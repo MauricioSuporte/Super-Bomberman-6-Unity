@@ -24,6 +24,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float PersonalityWeightJitter = 0.18f;
     private const float ItemTargetJitter = 0.75f;
     private const float FarmTargetJitter = 0.5f;
+    private const float ChainBombFuseSafetyMarginSeconds = 0.25f;
+    private const int ChainBombMinimumEscapeBranches = 3;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -266,12 +268,24 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (inDanger)
         {
+            if (TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: true, out CandidateAction chainNow))
+            {
+                ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, chainNow, "chainBomb");
+                return;
+            }
+
             ExecuteEscape(settings, myTile, currentDangerSeconds);
             return;
         }
 
         if (HasOwnUnresolvedBombOrExplosion())
         {
+            if (TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
+            {
+                ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, chain, "chainBomb");
+                return;
+            }
+
             hasSafeCenterTarget = true;
             safeCenterTargetTile = myTile;
 
@@ -323,6 +337,16 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         CandidateAction selected = PickWeightedCandidate(candidates);
+        ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, selected, selected.HasRoute ? "found" : "none");
+    }
+
+    private void ExecuteSelectedCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        CandidateAction selected,
+        string route)
+    {
         currentAction = selected.Action;
         currentMoveInput = selected.FirstMove;
         currentTargetTile = selected.TargetTile;
@@ -337,7 +361,7 @@ public sealed class BattleModeComController : MonoBehaviour
             currentInputDescription = AppendInput(currentInputDescription, "ActionA");
         }
 
-        LogDecision(settings, myTile, currentDangerSeconds, selected.HasRoute ? "found" : "none");
+        LogDecision(settings, myTile, currentDangerSeconds, route);
     }
 
     private void ExecuteEscape(
@@ -660,6 +684,124 @@ public sealed class BattleModeComController : MonoBehaviour
 
         RejectVerbose($"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
         return false;
+    }
+
+    private bool TryBuildChainBombCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        bool onlyCurrentTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (bombController == null || bombController.BombsRemaining <= 0)
+            return false;
+
+        int radius = Mathf.Max(1, bombController.explosionRadius);
+        GatherReachableSafeTiles(myTile, onlyCurrentTile ? 0 : settings.searchDepth + 2, settings);
+
+        Vector2Int bestTile = myTile;
+        Vector2 bestMove = Vector2.zero;
+        Vector2 bestEscapeMove = Vector2.zero;
+        float bestScore = float.NegativeInfinity;
+        int bestBranches = 0;
+        float bestTriggerSeconds = float.PositiveInfinity;
+        int bestDistance = int.MaxValue;
+        bool bestCreatesTurn = false;
+
+        for (int i = 0; i < reachableTiles.Count; i++)
+        {
+            Vector2Int tile = reachableTiles[i];
+            if (onlyCurrentTile && tile != myTile)
+                continue;
+
+            if (IsBombAtTile(tile) || WouldBlastHitUsefulItem(tile, radius, out _, out _))
+                continue;
+
+            if (!TryGetLinkedOwnBombTriggerSeconds(tile, radius, out float triggerSeconds, out bool createsTurn))
+                continue;
+
+            if (triggerSeconds <= settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
+            {
+                RejectVerbose($"ChainBomb fuse curto {tile} {triggerSeconds:F2}s");
+                continue;
+            }
+
+            if (!TryBuildChainBlastTiles(tile, radius, out List<Vector2Int> chainBlastTiles))
+                continue;
+
+            int escapeBranches = CountImmediateEscapeBranches(tile, chainBlastTiles);
+            if (escapeBranches < ChainBombMinimumEscapeBranches)
+            {
+                RejectVerbose($"ChainBomb poucas fugas {tile} branches {escapeBranches}");
+                continue;
+            }
+
+            if (!TryFindChainEscape(settings, tile, chainBlastTiles, triggerSeconds, out Vector2 escapeMove, out _))
+            {
+                RejectVerbose($"ChainBomb sem fuga {tile}");
+                continue;
+            }
+
+            if (!TryFindPath(myTile, tile, settings.searchDepth + 2, false, settings, null, out PathResult path))
+                continue;
+
+            float arrivalSeconds = EstimateTraversalSeconds(path.Distance);
+            if (!float.IsInfinity(currentDangerSeconds) &&
+                currentDangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds)
+            {
+                continue;
+            }
+
+            if (triggerSeconds <= arrivalSeconds + settings.safeTileMinimumSeconds + ChainBombFuseSafetyMarginSeconds)
+            {
+                RejectVerbose($"ChainBomb chegada insegura {tile} fuse {triggerSeconds:F2}s eta {arrivalSeconds:F2}s");
+                continue;
+            }
+
+            float score =
+                escapeBranches * 35f +
+                (createsTurn ? 45f : 0f) +
+                chainBlastTiles.Count * 1.5f -
+                path.Distance * 10f +
+                Mathf.Min(triggerSeconds, bombController.bombFuseTime) * 2f +
+                GetDecisionNoise(5000 + i, FarmTargetJitter);
+
+            if (score <= bestScore)
+                continue;
+
+            bestTile = tile;
+            bestMove = path.FirstMove;
+            bestEscapeMove = escapeMove;
+            bestScore = score;
+            bestBranches = escapeBranches;
+            bestTriggerSeconds = triggerSeconds;
+            bestDistance = path.Distance;
+            bestCreatesTurn = createsTurn;
+        }
+
+        if (bestDistance == int.MaxValue)
+            return false;
+
+        bool plantNow = bestDistance == 0;
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.CombatPlant,
+            Weight = Mathf.Max(1, settings.combatPlantWeight + bestBranches * 8),
+            TargetTile = bestTile,
+            HasTarget = true,
+            FirstMove = plantNow ? bestEscapeMove : bestMove,
+            HasRoute = true,
+            Reason = plantNow
+                ? $"chain bomb{(bestCreatesTurn ? " turn" : string.Empty)} branches {bestBranches} trigger {bestTriggerSeconds:F2}s"
+                : $"move to chain bomb{(bestCreatesTurn ? " turn" : string.Empty)} tile distance {bestDistance} branches {bestBranches}",
+            InputDescription = plantNow
+                ? AppendInput("ActionA", FirstMoveDescription(bestEscapeMove))
+                : FirstMoveDescription(bestMove),
+            TapBomb = plantNow
+        };
+        return true;
     }
 
     private int GetCollectItemWeight(BattleModeComDifficultySettings settings, int distance)
@@ -1318,6 +1460,76 @@ public sealed class BattleModeComController : MonoBehaviour
         return TryFindEscape(settings, plantTile, plannedBlast, out escapeMove, out escapeTile, out _);
     }
 
+    private bool TryFindChainEscape(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        List<Vector2Int> chainBlastTiles,
+        float triggerSeconds,
+        out Vector2 firstMove,
+        out Vector2Int target)
+    {
+        firstMove = Vector2.zero;
+        target = start;
+
+        visited.Clear();
+        open.Clear();
+
+        visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
+        open.Enqueue(start);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            float eta = EstimateTraversalSeconds(node.Depth);
+            bool inChainBlast = chainBlastTiles != null && chainBlastTiles.Contains(tile);
+
+            if (node.Depth > 0 && !inChainBlast)
+            {
+                float dangerSeconds = GetDangerSeconds(tile, null);
+                float requiredSeconds =
+                    eta +
+                    settings.dangerReactionSeconds +
+                    settings.safeTileMinimumSeconds +
+                    ChainBombFuseSafetyMarginSeconds;
+
+                if (triggerSeconds > requiredSeconds &&
+                    (float.IsInfinity(dangerSeconds) || dangerSeconds > requiredSeconds))
+                {
+                    target = tile;
+                    firstMove = ReconstructFirstMove(start, tile);
+                    return true;
+                }
+            }
+
+            if (node.Depth >= settings.searchDepth + 3)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next))
+                    continue;
+
+                if (!IsWalkableTile(next, start))
+                    continue;
+
+                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
+                float nextDanger = GetDangerSeconds(next, null);
+                if (!float.IsInfinity(nextDanger) &&
+                    nextDanger <= nextEta + settings.dangerReactionSeconds)
+                {
+                    continue;
+                }
+
+                visited[next] = new PathNode { Tile = next, Parent = tile, Depth = node.Depth + 1 };
+                open.Enqueue(next);
+            }
+        }
+
+        return false;
+    }
+
     private List<Vector2Int> BuildBlastTiles(Vector2Int origin, int radius)
     {
         List<Vector2Int> tiles = new();
@@ -1337,6 +1549,160 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return tiles;
+    }
+
+    private bool TryGetLinkedOwnBombTriggerSeconds(
+        Vector2Int plantTile,
+        int radius,
+        out float triggerSeconds,
+        out bool createsTurn)
+    {
+        triggerSeconds = float.PositiveInfinity;
+        bool linkedToOwnBomb = false;
+        createsTurn = false;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int bombRadius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : radius;
+            if (!IsTileInBlastLineRuntime(bombTile, plantTile, bombRadius))
+                continue;
+
+            if (bomb.Owner == bombController && !bomb.IsControlBomb)
+            {
+                linkedToOwnBomb = true;
+                createsTurn |= WouldCreateChainTurn(plantTile, bombTile);
+            }
+
+            float seconds = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
+            triggerSeconds = Mathf.Min(triggerSeconds, seconds);
+        }
+
+        return linkedToOwnBomb && !float.IsInfinity(triggerSeconds);
+    }
+
+    private bool WouldCreateChainTurn(Vector2Int plantTile, Vector2Int linkedBombTile)
+    {
+        Vector2Int newLeg = GetAxisDirection(plantTile - linkedBombTile);
+        if (newLeg == Vector2Int.zero)
+            return false;
+
+        foreach (Bomb other in Bomb.ActiveBombs)
+        {
+            if (other == null || other.HasExploded || other.Owner != bombController || other.IsControlBomb)
+                continue;
+
+            Vector2Int otherTile = WorldToTile(other.GetLogicalPosition());
+            if (otherTile == linkedBombTile || otherTile == plantTile)
+                continue;
+
+            Vector2Int existingLeg = GetAxisDirection(otherTile - linkedBombTile);
+            if (existingLeg == Vector2Int.zero)
+                continue;
+
+            if (IsPerpendicular(newLeg, existingLeg) &&
+                IsTileInBlastLineRuntime(linkedBombTile, otherTile, GetBombRadiusAtTile(linkedBombTile, 1)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static Vector2Int GetAxisDirection(Vector2Int delta)
+    {
+        if (delta.x == 0 && delta.y != 0)
+            return delta.y > 0 ? Vector2Int.up : Vector2Int.down;
+
+        if (delta.y == 0 && delta.x != 0)
+            return delta.x > 0 ? Vector2Int.right : Vector2Int.left;
+
+        return Vector2Int.zero;
+    }
+
+    private static bool IsPerpendicular(Vector2Int a, Vector2Int b)
+    {
+        return a != Vector2Int.zero && b != Vector2Int.zero && a.x * b.x + a.y * b.y == 0;
+    }
+
+    private bool TryBuildChainBlastTiles(Vector2Int plantTile, int radius, out List<Vector2Int> chainBlastTiles)
+    {
+        chainBlastTiles = BuildBlastTiles(plantTile, radius);
+        Queue<Vector2Int> triggeredBombTiles = new();
+        HashSet<Vector2Int> visitedBombTiles = new();
+
+        EnqueueBombsHitByBlast(chainBlastTiles, triggeredBombTiles, visitedBombTiles);
+
+        while (triggeredBombTiles.Count > 0)
+        {
+            Vector2Int bombTile = triggeredBombTiles.Dequeue();
+            int bombRadius = GetBombRadiusAtTile(bombTile, radius);
+            List<Vector2Int> bombBlast = BuildBlastTiles(bombTile, bombRadius);
+
+            for (int i = 0; i < bombBlast.Count; i++)
+            {
+                if (!chainBlastTiles.Contains(bombBlast[i]))
+                    chainBlastTiles.Add(bombBlast[i]);
+            }
+
+            EnqueueBombsHitByBlast(chainBlastTiles, triggeredBombTiles, visitedBombTiles);
+        }
+
+        return chainBlastTiles.Count > 0;
+    }
+
+    private void EnqueueBombsHitByBlast(
+        List<Vector2Int> blastTiles,
+        Queue<Vector2Int> triggeredBombTiles,
+        HashSet<Vector2Int> visitedBombTiles)
+    {
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            if (visitedBombTiles.Contains(bombTile) || !blastTiles.Contains(bombTile))
+                continue;
+
+            visitedBombTiles.Add(bombTile);
+            triggeredBombTiles.Enqueue(bombTile);
+        }
+    }
+
+    private int GetBombRadiusAtTile(Vector2Int tile, int fallbackRadius)
+    {
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            if (WorldToTile(bomb.GetLogicalPosition()) != tile)
+                continue;
+
+            return bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : fallbackRadius;
+        }
+
+        return fallbackRadius;
+    }
+
+    private int CountImmediateEscapeBranches(Vector2Int tile, List<Vector2Int> chainBlastTiles)
+    {
+        int count = 0;
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int next = tile + CardinalTiles[i];
+            if (!IsWalkableTile(next, tile))
+                continue;
+
+            count++;
+        }
+
+        return count;
     }
 
     private bool WouldBlastHitUsefulItem(Vector2Int origin, int radius, out ItemType itemType, out Vector2Int itemTile)
