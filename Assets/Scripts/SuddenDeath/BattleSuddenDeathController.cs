@@ -79,6 +79,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     }
 
     readonly Dictionary<Vector3Int, QueuedShadowData> queuedShadowVisuals = new Dictionary<Vector3Int, QueuedShadowData>();
+    readonly Dictionary<Vector3Int, float> activeFallingCellApplyTimes = new Dictionary<Vector3Int, float>();
     readonly HashSet<Vector3Int> scheduledOrPlacedCells = new HashSet<Vector3Int>();
     readonly Dictionary<Vector3Int, Coroutine> damageCoroutines = new Dictionary<Vector3Int, Coroutine>();
     readonly List<Vector3Int> suddenDeathPath = new List<Vector3Int>();
@@ -110,6 +111,60 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return false;
 
         return IsActiveSuddenDeathCell(indestructibleTilemap.WorldToCell(worldPosition));
+    }
+
+    public bool TryGetSecondsUntilSuddenDeathWorldPosition(Vector2 worldPosition, out float seconds)
+    {
+        seconds = float.PositiveInfinity;
+
+        if (indestructibleTilemap == null)
+            return false;
+
+        return TryGetSecondsUntilSuddenDeathCell(indestructibleTilemap.WorldToCell(worldPosition), out seconds);
+    }
+
+    public bool TryGetSecondsUntilSuddenDeathCell(Vector3Int cell, out float seconds)
+    {
+        seconds = float.PositiveInfinity;
+
+        if (indestructibleTilemap == null)
+            return false;
+
+        if (IsActiveSuddenDeathCell(cell))
+        {
+            seconds = 0f;
+            return true;
+        }
+
+        if (activeFallingCellApplyTimes.TryGetValue(cell, out float applyTime))
+        {
+            seconds = Mathf.Max(0f, applyTime - Time.time);
+            return true;
+        }
+
+        if (!suddenDeathStarted || suddenDeathFinished || suddenDeathPath.Count <= 0)
+            return false;
+
+        int index = suddenDeathPath.IndexOf(cell);
+        if (index < 0 || index < nextDropIndex)
+            return false;
+
+        if (HasBlockingIndestructibleAt(cell))
+            return false;
+
+        float rawRemaining = GetBattleTimeRemaining();
+        if (rawRemaining > suddenDeathShadowStartRemainingTime)
+            return false;
+
+        float dropWindowDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
+        float currentTimelineElapsed = Mathf.Clamp(
+            suddenDeathShadowStartRemainingTime - rawRemaining,
+            0f,
+            shadowLeadTime + dropWindowDuration);
+
+        float dropElapsedTime = GetDropElapsedTimeForIndex(index, dropWindowDuration);
+        seconds = Mathf.Max(0f, dropElapsedTime - currentTimelineElapsed) + Mathf.Max(0.01f, fallingDuration);
+        return true;
     }
 
     enum SuddenDeathDropPattern
@@ -575,6 +630,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         float duration = Mathf.Max(0.01f, fallingDuration);
 
         NotifyGameManagerIndestructibleDropStarted(cell);
+        activeFallingCellApplyTimes[cell] = Time.time + duration;
 
         if (queuedShadowVisuals.TryGetValue(cell, out QueuedShadowData queuedShadowData))
         {
@@ -662,6 +718,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         NotifyGameManagerIndestructibleDropFinished(cell);
+        activeFallingCellApplyTimes.Remove(cell);
 
         PlayFallingSfx();
         StartDamageOnCell(cell);
@@ -1750,6 +1807,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             GameManager.Instance.ClearPendingIndestructibleDrops();
 
         scheduledShadowCells.Clear();
+        activeFallingCellApplyTimes.Clear();
     }
 
     void RegisterActiveShadow(GameObject shadow)
@@ -1897,6 +1955,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         ClearAllActiveDropVisuals();
         ClearAllDamageCoroutines();
         scheduledShadowCells.Clear();
+        activeFallingCellApplyTimes.Clear();
     }
 
     void OnDestroy()
@@ -1905,5 +1964,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         ClearAllActiveDropVisuals();
         ClearAllDamageCoroutines();
         scheduledShadowCells.Clear();
+        activeFallingCellApplyTimes.Clear();
     }
 }

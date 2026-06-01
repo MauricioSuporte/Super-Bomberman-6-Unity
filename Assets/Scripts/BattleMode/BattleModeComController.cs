@@ -11,13 +11,13 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComController : MonoBehaviour
 {
-    private const float TargetReachDistanceTiles = 0.18f;
     private const float BombTapCooldownSeconds = 0.35f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
     private const float TurnAxisCenterTolerance = 0.045f;
     private const float DangerTimingMarginSeconds = 0.08f;
+    private const float SuddenDeathUnsafeLeadSeconds = 1f;
     private const int ItemPriorityDistance = 7;
     private const int NearbyItemFarmBlockDistance = 5;
     private const int MaxDecisionBufferEntries = 32;
@@ -41,7 +41,6 @@ public sealed class BattleModeComController : MonoBehaviour
     [Header("Diagnostics")]
     [SerializeField] private BattleModeComDiagnostics.LogLevel logLevel = BattleModeComDiagnostics.DefaultLogLevel;
     [SerializeField, Range(4, MaxDecisionBufferEntries)] private int decisionBufferSize = 16;
-    [SerializeField] private string[] recentDecisionLog = Array.Empty<string>();
 
     private readonly List<string> recentDecisions = new();
     private readonly List<PlayerIdentity> activePlayers = new(6);
@@ -61,6 +60,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
+    private BattleSuddenDeathController suddenDeathController;
     private int explosionMask;
     private int playerId = 1;
     private float tileSize = 1f;
@@ -169,6 +169,9 @@ public sealed class BattleModeComController : MonoBehaviour
             destructibleTilemap = gameManager.destructibleTilemap;
             indestructibleTilemap = gameManager.indestructibleTilemap;
         }
+
+        if (suddenDeathController == null || !suddenDeathController.isActiveAndEnabled)
+            suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
 
         explosionMask = LayerMask.GetMask("Explosion");
     }
@@ -888,8 +891,6 @@ public sealed class BattleModeComController : MonoBehaviour
         int max = Mathf.Clamp(decisionBufferSize, 4, MaxDecisionBufferEntries);
         while (recentDecisions.Count > max)
             recentDecisions.RemoveAt(0);
-
-        recentDecisionLog = recentDecisions.ToArray();
     }
 
     private string FormatCandidates()
@@ -1430,6 +1431,13 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         float danger = float.PositiveInfinity;
+        if (suddenDeathController != null &&
+            suddenDeathController.TryGetSecondsUntilSuddenDeathWorldPosition(TileToWorld(tile), out float suddenDeathSeconds) &&
+            suddenDeathSeconds <= SuddenDeathUnsafeLeadSeconds)
+        {
+            danger = Mathf.Min(danger, suddenDeathSeconds);
+        }
+
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
             if (bomb == null || bomb.HasExploded)
