@@ -16,6 +16,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float ControlBombTapCooldownSeconds = 0.35f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
+    private const float TurnAxisCenterTolerance = 0.045f;
     private const int MaxDecisionBufferEntries = 32;
 
     private static readonly Vector2Int[] CardinalTiles =
@@ -206,6 +207,7 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         currentMoveInput = ApplySafeTileCentering(myTile, currentMoveInput);
+        currentMoveInput = ApplyTurnAxisCentering(myTile, currentMoveInput);
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
         SetMovementInput(currentMoveInput);
     }
@@ -1321,6 +1323,9 @@ public sealed class BattleModeComController : MonoBehaviour
         if (IsTileThreatened(currentTile, null))
             return requestedMove;
 
+        if (IsCenteringTowardTileCenter(currentTile, requestedMove))
+            return requestedMove;
+
         if (hasSafeCenterTarget && currentTile == safeCenterTargetTile)
             return requestedMove;
 
@@ -1346,6 +1351,27 @@ public sealed class BattleModeComController : MonoBehaviour
 
             return Vector2.zero;
         }
+
+        return requestedMove;
+    }
+
+    private Vector2 ApplyTurnAxisCentering(Vector2Int currentTile, Vector2 requestedMove)
+    {
+        if (requestedMove == Vector2.zero)
+            return Vector2.zero;
+
+        Vector2Int requestedDirection = DirectionToTile(requestedMove);
+        if (requestedDirection == Vector2Int.zero)
+            return Vector2.zero;
+
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+
+        if (requestedDirection.x != 0 && Mathf.Abs(delta.y) > tolerance)
+            return delta.y > 0f ? Vector2.up : Vector2.down;
+
+        if (requestedDirection.y != 0 && Mathf.Abs(delta.x) > tolerance)
+            return delta.x > 0f ? Vector2.right : Vector2.left;
 
         return requestedMove;
     }
@@ -1389,6 +1415,21 @@ public sealed class BattleModeComController : MonoBehaviour
             return delta.y > 0f ? Vector2.up : Vector2.down;
 
         return Vector2.zero;
+    }
+
+    private bool IsCenteringTowardTileCenter(Vector2Int tile, Vector2 requestedMove)
+    {
+        Vector2Int requestedDirection = DirectionToTile(requestedMove);
+        if (requestedDirection == Vector2Int.zero)
+            return false;
+
+        Vector2 delta = TileToWorld(tile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+
+        if (requestedDirection.x != 0)
+            return Mathf.Abs(delta.x) > tolerance && Mathf.Sign(delta.x) == requestedDirection.x;
+
+        return Mathf.Abs(delta.y) > tolerance && Mathf.Sign(delta.y) == requestedDirection.y;
     }
 
     private bool HasOwnUnresolvedBombOrExplosion()
