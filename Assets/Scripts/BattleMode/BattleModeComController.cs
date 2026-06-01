@@ -18,6 +18,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float SafeTileCenterTolerance = 0.08f;
     private const float TurnAxisCenterTolerance = 0.045f;
     private const float DangerTimingMarginSeconds = 0.08f;
+    private const int ItemPriorityDistance = 7;
+    private const int NearbyItemFarmBlockDistance = 5;
     private const int MaxDecisionBufferEntries = 32;
 
     private static readonly Vector2Int[] CardinalTiles =
@@ -477,7 +479,7 @@ public sealed class BattleModeComController : MonoBehaviour
         candidate = new CandidateAction
         {
             Action = BattleModeComActionType.CollectItem,
-            Weight = settings.collectItemWeight,
+            Weight = GetCollectItemWeight(settings, bestDistance),
             TargetTile = bestTile,
             HasTarget = true,
             FirstMove = bestMove,
@@ -501,6 +503,13 @@ public sealed class BattleModeComController : MonoBehaviour
         if (destructibleTilemap == null)
             return false;
 
+        bool hasNearbyUsefulItem = HasReachableUsefulItem(myTile, settings, NearbyItemFarmBlockDistance, out _, out int nearbyItemDistance);
+        if (hasNearbyUsefulItem)
+        {
+            RejectVerbose($"FarmDestructible adiado por item util perto distance {nearbyItemDistance}");
+            return false;
+        }
+
         GatherReachableSafeTiles(myTile, settings.searchDepth + 3, settings);
 
         Vector2Int bestTile = myTile;
@@ -514,6 +523,12 @@ public sealed class BattleModeComController : MonoBehaviour
             Vector2Int tile = reachableTiles[i];
             if (!CanBombHitDestructible(tile, Mathf.Max(1, bombController.explosionRadius)))
                 continue;
+
+            if (WouldBlastHitUsefulItem(tile, Mathf.Max(1, bombController.explosionRadius), out ItemType itemType, out Vector2Int itemTile))
+            {
+                RejectVerbose($"FarmDestructible recusado queimaria item {itemType}@{itemTile}");
+                continue;
+            }
 
             if (!CanPlantBombWithEscape(tile, Mathf.Max(1, bombController.explosionRadius), settings, out Vector2 escapeMove, out _))
             {
@@ -569,6 +584,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         int radius = Mathf.Max(1, bombController.explosionRadius);
         if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
+            !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
             CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
         {
             candidate = new CandidateAction
@@ -605,6 +621,50 @@ public sealed class BattleModeComController : MonoBehaviour
 
         RejectVerbose($"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
         return false;
+    }
+
+    private int GetCollectItemWeight(BattleModeComDifficultySettings settings, int distance)
+    {
+        int urgency = Mathf.Max(0, ItemPriorityDistance - distance);
+        return settings.collectItemWeight + 40 + urgency * 12;
+    }
+
+    private bool HasReachableUsefulItem(
+        Vector2Int myTile,
+        BattleModeComDifficultySettings settings,
+        int maxDistance,
+        out ItemPickup foundItem,
+        out int foundDistance)
+    {
+        foundItem = null;
+        foundDistance = int.MaxValue;
+
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null || !item.gameObject.activeInHierarchy || !IsUsefulItem(item.type))
+                continue;
+
+            Vector2Int itemTile = WorldToTile(item.transform.position);
+            int manhattan = Manhattan(myTile, itemTile);
+            if (manhattan > maxDistance)
+                continue;
+
+            if (!IsWalkableTile(itemTile, myTile))
+                continue;
+
+            if (!TryFindPath(myTile, itemTile, maxDistance, true, settings, null, out PathResult path))
+                continue;
+
+            if (path.Distance >= foundDistance)
+                continue;
+
+            foundItem = item;
+            foundDistance = path.Distance;
+        }
+
+        return foundItem != null;
     }
 
     private bool ShouldHoldDangerTile(
@@ -1120,6 +1180,30 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return tiles;
+    }
+
+    private bool WouldBlastHitUsefulItem(Vector2Int origin, int radius, out ItemType itemType, out Vector2Int itemTile)
+    {
+        itemType = default;
+        itemTile = origin;
+
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null || !item.gameObject.activeInHierarchy || !IsUsefulItem(item.type))
+                continue;
+
+            Vector2Int tile = WorldToTile(item.transform.position);
+            if (!IsTileInBlastLineRuntime(origin, tile, radius))
+                continue;
+
+            itemType = item.type;
+            itemTile = tile;
+            return true;
+        }
+
+        return false;
     }
 
     private bool CanBombHitDestructible(Vector2Int plantTile, int radius)
