@@ -17,6 +17,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
     private const float TurnAxisCenterTolerance = 0.045f;
+    private const float DangerTimingMarginSeconds = 0.08f;
     private const int MaxDecisionBufferEntries = 32;
 
     private static readonly Vector2Int[] CardinalTiles =
@@ -73,6 +74,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private float lastSafetyHoldLogTime = -10f;
     private Vector2Int safeCenterTargetTile;
     private bool hasSafeCenterTarget;
+    private bool currentMoveFollowsEscapeRoute;
     private bool initialized;
 
     private struct PathNode
@@ -346,6 +348,20 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (ShouldHoldDangerTile(settings, myTile, currentDangerSeconds, out string holdReason))
+        {
+            SetCurrentDecision(
+                BattleModeComActionType.Stopped,
+                Vector2.zero,
+                false,
+                myTile,
+                holdReason,
+                "none",
+                currentDangerSeconds,
+                "dangerWait");
+            return;
+        }
+
         Vector2 fallback = FindBestFallbackMove(settings, myTile, null, out string fallbackReason);
         SetCurrentDecision(
             BattleModeComActionType.Reposition,
@@ -591,6 +607,53 @@ public sealed class BattleModeComController : MonoBehaviour
         return false;
     }
 
+    private bool ShouldHoldDangerTile(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out string reason)
+    {
+        reason = "hold danger tile";
+
+        if (float.IsInfinity(currentDangerSeconds) || currentDangerSeconds <= settings.dangerReactionSeconds)
+            return false;
+
+        bool foundWalkableExit = false;
+        float bestExitMargin = float.NegativeInfinity;
+        Vector2Int bestExitTile = myTile;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int next = myTile + CardinalTiles[i];
+            if (!IsWalkableTile(next, myTile))
+                continue;
+
+            foundWalkableExit = true;
+            float arrivalSeconds = EstimateTraversalSeconds(1);
+            float margin = GetSurvivalMarginSeconds(next, arrivalSeconds, settings, null);
+            if (margin > bestExitMargin)
+            {
+                bestExitMargin = margin;
+                bestExitTile = next;
+            }
+        }
+
+        if (!foundWalkableExit)
+        {
+            reason = "hold danger tile no walkable exit";
+            return true;
+        }
+
+        float currentMargin = currentDangerSeconds - settings.dangerReactionSeconds;
+        if (currentMargin + DangerTimingMarginSeconds >= bestExitMargin)
+        {
+            reason = $"hold danger tile current {currentMargin:F2}s exit {bestExitTile} {bestExitMargin:F2}s";
+            return true;
+        }
+
+        return false;
+    }
+
     private bool TryBuildPatrolCandidate(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -707,6 +770,11 @@ public sealed class BattleModeComController : MonoBehaviour
         currentTargetTile = target;
         currentReason = reason;
         currentInputDescription = input;
+        currentMoveFollowsEscapeRoute =
+            action == BattleModeComActionType.Reposition &&
+            hasTarget &&
+            !string.IsNullOrEmpty(route) &&
+            route.StartsWith("escape", StringComparison.Ordinal);
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
@@ -872,8 +940,9 @@ public sealed class BattleModeComController : MonoBehaviour
             if (!IsWalkableTile(next, myTile))
                 continue;
 
-            float danger = GetDangerSeconds(next, plannedBlastTiles);
-            float score = danger + CountOpenNeighbors(next) * 0.25f;
+            float arrivalSeconds = EstimateTraversalSeconds(1);
+            float score = GetSurvivalMarginSeconds(next, arrivalSeconds, settings, plannedBlastTiles) +
+                          CountOpenNeighbors(next) * 0.25f;
             if (plannedBlastTiles != null && plannedBlastTiles.Contains(next))
                 score -= 10f;
 
@@ -1307,6 +1376,19 @@ public sealed class BattleModeComController : MonoBehaviour
         return dangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds;
     }
 
+    private float GetSurvivalMarginSeconds(
+        Vector2Int tile,
+        float arrivalSeconds,
+        BattleModeComDifficultySettings settings,
+        List<Vector2Int> plannedBlastTiles)
+    {
+        float dangerSeconds = GetDangerSeconds(tile, plannedBlastTiles);
+        if (float.IsInfinity(dangerSeconds))
+            return 999f;
+
+        return dangerSeconds - arrivalSeconds - settings.dangerReactionSeconds;
+    }
+
     private bool IsTileThreatened(Vector2Int tile, List<Vector2Int> plannedBlastTiles)
     {
         return !float.IsInfinity(GetDangerSeconds(tile, plannedBlastTiles));
@@ -1320,9 +1402,6 @@ public sealed class BattleModeComController : MonoBehaviour
         if (requestedMove == Vector2.zero)
             return Vector2.zero;
 
-        if (IsTileThreatened(currentTile, null))
-            return requestedMove;
-
         if (IsCenteringTowardTileCenter(currentTile, requestedMove))
             return requestedMove;
 
@@ -1333,7 +1412,61 @@ public sealed class BattleModeComController : MonoBehaviour
         if (nextTile == currentTile)
             return Vector2.zero;
 
-        if (!IsWalkableTile(nextTile, currentTile) || IsTileThreatened(nextTile, null))
+        if (!IsWalkableTile(nextTile, currentTile))
+        {
+            if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
+            {
+                lastSafetyHoldLogTime = Time.time;
+                SetCurrentDecision(
+                    BattleModeComActionType.Stopped,
+                    Vector2.zero,
+                    false,
+                    currentTile,
+                    $"blocked move to {nextTile}",
+                    "none",
+                    GetDangerSeconds(currentTile, null),
+                    "safetyGate");
+            }
+
+            return Vector2.zero;
+        }
+
+        float currentDanger = GetDangerSeconds(currentTile, null);
+        float nextDanger = GetDangerSeconds(nextTile, null);
+
+        if (!float.IsInfinity(currentDanger))
+        {
+            if (currentMoveFollowsEscapeRoute &&
+                !IsDangerousAt(nextTile, EstimateTraversalSeconds(1), settings, null))
+            {
+                return requestedMove;
+            }
+
+            float nextMargin = GetSurvivalMarginSeconds(nextTile, EstimateTraversalSeconds(1), settings, null);
+            float currentMargin = currentDanger - settings.dangerReactionSeconds;
+            if (nextMargin + DangerTimingMarginSeconds < currentMargin)
+            {
+                if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
+                {
+                    lastSafetyHoldLogTime = Time.time;
+                    SetCurrentDecision(
+                        BattleModeComActionType.Stopped,
+                        Vector2.zero,
+                        false,
+                        currentTile,
+                        $"hold safer current {currentMargin:F2}s than {nextTile} {nextMargin:F2}s",
+                        "none",
+                        currentDanger,
+                        "dangerTimingGate");
+                }
+
+                return Vector2.zero;
+            }
+
+            return requestedMove;
+        }
+
+        if (!float.IsInfinity(nextDanger))
         {
             if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
             {
