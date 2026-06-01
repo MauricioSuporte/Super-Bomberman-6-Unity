@@ -1054,9 +1054,10 @@ public sealed class BattleModeComController : MonoBehaviour
             if (node.Depth >= maxDepth)
                 continue;
 
-            for (int i = 0; i < CardinalTiles.Length; i++)
+            Vector2Int[] directions = GetPathDirectionOrder(tile, goal);
+            for (int i = 0; i < directions.Length; i++)
             {
-                Vector2Int next = tile + CardinalTiles[i];
+                Vector2Int next = tile + directions[i];
                 if (visited.ContainsKey(next))
                     continue;
 
@@ -1149,6 +1150,70 @@ public sealed class BattleModeComController : MonoBehaviour
             return delta.y > 0 ? Vector2.up : Vector2.down;
 
         return Vector2.zero;
+    }
+
+    private Vector2Int[] GetPathDirectionOrder(Vector2Int start, Vector2Int goal)
+    {
+        Vector2Int[] directions =
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        Vector2Int preferredDirection = DirectionToTile(currentMoveInput);
+        for (int i = 1; i < directions.Length; i++)
+        {
+            Vector2Int direction = directions[i];
+            int score = GetPathDirectionScore(start, goal, direction, preferredDirection);
+            int j = i - 1;
+
+            while (j >= 0 &&
+                   score < GetPathDirectionScore(start, goal, directions[j], preferredDirection))
+            {
+                directions[j + 1] = directions[j];
+                j--;
+            }
+
+            directions[j + 1] = direction;
+        }
+
+        return directions;
+    }
+
+    private int GetPathDirectionScore(
+        Vector2Int start,
+        Vector2Int goal,
+        Vector2Int direction,
+        Vector2Int preferredDirection)
+    {
+        int score = Manhattan(start + direction, goal) * 10;
+
+        if (direction == preferredDirection)
+            score -= 2;
+
+        Vector2Int delta = goal - start;
+        if ((direction.x != 0 && Math.Sign(delta.x) == direction.x) ||
+            (direction.y != 0 && Math.Sign(delta.y) == direction.y))
+        {
+            score -= 1;
+        }
+
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y) &&
+            direction.x != 0 &&
+            Math.Sign(delta.x) == direction.x)
+        {
+            score -= 1;
+        }
+        else if (Mathf.Abs(delta.y) > Mathf.Abs(delta.x) &&
+                 direction.y != 0 &&
+                 Math.Sign(delta.y) == direction.y)
+        {
+            score -= 1;
+        }
+
+        return score;
     }
 
     private bool CanPlantBombWithEscape(
@@ -1589,6 +1654,9 @@ public sealed class BattleModeComController : MonoBehaviour
         if (requestedDirection == Vector2Int.zero)
             return Vector2.zero;
 
+        if (ShouldKeepTargetedMove(currentTile, requestedDirection))
+            return requestedMove;
+
         Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
         float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
 
@@ -1599,6 +1667,25 @@ public sealed class BattleModeComController : MonoBehaviour
             return delta.x > 0f ? Vector2.right : Vector2.left;
 
         return requestedMove;
+    }
+
+    private bool ShouldKeepTargetedMove(Vector2Int currentTile, Vector2Int requestedDirection)
+    {
+        if (!hasCurrentTarget)
+            return false;
+
+        if (requestedDirection == Vector2Int.zero)
+            return false;
+
+        int currentDistance = Manhattan(currentTile, currentTargetTile);
+        if (currentDistance > 2)
+            return false;
+
+        Vector2Int nextTile = currentTile + requestedDirection;
+        if (Manhattan(nextTile, currentTargetTile) >= currentDistance)
+            return false;
+
+        return IsWalkableTile(nextTile, currentTile);
     }
 
     private Vector2 ApplySafeTileCentering(Vector2Int currentTile, Vector2 requestedMove)
