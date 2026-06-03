@@ -20,6 +20,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private const float RepeatPlantOriginWaitSeconds = 0.6f;
     private const float RepeatReturnBlockedWaitSeconds = 1.0f;
     private const float ForceActionRStopAfterKickSeconds = 1.35f;
+    private const float DirectKickRetrySeconds = 0.9f;
+    private const float DirectKickRetryMinFuseSeconds = 0.45f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
@@ -62,6 +64,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private int sequenceTargetKickCount = 1;
     private float sequenceStateStartedTime = -10f;
     private float forceActionRStopUntil = -10f;
+    private float sequenceDirectKickRetryUntil = -10f;
     private Bomb sequenceTrackedBomb;
     private bool sequencePlantDirectionPatched;
     private bool sequenceAllowActionRStop;
@@ -547,9 +550,33 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 }
 
                 lastDecisionTrace = $"sequence direct kick failed stand {kickStandTile} reason {kickFailReason}";
+
+                EnsureDirectKickRetryWindow();
+                if (CanRetryDirectKick(bomb))
+                {
+                    decision = new BattleModeComAbilityDecision
+                    {
+                        Action = BattleModeComActionType.KickBomb,
+                        Weight = 255 + DifficultyWeight(settings),
+                        TargetTile = sequenceBombTile,
+                        HasTarget = true,
+                        FirstMove = Vector2.zero,
+                        Reason = "retry direct kick bomb",
+                        InputDescription = "DirectKickRetry"
+                    };
+
+                    lastDecisionTrace =
+                        $"sequence direct kick retry stand {kickStandTile} reason {kickFailReason} " +
+                        $"retryLeft {Mathf.Max(0f, sequenceDirectKickRetryUntil - Time.time):F2}";
+                    LogKickSurgical(
+                        "KICK_DIRECT_RETRY",
+                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} reason:{kickFailReason} bomb:{DescribeBomb(bomb)} retryLeft:{Mathf.Max(0f, sequenceDirectKickRetryUntil - Time.time):F2} nearby:{DescribeNearbyBombs(myTile)}");
+                    return true;
+                }
+
                 LogKickSurgical(
                     "KICK_DIRECT_FAILED",
-                    $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} reason:{kickFailReason} bomb:{DescribeBomb(bomb)} nearby:{DescribeNearbyBombs(myTile)}",
+                    $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} reason:{kickFailReason} bomb:{DescribeBomb(bomb)} retryLeft:{Mathf.Max(0f, sequenceDirectKickRetryUntil - Time.time):F2} nearby:{DescribeNearbyBombs(myTile)}",
                     true);
                 ResetOffensiveSequence();
                 return false;
@@ -776,6 +803,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequenceTrackedBomb = null;
         sequencePlantDirectionPatched = false;
         forceActionRStopUntil = -10f;
+        sequenceDirectKickRetryUntil = -10f;
 
         int bombsNeededForSecondKick = firstBombAlreadyPlaced ? 1 : 2;
         bool hasBombForSecondKick = bombController != null && bombController.BombsRemaining >= bombsNeededForSecondKick;
@@ -1465,11 +1493,51 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         bool kicked = kickAbility.TryHandleBlockedHit(bombCollider, direction, tileSize, obstacleMask);
         if (!kicked)
         {
-            failReason = "TryHandleBlockedHit false";
-            return false;
+            Tilemap bombDestructibleTilemap = bombController != null
+                ? bombController.destructibleTiles
+                : destructibleTilemap;
+
+            LayerMask blockMoveMask = LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie");
+            bool fallbackKicked = bomb.StartKick(
+                direction,
+                tileSize,
+                obstacleMask,
+                bombDestructibleTilemap,
+                blockMoveMask,
+                0.60f,
+                0.90f,
+                false);
+
+            if (!fallbackKicked)
+            {
+                failReason = "TryHandleBlockedHit false StartKick false";
+                return false;
+            }
+
+            kickAbility.RegisterExternallyKickedBomb(bomb, playSfx: true);
+            LogKickSurgical(
+                "KICK_DIRECT_FALLBACK",
+                $"dir:{kickDirection} bomb:{DescribeBomb(bomb)}",
+                true);
         }
 
         return true;
+    }
+
+    private void EnsureDirectKickRetryWindow()
+    {
+        if (sequenceDirectKickRetryUntil < -9f)
+            sequenceDirectKickRetryUntil = Time.time + DirectKickRetrySeconds;
+    }
+
+    private bool CanRetryDirectKick(Bomb bomb)
+    {
+        return bomb != null &&
+               !bomb.HasExploded &&
+               !bomb.IsBeingKicked &&
+               (bomb.CanBeKicked || bomb.CanBeKickedEarly) &&
+               bomb.RemainingFuseSeconds > DirectKickRetryMinFuseSeconds &&
+               Time.time <= sequenceDirectKickRetryUntil;
     }
 
     private bool HasGroundTile(Vector2Int tile)
@@ -1647,7 +1715,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private void SetSequenceState(SequenceState state)
     {
         if (sequenceState != state)
+        {
             sequenceStateStartedTime = Time.time;
+            sequenceDirectKickRetryUntil = state == SequenceState.ReturnToKick
+                ? Time.time + DirectKickRetrySeconds
+                : -10f;
+        }
 
         sequenceState = state;
     }
@@ -1660,6 +1733,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequenceTrackedBomb = null;
         sequencePlantDirectionPatched = false;
         sequenceAllowActionRStop = false;
+        sequenceDirectKickRetryUntil = -10f;
     }
 
     private static void AppendTracePart(ref string trace, string part)
