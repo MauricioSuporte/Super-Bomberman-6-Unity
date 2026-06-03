@@ -455,6 +455,7 @@ MonoBehaviour:
   destructiblePassAmount: 1
   invincibleSuitAmount: 0
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 3
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -475,6 +476,9 @@ MonoBehaviour:
   groundTile: {fileID: 0}
   groundShadowTile: {fileID: 0}
   indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -4078,7 +4082,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 175725864, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1587395625, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: -7, z: 0}
@@ -4105,7 +4109,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -961594608, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1682537845, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -5, z: 0}
@@ -4294,7 +4298,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1368141986660978707, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: 1181556526, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 0, z: 0}
@@ -4366,7 +4370,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1368141986660978707, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: 1181556526, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 2, z: 0}
@@ -4429,7 +4433,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 21300000, guid: 99c336b1dfdc5774b99d7daeb017b718, type: 3}
       - {fileID: 1368141986660978707, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 4, z: 0}
@@ -4492,7 +4496,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -1871863515, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1325004801, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -2, y: 5, z: 0}
@@ -4537,7 +4541,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 948470906, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1498975650, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 3, y: 5, z: 0}
@@ -4564,7 +4568,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -122615735, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: 1941905952, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   m_TileAssetArray:
@@ -4811,12 +4815,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 6
-  activePlayerMask: 63
+  activePlayerCount: 2
+  activePlayerMask: 17
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -5327,6 +5333,7 @@ MonoBehaviour:
   enableTeleportIntro: 1
   teleportDuration: 1
   teleportInterval: 0.04
+  minimumTeleportMoves: 48
   teleportAreaAtStart: {x: 220, y: 120}
   dynamicScale: 1
   referenceWidth: 256
@@ -5336,6 +5343,8 @@ MonoBehaviour:
   extraScaleMultiplier: 1
   minScale: 0.25
   maxScale: 10
+  centerOnPlayableArea: 1
+  topHudHeightAtDesign: 22
   anchoredPosition: {x: 0, y: 80}
   baseWidthAtDesign: 420
   baseHeightAtDesign: 64

@@ -254,7 +254,14 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void LogKickLoadDiagnostic(string message)
     {
+        if (!BattleModeComKickBombAbility.EnableKickBombLoadDiagnostics)
+            return;
+
         if (!IsBattleModeScene())
+            return;
+
+        if (BattleModeComKickBombAbility.DiagnosticPlayerIdFilter != 0 &&
+            playerId != BattleModeComKickBombAbility.DiagnosticPlayerIdFilter)
             return;
 
         lastKickLoadDiagnosticFrame = Time.frameCount;
@@ -346,6 +353,16 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (inDanger)
         {
+            // Habilidades (ex.: chute ofensivo de bomba) podem CONTINUAR uma jogada já iniciada
+            // mesmo sob perigo — tipicamente a IA recuou 1 tile e está dentro do raio da própria
+            // bomba, mas a jogada certa é voltar e chutá-la no adversário (removendo a bomba da
+            // lane e ficando segura), não fugir. Damos prioridade a isso antes da fuga.
+            if (TryBuildAbilityEmergencyCandidate(settings, myTile, currentDangerSeconds, out CandidateAction abilityEmergency))
+            {
+                ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, abilityEmergency, "ability");
+                return;
+            }
+
             if (TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: true, out CandidateAction chainNow))
             {
                 ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, chainNow, "chainBomb");

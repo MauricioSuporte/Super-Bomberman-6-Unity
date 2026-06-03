@@ -7,9 +7,17 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 {
+    // Filtro de diagnóstico: só emite logs [BattleCOMKick] para esta IA (playerId).
+    // Use 0 para logar TODAS as IAs. Ajuste conforme qual COM você quer inspecionar.
+    public const int DiagnosticPlayerIdFilter = 5;
+    public static readonly bool EnableKickBombLoadDiagnostics = false;
+
     private const float OffensiveSequenceCooldownSeconds = 1.1f;
     private const float ActionRStopCooldownSeconds = 0.7f;
     private const int MaxOffensiveKickDistance = 8;
+    private const int MaxKickSequenceDistanceFromBomb = 3;
+    private static readonly bool EnableKickBombSurgicalDiagnostics = true;
+    private const float SurgicalLogIntervalSeconds = 0.35f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -46,6 +54,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private Vector2Int sequenceRetreatTile;
     private Vector2Int sequenceKickDirection;
     private string lastDecisionTrace = "not evaluated";
+    private float lastSurgicalLogTime = -10f;
+    private string lastSurgicalLogKey = string.Empty;
 
     public string DiagnosticName => "KickBomb";
     public string LastDecisionTrace => lastDecisionTrace;
@@ -62,13 +72,11 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private void Awake()
     {
         CacheReferences();
-        LogKick("awake/cache");
     }
 
     private void OnEnable()
     {
         CacheReferences();
-        LogKick("enabled");
     }
 
     private void CacheReferences()
@@ -122,9 +130,23 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (!IsAvailable)
         {
             lastDecisionTrace = BuildAvailabilityTrace("emergency unavailable");
-            LogKick(lastDecisionTrace);
             return false;
         }
+
+        // Jogada ofensiva já em andamento: mesmo sob perigo da própria bomba recém-plantada,
+        // priorize CONCLUIR a sequência em vez de fugir. Ao recuar 1 tile a IA fica dentro do
+        // raio da própria bomba (inDanger=true) e o controller normalmente entraria em fuga,
+        // abandonando o chute. Aqui reproduzimos o gesto gravado do humano: recuar 1 tile (a
+        // bomba solidifica) e voltar para chutá-la no adversário.
+        if (sequenceState != SequenceState.None &&
+            TryContinueOffensiveSequence(settings, myTile, out decision))
+        {
+            lastDecisionTrace = "emergency continue offensive sequence -> " + lastDecisionTrace;
+            return true;
+        }
+
+        if (TryBuildOwnTriggerBombKickDecision(settings, myTile, out decision))
+            return true;
 
         string rejectedDirections = string.Empty;
 
@@ -153,7 +175,6 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                         InputDescription = FirstMoveDescription(TileDirectionToVector(dir))
                     };
                     lastDecisionTrace = $"emergency approach selected dir {dir} stand {standTile} bomb {bombTile} dest {approachBombDestination}";
-                    LogKick(lastDecisionTrace);
                     return true;
                 }
 
@@ -198,14 +219,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             lastDecisionTrace =
                 $"emergency selected dir {dir} bomb {myTile + dir} dest {bombDestination} escape {escapeTile}" +
                 (escapesThroughVacatedBombTile ? " via vacated bomb tile" : string.Empty);
-            LogKick(lastDecisionTrace);
             return true;
         }
 
         lastDecisionTrace = string.IsNullOrEmpty(rejectedDirections)
             ? $"emergency no adjacent kick options nearby:{DescribeNearbyBombs(myTile)}"
             : $"emergency rejected {rejectedDirections} nearby:{DescribeNearbyBombs(myTile)}";
-        LogKick(lastDecisionTrace);
         return false;
     }
 
@@ -221,7 +240,6 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (!IsAvailable)
         {
             lastDecisionTrace = BuildAvailabilityTrace("candidate unavailable");
-            LogKick(lastDecisionTrace);
             return false;
         }
 
@@ -231,39 +249,40 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (TryContinueOffensiveSequence(settings, myTile, out decision))
             return true;
 
+        if (TryBuildOwnTriggerBombKickDecision(settings, myTile, out decision))
+            return true;
+
         if (Time.time < nextOffensiveSequenceTime)
         {
             lastDecisionTrace = $"candidate cooldown {(nextOffensiveSequenceTime - Time.time):F2}s";
-            LogKick(lastDecisionTrace);
             return false;
         }
 
-        float chance = DifficultyChance(settings, 0.08f, 0.22f, 0.48f);
+        // A jogada só é cogitada quando já existe alvo alinhado e lane de chute aberta
+        // (validado abaixo), então pode ter chance alta: queremos que a IA realmente execute
+        // o chute ofensivo gravado quando há oportunidade limpa. Easy continua mais hesitante.
+        float chance = DifficultyChance(settings, 0.30f, 0.65f, 0.95f);
         if (Random.value > chance)
         {
             lastDecisionTrace = $"candidate chance failed chance {chance:F2}";
-            LogKick(lastDecisionTrace);
             return false;
         }
 
         if (bombController == null || bombController.BombsRemaining <= 0)
         {
             lastDecisionTrace = $"candidate no bombs remaining bc:{(bombController != null)}";
-            LogKick(lastDecisionTrace);
             return false;
         }
 
         if (!TryFindNearestEnemyAligned(myTile, out PlayerIdentity target, out Vector2Int targetTile, out Vector2Int kickDir))
         {
             lastDecisionTrace = "candidate no aligned target with open lane";
-            LogKick(lastDecisionTrace);
             return false;
         }
 
         if (!CanPlantBombForKick(myTile, kickDir, settings, out Vector2Int retreatTile))
         {
             lastDecisionTrace = $"candidate cannot plant/retreat dir {kickDir} target P{target.playerId}@{targetTile}";
-            LogKick(lastDecisionTrace);
             return false;
         }
 
@@ -277,7 +296,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
-            Weight = Mathf.Max(1, settings.combatPlantWeight + 35 + DifficultyWeight(settings)),
+            Weight = Mathf.Max(1, settings.combatPlantWeight + 90 + DifficultyWeight(settings)),
             TargetTile = targetTile,
             HasTarget = true,
             FirstMove = retreatMove,
@@ -286,7 +305,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             TapBomb = true
         };
         lastDecisionTrace = $"candidate selected plant target P{target.playerId}@{targetTile} dir {kickDir} retreat {retreatTile}";
-        LogKick(lastDecisionTrace);
+        LogKickSurgical(
+            "PLAN",
+            $"bomb:{myTile} stand:{retreatTile} target:P{target.playerId}@{targetTile} dir:{kickDir} move:{FirstMoveDescription(retreatMove)} nearby:{DescribeNearbyBombs(myTile)}",
+            true);
         return true;
     }
 
@@ -307,6 +329,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (bomb == null || bomb.HasExploded || bomb.Owner != bombController)
         {
             lastDecisionTrace = $"sequence cancelled bomb missing/exploded/owner tile {sequenceBombTile}";
+            LogKickSurgical(
+                "CANCEL_MISSING",
+                $"bomb:{sequenceBombTile} my:{myTile} nearby:{DescribeNearbyBombs(myTile)}",
+                true);
             sequenceState = SequenceState.None;
             return false;
         }
@@ -316,9 +342,13 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             if (myTile != sequenceRetreatTile)
             {
                 Vector2Int dir = StepToward(myTile, sequenceRetreatTile);
-                if (dir == Vector2Int.zero || !IsSafeWalkable(myTile + dir, myTile, settings, 1))
+                if (dir == Vector2Int.zero || !IsWalkableTile(myTile + dir, myTile))
                 {
                     lastDecisionTrace = $"sequence retreat blocked from {myTile} to {sequenceRetreatTile}";
+                    LogKickSurgical(
+                        "RETREAT_BLOCKED",
+                        $"from:{myTile} stand:{sequenceRetreatTile} dir:{dir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))} dangerStand:{FormatDanger(GetDangerSeconds(sequenceRetreatTile, bomb))} nearby:{DescribeNearbyBombs(myTile)}",
+                        true);
                     sequenceState = SequenceState.None;
                     return false;
                 }
@@ -334,6 +364,9 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     InputDescription = FirstMoveDescription(TileDirectionToVector(dir))
                 };
                 lastDecisionTrace = $"sequence retreat toward {sequenceRetreatTile} move {dir}";
+                LogKickSurgical(
+                    "RETREAT",
+                    $"from:{myTile} stand:{sequenceRetreatTile} move:{dir} bomb:{DescribeBomb(bomb)} dangerStand:{FormatDanger(GetDangerSeconds(sequenceRetreatTile, bomb))}");
                 return true;
             }
 
@@ -343,6 +376,61 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (sequenceState == SequenceState.ReturnToKick)
         {
             Vector2Int kickStandTile = sequenceBombTile - sequenceKickDirection;
+
+            if (Manhattan(myTile, sequenceBombTile) > MaxKickSequenceDistanceFromBomb)
+            {
+                lastDecisionTrace =
+                    $"sequence cancelled too far from bomb tile {sequenceBombTile} stand {kickStandTile}";
+                LogKickSurgical(
+                    "CANCEL_TOO_FAR",
+                    $"my:{myTile} bomb:{DescribeBomb(bomb)} stand:{kickStandTile} distance:{Manhattan(myTile, sequenceBombTile)} nearby:{DescribeNearbyBombs(myTile)}",
+                    true);
+                sequenceState = SequenceState.None;
+                return false;
+            }
+
+            if (bomb.IsBeingKicked)
+            {
+                lastDecisionTrace = $"sequence completed bomb already moving from {sequenceBombTile}";
+                LogKickSurgical(
+                    "KICK_CONFIRMED",
+                    $"my:{myTile} bomb:{DescribeBomb(bomb)} stand:{kickStandTile}",
+                    true);
+                sequenceState = SequenceState.None;
+                return false;
+            }
+
+            if (myTile == sequenceBombTile)
+            {
+                Vector2Int recoverDir = -sequenceKickDirection;
+                if (!IsWalkableTile(myTile + recoverDir, myTile))
+                {
+                    lastDecisionTrace = $"sequence recover blocked from bomb tile {sequenceBombTile} move {recoverDir}";
+                    LogKickSurgical(
+                        "RECOVER_BLOCKED",
+                        $"my:{myTile} stand:{kickStandTile} move:{recoverDir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))} dangerStand:{FormatDanger(GetDangerSeconds(kickStandTile, bomb))} nearby:{DescribeNearbyBombs(myTile)}",
+                        true);
+                    sequenceState = SequenceState.None;
+                    return false;
+                }
+
+                decision = new BattleModeComAbilityDecision
+                {
+                    Action = BattleModeComActionType.KickBomb,
+                    Weight = 210 + DifficultyWeight(settings),
+                    TargetTile = kickStandTile,
+                    HasTarget = true,
+                    FirstMove = TileDirectionToVector(recoverDir),
+                    Reason = "recover kick stance",
+                    InputDescription = FirstMoveDescription(TileDirectionToVector(recoverDir))
+                };
+                lastDecisionTrace = $"sequence recover from bomb tile {sequenceBombTile} toward stand {kickStandTile} move {recoverDir}";
+                LogKickSurgical(
+                    "ON_BOMB_TILE",
+                    $"my:{myTile} stand:{kickStandTile} move:{recoverDir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))} dangerStand:{FormatDanger(GetDangerSeconds(kickStandTile, bomb))} nearby:{DescribeNearbyBombs(myTile)}");
+                return true;
+            }
+
             Vector2Int dir = myTile == kickStandTile
                 ? sequenceKickDirection
                 : StepToward(myTile, kickStandTile);
@@ -350,6 +438,32 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             if (dir == Vector2Int.zero)
             {
                 lastDecisionTrace = $"sequence return no dir from {myTile} to {kickStandTile}";
+                LogKickSurgical(
+                    "RETURN_NO_DIR",
+                    $"my:{myTile} stand:{kickStandTile} bomb:{DescribeBomb(bomb)} nearby:{DescribeNearbyBombs(myTile)}",
+                    true);
+                sequenceState = SequenceState.None;
+                return false;
+            }
+
+            if (myTile != kickStandTile && myTile + dir == sequenceBombTile)
+            {
+                lastDecisionTrace = $"sequence return blocked would step onto bomb {sequenceBombTile} from {myTile}";
+                LogKickSurgical(
+                    "RETURN_BLOCKED_BOMB_TILE",
+                    $"my:{myTile} stand:{kickStandTile} move:{dir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))} nearby:{DescribeNearbyBombs(myTile)}",
+                    true);
+                sequenceState = SequenceState.None;
+                return false;
+            }
+
+            if (myTile != kickStandTile && !IsWalkableTile(myTile + dir, myTile))
+            {
+                lastDecisionTrace = $"sequence return blocked from {myTile} to {myTile + dir}";
+                LogKickSurgical(
+                    "RETURN_BLOCKED",
+                    $"my:{myTile} next:{myTile + dir} stand:{kickStandTile} move:{dir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))} nearby:{DescribeNearbyBombs(myTile)}",
+                    true);
                 sequenceState = SequenceState.None;
                 return false;
             }
@@ -365,15 +479,135 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 InputDescription = FirstMoveDescription(TileDirectionToVector(dir))
             };
 
-            if (myTile == kickStandTile)
-                sequenceState = SequenceState.None;
-
             lastDecisionTrace = $"sequence return/kick stand {kickStandTile} move {dir}";
+            LogKickSurgical(
+                myTile == kickStandTile ? "KICK_INPUT" : "RETURN",
+                $"my:{myTile} stand:{kickStandTile} move:{dir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))}");
             return true;
         }
 
         lastDecisionTrace = $"sequence unknown state {sequenceState}";
         return false;
+    }
+
+    private bool TryBuildOwnTriggerBombKickDecision(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+
+        Bomb bestBomb = null;
+        PlayerIdentity bestTarget = null;
+        Vector2Int bestBombTile = myTile;
+        Vector2Int bestTargetTile = myTile;
+        Vector2Int bestKickDir = Vector2Int.zero;
+        Vector2Int bestStandTile = myTile;
+        Vector2Int bestMoveDir = Vector2Int.zero;
+        int bestScore = int.MaxValue;
+        int ownEarlyBombsNear = 0;
+        string rejectedRescue = string.Empty;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (!IsOwnEarlyKickBomb(bomb))
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int distanceFromMe = Manhattan(myTile, bombTile);
+            if (distanceFromMe > MaxKickSequenceDistanceFromBomb)
+                continue;
+
+            ownEarlyBombsNear++;
+
+            if (!TryFindNearestEnemyAligned(bombTile, out PlayerIdentity target, out Vector2Int targetTile, out Vector2Int kickDir))
+            {
+                AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} no aligned target");
+                continue;
+            }
+
+            Vector2Int standTile = bombTile - kickDir;
+            if (!IsWalkableTile(standTile, bombTile))
+            {
+                AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} stand blocked:{standTile}");
+                continue;
+            }
+
+            Vector2Int moveDir;
+            if (myTile == standTile)
+            {
+                moveDir = kickDir;
+            }
+            else if (myTile == bombTile)
+            {
+                moveDir = standTile - bombTile;
+                if (!IsCardinalStep(moveDir) || !IsWalkableTile(standTile, bombTile))
+                {
+                    AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} recover blocked stand:{standTile}");
+                    continue;
+                }
+            }
+            else if (!TryStepTowardKickStand(myTile, standTile, bombTile, out moveDir))
+            {
+                AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} route blocked stand:{standTile}");
+                continue;
+            }
+
+            int score = distanceFromMe + Manhattan(myTile, standTile);
+            if (score >= bestScore)
+                continue;
+
+            bestScore = score;
+            bestBomb = bomb;
+            bestTarget = target;
+            bestBombTile = bombTile;
+            bestTargetTile = targetTile;
+            bestKickDir = kickDir;
+            bestStandTile = standTile;
+            bestMoveDir = moveDir;
+        }
+
+        if (bestBomb == null || bestTarget == null || bestMoveDir == Vector2Int.zero)
+        {
+            lastDecisionTrace = $"own trigger kick rescue none nearby:{DescribeNearbyBombs(myTile)}";
+            if (ownEarlyBombsNear > 0)
+            {
+                LogKickSurgical(
+                    "RESCUE_FAILED",
+                    $"my:{myTile} ownEarly:{ownEarlyBombsNear} rejected:{(string.IsNullOrEmpty(rejectedRescue) ? "none" : rejectedRescue)} nearby:{DescribeNearbyBombs(myTile)}");
+            }
+            return false;
+        }
+
+        sequenceState = SequenceState.ReturnToKick;
+        sequenceBombTile = bestBombTile;
+        sequenceRetreatTile = bestStandTile;
+        sequenceKickDirection = bestKickDir;
+        nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+
+        Vector2 firstMove = TileDirectionToVector(bestMoveDir);
+        bool kickNow = myTile == bestStandTile;
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.KickBomb,
+            Weight = 240 + DifficultyWeight(settings),
+            TargetTile = kickNow ? bestBombTile : bestStandTile,
+            HasTarget = true,
+            FirstMove = firstMove,
+            Reason = kickNow
+                ? $"kick own early bomb toward P{bestTarget.playerId}"
+                : $"recover own early bomb kick toward P{bestTarget.playerId}",
+            InputDescription = FirstMoveDescription(firstMove)
+        };
+
+        lastDecisionTrace =
+            $"own trigger kick rescue bomb {bestBombTile} stand {bestStandTile} target P{bestTarget.playerId}@{bestTargetTile} " +
+            $"dir {bestKickDir} move {bestMoveDir} solid:{bestBomb.IsSolid}/early:{bestBomb.CanBeKickedEarly}";
+        LogKickSurgical(
+            "RESCUE_PLAN",
+            $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} move:{bestMoveDir} kickNow:{kickNow} nearby:{DescribeNearbyBombs(myTile)}",
+            true);
+        return true;
     }
 
     private bool TryBuildActionRStopDecision(
@@ -439,17 +673,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         out Vector2Int retreatTile)
     {
         retreatTile = myTile - kickDir;
-        if (!IsSafeWalkable(retreatTile, myTile, settings, 1))
-        {
-            Vector2Int sideA = new(-kickDir.y, kickDir.x);
-            Vector2Int sideB = new(kickDir.y, -kickDir.x);
-            if (IsSafeWalkable(myTile + sideA, myTile, settings, 1))
-                retreatTile = myTile + sideA;
-            else if (IsSafeWalkable(myTile + sideB, myTile, settings, 1))
-                retreatTile = myTile + sideB;
-            else
-                return false;
-        }
+        if (!IsWalkableTile(retreatTile, myTile))
+            return false;
 
         return IsKickLaneOpen(myTile + kickDir, kickDir, 2);
     }
@@ -702,12 +927,71 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return null;
     }
 
-    private bool CanKick(Bomb bomb)
+    private bool IsOwnEarlyKickBomb(Bomb bomb)
     {
         return bomb != null &&
                !bomb.HasExploded &&
                !bomb.IsBeingKicked &&
-               (bomb.CanBeKicked || bomb.CanBeKickedEarly);
+               !bomb.IsSolid &&
+               bomb.CanBeKickedEarly &&
+               bomb.Owner == bombController;
+    }
+
+    private bool TryStepTowardKickStand(
+        Vector2Int from,
+        Vector2Int standTile,
+        Vector2Int bombTile,
+        out Vector2Int direction)
+    {
+        direction = Vector2Int.zero;
+
+        Vector2Int primary = StepToward(from, standTile);
+        if (CanStepTowardKickStand(from, primary, bombTile))
+        {
+            direction = primary;
+            return true;
+        }
+
+        Vector2Int delta = standTile - from;
+        Vector2Int horizontal = delta.x != 0 ? new Vector2Int(Mathf.Clamp(delta.x, -1, 1), 0) : Vector2Int.zero;
+        Vector2Int vertical = delta.y != 0 ? new Vector2Int(0, Mathf.Clamp(delta.y, -1, 1)) : Vector2Int.zero;
+
+        if (CanStepTowardKickStand(from, horizontal, bombTile))
+        {
+            direction = horizontal;
+            return true;
+        }
+
+        if (CanStepTowardKickStand(from, vertical, bombTile))
+        {
+            direction = vertical;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool CanStepTowardKickStand(Vector2Int from, Vector2Int direction, Vector2Int bombTile)
+    {
+        if (!IsCardinalStep(direction))
+            return false;
+
+        Vector2Int next = from + direction;
+        return next != bombTile && IsWalkableTile(next, from);
+    }
+
+    private bool CanKick(Bomb bomb)
+    {
+        // A IA chuta encostando na bomba (TryHandleBlockedHit só dispara quando o
+        // movimento é BLOQUEADO por uma bomba SÓLIDA). Bombas não-sólidas são
+        // atravessáveis: a IA andaria POR CIMA dela sem chutar e ficaria presa,
+        // oscilando em cima da bomba até explodir. Por isso só consideramos bombas
+        // realmente kickáveis (sólidas), nunca o early-kick (que exige uma troca de
+        // direção que a IA não executa).
+        return bomb != null &&
+               !bomb.HasExploded &&
+               !bomb.IsBeingKicked &&
+               bomb.CanBeKicked;
     }
 
     private bool HasGroundTile(Vector2Int tile)
@@ -792,6 +1076,11 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return new Vector2Int(0, Mathf.Clamp(delta.y, -1, 1));
 
         return Vector2Int.zero;
+    }
+
+    private static bool IsCardinalStep(Vector2Int direction)
+    {
+        return Mathf.Abs(direction.x) + Mathf.Abs(direction.y) == 1;
     }
 
     private static int Manhattan(Vector2Int a, Vector2Int b)
@@ -917,10 +1206,35 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return string.IsNullOrEmpty(result) ? "none" : result;
     }
 
-    private void LogKick(string message)
+    private string DescribeBomb(Bomb bomb)
     {
+        if (bomb == null)
+            return "null";
+
+        Vector2Int tile = WorldToTile(bomb.GetLogicalPosition());
+        return
+            $"{tile}/solid:{bomb.IsSolid}/can:{bomb.CanBeKicked}/early:{bomb.CanBeKickedEarly}/moving:{bomb.IsBeingKicked}/fuse:{FormatDanger(bomb.RemainingFuseSeconds)}";
+    }
+
+    private void LogKickSurgical(string key, string message, bool force = false)
+    {
+        if (!EnableKickBombSurgicalDiagnostics)
+            return;
+
         int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
+        if (DiagnosticPlayerIdFilter != 0 && id != DiagnosticPlayerIdFilter)
+            return;
+
+        if (!force &&
+            key == lastSurgicalLogKey &&
+            Time.time - lastSurgicalLogTime < SurgicalLogIntervalSeconds)
+        {
+            return;
+        }
+
+        lastSurgicalLogKey = key;
+        lastSurgicalLogTime = Time.time;
         Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
-        Debug.Log($"[BattleCOMKick][P{id}] tile:{tile} {message}", this);
+        Debug.Log($"[BattleCOMKickSurgical][P{id}] tile:{tile} state:{sequenceState} {key} {message}", this);
     }
 }
