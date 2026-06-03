@@ -400,6 +400,22 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             PlayKickStop_InterruptPrevious(cachedKickStopClip, 1f);
     }
 
+    public void RegisterExternallyKickedBomb(Bomb bomb, bool playSfx = false)
+    {
+        if (!enabledAbility || bomb == null || bomb.HasExploded)
+            return;
+
+        kickedByMe.Add(bomb);
+        _bombPlantDirection.Remove(bomb);
+        _bombEarlyKickUnlocked.Remove(bomb);
+        movement?.CancelBombReentryCentering();
+
+        LogBombKick($"RegisterExternallyKickedBomb bomb:{bomb.name} kickedByMe:{kickedByMe.Count}");
+
+        if (playSfx)
+            PlayKick_InterruptPrevious(cachedKickClip, 1f);
+    }
+
     public bool CanConvertKickToPunch(Bomb bomb)
     {
         return enabledAbility &&

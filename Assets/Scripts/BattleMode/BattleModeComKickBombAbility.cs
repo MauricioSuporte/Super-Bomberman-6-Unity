@@ -18,6 +18,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private const int MaxKickSequenceDistanceFromBomb = 3;
     private const int MaxSequentialKickBombs = 2;
     private const float RepeatPlantOriginWaitSeconds = 0.6f;
+    private const float RepeatReturnBlockedWaitSeconds = 1.0f;
     private const float ForceActionRStopAfterKickSeconds = 1.35f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
@@ -58,10 +59,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private Vector2Int sequenceRetreatTile;
     private Vector2Int sequenceKickDirection;
     private int sequenceKicksCompleted;
+    private int sequenceTargetKickCount = 1;
     private float sequenceStateStartedTime = -10f;
     private float forceActionRStopUntil = -10f;
     private Bomb sequenceTrackedBomb;
     private bool sequencePlantDirectionPatched;
+    private bool sequenceAllowActionRStop;
     private string lastDecisionTrace = "not evaluated";
     private float lastSurgicalLogTime = -10f;
     private string lastSurgicalLogKey = string.Empty;
@@ -309,9 +312,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         }
 
         SetSequenceState(SequenceState.RetreatAfterPlant);
-        sequenceKicksCompleted = 0;
-        sequenceTrackedBomb = null;
-        sequencePlantDirectionPatched = false;
+        ConfigureNewKickSequencePlan(settings, firstBombAlreadyPlaced: false);
         sequenceBombTile = myTile;
         sequenceRetreatTile = retreatTile;
         sequenceKickDirection = kickDir;
@@ -332,7 +333,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         lastDecisionTrace = $"candidate selected plant target P{target.playerId}@{targetTile} dir {kickDir} retreat {retreatTile}";
         LogKickSurgical(
             "PLAN",
-            $"bomb:{myTile} stand:{retreatTile} target:P{target.playerId}@{targetTile} dir:{kickDir} move:{FirstMoveDescription(retreatMove)} nearby:{DescribeNearbyBombs(myTile)}",
+            $"bomb:{myTile} stand:{retreatTile} target:P{target.playerId}@{targetTile} dir:{kickDir} move:{FirstMoveDescription(retreatMove)} targetKicks:{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop} nearby:{DescribeNearbyBombs(myTile)}",
             true);
         return true;
     }
@@ -425,7 +426,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 lastDecisionTrace = $"sequence completed bomb already moving from {sequenceBombTile}";
                 LogKickSurgical(
                     "KICK_CONFIRMED",
-                    $"my:{myTile} bomb:{DescribeBomb(bomb)} stand:{kickStandTile} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{MaxSequentialKickBombs}",
+                    $"my:{myTile} bomb:{DescribeBomb(bomb)} stand:{kickStandTile} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
                     true);
 
                 if (!repeatArmed)
@@ -540,7 +541,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     lastDecisionTrace = $"sequence direct kick stand {kickStandTile} dir {sequenceKickDirection}";
                     LogKickSurgical(
                         "KICK_DIRECT",
-                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} bomb:{DescribeBomb(bomb)} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{MaxSequentialKickBombs}",
+                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} bomb:{DescribeBomb(bomb)} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
                         true);
                     return true;
                 }
@@ -595,7 +596,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             lastDecisionTrace = $"repeat plant cancelled no bombs remaining bc:{(bombController != null)}";
             LogKickSurgical(
                 "CHAIN_NO_BOMBS",
-                $"my:{myTile} origin:{sequenceBombTile} kicks:{sequenceKicksCompleted}/{MaxSequentialKickBombs}",
+                $"my:{myTile} origin:{sequenceBombTile} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount}",
                 true);
             ResetOffensiveSequence();
             return false;
@@ -649,6 +650,25 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             Vector2Int dir = StepToward(myTile, sequenceBombTile);
             if (dir == Vector2Int.zero || !IsWalkableTile(myTile + dir, myTile))
             {
+                if (Time.time - sequenceStateStartedTime <= RepeatReturnBlockedWaitSeconds)
+                {
+                    decision = new BattleModeComAbilityDecision
+                    {
+                        Action = BattleModeComActionType.KickBomb,
+                        Weight = 205 + DifficultyWeight(settings),
+                        TargetTile = sequenceBombTile,
+                        HasTarget = true,
+                        FirstMove = Vector2.zero,
+                        Reason = "wait repeat kick origin unblock",
+                        InputDescription = "none"
+                    };
+                    lastDecisionTrace = $"repeat plant waiting return unblock from {myTile} to {sequenceBombTile}";
+                    LogKickSurgical(
+                        "CHAIN_WAIT_RETURN",
+                        $"my:{myTile} origin:{sequenceBombTile} move:{dir} nearby:{DescribeNearbyBombs(myTile)}");
+                    return true;
+                }
+
                 lastDecisionTrace = $"repeat plant return blocked from {myTile} to {sequenceBombTile}";
                 LogKickSurgical(
                     "CHAIN_RETURN_BLOCKED",
@@ -704,7 +724,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         lastDecisionTrace = $"repeat plant selected origin {sequenceBombTile} stand {sequenceRetreatTile} kicks {sequenceKicksCompleted}";
         LogKickSurgical(
             "CHAIN_PLANT",
-            $"my:{myTile} bomb:{DescribeBomb(placedBomb)} stand:{sequenceRetreatTile} kicks:{sequenceKicksCompleted}/{MaxSequentialKickBombs}",
+            $"my:{myTile} bomb:{DescribeBomb(placedBomb)} stand:{sequenceRetreatTile} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
             true);
         return true;
     }
@@ -717,26 +737,62 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequenceKicksCompleted = Mathf.Min(sequenceKicksCompleted + 1, MaxSequentialKickBombs);
         sequenceTrackedBomb = null;
         sequencePlantDirectionPatched = false;
-        forceActionRStopUntil = Time.time + ForceActionRStopAfterKickSeconds;
 
-        if (sequenceKicksCompleted >= MaxSequentialKickBombs)
+        if (sequenceKicksCompleted >= Mathf.Clamp(sequenceTargetKickCount, 1, MaxSequentialKickBombs))
+        {
+            ArmActionRStopWindowIfPlanned();
             return false;
+        }
 
         if (bombController == null || bombController.BombsRemaining <= 0)
+        {
+            ArmActionRStopWindowIfPlanned();
             return false;
+        }
 
         if (!IsCardinalStep(sequenceKickDirection))
+        {
+            ArmActionRStopWindowIfPlanned();
             return false;
+        }
 
         if (!IsWalkableTile(standTile, sequenceBombTile))
+        {
+            ArmActionRStopWindowIfPlanned();
             return false;
+        }
 
         SetSequenceState(SequenceState.ReturnToRepeatPlant);
         LogKickSurgical(
             "CHAIN_ARMED",
-            $"my:{myTile} origin:{sequenceBombTile} stand:{standTile} kicked:{DescribeBomb(kickedBomb)} kicks:{sequenceKicksCompleted}/{MaxSequentialKickBombs}",
+            $"my:{myTile} origin:{sequenceBombTile} stand:{standTile} kicked:{DescribeBomb(kickedBomb)} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
             true);
         return true;
+    }
+
+    private void ConfigureNewKickSequencePlan(BattleModeComDifficultySettings settings, bool firstBombAlreadyPlaced)
+    {
+        sequenceKicksCompleted = 0;
+        sequenceTrackedBomb = null;
+        sequencePlantDirectionPatched = false;
+        forceActionRStopUntil = -10f;
+
+        int bombsNeededForSecondKick = firstBombAlreadyPlaced ? 1 : 2;
+        bool hasBombForSecondKick = bombController != null && bombController.BombsRemaining >= bombsNeededForSecondKick;
+        float repeatChance = DifficultyChance(settings, 0.20f, 0.45f, 0.65f);
+        sequenceTargetKickCount = hasBombForSecondKick && Random.value < repeatChance
+            ? MaxSequentialKickBombs
+            : 1;
+
+        float actionRChance = DifficultyChance(settings, 0.20f, 0.42f, 0.58f);
+        sequenceAllowActionRStop = Random.value < actionRChance;
+    }
+
+    private void ArmActionRStopWindowIfPlanned()
+    {
+        forceActionRStopUntil = sequenceAllowActionRStop
+            ? Time.time + ForceActionRStopAfterKickSeconds
+            : -10f;
     }
 
     private bool TryPlaceSequenceBombAtOrigin(out Bomb placedBomb, out string failReason)
@@ -897,9 +953,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         }
 
         SetSequenceState(SequenceState.ReturnToKick);
-        sequenceKicksCompleted = 0;
-        sequenceTrackedBomb = null;
-        sequencePlantDirectionPatched = false;
+        ConfigureNewKickSequencePlan(settings, firstBombAlreadyPlaced: true);
         sequenceBombTile = bestBombTile;
         sequenceRetreatTile = bestStandTile;
         sequenceKickDirection = bestKickDir;
@@ -935,7 +989,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     $"dir {bestKickDir}";
                 LogKickSurgical(
                     "RESCUE_DIRECT_KICK",
-                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{MaxSequentialKickBombs}",
+                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
                     true);
                 return true;
             }
@@ -1602,8 +1656,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     {
         SetSequenceState(SequenceState.None);
         sequenceKicksCompleted = 0;
+        sequenceTargetKickCount = 1;
         sequenceTrackedBomb = null;
         sequencePlantDirectionPatched = false;
+        sequenceAllowActionRStop = false;
     }
 
     private static void AppendTracePart(ref string trace, string part)
