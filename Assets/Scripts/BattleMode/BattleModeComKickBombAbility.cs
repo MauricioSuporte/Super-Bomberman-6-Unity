@@ -468,6 +468,40 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 return false;
             }
 
+            if (myTile == kickStandTile)
+            {
+                if (TryKickSequenceBombDirect(bomb, sequenceKickDirection, out string kickFailReason))
+                {
+                    sequenceState = SequenceState.None;
+                    nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+                    decision = new BattleModeComAbilityDecision
+                    {
+                        Action = BattleModeComActionType.KickBomb,
+                        Weight = 260 + DifficultyWeight(settings),
+                        TargetTile = sequenceBombTile,
+                        HasTarget = true,
+                        FirstMove = Vector2.zero,
+                        Reason = "direct early kick bomb",
+                        InputDescription = "DirectKick"
+                    };
+
+                    lastDecisionTrace = $"sequence direct kick stand {kickStandTile} dir {sequenceKickDirection}";
+                    LogKickSurgical(
+                        "KICK_DIRECT",
+                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} bomb:{DescribeBomb(bomb)}",
+                        true);
+                    return true;
+                }
+
+                lastDecisionTrace = $"sequence direct kick failed stand {kickStandTile} reason {kickFailReason}";
+                LogKickSurgical(
+                    "KICK_DIRECT_FAILED",
+                    $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} reason:{kickFailReason} bomb:{DescribeBomb(bomb)} nearby:{DescribeNearbyBombs(myTile)}",
+                    true);
+                sequenceState = SequenceState.None;
+                return false;
+            }
+
             decision = new BattleModeComAbilityDecision
             {
                 Action = BattleModeComActionType.KickBomb,
@@ -481,7 +515,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
             lastDecisionTrace = $"sequence return/kick stand {kickStandTile} move {dir}";
             LogKickSurgical(
-                myTile == kickStandTile ? "KICK_INPUT" : "RETURN",
+                "RETURN",
                 $"my:{myTile} stand:{kickStandTile} move:{dir} bomb:{DescribeBomb(bomb)} dangerHere:{FormatDanger(GetDangerSeconds(myTile, bomb))}");
             return true;
         }
@@ -587,6 +621,41 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
         Vector2 firstMove = TileDirectionToVector(bestMoveDir);
         bool kickNow = myTile == bestStandTile;
+        if (kickNow)
+        {
+            if (TryKickSequenceBombDirect(bestBomb, bestKickDir, out string kickFailReason))
+            {
+                sequenceState = SequenceState.None;
+                nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+                decision = new BattleModeComAbilityDecision
+                {
+                    Action = BattleModeComActionType.KickBomb,
+                    Weight = 280 + DifficultyWeight(settings),
+                    TargetTile = bestBombTile,
+                    HasTarget = true,
+                    FirstMove = Vector2.zero,
+                    Reason = $"direct kick own early bomb toward P{bestTarget.playerId}",
+                    InputDescription = "DirectKick"
+                };
+
+                lastDecisionTrace =
+                    $"own trigger direct kick bomb {bestBombTile} stand {bestStandTile} target P{bestTarget.playerId}@{bestTargetTile} " +
+                    $"dir {bestKickDir}";
+                LogKickSurgical(
+                    "RESCUE_DIRECT_KICK",
+                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir}",
+                    true);
+                return true;
+            }
+
+            lastDecisionTrace = $"own trigger direct kick failed bomb {bestBombTile} stand {bestStandTile} reason {kickFailReason}";
+            LogKickSurgical(
+                "RESCUE_DIRECT_FAILED",
+                $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} reason:{kickFailReason}",
+                true);
+            return false;
+        }
+
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
@@ -992,6 +1061,72 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                !bomb.HasExploded &&
                !bomb.IsBeingKicked &&
                bomb.CanBeKicked;
+    }
+
+    private bool TryKickSequenceBombDirect(Bomb bomb, Vector2Int kickDirection, out string failReason)
+    {
+        failReason = string.Empty;
+
+        if (kickAbility == null || !kickAbility.IsEnabled)
+        {
+            failReason = "kick ability unavailable";
+            return false;
+        }
+
+        if (bomb == null)
+        {
+            failReason = "bomb null";
+            return false;
+        }
+
+        if (bomb.HasExploded)
+        {
+            failReason = "bomb exploded";
+            return false;
+        }
+
+        if (bomb.IsBeingKicked)
+        {
+            failReason = "already moving";
+            return false;
+        }
+
+        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
+        {
+            failReason = $"not kickable solid:{bomb.IsSolid} can:{bomb.CanBeKicked} early:{bomb.CanBeKickedEarly}";
+            return false;
+        }
+
+        if (!IsCardinalStep(kickDirection))
+        {
+            failReason = $"invalid dir {kickDirection}";
+            return false;
+        }
+
+        Vector2 direction = TileDirectionToVector(kickDirection);
+        LayerMask bombObstacles = (movement != null ? movement.obstacleMask : 0) | LayerMask.GetMask("Enemy");
+        Tilemap destructibleTiles = bombController != null && bombController.destructibleTiles != null
+            ? bombController.destructibleTiles
+            : destructibleTilemap;
+
+        bool kicked = bomb.StartKick(
+            direction,
+            tileSize,
+            bombObstacles,
+            destructibleTiles,
+            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
+            0.60f,
+            0.90f,
+            false);
+
+        if (!kicked)
+        {
+            failReason = "StartKick false";
+            return false;
+        }
+
+        movement?.CancelBombReentryCentering();
+        return true;
     }
 
     private bool HasGroundTile(Vector2Int tile)
