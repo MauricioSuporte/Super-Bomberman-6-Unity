@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -20,8 +21,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private const float RepeatPlantOriginWaitSeconds = 0.6f;
     private const float RepeatReturnBlockedWaitSeconds = 1.0f;
     private const float ForceActionRStopAfterKickSeconds = 1.35f;
+    private const float PostKickEscapeSeconds = 1.8f;
+    private const float MinimumOwnTriggerKickFuseSeconds = 0.7f;
     private const float DirectKickRetrySeconds = 0.9f;
-    private const float DirectKickRetryMinFuseSeconds = 0.45f;
+    private const float DirectKickRetryMinFuseSeconds = 0.65f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
@@ -38,7 +41,14 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         None,
         RetreatAfterPlant,
         ReturnToKick,
-        ReturnToRepeatPlant
+        ReturnToRepeatPlant,
+        EscapeAfterKick
+    }
+
+    private struct EscapeSearchNode
+    {
+        public Vector2Int Parent;
+        public int Depth;
     }
 
     private PlayerIdentity identity;
@@ -65,12 +75,15 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private float sequenceStateStartedTime = -10f;
     private float forceActionRStopUntil = -10f;
     private float sequenceDirectKickRetryUntil = -10f;
+    private float postKickEscapeUntil = -10f;
     private Bomb sequenceTrackedBomb;
     private bool sequencePlantDirectionPatched;
     private bool sequenceAllowActionRStop;
     private string lastDecisionTrace = "not evaluated";
     private float lastSurgicalLogTime = -10f;
     private string lastSurgicalLogKey = string.Empty;
+    private readonly Queue<Vector2Int> escapeOpen = new();
+    private readonly Dictionary<Vector2Int, EscapeSearchNode> escapeVisited = new();
 
     public string DiagnosticName => "KickBomb";
     public string LastDecisionTrace => lastDecisionTrace;
@@ -354,6 +367,9 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return false;
         }
 
+        if (sequenceState == SequenceState.EscapeAfterKick)
+            return TryContinuePostKickEscape(settings, myTile, out decision);
+
         if (sequenceState == SequenceState.ReturnToRepeatPlant)
             return TryContinueRepeatPlantSequence(settings, myTile, out decision);
 
@@ -426,6 +442,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             if (bomb.IsBeingKicked)
             {
                 bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bomb, kickStandTile);
+                bool postKickEscapeArmed = false;
+                Vector2 postKickEscapeMove = Vector2.zero;
+                Vector2Int postKickEscapeTarget = kickStandTile;
+                string postKickEscapeRoute = string.Empty;
                 lastDecisionTrace = $"sequence completed bomb already moving from {sequenceBombTile}";
                 LogKickSurgical(
                     "KICK_CONFIRMED",
@@ -434,7 +454,16 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
                 if (!repeatArmed)
                 {
-                    ResetOffensiveSequence();
+                    postKickEscapeArmed = ArmPostKickEscapeIfNeeded(
+                        settings,
+                        myTile,
+                        out postKickEscapeMove,
+                        out postKickEscapeTarget,
+                        out postKickEscapeRoute);
+
+                    if (!postKickEscapeArmed)
+                        ResetOffensiveSequence();
+
                     nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
                 }
 
@@ -442,12 +471,24 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 {
                     Action = BattleModeComActionType.KickBomb,
                     Weight = 220 + DifficultyWeight(settings),
-                    TargetTile = repeatArmed ? sequenceBombTile : kickStandTile,
+                    TargetTile = postKickEscapeArmed ? postKickEscapeTarget : repeatArmed ? sequenceBombTile : kickStandTile,
                     HasTarget = true,
-                    FirstMove = Vector2.zero,
-                    Reason = repeatArmed ? "prepare repeat kick bomb" : "kick confirmed",
-                    InputDescription = "none"
+                    FirstMove = postKickEscapeMove,
+                    Reason = postKickEscapeArmed
+                        ? "kick confirmed and escape"
+                        : repeatArmed ? "prepare repeat kick bomb" : "kick confirmed",
+                    InputDescription = postKickEscapeArmed
+                        ? FirstMoveDescription(postKickEscapeMove)
+                        : "none"
                 };
+                if (postKickEscapeArmed)
+                {
+                    LogKickSurgical(
+                        "POST_KICK_ESCAPE_ARMED",
+                        $"my:{myTile} target:{postKickEscapeTarget} move:{FirstMoveDescription(postKickEscapeMove)} route:{postKickEscapeRoute} dangerHere:{FormatDanger(GetDangerSeconds(myTile))} nearby:{DescribeNearbyBombs(myTile)}",
+                        true);
+                }
+
                 return true;
             }
 
@@ -524,9 +565,22 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 if (TryKickSequenceBombDirect(bomb, sequenceKickDirection, out string kickFailReason))
                 {
                     bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bomb, kickStandTile);
+                    bool postKickEscapeArmed = false;
+                    Vector2 postKickEscapeMove = Vector2.zero;
+                    Vector2Int postKickEscapeTarget = sequenceBombTile;
+                    string postKickEscapeRoute = string.Empty;
                     if (!repeatArmed)
                     {
-                        ResetOffensiveSequence();
+                        postKickEscapeArmed = ArmPostKickEscapeIfNeeded(
+                            settings,
+                            myTile,
+                            out postKickEscapeMove,
+                            out postKickEscapeTarget,
+                            out postKickEscapeRoute);
+
+                        if (!postKickEscapeArmed)
+                            ResetOffensiveSequence();
+
                         nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
                     }
 
@@ -534,17 +588,19 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     {
                         Action = BattleModeComActionType.KickBomb,
                         Weight = 260 + DifficultyWeight(settings),
-                        TargetTile = sequenceBombTile,
+                        TargetTile = postKickEscapeArmed ? postKickEscapeTarget : sequenceBombTile,
                         HasTarget = true,
-                        FirstMove = Vector2.zero,
-                        Reason = "direct early kick bomb",
-                        InputDescription = "DirectKick"
+                        FirstMove = postKickEscapeMove,
+                        Reason = postKickEscapeArmed ? "direct early kick bomb and escape" : "direct early kick bomb",
+                        InputDescription = postKickEscapeArmed
+                            ? AppendInput("DirectKick", FirstMoveDescription(postKickEscapeMove))
+                            : "DirectKick"
                     };
 
                     lastDecisionTrace = $"sequence direct kick stand {kickStandTile} dir {sequenceKickDirection}";
                     LogKickSurgical(
                         "KICK_DIRECT",
-                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} bomb:{DescribeBomb(bomb)} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
+                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} bomb:{DescribeBomb(bomb)} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop} escape:{postKickEscapeArmed} escapeMove:{FirstMoveDescription(postKickEscapeMove)} escapeTarget:{postKickEscapeTarget} route:{postKickEscapeRoute}",
                         true);
                     return true;
                 }
@@ -804,6 +860,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequencePlantDirectionPatched = false;
         forceActionRStopUntil = -10f;
         sequenceDirectKickRetryUntil = -10f;
+        postKickEscapeUntil = -10f;
 
         int bombsNeededForSecondKick = firstBombAlreadyPlaced ? 1 : 2;
         bool hasBombForSecondKick = bombController != null && bombController.BombsRemaining >= bombsNeededForSecondKick;
@@ -921,6 +978,14 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
             ownEarlyBombsNear++;
 
+            if (bomb.RemainingFuseSeconds <= MinimumOwnTriggerKickFuseSeconds)
+            {
+                AppendTracePart(
+                    ref rejectedRescue,
+                    $"bomb:{bombTile} fuse low:{FormatDanger(bomb.RemainingFuseSeconds)}");
+                continue;
+            }
+
             if (!TryFindNearestEnemyAligned(bombTile, out PlayerIdentity target, out Vector2Int targetTile, out Vector2Int kickDir))
             {
                 AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} no aligned target");
@@ -995,9 +1060,22 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             if (TryKickSequenceBombDirect(bestBomb, bestKickDir, out string kickFailReason))
             {
                 bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bestBomb, bestStandTile);
+                bool postKickEscapeArmed = false;
+                Vector2 postKickEscapeMove = Vector2.zero;
+                Vector2Int postKickEscapeTarget = bestBombTile;
+                string postKickEscapeRoute = string.Empty;
                 if (!repeatArmed)
                 {
-                    ResetOffensiveSequence();
+                    postKickEscapeArmed = ArmPostKickEscapeIfNeeded(
+                        settings,
+                        myTile,
+                        out postKickEscapeMove,
+                        out postKickEscapeTarget,
+                        out postKickEscapeRoute);
+
+                    if (!postKickEscapeArmed)
+                        ResetOffensiveSequence();
+
                     nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
                 }
 
@@ -1005,11 +1083,15 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 {
                     Action = BattleModeComActionType.KickBomb,
                     Weight = 280 + DifficultyWeight(settings),
-                    TargetTile = bestBombTile,
+                    TargetTile = postKickEscapeArmed ? postKickEscapeTarget : bestBombTile,
                     HasTarget = true,
-                    FirstMove = Vector2.zero,
-                    Reason = $"direct kick own early bomb toward P{bestTarget.playerId}",
-                    InputDescription = "DirectKick"
+                    FirstMove = postKickEscapeMove,
+                    Reason = postKickEscapeArmed
+                        ? $"direct kick own early bomb toward P{bestTarget.playerId} and escape"
+                        : $"direct kick own early bomb toward P{bestTarget.playerId}",
+                    InputDescription = postKickEscapeArmed
+                        ? AppendInput("DirectKick", FirstMoveDescription(postKickEscapeMove))
+                        : "DirectKick"
                 };
 
                 lastDecisionTrace =
@@ -1017,7 +1099,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     $"dir {bestKickDir}";
                 LogKickSurgical(
                     "RESCUE_DIRECT_KICK",
-                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
+                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop} escape:{postKickEscapeArmed} escapeMove:{FirstMoveDescription(postKickEscapeMove)} escapeTarget:{postKickEscapeTarget} route:{postKickEscapeRoute}",
                     true);
                 return true;
             }
@@ -1090,22 +1172,37 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             if (distance < 1 || distance > 3)
                 continue;
 
+            Vector2 escapeMove = Vector2.zero;
+            Vector2Int escapeTarget = targetTile;
+            string escapeRoute = "none";
+            bool hasEscapeMove = !float.IsInfinity(GetDangerSeconds(myTile)) &&
+                                 TryFindPostKickEscapeMove(
+                                     settings,
+                                     myTile,
+                                     out escapeMove,
+                                     out escapeTarget,
+                                     out escapeRoute);
+
             lastActionRStopTime = Time.time;
             decision = new BattleModeComAbilityDecision
             {
                 Action = BattleModeComActionType.KickBomb,
                 Weight = (forceWhenGood ? 260 : 160) + DifficultyWeight(settings),
-                TargetTile = targetTile,
+                TargetTile = hasEscapeMove ? escapeTarget : targetTile,
                 HasTarget = true,
-                FirstMove = Vector2.zero,
-                Reason = $"stop kicked bomb near P{target.playerId}",
-                InputDescription = "ActionR",
+                FirstMove = hasEscapeMove ? escapeMove : Vector2.zero,
+                Reason = hasEscapeMove
+                    ? $"stop kicked bomb near P{target.playerId} and escape"
+                    : $"stop kicked bomb near P{target.playerId}",
+                InputDescription = hasEscapeMove
+                    ? AppendInput("ActionR", FirstMoveDescription(escapeMove))
+                    : "ActionR",
                 TapActionR = true
             };
-            lastDecisionTrace = $"actionR selected bomb {bombTile} target P{target.playerId}@{targetTile} distance {distance}";
+            lastDecisionTrace = $"actionR selected bomb {bombTile} target P{target.playerId}@{targetTile} distance {distance} escape {hasEscapeMove}";
             LogKickSurgical(
                 "ACTION_R_STOP",
-                $"bomb:{bombTile} target:P{target.playerId}@{targetTile} distance:{distance} force:{forceWhenGood}",
+                $"bomb:{bombTile} target:P{target.playerId}@{targetTile} distance:{distance} force:{forceWhenGood} escape:{hasEscapeMove} escapeMove:{FirstMoveDescription(escapeMove)} escapeTarget:{escapeTarget} route:{escapeRoute}",
                 true);
             return true;
         }
@@ -1154,6 +1251,194 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         }
 
         return best;
+    }
+
+    private bool ArmPostKickEscapeIfNeeded(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out Vector2 firstMove,
+        out Vector2Int target,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        target = myTile;
+        route = "none";
+
+        if (float.IsInfinity(GetDangerSeconds(myTile)))
+            return false;
+
+        SetSequenceState(SequenceState.EscapeAfterKick);
+        postKickEscapeUntil = Time.time + PostKickEscapeSeconds;
+
+        if (TryFindPostKickEscapeMove(settings, myTile, out firstMove, out target, out route))
+            return true;
+
+        route = "escape pending";
+        return true;
+    }
+
+    private bool TryContinuePostKickEscape(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+
+        float dangerHere = GetDangerSeconds(myTile);
+        if (float.IsInfinity(dangerHere))
+        {
+            lastDecisionTrace = "post kick escape complete";
+            LogKickSurgical(
+                "POST_KICK_ESCAPE_DONE",
+                $"my:{myTile} nearby:{DescribeNearbyBombs(myTile)}");
+            ResetOffensiveSequence();
+            return false;
+        }
+
+        if (Time.time > postKickEscapeUntil)
+        {
+            lastDecisionTrace = $"post kick escape expired danger {FormatDanger(dangerHere)}";
+            LogKickSurgical(
+                "POST_KICK_ESCAPE_EXPIRED",
+                $"my:{myTile} dangerHere:{FormatDanger(dangerHere)} nearby:{DescribeNearbyBombs(myTile)}",
+                true);
+            ResetOffensiveSequence();
+            return false;
+        }
+
+        if (!TryFindPostKickEscapeMove(settings, myTile, out Vector2 firstMove, out Vector2Int target, out string route))
+        {
+            lastDecisionTrace = $"post kick escape no route danger {FormatDanger(dangerHere)}";
+            LogKickSurgical(
+                "POST_KICK_ESCAPE_FAILED",
+                $"my:{myTile} dangerHere:{FormatDanger(dangerHere)} nearby:{DescribeNearbyBombs(myTile)}");
+            return false;
+        }
+
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.KickBomb,
+            Weight = 280 + DifficultyWeight(settings),
+            TargetTile = target,
+            HasTarget = true,
+            FirstMove = firstMove,
+            Reason = "escape after kick bomb sequence",
+            InputDescription = FirstMoveDescription(firstMove)
+        };
+
+        lastDecisionTrace = $"post kick escape target {target} route {route}";
+        LogKickSurgical(
+            "POST_KICK_ESCAPE",
+            $"my:{myTile} target:{target} move:{FirstMoveDescription(firstMove)} route:{route} dangerHere:{FormatDanger(dangerHere)} nearby:{DescribeNearbyBombs(myTile)}");
+        return true;
+    }
+
+    private bool TryFindPostKickEscapeMove(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        out Vector2 firstMove,
+        out Vector2Int target,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        target = start;
+        route = "none";
+
+        escapeVisited.Clear();
+        escapeOpen.Clear();
+
+        escapeVisited[start] = new EscapeSearchNode { Parent = start, Depth = 0 };
+        escapeOpen.Enqueue(start);
+
+        int maxDepth = Mathf.Max(3, settings.searchDepth + 4);
+        while (escapeOpen.Count > 0)
+        {
+            Vector2Int tile = escapeOpen.Dequeue();
+            EscapeSearchNode node = escapeVisited[tile];
+            float eta = EstimateTraversalSeconds(node.Depth);
+            float dangerSeconds = GetDangerSeconds(tile);
+
+            if (node.Depth > 0 &&
+                float.IsInfinity(dangerSeconds) &&
+                !IsDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings))
+            {
+                target = tile;
+                Vector2Int firstStep = ReconstructEscapeFirstStep(start, tile);
+                firstMove = TileDirectionToVector(firstStep);
+                route = $"escape depth {node.Depth}";
+                return firstMove != Vector2.zero;
+            }
+
+            if (node.Depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (escapeVisited.ContainsKey(next))
+                    continue;
+
+                if (!IsWalkableTile(next, start))
+                    continue;
+
+                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
+                if (IsDangerousAt(next, nextEta, settings))
+                    continue;
+
+                escapeVisited[next] = new EscapeSearchNode { Parent = tile, Depth = node.Depth + 1 };
+                escapeOpen.Enqueue(next);
+            }
+        }
+
+        return TryFindPostKickFallbackMove(settings, start, out firstMove, out target, out route);
+    }
+
+    private bool TryFindPostKickFallbackMove(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        out Vector2 firstMove,
+        out Vector2Int target,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        target = start;
+        route = "no fallback";
+        float bestScore = float.NegativeInfinity;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            Vector2Int next = start + dir;
+            if (!IsWalkableTile(next, start))
+                continue;
+
+            float arrivalSeconds = EstimateTraversalSeconds(1);
+            float dangerMargin = GetSurvivalMarginSeconds(next, arrivalSeconds, settings);
+            float score = dangerMargin + CountOpenNeighbors(next) * 0.25f;
+            if (score <= bestScore)
+                continue;
+
+            bestScore = score;
+            firstMove = TileDirectionToVector(dir);
+            target = next;
+            route = $"fallback score {score:F2}";
+        }
+
+        return firstMove != Vector2.zero;
+    }
+
+    private Vector2Int ReconstructEscapeFirstStep(Vector2Int start, Vector2Int target)
+    {
+        Vector2Int current = target;
+        while (escapeVisited.TryGetValue(current, out EscapeSearchNode node) && node.Parent != start)
+        {
+            if (node.Parent == current)
+                break;
+
+            current = node.Parent;
+        }
+
+        return current - start;
     }
 
     private bool TryFindNearestEnemyAligned(
@@ -1303,6 +1588,18 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return false;
 
         return dangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds;
+    }
+
+    private float GetSurvivalMarginSeconds(
+        Vector2Int tile,
+        float arrivalSeconds,
+        BattleModeComDifficultySettings settings)
+    {
+        float dangerSeconds = GetDangerSeconds(tile);
+        if (float.IsInfinity(dangerSeconds))
+            return 999f;
+
+        return dangerSeconds - arrivalSeconds - settings.dangerReactionSeconds;
     }
 
     private float GetDangerSeconds(Vector2Int tile, Bomb ignoredBomb = null)
@@ -1734,6 +2031,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequencePlantDirectionPatched = false;
         sequenceAllowActionRStop = false;
         sequenceDirectKickRetryUntil = -10f;
+        postKickEscapeUntil = -10f;
     }
 
     private static void AppendTracePart(ref string trace, string part)
