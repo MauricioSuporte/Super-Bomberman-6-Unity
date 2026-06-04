@@ -603,6 +603,25 @@ public partial class BombController : MonoBehaviour
         return abilitySystem != null && abilitySystem.IsEnabled(FullFireAbility.AbilityId);
     }
 
+    /// <summary>
+    /// Retorna o raio de explosão efetivo que esta bomba usará ao detonar,
+    /// considerando PowerBomb, FullFire e qualquer override explícito.
+    /// Espelha exatamente a lógica de TriggerExplosion para que a IA possa
+    /// prever o alcance real antes da explosão ocorrer.
+    /// </summary>
+    public int GetPredictedBlastRadius(Bomb bomb)
+    {
+        if (bomb != null && bomb.ExplosionRadiusOverride > 0)
+            return bomb.ExplosionRadiusOverride;
+
+        if (bomb != null && bomb.IsPowerBomb)
+            return Mathf.Max(1, powerBombRadius);
+
+        return IsFullFireEnabled()
+            ? PlayerPersistentStats.MaxExplosionRadius
+            : explosionRadius;
+    }
+
     private bool IsMagnetBombEnabled()
     {
         var abilitySystem = GetAbilitySystem();

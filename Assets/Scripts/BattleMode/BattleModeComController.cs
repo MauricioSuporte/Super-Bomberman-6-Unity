@@ -240,6 +240,14 @@ public sealed class BattleModeComController : MonoBehaviour
             LogKickLoadDiagnostic("added BattleModeComKickBombAbility");
         }
 
+        // HazardAwareness é sempre ativa — não depende de power-up.
+        // Torna a IA ciente de raios ampliados (HasFullFire, HasPowerBomb) de bombas inimigas.
+        if (isCom && !TryGetComponent<BattleModeComHazardAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComHazardAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
         if (isCom && Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
         {
             bool kickEnabled = abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
@@ -1859,7 +1867,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
-            int bombRadius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : radius;
+            int bombRadius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : radius;
             if (!IsTileInBlastLineRuntime(bombTile, plantTile, bombRadius))
                 continue;
 
@@ -1976,7 +1984,7 @@ public sealed class BattleModeComController : MonoBehaviour
             if (WorldToTile(bomb.GetLogicalPosition()) != tile)
                 continue;
 
-            return bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : fallbackRadius;
+            return bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : fallbackRadius;
         }
 
         return fallbackRadius;
@@ -2258,7 +2266,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
-            int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : 2;
+            int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
             if (!IsTileInBlastLineRuntime(bombTile, tile, radius))
                 continue;
 
