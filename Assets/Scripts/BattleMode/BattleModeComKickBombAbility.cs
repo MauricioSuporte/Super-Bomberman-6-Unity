@@ -332,6 +332,21 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return false;
         }
 
+        // Verifica se o caminho da bomba após o chute está livre de explosões ativas
+        // ou de bombas com fuse iminente cujo raio alcance o lane. Sem essa verificação
+        // a IA pode chutar uma bomba para dentro de uma explosão em andamento, criando
+        // uma reação em cadeia que a mata.
+        int laneCheckDist = Manhattan(myTile, targetTile);
+        if (!IsKickLaneSafeFromImminentExplosions(myTile + kickDir, kickDir, laneCheckDist))
+        {
+            lastDecisionTrace = $"candidate kick lane unsafe imminent explosion dir {kickDir} target P{target.playerId}@{targetTile}";
+            LogKickSurgical(
+                "CANDIDATE_LANE_UNSAFE",
+                $"dir:{kickDir} target:P{target.playerId}@{targetTile} laneCheckDist:{laneCheckDist}",
+                true);
+            return false;
+        }
+
         SetSequenceState(SequenceState.RetreatAfterPlant);
         ConfigureNewKickSequencePlan(settings, firstBombAlreadyPlaced: false);
         sequenceBombTile = myTile;
@@ -1052,6 +1067,14 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 continue;
             }
 
+            // Rejeita se o caminho do chute passa por explosão ativa ou bomba iminente
+            int candidateLaneDist = Manhattan(bombTile, targetTile);
+            if (!IsKickLaneSafeFromImminentExplosions(bombTile + kickDir, kickDir, candidateLaneDist))
+            {
+                AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} kick lane unsafe imminent explosion");
+                continue;
+            }
+
             int score = distanceFromMe + Manhattan(myTile, standTile);
             if (score >= bestScore)
                 continue;
@@ -1075,6 +1098,22 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     "RESCUE_FAILED",
                     $"my:{myTile} ownEarly:{ownEarlyBombsNear} rejected:{(string.IsNullOrEmpty(rejectedRescue) ? "none" : rejectedRescue)} nearby:{DescribeNearbyBombs(myTile)}");
             }
+            return false;
+        }
+
+        // Verifica se o caminho do chute está livre de explosões ativas/iminentes.
+        // Sem isso, a IA pode chutar uma bomba já existente para dentro de uma
+        // explosão em andamento (de outra bomba com fuse quase zero), causando
+        // reação em cadeia e morte própria.
+        int ownLaneCheckDist = Manhattan(bestBombTile, bestTargetTile);
+        if (!IsKickLaneSafeFromImminentExplosions(bestBombTile + bestKickDir, bestKickDir, ownLaneCheckDist))
+        {
+            lastDecisionTrace =
+                $"own trigger kick lane unsafe imminent explosion bomb:{bestBombTile} dir:{bestKickDir} target:P{bestTarget.playerId}@{bestTargetTile}";
+            LogKickSurgical(
+                "RESCUE_LANE_UNSAFE",
+                $"my:{myTile} bomb:{bestBombTile} dir:{bestKickDir} target:P{bestTarget.playerId}@{bestTargetTile} laneCheckDist:{ownLaneCheckDist}",
+                true);
             return false;
         }
 
@@ -1529,6 +1568,57 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         }
 
         return target != null;
+    }
+
+    // Margem de fuse a partir da qual uma bomba é considerada "iminente" para
+    // efeito de segurança do lane de chute. Bombas com fuse abaixo deste valor
+    // e cujo raio cobre qualquer tile do caminho tornam o chute perigoso.
+    private const float KickLaneImminentFuseThreshold = 1.5f;
+
+    /// <summary>
+    /// Verifica se o caminho que a bomba percorrerá após o chute (a partir de
+    /// <paramref name="kickOrigin"/> na direção <paramref name="kickDir"/>) está
+    /// livre de explosões já ativas e de bombas com fuse iminente cujo raio
+    /// alcança qualquer tile desse caminho.
+    /// </summary>
+    private bool IsKickLaneSafeFromImminentExplosions(
+        Vector2Int kickOrigin,
+        Vector2Int kickDir,
+        int checkDistance)
+    {
+        for (int step = 1; step <= Mathf.Max(1, checkDistance); step++)
+        {
+            Vector2Int tile = kickOrigin + kickDir * step;
+
+            if (!HasGroundTile(tile) || HasIndestructibleTile(tile))
+                break;
+
+            // Explosão já ativa no tile
+            if (explosionMask != 0)
+            {
+                Collider2D exp = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.25f, explosionMask);
+                if (exp != null)
+                    return false;
+            }
+
+            // Bomba alheia com fuse iminente cujo raio cobre este tile
+            foreach (Bomb bomb in Bomb.ActiveBombs)
+            {
+                if (bomb == null || bomb.HasExploded)
+                    continue;
+
+                float fuse = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
+                if (fuse > KickLaneImminentFuseThreshold)
+                    continue;
+
+                Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+                int bombRadius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : 2;
+                if (IsTileInBlastLine(bombTile, tile, bombRadius))
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     private bool IsKickLaneOpen(Vector2Int start, Vector2Int dir, int minOpenTiles)
