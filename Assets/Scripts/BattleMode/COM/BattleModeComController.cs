@@ -15,6 +15,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private const float BombTapCooldownSeconds = 0.35f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
+    private const float PunchTapCooldownSeconds = 0.15f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
     private const float TurnAxisCenterTolerance = 0.045f;
@@ -75,6 +76,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private float nextDecisionTime;
     private float lastBombTapTime = -10f;
     private float lastControlTapTime = -10f;
+    private float lastPunchTapTime = -10f;
     private BattleModeComActionType currentAction = BattleModeComActionType.Stopped;
     private Vector2 currentMoveInput;
     private Vector2Int currentTargetTile;
@@ -110,6 +112,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public string InputDescription;
         public bool TapBomb;
         public bool TapActionR;
+        public bool TapActionC;
     }
 
     public IReadOnlyList<string> RecentDecisionLog => recentDecisions;
@@ -245,6 +248,25 @@ public sealed class BattleModeComController : MonoBehaviour
         if (isCom && !TryGetComponent<BattleModeComHazardAwarenessAbility>(out _))
         {
             gameObject.AddComponent<BattleModeComHazardAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
+        // PunchBomb: condicionado a CanPunchBombs, espelha o mesmo padrão do KickBomb.
+        bool persistentPunchEnabled = PlayerPersistentStats.GetRuntime(playerId).CanPunchBombs;
+        if (persistentPunchEnabled)
+        {
+            if (abilitySystem == null)
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+
+            if (!abilitySystem.IsEnabled(BombPunchAbility.AbilityId))
+                abilitySystem.Enable(BombPunchAbility.AbilityId);
+        }
+
+        if (abilitySystem != null &&
+            abilitySystem.IsEnabled(BombPunchAbility.AbilityId) &&
+            !TryGetComponent<BattleModeComPunchBombAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComPunchBombAbility>();
             abilitySystemVersion = -2;
         }
 
@@ -477,6 +499,13 @@ public sealed class BattleModeComController : MonoBehaviour
             currentInputDescription = AppendInput(currentInputDescription, "ActionR");
         }
 
+        if (selected.TapActionC && Time.time - lastPunchTapTime >= PunchTapCooldownSeconds)
+        {
+            Tap(PlayerAction.ActionC);
+            lastPunchTapTime = Time.time;
+            currentInputDescription = AppendInput(currentInputDescription, "ActionC");
+        }
+
         LogDecision(settings, myTile, currentDangerSeconds, route);
     }
 
@@ -591,7 +620,8 @@ public sealed class BattleModeComController : MonoBehaviour
             Reason = decision.Reason,
             InputDescription = decision.InputDescription,
             TapBomb = decision.TapBomb,
-            TapActionR = decision.TapActionR
+            TapActionR = decision.TapActionR,
+            TapActionC = decision.TapActionC
         };
     }
 

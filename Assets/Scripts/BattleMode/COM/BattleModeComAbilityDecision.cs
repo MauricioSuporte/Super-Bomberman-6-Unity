@@ -11,4 +11,5 @@ public struct BattleModeComAbilityDecision
     public string InputDescription;
     public bool TapBomb;
     public bool TapActionR;
+    public bool TapActionC;
 }
