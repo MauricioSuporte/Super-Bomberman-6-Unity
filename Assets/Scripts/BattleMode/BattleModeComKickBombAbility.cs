@@ -82,6 +82,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private string lastDecisionTrace = "not evaluated";
     private float lastSurgicalLogTime = -10f;
     private string lastSurgicalLogKey = string.Empty;
+
+    // Cache do roll de chance ofensivo para evitar que múltiplas chamadas
+    // dentro do mesmo ciclo de Think() re-rolem independentemente e aumentem
+    // a probabilidade efetiva além do pretendido (ex.: 50% × 50% = 75%).
+    private float offensiveTriggerChanceCacheTime = -10f;
+    private bool offensiveTriggerChanceCacheResult;
     private readonly Queue<Vector2Int> escapeOpen = new();
     private readonly Dictionary<Vector2Int, EscapeSearchNode> escapeVisited = new();
 
@@ -299,10 +305,9 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return false;
         }
 
-        // A jogada só é cogitada quando já existe alvo alinhado e lane de chute aberta
-        // (validado abaixo), então pode ter chance alta: queremos que a IA realmente execute
-        // o chute ofensivo gravado quando há oportunidade limpa. Easy continua mais hesitante.
-        float chance = DifficultyChance(settings, 0.30f, 0.65f, 0.95f);
+        // Chute ofensivo é uma jogada ocasional, não automática. Mesmo quando há alvo
+        // alinhado e lane aberta, a IA só executa conforme a chance por dificuldade.
+        float chance = DifficultyChance(settings, 0.10f, 0.25f, 0.50f);
         if (Random.value > chance)
         {
             lastDecisionTrace = $"candidate chance failed chance {chance:F2}";
@@ -955,6 +960,34 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     {
         decision = default;
 
+        // Chute ofensivo de bomba própria é jogada ocasional. O roll é CACHEADO por
+        // ~0.2s para que múltiplas chamadas dentro do mesmo ciclo de Think() (emergency +
+        // ExecuteEscape) compartilhem o mesmo resultado em vez de re-rolarem e elevarem
+        // a probabilidade efetiva além da intenção (ex.: dois rolls de 50% → 75%).
+        float ownTriggerChance = DifficultyChance(settings, 0.10f, 0.25f, 0.50f);
+        float cacheWindowSeconds = 0.20f;
+        if (Time.time - offensiveTriggerChanceCacheTime > cacheWindowSeconds)
+        {
+            offensiveTriggerChanceCacheTime = Time.time;
+            offensiveTriggerChanceCacheResult = Random.value <= ownTriggerChance;
+            if (!offensiveTriggerChanceCacheResult)
+            {
+                lastDecisionTrace =
+                    $"own trigger kick chance failed chance {ownTriggerChance:F2} (new roll)";
+                LogKickSurgical(
+                    "OWN_TRIGGER_CHANCE_FAIL",
+                    $"chance:{ownTriggerChance:F2} cached for {cacheWindowSeconds:F2}s");
+            }
+        }
+        else if (!offensiveTriggerChanceCacheResult)
+        {
+            lastDecisionTrace =
+                $"own trigger kick chance failed chance {ownTriggerChance:F2} (cached)";
+        }
+
+        if (!offensiveTriggerChanceCacheResult)
+            return false;
+
         Bomb bestBomb = null;
         PlayerIdentity bestTarget = null;
         Vector2Int bestBombTile = myTile;
@@ -1309,9 +1342,16 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (!TryFindPostKickEscapeMove(settings, myTile, out Vector2 firstMove, out Vector2Int target, out string route))
         {
             lastDecisionTrace = $"post kick escape no route danger {FormatDanger(dangerHere)}";
+            // Reseta a sequência para que o sistema de fuga principal do controller
+            // possa agir sem que a habilidade o intercepte em cada chamada de Think().
+            // Sem esse reset, TryContinueOffensiveSequence continua sendo chamada via
+            // TryBuildEmergencyCandidate (inclusive dentro de ExecuteEscape), bloqueando
+            // o fallback normal do controller e deixando a IA travada sob perigo.
+            ResetOffensiveSequence();
             LogKickSurgical(
                 "POST_KICK_ESCAPE_FAILED",
-                $"my:{myTile} dangerHere:{FormatDanger(dangerHere)} nearby:{DescribeNearbyBombs(myTile)}");
+                $"my:{myTile} dangerHere:{FormatDanger(dangerHere)} sequence reset nearby:{DescribeNearbyBombs(myTile)}",
+                true);
             return false;
         }
 
@@ -2032,6 +2072,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequenceAllowActionRStop = false;
         sequenceDirectKickRetryUntil = -10f;
         postKickEscapeUntil = -10f;
+        // Invalida o cache de chance para que a próxima oportunidade ofensiva
+        // receba um roll limpo, sem herdar o resultado da sequência encerrada.
+        offensiveTriggerChanceCacheTime = -10f;
+        offensiveTriggerChanceCacheResult = false;
     }
 
     private static void AppendTracePart(ref string trace, string part)
