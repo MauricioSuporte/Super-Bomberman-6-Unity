@@ -76,6 +76,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private float forceActionRStopUntil = -10f;
     private float sequenceDirectKickRetryUntil = -10f;
     private float postKickEscapeUntil = -10f;
+    private Vector2Int postKickEscapeLastTile;
+    private float postKickEscapeStuckSince = -10f;
+    private Vector2Int postKickEscapeLastAttemptedStep;
+    private readonly List<Vector2Int> postKickEscapeBlockedSteps = new List<Vector2Int>(4);
     private Bomb sequenceTrackedBomb;
     private bool sequencePlantDirectionPatched;
     private bool sequenceAllowActionRStop;
@@ -88,6 +92,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     // a probabilidade efetiva além do pretendido (ex.: 50% × 50% = 75%).
     private float offensiveTriggerChanceCacheTime = -10f;
     private bool offensiveTriggerChanceCacheResult;
+    private readonly Queue<Vector2Int> pathCheckOpen = new();
+    private readonly HashSet<Vector2Int> pathCheckVisited = new();
     private readonly Queue<Vector2Int> escapeOpen = new();
     private readonly Dictionary<Vector2Int, EscapeSearchNode> escapeVisited = new();
 
@@ -1047,6 +1053,17 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 continue;
             }
 
+            // Verifica se há um caminho completo de BFS de myTile até standTile.
+            // TryStepTowardKickStand valida apenas passos imediatos; sem esta verificação
+            // a IA pode iniciar a sequência e ficar presa no meio do caminho (entre bombas
+            // próprias), sem conseguir alcançar o stand e sem conseguir fugir.
+            int bfsMaxDepth = MaxKickSequenceDistanceFromBomb + 2;
+            if (!CanReachStandTileAvoidingBomb(myTile, standTile, bombTile, bfsMaxDepth))
+            {
+                AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} no full path to stand:{standTile}");
+                continue;
+            }
+
             Vector2Int moveDir;
             if (myTile == standTile)
             {
@@ -1341,6 +1358,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
         SetSequenceState(SequenceState.EscapeAfterKick);
         postKickEscapeUntil = Time.time + PostKickEscapeSeconds;
+        postKickEscapeLastTile = myTile;
+        postKickEscapeStuckSince = -1f;
+        postKickEscapeLastAttemptedStep = Vector2Int.zero;
+        postKickEscapeBlockedSteps.Clear();
 
         if (TryFindPostKickEscapeMove(settings, myTile, out firstMove, out target, out route))
             return true;
@@ -1378,7 +1399,34 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return false;
         }
 
-        if (!TryFindPostKickEscapeMove(settings, myTile, out Vector2 firstMove, out Vector2Int target, out string route))
+        // Detecta travamento: se a IA não mudou de tile por mais de 0.25s durante
+        // a fuga, bloqueia a direção que estava sendo tentada e força o BFS a
+        // encontrar uma rota alternativa. Repete para cada nova direção que travar.
+        if (myTile == postKickEscapeLastTile)
+        {
+            if (postKickEscapeStuckSince < 0f)
+                postKickEscapeStuckSince = Time.time;
+            else if (Time.time - postKickEscapeStuckSince > 0.25f
+                     && postKickEscapeLastAttemptedStep != Vector2Int.zero
+                     && !postKickEscapeBlockedSteps.Contains(postKickEscapeLastAttemptedStep))
+            {
+                postKickEscapeBlockedSteps.Add(postKickEscapeLastAttemptedStep);
+                postKickEscapeStuckSince = -1f; // reinicia timer para próxima direção
+                LogKickSurgical(
+                    "POST_KICK_ESCAPE_STUCK",
+                    $"my:{myTile} blocking dir:{postKickEscapeLastAttemptedStep} totalBlocked:{postKickEscapeBlockedSteps.Count}",
+                    true);
+            }
+        }
+        else
+        {
+            postKickEscapeLastTile = myTile;
+            postKickEscapeStuckSince = -1f;
+            postKickEscapeBlockedSteps.Clear();
+            postKickEscapeLastAttemptedStep = Vector2Int.zero;
+        }
+
+        if (!TryFindPostKickEscapeMove(settings, myTile, postKickEscapeBlockedSteps, out Vector2 firstMove, out Vector2Int target, out string route))
         {
             lastDecisionTrace = $"post kick escape no route danger {FormatDanger(dangerHere)}";
             // Reseta a sequência para que o sistema de fuga principal do controller
@@ -1405,6 +1453,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             InputDescription = FirstMoveDescription(firstMove)
         };
 
+        // Registra o primeiro passo tentado para que o stuck detection saiba
+        // qual direção bloquear se a IA não conseguir se mover.
+        postKickEscapeLastAttemptedStep = Vector2Int.RoundToInt(firstMove);
+
         lastDecisionTrace = $"post kick escape target {target} route {route}";
         LogKickSurgical(
             "POST_KICK_ESCAPE",
@@ -1412,9 +1464,20 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return true;
     }
 
+    private static readonly List<Vector2Int> EmptyBlockedSteps = new List<Vector2Int>(0);
+
     private bool TryFindPostKickEscapeMove(
         BattleModeComDifficultySettings settings,
         Vector2Int start,
+        out Vector2 firstMove,
+        out Vector2Int target,
+        out string route)
+        => TryFindPostKickEscapeMove(settings, start, EmptyBlockedSteps, out firstMove, out target, out route);
+
+    private bool TryFindPostKickEscapeMove(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        List<Vector2Int> blockedFirstSteps,
         out Vector2 firstMove,
         out Vector2Int target,
         out string route)
@@ -1427,6 +1490,15 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         escapeOpen.Clear();
 
         escapeVisited[start] = new EscapeSearchNode { Parent = start, Depth = 0 };
+
+        // Pré-marca todos os tiles de direções bloqueadas como visitados para que
+        // o BFS os ignore e encontre rotas alternativas.
+        for (int i = 0; i < blockedFirstSteps.Count; i++)
+        {
+            if (blockedFirstSteps[i] != Vector2Int.zero)
+                escapeVisited[start + blockedFirstSteps[i]] = new EscapeSearchNode { Parent = start, Depth = 0 };
+        }
+
         escapeOpen.Enqueue(start);
 
         int maxDepth = Mathf.Max(3, settings.searchDepth + 4);
@@ -1570,6 +1642,62 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return target != null;
     }
 
+    /// <summary>
+    /// Verifica via BFS se existe um caminho completo de <paramref name="from"/>
+    /// até <paramref name="to"/> sem passar pelo tile da bomba <paramref name="bombTile"/>.
+    /// Evita o problema de verificar apenas o primeiro passo da rota e depois
+    /// ficar preso no meio do caminho ao tentar alcançar o stand tile.
+    /// </summary>
+    private bool CanReachStandTileAvoidingBomb(
+        Vector2Int from,
+        Vector2Int to,
+        Vector2Int bombTile,
+        int maxDepth)
+    {
+        if (from == to)
+            return true;
+
+        pathCheckOpen.Clear();
+        pathCheckVisited.Clear();
+
+        pathCheckVisited.Add(from);
+        pathCheckOpen.Enqueue(from);
+        int depth = 0;
+
+        while (pathCheckOpen.Count > 0)
+        {
+            int count = pathCheckOpen.Count;
+            if (depth >= maxDepth)
+                break;
+
+            depth++;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2Int tile = pathCheckOpen.Dequeue();
+                for (int d = 0; d < CardinalTiles.Length; d++)
+                {
+                    Vector2Int next = tile + CardinalTiles[d];
+                    if (next == to)
+                        return true;
+
+                    if (pathCheckVisited.Contains(next))
+                        continue;
+
+                    if (next == bombTile)
+                        continue;
+
+                    if (!IsWalkableTile(next, from))
+                        continue;
+
+                    pathCheckVisited.Add(next);
+                    pathCheckOpen.Enqueue(next);
+                }
+            }
+        }
+
+        return false;
+    }
+
     // Margem de fuse a partir da qual uma bomba é considerada "iminente" para
     // efeito de segurança do lane de chute. Bombas com fuse abaixo deste valor
     // e cujo raio cobre qualquer tile do caminho tornam o chute perigoso.
@@ -1580,12 +1708,25 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     /// <paramref name="kickOrigin"/> na direção <paramref name="kickDir"/>) está
     /// livre de explosões já ativas e de bombas com fuse iminente cujo raio
     /// alcança qualquer tile desse caminho.
+    ///
+    /// Além da verificação direta no tile do lane, também verifica tiles PERPENDICULARES
+    /// ao kick — isto cobre o caso em que o BattleModeComController (ExecutionOrder -100)
+    /// roda antes dos scripts de bomba (ordem 0) e a explosão ainda não criou seus
+    /// colliders no tile do lane, mas já existe no tile de origem ou em tiles adjacentes
+    /// na linha perpendicular.
     /// </summary>
     private bool IsKickLaneSafeFromImminentExplosions(
         Vector2Int kickOrigin,
         Vector2Int kickDir,
         int checkDistance)
     {
+        // Direções perpendiculares ao chute (±90°)
+        var perpDirs = new Vector2Int[]
+        {
+            new(-kickDir.y, kickDir.x),
+            new(kickDir.y, -kickDir.x)
+        };
+
         for (int step = 1; step <= Mathf.Max(1, checkDistance); step++)
         {
             Vector2Int tile = kickOrigin + kickDir * step;
@@ -1593,15 +1734,11 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             if (!HasGroundTile(tile) || HasIndestructibleTile(tile))
                 break;
 
-            // Explosão já ativa no tile
-            if (explosionMask != 0)
-            {
-                Collider2D exp = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.25f, explosionMask);
-                if (exp != null)
-                    return false;
-            }
+            // 1) Explosão já ativa diretamente no tile do lane
+            if (LaneTileHasActiveExplosion(tile))
+                return false;
 
-            // Bomba alheia com fuse iminente cujo raio cobre este tile
+            // 2) Bomba alheia com fuse iminente cujo raio cobre este tile
             foreach (Bomb bomb in Bomb.ActiveBombs)
             {
                 if (bomb == null || bomb.HasExploded)
@@ -1616,9 +1753,61 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 if (IsTileInBlastLine(bombTile, tile, bombRadius))
                     return false;
             }
+
+            // 3) Explosões ativas em tiles PERPENDICULARES que podem se propagar até
+            //    o tile do lane. Trata o caso de race condition de execução: a bomba
+            //    explodiu antes de COM rodar (HasExploded=true, removida de ActiveBombs)
+            //    mas seus colliders de explosão ainda não chegaram ao tile do lane —
+            //    entretanto, o tile de origem ou tiles intermediários já os têm.
+            for (int pd = 0; pd < perpDirs.Length; pd++)
+            {
+                Vector2Int perpDir = perpDirs[pd];
+                for (int pk = 1; pk <= MaxOffensiveKickDistance; pk++)
+                {
+                    Vector2Int perpTile = tile + perpDir * pk;
+
+                    if (!HasGroundTile(perpTile))
+                        break;
+
+                    if (HasIndestructibleTile(perpTile))
+                        break;
+
+                    if (!LaneTileHasActiveExplosion(perpTile))
+                        continue;
+
+                    // Há explosão em perpTile. Verifica se não há parede entre
+                    // perpTile e tile (explosão poderia chegar ao tile do lane).
+                    bool blocked = false;
+                    for (int bi = 1; bi < pk; bi++)
+                    {
+                        Vector2Int between = tile + perpDir * bi;
+                        if (HasIndestructibleTile(between) || HasDestructibleTile(between))
+                        {
+                            blocked = true;
+                            break;
+                        }
+                    }
+
+                    if (!blocked)
+                        return false;
+                }
+            }
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Verifica se há um collider de explosão ativo no tile especificado,
+    /// usando um raio um pouco maior para robustez contra imprecisões de posição.
+    /// </summary>
+    private bool LaneTileHasActiveExplosion(Vector2Int tile)
+    {
+        if (explosionMask == 0)
+            return false;
+
+        Collider2D exp = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.45f, explosionMask);
+        return exp != null;
     }
 
     private bool IsKickLaneOpen(Vector2Int start, Vector2Int dir, int minOpenTiles)
@@ -2162,6 +2351,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         sequenceAllowActionRStop = false;
         sequenceDirectKickRetryUntil = -10f;
         postKickEscapeUntil = -10f;
+        postKickEscapeLastTile = default;
+        postKickEscapeStuckSince = -10f;
+        postKickEscapeLastAttemptedStep = Vector2Int.zero;
+        postKickEscapeBlockedSteps.Clear();
         // Invalida o cache de chance para que a próxima oportunidade ofensiva
         // receba um roll limpo, sem herdar o resultado da sequência encerrada.
         offensiveTriggerChanceCacheTime = -10f;
