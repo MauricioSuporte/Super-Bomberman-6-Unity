@@ -40,6 +40,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     // Tempo máximo permitido para a sequência ofensiva completa (planta → soco → fuga)
     private const float OffensiveSequenceTimeoutSeconds = 4.0f;
 
+    // Janela curta para o input sintético de plantar bomba ser processado pelo BombController.
+    private const float PlantConfirmationGraceSeconds = 0.25f;
+
     // Tempo de fuga após soco (bomba pausou durante o arco, depois retoma o fuse)
     private const float PostPunchEscapeSeconds = 2.5f;
 
@@ -69,7 +72,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     private Vector2Int sequenceRetreatTile;
     private Vector2Int sequencePunchDir;
     private Bomb sequenceTrackedBomb;
+    private float sequencePlantRequestedTime = -10f;
     private float postPunchEscapeUntil = -10f;
+    private bool sequencePunchCommandSent;
 
     // Flag para garantir que BombPunchAbility.lastFacingDir esteja em punchDir
     // antes de pressionar ActionC. É necessário um ciclo de Think() com movimento
@@ -269,6 +274,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         sequenceRetreatTile = retreatTile;
         sequencePunchDir = punchDir;
         sequenceTrackedBomb = null;
+        sequencePlantRequestedTime = Time.time;
+        sequencePunchCommandSent = false;
         SetSequenceState(SequenceState.RetreatAfterPlant);
         nextOffensiveSequenceTime = Time.time + OffensiveCooldownSeconds;
 
@@ -344,6 +351,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (sequenceTrackedBomb == null)
             sequenceTrackedBomb = FindBombAt(sequencePlantTile);
 
+        if (ShouldAbortMissingPlantedBomb("RETREAT_MISSING_BOMB", myTile))
+        {
+            ResetSequence();
+            return false;
+        }
+
         if (myTile == sequenceRetreatTile)
         {
             // Chegou no tile de recuo — vira para a bomba no próximo estado.
@@ -380,6 +393,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         if (sequenceTrackedBomb == null)
             sequenceTrackedBomb = FindBombAt(sequencePlantTile);
+
+        if (ShouldAbortMissingPlantedBomb("FACE_MISSING_BOMB", myTile))
+        {
+            ResetSequence();
+            return false;
+        }
 
         if (sequenceTrackedBomb != null && sequenceTrackedBomb.HasExploded)
         {
@@ -447,6 +466,16 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (sequenceTrackedBomb == null)
             sequenceTrackedBomb = FindBombAt(sequencePlantTile);
 
+        if (sequenceTrackedBomb == null && !sequencePunchCommandSent)
+        {
+            lastDecisionTrace = $"missing planted bomb before punch plant:{sequencePlantTile} my:{myTile}";
+            LogSurgical("SEQUENCE_RESET",
+                lastDecisionTrace,
+                force: true);
+            ResetSequence();
+            return false;
+        }
+
         // Verifica se o soco já aconteceu:
         // - bomba sumiu (null): soco enviou para fora do mapa ou explodiu em voo
         // - IsBeingPunched: soco em andamento (arco de voo)
@@ -454,6 +483,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (sequenceTrackedBomb == null || sequenceTrackedBomb.IsBeingPunched)
         {
             // Soco disparado → iniciar fuga.
+            sequencePunchCommandSent = true;
             SetSequenceState(SequenceState.EscapeAfterPunch);
             postPunchEscapeUntil = Time.time + PostPunchEscapeSeconds;
             escapeLastTile = myTile;
@@ -497,6 +527,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         // Move em direção à bomba (para atualizar lastFacingDir na BombPunchAbility)
         // E pressiona ActionC no mesmo frame.
         Vector2 punchMove = TileDirectionToVector(sequencePunchDir);
+        sequencePunchCommandSent = true;
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
@@ -526,7 +557,14 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         float dangerHere = GetDangerSeconds(myTile);
 
         // Chegou em tile seguro.
-        if (float.IsInfinity(dangerHere))
+        // Guarda: não declarar ESCAPE_DONE enquanto a bomba socada ainda está em voo.
+        // Durante o arco de punch, GetLogicalPosition() retorna posição intermediária,
+        // fazendo GetDangerSeconds retornar falso-infinito — o que causaria a IA ficar
+        // parada e ser atingida pela explosão quando a bomba pousar.
+        bool trackedBombStillFlying = sequenceTrackedBomb != null
+                                      && !sequenceTrackedBomb.HasExploded
+                                      && sequenceTrackedBomb.IsBeingPunched;
+        if (float.IsInfinity(dangerHere) && !trackedBombStillFlying)
         {
             LogSurgical("ESCAPE_DONE", $"my:{myTile}");
             ResetSequence();
@@ -901,7 +939,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     {
         SetSequenceState(SequenceState.None);
         sequenceTrackedBomb = null;
+        sequencePlantRequestedTime = -10f;
         sequenceFaceDirectionSent = false;
+        sequencePunchCommandSent = false;
         postPunchEscapeUntil = -10f;
         escapeLastTile = default;
         escapeStuckSince = -10f;
@@ -909,6 +949,22 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         escapeBlockedSteps.Clear();
         offensiveTriggerChanceCacheTime = -10f;
         offensiveTriggerChanceCacheResult = false;
+    }
+
+    private bool ShouldAbortMissingPlantedBomb(string key, Vector2Int myTile)
+    {
+        if (sequenceTrackedBomb != null)
+            return false;
+
+        float elapsed = Time.time - sequencePlantRequestedTime;
+        if (elapsed <= PlantConfirmationGraceSeconds)
+            return false;
+
+        lastDecisionTrace = $"{key} plant:{sequencePlantTile} retreat:{sequenceRetreatTile} my:{myTile} elapsed:{elapsed:F2}";
+        LogSurgical("SEQUENCE_RESET",
+            lastDecisionTrace,
+            force: true);
+        return true;
     }
 
     private BattleModeComAbilityDecision MakeSequenceDecision(

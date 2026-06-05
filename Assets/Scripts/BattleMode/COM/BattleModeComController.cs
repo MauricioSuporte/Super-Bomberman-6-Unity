@@ -2545,7 +2545,7 @@ public sealed class BattleModeComController : MonoBehaviour
             if (bomb == null || bomb.HasExploded)
                 continue;
 
-            if (bomb.Owner == bombController && !bomb.IsControlBomb)
+            if (bomb.Owner == bombController && !bomb.IsControlBomb && !bomb.WasMovedByKickOrPunch)
                 return true;
         }
 

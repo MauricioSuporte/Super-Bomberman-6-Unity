@@ -58,6 +58,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public bool IsBeingKicked => isKicked;
     public bool IsBeingPunched => isPunched;
+    public bool WasMovedByKickOrPunch { get; private set; }
     public bool IsBeingHeldByPowerGlove { get; private set; }
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
@@ -615,6 +616,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RemoveKickOriginBlocker();
 
+        WasMovedByKickOrPunch = true;
         isPunched = true;
 
         charactersInside.Clear();
@@ -1116,6 +1118,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         this.owner = owner;
         PlacedTime = Time.time;
+        WasMovedByKickOrPunch = false;
 
         lastPos = rb.position;
 
@@ -1221,6 +1224,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(kickRoutine);
 
         isKicked = true;
+        WasMovedByKickOrPunch = true;
 
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
