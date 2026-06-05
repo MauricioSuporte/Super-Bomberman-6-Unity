@@ -8,6 +8,8 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 public sealed class BattleRevengeSystem : MonoBehaviour
 {
+    private static readonly bool EnableSurgicalLogs = true;
+
     [SerializeField] private BattleRevengeController cartPrefab;
     private readonly float cartBombCooldownSeconds = 2f;
     [SerializeField, Min(1)] private int cartBombDistanceTiles = 3;
@@ -78,20 +80,41 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     public void HandlePlayerDeathCompleted(MovementController deadPlayer)
     {
         if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
+        {
+            SLogDeath(deadPlayer, "DEATH_SKIP_BLOCKED", "revenge bomber creation is blocked");
             return;
+        }
 
         if (!IsRuntimeEnabled || deadPlayer == null || !deadPlayer.CompareTag("Player"))
+        {
+            SLogDeath(
+                deadPlayer,
+                "DEATH_SKIP_INVALID",
+                $"runtime:{IsRuntimeEnabled} deadNull:{deadPlayer == null} isPlayer:{(deadPlayer != null && deadPlayer.CompareTag("Player"))}");
             return;
+        }
 
         CleanupDestroyedActiveCarts();
         EnsureBattleSetupCached();
 
         if (activeCartsByOwner.ContainsKey(deadPlayer.PlayerId))
+        {
+            SLogDeath(deadPlayer, "DEATH_SKIP_DUPLICATE_CART", $"activeCarts:{activeCartsByOwner.Count}");
             return;
+        }
+
+        SLogDeath(
+            deadPlayer,
+            "DEATH_ACCEPTED",
+            $"deathPos:{deadPlayer.transform.position} activeCarts:{activeCartsByOwner.Count}",
+            force: true);
 
         BattleRevengeController cart = AcquireCart();
         if (cart == null)
+        {
+            SLogDeath(deadPlayer, "DEATH_SKIP_NO_CART", $"prefabNull:{cartPrefab == null}", force: true);
             return;
+        }
 
         Vector2 startPosition = GetCartPositionForDeath(deadPlayer.transform.position, out Vector2 inwardDirection);
 
@@ -100,6 +123,12 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         ConfigureComController(cart);
 
         activeCartsByOwner[deadPlayer.PlayerId] = cart;
+
+        SLogDeath(
+            deadPlayer,
+            "CART_ACTIVATED",
+            $"cart:{cart.name} start:{startPosition} inward:{inwardDirection} bounds:({minEdgeX:F1},{minEdgeY:F1})..({maxEdgeX:F1},{maxEdgeY:F1})",
+            force: true);
     }
 
     public bool TryHandleLethalRevengeHit(MovementController victim, Collider2D hazard)
@@ -863,5 +892,24 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void SLogDeath(MovementController player, string key, string message, bool force = false)
+    {
+        if (!EnableSurgicalLogs)
+            return;
+
+        int playerId = player != null ? player.PlayerId : 0;
+        if (!GameSession.IsValidPlayerId(playerId))
+        {
+            if (!force)
+                return;
+        }
+        else if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+        {
+            return;
+        }
+
+        Debug.Log($"[BattleRevengeDeath][P{playerId}] t:{Time.unscaledTime:F2} {key} {message}", this);
     }
 }

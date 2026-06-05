@@ -10,6 +10,7 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
     private const float KickCommandConfirmationWaitSeconds = 0.35f;
     private const float DefensiveKickMinFuseSeconds = 0.55f;
     private const float DefensiveLogIntervalSeconds = 0.35f;
+    private static readonly bool EnableYellowLouieKickSurgicalDiagnostics = false;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -574,6 +575,9 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
     private void LogYellowDefensive(string key, string message, bool force = false)
     {
+        if (!EnableYellowLouieKickSurgicalDiagnostics)
+            return;
+
         string logKey = key + ":" + message;
         if (!force &&
             logKey == lastDefensiveLogKey &&

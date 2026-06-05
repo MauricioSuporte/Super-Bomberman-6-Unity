@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(BattleRevengeController))]
 public sealed class BattleRevengeComController : MonoBehaviour
 {
+    private static readonly bool EnableSurgicalLogs = true;
+
     private const float ThinkIntervalSeconds = 0.12f;
     private const float ChargeStepSeconds = 0.12f;
     private const float ReleasePaddingSeconds = 0.04f;
@@ -38,6 +40,8 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private bool holdingLaunch;
     private float launchHoldStartedAt;
     private int desiredLaunchDistance = MinLaunchDistanceTiles;
+    private float lastSurgicalLogTime = -10f;
+    private string lastSurgicalLogKey = string.Empty;
 
     public void Initialize(BattleRevengeController ownerCart)
     {
@@ -68,6 +72,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         if (!CanControl())
         {
+            SLog("CONTROL_DISABLED", $"holding:{holdingLaunch}", force: holdingLaunch);
             ClearSyntheticInputs();
             holdingLaunch = false;
             return;
@@ -101,12 +106,15 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         if (TryFindLaunchPlan(out LaunchPlan launchPlan))
         {
+            SLog("PLAN_SELECTED", FormatPlan(launchPlan), force: launchPlan.HasViableShot);
             DriveTowardLaunchPlan(launchPlan);
             return;
         }
 
+        PlayerAction roamAction = GetRoamAction();
+        SLog("ROAM", $"targets:0 action:{roamAction}");
         StopCharging();
-        SetMovement(GetRoamAction());
+        SetMovement(roamAction);
     }
 
     private void DriveTowardLaunchPlan(LaunchPlan plan)
@@ -114,12 +122,15 @@ public sealed class BattleRevengeComController : MonoBehaviour
         if (plan.HasViableShot)
         {
             ClearMovementInputs();
+            SLog("SHOT_VIABLE", FormatPlan(plan), force: true);
             HandleLaunchCharge(plan.DistanceTiles);
             return;
         }
 
         StopCharging();
-        SetMovement(GetMoveActionForDesiredWall(plan.DesiredWall));
+        PlayerAction roamAction = GetRoamAction();
+        SLog("PATROL_NO_SHOT", $"{FormatPlan(plan)} action:{roamAction}");
+        SetMovement(roamAction);
     }
 
     private bool TryFindLaunchPlan(out LaunchPlan bestPlan)
@@ -188,7 +199,11 @@ public sealed class BattleRevengeComController : MonoBehaviour
             }
         }
 
-        return foundTarget && bestPlan.Target != null;
+        bool foundPlan = foundTarget && bestPlan.Target != null;
+        if (!foundPlan)
+            SLog("NO_TARGET", $"activePlayers:{activePlayers.Count}");
+
+        return foundPlan;
     }
 
     private bool ShouldTakeShot(float landingError)
@@ -233,7 +248,10 @@ public sealed class BattleRevengeComController : MonoBehaviour
     {
         PlayerInputManager input = PlayerInputManager.Instance;
         if (input == null)
+        {
+            SLog("CHARGE_ABORT", "missing PlayerInputManager", force: true);
             return;
+        }
 
         desiredLaunchDistance = Mathf.Clamp(distanceTiles, MinLaunchDistanceTiles, MaxLaunchDistanceTiles);
 
@@ -247,16 +265,32 @@ public sealed class BattleRevengeComController : MonoBehaviour
             holdingLaunch = true;
             launchHoldStartedAt = Time.unscaledTime;
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, true);
+            SLog(
+                "CHARGE_START",
+                $"distance:{desiredLaunchDistance} holdStart:{launchHoldStartedAt:F2}",
+                force: true);
             return;
         }
 
         int chargeSteps = Mathf.Max(0, desiredLaunchDistance - MinLaunchDistanceTiles);
         float requiredHoldSeconds = chargeSteps * ChargeStepSeconds + ReleasePaddingSeconds + releaseJitterSeconds;
 
-        if (Time.unscaledTime - launchHoldStartedAt >= requiredHoldSeconds)
+        float heldSeconds = Time.unscaledTime - launchHoldStartedAt;
+        if (heldSeconds >= requiredHoldSeconds)
+        {
+            SLog(
+                "CHARGE_RELEASE",
+                $"distance:{desiredLaunchDistance} held:{heldSeconds:F2} required:{requiredHoldSeconds:F2}",
+                force: true);
             StopCharging();
+        }
         else
+        {
+            SLog(
+                "CHARGE_HOLD",
+                $"distance:{desiredLaunchDistance} held:{heldSeconds:F2} required:{requiredHoldSeconds:F2}");
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, true);
+        }
     }
 
     private void StopCharging()
@@ -268,19 +302,8 @@ public sealed class BattleRevengeComController : MonoBehaviour
         if (input != null)
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, false);
 
+        SLog("CHARGE_STOP", $"distance:{desiredLaunchDistance}", force: true);
         holdingLaunch = false;
-    }
-
-    private PlayerAction GetMoveActionForDesiredWall(RevengeTargetWall wall)
-    {
-        return wall switch
-        {
-            RevengeTargetWall.Left => PlayerAction.MoveLeft,
-            RevengeTargetWall.Right => PlayerAction.MoveRight,
-            RevengeTargetWall.Top => PlayerAction.MoveUp,
-            RevengeTargetWall.Bottom => PlayerAction.MoveDown,
-            _ => PlayerAction.MoveUp
-        };
     }
 
     private PlayerAction GetRoamAction()
@@ -351,6 +374,11 @@ public sealed class BattleRevengeComController : MonoBehaviour
         nextThinkTime = Time.unscaledTime + UnityEngine.Random.Range(0f, ThinkIntervalSeconds + thinkIntervalJitter);
         roamWallSwitchAt = Time.unscaledTime + UnityEngine.Random.Range(0f, roamIntervalSeconds);
         ClearSyntheticInputs();
+        SLog(
+            "RESET",
+            $"roamIndex:{roamWallIndex} roamStep:{roamWallStep} thinkJitter:{thinkIntervalJitter:F3} " +
+            $"roamInterval:{roamIntervalSeconds:F2} noise:{scoreNoiseMagnitude:F1} releaseJitter:{releaseJitterSeconds:F3} nearChance:{nearShotChance:F2}",
+            force: true);
     }
 
     private void RandomizePersonality()
@@ -380,5 +408,31 @@ public sealed class BattleRevengeComController : MonoBehaviour
         public float LandingError;
         public bool HasViableShot;
         public RevengeTargetWall DesiredWall;
+    }
+
+    private string FormatPlan(LaunchPlan plan)
+    {
+        int targetId = plan.Target != null ? plan.Target.playerId : 0;
+        Vector2 targetPos = plan.Target != null ? (Vector2)plan.Target.transform.position : Vector2.zero;
+        return
+            $"target:P{targetId}@{targetPos} wins:{plan.TargetWins} distance:{plan.DistanceTiles} " +
+            $"error:{plan.LandingError:F2} viable:{plan.HasViableShot} wall:{plan.DesiredWall} " +
+            $"cartPos:{(cart != null ? cart.transform.position.ToString() : "null")}";
+    }
+
+    private void SLog(string key, string message, bool force = false)
+    {
+        if (!EnableSurgicalLogs)
+            return;
+
+        string logKey = key + ":" + message;
+        if (!force && logKey == lastSurgicalLogKey && Time.unscaledTime - lastSurgicalLogTime < 0.35f)
+            return;
+
+        lastSurgicalLogKey = logKey;
+        lastSurgicalLogTime = Time.unscaledTime;
+
+        int ownerId = cart != null ? cart.OwnerPlayerId : 0;
+        Debug.Log($"[BattleRevengeCOM][P{ownerId}] t:{Time.unscaledTime:F2} {key} {message}", this);
     }
 }

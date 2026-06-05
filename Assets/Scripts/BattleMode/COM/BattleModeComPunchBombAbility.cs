@@ -25,7 +25,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 {
     // Filtro de diagnóstico: 0 = todos os jogadores COM.
     public const int DiagnosticPlayerIdFilter = 0;
-    private static readonly bool EnableDefensivePunchDiagnostics = true;
+    private static readonly bool EnableDefensivePunchDiagnostics = false;
     private const float DefensivePunchLogIntervalSeconds = 0.35f;
 
     // Cooldown entre sequências ofensivas

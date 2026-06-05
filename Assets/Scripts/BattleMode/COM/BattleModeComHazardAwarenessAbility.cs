@@ -26,7 +26,7 @@ public sealed class BattleModeComHazardAwarenessAbility : MonoBehaviour, IBattle
 {
     // Filtro de diagnóstico: 0 = todos os jogadores COM.
     public const int DiagnosticPlayerIdFilter = 0;
-    private static readonly bool EnableDiagnostics = true;
+    private static readonly bool EnableDiagnostics = false;
     private const float DiagnosticLogIntervalSeconds = 0.5f;
 
     // Buffer de tiles além do raio ampliado para considerar como zona de risco proativa.
