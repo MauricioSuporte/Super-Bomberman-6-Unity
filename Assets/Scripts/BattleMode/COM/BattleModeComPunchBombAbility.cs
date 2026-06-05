@@ -560,9 +560,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         // Chegou em tile seguro.
         // Guarda: não declarar ESCAPE_DONE enquanto a bomba socada ainda está em voo.
-        // Durante o arco de punch, GetLogicalPosition() retorna posição intermediária,
-        // fazendo GetDangerSeconds retornar falso-infinito — o que causaria a IA ficar
-        // parada e ser atingida pela explosão quando a bomba pousar.
+        // Durante o arco de punch, a bomba ainda está em voo, mas a posição lógica
+        // já aponta para o pouso previsto. Não encerra a fuga antes do pouso.
         bool trackedBombStillFlying = sequenceTrackedBomb != null
                                       && !sequenceTrackedBomb.HasExploded
                                       && sequenceTrackedBomb.IsBeingPunched;

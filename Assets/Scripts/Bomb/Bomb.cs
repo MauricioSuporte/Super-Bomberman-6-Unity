@@ -1002,7 +1002,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     {
         rb.position = pos;
         transform.position = pos;
-        lastPos = pos;
+        SetLogicalTileCenter(pos);
+    }
+
+    private void SetLogicalTileCenter(Vector2 pos)
+    {
+        Vector2 snapped = SnapToGrid(pos, kickTileSize > 0f ? kickTileSize : 1f);
+        currentTileCenter = snapped;
+        lastPos = snapped;
     }
 
     private float GetPunchSegmentDuration(float baseDuration, int distanceTiles)
@@ -1023,6 +1030,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     {
         duration = Mathf.Max(duration, Time.fixedDeltaTime);
 
+        SetLogicalTileCenter(end);
+
         float t = 0f;
         float inv = 1f / Mathf.Max(0.0001f, duration);
 
@@ -1039,7 +1048,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             pos.y += arc;
             pos = SnapPunchArcPositionToPixelGrid(pos);
 
-            lastPos = pos;
             rb.MovePosition(pos);
 
             yield return waitFixed;
@@ -1047,7 +1055,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         rb.position = end;
         transform.position = end;
-        lastPos = end;
+        SetLogicalTileCenter(end);
     }
 
     public void SetStageBoundsTilemap(Tilemap tilemap)

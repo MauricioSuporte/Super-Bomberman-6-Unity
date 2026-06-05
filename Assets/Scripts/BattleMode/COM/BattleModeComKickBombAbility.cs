@@ -191,7 +191,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return true;
         }
 
-        if (TryBuildOwnTriggerBombKickDecision(settings, myTile, out decision))
+        if (TryBuildOwnTriggerBombKickDecision(settings, myTile, out decision, forceChance: true))
             return true;
 
         string rejectedDirections = string.Empty;
@@ -977,7 +977,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private bool TryBuildOwnTriggerBombKickDecision(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
-        out BattleModeComAbilityDecision decision)
+        out BattleModeComAbilityDecision decision,
+        bool forceChance = false)
     {
         decision = default;
 
@@ -987,7 +988,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         // a probabilidade efetiva além da intenção (ex.: dois rolls de 50% → 75%).
         float ownTriggerChance = DifficultyChance(settings, 0.10f, 0.25f, 0.50f);
         float cacheWindowSeconds = 0.20f;
-        if (Time.time - offensiveTriggerChanceCacheTime > cacheWindowSeconds)
+        if (forceChance)
+        {
+            offensiveTriggerChanceCacheTime = Time.time;
+            offensiveTriggerChanceCacheResult = true;
+        }
+        else if (Time.time - offensiveTriggerChanceCacheTime > cacheWindowSeconds)
         {
             offensiveTriggerChanceCacheTime = Time.time;
             offensiveTriggerChanceCacheResult = Random.value <= ownTriggerChance;
@@ -1016,6 +1022,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         Vector2Int bestKickDir = Vector2Int.zero;
         Vector2Int bestStandTile = myTile;
         Vector2Int bestMoveDir = Vector2Int.zero;
+        bool bestDefensiveEscapeOnly = false;
         int bestScore = int.MaxValue;
         int ownEarlyBombsNear = 0;
         string rejectedRescue = string.Empty;
@@ -1042,7 +1049,37 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
             if (!TryFindNearestEnemyAligned(bombTile, out PlayerIdentity target, out Vector2Int targetTile, out Vector2Int kickDir))
             {
-                AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} no aligned target");
+                string defensiveReject = string.Empty;
+                Vector2Int defensiveStandTile = myTile;
+                Vector2Int defensiveMoveDir = Vector2Int.zero;
+                Vector2Int defensiveTargetTile = bombTile;
+                bool hasDefensivePlan = forceChance &&
+                    TryFindDefensiveOwnKickPlan(settings, myTile, bombTile, out kickDir, out defensiveStandTile, out defensiveMoveDir, out defensiveTargetTile, out defensiveReject);
+
+                if (!hasDefensivePlan)
+                {
+                    AppendTracePart(
+                        ref rejectedRescue,
+                        $"bomb:{bombTile} no aligned target{(string.IsNullOrEmpty(defensiveReject) ? string.Empty : " defensive:" + defensiveReject)}");
+                    continue;
+                }
+
+                target = null;
+                targetTile = defensiveTargetTile;
+
+                int defensiveScore = distanceFromMe + Manhattan(myTile, defensiveStandTile);
+                if (defensiveScore >= bestScore)
+                    continue;
+
+                bestScore = defensiveScore;
+                bestBomb = bomb;
+                bestTarget = null;
+                bestBombTile = bombTile;
+                bestTargetTile = targetTile;
+                bestKickDir = kickDir;
+                bestStandTile = defensiveStandTile;
+                bestMoveDir = defensiveMoveDir;
+                bestDefensiveEscapeOnly = true;
                 continue;
             }
 
@@ -1104,9 +1141,10 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             bestKickDir = kickDir;
             bestStandTile = standTile;
             bestMoveDir = moveDir;
+            bestDefensiveEscapeOnly = false;
         }
 
-        if (bestBomb == null || bestTarget == null || bestMoveDir == Vector2Int.zero)
+        if (bestBomb == null || (!bestDefensiveEscapeOnly && bestTarget == null) || bestMoveDir == Vector2Int.zero)
         {
             lastDecisionTrace = $"own trigger kick rescue none nearby:{DescribeNearbyBombs(myTile)}";
             if (ownEarlyBombsNear > 0)
@@ -1123,13 +1161,16 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         // explosão em andamento (de outra bomba com fuse quase zero), causando
         // reação em cadeia e morte própria.
         int ownLaneCheckDist = Manhattan(bestBombTile, bestTargetTile);
+        string rescueTargetLabel = bestDefensiveEscapeOnly
+            ? $"escape@{bestTargetTile}"
+            : $"P{bestTarget.playerId}@{bestTargetTile}";
         if (!IsKickLaneSafeFromImminentExplosions(bestBombTile + bestKickDir, bestKickDir, ownLaneCheckDist))
         {
             lastDecisionTrace =
-                $"own trigger kick lane unsafe imminent explosion bomb:{bestBombTile} dir:{bestKickDir} target:P{bestTarget.playerId}@{bestTargetTile}";
+                $"own trigger kick lane unsafe imminent explosion bomb:{bestBombTile} dir:{bestKickDir} target:{rescueTargetLabel}";
             LogKickSurgical(
                 "RESCUE_LANE_UNSAFE",
-                $"my:{myTile} bomb:{bestBombTile} dir:{bestKickDir} target:P{bestTarget.playerId}@{bestTargetTile} laneCheckDist:{ownLaneCheckDist}",
+                $"my:{myTile} bomb:{bestBombTile} dir:{bestKickDir} target:{rescueTargetLabel} laneCheckDist:{ownLaneCheckDist}",
                 true);
             return false;
         }
@@ -1176,19 +1217,19 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                     HasTarget = true,
                     FirstMove = postKickEscapeMove,
                     Reason = postKickEscapeArmed
-                        ? $"direct kick own early bomb toward P{bestTarget.playerId} and escape"
-                        : $"direct kick own early bomb toward P{bestTarget.playerId}",
+                        ? $"direct kick own early bomb toward {rescueTargetLabel} and escape"
+                        : $"direct kick own early bomb toward {rescueTargetLabel}",
                     InputDescription = postKickEscapeArmed
                         ? AppendInput("DirectKick", FirstMoveDescription(postKickEscapeMove))
                         : "DirectKick"
                 };
 
                 lastDecisionTrace =
-                    $"own trigger direct kick bomb {bestBombTile} stand {bestStandTile} target P{bestTarget.playerId}@{bestTargetTile} " +
+                    $"own trigger direct kick bomb {bestBombTile} stand {bestStandTile} target {rescueTargetLabel} " +
                     $"dir {bestKickDir}";
                 LogKickSurgical(
                     "RESCUE_DIRECT_KICK",
-                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop} escape:{postKickEscapeArmed} escapeMove:{FirstMoveDescription(postKickEscapeMove)} escapeTarget:{postKickEscapeTarget} route:{postKickEscapeRoute}",
+                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:{rescueTargetLabel} dir:{bestKickDir} repeat:{repeatArmed} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop} escape:{postKickEscapeArmed} escapeMove:{FirstMoveDescription(postKickEscapeMove)} escapeTarget:{postKickEscapeTarget} route:{postKickEscapeRoute}",
                     true);
                 return true;
             }
@@ -1196,7 +1237,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             lastDecisionTrace = $"own trigger direct kick failed bomb {bestBombTile} stand {bestStandTile} reason {kickFailReason}";
             LogKickSurgical(
                 "RESCUE_DIRECT_FAILED",
-                $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} reason:{kickFailReason}",
+                $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:{rescueTargetLabel} dir:{bestKickDir} reason:{kickFailReason}",
                 true);
             return false;
         }
@@ -1209,19 +1250,105 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             HasTarget = true,
             FirstMove = firstMove,
             Reason = kickNow
-                ? $"kick own early bomb toward P{bestTarget.playerId}"
-                : $"recover own early bomb kick toward P{bestTarget.playerId}",
+                ? $"kick own early bomb toward {rescueTargetLabel}"
+                : $"recover own early bomb kick toward {rescueTargetLabel}",
             InputDescription = FirstMoveDescription(firstMove)
         };
 
         lastDecisionTrace =
-            $"own trigger kick rescue bomb {bestBombTile} stand {bestStandTile} target P{bestTarget.playerId}@{bestTargetTile} " +
+            $"own trigger kick rescue bomb {bestBombTile} stand {bestStandTile} target {rescueTargetLabel} " +
             $"dir {bestKickDir} move {bestMoveDir} solid:{bestBomb.IsSolid}/early:{bestBomb.CanBeKickedEarly}";
         LogKickSurgical(
             "RESCUE_PLAN",
-            $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:P{bestTarget.playerId}@{bestTargetTile} dir:{bestKickDir} move:{bestMoveDir} kickNow:{kickNow} nearby:{DescribeNearbyBombs(myTile)}",
+            $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:{rescueTargetLabel} dir:{bestKickDir} move:{bestMoveDir} kickNow:{kickNow} nearby:{DescribeNearbyBombs(myTile)}",
             true);
         return true;
+    }
+
+    private bool TryFindDefensiveOwnKickPlan(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        Vector2Int bombTile,
+        out Vector2Int kickDir,
+        out Vector2Int standTile,
+        out Vector2Int moveDir,
+        out Vector2Int targetTile,
+        out string rejectReason)
+    {
+        kickDir = Vector2Int.zero;
+        standTile = myTile;
+        moveDir = Vector2Int.zero;
+        targetTile = bombTile;
+        rejectReason = string.Empty;
+
+        int bestScore = int.MaxValue;
+        int bfsMaxDepth = MaxKickSequenceDistanceFromBomb + 2;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            Vector2Int candidateStand = bombTile - dir;
+            Vector2Int candidateTarget = bombTile + dir * 2;
+
+            if (!IsKickLaneOpen(bombTile, dir, 1))
+            {
+                AppendTracePart(ref rejectReason, $"{dir}:lane blocked");
+                continue;
+            }
+
+            if (!IsWalkableTile(candidateStand, bombTile))
+            {
+                AppendTracePart(ref rejectReason, $"{dir}:stand blocked:{candidateStand}");
+                continue;
+            }
+
+            if (!CanReachStandTileAvoidingBomb(myTile, candidateStand, bombTile, bfsMaxDepth))
+            {
+                AppendTracePart(ref rejectReason, $"{dir}:no path stand:{candidateStand}");
+                continue;
+            }
+
+            Vector2Int candidateMove;
+            if (myTile == candidateStand)
+            {
+                candidateMove = dir;
+            }
+            else if (myTile == bombTile)
+            {
+                candidateMove = candidateStand - bombTile;
+                if (!IsCardinalStep(candidateMove) || !IsWalkableTile(candidateStand, bombTile))
+                {
+                    AppendTracePart(ref rejectReason, $"{dir}:recover blocked:{candidateStand}");
+                    continue;
+                }
+            }
+            else if (!TryStepTowardKickStand(myTile, candidateStand, bombTile, out candidateMove))
+            {
+                AppendTracePart(ref rejectReason, $"{dir}:route blocked:{candidateStand}");
+                continue;
+            }
+
+            if (!IsKickLaneSafeFromImminentExplosions(bombTile + dir, dir, 1))
+            {
+                AppendTracePart(ref rejectReason, $"{dir}:lane unsafe");
+                continue;
+            }
+
+            int score = Manhattan(myTile, candidateStand);
+            if (myTile == candidateStand)
+                score -= 4;
+
+            if (score >= bestScore)
+                continue;
+
+            bestScore = score;
+            kickDir = dir;
+            standTile = candidateStand;
+            moveDir = candidateMove;
+            targetTile = candidateTarget;
+        }
+
+        return kickDir != Vector2Int.zero && moveDir != Vector2Int.zero;
     }
 
     private bool TryBuildActionRStopDecision(
@@ -1541,7 +1668,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             }
         }
 
-        return TryFindPostKickFallbackMove(settings, start, out firstMove, out target, out route);
+        route = "no safe post-kick route";
+        return false;
     }
 
     private bool TryFindPostKickFallbackMove(
