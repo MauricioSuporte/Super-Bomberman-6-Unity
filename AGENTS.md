@@ -109,10 +109,8 @@ This file gives repository-specific guidance for AI coding agents working on
 
 ## Validation expectations
 
-- After finishing requested script edits, trigger or wait for Unity script
-  compilation before handing work back whenever the editor or a suitable Unity
-  command-line compile path is available. This avoids leaving the user to focus
-  the Unity Editor just to start compilation before manual testing.
+- Do not trigger Unity builds or script compilation after code edits unless the
+  user explicitly asks for it.
 - Prefer targeted manual validation in the touched scene or mode.
 - For shared gameplay changes, validate both single-player and multiplayer
   behavior when practical.
@@ -121,9 +119,6 @@ This file gives repository-specific guidance for AI coding agents working on
 - The Unity Test Framework package is installed, but there is no obvious
   first-party test suite under `Assets/` yet. Do not claim automated coverage
   unless you actually added or ran it.
-- If Unity script compilation cannot be triggered from the current environment,
-  say so explicitly in the final response and mention whether compilation is
-  still pending in the editor.
 
 ## Safe defaults for agents
 

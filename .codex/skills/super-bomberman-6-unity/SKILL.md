@@ -16,6 +16,8 @@ creating parallel systems or dropping scripts into the wrong folder.
 - Read `references/workflows.md` when the task touches items, abilities, bombs,
   explosions, bosses, mounts, stage gimmicks, save data, unlocks, menus, or
   scene flow.
+- Read `references/battle-mode-com-abilities.md` when the task creates or
+  changes Battle Mode COM AI abilities implementing `IBattleModeComAbility`.
 - Read `references/qa-checklist.md` before closing any gameplay-facing change.
 
 ## Working rules
@@ -79,6 +81,8 @@ creating parallel systems or dropping scripts into the wrong folder.
 ## Typical asks
 
 - Add a new item and wire pickup, effect, and content integration.
+- Create or update a Battle Mode COM AI ability and wire it through the
+  existing COM decision system.
 - Create or fix a boss attack, intro, outro, or Boss Rush behavior.
 - Adjust mount ability logic and keep animation and stage interaction coherent.
 - Add or repair a stage gimmick through tile resolvers and scene wiring.
