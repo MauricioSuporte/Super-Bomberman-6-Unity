@@ -627,6 +627,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 if (bomb == null || bomb.HasExploded)
                     yield break;
 
+                bomb.MarkMovedByKickOrPunch();
                 starts[i] = SnapToGrid(bomb.transform.position, tileSize);
                 ends[i] = starts[i] + kickDir * tileSize;
                 bodies[i] = bomb.GetComponent<Rigidbody2D>();

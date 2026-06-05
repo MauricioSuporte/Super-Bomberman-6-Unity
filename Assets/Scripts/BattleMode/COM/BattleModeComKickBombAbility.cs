@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(PlayerIdentity))]
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(BombController))]
-public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
+public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 {
     // Filtro de diagnóstico: só emite logs [BattleCOMKick] para esta IA (playerId).
     // Use 0 para logar TODAS as IAs. Ajuste conforme qual COM você quer inspecionar.
@@ -83,7 +83,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private Bomb sequenceTrackedBomb;
     private bool sequencePlantDirectionPatched;
     private bool sequenceAllowActionRStop;
-    private string lastDecisionTrace = "not evaluated";
+    protected string lastDecisionTrace = "not evaluated";
     private float lastSurgicalLogTime = -10f;
     private string lastSurgicalLogKey = string.Empty;
 
@@ -97,17 +97,24 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
     private readonly Queue<Vector2Int> escapeOpen = new();
     private readonly Dictionary<Vector2Int, EscapeSearchNode> escapeVisited = new();
 
-    public string DiagnosticName => "KickBomb";
+    public virtual string DiagnosticName => "KickBomb";
     public string LastDecisionTrace => lastDecisionTrace;
 
-    public bool IsAvailable
+    public virtual bool IsAvailable
     {
         get
         {
             CacheReferences();
-            return kickAbility != null && kickAbility.IsEnabled;
+            return IsKickAbilityEnabled && !ShouldDeferToMountedYellowLouieKick();
         }
     }
+
+    protected MovementController Movement => movement;
+    protected BombController BombController => bombController;
+    protected float TileSize => tileSize;
+
+    protected virtual bool IsKickAbilityEnabled => kickAbility != null && kickAbility.IsEnabled;
+    protected virtual bool CanUseActionRStop => true;
 
     private void Awake()
     {
@@ -119,7 +126,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         CacheReferences();
     }
 
-    private void CacheReferences()
+    protected void CacheReferences()
     {
         if (identity == null)
             TryGetComponent(out identity);
@@ -155,9 +162,15 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         }
 
         explosionMask = LayerMask.GetMask("Explosion");
+
+        CacheExtraReferences();
     }
 
-    public bool TryBuildEmergencyDecision(
+    protected virtual void CacheExtraReferences()
+    {
+    }
+
+    public virtual bool TryBuildEmergencyDecision(
         BattleModeComDifficultySettings settings,
         BattleModeComController controller,
         Vector2Int myTile,
@@ -185,11 +198,15 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return true;
         }
 
-        if (Time.time < forceActionRStopUntil &&
+        if (CanUseActionRStop &&
+            Time.time < forceActionRStopUntil &&
             TryBuildActionRStopDecision(settings, myTile, out decision, forceWhenGood: true))
         {
             return true;
         }
+
+        if (TryBuildCustomEmergencyDecision(settings, myTile, currentDangerSeconds, out decision))
+            return true;
 
         if (TryBuildOwnTriggerBombKickDecision(settings, myTile, out decision, forceChance: true))
             return true;
@@ -252,6 +269,22 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 continue;
             }
 
+            if (TryBuildKickActivationInputDecision(
+                    settings,
+                    myTile,
+                    bomb,
+                    myTile + dir,
+                    dir,
+                    240 + DifficultyWeight(settings),
+                    $"activate emergency kick bomb toward {bombDestination}",
+                    out decision))
+            {
+                lastDecisionTrace =
+                    $"emergency input selected dir {dir} bomb {myTile + dir} dest {bombDestination} escape {escapeTile}" +
+                    (escapesThroughVacatedBombTile ? " via vacated bomb tile" : string.Empty);
+                return true;
+            }
+
             decision = new BattleModeComAbilityDecision
             {
                 Action = BattleModeComActionType.KickBomb,
@@ -274,7 +307,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return false;
     }
 
-    public bool TryBuildCandidateDecision(
+    public virtual bool TryBuildCandidateDecision(
         BattleModeComDifficultySettings settings,
         BattleModeComController controller,
         Vector2Int myTile,
@@ -293,7 +326,8 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             TryContinueOffensiveSequence(settings, myTile, out decision))
             return true;
 
-        if (TryBuildActionRStopDecision(
+        if (CanUseActionRStop &&
+            TryBuildActionRStopDecision(
                 settings,
                 myTile,
                 out decision,
@@ -400,6 +434,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             return TryContinueRepeatPlantSequence(settings, myTile, out decision);
 
         Bomb bomb = FindBombAt(sequenceBombTile);
+        if ((bomb == null || bomb.HasExploded || bomb.Owner != bombController) &&
+            IsKickActivationComplete(sequenceTrackedBomb, sequenceBombTile))
+        {
+            bomb = sequenceTrackedBomb;
+        }
+
         if (bomb == null || bomb.HasExploded || bomb.Owner != bombController)
         {
             lastDecisionTrace = $"sequence cancelled bomb missing/exploded/owner tile {sequenceBombTile}";
@@ -465,7 +505,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                 return false;
             }
 
-            if (bomb.IsBeingKicked)
+            if (IsKickActivationComplete(bomb, sequenceBombTile))
             {
                 bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bomb, kickStandTile);
                 bool postKickEscapeArmed = false;
@@ -588,6 +628,24 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
 
             if (myTile == kickStandTile)
             {
+                if (TryBuildKickActivationInputDecision(
+                        settings,
+                        myTile,
+                        bomb,
+                        sequenceBombTile,
+                        sequenceKickDirection,
+                        285 + DifficultyWeight(settings),
+                        "activate kick bomb",
+                        out decision))
+                {
+                    lastDecisionTrace = $"sequence input kick stand {kickStandTile} dir {sequenceKickDirection}";
+                    LogKickSurgical(
+                        "KICK_INPUT",
+                        $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} bomb:{DescribeBomb(bomb)}",
+                        true);
+                    return true;
+                }
+
                 if (TryKickSequenceBombDirect(bomb, sequenceKickDirection, out string kickFailReason))
                 {
                     bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bomb, kickStandTile);
@@ -896,7 +954,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             : 1;
 
         float actionRChance = DifficultyChance(settings, 0.20f, 0.42f, 0.58f);
-        sequenceAllowActionRStop = Random.value < actionRChance;
+        sequenceAllowActionRStop = CanUseActionRStop && Random.value < actionRChance;
     }
 
     private void ArmActionRStopWindowIfPlanned()
@@ -965,8 +1023,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         if (retreatDirection == Vector2.zero)
             retreatDirection = -TileDirectionToVector(sequenceKickDirection);
 
-        movement?.NotifyBombPlanted(bomb, retreatDirection);
-        kickAbility?.NotifyBombPlanted(bomb, retreatDirection);
+        NotifySequenceBombPlanted(bomb, retreatDirection);
         sequencePlantDirectionPatched = true;
 
         LogKickSurgical(
@@ -1187,6 +1244,26 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         bool kickNow = myTile == bestStandTile;
         if (kickNow)
         {
+            if (TryBuildKickActivationInputDecision(
+                    settings,
+                    myTile,
+                    bestBomb,
+                    bestBombTile,
+                    bestKickDir,
+                    300 + DifficultyWeight(settings),
+                    $"activate own early bomb kick toward {rescueTargetLabel}",
+                    out decision))
+            {
+                lastDecisionTrace =
+                    $"own trigger input kick bomb {bestBombTile} stand {bestStandTile} target {rescueTargetLabel} " +
+                    $"dir {bestKickDir}";
+                LogKickSurgical(
+                    "RESCUE_INPUT_KICK",
+                    $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:{rescueTargetLabel} dir:{bestKickDir}",
+                    true);
+                return true;
+            }
+
             if (TryKickSequenceBombDirect(bestBomb, bestKickDir, out string kickFailReason))
             {
                 bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bestBomb, bestStandTile);
@@ -1263,6 +1340,22 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
             $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:{rescueTargetLabel} dir:{bestKickDir} move:{bestMoveDir} kickNow:{kickNow} nearby:{DescribeNearbyBombs(myTile)}",
             true);
         return true;
+    }
+
+    protected virtual void NotifySequenceBombPlanted(Bomb bomb, Vector2 retreatDirection)
+    {
+        movement?.NotifyBombPlanted(bomb, retreatDirection);
+        kickAbility?.NotifyBombPlanted(bomb, retreatDirection);
+    }
+
+    protected virtual bool TryBuildCustomEmergencyDecision(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+        return false;
     }
 
     private bool TryFindDefensiveOwnKickPlan(
@@ -1358,6 +1451,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         bool forceWhenGood = false)
     {
         decision = default;
+
+        if (!CanUseActionRStop)
+        {
+            lastDecisionTrace = "actionR unavailable for kick ability";
+            return false;
+        }
 
         if (Time.time - lastActionRStopTime < ActionRStopCooldownSeconds)
         {
@@ -1986,7 +2085,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return !IsDangerousAt(vacatedBombTile, eta, settings, kickedBomb);
     }
 
-    private bool IsWalkableTile(Vector2Int tile, Vector2Int startTile)
+    protected bool IsWalkableTile(Vector2Int tile, Vector2Int startTile)
     {
         if (!HasGroundTile(tile))
             return false;
@@ -2049,7 +2148,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return dangerSeconds - arrivalSeconds - settings.dangerReactionSeconds;
     }
 
-    private float GetDangerSeconds(Vector2Int tile, Bomb ignoredBomb = null)
+    protected float GetDangerSeconds(Vector2Int tile, Bomb ignoredBomb = null)
     {
         if (explosionMask != 0)
         {
@@ -2105,7 +2204,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return true;
     }
 
-    private Bomb FindBombAt(Vector2Int tile)
+    protected Bomb FindBombAt(Vector2Int tile)
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
@@ -2184,6 +2283,25 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                !bomb.HasExploded &&
                !bomb.IsBeingKicked &&
                bomb.CanBeKicked;
+    }
+
+    protected virtual bool IsKickActivationComplete(Bomb bomb, Vector2Int originalBombTile)
+    {
+        return bomb != null && bomb.IsBeingKicked;
+    }
+
+    protected virtual bool TryBuildKickActivationInputDecision(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        Bomb bomb,
+        Vector2Int bombTile,
+        Vector2Int kickDirection,
+        int weight,
+        string reason,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+        return false;
     }
 
     private bool TryKickSequenceBombDirect(Bomb bomb, Vector2Int kickDirection, out string failReason)
@@ -2284,7 +2402,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
                Time.time <= sequenceDirectKickRetryUntil;
     }
 
-    private bool HasGroundTile(Vector2Int tile)
+    protected bool HasGroundTile(Vector2Int tile)
     {
         if (groundTilemap == null)
             return true;
@@ -2292,12 +2410,12 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return groundTilemap.HasTile(WorldToCell(groundTilemap, tile));
     }
 
-    private bool HasDestructibleTile(Vector2Int tile)
+    protected bool HasDestructibleTile(Vector2Int tile)
     {
         return destructibleTilemap != null && destructibleTilemap.HasTile(WorldToCell(destructibleTilemap, tile));
     }
 
-    private bool HasIndestructibleTile(Vector2Int tile)
+    protected bool HasIndestructibleTile(Vector2Int tile)
     {
         return indestructibleTilemap != null && indestructibleTilemap.HasTile(WorldToCell(indestructibleTilemap, tile));
     }
@@ -2333,7 +2451,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return tilemap.WorldToCell(TileToWorld(tile));
     }
 
-    private Vector2Int WorldToTile(Vector2 world)
+    protected Vector2Int WorldToTile(Vector2 world)
     {
         float size = Mathf.Max(0.01f, tileSize);
         return new Vector2Int(
@@ -2378,7 +2496,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 
-    private static int DifficultyWeight(BattleModeComDifficultySettings settings)
+    protected static int DifficultyWeight(BattleModeComDifficultySettings settings)
     {
         return settings.difficulty switch
         {
@@ -2402,7 +2520,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         };
     }
 
-    private static Vector2 TileDirectionToVector(Vector2Int direction)
+    protected static Vector2 TileDirectionToVector(Vector2Int direction)
     {
         if (direction == Vector2Int.up)
             return Vector2.up;
@@ -2419,7 +2537,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return Vector2.zero;
     }
 
-    private static string FirstMoveDescription(Vector2 move)
+    protected static string FirstMoveDescription(Vector2 move)
     {
         if (move == Vector2.up)
             return "MoveUp";
@@ -2436,7 +2554,7 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return "none";
     }
 
-    private static string AppendInput(string current, string next)
+    protected static string AppendInput(string current, string next)
     {
         if (string.IsNullOrWhiteSpace(next) || next == "none")
             return string.IsNullOrWhiteSpace(current) ? "none" : current;
@@ -2450,9 +2568,24 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         return current + "+" + next;
     }
 
+    private bool ShouldDeferToMountedYellowLouieKick()
+    {
+        if (this is BattleModeComYellowLouieKickAbility)
+            return false;
+
+        return TryGetComponent<BattleModeComYellowLouieKickAbility>(out var yellowCom) &&
+               yellowCom != null &&
+               yellowCom.IsMountedYellowLouieKickAvailable;
+    }
+
+    protected virtual string BuildAbilityAvailabilityTrace()
+    {
+        return $"kick:{(kickAbility != null)} kickEnabled:{(kickAbility != null && kickAbility.IsEnabled)}";
+    }
+
     private string BuildAvailabilityTrace(string prefix)
     {
-        return $"{prefix} kick:{(kickAbility != null)} kickEnabled:{(kickAbility != null && kickAbility.IsEnabled)} " +
+        return $"{prefix} {BuildAbilityAvailabilityTrace()} " +
                $"movement:{(movement != null)} bombController:{(bombController != null)}";
     }
 
@@ -2487,6 +2620,11 @@ public sealed class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeCom
         // receba um roll limpo, sem herdar o resultado da sequência encerrada.
         offensiveTriggerChanceCacheTime = -10f;
         offensiveTriggerChanceCacheResult = false;
+        OnOffensiveSequenceReset();
+    }
+
+    protected virtual void OnOffensiveSequenceReset()
+    {
     }
 
     private static void AppendTracePart(ref string trace, string part)

@@ -1140,6 +1140,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public Vector2 GetLogicalPosition() => lastPos;
 
+    public void MarkMovedByKickOrPunch()
+    {
+        WasMovedByKickOrPunch = true;
+    }
+
     public void ForceSetLogicalPosition(Vector2 worldPos)
     {
         worldPos.x = Mathf.Round(worldPos.x);

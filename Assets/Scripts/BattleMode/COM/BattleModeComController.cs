@@ -234,9 +234,35 @@ public sealed class BattleModeComController : MonoBehaviour
             }
         }
 
+        bool yellowLouieKickEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(YellowLouieKickAbility.AbilityId);
+
+        BattleModeComKickBombAbility exactKickCom = FindExactKickBombComAbility();
+        bool hasYellowLouieKickCom = TryGetComponent<BattleModeComYellowLouieKickAbility>(out _);
+        if (isCom &&
+            yellowLouieKickEnabled &&
+            !hasYellowLouieKickCom)
+        {
+            if (exactKickCom != null)
+            {
+                Destroy(exactKickCom);
+                exactKickCom = null;
+            }
+            else
+            {
+                gameObject.AddComponent<BattleModeComYellowLouieKickAbility>();
+                hasYellowLouieKickCom = true;
+            }
+
+            abilitySystemVersion = -2;
+        }
+
         if (abilitySystem != null &&
             abilitySystem.IsEnabled(BombKickAbility.AbilityId) &&
-            !TryGetComponent<BattleModeComKickBombAbility>(out _))
+            !yellowLouieKickEnabled &&
+            !hasYellowLouieKickCom &&
+            exactKickCom == null)
         {
             gameObject.AddComponent<BattleModeComKickBombAbility>();
             abilitySystemVersion = -2;
@@ -280,6 +306,19 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return abilitySystem;
+    }
+
+    private BattleModeComKickBombAbility FindExactKickBombComAbility()
+    {
+        var abilities = GetComponents<BattleModeComKickBombAbility>();
+        for (int i = 0; i < abilities.Length; i++)
+        {
+            BattleModeComKickBombAbility ability = abilities[i];
+            if (ability != null && ability.GetType() == typeof(BattleModeComKickBombAbility))
+                return ability;
+        }
+
+        return null;
     }
 
     private void LogKickLoadDiagnostic(string message)
