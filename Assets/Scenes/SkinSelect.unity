@@ -335,6 +335,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -1007,6 +1008,8 @@ MonoBehaviour:
   fadeOutOnConfirmDuration: 1
   useFadeTransitions: 1
   manageSelectMusic: 1
+  useBattleModeComAssignment: 0
+  postConfirmHoldSeconds: 0
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
   columns: 5
@@ -1024,6 +1027,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
   - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
   - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
+  logCursorPositionDebug: 1
+  cursorPositionDebugFrames: 8
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
   cursorYOffset: 10
@@ -1044,9 +1049,9 @@ MonoBehaviour:
   endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
   endStageYOffset: 10
   endStageLoopsToStop: 1
-  selectMusic: {fileID: 8300000, guid: 41467db587cc70f42af59ac5abd81be3, type: 3}
-  selectMusicLoop: {fileID: 8300000, guid: 6a0bcd3577b8b13489cf8bcf2275467b, type: 3}
-  selectMusicVolume: 1
+  selectMusic: {fileID: 8300000, guid: e4c38e02c55a4284ab2b5678b839b24f, type: 3}
+  selectMusicLoop: {fileID: 0}
+  selectMusicVolume: 0.6
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1
@@ -1146,6 +1151,8 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
