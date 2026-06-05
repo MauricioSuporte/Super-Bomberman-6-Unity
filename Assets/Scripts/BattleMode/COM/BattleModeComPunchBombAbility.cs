@@ -25,8 +25,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 {
     // Filtro de diagnóstico: 0 = todos os jogadores COM.
     public const int DiagnosticPlayerIdFilter = 0;
-    private static readonly bool EnableSurgicalDiagnostics = true;
-    private const float SurgicalLogIntervalSeconds = 0.35f;
+    private static readonly bool EnableDefensivePunchDiagnostics = true;
+    private const float DefensivePunchLogIntervalSeconds = 0.35f;
 
     // Cooldown entre sequências ofensivas
     private const float OffensiveCooldownSeconds = 1.5f;
@@ -115,8 +115,10 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
     // ─── Diagnóstico ───────────────────────────────────────────────────────
     private string lastDecisionTrace = "not evaluated";
-    private float lastSurgicalLogTime = -10f;
-    private string lastSurgicalLogKey = string.Empty;
+    private float lastDefensivePunchLogTime = -10f;
+    private string lastDefensivePunchLogKey = string.Empty;
+    private readonly List<string> defensivePunchScanNotes = new List<string>(4);
+    private readonly List<string> defensiveSafeExitNotes = new List<string>(4);
 
     // ─── IBattleModeComAbility ─────────────────────────────────────────────
     public string DiagnosticName => "PunchBomb";
@@ -627,14 +629,18 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (currentDangerSeconds < DefensivePunchMinFuseSeconds)
         {
             lastDecisionTrace = "defensive punch: fuse too low";
+            LogSurgical("DEF_REJECT",
+                $"reason:danger-fuse-low my:{myTile} danger:{FormatDanger(currentDangerSeconds)} min:{DefensivePunchMinFuseSeconds:F2}");
             return false;
         }
 
         // Conta saídas seguras sem socar — se há saídas suficientes, não precisa socar.
         int safeExits = CountSafeExits(settings, myTile);
-        if (safeExits >= 2)
+        if (safeExits > 0)
         {
-            lastDecisionTrace = $"defensive punch: enough exits {safeExits}";
+            lastDecisionTrace = $"defensive punch: not cornered exits:{safeExits}";
+            LogSurgical("DEF_REJECT",
+                $"reason:not-cornered my:{myTile} danger:{FormatDanger(currentDangerSeconds)} exits:{safeExits} exitsScan:{BuildDefensiveSafeExitSummary()} adjacentBombs:{BuildAdjacentPunchBombSummary(myTile)}");
             return false;
         }
 
@@ -642,6 +648,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         Bomb bestBomb = null;
         Vector2Int bestPunchDir = Vector2Int.zero;
         float bestFuse = float.PositiveInfinity;
+        defensivePunchScanNotes.Clear();
 
         for (int i = 0; i < CardinalTiles.Length; i++)
         {
@@ -649,12 +656,25 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
             Vector2Int neighborTile = myTile + dir;
             Bomb bomb = FindBombAt(neighborTile);
 
-            if (bomb == null || !bomb.CanBePunched)
+            if (bomb == null)
+            {
+                defensivePunchScanNotes.Add($"{DirectionLabel(dir)}:{neighborTile}:no-bomb");
                 continue;
+            }
+
+            bool canPunchNow = CanDefensivePunchBomb(bomb);
+            if (!canPunchNow)
+            {
+                defensivePunchScanNotes.Add($"{DirectionLabel(dir)}:{DescribeBomb(bomb)}:cannot-punch");
+                continue;
+            }
 
             float fuse = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
             if (fuse < DefensivePunchMinFuseSeconds)
+            {
+                defensivePunchScanNotes.Add($"{DirectionLabel(dir)}:{DescribeBomb(bomb)}:fuse-low");
                 continue;
+            }
 
             // Verifica que socar a bomba nessa direção a move para longe (não volta na IA).
             // Ao socar em direção "dir", a bomba voa mais "dir" tiles, saindo do range.
@@ -676,8 +696,15 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
                     opensPerpendicular = true;
 
                 if (!opensPerpendicular)
+                {
+                    defensivePunchScanNotes.Add(
+                        $"{DirectionLabel(dir)}:{DescribeBomb(bomb)}:blast:{blastRadius}:no-perp-open");
                     continue;
+                }
             }
+
+            defensivePunchScanNotes.Add(
+                $"{DirectionLabel(dir)}:{DescribeBomb(bomb)}:candidate-{PunchReadinessLabel(bomb)}:blast:{blastRadius}:current-safe:{punchMakesCurrentTileSafe}");
 
             if (fuse < bestFuse)
             {
@@ -690,14 +717,20 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (bestBomb == null)
         {
             lastDecisionTrace = "defensive punch: no punchable bomb adjacent";
+            LogSurgical("DEF_REJECT",
+                $"reason:no-eligible-adjacent-bomb my:{myTile} danger:{FormatDanger(currentDangerSeconds)} exits:{safeExits} scan:{BuildDefensiveScanSummary()}",
+                force: true);
             return false;
         }
 
         // Soco defensivo: move em direção à bomba (para atualizar facing) + ActionC.
         Vector2 punchMove = TileDirectionToVector(bestPunchDir);
+        if (movement != null)
+            movement.ForceFacingDirection(punchMove);
+
         decision = new BattleModeComAbilityDecision
         {
-            Action = BattleModeComActionType.Reposition,
+            Action = BattleModeComActionType.KickBomb,
             Weight = 320 + DifficultyWeight(settings),
             TargetTile = myTile + bestPunchDir * (1 + PunchDistanceTiles),
             HasTarget = true,
@@ -709,8 +742,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         lastDecisionTrace =
             $"DEFENSIVE_PUNCH dir:{bestPunchDir} bomb:{myTile + bestPunchDir} fuse:{bestFuse:F2} exits:{safeExits}";
-        LogSurgical("DEFENSIVE_PUNCH",
-            $"my:{myTile} dir:{bestPunchDir} bombTile:{myTile + bestPunchDir} fuse:{bestFuse:F2} safeExits:{safeExits}",
+        LogSurgical("DEF_ACCEPT",
+            $"my:{myTile} dir:{DirectionLabel(bestPunchDir)} action:{decision.Action} forcedFacing:{FirstMoveDescription(punchMove)} bomb:{DescribeBomb(bestBomb)} danger:{FormatDanger(currentDangerSeconds)} exits:{safeExits} target:{decision.TargetTile} input:{decision.InputDescription} scan:{BuildDefensiveScanSummary()}",
             force: true);
         return true;
     }
@@ -985,7 +1018,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (Time.time - offensiveTriggerChanceCacheTime < 0.001f)
             return offensiveTriggerChanceCacheResult;
 
-        float chance = DifficultyChance(settings, 0.1f, 0.25f, 0.99f);
+        float chance = DifficultyChance(settings, 0.1f, 0.25f, 0.50f);
         bool result = Random.value <= chance;
         offensiveTriggerChanceCacheTime = Time.time;
         offensiveTriggerChanceCacheResult = result;
@@ -1002,13 +1035,86 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     private int CountSafeExits(BattleModeComDifficultySettings settings, Vector2Int myTile)
     {
         int count = 0;
+        defensiveSafeExitNotes.Clear();
+
         for (int i = 0; i < CardinalTiles.Length; i++)
         {
-            Vector2Int next = myTile + CardinalTiles[i];
-            if (!IsWalkableTile(next, myTile)) continue;
-            if (!IsDangerousAt(next, EstimateTraversalSeconds(1), settings)) count++;
+            Vector2Int dir = CardinalTiles[i];
+            Vector2Int next = myTile + dir;
+            Bomb bomb = FindBombAt(next);
+
+            if (!IsWalkableTile(next, myTile))
+            {
+                defensiveSafeExitNotes.Add(
+                    $"{DirectionLabel(dir)}:{next}:blocked bomb:{DescribeBomb(bomb)}");
+                continue;
+            }
+
+            float eta = EstimateTraversalSeconds(1);
+            float danger = GetDangerSeconds(next);
+            float requiredSafeSeconds = eta + settings.safeTileMinimumSeconds + settings.dangerReactionSeconds;
+            bool safeEnough = HasSafeEscapeRouteThroughFirstStep(settings, myTile, dir, out int routeDepth);
+            defensiveSafeExitNotes.Add(
+                $"{DirectionLabel(dir)}:{next}:walkable danger:{FormatDanger(danger)} eta:{eta:F2} required:{requiredSafeSeconds:F2} routeDepth:{routeDepth} safe:{safeEnough}");
+
+            if (safeEnough)
+                count++;
         }
+
         return count;
+    }
+
+    private bool HasSafeEscapeRouteThroughFirstStep(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        Vector2Int firstStep,
+        out int routeDepth)
+    {
+        routeDepth = -1;
+
+        Vector2Int firstTile = start + firstStep;
+        if (IsDangerousAt(firstTile, EstimateTraversalSeconds(1), settings))
+            return false;
+
+        escapeVisited.Clear();
+        escapeOpen.Clear();
+
+        escapeVisited[start] = new EscapeNode { Parent = start, Depth = 0 };
+        escapeVisited[firstTile] = new EscapeNode { Parent = start, Depth = 1 };
+        escapeOpen.Enqueue(firstTile);
+
+        int maxDepth = Mathf.Max(3, settings.searchDepth + 4);
+
+        while (escapeOpen.Count > 0)
+        {
+            Vector2Int tile = escapeOpen.Dequeue();
+            EscapeNode node = escapeVisited[tile];
+            float eta = EstimateTraversalSeconds(node.Depth);
+            float dangerSeconds = GetDangerSeconds(tile);
+
+            if (float.IsInfinity(dangerSeconds) &&
+                !IsDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings))
+            {
+                routeDepth = node.Depth;
+                return true;
+            }
+
+            if (node.Depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (escapeVisited.ContainsKey(next)) continue;
+                if (!IsWalkableTile(next, tile)) continue;
+                if (IsDangerousAt(next, EstimateTraversalSeconds(node.Depth + 1), settings)) continue;
+
+                escapeVisited[next] = new EscapeNode { Parent = tile, Depth = node.Depth + 1 };
+                escapeOpen.Enqueue(next);
+            }
+        }
+
+        return false;
     }
 
     private Bomb FindBombAt(Vector2Int tile)
@@ -1020,6 +1126,24 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         }
         return null;
     }
+
+    private static bool CanDefensivePunchBomb(Bomb bomb)
+    {
+        if (bomb == null)
+            return false;
+
+        if (bomb.CanBePunched)
+            return true;
+
+        // BombPunchAbility/StartPunch both allow early punch before the bomb collider
+        // becomes solid, which is exactly the trap case after an adjacent bomb is placed.
+        return !bomb.HasExploded &&
+               !bomb.IsBeingKicked &&
+               !bomb.IsBeingPunched;
+    }
+
+    private static string PunchReadinessLabel(Bomb bomb) =>
+        bomb != null && bomb.CanBePunched ? "solid" : "early";
 
     private float GetDangerSeconds(Vector2Int tile)
     {
@@ -1106,6 +1230,10 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         destructibleTilemap != null &&
         destructibleTilemap.HasTile(destructibleTilemap.WorldToCell(TileToWorld(tile)));
 
+    private bool HasGroundTile(Vector2Int tile) =>
+        groundTilemap == null ||
+        groundTilemap.HasTile(groundTilemap.WorldToCell(TileToWorld(tile)));
+
     private float EstimateTraversalSeconds(int depth) =>
         depth * (tileSize / Mathf.Max(0.01f, movement != null ? movement.speed : 4f));
 
@@ -1145,6 +1273,58 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         return $"{tile}/punched:{bomb.IsBeingPunched}/can:{bomb.CanBePunched}/fuse:{FormatDanger(bomb.RemainingFuseSeconds)}";
     }
 
+    private static string DirectionLabel(Vector2Int dir)
+    {
+        if (dir == Vector2Int.up) return "U";
+        if (dir == Vector2Int.down) return "D";
+        if (dir == Vector2Int.left) return "L";
+        if (dir == Vector2Int.right) return "R";
+        return dir.ToString();
+    }
+
+    private string BuildDefensiveScanSummary() =>
+        defensivePunchScanNotes.Count == 0
+            ? "empty"
+            : string.Join("|", defensivePunchScanNotes);
+
+    private string BuildDefensiveSafeExitSummary() =>
+        defensiveSafeExitNotes.Count == 0
+            ? "empty"
+            : string.Join("|", defensiveSafeExitNotes);
+
+    private string BuildAdjacentPunchBombSummary(Vector2Int myTile)
+    {
+        defensivePunchScanNotes.Clear();
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            Vector2Int neighborTile = myTile + dir;
+            Bomb bomb = FindBombAt(neighborTile);
+
+            if (bomb == null)
+            {
+                defensivePunchScanNotes.Add($"{DirectionLabel(dir)}:{neighborTile}:no-bomb");
+                continue;
+            }
+
+            int blastRadius = bomb.Owner != null
+                ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb))
+                : 2;
+            Vector2Int kickLandingTile = neighborTile + dir;
+            bool kickLandingBlocked =
+                !HasGroundTile(kickLandingTile) ||
+                HasIndestructibleTile(kickLandingTile) ||
+                HasDestructibleTile(kickLandingTile) ||
+                FindBombAt(kickLandingTile) != null;
+
+            defensivePunchScanNotes.Add(
+                $"{DirectionLabel(dir)}:{DescribeBomb(bomb)}:punch:{CanDefensivePunchBomb(bomb)}:{PunchReadinessLabel(bomb)}:blast:{blastRadius}:kickLanding:{kickLandingTile}:kickBlocked:{kickLandingBlocked}");
+        }
+
+        return BuildDefensiveScanSummary();
+    }
+
     private static int DifficultyWeight(BattleModeComDifficultySettings settings) =>
         settings.difficulty switch
         {
@@ -1164,18 +1344,20 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
     private void LogSurgical(string key, string message, bool force = false)
     {
-        if (!EnableSurgicalDiagnostics) return;
+        if (!EnableDefensivePunchDiagnostics) return;
+        if (!key.StartsWith("DEF_")) return;
 
         int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
         if (DiagnosticPlayerIdFilter != 0 && id != DiagnosticPlayerIdFilter) return;
 
+        string logKey = key + ":" + message;
         if (!force &&
-            key == lastSurgicalLogKey &&
-            Time.time - lastSurgicalLogTime < SurgicalLogIntervalSeconds)
+            logKey == lastDefensivePunchLogKey &&
+            Time.time - lastDefensivePunchLogTime < DefensivePunchLogIntervalSeconds)
             return;
 
-        lastSurgicalLogKey = key;
-        lastSurgicalLogTime = Time.time;
+        lastDefensivePunchLogKey = logKey;
+        lastDefensivePunchLogTime = Time.time;
         Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
         Debug.Log($"[BattleCOMPunch][P{id}] tile:{tile} state:{sequenceState} {key} {message}", this);
     }
