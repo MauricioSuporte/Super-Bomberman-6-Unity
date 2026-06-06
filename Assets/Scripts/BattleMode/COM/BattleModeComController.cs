@@ -29,6 +29,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float FarmTargetJitter = 0.5f;
     private const float ChainBombFuseSafetyMarginSeconds = 0.25f;
     private const int ChainBombMinimumEscapeBranches = 3;
+    private const float ChainBombMaxPlantingSeconds = 1.5f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -84,6 +85,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private string currentReason = "startup";
     private string currentInputDescription = "none";
     private float lastSafetyHoldLogTime = -10f;
+    private float chainBombPlantingStartedTime = -10f;
     private Vector2Int safeCenterTargetTile;
     private bool hasSafeCenterTarget;
     private bool currentMoveFollowsEscapeRoute;
@@ -444,7 +446,13 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (HasOwnUnresolvedBombOrExplosion())
         {
-            if (TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
+            if (chainBombPlantingStartedTime < 0f)
+                chainBombPlantingStartedTime = Time.time;
+
+            bool chainPlantingTimeExpired = Time.time - chainBombPlantingStartedTime > ChainBombMaxPlantingSeconds;
+
+            if (!chainPlantingTimeExpired &&
+                TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
             {
                 ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, chain, "chainBomb");
                 return;
@@ -471,6 +479,7 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        chainBombPlantingStartedTime = -10f;
         hasSafeCenterTarget = false;
 
         if (TryEmitControlBomb(settings, myTile, currentDangerSeconds))
