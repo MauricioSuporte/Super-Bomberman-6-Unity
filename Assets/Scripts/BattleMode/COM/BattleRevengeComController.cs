@@ -14,6 +14,9 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private const float NearHitTolerance = 1.1f;
     private const float MinimumNearShotChance = 0.62f;
     private const float MaximumNearShotChance = 0.88f;
+    private const float NormalDifficultyNextShotDelaySeconds = 5f;
+    private const float EasyDifficultyNextShotDelaySeconds = 10f;
+
     private const int MinLaunchDistanceTiles = 3;
     private const int MaxLaunchDistanceTiles = 7;
 
@@ -40,6 +43,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private bool holdingLaunch;
     private float launchHoldStartedAt;
     private int desiredLaunchDistance = MinLaunchDistanceTiles;
+    private float nextAiLaunchAllowedAt;
     private float lastSurgicalLogTime = -10f;
     private string lastSurgicalLogKey = string.Empty;
 
@@ -121,6 +125,21 @@ public sealed class BattleRevengeComController : MonoBehaviour
     {
         if (plan.HasViableShot)
         {
+            if (!CanStartOrContinueLaunch())
+            {
+                float remaining = Mathf.Max(0f, nextAiLaunchAllowedAt - Time.unscaledTime);
+
+                StopCharging();
+
+                PlayerAction roamAction = GetRoamAction();
+                SLog(
+                    "SHOT_WAITING_RECHARGE",
+                    $"{FormatPlan(plan)} remaining:{remaining:F2} action:{roamAction}");
+
+                SetMovement(roamAction);
+                return;
+            }
+
             ClearMovementInputs();
             SLog("SHOT_VIABLE", FormatPlan(plan), force: true);
             HandleLaunchCharge(plan.DistanceTiles);
@@ -128,9 +147,17 @@ public sealed class BattleRevengeComController : MonoBehaviour
         }
 
         StopCharging();
-        PlayerAction roamAction = GetRoamAction();
-        SLog("PATROL_NO_SHOT", $"{FormatPlan(plan)} action:{roamAction}");
-        SetMovement(roamAction);
+        PlayerAction patrolAction = GetPatrolAction(plan.DesiredWall);
+        SLog("PATROL_NO_SHOT", $"{FormatPlan(plan)} action:{patrolAction}");
+        SetMovement(patrolAction);
+    }
+
+    private bool CanStartOrContinueLaunch()
+    {
+        if (holdingLaunch)
+            return true;
+
+        return Time.unscaledTime >= nextAiLaunchAllowedAt;
     }
 
     private bool TryFindLaunchPlan(out LaunchPlan bestPlan)
@@ -184,6 +211,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
             float approachScore = wins * 100f - Vector2.Distance(cart.transform.position, targetPosition);
             approachScore += UnityEngine.Random.Range(-scoreNoiseMagnitude, scoreNoiseMagnitude);
+
             if (approachScore > bestScore)
             {
                 bestScore = approachScore;
@@ -265,10 +293,12 @@ public sealed class BattleRevengeComController : MonoBehaviour
             holdingLaunch = true;
             launchHoldStartedAt = Time.unscaledTime;
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, true);
+
             SLog(
                 "CHARGE_START",
-                $"distance:{desiredLaunchDistance} holdStart:{launchHoldStartedAt:F2}",
+                $"distance:{desiredLaunchDistance} holdStart:{launchHoldStartedAt:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
                 force: true);
+
             return;
         }
 
@@ -282,13 +312,15 @@ public sealed class BattleRevengeComController : MonoBehaviour
                 "CHARGE_RELEASE",
                 $"distance:{desiredLaunchDistance} held:{heldSeconds:F2} required:{requiredHoldSeconds:F2}",
                 force: true);
-            StopCharging();
+
+            StopChargingAndStartNextShotDelay();
         }
         else
         {
             SLog(
                 "CHARGE_HOLD",
                 $"distance:{desiredLaunchDistance} held:{heldSeconds:F2} required:{requiredHoldSeconds:F2}");
+
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, true);
         }
     }
@@ -304,6 +336,69 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         SLog("CHARGE_STOP", $"distance:{desiredLaunchDistance}", force: true);
         holdingLaunch = false;
+    }
+
+    private void StopChargingAndStartNextShotDelay()
+    {
+        if (!holdingLaunch)
+            return;
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input != null)
+            input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, false);
+
+        float delaySeconds = GetNextShotDelaySeconds();
+        nextAiLaunchAllowedAt = Time.unscaledTime + delaySeconds;
+
+        SLog(
+            "CHARGE_STOP_AND_RECHARGE",
+            $"distance:{desiredLaunchDistance} delay:{delaySeconds:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
+            force: true);
+
+        holdingLaunch = false;
+    }
+
+    private float GetNextShotDelaySeconds()
+    {
+        float cartCooldownSeconds = BattleRevengeSystem.Instance != null
+            ? BattleRevengeSystem.Instance.CartBombCooldownSeconds
+            : 2.5f;
+
+        BattleModeComputerLevel computerLevel = SaveSystem.GetBattleModeComputerLevel();
+
+        switch (computerLevel)
+        {
+            case BattleModeComputerLevel.Easy:
+                return Mathf.Max(cartCooldownSeconds, EasyDifficultyNextShotDelaySeconds);
+
+            case BattleModeComputerLevel.Hard:
+                return cartCooldownSeconds;
+
+            case BattleModeComputerLevel.Normal:
+            default:
+                return Mathf.Max(cartCooldownSeconds, NormalDifficultyNextShotDelaySeconds);
+        }
+    }
+
+    private PlayerAction GetPatrolAction(RevengeTargetWall desiredWall)
+    {
+        switch (desiredWall)
+        {
+            case RevengeTargetWall.Left:
+                return PlayerAction.MoveLeft;
+
+            case RevengeTargetWall.Right:
+                return PlayerAction.MoveRight;
+
+            case RevengeTargetWall.Top:
+                return PlayerAction.MoveUp;
+
+            case RevengeTargetWall.Bottom:
+                return PlayerAction.MoveDown;
+
+            default:
+                return GetRoamAction();
+        }
     }
 
     private PlayerAction GetRoamAction()
@@ -370,14 +465,20 @@ public sealed class BattleRevengeComController : MonoBehaviour
     {
         holdingLaunch = false;
         desiredLaunchDistance = MinLaunchDistanceTiles;
+        nextAiLaunchAllowedAt = 0f;
+
         RandomizePersonality();
+
         nextThinkTime = Time.unscaledTime + UnityEngine.Random.Range(0f, ThinkIntervalSeconds + thinkIntervalJitter);
         roamWallSwitchAt = Time.unscaledTime + UnityEngine.Random.Range(0f, roamIntervalSeconds);
+
         ClearSyntheticInputs();
+
         SLog(
             "RESET",
             $"roamIndex:{roamWallIndex} roamStep:{roamWallStep} thinkJitter:{thinkIntervalJitter:F3} " +
-            $"roamInterval:{roamIntervalSeconds:F2} noise:{scoreNoiseMagnitude:F1} releaseJitter:{releaseJitterSeconds:F3} nearChance:{nearShotChance:F2}",
+            $"roamInterval:{roamIntervalSeconds:F2} noise:{scoreNoiseMagnitude:F1} releaseJitter:{releaseJitterSeconds:F3} " +
+            $"nearChance:{nearShotChance:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
             force: true);
     }
 
@@ -414,6 +515,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
     {
         int targetId = plan.Target != null ? plan.Target.playerId : 0;
         Vector2 targetPos = plan.Target != null ? (Vector2)plan.Target.transform.position : Vector2.zero;
+
         return
             $"target:P{targetId}@{targetPos} wins:{plan.TargetWins} distance:{plan.DistanceTiles} " +
             $"error:{plan.LandingError:F2} viable:{plan.HasViableShot} wall:{plan.DesiredWall} " +
