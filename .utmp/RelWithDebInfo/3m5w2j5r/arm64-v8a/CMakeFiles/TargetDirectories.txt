@@ -1,0 +1,5 @@
+C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3m5w2j5r/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3m5w2j5r/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3m5w2j5r/arm64-v8a/FramePacing/CMakeFiles/swappywrapper.dir
+C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3m5w2j5r/arm64-v8a/FramePacing/CMakeFiles/edit_cache.dir
+C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3m5w2j5r/arm64-v8a/FramePacing/CMakeFiles/rebuild_cache.dir
