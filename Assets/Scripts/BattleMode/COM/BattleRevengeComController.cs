@@ -16,6 +16,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private const float MaximumNearShotChance = 0.88f;
     private const float NormalDifficultyNextShotDelaySeconds = 5f;
     private const float EasyDifficultyNextShotDelaySeconds = 10f;
+    private const float SameWallTargetAxisTolerance = 0.25f;
 
     private const int MinLaunchDistanceTiles = 3;
     private const int MaxLaunchDistanceTiles = 7;
@@ -35,6 +36,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private float roamWallSwitchAt;
     private int roamWallIndex;
     private int roamWallStep = 1;
+    private int sameWallFallbackStep = 1;
     private float thinkIntervalJitter;
     private float roamIntervalSeconds = 1.35f;
     private float scoreNoiseMagnitude;
@@ -147,7 +149,8 @@ public sealed class BattleRevengeComController : MonoBehaviour
         }
 
         StopCharging();
-        PlayerAction patrolAction = GetPatrolAction(plan.DesiredWall);
+
+        PlayerAction patrolAction = GetPatrolAction(plan);
         SLog("PATROL_NO_SHOT", $"{FormatPlan(plan)} action:{patrolAction}");
         SetMovement(patrolAction);
     }
@@ -380,9 +383,59 @@ public sealed class BattleRevengeComController : MonoBehaviour
         }
     }
 
-    private PlayerAction GetPatrolAction(RevengeTargetWall desiredWall)
+    private PlayerAction GetPatrolAction(LaunchPlan plan)
     {
-        switch (desiredWall)
+        RevengeTargetWall currentWall = ResolveCurrentWallFromCart();
+
+        if (currentWall != plan.DesiredWall)
+            return GetActionTowardWall(plan.DesiredWall);
+
+        if (plan.Target == null || cart == null)
+            return GetRoamAction();
+
+        Vector2 targetPosition = plan.Target.transform.position;
+        Vector2 cartPosition = cart.transform.position;
+
+        switch (currentWall)
+        {
+            case RevengeTargetWall.Left:
+            case RevengeTargetWall.Right:
+                return GetVerticalPatrolAction(cartPosition.y, targetPosition.y);
+
+            case RevengeTargetWall.Top:
+            case RevengeTargetWall.Bottom:
+                return GetHorizontalPatrolAction(cartPosition.x, targetPosition.x);
+
+            default:
+                return GetRoamAction();
+        }
+    }
+
+    private PlayerAction GetVerticalPatrolAction(float cartY, float targetY)
+    {
+        float deltaY = targetY - cartY;
+
+        if (Mathf.Abs(deltaY) > SameWallTargetAxisTolerance)
+            return deltaY > 0f ? PlayerAction.MoveUp : PlayerAction.MoveDown;
+
+        sameWallFallbackStep *= -1;
+        return sameWallFallbackStep > 0 ? PlayerAction.MoveUp : PlayerAction.MoveDown;
+    }
+
+    private PlayerAction GetHorizontalPatrolAction(float cartX, float targetX)
+    {
+        float deltaX = targetX - cartX;
+
+        if (Mathf.Abs(deltaX) > SameWallTargetAxisTolerance)
+            return deltaX > 0f ? PlayerAction.MoveRight : PlayerAction.MoveLeft;
+
+        sameWallFallbackStep *= -1;
+        return sameWallFallbackStep > 0 ? PlayerAction.MoveRight : PlayerAction.MoveLeft;
+    }
+
+    private PlayerAction GetActionTowardWall(RevengeTargetWall wall)
+    {
+        switch (wall)
         {
             case RevengeTargetWall.Left:
                 return PlayerAction.MoveLeft;
@@ -399,6 +452,19 @@ public sealed class BattleRevengeComController : MonoBehaviour
             default:
                 return GetRoamAction();
         }
+    }
+
+    private RevengeTargetWall ResolveCurrentWallFromCart()
+    {
+        if (cart == null)
+            return RevengeTargetWall.Left;
+
+        Vector2 launchDirection = cart.LaunchDirection;
+
+        if (Mathf.Abs(launchDirection.x) >= Mathf.Abs(launchDirection.y))
+            return launchDirection.x > 0f ? RevengeTargetWall.Left : RevengeTargetWall.Right;
+
+        return launchDirection.y > 0f ? RevengeTargetWall.Bottom : RevengeTargetWall.Top;
     }
 
     private PlayerAction GetRoamAction()
@@ -466,6 +532,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
         holdingLaunch = false;
         desiredLaunchDistance = MinLaunchDistanceTiles;
         nextAiLaunchAllowedAt = 0f;
+        sameWallFallbackStep = UnityEngine.Random.value < 0.5f ? -1 : 1;
 
         RandomizePersonality();
 
@@ -476,8 +543,9 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         SLog(
             "RESET",
-            $"roamIndex:{roamWallIndex} roamStep:{roamWallStep} thinkJitter:{thinkIntervalJitter:F3} " +
-            $"roamInterval:{roamIntervalSeconds:F2} noise:{scoreNoiseMagnitude:F1} releaseJitter:{releaseJitterSeconds:F3} " +
+            $"roamIndex:{roamWallIndex} roamStep:{roamWallStep} sameWallStep:{sameWallFallbackStep} " +
+            $"thinkJitter:{thinkIntervalJitter:F3} roamInterval:{roamIntervalSeconds:F2} " +
+            $"noise:{scoreNoiseMagnitude:F1} releaseJitter:{releaseJitterSeconds:F3} " +
             $"nearChance:{nearShotChance:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
             force: true);
     }
@@ -515,11 +583,12 @@ public sealed class BattleRevengeComController : MonoBehaviour
     {
         int targetId = plan.Target != null ? plan.Target.playerId : 0;
         Vector2 targetPos = plan.Target != null ? (Vector2)plan.Target.transform.position : Vector2.zero;
+        RevengeTargetWall currentWall = cart != null ? ResolveCurrentWallFromCart() : RevengeTargetWall.Left;
 
         return
             $"target:P{targetId}@{targetPos} wins:{plan.TargetWins} distance:{plan.DistanceTiles} " +
             $"error:{plan.LandingError:F2} viable:{plan.HasViableShot} wall:{plan.DesiredWall} " +
-            $"cartPos:{(cart != null ? cart.transform.position.ToString() : "null")}";
+            $"currentWall:{currentWall} cartPos:{(cart != null ? cart.transform.position.ToString() : "null")}";
     }
 
     private void SLog(string key, string message, bool force = false)
