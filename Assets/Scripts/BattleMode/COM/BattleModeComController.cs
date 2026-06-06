@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -64,6 +65,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private PlayerIdentity identity;
     private MovementController movement;
     private BombController bombController;
+    private CharacterHealth health;
     private Collider2D[] ownColliders;
     private ContactFilter2D obstacleFilter;
     private GameManager gameManager;
@@ -94,6 +96,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private int decisionSerial;
     private int abilitySystemVersion = -1;
     private int lastKickLoadDiagnosticFrame = -9999;
+    private bool subscribedToHealthDeath;
+    private bool subscribedToMovementDeath;
+    private int lastDeathDiagnosticFrame = -1;
 
     private struct PathNode
     {
@@ -153,6 +158,12 @@ public sealed class BattleModeComController : MonoBehaviour
         ClearSyntheticInputs();
     }
 
+    private void OnDestroy()
+    {
+        UnsubscribeFromHealthDeath();
+        UnsubscribeFromMovementDeath();
+    }
+
     private void CacheReferences()
     {
         if (identity == null)
@@ -163,6 +174,12 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (bombController == null)
             TryGetComponent(out bombController);
+
+        if (health == null)
+            TryGetComponent(out health);
+
+        SubscribeToHealthDeath();
+        SubscribeToMovementDeath();
 
         if (identity != null)
             playerId = Mathf.Clamp(identity.playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
@@ -194,6 +211,42 @@ public sealed class BattleModeComController : MonoBehaviour
             suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
 
         explosionMask = LayerMask.GetMask("Explosion");
+    }
+
+    private void SubscribeToHealthDeath()
+    {
+        if (health == null || subscribedToHealthDeath)
+            return;
+
+        health.Died += OnHealthDied;
+        subscribedToHealthDeath = true;
+    }
+
+    private void UnsubscribeFromHealthDeath()
+    {
+        if (health == null || !subscribedToHealthDeath)
+            return;
+
+        health.Died -= OnHealthDied;
+        subscribedToHealthDeath = false;
+    }
+
+    private void SubscribeToMovementDeath()
+    {
+        if (movement == null || subscribedToMovementDeath)
+            return;
+
+        movement.Died += OnMovementDied;
+        subscribedToMovementDeath = true;
+    }
+
+    private void UnsubscribeFromMovementDeath()
+    {
+        if (movement == null || !subscribedToMovementDeath)
+            return;
+
+        movement.Died -= OnMovementDied;
+        subscribedToMovementDeath = false;
     }
 
     private void RefreshComAbilities()
@@ -1454,12 +1507,6 @@ public sealed class BattleModeComController : MonoBehaviour
         float dangerSeconds,
         string route)
     {
-        if (!EnableGeneralDecisionLogs)
-            return;
-
-        if (!BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Summary))
-            return;
-
         string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
         string danger = FormatDanger(dangerSeconds);
         string scene = SceneManager.GetActiveScene().name;
@@ -1478,6 +1525,17 @@ public sealed class BattleModeComController : MonoBehaviour
 
         string line = $"[BattleCOM][P{playerId}] {summary}";
         PushDecision(line);
+
+        string detail = BuildDecisionDetailLine();
+        if (!string.IsNullOrEmpty(detail))
+            PushDecision($"[BattleCOM][P{playerId}] {detail}");
+
+        if (!EnableGeneralDecisionLogs)
+            return;
+
+        if (!BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Summary))
+            return;
+
         Debug.Log(line, this);
 
         bool shouldLogVerbose = BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose);
@@ -1491,8 +1549,140 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (shouldLogVerbose || shouldLogAbilityFailure)
         {
-            Debug.Log($"[BattleCOM][P{playerId}] candidates:{FormatCandidates()} rejected:{string.Join(" | ", rejectedActions)}", this);
+            Debug.Log($"[BattleCOM][P{playerId}] {detail}", this);
         }
+    }
+
+    private string BuildDecisionDetailLine()
+    {
+        string candidatesLine = FormatCandidates();
+        string rejectedLine = rejectedActions.Count > 0 ? string.Join(" | ", rejectedActions) : "none";
+        string abilityLine = FormatCurrentAbilityTraces();
+
+        if (candidatesLine == "none" && rejectedLine == "none" && abilityLine == "none")
+            return string.Empty;
+
+        return $"candidates:{candidatesLine} rejected:{rejectedLine} abilities:{abilityLine}";
+    }
+
+    private void OnHealthDied()
+    {
+        if (lastDeathDiagnosticFrame == Time.frameCount)
+            return;
+
+        lastDeathDiagnosticFrame = Time.frameCount;
+
+        if (!IsBattleModeScene())
+            return;
+
+        if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+            return;
+
+        Debug.Log(BuildDeathDiagnosticReport(), this);
+    }
+
+    private void OnMovementDied(MovementController deadMovement)
+    {
+        OnHealthDied();
+    }
+
+    private string BuildDeathDiagnosticReport()
+    {
+        CacheReferences();
+
+        BattleModeComputerLevel difficulty = ResolveDifficulty();
+        Vector2Int myTile = WorldToTile(transform.position);
+        float dangerSeconds = GetDangerSeconds(myTile, null);
+        string scene = SceneManager.GetActiveScene().name;
+
+        StringBuilder sb = new();
+        sb.AppendLine($"[BattleCOMDeath][P{playerId}] IA morreu - diagnostico de logica");
+        sb.AppendLine(
+            $"scene:{scene} frame:{Time.frameCount} time:{Time.time:F2} difficulty:{difficulty} " +
+            $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(dangerSeconds)}");
+        sb.AppendLine(
+            $"current action:{currentAction} target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+            $"move:{FirstMoveDescription(currentMoveInput)} input:{currentInputDescription} reason:{currentReason}");
+        sb.AppendLine(
+            $"state safeCenter:{hasSafeCenterTarget}@{safeCenterTargetTile} escapeRoute:{currentMoveFollowsEscapeRoute} " +
+            $"ownBombOrExplosion:{HasOwnUnresolvedBombOrExplosion()}");
+        sb.AppendLine($"abilities:{FormatCurrentAbilityTraces()}");
+        sb.AppendLine($"activeBombs:{FormatActiveBombThreats(myTile)}");
+        sb.AppendLine($"lastCandidates:{FormatCandidates()}");
+        sb.AppendLine($"lastRejected:{(rejectedActions.Count > 0 ? string.Join(" | ", rejectedActions) : "none")}");
+        sb.AppendLine("recentDecisions:");
+
+        if (recentDecisions.Count <= 0)
+        {
+            sb.AppendLine("  none");
+        }
+        else
+        {
+            for (int i = 0; i < recentDecisions.Count; i++)
+                sb.AppendLine($"  {i + 1:00}. {recentDecisions[i]}");
+        }
+
+        return sb.ToString();
+    }
+
+    private string FormatCurrentAbilityTraces()
+    {
+        RefreshComAbilities();
+
+        if (comAbilities.Count <= 0)
+            return BuildNoAbilityScriptsTrace();
+
+        string result = string.Empty;
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            IBattleModeComAbility ability = comAbilities[i];
+            if (ability == null)
+                continue;
+
+            if (!string.IsNullOrEmpty(result))
+                result += " | ";
+
+            string name = string.IsNullOrWhiteSpace(ability.DiagnosticName)
+                ? ability.GetType().Name
+                : ability.DiagnosticName;
+            string trace = string.IsNullOrWhiteSpace(ability.LastDecisionTrace)
+                ? "no trace"
+                : ability.LastDecisionTrace;
+
+            result += $"{name}:{trace}";
+        }
+
+        return string.IsNullOrEmpty(result) ? "none" : result;
+    }
+
+    private string FormatActiveBombThreats(Vector2Int myTile)
+    {
+        string result = string.Empty;
+        int count = 0;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
+            bool threatensAi = IsTileInBlastLineRuntime(bombTile, myTile, radius);
+            int ownerId = 0;
+            if (bomb.Owner != null && bomb.Owner.TryGetComponent<PlayerIdentity>(out var ownerIdentity) && ownerIdentity != null)
+                ownerId = ownerIdentity.playerId;
+
+            if (count > 0)
+                result += " | ";
+
+            result +=
+                $"#{count + 1} owner:P{ownerId} tile:{bombTile} radius:{radius} " +
+                $"fuse:{FormatDanger(bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds)} " +
+                $"control:{bomb.IsControlBomb} moved:{bomb.WasMovedByKickOrPunch} solid:{bomb.IsSolid} threatensAi:{threatensAi}";
+            count++;
+        }
+
+        return count <= 0 ? "none" : result;
     }
 
     private void PushDecision(string line)
@@ -1524,14 +1714,12 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void Reject(string action, string reason)
     {
-        if (BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose))
-            rejectedActions.Add($"{action}:{reason}");
+        rejectedActions.Add($"{action}:{reason}");
     }
 
     private void RejectVerbose(string reason)
     {
-        if (BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose))
-            rejectedActions.Add(reason);
+        rejectedActions.Add(reason);
     }
 
     private bool TryFindEscape(

@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(BattleRevengeController))]
 public sealed class BattleRevengeComController : MonoBehaviour
 {
-    private static readonly bool EnableSurgicalLogs = true;
+    private static readonly bool EnableSurgicalLogs = false;
 
     private const float ThinkIntervalSeconds = 0.12f;
     private const float ChargeStepSeconds = 0.12f;
