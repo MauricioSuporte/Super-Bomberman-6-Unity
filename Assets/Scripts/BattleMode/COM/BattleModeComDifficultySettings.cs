@@ -11,6 +11,7 @@ public sealed class BattleModeComDifficultySettings
     public float dangerReactionSeconds = 0.12f;
     public float safeTileMinimumSeconds = 0.35f;
     [Range(0f, 1f)] public float hesitationChance;
+    [Range(0f, 1f)] public float escapeAbilityChance = 0.5f;
 
     public int stoppedWeight;
     public int patrolWeight;
@@ -32,6 +33,7 @@ public sealed class BattleModeComDifficultySettings
                     dangerReactionSeconds = 0.22f,
                     safeTileMinimumSeconds = 0.2f,
                     hesitationChance = 0.12f,
+                    escapeAbilityChance = 0.25f,
                     stoppedWeight = 8,
                     patrolWeight = 30,
                     collectItemWeight = 35,
@@ -49,6 +51,7 @@ public sealed class BattleModeComDifficultySettings
                     dangerReactionSeconds = 0.04f,
                     safeTileMinimumSeconds = 0.45f,
                     hesitationChance = 0.01f,
+                    escapeAbilityChance = 1f,
                     stoppedWeight = 1,
                     patrolWeight = 12,
                     collectItemWeight = 30,
@@ -66,6 +69,7 @@ public sealed class BattleModeComDifficultySettings
                     dangerReactionSeconds = 0.1f,
                     safeTileMinimumSeconds = 0.35f,
                     hesitationChance = 0.04f,
+                    escapeAbilityChance = 0.5f,
                     stoppedWeight = 3,
                     patrolWeight = 20,
                     collectItemWeight = 35,

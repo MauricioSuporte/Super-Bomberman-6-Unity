@@ -736,7 +736,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
             FirstMove = punchMove,
             Reason = "defensive punch to escape",
             InputDescription = AppendInput(FirstMoveDescription(punchMove), "ActionC"),
-            TapActionC = true
+            TapActionC = true,
+            UsesEscapeAbilityChance = true
         };
 
         lastDecisionTrace =

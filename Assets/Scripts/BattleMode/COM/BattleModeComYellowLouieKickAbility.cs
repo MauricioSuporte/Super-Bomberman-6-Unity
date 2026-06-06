@@ -207,6 +207,7 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
         decision.TargetTile = bestEscapeTile;
         decision.HasTarget = true;
+        decision.UsesEscapeAbilityChance = true;
         lastDecisionTrace =
             $"yellow defensive kick selected dir:{bestDir} bomb:{myTile + bestDir} escape:{bestEscapeTile} fuse:{bestFuse:F2} score:{bestScore}";
         LogYellowDefensive(

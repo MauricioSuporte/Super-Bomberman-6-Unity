@@ -25,6 +25,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     private const float MinimumOwnTriggerKickFuseSeconds = 0.7f;
     private const float DirectKickRetrySeconds = 0.9f;
     private const float DirectKickRetryMinFuseSeconds = 0.65f;
+    private const float DirectKickRetryDangerBufferSeconds = 0.05f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
@@ -235,7 +236,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                         HasTarget = true,
                         FirstMove = TileDirectionToVector(dir),
                         Reason = $"approach kick bomb at {bombTile} toward {approachBombDestination}",
-                        InputDescription = FirstMoveDescription(TileDirectionToVector(dir))
+                        InputDescription = FirstMoveDescription(TileDirectionToVector(dir)),
+                        UsesEscapeAbilityChance = true
                     };
                     lastDecisionTrace = $"emergency approach selected dir {dir} stand {standTile} bomb {bombTile} dest {approachBombDestination}";
                     return true;
@@ -282,6 +284,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 lastDecisionTrace =
                     $"emergency input selected dir {dir} bomb {myTile + dir} dest {bombDestination} escape {escapeTile}" +
                     (escapesThroughVacatedBombTile ? " via vacated bomb tile" : string.Empty);
+                decision.UsesEscapeAbilityChance = true;
                 return true;
             }
 
@@ -293,7 +296,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 HasTarget = true,
                 FirstMove = TileDirectionToVector(dir),
                 Reason = $"kick escape bomb toward {bombDestination}",
-                InputDescription = FirstMoveDescription(TileDirectionToVector(dir))
+                InputDescription = FirstMoveDescription(TileDirectionToVector(dir)),
+                UsesEscapeAbilityChance = true
             };
             lastDecisionTrace =
                 $"emergency selected dir {dir} bomb {myTile + dir} dest {bombDestination} escape {escapeTile}" +
@@ -694,6 +698,25 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 EnsureDirectKickRetryWindow();
                 if (CanRetryDirectKick(bomb))
                 {
+                    float dangerHere = GetDangerSeconds(myTile);
+                    float minRetrySafetySeconds = Mathf.Max(
+                        settings.dangerReactionSeconds,
+                        EstimateFirstMoveTraversalSeconds(sequenceKickDirection)) +
+                        DirectKickRetryDangerBufferSeconds;
+                    if (!float.IsInfinity(dangerHere) && dangerHere <= minRetrySafetySeconds)
+                    {
+                        lastDecisionTrace =
+                            $"sequence direct kick retry cancelled unsafe stand {kickStandTile} " +
+                            $"danger {FormatDanger(dangerHere)} minSafe {minRetrySafetySeconds:F2} " +
+                            $"reason {kickFailReason}";
+                        LogKickSurgical(
+                            "KICK_DIRECT_RETRY_UNSAFE",
+                            $"my:{myTile} stand:{kickStandTile} dir:{sequenceKickDirection} reason:{kickFailReason} dangerHere:{FormatDanger(dangerHere)} minSafe:{minRetrySafetySeconds:F2} bomb:{DescribeBomb(bomb)} nearby:{DescribeNearbyBombs(myTile)}",
+                            true);
+                        ResetOffensiveSequence();
+                        return false;
+                    }
+
                     decision = new BattleModeComAbilityDecision
                     {
                         Action = BattleModeComActionType.KickBomb,
@@ -1257,6 +1280,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 lastDecisionTrace =
                     $"own trigger input kick bomb {bestBombTile} stand {bestStandTile} target {rescueTargetLabel} " +
                     $"dir {bestKickDir}";
+                decision.UsesEscapeAbilityChance = bestDefensiveEscapeOnly;
                 LogKickSurgical(
                     "RESCUE_INPUT_KICK",
                     $"my:{myTile} bomb:{DescribeBomb(bestBomb)} stand:{bestStandTile} target:{rescueTargetLabel} dir:{bestKickDir}",
@@ -1298,7 +1322,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                         : $"direct kick own early bomb toward {rescueTargetLabel}",
                     InputDescription = postKickEscapeArmed
                         ? AppendInput("DirectKick", FirstMoveDescription(postKickEscapeMove))
-                        : "DirectKick"
+                        : "DirectKick",
+                    UsesEscapeAbilityChance = bestDefensiveEscapeOnly
                 };
 
                 lastDecisionTrace =
@@ -1329,7 +1354,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             Reason = kickNow
                 ? $"kick own early bomb toward {rescueTargetLabel}"
                 : $"recover own early bomb kick toward {rescueTargetLabel}",
-            InputDescription = FirstMoveDescription(firstMove)
+            InputDescription = FirstMoveDescription(firstMove),
+            UsesEscapeAbilityChance = bestDefensiveEscapeOnly
         };
 
         lastDecisionTrace =
@@ -1670,7 +1696,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
         decision = new BattleModeComAbilityDecision
         {
-            Action = BattleModeComActionType.KickBomb,
+            Action = BattleModeComActionType.Reposition,
             Weight = 280 + DifficultyWeight(settings),
             TargetTile = target,
             HasTarget = true,
@@ -1732,7 +1758,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         {
             Vector2Int tile = escapeOpen.Dequeue();
             EscapeSearchNode node = escapeVisited[tile];
-            float eta = EstimateTraversalSeconds(node.Depth);
+            float eta = EstimateEscapeTraversalSeconds(start, tile, node.Depth);
             float dangerSeconds = GetDangerSeconds(tile);
 
             if (node.Depth > 0 &&
@@ -1741,8 +1767,16 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             {
                 target = tile;
                 Vector2Int firstStep = ReconstructEscapeFirstStep(start, tile);
+                float firstMoveEta = EstimateFirstMoveTraversalSeconds(firstStep);
+                float currentDangerSeconds = GetDangerSeconds(start);
+                if (!float.IsInfinity(currentDangerSeconds) &&
+                    currentDangerSeconds <= firstMoveEta + DirectKickRetryDangerBufferSeconds)
+                {
+                    continue;
+                }
+
                 firstMove = TileDirectionToVector(firstStep);
-                route = $"escape depth {node.Depth}";
+                route = $"escape depth {node.Depth} eta {eta:F2}s";
                 return firstMove != Vector2.zero;
             }
 
@@ -1758,7 +1792,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 if (!IsWalkableTile(next, start))
                     continue;
 
-                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
+                float nextEta = EstimateEscapeTraversalSeconds(start, tile, next, node.Depth + 1);
                 if (IsDangerousAt(next, nextEta, settings))
                     continue;
 
@@ -1790,7 +1824,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             if (!IsWalkableTile(next, start))
                 continue;
 
-            float arrivalSeconds = EstimateTraversalSeconds(1);
+            float arrivalSeconds = EstimateFirstMoveTraversalSeconds(dir);
             float dangerMargin = GetSurvivalMarginSeconds(next, arrivalSeconds, settings);
             float score = dangerMargin + CountOpenNeighbors(next) * 0.25f;
             if (score <= bestScore)
@@ -2472,6 +2506,52 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
         float tilesPerSecond = Mathf.Max(1f, movement.speed);
         return depth / tilesPerSecond;
+    }
+
+    private float EstimateEscapeTraversalSeconds(Vector2Int start, Vector2Int target, int depth)
+    {
+        if (depth <= 0 || target == start)
+            return 0f;
+
+        Vector2Int firstStep = ReconstructEscapeFirstStep(start, target);
+        return EstimateTraversalSeconds(depth) + EstimateTurnAxisCenteringSeconds(firstStep);
+    }
+
+    private float EstimateEscapeTraversalSeconds(Vector2Int start, Vector2Int parent, Vector2Int next, int depth)
+    {
+        if (depth <= 0 || next == start)
+            return 0f;
+
+        Vector2Int firstStep = parent == start
+            ? next - start
+            : ReconstructEscapeFirstStep(start, parent);
+
+        return EstimateTraversalSeconds(depth) + EstimateTurnAxisCenteringSeconds(firstStep);
+    }
+
+    private float EstimateFirstMoveTraversalSeconds(Vector2Int firstStep)
+    {
+        return EstimateTraversalSeconds(1) + EstimateTurnAxisCenteringSeconds(firstStep);
+    }
+
+    private float EstimateTurnAxisCenteringSeconds(Vector2Int requestedDirection)
+    {
+        if (movement == null || requestedDirection == Vector2Int.zero)
+            return 0f;
+
+        Vector2Int currentTile = WorldToTile(transform.position);
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+        float offAxisDistance = requestedDirection.x != 0
+            ? Mathf.Abs(delta.y)
+            : requestedDirection.y != 0
+                ? Mathf.Abs(delta.x)
+                : 0f;
+
+        float tolerance = Mathf.Max(0.01f, tileSize * 0.045f);
+        if (offAxisDistance <= tolerance)
+            return 0f;
+
+        return (offAxisDistance - tolerance) / Mathf.Max(1f, movement.speed);
     }
 
     private static Vector2Int StepToward(Vector2Int from, Vector2Int to)

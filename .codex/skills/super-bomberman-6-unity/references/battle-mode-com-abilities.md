@@ -48,6 +48,10 @@ abilities under `Assets/Scripts/BattleMode/COM/`.
 - `InputDescription`: match the movement/taps, for example
   `ActionA+MoveLeft` or `ActionC`.
 - Tap flags are edge inputs. Let the controller apply cooldowns.
+- Set `UsesEscapeAbilityChance = true` for emergency decisions whose purpose is
+  escaping a trap with an ability. The controller applies the difficulty chance:
+  Easy 25%, Normal 50%, Hard 100%. Leave it false for ongoing offensive
+  sequences that must keep progressing under danger.
 - Treat `Action = KickBomb` carefully: the controller allows KickBomb movement
   through its safety gate because kick sequences sometimes need to step toward a
   bomb. Use it only for mechanics that truly need that exception.

@@ -99,6 +99,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool subscribedToHealthDeath;
     private bool subscribedToMovementDeath;
     private int lastDeathDiagnosticFrame = -1;
+    private float escapeAbilityChanceCacheTime = -10f;
+    private bool escapeAbilityChanceCacheResult;
+    private string lastEscapeAbilityChanceTrace = "not rolled";
 
     private struct PathNode
     {
@@ -120,6 +123,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public bool TapBomb;
         public bool TapActionR;
         public bool TapActionC;
+        public bool UsesEscapeAbilityChance;
     }
 
     public IReadOnlyList<string> RecentDecisionLog => recentDecisions;
@@ -585,6 +589,16 @@ public sealed class BattleModeComController : MonoBehaviour
         hasCurrentTarget = selected.HasTarget;
         currentReason = selected.Reason;
         currentInputDescription = selected.InputDescription;
+        currentMoveFollowsEscapeRoute =
+            selected.Action == BattleModeComActionType.Reposition &&
+            !string.IsNullOrEmpty(selected.Reason) &&
+            selected.Reason.Contains("escape", StringComparison.OrdinalIgnoreCase);
+
+        if (selected.Action == BattleModeComActionType.Reposition && selected.HasTarget)
+        {
+            hasSafeCenterTarget = true;
+            safeCenterTargetTile = selected.TargetTile;
+        }
 
         if (selected.TapBomb && Time.time - lastBombTapTime >= BombTapCooldownSeconds)
         {
@@ -643,6 +657,16 @@ public sealed class BattleModeComController : MonoBehaviour
             if (!ability.TryBuildEmergencyDecision(settings, this, myTile, currentDangerSeconds, out var decision))
             {
                 AppendAbilityTrace(ability, "emergency");
+                continue;
+            }
+
+            if (decision.UsesEscapeAbilityChance &&
+                !RollEscapeAbilityChance(settings, GetAbilityDiagnosticName(ability), out string chanceTrace))
+            {
+                AppendAbilityTrace(
+                    "emergency chance",
+                    GetAbilityDiagnosticName(ability),
+                    $"{chanceTrace} trace:{ability.LastDecisionTrace}");
                 continue;
             }
 
@@ -722,7 +746,8 @@ public sealed class BattleModeComController : MonoBehaviour
             InputDescription = decision.InputDescription,
             TapBomb = decision.TapBomb,
             TapActionR = decision.TapActionR,
-            TapActionC = decision.TapActionC
+            TapActionC = decision.TapActionC,
+            UsesEscapeAbilityChance = decision.UsesEscapeAbilityChance
         };
     }
 
@@ -731,9 +756,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (ability == null)
             return;
 
-        string name = string.IsNullOrWhiteSpace(ability.DiagnosticName)
-            ? ability.GetType().Name
-            : ability.DiagnosticName;
+        string name = GetAbilityDiagnosticName(ability);
         string trace = string.IsNullOrWhiteSpace(ability.LastDecisionTrace)
             ? "no trace"
             : ability.LastDecisionTrace;
@@ -744,6 +767,64 @@ public sealed class BattleModeComController : MonoBehaviour
     private void AppendAbilityTrace(string phase, string name, string trace)
     {
         rejectedActions.Add($"Ability/{phase}/{name}:{trace}");
+    }
+
+    private static string GetAbilityDiagnosticName(IBattleModeComAbility ability)
+    {
+        if (ability == null)
+            return "null";
+
+        return string.IsNullOrWhiteSpace(ability.DiagnosticName)
+            ? ability.GetType().Name
+            : ability.DiagnosticName;
+    }
+
+    private bool RollEscapeAbilityChance(
+        BattleModeComDifficultySettings settings,
+        string abilityName,
+        out string trace)
+    {
+        float chance = Mathf.Clamp01(settings.escapeAbilityChance);
+        float roll;
+        bool result;
+
+        if (chance >= 1f)
+        {
+            roll = 0f;
+            result = true;
+            trace = FormatEscapeAbilityChanceTrace(settings, abilityName, chance, roll, result, cached: false);
+            lastEscapeAbilityChanceTrace = trace;
+            return true;
+        }
+
+        if (Time.time - escapeAbilityChanceCacheTime < 0.001f)
+        {
+            result = escapeAbilityChanceCacheResult;
+            trace = lastEscapeAbilityChanceTrace;
+            return result;
+        }
+
+        escapeAbilityChanceCacheTime = Time.time;
+        roll = UnityEngine.Random.value;
+        result = roll <= chance;
+        escapeAbilityChanceCacheResult = result;
+        trace = FormatEscapeAbilityChanceTrace(settings, abilityName, chance, roll, result, cached: false);
+        lastEscapeAbilityChanceTrace = trace;
+        return result;
+    }
+
+    private static string FormatEscapeAbilityChanceTrace(
+        BattleModeComDifficultySettings settings,
+        string abilityName,
+        float chance,
+        float roll,
+        bool result,
+        bool cached)
+    {
+        return
+            $"escapeAbilityRoll ability:{abilityName} difficulty:{settings.difficulty} " +
+            $"chance:{chance:F2} roll:{roll:F2} result:{(result ? "pass" : "fail")}" +
+            (cached ? " cached" : string.Empty);
     }
 
     private string BuildNoAbilityScriptsTrace()
@@ -812,11 +893,13 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         Vector2 fallback = FindBestFallbackMove(settings, myTile, null, out string fallbackReason);
+        Vector2Int fallbackTarget = myTile + DirectionToTile(fallback);
+        bool hasFallbackTarget = fallback != Vector2.zero && fallbackTarget != myTile;
         SetCurrentDecision(
             BattleModeComActionType.Reposition,
             fallback,
-            false,
-            myTile,
+            hasFallbackTarget,
+            hasFallbackTarget ? fallbackTarget : myTile,
             fallbackReason,
             FirstMoveDescription(fallback),
             currentDangerSeconds,
@@ -1289,7 +1372,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             foundWalkableExit = true;
-            float arrivalSeconds = EstimateTraversalSeconds(1);
+            float arrivalSeconds = EstimateFirstMoveTraversalSeconds(CardinalTiles[i]);
             float margin = GetSurvivalMarginSeconds(next, arrivalSeconds, settings, null);
             if (margin > bestExitMargin)
             {
@@ -1606,8 +1689,10 @@ public sealed class BattleModeComController : MonoBehaviour
         sb.AppendLine(
             $"state safeCenter:{hasSafeCenterTarget}@{safeCenterTargetTile} escapeRoute:{currentMoveFollowsEscapeRoute} " +
             $"ownBombOrExplosion:{HasOwnUnresolvedBombOrExplosion()}");
+        sb.AppendLine($"escapeAbilityChance:{lastEscapeAbilityChanceTrace}");
         sb.AppendLine($"abilities:{FormatCurrentAbilityTraces()}");
         sb.AppendLine($"activeBombs:{FormatActiveBombThreats(myTile)}");
+        sb.AppendLine($"activeExplosions:{FormatActiveExplosionThreats(myTile)}");
         sb.AppendLine($"lastCandidates:{FormatCandidates()}");
         sb.AppendLine($"lastRejected:{(rejectedActions.Count > 0 ? string.Join(" | ", rejectedActions) : "none")}");
         sb.AppendLine("recentDecisions:");
@@ -1685,6 +1770,47 @@ public sealed class BattleModeComController : MonoBehaviour
         return count <= 0 ? "none" : result;
     }
 
+    private string FormatActiveExplosionThreats(Vector2Int myTile)
+    {
+        if (explosionMask == 0)
+            return "none";
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(
+            TileToWorld(myTile),
+            Mathf.Max(tileSize * 2.5f, 0.5f),
+            explosionMask);
+
+        if (hits == null || hits.Length <= 0)
+            return "none";
+
+        string result = string.Empty;
+        int count = 0;
+        int max = Mathf.Min(hits.Length, 8);
+        for (int i = 0; i < max; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            Vector2Int tile = WorldToTile(hit.bounds.center);
+            bool onAiTile = tile == myTile;
+            bool touchesAi = hit.OverlapPoint(transform.position);
+
+            if (count > 0)
+                result += " | ";
+
+            result +=
+                $"#{count + 1} tile:{tile} center:{hit.bounds.center} " +
+                $"onAiTile:{onAiTile} touchesAi:{touchesAi}";
+            count++;
+        }
+
+        if (hits.Length > max)
+            result += $" | +{hits.Length - max} more";
+
+        return count <= 0 ? "none" : result;
+    }
+
     private void PushDecision(string line)
     {
         recentDecisions.Add(line);
@@ -1744,7 +1870,7 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             Vector2Int tile = open.Dequeue();
             PathNode node = visited[tile];
-            float eta = EstimateTraversalSeconds(node.Depth);
+            float eta = EstimateEscapeTraversalSeconds(start, tile, node.Depth);
             float dangerSeconds = GetDangerSeconds(tile, plannedBlastTiles);
             bool plannedDanger = plannedBlastTiles != null && plannedBlastTiles.Contains(tile);
 
@@ -1754,9 +1880,21 @@ public sealed class BattleModeComController : MonoBehaviour
                 !IsDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings, plannedBlastTiles) &&
                 dangerSeconds > eta + settings.safeTileMinimumSeconds)
             {
+                Vector2Int firstStep = ReconstructFirstStep(start, tile);
+                float firstMoveEta = EstimateFirstMoveTraversalSeconds(firstStep);
+                float currentDangerSeconds = GetDangerSeconds(start, plannedBlastTiles);
+                if (!float.IsInfinity(currentDangerSeconds) &&
+                    currentDangerSeconds <= firstMoveEta + DangerTimingMarginSeconds)
+                {
+                    RejectVerbose(
+                        $"Escape {tile} rejected current danger {FormatDanger(currentDangerSeconds)} " +
+                        $"before first step eta:{firstMoveEta:F2}s");
+                    continue;
+                }
+
                 target = tile;
-                firstMove = ReconstructFirstMove(start, tile);
-                route = $"escape depth {node.Depth}";
+                firstMove = TileDirectionToVector(firstStep);
+                route = $"escape depth {node.Depth} eta {eta:F2}s";
                 return true;
             }
 
@@ -1772,7 +1910,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 if (!IsWalkableTile(next, start))
                     continue;
 
-                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
+                float nextEta = EstimateEscapeTraversalSeconds(start, tile, next, node.Depth + 1);
                 if (IsDangerousAt(next, nextEta, settings, plannedBlastTiles))
                     continue;
 
@@ -1798,13 +1936,21 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             Vector2Int next = myTile + CardinalTiles[i];
             if (!IsWalkableTile(next, myTile))
+            {
+                RejectVerbose($"Fallback {DirectionLabel(CardinalTiles[i])} {next} blocked");
                 continue;
+            }
 
-            float arrivalSeconds = EstimateTraversalSeconds(1);
+            float arrivalSeconds = EstimateFirstMoveTraversalSeconds(CardinalTiles[i]);
             float score = GetSurvivalMarginSeconds(next, arrivalSeconds, settings, plannedBlastTiles) +
                           CountOpenNeighbors(next) * 0.25f;
             if (plannedBlastTiles != null && plannedBlastTiles.Contains(next))
                 score -= 10f;
+
+            RejectVerbose(
+                $"Fallback {DirectionLabel(CardinalTiles[i])} {next} score:{score:F2} " +
+                $"eta:{arrivalSeconds:F2}s danger:{FormatDanger(GetDangerSeconds(next, plannedBlastTiles))} " +
+                $"margin:{GetSurvivalMarginSeconds(next, arrivalSeconds, settings, plannedBlastTiles):F2}");
 
             if (score > bestScore)
             {
@@ -1934,8 +2080,13 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private Vector2 ReconstructFirstMove(Vector2Int start, Vector2Int goal)
     {
+        return TileDirectionToVector(ReconstructFirstStep(start, goal));
+    }
+
+    private Vector2Int ReconstructFirstStep(Vector2Int start, Vector2Int goal)
+    {
         if (start == goal)
-            return Vector2.zero;
+            return Vector2Int.zero;
 
         Vector2Int cursor = goal;
         while (visited.TryGetValue(cursor, out PathNode node) && node.Parent != start && node.Parent != cursor)
@@ -1943,12 +2094,12 @@ public sealed class BattleModeComController : MonoBehaviour
 
         Vector2Int delta = cursor - start;
         if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
-            return delta.x > 0 ? Vector2.right : Vector2.left;
+            return delta.x > 0 ? Vector2Int.right : Vector2Int.left;
 
         if (delta.y != 0)
-            return delta.y > 0 ? Vector2.up : Vector2.down;
+            return delta.y > 0 ? Vector2Int.up : Vector2Int.down;
 
-        return Vector2.zero;
+        return Vector2Int.zero;
     }
 
     private Vector2Int[] GetPathDirectionOrder(Vector2Int start, Vector2Int goal)
@@ -2047,7 +2198,7 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             Vector2Int tile = open.Dequeue();
             PathNode node = visited[tile];
-            float eta = EstimateTraversalSeconds(node.Depth);
+            float eta = EstimateEscapeTraversalSeconds(start, tile, node.Depth);
             bool inChainBlast = chainBlastTiles != null && chainBlastTiles.Contains(tile);
 
             if (node.Depth > 0 && !inChainBlast)
@@ -2080,7 +2231,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 if (!IsWalkableTile(next, start))
                     continue;
 
-                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
+                float nextEta = EstimateEscapeTraversalSeconds(start, tile, next, node.Depth + 1);
                 float nextDanger = GetDangerSeconds(next, null);
                 if (!float.IsInfinity(nextDanger) &&
                     nextDanger <= nextEta + settings.dangerReactionSeconds)
@@ -2622,13 +2773,15 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (!float.IsInfinity(currentDanger))
         {
+            float nextArrivalSeconds = EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
             if (currentMoveFollowsEscapeRoute &&
-                !IsDangerousAt(nextTile, EstimateTraversalSeconds(1), settings, null))
+                currentDanger > nextArrivalSeconds + DangerTimingMarginSeconds &&
+                !IsDangerousAt(nextTile, nextArrivalSeconds, settings, null))
             {
                 return requestedMove;
             }
 
-            float nextMargin = GetSurvivalMarginSeconds(nextTile, EstimateTraversalSeconds(1), settings, null);
+            float nextMargin = GetSurvivalMarginSeconds(nextTile, nextArrivalSeconds, settings, null);
             float currentMargin = currentDanger - settings.dangerReactionSeconds;
             if (nextMargin + DangerTimingMarginSeconds < currentMargin)
             {
@@ -2683,19 +2836,43 @@ public sealed class BattleModeComController : MonoBehaviour
         if (requestedDirection == Vector2Int.zero)
             return Vector2.zero;
 
+        if (currentMoveFollowsEscapeRoute && NeedsTurnAxisCentering(currentTile, requestedDirection))
+            return GetTurnAxisCenteringMove(currentTile, requestedDirection);
+
         if (ShouldKeepTargetedMove(currentTile, requestedDirection))
             return requestedMove;
 
+        if (NeedsTurnAxisCentering(currentTile, requestedDirection))
+            return GetTurnAxisCenteringMove(currentTile, requestedDirection);
+
+        return requestedMove;
+    }
+
+    private bool NeedsTurnAxisCentering(Vector2Int currentTile, Vector2Int requestedDirection)
+    {
         Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
         float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
 
-        if (requestedDirection.x != 0 && Mathf.Abs(delta.y) > tolerance)
+        if (requestedDirection.x != 0)
+            return Mathf.Abs(delta.y) > tolerance;
+
+        if (requestedDirection.y != 0)
+            return Mathf.Abs(delta.x) > tolerance;
+
+        return false;
+    }
+
+    private Vector2 GetTurnAxisCenteringMove(Vector2Int currentTile, Vector2Int requestedDirection)
+    {
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+
+        if (requestedDirection.x != 0)
             return delta.y > 0f ? Vector2.up : Vector2.down;
 
-        if (requestedDirection.y != 0 && Mathf.Abs(delta.x) > tolerance)
+        if (requestedDirection.y != 0)
             return delta.x > 0f ? Vector2.right : Vector2.left;
 
-        return requestedMove;
+        return Vector2.zero;
     }
 
     private bool ShouldKeepTargetedMove(Vector2Int currentTile, Vector2Int requestedDirection)
@@ -2957,6 +3134,52 @@ public sealed class BattleModeComController : MonoBehaviour
         return depth / tilesPerSecond;
     }
 
+    private float EstimateEscapeTraversalSeconds(Vector2Int start, Vector2Int target, int depth)
+    {
+        if (depth <= 0 || target == start)
+            return 0f;
+
+        Vector2Int firstStep = ReconstructFirstStep(start, target);
+        return EstimateTraversalSeconds(depth) + EstimateTurnAxisCenteringSeconds(firstStep);
+    }
+
+    private float EstimateEscapeTraversalSeconds(Vector2Int start, Vector2Int parent, Vector2Int next, int depth)
+    {
+        if (depth <= 0 || next == start)
+            return 0f;
+
+        Vector2Int firstStep = parent == start
+            ? next - start
+            : ReconstructFirstStep(start, parent);
+
+        return EstimateTraversalSeconds(depth) + EstimateTurnAxisCenteringSeconds(firstStep);
+    }
+
+    private float EstimateFirstMoveTraversalSeconds(Vector2Int firstStep)
+    {
+        return EstimateTraversalSeconds(1) + EstimateTurnAxisCenteringSeconds(firstStep);
+    }
+
+    private float EstimateTurnAxisCenteringSeconds(Vector2Int requestedDirection)
+    {
+        if (movement == null || requestedDirection == Vector2Int.zero)
+            return 0f;
+
+        Vector2Int currentTile = WorldToTile(transform.position);
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+        float offAxisDistance = requestedDirection.x != 0
+            ? Mathf.Abs(delta.y)
+            : requestedDirection.y != 0
+                ? Mathf.Abs(delta.x)
+                : 0f;
+
+        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+        if (offAxisDistance <= tolerance)
+            return 0f;
+
+        return (offAxisDistance - tolerance) / Mathf.Max(1f, movement.speed);
+    }
+
     private static Vector2 TileDirectionToVector(Vector2Int direction)
     {
         if (direction == Vector2Int.up)
@@ -2972,6 +3195,23 @@ public sealed class BattleModeComController : MonoBehaviour
             return Vector2.right;
 
         return Vector2.zero;
+    }
+
+    private static string DirectionLabel(Vector2Int direction)
+    {
+        if (direction == Vector2Int.up)
+            return "U";
+
+        if (direction == Vector2Int.down)
+            return "D";
+
+        if (direction == Vector2Int.left)
+            return "L";
+
+        if (direction == Vector2Int.right)
+            return "R";
+
+        return direction.ToString();
     }
 
     private static Vector2Int DirectionToTile(Vector2 direction)
