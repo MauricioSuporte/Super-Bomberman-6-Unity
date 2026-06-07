@@ -26,7 +26,11 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     // Filtro de diagnóstico: 0 = todos os jogadores COM.
     public const int DiagnosticPlayerIdFilter = 0;
     private static readonly bool EnableDefensivePunchDiagnostics = false;
+    private static readonly bool EnableOffensivePunchDiagnostics = true;
     private const float DefensivePunchLogIntervalSeconds = 0.35f;
+    private const float OffensivePunchLogIntervalSeconds = 0.20f;
+    private const float RetreatProgressStuckSeconds = 0.20f;
+    private const float RetreatStartCenterTolerance = 0.045f;
 
     // Cooldown entre sequências ofensivas
     private const float OffensiveCooldownSeconds = 1.5f;
@@ -82,6 +86,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     // atualize antes do soco.
     private bool sequenceFaceDirectionSent;
 
+    // Diagnostico do recuo pos-plantio ofensivo. Este e o ponto onde a IA pode
+    // parecer "indo e voltando" se o controller estiver centralizando eixo.
+    private Vector2Int retreatLastTile;
+    private float retreatStuckSince = -10f;
+    private Vector2Int retreatLastAttemptedStep;
+
     // Detecção de travamento na fuga pós-soco
     private Vector2Int escapeLastTile;
     private float escapeStuckSince = -10f;
@@ -117,6 +127,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     private string lastDecisionTrace = "not evaluated";
     private float lastDefensivePunchLogTime = -10f;
     private string lastDefensivePunchLogKey = string.Empty;
+    private float lastOffensivePunchLogTime = -10f;
+    private string lastOffensivePunchLogKey = string.Empty;
     private readonly List<string> defensivePunchScanNotes = new List<string>(4);
     private readonly List<string> defensiveSafeExitNotes = new List<string>(4);
 
@@ -263,6 +275,15 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
             return false;
         }
 
+        Vector2Int retreatDir = retreatTile - myTile;
+        if (!CanStartRetreatCleanly(myTile, retreatDir, out string retreatStartReason))
+        {
+            lastDecisionTrace = $"candidate retreat not aligned {retreatStartReason}";
+            LogOffensiveSurgical("PUNCH_PLAN_REJECT_ALIGNMENT",
+                $"my:{myTile} retreat:{retreatTile} dir:{retreatDir} reason:{retreatStartReason}");
+            return false;
+        }
+
         // Verifica fuga pós-soco: após socar a bomba, a IA precisa ter pelo menos
         // um tile seguro para correr.
         if (!HasEscapeAfterPunch(settings, retreatTile, punchDir, myTile))
@@ -278,15 +299,18 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         sequenceTrackedBomb = null;
         sequencePlantRequestedTime = Time.time;
         sequencePunchCommandSent = false;
+        retreatLastTile = myTile;
+        retreatStuckSince = Time.time;
+        retreatLastAttemptedStep = retreatDir;
         SetSequenceState(SequenceState.RetreatAfterPlant);
         nextOffensiveSequenceTime = Time.time + OffensiveCooldownSeconds;
 
-        Vector2 retreatMove = TileDirectionToVector(retreatTile - myTile);
+        Vector2 retreatMove = TileDirectionToVector(retreatDir);
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
             Weight = Mathf.Max(1, settings.combatPlantWeight + 80 + DifficultyWeight(settings)),
-            TargetTile = targetTile,
+            TargetTile = retreatTile,
             HasTarget = true,
             FirstMove = retreatMove,
             Reason = $"punch bomb toward P{target.playerId}",
@@ -296,6 +320,10 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         lastDecisionTrace =
             $"candidate PLAN plant:{myTile} retreat:{retreatTile} punchDir:{punchDir} target P{target.playerId}@{targetTile}";
+        LogOffensiveSurgical("PUNCH_PLAN",
+            $"plant:{myTile} retreat:{retreatTile} punchDir:{punchDir} target:P{target.playerId}@{targetTile} " +
+            $"firstMove:{FirstMoveDescription(retreatMove)} decisionTarget:{retreatTile}",
+            force: true);
         LogSurgical("PLAN",
             $"plant:{myTile} retreat:{retreatTile} punchDir:{punchDir} target:P{target.playerId}@{targetTile}",
             force: true);
@@ -363,6 +391,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         {
             // Chegou no tile de recuo — vira para a bomba no próximo estado.
             SetSequenceState(SequenceState.FaceToBomb);
+            LogOffensiveSurgical("PUNCH_RETREAT_DONE",
+                $"at:{myTile} plant:{sequencePlantTile} bomb:{DescribeBomb(sequenceTrackedBomb)}",
+                force: true);
             LogSurgical("RETREAT_DONE", $"at:{myTile} bomb:{DescribeBomb(sequenceTrackedBomb)}");
             return TryContinueFace(settings, myTile, out decision);
         }
@@ -370,6 +401,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         // Abortamos se a bomba explodiu antes de podermos socar.
         if (sequenceTrackedBomb != null && sequenceTrackedBomb.HasExploded)
         {
+            LogOffensiveSurgical("PUNCH_RETREAT_ABORT",
+                $"reason:bomb exploded my:{myTile} plant:{sequencePlantTile} retreat:{sequenceRetreatTile}",
+                force: true);
             LogSurgical("SEQUENCE_RESET", "bomb exploded during retreat", force: true);
             ResetSequence();
             return false;
@@ -377,7 +411,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         // Ainda recuando: continua movendo em direção ao retreatTile.
         Vector2 retreatMove = TileDirectionToVector(sequenceRetreatTile - myTile);
-        decision = MakeSequenceDecision(retreatMove, 280 + DifficultyWeight(settings), "retreating after plant");
+        UpdateRetreatProgressDiagnostics(settings, myTile, retreatMove);
+        decision = MakeSequenceDecision(
+            retreatMove,
+            280 + DifficultyWeight(settings),
+            "retreating after plant",
+            sequenceRetreatTile);
 
         lastDecisionTrace = $"RETREAT from:{myTile} to:{sequenceRetreatTile}";
         LogSurgical("RETREAT", $"from:{myTile} to:{sequenceRetreatTile} bomb:{DescribeBomb(sequenceTrackedBomb)}");
@@ -958,6 +997,58 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         }
     }
 
+    private void UpdateRetreatProgressDiagnostics(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        Vector2 retreatMove)
+    {
+        Vector2Int attemptedStep = DirectionToTile(retreatMove);
+        if (myTile != retreatLastTile)
+        {
+            retreatLastTile = myTile;
+            retreatStuckSince = Time.time;
+            retreatLastAttemptedStep = attemptedStep;
+            LogOffensiveSurgical("PUNCH_RETREAT_PROGRESS",
+                $"my:{myTile} retreat:{sequenceRetreatTile} move:{FirstMoveDescription(retreatMove)} " +
+                $"stateElapsed:{(Time.time - sequenceStateStartedTime):F2}s danger:{FormatDanger(GetDangerSeconds(myTile))}",
+                force: true);
+            return;
+        }
+
+        if (retreatStuckSince < 0f)
+            retreatStuckSince = Time.time;
+
+        retreatLastAttemptedStep = attemptedStep;
+        float stuckFor = Time.time - retreatStuckSince;
+        if (stuckFor < RetreatProgressStuckSeconds)
+            return;
+
+        Vector3 position = movement != null ? movement.transform.position : transform.position;
+        Vector2 currentCenterDelta = (Vector2)TileToWorld(myTile) - (Vector2)position;
+        Vector2 retreatCenterDelta = (Vector2)TileToWorld(sequenceRetreatTile) - (Vector2)position;
+        float turnTolerance = Mathf.Max(0.01f, tileSize * 0.08f);
+        bool wouldNeedTurnCentering =
+            (attemptedStep.x != 0 && Mathf.Abs(currentCenterDelta.y) > turnTolerance) ||
+            (attemptedStep.y != 0 && Mathf.Abs(currentCenterDelta.x) > turnTolerance);
+        float arrivalSeconds = EstimateTraversalSeconds(1);
+        float currentDanger = GetDangerSeconds(myTile);
+        float retreatDanger = GetDangerSeconds(sequenceRetreatTile);
+        bool retreatWalkable = IsWalkableTile(sequenceRetreatTile, myTile);
+        bool retreatDangerousAtArrival = IsDangerousAt(sequenceRetreatTile, arrivalSeconds, settings);
+
+        LogOffensiveSurgical("PUNCH_RETREAT_STUCK",
+            $"my:{myTile} pos:{position} plant:{sequencePlantTile} retreat:{sequenceRetreatTile} " +
+            $"move:{FirstMoveDescription(retreatMove)} attempted:{attemptedStep} sameTileFor:{stuckFor:F2}s " +
+            $"stateElapsed:{(Time.time - sequenceStateStartedTime):F2}s plantElapsed:{(Time.time - sequencePlantRequestedTime):F2}s " +
+            $"currentDelta:{currentCenterDelta} retreatDelta:{retreatCenterDelta} turnCentering:{wouldNeedTurnCentering} " +
+            $"targetShouldBe:{sequenceRetreatTile} walkable:{retreatWalkable} dangerHere:{FormatDanger(currentDanger)} " +
+            $"dangerRetreat:{FormatDanger(retreatDanger)} retreatDangerAtEta:{retreatDangerousAtArrival} " +
+            $"eta:{arrivalSeconds:F2}s bomb:{DescribeBomb(sequenceTrackedBomb)}",
+            force: true);
+
+        retreatStuckSince = Time.time;
+    }
+
     // =========================================================================
     // Auxiliares gerais
     // =========================================================================
@@ -976,6 +1067,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         sequenceFaceDirectionSent = false;
         sequencePunchCommandSent = false;
         postPunchEscapeUntil = -10f;
+        retreatLastTile = default;
+        retreatStuckSince = -10f;
+        retreatLastAttemptedStep = Vector2Int.zero;
         escapeLastTile = default;
         escapeStuckSince = -10f;
         escapeLastAttemptedStep = Vector2Int.zero;
@@ -1001,12 +1095,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     }
 
     private BattleModeComAbilityDecision MakeSequenceDecision(
-        Vector2 firstMove, int weight, string reason) =>
+        Vector2 firstMove, int weight, string reason, Vector2Int? targetOverride = null) =>
         new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
             Weight = weight,
-            TargetTile = sequencePlantTile,
+            TargetTile = targetOverride ?? sequencePlantTile,
             HasTarget = true,
             FirstMove = firstMove,
             Reason = reason,
@@ -1247,6 +1341,45 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
     private static Vector2 TileDirectionToVector(Vector2Int dir) => new Vector2(dir.x, dir.y);
 
+    private static Vector2Int DirectionToTile(Vector2 move)
+    {
+        if (Mathf.Abs(move.x) > Mathf.Abs(move.y))
+            return move.x > 0f ? Vector2Int.right : Vector2Int.left;
+
+        if (Mathf.Abs(move.y) > 0.01f)
+            return move.y > 0f ? Vector2Int.up : Vector2Int.down;
+
+        return Vector2Int.zero;
+    }
+
+    private bool CanStartRetreatCleanly(Vector2Int currentTile, Vector2Int retreatDir, out string reason)
+    {
+        reason = "ready";
+
+        if (retreatDir == Vector2Int.zero)
+        {
+            reason = "zero retreat dir";
+            return false;
+        }
+
+        Vector2 delta = TileToWorld(currentTile) - transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * RetreatStartCenterTolerance);
+
+        if (retreatDir.x != 0 && Mathf.Abs(delta.y) > tolerance)
+        {
+            reason = $"needs y center delta:{delta.y:F2} tolerance:{tolerance:F2}";
+            return false;
+        }
+
+        if (retreatDir.y != 0 && Mathf.Abs(delta.x) > tolerance)
+        {
+            reason = $"needs x center delta:{delta.x:F2} tolerance:{tolerance:F2}";
+            return false;
+        }
+
+        return true;
+    }
+
     private static string FirstMoveDescription(Vector2 move)
     {
         if (move == Vector2.zero) return "none";
@@ -1360,5 +1493,24 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         lastDefensivePunchLogTime = Time.time;
         Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
         Debug.Log($"[BattleCOMPunch][P{id}] tile:{tile} state:{sequenceState} {key} {message}", this);
+    }
+
+    private void LogOffensiveSurgical(string key, string message, bool force = false)
+    {
+        if (!EnableOffensivePunchDiagnostics) return;
+
+        int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
+        if (DiagnosticPlayerIdFilter != 0 && id != DiagnosticPlayerIdFilter) return;
+
+        string logKey = key + ":" + message;
+        if (!force &&
+            logKey == lastOffensivePunchLogKey &&
+            Time.time - lastOffensivePunchLogTime < OffensivePunchLogIntervalSeconds)
+            return;
+
+        lastOffensivePunchLogKey = logKey;
+        lastOffensivePunchLogTime = Time.time;
+        Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
+        Debug.Log($"[BattleCOMPunchRisk][P{id}] frame:{Time.frameCount} t:{Time.time:F2} tile:{tile} state:{sequenceState} key:{key} {message}", this);
     }
 }

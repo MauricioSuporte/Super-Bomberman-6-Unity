@@ -17,6 +17,14 @@ public sealed class BattleModeComController : MonoBehaviour
     private static readonly bool EnableDeathDiagnostics = false;
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
     private static readonly bool EnableKickBombRiskDiagnostics = true;
+
+    // Log cirúrgico de ExecuteEscape — separado do PostPlant para não depender
+    // de postPlantEscapeWatchActive/chainBombPlantingStartedTime.
+    private static readonly bool EnableEscapeDiagnostics = true;
+    private const float EscapeLogIntervalSeconds = 0.25f;
+    private float lastEscapeLogTime = -10f;
+    private string lastEscapeLogKey = string.Empty;
+
     private const int PostPlantDiagnosticPlayerIdFilter = 5;
     private const float KickBombRiskLogIntervalSeconds = 0.25f;
 
@@ -37,6 +45,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float ChainBombFuseSafetyMarginSeconds = 0.25f;
     private const int ChainBombMinimumEscapeBranches = 3;
     private const float ChainBombMaxPlantingSeconds = 1.5f;
+    private const float PostPlantEmergencyEscapeMarginSeconds = 0.35f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -119,6 +128,13 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastPostPlantEscapeLogKey = string.Empty;
     private float lastKickBombRiskLogTime = -10f;
     private string lastKickBombRiskLogKey = string.Empty;
+
+    // Committed escape: quando TryBuildOwnPendingEscapeRoute encontra um target válido,
+    // gravamos ele aqui. TryBuildOwnPendingSafetyMove usa BFS em direção a ele antes de
+    // fazer a avaliação greedy de 1 passo, evitando oscilação entre dois tiles adjacentes.
+    private Vector2Int committedEscapeTarget = new Vector2Int(int.MinValue, int.MinValue);
+    private float committedEscapeExpiresTime = -10f;
+    private const float CommittedEscapeLifetimeSeconds = 2.5f;
 
     private struct PathNode
     {
@@ -527,6 +543,10 @@ public sealed class BattleModeComController : MonoBehaviour
 
             bool chainPlantingTimeExpired = Time.time - chainBombPlantingStartedTime > ChainBombMaxPlantingSeconds;
 
+            // Chain bomb tem prioridade sobre fuga simples: só tentamos fugir depois de verificar
+            // se existe oportunidade de plantar mais uma bomba em chain. Isso preserva as
+            // estratégias de kick-chain e chain-explosion que foram quebradas quando o Codex
+            // colocou o escape route antes do chain candidate.
             if (!chainPlantingTimeExpired &&
                 TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
             {
@@ -555,6 +575,25 @@ public sealed class BattleModeComController : MonoBehaviour
                     myTile,
                     currentDangerSeconds,
                     $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s rejected:{FormatRejectedForLog()}");
+            }
+
+            if (TryBuildOwnPendingEscapeRoute(settings, myTile, currentDangerSeconds, out Vector2 ownEscapeMove, out Vector2Int ownEscapeTarget, out string ownEscapeReason))
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "OWN_PENDING_ESCAPE_ROUTE",
+                    myTile,
+                    currentDangerSeconds,
+                    $"target:{ownEscapeTarget} move:{FirstMoveDescription(ownEscapeMove)} reason:{ownEscapeReason}");
+                SetCurrentDecision(
+                    BattleModeComActionType.Reposition,
+                    ownEscapeMove,
+                    true,
+                    ownEscapeTarget,
+                    ownEscapeReason,
+                    FirstMoveDescription(ownEscapeMove),
+                    currentDangerSeconds,
+                    "escape ownPending");
+                return;
             }
 
             if (TryBuildAbilityCandidate(settings, myTile, out CandidateAction abilityWithOwnBomb))
@@ -624,6 +663,7 @@ public sealed class BattleModeComController : MonoBehaviour
         chainBombPlantingStartedTime = -10f;
         postPlantEscapeWatchActive = false;
         hasSafeCenterTarget = false;
+        committedEscapeExpiresTime = -10f;
 
         if (TryEmitControlBomb(settings, myTile, currentDangerSeconds))
             return;
@@ -1139,6 +1179,32 @@ public sealed class BattleModeComController : MonoBehaviour
                playerId == BattleModeComKickBombAbility.DiagnosticPlayerIdFilter;
     }
 
+    private void LogEscapeDiagnostic(string key, Vector2Int myTile, float dangerSeconds, string message, bool force = false)
+    {
+        if (!EnableEscapeDiagnostics)
+            return;
+
+        if (PostPlantDiagnosticPlayerIdFilter != 0 && playerId != PostPlantDiagnosticPlayerIdFilter)
+            return;
+
+        string logKey = $"{key}:{myTile}:{currentAction}";
+        if (!force && logKey == lastEscapeLogKey && Time.time - lastEscapeLogTime < EscapeLogIntervalSeconds)
+            return;
+
+        lastEscapeLogKey = logKey;
+        lastEscapeLogTime = Time.time;
+
+        Debug.Log(
+            $"[BattleCOMEscape][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} tile:{myTile} " +
+            $"danger:{FormatDanger(dangerSeconds)} key:{key} " +
+            $"action:{currentAction} move:{FirstMoveDescription(currentMoveInput)} " +
+            $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+            $"chain:{(chainBombPlantingStartedTime >= 0f ? $"{Time.time - chainBombPlantingStartedTime:F2}s" : "none")} " +
+            $"watch:{postPlantEscapeWatchActive} ownPending:{HasOwnUnresolvedBombOrExplosion()} " +
+            $"msg:{message}",
+            this);
+    }
+
     private string FormatRejectedForLog()
     {
         if (rejectedActions.Count <= 0)
@@ -1160,6 +1226,11 @@ public sealed class BattleModeComController : MonoBehaviour
                 myTile,
                 currentDangerSeconds,
                 $"target:{target} move:{FirstMoveDescription(firstMove)} route:{route}");
+            LogEscapeDiagnostic(
+                "ESCAPE",
+                myTile,
+                currentDangerSeconds,
+                $"target:{target} move:{FirstMoveDescription(firstMove)} route:{route}");
             SetCurrentDecision(
                 BattleModeComActionType.Reposition,
                 firstMove,
@@ -1172,6 +1243,14 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        // BFS falhou — logar antes de tentar ability/hold/fallback
+        LogEscapeDiagnostic(
+            "ESCAPE_FAIL",
+            myTile,
+            currentDangerSeconds,
+            "TryFindEscape returned false, trying ability/hold/fallback",
+            force: true);
+
         if (TryBuildAbilityEmergencyCandidate(settings, myTile, currentDangerSeconds, out CandidateAction abilityEmergency))
         {
             LogPostPlantEscapeDiagnostic(
@@ -1180,6 +1259,11 @@ public sealed class BattleModeComController : MonoBehaviour
                 currentDangerSeconds,
                 $"action:{abilityEmergency.Action} target:{abilityEmergency.TargetTile} " +
                 $"move:{FirstMoveDescription(abilityEmergency.FirstMove)} reason:{abilityEmergency.Reason}");
+            LogEscapeDiagnostic(
+                "ESCAPE_ABILITY",
+                myTile,
+                currentDangerSeconds,
+                $"action:{abilityEmergency.Action} target:{abilityEmergency.TargetTile} reason:{abilityEmergency.Reason}");
             ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, abilityEmergency, "ability");
             return;
         }
@@ -1191,6 +1275,13 @@ public sealed class BattleModeComController : MonoBehaviour
                 myTile,
                 currentDangerSeconds,
                 holdReason);
+            // force=true: HOLD é sempre importante — indica que TryFindEscape falhou
+            LogEscapeDiagnostic(
+                "HOLD",
+                myTile,
+                currentDangerSeconds,
+                $"reason:{holdReason} bfsEscapeFailed:true",
+                force: true);
             SetCurrentDecision(
                 BattleModeComActionType.Stopped,
                 Vector2.zero,
@@ -1212,6 +1303,14 @@ public sealed class BattleModeComController : MonoBehaviour
             currentDangerSeconds,
             $"target:{(hasFallbackTarget ? fallbackTarget.ToString() : "none")} move:{FirstMoveDescription(fallback)} " +
             $"reason:{fallbackReason} rejected:{FormatRejectedForLog()}");
+        // force=true: FALLBACK significa que BFS falhou E hold também foi rejeitado
+        LogEscapeDiagnostic(
+            "FALLBACK",
+            myTile,
+            currentDangerSeconds,
+            $"target:{(hasFallbackTarget ? fallbackTarget.ToString() : "none")} move:{FirstMoveDescription(fallback)} " +
+            $"reason:{fallbackReason}",
+            force: true);
         SetCurrentDecision(
             BattleModeComActionType.Reposition,
             fallback,
@@ -1771,12 +1870,30 @@ public sealed class BattleModeComController : MonoBehaviour
         if (currentThreatDistance == int.MaxValue)
             return false;
 
-        float elapsed = chainBombPlantingStartedTime >= 0f
-            ? Time.time - chainBombPlantingStartedTime
-            : 0f;
-
-        if (!IsCenteredOnTile(myTile) && elapsed < 0.25f)
-            return false;
+        // Se temos um escape target comprometido (vindo de TryBuildOwnPendingEscapeRoute),
+        // tentamos navegar BFS em direção a ele em vez de fazer a avaliação greedy de 1 passo.
+        // Isso evita que o safety move oscile entre dois tiles adjacentes com scores similares.
+        if (committedEscapeExpiresTime > Time.time &&
+            committedEscapeTarget.x != int.MinValue &&
+            committedEscapeTarget != myTile)
+        {
+            float targetDanger = GetDangerSeconds(committedEscapeTarget, null);
+            bool targetStillSafe = float.IsInfinity(targetDanger);
+            if (targetStillSafe &&
+                TryFindEscape(settings, myTile, null, out Vector2 escapeFm, out Vector2Int escapeT, out string escapeR))
+            {
+                // Só usa o BFS se ele nos leva em direção ao committed target (ou a algum tile seguro próximo)
+                move = escapeFm;
+                target = committedEscapeTarget;
+                reason = $"committed escape target {committedEscapeTarget} bfs:{escapeT} {escapeR}";
+                return true;
+            }
+            else
+            {
+                // Target ficou perigoso ou BFS falhou — invalida o commit
+                committedEscapeExpiresTime = -10f;
+            }
+        }
 
         float currentScore = ScoreOwnPendingSafetyTile(myTile, 0f, settings);
         float bestScore = currentScore;
@@ -1784,6 +1901,7 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int bestTile = myTile;
         int bestThreatDistance = currentThreatDistance;
         float bestArrival = 0f;
+        bool standingOnOwnThreat = currentThreatDistance == 0;
 
         for (int i = 0; i < CardinalTiles.Length; i++)
         {
@@ -1798,8 +1916,15 @@ public sealed class BattleModeComController : MonoBehaviour
 
             float score = ScoreOwnPendingSafetyTile(next, arrivalSeconds, settings);
             int threatDistance = GetClosestOwnPendingThreatDistance(next);
-            if (score <= bestScore + 0.5f)
+            if (standingOnOwnThreat)
+            {
+                if (threatDistance <= currentThreatDistance)
+                    continue;
+            }
+            else if (score <= bestScore + 0.5f)
+            {
                 continue;
+            }
 
             bestScore = score;
             bestDirection = direction;
@@ -1819,16 +1944,84 @@ public sealed class BattleModeComController : MonoBehaviour
         return true;
     }
 
+    private bool TryBuildOwnPendingEscapeRoute(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out Vector2 move,
+        out Vector2Int target,
+        out string reason)
+    {
+        move = Vector2.zero;
+        target = myTile;
+        reason = "no own pending escape route";
+
+        int currentThreatDistance = GetClosestOwnPendingThreatDistance(myTile);
+        if (currentThreatDistance == int.MaxValue)
+            return false;
+
+        if (!TryFindEscape(settings, myTile, null, out Vector2 firstMove, out Vector2Int escapeTarget, out string route))
+        {
+            reason = $"own pending no bfs escape dist {currentThreatDistance}";
+            return false;
+        }
+
+        Vector2Int firstStep = DirectionToTile(firstMove);
+        if (firstStep == Vector2Int.zero)
+            return false;
+
+        float arrivalSeconds = EstimateFirstMoveTraversalSeconds(firstStep);
+        float firstStepMargin = GetSurvivalMarginSeconds(myTile + firstStep, arrivalSeconds, settings, null);
+        bool standingOnOwnThreat = currentThreatDistance == 0;
+        int nextThreatDistance = GetClosestOwnPendingThreatDistance(myTile + firstStep);
+
+        if (standingOnOwnThreat && nextThreatDistance <= currentThreatDistance)
+        {
+            reason = $"own pending escape first step does not leave threat dist {currentThreatDistance}->{nextThreatDistance}";
+            return false;
+        }
+
+        if (!standingOnOwnThreat &&
+            firstStepMargin < PostPlantEmergencyEscapeMarginSeconds &&
+            !float.IsInfinity(currentDangerSeconds))
+        {
+            reason =
+                $"own pending escape rejected low first margin {firstStepMargin:F2}s " +
+                $"danger:{FormatDanger(currentDangerSeconds)} target:{escapeTarget}";
+            return false;
+        }
+
+        // Não fazemos centering explícito aqui: o SetCurrentDecision com route "escape ownPending"
+        // ativa currentMoveFollowsEscapeRoute = true, e ApplyTurnAxisCentering (post-processing)
+        // já faz o centering de eixo corretamente. Fazer centering aqui é redundante e causa
+        // oscilação porque a direção retornada muda frame-a-frame conforme a sub-posição do tile.
+        move = firstMove;
+        target = escapeTarget;
+        reason =
+            $"own pending escape route {route} first:{FirstMoveDescription(firstMove)} " +
+            $"target:{escapeTarget} margin:{firstStepMargin:F2}s dist {currentThreatDistance}->{nextThreatDistance}";
+
+        // Grava o target de fuga comprometido para que TryBuildOwnPendingSafetyMove
+        // não oscile entre direções greedy enquanto ainda não chegamos lá.
+        committedEscapeTarget = escapeTarget;
+        committedEscapeExpiresTime = Time.time + CommittedEscapeLifetimeSeconds;
+
+        return true;
+    }
+
     private float ScoreOwnPendingSafetyTile(
         Vector2Int tile,
         float arrivalSeconds,
         BattleModeComDifficultySettings settings)
     {
         float dangerSeconds = GetDangerSeconds(tile, null);
-        if (!float.IsInfinity(dangerSeconds))
-            return dangerSeconds - arrivalSeconds - settings.dangerReactionSeconds;
-
         int threatDistance = GetClosestOwnPendingThreatDistance(tile);
+        if (!float.IsInfinity(dangerSeconds))
+        {
+            float distanceBonus = threatDistance == int.MaxValue ? 0f : threatDistance * 0.75f;
+            return dangerSeconds - arrivalSeconds - settings.dangerReactionSeconds + distanceBonus;
+        }
+
         float distanceScore = threatDistance == int.MaxValue ? 0f : threatDistance * 6f;
         return 50f + distanceScore + CountOpenNeighbors(tile) * 1.5f - arrivalSeconds;
     }
@@ -2686,7 +2879,18 @@ public sealed class BattleModeComController : MonoBehaviour
         out Vector2Int escapeTile)
     {
         List<Vector2Int> plannedBlast = BuildBlastTiles(plantTile, radius);
-        return TryFindEscape(settings, plantTile, plannedBlast, out escapeMove, out escapeTile, out _);
+        if (!TryFindEscape(settings, plantTile, plannedBlast, out escapeMove, out escapeTile, out _))
+            return false;
+
+        Vector2Int currentTile = WorldToTile(transform.position);
+        if (plantTile == currentTile)
+        {
+            Vector2Int firstStep = DirectionToTile(escapeMove);
+            if (!IsCenteredOnTile(plantTile) || NeedsTurnAxisCentering(plantTile, firstStep))
+                return false;
+        }
+
+        return true;
     }
 
     private bool TryFindChainEscape(
@@ -3426,7 +3630,13 @@ public sealed class BattleModeComController : MonoBehaviour
             return Vector2.zero;
 
         if (currentMoveFollowsEscapeRoute && NeedsTurnAxisCentering(currentTile, requestedDirection))
-            return GetTurnAxisCenteringMove(currentTile, requestedDirection);
+        {
+            // Não centralizar quando o tile atual está em perigo: cada frame conta.
+            // Centralizar só quando o tile está seguro (ownPending escape com tempo de sobra).
+            float tileDanger = GetDangerSeconds(currentTile, null);
+            if (float.IsInfinity(tileDanger))
+                return GetTurnAxisCenteringMove(currentTile, requestedDirection);
+        }
 
         if (ShouldKeepTargetedMove(currentTile, requestedDirection))
             return requestedMove;

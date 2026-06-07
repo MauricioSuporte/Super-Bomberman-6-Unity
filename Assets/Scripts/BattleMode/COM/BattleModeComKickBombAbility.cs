@@ -26,6 +26,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     private const float DirectKickRetrySeconds = 0.9f;
     private const float DirectKickRetryMinFuseSeconds = 0.65f;
     private const float DirectKickRetryDangerBufferSeconds = 0.05f;
+    private const float ReturnToKickStuckTimeoutSeconds = 0.2f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = false;
     private static readonly bool EnableKickBombRiskDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
@@ -510,6 +511,19 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 return false;
             }
 
+            if (Time.time - sequenceStateStartedTime > ReturnToKickStuckTimeoutSeconds &&
+                !IsKickActivationComplete(bomb, sequenceBombTile))
+            {
+                lastDecisionTrace =
+                    $"sequence cancelled return/kick timeout bomb {sequenceBombTile} stand {kickStandTile}";
+                LogKickSurgical(
+                    "RETURN_TO_KICK_TIMEOUT",
+                    $"my:{myTile} bomb:{DescribeBomb(bomb)} stand:{kickStandTile} elapsed:{Time.time - sequenceStateStartedTime:F2}s nearby:{DescribeNearbyBombs(myTile)}",
+                    true);
+                ResetOffensiveSequence();
+                return false;
+            }
+
             if (IsKickActivationComplete(bomb, sequenceBombTile))
             {
                 bool repeatArmed = TryArmRepeatKickAfterSuccessfulKick(myTile, bomb, kickStandTile);
@@ -886,6 +900,17 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             return true;
         }
 
+        if (!IsRepeatKickLaneReady(sequenceBombTile, sequenceKickDirection, out string repeatLaneReason))
+        {
+            lastDecisionTrace = $"repeat plant cancelled lane blocked {repeatLaneReason}";
+            LogKickSurgical(
+                "CHAIN_PLANT_LANE_BLOCKED",
+                $"my:{myTile} origin:{sequenceBombTile} dir:{sequenceKickDirection} reason:{repeatLaneReason} nearby:{DescribeNearbyBombs(myTile)}",
+                true);
+            ResetOffensiveSequence();
+            return false;
+        }
+
         if (!TryPlaceSequenceBombAtOrigin(out Bomb placedBomb, out string placeFailReason))
         {
             lastDecisionTrace = $"repeat plant failed origin {sequenceBombTile} reason {placeFailReason}";
@@ -953,12 +978,49 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             return false;
         }
 
+        if (!IsRepeatKickLaneReady(sequenceBombTile, sequenceKickDirection, out string laneReason))
+        {
+            LogKickSurgical(
+                "CHAIN_NOT_ARMED_LANE_BLOCKED",
+                $"my:{myTile} origin:{sequenceBombTile} dir:{sequenceKickDirection} reason:{laneReason} kicked:{DescribeBomb(kickedBomb)}",
+                true);
+            ArmActionRStopWindowIfPlanned();
+            return false;
+        }
+
         SetSequenceState(SequenceState.ReturnToRepeatPlant);
         LogKickSurgical(
             "CHAIN_ARMED",
             $"my:{myTile} origin:{sequenceBombTile} stand:{standTile} kicked:{DescribeBomb(kickedBomb)} kicks:{sequenceKicksCompleted}/{sequenceTargetKickCount} actionR:{sequenceAllowActionRStop}",
             true);
         return true;
+    }
+
+    private bool IsRepeatKickLaneReady(Vector2Int originTile, Vector2Int kickDir, out string reason)
+    {
+        reason = "ready";
+
+        if (!IsCardinalStep(kickDir))
+        {
+            reason = $"invalid dir {kickDir}";
+            return false;
+        }
+
+        Vector2Int firstTile = originTile + kickDir;
+        Bomb blockingBomb = FindBombAt(firstTile);
+        if (blockingBomb != null && blockingBomb.IsBeingKicked)
+        {
+            reason = $"moving bomb still in first lane tile {DescribeBomb(blockingBomb)}";
+            return false;
+        }
+
+        if (blockingBomb != null)
+        {
+            reason = $"bomb still in first lane tile {DescribeBomb(blockingBomb)}";
+            return false;
+        }
+
+        return IsKickLaneOpen(originTile, kickDir, 1);
     }
 
     private void ConfigureNewKickSequencePlan(BattleModeComDifficultySettings settings, bool firstBombAlreadyPlaced)
