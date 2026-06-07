@@ -13,6 +13,10 @@ using UnityEngine.Tilemaps;
 public sealed class BattleModeComController : MonoBehaviour
 {
     private static bool EnableGeneralDecisionLogs => false;
+    private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
+    private static readonly bool EnableDeathDiagnostics = false;
+    private static readonly bool EnablePostPlantEscapeDiagnostics = true;
+    private const int PostPlantDiagnosticPlayerIdFilter = 5;
 
     private const float BombTapCooldownSeconds = 0.35f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
@@ -101,7 +105,16 @@ public sealed class BattleModeComController : MonoBehaviour
     private int lastDeathDiagnosticFrame = -1;
     private float escapeAbilityChanceCacheTime = -10f;
     private bool escapeAbilityChanceCacheResult;
+    private float escapeAbilityChanceCacheRoll;
+    private string escapeAbilityChanceCacheThreatKey = string.Empty;
+    private BattleModeComputerLevel escapeAbilityChanceCacheDifficulty = BattleModeComputerLevel.Normal;
     private string lastEscapeAbilityChanceTrace = "not rolled";
+    private float lastEscapeAbilityChanceLogTime = -10f;
+    private string lastEscapeAbilityChanceLogKey = string.Empty;
+    private bool postPlantEscapeWatchActive;
+    private float postPlantEscapeWatchStartedTime = -10f;
+    private float lastPostPlantEscapeLogTime = -10f;
+    private string lastPostPlantEscapeLogKey = string.Empty;
 
     private struct PathNode
     {
@@ -491,12 +504,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 return;
             }
 
-            if (TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: true, out CandidateAction chainNow))
-            {
-                ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, chainNow, "chainBomb");
-                return;
-            }
-
             ExecuteEscape(settings, myTile, currentDangerSeconds);
             return;
         }
@@ -504,26 +511,88 @@ public sealed class BattleModeComController : MonoBehaviour
         if (HasOwnUnresolvedBombOrExplosion())
         {
             if (chainBombPlantingStartedTime < 0f)
+            {
                 chainBombPlantingStartedTime = Time.time;
+                LogPostPlantEscapeDiagnostic(
+                    "OWN_BOMB_START",
+                    myTile,
+                    currentDangerSeconds,
+                    "own unresolved bomb/explosion entered post-plant flow",
+                    force: true);
+            }
 
             bool chainPlantingTimeExpired = Time.time - chainBombPlantingStartedTime > ChainBombMaxPlantingSeconds;
 
             if (!chainPlantingTimeExpired &&
                 TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
             {
+                LogPostPlantEscapeDiagnostic(
+                    "CHAIN_CONTINUE",
+                    myTile,
+                    currentDangerSeconds,
+                    $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s action:{chain.Action} target:{chain.TargetTile} " +
+                    $"move:{FirstMoveDescription(chain.FirstMove)} tapBomb:{chain.TapBomb} reason:{chain.Reason}");
                 ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, chain, "chainBomb");
                 return;
             }
 
+            if (chainPlantingTimeExpired)
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "CHAIN_TIMEOUT",
+                    myTile,
+                    currentDangerSeconds,
+                    $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s max:{ChainBombMaxPlantingSeconds:F2}s");
+            }
+            else
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "CHAIN_NO_CANDIDATE",
+                    myTile,
+                    currentDangerSeconds,
+                    $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s rejected:{FormatRejectedForLog()}");
+            }
+
             if (TryBuildAbilityCandidate(settings, myTile, out CandidateAction abilityWithOwnBomb))
             {
+                LogPostPlantEscapeDiagnostic(
+                    "ABILITY_AFTER_PLANT",
+                    myTile,
+                    currentDangerSeconds,
+                    $"action:{abilityWithOwnBomb.Action} target:{abilityWithOwnBomb.TargetTile} " +
+                    $"move:{FirstMoveDescription(abilityWithOwnBomb.FirstMove)} reason:{abilityWithOwnBomb.Reason}");
                 ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, abilityWithOwnBomb, "ability");
+                return;
+            }
+
+            if (TryBuildOwnPendingSafetyMove(settings, myTile, currentDangerSeconds, out Vector2 safetyMove, out Vector2Int safetyTarget, out string safetyReason))
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "OWN_PENDING_REPOSITION",
+                    myTile,
+                    currentDangerSeconds,
+                    $"target:{safetyTarget} move:{FirstMoveDescription(safetyMove)} reason:{safetyReason}");
+                SetCurrentDecision(
+                    BattleModeComActionType.Reposition,
+                    safetyMove,
+                    true,
+                    safetyTarget,
+                    safetyReason,
+                    FirstMoveDescription(safetyMove),
+                    currentDangerSeconds,
+                    "ownPendingSafety");
                 return;
             }
 
             hasSafeCenterTarget = true;
             safeCenterTargetTile = myTile;
 
+            LogPostPlantEscapeDiagnostic(
+                "HOLD_SAFE_TILE",
+                myTile,
+                currentDangerSeconds,
+                $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s bombsRemaining:{bombController.BombsRemaining} " +
+                $"rejected:{FormatRejectedForLog()}");
             SetCurrentDecision(
                 BattleModeComActionType.Stopped,
                 Vector2.zero,
@@ -536,7 +605,20 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (chainBombPlantingStartedTime >= 0f || postPlantEscapeWatchActive)
+        {
+            LogPostPlantEscapeDiagnostic(
+                "OWN_BOMB_RESOLVED",
+                myTile,
+                currentDangerSeconds,
+                chainBombPlantingStartedTime >= 0f
+                    ? $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s"
+                    : "elapsed:none",
+                force: true);
+        }
+
         chainBombPlantingStartedTime = -10f;
+        postPlantEscapeWatchActive = false;
         hasSafeCenterTarget = false;
 
         if (TryEmitControlBomb(settings, myTile, currentDangerSeconds))
@@ -605,6 +687,18 @@ public sealed class BattleModeComController : MonoBehaviour
             Tap(PlayerAction.ActionA);
             lastBombTapTime = Time.time;
             currentInputDescription = AppendInput(currentInputDescription, "ActionA");
+            if (route == "chainBomb")
+            {
+                postPlantEscapeWatchActive = true;
+                postPlantEscapeWatchStartedTime = Time.time;
+                LogPostPlantEscapeDiagnostic(
+                    "BOMB_TAPPED",
+                    myTile,
+                    currentDangerSeconds,
+                    $"action:{selected.Action} target:{selected.TargetTile} move:{FirstMoveDescription(selected.FirstMove)} " +
+                    $"reason:{selected.Reason}",
+                    force: true);
+            }
         }
 
         if (selected.TapActionR && Time.time - lastControlTapTime >= ControlBombTapCooldownSeconds)
@@ -639,6 +733,7 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
         }
 
+        string escapeAbilityCandidates = string.Empty;
         for (int i = 0; i < comAbilities.Count; i++)
         {
             IBattleModeComAbility ability = comAbilities[i];
@@ -660,8 +755,17 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
             }
 
+            if (decision.UsesEscapeAbilityChance)
+                AppendEscapeAbilityCandidate(ref escapeAbilityCandidates, ability, decision);
+
             if (decision.UsesEscapeAbilityChance &&
-                !RollEscapeAbilityChance(settings, GetAbilityDiagnosticName(ability), out string chanceTrace))
+                !RollEscapeAbilityChance(
+                    settings,
+                    GetAbilityDiagnosticName(ability),
+                    escapeAbilityCandidates,
+                    myTile,
+                    currentDangerSeconds,
+                    out string chanceTrace))
             {
                 AppendAbilityTrace(
                     "emergency chance",
@@ -782,34 +886,62 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool RollEscapeAbilityChance(
         BattleModeComDifficultySettings settings,
         string abilityName,
+        string escapeCandidates,
+        Vector2Int myTile,
+        float currentDangerSeconds,
         out string trace)
     {
         float chance = Mathf.Clamp01(settings.escapeAbilityChance);
         float roll;
         bool result;
+        string threatKey = ResolveEscapeAbilityThreatKey(myTile);
+        bool cacheMatches =
+            !string.IsNullOrEmpty(escapeAbilityChanceCacheThreatKey) &&
+            string.Equals(escapeAbilityChanceCacheThreatKey, threatKey, StringComparison.Ordinal) &&
+            escapeAbilityChanceCacheDifficulty == settings.difficulty;
+
+        if (cacheMatches)
+        {
+            result = escapeAbilityChanceCacheResult;
+            trace = FormatEscapeAbilityChanceTrace(
+                settings,
+                abilityName,
+                chance,
+                escapeAbilityChanceCacheRoll,
+                result,
+                cached: true,
+                threatKey,
+                escapeCandidates);
+            lastEscapeAbilityChanceTrace = trace;
+            LogEscapeAbilityChanceDiagnostic(trace, myTile, currentDangerSeconds, escapeCandidates, force: false);
+            return result;
+        }
 
         if (chance >= 1f)
         {
             roll = 0f;
             result = true;
-            trace = FormatEscapeAbilityChanceTrace(settings, abilityName, chance, roll, result, cached: false);
+            escapeAbilityChanceCacheThreatKey = threatKey;
+            escapeAbilityChanceCacheDifficulty = settings.difficulty;
+            escapeAbilityChanceCacheTime = Time.time;
+            escapeAbilityChanceCacheResult = result;
+            escapeAbilityChanceCacheRoll = roll;
+            trace = FormatEscapeAbilityChanceTrace(settings, abilityName, chance, roll, result, cached: false, threatKey, escapeCandidates);
             lastEscapeAbilityChanceTrace = trace;
+            LogEscapeAbilityChanceDiagnostic(trace, myTile, currentDangerSeconds, escapeCandidates, force: true);
             return true;
         }
 
-        if (Time.time - escapeAbilityChanceCacheTime < 0.001f)
-        {
-            result = escapeAbilityChanceCacheResult;
-            trace = lastEscapeAbilityChanceTrace;
-            return result;
-        }
-
+        escapeAbilityChanceCacheThreatKey = threatKey;
+        escapeAbilityChanceCacheDifficulty = settings.difficulty;
         escapeAbilityChanceCacheTime = Time.time;
         roll = UnityEngine.Random.value;
         result = roll <= chance;
         escapeAbilityChanceCacheResult = result;
-        trace = FormatEscapeAbilityChanceTrace(settings, abilityName, chance, roll, result, cached: false);
+        escapeAbilityChanceCacheRoll = roll;
+        trace = FormatEscapeAbilityChanceTrace(settings, abilityName, chance, roll, result, cached: false, threatKey, escapeCandidates);
         lastEscapeAbilityChanceTrace = trace;
+        LogEscapeAbilityChanceDiagnostic(trace, myTile, currentDangerSeconds, escapeCandidates, force: true);
         return result;
     }
 
@@ -819,12 +951,66 @@ public sealed class BattleModeComController : MonoBehaviour
         float chance,
         float roll,
         bool result,
-        bool cached)
+        bool cached,
+        string threatKey,
+        string escapeCandidates)
     {
         return
             $"escapeAbilityRoll ability:{abilityName} difficulty:{settings.difficulty} " +
-            $"chance:{chance:F2} roll:{roll:F2} result:{(result ? "pass" : "fail")}" +
-            (cached ? " cached" : string.Empty);
+            $"chance:{chance:F2} roll:{roll:F2} result:{(result ? "pass" : "fail")} threat:{threatKey}" +
+            (cached ? " cached" : string.Empty) +
+            $" candidates:{(string.IsNullOrWhiteSpace(escapeCandidates) ? "none" : escapeCandidates)}";
+    }
+
+    private void AppendEscapeAbilityCandidate(
+        ref string candidatesText,
+        IBattleModeComAbility ability,
+        BattleModeComAbilityDecision decision)
+    {
+        string name = GetAbilityDiagnosticName(ability);
+        string target = decision.HasTarget ? decision.TargetTile.ToString() : "none";
+        string move = FirstMoveDescription(decision.FirstMove);
+        string input = string.IsNullOrWhiteSpace(decision.InputDescription) ? "none" : decision.InputDescription;
+        string reason = string.IsNullOrWhiteSpace(decision.Reason) ? "none" : decision.Reason;
+        string trace = ability != null && !string.IsNullOrWhiteSpace(ability.LastDecisionTrace)
+            ? ability.LastDecisionTrace
+            : "no trace";
+
+        string entry =
+            $"{name}[action:{decision.Action} weight:{decision.Weight} target:{target} " +
+            $"move:{move} input:{input} reason:{reason} trace:{trace}]";
+
+        if (string.IsNullOrWhiteSpace(candidatesText))
+            candidatesText = entry;
+        else
+            candidatesText += " | " + entry;
+    }
+
+    private void LogEscapeAbilityChanceDiagnostic(
+        string chanceTrace,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        string escapeCandidates,
+        bool force)
+    {
+        if (!EnableEscapeAbilityChanceDiagnostics)
+            return;
+
+        string key = chanceTrace;
+        if (!force &&
+            key == lastEscapeAbilityChanceLogKey &&
+            Time.time - lastEscapeAbilityChanceLogTime < 0.35f)
+        {
+            return;
+        }
+
+        lastEscapeAbilityChanceLogKey = key;
+        lastEscapeAbilityChanceLogTime = Time.time;
+        Debug.Log(
+            $"[BattleCOMEscapeRoll][P{playerId}] tile:{myTile} pos:{transform.position} " +
+            $"danger:{FormatDanger(currentDangerSeconds)} {chanceTrace} " +
+            $"escapeCandidates:{(string.IsNullOrWhiteSpace(escapeCandidates) ? "none" : escapeCandidates)}",
+            this);
     }
 
     private string BuildNoAbilityScriptsTrace()
@@ -853,6 +1039,59 @@ public sealed class BattleModeComController : MonoBehaviour
         return false;
     }
 
+    private void LogPostPlantEscapeDiagnostic(
+        string key,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        string message,
+        bool force = false)
+    {
+        if (!EnablePostPlantEscapeDiagnostics)
+            return;
+
+        if (PostPlantDiagnosticPlayerIdFilter != 0 && playerId != PostPlantDiagnosticPlayerIdFilter)
+            return;
+
+        if (!force && !postPlantEscapeWatchActive && chainBombPlantingStartedTime < 0f)
+            return;
+
+        string logKey = $"{key}:{myTile}:{currentAction}:{currentReason}";
+        if (!force &&
+            logKey == lastPostPlantEscapeLogKey &&
+            Time.time - lastPostPlantEscapeLogTime < 0.25f)
+        {
+            return;
+        }
+
+        lastPostPlantEscapeLogKey = logKey;
+        lastPostPlantEscapeLogTime = Time.time;
+
+        string watch = postPlantEscapeWatchActive
+            ? $"watch:{Time.time - postPlantEscapeWatchStartedTime:F2}s"
+            : "watch:off";
+        string chain = chainBombPlantingStartedTime >= 0f
+            ? $"chainElapsed:{Time.time - chainBombPlantingStartedTime:F2}s"
+            : "chainElapsed:none";
+        string safe = hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none";
+
+        Debug.Log(
+            $"[BattleCOMPostPlant][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} tile:{myTile} " +
+            $"pos:{transform.position} danger:{FormatDanger(currentDangerSeconds)} key:{key} {watch} {chain} " +
+            $"action:{currentAction} move:{FirstMoveDescription(currentMoveInput)} target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+            $"safeCenter:{safe} bombsRemaining:{(bombController != null ? bombController.BombsRemaining : -1)} " +
+            $"ownPending:{HasOwnUnresolvedBombOrExplosion()} msg:{message}",
+            this);
+    }
+
+    private string FormatRejectedForLog()
+    {
+        if (rejectedActions.Count <= 0)
+            return "none";
+
+        string joined = string.Join(" | ", rejectedActions);
+        return joined.Length <= 420 ? joined : joined.Substring(0, 420) + "...";
+    }
+
     private void ExecuteEscape(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -860,6 +1099,11 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         if (TryFindEscape(settings, myTile, null, out Vector2 firstMove, out Vector2Int target, out string route))
         {
+            LogPostPlantEscapeDiagnostic(
+                "DANGER_ESCAPE",
+                myTile,
+                currentDangerSeconds,
+                $"target:{target} move:{FirstMoveDescription(firstMove)} route:{route}");
             SetCurrentDecision(
                 BattleModeComActionType.Reposition,
                 firstMove,
@@ -874,12 +1118,23 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (TryBuildAbilityEmergencyCandidate(settings, myTile, currentDangerSeconds, out CandidateAction abilityEmergency))
         {
+            LogPostPlantEscapeDiagnostic(
+                "DANGER_ABILITY",
+                myTile,
+                currentDangerSeconds,
+                $"action:{abilityEmergency.Action} target:{abilityEmergency.TargetTile} " +
+                $"move:{FirstMoveDescription(abilityEmergency.FirstMove)} reason:{abilityEmergency.Reason}");
             ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, abilityEmergency, "ability");
             return;
         }
 
         if (ShouldHoldDangerTile(settings, myTile, currentDangerSeconds, out string holdReason))
         {
+            LogPostPlantEscapeDiagnostic(
+                "DANGER_HOLD",
+                myTile,
+                currentDangerSeconds,
+                holdReason);
             SetCurrentDecision(
                 BattleModeComActionType.Stopped,
                 Vector2.zero,
@@ -895,6 +1150,12 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2 fallback = FindBestFallbackMove(settings, myTile, null, out string fallbackReason);
         Vector2Int fallbackTarget = myTile + DirectionToTile(fallback);
         bool hasFallbackTarget = fallback != Vector2.zero && fallbackTarget != myTile;
+        LogPostPlantEscapeDiagnostic(
+            "DANGER_FALLBACK",
+            myTile,
+            currentDangerSeconds,
+            $"target:{(hasFallbackTarget ? fallbackTarget.ToString() : "none")} move:{FirstMoveDescription(fallback)} " +
+            $"reason:{fallbackReason} rejected:{FormatRejectedForLog()}");
         SetCurrentDecision(
             BattleModeComActionType.Reposition,
             fallback,
@@ -1198,7 +1459,17 @@ public sealed class BattleModeComController : MonoBehaviour
         candidate = default;
 
         if (bombController == null || bombController.BombsRemaining <= 0)
+        {
+            if (HasOwnUnresolvedBombOrExplosion())
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "CHAIN_NO_BOMBS",
+                    myTile,
+                    currentDangerSeconds,
+                    $"bombController:{(bombController != null)} bombsRemaining:{(bombController != null ? bombController.BombsRemaining : -1)}");
+            }
             return false;
+        }
 
         int radius = Mathf.Max(1, bombController.explosionRadius);
         GatherReachableSafeTiles(myTile, onlyCurrentTile ? 0 : settings.searchDepth + 2, settings);
@@ -1284,9 +1555,30 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         if (bestDistance == int.MaxValue)
+        {
+            if (HasOwnUnresolvedBombOrExplosion())
+            {
+                LogPostPlantEscapeDiagnostic(
+                    onlyCurrentTile ? "CHAIN_CURRENT_NONE" : "CHAIN_SEARCH_NONE",
+                    myTile,
+                    currentDangerSeconds,
+                    $"reachable:{reachableTiles.Count} rejected:{FormatRejectedForLog()}");
+            }
             return false;
+        }
 
         bool plantNow = bestDistance == 0;
+        if (plantNow && !float.IsInfinity(currentDangerSeconds))
+        {
+            LogPostPlantEscapeDiagnostic(
+                "CHAIN_REJECT_DANGER_PLANT",
+                myTile,
+                currentDangerSeconds,
+                $"best:{bestTile} trigger:{bestTriggerSeconds:F2}s branches:{bestBranches} escapeMove:{FirstMoveDescription(bestEscapeMove)}");
+            RejectVerbose($"ChainBomb recusado em perigo {myTile} danger:{FormatDanger(currentDangerSeconds)}");
+            return false;
+        }
+
         candidate = new CandidateAction
         {
             Action = BattleModeComActionType.CombatPlant,
@@ -1303,6 +1595,16 @@ public sealed class BattleModeComController : MonoBehaviour
                 : FirstMoveDescription(bestMove),
             TapBomb = plantNow
         };
+        if (HasOwnUnresolvedBombOrExplosion())
+        {
+            LogPostPlantEscapeDiagnostic(
+                plantNow ? "CHAIN_PLANT_NOW" : "CHAIN_MOVE_TO_PLANT",
+                myTile,
+                currentDangerSeconds,
+                $"best:{bestTile} distance:{bestDistance} move:{FirstMoveDescription(candidate.FirstMove)} " +
+                $"escapeMove:{FirstMoveDescription(bestEscapeMove)} branches:{bestBranches} trigger:{bestTriggerSeconds:F2}s " +
+                $"createsTurn:{bestCreatesTurn}");
+        }
         return true;
     }
 
@@ -1395,6 +1697,114 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool TryBuildOwnPendingSafetyMove(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out Vector2 move,
+        out Vector2Int target,
+        out string reason)
+    {
+        move = Vector2.zero;
+        target = myTile;
+        reason = "no own pending safety move";
+
+        int currentThreatDistance = GetClosestOwnPendingThreatDistance(myTile);
+        if (currentThreatDistance == int.MaxValue)
+            return false;
+
+        float elapsed = chainBombPlantingStartedTime >= 0f
+            ? Time.time - chainBombPlantingStartedTime
+            : 0f;
+
+        if (!IsCenteredOnTile(myTile) && elapsed < 0.25f)
+            return false;
+
+        float currentScore = ScoreOwnPendingSafetyTile(myTile, 0f, settings);
+        float bestScore = currentScore;
+        Vector2Int bestDirection = Vector2Int.zero;
+        Vector2Int bestTile = myTile;
+        int bestThreatDistance = currentThreatDistance;
+        float bestArrival = 0f;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int direction = CardinalTiles[i];
+            Vector2Int next = myTile + direction;
+            if (!IsWalkableTile(next, myTile))
+                continue;
+
+            float arrivalSeconds = EstimateFirstMoveTraversalSeconds(direction);
+            if (IsDangerousAt(next, arrivalSeconds, settings, null))
+                continue;
+
+            float score = ScoreOwnPendingSafetyTile(next, arrivalSeconds, settings);
+            int threatDistance = GetClosestOwnPendingThreatDistance(next);
+            if (score <= bestScore + 0.5f)
+                continue;
+
+            bestScore = score;
+            bestDirection = direction;
+            bestTile = next;
+            bestThreatDistance = threatDistance;
+            bestArrival = arrivalSeconds;
+        }
+
+        if (bestDirection == Vector2Int.zero)
+            return false;
+
+        move = TileDirectionToVector(bestDirection);
+        target = bestTile;
+        reason =
+            $"own pending safety dist {currentThreatDistance}->{bestThreatDistance} " +
+            $"score {currentScore:F2}->{bestScore:F2} eta {bestArrival:F2}s";
+        return true;
+    }
+
+    private float ScoreOwnPendingSafetyTile(
+        Vector2Int tile,
+        float arrivalSeconds,
+        BattleModeComDifficultySettings settings)
+    {
+        float dangerSeconds = GetDangerSeconds(tile, null);
+        if (!float.IsInfinity(dangerSeconds))
+            return dangerSeconds - arrivalSeconds - settings.dangerReactionSeconds;
+
+        int threatDistance = GetClosestOwnPendingThreatDistance(tile);
+        float distanceScore = threatDistance == int.MaxValue ? 0f : threatDistance * 6f;
+        return 50f + distanceScore + CountOpenNeighbors(tile) * 1.5f - arrivalSeconds;
+    }
+
+    private int GetClosestOwnPendingThreatDistance(Vector2Int tile)
+    {
+        if (bombController == null)
+            return int.MaxValue;
+
+        int best = int.MaxValue;
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            if (bomb.Owner != bombController || bomb.IsControlBomb || bomb.WasMovedByKickOrPunch)
+                continue;
+
+            best = Mathf.Min(best, Manhattan(tile, WorldToTile(bomb.GetLogicalPosition())));
+        }
+
+        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < explosions.Length; i++)
+        {
+            BombExplosion explosion = explosions[i];
+            if (explosion == null || explosion.Owner != bombController)
+                continue;
+
+            best = Mathf.Min(best, Manhattan(tile, WorldToTile(explosion.transform.position)));
+        }
+
+        return best;
     }
 
     private bool TryBuildPatrolCandidate(
@@ -1650,6 +2060,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void OnHealthDied()
     {
+        if (!EnableDeathDiagnostics)
+            return;
+
         if (lastDeathDiagnosticFrame == Time.frameCount)
             return;
 
@@ -2694,6 +3107,52 @@ public sealed class BattleModeComController : MonoBehaviour
         return danger;
     }
 
+    private string ResolveEscapeAbilityThreatKey(Vector2Int tile)
+    {
+        Bomb bestBomb = null;
+        float bestSeconds = float.PositiveInfinity;
+        int bestDistance = int.MaxValue;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
+            if (!IsTileInBlastLineRuntime(bombTile, tile, radius))
+                continue;
+
+            float seconds = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
+            int distance = Manhattan(tile, bombTile);
+            if (seconds > bestSeconds || (Mathf.Approximately(seconds, bestSeconds) && distance >= bestDistance))
+                continue;
+
+            bestBomb = bomb;
+            bestSeconds = seconds;
+            bestDistance = distance;
+        }
+
+        if (bestBomb != null)
+            return $"bomb:{bestBomb.GetEntityId()}";
+
+        if (explosionMask != 0)
+        {
+            Collider2D explosion = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.25f, explosionMask);
+            if (explosion != null)
+                return $"explosion:{WorldToTile(explosion.bounds.center)}";
+        }
+
+        if (suddenDeathController != null &&
+            suddenDeathController.TryGetSecondsUntilSuddenDeathWorldPosition(TileToWorld(tile), out float suddenDeathSeconds) &&
+            suddenDeathSeconds <= SuddenDeathUnsafeLeadSeconds)
+        {
+            return $"suddenDeath:{tile}";
+        }
+
+        return $"tile:{tile}";
+    }
+
     private bool IsDangerousAt(
         Vector2Int tile,
         float arrivalSeconds,
@@ -2751,6 +3210,11 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (!IsWalkableTile(nextTile, currentTile))
         {
+            LogPostPlantEscapeDiagnostic(
+                "SAFETY_BLOCKED",
+                currentTile,
+                GetDangerSeconds(currentTile, null),
+                $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} action:{currentAction} reason:{currentReason}");
             if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
             {
                 lastSafetyHoldLogTime = Time.time;
@@ -2785,6 +3249,12 @@ public sealed class BattleModeComController : MonoBehaviour
             float currentMargin = currentDanger - settings.dangerReactionSeconds;
             if (nextMargin + DangerTimingMarginSeconds < currentMargin)
             {
+                LogPostPlantEscapeDiagnostic(
+                    "SAFETY_HOLD_DANGER_TIMING",
+                    currentTile,
+                    currentDanger,
+                    $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} " +
+                    $"currentMargin:{currentMargin:F2}s nextMargin:{nextMargin:F2}s nextArrival:{nextArrivalSeconds:F2}s");
                 if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
                 {
                     lastSafetyHoldLogTime = Time.time;
@@ -2807,6 +3277,11 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (!float.IsInfinity(nextDanger))
         {
+            LogPostPlantEscapeDiagnostic(
+                "SAFETY_BLOCK_UNSAFE_NEXT",
+                currentTile,
+                GetDangerSeconds(currentTile, null),
+                $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} nextDanger:{FormatDanger(nextDanger)}");
             if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
             {
                 lastSafetyHoldLogTime = Time.time;
