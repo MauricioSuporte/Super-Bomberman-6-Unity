@@ -34,6 +34,7 @@ public partial class BombController : MonoBehaviour
     public int bombAmout = 1;
 
     [Header("Chain Explosion")]
+    private const bool EnableBombChainRuntimeDiagnostics = true;
     [SerializeField] private float chainBombDelaySeconds = 0.1f;
     private readonly HashSet<GameObject> scheduledChainBombs = new();
     private readonly Dictionary<GameObject, Vector2> scheduledChainBombSnapPositions = new();
@@ -1664,6 +1665,19 @@ public partial class BombController : MonoBehaviour
 
                 if (otherBombGo != null)
                 {
+                    BombExplosion.ExplosionPart bombHitPart =
+                        isMaxRangeTile
+                            ? BombExplosion.ExplosionPart.End
+                            : BombExplosion.ExplosionPart.Middle;
+
+                    result.Explosions.Add((position, bombHitPart));
+                    result.Reach = Mathf.Max(result.Reach, i + 1);
+                    LogBombChainRuntime(
+                        "HIT",
+                        otherBombGo,
+                        position,
+                        $"origin:{FormatBombChainTile(origin)} dir:{direction} sourceOwner:P{playerId}");
+
                     if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
                         otherBomb.Owner.ExplodeBombChained(otherBombGo, position);
                     else
@@ -1697,6 +1711,29 @@ public partial class BombController : MonoBehaviour
         return result;
     }
 
+    private void LogBombChainRuntime(string key, GameObject bomb, Vector2 worldPosition, string detail)
+    {
+        if (!EnableBombChainRuntimeDiagnostics)
+            return;
+
+        string bombName = bomb != null ? bomb.name : "null";
+        Debug.Log(
+            $"[BombChainRuntime][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"key:{key} tile:{FormatBombChainTile(worldPosition)} world:{worldPosition} " +
+            $"bomb:{bombName} {detail}");
+    }
+
+    private string FormatBombChainTile(Vector2 worldPosition)
+    {
+        Tilemap tilemap = GetSnapTilemapForGround();
+        if (tilemap == null)
+            return $"({Mathf.RoundToInt(worldPosition.x)}, {Mathf.RoundToInt(worldPosition.y)})";
+
+        Vector3Int cell = tilemap.WorldToCell(worldPosition);
+        Vector3 center = tilemap.GetCellCenterWorld(cell);
+        return $"({Mathf.RoundToInt(center.x)}, {Mathf.RoundToInt(center.y)})";
+    }
+
     public void ExplodeBombChained(GameObject bomb)
     {
         ExplodeBombChained(bomb, null);
@@ -1713,16 +1750,37 @@ public partial class BombController : MonoBehaviour
             return;
 
         if (_removedBombs.Contains(bomb))
+        {
+            LogBombChainRuntime(
+                "SKIP_REMOVED",
+                bomb,
+                chainHitWorldPosition ?? bomb.transform.position,
+                $"owner:P{playerId}");
             return;
+        }
 
         Bomb bombComp = null;
         bomb.TryGetComponent(out bombComp);
 
         if (bombComp != null && bombComp.HasExploded)
+        {
+            LogBombChainRuntime(
+                "SKIP_EXPLODED",
+                bomb,
+                chainHitWorldPosition ?? bomb.transform.position,
+                $"owner:P{playerId}");
             return;
+        }
 
         if (!scheduledChainBombs.Add(bomb))
+        {
+            LogBombChainRuntime(
+                "SKIP_ALREADY_SCHEDULED",
+                bomb,
+                chainHitWorldPosition ?? bomb.transform.position,
+                $"owner:P{playerId}");
             return;
+        }
 
         if (chainHitWorldPosition.HasValue && bombComp != null && bombComp.IsBeingKicked)
         {
@@ -1743,6 +1801,12 @@ public partial class BombController : MonoBehaviour
         float delay = queuedDelay;
         if (bombComp != null)
             delay = Mathf.Max(delay, Mathf.Max(0f, bombComp.chainStepDelay));
+
+        LogBombChainRuntime(
+            "SCHEDULE",
+            bomb,
+            chainHitWorldPosition ?? bomb.transform.position,
+            $"delay:{delay:F2}s queued:{queuedDelay:F2}s index:{_chainIndexThisFrame} owner:P{playerId}");
 
         StartSafeCoroutine(ExplodeBombAfterDelay(bomb, delay));
     }
@@ -1866,6 +1930,11 @@ public partial class BombController : MonoBehaviour
                             : BombExplosion.ExplosionPart.Middle;
 
                     explosionsToSpawn.Add((position, part));
+                    LogBombChainRuntime(
+                        "HIT",
+                        otherBombGo,
+                        position,
+                        $"origin:{FormatBombChainTile(origin)} dir:{direction} sourceOwner:P{playerId}");
 
                     if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
                         otherBomb.Owner.ExplodeBombChained(otherBombGo, position);
@@ -2420,6 +2489,12 @@ public partial class BombController : MonoBehaviour
 
             if (otherBombGo != null)
             {
+                LogBombChainRuntime(
+                    "HIT",
+                    otherBombGo,
+                    position,
+                    $"origin:{FormatBombChainTile(origin)} dir:{direction} sourceOwner:P{playerId}");
+
                 if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
                     otherBomb.Owner.ExplodeBombChained(otherBombGo, position);
                 else

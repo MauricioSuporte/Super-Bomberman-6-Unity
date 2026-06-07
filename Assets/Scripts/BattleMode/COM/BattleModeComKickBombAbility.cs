@@ -28,7 +28,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     private const float DirectKickRetryDangerBufferSeconds = 0.05f;
     private const float ReturnToKickStuckTimeoutSeconds = 0.2f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = false;
-    private static readonly bool EnableKickBombRiskDiagnostics = true;
+    private static readonly bool EnableKickBombRiskDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     private static readonly Vector2Int[] CardinalTiles =
