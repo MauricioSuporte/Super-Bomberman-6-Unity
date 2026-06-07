@@ -61,6 +61,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float OwnChainPlanChance = 0.35f;
     private const int OwnChainSecondBombDistance = 2;
     private const float OwnChainPlanTimeoutSeconds = 2.25f;
+    private const float OwnChainFirstFusePlantWindowSeconds = 1.5f;
     private const float OwnChainUnsafeMoveMarginSeconds = 0.45f;
     private const float PostPlantEmergencyEscapeMarginSeconds = 0.35f;
 
@@ -127,7 +128,10 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool ownChainPlanActive;
     private Vector2Int ownChainOriginTile;
     private Vector2Int ownChainSecondTile;
+    private Vector2Int ownChainLastPlantedTile;
     private Vector2Int ownChainLineDirection;
+    private int ownChainPlantedCount;
+    private bool ownChainEscapeOnly;
     private float ownChainPlanStartedTime = -10f;
     private Vector2Int safeCenterTargetTile;
     private bool hasSafeCenterTarget;
@@ -755,6 +759,7 @@ public sealed class BattleModeComController : MonoBehaviour
         hasSafeCenterTarget = false;
         committedEscapeExpiresTime = -10f;
         ownChainPlanActive = false;
+        ownChainEscapeOnly = false;
 
         if (float.IsInfinity(currentDangerSeconds) &&
             TryBuildOwnChainStartCandidate(settings, myTile, out CandidateAction ownChainStart))
@@ -764,7 +769,10 @@ public sealed class BattleModeComController : MonoBehaviour
                 ownChainPlanActive = true;
                 ownChainOriginTile = myTile;
                 ownChainSecondTile = ownChainStart.TargetTile;
+                ownChainLastPlantedTile = myTile;
                 ownChainLineDirection = DirectionToTile(ownChainStart.FirstMove);
+                ownChainPlantedCount = 1;
+                ownChainEscapeOnly = false;
                 ownChainPlanStartedTime = Time.time;
             }
 
@@ -2069,7 +2077,7 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         candidate = default;
 
-        if (!ownChainPlanActive || bombController == null)
+        if (!ownChainPlanActive || ownChainEscapeOnly || bombController == null)
             return false;
 
         if (Time.time - ownChainPlanStartedTime > OwnChainPlanTimeoutSeconds)
@@ -2078,6 +2086,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 Debug.Log($"[BattleCOMOwnChain][P{playerId}] TIMEOUT origin:{ownChainOriginTile} second:{ownChainSecondTile} tile:{myTile}");
 
             ownChainPlanActive = false;
+            ownChainEscapeOnly = false;
             return false;
         }
 
@@ -2085,6 +2094,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!HasOwnBombAtTile(ownChainOriginTile, out float firstFuseSeconds))
         {
             ownChainPlanActive = false;
+            ownChainEscapeOnly = false;
             return false;
         }
 
@@ -2098,34 +2108,73 @@ public sealed class BattleModeComController : MonoBehaviour
             if (Time.time - lastBombTapTime < BombTapCooldownSeconds)
                 return false;
 
-            if (firstFuseSeconds <= settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
+            if (!IsWithinOwnChainPlantWindow(firstFuseSeconds) ||
+                firstFuseSeconds <= settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
             {
                 ownChainPlanActive = false;
+                ownChainEscapeOnly = false;
                 return false;
             }
 
             if (!TryFindOwnChainEscape(settings, myTile, ownChainLineDirection, chainBlastTiles, out Vector2 escapeMove, out Vector2Int escapeTarget))
                 return false;
 
+            Vector2Int nextChainTile = myTile;
+            Vector2Int nextChainDirection = Vector2Int.zero;
+            Vector2 nextChainMove = escapeMove;
+            bool hasNextChainTarget =
+                IsWithinOwnChainPlantWindow(firstFuseSeconds) &&
+                bombController.BombsRemaining > 1 &&
+                TryFindNextOwnChainTarget(
+                    settings,
+                    myTile,
+                    radius,
+                    firstFuseSeconds,
+                    chainBlastTiles,
+                    out nextChainTile,
+                    out nextChainDirection,
+                    out nextChainMove);
+
+            Vector2 selectedMove = hasNextChainTarget ? nextChainMove : escapeMove;
+            Vector2Int selectedTarget = hasNextChainTarget ? nextChainTile : myTile;
+            string selectedReason = hasNextChainTarget
+                ? $"own-chain plant continue #{ownChainPlantedCount + 1} origin {ownChainOriginTile} next {nextChainTile} fuse {firstFuseSeconds:F2}s"
+                : $"own-chain final plant origin {ownChainOriginTile} fuse {firstFuseSeconds:F2}s escape {escapeTarget}";
+
             candidate = new CandidateAction
             {
                 Action = BattleModeComActionType.CombatPlant,
                 Weight = Mathf.Max(1, Mathf.RoundToInt(settings.combatPlantWeight * 2.0f)),
-                TargetTile = myTile,
+                TargetTile = selectedTarget,
                 HasTarget = true,
-                FirstMove = escapeMove,
+                FirstMove = selectedMove,
                 HasRoute = true,
-                Reason = $"own-chain second plant origin {ownChainOriginTile} fuse {firstFuseSeconds:F2}s escape {escapeTarget}",
-                InputDescription = AppendInput("ActionA", FirstMoveDescription(escapeMove)),
+                Reason = selectedReason,
+                InputDescription = AppendInput("ActionA", FirstMoveDescription(selectedMove)),
                 TapBomb = true
             };
 
             if (EnableChainBombDiagnostics)
             {
                 Debug.Log(
-                    $"[BattleCOMOwnChain][P{playerId}] SECOND_PLANT origin:{ownChainOriginTile} " +
-                    $"second:{ownChainSecondTile} fuse:{firstFuseSeconds:F2}s escape:{escapeTarget} " +
-                    $"move:{FirstMoveDescription(escapeMove)}");
+                    $"[BattleCOMOwnChain][P{playerId}] PLANT_CHAIN index:{ownChainPlantedCount + 1} " +
+                    $"origin:{ownChainOriginTile} planted:{myTile} fuse:{firstFuseSeconds:F2}s " +
+                    $"next:{(hasNextChainTarget ? nextChainTile.ToString() : "none")} " +
+                    $"escape:{escapeTarget} move:{FirstMoveDescription(selectedMove)}");
+            }
+
+            ownChainLastPlantedTile = myTile;
+            ownChainPlantedCount++;
+
+            if (hasNextChainTarget)
+            {
+                ownChainSecondTile = nextChainTile;
+                ownChainLineDirection = nextChainDirection;
+                ownChainEscapeOnly = false;
+            }
+            else
+            {
+                ownChainEscapeOnly = true;
             }
 
             return true;
@@ -2135,9 +2184,11 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
 
         float arrivalSeconds = EstimateTraversalSeconds(path.Distance);
-        if (firstFuseSeconds <= arrivalSeconds + settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
+        if (!IsWithinOwnChainPlantWindow(firstFuseSeconds) ||
+            firstFuseSeconds <= arrivalSeconds + settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
         {
             ownChainPlanActive = false;
+            ownChainEscapeOnly = false;
             return false;
         }
 
@@ -2167,7 +2218,105 @@ public sealed class BattleModeComController : MonoBehaviour
                 blastTiles.Add(secondBlast[i]);
         }
 
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded || bomb.Owner != bombController || bomb.IsControlBomb)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            List<Vector2Int> bombBlast = BuildBlastTiles(bombTile, radius);
+            for (int i = 0; i < bombBlast.Count; i++)
+            {
+                if (!blastTiles.Contains(bombBlast[i]))
+                    blastTiles.Add(bombBlast[i]);
+            }
+        }
+
         return blastTiles;
+    }
+
+    private bool IsWithinOwnChainPlantWindow(float firstFuseSeconds)
+    {
+        if (bombController == null)
+            return false;
+
+        float initialFuseSeconds = Mathf.Max(0.01f, bombController.bombFuseTime);
+        float elapsedFuseSeconds = Mathf.Max(0f, initialFuseSeconds - firstFuseSeconds);
+        return elapsedFuseSeconds <= OwnChainFirstFusePlantWindowSeconds;
+    }
+
+    private bool TryFindNextOwnChainTarget(
+        BattleModeComDifficultySettings settings,
+        Vector2Int currentTile,
+        int radius,
+        float firstFuseSeconds,
+        List<Vector2Int> currentBlastTiles,
+        out Vector2Int nextChainTile,
+        out Vector2Int nextChainDirection,
+        out Vector2 nextChainMove)
+    {
+        nextChainTile = currentTile;
+        nextChainDirection = Vector2Int.zero;
+        nextChainMove = Vector2.zero;
+
+        Vector2Int backDelta = ownChainLastPlantedTile - currentTile;
+        Vector2Int backDirection = backDelta == Vector2Int.zero
+            ? Vector2Int.zero
+            : DirectionToTile(new Vector2(backDelta.x, backDelta.y));
+
+        int bestScore = int.MinValue;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int direction = CardinalTiles[i];
+            if (direction == backDirection)
+                continue;
+
+            Vector2Int midTile = currentTile + direction;
+            Vector2Int candidateTile = currentTile + direction * OwnChainSecondBombDistance;
+
+            if (!IsWalkableTile(midTile, currentTile) || !IsWalkableTile(candidateTile, currentTile))
+                continue;
+
+            if (IsBombAtTile(candidateTile))
+                continue;
+
+            if (!TryFindPath(currentTile, candidateTile, OwnChainSecondBombDistance + 1, false, settings, null, out PathResult path))
+                continue;
+
+            if (path.Distance != OwnChainSecondBombDistance)
+                continue;
+
+            float arrivalSeconds = EstimateTraversalSeconds(path.Distance);
+            if (firstFuseSeconds <= arrivalSeconds + settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
+                continue;
+
+            List<Vector2Int> plannedBlastTiles = new List<Vector2Int>(currentBlastTiles);
+            List<Vector2Int> candidateBlastTiles = BuildBlastTiles(candidateTile, radius);
+            for (int b = 0; b < candidateBlastTiles.Count; b++)
+            {
+                if (!plannedBlastTiles.Contains(candidateBlastTiles[b]))
+                    plannedBlastTiles.Add(candidateBlastTiles[b]);
+            }
+
+            if (!TryFindOwnChainEscape(settings, candidateTile, direction, plannedBlastTiles, out _, out Vector2Int escapeTarget))
+                continue;
+
+            int score =
+                ScoreOwnChainDirection(currentTile, candidateTile, radius, direction) +
+                (direction == ownChainLineDirection ? 12 : 6) +
+                CountOpenNeighbors(escapeTarget) * 3;
+
+            if (score <= bestScore)
+                continue;
+
+            bestScore = score;
+            nextChainTile = candidateTile;
+            nextChainDirection = direction;
+            nextChainMove = path.FirstMove;
+        }
+
+        return nextChainDirection != Vector2Int.zero;
     }
 
     private bool TryFindOwnChainEscape(
