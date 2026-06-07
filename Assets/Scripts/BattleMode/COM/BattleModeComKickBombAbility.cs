@@ -27,6 +27,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     private const float DirectKickRetryMinFuseSeconds = 0.65f;
     private const float DirectKickRetryDangerBufferSeconds = 0.05f;
     private static readonly bool EnableKickBombSurgicalDiagnostics = false;
+    private static readonly bool EnableKickBombRiskDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     private static readonly Vector2Int[] CardinalTiles =
@@ -1453,9 +1454,23 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 continue;
             }
 
+            if (!HasSafeEscapeAfterDefensiveKick(
+                    bombTile,
+                    dir,
+                    candidateStand,
+                    settings,
+                    out Vector2Int escapeTile,
+                    out string escapeReason))
+            {
+                AppendTracePart(ref rejectReason, $"{dir}:no post-kick escape stand:{candidateStand} {escapeReason}");
+                continue;
+            }
+
             int score = Manhattan(myTile, candidateStand);
             if (myTile == candidateStand)
                 score -= 4;
+
+            score -= CountOpenNeighbors(escapeTile);
 
             if (score >= bestScore)
                 continue;
@@ -1468,6 +1483,96 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         }
 
         return kickDir != Vector2Int.zero && moveDir != Vector2Int.zero;
+    }
+
+    private bool HasSafeEscapeAfterDefensiveKick(
+        Vector2Int bombTile,
+        Vector2Int kickDir,
+        Vector2Int standTile,
+        BattleModeComDifficultySettings settings,
+        out Vector2Int escapeTile,
+        out string reason)
+    {
+        escapeTile = standTile;
+        reason = "none";
+
+        Bomb bomb = FindBombAt(bombTile);
+        int radius = bomb != null && bomb.Owner != null
+            ? Mathf.Max(1, bomb.Owner.explosionRadius)
+            : 2;
+        Vector2Int firstBombTileAfterKick = bombTile + kickDir;
+        string rejected = string.Empty;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            Vector2Int next = standTile + dir;
+
+            if (next == bombTile)
+            {
+                AppendTracePart(ref rejected, $"{dir}:through bomb origin");
+                continue;
+            }
+
+            if (!IsWalkableTile(next, standTile))
+            {
+                AppendTracePart(ref rejected, $"{dir}:blocked");
+                continue;
+            }
+
+            float eta = EstimateFirstMoveTraversalSeconds(dir);
+            if (IsDangerousAt(next, eta, settings, bomb))
+            {
+                AppendTracePart(ref rejected, $"{dir}:existing danger");
+                continue;
+            }
+
+            if (IsTileInPredictedKickedBombBlastLine(firstBombTileAfterKick, next, radius, bombTile))
+            {
+                AppendTracePart(ref rejected, $"{dir}:kicked bomb blast");
+                continue;
+            }
+
+            escapeTile = next;
+            reason = $"escape:{next}";
+            return true;
+        }
+
+        reason = string.IsNullOrEmpty(rejected) ? "no adjacent option" : rejected;
+        return false;
+    }
+
+    private bool IsTileInPredictedKickedBombBlastLine(
+        Vector2Int origin,
+        Vector2Int tile,
+        int radius,
+        Vector2Int vacatedBombTile)
+    {
+        if (tile == origin)
+            return true;
+
+        Vector2Int delta = tile - origin;
+        bool sameColumn = delta.x == 0 && delta.y != 0;
+        bool sameRow = delta.y == 0 && delta.x != 0;
+        if (!sameColumn && !sameRow)
+            return false;
+
+        int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+        if (distance > radius)
+            return false;
+
+        Vector2Int dir = new(Mathf.Clamp(delta.x, -1, 1), Mathf.Clamp(delta.y, -1, 1));
+        for (int step = 1; step < distance; step++)
+        {
+            Vector2Int check = origin + dir * step;
+            if (HasIndestructibleTile(check) || HasDestructibleTile(check))
+                return false;
+
+            if (check != vacatedBombTile && FindBombAt(check) != null)
+                return false;
+        }
+
+        return true;
     }
 
     private bool TryBuildActionRStopDecision(
@@ -1988,7 +2093,9 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             new(kickDir.y, -kickDir.x)
         };
 
-        for (int step = 1; step <= Mathf.Max(1, checkDistance); step++)
+        // step 0 is the first tile the bomb enters after the kick. Skipping it
+        // lets the COM kick into an imminent blast and trigger an instant chain.
+        for (int step = 0; step <= Mathf.Max(1, checkDistance); step++)
         {
             Vector2Int tile = kickOrigin + kickDir * step;
 
@@ -2759,7 +2866,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
     private void LogKickSurgical(string key, string message, bool force = false)
     {
-        if (!EnableKickBombSurgicalDiagnostics)
+        bool useRiskTag = EnableKickBombRiskDiagnostics;
+        if (!useRiskTag && !EnableKickBombSurgicalDiagnostics)
             return;
 
         int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
@@ -2776,6 +2884,10 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         lastSurgicalLogKey = key;
         lastSurgicalLogTime = Time.time;
         Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
-        Debug.Log($"[BattleCOMKickSurgical][P{id}] tile:{tile} state:{sequenceState} {key} {message}", this);
+        string tag = useRiskTag ? "BattleCOMKickRisk" : "BattleCOMKickSurgical";
+        Debug.Log(
+            $"[{tag}][P{id}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{tile} state:{sequenceState} key:{key} {message}",
+            this);
     }
 }

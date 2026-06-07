@@ -15,8 +15,10 @@ public sealed class BattleModeComController : MonoBehaviour
     private static bool EnableGeneralDecisionLogs => false;
     private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
     private static readonly bool EnableDeathDiagnostics = false;
-    private static readonly bool EnablePostPlantEscapeDiagnostics = true;
+    private static readonly bool EnablePostPlantEscapeDiagnostics = false;
+    private static readonly bool EnableKickBombRiskDiagnostics = true;
     private const int PostPlantDiagnosticPlayerIdFilter = 5;
+    private const float KickBombRiskLogIntervalSeconds = 0.25f;
 
     private const float BombTapCooldownSeconds = 0.35f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
@@ -115,6 +117,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private float postPlantEscapeWatchStartedTime = -10f;
     private float lastPostPlantEscapeLogTime = -10f;
     private string lastPostPlantEscapeLogKey = string.Empty;
+    private float lastKickBombRiskLogTime = -10f;
+    private string lastKickBombRiskLogKey = string.Empty;
 
     private struct PathNode
     {
@@ -715,6 +719,20 @@ public sealed class BattleModeComController : MonoBehaviour
             currentInputDescription = AppendInput(currentInputDescription, "ActionC");
         }
 
+        if (selected.Action == BattleModeComActionType.KickBomb)
+        {
+            LogKickBombRiskDiagnostic(
+                "DECISION_SELECTED",
+                myTile,
+                currentDangerSeconds,
+                $"route:{route} target:{(selected.HasTarget ? selected.TargetTile.ToString() : "none")} " +
+                $"move:{FirstMoveDescription(selected.FirstMove)} input:{currentInputDescription} " +
+                $"tapBomb:{selected.TapBomb} tapR:{selected.TapActionR} tapC:{selected.TapActionC} " +
+                $"reason:{selected.Reason} candidates:{FormatCandidates()} rejected:{FormatRejectedForLog()} " +
+                $"abilities:{FormatCurrentAbilityTraces()} activeBombs:{FormatActiveBombThreats(myTile)}",
+                force: true);
+        }
+
         LogDecision(settings, myTile, currentDangerSeconds, route);
     }
 
@@ -1081,6 +1099,44 @@ public sealed class BattleModeComController : MonoBehaviour
             $"safeCenter:{safe} bombsRemaining:{(bombController != null ? bombController.BombsRemaining : -1)} " +
             $"ownPending:{HasOwnUnresolvedBombOrExplosion()} msg:{message}",
             this);
+    }
+
+    private void LogKickBombRiskDiagnostic(
+        string key,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        string message,
+        bool force = false)
+    {
+        if (!ShouldLogKickBombRiskDiagnostics())
+            return;
+
+        string logKey = $"{key}:{myTile}:{currentAction}:{currentReason}:{currentInputDescription}";
+        if (!force &&
+            logKey == lastKickBombRiskLogKey &&
+            Time.time - lastKickBombRiskLogTime < KickBombRiskLogIntervalSeconds)
+        {
+            return;
+        }
+
+        lastKickBombRiskLogKey = logKey;
+        lastKickBombRiskLogTime = Time.time;
+
+        Debug.Log(
+            $"[BattleCOMKickRisk][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(currentDangerSeconds)} " +
+            $"key:{key} action:{currentAction} move:{FirstMoveDescription(currentMoveInput)} " +
+            $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} msg:{message}",
+            this);
+    }
+
+    private bool ShouldLogKickBombRiskDiagnostics()
+    {
+        if (!EnableKickBombRiskDiagnostics)
+            return false;
+
+        return BattleModeComKickBombAbility.DiagnosticPlayerIdFilter == 0 ||
+               playerId == BattleModeComKickBombAbility.DiagnosticPlayerIdFilter;
     }
 
     private string FormatRejectedForLog()
@@ -2060,7 +2116,12 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void OnHealthDied()
     {
-        if (!EnableDeathDiagnostics)
+        bool shouldLogDeathDiagnostic = EnableDeathDiagnostics;
+        bool shouldLogKickBombDeathDiagnostic =
+            ShouldLogKickBombRiskDiagnostics() &&
+            IsRecentKickBombRiskContext();
+
+        if (!shouldLogDeathDiagnostic && !shouldLogKickBombDeathDiagnostic)
             return;
 
         if (lastDeathDiagnosticFrame == Time.frameCount)
@@ -2074,7 +2135,10 @@ public sealed class BattleModeComController : MonoBehaviour
         if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
             return;
 
-        Debug.Log(BuildDeathDiagnosticReport(), this);
+        if (shouldLogKickBombDeathDiagnostic)
+            Debug.Log(BuildKickBombRiskDeathDiagnosticReport(), this);
+        else
+            Debug.Log(BuildDeathDiagnosticReport(), this);
     }
 
     private void OnMovementDied(MovementController deadMovement)
@@ -2082,7 +2146,7 @@ public sealed class BattleModeComController : MonoBehaviour
         OnHealthDied();
     }
 
-    private string BuildDeathDiagnosticReport()
+    private string BuildDeathDiagnosticReport(string header = null)
     {
         CacheReferences();
 
@@ -2092,7 +2156,7 @@ public sealed class BattleModeComController : MonoBehaviour
         string scene = SceneManager.GetActiveScene().name;
 
         StringBuilder sb = new();
-        sb.AppendLine($"[BattleCOMDeath][P{playerId}] IA morreu - diagnostico de logica");
+        sb.AppendLine(header ?? $"[BattleCOMDeath][P{playerId}] IA morreu - diagnostico de logica");
         sb.AppendLine(
             $"scene:{scene} frame:{Time.frameCount} time:{Time.time:F2} difficulty:{difficulty} " +
             $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(dangerSeconds)}");
@@ -2121,6 +2185,41 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return sb.ToString();
+    }
+
+    private string BuildKickBombRiskDeathDiagnosticReport()
+    {
+        string report = BuildDeathDiagnosticReport($"[BattleCOMKickRisk][P{playerId}] KICK_BOMB_DEATH_DETAIL");
+        Vector2Int myTile = WorldToTile(transform.position);
+
+        StringBuilder sb = new();
+        sb.AppendLine($"[BattleCOMKickRisk][P{playerId}] KICK_BOMB_DEATH");
+        sb.AppendLine(
+            $"kickContext currentAction:{currentAction} move:{FirstMoveDescription(currentMoveInput)} " +
+            $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} reason:{currentReason} input:{currentInputDescription}");
+        sb.AppendLine($"kickAbilities:{FormatCurrentAbilityTraces()}");
+        sb.AppendLine($"kickActiveBombs:{FormatActiveBombThreats(myTile)}");
+        sb.AppendLine($"kickActiveExplosions:{FormatActiveExplosionThreats(myTile)}");
+        sb.Append(report);
+        return sb.ToString();
+    }
+
+    private bool IsRecentKickBombRiskContext()
+    {
+        if (currentAction == BattleModeComActionType.KickBomb)
+            return true;
+
+        for (int i = recentDecisions.Count - 1; i >= 0; i--)
+        {
+            string line = recentDecisions[i];
+            if (!string.IsNullOrEmpty(line) &&
+                line.Contains("KickBomb", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private string FormatCurrentAbilityTraces()
@@ -3204,6 +3303,21 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (currentAction == BattleModeComActionType.KickBomb)
         {
+            float kickCurrentDanger = GetDangerSeconds(currentTile, null);
+            float kickNextDanger = GetDangerSeconds(nextTile, null);
+            float kickNextArrivalSeconds = EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
+            bool kickNextWalkable = IsWalkableTile(nextTile, currentTile);
+            float kickNextMargin = GetSurvivalMarginSeconds(nextTile, kickNextArrivalSeconds, settings, null);
+
+            LogKickBombRiskDiagnostic(
+                "SAFETY_BYPASS",
+                currentTile,
+                kickCurrentDanger,
+                $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} nextWalkable:{kickNextWalkable} " +
+                $"nextDanger:{FormatDanger(kickNextDanger)} nextArrival:{kickNextArrivalSeconds:F2}s " +
+                $"nextMargin:{kickNextMargin:F2}s target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+                $"reason:{currentReason} input:{currentInputDescription} abilities:{FormatCurrentAbilityTraces()} " +
+                $"activeBombs:{FormatActiveBombThreats(currentTile)} activeExplosions:{FormatActiveExplosionThreats(currentTile)}");
             LogKickLoadDiagnostic($"allow KickBomb move {currentTile}->{nextTile} input:{FirstMoveDescription(requestedMove)} reason:{currentReason}");
             return requestedMove;
         }
