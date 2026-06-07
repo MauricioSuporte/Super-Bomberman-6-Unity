@@ -16,14 +16,18 @@ public sealed class BattleModeComController : MonoBehaviour
     private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
     private static readonly bool EnableDeathDiagnostics = false;
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
-    private static readonly bool EnableKickBombRiskDiagnostics = true;
+    private static readonly bool EnableKickBombRiskDiagnostics = false;
 
-    // Log cirúrgico de ExecuteEscape — separado do PostPlant para não depender
-    // de postPlantEscapeWatchActive/chainBombPlantingStartedTime.
-    private static readonly bool EnableEscapeDiagnostics = true;
+    // Log cirúrgico de ExecuteEscape — desativado enquanto investigamos o patrol.
+    private static readonly bool EnableEscapeDiagnostics = false;
     private const float EscapeLogIntervalSeconds = 0.25f;
     private float lastEscapeLogTime = -10f;
     private string lastEscapeLogKey = string.Empty;
+
+    // Log de patrol/wander — mostra tile atual, wander target, direção tomada e motivo.
+    private static readonly bool EnablePatrolDiagnostics = true;
+    private const float PatrolLogIntervalSeconds = 1.0f;
+    private float lastPatrolLogTime = -10f;
 
     private const int PostPlantDiagnosticPlayerIdFilter = 5;
     private const float KickBombRiskLogIntervalSeconds = 0.25f;
@@ -135,6 +139,14 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2Int committedEscapeTarget = new Vector2Int(int.MinValue, int.MinValue);
     private float committedEscapeExpiresTime = -10f;
     private const float CommittedEscapeLifetimeSeconds = 2.5f;
+
+    // Wander target: tile distante escolhido via BFS para evitar que a IA fique presa no canto.
+    // Substituído quando atingido, inválido, ou após o timeout.
+    private Vector2Int wanderTarget = new Vector2Int(int.MinValue, int.MinValue);
+    private float wanderTargetExpiresTime = -10f;
+    private const float WanderTargetLifetimeSeconds = 6f;
+    private const int WanderBfsDepth = 14;
+    private const int WanderMinDistance = 5;
 
     private struct PathNode
     {
@@ -2067,8 +2079,18 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int targetTile = myTile;
         string reason = "safe roam";
 
-        if (TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int enemyTile, out int enemyDistance) &&
-            TryFindPath(myTile, enemyTile, settings.searchDepth + 4, true, settings, null, out PathResult enemyPath))
+        // Só persegue inimigo se estiver a distância útil.
+        // Se enemyDistance < PatrolMinEnemyDistance, todos se amontoam e ficam com move:none (distance 0).
+        // Se enemyPath.FirstMove == zero (mesmo tile), também cai no wander.
+        const int PatrolMinEnemyDistance = 3;
+        PathResult enemyPath = default;
+        bool hasUsefulEnemyPath =
+            TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int enemyTile, out int enemyDistance) &&
+            enemyDistance >= PatrolMinEnemyDistance &&
+            TryFindPath(myTile, enemyTile, settings.searchDepth + 4, true, settings, null, out enemyPath) &&
+            enemyPath.FirstMove != Vector2.zero;
+
+        if (hasUsefulEnemyPath)
         {
             move = enemyPath.FirstMove;
             targetTile = enemyTile;
@@ -2076,11 +2098,26 @@ public sealed class BattleModeComController : MonoBehaviour
         }
         else
         {
-            move = FindBestFallbackMove(settings, myTile, null, out reason);
-            if (move == Vector2.zero)
-                return false;
+            // Usa wander target persistente para forçar a IA a explorar toda a arena
+            // em vez de ficar ciclando entre tiles adjacentes no mesmo canto.
+            if (TryGetWanderTarget(settings, myTile, out Vector2Int wander) &&
+                TryFindPath(myTile, wander, WanderBfsDepth, true, settings, null, out PathResult wanderPath) &&
+                wanderPath.FirstMove != Vector2.zero)
+            {
+                move = wanderPath.FirstMove;
+                targetTile = wander;
+                reason = $"wander toward {wander} dist {Manhattan(myTile, wander)}";
+            }
+            else
+            {
+                // Invalida o wander target se BFS falhou
+                wanderTargetExpiresTime = -10f;
+                move = FindBestFallbackMove(settings, myTile, null, out reason);
+                if (move == Vector2.zero)
+                    return false;
 
-            targetTile = myTile + DirectionToTile(move);
+                targetTile = myTile + DirectionToTile(move);
+            }
         }
 
         candidate = new CandidateAction
@@ -2094,7 +2131,125 @@ public sealed class BattleModeComController : MonoBehaviour
             Reason = reason,
             InputDescription = FirstMoveDescription(move)
         };
+
+        LogPatrolDiagnostic(myTile, targetTile, move, reason);
         return true;
+    }
+
+    private void LogPatrolDiagnostic(Vector2Int myTile, Vector2Int targetTile, Vector2 move, string reason)
+    {
+        if (!EnablePatrolDiagnostics)
+            return;
+        if (Time.time - lastPatrolLogTime < PatrolLogIntervalSeconds)
+            return;
+        lastPatrolLogTime = Time.time;
+
+        string wanderStr = wanderTarget.x != int.MinValue
+            ? $"{wanderTarget}(dist:{Manhattan(myTile, wanderTarget)})"
+            : "none";
+        string wanderExpiry = wanderTarget.x != int.MinValue
+            ? $"exp:{wanderTargetExpiresTime - Time.time:F1}s"
+            : "";
+
+        Debug.Log(
+            $"[BattleCOMPatrol][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} -> target:{targetTile} move:{FirstMoveDescription(move)} " +
+            $"wander:{wanderStr} {wanderExpiry} reason:{reason}",
+            this);
+    }
+
+    /// <summary>
+    /// Retorna um wander target para que a IA explore toda a arena.
+    /// Cada AI tem preferência direcional por quadrante (baseada em playerId),
+    /// garantindo que IAs no mesmo local caminhem em direções diferentes.
+    /// Se o BFS não encontrar tile em WanderMinDistance, aceita qualquer tile seguro (dist>=1)
+    /// para nunca cair no greedy fallback quando há muitas bombas no cluster.
+    /// </summary>
+    private bool TryGetWanderTarget(BattleModeComDifficultySettings settings, Vector2Int myTile, out Vector2Int result)
+    {
+        result = Vector2Int.zero;
+
+        bool expired = wanderTargetExpiresTime < Time.time;
+        bool reached = wanderTarget.x != int.MinValue && Manhattan(myTile, wanderTarget) <= 1;
+        bool targetDangerous = wanderTarget.x != int.MinValue &&
+                               !float.IsInfinity(GetDangerSeconds(wanderTarget, null));
+
+        if (!expired && !reached && !targetDangerous && wanderTarget.x != int.MinValue)
+        {
+            result = wanderTarget;
+            return true;
+        }
+
+        // Preferência direcional por playerId — distribui IAs em quadrantes diferentes.
+        // pid0=0 → NE(+x,+y), pid0=1 → SE(+x,-y), pid0=2 → SW(-x,-y), pid0=3 → NW(-x,+y)
+        int pid0 = (playerId - 1) % 4;
+        int prefX = (pid0 < 2) ? 1 : -1;
+        int prefY = (pid0 == 0 || pid0 == 3) ? 1 : -1;
+        int tieBreakSeed = playerId * 7919 + Mathf.RoundToInt(Time.time) * 1021;
+
+        // Primeira tentativa: tile seguro em dist >= WanderMinDistance
+        Vector2Int bestTile = RunWanderBfs(myTile, settings, prefX, prefY, tieBreakSeed, WanderMinDistance);
+
+        // Fallback: aceita qualquer tile seguro (dist >= 1) para nunca cair no greedy fallback
+        if (bestTile.x == int.MinValue)
+            bestTile = RunWanderBfs(myTile, settings, prefX, prefY, tieBreakSeed, 1);
+
+        if (bestTile.x == int.MinValue)
+            return false;
+
+        wanderTarget = bestTile;
+        wanderTargetExpiresTime = Time.time + WanderTargetLifetimeSeconds;
+        result = bestTile;
+        return true;
+    }
+
+    private Vector2Int RunWanderBfs(
+        Vector2Int myTile,
+        BattleModeComDifficultySettings settings,
+        int prefX, int prefY,
+        int tieBreakSeed,
+        int minDist)
+    {
+        visited.Clear();
+        open.Clear();
+        visited[myTile] = new PathNode { Tile = myTile, Parent = myTile, Depth = 0 };
+        open.Enqueue(myTile);
+
+        Vector2Int bestTile = new Vector2Int(int.MinValue, int.MinValue);
+        int bestScore = int.MinValue;
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            if (node.Depth > WanderBfsDepth) continue;
+
+            if (node.Depth >= minDist && float.IsInfinity(GetDangerSeconds(tile, null)))
+            {
+                // Score direcional: dot product com quadrante preferido + desempate pseudo-aleatório
+                int dirScore = tile.x * prefX + tile.y * prefY;
+                int tieBreak = ((tile.x * 73 + tile.y * 37 + tieBreakSeed) & 0x7FFFFFFF) % 4;
+                int score = dirScore * 4 + tieBreak;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestTile = tile;
+                }
+            }
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next)) continue;
+                if (!IsWalkableTile(next, myTile)) continue;
+                float eta = EstimateEscapeTraversalSeconds(myTile, tile, next, node.Depth + 1);
+                if (IsDangerousAt(next, eta, settings, null)) continue;
+                visited[next] = new PathNode { Tile = next, Parent = tile, Depth = node.Depth + 1 };
+                open.Enqueue(next);
+            }
+        }
+
+        return bestTile;
     }
 
     private bool TryEmitControlBomb(
