@@ -25,9 +25,16 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastEscapeLogKey = string.Empty;
 
     // Log de patrol/wander — mostra tile atual, wander target, direção tomada e motivo.
-    private static readonly bool EnablePatrolDiagnostics = true;
+    private static readonly bool EnablePatrolDiagnostics = false;
     private const float PatrolLogIntervalSeconds = 1.0f;
     private float lastPatrolLogTime = -10f;
+
+    // Log de chain bomb — mostra por que a IA não planta a segunda bomba quando tem bombas disponíveis.
+    private static readonly bool EnableChainBombDiagnostics = true;
+    private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
+    private const float ChainBombDiagLogIntervalSeconds = 0.3f;
+    private float lastChainBombLogTime = -10f;
+    private string lastChainBombLogKey = string.Empty;
 
     private const int PostPlantDiagnosticPlayerIdFilter = 5;
     private const float KickBombRiskLogIntervalSeconds = 0.25f;
@@ -587,6 +594,21 @@ public sealed class BattleModeComController : MonoBehaviour
                     myTile,
                     currentDangerSeconds,
                     $"elapsed:{Time.time - chainBombPlantingStartedTime:F2}s rejected:{FormatRejectedForLog()}");
+            }
+
+            // Se a IA está segura e tem bombas sobrando, tenta plantar uma bomba independente
+            // (sem precisar de chain link) em posição que atinja inimigo ou bloco destrutível.
+            if (float.IsInfinity(currentDangerSeconds) &&
+                TryBuildSecondBombCandidate(settings, myTile, currentDangerSeconds, out CandidateAction secondBomb))
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "SECOND_BOMB",
+                    myTile,
+                    currentDangerSeconds,
+                    $"action:{secondBomb.Action} target:{secondBomb.TargetTile} " +
+                    $"move:{FirstMoveDescription(secondBomb.FirstMove)} tapBomb:{secondBomb.TapBomb} reason:{secondBomb.Reason}");
+                ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, secondBomb, "secondBomb");
+                return;
             }
 
             if (TryBuildOwnPendingEscapeRoute(settings, myTile, currentDangerSeconds, out Vector2 ownEscapeMove, out Vector2Int ownEscapeTarget, out string ownEscapeReason))
@@ -1616,6 +1638,140 @@ public sealed class BattleModeComController : MonoBehaviour
         return false;
     }
 
+    // Planta uma segunda bomba independente (não precisa de chain link) quando a IA já tem
+    // uma bomba ativa mas está segura e tem bombas sobrando. Prioriza atingir inimigo;
+    // caso não haja inimigo no raio, aceita atingir bloco destrutível.
+    private bool TryBuildSecondBombCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (bombController == null || bombController.BombsRemaining <= 0)
+            return false;
+
+        int radius = Mathf.Max(1, bombController.explosionRadius);
+        GatherReachableSafeTiles(myTile, settings.searchDepth + 3, settings);
+
+        // --- Passo 1: tenta acertar inimigo diretamente (como TryBuildCombatCandidate) ---
+        if (TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int targetTile, out int _targetDist))
+        {
+            // Na posição atual
+            if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
+                !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
+                CanPlantBombWithEscape(myTile, radius, settings, out Vector2 combatEscape, out _))
+            {
+                candidate = new CandidateAction
+                {
+                    Action = BattleModeComActionType.CombatPlant,
+                    Weight = settings.combatPlantWeight,
+                    TargetTile = targetTile,
+                    HasTarget = true,
+                    FirstMove = combatEscape,
+                    HasRoute = true,
+                    Reason = $"second bomb combat P{target.playerId} in blast line",
+                    InputDescription = AppendInput("ActionA", FirstMoveDescription(combatEscape)),
+                    TapBomb = true
+                };
+                return true;
+            }
+
+            // Em tile reachable que alcance o inimigo
+            Vector2Int bestCombatTile = myTile;
+            Vector2 bestCombatMove = Vector2.zero;
+            Vector2 bestCombatEscapeMove = Vector2.zero;
+            int bestCombatDist = int.MaxValue;
+            for (int i = 0; i < reachableTiles.Count; i++)
+            {
+                Vector2Int tile = reachableTiles[i];
+                if (IsBombAtTile(tile)) continue;
+                if (WouldBlastHitUsefulItem(tile, radius, out _, out _)) continue;
+                if (!IsTileInBlastLineRuntime(tile, targetTile, radius)) continue;
+                if (!CanPlantBombWithEscape(tile, radius, settings, out Vector2 esc, out _)) continue;
+                if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
+                if (path.Distance < bestCombatDist)
+                {
+                    bestCombatTile = tile;
+                    bestCombatMove = path.FirstMove;
+                    bestCombatEscapeMove = esc;
+                    bestCombatDist = path.Distance;
+                }
+            }
+            if (bestCombatDist != int.MaxValue)
+            {
+                bool plantNow = bestCombatDist == 0;
+                candidate = new CandidateAction
+                {
+                    Action = BattleModeComActionType.CombatPlant,
+                    Weight = settings.combatPlantWeight,
+                    TargetTile = bestCombatTile,
+                    HasTarget = true,
+                    FirstMove = plantNow ? bestCombatEscapeMove : bestCombatMove,
+                    HasRoute = true,
+                    Reason = plantNow
+                        ? $"second bomb combat P{target.playerId} dist {bestCombatDist}"
+                        : $"move to second bomb combat P{target.playerId} dist {bestCombatDist}",
+                    InputDescription = plantNow
+                        ? AppendInput("ActionA", FirstMoveDescription(bestCombatEscapeMove))
+                        : FirstMoveDescription(bestCombatMove),
+                    TapBomb = plantNow
+                };
+                return true;
+            }
+        }
+
+        // --- Passo 2: fallback — atingir bloco destrutível (como TryBuildFarmCandidate) ---
+        Vector2Int bestFarmTile = myTile;
+        Vector2 bestFarmMove = Vector2.zero;
+        Vector2 bestFarmEscapeMove = Vector2.zero;
+        int bestFarmDist = int.MaxValue;
+        float bestFarmScore = float.NegativeInfinity;
+
+        for (int i = 0; i < reachableTiles.Count; i++)
+        {
+            Vector2Int tile = reachableTiles[i];
+            if (IsBombAtTile(tile)) continue;
+            if (!CanBombHitDestructible(tile, radius)) continue;
+            if (WouldBlastHitUsefulItem(tile, radius, out _, out _)) continue;
+            if (!CanPlantBombWithEscape(tile, radius, settings, out Vector2 esc, out _)) continue;
+            if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
+
+            float score = -path.Distance * 10f + GetDecisionNoise(9000 + i, FarmTargetJitter);
+            if (score > bestFarmScore)
+            {
+                bestFarmTile = tile;
+                bestFarmMove = path.FirstMove;
+                bestFarmEscapeMove = esc;
+                bestFarmDist = path.Distance;
+                bestFarmScore = score;
+            }
+        }
+
+        if (bestFarmDist == int.MaxValue)
+            return false;
+
+        bool plantFarmNow = bestFarmDist == 0;
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.FarmDestructible,
+            Weight = settings.farmDestructibleWeight,
+            TargetTile = bestFarmTile,
+            HasTarget = true,
+            FirstMove = plantFarmNow ? bestFarmEscapeMove : bestFarmMove,
+            HasRoute = true,
+            Reason = plantFarmNow
+                ? $"second bomb farm dist {bestFarmDist}"
+                : $"move to second bomb farm dist {bestFarmDist}",
+            InputDescription = plantFarmNow
+                ? AppendInput("ActionA", FirstMoveDescription(bestFarmEscapeMove))
+                : FirstMoveDescription(bestFarmMove),
+            TapBomb = plantFarmNow
+        };
+        return true;
+    }
+
     private bool TryBuildChainBombCandidate(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -1635,11 +1791,21 @@ public sealed class BattleModeComController : MonoBehaviour
                     currentDangerSeconds,
                     $"bombController:{(bombController != null)} bombsRemaining:{(bombController != null ? bombController.BombsRemaining : -1)}");
             }
+            LogChainBombDiagnostic("NO_BOMBS", myTile, currentDangerSeconds,
+                $"sem bomba disponível bombController:{bombController != null} " +
+                $"bombsRemaining:{(bombController != null ? bombController.BombsRemaining : -1)}/" +
+                $"{(bombController != null ? bombController.bombAmout : -1)}");
             return false;
         }
 
         int radius = Mathf.Max(1, bombController.explosionRadius);
         GatherReachableSafeTiles(myTile, onlyCurrentTile ? 0 : settings.searchDepth + 2, settings);
+
+        LogChainBombDiagnostic("EVAL_START", myTile, currentDangerSeconds,
+            $"radius:{radius} reachableTiles:{reachableTiles.Count} onlyCurrentTile:{onlyCurrentTile} " +
+            $"fuseSafetyMargin:{ChainBombFuseSafetyMarginSeconds:F2}s minBranches:{ChainBombMinimumEscapeBranches} " +
+            $"dangerReactionSeconds:{settings.dangerReactionSeconds:F2}s",
+            force: true);
 
         Vector2Int bestTile = myTile;
         Vector2 bestMove = Vector2.zero;
@@ -1650,55 +1816,85 @@ public sealed class BattleModeComController : MonoBehaviour
         int bestDistance = int.MaxValue;
         bool bestCreatesTurn = false;
 
+        int cntBombAtTile = 0, cntBlastHitsItem = 0, cntNoLink = 0, cntFuseShort = 0;
+        int cntNoBlastTiles = 0, cntFewBranches = 0, cntNoChainEscape = 0;
+        int cntNoPath = 0, cntDangerArrival = 0, cntFuseArrivalUnsafe = 0, cntEvaluated = 0;
+
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
             if (onlyCurrentTile && tile != myTile)
                 continue;
 
-            if (IsBombAtTile(tile) || WouldBlastHitUsefulItem(tile, radius, out _, out _))
+            if (IsBombAtTile(tile))
+            {
+                cntBombAtTile++;
                 continue;
+            }
+
+            if (WouldBlastHitUsefulItem(tile, radius, out ItemType hitItemType, out Vector2Int hitItemTile))
+            {
+                cntBlastHitsItem++;
+                RejectVerbose($"ChainBomb recusado queimaria item {hitItemType}@{hitItemTile} tile:{tile}");
+                continue;
+            }
 
             if (!TryGetLinkedOwnBombTriggerSeconds(tile, radius, out float triggerSeconds, out bool createsTurn))
+            {
+                cntNoLink++;
                 continue;
+            }
 
             if (triggerSeconds <= settings.dangerReactionSeconds + ChainBombFuseSafetyMarginSeconds)
             {
+                cntFuseShort++;
                 RejectVerbose($"ChainBomb fuse curto {tile} {triggerSeconds:F2}s");
                 continue;
             }
 
             if (!TryBuildChainBlastTiles(tile, radius, out List<Vector2Int> chainBlastTiles))
+            {
+                cntNoBlastTiles++;
                 continue;
+            }
 
             int escapeBranches = CountImmediateEscapeBranches(tile, chainBlastTiles);
             if (escapeBranches < ChainBombMinimumEscapeBranches)
             {
+                cntFewBranches++;
                 RejectVerbose($"ChainBomb poucas fugas {tile} branches {escapeBranches}");
                 continue;
             }
 
             if (!TryFindChainEscape(settings, tile, chainBlastTiles, triggerSeconds, out Vector2 escapeMove, out _))
             {
+                cntNoChainEscape++;
                 RejectVerbose($"ChainBomb sem fuga {tile}");
                 continue;
             }
 
             if (!TryFindPath(myTile, tile, settings.searchDepth + 2, false, settings, null, out PathResult path))
+            {
+                cntNoPath++;
                 continue;
+            }
 
             float arrivalSeconds = EstimateTraversalSeconds(path.Distance);
             if (!float.IsInfinity(currentDangerSeconds) &&
                 currentDangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds)
             {
+                cntDangerArrival++;
                 continue;
             }
 
             if (triggerSeconds <= arrivalSeconds + settings.safeTileMinimumSeconds + ChainBombFuseSafetyMarginSeconds)
             {
+                cntFuseArrivalUnsafe++;
                 RejectVerbose($"ChainBomb chegada insegura {tile} fuse {triggerSeconds:F2}s eta {arrivalSeconds:F2}s");
                 continue;
             }
+
+            cntEvaluated++;
 
             float score =
                 escapeBranches * 35f +
@@ -1731,8 +1927,32 @@ public sealed class BattleModeComController : MonoBehaviour
                     currentDangerSeconds,
                     $"reachable:{reachableTiles.Count} rejected:{FormatRejectedForLog()}");
             }
+
+            LogChainBombDiagnostic(
+                onlyCurrentTile ? "FAIL_CURRENT_TILE" : "FAIL_ALL_TILES",
+                myTile,
+                currentDangerSeconds,
+                $"reachable:{reachableTiles.Count} " +
+                $"bombAtTile:{cntBombAtTile} blastHitsItem:{cntBlastHitsItem} " +
+                $"noLink:{cntNoLink} fuseShort:{cntFuseShort} noBlastTiles:{cntNoBlastTiles} " +
+                $"fewBranches(min:{ChainBombMinimumEscapeBranches}):{cntFewBranches} " +
+                $"noChainEscape:{cntNoChainEscape} noPath:{cntNoPath} " +
+                $"dangerArrival:{cntDangerArrival} fuseArrivalUnsafe:{cntFuseArrivalUnsafe} " +
+                $"evaluated:{cntEvaluated}",
+                force: true);
             return false;
         }
+
+        LogChainBombDiagnostic(
+            bestDistance == 0 ? "FOUND_PLANT_NOW" : "FOUND_MOVE_TO",
+            myTile,
+            currentDangerSeconds,
+            $"bestTile:{bestTile} dist:{bestDistance} branches:{bestBranches} " +
+            $"trigger:{bestTriggerSeconds:F2}s createsTurn:{bestCreatesTurn} " +
+            $"escapeMove:{FirstMoveDescription(bestEscapeMove)} " +
+            $"reachable:{reachableTiles.Count} noLink:{cntNoLink} fewBranches:{cntFewBranches} " +
+            $"noChainEscape:{cntNoChainEscape} evaluated:{cntEvaluated}",
+            force: true);
 
         bool plantNow = bestDistance == 0;
         if (plantNow && !float.IsInfinity(currentDangerSeconds))
@@ -2134,6 +2354,34 @@ public sealed class BattleModeComController : MonoBehaviour
 
         LogPatrolDiagnostic(myTile, targetTile, move, reason);
         return true;
+    }
+
+    private void LogChainBombDiagnostic(string key, Vector2Int myTile, float currentDangerSeconds, string message, bool force = false)
+    {
+        if (!EnableChainBombDiagnostics)
+            return;
+
+        if (ChainBombDiagnosticPlayerIdFilter != 0 && playerId != ChainBombDiagnosticPlayerIdFilter)
+            return;
+
+        string logKey = $"{key}:{myTile}";
+        if (!force &&
+            logKey == lastChainBombLogKey &&
+            Time.time - lastChainBombLogTime < ChainBombDiagLogIntervalSeconds)
+        {
+            return;
+        }
+
+        lastChainBombLogKey = logKey;
+        lastChainBombLogTime = Time.time;
+
+        int bombsRemaining = bombController != null ? bombController.BombsRemaining : -1;
+        int totalBombs = bombController != null ? bombController.bombAmout : -1;
+        Debug.Log(
+            $"[BattleCOMChain][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} danger:{FormatDanger(currentDangerSeconds)} " +
+            $"bombsRemaining:{bombsRemaining}/{totalBombs} key:{key} {message}",
+            this);
     }
 
     private void LogPatrolDiagnostic(Vector2Int myTile, Vector2Int targetTile, Vector2 move, string reason)
