@@ -1544,7 +1544,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StopKickAndSnapToExplosionTile(other, kickTileSize);
 
             if (owner != null)
-                owner.ExplodeBomb(gameObject);
+                owner.ExplodeBombChained(gameObject, other.transform.position);
 
             return;
         }
