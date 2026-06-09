@@ -211,6 +211,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -230,6 +231,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 0}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -1046,6 +1051,8 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -1677,9 +1684,11 @@ MonoBehaviour:
   selectTitleToBodyGapLines: 2
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
-  controlsMusic: {fileID: 8300000, guid: 58c85641e36842c4eaf8c6bce6a15280, type: 3}
-  controlsMusicLoop: {fileID: 8300000, guid: 90a483711e8d20b468dacd50223706f3, type: 3}
-  controlsMusicVolume: 1
+  maxFadeStepDelta: 0.033
+  logOpenFlowDiagnostics: 1
+  controlsMusic: {fileID: 8300000, guid: cb664d6e50930ce42ba645a9be8cc7fe, type: 3}
+  controlsMusicLoop: {fileID: 0}
+  controlsMusicVolume: 0.5
   menuText: {fileID: 534844157}
   titleFontSize: 32
   titleVOffset: 26
