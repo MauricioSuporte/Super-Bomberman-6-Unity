@@ -647,6 +647,18 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 Vector2 frontCell = front != null ? SnapToGrid(front.transform.position, tileSize) : Vector2.zero;
                 Vector2 nextCell = frontCell + kickDir * tileSize;
 
+                if (front != null &&
+                    front.IsRubberBomb &&
+                    (transfer == null || !transfer.hitDestructible) &&
+                    TryReverseRubberBombQueue(queue, ref kickDir, tileSize, destructibleTilemap, transfer))
+                {
+                    LogKickTrace(
+                        $"bomb-queue-rubber-bounce segment:{segment} queue:{FormatBombQueue(queue)} " +
+                        $"newDir:{FormatVec(kickDir)} blocked:{FormatVec(nextCell)}");
+                    front.PlayKickBounceSfx();
+                    continue;
+                }
+
                 LogKickTrace(
                     $"bomb-queue-stop blocked segment:{segment} queue:{FormatBombQueue(queue)} " +
                     $"front:{FormatBomb(front)} next:{FormatVec(nextCell)} " +
@@ -706,6 +718,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     bomb.transform.position = pos;
                 }
 
+                Vector2 frontPosition = Vector2.Lerp(frontStart, ends[ends.Length - 1], t);
+                DestroyNonSkullItemsAtWorld(frontPosition);
                 UpdateBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart, t);
 
                 yield return null;
@@ -723,6 +737,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             }
 
             FinishBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, ends[ends.Length - 1]);
+            DestroyNonSkullItemsAtWorld(ends[ends.Length - 1]);
 
             LogKickTrace(
                 $"bomb-queue-segment-done segment:{segment} queue:{FormatBombQueue(queue)} " +
@@ -768,7 +783,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         Vector2 kickDir,
         float tileSize,
         Tilemap destructibleTilemap,
-        BombQueueTransfer transfer)
+        BombQueueTransfer transfer,
+        bool validateKickEligibility = true)
     {
         if (transfer != null)
             transfer.Reset();
@@ -776,7 +792,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (queue == null || queue.Count == 0)
             return false;
 
-        for (int i = 0; i < queue.Count; i++)
+        for (int i = 0; validateKickEligibility && i < queue.Count; i++)
         {
             Bomb bomb = queue[i];
             if (!CanStartYellowBombKick(bomb, kickDir, unlockEarlyKick: true))
@@ -814,8 +830,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (HasEnemyAt(nextCellWorld))
             return false;
 
-        if (HasBlockingNonSkullItemAt(nextCellWorld, out List<ItemPickup> pushedSkulls))
-            return false;
+        CollectSkullsAt(nextCellWorld, out List<ItemPickup> pushedSkulls);
 
         if (transfer != null)
         {
@@ -872,7 +887,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (movement == null)
             return true;
 
-        if (HasBlockingNonSkullItemAt(nextCell, out _))
+        if (currentBomb == null && HasBlockingNonSkullItemAt(nextCell, out _))
             return true;
 
         if (HasPlayerAt(nextCell))
@@ -918,8 +933,11 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (pickup == null)
                 pickup = hit.GetComponentInParent<ItemPickup>();
 
-            if (pickup != null && pickup.type == ItemType.Skull)
+            if (pickup != null &&
+                (currentBomb != null || pickup.type == ItemType.Skull))
+            {
                 continue;
+            }
 
             if (hit.isTrigger)
                 continue;
@@ -928,6 +946,49 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
+    }
+
+    bool TryReverseRubberBombQueue(
+        List<Bomb> queue,
+        ref Vector2 kickDir,
+        float tileSize,
+        Tilemap destructibleTilemap,
+        BombQueueTransfer transfer)
+    {
+        if (queue == null || queue.Count == 0)
+            return false;
+
+        for (int i = 0; i < queue.Count; i++)
+        {
+            if (queue[i] == null || queue[i].HasExploded)
+                return false;
+        }
+
+        Vector2 reversedDirection = -kickDir;
+
+        queue.Reverse();
+        if (!CanMoveBombQueue(
+                queue,
+                reversedDirection,
+                tileSize,
+                destructibleTilemap,
+                transfer,
+                validateKickEligibility: false))
+        {
+            queue.Reverse();
+            return false;
+        }
+
+        for (int i = 0; i < queue.Count; i++)
+        {
+            Bomb bomb = queue[i];
+            bomb.MarkMovedByKickOrPunch();
+            _bombPlantDirection.Remove(bomb);
+            _bombEarlyKickUnlocked.Remove(bomb);
+        }
+
+        kickDir = reversedDirection;
+        return true;
     }
 
     void StartBombQueuePushedSkulls(
@@ -1185,6 +1246,78 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     bool HasItemAt(Vector3 center)
     {
         return HasBlockingNonSkullItemAt(center, out _);
+    }
+
+    void CollectSkullsAt(Vector3 center, out List<ItemPickup> skulls)
+    {
+        skulls = new List<ItemPickup>();
+
+        int itemLayer = LayerMask.NameToLayer("Item");
+        if (itemLayer < 0)
+            return;
+
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float size = tileSize * 0.55f;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            center,
+            new Vector2(size, size),
+            0f,
+            1 << itemLayer);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null || hit.gameObject == gameObject)
+                continue;
+
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup != null &&
+                pickup.type == ItemType.Skull &&
+                !skulls.Contains(pickup))
+            {
+                skulls.Add(pickup);
+            }
+        }
+    }
+
+    void DestroyNonSkullItemsAtWorld(Vector2 worldCenter)
+    {
+        int itemLayer = LayerMask.NameToLayer("Item");
+        if (itemLayer < 0)
+            return;
+
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float size = tileSize * 0.45f;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            worldCenter,
+            new Vector2(size, size),
+            0f,
+            1 << itemLayer);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup == null || pickup.type == ItemType.Skull)
+                continue;
+
+            pickup.DestroySilently();
+        }
     }
 
     bool HasBlockingNonSkullItemAt(Vector3 center, out List<ItemPickup> skulls)

@@ -1174,6 +1174,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return true;
     }
 
+    public void PlayKickBounceSfx()
+    {
+        TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+    }
+
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
         LayerMask defaultBlockMoveMask = LayerMask.GetMask("Player", "Bomb", "Enemy", "Louie");
