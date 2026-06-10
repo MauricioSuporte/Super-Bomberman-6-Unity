@@ -35,6 +35,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
     private const float ChainBombDiagLogIntervalSeconds = 0.45f;
     private const int ChainBombRejectSampleLimit = 4;
+    private const int SecondBombRejectSampleLimit = 6;
     private float lastChainBombLogTime = -10f;
     private string lastChainBombLogKey = string.Empty;
 
@@ -57,6 +58,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float FarmTargetJitter = 0.5f;
     private const float ChainBombFuseSafetyMarginSeconds = 0.25f;
     private const int ChainBombMinimumEscapeBranches = 2;
+    private const int AdditionalBombMinimumEscapeBranches = 2;
     private const float ChainBombMaxPlantingSeconds = 2.0f;
     private const float OwnChainPlanChance = 0.35f;
     private const int OwnChainSecondBombDistance = 2;
@@ -64,6 +66,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float OwnChainFirstFusePlantWindowSeconds = 1.5f;
     private const float OwnChainUnsafeMoveMarginSeconds = 0.45f;
     private const float PostPlantEmergencyEscapeMarginSeconds = 0.35f;
+    private const float AbilityDecisionLogIntervalSeconds = 0.35f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -86,6 +89,8 @@ public sealed class BattleModeComController : MonoBehaviour
     [SerializeField, Range(4, MaxDecisionBufferEntries)] private int decisionBufferSize = 16;
     [SerializeField] private bool debugDecisionTrace = true;
     [SerializeField] private int decisionTracePlayerIdFilter = 0;
+    [SerializeField] private bool debugAbilityDecisionTrace = true;
+    [SerializeField] private int abilityDecisionTracePlayerIdFilter = 0;
 
     private readonly List<string> recentDecisions = new();
     private readonly List<PlayerIdentity> activePlayers = new(6);
@@ -162,6 +167,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastKickBombRiskLogKey = string.Empty;
     private float lastDecisionTraceLogTime = -10f;
     private string lastDecisionTraceLogKey = string.Empty;
+    private float lastAbilityDecisionTraceLogTime = -10f;
+    private string lastAbilityDecisionTraceLogKey = string.Empty;
+    private bool abilityDecisionEvaluatedThisThink;
 
     // Committed escape: quando TryBuildOwnPendingEscapeRoute encontra um target válido,
     // gravamos ele aqui. TryBuildOwnPendingSafetyMove usa BFS em direção a ele antes de
@@ -552,6 +560,7 @@ public sealed class BattleModeComController : MonoBehaviour
         candidates.Clear();
         rejectedActions.Clear();
         currentInputDescription = "none";
+        abilityDecisionEvaluatedThisThink = false;
         EnsurePersonalitySeed();
 
         if (inDanger)
@@ -1001,35 +1010,54 @@ public sealed class BattleModeComController : MonoBehaviour
         out CandidateAction candidate)
     {
         candidate = default;
+        abilityDecisionEvaluatedThisThink = true;
         RefreshComAbilities();
 
         if (comAbilities.Count == 0)
         {
-            AppendAbilityTrace("emergency", "none", BuildNoAbilityScriptsTrace());
+            string noAbilitiesTrace = BuildNoAbilityScriptsTrace();
+            AppendAbilityTrace("emergency", "none", noAbilitiesTrace);
+            LogAbilityDecisionTrace(
+                "emergency",
+                myTile,
+                currentDangerSeconds,
+                "none",
+                noAbilitiesTrace);
             return false;
         }
 
         string escapeAbilityCandidates = string.Empty;
+        string evaluations = string.Empty;
         for (int i = 0; i < comAbilities.Count; i++)
         {
             IBattleModeComAbility ability = comAbilities[i];
             if (ability == null)
             {
                 AppendAbilityTrace("emergency", "null", "null ability entry");
+                AppendAbilityEvaluation(ref evaluations, "null", "unavailable", "null ability entry");
                 continue;
             }
 
+            string abilityName = GetAbilityDiagnosticName(ability);
             if (!ability.IsAvailable)
             {
                 AppendAbilityTrace(ability, "emergency unavailable");
+                AppendAbilityEvaluation(ref evaluations, abilityName, "unavailable", ability.LastDecisionTrace);
                 continue;
             }
 
             if (!ability.TryBuildEmergencyDecision(settings, this, myTile, currentDangerSeconds, out var decision))
             {
                 AppendAbilityTrace(ability, "emergency");
+                AppendAbilityEvaluation(ref evaluations, abilityName, "rejected", ability.LastDecisionTrace);
                 continue;
             }
+
+            AppendAbilityEvaluation(
+                ref evaluations,
+                abilityName,
+                "candidate",
+                FormatAbilityDecision(decision, ability.LastDecisionTrace));
 
             if (decision.UsesEscapeAbilityChance)
                 AppendEscapeAbilityCandidate(ref escapeAbilityCandidates, ability, decision);
@@ -1037,7 +1065,7 @@ public sealed class BattleModeComController : MonoBehaviour
             if (decision.UsesEscapeAbilityChance &&
                 !RollEscapeAbilityChance(
                     settings,
-                    GetAbilityDiagnosticName(ability),
+                    abilityName,
                     escapeAbilityCandidates,
                     myTile,
                     currentDangerSeconds,
@@ -1045,8 +1073,9 @@ public sealed class BattleModeComController : MonoBehaviour
             {
                 AppendAbilityTrace(
                     "emergency chance",
-                    GetAbilityDiagnosticName(ability),
+                    abilityName,
                     $"{chanceTrace} trace:{ability.LastDecisionTrace}");
+                AppendAbilityEvaluation(ref evaluations, abilityName, "chance-rejected", chanceTrace);
                 if (ability is BattleModeComYellowLouieKickAbility yellowLouieKickAbility)
                     yellowLouieKickAbility.CancelUnselectedPendingKickCommand("escape ability chance failed");
                 continue;
@@ -1054,9 +1083,22 @@ public sealed class BattleModeComController : MonoBehaviour
 
             candidate = ToCandidateAction(decision);
             AppendAbilityTrace(ability, "emergency selected");
+            LogAbilityDecisionTrace(
+                "emergency",
+                myTile,
+                currentDangerSeconds,
+                $"selected:{abilityName}",
+                evaluations,
+                decision);
             return true;
         }
 
+        LogAbilityDecisionTrace(
+            "emergency",
+            myTile,
+            currentDangerSeconds,
+            "none-selected",
+            evaluations);
         return false;
     }
 
@@ -1108,16 +1150,27 @@ public sealed class BattleModeComController : MonoBehaviour
         out CandidateAction candidate)
     {
         candidate = default;
+        abilityDecisionEvaluatedThisThink = true;
         RefreshComAbilities();
 
         if (comAbilities.Count == 0)
         {
-            AppendAbilityTrace("candidate", "none", BuildNoAbilityScriptsTrace());
+            string noAbilitiesTrace = BuildNoAbilityScriptsTrace();
+            AppendAbilityTrace("candidate", "none", noAbilitiesTrace);
+            LogAbilityDecisionTrace(
+                "candidate",
+                myTile,
+                float.PositiveInfinity,
+                "none",
+                noAbilitiesTrace);
             return false;
         }
 
         CandidateAction best = default;
         int bestWeight = 0;
+        BattleModeComAbilityDecision bestDecision = default;
+        string bestAbilityName = "none";
+        string evaluations = string.Empty;
 
         for (int i = 0; i < comAbilities.Count; i++)
         {
@@ -1125,34 +1178,64 @@ public sealed class BattleModeComController : MonoBehaviour
             if (ability == null)
             {
                 AppendAbilityTrace("candidate", "null", "null ability entry");
+                AppendAbilityEvaluation(ref evaluations, "null", "unavailable", "null ability entry");
                 continue;
             }
 
+            string abilityName = GetAbilityDiagnosticName(ability);
             if (!ability.IsAvailable)
             {
                 AppendAbilityTrace(ability, "candidate unavailable");
+                AppendAbilityEvaluation(ref evaluations, abilityName, "unavailable", ability.LastDecisionTrace);
                 continue;
             }
 
             if (!ability.TryBuildCandidateDecision(settings, this, myTile, out var decision))
             {
                 AppendAbilityTrace(ability, "candidate");
+                AppendAbilityEvaluation(ref evaluations, abilityName, "rejected", ability.LastDecisionTrace);
                 continue;
             }
 
             CandidateAction candidateAction = ToCandidateAction(decision);
+            string outcome = candidateAction.Weight > bestWeight
+                ? "leading"
+                : $"lower-weight-than:{bestAbilityName}:{bestWeight}";
+            AppendAbilityEvaluation(
+                ref evaluations,
+                abilityName,
+                outcome,
+                FormatAbilityDecision(decision, ability.LastDecisionTrace));
+
             if (candidateAction.Weight <= bestWeight)
                 continue;
 
             best = candidateAction;
             bestWeight = candidateAction.Weight;
+            bestDecision = decision;
+            bestAbilityName = abilityName;
             AppendAbilityTrace(ability, "candidate selected");
         }
 
         if (bestWeight <= 0)
+        {
+            LogAbilityDecisionTrace(
+                "candidate",
+                myTile,
+                float.PositiveInfinity,
+                "none-selected",
+                evaluations);
             return false;
+        }
 
         candidate = best;
+        LogAbilityDecisionTrace(
+            "candidate",
+            myTile,
+            float.PositiveInfinity,
+            $"selected:{bestAbilityName}",
+            evaluations,
+            bestDecision);
         return true;
     }
 
@@ -1201,6 +1284,79 @@ public sealed class BattleModeComController : MonoBehaviour
         return string.IsNullOrWhiteSpace(ability.DiagnosticName)
             ? ability.GetType().Name
             : ability.DiagnosticName;
+    }
+
+    private static void AppendAbilityEvaluation(
+        ref string evaluations,
+        string abilityName,
+        string outcome,
+        string trace)
+    {
+        if (!string.IsNullOrEmpty(evaluations))
+            evaluations += " | ";
+
+        evaluations +=
+            $"{abilityName}[{outcome} trace:{(string.IsNullOrWhiteSpace(trace) ? "no trace" : trace)}]";
+    }
+
+    private static string FormatAbilityDecision(
+        BattleModeComAbilityDecision decision,
+        string trace)
+    {
+        string target = decision.HasTarget ? decision.TargetTile.ToString() : "none";
+        string input = string.IsNullOrWhiteSpace(decision.InputDescription)
+            ? "none"
+            : decision.InputDescription;
+        string reason = string.IsNullOrWhiteSpace(decision.Reason)
+            ? "none"
+            : decision.Reason;
+
+        return
+            $"action:{decision.Action} weight:{decision.Weight} target:{target} " +
+            $"move:{FirstMoveDescription(decision.FirstMove)} input:{input} " +
+            $"tapA:{decision.TapBomb} tapR:{decision.TapActionR} tapC:{decision.TapActionC} " +
+            $"escapeChance:{decision.UsesEscapeAbilityChance} reason:{reason} " +
+            $"trace:{(string.IsNullOrWhiteSpace(trace) ? "no trace" : trace)}";
+    }
+
+    private void LogAbilityDecisionTrace(
+        string phase,
+        Vector2Int myTile,
+        float dangerSeconds,
+        string outcome,
+        string evaluations,
+        BattleModeComAbilityDecision? selectedDecision = null)
+    {
+        if (!debugAbilityDecisionTrace)
+            return;
+
+        if (abilityDecisionTracePlayerIdFilter != 0 &&
+            playerId != abilityDecisionTracePlayerIdFilter)
+        {
+            return;
+        }
+
+        string evaluationText = string.IsNullOrWhiteSpace(evaluations) ? "none" : evaluations;
+        string selectedText = selectedDecision.HasValue
+            ? FormatAbilityDecision(selectedDecision.Value, "see-evaluations")
+            : "none";
+        string key = $"{phase}:{myTile}:{outcome}:{evaluationText}:{selectedText}";
+        float elapsed = Time.time - lastAbilityDecisionTraceLogTime;
+
+        if (elapsed < AbilityDecisionLogIntervalSeconds ||
+            (key == lastAbilityDecisionTraceLogKey && elapsed < 1f))
+        {
+            return;
+        }
+
+        lastAbilityDecisionTraceLogKey = key;
+        lastAbilityDecisionTraceLogTime = Time.time;
+
+        Debug.Log(
+            $"[BattleCOMAbilityDecision][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"phase:{phase} tile:{myTile} pos:{transform.position} danger:{FormatDanger(dangerSeconds)} " +
+            $"outcome:{outcome} selected:{selectedText} evaluations:{evaluationText}",
+            this);
     }
 
     private bool RollEscapeAbilityChance(
@@ -1889,7 +2045,13 @@ public sealed class BattleModeComController : MonoBehaviour
             // Na posição atual
             if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
                 !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
-                CanPlantBombWithEscape(myTile, radius, settings, out Vector2 combatEscape, out _))
+                CanPlantAdditionalBombWithEscape(
+                    myTile,
+                    radius,
+                    settings,
+                    out Vector2 combatEscape,
+                    out _,
+                    out _))
             {
                 candidate = new CandidateAction
                 {
@@ -1917,7 +2079,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 if (IsBombAtTile(tile)) continue;
                 if (WouldBlastHitUsefulItem(tile, radius, out _, out _)) continue;
                 if (!IsTileInBlastLineRuntime(tile, targetTile, radius)) continue;
-                if (!CanPlantBombWithEscape(tile, radius, settings, out Vector2 esc, out _)) continue;
+                if (!CanPlantAdditionalBombWithEscape(tile, radius, settings, out Vector2 esc, out _, out _)) continue;
                 if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
                 if (path.Distance < bestCombatDist)
                 {
@@ -1963,7 +2125,7 @@ public sealed class BattleModeComController : MonoBehaviour
             if (IsBombAtTile(tile)) continue;
             if (!CanBombHitDestructible(tile, radius)) continue;
             if (WouldBlastHitUsefulItem(tile, radius, out _, out _)) continue;
-            if (!CanPlantBombWithEscape(tile, radius, settings, out Vector2 esc, out _)) continue;
+            if (!CanPlantAdditionalBombWithEscape(tile, radius, settings, out Vector2 esc, out _, out _)) continue;
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
 
             float score = -path.Distance * 10f + GetDecisionNoise(9000 + i, FarmTargetJitter);
@@ -3743,12 +3905,14 @@ public sealed class BattleModeComController : MonoBehaviour
         bool plantedBomb = !string.IsNullOrEmpty(currentInputDescription) &&
                            currentInputDescription.Contains("ActionA", StringComparison.OrdinalIgnoreCase);
         bool stopped = currentAction == BattleModeComActionType.Stopped;
+        bool abilityAction = currentAction == BattleModeComActionType.KickBomb;
+        bool abilityContext = abilityDecisionEvaluatedThisThink || abilityAction;
         bool postPlantContext =
             postPlantEscapeWatchActive ||
             chainBombPlantingStartedTime >= 0f ||
             HasOwnUnresolvedBombOrExplosion();
 
-        if (!plantedBomb && !stopped && !postPlantContext)
+        if (!plantedBomb && !stopped && !abilityContext && !postPlantContext)
             return;
 
         string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
@@ -4407,6 +4571,113 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private bool CanPlantAdditionalBombWithEscape(
+        Vector2Int plantTile,
+        int radius,
+        BattleModeComDifficultySettings settings,
+        out Vector2 escapeMove,
+        out Vector2Int escapeTile,
+        out int escapeBranches)
+    {
+        escapeMove = Vector2.zero;
+        escapeTile = plantTile;
+        escapeBranches = 0;
+
+        if (!CanPlantBombWithEscape(plantTile, radius, settings, out escapeMove, out escapeTile))
+            return false;
+
+        if (!TryBuildChainBlastTiles(plantTile, radius, out List<Vector2Int> combinedBlastTiles))
+        {
+            RejectSecondBombSafety($"sem simulacao de explosao tile:{plantTile}");
+            return false;
+        }
+
+        string branchSummary = string.Empty;
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int firstStep = CardinalTiles[i];
+            Vector2Int firstTile = plantTile + firstStep;
+            if (!IsWalkableTile(firstTile, plantTile))
+            {
+                AppendSecondBombBranchSummary(
+                    ref branchSummary,
+                    firstStep,
+                    "blocked");
+                continue;
+            }
+
+            float firstStepEta = EstimateFirstMoveTraversalSeconds(firstStep);
+            if (IsDangerousAt(firstTile, firstStepEta, settings, combinedBlastTiles))
+            {
+                AppendSecondBombBranchSummary(
+                    ref branchSummary,
+                    firstStep,
+                    $"unsafe-first:{FormatDanger(GetDangerSeconds(firstTile, combinedBlastTiles))}");
+                continue;
+            }
+
+            if (!TryFindEscapeWithPreferredFirstStep(
+                    settings,
+                    plantTile,
+                    firstStep,
+                    combinedBlastTiles,
+                    out Vector2Int branchTarget,
+                    out int branchDepth))
+            {
+                AppendSecondBombBranchSummary(
+                    ref branchSummary,
+                    firstStep,
+                    "no-safe-target");
+                continue;
+            }
+
+            if (escapeBranches == 0)
+            {
+                escapeMove = TileDirectionToVector(firstStep);
+                escapeTile = branchTarget;
+            }
+
+            escapeBranches++;
+            AppendSecondBombBranchSummary(
+                ref branchSummary,
+                firstStep,
+                $"safe:{branchTarget}/depth:{branchDepth}");
+        }
+
+        if (escapeBranches >= AdditionalBombMinimumEscapeBranches)
+            return true;
+
+        RejectSecondBombSafety(
+            $"poucas fugas tile:{plantTile} branches:{escapeBranches}/" +
+            $"{AdditionalBombMinimumEscapeBranches} escape:{escapeTile} routes:{branchSummary} " +
+            $"own:{FormatOwnChainBombs()}");
+        return false;
+    }
+
+    private static void AppendSecondBombBranchSummary(
+        ref string summary,
+        Vector2Int direction,
+        string result)
+    {
+        if (!string.IsNullOrEmpty(summary))
+            summary += " | ";
+
+        summary += $"{DirectionLabel(direction)}:{result}";
+    }
+
+    private void RejectSecondBombSafety(string reason)
+    {
+        int samples = 0;
+        for (int i = 0; i < rejectedActions.Count; i++)
+        {
+            if (rejectedActions[i].StartsWith("SecondBomb recusada", StringComparison.Ordinal))
+                samples++;
+        }
+
+        if (samples < SecondBombRejectSampleLimit)
+            RejectVerbose($"SecondBomb recusada {reason}");
     }
 
     private bool TryFindChainEscape(
