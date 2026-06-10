@@ -67,6 +67,9 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
     {
         get
         {
+            if (this == null)
+                return false;
+
             CacheReferences();
 
             if (IsMountedYellowLouieKickAvailable)

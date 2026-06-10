@@ -421,6 +421,16 @@ public static class PlayerPersistentStats
             EnsureBattleModeComKickBombAbility(playerGo, playerId);
         else
             RemoveBattleModeComKickBombAbility(playerGo);
+
+        if (s.CanPunchBombs)
+            EnsureBattleModeComAbility<BattleModeComPunchBombAbility>(playerGo, playerId);
+        else
+            RemoveBattleModeComAbility<BattleModeComPunchBombAbility>(playerGo);
+
+        if (s.HasPowerGlove)
+            EnsureBattleModeComAbility<BattleModeComPowerGloveAbility>(playerGo, playerId);
+        else
+            RemoveBattleModeComAbility<BattleModeComPowerGloveAbility>(playerGo);
     }
 
     static void EnsureBattleModeComKickBombAbility(GameObject playerGo, int playerId)
@@ -443,7 +453,41 @@ public static class PlayerPersistentStats
         if (playerGo == null)
             return;
 
-        var ability = playerGo.GetComponent<BattleModeComKickBombAbility>();
+        var abilities = playerGo.GetComponents<BattleModeComKickBombAbility>();
+        for (int i = 0; i < abilities.Length; i++)
+        {
+            BattleModeComKickBombAbility ability = abilities[i];
+            if (ability != null &&
+                ability.GetType() == typeof(BattleModeComKickBombAbility))
+            {
+                Object.Destroy(ability);
+            }
+        }
+    }
+
+    static void EnsureBattleModeComAbility<T>(GameObject playerGo, int playerId)
+        where T : MonoBehaviour
+    {
+        if (playerGo == null)
+            return;
+
+        if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+        {
+            RemoveBattleModeComAbility<T>(playerGo);
+            return;
+        }
+
+        if (!playerGo.TryGetComponent<T>(out _))
+            playerGo.AddComponent<T>();
+    }
+
+    static void RemoveBattleModeComAbility<T>(GameObject playerGo)
+        where T : MonoBehaviour
+    {
+        if (playerGo == null)
+            return;
+
+        T ability = playerGo.GetComponent<T>();
         if (ability != null)
             Object.Destroy(ability);
     }
@@ -1284,9 +1328,11 @@ public static class PlayerPersistentStats
                 break;
             case ItemType.BombPunch:
                 abilitySystem.Disable(BombPunchAbility.AbilityId);
+                RemoveBattleModeComAbility<BattleModeComPunchBombAbility>(movement.gameObject);
                 break;
             case ItemType.PowerGlove:
                 abilitySystem.Disable(PowerGloveAbility.AbilityId);
+                RemoveBattleModeComAbility<BattleModeComPowerGloveAbility>(movement.gameObject);
                 break;
             case ItemType.BombPass:
                 abilitySystem.Disable(BombPassAbility.AbilityId);

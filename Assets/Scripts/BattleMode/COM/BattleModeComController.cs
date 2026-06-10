@@ -343,15 +343,33 @@ public sealed class BattleModeComController : MonoBehaviour
         AbilitySystem abilitySystem = EnsureKnownComAbilityScripts();
         int currentVersion = abilitySystem != null ? abilitySystem.Version : -1;
 
-        if (currentVersion == abilitySystemVersion && comAbilities.Count > 0)
+        bool hasDestroyedEntry = false;
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            if (!IsComAbilityAlive(comAbilities[i]))
+            {
+                hasDestroyedEntry = true;
+                break;
+            }
+        }
+
+        if (currentVersion == abilitySystemVersion &&
+            comAbilities.Count > 0 &&
+            !hasDestroyedEntry)
+        {
             return;
+        }
 
         comAbilities.Clear();
         var monos = GetComponents<MonoBehaviour>();
         for (int i = 0; i < monos.Length; i++)
         {
-            if (monos[i] is IBattleModeComAbility ability)
+            if (monos[i] != null &&
+                monos[i] is IBattleModeComAbility ability &&
+                IsComAbilityAlive(ability))
+            {
                 comAbilities.Add(ability);
+            }
         }
 
         abilitySystemVersion = currentVersion;
@@ -378,39 +396,52 @@ public sealed class BattleModeComController : MonoBehaviour
             }
         }
 
+        bool kickEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(BombKickAbility.AbilityId);
         bool yellowLouieKickEnabled =
             abilitySystem != null &&
             abilitySystem.IsEnabled(YellowLouieKickAbility.AbilityId);
 
         BattleModeComKickBombAbility exactKickCom = FindExactKickBombComAbility();
-        bool hasYellowLouieKickCom = TryGetComponent<BattleModeComYellowLouieKickAbility>(out _);
+        TryGetComponent<BattleModeComYellowLouieKickAbility>(out var yellowLouieKickCom);
+
+        if ((!isCom || !yellowLouieKickEnabled) && yellowLouieKickCom != null)
+        {
+            Destroy(yellowLouieKickCom);
+            yellowLouieKickCom = null;
+            abilitySystemVersion = -2;
+        }
+
         if (isCom &&
             yellowLouieKickEnabled &&
-            !hasYellowLouieKickCom)
+            yellowLouieKickCom == null)
         {
             if (exactKickCom != null)
             {
                 Destroy(exactKickCom);
                 exactKickCom = null;
             }
-            else
-            {
-                gameObject.AddComponent<BattleModeComYellowLouieKickAbility>();
-                hasYellowLouieKickCom = true;
-            }
 
+            yellowLouieKickCom = gameObject.AddComponent<BattleModeComYellowLouieKickAbility>();
             abilitySystemVersion = -2;
         }
 
-        if (abilitySystem != null &&
-            abilitySystem.IsEnabled(BombKickAbility.AbilityId) &&
+        if (isCom &&
+            kickEnabled &&
             !yellowLouieKickEnabled &&
-            !hasYellowLouieKickCom &&
+            yellowLouieKickCom == null &&
             exactKickCom == null)
         {
             gameObject.AddComponent<BattleModeComKickBombAbility>();
             abilitySystemVersion = -2;
             LogKickLoadDiagnostic("added BattleModeComKickBombAbility");
+        }
+
+        if ((!isCom || !kickEnabled || yellowLouieKickEnabled) && exactKickCom != null)
+        {
+            Destroy(exactKickCom);
+            abilitySystemVersion = -2;
         }
 
         // HazardAwareness é sempre ativa — não depende de power-up.
@@ -432,11 +463,18 @@ public sealed class BattleModeComController : MonoBehaviour
                 abilitySystem.Enable(BombPunchAbility.AbilityId);
         }
 
-        if (abilitySystem != null &&
-            abilitySystem.IsEnabled(BombPunchAbility.AbilityId) &&
-            !TryGetComponent<BattleModeComPunchBombAbility>(out _))
+        bool punchEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
+        TryGetComponent<BattleModeComPunchBombAbility>(out var punchCom);
+        if (isCom && punchEnabled && punchCom == null)
         {
             gameObject.AddComponent<BattleModeComPunchBombAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !punchEnabled) && punchCom != null)
+        {
+            Destroy(punchCom);
             abilitySystemVersion = -2;
         }
 
@@ -450,22 +488,30 @@ public sealed class BattleModeComController : MonoBehaviour
                 abilitySystem.Enable(PowerGloveAbility.AbilityId);
         }
 
-        if (isCom &&
+        bool powerGloveEnabled =
             abilitySystem != null &&
-            abilitySystem.IsEnabled(PowerGloveAbility.AbilityId) &&
-            !TryGetComponent<BattleModeComPowerGloveAbility>(out _))
+            abilitySystem.IsEnabled(PowerGloveAbility.AbilityId);
+        TryGetComponent<BattleModeComPowerGloveAbility>(out var powerGloveCom);
+        if (isCom && powerGloveEnabled && powerGloveCom == null)
         {
             gameObject.AddComponent<BattleModeComPowerGloveAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !powerGloveEnabled) && powerGloveCom != null)
+        {
+            Destroy(powerGloveCom);
             abilitySystemVersion = -2;
         }
 
         if (isCom && Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
         {
-            bool kickEnabled = abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
+            bool diagnosticKickEnabled =
+                abilitySystem != null &&
+                abilitySystem.IsEnabled(BombKickAbility.AbilityId);
             bool hasKickCom = TryGetComponent<BattleModeComKickBombAbility>(out _);
             LogKickLoadDiagnostic(
                 $"load check persistentKick:{persistentKickEnabled} abilitySystem:{(abilitySystem != null)} " +
-                $"kickEnabled:{kickEnabled} kickCom:{hasKickCom}");
+                $"kickEnabled:{diagnosticKickEnabled} kickCom:{hasKickCom}");
         }
 
         return abilitySystem;
@@ -1056,7 +1102,8 @@ public sealed class BattleModeComController : MonoBehaviour
 
         for (int i = 0; i < comAbilities.Count; i++)
         {
-            if (comAbilities[i] is BattleModeComPowerGloveAbility powerGloveAbility &&
+            if (IsComAbilityAlive(comAbilities[i]) &&
+                comAbilities[i] is BattleModeComPowerGloveAbility powerGloveAbility &&
                 powerGloveAbility.ShouldPrioritizeEmergency(myTile))
             {
                 prioritizedPowerGlove = powerGloveAbility;
@@ -1104,7 +1151,7 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < comAbilities.Count; i++)
         {
             IBattleModeComAbility ability = comAbilities[i];
-            if (ability == null)
+            if (!IsComAbilityAlive(ability))
             {
                 AppendAbilityTrace("emergency", "null", "null ability entry");
                 AppendAbilityEvaluation(ref evaluations, "null", "unavailable", "null ability entry");
@@ -1251,7 +1298,7 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < comAbilities.Count; i++)
         {
             IBattleModeComAbility ability = comAbilities[i];
-            if (ability == null)
+            if (!IsComAbilityAlive(ability))
             {
                 AppendAbilityTrace("candidate", "null", "null ability entry");
                 AppendAbilityEvaluation(ref evaluations, "null", "unavailable", "null ability entry");
@@ -1337,7 +1384,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void AppendAbilityTrace(IBattleModeComAbility ability, string phase)
     {
-        if (ability == null)
+        if (!IsComAbilityAlive(ability))
             return;
 
         string name = GetAbilityDiagnosticName(ability);
@@ -1355,7 +1402,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private static string GetAbilityDiagnosticName(IBattleModeComAbility ability)
     {
-        if (ability == null)
+        if (!IsComAbilityAlive(ability))
             return "null";
 
         return string.IsNullOrWhiteSpace(ability.DiagnosticName)
@@ -1526,7 +1573,7 @@ public sealed class BattleModeComController : MonoBehaviour
         string move = FirstMoveDescription(decision.FirstMove);
         string input = string.IsNullOrWhiteSpace(decision.InputDescription) ? "none" : decision.InputDescription;
         string reason = string.IsNullOrWhiteSpace(decision.Reason) ? "none" : decision.Reason;
-        string trace = ability != null && !string.IsNullOrWhiteSpace(ability.LastDecisionTrace)
+        string trace = IsComAbilityAlive(ability) && !string.IsNullOrWhiteSpace(ability.LastDecisionTrace)
             ? ability.LastDecisionTrace
             : "no trace";
 
@@ -4177,7 +4224,7 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < comAbilities.Count; i++)
         {
             IBattleModeComAbility ability = comAbilities[i];
-            if (ability == null)
+            if (!IsComAbilityAlive(ability))
                 continue;
 
             if (!string.IsNullOrEmpty(result))
@@ -4194,6 +4241,17 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return string.IsNullOrEmpty(result) ? "none" : result;
+    }
+
+    private static bool IsComAbilityAlive(IBattleModeComAbility ability)
+    {
+        if (ability == null)
+            return false;
+
+        if (ability is UnityEngine.Object unityObject)
+            return unityObject != null;
+
+        return true;
     }
 
     private string FormatActiveBombThreats(Vector2Int myTile)

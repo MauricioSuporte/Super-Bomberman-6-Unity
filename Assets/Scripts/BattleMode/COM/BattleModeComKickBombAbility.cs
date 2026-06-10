@@ -107,6 +107,9 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     {
         get
         {
+            if (this == null)
+                return false;
+
             CacheReferences();
             return IsKickAbilityEnabled && !ShouldDeferToMountedYellowLouieKick();
         }
@@ -131,6 +134,9 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
     protected void CacheReferences()
     {
+        if (this == null)
+            return;
+
         if (identity == null)
             TryGetComponent(out identity);
 
