@@ -208,7 +208,7 @@ public sealed class BattleModeComHazardAwarenessAbility : MonoBehaviour, IBattle
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             // Ignora bombas próprias — o sistema base cuida delas.

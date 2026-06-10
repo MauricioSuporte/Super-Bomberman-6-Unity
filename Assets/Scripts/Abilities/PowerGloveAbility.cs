@@ -18,9 +18,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     [Header("Timings")]
     private readonly float pickupLockTime = 0.1f;
     private readonly float releaseLockTime = 0.1f;
+    private const float MinimumBombAgeForPickupSeconds = 0.05f;
 
     [Header("Throw Settings")]
     [SerializeField, Min(1)] private int throwDistanceTiles = 3;
+    public int ThrowDistanceTiles => Mathf.Max(1, throwDistanceTiles);
 
     [Header("Pickup Sprites (PLAYER)")]
     [SerializeField] private AnimatedSpriteRenderer pickupUp;
@@ -81,6 +83,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool CanPickupBombNow(Bomb bomb)
+        => bomb != null &&
+           !bomb.HasExploded &&
+           Time.time - bomb.PlacedTime >= MinimumBombAgeForPickupSeconds;
 
     private const int CarryOrderInLayer = 6;
     private const int GroundOrderInLayer = 3;
@@ -385,7 +391,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (!hit.TryGetComponent<Bomb>(out var bomb)) return;
         if (bomb == null) return;
-        if (bomb.HasExploded) return;
+        if (!CanPickupBombNow(bomb)) return;
 
         if (bomb.GetComponent<BoilerCapturedBomb>() != null) return;
 

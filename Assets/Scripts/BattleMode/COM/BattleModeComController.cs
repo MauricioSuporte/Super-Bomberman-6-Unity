@@ -122,6 +122,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private float lastPunchTapTime = -10f;
     private BattleModeComActionType currentAction = BattleModeComActionType.Stopped;
     private Vector2 currentMoveInput;
+    private bool currentHoldActionA;
     private Vector2Int currentTargetTile;
     private bool hasCurrentTarget;
     private string currentReason = "startup";
@@ -204,6 +205,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public string Reason;
         public string InputDescription;
         public bool TapBomb;
+        public bool HoldActionA;
         public bool TapActionR;
         public bool TapActionC;
         public bool UsesEscapeAbilityChance;
@@ -438,6 +440,25 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        bool persistentPowerGloveEnabled = PlayerPersistentStats.GetRuntime(playerId).HasPowerGlove;
+        if (persistentPowerGloveEnabled)
+        {
+            if (abilitySystem == null)
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+
+            if (!abilitySystem.IsEnabled(PowerGloveAbility.AbilityId))
+                abilitySystem.Enable(PowerGloveAbility.AbilityId);
+        }
+
+        if (isCom &&
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(PowerGloveAbility.AbilityId) &&
+            !TryGetComponent<BattleModeComPowerGloveAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComPowerGloveAbility>();
+            abilitySystemVersion = -2;
+        }
+
         if (isCom && Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
         {
             bool kickEnabled = abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
@@ -501,6 +522,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!IsReadyToThink())
         {
             SetMovementInput(Vector2.zero);
+            SetActionAHeld(currentHoldActionA);
             return;
         }
 
@@ -520,6 +542,7 @@ public sealed class BattleModeComController : MonoBehaviour
         currentMoveInput = ApplyTurnAxisCentering(myTile, currentMoveInput);
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
         SetMovementInput(currentMoveInput);
+        SetActionAHeld(currentHoldActionA);
     }
 
     private bool IsReadyToThink()
@@ -914,6 +937,7 @@ public sealed class BattleModeComController : MonoBehaviour
         hasCurrentTarget = selected.HasTarget;
         currentReason = selected.Reason;
         currentInputDescription = selected.InputDescription;
+        currentHoldActionA = selected.HoldActionA;
         currentMoveFollowsEscapeRoute =
             selected.Action == BattleModeComActionType.Reposition &&
             !string.IsNullOrEmpty(selected.Reason) &&
@@ -1028,6 +1052,55 @@ public sealed class BattleModeComController : MonoBehaviour
 
         string escapeAbilityCandidates = string.Empty;
         string evaluations = string.Empty;
+        BattleModeComPowerGloveAbility prioritizedPowerGlove = null;
+
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            if (comAbilities[i] is BattleModeComPowerGloveAbility powerGloveAbility &&
+                powerGloveAbility.ShouldPrioritizeEmergency(myTile))
+            {
+                prioritizedPowerGlove = powerGloveAbility;
+                break;
+            }
+        }
+
+        if (prioritizedPowerGlove != null)
+        {
+            string abilityName = GetAbilityDiagnosticName(prioritizedPowerGlove);
+            if (prioritizedPowerGlove.IsAvailable &&
+                prioritizedPowerGlove.TryBuildEmergencyDecision(
+                    settings,
+                    this,
+                    myTile,
+                    currentDangerSeconds,
+                    out var powerGloveDecision))
+            {
+                candidate = ToCandidateAction(powerGloveDecision);
+                AppendAbilityTrace(prioritizedPowerGlove, "emergency priority selected");
+                AppendAbilityEvaluation(
+                    ref evaluations,
+                    abilityName,
+                    "priority-candidate",
+                    FormatAbilityDecision(
+                        powerGloveDecision,
+                        prioritizedPowerGlove.LastDecisionTrace));
+                LogAbilityDecisionTrace(
+                    "emergency",
+                    myTile,
+                    currentDangerSeconds,
+                    $"selected:{abilityName}:active-sequence",
+                    evaluations,
+                    powerGloveDecision);
+                return true;
+            }
+
+            AppendAbilityEvaluation(
+                ref evaluations,
+                abilityName,
+                "priority-rejected",
+                prioritizedPowerGlove.LastDecisionTrace);
+        }
+
         for (int i = 0; i < comAbilities.Count; i++)
         {
             IBattleModeComAbility ability = comAbilities[i];
@@ -1037,6 +1110,9 @@ public sealed class BattleModeComController : MonoBehaviour
                 AppendAbilityEvaluation(ref evaluations, "null", "unavailable", "null ability entry");
                 continue;
             }
+
+            if (ReferenceEquals(ability, prioritizedPowerGlove))
+                continue;
 
             string abilityName = GetAbilityDiagnosticName(ability);
             if (!ability.IsAvailable)
@@ -1252,6 +1328,7 @@ public sealed class BattleModeComController : MonoBehaviour
             Reason = decision.Reason,
             InputDescription = decision.InputDescription,
             TapBomb = decision.TapBomb,
+            HoldActionA = decision.HoldActionA,
             TapActionR = decision.TapActionR,
             TapActionC = decision.TapActionC,
             UsesEscapeAbilityChance = decision.UsesEscapeAbilityChance
@@ -1314,7 +1391,8 @@ public sealed class BattleModeComController : MonoBehaviour
         return
             $"action:{decision.Action} weight:{decision.Weight} target:{target} " +
             $"move:{FirstMoveDescription(decision.FirstMove)} input:{input} " +
-            $"tapA:{decision.TapBomb} tapR:{decision.TapActionR} tapC:{decision.TapActionC} " +
+            $"tapA:{decision.TapBomb} holdA:{decision.HoldActionA} " +
+            $"tapR:{decision.TapActionR} tapC:{decision.TapActionC} " +
             $"escapeChance:{decision.UsesEscapeAbilityChance} reason:{reason} " +
             $"trace:{(string.IsNullOrWhiteSpace(trace) ? "no trace" : trace)}";
     }
@@ -2433,7 +2511,11 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded || bomb.Owner != bombController || bomb.IsControlBomb)
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove ||
+                bomb.Owner != bombController ||
+                bomb.IsControlBomb)
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
@@ -2690,7 +2772,11 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded || bomb.Owner != bombController || bomb.IsControlBomb)
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove ||
+                bomb.Owner != bombController ||
+                bomb.IsControlBomb)
                 continue;
 
             if (WorldToTile(bomb.GetLogicalPosition()) != tile)
@@ -2758,7 +2844,10 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded || bomb.Owner == bombController)
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove ||
+                bomb.Owner == bombController)
                 continue;
 
             float fuseLeft = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
@@ -2804,7 +2893,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             // Só bombas inimigas (não nossas)
@@ -3407,7 +3496,7 @@ public sealed class BattleModeComController : MonoBehaviour
         int best = int.MaxValue;
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (bomb.Owner != bombController || bomb.IsControlBomb || bomb.WasMovedByKickOrPunch)
@@ -3560,7 +3649,11 @@ public sealed class BattleModeComController : MonoBehaviour
         int count = 0;
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded || bomb.Owner != bombController || bomb.IsControlBomb)
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove ||
+                bomb.Owner != bombController ||
+                bomb.IsControlBomb)
                 continue;
 
             if (count > 0)
@@ -3700,7 +3793,11 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded || !bomb.IsControlBomb || bomb.Owner != bombController)
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove ||
+                !bomb.IsControlBomb ||
+                bomb.Owner != bombController)
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
@@ -3820,6 +3917,7 @@ public sealed class BattleModeComController : MonoBehaviour
         currentTargetTile = target;
         currentReason = reason;
         currentInputDescription = input;
+        currentHoldActionA = false;
         currentMoveFollowsEscapeRoute =
             action == BattleModeComActionType.Reposition &&
             hasTarget &&
@@ -3959,6 +4057,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void OnHealthDied()
     {
+        currentHoldActionA = false;
+        ClearSyntheticInputs();
+
         bool shouldLogDeathDiagnostic = EnableDeathDiagnostics;
         bool shouldLogKickBombDeathDiagnostic =
             ShouldLogKickBombRiskDiagnostics() &&
@@ -4107,7 +4208,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
             int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
-            bool threatensAi = IsTileInBlastLineRuntime(bombTile, myTile, radius);
+            bool threatensAi =
+                !bomb.IsBeingHeldByPowerGlove &&
+                IsTileInBlastLineRuntime(bombTile, myTile, radius);
             int ownerId = 0;
             if (bomb.Owner != null && bomb.Owner.TryGetComponent<PlayerIdentity>(out var ownerIdentity) && ownerIdentity != null)
                 ownerId = ownerIdentity.playerId;
@@ -4118,7 +4221,8 @@ public sealed class BattleModeComController : MonoBehaviour
             result +=
                 $"#{count + 1} owner:P{ownerId} tile:{bombTile} radius:{radius} " +
                 $"fuse:{FormatDanger(bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds)} " +
-                $"control:{bomb.IsControlBomb} moved:{bomb.WasMovedByKickOrPunch} solid:{bomb.IsSolid} threatensAi:{threatensAi}";
+                $"control:{bomb.IsControlBomb} held:{bomb.IsBeingHeldByPowerGlove} " +
+                $"moved:{bomb.WasMovedByKickOrPunch} solid:{bomb.IsSolid} threatensAi:{threatensAi}";
             count++;
         }
 
@@ -4787,7 +4891,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
@@ -4893,7 +4997,7 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
@@ -4909,7 +5013,7 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (WorldToTile(bomb.GetLogicalPosition()) != tile)
@@ -5156,7 +5260,7 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (WorldToTile(bomb.GetLogicalPosition()) == tile)
@@ -5193,7 +5297,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
@@ -5216,7 +5320,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
@@ -5589,7 +5693,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (bomb.Owner == bombController && !bomb.IsControlBomb && !bomb.WasMovedByKickOrPunch)
@@ -5955,8 +6059,17 @@ public sealed class BattleModeComController : MonoBehaviour
             input.TapSynthetic(playerId, action);
     }
 
+    private void SetActionAHeld(bool held)
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input != null)
+            input.SetSyntheticHeld(playerId, PlayerAction.ActionA, held);
+    }
+
     private void ClearSyntheticInputs()
     {
+        currentHoldActionA = false;
+
         PlayerInputManager input = PlayerInputManager.Instance;
         if (input != null)
             input.ClearSyntheticPlayer(playerId);

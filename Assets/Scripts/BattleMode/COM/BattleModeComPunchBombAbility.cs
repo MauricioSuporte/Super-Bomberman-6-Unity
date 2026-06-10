@@ -1215,7 +1215,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded) continue;
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove) continue;
             if (WorldToTile(bomb.GetLogicalPosition()) == tile) return bomb;
         }
         return null;
@@ -1250,7 +1250,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         float danger = float.PositiveInfinity;
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded) continue;
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove) continue;
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
             int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
             if (!IsTileInBlastLine(bombTile, tile, radius)) continue;

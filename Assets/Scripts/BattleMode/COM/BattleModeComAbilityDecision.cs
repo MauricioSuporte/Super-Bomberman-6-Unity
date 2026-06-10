@@ -10,6 +10,7 @@ public struct BattleModeComAbilityDecision
     public string Reason;
     public string InputDescription;
     public bool TapBomb;
+    public bool HoldActionA;
     public bool TapActionR;
     public bool TapActionC;
     public bool UsesEscapeAbilityChance;

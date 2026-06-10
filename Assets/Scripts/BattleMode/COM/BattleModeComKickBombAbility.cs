@@ -2171,7 +2171,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             // 2) Bomba alheia com fuse iminente cujo raio cobre este tile
             foreach (Bomb bomb in Bomb.ActiveBombs)
             {
-                if (bomb == null || bomb.HasExploded)
+                if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                     continue;
 
                 float fuse = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
@@ -2363,7 +2363,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         float danger = float.PositiveInfinity;
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (bomb == ignoredBomb)
@@ -2411,7 +2411,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (WorldToTile(bomb.GetLogicalPosition()) == tile)
