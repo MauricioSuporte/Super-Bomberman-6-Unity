@@ -255,6 +255,16 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 continue;
             }
 
+            // Fuse quase zerado: chutar agora não remove a explosão a tempo e o
+            // "escape via vacated bomb tile" leva a IA direto para o blast.
+            if (!bomb.IsControlBomb && bomb.RemainingFuseSeconds <= MinimumOwnTriggerKickFuseSeconds)
+            {
+                AppendTracePart(
+                    ref rejectedDirections,
+                    $"{dir}:fuse too low {FormatDanger(bomb.RemainingFuseSeconds)}");
+                continue;
+            }
+
             Vector2Int bombDestination = myTile + dir * 2;
             if (!IsKickLaneOpen(myTile + dir, dir, 1))
             {

@@ -3,9 +3,8 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
-/// Teaches Battle Mode COM players to hold ActionA on a bomb, aim while the
-/// Power Glove pauses its fuse, release ActionA to throw, and escape the
-/// landing blast.
+/// Teaches Battle Mode COM players to tap ActionA to pick up a bomb and tap
+/// again to throw it immediately toward the selected landing tile.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerIdentity))]
@@ -14,10 +13,9 @@ using UnityEngine.Tilemaps;
 public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeComAbility
 {
     private const float SequenceTimeoutSeconds = 6f;
-    private const float PickupConfirmationSeconds = 1.2f;
-    private const float AimHoldSeconds = 0.06f;
+    private const float PickupConfirmationSeconds = 0.35f;
+    private const float PickupAbortEscapeMarginSeconds = 0.15f;
     private const float ReleaseConfirmationSeconds = 0.8f;
-    private const float PostThrowEscapeSeconds = 2.8f;
     private const float OffensiveCooldownSeconds = 2f;
     private const float PlannedPickupAuthorizationSeconds = 0.8f;
     private const float CenterToleranceTiles = 0.12f;
@@ -34,15 +32,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     {
         None,
         PickingUp,
-        Aiming,
-        Releasing,
-        EscapeAfterThrow
-    }
-
-    private struct EscapeNode
-    {
-        public Vector2Int Parent;
-        public int Depth;
+        Releasing
     }
 
     private PlayerIdentity identity;
@@ -53,13 +43,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
-    private Collider2D[] ownColliders;
-    private ContactFilter2D obstacleFilter;
-    private readonly Collider2D[] obstacleHits = new Collider2D[16];
     private readonly List<PlayerIdentity> activePlayers = new List<PlayerIdentity>(6);
-    private readonly Queue<Vector2Int> escapeOpen = new Queue<Vector2Int>();
-    private readonly Dictionary<Vector2Int, EscapeNode> escapeVisited =
-        new Dictionary<Vector2Int, EscapeNode>();
 
     private SequenceState sequenceState;
     private float sequenceStartedTime = -10f;
@@ -137,18 +121,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         if (powerGlove == null)
             TryGetComponent(out powerGlove);
 
-        ownColliders = GetComponentsInChildren<Collider2D>(true);
-
         if (movement != null)
-        {
             tileSize = Mathf.Max(0.01f, movement.tileSize);
-            obstacleFilter = new ContactFilter2D
-            {
-                useLayerMask = true,
-                useTriggers = true
-            };
-            obstacleFilter.SetLayerMask(movement.obstacleMask);
-        }
 
         gameManager = GameManager.Instance != null
             ? GameManager.Instance
@@ -202,13 +176,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
         if (potentialBomb != null && !powerGlove.CanPickupBombNow(potentialBomb))
         {
-            decision = BuildStoppedDecision(
-                settings,
-                myTile,
-                "waiting for power glove pickup window");
             lastDecisionTrace =
-                $"emergency wait pickup age:{Time.time - potentialBomb.PlacedTime:F3}s";
-            return true;
+                $"emergency skip pickup window age:{Time.time - potentialBomb.PlacedTime:F3}s";
+            return false;
         }
 
         Bomb bomb = FindPickupBombAt(myTile);
@@ -386,14 +356,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             case SequenceState.PickingUp:
                 return ContinuePickup(settings, myTile, out decision);
 
-            case SequenceState.Aiming:
-                return ContinueAim(settings, out decision);
-
             case SequenceState.Releasing:
-                return ContinueRelease(settings, myTile, out decision);
-
-            case SequenceState.EscapeAfterThrow:
-                return ContinueEscape(settings, myTile, out decision);
+                return ContinueRelease(settings, out decision);
 
             default:
                 return false;
@@ -415,58 +379,47 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
         if (powerGlove.IsHoldingBomb && sequenceBomb.IsBeingHeldByPowerGlove)
         {
-            SetSequenceState(SequenceState.Aiming);
-            decision = BuildAimDecision(settings);
+            movement.ForceFacingDirection(TileDirectionToVector(sequenceThrowDirection));
+            SetSequenceState(SequenceState.Releasing);
+            decision = BuildThrowTapDecision(settings);
             lastDecisionTrace =
-                $"sequence AIM dir:{sequenceThrowDirection} landing:{sequenceLandingTile}";
+                $"sequence SECOND_TAP dir:{sequenceThrowDirection} landing:{sequenceLandingTile}";
             return true;
         }
 
-        if (Time.time - sequenceStateStartedTime > PickupConfirmationSeconds)
+        if (sequenceBomb.IsBeingPunched)
         {
-            ResetSequence($"pickup timeout bomb:{sequencePlantTile} my:{myTile}");
+            ResetSequence("pickup tap already released bomb");
             return false;
         }
 
-        decision = BuildPickupDecision(settings, "holding ActionA to pick up");
-        lastDecisionTrace =
-            $"sequence HOLD_A pickup bomb:{sequencePlantTile} my:{myTile}";
-        return true;
-    }
+        float pickupElapsed = Time.time - sequenceStateStartedTime;
+        float dangerHere = GetDangerSeconds(myTile, null);
+        float oneStepEscapeSeconds =
+            EstimateTraversalSeconds(1) +
+            settings.dangerReactionSeconds +
+            PickupAbortEscapeMarginSeconds;
+        bool escapeWindowClosing =
+            !float.IsInfinity(dangerHere) &&
+            dangerHere <= oneStepEscapeSeconds;
 
-    private bool ContinueAim(
-        BattleModeComDifficultySettings settings,
-        out BattleModeComAbilityDecision decision)
-    {
-        decision = default;
-
-        if (!IsSequenceBombValid() ||
-            !powerGlove.IsHoldingBomb ||
-            !sequenceBomb.IsBeingHeldByPowerGlove)
+        if (pickupElapsed > PickupConfirmationSeconds || escapeWindowClosing)
         {
-            ResetSequence("aim lost held bomb");
+            ResetSequence(
+                $"pickup aborted bomb:{sequencePlantTile} my:{myTile} " +
+                $"elapsed:{pickupElapsed:F2}s danger:{FormatDanger(dangerHere)} " +
+                $"escapeNeed:{oneStepEscapeSeconds:F2}s");
             return false;
         }
 
-        movement.ForceFacingDirection(TileDirectionToVector(sequenceThrowDirection));
-
-        if (Time.time - sequenceStateStartedTime < AimHoldSeconds)
-        {
-            decision = BuildAimDecision(settings);
-            lastDecisionTrace = $"sequence AIM hold dir:{sequenceThrowDirection}";
-            return true;
-        }
-
-        SetSequenceState(SequenceState.Releasing);
-        decision = BuildReleaseDecision(settings);
+        decision = BuildWaitForPickupDecision(settings);
         lastDecisionTrace =
-            $"sequence RELEASE dir:{sequenceThrowDirection} landing:{sequenceLandingTile}";
+            $"sequence WAIT_PICKUP bomb:{sequencePlantTile} my:{myTile}";
         return true;
     }
 
     private bool ContinueRelease(
         BattleModeComDifficultySettings settings,
-        Vector2Int myTile,
         out BattleModeComAbilityDecision decision)
     {
         decision = default;
@@ -482,8 +435,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         if (!powerGlove.IsHoldingBomb &&
             !sequenceBomb.IsBeingHeldByPowerGlove)
         {
-            SetSequenceState(SequenceState.EscapeAfterThrow);
-            return ContinueEscape(settings, myTile, out decision);
+            ResetSequence("throw complete");
+            return false;
         }
 
         if (Time.time - sequenceStateStartedTime > ReleaseConfirmationSeconds)
@@ -492,57 +445,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             return false;
         }
 
-        decision = BuildReleaseDecision(settings);
+        decision = BuildWaitForReleaseDecision(settings);
         lastDecisionTrace = $"sequence RELEASE_WAIT dir:{sequenceThrowDirection}";
-        return true;
-    }
-
-    private bool ContinueEscape(
-        BattleModeComDifficultySettings settings,
-        Vector2Int myTile,
-        out BattleModeComAbilityDecision decision)
-    {
-        decision = default;
-
-        bool bombResolved = sequenceBomb == null || sequenceBomb.HasExploded;
-        bool bombLanded =
-            bombResolved ||
-            (!sequenceBomb.IsBeingPunched && !sequenceBomb.IsBeingHeldByPowerGlove);
-        float dangerHere = GetDangerSeconds(myTile, sequenceBomb);
-
-        if (bombResolved ||
-            (bombLanded &&
-             float.IsInfinity(dangerHere) &&
-             Time.time - sequenceStateStartedTime >= 0.2f) ||
-            Time.time - sequenceStateStartedTime > PostThrowEscapeSeconds)
-        {
-            ResetSequence("post throw escape complete");
-            return false;
-        }
-
-        if (TryFindEscape(settings, myTile, sequenceBomb, out Vector2 move, out Vector2Int target))
-        {
-            decision = new BattleModeComAbilityDecision
-            {
-                Action = BattleModeComActionType.KickBomb,
-                Weight = 500 + DifficultyWeight(settings),
-                TargetTile = target,
-                HasTarget = true,
-                FirstMove = move,
-                Reason = "escape after power glove throw",
-                InputDescription = FirstMoveDescription(move)
-            };
-            lastDecisionTrace =
-                $"sequence ESCAPE from:{myTile} target:{target} move:{FirstMoveDescription(move)}";
-            return true;
-        }
-
-        decision = BuildStoppedDecision(
-            settings,
-            myTile,
-            "waiting for safe post-throw route");
-        lastDecisionTrace =
-            $"sequence ESCAPE_WAIT my:{myTile} danger:{FormatDanger(dangerHere)}";
         return true;
     }
 
@@ -576,10 +480,11 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         sequenceThrowDirection = throwDirection;
         sequenceLandingTile = landingTile;
         sequenceStartedTime = Time.time;
-        SetSequenceState(SequenceState.Aiming);
-        decision = BuildAimDecision(settings);
+        movement.ForceFacingDirection(TileDirectionToVector(sequenceThrowDirection));
+        SetSequenceState(SequenceState.Releasing);
+        decision = BuildThrowTapDecision(settings);
         lastDecisionTrace =
-            $"adopt held bomb dir:{throwDirection} landing:{landingTile}";
+            $"adopt held bomb SECOND_TAP dir:{throwDirection} landing:{landingTile}";
         return true;
     }
 
@@ -595,6 +500,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         sequenceLandingTile = landingTile;
         sequenceStartedTime = Time.time;
         authorizedPlantPickupUntil = -10f;
+        movement.ForceFacingDirection(TileDirectionToVector(sequenceThrowDirection));
         SetSequenceState(SequenceState.PickingUp);
     }
 
@@ -610,28 +516,27 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             HasTarget = true,
             FirstMove = Vector2.zero,
             Reason = reason,
-            InputDescription = "HoldActionA",
-            HoldActionA = true
+            InputDescription = "ActionA",
+            TapActionA = true
         };
     }
 
-    private BattleModeComAbilityDecision BuildAimDecision(
+    private BattleModeComAbilityDecision BuildWaitForPickupDecision(
         BattleModeComDifficultySettings settings)
     {
         return new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
-            Weight = 540 + DifficultyWeight(settings),
-            TargetTile = sequenceLandingTile,
+            Weight = 520 + DifficultyWeight(settings),
+            TargetTile = sequencePlantTile,
             HasTarget = true,
             FirstMove = Vector2.zero,
-            Reason = $"aim held bomb toward {sequenceLandingTile}",
-            InputDescription = "HoldActionA",
-            HoldActionA = true
+            Reason = "waiting for power glove pickup",
+            InputDescription = "none"
         };
     }
 
-    private BattleModeComAbilityDecision BuildReleaseDecision(
+    private BattleModeComAbilityDecision BuildThrowTapDecision(
         BattleModeComDifficultySettings settings)
     {
         return new BattleModeComAbilityDecision
@@ -641,24 +546,23 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             TargetTile = sequenceLandingTile,
             HasTarget = true,
             FirstMove = Vector2.zero,
-            Reason = $"release power glove throw toward {sequenceLandingTile}",
-            InputDescription = "ReleaseActionA"
+            Reason = $"double tap power glove throw toward {sequenceLandingTile}",
+            InputDescription = "ActionA",
+            TapActionA = true
         };
     }
 
-    private static BattleModeComAbilityDecision BuildStoppedDecision(
-        BattleModeComDifficultySettings settings,
-        Vector2Int target,
-        string reason)
+    private BattleModeComAbilityDecision BuildWaitForReleaseDecision(
+        BattleModeComDifficultySettings settings)
     {
         return new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
-            Weight = 500 + DifficultyWeight(settings),
-            TargetTile = target,
+            Weight = 560 + DifficultyWeight(settings),
+            TargetTile = sequenceLandingTile,
             HasTarget = true,
             FirstMove = Vector2.zero,
-            Reason = reason,
+            Reason = $"waiting for power glove throw toward {sequenceLandingTile}",
             InputDescription = "none"
         };
     }
@@ -758,84 +662,6 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         }
 
         return landing;
-    }
-
-    private bool TryFindEscape(
-        BattleModeComDifficultySettings settings,
-        Vector2Int start,
-        Bomb thrownBomb,
-        out Vector2 firstMove,
-        out Vector2Int target)
-    {
-        firstMove = Vector2.zero;
-        target = start;
-        escapeVisited.Clear();
-        escapeOpen.Clear();
-        escapeVisited[start] = new EscapeNode { Parent = start, Depth = 0 };
-        escapeOpen.Enqueue(start);
-
-        int maxDepth = Mathf.Max(3, settings.searchDepth + 2);
-
-        while (escapeOpen.Count > 0)
-        {
-            Vector2Int tile = escapeOpen.Dequeue();
-            EscapeNode node = escapeVisited[tile];
-            float eta = EstimateTraversalSeconds(node.Depth);
-            float danger = GetDangerSeconds(tile, thrownBomb);
-
-            if (node.Depth > 0 &&
-                (float.IsInfinity(danger) ||
-                 danger > eta + settings.safeTileMinimumSeconds + settings.dangerReactionSeconds))
-            {
-                target = tile;
-                firstMove = ReconstructFirstMove(start, tile);
-                return firstMove != Vector2.zero;
-            }
-
-            if (node.Depth >= maxDepth)
-                continue;
-
-            for (int i = 0; i < CardinalTiles.Length; i++)
-            {
-                Vector2Int next = tile + CardinalTiles[i];
-                if (escapeVisited.ContainsKey(next))
-                    continue;
-
-                if (!IsWalkableTile(next))
-                    continue;
-
-                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
-                float nextDanger = GetDangerSeconds(next, thrownBomb);
-                if (!float.IsInfinity(nextDanger) &&
-                    nextDanger <= nextEta + settings.dangerReactionSeconds)
-                {
-                    continue;
-                }
-
-                escapeVisited[next] = new EscapeNode
-                {
-                    Parent = tile,
-                    Depth = node.Depth + 1
-                };
-                escapeOpen.Enqueue(next);
-            }
-        }
-
-        return false;
-    }
-
-    private Vector2 ReconstructFirstMove(Vector2Int start, Vector2Int target)
-    {
-        Vector2Int cursor = target;
-
-        while (escapeVisited.TryGetValue(cursor, out EscapeNode node) &&
-               node.Parent != start &&
-               node.Parent != cursor)
-        {
-            cursor = node.Parent;
-        }
-
-        return TileDirectionToVector(cursor - start);
     }
 
     private float GetDangerSeconds(Vector2Int tile, Bomb thrownBomb)
@@ -968,54 +794,6 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         }
 
         return null;
-    }
-
-    private bool IsWalkableTile(Vector2Int tile)
-    {
-        if (!HasGroundTile(tile) ||
-            HasIndestructibleTile(tile) ||
-            HasDestructibleTile(tile))
-        {
-            return false;
-        }
-
-        Vector2 center = TileToWorld(tile);
-        Vector2 size = Vector2.one * (tileSize * 0.6f);
-        int hitCount = Physics2D.OverlapBox(
-            center,
-            size,
-            0f,
-            obstacleFilter,
-            obstacleHits);
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider2D hit = obstacleHits[i];
-            if (hit == null || IsOwnCollider(hit))
-                continue;
-
-            Bomb bomb = hit.GetComponent<Bomb>();
-            if (bomb != null && bomb.IsBeingHeldByPowerGlove)
-                continue;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    private bool IsOwnCollider(Collider2D candidate)
-    {
-        if (candidate == null || ownColliders == null)
-            return false;
-
-        for (int i = 0; i < ownColliders.Length; i++)
-        {
-            if (ownColliders[i] == candidate)
-                return true;
-        }
-
-        return false;
     }
 
     private bool IsCenteredOnTile(Vector2Int tile)
@@ -1223,6 +1001,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
     private void ResetSequence(string reason)
     {
+        ReleaseSyntheticActionA();
         sequenceState = SequenceState.None;
         sequenceStartedTime = -10f;
         sequenceStateStartedTime = -10f;

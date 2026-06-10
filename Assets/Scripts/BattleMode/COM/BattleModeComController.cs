@@ -12,7 +12,11 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComController : MonoBehaviour
 {
-    private static bool EnableGeneralDecisionLogs => false;
+    private const float BehaviorProgressDistance = 0.08f;
+    private const float BehaviorNoProgressSeconds = 0.75f;
+    private const float BehaviorStoppedDangerSeconds = 0.5f;
+    private const float BehaviorOscillationWindowSeconds = 1.5f;
+    private const float BehaviorRepeatLogSeconds = 0.75f;
     private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
     private static readonly bool EnableDeathDiagnostics = false;
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
@@ -32,6 +36,19 @@ public sealed class BattleModeComController : MonoBehaviour
     // Chain-bomb surgical log: only the decision points needed to explain why
     // COM does or does not execute a line/corner chain explosion plan.
     private static readonly bool EnableChainBombDiagnostics = false;
+
+    // Diagnóstico cirúrgico de oscilação: loga reversões de decisão e do input aplicado
+    // (com o pipeline de pós-processamento) para identificar qual estágio inverte a direção.
+    private static readonly bool EnableOscillationDiagnostics = true;
+    private Vector2Int oscDiagLastDecisionDir;
+    private float oscDiagLastDecisionTime = -10f;
+    private string oscDiagLastDecisionReason = string.Empty;
+    private string oscDiagLastDecisionRoute = string.Empty;
+    private Vector2Int oscDiagLastDecisionTarget;
+    private string oscDiagCurrentRoute = string.Empty;
+    private Vector2Int oscDiagLastAppliedDir;
+    private float oscDiagLastAppliedTime = -10f;
+    private float oscDiagLastFlipLogTime = -10f;
     private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
     private const float ChainBombDiagLogIntervalSeconds = 0.45f;
     private const int ChainBombRejectSampleLimit = 4;
@@ -43,11 +60,27 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float KickBombRiskLogIntervalSeconds = 0.25f;
 
     private const float BombTapCooldownSeconds = 0.35f;
+    private const float ActionATapCooldownSeconds = 0.08f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
     private const float PunchTapCooldownSeconds = 0.15f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
     private const float TurnAxisCenterTolerance = 0.045f;
+
+    // Histerese da centralização de eixo: depois de considerado "centrado", só volta a
+    // centralizar se o desvio passar de tolerance * este multiplicador. Sem isso, o
+    // corner-assist do MovementController empurra o personagem ~0.06 para fora da zona
+    // morta (0.045) a cada frame e a IA oscila esquerda/direita sem nunca virar.
+    private const float TurnAxisCenteringExitMultiplier = 3f;
+    private Vector2Int turnAxisCenteredKeepDir = Vector2Int.zero;
+
+    // Detecção de overshoot da centralização: o passo de movimento por frame (~0.125)
+    // é maior que a zona morta inteira (2 * 0.045), então o personagem pula por cima
+    // do centro sem nunca ficar "dentro da tolerância". Guardamos a direção e o sinal
+    // do desvio do último frame de centralização; se o sinal inverter, cruzamos o
+    // centro e consideramos centrado.
+    private Vector2Int turnAxisCenteringDir = Vector2Int.zero;
+    private int turnAxisCenteringSign;
     private const float DangerTimingMarginSeconds = 0.08f;
     private const float SuddenDeathUnsafeLeadSeconds = 1f;
     private const int ItemPriorityDistance = 7;
@@ -118,6 +151,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private float tileSize = 1f;
     private float nextDecisionTime;
     private float lastBombTapTime = -10f;
+    private float lastActionATapTime = -10f;
     private float lastControlTapTime = -10f;
     private float lastPunchTapTime = -10f;
     private BattleModeComActionType currentAction = BattleModeComActionType.Stopped;
@@ -133,6 +167,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2Int walkToChainCommittedTile;
     private float walkToChainCommittedTime;
     private const float WalkToChainCommitTimeoutSeconds = 2.5f;
+    private bool ownChainSeekCommitted;
+    private Vector2Int ownChainSeekJunction;
+    private float ownChainSeekCommittedTime;
     private bool ownChainPlanActive;
     private Vector2Int ownChainOriginTile;
     private Vector2Int ownChainSecondTile;
@@ -171,6 +208,18 @@ public sealed class BattleModeComController : MonoBehaviour
     private float lastAbilityDecisionTraceLogTime = -10f;
     private string lastAbilityDecisionTraceLogKey = string.Empty;
     private bool abilityDecisionEvaluatedThisThink;
+    private bool behaviorStartLogged;
+    private Vector2 behaviorLastProgressPosition;
+    private float behaviorLastProgressTime = -10f;
+    private float behaviorStoppedDangerStartedTime = -1f;
+    private float behaviorLastLogTime = -10f;
+    private string behaviorLastLogKey = string.Empty;
+    private Vector2Int behaviorLastTile;
+    private Vector2Int behaviorPreviousTile;
+    private bool behaviorHasLastTile;
+    private bool behaviorWasRequestingMovement;
+    private int behaviorOscillationCount;
+    private float behaviorOscillationStartedTime = -10f;
 
     // Committed escape: quando TryBuildOwnPendingEscapeRoute encontra um target válido,
     // gravamos ele aqui. TryBuildOwnPendingSafetyMove usa BFS em direção a ele antes de
@@ -205,6 +254,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public string Reason;
         public string InputDescription;
         public bool TapBomb;
+        public bool TapActionA;
         public bool HoldActionA;
         public bool TapActionR;
         public bool TapActionC;
@@ -245,6 +295,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private void OnDisable()
     {
         ClearSyntheticInputs();
+        ResetBehaviorDiagnostics();
     }
 
     private void OnDestroy()
@@ -554,11 +605,13 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!shouldRun)
         {
             ClearSyntheticInputs();
+            ResetBehaviorDiagnostics();
             enabled = false;
             return;
         }
 
         enabled = true;
+        LogBehaviorStart();
     }
 
     private void Update()
@@ -584,10 +637,52 @@ public sealed class BattleModeComController : MonoBehaviour
             nextDecisionTime = Time.time + (inDanger ? settings.dangerDecisionInterval : settings.decisionInterval);
         }
 
+        Vector2 oscDiagDecidedMove = currentMoveInput;
         currentMoveInput = ApplySafeTileCentering(myTile, currentMoveInput);
+        Vector2 oscDiagAfterSafeCenter = currentMoveInput;
         currentMoveInput = ApplyTurnAxisCentering(myTile, currentMoveInput);
+        Vector2 oscDiagAfterTurnAxis = currentMoveInput;
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
+
+        if (EnableOscillationDiagnostics)
+        {
+            Vector2Int appliedDir = DirectionToTile(currentMoveInput);
+            if (appliedDir != Vector2Int.zero &&
+                oscDiagLastAppliedDir == -appliedDir &&
+                Time.time - oscDiagLastAppliedTime < 0.6f &&
+                Time.time - oscDiagLastFlipLogTime > 0.1f)
+            {
+                oscDiagLastFlipLogTime = Time.time;
+                Vector2 diagCenterOffset = (Vector2)transform.position - TileToWorld(myTile);
+                Vector2Int firstStep = DirectionToTile(oscDiagDecidedMove);
+                float nextDanger = firstStep == Vector2Int.zero
+                    ? float.PositiveInfinity
+                    : GetDangerSeconds(myTile + firstStep, null);
+                Debug.LogWarning(
+                    $"[BattleCOMOscDiag][P{playerId}] event:INPUT_FLIP frame:{Time.frameCount} t:{Time.time:F2} " +
+                    $"tile:{myTile} pos:{transform.position} centerOffset:{diagCenterOffset} " +
+                    $"danger:{FormatDanger(currentDangerSeconds)} nextDanger:{FormatDanger(nextDanger)} " +
+                    $"prevApplied:{oscDiagLastAppliedDir} age:{Time.time - oscDiagLastAppliedTime:F2}s " +
+                    $"pipeline[decided:{FirstMoveDescription(oscDiagDecidedMove)} " +
+                    $"safeCenter:{FirstMoveDescription(oscDiagAfterSafeCenter)} " +
+                    $"turnAxis:{FirstMoveDescription(oscDiagAfterTurnAxis)} " +
+                    $"enforce:{FirstMoveDescription(currentMoveInput)}] " +
+                    $"action:{currentAction} reason:{currentReason} route:{oscDiagCurrentRoute} " +
+                    $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+                    $"safeCenterTarget:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
+                    $"followsEscape:{currentMoveFollowsEscapeRoute}",
+                    this);
+            }
+
+            if (appliedDir != Vector2Int.zero)
+            {
+                oscDiagLastAppliedDir = appliedDir;
+                oscDiagLastAppliedTime = Time.time;
+            }
+        }
+
         SetMovementInput(currentMoveInput);
+        TrackBehaviorDiagnostics(myTile, currentDangerSeconds);
         SetActionAHeld(currentHoldActionA);
     }
 
@@ -846,7 +941,11 @@ public sealed class BattleModeComController : MonoBehaviour
         ownChainPlanActive = false;
         ownChainEscapeOnly = false;
 
-        if (float.IsInfinity(currentDangerSeconds) &&
+        bool walkToChainCommitActive =
+            walkToChainCommitted && Time.time - walkToChainCommittedTime < WalkToChainCommitTimeoutSeconds;
+
+        if (!walkToChainCommitActive &&
+            float.IsInfinity(currentDangerSeconds) &&
             TryBuildOwnChainStartCandidate(settings, myTile, out CandidateAction ownChainStart))
         {
             if (ownChainStart.TapBomb)
@@ -1042,6 +1141,14 @@ public sealed class BattleModeComController : MonoBehaviour
                 force: true);
         }
 
+        if (selected.TapActionA &&
+            Time.time - lastActionATapTime >= ActionATapCooldownSeconds)
+        {
+            Tap(PlayerAction.ActionA);
+            lastActionATapTime = Time.time;
+            currentInputDescription = AppendInput(currentInputDescription, "ActionA");
+        }
+
         if (selected.TapActionR && Time.time - lastControlTapTime >= ControlBombTapCooldownSeconds)
         {
             Tap(PlayerAction.ActionR);
@@ -1064,7 +1171,8 @@ public sealed class BattleModeComController : MonoBehaviour
                 currentDangerSeconds,
                 $"route:{route} target:{(selected.HasTarget ? selected.TargetTile.ToString() : "none")} " +
                 $"move:{FirstMoveDescription(selected.FirstMove)} input:{currentInputDescription} " +
-                $"tapBomb:{selected.TapBomb} tapR:{selected.TapActionR} tapC:{selected.TapActionC} " +
+                $"tapBomb:{selected.TapBomb} tapA:{selected.TapActionA} " +
+                $"tapR:{selected.TapActionR} tapC:{selected.TapActionC} " +
                 $"reason:{selected.Reason} candidates:{FormatCandidates()} rejected:{FormatRejectedForLog()} " +
                 $"abilities:{FormatCurrentAbilityTraces()} activeBombs:{FormatActiveBombThreats(myTile)}",
                 force: true);
@@ -1237,16 +1345,45 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!float.IsInfinity(targetDanger))
             return false;
 
-        if (!TryFindEscape(settings, myTile, null, out Vector2 firstMove, out Vector2Int escapeTarget, out string route))
+        // Primeiro tenta seguir o safe center já escolhido. Refazer um BFS livre a cada
+        // frame faz a raiz da busca alternar entre dois tiles na fronteira (sub-posição),
+        // produzindo first moves opostos e oscilação até a morte.
+        Vector2 firstMove;
+        Vector2Int escapeTarget;
+        string route;
+        if (TryFindPath(myTile, safeCenterTargetTile, settings.searchDepth + 4, false, settings, null, out PathResult safeCenterPath) &&
+            safeCenterPath.FirstMove != Vector2.zero)
+        {
+            firstMove = safeCenterPath.FirstMove;
+            escapeTarget = safeCenterTargetTile;
+            route = "escape safeCenterPath";
+        }
+        else if (!TryFindEscape(settings, myTile, null, out firstMove, out escapeTarget, out route))
+        {
             return false;
+        }
 
         Vector2Int firstStep = DirectionToTile(firstMove);
-        if (firstStep == Vector2Int.zero)
-            return false;
-
         Vector2Int nextTile = myTile + firstStep;
         float arrivalSeconds = EstimateFirstMoveTraversalSeconds(firstStep);
-        if (IsDangerousAt(nextTile, arrivalSeconds, settings, null))
+        bool firstStepUnsafe =
+            firstStep == Vector2Int.zero || IsDangerousAt(nextTile, arrivalSeconds, settings, null);
+
+        // Se o caminho ao safe center ficou bloqueado/perigoso no primeiro passo,
+        // cai para o BFS de fuga genérico antes de desistir.
+        if (firstStepUnsafe && route == "escape safeCenterPath")
+        {
+            if (!TryFindEscape(settings, myTile, null, out firstMove, out escapeTarget, out route))
+                return false;
+
+            firstStep = DirectionToTile(firstMove);
+            nextTile = myTile + firstStep;
+            arrivalSeconds = EstimateFirstMoveTraversalSeconds(firstStep);
+            firstStepUnsafe =
+                firstStep == Vector2Int.zero || IsDangerousAt(nextTile, arrivalSeconds, settings, null);
+        }
+
+        if (firstStepUnsafe)
             return false;
 
         LogPostPlantEscapeDiagnostic(
@@ -1375,6 +1512,7 @@ public sealed class BattleModeComController : MonoBehaviour
             Reason = decision.Reason,
             InputDescription = decision.InputDescription,
             TapBomb = decision.TapBomb,
+            TapActionA = decision.TapActionA,
             HoldActionA = decision.HoldActionA,
             TapActionR = decision.TapActionR,
             TapActionC = decision.TapActionC,
@@ -1438,7 +1576,8 @@ public sealed class BattleModeComController : MonoBehaviour
         return
             $"action:{decision.Action} weight:{decision.Weight} target:{target} " +
             $"move:{FirstMoveDescription(decision.FirstMove)} input:{input} " +
-            $"tapA:{decision.TapBomb} holdA:{decision.HoldActionA} " +
+            $"tapBomb:{decision.TapBomb} tapA:{decision.TapActionA} " +
+            $"holdA:{decision.HoldActionA} " +
             $"tapR:{decision.TapActionR} tapC:{decision.TapActionC} " +
             $"escapeChance:{decision.UsesEscapeAbilityChance} reason:{reason} " +
             $"trace:{(string.IsNullOrWhiteSpace(trace) ? "no trace" : trace)}";
@@ -1452,36 +1591,7 @@ public sealed class BattleModeComController : MonoBehaviour
         string evaluations,
         BattleModeComAbilityDecision? selectedDecision = null)
     {
-        if (!debugAbilityDecisionTrace)
-            return;
-
-        if (abilityDecisionTracePlayerIdFilter != 0 &&
-            playerId != abilityDecisionTracePlayerIdFilter)
-        {
-            return;
-        }
-
-        string evaluationText = string.IsNullOrWhiteSpace(evaluations) ? "none" : evaluations;
-        string selectedText = selectedDecision.HasValue
-            ? FormatAbilityDecision(selectedDecision.Value, "see-evaluations")
-            : "none";
-        string key = $"{phase}:{myTile}:{outcome}:{evaluationText}:{selectedText}";
-        float elapsed = Time.time - lastAbilityDecisionTraceLogTime;
-
-        if (elapsed < AbilityDecisionLogIntervalSeconds ||
-            (key == lastAbilityDecisionTraceLogKey && elapsed < 1f))
-        {
-            return;
-        }
-
-        lastAbilityDecisionTraceLogKey = key;
-        lastAbilityDecisionTraceLogTime = Time.time;
-
-        Debug.Log(
-            $"[BattleCOMAbilityDecision][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
-            $"phase:{phase} tile:{myTile} pos:{transform.position} danger:{FormatDanger(dangerSeconds)} " +
-            $"outcome:{outcome} selected:{selectedText} evaluations:{evaluationText}",
-            this);
+        // Replaced by the unified behavior watchdog.
     }
 
     private bool RollEscapeAbilityChance(
@@ -2295,14 +2405,29 @@ public sealed class BattleModeComController : MonoBehaviour
         candidate = default;
 
         if (bombController == null || bombController.BombsRemaining < 2)
+        {
+            ownChainSeekCommitted = false;
             return false;
+        }
 
-        if (UnityEngine.Random.value > OwnChainPlanChance)
-            return false;
+        // Compromisso com uma junction já escolhida: não re-rolar o plano a cada frame,
+        // senão a IA oscila entre planos concorrentes (vai-e-volta até morrer).
+        bool seekCommitActive =
+            ownChainSeekCommitted &&
+            Time.time - ownChainSeekCommittedTime < WalkToChainCommitTimeoutSeconds;
+        if (!seekCommitActive)
+        {
+            ownChainSeekCommitted = false;
+            if (UnityEngine.Random.value > OwnChainPlanChance)
+                return false;
+        }
 
         int radius = Mathf.Max(1, bombController.explosionRadius);
         if (radius < OwnChainSecondBombDistance)
+        {
+            ownChainSeekCommitted = false;
             return false;
+        }
 
         Vector2Int bestDirection = Vector2Int.zero;
         Vector2Int bestJunction = myTile;
@@ -2315,6 +2440,9 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int r = 0; r < reachableTiles.Count; r++)
         {
             Vector2Int junction = reachableTiles[r];
+            // Com compromisso ativo, só considerar a junction comprometida.
+            if (seekCommitActive && junction != ownChainSeekJunction)
+                continue;
             if (IsBombAtTile(junction) || CountOpenNeighbors(junction) < 4)
                 continue;
 
@@ -2336,11 +2464,23 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         if (bestDirection == Vector2Int.zero)
+        {
+            ownChainSeekCommitted = false;
             return false;
+        }
 
         bool plantNow = bestJunction == myTile;
         if (plantNow)
+        {
             bestFirstMove = TileDirectionToVector(bestDirection);
+            ownChainSeekCommitted = false;
+        }
+        else if (!seekCommitActive)
+        {
+            ownChainSeekCommitted = true;
+            ownChainSeekJunction = bestJunction;
+            ownChainSeekCommittedTime = Time.time;
+        }
 
         candidate = new CandidateAction
         {
@@ -3958,6 +4098,40 @@ public sealed class BattleModeComController : MonoBehaviour
         float dangerSeconds,
         string route)
     {
+        if (EnableOscillationDiagnostics)
+        {
+            Vector2Int newDir = DirectionToTile(move);
+            if (newDir != Vector2Int.zero &&
+                oscDiagLastDecisionDir == -newDir &&
+                Time.time - oscDiagLastDecisionTime < 1.0f &&
+                Time.time - oscDiagLastFlipLogTime > 0.1f)
+            {
+                oscDiagLastFlipLogTime = Time.time;
+                Vector2Int diagTile = WorldToTile(transform.position);
+                Vector2 diagCenterOffset = (Vector2)transform.position - TileToWorld(diagTile);
+                Debug.LogWarning(
+                    $"[BattleCOMOscDiag][P{playerId}] event:DECISION_FLIP frame:{Time.frameCount} t:{Time.time:F2} " +
+                    $"tile:{diagTile} pos:{transform.position} centerOffset:{diagCenterOffset} " +
+                    $"danger:{FormatDanger(dangerSeconds)} " +
+                    $"PREV[dir:{oscDiagLastDecisionDir} age:{Time.time - oscDiagLastDecisionTime:F2}s " +
+                    $"reason:{oscDiagLastDecisionReason} route:{oscDiagLastDecisionRoute} target:{oscDiagLastDecisionTarget}] " +
+                    $"NEW[dir:{newDir} action:{action} reason:{reason} route:{route} target:{target} input:{input}] " +
+                    $"safeCenter:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
+                    $"followsEscape:{currentMoveFollowsEscapeRoute}",
+                    this);
+            }
+
+            if (newDir != Vector2Int.zero)
+            {
+                oscDiagLastDecisionDir = newDir;
+                oscDiagLastDecisionTime = Time.time;
+                oscDiagLastDecisionReason = reason;
+                oscDiagLastDecisionRoute = route;
+                oscDiagLastDecisionTarget = target;
+            }
+        }
+
+        oscDiagCurrentRoute = route;
         currentAction = action;
         currentMoveInput = move;
         hasCurrentTarget = hasTarget;
@@ -3979,6 +4153,160 @@ public sealed class BattleModeComController : MonoBehaviour
 
         BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(ResolveDifficulty());
         LogDecision(settings, WorldToTile(transform.position), dangerSeconds, route);
+    }
+
+    private void LogBehaviorStart()
+    {
+        if (behaviorStartLogged || !IsBattleModeScene())
+            return;
+
+        behaviorStartLogged = true;
+        behaviorLastProgressPosition = transform.position;
+        behaviorLastProgressTime = Time.time;
+
+        Vector2Int tile = WorldToTile(transform.position);
+        behaviorLastTile = tile;
+        behaviorPreviousTile = tile;
+        behaviorHasLastTile = true;
+
+        Debug.LogWarning(
+            $"[BattleCOMBehavior][P{playerId}] event:START frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"scene:{SceneManager.GetActiveScene().name} tile:{tile} pos:{transform.position} " +
+            $"difficulty:{ResolveDifficulty()}",
+            this);
+    }
+
+    private void ResetBehaviorDiagnostics()
+    {
+        behaviorStartLogged = false;
+        behaviorHasLastTile = false;
+        behaviorWasRequestingMovement = false;
+        behaviorLastProgressPosition = transform.position;
+        behaviorLastProgressTime = Time.time;
+        behaviorStoppedDangerStartedTime = -1f;
+        behaviorLastLogTime = -10f;
+        behaviorLastLogKey = string.Empty;
+        behaviorOscillationCount = 0;
+        behaviorOscillationStartedTime = -10f;
+    }
+
+    private void TrackBehaviorDiagnostics(Vector2Int myTile, float dangerSeconds)
+    {
+        LogBehaviorStart();
+
+        Vector2 position = transform.position;
+        if (Vector2.Distance(position, behaviorLastProgressPosition) >=
+            Mathf.Max(0.01f, tileSize * BehaviorProgressDistance))
+        {
+            behaviorLastProgressPosition = position;
+            behaviorLastProgressTime = Time.time;
+        }
+
+        if (!behaviorHasLastTile)
+        {
+            behaviorLastTile = myTile;
+            behaviorPreviousTile = myTile;
+            behaviorHasLastTile = true;
+        }
+        else if (myTile != behaviorLastTile)
+        {
+            if (Time.time - behaviorOscillationStartedTime > BehaviorOscillationWindowSeconds)
+            {
+                behaviorOscillationCount = 0;
+                behaviorOscillationStartedTime = Time.time;
+            }
+
+            if (myTile == behaviorPreviousTile)
+            {
+                behaviorOscillationCount++;
+                LogBehaviorDiagnostic(
+                    "OSCILLATION",
+                    myTile,
+                    dangerSeconds,
+                    $"between:{behaviorPreviousTile}<->{behaviorLastTile} reversals:{behaviorOscillationCount}");
+            }
+
+            behaviorPreviousTile = behaviorLastTile;
+            behaviorLastTile = myTile;
+        }
+
+        bool requestedMovement = currentMoveInput != Vector2.zero;
+        if (requestedMovement && !behaviorWasRequestingMovement)
+        {
+            behaviorLastProgressPosition = position;
+            behaviorLastProgressTime = Time.time;
+        }
+
+        behaviorWasRequestingMovement = requestedMovement;
+        float noProgressSeconds = Time.time - behaviorLastProgressTime;
+        if (requestedMovement && noProgressSeconds >= BehaviorNoProgressSeconds)
+        {
+            LogBehaviorDiagnostic(
+                "NO_PROGRESS",
+                myTile,
+                dangerSeconds,
+                $"duration:{noProgressSeconds:F2}s requested:{FirstMoveDescription(currentMoveInput)}");
+        }
+
+        bool stoppedInDanger =
+            !float.IsInfinity(dangerSeconds) &&
+            (currentMoveInput == Vector2.zero || currentAction == BattleModeComActionType.Stopped);
+
+        if (!stoppedInDanger)
+        {
+            behaviorStoppedDangerStartedTime = -1f;
+            return;
+        }
+
+        if (behaviorStoppedDangerStartedTime < 0f)
+            behaviorStoppedDangerStartedTime = Time.time;
+
+        float stoppedSeconds = Time.time - behaviorStoppedDangerStartedTime;
+        if (stoppedSeconds >= BehaviorStoppedDangerSeconds)
+        {
+            LogBehaviorDiagnostic(
+                "STOPPED_IN_DANGER",
+                myTile,
+                dangerSeconds,
+                $"duration:{stoppedSeconds:F2}s");
+        }
+    }
+
+    private void LogBehaviorDiagnostic(
+        string eventName,
+        Vector2Int myTile,
+        float dangerSeconds,
+        string symptom = "",
+        bool force = false)
+    {
+        string key =
+            $"{eventName}:{myTile}:{currentAction}:{currentTargetTile}:{currentMoveInput}:{currentReason}";
+        if (!force &&
+            key == behaviorLastLogKey &&
+            Time.time - behaviorLastLogTime < BehaviorRepeatLogSeconds)
+        {
+            return;
+        }
+
+        behaviorLastLogKey = key;
+        behaviorLastLogTime = Time.time;
+
+        string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
+        string safeCenter = hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none";
+        string rejected = rejectedActions.Count > 0 ? string.Join(" | ", rejectedActions) : "none";
+        string candidatesText = FormatCandidates();
+        Vector2 centerOffset = TileToWorld(myTile) - (Vector2)transform.position;
+
+        Debug.LogWarning(
+            $"[BattleCOMBehavior][P{playerId}] event:{eventName} frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} pos:{transform.position} centerOffset:{centerOffset} " +
+            $"danger:{FormatDanger(dangerSeconds)} symptom:{(string.IsNullOrEmpty(symptom) ? "none" : symptom)} " +
+            $"action:{currentAction} target:{target} move:{FirstMoveDescription(currentMoveInput)} " +
+            $"input:{currentInputDescription} reason:{currentReason} escapeRoute:{currentMoveFollowsEscapeRoute} " +
+            $"safeCenter:{safeCenter} openNeighbors:{CountOpenNeighbors(myTile)} " +
+            $"bombs:{FormatActiveBombThreats(myTile)} own:{FormatOwnChainBombs()} " +
+            $"candidates:{candidatesText} rejected:{rejected} abilities:{FormatCurrentAbilityTraces()}",
+            this);
     }
 
     private void LogDecision(
@@ -4009,30 +4337,6 @@ public sealed class BattleModeComController : MonoBehaviour
         string detail = BuildDecisionDetailLine();
         if (!string.IsNullOrEmpty(detail))
             PushDecision($"[BattleCOM][P{playerId}] {detail}");
-
-        LogSurgicalDecisionTrace(myTile, dangerSeconds, route, detail);
-
-        if (!EnableGeneralDecisionLogs)
-            return;
-
-        if (!BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Summary))
-            return;
-
-        Debug.Log(line, this);
-
-        bool shouldLogVerbose = BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose);
-        bool shouldLogAbilityFailure =
-            HasAbilityTrace() &&
-            (string.Equals(route, "fallback", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(route, "dangerWait", StringComparison.OrdinalIgnoreCase) ||
-             currentReason.Contains("fallback", StringComparison.OrdinalIgnoreCase) ||
-             currentReason.Contains("hold danger tile", StringComparison.OrdinalIgnoreCase) ||
-             currentReason.Contains("no fallback", StringComparison.OrdinalIgnoreCase));
-
-        if (shouldLogVerbose || shouldLogAbilityFailure)
-        {
-            Debug.Log($"[BattleCOM][P{playerId}] {detail}", this);
-        }
     }
 
     private void LogSurgicalDecisionTrace(
@@ -4107,14 +4411,6 @@ public sealed class BattleModeComController : MonoBehaviour
         currentHoldActionA = false;
         ClearSyntheticInputs();
 
-        bool shouldLogDeathDiagnostic = EnableDeathDiagnostics;
-        bool shouldLogKickBombDeathDiagnostic =
-            ShouldLogKickBombRiskDiagnostics() &&
-            IsRecentKickBombRiskContext();
-
-        if (!shouldLogDeathDiagnostic && !shouldLogKickBombDeathDiagnostic)
-            return;
-
         if (lastDeathDiagnosticFrame == Time.frameCount)
             return;
 
@@ -4126,10 +4422,8 @@ public sealed class BattleModeComController : MonoBehaviour
         if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
             return;
 
-        if (shouldLogKickBombDeathDiagnostic)
-            Debug.Log(BuildKickBombRiskDeathDiagnosticReport(), this);
-        else
-            Debug.Log(BuildDeathDiagnosticReport(), this);
+        Vector2Int tile = WorldToTile(transform.position);
+        LogBehaviorDiagnostic("DEATH", tile, GetDangerSeconds(tile, null), force: true);
     }
 
     private void OnMovementDied(MovementController deadMovement)
@@ -5622,26 +5916,109 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2 ApplyTurnAxisCentering(Vector2Int currentTile, Vector2 requestedMove)
     {
         if (requestedMove == Vector2.zero)
+        {
+            turnAxisCenteredKeepDir = Vector2Int.zero;
             return Vector2.zero;
+        }
 
         Vector2Int requestedDirection = DirectionToTile(requestedMove);
         if (requestedDirection == Vector2Int.zero)
+        {
+            turnAxisCenteredKeepDir = Vector2Int.zero;
             return Vector2.zero;
+        }
 
-        if (currentMoveFollowsEscapeRoute && NeedsTurnAxisCentering(currentTile, requestedDirection))
+        bool needsCentering = NeedsTurnAxisCentering(currentTile, requestedDirection);
+
+        // Histerese: se já consideramos o personagem centrado para esta direção, só
+        // retomamos a centralização quando o desvio crescer bem além da tolerância.
+        // Sem isso, centralizar -> entrar na tolerância -> ser empurrado de volta gera
+        // input alternado (esq/dir ou cima/baixo) e a IA nunca executa a virada.
+        if (needsCentering &&
+            turnAxisCenteredKeepDir == requestedDirection &&
+            !TurnAxisOffsetExceeds(currentTile, requestedDirection, TurnAxisCenteringExitMultiplier))
+        {
+            needsCentering = false;
+        }
+
+        // Overshoot: o passo por frame é maior que a zona morta, então o personagem
+        // cruza o centro sem nunca cair dentro da tolerância (sinal do desvio inverte
+        // a cada frame de centralização). Se estávamos centralizando para esta direção
+        // e o sinal inverteu, consideramos centrado e seguimos o move pedido.
+        if (needsCentering)
+        {
+            int offsetSign = GetTurnAxisOffsetSign(currentTile, requestedDirection);
+            if (turnAxisCenteringDir == requestedDirection &&
+                turnAxisCenteringSign != 0 &&
+                offsetSign != 0 &&
+                offsetSign != turnAxisCenteringSign &&
+                !TurnAxisOffsetExceeds(currentTile, requestedDirection, TurnAxisCenteringExitMultiplier))
+            {
+                needsCentering = false;
+                turnAxisCenteredKeepDir = requestedDirection;
+                turnAxisCenteringDir = Vector2Int.zero;
+                turnAxisCenteringSign = 0;
+            }
+            else
+            {
+                turnAxisCenteringDir = requestedDirection;
+                turnAxisCenteringSign = offsetSign;
+            }
+        }
+        else
+        {
+            turnAxisCenteringDir = Vector2Int.zero;
+            turnAxisCenteringSign = 0;
+        }
+
+        if (currentMoveFollowsEscapeRoute && needsCentering)
         {
             // A perpendicular turn cannot pass the tile collision while the player is
             // between grid lanes. Finish that short alignment even during an escape.
+            turnAxisCenteredKeepDir = Vector2Int.zero;
             return GetTurnAxisCenteringMove(currentTile, requestedDirection);
         }
 
         if (ShouldKeepTargetedMove(currentTile, requestedDirection))
+        {
+            if (!needsCentering)
+                turnAxisCenteredKeepDir = requestedDirection;
             return requestedMove;
+        }
 
-        if (NeedsTurnAxisCentering(currentTile, requestedDirection))
+        if (needsCentering)
+        {
+            turnAxisCenteredKeepDir = Vector2Int.zero;
             return GetTurnAxisCenteringMove(currentTile, requestedDirection);
+        }
 
+        turnAxisCenteredKeepDir = requestedDirection;
         return requestedMove;
+    }
+
+    private int GetTurnAxisOffsetSign(Vector2Int currentTile, Vector2Int requestedDirection)
+    {
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+        float axisDelta = requestedDirection.x != 0 ? delta.y : delta.x;
+
+        if (Mathf.Abs(axisDelta) < 0.001f)
+            return 0;
+
+        return axisDelta > 0f ? 1 : -1;
+    }
+
+    private bool TurnAxisOffsetExceeds(Vector2Int currentTile, Vector2Int requestedDirection, float toleranceMultiplier)
+    {
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance) * toleranceMultiplier;
+
+        if (requestedDirection.x != 0)
+            return Mathf.Abs(delta.y) > tolerance;
+
+        if (requestedDirection.y != 0)
+            return Mathf.Abs(delta.x) > tolerance;
+
+        return false;
     }
 
     private bool NeedsTurnAxisCentering(Vector2Int currentTile, Vector2Int requestedDirection)
