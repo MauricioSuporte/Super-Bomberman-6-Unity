@@ -10,7 +10,7 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
     private const float KickCommandConfirmationWaitSeconds = 0.35f;
     private const float DefensiveKickMinFuseSeconds = 0.55f;
     private const float DefensiveLogIntervalSeconds = 0.35f;
-    private static readonly bool EnableYellowLouieKickSurgicalDiagnostics = false;
+    private const float FailedKickRetryBlockSeconds = 1.0f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -25,11 +25,20 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
     private Bomb pendingKickBomb;
     private Vector2Int pendingKickOriginTile;
     private Vector2Int pendingKickDirection;
+    private Vector2Int pendingKickEscapeTile;
+    private bool hasPendingKickEscape;
     private float pendingKickSentTime = -10f;
+    private Bomb failedKickBomb;
+    private Vector2Int failedKickOriginTile;
+    private Vector2Int failedKickDirection;
+    private float failedKickRetryBlockedUntil = -10f;
     private float lastDefensiveLogTime = -10f;
     private string lastDefensiveLogKey = string.Empty;
     private readonly Queue<Vector2Int> escapeOpen = new();
     private readonly Dictionary<Vector2Int, EscapeNode> escapeVisited = new();
+
+    [Header("Debug")]
+    [SerializeField] private bool debugYellowKickTrace;
 
     private struct EscapeNode
     {
@@ -113,6 +122,9 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         if (!IsMountedYellowLouieKickAvailable)
             return false;
 
+        if (TryBuildPendingKickEscapeDecision(settings, myTile, out decision))
+            return true;
+
         Bomb bestBomb = null;
         Vector2Int bestDir = Vector2Int.zero;
         Vector2Int bestEscapeTile = myTile;
@@ -137,6 +149,28 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
             if (fuse < DefensiveKickMinFuseSeconds)
             {
                 AppendTracePart(ref rejected, $"{DirectionLabel(dir)}:{bombTile}:fuse-low:{fuse:F2}<min:{DefensiveKickMinFuseSeconds:F2}");
+                continue;
+            }
+
+            if (IsRecentlyFailedKick(bomb, bombTile, dir, out float retrySecondsLeft))
+            {
+                AppendTracePart(ref rejected, $"{DirectionLabel(dir)}:{bombTile}:retry-blocked:{retrySecondsLeft:F2}s:{DescribeYellowBomb(bomb)}");
+                LogYellowDefensive(
+                    "defensive-reject-retry-blocked",
+                    $"my:{myTile} dir:{DirectionLabel(dir)} bombTile:{bombTile} retryLeft:{retrySecondsLeft:F2}s bomb:{DescribeYellowBomb(bomb)}");
+                continue;
+            }
+
+            Vector2Int bombDestinationTile = bombTile + dir;
+            float destinationDangerSeconds = GetDangerSeconds(bombDestinationTile, bomb);
+            if (destinationDangerSeconds <= settings.dangerReactionSeconds)
+            {
+                AppendTracePart(
+                    ref rejected,
+                    $"{DirectionLabel(dir)}:{bombTile}:dest-danger:{bombDestinationTile}:{FormatDanger(destinationDangerSeconds)}:{DescribeYellowBomb(bomb)}");
+                LogYellowDefensive(
+                    "defensive-reject-destination-danger",
+                    $"my:{myTile} dir:{DirectionLabel(dir)} bombTile:{bombTile} destination:{bombDestinationTile} destinationDanger:{FormatDanger(destinationDangerSeconds)} bomb:{DescribeYellowBomb(bomb)}");
                 continue;
             }
 
@@ -179,9 +213,8 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
             lastDecisionTrace =
                 $"yellow defensive kick none danger:{FormatDanger(currentDangerSeconds)} rejected:{(string.IsNullOrEmpty(rejected) ? "empty" : rejected)} candidates:{(string.IsNullOrEmpty(candidates) ? "none" : candidates)}";
             LogYellowDefensive(
-                "YELLOW_DEF_REJECT",
-                $"my:{myTile} danger:{FormatDanger(currentDangerSeconds)} rejected:{(string.IsNullOrEmpty(rejected) ? "empty" : rejected)} candidates:{(string.IsNullOrEmpty(candidates) ? "none" : candidates)} nearby:{DescribeAdjacentBombs(myTile)}",
-                force: true);
+                "defensive-reject",
+                $"my:{myTile} danger:{FormatDanger(currentDangerSeconds)} nearby:{DescribeAdjacentBombs(myTile)} rejected:{(string.IsNullOrEmpty(rejected) ? "empty" : rejected)} candidates:{(string.IsNullOrEmpty(candidates) ? "none" : candidates)}");
             return false;
         }
 
@@ -199,21 +232,21 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         {
             lastDecisionTrace = $"yellow defensive kick failed input dir:{bestDir} bomb:{DescribeYellowBomb(bestBomb)}";
             LogYellowDefensive(
-                "YELLOW_DEF_INPUT_FAIL",
-                $"my:{myTile} dir:{DirectionLabel(bestDir)} bomb:{DescribeYellowBomb(bestBomb)}",
-                force: true);
+                "defensive-input-fail",
+                $"my:{myTile} dir:{DirectionLabel(bestDir)} bomb:{DescribeYellowBomb(bestBomb)}");
             return false;
         }
 
         decision.TargetTile = bestEscapeTile;
         decision.HasTarget = true;
         decision.UsesEscapeAbilityChance = true;
+        pendingKickEscapeTile = bestEscapeTile;
+        hasPendingKickEscape = true;
         lastDecisionTrace =
             $"yellow defensive kick selected dir:{bestDir} bomb:{myTile + bestDir} escape:{bestEscapeTile} fuse:{bestFuse:F2} score:{bestScore}";
         LogYellowDefensive(
-            "YELLOW_DEF_ACCEPT",
-            $"my:{myTile} dir:{DirectionLabel(bestDir)} bomb:{DescribeYellowBomb(bestBomb)} escape:{bestEscapeTile} fuse:{bestFuse:F2} score:{bestScore} input:{decision.InputDescription} candidates:{(string.IsNullOrEmpty(candidates) ? "none" : candidates)} rejected:{(string.IsNullOrEmpty(rejected) ? "none" : rejected)}",
-            force: true);
+            "defensive-select",
+            $"my:{myTile} dir:{DirectionLabel(bestDir)} bomb:{DescribeYellowBomb(bestBomb)} escape:{bestEscapeTile} escapeDanger:{FormatDanger(GetDangerSeconds(bestEscapeTile, bestBomb))} fuse:{bestFuse:F2} score:{bestScore} input:{decision.InputDescription}");
         return true;
     }
 
@@ -231,7 +264,19 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
         bool movedFromOrigin = WorldToTile(trackedBomb.GetLogicalPosition()) != originalBombTile;
         if (movedFromOrigin)
+        {
+            LogYellowDefensive(
+                "kick-confirmed",
+                $"origin:{originalBombTile} now:{WorldToTile(trackedBomb.GetLogicalPosition())} pendingDir:{pendingKickDirection} bomb:{DescribeYellowBomb(trackedBomb)} elapsed:{Time.time - pendingKickSentTime:F2}",
+                force: true);
             ClearPendingKickCommand();
+        }
+        else if (pendingKickBomb == trackedBomb)
+        {
+            LogYellowDefensive(
+                "kick-not-confirmed-yet",
+                $"origin:{originalBombTile} logical:{WorldToTile(trackedBomb.GetLogicalPosition())} pendingDir:{pendingKickDirection} bomb:{DescribeYellowBomb(trackedBomb)} elapsed:{Time.time - pendingKickSentTime:F2}");
+        }
 
         return movedFromOrigin;
     }
@@ -272,6 +317,9 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
             };
             lastDecisionTrace =
                 $"yellow kick wait bomb:{bombTile} dir:{kickDirection} wait:{pendingElapsed:F2}/{KickCommandConfirmationWaitSeconds:F2}";
+            LogYellowDefensive(
+                "kick-wait-confirmation",
+                $"my:{myTile} bombTile:{bombTile} dir:{DirectionLabel(kickDirection)} elapsed:{pendingElapsed:F2} bomb:{DescribeYellowBomb(bomb)}");
             return true;
         }
 
@@ -297,11 +345,26 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         };
 
         lastDecisionTrace = $"yellow kick ActionC bomb:{bombTile} dir:{kickDirection}";
+        LogYellowDefensive(
+            "kick-command",
+            $"my:{myTile} bombTile:{bombTile} target:{decision.TargetTile} dir:{DirectionLabel(kickDirection)} input:{decision.InputDescription} bomb:{DescribeYellowBomb(bomb)}");
         return true;
     }
 
     protected override void OnOffensiveSequenceReset()
     {
+        ClearPendingKickCommand();
+    }
+
+    public void CancelUnselectedPendingKickCommand(string reason)
+    {
+        if (!hasPendingKickEscape && pendingKickBomb == null)
+            return;
+
+        LogYellowDefensive(
+            "pending-cancel-unselected",
+            $"reason:{reason} origin:{pendingKickOriginTile} escape:{pendingKickEscapeTile} bomb:{DescribeYellowBomb(pendingKickBomb)}",
+            force: true);
         ClearPendingKickCommand();
     }
 
@@ -331,7 +394,133 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         pendingKickBomb = null;
         pendingKickOriginTile = default;
         pendingKickDirection = default;
+        pendingKickEscapeTile = default;
+        hasPendingKickEscape = false;
         pendingKickSentTime = -10f;
+    }
+
+    private bool TryBuildPendingKickEscapeDecision(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+
+        if (!hasPendingKickEscape || pendingKickBomb == null || pendingKickBomb.HasExploded)
+        {
+            if (hasPendingKickEscape || pendingKickBomb != null)
+                ClearPendingKickCommand();
+
+            return false;
+        }
+
+        float elapsed = Time.time - pendingKickSentTime;
+        bool bombMoved = WorldToTile(pendingKickBomb.GetLogicalPosition()) != pendingKickOriginTile;
+
+        if (myTile == pendingKickEscapeTile)
+        {
+            LogYellowDefensive(
+                "pending-escape-arrived",
+                $"my:{myTile} escape:{pendingKickEscapeTile} bombMoved:{bombMoved} elapsed:{elapsed:F2} bomb:{DescribeYellowBomb(pendingKickBomb)}",
+                force: true);
+            ClearPendingKickCommand();
+            return false;
+        }
+
+        if (!bombMoved && elapsed > KickCommandConfirmationWaitSeconds)
+        {
+            LogYellowDefensive(
+                "pending-escape-cancel-not-moved",
+                $"my:{myTile} origin:{pendingKickOriginTile} escape:{pendingKickEscapeTile} elapsed:{elapsed:F2} bomb:{DescribeYellowBomb(pendingKickBomb)}",
+                force: true);
+            RememberFailedKick(pendingKickBomb, pendingKickOriginTile, pendingKickDirection);
+            ClearPendingKickCommand();
+            return false;
+        }
+
+        if (!TryFindPendingEscapeStep(
+                settings,
+                myTile,
+                pendingKickEscapeTile,
+                pendingKickBomb,
+                out Vector2Int step,
+                out int routeDepth))
+        {
+            LogYellowDefensive(
+                "pending-escape-no-route",
+                $"my:{myTile} escape:{pendingKickEscapeTile} bombMoved:{bombMoved} elapsed:{elapsed:F2} bomb:{DescribeYellowBomb(pendingKickBomb)}",
+                force: true);
+            ClearPendingKickCommand();
+            return false;
+        }
+
+        Vector2Int next = myTile + step;
+        if (!IsOpenAfterKick(next, myTile, pendingKickBomb))
+        {
+            LogYellowDefensive(
+                "pending-escape-blocked",
+                $"my:{myTile} next:{next} escape:{pendingKickEscapeTile} bombMoved:{bombMoved} elapsed:{elapsed:F2} bomb:{DescribeYellowBomb(pendingKickBomb)}",
+                force: true);
+            ClearPendingKickCommand();
+            return false;
+        }
+
+        float nextDanger = GetDangerSeconds(next, pendingKickBomb);
+        float arrival = 1f / Mathf.Max(1f, Movement != null ? Movement.speed : 4f);
+        if (nextDanger <= arrival + settings.dangerReactionSeconds)
+        {
+            LogYellowDefensive(
+                "pending-escape-unsafe",
+                $"my:{myTile} next:{next} escape:{pendingKickEscapeTile} nextDanger:{FormatDanger(nextDanger)} arrival:{arrival:F2} bombMoved:{bombMoved} bomb:{DescribeYellowBomb(pendingKickBomb)}",
+                force: true);
+            ClearPendingKickCommand();
+            return false;
+        }
+
+        Vector2 move = TileDirectionToVector(step);
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.Reposition,
+            Weight = 390 + DifficultyWeight(settings),
+            TargetTile = pendingKickEscapeTile,
+            HasTarget = true,
+            FirstMove = move,
+            Reason = "escape after yellow louie kick",
+            InputDescription = FirstMoveDescription(move)
+        };
+
+        lastDecisionTrace =
+            $"yellow pending escape target:{pendingKickEscapeTile} step:{step} depth:{routeDepth} bombMoved:{bombMoved} elapsed:{elapsed:F2}";
+        LogYellowDefensive(
+            "pending-escape",
+            $"my:{myTile} next:{next} escape:{pendingKickEscapeTile} move:{FirstMoveDescription(move)} depth:{routeDepth} bombMoved:{bombMoved} elapsed:{elapsed:F2} nextDanger:{FormatDanger(nextDanger)} bomb:{DescribeYellowBomb(pendingKickBomb)}");
+        return true;
+    }
+
+    private bool IsRecentlyFailedKick(
+        Bomb bomb,
+        Vector2Int bombTile,
+        Vector2Int direction,
+        out float retrySecondsLeft)
+    {
+        retrySecondsLeft = failedKickRetryBlockedUntil - Time.time;
+        if (retrySecondsLeft <= 0f)
+            return false;
+
+        return failedKickBomb == bomb &&
+               failedKickOriginTile == bombTile &&
+               failedKickDirection == direction;
+    }
+
+    private void RememberFailedKick(Bomb bomb, Vector2Int bombTile, Vector2Int direction)
+    {
+        if (bomb == null)
+            return;
+
+        failedKickBomb = bomb;
+        failedKickOriginTile = bombTile;
+        failedKickDirection = direction;
+        failedKickRetryBlockedUntil = Time.time + FailedKickRetryBlockSeconds;
     }
 
     private bool IsKickCommandAwaitingConfirmation(
@@ -453,17 +642,33 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         escapeOpen.Enqueue(firstTile);
 
         int maxDepth = Mathf.Max(3, settings.searchDepth + 4);
+        Vector2Int fallbackTarget = start;
+        int fallbackDepth = -1;
+        float fallbackDanger = float.NegativeInfinity;
+
         while (escapeOpen.Count > 0)
         {
             Vector2Int tile = escapeOpen.Dequeue();
             EscapeNode node = escapeVisited[tile];
 
             if (node.Depth > 0 &&
-                IsFinalSafeTile(tile, settings, ignoredBomb, node.Depth))
+                IsCompletelySafeTile(tile, ignoredBomb))
             {
                 target = tile;
                 routeDepth = node.Depth;
                 return true;
+            }
+
+            if (node.Depth > 1 &&
+                IsFinalSafeTile(tile, settings, ignoredBomb, node.Depth))
+            {
+                float danger = GetDangerSeconds(tile, ignoredBomb);
+                if (fallbackDepth < 0 || danger > fallbackDanger)
+                {
+                    fallbackTarget = tile;
+                    fallbackDepth = node.Depth;
+                    fallbackDanger = danger;
+                }
             }
 
             if (node.Depth >= maxDepth)
@@ -487,7 +692,83 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
             }
         }
 
+        if (fallbackDepth > 0)
+        {
+            target = fallbackTarget;
+            routeDepth = fallbackDepth;
+            return true;
+        }
+
         return false;
+    }
+
+    private bool TryFindPendingEscapeStep(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        Vector2Int target,
+        Bomb ignoredBomb,
+        out Vector2Int step,
+        out int routeDepth)
+    {
+        step = Vector2Int.zero;
+        routeDepth = -1;
+
+        if (start == target)
+            return false;
+
+        escapeOpen.Clear();
+        escapeVisited.Clear();
+
+        escapeVisited[start] = new EscapeNode { Parent = start, Depth = 0 };
+        escapeOpen.Enqueue(start);
+
+        int maxDepth = Mathf.Max(3, settings.searchDepth + 4);
+        while (escapeOpen.Count > 0)
+        {
+            Vector2Int tile = escapeOpen.Dequeue();
+            EscapeNode node = escapeVisited[tile];
+            if (node.Depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (escapeVisited.ContainsKey(next))
+                    continue;
+
+                if (!IsOpenAfterKick(next, tile, ignoredBomb))
+                    continue;
+
+                int nextDepth = node.Depth + 1;
+                if (!IsSafeEnoughAtDepth(next, settings, ignoredBomb, nextDepth))
+                    continue;
+
+                escapeVisited[next] = new EscapeNode { Parent = tile, Depth = nextDepth };
+                if (next == target)
+                {
+                    step = ReconstructPendingEscapeStep(start, target);
+                    routeDepth = nextDepth;
+                    return step != Vector2Int.zero;
+                }
+
+                escapeOpen.Enqueue(next);
+            }
+        }
+
+        return false;
+    }
+
+    private Vector2Int ReconstructPendingEscapeStep(Vector2Int start, Vector2Int target)
+    {
+        Vector2Int cursor = target;
+        while (escapeVisited.TryGetValue(cursor, out EscapeNode node) &&
+               node.Parent != start &&
+               node.Parent != cursor)
+        {
+            cursor = node.Parent;
+        }
+
+        return cursor - start;
     }
 
     private bool IsOpenAfterKick(Vector2Int tile, Vector2Int startTile, Bomb ignoredBomb)
@@ -544,6 +825,11 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         return dangerSeconds > arrivalSeconds + settings.safeTileMinimumSeconds + settings.dangerReactionSeconds;
     }
 
+    private bool IsCompletelySafeTile(Vector2Int tile, Bomb ignoredBomb)
+    {
+        return float.IsInfinity(GetDangerSeconds(tile, ignoredBomb));
+    }
+
     private static bool CanYellowKickBomb(Bomb bomb)
     {
         return bomb != null &&
@@ -576,7 +862,7 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
     private void LogYellowDefensive(string key, string message, bool force = false)
     {
-        if (!EnableYellowLouieKickSurgicalDiagnostics)
+        if (!debugYellowKickTrace)
             return;
 
         string logKey = key + ":" + message;
@@ -590,7 +876,7 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         lastDefensiveLogKey = logKey;
         lastDefensiveLogTime = Time.time;
         Vector2Int tile = Movement != null ? WorldToTile(Movement.transform.position) : Vector2Int.zero;
-        Debug.Log($"[BattleCOMYellowKick][P{(Movement != null ? Movement.PlayerId : 0)}] tile:{tile} {key} {message}", this);
+        Debug.Log($"[BattleCOMYellowKickTrace][P{(Movement != null ? Movement.PlayerId : 0)}] t:{Time.time:F3} tile:{tile} {key} {message}", this);
     }
 
     private static string DirectionLabel(Vector2Int dir)

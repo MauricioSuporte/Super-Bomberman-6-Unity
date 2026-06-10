@@ -7,10 +7,6 @@ using UnityEngine;
 [RequireComponent(typeof(MovementController))]
 public class BombKickAbility : MonoBehaviour, IMovementAbility
 {
-    [Header("Debug Bomb Kick")]
-    private readonly bool debugBombKick = false;
-    private readonly bool debugBombKickVerbose = false;
-
     public const string AbilityId = "BombKick";
 
     private const string KickClipResourcesPath = "Sounds/KickBomb";
@@ -694,12 +690,5 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private void LogBombKick(string message, bool verbose = false)
     {
-        if (!debugBombKick)
-            return;
-
-        if (verbose && !debugBombKickVerbose)
-            return;
-
-        Debug.Log($"[BombKick][{name}] {message}", this);
     }
 }

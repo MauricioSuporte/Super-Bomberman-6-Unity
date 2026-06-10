@@ -31,7 +31,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     // Chain-bomb surgical log: only the decision points needed to explain why
     // COM does or does not execute a line/corner chain explosion plan.
-    private static readonly bool EnableChainBombDiagnostics = true;
+    private static readonly bool EnableChainBombDiagnostics = false;
     private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
     private const float ChainBombDiagLogIntervalSeconds = 0.45f;
     private const int ChainBombRejectSampleLimit = 4;
@@ -84,6 +84,8 @@ public sealed class BattleModeComController : MonoBehaviour
     [Header("Diagnostics")]
     [SerializeField] private BattleModeComDiagnostics.LogLevel logLevel = BattleModeComDiagnostics.DefaultLogLevel;
     [SerializeField, Range(4, MaxDecisionBufferEntries)] private int decisionBufferSize = 16;
+    [SerializeField] private bool debugDecisionTrace = true;
+    [SerializeField] private int decisionTracePlayerIdFilter = 0;
 
     private readonly List<string> recentDecisions = new();
     private readonly List<PlayerIdentity> activePlayers = new(6);
@@ -158,6 +160,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastPostPlantEscapeLogKey = string.Empty;
     private float lastKickBombRiskLogTime = -10f;
     private string lastKickBombRiskLogKey = string.Empty;
+    private float lastDecisionTraceLogTime = -10f;
+    private string lastDecisionTraceLogKey = string.Empty;
 
     // Committed escape: quando TryBuildOwnPendingEscapeRoute encontra um target válido,
     // gravamos ele aqui. TryBuildOwnPendingSafetyMove usa BFS em direção a ele antes de
@@ -552,6 +556,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (inDanger)
         {
+            if (TryContinueDangerEscapeRoute(settings, myTile, currentDangerSeconds))
+                return;
+
             // Habilidades (ex.: chute ofensivo de bomba) podem CONTINUAR uma jogada já iniciada
             // mesmo sob perigo — tipicamente a IA recuou 1 tile e está dentro do raio da própria
             // bomba, mas a jogada certa é voltar e chutá-la no adversário (removendo a bomba da
@@ -1040,6 +1047,8 @@ public sealed class BattleModeComController : MonoBehaviour
                     "emergency chance",
                     GetAbilityDiagnosticName(ability),
                     $"{chanceTrace} trace:{ability.LastDecisionTrace}");
+                if (ability is BattleModeComYellowLouieKickAbility yellowLouieKickAbility)
+                    yellowLouieKickAbility.CancelUnselectedPendingKickCommand("escape ability chance failed");
                 continue;
             }
 
@@ -1049,6 +1058,48 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool TryContinueDangerEscapeRoute(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds)
+    {
+        if (!currentMoveFollowsEscapeRoute || !hasSafeCenterTarget || myTile == safeCenterTargetTile)
+            return false;
+
+        float targetDanger = GetDangerSeconds(safeCenterTargetTile, null);
+        if (!float.IsInfinity(targetDanger))
+            return false;
+
+        if (!TryFindEscape(settings, myTile, null, out Vector2 firstMove, out Vector2Int escapeTarget, out string route))
+            return false;
+
+        Vector2Int firstStep = DirectionToTile(firstMove);
+        if (firstStep == Vector2Int.zero)
+            return false;
+
+        Vector2Int nextTile = myTile + firstStep;
+        float arrivalSeconds = EstimateFirstMoveTraversalSeconds(firstStep);
+        if (IsDangerousAt(nextTile, arrivalSeconds, settings, null))
+            return false;
+
+        LogPostPlantEscapeDiagnostic(
+            "DANGER_CONTINUE_ESCAPE_ROUTE",
+            myTile,
+            currentDangerSeconds,
+            $"safeCenter:{safeCenterTargetTile} bfsTarget:{escapeTarget} next:{nextTile} " +
+            $"move:{FirstMoveDescription(firstMove)} route:{route}");
+        SetCurrentDecision(
+            BattleModeComActionType.Reposition,
+            firstMove,
+            true,
+            escapeTarget,
+            "continue escape danger",
+            FirstMoveDescription(firstMove),
+            currentDangerSeconds,
+            route);
+        return true;
     }
 
     private bool TryBuildAbilityCandidate(
@@ -3652,6 +3703,8 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!string.IsNullOrEmpty(detail))
             PushDecision($"[BattleCOM][P{playerId}] {detail}");
 
+        LogSurgicalDecisionTrace(myTile, dangerSeconds, route, detail);
+
         if (!EnableGeneralDecisionLogs)
             return;
 
@@ -3673,6 +3726,59 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             Debug.Log($"[BattleCOM][P{playerId}] {detail}", this);
         }
+    }
+
+    private void LogSurgicalDecisionTrace(
+        Vector2Int myTile,
+        float dangerSeconds,
+        string route,
+        string detail)
+    {
+        if (!debugDecisionTrace)
+            return;
+
+        if (decisionTracePlayerIdFilter != 0 && playerId != decisionTracePlayerIdFilter)
+            return;
+
+        bool plantedBomb = !string.IsNullOrEmpty(currentInputDescription) &&
+                           currentInputDescription.Contains("ActionA", StringComparison.OrdinalIgnoreCase);
+        bool stopped = currentAction == BattleModeComActionType.Stopped;
+        bool postPlantContext =
+            postPlantEscapeWatchActive ||
+            chainBombPlantingStartedTime >= 0f ||
+            HasOwnUnresolvedBombOrExplosion();
+
+        if (!plantedBomb && !stopped && !postPlantContext)
+            return;
+
+        string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
+        string key =
+            $"{currentAction}:{myTile}:{target}:{route}:{currentReason}:{currentInputDescription}:{FormatOwnChainBombs()}";
+
+        if (key == lastDecisionTraceLogKey &&
+            Time.time - lastDecisionTraceLogTime < 0.25f)
+        {
+            return;
+        }
+
+        lastDecisionTraceLogKey = key;
+        lastDecisionTraceLogTime = Time.time;
+
+        int bombsRemaining = bombController != null ? bombController.BombsRemaining : -1;
+        int bombsTotal = bombController != null ? bombController.bombAmout : -1;
+        string safeCenter = hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none";
+        string rejected = rejectedActions.Count > 0 ? string.Join(" | ", rejectedActions) : "none";
+        string extraDetail = string.IsNullOrEmpty(detail) ? "none" : detail;
+
+        Debug.Log(
+            $"[BattleCOMDecisionTrace][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(dangerSeconds)} " +
+            $"action:{currentAction} route:{route} target:{target} move:{FirstMoveDescription(currentMoveInput)} " +
+            $"input:{currentInputDescription} reason:{currentReason} planted:{plantedBomb} stopped:{stopped} " +
+            $"postPlant:{postPlantContext} safeCenter:{safeCenter} escapeRoute:{currentMoveFollowsEscapeRoute} " +
+            $"bombs:{bombsRemaining}/{bombsTotal} own:{FormatOwnChainBombs()} " +
+            $"activeBombs:{FormatActiveBombThreats(myTile)} rejected:{rejected} detail:{extraDetail}",
+            this);
     }
 
     private string BuildDecisionDetailLine()
@@ -4266,8 +4372,38 @@ public sealed class BattleModeComController : MonoBehaviour
         if (plantTile == currentTile)
         {
             Vector2Int firstStep = DirectionToTile(escapeMove);
+            if (firstStep == Vector2Int.zero)
+            {
+                RejectVerbose($"PlantEscape recusado sem primeiro passo tile:{plantTile} escape:{escapeTile}");
+                return false;
+            }
+
             if (!IsCenteredOnTile(plantTile) || NeedsTurnAxisCentering(plantTile, firstStep))
                 return false;
+
+            Vector2Int firstEscapeTile = plantTile + firstStep;
+            float currentDanger = GetDangerSeconds(currentTile, null);
+            float activeFirstDanger = GetDangerSeconds(firstEscapeTile, null);
+
+            if (float.IsInfinity(currentDanger) && !float.IsInfinity(activeFirstDanger))
+            {
+                RejectVerbose(
+                    $"PlantEscape recusado primeiro passo ameacado por bomba ativa " +
+                    $"plant:{plantTile} first:{firstEscapeTile} danger:{FormatDanger(activeFirstDanger)} escape:{escapeTile}");
+                return false;
+            }
+
+            if (HasOwnUnresolvedBombOrExplosion())
+            {
+                float activeTargetDanger = GetDangerSeconds(escapeTile, null);
+                if (!float.IsInfinity(activeTargetDanger))
+                {
+                    RejectVerbose(
+                        $"PlantEscape recusado alvo ameacado por bomba propria ativa " +
+                        $"plant:{plantTile} first:{firstEscapeTile} target:{escapeTile} danger:{FormatDanger(activeTargetDanger)}");
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -4766,8 +4902,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private float GetDangerSeconds(Vector2Int tile, List<Vector2Int> plannedBlastTiles)
     {
+        float danger = float.PositiveInfinity;
         if (plannedBlastTiles != null && plannedBlastTiles.Contains(tile))
-            return bombController != null ? Mathf.Max(0.5f, bombController.bombFuseTime) : 2f;
+            danger = bombController != null ? Mathf.Max(0.5f, bombController.bombFuseTime) : 2f;
 
         if (explosionMask != 0)
         {
@@ -4776,7 +4913,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 return 0f;
         }
 
-        float danger = float.PositiveInfinity;
         if (suddenDeathController != null &&
             suddenDeathController.TryGetSecondsUntilSuddenDeathWorldPosition(TileToWorld(tile), out float suddenDeathSeconds) &&
             suddenDeathSeconds <= SuddenDeathUnsafeLeadSeconds)
@@ -4960,6 +5096,17 @@ public sealed class BattleModeComController : MonoBehaviour
 
             float nextMargin = GetSurvivalMarginSeconds(nextTile, nextArrivalSeconds, settings, null);
             float currentMargin = currentDanger - settings.dangerReactionSeconds;
+            if (currentMargin <= 0f)
+            {
+                LogPostPlantEscapeDiagnostic(
+                    "SAFETY_ALLOW_FATAL_ESCAPE_MOVE",
+                    currentTile,
+                    currentDanger,
+                    $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} " +
+                    $"currentMargin:{currentMargin:F2}s nextMargin:{nextMargin:F2}s nextArrival:{nextArrivalSeconds:F2}s");
+                return requestedMove;
+            }
+
             if (nextMargin + DangerTimingMarginSeconds < currentMargin)
             {
                 LogPostPlantEscapeDiagnostic(

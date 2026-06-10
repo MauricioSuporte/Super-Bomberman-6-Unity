@@ -30,6 +30,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public AudioClip kickSfx;
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
 
+    [Header("Debug")]
+    private bool debugKickTrace = true;
+
     private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
     private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();
     private Vector2 _lastOwnerDirection = Vector2.zero;
@@ -62,6 +65,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         public bool hitDestructible;
         public Vector3Int destructibleCell;
         public TileBase destructibleTile;
+        public readonly List<ItemPickup> pushedSkulls = new();
+
+        public void Reset()
+        {
+            hitDestructible = false;
+            destructibleCell = default;
+            destructibleTile = null;
+            pushedSkulls.Clear();
+        }
     }
 
     void Awake()
@@ -167,8 +179,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         bool hasBombInFront = TryGetBombAtCell(SnapToGrid(rb.position, movement.tileSize) + dir.normalized * movement.tileSize, out Bomb firstBomb);
         bool hasTileInFront = TryGetDestructibleAtCell(destructibleTilemap, frontCell, out TileBase firstTile);
 
+        LogKickTrace(
+            $"kick-start owner:{GetOwnerLabel()} ownerTile:{FormatVec(SnapToGrid(rb.position, movement.tileSize))} " +
+            $"dir:{FormatVec(dir.normalized)} frontCell:{frontCell} firstBomb:{FormatBomb(firstBomb)} " +
+            $"firstTile:{(firstTile != null ? firstTile.name : "none")}");
+
         if (!hasBombInFront && !hasTileInFront)
         {
+            LogKickTrace("kick-cancel no-bomb-or-tile-in-front");
+
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
             {
                 if (!inputUnlockedAfterAnim)
@@ -604,6 +623,11 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         float tileSize = movement.tileSize;
         float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
         var queue = new List<Bomb>(8) { firstBomb };
+        int segment = 0;
+
+        LogKickTrace(
+            $"bomb-queue-start dir:{FormatVec(kickDir)} first:{FormatBomb(firstBomb)} " +
+            $"remainingFuse:{FormatFuse(firstBomb)}");
 
         while (enabledAbility && movement != null && !movement.isDead)
         {
@@ -612,14 +636,31 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             ExtendBombQueue(queue, kickDir, tileSize);
 
             if (queue.Count == 0)
+            {
+                LogKickTrace("bomb-queue-stop empty-queue");
                 yield break;
+            }
 
             if (!CanMoveBombQueue(queue, kickDir, tileSize, destructibleTilemap, transfer))
+            {
+                Bomb front = queue[queue.Count - 1];
+                Vector2 frontCell = front != null ? SnapToGrid(front.transform.position, tileSize) : Vector2.zero;
+                Vector2 nextCell = frontCell + kickDir * tileSize;
+
+                LogKickTrace(
+                    $"bomb-queue-stop blocked segment:{segment} queue:{FormatBombQueue(queue)} " +
+                    $"front:{FormatBomb(front)} next:{FormatVec(nextCell)} " +
+                    $"hitDestructible:{(transfer != null && transfer.hitDestructible)} " +
+                    $"destructibleCell:{(transfer != null ? transfer.destructibleCell.ToString() : "none")}");
                 yield break;
+            }
 
             var starts = new Vector2[queue.Count];
             var ends = new Vector2[queue.Count];
             var bodies = new Rigidbody2D[queue.Count];
+            var frontBomb = queue[queue.Count - 1];
+            var frontStart = SnapToGrid(frontBomb.transform.position, tileSize);
+            var frontCollider = frontBomb.GetComponent<Collider2D>();
 
             for (int i = 0; i < queue.Count; i++)
             {
@@ -632,6 +673,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 ends[i] = starts[i] + kickDir * tileSize;
                 bodies[i] = bomb.GetComponent<Rigidbody2D>();
             }
+
+            StartBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart);
+
+            LogKickTrace(
+                $"bomb-queue-segment segment:{segment} queue:{FormatBombQueue(queue)} " +
+                $"from:{FormatVec(starts[0])} to:{FormatVec(ends[0])} " +
+                $"frontTo:{FormatVec(ends[ends.Length - 1])} firstFuse:{FormatFuse(queue[0])}");
 
             float tMove = 0f;
             while (tMove < 1f)
@@ -658,6 +706,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     bomb.transform.position = pos;
                 }
 
+                UpdateBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart, t);
+
                 yield return null;
             }
 
@@ -671,6 +721,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 _bombPlantDirection.Remove(bomb);
                 _bombEarlyKickUnlocked.Remove(bomb);
             }
+
+            FinishBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, ends[ends.Length - 1]);
+
+            LogKickTrace(
+                $"bomb-queue-segment-done segment:{segment} queue:{FormatBombQueue(queue)} " +
+                $"logicalFirst:{FormatVec(queue[0] != null ? queue[0].GetLogicalPosition() : Vector2.zero)} " +
+                $"firstFuse:{FormatFuse(queue[0])}");
+
+            segment++;
         }
     }
 
@@ -711,6 +770,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         Tilemap destructibleTilemap,
         BombQueueTransfer transfer)
     {
+        if (transfer != null)
+            transfer.Reset();
+
         if (queue == null || queue.Count == 0)
             return false;
 
@@ -751,6 +813,19 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         if (HasEnemyAt(nextCellWorld))
             return false;
+
+        if (HasBlockingNonSkullItemAt(nextCellWorld, out List<ItemPickup> pushedSkulls))
+            return false;
+
+        if (transfer != null)
+        {
+            transfer.pushedSkulls.Clear();
+            for (int i = 0; i < pushedSkulls.Count; i++)
+            {
+                if (pushedSkulls[i] != null && !transfer.pushedSkulls.Contains(pushedSkulls[i]))
+                    transfer.pushedSkulls.Add(pushedSkulls[i]);
+            }
+        }
 
         if (IsMixedChainSolidAt(nextCellWorld, kickDir, front))
             return false;
@@ -797,7 +872,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (movement == null)
             return true;
 
-        if (HasItemAt(nextCell))
+        if (HasBlockingNonSkullItemAt(nextCell, out _))
             return true;
 
         if (HasPlayerAt(nextCell))
@@ -839,6 +914,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject.name == "YellowKickBlock_CurrentCell" || hit.gameObject.name == "YellowKickBlock_NextCell")
                 continue;
 
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup != null && pickup.type == ItemType.Skull)
+                continue;
+
             if (hit.isTrigger)
                 continue;
 
@@ -846,6 +928,77 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
+    }
+
+    void StartBombQueuePushedSkulls(
+        BombQueueTransfer transfer,
+        Vector2 kickDir,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 frontSegmentStart)
+    {
+        if (transfer == null || transfer.pushedSkulls.Count == 0)
+            return;
+
+        for (int i = transfer.pushedSkulls.Count - 1; i >= 0; i--)
+        {
+            ItemPickup skull = transfer.pushedSkulls[i];
+            if (skull == null ||
+                !skull.StartKickedBombPushSegment(kickDir, tileSize, ignoredCollider, frontSegmentStart, i + 1))
+            {
+                transfer.pushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    void UpdateBombQueuePushedSkulls(
+        BombQueueTransfer transfer,
+        Vector2 kickDir,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 frontSegmentStart,
+        float progress)
+    {
+        if (transfer == null || transfer.pushedSkulls.Count == 0)
+            return;
+
+        for (int i = transfer.pushedSkulls.Count - 1; i >= 0; i--)
+        {
+            ItemPickup skull = transfer.pushedSkulls[i];
+            if (skull == null ||
+                !skull.UpdateKickedBombPushSegment(kickDir, tileSize, ignoredCollider, frontSegmentStart, progress, i + 1))
+            {
+                transfer.pushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    void FinishBombQueuePushedSkulls(
+        BombQueueTransfer transfer,
+        Vector2 kickDir,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 frontBombWorldCenter)
+    {
+        if (transfer == null || transfer.pushedSkulls.Count == 0)
+            return;
+
+        for (int i = transfer.pushedSkulls.Count - 1; i >= 0; i--)
+        {
+            ItemPickup skull = transfer.pushedSkulls[i];
+            if (skull == null)
+                continue;
+
+            skull.TryMoveSkullInFrontOfKickedBomb(
+                kickDir,
+                tileSize,
+                ignoredCollider,
+                frontBombWorldCenter,
+                i + 1,
+                finishPush: true);
+        }
+
+        transfer.pushedSkulls.Clear();
     }
 
     float GetChainTransferDuration()
@@ -1031,11 +1184,47 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     bool HasItemAt(Vector3 center)
     {
+        return HasBlockingNonSkullItemAt(center, out _);
+    }
+
+    bool HasBlockingNonSkullItemAt(Vector3 center, out List<ItemPickup> skulls)
+    {
+        skulls = new List<ItemPickup>();
+
         int itemLayer = LayerMask.NameToLayer("Item");
         if (itemLayer < 0)
             return false;
 
-        return HasAnyColliderAt(center, 1 << itemLayer);
+        float ts = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float s = ts * 0.55f;
+
+        var hits = Physics2D.OverlapBoxAll(center, new Vector2(s, s), 0f, 1 << itemLayer);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        bool foundAnyItem = false;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null || hit.gameObject == gameObject)
+                continue;
+
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup == null)
+                continue;
+
+            foundAnyItem = true;
+            if (pickup.type != ItemType.Skull)
+                return true;
+
+            if (!skulls.Contains(pickup))
+                skulls.Add(pickup);
+        }
+
+        return foundAnyItem && skulls.Count == 0;
     }
 
     bool HasPlayerAt(Vector3 center)
@@ -1285,5 +1474,59 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             _bombPlantDirection.Remove(bombsToRemove[i]);
             _bombEarlyKickUnlocked.Remove(bombsToRemove[i]);
         }
+    }
+
+    void LogKickTrace(string message)
+    {
+        if (!debugKickTrace)
+            return;
+
+        Debug.Log($"[YellowLouieKickTrace][{name}] t:{Time.time:F3} {message}", this);
+    }
+
+    string GetOwnerLabel()
+    {
+        if (movement == null)
+            return name;
+
+        return $"P{movement.PlayerId}:{name}";
+    }
+
+    static string FormatVec(Vector2 value)
+    {
+        return $"({value.x:F2},{value.y:F2})";
+    }
+
+    static string FormatBomb(Bomb bomb)
+    {
+        if (bomb == null)
+            return "none";
+
+        return $"{bomb.name}@{FormatVec(bomb.GetLogicalPosition())}";
+    }
+
+    static string FormatFuse(Bomb bomb)
+    {
+        if (bomb == null)
+            return "n/a";
+
+        return bomb.RemainingFuseSeconds.ToString("F2");
+    }
+
+    static string FormatBombQueue(List<Bomb> queue)
+    {
+        if (queue == null || queue.Count == 0)
+            return "empty";
+
+        System.Text.StringBuilder sb = new();
+        for (int i = 0; i < queue.Count; i++)
+        {
+            if (i > 0)
+                sb.Append(" -> ");
+
+            sb.Append(FormatBomb(queue[i]));
+        }
+
+        return sb.ToString();
     }
 }

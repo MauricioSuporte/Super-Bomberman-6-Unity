@@ -44,6 +44,9 @@ public class BrainIA : MonoBehaviour
     public float kickDecisionCooldown = 0.35f;
     public float minSafetyAfterKick = 1.5f;
 
+    [Header("Debug")]
+    private readonly bool debugKickTrace = true;
+
     private MovementControllerAI movement;
     private BombController bomb;
     private BombKickAbility kickAbility;
@@ -263,6 +266,11 @@ public class BrainIA : MonoBehaviour
                 Vector2 targetTile = RoundToTile((Vector2)target.position, movement.tileSize);
                 lastDirection = GetBestStepAwayFromTarget(myTile, targetTile, bombsNow);
             }
+
+            LogKickTrace(
+                $"danger-think tile:{FormatVec(myTile)} chosenDir:{FormatVec(lastDirection)} " +
+                $"timeToHit:{GetMinTimeUntilBlastHitsTile(myTile, bombsNow):F2} " +
+                $"bombs:{FormatRelevantBombs(myTile, bombsNow)}");
             return;
         }
 
@@ -276,6 +284,11 @@ public class BrainIA : MonoBehaviour
                     Vector2 targetTile = RoundToTile((Vector2)target.position, movement.tileSize);
                     lastDirection = GetBestStepAwayFromTarget(myTile, targetTile, bombsNow);
                 }
+
+                LogKickTrace(
+                    $"continue-evade tile:{FormatVec(myTile)} chosenDir:{FormatVec(lastDirection)} " +
+                    $"timeToHit:{GetMinTimeUntilBlastHitsTile(myTile, bombsNow):F2} " +
+                    $"bombs:{FormatRelevantBombs(myTile, bombsNow)}");
                 return;
             }
 
@@ -566,11 +579,22 @@ public class BrainIA : MonoBehaviour
             : ScoreTile(myTile + escapeDir * movement.tileSize, bombsNow, GetSingleStepTravelTimeSeconds());
 
         if (escapeSafety < minSafetyAfterKick)
+        {
+            LogKickTrace(
+                $"opportunistic-kick-reject unsafe-after-kick tile:{FormatVec(myTile)} " +
+                $"bomb:{FormatBomb(bestAdjPlayerBomb)} kickDir:{FormatVec(kickDir)} " +
+                $"escapeDir:{FormatVec(escapeDir)} escapeSafety:{escapeSafety:F2}");
             return false;
+        }
 
         lastKickDecisionTime = Time.time;
         isEvading = true;
         lastDirection = kickDir;
+
+        LogKickTrace(
+            $"opportunistic-kick-commit tile:{FormatVec(myTile)} bomb:{FormatBomb(bestAdjPlayerBomb)} " +
+            $"kickDir:{FormatVec(kickDir)} escapeDir:{FormatVec(escapeDir)} " +
+            $"escapeSafety:{escapeSafety:F2} bombFuse:{GetBombRemainingFuseSecondsSafe(bestAdjPlayerBomb):F2}");
         return true;
     }
 
@@ -617,6 +641,11 @@ public class BrainIA : MonoBehaviour
         lastKickDecisionTime = Time.time;
         isEvading = true;
         lastDirection = bestDir;
+
+        LogKickTrace(
+            $"trapped-kick-commit tile:{FormatVec(myTile)} bomb:{FormatBomb(bestBomb)} " +
+            $"kickDir:{FormatVec(bestDir)} timeToHit:{GetMinTimeUntilBlastHitsTile(myTile, bombsNow):F2} " +
+            $"bombs:{FormatRelevantBombs(myTile, bombsNow)}");
         return true;
     }
 
@@ -1116,6 +1145,65 @@ public class BrainIA : MonoBehaviour
     bool IsStunnedPlaying()
     {
         return stun != null && stun.IsStunned;
+    }
+
+    void LogKickTrace(string message)
+    {
+        if (!debugKickTrace)
+            return;
+
+        Debug.Log($"[BrainIAKickTrace][{name}] t:{Time.time:F3} {message}", this);
+    }
+
+    static string FormatVec(Vector2 value)
+    {
+        return $"({value.x:F2},{value.y:F2})";
+    }
+
+    string FormatBomb(Bomb b)
+    {
+        if (b == null)
+            return "none";
+
+        return $"{b.name}@{FormatVec(RoundToTile(b.GetLogicalPosition(), movement.tileSize))}/fuse:{GetBombRemainingFuseSecondsSafe(b):F2}/moved:{b.WasMovedByKickOrPunch}";
+    }
+
+    string FormatRelevantBombs(Vector2 tile, IReadOnlyList<Bomb> bombsNow)
+    {
+        if (bombsNow == null || bombsNow.Count == 0)
+            return "none";
+
+        System.Text.StringBuilder sb = new();
+        int count = 0;
+
+        for (int i = 0; i < bombsNow.Count; i++)
+        {
+            Bomb b = bombsNow[i];
+            if (b == null || b.HasExploded)
+                continue;
+
+            Vector2 bombTile = RoundToTile(b.GetLogicalPosition(), movement.tileSize);
+            bool inBlast = IsTileInBlastLineWithBlocking(
+                bombTile,
+                tile,
+                GetBombExplosionRadiusSafe(b),
+                out float dist);
+
+            if (!inBlast && Manhattan(tile, bombTile) > movement.tileSize * 4f)
+                continue;
+
+            if (count > 0)
+                sb.Append(" | ");
+
+            sb.Append(FormatBomb(b));
+            sb.Append($"/dist:{dist:F2}/inBlast:{inBlast}");
+            count++;
+
+            if (count >= 4)
+                break;
+        }
+
+        return count == 0 ? "none" : sb.ToString();
     }
 
     struct Node

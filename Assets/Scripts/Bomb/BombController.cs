@@ -34,7 +34,7 @@ public partial class BombController : MonoBehaviour
     public int bombAmout = 1;
 
     [Header("Chain Explosion")]
-    private const bool EnableBombChainRuntimeDiagnostics = true;
+    private const bool EnableBombChainRuntimeDiagnostics = false;
     [SerializeField] private float chainBombDelaySeconds = 0.1f;
     private readonly HashSet<GameObject> scheduledChainBombs = new();
     private readonly Dictionary<GameObject, Vector2> scheduledChainBombSnapPositions = new();
