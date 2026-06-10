@@ -5468,11 +5468,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (currentMoveFollowsEscapeRoute && NeedsTurnAxisCentering(currentTile, requestedDirection))
         {
-            // Não centralizar quando o tile atual está em perigo: cada frame conta.
-            // Centralizar só quando o tile está seguro (ownPending escape com tempo de sobra).
-            float tileDanger = GetDangerSeconds(currentTile, null);
-            if (float.IsInfinity(tileDanger))
-                return GetTurnAxisCenteringMove(currentTile, requestedDirection);
+            // A perpendicular turn cannot pass the tile collision while the player is
+            // between grid lanes. Finish that short alignment even during an escape.
+            return GetTurnAxisCenteringMove(currentTile, requestedDirection);
         }
 
         if (ShouldKeepTargetedMove(currentTile, requestedDirection))

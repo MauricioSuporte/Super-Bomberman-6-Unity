@@ -4767,8 +4767,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 2
-  activePlayerMask: 17
+  activePlayerCount: 6
+  activePlayerMask: 63
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
