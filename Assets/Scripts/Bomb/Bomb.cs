@@ -56,15 +56,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public float PlacedTime { get; private set; }
     public bool IsControlBomb { get; set; }
 
-    public bool IsBeingKicked => isKicked;
+    public bool IsBeingKicked => isKicked || isBeingMovedByYellowLouie;
+    public bool IsBeingMovedByYellowLouie => isBeingMovedByYellowLouie;
     public bool IsBeingPunched => isPunched;
     public bool WasMovedByKickOrPunch { get; private set; }
     public bool IsBeingHeldByPowerGlove { get; private set; }
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
-    public bool CanBeKickedEarly => !HasExploded && !isKicked && !isPunched && !IsBeingHeldByPowerGlove;
-    public bool CanBeKicked => !HasExploded && !isKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
-    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
+    public bool CanBeKickedEarly => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove;
+    public bool CanBeKicked => !HasExploded && !IsBeingKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
+    public bool CanBePunched => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
     public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingHeldByPowerGlove && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
@@ -87,6 +88,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private BoundsInt stageCellBounds;
 
     private bool isKicked;
+    private bool isBeingMovedByYellowLouie;
     private bool isPunched;
 
     private Vector2 kickDirection;
@@ -1145,6 +1147,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         WasMovedByKickOrPunch = true;
     }
 
+    public void SetYellowLouieKickMovement(bool moving)
+    {
+        isBeingMovedByYellowLouie = moving && !HasExploded;
+        if (isBeingMovedByYellowLouie)
+            WasMovedByKickOrPunch = true;
+    }
+
     public void ForceSetLogicalPosition(Vector2 worldPos)
     {
         worldPos.x = Mathf.Round(worldPos.x);
@@ -1918,13 +1927,22 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 var h = hits[i];
                 if (h == null) continue;
                 if (h.gameObject == gameObject) continue;
-                if (h.isTrigger) continue;
 
                 if (h.transform.IsChildOf(transform))
                     continue;
 
                 if (h.gameObject.name == "KickBombOriginBlocker" || h.gameObject.name == "MagnetBombOriginBlocker")
                     continue;
+
+                Bomb blockingBomb = h.GetComponent<Bomb>() ?? h.GetComponentInParent<Bomb>();
+                if (blockingBomb != null &&
+                    blockingBomb != this &&
+                    blockingBomb.IsBeingKicked)
+                {
+                    return true;
+                }
+
+                if (h.isTrigger) continue;
 
                 return true;
             }

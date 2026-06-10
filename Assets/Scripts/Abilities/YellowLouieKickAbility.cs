@@ -35,6 +35,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
     private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();
+    private readonly HashSet<Bomb> yellowLouieMovingBombs = new();
     private Vector2 _lastOwnerDirection = Vector2.zero;
 
     MovementController movement;
@@ -473,7 +474,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
                     float tMove = 0f;
-                    bool enemyEnteredDestinationDuringMove = false;
+                    bool characterEnteredDestinationDuringMove = false;
 
                     while (tMove < 1f)
                     {
@@ -482,9 +483,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                         ReleaseInputIfNeeded();
 
-                        if (HasEnemyAt(to))
+                        if (HasPlayerAt(to) || HasEnemyAt(to))
                         {
-                            enemyEnteredDestinationDuringMove = true;
+                            characterEnteredDestinationDuringMove = true;
                             break;
                         }
 
@@ -496,7 +497,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         yield return null;
                     }
 
-                    if (enemyEnteredDestinationDuringMove)
+                    if (characterEnteredDestinationDuringMove)
                     {
                         release(nextCell);
                         ApplyShadowForCell(nextCell);
@@ -651,6 +652,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
         var queue = new List<Bomb>(8) { firstBomb };
         int segment = 0;
+        SetYellowLouieBombMoving(firstBomb);
 
         LogKickTrace(
             $"bomb-queue-start dir:{FormatVec(kickDir)} first:{FormatBomb(firstBomb)} " +
@@ -661,10 +663,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             releaseInputIfNeeded?.Invoke();
 
             ExtendBombQueue(queue, kickDir, tileSize);
+            for (int i = 0; i < queue.Count; i++)
+                SetYellowLouieBombMoving(queue[i]);
 
             if (queue.Count == 0)
             {
                 LogKickTrace("bomb-queue-stop empty-queue");
+                ClearYellowLouieBombMovement();
                 yield break;
             }
 
@@ -691,6 +696,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     $"front:{FormatBomb(front)} next:{FormatVec(nextCell)} " +
                     $"hitDestructible:{(transfer != null && transfer.hitDestructible)} " +
                     $"destructibleCell:{(transfer != null ? transfer.destructibleCell.ToString() : "none")}");
+                ClearYellowLouieBombMovement();
                 yield break;
             }
 
@@ -705,7 +711,10 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             {
                 Bomb bomb = queue[i];
                 if (bomb == null || bomb.HasExploded)
+                {
+                    ClearYellowLouieBombMovement();
                     yield break;
+                }
 
                 bomb.MarkMovedByKickOrPunch();
                 starts[i] = SnapToGrid(bomb.transform.position, tileSize);
@@ -721,13 +730,30 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 $"frontTo:{FormatVec(ends[ends.Length - 1])} firstFuse:{FormatFuse(queue[0])}");
 
             float tMove = 0f;
+            bool hitMovingBomb = false;
+            bool hitPlayer = false;
             while (tMove < 1f)
             {
                 if (!enabledAbility || movement == null || movement.isDead)
+                {
+                    ClearYellowLouieBombMovement();
                     yield break;
+                }
 
                 if (Time.time >= animEndTime)
                     releaseInputIfNeeded?.Invoke();
+
+                if (HasMovingBombOutsideQueueAtCell(ends[ends.Length - 1], queue))
+                {
+                    hitMovingBomb = true;
+                    break;
+                }
+
+                if (HasPlayerAt(ends[ends.Length - 1]))
+                {
+                    hitPlayer = true;
+                    break;
+                }
 
                 tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
                 float t = Mathf.Clamp01(tMove);
@@ -752,6 +778,36 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 yield return null;
             }
 
+            if (hitMovingBomb || hitPlayer)
+            {
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    Bomb bomb = queue[i];
+                    if (bomb != null && !bomb.HasExploded)
+                        bomb.ForceSetLogicalPosition(starts[i]);
+                }
+
+                FinishBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart);
+
+                if (frontBomb != null &&
+                    frontBomb.IsRubberBomb &&
+                    TryReverseRubberBombQueue(queue, ref kickDir, tileSize, destructibleTilemap, transfer))
+                {
+                    LogKickTrace(
+                        $"bomb-queue-rubber-moving-bomb-bounce segment:{segment} " +
+                        $"queue:{FormatBombQueue(queue)} newDir:{FormatVec(kickDir)}");
+                    frontBomb.PlayKickBounceSfx();
+                    continue;
+                }
+
+                LogKickTrace(
+                    $"bomb-queue-stop dynamic-collision segment:{segment} " +
+                    $"reason:{(hitPlayer ? "player" : "moving-bomb")} " +
+                    $"queue:{FormatBombQueue(queue)} target:{FormatVec(ends[ends.Length - 1])}");
+                ClearYellowLouieBombMovement();
+                yield break;
+            }
+
             for (int i = 0; i < queue.Count; i++)
             {
                 Bomb bomb = queue[i];
@@ -773,6 +829,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
             segment++;
         }
+
+        ClearYellowLouieBombMovement();
     }
 
     void ExtendBombQueue(List<Bomb> queue, Vector2 kickDir, float tileSize)
@@ -822,8 +880,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         for (int i = 0; validateKickEligibility && i < queue.Count; i++)
         {
             Bomb bomb = queue[i];
-            if (!CanStartYellowBombKick(bomb, kickDir, unlockEarlyKick: true))
+            if (bomb == null ||
+                (bomb.IsBeingKicked &&
+                 !bomb.IsBeingMovedByYellowLouie) ||
+                (!bomb.IsBeingMovedByYellowLouie &&
+                 !CanStartYellowBombKick(bomb, kickDir, unlockEarlyKick: true)))
+            {
                 return false;
+            }
         }
 
         Bomb front = queue[queue.Count - 1];
@@ -989,7 +1053,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         {
             if (queue[i] == null ||
                 queue[i].HasExploded ||
-                queue[i].IsBeingKicked)
+                (queue[i].IsBeingKicked &&
+                 !queue[i].IsBeingMovedByYellowLouie))
             {
                 return false;
             }
@@ -1436,6 +1501,59 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return false;
     }
 
+    bool HasMovingBombOutsideQueueAtCell(Vector2 worldCellCenter, List<Bomb> queue)
+    {
+        if (movement == null)
+            return false;
+
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            worldCellCenter,
+            Vector2.one * (movement.tileSize * 0.6f),
+            0f,
+            1 << bombLayer);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            Bomb bomb = hit.GetComponent<Bomb>() ?? hit.GetComponentInParent<Bomb>();
+            if (bomb != null &&
+                bomb.IsBeingKicked &&
+                (queue == null || !queue.Contains(bomb)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void SetYellowLouieBombMoving(Bomb bomb)
+    {
+        if (bomb == null || bomb.HasExploded || yellowLouieMovingBombs.Contains(bomb))
+            return;
+
+        yellowLouieMovingBombs.Add(bomb);
+        bomb.SetYellowLouieKickMovement(true);
+    }
+
+    void ClearYellowLouieBombMovement()
+    {
+        foreach (Bomb bomb in yellowLouieMovingBombs)
+        {
+            if (bomb != null)
+                bomb.SetYellowLouieKickMovement(false);
+        }
+
+        yellowLouieMovingBombs.Clear();
+    }
+
     void CancelKick()
     {
         if (routine != null)
@@ -1445,6 +1563,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         StopKickVisuals();
+        ClearYellowLouieBombMovement();
 
         if (movement != null)
             movement.SetInputLocked(false);
@@ -1474,6 +1593,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             StopCoroutine(routine);
             routine = null;
         }
+
+        ClearYellowLouieBombMovement();
 
         if (kickVisualRoutine != null)
         {
