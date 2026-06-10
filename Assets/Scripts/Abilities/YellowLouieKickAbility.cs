@@ -205,6 +205,33 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             yield break;
         }
 
+        if (firstBomb != null && firstBomb.IsBeingKicked)
+        {
+            bool redirected = firstBomb.TryRedirectKick(dir);
+            LogKickTrace(
+                $"kick-redirect-moving-bomb bomb:{FormatBomb(firstBomb)} " +
+                $"dir:{FormatVec(dir.normalized)} redirected:{redirected}");
+
+            if (redirected && audioSource != null && kickSfx != null)
+                audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+
+            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null)
+                        movement.SetInputLocked(false);
+                }
+            });
+
+            if (movement != null)
+                movement.SetInputLocked(false);
+
+            routine = null;
+            yield break;
+        }
+
         if (audioSource != null && kickSfx != null)
             audioSource.PlayOneShot(kickSfx, kickSfxVolume);
 
@@ -960,8 +987,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         for (int i = 0; i < queue.Count; i++)
         {
-            if (queue[i] == null || queue[i].HasExploded)
+            if (queue[i] == null ||
+                queue[i].HasExploded ||
+                queue[i].IsBeingKicked)
+            {
                 return false;
+            }
         }
 
         Vector2 reversedDirection = -kickDir;
