@@ -594,6 +594,45 @@ public sealed class BattleModeComController : MonoBehaviour
                 $"REMOVED BattleModeComBombPassAbility isCom:{isCom} enabled:{bombPassEnabled}");
         }
 
+        // DestructiblePass: condicionado a CanPassDestructibles, mesmo padrão do BombPass.
+        bool persistentDestructiblePassEnabled =
+            PlayerPersistentStats.GetRuntime(playerId).CanPassDestructibles;
+        if (persistentDestructiblePassEnabled)
+        {
+            if (abilitySystem == null)
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+
+            if (!abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId))
+                abilitySystem.Enable(DestructiblePassAbility.AbilityId);
+        }
+
+        bool destructiblePassEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+        TryGetComponent<BattleModeComDestructiblePassAbility>(out var destructiblePassCom);
+        if (isCom && destructiblePassEnabled && destructiblePassCom == null)
+        {
+            gameObject.AddComponent<BattleModeComDestructiblePassAbility>();
+            abilitySystemVersion = -2;
+            LogDestructiblePassLoadDiagnostic(
+                $"ADDED BattleModeComDestructiblePassAbility persistent:{persistentDestructiblePassEnabled}");
+        }
+        else if ((!isCom || !destructiblePassEnabled) && destructiblePassCom != null)
+        {
+            Destroy(destructiblePassCom);
+            abilitySystemVersion = -2;
+            LogDestructiblePassLoadDiagnostic(
+                $"REMOVED BattleModeComDestructiblePassAbility isCom:{isCom} enabled:{destructiblePassEnabled}");
+        }
+
+        if (isCom && Time.frameCount - lastDestructiblePassLoadDiagnosticFrame >= 300)
+        {
+            lastDestructiblePassLoadDiagnosticFrame = Time.frameCount;
+            LogDestructiblePassLoadDiagnostic(
+                $"load check persistent:{persistentDestructiblePassEnabled} enabled:{destructiblePassEnabled} " +
+                $"com:{(destructiblePassCom != null || (isCom && destructiblePassEnabled))}");
+        }
+
         if (isCom && Time.frameCount - lastBombPassLoadDiagnosticFrame >= 300)
         {
             lastBombPassLoadDiagnosticFrame = Time.frameCount;
@@ -630,6 +669,22 @@ public sealed class BattleModeComController : MonoBehaviour
     }
 
     private int lastBombPassLoadDiagnosticFrame = -9999;
+    private int lastDestructiblePassLoadDiagnosticFrame = -9999;
+
+    private void LogDestructiblePassLoadDiagnostic(string message)
+    {
+        if (!BattleModeComDestructiblePassAbility.EnableDestructiblePassDiagnostics)
+            return;
+
+        if (!IsBattleModeScene())
+            return;
+
+        if (BattleModeComDestructiblePassAbility.DiagnosticPlayerIdFilter != 0 &&
+            playerId != BattleModeComDestructiblePassAbility.DiagnosticPlayerIdFilter)
+            return;
+
+        Debug.LogWarning($"[BattleCOMDestructiblePass][P{playerId}] LOAD {message}", this);
+    }
 
     private void LogBombPassLoadDiagnostic(string message)
     {
@@ -4209,11 +4264,12 @@ public sealed class BattleModeComController : MonoBehaviour
             hasTarget &&
             ((!string.IsNullOrEmpty(route) &&
               route.StartsWith("escape", StringComparison.Ordinal)) ||
-             // Fugas da BombPass ability chegam com route "ability" mas são rotas
-             // de fuga legítimas (atravessando bombas) — sem isso o dangerTimingGate
-             // bloqueia o passo para dentro da blast line e a IA congela.
+             // Fugas das abilities de atravessar (BombPass/DestructiblePass) chegam
+             // com route "ability" mas são rotas de fuga legítimas — sem isso o
+             // dangerTimingGate bloqueia o passo para dentro da blast line e a IA congela.
              (!string.IsNullOrEmpty(reason) &&
-              reason.StartsWith("bomb-pass", StringComparison.Ordinal)));
+              (reason.StartsWith("bomb-pass", StringComparison.Ordinal) ||
+               reason.StartsWith("destructible-pass", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
@@ -5628,7 +5684,12 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!HasGroundTile(tile))
             return false;
 
-        if (HasIndestructibleTile(tile) || HasDestructibleTile(tile))
+        if (HasIndestructibleTile(tile))
+            return false;
+
+        // DestructiblePass: blocos destrutíveis deixam de ser obstáculo — abre rotas
+        // de fuga, farm e perseguição através dos blocos em todo o pathfinding.
+        if (HasDestructibleTile(tile) && !ComCanPassThroughDestructibles())
             return false;
 
         // BombPass: bombas deixam de ser obstáculo para a IA — isso abre rotas de
@@ -5658,6 +5719,10 @@ public sealed class BattleModeComController : MonoBehaviour
                     (tile == startTile || ComCanPassThroughBombs()))
                     continue;
 
+                // DestructiblePass: ignora os colliders dos blocos destrutíveis.
+                if (ComCanPassThroughDestructibles() && IsDestructibleCollider(hit))
+                    continue;
+
                 return false;
             }
         }
@@ -5677,6 +5742,34 @@ public sealed class BattleModeComController : MonoBehaviour
 
         return bombPassCheckAbilitySystem != null &&
                bombPassCheckAbilitySystem.IsEnabled(BombPassAbility.AbilityId);
+    }
+
+    /// <summary>
+    /// True quando a IA possui DestructiblePassAbility ativa — blocos destrutíveis
+    /// são atravessáveis.
+    /// </summary>
+    private bool ComCanPassThroughDestructibles()
+    {
+        if (bombPassCheckAbilitySystem == null)
+            TryGetComponent(out bombPassCheckAbilitySystem);
+
+        return bombPassCheckAbilitySystem != null &&
+               bombPassCheckAbilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+    }
+
+    private static bool IsDestructibleCollider(Collider2D collider)
+    {
+        Transform current = collider != null ? collider.transform : null;
+        int guard = 0;
+        while (current != null && guard++ < 6)
+        {
+            if (current.CompareTag("Destructibles"))
+                return true;
+
+            current = current.parent;
+        }
+
+        return false;
     }
 
     private bool IsOwnCollider(Collider2D colliderToCheck)
