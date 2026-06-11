@@ -19,6 +19,10 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     private const float OffensiveCooldownSeconds = 2f;
     private const float PlannedPickupAuthorizationSeconds = 0.8f;
     private const float CenterToleranceTiles = 0.12f;
+    private const float CarryMaxSeconds = 5f;
+    private const float CarryNoPathGraceSeconds = 1.25f;
+    private const int CarrySearchMaxDepth = 14;
+    private const float CarryStepDangerMarginSeconds = 0.35f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -32,6 +36,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     {
         None,
         PickingUp,
+        Carrying,
         Releasing
     }
 
@@ -60,6 +65,14 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     private Vector2Int sequencePlantTile;
     private Vector2Int sequenceThrowDirection;
     private Vector2Int sequenceLandingTile;
+    private bool carryModePlanned;
+    private float carryStartedTime = -10f;
+    private float carryNoPathSince = -10f;
+    private readonly Dictionary<Vector2Int, Vector2Int> carrySearchParents =
+        new Dictionary<Vector2Int, Vector2Int>(128);
+    private readonly Dictionary<Vector2Int, int> carrySearchDepth =
+        new Dictionary<Vector2Int, int>(128);
+    private readonly Queue<Vector2Int> carrySearchOpen = new Queue<Vector2Int>(64);
     private float tileSize = 1f;
     private int explosionMask;
     private string lastDecisionTrace = "not evaluated";
@@ -201,7 +214,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             return false;
         }
 
-        StartPickupSequence(bomb, myTile, throwDirection, landingTile);
+        StartPickupSequence(settings, bomb, myTile, throwDirection, landingTile);
         decision = BuildPickupDecision(settings, "emergency pickup");
         lastDecisionTrace =
             $"emergency PICKUP bomb:{myTile} dir:{throwDirection} landing:{landingTile}";
@@ -260,6 +273,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             }
 
             StartPickupSequence(
+                settings,
                 existingBomb,
                 myTile,
                 existingDirection,
@@ -356,6 +370,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             case SequenceState.PickingUp:
                 return ContinuePickup(settings, myTile, out decision);
 
+            case SequenceState.Carrying:
+                return ContinueCarry(settings, myTile, out decision);
+
             case SequenceState.Releasing:
                 return ContinueRelease(settings, out decision);
 
@@ -379,6 +396,16 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
         if (powerGlove.IsHoldingBomb && sequenceBomb.IsBeingHeldByPowerGlove)
         {
+            if (carryModePlanned)
+            {
+                carryStartedTime = Time.time;
+                carryNoPathSince = -10f;
+                sequenceStartedTime = Time.time;
+                SetSequenceState(SequenceState.Carrying);
+                lastDecisionTrace = $"sequence CARRY_START my:{myTile}";
+                return ContinueCarry(settings, myTile, out decision);
+            }
+
             movement.ForceFacingDirection(TileDirectionToVector(sequenceThrowDirection));
             SetSequenceState(SequenceState.Releasing);
             decision = BuildThrowTapDecision(settings);
@@ -450,6 +477,310 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         return true;
     }
 
+    private bool ContinueCarry(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+
+        if (!IsSequenceBombValid())
+        {
+            ResetSequence("carry bomb invalid");
+            return false;
+        }
+
+        if (!powerGlove.IsHoldingBomb || !sequenceBomb.IsBeingHeldByPowerGlove)
+        {
+            ResetSequence("carry lost held bomb");
+            return false;
+        }
+
+        if (!FindNearestOpponentTile(myTile, out Vector2Int targetTile))
+            return ForceCarryThrow(settings, myTile, "carry no opponent alive", out decision);
+
+        if (Time.time - carryStartedTime > CarryMaxSeconds)
+            return ForceCarryThrow(settings, myTile, "carry timeout", out decision);
+
+        if (IsCenteredOnTile(myTile) &&
+            TryGetThrowSpotDirection(
+                myTile,
+                targetTile,
+                out Vector2Int throwDirection,
+                out Vector2Int throwLanding))
+        {
+            return BeginCarryRelease(
+                settings,
+                myTile,
+                throwDirection,
+                throwLanding,
+                $"carry throw at P-target tile:{targetTile}",
+                out decision);
+        }
+
+        if (TryFindCarryStep(myTile, targetTile, out Vector2 stepMove, out Vector2Int stepTarget))
+        {
+            carryNoPathSince = -10f;
+            decision = new BattleModeComAbilityDecision
+            {
+                Action = BattleModeComActionType.KickBomb,
+                Weight = 540 + DifficultyWeight(settings),
+                TargetTile = stepTarget,
+                HasTarget = true,
+                FirstMove = stepMove,
+                Reason = $"carrying bomb toward throw spot {stepTarget}",
+                InputDescription = AppendInput("HoldActionA", FirstMoveDescription(stepMove)),
+                HoldActionA = true
+            };
+            lastDecisionTrace =
+                $"sequence CARRY my:{myTile} target:{targetTile} step:{FirstMoveDescription(stepMove)} goal:{stepTarget}";
+            return true;
+        }
+
+        if (carryNoPathSince < 0f)
+            carryNoPathSince = Time.time;
+
+        if (Time.time - carryNoPathSince > CarryNoPathGraceSeconds)
+            return ForceCarryThrow(settings, myTile, "carry no path to throw spot", out decision);
+
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.KickBomb,
+            Weight = 540 + DifficultyWeight(settings),
+            TargetTile = myTile,
+            HasTarget = true,
+            FirstMove = Vector2.zero,
+            Reason = "carrying bomb waiting for path",
+            InputDescription = "HoldActionA",
+            HoldActionA = true
+        };
+        lastDecisionTrace = $"sequence CARRY_WAIT my:{myTile} target:{targetTile}";
+        return true;
+    }
+
+    private bool BeginCarryRelease(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        Vector2Int throwDirection,
+        Vector2Int landingTile,
+        string reason,
+        out BattleModeComAbilityDecision decision)
+    {
+        sequencePlantTile = myTile;
+        sequenceThrowDirection = throwDirection;
+        sequenceLandingTile = landingTile;
+        movement.ForceFacingDirection(TileDirectionToVector(throwDirection));
+        SetSequenceState(SequenceState.Releasing);
+
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.KickBomb,
+            Weight = 560 + DifficultyWeight(settings),
+            TargetTile = landingTile,
+            HasTarget = true,
+            FirstMove = Vector2.zero,
+            Reason = reason,
+            InputDescription = "ReleaseActionA",
+            HoldActionA = false
+        };
+
+        lastDecisionTrace =
+            $"sequence CARRY_RELEASE dir:{throwDirection} landing:{landingTile} reason:{reason}";
+        return true;
+    }
+
+    private bool ForceCarryThrow(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        string reason,
+        out BattleModeComAbilityDecision decision)
+    {
+        if (!TryChooseThrowDirection(
+                myTile,
+                sequenceBomb,
+                requireOffensiveTarget: false,
+                out Vector2Int throwDirection,
+                out Vector2Int landingTile,
+                out _))
+        {
+            throwDirection = Vector2Int.down;
+            landingTile = PredictLandingTile(myTile, throwDirection);
+        }
+
+        return BeginCarryRelease(settings, myTile, throwDirection, landingTile, reason, out decision);
+    }
+
+    private bool TryGetThrowSpotDirection(
+        Vector2Int origin,
+        Vector2Int targetTile,
+        out Vector2Int bestDirection,
+        out Vector2Int bestLanding)
+    {
+        bestDirection = Vector2Int.zero;
+        bestLanding = origin;
+        int bestScore = int.MinValue;
+        int radius = GetBombRadius(sequenceBomb);
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int direction = CardinalTiles[i];
+            Vector2Int landing = PredictLandingTile(origin, direction);
+            if (landing == origin)
+                continue;
+
+            int score;
+            if (landing == targetTile)
+                score = 100;
+            else if (IsTileInBlastLine(landing, targetTile, radius) &&
+                     !IsTileInBlastLine(landing, origin, radius))
+                score = 50;
+            else
+                continue;
+
+            if (score <= bestScore)
+                continue;
+
+            bestScore = score;
+            bestDirection = direction;
+            bestLanding = landing;
+        }
+
+        return bestDirection != Vector2Int.zero;
+    }
+
+    private bool FindNearestOpponentTile(Vector2Int myTile, out Vector2Int targetTile)
+    {
+        targetTile = myTile;
+        int bestDistance = int.MaxValue;
+
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (!player.TryGetComponent(out MovementController targetMovement) ||
+                targetMovement == null ||
+                targetMovement.isDead)
+            {
+                continue;
+            }
+
+            Vector2Int tile = WorldToTile(player.transform.position);
+            int distance = Manhattan(myTile, tile);
+            if (distance >= bestDistance)
+                continue;
+
+            bestDistance = distance;
+            targetTile = tile;
+        }
+
+        return bestDistance != int.MaxValue;
+    }
+
+    private bool TryFindCarryStep(
+        Vector2Int start,
+        Vector2Int targetTile,
+        out Vector2 firstMove,
+        out Vector2Int goal)
+    {
+        firstMove = Vector2.zero;
+        goal = start;
+
+        carrySearchParents.Clear();
+        carrySearchDepth.Clear();
+        carrySearchOpen.Clear();
+
+        carrySearchParents[start] = start;
+        carrySearchDepth[start] = 0;
+        carrySearchOpen.Enqueue(start);
+
+        Vector2Int bestApproach = start;
+        int bestApproachDistance = Manhattan(start, targetTile);
+
+        while (carrySearchOpen.Count > 0)
+        {
+            Vector2Int tile = carrySearchOpen.Dequeue();
+            int depth = carrySearchDepth[tile];
+
+            if (depth > 0 && TryGetThrowSpotDirection(tile, targetTile, out _, out _))
+            {
+                goal = tile;
+                firstMove = TileDirectionToVector(ReconstructCarryFirstStep(start, tile));
+                return firstMove != Vector2.zero;
+            }
+
+            int distance = Manhattan(tile, targetTile);
+            if (depth > 0 && distance < bestApproachDistance)
+            {
+                bestApproachDistance = distance;
+                bestApproach = tile;
+            }
+
+            if (depth >= CarrySearchMaxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (carrySearchParents.ContainsKey(next))
+                    continue;
+
+                if (next == targetTile)
+                    continue;
+
+                if (!IsCarryWalkable(next))
+                    continue;
+
+                float danger = GetDangerSeconds(next, null);
+                if (!float.IsInfinity(danger) &&
+                    danger <= EstimateTraversalSeconds(depth + 1) + CarryStepDangerMarginSeconds)
+                {
+                    continue;
+                }
+
+                carrySearchParents[next] = tile;
+                carrySearchDepth[next] = depth + 1;
+                carrySearchOpen.Enqueue(next);
+            }
+        }
+
+        if (bestApproach != start)
+        {
+            goal = bestApproach;
+            firstMove = TileDirectionToVector(ReconstructCarryFirstStep(start, bestApproach));
+            return firstMove != Vector2.zero;
+        }
+
+        return false;
+    }
+
+    private Vector2Int ReconstructCarryFirstStep(Vector2Int start, Vector2Int goal)
+    {
+        Vector2Int current = goal;
+        while (carrySearchParents.TryGetValue(current, out Vector2Int parent) &&
+               parent != start)
+        {
+            if (parent == current)
+                break;
+
+            current = parent;
+        }
+
+        return current - start;
+    }
+
+    private bool IsCarryWalkable(Vector2Int tile)
+    {
+        return HasGroundTile(tile) &&
+               !HasIndestructibleTile(tile) &&
+               !HasDestructibleTile(tile) &&
+               FindBoardBombAt(tile) == null;
+    }
+
     private bool TryAdoptHeldBomb(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -489,11 +820,17 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     }
 
     private void StartPickupSequence(
+        BattleModeComDifficultySettings settings,
         Bomb bomb,
         Vector2Int plantTile,
         Vector2Int throwDirection,
         Vector2Int landingTile)
     {
+        carryModePlanned =
+            FindNearestOpponentTile(plantTile, out _) &&
+            Random.value <= GetCarryChance(settings);
+        carryStartedTime = -10f;
+        carryNoPathSince = -10f;
         sequenceBomb = bomb;
         sequencePlantTile = plantTile;
         sequenceThrowDirection = throwDirection;
@@ -516,8 +853,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             HasTarget = true,
             FirstMove = Vector2.zero,
             Reason = reason,
-            InputDescription = "ActionA",
-            TapActionA = true
+            InputDescription = carryModePlanned ? "ActionA+Hold" : "ActionA",
+            TapActionA = true,
+            HoldActionA = carryModePlanned
         };
     }
 
@@ -532,7 +870,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             HasTarget = true,
             FirstMove = Vector2.zero,
             Reason = "waiting for power glove pickup",
-            InputDescription = "none"
+            InputDescription = carryModePlanned ? "HoldActionA" : "none",
+            HoldActionA = carryModePlanned
         };
     }
 
@@ -960,6 +1299,21 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         };
     }
 
+    private static float GetCarryChance(BattleModeComDifficultySettings settings)
+    {
+        return settings.difficulty switch
+        {
+            BattleModeComputerLevel.Easy => 0.25f,
+            BattleModeComputerLevel.Hard => 0.55f,
+            _ => 0.40f
+        };
+    }
+
+    private static string AppendInput(string existing, string input)
+    {
+        return string.IsNullOrEmpty(existing) ? input : existing + "+" + input;
+    }
+
     private static string FirstMoveDescription(Vector2 move)
     {
         if (move == Vector2.zero)
@@ -1009,6 +1363,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         sequencePlantTile = default;
         sequenceThrowDirection = default;
         sequenceLandingTile = default;
+        carryModePlanned = false;
+        carryStartedTime = -10f;
+        carryNoPathSince = -10f;
 
         if (!string.IsNullOrEmpty(reason))
             lastDecisionTrace = $"reset {reason}";
