@@ -1381,6 +1381,8 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -1523,6 +1525,7 @@ MonoBehaviour:
   skinSelectSceneName: SkinSelect
   bossRushSceneName: BossRush
   battleModeMenuSceneName: BattleModeMenu
+  achievementsSceneName: Achievements
   fadeOpenBeforeHudsonSeconds: 0.2
   fadeCloseAfterHudsonSeconds: 0.12
 --- !u!1 &1520869088

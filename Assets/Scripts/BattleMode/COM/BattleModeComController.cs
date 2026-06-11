@@ -39,7 +39,15 @@ public sealed class BattleModeComController : MonoBehaviour
 
     // Diagnóstico cirúrgico de oscilação: loga reversões de decisão e do input aplicado
     // (com o pipeline de pós-processamento) para identificar qual estágio inverte a direção.
-    private static readonly bool EnableOscillationDiagnostics = true;
+    private static readonly bool EnableOscillationDiagnostics = false;
+
+    // Watchdog de comportamento ([BattleCOMBehavior]) — desativado durante a
+    // investigação da fuga com BombPass para reduzir ruído no console.
+    private static readonly bool EnableBehaviorDiagnostics = false;
+
+    // Master switch do [BattleCOMDecisionTrace] (o campo serializado
+    // debugDecisionTrace continua existindo, mas este flag tem precedência).
+    private static readonly bool EnableDecisionTraceDiagnostics = false;
     private Vector2Int oscDiagLastDecisionDir;
     private float oscDiagLastDecisionTime = -10f;
     private string oscDiagLastDecisionReason = string.Empty;
@@ -554,6 +562,46 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // BombPass: condicionado a CanPassBombs, espelha o padrão do PunchBomb.
+        // Mutuamente exclusivo com BombKick (PlayerPersistentStats já garante isso);
+        // pode coexistir com BattleModeComYellowLouieKickAbility.
+        bool persistentBombPassEnabled = PlayerPersistentStats.GetRuntime(playerId).CanPassBombs;
+        if (persistentBombPassEnabled)
+        {
+            if (abilitySystem == null)
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+
+            if (!abilitySystem.IsEnabled(BombPassAbility.AbilityId))
+                abilitySystem.Enable(BombPassAbility.AbilityId);
+        }
+
+        bool bombPassEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+        TryGetComponent<BattleModeComBombPassAbility>(out var bombPassCom);
+        if (isCom && bombPassEnabled && bombPassCom == null)
+        {
+            gameObject.AddComponent<BattleModeComBombPassAbility>();
+            abilitySystemVersion = -2;
+            LogBombPassLoadDiagnostic(
+                $"ADDED BattleModeComBombPassAbility persistent:{persistentBombPassEnabled}");
+        }
+        else if ((!isCom || !bombPassEnabled) && bombPassCom != null)
+        {
+            Destroy(bombPassCom);
+            abilitySystemVersion = -2;
+            LogBombPassLoadDiagnostic(
+                $"REMOVED BattleModeComBombPassAbility isCom:{isCom} enabled:{bombPassEnabled}");
+        }
+
+        if (isCom && Time.frameCount - lastBombPassLoadDiagnosticFrame >= 300)
+        {
+            lastBombPassLoadDiagnosticFrame = Time.frameCount;
+            LogBombPassLoadDiagnostic(
+                $"load check persistent:{persistentBombPassEnabled} enabled:{bombPassEnabled} " +
+                $"com:{(bombPassCom != null || (isCom && bombPassEnabled))}");
+        }
+
         if (isCom && Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
         {
             bool diagnosticKickEnabled =
@@ -579,6 +627,23 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return null;
+    }
+
+    private int lastBombPassLoadDiagnosticFrame = -9999;
+
+    private void LogBombPassLoadDiagnostic(string message)
+    {
+        if (!BattleModeComBombPassAbility.EnableBombPassEscapeDiagnostics)
+            return;
+
+        if (!IsBattleModeScene())
+            return;
+
+        if (BattleModeComBombPassAbility.DiagnosticPlayerIdFilter != 0 &&
+            playerId != BattleModeComBombPassAbility.DiagnosticPlayerIdFilter)
+            return;
+
+        Debug.LogWarning($"[BattleCOMBombPass][P{playerId}] LOAD {message}", this);
     }
 
     private void LogKickLoadDiagnostic(string message)
@@ -4142,8 +4207,13 @@ public sealed class BattleModeComController : MonoBehaviour
         currentMoveFollowsEscapeRoute =
             action == BattleModeComActionType.Reposition &&
             hasTarget &&
-            !string.IsNullOrEmpty(route) &&
-            route.StartsWith("escape", StringComparison.Ordinal);
+            ((!string.IsNullOrEmpty(route) &&
+              route.StartsWith("escape", StringComparison.Ordinal)) ||
+             // Fugas da BombPass ability chegam com route "ability" mas são rotas
+             // de fuga legítimas (atravessando bombas) — sem isso o dangerTimingGate
+             // bloqueia o passo para dentro da blast line e a IA congela.
+             (!string.IsNullOrEmpty(reason) &&
+              reason.StartsWith("bomb-pass", StringComparison.Ordinal)));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
@@ -4159,6 +4229,18 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         if (behaviorStartLogged || !IsBattleModeScene())
             return;
+
+        if (!EnableBehaviorDiagnostics)
+        {
+            behaviorStartLogged = true;
+            behaviorLastProgressPosition = transform.position;
+            behaviorLastProgressTime = Time.time;
+            Vector2Int startTile = WorldToTile(transform.position);
+            behaviorLastTile = startTile;
+            behaviorPreviousTile = startTile;
+            behaviorHasLastTile = true;
+            return;
+        }
 
         behaviorStartLogged = true;
         behaviorLastProgressPosition = transform.position;
@@ -4279,6 +4361,9 @@ public sealed class BattleModeComController : MonoBehaviour
         string symptom = "",
         bool force = false)
     {
+        if (!EnableBehaviorDiagnostics)
+            return;
+
         string key =
             $"{eventName}:{myTile}:{currentAction}:{currentTargetTile}:{currentMoveInput}:{currentReason}";
         if (!force &&
@@ -4345,7 +4430,7 @@ public sealed class BattleModeComController : MonoBehaviour
         string route,
         string detail)
     {
-        if (!debugDecisionTrace)
+        if (!EnableDecisionTraceDiagnostics || !debugDecisionTrace)
             return;
 
         if (decisionTracePlayerIdFilter != 0 && playerId != decisionTracePlayerIdFilter)
@@ -5546,7 +5631,10 @@ public sealed class BattleModeComController : MonoBehaviour
         if (HasIndestructibleTile(tile) || HasDestructibleTile(tile))
             return false;
 
-        if (IsBombAtTile(tile) && tile != startTile)
+        // BombPass: bombas deixam de ser obstáculo para a IA — isso abre rotas de
+        // fuga, desencurralamento e aproximação ofensiva através de bombas em TODOS
+        // os pathfindings do controller (fuga nativa inclusive).
+        if (IsBombAtTile(tile) && tile != startTile && !ComCanPassThroughBombs())
             return false;
 
         if (movement != null && movement.obstacleMask.value != 0)
@@ -5566,7 +5654,8 @@ public sealed class BattleModeComController : MonoBehaviour
                 if (hit.GetComponentInParent<PlayerIdentity>() != null)
                     continue;
 
-                if (tile == startTile && hit.GetComponentInParent<Bomb>() != null)
+                if (hit.GetComponentInParent<Bomb>() != null &&
+                    (tile == startTile || ComCanPassThroughBombs()))
                     continue;
 
                 return false;
@@ -5574,6 +5663,20 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private AbilitySystem bombPassCheckAbilitySystem;
+
+    /// <summary>
+    /// True quando a IA possui BombPassAbility ativa — bombas são atravessáveis.
+    /// </summary>
+    private bool ComCanPassThroughBombs()
+    {
+        if (bombPassCheckAbilitySystem == null)
+            TryGetComponent(out bombPassCheckAbilitySystem);
+
+        return bombPassCheckAbilitySystem != null &&
+               bombPassCheckAbilitySystem.IsEnabled(BombPassAbility.AbilityId);
     }
 
     private bool IsOwnCollider(Collider2D colliderToCheck)
