@@ -562,6 +562,22 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // GreenLouie dash: condicionado à ability do mount, mesmo padrão.
+        bool greenLouieDashEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(GreenLouieDashAbility.AbilityId);
+        TryGetComponent<BattleModeComGreenLouieDashAbility>(out var greenLouieDashCom);
+        if (isCom && greenLouieDashEnabled && greenLouieDashCom == null)
+        {
+            gameObject.AddComponent<BattleModeComGreenLouieDashAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !greenLouieDashEnabled) && greenLouieDashCom != null)
+        {
+            Destroy(greenLouieDashCom);
+            abilitySystemVersion = -2;
+        }
+
         // ControlBomb (uso): condicionado a HasControlBombs, padrão do PunchBomb.
         bool persistentControlEnabled = PlayerPersistentStats.GetRuntime(playerId).HasControlBombs;
         if (persistentControlEnabled)
@@ -4386,7 +4402,8 @@ public sealed class BattleModeComController : MonoBehaviour
                reason.StartsWith("pierce-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("control-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("control-retreat", StringComparison.Ordinal) ||
-               reason.StartsWith("magnet-dodge", StringComparison.Ordinal))));
+               reason.StartsWith("magnet-dodge", StringComparison.Ordinal) ||
+               reason.StartsWith("greenlouie-dash", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
