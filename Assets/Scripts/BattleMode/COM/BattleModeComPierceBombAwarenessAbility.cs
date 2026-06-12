@@ -3,41 +3,50 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
-/// Ability passiva de consciência de RubberBombs em movimento.
+/// Ability passiva de consciência de PierceBombs no campo.
 ///
 /// PROBLEMA RESOLVIDO:
-///   Uma RubberBomb chutada ricocheteia: ao colidir com algo ela INVERTE a direção
-///   e volta (Bomb.KickRoutineFixed). O controller calcula perigo apenas pela posição
-///   ATUAL da bomba, então a IA é pega desprevenida quando a bomba retorna na direção
-///   dela — inclusive bombas que a própria IA chutou.
+///   O modelo de perigo do controller (e das outras abilities) considera que blocos
+///   destrutíveis e bombas BLOQUEIAM a linha de explosão. A explosão de uma
+///   PierceBomb ATRAVESSA destrutíveis e itens (BombController.ExplodeAndCollect),
+///   então:
+///     1. A IA acha que está protegida atrás de um bloco e morre quando a pierce
+///        explode através dele.
+///     2. A pierce alcança outra bomba através de blocos e ACIONA UMA CADEIA — a
+///        bomba acionada explode imediatamente, atingindo a IA em lugares que o
+///        modelo ingênuo considera seguros. Isso inclui cadeias iniciadas pelas
+///        pierce bombs da PRÓPRIA IA.
 ///
 /// SOLUÇÃO:
-///   Enquanto uma RubberBomb estiver sendo chutada, o corredor inteiro de viagem
-///   (a linha/coluna entre os obstáculos que delimitam o vai-e-vem) é tratado como
-///   zona de risco. Se a IA estiver nesse corredor, esta ability gera uma decisão de
-///   reposicionamento PERPENDICULAR para fora da lane — em emergency (prioridade
-///   sobre a fuga nativa) e também proativamente como candidate.
+///   Modelo de perigo pierce-aware com propagação de cadeia: para cada bomba ativa,
+///   calcula a linha de blast honrando o flag IsPierceBomb (atravessa destrutíveis;
+///   para em indestrutível; ao encontrar outra bomba aciona a cadeia e para). O fuse
+///   efetivo de uma bomba encadeada é o MENOR entre o dela e o de quem a aciona
+///   (relaxação iterativa). Se a IA está numa zona pierce-aware perigosa que o modelo
+///   nativo não enxerga, reposiciona — proativamente (candidate) e, sob perigo nativo,
+///   garante que o tile de fuga também seja seguro no modelo pierce-aware (emergency).
 ///
-/// Sempre ativa para IAs COM (como a HazardAwareness) — a ameaça independe dos
+/// Sempre ativa para IAs COM (como Hazard/RubberAwareness) — a ameaça independe dos
 /// power-ups da própria IA.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerIdentity))]
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(BombController))]
-public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBattleModeComAbility
+public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBattleModeComAbility
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnableRubberAwarenessDiagnostics = true;
+    public static readonly bool EnablePierceAwarenessDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento ===
-    // Comprimento máximo do corredor rastreado a partir da bomba (cada direção).
-    private const int MaxLaneTilesPerDirection = 14;
-    // Distância (em tiles, ao longo da lane) em que a ameaça é tratada como urgente.
-    private const int UrgentLaneDistanceTiles = 6;
-    // Tempo parado no mesmo tile para considerar travamento na esquiva.
+    // Janela de fuse: ameaças com fuse acima disso não interrompem o comportamento normal.
+    private const float ThreatFuseWindowSeconds = 4.0f;
+    // Fuse abaixo disso = urgente (bônus de peso na esquiva proativa).
+    private const float UrgentFuseSeconds = 1.5f;
+    // Iterações máximas da relaxação de fuses encadeados.
+    private const int ChainRelaxationIterations = 4;
     private const float DodgeStuckSeconds = 0.25f;
 
     private static readonly Vector2Int[] CardinalTiles =
@@ -63,20 +72,20 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
     private float tileSize = 1f;
     private int explosionMask;
 
-    // === Lanes ativas (recalculadas por avaliação) ===
-    private struct RubberThreat
+    // === Snapshot de bombas (recalculado por avaliação) ===
+    private struct BombSnapshot
     {
         public Bomb Bomb;
-        public Vector2Int BombTile;
-        public Vector2Int Axis;          // (1,0) = horizontal, (0,1) = vertical
-        public Vector2Int LaneMin;       // extremo negativo do corredor
-        public Vector2Int LaneMax;       // extremo positivo do corredor
-        public int Radius;               // raio de blast previsto
-        public int DistanceToMe;         // distância na lane até a IA (-1 = fora)
+        public Vector2Int Tile;
+        public int Radius;
+        public bool Pierce;
+        public float EffectiveFuse; // já considerando cadeias
     }
 
-    private readonly List<RubberThreat> activeThreats = new List<RubberThreat>(4);
-    private readonly HashSet<Vector2Int> laneTiles = new HashSet<Vector2Int>();
+    private readonly List<BombSnapshot> bombSnapshots = new List<BombSnapshot>(12);
+    private bool snapshotHasPierce;
+    private bool snapshotHasChainThroughBlocks;
+    private float snapshotTime = -10f;
 
     // === Detecção de travamento na esquiva ===
     private Vector2Int dodgeLastTile;
@@ -101,7 +110,7 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
     private string lastSurgicalLogKey = string.Empty;
 
     // === IBattleModeComAbility ===
-    public string DiagnosticName => "RubberBombAwareness";
+    public string DiagnosticName => "PierceBombAwareness";
     public string LastDecisionTrace => lastDecisionTrace;
 
     public bool IsAvailable
@@ -150,7 +159,7 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
     }
 
     // =====================================================================
-    // TryBuildEmergencyDecision — esquiva urgente da lane
+    // TryBuildEmergencyDecision — fuga com modelo pierce-aware
     // =====================================================================
     public bool TryBuildEmergencyDecision(
         BattleModeComDifficultySettings settings,
@@ -168,22 +177,27 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
             return false;
         }
 
-        if (!RefreshThreats(myTile) || !IsOnAnyLane(myTile, out RubberThreat worst))
+        RefreshBombSnapshots();
+
+        // Só interfere se há pierce no campo ou cadeia atravessando blocos —
+        // sem isso o modelo nativo é equivalente e a fuga nativa resolve.
+        if (!snapshotHasPierce && !snapshotHasChainThroughBlocks)
         {
-            lastDecisionTrace = "emergency no rubber lane threat";
+            lastDecisionTrace = "emergency no pierce/chain threat on field";
             return false;
         }
 
-        // Em emergency só interfere se a ameaça é urgente (bomba perto na lane) —
-        // caso contrário deixa a fuga nativa cuidar do perigo que disparou o inDanger.
-        if (worst.DistanceToMe > UrgentLaneDistanceTiles)
+        float pierceDanger = GetPierceAwareDangerSeconds(myTile);
+        if (float.IsInfinity(pierceDanger) || pierceDanger > ThreatFuseWindowSeconds)
         {
-            lastDecisionTrace =
-                $"emergency rubber lane far dist:{worst.DistanceToMe} (native escape handles)";
+            lastDecisionTrace = $"emergency tile not pierce-threatened ({FormatDanger(pierceDanger)})";
             return false;
         }
 
-        return TryBuildDodgeDecision(settings, myTile, worst, 290, "emergency", out decision);
+        // Sob perigo nativo + ameaça pierce: fornece fuga cujo destino é seguro
+        // TAMBÉM no modelo pierce-aware (a fuga nativa pode escolher um tile atrás
+        // de um bloco que a pierce atravessa).
+        return TryBuildDodgeDecision(settings, myTile, pierceDanger, 295, "emergency", out decision);
     }
 
     // =====================================================================
@@ -204,22 +218,45 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
             return false;
         }
 
-        if (!RefreshThreats(myTile) || !IsOnAnyLane(myTile, out RubberThreat worst))
+        RefreshBombSnapshots();
+
+        if (!snapshotHasPierce && !snapshotHasChainThroughBlocks)
         {
-            lastDecisionTrace = "candidate no rubber lane threat";
+            lastDecisionTrace = "candidate no pierce/chain threat on field";
             ClearDodgeStuckState();
             dodgeLastTile = myTile;
             return false;
         }
 
-        // Proativo: qualquer presença na lane de uma rubber em movimento justifica sair.
-        // A seleção de candidates é SORTEIO PONDERADO — peso modesto perde para
-        // farm/patrol e a IA fica parada na lane. Bomba chutada viaja ~10 tiles/s,
-        // então presença na lane é sempre urgente: peso alto para vencer o sorteio.
-        int weight = worst.DistanceToMe <= UrgentLaneDistanceTiles
-            ? 4000
-            : 400 + DifficultyWeight(settings);
-        return TryBuildDodgeDecision(settings, myTile, worst, weight, "candidate", out decision);
+        float pierceDanger = GetPierceAwareDangerSeconds(myTile);
+        if (float.IsInfinity(pierceDanger) || pierceDanger > ThreatFuseWindowSeconds)
+        {
+            lastDecisionTrace = $"candidate tile not pierce-threatened ({FormatDanger(pierceDanger)})";
+            ClearDodgeStuckState();
+            dodgeLastTile = myTile;
+            return false;
+        }
+
+        // O ponto desta ability: o tile parece seguro no modelo NATIVO (senão o
+        // controller já estaria em inDanger e a fuga nativa/emergency cuidaria),
+        // mas é perigoso no modelo pierce-aware. Reposiciona proativamente.
+        //
+        // IMPORTANTE: a seleção de candidates do controller é SORTEIO PONDERADO.
+        // Com peso modesto a esquiva perde o sorteio para farm/patrol e a IA morre
+        // parada dentro da zona pierce (causa de morte observada nos P3/P4).
+        // Por isso o peso escala agressivamente com a urgência do fuse:
+        //   fuse <= 1.5s  → 4000 (esquiva vence o sorteio na prática)
+        //   fuse <= 2.5s  → 400  (domina a maioria dos pools)
+        //   fuse <= 4.0s  → patrol+60 (proativo, sem atropelar a ofensiva)
+        int weight;
+        if (pierceDanger <= UrgentFuseSeconds)
+            weight = 4000;
+        else if (pierceDanger <= 2.5f)
+            weight = 400 + DifficultyWeight(settings);
+        else
+            weight = settings.patrolWeight + 60 + DifficultyWeight(settings);
+
+        return TryBuildDodgeDecision(settings, myTile, pierceDanger, weight, "candidate", out decision);
     }
 
     // =====================================================================
@@ -228,7 +265,7 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
     private bool TryBuildDodgeDecision(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
-        RubberThreat worst,
+        float pierceDanger,
         int weight,
         string phase,
         out BattleModeComAbilityDecision decision)
@@ -237,13 +274,13 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
 
         UpdateDodgeStuckDetection(myTile);
 
-        if (!TryFindOffLaneTile(settings, myTile, dodgeBlockedSteps,
+        if (!TryFindPierceSafeTile(settings, myTile, dodgeBlockedSteps,
                 out Vector2 firstMove, out Vector2Int target, out int depth))
         {
-            lastDecisionTrace = $"{phase} on rubber lane but no off-lane route";
+            lastDecisionTrace = $"{phase} pierce-threatened but no safe route";
             LogSurgical("DODGE_NO_ROUTE",
-                $"my:{myTile} bomb:{worst.BombTile} dist:{worst.DistanceToMe} " +
-                $"lane:{worst.LaneMin}->{worst.LaneMax} scan:{BuildNeighborScanSummary(myTile)}",
+                $"my:{myTile} pierceDanger:{FormatDanger(pierceDanger)} " +
+                $"scan:{BuildNeighborScanSummary(settings, myTile)}",
                 force: true);
             return false;
         }
@@ -253,181 +290,252 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.Reposition,
-            Weight = weight + DifficultyWeight(settings),
+            Weight = weight,
             TargetTile = target,
             HasTarget = true,
             FirstMove = firstMove,
-            Reason = "rubber-dodge moving rubber bomb lane",
+            Reason = "pierce-dodge blast through blocks",
             InputDescription = FirstMoveDescription(firstMove)
         };
 
         lastDecisionTrace =
-            $"{phase} rubber dodge bomb:{worst.BombTile} dist:{worst.DistanceToMe} target:{target} depth:{depth}";
+            $"{phase} pierce dodge danger:{FormatDanger(pierceDanger)} target:{target} depth:{depth} w:{weight}";
         LogSurgical("DODGE",
-            $"phase:{phase} my:{myTile} bomb:{worst.BombTile} dir:{worst.Axis} dist:{worst.DistanceToMe} " +
+            $"phase:{phase} my:{myTile} pierceDanger:{FormatDanger(pierceDanger)} " +
             $"target:{target} move:{FirstMoveDescription(firstMove)} depth:{depth} weight:{weight}");
         return true;
     }
 
     // =====================================================================
-    // Ameaças / lanes
+    // Snapshot de bombas + relaxação de cadeias
     // =====================================================================
 
     /// <summary>
-    /// Recalcula as lanes de todas as RubberBombs em movimento. Retorna false se
-    /// não houver nenhuma.
+    /// Reconstrói o snapshot de bombas ativas e propaga fuses por cadeia:
+    /// se a linha de blast pierce-aware da bomba A alcança a bomba B, então
+    /// B explode junto com A (fuse efetivo de B = min(B, A)).
+    /// Também marca se existe pierce no campo e se alguma cadeia só acontece
+    /// graças a pierce atravessando blocos (informação de diagnóstico/gate).
     /// </summary>
-    private bool RefreshThreats(Vector2Int myTile)
+    private void RefreshBombSnapshots()
     {
-        activeThreats.Clear();
-        laneTiles.Clear();
+        // Cache por frame: emergency + candidate no mesmo Think reutilizam.
+        if (Mathf.Abs(Time.time - snapshotTime) < 0.001f)
+            return;
+
+        snapshotTime = Time.time;
+        bombSnapshots.Clear();
+        snapshotHasPierce = false;
+        snapshotHasChainThroughBlocks = false;
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded || !bomb.IsRubberBomb || !bomb.IsBeingKicked)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
-
-            Vector2 kickDir = bomb.CurrentKickDirection;
-            if (kickDir == Vector2.zero)
-                continue;
-
-            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
-            Vector2Int axis = Mathf.Abs(kickDir.x) >= Mathf.Abs(kickDir.y)
-                ? Vector2Int.right
-                : Vector2Int.up;
-
-            // Corredor do vai-e-vem: caminha nas duas direções até um bloqueio.
-            Vector2Int laneMin = bombTile;
-            Vector2Int laneMax = bombTile;
-            for (int step = 1; step <= MaxLaneTilesPerDirection; step++)
-            {
-                Vector2Int tile = bombTile + axis * step;
-                if (BlocksLane(tile, bomb)) break;
-                laneMax = tile;
-            }
-
-            for (int step = 1; step <= MaxLaneTilesPerDirection; step++)
-            {
-                Vector2Int tile = bombTile - axis * step;
-                if (BlocksLane(tile, bomb)) break;
-                laneMin = tile;
-            }
 
             int radius = bomb.Owner != null
                 ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb))
                 : 2;
 
-            var threat = new RubberThreat
+            var snapshot = new BombSnapshot
             {
                 Bomb = bomb,
-                BombTile = bombTile,
-                Axis = axis,
-                LaneMin = laneMin,
-                LaneMax = laneMax,
+                Tile = WorldToTile(bomb.GetLogicalPosition()),
                 Radius = radius,
-                DistanceToMe = LaneDistance(bombTile, axis, laneMin, laneMax, myTile)
+                Pierce = bomb.IsPierceBomb,
+                EffectiveFuse = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds
             };
-            activeThreats.Add(threat);
 
-            // Registra os tiles do corredor para o BFS evitar.
-            Vector2Int cursor = laneMin;
-            int guard = 0;
-            while (guard++ <= 2 * MaxLaneTilesPerDirection + 1)
-            {
-                laneTiles.Add(cursor);
-                if (cursor == laneMax) break;
-                cursor += axis;
-            }
+            if (snapshot.Pierce)
+                snapshotHasPierce = true;
+
+            bombSnapshots.Add(snapshot);
         }
 
-        return activeThreats.Count > 0;
+        if (bombSnapshots.Count < 1)
+            return;
+
+        // Relaxação: propaga o menor fuse pelas cadeias até estabilizar.
+        for (int iteration = 0; iteration < ChainRelaxationIterations; iteration++)
+        {
+            bool changed = false;
+
+            for (int a = 0; a < bombSnapshots.Count; a++)
+            {
+                BombSnapshot source = bombSnapshots[a];
+
+                for (int b = 0; b < bombSnapshots.Count; b++)
+                {
+                    if (a == b)
+                        continue;
+
+                    BombSnapshot other = bombSnapshots[b];
+                    if (other.EffectiveFuse <= source.EffectiveFuse + 0.0001f)
+                        continue;
+
+                    if (!BlastReachesBomb(source, other.Tile, out bool passedThroughBlock))
+                        continue;
+
+                    other.EffectiveFuse = source.EffectiveFuse;
+                    bombSnapshots[b] = other;
+                    changed = true;
+
+                    if (passedThroughBlock)
+                        snapshotHasChainThroughBlocks = true;
+                }
+            }
+
+            if (!changed)
+                break;
+        }
     }
 
     /// <summary>
-    /// True se o tile bloqueia o vai-e-vem da rubber bomb (paredes, blocos, bombas).
+    /// True se a linha de blast pierce-aware de source alcança bombTile.
+    /// passedThroughBlock indica que a corrente só existe por causa do pierce
+    /// (atravessou pelo menos um destrutível no caminho).
     /// </summary>
-    private bool BlocksLane(Vector2Int tile, Bomb movingBomb)
+    private bool BlastReachesBomb(BombSnapshot source, Vector2Int bombTile, out bool passedThroughBlock)
     {
-        if (!HasGroundTile(tile))
-            return true;
+        passedThroughBlock = false;
 
-        if (HasIndestructibleTile(tile) || HasDestructibleTile(tile))
-            return true;
+        Vector2Int delta = bombTile - source.Tile;
+        bool sameColumn = delta.x == 0 && delta.y != 0;
+        bool sameRow = delta.y == 0 && delta.x != 0;
+        if (!sameColumn && !sameRow)
+            return false;
 
-        Bomb other = FindBombAt(tile);
-        return other != null && other != movingBomb;
+        int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+        if (distance > source.Radius)
+            return false;
+
+        Vector2Int dir = new(Mathf.Clamp(delta.x, -1, 1), Mathf.Clamp(delta.y, -1, 1));
+        for (int step = 1; step < distance; step++)
+        {
+            Vector2Int check = source.Tile + dir * step;
+
+            if (HasIndestructibleTile(check))
+                return false;
+
+            if (HasDestructibleTile(check))
+            {
+                if (!source.Pierce)
+                    return false;
+
+                passedThroughBlock = true;
+                continue;
+            }
+
+            // Outra bomba no caminho: a explosão aciona ELA e para — não alcança
+            // a bomba alvo diretamente (mas a cadeia continua via a intermediária,
+            // que a relaxação cobre em outra iteração).
+            if (FindBombTileIndexAt(check) >= 0)
+                return false;
+        }
+
+        return true;
     }
 
-    private bool IsOnAnyLane(Vector2Int myTile, out RubberThreat worst)
-    {
-        worst = default;
-        int bestDistance = int.MaxValue;
-        bool found = false;
+    // =====================================================================
+    // Modelo de perigo pierce-aware
+    // =====================================================================
 
-        for (int i = 0; i < activeThreats.Count; i++)
+    /// <summary>
+    /// Perigo no tile considerando explosões pierce (atravessam destrutíveis)
+    /// e fuses encadeados. Infinity = seguro.
+    /// </summary>
+    private float GetPierceAwareDangerSeconds(Vector2Int tile)
+    {
+        if (explosionMask != 0)
         {
-            RubberThreat threat = activeThreats[i];
-            if (threat.DistanceToMe < 0)
+            Collider2D explosion = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.25f, explosionMask);
+            if (explosion != null)
+                return 0f;
+        }
+
+        float danger = float.PositiveInfinity;
+        for (int i = 0; i < bombSnapshots.Count; i++)
+        {
+            BombSnapshot snapshot = bombSnapshots[i];
+            if (!IsTileInPierceAwareBlastLine(snapshot, tile))
                 continue;
 
-            if (threat.DistanceToMe < bestDistance)
+            danger = Mathf.Min(danger, snapshot.EffectiveFuse);
+        }
+
+        return danger;
+    }
+
+    /// <summary>
+    /// Linha de blast honrando o pierce da bomba: destrutíveis bloqueiam apenas
+    /// bombas normais; indestrutíveis bloqueiam sempre; outra bomba no caminho
+    /// para a linha (a cadeia é tratada pelos fuses efetivos).
+    /// </summary>
+    private bool IsTileInPierceAwareBlastLine(BombSnapshot snapshot, Vector2Int tile)
+    {
+        if (tile == snapshot.Tile)
+            return true;
+
+        Vector2Int delta = tile - snapshot.Tile;
+        bool sameColumn = delta.x == 0 && delta.y != 0;
+        bool sameRow = delta.y == 0 && delta.x != 0;
+        if (!sameColumn && !sameRow)
+            return false;
+
+        int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+        if (distance > snapshot.Radius)
+            return false;
+
+        Vector2Int dir = new(Mathf.Clamp(delta.x, -1, 1), Mathf.Clamp(delta.y, -1, 1));
+        for (int step = 1; step < distance; step++)
+        {
+            Vector2Int check = snapshot.Tile + dir * step;
+
+            if (HasIndestructibleTile(check))
+                return false;
+
+            if (HasDestructibleTile(check))
             {
-                bestDistance = threat.DistanceToMe;
-                worst = threat;
-                found = true;
+                if (!snapshot.Pierce)
+                    return false;
+
+                continue;
             }
+
+            if (FindBombTileIndexAt(check) >= 0)
+                return false;
         }
 
-        return found;
+        return true;
     }
 
-    /// <summary>
-    /// Distância ao longo da lane do tile da bomba até myTile, ou -1 se myTile
-    /// não está no corredor.
-    /// </summary>
-    private static int LaneDistance(
-        Vector2Int bombTile,
-        Vector2Int axis,
-        Vector2Int laneMin,
-        Vector2Int laneMax,
-        Vector2Int myTile)
+    private int FindBombTileIndexAt(Vector2Int tile)
     {
-        if (axis == Vector2Int.right)
+        for (int i = 0; i < bombSnapshots.Count; i++)
         {
-            if (myTile.y != bombTile.y) return -1;
-            if (myTile.x < laneMin.x || myTile.x > laneMax.x) return -1;
-            return Mathf.Abs(myTile.x - bombTile.x);
+            if (bombSnapshots[i].Tile == tile)
+                return i;
         }
 
-        if (myTile.x != bombTile.x) return -1;
-        if (myTile.y < laneMin.y || myTile.y > laneMax.y) return -1;
-        return Mathf.Abs(myTile.y - bombTile.y);
+        return -1;
     }
 
-    private bool IsTileOnAnyLane(Vector2Int tile) => laneTiles.Contains(tile);
-
-    /// <summary>
-    /// True se o tile fica na linha de blast de algum ponto possível de parada
-    /// da rubber bomb (os dois extremos do corredor) — esses são os lugares onde
-    /// ela vai explodir com mais probabilidade.
-    /// </summary>
-    private bool IsTileInLaneEndBlast(Vector2Int tile)
+    private bool IsPierceAwareDangerousAt(
+        Vector2Int tile,
+        float arrivalSeconds,
+        BattleModeComDifficultySettings settings)
     {
-        for (int i = 0; i < activeThreats.Count; i++)
-        {
-            RubberThreat threat = activeThreats[i];
-            if (IsTileInBlastLine(threat.LaneMin, tile, threat.Radius) ||
-                IsTileInBlastLine(threat.LaneMax, tile, threat.Radius))
-                return true;
-        }
+        float dangerSeconds = GetPierceAwareDangerSeconds(tile);
+        if (float.IsInfinity(dangerSeconds))
+            return false;
 
-        return false;
+        return dangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds;
     }
 
     // =====================================================================
-    // BFS para fora da lane
+    // BFS para tile pierce-safe
     // =====================================================================
-    private bool TryFindOffLaneTile(
+    private bool TryFindPierceSafeTile(
         BattleModeComDifficultySettings settings,
         Vector2Int start,
         List<Vector2Int> blockedFirstSteps,
@@ -454,70 +562,43 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
         }
 
         searchOpen.Enqueue(start);
-        int maxDepth = Mathf.Max(4, settings.searchDepth);
+        int maxDepth = Mathf.Max(4, settings.searchDepth + 2);
 
-        // Primeira passada: alvo ideal — fora da lane E fora do blast dos extremos.
-        // Segunda passada (fallback): apenas fora da lane.
-        for (int pass = 0; pass < 2; pass++)
+        while (searchOpen.Count > 0)
         {
-            bool strict = pass == 0;
+            Vector2Int tile = searchOpen.Dequeue();
+            SearchNode node = searchVisited[tile];
+            float eta = EstimateTraversalSeconds(node.Depth);
 
-            if (pass == 1)
+            if (node.Depth > 0 &&
+                float.IsInfinity(GetPierceAwareDangerSeconds(tile)) &&
+                !IsPierceAwareDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings))
             {
-                searchVisited.Clear();
-                searchOpen.Clear();
-                searchVisited[start] = new SearchNode { Parent = start, Depth = 0 };
-                if (blockedFirstSteps != null)
-                {
-                    for (int i = 0; i < blockedFirstSteps.Count; i++)
-                    {
-                        if (blockedFirstSteps[i] != Vector2Int.zero)
-                            searchVisited[start + blockedFirstSteps[i]] =
-                                new SearchNode { Parent = start, Depth = 0 };
-                    }
-                }
-
-                searchOpen.Enqueue(start);
+                target = tile;
+                resultDepth = node.Depth;
+                firstMove = TileDirectionToVector(ReconstructFirstStep(start, tile));
+                return firstMove != Vector2.zero;
             }
 
-            while (searchOpen.Count > 0)
+            if (node.Depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
             {
-                Vector2Int tile = searchOpen.Dequeue();
-                SearchNode node = searchVisited[tile];
-                float eta = EstimateTraversalSeconds(node.Depth);
-
-                bool offLane = !IsTileOnAnyLane(tile);
-                bool clearOfEndBlast = !strict || !IsTileInLaneEndBlast(tile);
-                if (node.Depth > 0 &&
-                    offLane &&
-                    clearOfEndBlast &&
-                    float.IsInfinity(GetDangerSeconds(tile)) &&
-                    !IsDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings))
-                {
-                    target = tile;
-                    resultDepth = node.Depth;
-                    firstMove = TileDirectionToVector(ReconstructFirstStep(start, tile));
-                    return firstMove != Vector2.zero;
-                }
-
-                if (node.Depth >= maxDepth)
+                Vector2Int next = tile + CardinalTiles[i];
+                if (searchVisited.ContainsKey(next))
                     continue;
 
-                for (int i = 0; i < CardinalTiles.Length; i++)
-                {
-                    Vector2Int next = tile + CardinalTiles[i];
-                    if (searchVisited.ContainsKey(next))
-                        continue;
+                if (!IsWalkableTile(next, start))
+                    continue;
 
-                    if (!IsWalkableTile(next, start))
-                        continue;
+                // Expansão usa o modelo pierce-aware: não atravessa zonas que a
+                // pierce alcança dentro da janela de chegada.
+                if (IsPierceAwareDangerousAt(next, EstimateTraversalSeconds(node.Depth + 1), settings))
+                    continue;
 
-                    if (IsDangerousAt(next, EstimateTraversalSeconds(node.Depth + 1), settings))
-                        continue;
-
-                    searchVisited[next] = new SearchNode { Parent = tile, Depth = node.Depth + 1 };
-                    searchOpen.Enqueue(next);
-                }
+                searchVisited[next] = new SearchNode { Parent = tile, Depth = node.Depth + 1 };
+                searchOpen.Enqueue(next);
             }
         }
 
@@ -525,7 +606,7 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
     }
 
     // =====================================================================
-    // Walkability / perigo (respeita BombPass/DestructiblePass se presentes)
+    // Walkability (respeita BombPass/DestructiblePass se presentes)
     // =====================================================================
     private bool IsWalkableTile(Vector2Int tile, Vector2Int startTile)
     {
@@ -585,73 +666,6 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
         }
 
         return false;
-    }
-
-    private bool IsDangerousAt(
-        Vector2Int tile,
-        float arrivalSeconds,
-        BattleModeComDifficultySettings settings)
-    {
-        float dangerSeconds = GetDangerSeconds(tile);
-        if (float.IsInfinity(dangerSeconds))
-            return false;
-
-        return dangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds;
-    }
-
-    private float GetDangerSeconds(Vector2Int tile)
-    {
-        if (explosionMask != 0)
-        {
-            Collider2D explosion = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.25f, explosionMask);
-            if (explosion != null)
-                return 0f;
-        }
-
-        float danger = float.PositiveInfinity;
-        foreach (Bomb bomb in Bomb.ActiveBombs)
-        {
-            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
-                continue;
-
-            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
-            int radius = bomb.Owner != null
-                ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb))
-                : 2;
-            if (!IsTileInBlastLine(bombTile, tile, radius))
-                continue;
-
-            float seconds = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
-            danger = Mathf.Min(danger, seconds);
-        }
-
-        return danger;
-    }
-
-    private bool IsTileInBlastLine(Vector2Int origin, Vector2Int tile, int radius)
-    {
-        if (tile == origin)
-            return true;
-
-        Vector2Int delta = tile - origin;
-        bool sameColumn = delta.x == 0 && delta.y != 0;
-        bool sameRow = delta.y == 0 && delta.x != 0;
-        if (!sameColumn && !sameRow)
-            return false;
-
-        int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
-        if (distance > radius)
-            return false;
-
-        Vector2Int dir = new(Mathf.Clamp(delta.x, -1, 1), Mathf.Clamp(delta.y, -1, 1));
-        for (int step = 1; step < distance; step++)
-        {
-            Vector2Int check = origin + dir * step;
-            if (HasIndestructibleTile(check) || HasDestructibleTile(check) || FindBombAt(check) != null)
-                return false;
-        }
-
-        return true;
     }
 
     private Bomb FindBombAt(Vector2Int tile)
@@ -715,7 +729,7 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
             _ => 0
         };
 
-    private string BuildNeighborScanSummary(Vector2Int myTile)
+    private string BuildNeighborScanSummary(BattleModeComDifficultySettings settings, Vector2Int myTile)
     {
         var sb = new System.Text.StringBuilder(96);
         string[] labels = { "U", "D", "L", "R" };
@@ -728,19 +742,16 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
             {
                 sb.Append("blocked");
             }
-            else if (IsTileOnAnyLane(next))
-            {
-                sb.Append("lane");
-            }
             else
             {
-                float danger = GetDangerSeconds(next);
-                sb.Append(float.IsInfinity(danger) ? "walk" : $"danger {danger:F2}");
+                float danger = GetPierceAwareDangerSeconds(next);
+                sb.Append(float.IsInfinity(danger) ? "walk" : $"pierce-danger {danger:F2}");
             }
 
             sb.Append("] ");
         }
 
+        sb.Append($"bombs:{bombSnapshots.Count} pierce:{snapshotHasPierce} chainThroughBlocks:{snapshotHasChainThroughBlocks}");
         return sb.ToString();
     }
 
@@ -833,7 +844,7 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
 
     private void LogSurgical(string key, string message, bool force = false)
     {
-        if (!EnableRubberAwarenessDiagnostics) return;
+        if (!EnablePierceAwarenessDiagnostics) return;
 
         int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
         if (DiagnosticPlayerIdFilter != 0 && id != DiagnosticPlayerIdFilter) return;

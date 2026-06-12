@@ -519,6 +519,15 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // PierceBombAwareness é sempre ativa — explosões pierce (de qualquer
+        // jogador, inclusive da própria IA) atravessam destrutíveis e acionam
+        // cadeias que o modelo de perigo nativo não enxerga.
+        if (isCom && !TryGetComponent<BattleModeComPierceBombAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComPierceBombAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
         // PunchBomb: condicionado a CanPunchBombs, espelha o mesmo padrão do KickBomb.
         bool persistentPunchEnabled = PlayerPersistentStats.GetRuntime(playerId).CanPunchBombs;
         if (persistentPunchEnabled)
@@ -4278,7 +4287,8 @@ public sealed class BattleModeComController : MonoBehaviour
              (!string.IsNullOrEmpty(reason) &&
               (reason.StartsWith("bomb-pass", StringComparison.Ordinal) ||
                reason.StartsWith("destructible-pass", StringComparison.Ordinal) ||
-               reason.StartsWith("rubber-dodge", StringComparison.Ordinal))));
+               reason.StartsWith("rubber-dodge", StringComparison.Ordinal) ||
+               reason.StartsWith("pierce-dodge", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
