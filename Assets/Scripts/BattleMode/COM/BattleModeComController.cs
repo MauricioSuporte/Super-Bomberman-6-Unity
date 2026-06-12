@@ -511,6 +511,14 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // RubberBombAwareness é sempre ativa — qualquer RubberBomb chutada (de
+        // qualquer jogador) ricocheteia e pode voltar na direção da IA.
+        if (isCom && !TryGetComponent<BattleModeComRubberBombAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComRubberBombAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
         // PunchBomb: condicionado a CanPunchBombs, espelha o mesmo padrão do KickBomb.
         bool persistentPunchEnabled = PlayerPersistentStats.GetRuntime(playerId).CanPunchBombs;
         if (persistentPunchEnabled)
@@ -4269,7 +4277,8 @@ public sealed class BattleModeComController : MonoBehaviour
              // dangerTimingGate bloqueia o passo para dentro da blast line e a IA congela.
              (!string.IsNullOrEmpty(reason) &&
               (reason.StartsWith("bomb-pass", StringComparison.Ordinal) ||
-               reason.StartsWith("destructible-pass", StringComparison.Ordinal))));
+               reason.StartsWith("destructible-pass", StringComparison.Ordinal) ||
+               reason.StartsWith("rubber-dodge", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {

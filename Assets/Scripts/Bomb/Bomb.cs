@@ -57,6 +57,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool IsControlBomb { get; set; }
 
     public bool IsBeingKicked => isKicked || isBeingMovedByYellowLouie;
+
+    /// <summary>
+    /// Direção atual do chute (Vector2.zero quando a bomba não está sendo chutada).
+    /// Usada pela IA para prever a trajetória de RubberBombs (que ricocheteiam).
+    /// </summary>
+    public Vector2 CurrentKickDirection => isKicked ? kickDirection : Vector2.zero;
     public bool IsBeingMovedByYellowLouie => isBeingMovedByYellowLouie;
     public bool IsBeingPunched => isPunched;
     public bool WasMovedByKickOrPunch { get; private set; }
