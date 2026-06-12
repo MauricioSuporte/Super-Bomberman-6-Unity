@@ -578,6 +578,22 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // PinkLouie jump: condicionado à ability do mount, mesmo padrão.
+        bool pinkLouieJumpEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(PinkLouieJumpAbility.AbilityId);
+        TryGetComponent<BattleModeComPinkLouieJumpAbility>(out var pinkLouieJumpCom);
+        if (isCom && pinkLouieJumpEnabled && pinkLouieJumpCom == null)
+        {
+            gameObject.AddComponent<BattleModeComPinkLouieJumpAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !pinkLouieJumpEnabled) && pinkLouieJumpCom != null)
+        {
+            Destroy(pinkLouieJumpCom);
+            abilitySystemVersion = -2;
+        }
+
         // ControlBomb (uso): condicionado a HasControlBombs, padrão do PunchBomb.
         bool persistentControlEnabled = PlayerPersistentStats.GetRuntime(playerId).HasControlBombs;
         if (persistentControlEnabled)
@@ -4403,7 +4419,8 @@ public sealed class BattleModeComController : MonoBehaviour
                reason.StartsWith("control-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("control-retreat", StringComparison.Ordinal) ||
                reason.StartsWith("magnet-dodge", StringComparison.Ordinal) ||
-               reason.StartsWith("greenlouie-dash", StringComparison.Ordinal))));
+               reason.StartsWith("greenlouie-dash", StringComparison.Ordinal) ||
+               reason.StartsWith("pinklouie-jump", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
