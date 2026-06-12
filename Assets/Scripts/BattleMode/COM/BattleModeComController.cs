@@ -545,6 +545,23 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // RedLouie stun punch: condicionado à ability do mount (sem flag persistente,
+        // mesmo padrão do YellowLouieKick).
+        bool redLouieStunEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(RedLouiePunchStunAbility.AbilityId);
+        TryGetComponent<BattleModeComRedLouiePunchStunAbility>(out var redLouieStunCom);
+        if (isCom && redLouieStunEnabled && redLouieStunCom == null)
+        {
+            gameObject.AddComponent<BattleModeComRedLouiePunchStunAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !redLouieStunEnabled) && redLouieStunCom != null)
+        {
+            Destroy(redLouieStunCom);
+            abilitySystemVersion = -2;
+        }
+
         // ControlBomb (uso): condicionado a HasControlBombs, padrão do PunchBomb.
         bool persistentControlEnabled = PlayerPersistentStats.GetRuntime(playerId).HasControlBombs;
         if (persistentControlEnabled)
