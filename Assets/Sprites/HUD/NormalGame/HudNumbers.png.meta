@@ -5,30 +5,6 @@ TextureImporter:
   - first:
       213: 905470350162025073
     second: HudNumbers_0
-  - first:
-      213: -3743038799579813963
-    second: HudNumbers_1
-  - first:
-      213: 1086375910367542935
-    second: HudNumbers_2
-  - first:
-      213: -227961198541667165
-    second: HudNumbers_3
-  - first:
-      213: 1945113751715194296
-    second: HudNumbers_4
-  - first:
-      213: 7600658637578893265
-    second: HudNumbers_5
-  - first:
-      213: -70024331835716748
-    second: HudNumbers_6
-  - first:
-      213: 8075173621944378038
-    second: HudNumbers_7
-  - first:
-      213: -7116784667258112182
-    second: HudNumbers_8
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -121,24 +97,11 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: WebGL
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
     buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -185,10 +148,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 5b76a821b0e0e0cc0800000000000000
-      internalID: -3743038799579813963
+      spriteID: fc6ae2d1c26eea14ca9d64971f62a74a
+      internalID: -1620449166
       vertices: []
       indices: 
       edges: []
@@ -207,10 +170,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 79ebff57225931f00800000000000000
-      internalID: 1086375910367542935
+      spriteID: 1e765d815665ad64197c4154d309a7fe
+      internalID: -1470848104
       vertices: []
       indices: 
       edges: []
@@ -229,10 +192,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 3a40a5a6f7e16dcf0800000000000000
-      internalID: -227961198541667165
+      spriteID: 9ecf34eec6c5b714191fb47d85ac5346
+      internalID: -1117295556
       vertices: []
       indices: 
       edges: []
@@ -251,10 +214,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8b526bac6ae6efa10800000000000000
-      internalID: 1945113751715194296
+      spriteID: 9fc264cc636a2da47b2b96d37a221bd1
+      internalID: -558414233
       vertices: []
       indices: 
       edges: []
@@ -273,10 +236,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1d7f4e7c2c6fa7960800000000000000
-      internalID: 7600658637578893265
+      spriteID: f8624a4f59b47774e8699a42fe18bd31
+      internalID: -1615284097
       vertices: []
       indices: 
       edges: []
@@ -295,10 +258,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 47b4c4fbd39370ff0800000000000000
-      internalID: -70024331835716748
+      spriteID: 493d03b116467684f84161b5a49a45a1
+      internalID: 892443036
       vertices: []
       indices: 
       edges: []
@@ -317,10 +280,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 6b2699300a7c01070800000000000000
-      internalID: 8075173621944378038
+      spriteID: 1ccf9f0a0c245e0438f05650bff545b2
+      internalID: -1540379943
       vertices: []
       indices: 
       edges: []
@@ -339,10 +302,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a47322d2d0a1c3d90800000000000000
-      internalID: -7116784667258112182
+      spriteID: 5a7cf4ead04e49d468085e4e362dd7b0
+      internalID: 1071621713
       vertices: []
       indices: 
       edges: []
@@ -363,8 +326,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d616b182c050b4340b8c76f954ca45ba
-      internalID: -765247112
+      spriteID: 31b663e3e5032a34ba6832f18e0c08be
+      internalID: 543590862
       vertices: []
       indices: 
       edges: []
@@ -373,7 +336,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 19189caf08c1cfd4598cf341e5307f7b
     internalID: 0
     vertices: []
     indices: 
@@ -386,15 +349,15 @@ TextureImporter:
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":7.0,"y":7.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       HudNumbers_0: 905470350162025073
-      HudNumbers_1: -3743038799579813963
-      HudNumbers_2: 1086375910367542935
-      HudNumbers_3: -227961198541667165
-      HudNumbers_4: 1945113751715194296
-      HudNumbers_5: 7600658637578893265
-      HudNumbers_6: -70024331835716748
-      HudNumbers_7: 8075173621944378038
-      HudNumbers_8: -7116784667258112182
-      HudNumbers_9: -765247112
+      HudNumbers_1: -1620449166
+      HudNumbers_2: -1470848104
+      HudNumbers_3: -1117295556
+      HudNumbers_4: -558414233
+      HudNumbers_5: -1615284097
+      HudNumbers_6: 892443036
+      HudNumbers_7: -1540379943
+      HudNumbers_8: 1071621713
+      HudNumbers_9: 543590862
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
