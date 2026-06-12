@@ -537,6 +537,14 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // MagnetBombAwareness é sempre ativa — magnet bombs adversárias perseguem
+        // a IA quando alinhada na mesma linha/coluna; quebrar o alinhamento é a defesa.
+        if (isCom && !TryGetComponent<BattleModeComMagnetBombAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComMagnetBombAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
         // ControlBomb (uso): condicionado a HasControlBombs, padrão do PunchBomb.
         bool persistentControlEnabled = PlayerPersistentStats.GetRuntime(playerId).HasControlBombs;
         if (persistentControlEnabled)
@@ -4360,7 +4368,8 @@ public sealed class BattleModeComController : MonoBehaviour
                reason.StartsWith("rubber-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("pierce-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("control-dodge", StringComparison.Ordinal) ||
-               reason.StartsWith("control-retreat", StringComparison.Ordinal))));
+               reason.StartsWith("control-retreat", StringComparison.Ordinal) ||
+               reason.StartsWith("magnet-dodge", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
