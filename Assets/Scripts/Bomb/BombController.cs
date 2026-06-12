@@ -2280,6 +2280,33 @@ public partial class BombController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Retorna (sem detonar) a ControlBomb que TryExplodeOldestControlledBomb
+    /// detonaria agora — a mais antiga ainda válida. Usado pela IA para decidir
+    /// se vale apertar ActionB.
+    /// </summary>
+    public Bomb PeekOldestControlledBomb()
+    {
+        CleanupNullBombs();
+
+        for (int i = 0; i < plantedBombs.Count; i++)
+        {
+            var b = plantedBombs[i];
+            if (b == null)
+                continue;
+
+            if (!b.TryGetComponent<Bomb>(out var bombComp) || bombComp == null || !bombComp.IsControlBomb)
+                continue;
+
+            if (bombComp.IsBeingPunched)
+                continue;
+
+            return bombComp;
+        }
+
+        return null;
+    }
+
     public bool TryExplodeOldestControlledBomb()
     {
         CleanupNullBombs();

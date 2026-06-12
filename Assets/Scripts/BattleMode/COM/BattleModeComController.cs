@@ -264,6 +264,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public bool TapBomb;
         public bool TapActionA;
         public bool HoldActionA;
+        public bool TapActionB;
         public bool TapActionR;
         public bool TapActionC;
         public bool UsesEscapeAbilityChance;
@@ -528,6 +529,52 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // ControlBombAwareness é sempre ativa — ControlBombs adversárias podem
+        // explodir a qualquer momento; a zona delas é perigo máximo.
+        if (isCom && !TryGetComponent<BattleModeComControlBombAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComControlBombAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
+        // ControlBomb (uso): condicionado a HasControlBombs, padrão do PunchBomb.
+        bool persistentControlEnabled = PlayerPersistentStats.GetRuntime(playerId).HasControlBombs;
+        if (persistentControlEnabled)
+        {
+            if (abilitySystem == null)
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+
+            if (!abilitySystem.IsEnabled(ControlBombAbility.AbilityId))
+                abilitySystem.Enable(ControlBombAbility.AbilityId);
+        }
+
+        bool controlEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(ControlBombAbility.AbilityId);
+        TryGetComponent<BattleModeComControlBombAbility>(out var controlBombCom);
+        if (isCom && controlEnabled && controlBombCom == null)
+        {
+            gameObject.AddComponent<BattleModeComControlBombAbility>();
+            abilitySystemVersion = -2;
+            LogControlBombLoadDiagnostic(
+                $"ADDED BattleModeComControlBombAbility persistent:{persistentControlEnabled}");
+        }
+        else if ((!isCom || !controlEnabled) && controlBombCom != null)
+        {
+            Destroy(controlBombCom);
+            abilitySystemVersion = -2;
+            LogControlBombLoadDiagnostic(
+                $"REMOVED BattleModeComControlBombAbility isCom:{isCom} enabled:{controlEnabled}");
+        }
+
+        if (isCom && Time.frameCount - lastControlBombLoadDiagnosticFrame >= 300)
+        {
+            lastControlBombLoadDiagnosticFrame = Time.frameCount;
+            LogControlBombLoadDiagnostic(
+                $"load check persistent:{persistentControlEnabled} enabled:{controlEnabled} " +
+                $"com:{(controlBombCom != null || (isCom && controlEnabled))}");
+        }
+
         // PunchBomb: condicionado a CanPunchBombs, espelha o mesmo padrão do KickBomb.
         bool persistentPunchEnabled = PlayerPersistentStats.GetRuntime(playerId).CanPunchBombs;
         if (persistentPunchEnabled)
@@ -687,6 +734,22 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private int lastBombPassLoadDiagnosticFrame = -9999;
     private int lastDestructiblePassLoadDiagnosticFrame = -9999;
+    private int lastControlBombLoadDiagnosticFrame = -9999;
+
+    private void LogControlBombLoadDiagnostic(string message)
+    {
+        if (!BattleModeComControlBombAbility.EnableControlBombDiagnostics)
+            return;
+
+        if (!IsBattleModeScene())
+            return;
+
+        if (BattleModeComControlBombAbility.DiagnosticPlayerIdFilter != 0 &&
+            playerId != BattleModeComControlBombAbility.DiagnosticPlayerIdFilter)
+            return;
+
+        Debug.LogWarning($"[BattleCOMControlBomb][P{playerId}] LOAD {message}", this);
+    }
 
     private void LogDestructiblePassLoadDiagnostic(string message)
     {
@@ -1286,6 +1349,13 @@ public sealed class BattleModeComController : MonoBehaviour
             currentInputDescription = AppendInput(currentInputDescription, "ActionA");
         }
 
+        if (selected.TapActionB && Time.time - lastControlTapTime >= ControlBombTapCooldownSeconds)
+        {
+            Tap(PlayerAction.ActionB);
+            lastControlTapTime = Time.time;
+            currentInputDescription = AppendInput(currentInputDescription, "ActionB");
+        }
+
         if (selected.TapActionR && Time.time - lastControlTapTime >= ControlBombTapCooldownSeconds)
         {
             Tap(PlayerAction.ActionR);
@@ -1651,6 +1721,7 @@ public sealed class BattleModeComController : MonoBehaviour
             TapBomb = decision.TapBomb,
             TapActionA = decision.TapActionA,
             HoldActionA = decision.HoldActionA,
+            TapActionB = decision.TapActionB,
             TapActionR = decision.TapActionR,
             TapActionC = decision.TapActionC,
             UsesEscapeAbilityChance = decision.UsesEscapeAbilityChance
@@ -4115,37 +4186,36 @@ public sealed class BattleModeComController : MonoBehaviour
         if (bombController == null || Time.time - lastControlTapTime < ControlBombTapCooldownSeconds)
             return false;
 
-        foreach (Bomb bomb in Bomb.ActiveBombs)
+        // ActionB detona a MAIS ANTIGA ControlBomb da IA — avaliar qualquer outra
+        // bomba aqui causaria detonações erradas. Só a mais antiga importa.
+        Bomb oldest = bombController.PeekOldestControlledBomb();
+        if (oldest == null || oldest.HasExploded || oldest.IsBeingHeldByPowerGlove)
         {
-            if (bomb == null ||
-                bomb.HasExploded ||
-                bomb.IsBeingHeldByPowerGlove ||
-                !bomb.IsControlBomb ||
-                bomb.Owner != bombController)
-                continue;
-
-            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
-            int radius = Mathf.Max(1, bombController.explosionRadius);
-            if (!WouldExplosionHitEnemyWithoutFriendlyRisk(bombTile, radius, myTile, out int enemyId))
-                continue;
-
-            Tap(PlayerAction.ActionB);
-            lastControlTapTime = Time.time;
-
-            SetCurrentDecision(
-                BattleModeComActionType.CombatPlant,
-                currentMoveInput,
-                true,
-                bombTile,
-                $"control bomb hits P{enemyId}",
-                "ActionB",
-                currentDangerSeconds,
-                "controlBomb");
-            return true;
+            RejectVerbose("ControlBomb sem alvo seguro");
+            return false;
         }
 
-        RejectVerbose("ControlBomb sem alvo seguro");
-        return false;
+        Vector2Int bombTile = WorldToTile(oldest.GetLogicalPosition());
+        int radius = Mathf.Max(1, bombController.GetPredictedBlastRadius(oldest));
+        if (!WouldExplosionHitEnemyWithoutFriendlyRisk(bombTile, radius, myTile, out int enemyId))
+        {
+            RejectVerbose("ControlBomb sem alvo seguro");
+            return false;
+        }
+
+        Tap(PlayerAction.ActionB);
+        lastControlTapTime = Time.time;
+
+        SetCurrentDecision(
+            BattleModeComActionType.CombatPlant,
+            currentMoveInput,
+            true,
+            bombTile,
+            $"control bomb hits P{enemyId}",
+            "ActionB",
+            currentDangerSeconds,
+            "controlBomb");
+        return true;
     }
 
     private CandidateAction PickWeightedCandidate(List<CandidateAction> source)
@@ -4288,7 +4358,9 @@ public sealed class BattleModeComController : MonoBehaviour
               (reason.StartsWith("bomb-pass", StringComparison.Ordinal) ||
                reason.StartsWith("destructible-pass", StringComparison.Ordinal) ||
                reason.StartsWith("rubber-dodge", StringComparison.Ordinal) ||
-               reason.StartsWith("pierce-dodge", StringComparison.Ordinal))));
+               reason.StartsWith("pierce-dodge", StringComparison.Ordinal) ||
+               reason.StartsWith("control-dodge", StringComparison.Ordinal) ||
+               reason.StartsWith("control-retreat", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
