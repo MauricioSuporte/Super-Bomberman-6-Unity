@@ -578,6 +578,22 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // BlackLouie dash push: condicionado à ability do mount, mesmo padrão.
+        bool blackLouiePushEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(BlackLouieDashPushAbility.AbilityId);
+        TryGetComponent<BattleModeComBlackLouieDashPushAbility>(out var blackLouiePushCom);
+        if (isCom && blackLouiePushEnabled && blackLouiePushCom == null)
+        {
+            gameObject.AddComponent<BattleModeComBlackLouieDashPushAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !blackLouiePushEnabled) && blackLouiePushCom != null)
+        {
+            Destroy(blackLouiePushCom);
+            abilitySystemVersion = -2;
+        }
+
         // PinkLouie jump: condicionado à ability do mount, mesmo padrão.
         bool pinkLouieJumpEnabled =
             abilitySystem != null &&
