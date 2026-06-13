@@ -545,6 +545,14 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // TankThreatAwareness is always active: it predicts ready enemy tank
+        // firing lanes, live projectiles, and their radius-1 impact explosions.
+        if (isCom && !TryGetComponent<BattleModeComTankThreatAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComTankThreatAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
         // RedLouie stun punch: condicionado à ability do mount (sem flag persistente,
         // mesmo padrão do YellowLouieKick).
         bool redLouieStunEnabled =
@@ -971,6 +979,12 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int myTile = WorldToTile(transform.position);
         float currentDangerSeconds = GetDangerSeconds(myTile, null);
         bool inDanger = IsTileThreatened(myTile, null);
+        if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility tankAwareness) &&
+            tankAwareness.HasImmediateThreat(myTile, out float tankThreatSeconds))
+        {
+            inDanger = true;
+            currentDangerSeconds = Mathf.Min(currentDangerSeconds, tankThreatSeconds);
+        }
 
         if (inDanger || Time.time >= nextDecisionTime)
         {
@@ -983,6 +997,17 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2 oscDiagAfterSafeCenter = currentMoveInput;
         currentMoveInput = ApplyTurnAxisCentering(myTile, currentMoveInput);
         Vector2 oscDiagAfterTurnAxis = currentMoveInput;
+        if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility committedTankAwareness) &&
+            committedTankAwareness.TryGetCommittedDodgeMove(
+                out Vector2 committedTankMove,
+                out Vector2Int committedTankTarget))
+        {
+            currentMoveInput = committedTankMove;
+            hasCurrentTarget = true;
+            currentTargetTile = committedTankTarget;
+            hasSafeCenterTarget = true;
+            safeCenterTargetTile = committedTankTarget;
+        }
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
 
         if (EnableOscillationDiagnostics)
@@ -1070,6 +1095,24 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (inDanger)
         {
+            if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility tankAwareness) &&
+                tankAwareness.HasImmediateThreat(myTile, out float immediateTankSeconds) &&
+                tankAwareness.TryBuildEmergencyDecision(
+                    settings,
+                    this,
+                    myTile,
+                    immediateTankSeconds,
+                    out BattleModeComAbilityDecision tankEmergency))
+            {
+                ExecuteSelectedCandidate(
+                    settings,
+                    myTile,
+                    currentDangerSeconds,
+                    ToCandidateAction(tankEmergency),
+                    "tankEmergency");
+                return;
+            }
+
             if (TryContinueDangerEscapeRoute(settings, myTile, currentDangerSeconds))
                 return;
 
@@ -1438,7 +1481,8 @@ public sealed class BattleModeComController : MonoBehaviour
         currentMoveFollowsEscapeRoute =
             selected.Action == BattleModeComActionType.Reposition &&
             !string.IsNullOrEmpty(selected.Reason) &&
-            selected.Reason.Contains("escape", StringComparison.OrdinalIgnoreCase);
+            (selected.Reason.Contains("escape", StringComparison.OrdinalIgnoreCase) ||
+             selected.Reason.StartsWith("tank-threat dodge", StringComparison.Ordinal));
 
         if (selected.Action == BattleModeComActionType.Reposition && selected.HasTarget)
         {
@@ -4547,6 +4591,7 @@ public sealed class BattleModeComController : MonoBehaviour
                reason.StartsWith("magnet-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("greenlouie-dash", StringComparison.Ordinal) ||
                reason.StartsWith("pinklouie-jump", StringComparison.Ordinal) ||
+               reason.StartsWith("tank-threat dodge", StringComparison.Ordinal) ||
                reason.StartsWith("purple-line retreat", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
@@ -6326,6 +6371,35 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int nextTile = currentTile + DirectionToTile(requestedMove);
         if (nextTile == currentTile)
             return Vector2.zero;
+
+        if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility tankAwareness))
+        {
+            bool currentTankThreat =
+                tankAwareness.HasImmediateThreat(currentTile, out float currentTankThreatSeconds);
+            bool nextTankThreat =
+                tankAwareness.HasImmediateThreat(nextTile, out float nextTankThreatSeconds);
+            if (currentTankThreat || nextTankThreat)
+            {
+                float traversalSeconds =
+                    EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
+                if (!tankAwareness.CanSafelyTraverseThreatenedTile(
+                        currentTile,
+                        nextTile,
+                        traversalSeconds,
+                        out string blockReason))
+                {
+                    float tankThreatSeconds = Mathf.Min(
+                        currentTankThreatSeconds,
+                        nextTankThreatSeconds);
+                    tankAwareness.LogPreventedEntry(
+                        currentTile,
+                        nextTile,
+                        tankThreatSeconds,
+                        blockReason);
+                    return Vector2.zero;
+                }
+            }
+        }
 
         if (currentAction == BattleModeComActionType.KickBomb)
         {
