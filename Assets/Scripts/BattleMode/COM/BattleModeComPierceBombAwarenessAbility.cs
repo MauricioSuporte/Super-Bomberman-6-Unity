@@ -91,6 +91,8 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
     private Vector2Int dodgeLastTile;
     private float dodgeStuckSince = -10f;
     private Vector2Int dodgeLastAttemptedStep;
+    private Vector2Int dodgeTrackedAttemptedStep;
+    private Vector2 dodgeProgressPosition;
     private readonly List<Vector2Int> dodgeBlockedSteps = new List<Vector2Int>(4);
 
     // === BFS reutilizável ===
@@ -687,27 +689,56 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
     // =====================================================================
     private void UpdateDodgeStuckDetection(Vector2Int myTile)
     {
-        if (myTile == dodgeLastTile)
-        {
-            if (dodgeStuckSince < 0f)
-            {
-                dodgeStuckSince = Time.time;
-            }
-            else if (Time.time - dodgeStuckSince > DodgeStuckSeconds &&
-                     dodgeLastAttemptedStep != Vector2Int.zero &&
-                     !dodgeBlockedSteps.Contains(dodgeLastAttemptedStep))
-            {
-                dodgeBlockedSteps.Add(dodgeLastAttemptedStep);
-                dodgeStuckSince = -1f;
-                LogSurgical("DODGE_STUCK",
-                    $"my:{myTile} blocking:{dodgeLastAttemptedStep} total:{dodgeBlockedSteps.Count}",
-                    force: true);
-            }
-        }
-        else
+        Vector2 currentPosition = transform.position;
+
+        if (myTile != dodgeLastTile)
         {
             dodgeLastTile = myTile;
             ClearDodgeStuckState();
+            dodgeProgressPosition = currentPosition;
+            return;
+        }
+
+        if (dodgeLastAttemptedStep == Vector2Int.zero)
+        {
+            dodgeStuckSince = -1f;
+            dodgeTrackedAttemptedStep = Vector2Int.zero;
+            dodgeProgressPosition = currentPosition;
+            return;
+        }
+
+        if (dodgeLastAttemptedStep != dodgeTrackedAttemptedStep)
+        {
+            dodgeTrackedAttemptedStep = dodgeLastAttemptedStep;
+            dodgeStuckSince = Time.time;
+            dodgeProgressPosition = currentPosition;
+            return;
+        }
+
+        float progressThreshold = Mathf.Max(0.01f, tileSize * 0.03f);
+        if ((currentPosition - dodgeProgressPosition).sqrMagnitude >=
+            progressThreshold * progressThreshold)
+        {
+            // Permanecer no mesmo tile durante centralizacao ou troca de eixo nao
+            // significa travamento se o personagem continua se deslocando.
+            dodgeStuckSince = Time.time;
+            dodgeProgressPosition = currentPosition;
+            return;
+        }
+
+        if (dodgeStuckSince < 0f)
+        {
+            dodgeStuckSince = Time.time;
+            dodgeProgressPosition = currentPosition;
+        }
+        else if (Time.time - dodgeStuckSince > DodgeStuckSeconds &&
+                 !dodgeBlockedSteps.Contains(dodgeLastAttemptedStep))
+        {
+            dodgeBlockedSteps.Add(dodgeLastAttemptedStep);
+            dodgeStuckSince = -1f;
+            LogSurgical("DODGE_STUCK",
+                $"my:{myTile} blocking:{dodgeLastAttemptedStep} total:{dodgeBlockedSteps.Count}",
+                force: true);
         }
     }
 
@@ -716,6 +747,8 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         dodgeStuckSince = -1f;
         dodgeBlockedSteps.Clear();
         dodgeLastAttemptedStep = Vector2Int.zero;
+        dodgeTrackedAttemptedStep = Vector2Int.zero;
+        dodgeProgressPosition = transform.position;
     }
 
     // =====================================================================

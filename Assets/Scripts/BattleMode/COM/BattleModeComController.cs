@@ -594,6 +594,22 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // PurpleLouie bomb line: condicionado à ability do mount, mesmo padrão.
+        bool purpleLineEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(PurpleLouieBombLineAbility.AbilityId);
+        TryGetComponent<BattleModeComPurpleLouieBombLineAbility>(out var purpleLineCom);
+        if (isCom && purpleLineEnabled && purpleLineCom == null)
+        {
+            gameObject.AddComponent<BattleModeComPurpleLouieBombLineAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !purpleLineEnabled) && purpleLineCom != null)
+        {
+            Destroy(purpleLineCom);
+            abilitySystemVersion = -2;
+        }
+
         // ControlBomb (uso): condicionado a HasControlBombs, padrão do PunchBomb.
         bool persistentControlEnabled = PlayerPersistentStats.GetRuntime(playerId).HasControlBombs;
         if (persistentControlEnabled)
@@ -792,6 +808,26 @@ public sealed class BattleModeComController : MonoBehaviour
     private int lastBombPassLoadDiagnosticFrame = -9999;
     private int lastDestructiblePassLoadDiagnosticFrame = -9999;
     private int lastControlBombLoadDiagnosticFrame = -9999;
+
+    // Log de cada tap sintético de ActionB/ActionC com o motivo da decisão —
+    // identifica QUEM está pressionando o botão quando o comportamento parece
+    // spam (ex.: ActionC repetido do PurpleLouie).
+    private static readonly bool EnableInputTapDiagnostics = true;
+
+    private void LogInputTapDiagnostic(
+        string action,
+        string reason,
+        BattleModeComActionType actionType,
+        Vector2Int myTile)
+    {
+        if (!EnableInputTapDiagnostics || !IsBattleModeScene())
+            return;
+
+        Debug.LogWarning(
+            $"[BattleCOMInput][P{playerId}] TAP {action} tile:{myTile} decisionAction:{actionType} " +
+            $"reason:{(string.IsNullOrEmpty(reason) ? "none" : reason)}",
+            this);
+    }
 
     private void LogControlBombLoadDiagnostic(string message)
     {
@@ -1411,6 +1447,7 @@ public sealed class BattleModeComController : MonoBehaviour
             Tap(PlayerAction.ActionB);
             lastControlTapTime = Time.time;
             currentInputDescription = AppendInput(currentInputDescription, "ActionB");
+            LogInputTapDiagnostic("ActionB", selected.Reason, selected.Action, myTile);
         }
 
         if (selected.TapActionR && Time.time - lastControlTapTime >= ControlBombTapCooldownSeconds)
@@ -1425,6 +1462,7 @@ public sealed class BattleModeComController : MonoBehaviour
             Tap(PlayerAction.ActionC);
             lastPunchTapTime = Time.time;
             currentInputDescription = AppendInput(currentInputDescription, "ActionC");
+            LogInputTapDiagnostic("ActionC", selected.Reason, selected.Action, myTile);
         }
 
         if (selected.Action == BattleModeComActionType.KickBomb)
@@ -2418,16 +2456,16 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
-            if (!CanBombHitDestructible(tile, Mathf.Max(1, bombController.explosionRadius)))
+            if (!CanBombHitDestructible(tile, Mathf.Max(1, bombController.GetPlannedExplosionRadius())))
                 continue;
 
-            if (WouldBlastHitUsefulItem(tile, Mathf.Max(1, bombController.explosionRadius), out ItemType itemType, out Vector2Int itemTile))
+            if (WouldBlastHitUsefulItem(tile, Mathf.Max(1, bombController.GetPlannedExplosionRadius()), out ItemType itemType, out Vector2Int itemTile))
             {
                 RejectVerbose($"FarmDestructible recusado queimaria item {itemType}@{itemTile}");
                 continue;
             }
 
-            if (!CanPlantBombWithEscape(tile, Mathf.Max(1, bombController.explosionRadius), settings, out Vector2 escapeMove, out _))
+            if (!CanPlantBombWithEscape(tile, Mathf.Max(1, bombController.GetPlannedExplosionRadius()), settings, out Vector2 escapeMove, out _))
             {
                 RejectVerbose($"FarmDestructible recusado sem fuga {tile}");
                 continue;
@@ -2481,7 +2519,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int targetTile, out int targetDistance))
             return false;
 
-        int radius = Mathf.Max(1, bombController.explosionRadius);
+        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
         if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
             !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
             CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
@@ -2536,7 +2574,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (bombController == null || bombController.BombsRemaining <= 0)
             return false;
 
-        int radius = Mathf.Max(1, bombController.explosionRadius);
+        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
         GatherReachableSafeTiles(myTile, settings.searchDepth + 3, settings);
 
         // --- Passo 1: tenta acertar inimigo diretamente (como TryBuildCombatCandidate) ---
@@ -2687,7 +2725,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 return false;
         }
 
-        int radius = Mathf.Max(1, bombController.explosionRadius);
+        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
         if (radius < OwnChainSecondBombDistance)
         {
             ownChainSeekCommitted = false;
@@ -2833,7 +2871,7 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
         }
 
-        int radius = Mathf.Max(1, bombController.explosionRadius);
+        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
         if (!HasOwnBombAtTile(ownChainOriginTile, out float firstFuseSeconds))
         {
             ownChainPlanActive = false;
@@ -3268,7 +3306,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!HasActiveNonOwnChainTriggerAtTile(myTile, settings, out float triggerSeconds))
             return false;
 
-        int radius = Mathf.Max(1, bombController.explosionRadius);
+        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
         if (!CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
             return false;
 
@@ -3309,7 +3347,7 @@ public sealed class BattleModeComController : MonoBehaviour
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
             int bombRadius = bomb.Owner != null
                 ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb))
-                : Mathf.Max(1, bombController != null ? bombController.explosionRadius : 1);
+                : Mathf.Max(1, bombController != null ? bombController.GetPlannedExplosionRadius() : 1);
 
             if (!IsTileInBlastLineRuntime(bombTile, tile, bombRadius))
                 continue;
@@ -3331,7 +3369,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (bombController == null || bombController.BombsRemaining <= 0)
             return false;
 
-        int myRadius = Mathf.Max(1, bombController.explosionRadius);
+        int myRadius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
 
         int wtc_noPath = 0, wtc_arrivalLate = 0, wtc_noEscape = 0;
         int wtc_noUseful = 0, wtc_bombAtTile = 0, wtc_evaluated = 0;
@@ -3461,7 +3499,7 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
         }
 
-        int radius = Mathf.Max(1, bombController.explosionRadius);
+        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
         GatherReachableSafeTiles(myTile, onlyCurrentTile ? 0 : settings.searchDepth + 2, settings);
 
         LogChainBombDiagnostic("SCAN", myTile, currentDangerSeconds,
@@ -4420,7 +4458,8 @@ public sealed class BattleModeComController : MonoBehaviour
                reason.StartsWith("control-retreat", StringComparison.Ordinal) ||
                reason.StartsWith("magnet-dodge", StringComparison.Ordinal) ||
                reason.StartsWith("greenlouie-dash", StringComparison.Ordinal) ||
-               reason.StartsWith("pinklouie-jump", StringComparison.Ordinal))));
+               reason.StartsWith("pinklouie-jump", StringComparison.Ordinal) ||
+               reason.StartsWith("purple-line retreat", StringComparison.Ordinal))));
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
@@ -6001,7 +6040,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
             int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
-            if (!IsTileInBlastLineRuntime(bombTile, tile, radius))
+            if (!IsBombBlastReachingTile(bomb, bombTile, tile, radius))
                 continue;
 
             float seconds = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
@@ -6009,6 +6048,25 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return danger;
+    }
+
+    /// <summary>
+    /// Blast line ciente do tipo da bomba: explosões PIERCE atravessam blocos
+    /// destrutíveis (param só em indestrutíveis e outras bombas). Sem isso, o
+    /// modelo nativo achava "seguro" um tile atrás de um bloco que a pierce
+    /// atravessa — e a IA plantava/fugia para dentro da zona real de explosão.
+    /// </summary>
+    private bool IsBombBlastReachingTile(Bomb bomb, Vector2Int bombTile, Vector2Int tile, int radius)
+    {
+        if (bomb != null && bomb.IsPierceBomb)
+            return IsTileInBlastLine(bombTile, tile, radius, BlocksExplosionForPierce);
+
+        return IsTileInBlastLineRuntime(bombTile, tile, radius);
+    }
+
+    private bool BlocksExplosionForPierce(Vector2Int tile)
+    {
+        return HasIndestructibleTile(tile) || IsBombAtTile(tile);
     }
 
     private string ResolveEscapeAbilityThreatKey(Vector2Int tile)
@@ -6024,7 +6082,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
             int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : 2;
-            if (!IsTileInBlastLineRuntime(bombTile, tile, radius))
+            if (!IsBombBlastReachingTile(bomb, bombTile, tile, radius))
                 continue;
 
             float seconds = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;

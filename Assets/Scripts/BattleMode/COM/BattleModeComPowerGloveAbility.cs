@@ -1189,7 +1189,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             return Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb));
 
         return bombController != null
-            ? Mathf.Max(1, bombController.explosionRadius)
+            ? Mathf.Max(1, bombController.GetPlannedExplosionRadius())
             : 2;
     }
 

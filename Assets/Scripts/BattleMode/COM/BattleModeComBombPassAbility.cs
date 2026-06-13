@@ -763,7 +763,7 @@ public sealed class BattleModeComBombPassAbility : MonoBehaviour, IBattleModeCom
         if (Manhattan(myTile, enemyTile) > MaxOffensiveEnemyDistance)
             return false;
 
-        int radius = bombController != null ? Mathf.Max(1, bombController.explosionRadius) : 2;
+        int radius = bombController != null ? Mathf.Max(1, bombController.GetPlannedExplosionRadius()) : 2;
 
         // BFS através de bombas; primeiro tile alcançado que está na linha de
         // blast do inimigo (e com fuga viável) vira o plant tile.
@@ -831,7 +831,7 @@ public sealed class BattleModeComBombPassAbility : MonoBehaviour, IBattleModeCom
         plannedBlastTiles.Clear();
         plannedBlastTiles.Add(bombTile);
 
-        int radius = bombController != null ? Mathf.Max(1, bombController.explosionRadius) : 2;
+        int radius = bombController != null ? Mathf.Max(1, bombController.GetPlannedExplosionRadius()) : 2;
         for (int d = 0; d < CardinalTiles.Length; d++)
         {
             for (int step = 1; step <= radius; step++)

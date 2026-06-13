@@ -571,7 +571,7 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
             // como alinhado — penaliza, mas não proíbe: às vezes é a única saída).
             bool offOwnBlastLine = !IsTileInBlastLine(
                 myTile, landing,
-                bombController != null ? Mathf.Max(1, bombController.explosionRadius) : 2);
+                bombController != null ? Mathf.Max(1, bombController.GetPlannedExplosionRadius()) : 2);
 
             float score = exits * 100f + (offOwnBlastLine ? 50f : 0f) + distance;
             if (score > bestScore)

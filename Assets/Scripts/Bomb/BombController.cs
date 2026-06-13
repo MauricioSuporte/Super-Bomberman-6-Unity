@@ -610,6 +610,21 @@ public partial class BombController : MonoBehaviour
     /// Espelha exatamente a lógica de TriggerExplosion para que a IA possa
     /// prever o alcance real antes da explosão ocorrer.
     /// </summary>
+    /// <summary>
+    /// Raio que uma NOVA bomba plantada agora teria (PowerBomb/FullFire inclusos).
+    /// Usado pela IA para planejar plantios e fugas com o raio REAL — planejar com
+    /// o raio base fazia a IA se acertar com a própria explosão quando tinha FullFire.
+    /// </summary>
+    public int GetPlannedExplosionRadius()
+    {
+        if (CanUsePowerBombNow())
+            return Mathf.Max(1, powerBombRadius);
+
+        return IsFullFireEnabled()
+            ? PlayerPersistentStats.MaxExplosionRadius
+            : Mathf.Max(1, explosionRadius);
+    }
+
     public int GetPredictedBlastRadius(Bomb bomb)
     {
         if (bomb != null && bomb.ExplosionRadiusOverride > 0)

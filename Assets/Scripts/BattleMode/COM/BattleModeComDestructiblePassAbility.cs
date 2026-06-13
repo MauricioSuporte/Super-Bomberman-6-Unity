@@ -764,7 +764,7 @@ public sealed class BattleModeComDestructiblePassAbility : MonoBehaviour, IBattl
         if (Manhattan(myTile, enemyTile) > MaxChaseEnemyDistance)
             return false;
 
-        int radius = bombController != null ? Mathf.Max(1, bombController.explosionRadius) : 2;
+        int radius = bombController != null ? Mathf.Max(1, bombController.GetPlannedExplosionRadius()) : 2;
 
         ResetBfsCounters();
         searchVisited.Clear();
@@ -916,7 +916,7 @@ public sealed class BattleModeComDestructiblePassAbility : MonoBehaviour, IBattl
         plannedBlastTiles.Clear();
         plannedBlastTiles.Add(bombTile);
 
-        int radius = bombController != null ? Mathf.Max(1, bombController.explosionRadius) : 2;
+        int radius = bombController != null ? Mathf.Max(1, bombController.GetPlannedExplosionRadius()) : 2;
         for (int d = 0; d < CardinalTiles.Length; d++)
         {
             for (int step = 1; step <= radius; step++)
