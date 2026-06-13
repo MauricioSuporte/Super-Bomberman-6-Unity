@@ -59,6 +59,19 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool Running => running;
+    public float StartupInvulnerabilityDelaySeconds =>
+        externalAnimator is MoleMountDrillAnimator anim
+            ? Mathf.Max(0f, anim.Phase1Duration)
+            : 1f;
+    public bool CanStartDrill =>
+        enabledAbility &&
+        !running &&
+        routine == null &&
+        movement != null &&
+        !movement.isDead &&
+        !movement.InputLocked &&
+        IsMountedOnMole();
 
     MountEggQueue eggQueue;
     bool eggQueuePrevVisible;

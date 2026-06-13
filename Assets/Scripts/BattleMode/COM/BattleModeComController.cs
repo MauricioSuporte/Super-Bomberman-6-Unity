@@ -610,6 +610,22 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // Mole drill: preventive escape after its vulnerable startup phase.
+        bool moleDrillEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(MoleMountDrillAbility.AbilityId);
+        TryGetComponent<BattleModeComMoleDrillEscapeAbility>(out var moleDrillCom);
+        if (isCom && moleDrillEnabled && moleDrillCom == null)
+        {
+            gameObject.AddComponent<BattleModeComMoleDrillEscapeAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !moleDrillEnabled) && moleDrillCom != null)
+        {
+            Destroy(moleDrillCom);
+            abilitySystemVersion = -2;
+        }
+
         // PurpleLouie bomb line: condicionado à ability do mount, mesmo padrão.
         bool purpleLineEnabled =
             abilitySystem != null &&
@@ -5073,6 +5089,81 @@ public sealed class BattleModeComController : MonoBehaviour
                     continue;
 
                 visited[next] = new PathNode { Tile = next, Parent = tile, Depth = node.Depth + 1 };
+                open.Enqueue(next);
+            }
+        }
+
+        return false;
+    }
+
+    public int CountSafeEscapeFirstSteps(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start)
+    {
+        int count = 0;
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            if (HasSafeEscapeRouteThroughFirstStep(settings, start, CardinalTiles[i]))
+                count++;
+        }
+
+        return count;
+    }
+
+    private bool HasSafeEscapeRouteThroughFirstStep(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        Vector2Int firstStep)
+    {
+        Vector2Int firstTile = start + firstStep;
+        if (!IsWalkableTile(firstTile, start))
+            return false;
+
+        float firstEta = EstimateFirstMoveTraversalSeconds(firstStep);
+        float currentDanger = GetDangerSeconds(start, null);
+        if (!float.IsInfinity(currentDanger) &&
+            currentDanger <= firstEta + DangerTimingMarginSeconds)
+            return false;
+
+        if (IsDangerousAt(firstTile, firstEta, settings, null))
+            return false;
+
+        visited.Clear();
+        open.Clear();
+        visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
+        visited[firstTile] = new PathNode { Tile = firstTile, Parent = start, Depth = 1 };
+        open.Enqueue(firstTile);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            float eta = EstimateEscapeTraversalSeconds(start, tile, node.Depth);
+            float danger = GetDangerSeconds(tile, null);
+
+            if (float.IsInfinity(danger) &&
+                !IsDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings, null))
+                return true;
+
+            if (node.Depth >= settings.searchDepth + 3)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next) || !IsWalkableTile(next, start))
+                    continue;
+
+                float nextEta = EstimateEscapeTraversalSeconds(start, tile, next, node.Depth + 1);
+                if (IsDangerousAt(next, nextEta, settings, null))
+                    continue;
+
+                visited[next] = new PathNode
+                {
+                    Tile = next,
+                    Parent = tile,
+                    Depth = node.Depth + 1
+                };
                 open.Enqueue(next);
             }
         }
