@@ -626,6 +626,22 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
+        // Tank shot: long-range offense with difficulty-specific cooldown.
+        bool tankShootEnabled =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(TankMountShootAbility.AbilityId);
+        TryGetComponent<BattleModeComTankMountShootAbility>(out var tankShootCom);
+        if (isCom && tankShootEnabled && tankShootCom == null)
+        {
+            gameObject.AddComponent<BattleModeComTankMountShootAbility>();
+            abilitySystemVersion = -2;
+        }
+        else if ((!isCom || !tankShootEnabled) && tankShootCom != null)
+        {
+            Destroy(tankShootCom);
+            abilitySystemVersion = -2;
+        }
+
         // PurpleLouie bomb line: condicionado à ability do mount, mesmo padrão.
         bool purpleLineEnabled =
             abilitySystem != null &&
@@ -1266,6 +1282,17 @@ public sealed class BattleModeComController : MonoBehaviour
         ownChainPlanActive = false;
         ownChainEscapeOnly = false;
 
+        if (TryBuildTankShootPriorityCandidate(settings, myTile, out CandidateAction tankShoot))
+        {
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                tankShoot,
+                "tankShootPriority");
+            return;
+        }
+
         bool walkToChainCommitActive =
             walkToChainCommitted && Time.time - walkToChainCommittedTime < WalkToChainCommitTimeoutSeconds;
 
@@ -1853,6 +1880,35 @@ public sealed class BattleModeComController : MonoBehaviour
             TapActionC = decision.TapActionC,
             UsesEscapeAbilityChance = decision.UsesEscapeAbilityChance
         };
+    }
+
+    private bool TryBuildTankShootPriorityCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        RefreshComAbilities();
+
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            if (comAbilities[i] is not BattleModeComTankMountShootAbility tankShoot ||
+                !tankShoot.IsAvailable)
+                continue;
+
+            if (!tankShoot.TryBuildCandidateDecision(
+                    settings,
+                    this,
+                    myTile,
+                    out BattleModeComAbilityDecision decision))
+                return false;
+
+            candidate = ToCandidateAction(decision);
+            AppendAbilityTrace(tankShoot, "candidate priority selected");
+            return candidate.Weight > 0;
+        }
+
+        return false;
     }
 
     private void AppendAbilityTrace(IBattleModeComAbility ability, string phase)
