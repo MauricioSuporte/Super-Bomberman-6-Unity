@@ -99,6 +99,9 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     private readonly HashSet<Vector2Int> pathCheckVisited = new();
     private readonly Queue<Vector2Int> escapeOpen = new();
     private readonly Dictionary<Vector2Int, EscapeSearchNode> escapeVisited = new();
+    private readonly List<Vector2Int> redirectedKickTrajectory = new(16);
+    private readonly HashSet<long> redirectedKickStates = new();
+    private IBattleModeComKickTrajectoryProvider kickTrajectoryProvider;
 
     public virtual string DiagnosticName => "KickBomb";
     public string LastDecisionTrace => lastDecisionTrace;
@@ -172,8 +175,63 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
         explosionMask = LayerMask.GetMask("Explosion");
 
+        ResolveKickTrajectoryProvider();
         CacheExtraReferences();
     }
+
+    private void ResolveKickTrajectoryProvider()
+    {
+        kickTrajectoryProvider = null;
+
+        MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            MonoBehaviour behaviour = behaviours[i];
+            if (behaviour == null ||
+                !behaviour.isActiveAndEnabled ||
+                behaviour is not IBattleModeComKickTrajectoryProvider provider)
+            {
+                continue;
+            }
+
+            kickTrajectoryProvider = provider;
+            return;
+        }
+    }
+
+    private IBattleModeComKickTrajectoryProvider GetKickTrajectoryProvider()
+    {
+        if (kickTrajectoryProvider is MonoBehaviour behaviour &&
+            behaviour != null &&
+            behaviour.isActiveAndEnabled)
+        {
+            return kickTrajectoryProvider;
+        }
+
+        ResolveKickTrajectoryProvider();
+        return kickTrajectoryProvider;
+    }
+
+    private float GetOffensiveKickChanceMultiplier()
+        => GetKickTrajectoryProvider()?.OffensiveKickChanceMultiplier ?? 1f;
+
+    private int GetOffensiveKickWeightBonus()
+        => GetKickTrajectoryProvider()?.OffensiveKickWeightBonus ?? 0;
+
+    private float GetOffensiveKickCooldownSeconds()
+        => Mathf.Max(
+            0.1f,
+            GetKickTrajectoryProvider()?.OffensiveKickCooldownSeconds ??
+            OffensiveSequenceCooldownSeconds);
+
+    private int GetMaxSequentialKickBombs()
+        => Mathf.Max(
+            MaxSequentialKickBombs,
+            GetKickTrajectoryProvider()?.MaxSequentialKickBombs ??
+            MaxSequentialKickBombs);
+
+    private float GetStageRepeatKickChance()
+        => Mathf.Clamp01(GetKickTrajectoryProvider()?.RepeatKickChance ?? 0f);
 
     protected virtual void CacheExtraReferences()
     {
@@ -369,7 +427,9 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
         // Chute ofensivo é uma jogada ocasional, não automática. Mesmo quando há alvo
         // alinhado e lane aberta, a IA só executa conforme a chance por dificuldade.
-        float chance = DifficultyChance(settings, 0.10f, 0.25f, 0.50f);
+        float chance = Mathf.Clamp01(
+            DifficultyChance(settings, 0.10f, 0.25f, 0.50f) *
+            GetOffensiveKickChanceMultiplier());
         if (Random.value > chance)
         {
             lastDecisionTrace = $"candidate chance failed chance {chance:F2}";
@@ -384,7 +444,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
         if (!TryFindNearestEnemyAligned(myTile, out PlayerIdentity target, out Vector2Int targetTile, out Vector2Int kickDir))
         {
-            lastDecisionTrace = "candidate no aligned target with open lane";
+            lastDecisionTrace = "candidate no target on planned kick trajectory";
             return false;
         }
 
@@ -399,7 +459,11 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         // a IA pode chutar uma bomba para dentro de uma explosão em andamento, criando
         // uma reação em cadeia que a mata.
         int laneCheckDist = Manhattan(myTile, targetTile);
-        if (!IsKickLaneSafeFromImminentExplosions(myTile + kickDir, kickDir, laneCheckDist))
+        if (!IsPlannedKickPathSafeFromImminentExplosions(
+                myTile,
+                kickDir,
+                targetTile,
+                laneCheckDist))
         {
             lastDecisionTrace = $"candidate kick lane unsafe imminent explosion dir {kickDir} target P{target.playerId}@{targetTile}";
             LogKickSurgical(
@@ -414,13 +478,18 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         sequenceBombTile = myTile;
         sequenceRetreatTile = retreatTile;
         sequenceKickDirection = kickDir;
-        nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+        nextOffensiveSequenceTime = Time.time + GetOffensiveKickCooldownSeconds();
 
         Vector2 retreatMove = TileDirectionToVector(retreatTile - myTile);
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
-            Weight = Mathf.Max(1, settings.combatPlantWeight + 90 + DifficultyWeight(settings)),
+            Weight = Mathf.Max(
+                1,
+                settings.combatPlantWeight +
+                90 +
+                DifficultyWeight(settings) +
+                GetOffensiveKickWeightBonus()),
             TargetTile = targetTile,
             HasTarget = true,
             FirstMove = retreatMove,
@@ -565,7 +634,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                     if (!postKickEscapeArmed)
                         ResetOffensiveSequence();
 
-                    nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+                    nextOffensiveSequenceTime =
+                        Time.time + GetOffensiveKickCooldownSeconds();
                 }
 
                 decision = new BattleModeComAbilityDecision
@@ -700,7 +770,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                         if (!postKickEscapeArmed)
                             ResetOffensiveSequence();
 
-                        nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+                        nextOffensiveSequenceTime =
+                            Time.time + GetOffensiveKickCooldownSeconds();
                     }
 
                     decision = new BattleModeComAbilityDecision
@@ -805,7 +876,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
     {
         decision = default;
 
-        if (sequenceKicksCompleted >= MaxSequentialKickBombs)
+        int maxSequentialKicks = GetMaxSequentialKickBombs();
+        if (sequenceKicksCompleted >= maxSequentialKicks)
         {
             lastDecisionTrace = $"repeat plant cancelled max kicks {sequenceKicksCompleted}";
             ResetOffensiveSequence();
@@ -966,11 +1038,15 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         Bomb kickedBomb,
         Vector2Int standTile)
     {
-        sequenceKicksCompleted = Mathf.Min(sequenceKicksCompleted + 1, MaxSequentialKickBombs);
+        int maxSequentialKicks = GetMaxSequentialKickBombs();
+        sequenceKicksCompleted = Mathf.Min(
+            sequenceKicksCompleted + 1,
+            maxSequentialKicks);
         sequenceTrackedBomb = null;
         sequencePlantDirectionPatched = false;
 
-        if (sequenceKicksCompleted >= Mathf.Clamp(sequenceTargetKickCount, 1, MaxSequentialKickBombs))
+        if (sequenceKicksCompleted >=
+            Mathf.Clamp(sequenceTargetKickCount, 1, maxSequentialKicks))
         {
             ArmActionRStopWindowIfPlanned();
             return false;
@@ -1048,11 +1124,20 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         sequenceDirectKickRetryUntil = -10f;
         postKickEscapeUntil = -10f;
 
-        int bombsNeededForSecondKick = firstBombAlreadyPlaced ? 1 : 2;
-        bool hasBombForSecondKick = bombController != null && bombController.BombsRemaining >= bombsNeededForSecondKick;
-        float repeatChance = DifficultyChance(settings, 0.20f, 0.45f, 0.65f);
+        int maxSequentialKicks = GetMaxSequentialKickBombs();
+        int availableSequenceKicks = bombController == null
+            ? 0
+            : bombController.BombsRemaining + (firstBombAlreadyPlaced ? 1 : 0);
+        int possibleSequenceKicks = Mathf.Clamp(
+            availableSequenceKicks,
+            1,
+            maxSequentialKicks);
+        bool hasBombForSecondKick = possibleSequenceKicks >= 2;
+        float repeatChance = Mathf.Max(
+            DifficultyChance(settings, 0.20f, 0.45f, 0.65f),
+            GetStageRepeatKickChance());
         sequenceTargetKickCount = hasBombForSecondKick && Random.value < repeatChance
-            ? MaxSequentialKickBombs
+            ? possibleSequenceKicks
             : 1;
 
         float actionRChance = DifficultyChance(settings, 0.20f, 0.42f, 0.58f);
@@ -1145,7 +1230,9 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         // ~0.2s para que múltiplas chamadas dentro do mesmo ciclo de Think() (emergency +
         // ExecuteEscape) compartilhem o mesmo resultado em vez de re-rolarem e elevarem
         // a probabilidade efetiva além da intenção (ex.: dois rolls de 50% → 75%).
-        float ownTriggerChance = DifficultyChance(settings, 0.10f, 0.25f, 0.50f);
+        float ownTriggerChance = Mathf.Clamp01(
+            DifficultyChance(settings, 0.10f, 0.25f, 0.50f) *
+            GetOffensiveKickChanceMultiplier());
         float cacheWindowSeconds = 0.20f;
         if (forceChance)
         {
@@ -1219,7 +1306,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 {
                     AppendTracePart(
                         ref rejectedRescue,
-                        $"bomb:{bombTile} no aligned target{(string.IsNullOrEmpty(defensiveReject) ? string.Empty : " defensive:" + defensiveReject)}");
+                        $"bomb:{bombTile} no target on kick trajectory{(string.IsNullOrEmpty(defensiveReject) ? string.Empty : " defensive:" + defensiveReject)}");
                     continue;
                 }
 
@@ -1282,7 +1369,11 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
 
             // Rejeita se o caminho do chute passa por explosão ativa ou bomba iminente
             int candidateLaneDist = Manhattan(bombTile, targetTile);
-            if (!IsKickLaneSafeFromImminentExplosions(bombTile + kickDir, kickDir, candidateLaneDist))
+            if (!IsPlannedKickPathSafeFromImminentExplosions(
+                    bombTile,
+                    kickDir,
+                    targetTile,
+                    candidateLaneDist))
             {
                 AppendTracePart(ref rejectedRescue, $"bomb:{bombTile} kick lane unsafe imminent explosion");
                 continue;
@@ -1323,7 +1414,11 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         string rescueTargetLabel = bestDefensiveEscapeOnly
             ? $"escape@{bestTargetTile}"
             : $"P{bestTarget.playerId}@{bestTargetTile}";
-        if (!IsKickLaneSafeFromImminentExplosions(bestBombTile + bestKickDir, bestKickDir, ownLaneCheckDist))
+        if (!IsPlannedKickPathSafeFromImminentExplosions(
+                bestBombTile,
+                bestKickDir,
+                bestTargetTile,
+                ownLaneCheckDist))
         {
             lastDecisionTrace =
                 $"own trigger kick lane unsafe imminent explosion bomb:{bestBombTile} dir:{bestKickDir} target:{rescueTargetLabel}";
@@ -1339,7 +1434,7 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         sequenceBombTile = bestBombTile;
         sequenceRetreatTile = bestStandTile;
         sequenceKickDirection = bestKickDir;
-        nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+        nextOffensiveSequenceTime = Time.time + GetOffensiveKickCooldownSeconds();
         EnsureSequenceBombPlantDirection(bestBomb);
 
         Vector2 firstMove = TileDirectionToVector(bestMoveDir);
@@ -1386,7 +1481,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                     if (!postKickEscapeArmed)
                         ResetOffensiveSequence();
 
-                    nextOffensiveSequenceTime = Time.time + OffensiveSequenceCooldownSeconds;
+                    nextOffensiveSequenceTime =
+                        Time.time + GetOffensiveKickCooldownSeconds();
                 }
 
                 decision = new BattleModeComAbilityDecision
@@ -2042,6 +2138,15 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         out Vector2Int targetTile,
         out Vector2Int direction)
     {
+        if (GetKickTrajectoryProvider() != null)
+        {
+            return TryFindNearestEnemyOnRedirectedTrajectory(
+                origin,
+                out target,
+                out targetTile,
+                out direction);
+        }
+
         target = null;
         targetTile = origin;
         direction = Vector2Int.zero;
@@ -2084,6 +2189,144 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
         }
 
         return target != null;
+    }
+
+    private bool TryFindNearestEnemyOnRedirectedTrajectory(
+        Vector2Int origin,
+        out PlayerIdentity target,
+        out Vector2Int targetTile,
+        out Vector2Int direction)
+    {
+        target = null;
+        targetTile = origin;
+        direction = Vector2Int.zero;
+        int bestDistance = int.MaxValue;
+
+        PlayerIdentity[] players =
+            FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < players.Length; i++)
+        {
+            PlayerIdentity player = players[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (player.TryGetComponent<CharacterHealth>(out var health) &&
+                health.life <= 0)
+            {
+                continue;
+            }
+
+            if (identity != null &&
+                BattleModeRules.Instance != null &&
+                BattleModeRules.Instance.GetTeamForPlayer(player.playerId) ==
+                BattleModeRules.Instance.GetTeamForPlayer(identity.playerId))
+            {
+                continue;
+            }
+
+            Vector2Int playerTile = WorldToTile(player.transform.position);
+            for (int d = 0; d < CardinalTiles.Length; d++)
+            {
+                Vector2Int initialDirection = CardinalTiles[d];
+                if (!TryBuildRedirectedKickTrajectory(
+                        origin,
+                        initialDirection,
+                        MaxOffensiveKickDistance,
+                        redirectedKickTrajectory))
+                {
+                    continue;
+                }
+
+                int pathIndex = redirectedKickTrajectory.IndexOf(playerTile);
+                int distance = pathIndex + 1;
+                if (pathIndex < 0 ||
+                    distance <= 1 ||
+                    distance >= bestDistance)
+                {
+                    continue;
+                }
+
+                bestDistance = distance;
+                target = player;
+                targetTile = playerTile;
+                direction = initialDirection;
+            }
+        }
+
+        return target != null;
+    }
+
+    private bool TryBuildRedirectedKickTrajectory(
+        Vector2Int origin,
+        Vector2Int initialDirection,
+        int maxDistance,
+        List<Vector2Int> destination)
+    {
+        destination.Clear();
+        redirectedKickStates.Clear();
+
+        IBattleModeComKickTrajectoryProvider provider =
+            GetKickTrajectoryProvider();
+        if (provider == null || !IsCardinalStep(initialDirection))
+            return false;
+
+        Vector2Int tile = origin;
+        Vector2Int direction = initialDirection;
+        TryApplyKickRedirection(provider, tile, ref direction);
+
+        for (int step = 0; step < Mathf.Max(1, maxDistance); step++)
+        {
+            if (!redirectedKickStates.Add(
+                    EncodeKickTrajectoryState(tile, direction)))
+            {
+                break;
+            }
+
+            Vector2Int next = tile + direction;
+            if (!HasGroundTile(next) ||
+                HasIndestructibleTile(next) ||
+                HasDestructibleTile(next) ||
+                FindBombAt(next) != null)
+            {
+                break;
+            }
+
+            destination.Add(next);
+            tile = next;
+            TryApplyKickRedirection(provider, tile, ref direction);
+        }
+
+        return destination.Count > 0;
+    }
+
+    private static void TryApplyKickRedirection(
+        IBattleModeComKickTrajectoryProvider provider,
+        Vector2Int tile,
+        ref Vector2Int direction)
+    {
+        if (provider.TryGetRedirectedKickDirection(
+                tile,
+                direction,
+                out Vector2Int redirectedDirection) &&
+            IsCardinalStep(redirectedDirection))
+        {
+            direction = redirectedDirection;
+        }
+    }
+
+    private static long EncodeKickTrajectoryState(
+        Vector2Int tile,
+        Vector2Int direction)
+    {
+        unchecked
+        {
+            long tileKey = ((long)tile.x << 32) ^ (uint)tile.y;
+            int directionKey =
+                (direction.x + 1) * 3 +
+                direction.y +
+                1;
+            return (tileKey * 397L) ^ (uint)directionKey;
+        }
     }
 
     /// <summary>
@@ -2237,6 +2480,111 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                     if (!blocked)
                         return false;
                 }
+            }
+        }
+
+        return true;
+    }
+
+    private bool IsPlannedKickPathSafeFromImminentExplosions(
+        Vector2Int origin,
+        Vector2Int initialDirection,
+        Vector2Int targetTile,
+        int fallbackDistance)
+    {
+        if (GetKickTrajectoryProvider() == null)
+        {
+            return IsKickLaneSafeFromImminentExplosions(
+                origin + initialDirection,
+                initialDirection,
+                fallbackDistance);
+        }
+
+        if (!TryBuildRedirectedKickTrajectory(
+                origin,
+                initialDirection,
+                MaxOffensiveKickDistance,
+                redirectedKickTrajectory))
+        {
+            return false;
+        }
+
+        Vector2Int previousTile = origin;
+        for (int i = 0; i < redirectedKickTrajectory.Count; i++)
+        {
+            Vector2Int tile = redirectedKickTrajectory[i];
+            Vector2Int movementDirection = tile - previousTile;
+            if (!IsKickTrajectoryTileSafe(tile, movementDirection))
+                return false;
+
+            if (tile == targetTile)
+                return true;
+
+            previousTile = tile;
+        }
+
+        return false;
+    }
+
+    private bool IsKickTrajectoryTileSafe(
+        Vector2Int tile,
+        Vector2Int movementDirection)
+    {
+        if (LaneTileHasActiveExplosion(tile))
+            return false;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove)
+            {
+                continue;
+            }
+
+            float fuse = bomb.IsControlBomb
+                ? 0.65f
+                : bomb.RemainingFuseSeconds;
+            if (fuse > KickLaneImminentFuseThreshold)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int bombRadius = bomb.Owner != null
+                ? Mathf.Max(1, bomb.Owner.explosionRadius)
+                : 2;
+            if (IsTileInBlastLine(bombTile, tile, bombRadius))
+                return false;
+        }
+
+        if (!IsCardinalStep(movementDirection))
+            return true;
+
+        Vector2Int[] perpendicularDirections =
+        {
+            new(-movementDirection.y, movementDirection.x),
+            new(movementDirection.y, -movementDirection.x)
+        };
+
+        for (int d = 0; d < perpendicularDirections.Length; d++)
+        {
+            Vector2Int perpendicularDirection = perpendicularDirections[d];
+            for (int distance = 1;
+                 distance <= MaxOffensiveKickDistance;
+                 distance++)
+            {
+                Vector2Int checkTile =
+                    tile + perpendicularDirection * distance;
+                if (!HasGroundTile(checkTile) ||
+                    HasIndestructibleTile(checkTile))
+                {
+                    break;
+                }
+
+                if (HasDestructibleTile(checkTile))
+                    break;
+
+                if (LaneTileHasActiveExplosion(checkTile))
+                    return false;
             }
         }
 

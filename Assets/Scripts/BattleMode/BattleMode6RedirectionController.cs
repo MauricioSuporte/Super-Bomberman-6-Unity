@@ -76,6 +76,36 @@ public sealed class BattleMode6RedirectionController : MonoBehaviour, IGroundTil
         ref bool pierce)
         => false;
 
+    public bool TryGetRedirection(
+        Vector2Int tile,
+        out Vector2Int direction)
+    {
+        RebuildArrowMap();
+        if (!arrowDirectionsByCell.TryGetValue(
+                ToCell(tile),
+                out ArrowDirection arrowDirection))
+        {
+            direction = Vector2Int.zero;
+            return false;
+        }
+
+        direction = ToVectorInt(arrowDirection);
+        return direction != Vector2Int.zero;
+    }
+
+    public void CopyArrowCells(List<ArrowCell> destination)
+    {
+        if (destination == null)
+            return;
+
+        destination.Clear();
+        if (arrows == null)
+            return;
+
+        for (int i = 0; i < arrows.Length; i++)
+            destination.Add(arrows[i]);
+    }
+
     public void OnBombAt(
         BombController source,
         Vector2 worldPos,
@@ -279,6 +309,18 @@ public sealed class BattleMode6RedirectionController : MonoBehaviour, IGroundTil
             ArrowDirection.Left => Vector2.left,
             ArrowDirection.Right => Vector2.right,
             _ => Vector2.zero,
+        };
+    }
+
+    static Vector2Int ToVectorInt(ArrowDirection direction)
+    {
+        return direction switch
+        {
+            ArrowDirection.Up => Vector2Int.up,
+            ArrowDirection.Down => Vector2Int.down,
+            ArrowDirection.Left => Vector2Int.left,
+            ArrowDirection.Right => Vector2Int.right,
+            _ => Vector2Int.zero,
         };
     }
 
