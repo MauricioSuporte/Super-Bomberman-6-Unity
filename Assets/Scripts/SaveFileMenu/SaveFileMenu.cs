@@ -9,6 +9,8 @@ using UnityEngine.UI;
 
 public class SaveFileMenu : MonoBehaviour
 {
+    public static bool SelectNewGameOnNextOpen { get; set; }
+
     private enum MenuState
     {
         Main = 0,
@@ -555,7 +557,23 @@ public class SaveFileMenu : MonoBehaviour
             _displayEnabled.Add(IsMainOptionEnabled(option));
         }
 
-        selectedIndex = GetDefaultMainMenuSelectedIndex();
+        if (SelectNewGameOnNextOpen)
+        {
+            SelectNewGameOnNextOpen = false;
+
+            int newGameIndex = _mainOptions.IndexOf(SaveFileOption.NewGame);
+            selectedIndex =
+                newGameIndex >= 0 &&
+                newGameIndex < _displayEnabled.Count &&
+                _displayEnabled[newGameIndex]
+                    ? newGameIndex
+                    : GetDefaultMainMenuSelectedIndex();
+        }
+        else
+        {
+            selectedIndex = GetDefaultMainMenuSelectedIndex();
+        }
+
         ApplyEntriesToPanel();
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);

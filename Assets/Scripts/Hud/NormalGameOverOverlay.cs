@@ -582,6 +582,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         if (returnToSaveFileMenuOnEnd)
         {
             returnToSaveFileMenuOnEnd = false;
+            SaveFileMenu.SelectNewGameOnNextOpen = true;
             SceneManager.LoadScene(SaveFileMenuSceneName);
             return;
         }
