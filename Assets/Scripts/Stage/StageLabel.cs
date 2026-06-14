@@ -229,8 +229,6 @@ public class StageLabel : MonoBehaviour
     {
         EnsureNoWrap();
 
-        string stageNumber = $"{world}-{stage}";
-
         string resume = selectedIndex == 0
             ? "<color=#FF6F31>> RESUME</color>"
             : "<color=#E8E8E8>  RESUME</color>";
@@ -251,8 +249,6 @@ public class StageLabel : MonoBehaviour
 
         stageText.text =
             "<align=center>" +
-            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
-            $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
             $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
             $"<size={S(SizeMenuItem)}>{restartRound}</size>\n" +
