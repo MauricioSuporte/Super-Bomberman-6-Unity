@@ -55,7 +55,6 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float OpeningFarmDiagnosticDurationSeconds = 8f;
     private const float OpeningFarmDiagnosticRepeatSeconds = 0.12f;
     private const float OpeningFarmPriorityDurationSeconds = 4f;
-    private const int OpeningFarmMaxTargetDistance = 1;
     private const int OpeningFarmDiagnosticPlayerIdFilter = 0;
     private Vector2Int oscDiagLastDecisionDir;
     private float oscDiagLastDecisionTime = -10f;
@@ -2965,17 +2964,10 @@ public sealed class BattleModeComController : MonoBehaviour
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path))
                 continue;
 
-            if (IsOpeningFarmPriorityActive() &&
-                path.Distance > OpeningFarmMaxTargetDistance)
-            {
-                RejectVerbose(
-                    $"FarmDestructible recusado opening distante tile {tile} " +
-                    $"distance {path.Distance} max {OpeningFarmMaxTargetDistance}");
-                continue;
-            }
-
             // Maximiza primeiro o rendimento da bomba. Distância e personalidade
             // servem apenas para desempatar tiles que destroem a mesma quantidade.
+            // This also applies to the opening farm: a farther tile is selected
+            // only when it destroys more blocks; equal yields still favor distance.
             float score =
                 destructibleCount * 1000f -
                 path.Distance * 10f +
