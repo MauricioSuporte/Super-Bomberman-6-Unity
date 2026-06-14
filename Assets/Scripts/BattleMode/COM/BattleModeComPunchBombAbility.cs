@@ -315,7 +315,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
                 settings.combatPlantWeight +
                 80 +
                 DifficultyWeight(settings) +
-                (GetStageAggression()?.PunchWeightBonus ?? 0)),
+                GetPunchWeightBonus()),
             TargetTile = retreatTile,
             HasTarget = true,
             FirstMove = retreatMove,
@@ -1120,7 +1120,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         float chance = Mathf.Clamp01(
             DifficultyChance(settings, 0.1f, 0.25f, 0.50f) *
-            (GetStageAggression()?.PunchChanceMultiplier ?? 1f));
+            GetPunchChanceMultiplier());
         bool result = Random.value <= chance;
         offensiveTriggerChanceCacheTime = Time.time;
         offensiveTriggerChanceCacheResult = result;
@@ -1135,15 +1135,56 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     }
 
     private float GetOffensiveCooldownSeconds()
-        => Mathf.Max(
+    {
+        BattleModeComStage10PowerZoneAggressionAbility stage10 =
+            GetStageAggression();
+        if (stage10 != null)
+            return Mathf.Max(0.1f, stage10.PunchCooldownSeconds);
+
+        BattleModeComStage11ImpulseRopeAbility stage11 =
+            GetStage11Aggression();
+        return Mathf.Max(
             0.1f,
-            GetStageAggression()?.PunchCooldownSeconds ??
-            OffensiveCooldownSeconds);
+            stage11 != null
+                ? stage11.PunchCooldownSeconds
+                : OffensiveCooldownSeconds);
+    }
+
+    private float GetPunchChanceMultiplier()
+    {
+        BattleModeComStage10PowerZoneAggressionAbility stage10 =
+            GetStageAggression();
+        if (stage10 != null)
+            return stage10.PunchChanceMultiplier;
+
+        BattleModeComStage11ImpulseRopeAbility stage11 =
+            GetStage11Aggression();
+        return stage11 != null ? stage11.PunchChanceMultiplier : 1f;
+    }
+
+    private int GetPunchWeightBonus()
+    {
+        BattleModeComStage10PowerZoneAggressionAbility stage10 =
+            GetStageAggression();
+        if (stage10 != null)
+            return stage10.PunchWeightBonus;
+
+        BattleModeComStage11ImpulseRopeAbility stage11 =
+            GetStage11Aggression();
+        return stage11 != null ? stage11.PunchWeightBonus : 0;
+    }
 
     private BattleModeComStage10PowerZoneAggressionAbility
         GetStageAggression()
         => TryGetComponent(
             out BattleModeComStage10PowerZoneAggressionAbility aggression)
+            ? aggression
+            : null;
+
+    private BattleModeComStage11ImpulseRopeAbility
+        GetStage11Aggression()
+        => TryGetComponent(
+            out BattleModeComStage11ImpulseRopeAbility aggression)
             ? aggression
             : null;
 

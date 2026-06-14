@@ -2283,8 +2283,22 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
             }
 
             Vector2Int next = tile + direction;
+            bool blockedByIndestructible =
+                HasIndestructibleTile(next);
+            if (blockedByIndestructible &&
+                provider.TryGetRedirectedKickDirection(
+                    next,
+                    direction,
+                    out Vector2Int bounceDirection) &&
+                IsCardinalStep(bounceDirection) &&
+                bounceDirection != direction)
+            {
+                direction = bounceDirection;
+                continue;
+            }
+
             if (!HasGroundTile(next) ||
-                HasIndestructibleTile(next) ||
+                blockedByIndestructible ||
                 HasDestructibleTile(next) ||
                 FindBombAt(next) != null)
             {

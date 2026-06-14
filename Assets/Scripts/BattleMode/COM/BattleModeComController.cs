@@ -993,6 +993,12 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             powerZoneAggression.ApplyAggressionSettings(settings);
         }
+        else if (TryGetComponent(
+                     out BattleModeComStage11ImpulseRopeAbility
+                         impulseRopeAggression))
+        {
+            impulseRopeAggression.ApplyAggressionSettings(settings);
+        }
 
         Vector2Int myTile = WorldToTile(transform.position);
         float currentDangerSeconds = GetDangerSeconds(myTile, null);
@@ -2979,7 +2985,11 @@ public sealed class BattleModeComController : MonoBehaviour
                     out BattleModeComStage10PowerZoneAggressionAbility
                         powerZoneAggression)
                     ? powerZoneAggression.OwnChainPlanChance
-                    : OwnChainPlanChance;
+                    : TryGetComponent(
+                        out BattleModeComStage11ImpulseRopeAbility
+                            impulseRopeAggression)
+                        ? impulseRopeAggression.OwnChainPlanChance
+                        : OwnChainPlanChance;
             if (UnityEngine.Random.value > ownChainPlanChance)
                 return false;
         }
@@ -7176,6 +7186,23 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int nextTile = currentTile + DirectionToTile(requestedMove);
         if (nextTile == currentTile)
             return Vector2.zero;
+
+        if (TryGetComponent(
+                out BattleModeComStage11ImpulseRopeAbility
+                    impulseRopeAbility) &&
+            !string.IsNullOrEmpty(currentReason) &&
+            currentReason.StartsWith(
+                "stage 11 rope impulse",
+                StringComparison.Ordinal) &&
+            impulseRopeAbility.CanUseCommittedImpulseInput(
+                settings,
+                this,
+                currentTile,
+                DirectionToTile(requestedMove),
+                out _))
+        {
+            return requestedMove;
+        }
 
         BattleModeComStage7PortalEscapeAbility portalAbility =
             GetStage7PortalAbility();

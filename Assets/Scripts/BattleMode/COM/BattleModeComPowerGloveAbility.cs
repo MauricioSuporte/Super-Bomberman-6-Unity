@@ -339,7 +339,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             Weight =
                 420 +
                 DifficultyWeight(settings) +
-                (GetStageAggression()?.PowerGloveWeightBonus ?? 0),
+                GetPowerGloveWeightBonus(),
             TargetTile = landingTile,
             HasTarget = true,
             FirstMove = Vector2.zero,
@@ -1303,7 +1303,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         };
         return Mathf.Clamp01(
             chance *
-            (GetStageAggression()?.PowerGloveChanceMultiplier ?? 1f));
+            GetPowerGloveChanceMultiplier());
     }
 
     private float GetCarryChance(BattleModeComDifficultySettings settings)
@@ -1316,19 +1316,62 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         };
         return Mathf.Clamp01(
             chance *
-            (GetStageAggression()?.PowerGloveChanceMultiplier ?? 1f));
+            GetPowerGloveChanceMultiplier());
     }
 
     private float GetOffensiveCooldownSeconds()
-        => Mathf.Max(
+    {
+        BattleModeComStage10PowerZoneAggressionAbility stage10 =
+            GetStageAggression();
+        if (stage10 != null)
+            return Mathf.Max(0.1f, stage10.PowerGloveCooldownSeconds);
+
+        BattleModeComStage11ImpulseRopeAbility stage11 =
+            GetStage11Aggression();
+        return Mathf.Max(
             0.1f,
-            GetStageAggression()?.PowerGloveCooldownSeconds ??
-            OffensiveCooldownSeconds);
+            stage11 != null
+                ? stage11.PowerGloveCooldownSeconds
+                : OffensiveCooldownSeconds);
+    }
+
+    private float GetPowerGloveChanceMultiplier()
+    {
+        BattleModeComStage10PowerZoneAggressionAbility stage10 =
+            GetStageAggression();
+        if (stage10 != null)
+            return stage10.PowerGloveChanceMultiplier;
+
+        BattleModeComStage11ImpulseRopeAbility stage11 =
+            GetStage11Aggression();
+        return stage11 != null
+            ? stage11.PowerGloveChanceMultiplier
+            : 1f;
+    }
+
+    private int GetPowerGloveWeightBonus()
+    {
+        BattleModeComStage10PowerZoneAggressionAbility stage10 =
+            GetStageAggression();
+        if (stage10 != null)
+            return stage10.PowerGloveWeightBonus;
+
+        BattleModeComStage11ImpulseRopeAbility stage11 =
+            GetStage11Aggression();
+        return stage11 != null ? stage11.PowerGloveWeightBonus : 0;
+    }
 
     private BattleModeComStage10PowerZoneAggressionAbility
         GetStageAggression()
         => TryGetComponent(
             out BattleModeComStage10PowerZoneAggressionAbility aggression)
+            ? aggression
+            : null;
+
+    private BattleModeComStage11ImpulseRopeAbility
+        GetStage11Aggression()
+        => TryGetComponent(
+            out BattleModeComStage11ImpulseRopeAbility aggression)
             ? aggression
             : null;
 
