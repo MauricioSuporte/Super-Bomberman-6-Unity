@@ -26,6 +26,8 @@ public sealed class GameSession : MonoBehaviour
     [Header("Normal Game Run")]
     [SerializeField, HideInInspector] private bool hardNormalGameRunInProgress;
     [SerializeField, HideInInspector] private int hardNormalGameRemainingLives = HardNormalGameStartingLives;
+    [SerializeField, HideInInspector] private bool hardcoreNormalGameRunInProgress;
+    [SerializeField, HideInInspector] private int hardcoreEliminatedPlayerMask;
 
     public int ActivePlayerCount => CountPlayersInMask(GetEffectiveActivePlayerMask());
     public int ActivePlayerMask => GetEffectiveActivePlayerMask();
@@ -148,6 +150,23 @@ public sealed class GameSession : MonoBehaviour
 
     public void EnsureNormalGameLivesSession(NormalGameDifficulty difficulty)
     {
+        if (difficulty == NormalGameDifficulty.Hardcore)
+        {
+            hardNormalGameRunInProgress = false;
+            hardNormalGameRemainingLives = HardNormalGameStartingLives;
+
+            if (!hardcoreNormalGameRunInProgress)
+            {
+                hardcoreNormalGameRunInProgress = true;
+                hardcoreEliminatedPlayerMask = 0;
+            }
+
+            return;
+        }
+
+        hardcoreNormalGameRunInProgress = false;
+        hardcoreEliminatedPlayerMask = 0;
+
         if (difficulty != NormalGameDifficulty.Hard)
         {
             ResetNormalGameLivesSession();
@@ -165,6 +184,35 @@ public sealed class GameSession : MonoBehaviour
     {
         hardNormalGameRunInProgress = false;
         hardNormalGameRemainingLives = HardNormalGameStartingLives;
+        hardcoreNormalGameRunInProgress = false;
+        hardcoreEliminatedPlayerMask = 0;
+    }
+
+    public void MarkHardcorePlayerEliminated(int playerId)
+    {
+        if (!hardcoreNormalGameRunInProgress || !IsValidPlayerId(playerId))
+            return;
+
+        hardcoreEliminatedPlayerMask |= PlayerIdToMask(playerId);
+    }
+
+    public bool ShouldSpawnHardcorePlayer(int playerId)
+    {
+        if (!IsValidPlayerId(playerId))
+            return false;
+
+        if (!hardcoreNormalGameRunInProgress)
+            return true;
+
+        return !IsHardcorePlayerEliminated(playerId);
+    }
+
+    public bool IsHardcorePlayerEliminated(int playerId)
+    {
+        if (!hardcoreNormalGameRunInProgress || !IsValidPlayerId(playerId))
+            return false;
+
+        return (hardcoreEliminatedPlayerMask & PlayerIdToMask(playerId)) != 0;
     }
 
     public bool TryConsumeHardNormalGameLife(out int remainingLives)

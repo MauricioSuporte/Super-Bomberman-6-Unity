@@ -154,6 +154,14 @@ public sealed class PlayersSpawner : MonoBehaviour
             if (BossRushSession.IsActive && !BossRushSession.ShouldSpawnPlayer(playerId))
                 continue;
 
+            if (!BossRushSession.IsActive &&
+                SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore &&
+                GameSession.Instance != null &&
+                !GameSession.Instance.ShouldSpawnHardcorePlayer(playerId))
+            {
+                continue;
+            }
+
             int index = playerId - 1;
             Vector3 spawnPos = ResolveSpawnPosition(index, preset);
 

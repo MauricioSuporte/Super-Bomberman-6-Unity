@@ -101,6 +101,13 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
             int portraitIndex = GetPortraitIndex(skin);
 
+            if (Application.isPlaying &&
+                GameSession.Instance != null &&
+                GameSession.Instance.IsHardcorePlayerEliminated(playerId))
+            {
+                playerDead[i] = true;
+            }
+
             bool isDead = playerDead[i];
 
             TrySetPortrait(portraitImage, portraitIndex, isDead);

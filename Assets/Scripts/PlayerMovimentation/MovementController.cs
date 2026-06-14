@@ -2816,6 +2816,12 @@ public class MovementController : MonoBehaviour, IKillable
             checkWinStateOnDeath &&
             !battleRevengeSwapDeathPending)
         {
+            if (!BossRushSession.IsActive &&
+                SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore)
+            {
+                GameSession.Instance?.MarkHardcorePlayerEliminated(playerId);
+            }
+
             var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
                 gm.NotifyPlayerDeathStarted(this);
