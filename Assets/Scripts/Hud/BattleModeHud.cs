@@ -1096,12 +1096,6 @@ public sealed class BattleModeHud : MonoBehaviour
         if (index < 0 || index >= playerDead.Length)
             return false;
 
-        if (health != null && health.life > 0)
-        {
-            playerDead[index] = false;
-            return false;
-        }
-
         if (health != null && health.life <= 0)
             playerDead[index] = true;
 
