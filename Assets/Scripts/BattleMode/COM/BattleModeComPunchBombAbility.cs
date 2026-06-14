@@ -303,13 +303,19 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         retreatStuckSince = Time.time;
         retreatLastAttemptedStep = retreatDir;
         SetSequenceState(SequenceState.RetreatAfterPlant);
-        nextOffensiveSequenceTime = Time.time + OffensiveCooldownSeconds;
+        nextOffensiveSequenceTime =
+            Time.time + GetOffensiveCooldownSeconds();
 
         Vector2 retreatMove = TileDirectionToVector(retreatDir);
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
-            Weight = Mathf.Max(1, settings.combatPlantWeight + 80 + DifficultyWeight(settings)),
+            Weight = Mathf.Max(
+                1,
+                settings.combatPlantWeight +
+                80 +
+                DifficultyWeight(settings) +
+                (GetStageAggression()?.PunchWeightBonus ?? 0)),
             TargetTile = retreatTile,
             HasTarget = true,
             FirstMove = retreatMove,
@@ -1112,7 +1118,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (Time.time - offensiveTriggerChanceCacheTime < 0.001f)
             return offensiveTriggerChanceCacheResult;
 
-        float chance = DifficultyChance(settings, 0.1f, 0.25f, 0.50f);
+        float chance = Mathf.Clamp01(
+            DifficultyChance(settings, 0.1f, 0.25f, 0.50f) *
+            (GetStageAggression()?.PunchChanceMultiplier ?? 1f));
         bool result = Random.value <= chance;
         offensiveTriggerChanceCacheTime = Time.time;
         offensiveTriggerChanceCacheResult = result;
@@ -1125,6 +1133,19 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         return result;
     }
+
+    private float GetOffensiveCooldownSeconds()
+        => Mathf.Max(
+            0.1f,
+            GetStageAggression()?.PunchCooldownSeconds ??
+            OffensiveCooldownSeconds);
+
+    private BattleModeComStage10PowerZoneAggressionAbility
+        GetStageAggression()
+        => TryGetComponent(
+            out BattleModeComStage10PowerZoneAggressionAbility aggression)
+            ? aggression
+            : null;
 
     private int CountSafeExits(BattleModeComDifficultySettings settings, Vector2Int myTile)
     {

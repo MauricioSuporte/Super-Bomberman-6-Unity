@@ -987,6 +987,13 @@ public sealed class BattleModeComController : MonoBehaviour
 
         BattleModeComputerLevel difficulty = ResolveDifficulty();
         BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(difficulty);
+        if (TryGetComponent(
+                out BattleModeComStage10PowerZoneAggressionAbility
+                    powerZoneAggression))
+        {
+            powerZoneAggression.ApplyAggressionSettings(settings);
+        }
+
         Vector2Int myTile = WorldToTile(transform.position);
         float currentDangerSeconds = GetDangerSeconds(myTile, null);
         bool inDanger = IsTileThreatened(myTile, null);
@@ -2967,7 +2974,13 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!seekCommitActive)
         {
             ownChainSeekCommitted = false;
-            if (UnityEngine.Random.value > OwnChainPlanChance)
+            float ownChainPlanChance =
+                TryGetComponent(
+                    out BattleModeComStage10PowerZoneAggressionAbility
+                        powerZoneAggression)
+                    ? powerZoneAggression.OwnChainPlanChance
+                    : OwnChainPlanChance;
+            if (UnityEngine.Random.value > ownChainPlanChance)
                 return false;
         }
 

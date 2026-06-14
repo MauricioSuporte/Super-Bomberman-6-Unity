@@ -321,7 +321,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         }
 
         bool shouldUsePowerGlove = RollOffensiveChance(settings);
-        nextOffensiveTime = Time.time + OffensiveCooldownSeconds;
+        nextOffensiveTime =
+            Time.time + GetOffensiveCooldownSeconds();
         if (!shouldUsePowerGlove)
         {
             lastDecisionTrace =
@@ -335,7 +336,10 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         decision = new BattleModeComAbilityDecision
         {
             Action = BattleModeComActionType.KickBomb,
-            Weight = 420 + DifficultyWeight(settings),
+            Weight =
+                420 +
+                DifficultyWeight(settings) +
+                (GetStageAggression()?.PowerGloveWeightBonus ?? 0),
             TargetTile = landingTile,
             HasTarget = true,
             FirstMove = Vector2.zero,
@@ -1289,25 +1293,44 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         bombChanceResult = false;
     }
 
-    private static float GetUsageChance(BattleModeComDifficultySettings settings)
+    private float GetUsageChance(BattleModeComDifficultySettings settings)
     {
-        return settings.difficulty switch
+        float chance = settings.difficulty switch
         {
             BattleModeComputerLevel.Easy => 0.10f,
             BattleModeComputerLevel.Hard => 0.50f,
             _ => 0.25f
         };
+        return Mathf.Clamp01(
+            chance *
+            (GetStageAggression()?.PowerGloveChanceMultiplier ?? 1f));
     }
 
-    private static float GetCarryChance(BattleModeComDifficultySettings settings)
+    private float GetCarryChance(BattleModeComDifficultySettings settings)
     {
-        return settings.difficulty switch
+        float chance = settings.difficulty switch
         {
             BattleModeComputerLevel.Easy => 0.25f,
             BattleModeComputerLevel.Hard => 0.55f,
             _ => 0.40f
         };
+        return Mathf.Clamp01(
+            chance *
+            (GetStageAggression()?.PowerGloveChanceMultiplier ?? 1f));
     }
+
+    private float GetOffensiveCooldownSeconds()
+        => Mathf.Max(
+            0.1f,
+            GetStageAggression()?.PowerGloveCooldownSeconds ??
+            OffensiveCooldownSeconds);
+
+    private BattleModeComStage10PowerZoneAggressionAbility
+        GetStageAggression()
+        => TryGetComponent(
+            out BattleModeComStage10PowerZoneAggressionAbility aggression)
+            ? aggression
+            : null;
 
     private static string AppendInput(string existing, string input)
     {
