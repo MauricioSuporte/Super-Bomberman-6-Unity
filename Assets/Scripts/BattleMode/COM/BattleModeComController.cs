@@ -5470,6 +5470,15 @@ public sealed class BattleModeComController : MonoBehaviour
     public float GetAbilityDangerSeconds(Vector2Int tile)
         => GetDangerSeconds(tile, null);
 
+    public bool IsAbilityTileWalkable(
+        Vector2Int tile,
+        Vector2Int startTile)
+        => IsWalkableTile(tile, startTile);
+
+    public float GetAbilityFirstMoveTraversalSeconds(Vector2 move)
+        => EstimateFirstMoveTraversalSeconds(
+            DirectionToTile(move));
+
     public bool IsAbilityTileDangerousAt(
         Vector2Int tile,
         float arrivalSeconds,

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -27,9 +26,13 @@ public sealed class BattleModeComStage9MinecartAbility :
     private const float CartCommitBlockedRetrySeconds = 0.65f;
     private const float CartCommitTimeoutSeconds = 12f;
     private const float DiagnosticThrottleSeconds = 0.5f;
-
-    private readonly List<Vector2Int> railTiles = new();
-    private readonly HashSet<Vector2Int> railTileSet = new();
+    private static readonly Vector2[] EscapeDirections =
+    {
+        Vector2.up,
+        Vector2.down,
+        Vector2.left,
+        Vector2.right
+    };
 
     private PlayerIdentity identity;
     private MovementController movement;
@@ -99,17 +102,6 @@ public sealed class BattleModeComStage9MinecartAbility :
                 FindAnyObjectByType<BattleMode9MinecartController>();
         }
 
-        if (minecartController != null && railTiles.Count == 0)
-            RefreshRailTiles();
-    }
-
-    private void RefreshRailTiles()
-    {
-        railTiles.Clear();
-        railTileSet.Clear();
-        minecartController.CopyRailTiles(railTiles);
-        for (int i = 0; i < railTiles.Count; i++)
-            railTileSet.Add(railTiles[i]);
     }
 
     private void ScheduleInitialCartUse()
@@ -135,7 +127,6 @@ public sealed class BattleModeComStage9MinecartAbility :
         UpdateRideObservation();
         if (!minecartController.RideActive ||
             minecartController.CurrentRider == movement ||
-            !railTileSet.Contains(tile) ||
             !minecartController.TryGetSecondsUntilCartReachesTile(
                 tile,
                 out float arrivalSeconds))
@@ -182,22 +173,169 @@ public sealed class BattleModeComStage9MinecartAbility :
 
         if (!IsAvailable ||
             float.IsInfinity(currentDangerSeconds) ||
-            !railTileSet.Contains(myTile))
+            !minecartController.TryGetSecondsUntilCartReachesTile(
+                myTile,
+                out float minecartDangerSeconds))
         {
             lastDecisionTrace = "emergency outside active minecart rail";
             return false;
         }
 
+        if (TryBuildRailEscapeDecision(
+                settings,
+                controller,
+                myTile,
+                minecartDangerSeconds,
+                out decision))
+        {
+            return true;
+        }
+
         lastDecisionTrace =
-            $"emergency rail dangerIn:{currentDangerSeconds:F2}s " +
+            $"emergency rail blocked dangerIn:{minecartDangerSeconds:F2}s " +
             $"cart:{minecartController.GetCurrentCartTile()} " +
             $"exitIn:{FormatSeconds(minecartController.EstimateSecondsUntilExit())}";
         LogDiagnostic(
-            "RAIL_DANGER",
-            $"tile:{myTile} dangerIn:{currentDangerSeconds:F2}s " +
+            "RAIL_ESCAPE_BLOCKED",
+            $"tile:{myTile} dangerIn:{minecartDangerSeconds:F2}s " +
             $"cart:{minecartController.GetCurrentCartTile()} " +
-            $"exitIn:{FormatSeconds(minecartController.EstimateSecondsUntilExit())}");
+            $"exitIn:{FormatSeconds(minecartController.EstimateSecondsUntilExit())} " +
+            BuildRailEscapeScan(settings, controller, myTile));
         return false;
+    }
+
+    private bool TryBuildRailEscapeDecision(
+        BattleModeComDifficultySettings settings,
+        BattleModeComController controller,
+        Vector2Int myTile,
+        float minecartDangerSeconds,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+        if (controller == null)
+            return false;
+
+        Vector2Int cartTile =
+            minecartController.GetCurrentCartTile();
+        Vector2 bestMove = Vector2.zero;
+        Vector2Int bestTile = myTile;
+        float bestDangerSeconds = float.NegativeInfinity;
+        int bestCartDistance = int.MinValue;
+        float bestArrivalSeconds = 0f;
+
+        for (int i = 0; i < EscapeDirections.Length; i++)
+        {
+            Vector2 move = EscapeDirections[i];
+            Vector2Int nextTile =
+                myTile + Vector2Int.RoundToInt(move);
+            if (!controller.IsAbilityTileWalkable(nextTile, myTile) ||
+                minecartController.IsActiveDangerRailTile(nextTile))
+            {
+                continue;
+            }
+
+            float arrivalSeconds =
+                controller.GetAbilityFirstMoveTraversalSeconds(move);
+            if (controller.IsAbilityTileDangerousAt(
+                    nextTile,
+                    arrivalSeconds,
+                    settings))
+            {
+                continue;
+            }
+
+            float nextDangerSeconds =
+                controller.GetAbilityDangerSeconds(nextTile);
+            int cartDistance =
+                Mathf.Abs(nextTile.x - cartTile.x) +
+                Mathf.Abs(nextTile.y - cartTile.y);
+            float dangerScore = float.IsInfinity(nextDangerSeconds)
+                ? 999f
+                : nextDangerSeconds;
+            if (dangerScore < bestDangerSeconds ||
+                (Mathf.Approximately(
+                     dangerScore,
+                     bestDangerSeconds) &&
+                 cartDistance <= bestCartDistance))
+            {
+                continue;
+            }
+
+            bestMove = move;
+            bestTile = nextTile;
+            bestDangerSeconds = dangerScore;
+            bestCartDistance = cartDistance;
+            bestArrivalSeconds = arrivalSeconds;
+        }
+
+        if (bestMove == Vector2.zero)
+            return false;
+
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.Reposition,
+            Weight = 1000,
+            TargetTile = bestTile,
+            HasTarget = true,
+            FirstMove = bestMove,
+            Reason = "escape stage minecart rail",
+            InputDescription = FirstMoveDescription(bestMove)
+        };
+        lastDecisionTrace =
+            $"emergency rail escape {myTile}->{bestTile} " +
+            $"dangerIn:{minecartDangerSeconds:F2}s " +
+            $"arrival:{bestArrivalSeconds:F2}s";
+        LogDiagnostic(
+            "RAIL_ESCAPE_SELECT",
+            $"from:{myTile} to:{bestTile} " +
+            $"move:{FirstMoveDescription(bestMove)} " +
+            $"dangerIn:{minecartDangerSeconds:F2}s " +
+            $"arrival:{bestArrivalSeconds:F2}s " +
+            $"cart:{cartTile} " +
+            BuildRailEscapeScan(settings, controller, myTile),
+            force: true);
+        return true;
+    }
+
+    private string BuildRailEscapeScan(
+        BattleModeComDifficultySettings settings,
+        BattleModeComController controller,
+        Vector2Int myTile)
+    {
+        if (controller == null)
+            return "scan:controller-null";
+
+        string scan = "scan:";
+        for (int i = 0; i < EscapeDirections.Length; i++)
+        {
+            Vector2 move = EscapeDirections[i];
+            Vector2Int nextTile =
+                myTile + Vector2Int.RoundToInt(move);
+            float arrivalSeconds =
+                controller.GetAbilityFirstMoveTraversalSeconds(move);
+            bool walkable =
+                controller.IsAbilityTileWalkable(nextTile, myTile);
+            bool activeRail =
+                minecartController.IsActiveDangerRailTile(nextTile);
+            bool dangerous =
+                walkable &&
+                controller.IsAbilityTileDangerousAt(
+                    nextTile,
+                    arrivalSeconds,
+                    settings);
+            float dangerSeconds =
+                controller.GetAbilityDangerSeconds(nextTile);
+            if (i > 0)
+                scan += "|";
+
+            scan +=
+                $"{FirstMoveDescription(move)}:{nextTile} " +
+                $"walk:{walkable} rail:{activeRail} " +
+                $"danger:{FormatSeconds(dangerSeconds)} " +
+                $"atEta:{dangerous} eta:{arrivalSeconds:F2}";
+        }
+
+        return scan;
     }
 
     public bool TryBuildCandidateDecision(

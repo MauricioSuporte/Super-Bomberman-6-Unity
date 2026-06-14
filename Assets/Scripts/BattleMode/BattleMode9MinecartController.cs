@@ -125,6 +125,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     BattleSuddenDeathController suddenDeathController;
 
     readonly List<Vector3Int> railPath = new();
+    readonly List<Vector3Int> activeDangerRailPath = new();
     readonly HashSet<MovementController> activeRiders = new();
     readonly HashSet<MovementController> waitingForStationExit = new();
     readonly Dictionary<MovementController, RideState> activeStates = new();
@@ -146,13 +147,34 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     float rideEnterAnimationStartedTime;
     bool rideExitAnimationActive;
     float rideExitAnimationStartedTime;
+    Vector3Int currentRideExitCell;
 
     public bool RideActive => currentRider != null;
     public bool CartAvailable => !cartDestroyedBySuddenDeath && currentRider == null;
     public bool CartDestroyedBySuddenDeath => cartDestroyedBySuddenDeath;
     public MovementController CurrentRider => currentRider;
-    public Vector2Int StationTile => stationCell;
-    public Vector2Int ExitTile => stationCell + exitCellOffset;
+    public Vector2Int StationTile
+    {
+        get
+        {
+            Vector3Int cell = GetActiveStationCell();
+            return new Vector2Int(cell.x, cell.y);
+        }
+    }
+    public Vector2Int ExitTile
+    {
+        get
+        {
+            Vector3Int cell = RideActive
+                ? currentRideExitCell
+                : GetActiveStationCell() +
+                  new Vector3Int(
+                      exitCellOffset.x,
+                      exitCellOffset.y,
+                      0);
+            return new Vector2Int(cell.x, cell.y);
+        }
+    }
 
     public bool SuddenDeathStarted
     {
@@ -272,6 +294,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         waitingForStationExit.Clear();
         currentRider = null;
         currentRailTargetIndex = -1;
+        activeDangerRailPath.Clear();
         rideEnterAnimationActive = false;
         rideExitAnimationActive = false;
         StopRideLoopSfx();
@@ -366,12 +389,38 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         Vector3Int station = battleMode12 ? ToCell(battleMode12Routes[startRouteIndex].startCell) : ToCell(stationCell);
         Vector2 stationWorld = GetCellCenter(station);
         Vector3Int exitCell = battleMode12 ? station : station + new Vector3Int(exitCellOffset.x, exitCellOffset.y, 0);
+        currentRideExitCell = exitCell;
         Vector2 exitWorld = GetCellCenter(exitCell);
         Vector2 startFacing = battleMode12 ? GetRouteStartDirection(startRouteIndex) : Vector2.right;
         Vector2 exitFacing = battleMode12 ? startFacing : Cardinalize(exitWorld - stationWorld);
         if (exitFacing == Vector2.zero)
             exitFacing = Vector2.right;
         Vector2 enterFacing = ResolveEnterHopFacing(mover, exitFacing);
+
+        if (battleMode12)
+        {
+            destinationRouteIndex =
+                GetRandomOtherBattleMode12RouteIndex(startRouteIndex);
+            Vector2 destinationExitFacing =
+                GetRouteExitDirection(destinationRouteIndex);
+            if (destinationExitFacing == Vector2.zero)
+            {
+                destinationExitFacing =
+                    GetRouteStartDirection(destinationRouteIndex);
+            }
+
+            Vector3Int destinationStartCell =
+                ToCell(battleMode12Routes[destinationRouteIndex].startCell);
+            currentRideExitCell =
+                ResolveBattleMode12ExitCell(
+                    destinationStartCell,
+                    ref destinationExitFacing);
+        }
+
+        SetActiveDangerRailPath(
+            battleMode12
+                ? BuildBattleMode12PathToPortal(startRouteIndex)
+                : railPath);
 
         CancelActiveMountMovementAbilities(mover);
         RideState state = CaptureAndApplyRideState(mover);
@@ -397,13 +446,18 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
             if (battleMode12)
             {
-                yield return MoveCartThroughBattleMode12Route(mover, state, startRouteIndex, route => destinationRouteIndex = route);
+                yield return MoveCartThroughBattleMode12Route(
+                    mover,
+                    state,
+                    startRouteIndex,
+                    destinationRouteIndex);
                 exitFacing = GetRouteExitDirection(destinationRouteIndex);
                 if (exitFacing == Vector2.zero)
                     exitFacing = GetRouteStartDirection(destinationRouteIndex);
 
                 Vector3Int routeStartCell = ToCell(battleMode12Routes[destinationRouteIndex].startCell);
                 exitCell = ResolveBattleMode12ExitCell(routeStartCell, ref exitFacing);
+                currentRideExitCell = exitCell;
                 exitWorld = GetCellCenter(exitCell);
             }
             else
@@ -460,6 +514,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             activeStates.Remove(mover);
             currentRider = null;
             currentRailTargetIndex = -1;
+            activeDangerRailPath.Clear();
             rideEnterAnimationActive = false;
             rideExitAnimationActive = false;
             if (!cartDestroyedBySuddenDeath)
@@ -551,6 +606,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     IEnumerator MoveCartAroundRail(MovementController mover, RideState state)
     {
+        SetActiveDangerRailPath(railPath);
         yield return MoveCartAlongPath(mover, state, railPath);
     }
 
@@ -558,16 +614,17 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         MovementController mover,
         RideState state,
         int sourceRouteIndex,
-        System.Action<int> setDestinationRouteIndex)
+        int destinationRouteIndex)
     {
         if (!HasUsableBattleMode12Routes())
             yield break;
 
         sourceRouteIndex = GetValidBattleMode12RouteIndex(sourceRouteIndex);
-        int destinationRouteIndex = GetRandomOtherBattleMode12RouteIndex(sourceRouteIndex);
-        setDestinationRouteIndex?.Invoke(destinationRouteIndex);
+        destinationRouteIndex =
+            GetValidBattleMode12RouteIndex(destinationRouteIndex);
 
         List<Vector3Int> sourcePath = BuildBattleMode12PathToPortal(sourceRouteIndex);
+        SetActiveDangerRailPath(sourcePath);
         yield return MoveCartAlongPath(mover, state, sourcePath);
 
         if (state != null && state.cartDestroyedBySuddenDeath)
@@ -576,13 +633,29 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         Vector3Int sourcePortal = ToCell(battleMode12Routes[sourceRouteIndex].portalCell);
         Vector3Int destinationPortal = ToCell(battleMode12Routes[destinationRouteIndex].portalCell);
         Vector2 destinationPortalFacing = GetRoutePortalExitDirection(destinationRouteIndex);
+        activeDangerRailPath.Clear();
+        currentRailTargetIndex = -1;
         yield return TeleportCartBetweenPortals(mover, state, sourcePortal, destinationPortal, destinationPortalFacing);
 
         if (state != null && state.cartDestroyedBySuddenDeath)
             yield break;
 
         List<Vector3Int> destinationPath = BuildBattleMode12PathFromPortalToStart(destinationRouteIndex);
+        SetActiveDangerRailPath(destinationPath);
         yield return MoveCartAlongPath(mover, state, destinationPath);
+    }
+
+    void SetActiveDangerRailPath(List<Vector3Int> path)
+    {
+        activeDangerRailPath.Clear();
+        if (path == null)
+            return;
+
+        for (int i = 0; i < path.Count; i++)
+            activeDangerRailPath.Add(path[i]);
+
+        currentRailTargetIndex =
+            activeDangerRailPath.Count > 1 ? 1 : 0;
     }
 
     IEnumerator MoveCartAlongPath(MovementController mover, RideState state, List<Vector3Int> path)
@@ -679,6 +752,21 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         return false;
     }
 
+    public bool IsActiveDangerRailTile(Vector2Int tile)
+    {
+        for (int i = 0; i < activeDangerRailPath.Count; i++)
+        {
+            Vector3Int railCell = activeDangerRailPath[i];
+            if (railCell.x == tile.x &&
+                railCell.y == tile.y)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public Vector2Int GetCurrentCartTile()
     {
         Vector3Int cell = WorldToCell(transform.position);
@@ -707,14 +795,15 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 (Time.time - rideEnterAnimationStartedTime));
         }
 
-        if (railPath.Count <= 1)
+        if (activeDangerRailPath.Count <= 1)
             return remaining;
 
         int targetIndex = Mathf.Clamp(
             currentRailTargetIndex,
             1,
-            railPath.Count - 1);
-        Vector2 targetWorld = GetCellCenter(railPath[targetIndex]);
+            activeDangerRailPath.Count - 1);
+        Vector2 targetWorld =
+            GetCellCenter(activeDangerRailPath[targetIndex]);
         float tileWorldSize = groundTilemap != null
             ? Mathf.Max(
                 0.0001f,
@@ -724,7 +813,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             Vector2.Distance(transform.position, targetWorld) /
             tileWorldSize;
         int fullTilesAfterTarget =
-            Mathf.Max(0, railPath.Count - 1 - targetIndex);
+            Mathf.Max(
+                0,
+                activeDangerRailPath.Count - 1 - targetIndex);
         float travelTiles = partialTiles + fullTilesAfterTarget;
         remaining += travelTiles / Mathf.Max(0.05f, tilesPerSecond);
         return remaining;
@@ -737,7 +828,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         seconds = float.PositiveInfinity;
         if (!RideActive ||
             rideExitAnimationActive ||
-            railPath.Count <= 1)
+            activeDangerRailPath.Count <= 1)
         {
             return false;
         }
@@ -758,7 +849,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         int targetIndex = Mathf.Clamp(
             currentRailTargetIndex,
             1,
-            railPath.Count - 1);
+            activeDangerRailPath.Count - 1);
         float tileWorldSize = groundTilemap != null
             ? Mathf.Max(
                 0.0001f,
@@ -767,15 +858,18 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         float travelTiles = 0f;
         Vector2 previousWorld = transform.position;
 
-        for (int i = targetIndex; i < railPath.Count; i++)
+        for (int i = targetIndex;
+             i < activeDangerRailPath.Count;
+             i++)
         {
-            Vector2 cellWorld = GetCellCenter(railPath[i]);
+            Vector3Int railCell = activeDangerRailPath[i];
+            Vector2 cellWorld = GetCellCenter(railCell);
             travelTiles +=
                 Vector2.Distance(previousWorld, cellWorld) /
                 tileWorldSize;
 
-            if (railPath[i].x == tile.x &&
-                railPath[i].y == tile.y)
+            if (railCell.x == tile.x &&
+                railCell.y == tile.y)
             {
                 seconds =
                     remainingEnterSeconds +
