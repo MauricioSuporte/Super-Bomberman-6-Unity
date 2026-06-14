@@ -48,6 +48,15 @@ public sealed class BattleModeComController : MonoBehaviour
     // Master switch do [BattleCOMDecisionTrace] (o campo serializado
     // debugDecisionTrace continua existindo, mas este flag tem precedência).
     private static readonly bool EnableDecisionTraceDiagnostics = false;
+
+    // Diagnóstico temporário do começo da rodada: explica por que o COM se move
+    // em vez de plantar imediatamente para farmar destrutíveis.
+    private static readonly bool EnableOpeningFarmDiagnostics = true;
+    private const float OpeningFarmDiagnosticDurationSeconds = 8f;
+    private const float OpeningFarmDiagnosticRepeatSeconds = 0.12f;
+    private const float OpeningFarmPriorityDurationSeconds = 4f;
+    private const int OpeningFarmMaxTargetDistance = 1;
+    private const int OpeningFarmDiagnosticPlayerIdFilter = 0;
     private Vector2Int oscDiagLastDecisionDir;
     private float oscDiagLastDecisionTime = -10f;
     private string oscDiagLastDecisionReason = string.Empty;
@@ -199,6 +208,13 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool initialized;
     private int personalitySeed;
     private int decisionSerial;
+    private int lastWeightedRoll = -1;
+    private int lastWeightedTotal = -1;
+    private float openingFarmReadyStartedTime = -1f;
+    private float lastOpeningFarmLogTime = -10f;
+    private string lastOpeningFarmLogKey = string.Empty;
+    private Vector2Int openingFarmLastAppliedDir;
+    private float openingFarmLastAppliedTime = -10f;
     private int abilitySystemVersion = -1;
     private int lastKickLoadDiagnosticFrame = -9999;
     private bool subscribedToHealthDeath;
@@ -992,6 +1008,9 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (openingFarmReadyStartedTime < 0f)
+            openingFarmReadyStartedTime = Time.time;
+
         BattleModeComputerLevel difficulty = ResolveDifficulty();
         BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(difficulty);
         if (TryGetComponent(
@@ -1017,8 +1036,26 @@ public sealed class BattleModeComController : MonoBehaviour
             currentDangerSeconds = Mathf.Min(currentDangerSeconds, tankThreatSeconds);
         }
 
-        if (inDanger || Time.time >= nextDecisionTime)
+        bool enteredOpeningFarmTarget =
+            IsOpeningFarmPriorityActive() &&
+            currentAction == BattleModeComActionType.FarmDestructible &&
+            hasCurrentTarget &&
+            myTile == currentTargetTile;
+
+        if (inDanger || enteredOpeningFarmTarget || Time.time >= nextDecisionTime)
         {
+            if (enteredOpeningFarmTarget)
+            {
+                LogOpeningFarmDiagnostic(
+                    IsOpeningFarmTargetReached(currentTargetTile)
+                        ? "OPENING_FARM_TARGET_REACHED"
+                        : "OPENING_FARM_TARGET_CENTERING",
+                    myTile,
+                    currentDangerSeconds,
+                    $"target:{currentTargetTile} forcing immediate decision " +
+                    $"centerOffset:{(Vector2)transform.position - TileToWorld(currentTargetTile)}");
+            }
+
             Think(settings, myTile, currentDangerSeconds, inDanger);
             nextDecisionTime = Time.time + (inDanger ? settings.dangerDecisionInterval : settings.decisionInterval);
         }
@@ -1040,6 +1077,13 @@ public sealed class BattleModeComController : MonoBehaviour
             safeCenterTargetTile = committedTankTarget;
         }
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
+        LogOpeningFarmMovementPipeline(
+            myTile,
+            currentDangerSeconds,
+            oscDiagDecidedMove,
+            oscDiagAfterSafeCenter,
+            oscDiagAfterTurnAxis,
+            currentMoveInput);
 
         if (EnableOscillationDiagnostics)
         {
@@ -1122,6 +1166,8 @@ public sealed class BattleModeComController : MonoBehaviour
         rejectedActions.Clear();
         currentInputDescription = "none";
         abilityDecisionEvaluatedThisThink = false;
+        lastWeightedRoll = -1;
+        lastWeightedTotal = -1;
         EnsurePersonalitySeed();
 
         if (inDanger)
@@ -1396,6 +1442,9 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (TryContinueOpeningFarmCommitment(settings, myTile, currentDangerSeconds))
+            return;
+
         bool walkToChainCommitActive =
             walkToChainCommitted && Time.time - walkToChainCommittedTime < WalkToChainCommitTimeoutSeconds;
 
@@ -1506,8 +1555,29 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (TryGetOpeningFarmPriorityCandidate(out CandidateAction openingFarm))
+        {
+            LogOpeningFarmDiagnostic(
+                "OPENING_FARM_PRIORITY",
+                myTile,
+                currentDangerSeconds,
+                $"selected:{FormatOpeningCandidate(openingFarm)}");
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                openingFarm,
+                "openingFarmPriority");
+            return;
+        }
+
         if (UnityEngine.Random.value < settings.hesitationChance)
         {
+            LogOpeningFarmDiagnostic(
+                "HESITATION",
+                myTile,
+                currentDangerSeconds,
+                "random hesitation selected before weighted candidate");
             SetCurrentDecision(
                 BattleModeComActionType.Stopped,
                 Vector2.zero,
@@ -1521,7 +1591,105 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         CandidateAction selected = PickWeightedCandidate(candidates);
+        LogOpeningFarmDiagnostic(
+            "WEIGHTED_SELECTION",
+            myTile,
+            currentDangerSeconds,
+            $"selected:{FormatOpeningCandidate(selected)} roll:{lastWeightedRoll}/{lastWeightedTotal}");
         ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, selected, selected.HasRoute ? "found" : "none");
+    }
+
+    private bool TryContinueOpeningFarmCommitment(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds)
+    {
+        if (openingFarmReadyStartedTime < 0f ||
+            Time.time - openingFarmReadyStartedTime > OpeningFarmPriorityDurationSeconds ||
+            lastBombTapTime >= openingFarmReadyStartedTime ||
+            currentAction != BattleModeComActionType.FarmDestructible ||
+            !hasCurrentTarget ||
+            IsOpeningFarmTargetReached(currentTargetTile))
+        {
+            return false;
+        }
+
+        Vector2 move;
+        if (myTile == currentTargetTile)
+        {
+            move = GetMoveTowardTileCenter(currentTargetTile);
+        }
+        else if (TryFindPath(
+                     myTile,
+                     currentTargetTile,
+                     settings.searchDepth + 3,
+                     true,
+                     settings,
+                     null,
+                     out PathResult path))
+        {
+            move = path.FirstMove;
+        }
+        else
+        {
+            return false;
+        }
+
+        if (move == Vector2.zero)
+            return false;
+
+        LogOpeningFarmDiagnostic(
+            "OPENING_FARM_COMMIT",
+            myTile,
+            currentDangerSeconds,
+            $"target:{currentTargetTile} move:{FirstMoveDescription(move)} " +
+            $"reached:{IsOpeningFarmTargetReached(currentTargetTile)}");
+        SetCurrentDecision(
+            BattleModeComActionType.FarmDestructible,
+            move,
+            true,
+            currentTargetTile,
+            "continue opening farm target",
+            FirstMoveDescription(move),
+            currentDangerSeconds,
+            "openingFarmCommit");
+        return true;
+    }
+
+    private bool IsOpeningFarmTargetReached(Vector2Int targetTile)
+    {
+        if (WorldToTile(transform.position) != targetTile)
+            return false;
+
+        return IsCenteredOnTile(targetTile);
+    }
+
+    private bool TryGetOpeningFarmPriorityCandidate(out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (!IsOpeningFarmPriorityActive())
+            return false;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            CandidateAction current = candidates[i];
+            if (current.Action != BattleModeComActionType.FarmDestructible)
+                continue;
+
+            candidate = current;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsOpeningFarmPriorityActive()
+    {
+        return openingFarmReadyStartedTime >= 0f &&
+               Time.time - openingFarmReadyStartedTime <= OpeningFarmPriorityDurationSeconds &&
+               lastBombTapTime < openingFarmReadyStartedTime &&
+               !HasOwnUnresolvedBombOrExplosion();
     }
 
     private void ExecuteSelectedCandidate(
@@ -1649,6 +1817,12 @@ public sealed class BattleModeComController : MonoBehaviour
                 force: true);
         }
 
+        LogOpeningFarmDiagnostic(
+            "EXECUTE",
+            myTile,
+            currentDangerSeconds,
+            $"route:{route} selected:{FormatOpeningCandidate(selected)} " +
+            $"bombTapCooldownLeft:{Mathf.Max(0f, BombTapCooldownSeconds - (Time.time - lastBombTapTime)):F2}s");
         LogDecision(settings, myTile, currentDangerSeconds, route);
     }
 
@@ -2712,6 +2886,7 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int bestTile = myTile;
         Vector2 bestMove = Vector2.zero;
         int bestDistance = int.MaxValue;
+        int bestDestructibleCount = 0;
         float bestScore = float.NegativeInfinity;
         bool bestNeedsBombTap = false;
         Vector2 bestEscapeMove = Vector2.zero;
@@ -2720,7 +2895,8 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             Vector2Int tile = reachableTiles[i];
             int radius = GetPlannedBombRadiusAt(tile);
-            if (!CanBombHitDestructible(tile, radius))
+            int destructibleCount = CountBombHitDestructibles(tile, radius);
+            if (destructibleCount <= 0)
                 continue;
 
             if (WouldBlastHitUsefulItem(tile, radius, out ItemType itemType, out Vector2Int itemTile))
@@ -2738,12 +2914,27 @@ public sealed class BattleModeComController : MonoBehaviour
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path))
                 continue;
 
-            float score = -path.Distance * 10f + GetDecisionNoise(2000 + i, FarmTargetJitter);
+            if (IsOpeningFarmPriorityActive() &&
+                path.Distance > OpeningFarmMaxTargetDistance)
+            {
+                RejectVerbose(
+                    $"FarmDestructible recusado opening distante tile {tile} " +
+                    $"distance {path.Distance} max {OpeningFarmMaxTargetDistance}");
+                continue;
+            }
+
+            // Maximiza primeiro o rendimento da bomba. Distância e personalidade
+            // servem apenas para desempatar tiles que destroem a mesma quantidade.
+            float score =
+                destructibleCount * 1000f -
+                path.Distance * 10f +
+                GetDecisionNoise(2000 + i, FarmTargetJitter);
             if (score > bestScore)
             {
                 bestTile = tile;
                 bestMove = path.FirstMove;
                 bestDistance = path.Distance;
+                bestDestructibleCount = destructibleCount;
                 bestScore = score;
                 bestNeedsBombTap = path.Distance == 0;
                 bestEscapeMove = escapeMove;
@@ -2761,7 +2952,9 @@ public sealed class BattleModeComController : MonoBehaviour
             HasTarget = true,
             FirstMove = bestNeedsBombTap ? bestEscapeMove : bestMove,
             HasRoute = true,
-            Reason = bestNeedsBombTap ? "plant farm bomb" : $"move to farm tile distance {bestDistance}",
+            Reason = bestNeedsBombTap
+                ? $"plant farm bomb blocks {bestDestructibleCount}"
+                : $"move to farm tile distance {bestDistance} blocks {bestDestructibleCount}",
             InputDescription = bestNeedsBombTap
                 ? AppendInput("ActionA", FirstMoveDescription(bestEscapeMove))
                 : FirstMoveDescription(bestMove),
@@ -4191,6 +4384,58 @@ public sealed class BattleModeComController : MonoBehaviour
         if (currentThreatDistance == int.MaxValue)
             return false;
 
+        if (committedEscapeExpiresTime > Time.time &&
+            committedEscapeTarget.x != int.MinValue)
+        {
+            float committedDanger = GetDangerSeconds(committedEscapeTarget, null);
+            if (float.IsInfinity(committedDanger))
+            {
+                if (myTile == committedEscapeTarget)
+                {
+                    move = IsCenteredOnTile(myTile)
+                        ? Vector2.zero
+                        : GetMoveTowardTileCenter(myTile);
+                    target = committedEscapeTarget;
+                    reason = $"hold committed own pending escape target {committedEscapeTarget}";
+                    return true;
+                }
+
+                if (TryFindPath(
+                        myTile,
+                        committedEscapeTarget,
+                        settings.searchDepth + 4,
+                        true,
+                        settings,
+                        null,
+                        out PathResult committedPath))
+                {
+                    Vector2Int committedFirstStep = DirectionToTile(committedPath.FirstMove);
+                    float committedArrival =
+                        EstimateFirstMoveTraversalSeconds(committedFirstStep);
+                    float committedMargin = GetSurvivalMarginSeconds(
+                        myTile + committedFirstStep,
+                        committedArrival,
+                        settings,
+                        null);
+
+                    if (committedFirstStep != Vector2Int.zero &&
+                        (float.IsInfinity(currentDangerSeconds) ||
+                         committedMargin >= PostPlantEmergencyEscapeMarginSeconds))
+                    {
+                        move = committedPath.FirstMove;
+                        target = committedEscapeTarget;
+                        reason =
+                            $"continue committed own pending escape target {committedEscapeTarget} " +
+                            $"distance:{committedPath.Distance} margin:{committedMargin:F2}s";
+                        return true;
+                    }
+                }
+            }
+
+            committedEscapeTarget = new Vector2Int(int.MinValue, int.MinValue);
+            committedEscapeExpiresTime = -10f;
+        }
+
         if (!TryFindEscape(settings, myTile, null, out Vector2 firstMove, out Vector2Int escapeTarget, out string route))
         {
             reason = $"own pending no bfs escape dist {currentThreatDistance}";
@@ -4599,10 +4844,15 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < source.Count; i++)
             total += Mathf.Max(0, source[i].Weight);
 
+        lastWeightedTotal = total;
         if (total <= 0)
+        {
+            lastWeightedRoll = -1;
             return source[0];
+        }
 
         int roll = UnityEngine.Random.Range(0, total);
+        lastWeightedRoll = roll;
         int cursor = 0;
 
         for (int i = 0; i < source.Count; i++)
@@ -4740,6 +4990,13 @@ public sealed class BattleModeComController : MonoBehaviour
                reason.StartsWith("pinklouie-jump", StringComparison.Ordinal) ||
                reason.StartsWith("tank-threat dodge", StringComparison.Ordinal) ||
                reason.StartsWith("purple-line retreat", StringComparison.Ordinal))));
+
+        LogOpeningFarmDiagnostic(
+            "DIRECT_DECISION",
+            WorldToTile(transform.position),
+            dangerSeconds,
+            $"action:{action} route:{route} target:{(hasTarget ? target.ToString() : "none")} " +
+            $"move:{FirstMoveDescription(move)} input:{input} reason:{reason}");
 
         if (action == BattleModeComActionType.Reposition && hasTarget)
         {
@@ -5266,6 +5523,123 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return result;
+    }
+
+    private bool ShouldLogOpeningFarmDiagnostic()
+    {
+        if (!EnableOpeningFarmDiagnostics ||
+            openingFarmReadyStartedTime < 0f ||
+            Time.time - openingFarmReadyStartedTime > OpeningFarmDiagnosticDurationSeconds)
+        {
+            return false;
+        }
+
+        return OpeningFarmDiagnosticPlayerIdFilter == 0 ||
+               playerId == OpeningFarmDiagnosticPlayerIdFilter;
+    }
+
+    private void LogOpeningFarmDiagnostic(
+        string eventName,
+        Vector2Int myTile,
+        float dangerSeconds,
+        string detail,
+        bool force = false)
+    {
+        if (!ShouldLogOpeningFarmDiagnostic())
+            return;
+
+        string key =
+            $"{eventName}:{myTile}:{currentAction}:{currentTargetTile}:{currentMoveInput}:{currentReason}:{detail}";
+        if (!force &&
+            key == lastOpeningFarmLogKey &&
+            Time.time - lastOpeningFarmLogTime < OpeningFarmDiagnosticRepeatSeconds)
+        {
+            return;
+        }
+
+        lastOpeningFarmLogKey = key;
+        lastOpeningFarmLogTime = Time.time;
+
+        int bombsRemaining = bombController != null ? bombController.BombsRemaining : -1;
+        int bombsTotal = bombController != null ? bombController.bombAmout : -1;
+        string rejected = rejectedActions.Count > 0 ? string.Join(" | ", rejectedActions) : "none";
+
+        Debug.LogWarning(
+            $"[BattleCOMOpeningFarm][P{playerId}] event:{eventName} " +
+            $"readyAge:{Time.time - openingFarmReadyStartedTime:F2}s frame:{Time.frameCount} " +
+            $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(dangerSeconds)} " +
+            $"bombs:{bombsRemaining}/{bombsTotal} currentAction:{currentAction} " +
+            $"currentMove:{FirstMoveDescription(currentMoveInput)} currentReason:{currentReason} " +
+            $"weightedRoll:{lastWeightedRoll}/{lastWeightedTotal} " +
+            $"candidates:{FormatOpeningCandidates()} rejected:{rejected} detail:{detail}",
+            this);
+    }
+
+    private void LogOpeningFarmMovementPipeline(
+        Vector2Int myTile,
+        float dangerSeconds,
+        Vector2 decidedMove,
+        Vector2 afterSafeCenter,
+        Vector2 afterTurnAxis,
+        Vector2 appliedMove)
+    {
+        if (!ShouldLogOpeningFarmDiagnostic())
+            return;
+
+        Vector2Int decidedDir = DirectionToTile(decidedMove);
+        Vector2Int appliedDir = DirectionToTile(appliedMove);
+        bool pipelineChangedDirection = decidedDir != appliedDir;
+        bool reversedAppliedDirection =
+            appliedDir != Vector2Int.zero &&
+            openingFarmLastAppliedDir == -appliedDir &&
+            Time.time - openingFarmLastAppliedTime < 0.75f;
+
+        if (pipelineChangedDirection || reversedAppliedDirection)
+        {
+            LogOpeningFarmDiagnostic(
+                reversedAppliedDirection ? "APPLIED_DIRECTION_FLIP" : "MOVEMENT_PIPELINE_CHANGED",
+                myTile,
+                dangerSeconds,
+                $"decided:{FirstMoveDescription(decidedMove)} " +
+                $"safeCenter:{FirstMoveDescription(afterSafeCenter)} " +
+                $"turnAxis:{FirstMoveDescription(afterTurnAxis)} " +
+                $"applied:{FirstMoveDescription(appliedMove)} " +
+                $"centerOffset:{(Vector2)transform.position - TileToWorld(myTile)} " +
+                $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+                $"safeCenterTarget:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")}",
+                force: reversedAppliedDirection);
+        }
+
+        if (appliedDir != Vector2Int.zero)
+        {
+            openingFarmLastAppliedDir = appliedDir;
+            openingFarmLastAppliedTime = Time.time;
+        }
+    }
+
+    private string FormatOpeningCandidates()
+    {
+        if (candidates.Count <= 0)
+            return "none";
+
+        string result = string.Empty;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (i > 0)
+                result += " | ";
+
+            result += FormatOpeningCandidate(candidates[i]);
+        }
+
+        return result;
+    }
+
+    private static string FormatOpeningCandidate(CandidateAction candidate)
+    {
+        return $"{candidate.Action}[weight:{candidate.Weight} " +
+               $"target:{(candidate.HasTarget ? candidate.TargetTile.ToString() : "none")} " +
+               $"move:{FirstMoveDescription(candidate.FirstMove)} tapBomb:{candidate.TapBomb} " +
+               $"reason:{candidate.Reason}]";
     }
 
     private void Reject(string action, string reason)
@@ -6601,7 +6975,12 @@ public sealed class BattleModeComController : MonoBehaviour
     }
 
     private bool CanBombHitDestructible(Vector2Int plantTile, int radius)
+        => CountBombHitDestructibles(plantTile, radius) > 0;
+
+    private int CountBombHitDestructibles(Vector2Int plantTile, int radius)
     {
+        int count = 0;
+
         for (int i = 0; i < CardinalTiles.Length; i++)
         {
             Vector2Int dir = CardinalTiles[i];
@@ -6613,14 +6992,17 @@ public sealed class BattleModeComController : MonoBehaviour
                     break;
 
                 if (HasDestructibleTile(tile))
-                    return true;
+                {
+                    count++;
+                    break;
+                }
 
                 if (IsBombAtTile(tile))
                     break;
             }
         }
 
-        return false;
+        return count;
     }
 
     private bool TryFindNearestEnemy(
