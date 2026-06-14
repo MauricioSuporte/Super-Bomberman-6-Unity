@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public static class BattleModeComStageAbilityLoader
 {
     private const string BattleMode2SceneName = "BattleMode_2";
+    private const string BattleMode3SceneName = "BattleMode_3";
 
     public static bool EnsureForActiveStage(GameObject playerObject)
     {
@@ -14,6 +15,8 @@ public static class BattleModeComStageAbilityLoader
         {
             BattleMode2SceneName =>
                 EnsureAbility<BattleModeComStage2FallingBombAbility>(playerObject),
+            BattleMode3SceneName =>
+                EnsureAbility<BattleModeComStage3PowderTrailAbility>(playerObject),
             _ => false
         };
     }

@@ -66,6 +66,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private const int PostPlantDiagnosticPlayerIdFilter = 5;
     private const float KickBombRiskLogIntervalSeconds = 0.25f;
+    private const string BattleMode3SceneName = "BattleMode_3";
 
     private const float BombTapCooldownSeconds = 0.35f;
     private const float ActionATapCooldownSeconds = 0.08f;
@@ -215,6 +216,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastDecisionTraceLogKey = string.Empty;
     private float lastAbilityDecisionTraceLogTime = -10f;
     private string lastAbilityDecisionTraceLogKey = string.Empty;
+    private float lastStage3PlantDiagnosticTime = -10f;
+    private string lastStage3PlantDiagnosticKey = string.Empty;
     private bool abilityDecisionEvaluatedThisThink;
     private bool behaviorStartLogged;
     private Vector2 behaviorLastProgressPosition;
@@ -1521,6 +1524,12 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (selected.TapBomb && Time.time - lastBombTapTime >= BombTapCooldownSeconds)
         {
+            LogStage3P5PlantDiagnostic(
+                "TAP",
+                myTile,
+                $"action:{selected.Action} route:{route} target:{selected.TargetTile} " +
+                $"move:{FirstMoveDescription(selected.FirstMove)} danger:{FormatDanger(currentDangerSeconds)} " +
+                $"reason:{selected.Reason}");
             Tap(PlayerAction.ActionA);
             lastBombTapTime = Time.time;
             currentInputDescription = AppendInput(currentInputDescription, "ActionA");
@@ -4943,6 +4952,14 @@ public sealed class BattleModeComController : MonoBehaviour
 
         Vector2Int tile = WorldToTile(transform.position);
         LogBehaviorDiagnostic("DEATH", tile, GetDangerSeconds(tile, null), force: true);
+
+        if (IsStage3P5SurgicalDiagnostic())
+        {
+            Debug.LogWarning(
+                BuildDeathDiagnosticReport(
+                    $"[BattleCOMStage3Plant][P5] DEATH"),
+                this);
+        }
     }
 
     private void OnMovementDied(MovementController deadMovement)
@@ -5595,7 +5612,29 @@ public sealed class BattleModeComController : MonoBehaviour
         out Vector2Int escapeTile)
     {
         List<Vector2Int> plannedBlast = BuildBlastTiles(plantTile, radius);
-        if (!TryFindEscape(settings, plantTile, plannedBlast, out escapeMove, out escapeTile, out _))
+        int directBlastTileCount = plannedBlast.Count;
+        bool expandedByStage = AppendPlannedBombStageDanger(
+            plantTile,
+            plannedBlast);
+        bool foundEscape = TryFindEscape(
+            settings,
+            plantTile,
+            plannedBlast,
+            out escapeMove,
+            out escapeTile,
+            out string escapeRoute);
+
+        if (expandedByStage && plantTile == WorldToTile(transform.position))
+        {
+            LogStage3P5PlantDiagnostic(
+                "PREPLANT",
+                plantTile,
+                $"pathResult:{(foundEscape ? "FOUND" : "NOT_FOUND")} radius:{radius} " +
+                $"directTiles:{directBlastTileCount} expandedTiles:{plannedBlast.Count} " +
+                $"escape:{escapeTile} move:{FirstMoveDescription(escapeMove)} route:{escapeRoute}");
+        }
+
+        if (!foundEscape)
             return false;
 
         Vector2Int currentTile = WorldToTile(transform.position);
@@ -5637,6 +5676,59 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private bool AppendPlannedBombStageDanger(
+        Vector2Int plantTile,
+        List<Vector2Int> plannedDangerTiles)
+    {
+        bool expanded = false;
+
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            if (comAbilities[i] is not IBattleModeComPlannedBombDangerProvider provider)
+                continue;
+
+            expanded |= provider.TryAppendPlannedBombDangerTiles(
+                plantTile,
+                plannedDangerTiles);
+        }
+
+        return expanded;
+    }
+
+    private bool IsStage3P5SurgicalDiagnostic()
+    {
+        return playerId == 5 &&
+               string.Equals(
+                   SceneManager.GetActiveScene().name,
+                   BattleMode3SceneName,
+                   StringComparison.Ordinal);
+    }
+
+    private void LogStage3P5PlantDiagnostic(
+        string key,
+        Vector2Int tile,
+        string detail)
+    {
+        if (!IsStage3P5SurgicalDiagnostic())
+            return;
+
+        string diagnosticKey = $"{key}:{tile}:{detail}";
+        if (key == "PREPLANT" &&
+            diagnosticKey == lastStage3PlantDiagnosticKey &&
+            Time.time - lastStage3PlantDiagnosticTime < 0.35f)
+        {
+            return;
+        }
+
+        lastStage3PlantDiagnosticKey = diagnosticKey;
+        lastStage3PlantDiagnosticTime = Time.time;
+
+        Debug.LogWarning(
+            $"[BattleCOMStage3Plant][P5] {key} frame:{Time.frameCount} " +
+            $"t:{Time.time:F2} tile:{tile} pos:{transform.position} {detail}",
+            this);
     }
 
     private bool CanPlantAdditionalBombWithEscape(
@@ -5949,6 +6041,7 @@ public sealed class BattleModeComController : MonoBehaviour
             EnqueueBombsHitByBlast(chainBlastTiles, triggeredBombTiles, visitedBombTiles);
         }
 
+        AppendPlannedBombStageDanger(plantTile, chainBlastTiles);
         return chainBlastTiles.Count > 0;
     }
 
@@ -6351,6 +6444,45 @@ public sealed class BattleModeComController : MonoBehaviour
             return IsTileInBlastLine(bombTile, tile, radius, BlocksExplosionForPierce);
 
         return IsTileInBlastLineRuntime(bombTile, tile, radius);
+    }
+
+    public bool DoesBombBlastReachTile(Bomb bomb, Vector2Int tile)
+    {
+        return DoesBombBlastReachTile(bomb, tile, null);
+    }
+
+    public bool DoesBombBlastReachTile(
+        Bomb bomb,
+        Vector2Int tile,
+        ICollection<Vector2Int> ignoredBombTiles)
+    {
+        if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
+            return false;
+
+        Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+        int radius = bomb.Owner != null
+            ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb))
+            : Mathf.Max(1, bomb.ExplosionRadiusOverride > 0 ? bomb.ExplosionRadiusOverride : 2);
+
+        if (ignoredBombTiles == null || ignoredBombTiles.Count == 0)
+            return IsBombBlastReachingTile(bomb, bombTile, tile, radius);
+
+        bool BlocksPredictedExplosion(Vector2Int check)
+        {
+            if (HasIndestructibleTile(check))
+                return true;
+
+            if (!bomb.IsPierceBomb && HasDestructibleTile(check))
+                return true;
+
+            return !ignoredBombTiles.Contains(check) && IsBombAtTile(check);
+        }
+
+        return IsTileInBlastLine(
+            bombTile,
+            tile,
+            radius,
+            BlocksPredictedExplosion);
     }
 
     private bool BlocksExplosionForPierce(Vector2Int tile)

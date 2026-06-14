@@ -92,6 +92,35 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
     private Tile[] cornerExplosionTiles;
     private Coroutine igniteRoutine;
     private bool ignitionRunning;
+    private float ignitionEndsAt;
+
+    public bool IgnitionRunning => ignitionRunning;
+
+    public float IgnitionSecondsRemaining =>
+        ignitionRunning
+            ? Mathf.Max(0f, ignitionEndsAt - Time.time)
+            : 0f;
+
+    public void CopyTrailWorldPositions(List<Vector2> destination)
+    {
+        if (destination == null)
+            return;
+
+        destination.Clear();
+        ResolveReferences();
+
+        if (trailCells.Count == 0)
+            BuildTrailCells();
+
+        if (groundTilemap == null)
+            return;
+
+        for (int i = 0; i < trailCells.Count; i++)
+        {
+            Vector3 world = groundTilemap.GetCellCenterWorld(trailCells[i]);
+            destination.Add(new Vector2(world.x, world.y));
+        }
+    }
 
     private void Awake()
     {
@@ -156,6 +185,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         SpawnHitboxes(source, origin);
 
         float duration = Mathf.Max(0.01f, explosionDurationSeconds);
+        ignitionEndsAt = Time.time + duration;
         int frameCount = GetMaxExplosionFrameCount();
 
         if (frameCount <= 0)
@@ -189,6 +219,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         originalTransforms.Clear();
         igniteRoutine = null;
         ignitionRunning = false;
+        ignitionEndsAt = 0f;
     }
 
     private void StopIgnition(bool restoreTiles)
@@ -213,6 +244,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         originalTiles.Clear();
         originalTransforms.Clear();
         ignitionRunning = false;
+        ignitionEndsAt = 0f;
     }
 
     private void CacheOriginalTiles(bool captureStableState)
