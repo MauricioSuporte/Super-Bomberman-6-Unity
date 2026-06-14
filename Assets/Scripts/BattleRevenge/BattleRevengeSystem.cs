@@ -27,6 +27,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     private readonly Stack<BattleRevengeController> cartPool = new();
     private readonly Dictionary<int, PlayerPersistentStats.PlayerState> baseLoadoutsByPlayer = new();
     private readonly Dictionary<int, MovementController> playersById = new();
+    private readonly HashSet<int> respawnSwapsInProgress = new();
     private float nextLandingValidationDebugAt;
 
     private float minEdgeX;
@@ -69,6 +70,8 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     {
         if (Instance == this)
             Instance = null;
+
+        respawnSwapsInProgress.Clear();
     }
 
     IEnumerator CaptureBaseLoadoutsNextFrame()
@@ -153,6 +156,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         if (respawnPlayerId == victim.PlayerId)
             return false;
 
+        if (respawnSwapsInProgress.Contains(respawnPlayerId))
+            return false;
+
         if (!activeCartsByOwner.TryGetValue(respawnPlayerId, out BattleRevengeController cart) || cart == null)
             return false;
 
@@ -165,6 +171,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         Vector2 respawnPosition = GetArenaSnapPosition(victim.transform.position);
         Vector2 newCartPosition = GetCartPositionForDeath(victim.transform.position, out Vector2 newInwardDirection);
 
+        respawnSwapsInProgress.Add(respawnPlayerId);
         PlayerPersistentStats.ApplyBattleRevengeRespawnLoadout(respawnPlayerId);
 
         bool victimDeathFinished = false;
@@ -188,6 +195,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 return;
 
             swapFinalized = true;
+            respawnSwapsInProgress.Remove(respawnPlayerId);
 
             victim.RemoveForBattleRevengeSwap();
 
@@ -437,6 +445,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
             system.activeCartsByOwner.Clear();
             system.cartPool.Clear();
+            system.respawnSwapsInProgress.Clear();
         }
 
         BattleRevengeController[] carts = FindObjectsByType<BattleRevengeController>(FindObjectsInactive.Exclude);
