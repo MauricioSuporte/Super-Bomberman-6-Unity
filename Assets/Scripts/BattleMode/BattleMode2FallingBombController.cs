@@ -38,6 +38,22 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
     Tilemap destructibleTilemap;
     SpriteRenderer targetRenderer;
     Coroutine loopRoutine;
+    bool targetWarningActive;
+    Vector2 targetWarningWorldPosition;
+    float targetWarningSecondsRemaining;
+
+    public bool TryGetActiveTargetWarning(
+        out Vector2 worldPosition,
+        out int explosionRadius,
+        out float secondsUntilExplosion)
+    {
+        worldPosition = targetWarningWorldPosition;
+        explosionRadius = Mathf.Max(1, bombFireLevel);
+        secondsUntilExplosion =
+            Mathf.Max(0f, targetWarningSecondsRemaining) +
+            Mathf.Max(0.01f, bombFuseSeconds);
+        return targetWarningActive;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void BootstrapOnInitialScene()
@@ -156,17 +172,18 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
     {
         EnsureTargetRenderer();
 
-        if (targetRenderer == null)
-        {
-            yield return WaitGameplaySeconds(seconds);
-            yield break;
-        }
+        targetWarningActive = true;
+        targetWarningWorldPosition = worldPosition;
+        targetWarningSecondsRemaining = Mathf.Max(0f, seconds);
 
-        targetRenderer.transform.position = new Vector3(
-            worldPosition.x,
-            worldPosition.y,
-            targetRenderer.transform.position.z);
-        targetRenderer.enabled = true;
+        if (targetRenderer != null)
+        {
+            targetRenderer.transform.position = new Vector3(
+                worldPosition.x,
+                worldPosition.y,
+                targetRenderer.transform.position.z);
+            targetRenderer.enabled = true;
+        }
 
         float elapsed = 0f;
         while (elapsed < seconds && IsBattleMode2Active() && !HasSuddenDeathStarted())
@@ -174,10 +191,15 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
             if (!GamePauseController.IsPaused)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.PingPong(Time.time * targetBlinkSpeed, 1f);
-                Color c = targetRenderer.color;
-                c.a = Mathf.Lerp(targetMinAlpha, targetMaxAlpha, t);
-                targetRenderer.color = c;
+                targetWarningSecondsRemaining = Mathf.Max(0f, seconds - elapsed);
+
+                if (targetRenderer != null)
+                {
+                    float t = Mathf.PingPong(Time.time * targetBlinkSpeed, 1f);
+                    Color c = targetRenderer.color;
+                    c.a = Mathf.Lerp(targetMinAlpha, targetMaxAlpha, t);
+                    targetRenderer.color = c;
+                }
             }
 
             yield return null;
@@ -355,6 +377,9 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
 
     void HideTarget()
     {
+        targetWarningActive = false;
+        targetWarningSecondsRemaining = 0f;
+
         if (targetRenderer == null)
             return;
 

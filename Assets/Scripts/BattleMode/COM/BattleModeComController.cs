@@ -441,6 +441,9 @@ public sealed class BattleModeComController : MonoBehaviour
 
         bool persistentKickEnabled = PlayerPersistentStats.GetRuntime(playerId).CanKickBombs;
         bool isCom = SaveSystem.GetBattleModePlayerControlMode(playerId) == BattleModePlayerControlMode.Com;
+        if (isCom && BattleModeComStageAbilityLoader.EnsureForActiveStage(gameObject))
+            abilitySystemVersion = -2;
+
         if (persistentKickEnabled)
         {
             if (abilitySystem == null)
@@ -1116,6 +1119,21 @@ public sealed class BattleModeComController : MonoBehaviour
             if (TryContinueDangerEscapeRoute(settings, myTile, currentDangerSeconds))
                 return;
 
+            if (TryBuildStageAbilityEmergencyCandidate(
+                    settings,
+                    myTile,
+                    currentDangerSeconds,
+                    out CandidateAction stageEmergency))
+            {
+                ExecuteSelectedCandidate(
+                    settings,
+                    myTile,
+                    currentDangerSeconds,
+                    stageEmergency,
+                    "stageAbility");
+                return;
+            }
+
             // Habilidades (ex.: chute ofensivo de bomba) podem CONTINUAR uma jogada já iniciada
             // mesmo sob perigo — tipicamente a IA recuou 1 tile e está dentro do raio da própria
             // bomba, mas a jogada certa é voltar e chutá-la no adversário (removendo a bomba da
@@ -1584,6 +1602,43 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         LogDecision(settings, myTile, currentDangerSeconds, route);
+    }
+
+    private bool TryBuildStageAbilityEmergencyCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        abilityDecisionEvaluatedThisThink = true;
+        RefreshComAbilities();
+
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            if (comAbilities[i] is not IBattleModeComStageAbility stageAbility ||
+                !IsComAbilityAlive(stageAbility) ||
+                !stageAbility.IsAvailable)
+            {
+                continue;
+            }
+
+            if (!stageAbility.TryBuildEmergencyDecision(
+                    settings,
+                    this,
+                    myTile,
+                    currentDangerSeconds,
+                    out BattleModeComAbilityDecision decision))
+            {
+                continue;
+            }
+
+            candidate = ToCandidateAction(decision);
+            AppendAbilityTrace(stageAbility, "stage emergency selected");
+            return true;
+        }
+
+        return false;
     }
 
     private bool TryBuildAbilityEmergencyCandidate(
@@ -5197,6 +5252,22 @@ public sealed class BattleModeComController : MonoBehaviour
         return false;
     }
 
+    public bool TryFindAbilityEscape(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        out Vector2 firstMove,
+        out Vector2Int target,
+        out string route)
+    {
+        return TryFindEscape(
+            settings,
+            start,
+            null,
+            out firstMove,
+            out target,
+            out route);
+    }
+
     public int CountSafeEscapeFirstSteps(
         BattleModeComDifficultySettings settings,
         Vector2Int start)
@@ -6226,6 +6297,16 @@ public sealed class BattleModeComController : MonoBehaviour
         float danger = float.PositiveInfinity;
         if (plannedBlastTiles != null && plannedBlastTiles.Contains(tile))
             danger = bombController != null ? Mathf.Max(0.5f, bombController.bombFuseTime) : 2f;
+
+        // Stage abilities can announce hazards before their runtime object exists.
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            if (comAbilities[i] is IBattleModeComDangerProvider dangerProvider &&
+                dangerProvider.TryGetDangerSeconds(tile, out float stageDangerSeconds))
+            {
+                danger = Mathf.Min(danger, Mathf.Max(0f, stageDangerSeconds));
+            }
+        }
 
         if (explosionMask != 0)
         {
