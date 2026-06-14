@@ -34,10 +34,10 @@ public sealed class BattleModeComDifficultySettings
                     safeTileMinimumSeconds = 0.2f,
                     hesitationChance = 0.12f,
                     escapeAbilityChance = 0.25f,
-                    stoppedWeight = 8,
-                    patrolWeight = 30,
-                    collectItemWeight = 35,
-                    farmDestructibleWeight = 20,
+                    stoppedWeight = 4,
+                    patrolWeight = 18,
+                    collectItemWeight = 60,
+                    farmDestructibleWeight = 40,
                     combatPlantWeight = 10
                 };
 
@@ -53,10 +53,10 @@ public sealed class BattleModeComDifficultySettings
                     hesitationChance = 0.01f,
                     escapeAbilityChance = 1f,
                     stoppedWeight = 1,
-                    patrolWeight = 12,
-                    collectItemWeight = 30,
-                    farmDestructibleWeight = 25,
-                    combatPlantWeight = 45
+                    patrolWeight = 8,
+                    collectItemWeight = 55,
+                    farmDestructibleWeight = 45,
+                    combatPlantWeight = 40
                 };
 
             default:
@@ -70,11 +70,11 @@ public sealed class BattleModeComDifficultySettings
                     safeTileMinimumSeconds = 0.35f,
                     hesitationChance = 0.04f,
                     escapeAbilityChance = 0.5f,
-                    stoppedWeight = 3,
-                    patrolWeight = 20,
-                    collectItemWeight = 35,
-                    farmDestructibleWeight = 25,
-                    combatPlantWeight = 30
+                    stoppedWeight = 2,
+                    patrolWeight = 12,
+                    collectItemWeight = 65,
+                    farmDestructibleWeight = 50,
+                    combatPlantWeight = 25
                 };
         }
     }
