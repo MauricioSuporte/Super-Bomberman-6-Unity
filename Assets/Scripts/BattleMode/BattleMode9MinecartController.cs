@@ -141,6 +141,30 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     bool rideLoopPausedForGamePause;
     bool cartDestroyedBySuddenDeath;
     int battleMode12CurrentRouteIndex;
+    int currentRailTargetIndex = -1;
+    bool rideEnterAnimationActive;
+    float rideEnterAnimationStartedTime;
+    bool rideExitAnimationActive;
+    float rideExitAnimationStartedTime;
+
+    public bool RideActive => currentRider != null;
+    public bool CartAvailable => !cartDestroyedBySuddenDeath && currentRider == null;
+    public bool CartDestroyedBySuddenDeath => cartDestroyedBySuddenDeath;
+    public MovementController CurrentRider => currentRider;
+    public Vector2Int StationTile => stationCell;
+    public Vector2Int ExitTile => stationCell + exitCellOffset;
+
+    public bool SuddenDeathStarted
+    {
+        get
+        {
+            if (suddenDeathController == null)
+                suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+
+            return suddenDeathController != null &&
+                   suddenDeathController.SuddenDeathStarted;
+        }
+    }
 
     sealed class RideState
     {
@@ -247,6 +271,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         activeRiders.Clear();
         waitingForStationExit.Clear();
         currentRider = null;
+        currentRailTargetIndex = -1;
+        rideEnterAnimationActive = false;
+        rideExitAnimationActive = false;
         StopRideLoopSfx();
     }
 
@@ -328,6 +355,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         activeRiders.Add(mover);
         currentRider = mover;
+        currentRailTargetIndex = 1;
+        rideEnterAnimationActive = true;
+        rideEnterAnimationStartedTime = Time.time;
+        rideExitAnimationActive = false;
 
         bool battleMode12 = IsBattleMode12Active();
         int startRouteIndex = GetValidBattleMode12RouteIndex(battleMode12CurrentRouteIndex);
@@ -356,6 +387,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         try
         {
             yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds, "Enter");
+            rideEnterAnimationActive = false;
             if (mover == null || mover.IsEndingStage)
                 yield break;
 
@@ -395,7 +427,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             if (!state.cartDestroyedBySuddenDeath)
             {
                 PlayOneShot(exitSfx);
+                rideExitAnimationActive = true;
+                rideExitAnimationStartedTime = Time.time;
                 yield return PlayEnterExitVisualRoutine(mover, state, exitStartWorld, actualExitWorld, actualExitFacing, exitAnimationSeconds, "Exit");
+                rideExitAnimationActive = false;
             }
             else
             {
@@ -424,6 +459,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             }
             activeStates.Remove(mover);
             currentRider = null;
+            currentRailTargetIndex = -1;
+            rideEnterAnimationActive = false;
+            rideExitAnimationActive = false;
             if (!cartDestroyedBySuddenDeath)
             {
                 if (battleMode12)
@@ -558,6 +596,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         for (int i = 1; i < path.Count; i++)
         {
+            currentRailTargetIndex = i;
             if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && mover.IsEndingStage))
                 yield break;
 
@@ -610,6 +649,145 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         UpdateCartVisual(currentCartDirection, moving: false);
+        currentRailTargetIndex = path.Count - 1;
+    }
+
+    public void CopyRailTiles(List<Vector2Int> destination)
+    {
+        if (destination == null)
+            return;
+
+        if (railPath.Count == 0)
+            BuildRailPath();
+
+        destination.Clear();
+        for (int i = 0; i < railPath.Count; i++)
+            destination.Add(new Vector2Int(railPath[i].x, railPath[i].y));
+    }
+
+    public bool IsRailTile(Vector2Int tile)
+    {
+        if (railPath.Count == 0)
+            BuildRailPath();
+
+        for (int i = 0; i < railPath.Count; i++)
+        {
+            if (railPath[i].x == tile.x && railPath[i].y == tile.y)
+                return true;
+        }
+
+        return false;
+    }
+
+    public Vector2Int GetCurrentCartTile()
+    {
+        Vector3Int cell = WorldToCell(transform.position);
+        return new Vector2Int(cell.x, cell.y);
+    }
+
+    public float EstimateSecondsUntilExit()
+    {
+        if (!RideActive)
+            return float.PositiveInfinity;
+
+        if (rideExitAnimationActive)
+        {
+            return Mathf.Max(
+                0f,
+                exitAnimationSeconds -
+                (Time.time - rideExitAnimationStartedTime));
+        }
+
+        float remaining = Mathf.Max(0.01f, exitAnimationSeconds);
+        if (rideEnterAnimationActive)
+        {
+            remaining += Mathf.Max(
+                0f,
+                enterAnimationSeconds -
+                (Time.time - rideEnterAnimationStartedTime));
+        }
+
+        if (railPath.Count <= 1)
+            return remaining;
+
+        int targetIndex = Mathf.Clamp(
+            currentRailTargetIndex,
+            1,
+            railPath.Count - 1);
+        Vector2 targetWorld = GetCellCenter(railPath[targetIndex]);
+        float tileWorldSize = groundTilemap != null
+            ? Mathf.Max(
+                0.0001f,
+                Mathf.Abs(groundTilemap.cellSize.x))
+            : 1f;
+        float partialTiles =
+            Vector2.Distance(transform.position, targetWorld) /
+            tileWorldSize;
+        int fullTilesAfterTarget =
+            Mathf.Max(0, railPath.Count - 1 - targetIndex);
+        float travelTiles = partialTiles + fullTilesAfterTarget;
+        remaining += travelTiles / Mathf.Max(0.05f, tilesPerSecond);
+        return remaining;
+    }
+
+    public bool TryGetSecondsUntilCartReachesTile(
+        Vector2Int tile,
+        out float seconds)
+    {
+        seconds = float.PositiveInfinity;
+        if (!RideActive ||
+            rideExitAnimationActive ||
+            railPath.Count <= 1)
+        {
+            return false;
+        }
+
+        if (!rideEnterAnimationActive &&
+            GetCurrentCartTile() == tile)
+        {
+            seconds = 0.05f;
+            return true;
+        }
+
+        float remainingEnterSeconds = rideEnterAnimationActive
+            ? Mathf.Max(
+                0f,
+                enterAnimationSeconds -
+                (Time.time - rideEnterAnimationStartedTime))
+            : 0f;
+        int targetIndex = Mathf.Clamp(
+            currentRailTargetIndex,
+            1,
+            railPath.Count - 1);
+        float tileWorldSize = groundTilemap != null
+            ? Mathf.Max(
+                0.0001f,
+                Mathf.Abs(groundTilemap.cellSize.x))
+            : 1f;
+        float travelTiles = 0f;
+        Vector2 previousWorld = transform.position;
+
+        for (int i = targetIndex; i < railPath.Count; i++)
+        {
+            Vector2 cellWorld = GetCellCenter(railPath[i]);
+            travelTiles +=
+                Vector2.Distance(previousWorld, cellWorld) /
+                tileWorldSize;
+
+            if (railPath[i].x == tile.x &&
+                railPath[i].y == tile.y)
+            {
+                seconds =
+                    remainingEnterSeconds +
+                    travelTiles /
+                    Mathf.Max(0.05f, tilesPerSecond);
+                return true;
+            }
+
+            previousWorld = cellWorld;
+        }
+
+        return false;
     }
 
     IEnumerator TeleportCartBetweenPortals(

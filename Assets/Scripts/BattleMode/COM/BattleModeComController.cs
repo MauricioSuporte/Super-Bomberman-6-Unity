@@ -158,6 +158,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private BattleModeComStage7PortalEscapeAbility stage7PortalAbility;
     private BattleModeComStage8PowerGroundAwarenessAbility stage8PowerGroundAbility;
     private bool stage8PowerGroundAbilityResolved;
+    private BattleModeComStage9MinecartAbility stage9MinecartAbility;
+    private bool stage9MinecartAbilityResolved;
     private int explosionMask;
     private int playerId = 1;
     private float tileSize = 1f;
@@ -1349,6 +1351,20 @@ public sealed class BattleModeComController : MonoBehaviour
         ownChainPlanActive = false;
         ownChainEscapeOnly = false;
 
+        if (TryBuildStage9MinecartPriorityCandidate(
+                settings,
+                myTile,
+                out CandidateAction minecartPriority))
+        {
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                minecartPriority,
+                "stage9MinecartPriority");
+            return;
+        }
+
         if (TryBuildTankShootPriorityCandidate(settings, myTile, out CandidateAction tankShoot))
         {
             ExecuteSelectedCandidate(
@@ -2020,6 +2036,34 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool TryBuildStage9MinecartPriorityCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        BattleModeComStage9MinecartAbility ability =
+            GetStage9MinecartAbility();
+        if (ability == null ||
+            !ability.IsAvailable ||
+            !ability.HasCartUseCommit)
+        {
+            return false;
+        }
+
+        if (!ability.TryBuildCandidateDecision(
+                settings,
+                this,
+                myTile,
+                out BattleModeComAbilityDecision decision))
+        {
+            return false;
+        }
+
+        candidate = ToCandidateAction(decision);
+        return candidate.Weight > 0;
     }
 
     private void AppendAbilityTrace(IBattleModeComAbility ability, string phase)
@@ -5302,6 +5346,127 @@ public sealed class BattleModeComController : MonoBehaviour
             out route);
     }
 
+    public bool TryFindAbilityRouteToDangerousGoal(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        Vector2Int goal,
+        int extraDepth,
+        out Vector2 firstMove,
+        out int distance,
+        out float arrivalSeconds,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        distance = 0;
+        arrivalSeconds = 0f;
+        route = "none";
+
+        if (start == goal)
+        {
+            route = $"dangerous goal current tile {goal}";
+            return true;
+        }
+
+        visited.Clear();
+        open.Clear();
+        visited[start] = new PathNode
+        {
+            Tile = start,
+            Parent = start,
+            Depth = 0
+        };
+        open.Enqueue(start);
+
+        int maxDepth = settings.searchDepth + Mathf.Max(0, extraDepth);
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            if (node.Depth >= maxDepth)
+                continue;
+
+            Vector2Int[] directions = GetPathDirectionOrder(tile, goal);
+            for (int i = 0; i < directions.Length; i++)
+            {
+                Vector2Int next = tile + directions[i];
+                bool isGoal = next == goal;
+                if (visited.ContainsKey(next) ||
+                    !IsWalkableTile(next, start))
+                {
+                    continue;
+                }
+
+                int nextDepth = node.Depth + 1;
+                float nextEta = EstimateEscapeTraversalSeconds(
+                    start,
+                    tile,
+                    next,
+                    nextDepth);
+                if (!isGoal &&
+                    IsDangerousAt(next, nextEta, settings, null))
+                {
+                    continue;
+                }
+
+                visited[next] = new PathNode
+                {
+                    Tile = next,
+                    Parent = tile,
+                    Depth = nextDepth
+                };
+
+                if (!isGoal)
+                {
+                    open.Enqueue(next);
+                    continue;
+                }
+
+                Vector2Int firstStep = tile == start
+                    ? next - start
+                    : ReconstructFirstStep(start, tile);
+                firstMove = TileDirectionToVector(firstStep);
+                distance = nextDepth;
+                arrivalSeconds = nextEta;
+                route =
+                    $"dangerous goal {goal} depth:{distance} " +
+                    $"eta:{arrivalSeconds:F2}s";
+                return true;
+            }
+        }
+
+        route = $"no safe route to dangerous goal {goal}";
+        return false;
+    }
+
+    public bool TryPlanAbilityBombWithEscape(
+        Vector2Int plantTile,
+        BattleModeComDifficultySettings settings,
+        out Vector2 escapeMove,
+        out Vector2Int escapeTile)
+    {
+        escapeMove = Vector2.zero;
+        escapeTile = plantTile;
+        if (bombController == null ||
+            bombController.BombsRemaining <= 0 ||
+            plantTile != WorldToTile(transform.position))
+        {
+            return false;
+        }
+
+        int radius = GetPlannedBombRadiusAt(plantTile);
+        return CanPlantBombWithEscape(
+            plantTile,
+            radius,
+            settings,
+            out escapeMove,
+            out escapeTile);
+    }
+
+    public float GetAbilityBombFuseSeconds()
+        => bombController != null
+            ? Mathf.Max(0.1f, bombController.bombFuseTime)
+            : 2f;
+
     public float GetAbilityDangerSeconds(Vector2Int tile)
         => GetDangerSeconds(tile, null);
 
@@ -6599,6 +6764,17 @@ public sealed class BattleModeComController : MonoBehaviour
         return stage8PowerGroundAbility;
     }
 
+    private BattleModeComStage9MinecartAbility GetStage9MinecartAbility()
+    {
+        if (!stage9MinecartAbilityResolved)
+        {
+            TryGetComponent(out stage9MinecartAbility);
+            stage9MinecartAbilityResolved = true;
+        }
+
+        return stage9MinecartAbility;
+    }
+
     private int GetPlannedBombRadiusAt(
         Vector2Int plantTile,
         int baseRadius = -1)
@@ -7102,6 +7278,38 @@ public sealed class BattleModeComController : MonoBehaviour
         float currentDanger = GetDangerSeconds(currentTile, null);
         float nextDanger = GetDangerSeconds(nextTile, null);
         float nextArrivalSecondsForOwnChain = EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
+
+        BattleModeComStage9MinecartAbility minecartAbility =
+            GetStage9MinecartAbility();
+        if (minecartAbility != null &&
+            !string.IsNullOrEmpty(currentReason) &&
+            currentReason.StartsWith(
+                "stage 9 minecart punish",
+                StringComparison.Ordinal))
+        {
+            bool canTraverseMinecartRail =
+                minecartAbility.CanTraverseCommittedRailTile(
+                currentTile,
+                nextTile,
+                nextArrivalSecondsForOwnChain,
+                out string minecartTrace);
+            if (canTraverseMinecartRail)
+            {
+                minecartAbility.LogCommittedRailEntry(
+                    currentTile,
+                    nextTile,
+                    minecartTrace);
+                return requestedMove;
+            }
+
+            if (minecartAbility.IsPunishExitTile(nextTile))
+            {
+                minecartAbility.LogCommittedRailBlocked(
+                    currentTile,
+                    nextTile,
+                    minecartTrace);
+            }
+        }
 
         if (ShouldAllowOwnChainTimedMove(nextTile, nextArrivalSecondsForOwnChain, settings))
             return requestedMove;
