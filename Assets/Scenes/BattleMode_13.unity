@@ -427,6 +427,7 @@ MonoBehaviour:
   destructiblePassAmount: 1
   invincibleSuitAmount: 0
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 3
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -904,16 +905,6 @@ Tilemap:
       dummyAlignment: 0
       m_AllTileFlags: 1073741824
   - first: {x: 1, y: -5, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 23
-      m_TileSpriteIndex: 23
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741824
-  - first: {x: 5, y: -5, z: 0}
     second:
       serializedVersion: 2
       m_TileIndex: 23
@@ -2046,7 +2037,7 @@ Tilemap:
       - {fileID: -3380898060626557992, guid: a192e6c57a711314793279ff31188763, type: 3}
       - {fileID: 8048923861419271694, guid: a192e6c57a711314793279ff31188763, type: 3}
       - {fileID: -5327279360030060877, guid: a192e6c57a711314793279ff31188763, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 3, y: -6, z: 0}
@@ -2083,17 +2074,6 @@ Tilemap:
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 1, y: -5, z: 0}
-    second:
-      serializedVersion: 2
-      m_AnimatedSprites:
-      - {fileID: -8074880809719174170, guid: a192e6c57a711314793279ff31188763, type: 3}
-      - {fileID: -3380898060626557992, guid: a192e6c57a711314793279ff31188763, type: 3}
-      - {fileID: 8048923861419271694, guid: a192e6c57a711314793279ff31188763, type: 3}
-      - {fileID: -5327279360030060877, guid: a192e6c57a711314793279ff31188763, type: 3}
-      m_AnimationSpeed: 10
-      m_AnimationTimeOffset: 0
-      m_Flags: 0
-  - first: {x: 5, y: -5, z: 0}
     second:
       serializedVersion: 2
       m_AnimatedSprites:
@@ -2354,7 +2334,7 @@ Tilemap:
       - {fileID: -3380898060626557992, guid: a192e6c57a711314793279ff31188763, type: 3}
       - {fileID: 8048923861419271694, guid: a192e6c57a711314793279ff31188763, type: 3}
       - {fileID: -5327279360030060877, guid: a192e6c57a711314793279ff31188763, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 2, y: -2, z: 0}
@@ -2890,7 +2870,7 @@ Tilemap:
     m_RefCount: 1
     m_Data: {fileID: 11400000, guid: cc78e6c5e2752d346984bd37a6fef121, type: 2}
   - serializedVersion: 2
-    m_RefCount: 75
+    m_RefCount: 74
     m_Data: {fileID: 11400000, guid: 487c1a204f266f44bb8376981ba2f009, type: 2}
   m_TileSpriteArray:
   - serializedVersion: 2
@@ -2963,11 +2943,11 @@ Tilemap:
     m_RefCount: 1
     m_Data: {fileID: -479942689, guid: 49d48fc72567b2843a0c3164eb2670ba, type: 3}
   - serializedVersion: 2
-    m_RefCount: 75
+    m_RefCount: 74
     m_Data: {fileID: -8074880809719174170, guid: a192e6c57a711314793279ff31188763, type: 3}
   m_TileMatrixArray:
   - serializedVersion: 2
-    m_RefCount: 140
+    m_RefCount: 139
     m_Data:
       e00: 1
       e01: 0
@@ -2987,7 +2967,7 @@ Tilemap:
       e33: 1
   m_TileColorArray:
   - serializedVersion: 2
-    m_RefCount: 140
+    m_RefCount: 139
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -6492,6 +6472,8 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
