@@ -210,6 +210,12 @@ public sealed class SkullDebuffController : MonoBehaviour
         activeEffectEndsAt = 0f;
     }
 
+    public void ClearForArenaRemoval()
+    {
+        CacheReferences();
+        ClearActiveEffect();
+    }
+
     IEnumerator ClearAfter(float durationSeconds)
     {
         yield return new WaitForSeconds(durationSeconds);

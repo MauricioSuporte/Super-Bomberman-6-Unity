@@ -1271,6 +1271,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     void ApplyTemporarySpeedBlinkColor(bool useBlack)
     {
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        if (cachedHealth != null)
+        {
+            if (useBlack)
+                cachedHealth.SetPersistentTint(Color.black);
+            else
+                cachedHealth.ClearPersistentTint();
+        }
+
         var renderers = GetComponentsInChildren<SpriteRenderer>(true);
         if (renderers == null || renderers.Length == 0)
             return;
@@ -1284,10 +1295,14 @@ public class MovementController : MonoBehaviour, IKillable
             if (!temporarySpeedBlinkOriginalColors.ContainsKey(sr))
                 temporarySpeedBlinkOriginalColors.Add(sr, sr.color);
 
+            if (cachedHealth != null)
+                continue;
+
             Color original = temporarySpeedBlinkOriginalColors[sr];
+            float currentAlpha = sr.color.a;
             sr.color = useBlack
-                ? new Color(0f, 0f, 0f, original.a)
-                : original;
+                ? new Color(0f, 0f, 0f, currentAlpha)
+                : new Color(original.r, original.g, original.b, currentAlpha);
         }
 
         ApplyMountedVisualBlinkColor(useBlack);
@@ -1304,10 +1319,19 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (restoreColors)
         {
+            if (cachedHealth == null)
+                cachedHealth = GetComponent<CharacterHealth>();
+
+            cachedHealth?.ClearPersistentTint();
+
             foreach (var kv in temporarySpeedBlinkOriginalColors)
             {
                 if (kv.Key != null)
-                    kv.Key.color = kv.Value;
+                {
+                    Color current = kv.Key.color;
+                    Color original = kv.Value;
+                    kv.Key.color = new Color(original.r, original.g, original.b, current.a);
+                }
             }
         }
 
@@ -2769,6 +2793,20 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
+
+        if (TryGetComponent<SkullDebuffController>(out var skullDebuff) && skullDebuff != null)
+            skullDebuff.ClearForArenaRemoval();
+        else
+            ClearTemporarySkullVisual();
+
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        if (cachedHealth != null)
+        {
+            cachedHealth.SetExternalInvulnerability(false);
+            cachedHealth.StopInvulnerability();
+        }
 
         if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
             glove.DestroyHeldBombIfHolding();
