@@ -427,6 +427,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (!stunned.Add(sr))
                 continue;
 
+            if (mc.CompareTag("Player") && sr.IsStunned)
+                continue;
+
             sr.Stun(seconds);
 
             if (mc.CompareTag("Player") &&

@@ -120,6 +120,9 @@ public class StunReceiver : MonoBehaviour
 
     public void Stun(float seconds)
     {
+        if (CompareTag("Player") && (isStunned || stunRoutine != null))
+            return;
+
         float dur = Mathf.Max(0.01f, seconds);
         float newEnd = Time.time + dur;
         bool startingNewStun = !isStunned && stunRoutine == null;
