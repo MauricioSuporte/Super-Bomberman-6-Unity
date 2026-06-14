@@ -155,6 +155,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
     private BattleSuddenDeathController suddenDeathController;
+    private BattleModeComStage7PortalEscapeAbility stage7PortalAbility;
     private int explosionMask;
     private int playerId = 1;
     private float tileSize = 1f;
@@ -5210,6 +5211,8 @@ public sealed class BattleModeComController : MonoBehaviour
         visited.Clear();
         open.Clear();
 
+        TryGetComponent(
+            out BattleModeComStage7PortalEscapeAbility portalAbility);
         visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
         open.Enqueue(start);
 
@@ -5257,6 +5260,12 @@ public sealed class BattleModeComController : MonoBehaviour
                 if (!IsWalkableTile(next, start))
                     continue;
 
+                if (portalAbility != null &&
+                    portalAbility.IsPortalTile(next))
+                {
+                    continue;
+                }
+
                 float nextEta = EstimateEscapeTraversalSeconds(start, tile, next, node.Depth + 1);
                 if (IsDangerousAt(next, nextEta, settings, plannedBlastTiles))
                     continue;
@@ -5287,6 +5296,161 @@ public sealed class BattleModeComController : MonoBehaviour
 
     public float GetAbilityDangerSeconds(Vector2Int tile)
         => GetDangerSeconds(tile, null);
+
+    public bool IsAbilityTileDangerousAt(
+        Vector2Int tile,
+        float arrivalSeconds,
+        BattleModeComDifficultySettings settings)
+    {
+        return IsDangerousAt(
+            tile,
+            Mathf.Max(0f, arrivalSeconds),
+            settings,
+            null);
+    }
+
+    public bool TryFindAbilityPortalEscapeRoute(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        Vector2Int portalTile,
+        Vector2Int destinationTile,
+        float teleportSeconds,
+        out Vector2 firstMove,
+        out int distance,
+        out float portalArrivalSeconds,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        distance = 0;
+        portalArrivalSeconds = 0f;
+        route = "none";
+
+        if (start == portalTile)
+        {
+            if (IsAbilityTileDangerousAt(
+                    destinationTile,
+                    teleportSeconds,
+                    settings))
+            {
+                route = $"destination {destinationTile} unsafe";
+                return false;
+            }
+
+            route = $"portal current tile destination {destinationTile}";
+            return true;
+        }
+
+        TryGetComponent(
+            out BattleModeComStage7PortalEscapeAbility portalAbility);
+
+        visited.Clear();
+        open.Clear();
+        visited[start] = new PathNode
+        {
+            Tile = start,
+            Parent = start,
+            Depth = 0
+        };
+        open.Enqueue(start);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            if (node.Depth >= settings.searchDepth + 3)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                bool isPortalGoal = next == portalTile;
+                if (visited.ContainsKey(next) ||
+                    !IsWalkableTile(
+                        next,
+                        start,
+                        allowStage7Portal: isPortalGoal))
+                {
+                    continue;
+                }
+
+                if (!isPortalGoal &&
+                    portalAbility != null &&
+                    portalAbility.IsPortalTile(next))
+                {
+                    continue;
+                }
+
+                int nextDepth = node.Depth + 1;
+                float nextEta =
+                    EstimateEscapeTraversalSeconds(
+                        start,
+                        tile,
+                        next,
+                        nextDepth);
+
+                if (!isPortalGoal &&
+                    IsDangerousAt(next, nextEta, settings, null))
+                {
+                    continue;
+                }
+
+                if (isPortalGoal)
+                {
+                    float destinationEta =
+                        nextEta + Mathf.Max(0.01f, teleportSeconds);
+                    if (IsAbilityTileDangerousAt(
+                            destinationTile,
+                            destinationEta,
+                            settings))
+                    {
+                        continue;
+                    }
+
+                    float portalDanger = GetDangerSeconds(next, null);
+                    if (!float.IsInfinity(portalDanger) &&
+                        portalDanger <=
+                        nextEta + DangerTimingMarginSeconds)
+                    {
+                        continue;
+                    }
+
+                    Vector2Int firstStep = tile == start
+                        ? next - start
+                        : ReconstructFirstStep(start, tile);
+                    float firstEta =
+                        EstimateFirstMoveTraversalSeconds(firstStep);
+                    float currentDanger =
+                        GetDangerSeconds(start, null);
+                    if (!float.IsInfinity(currentDanger) &&
+                        currentDanger <=
+                        firstEta + DangerTimingMarginSeconds)
+                    {
+                        continue;
+                    }
+
+                    firstMove = TileDirectionToVector(firstStep);
+                    distance = nextDepth;
+                    portalArrivalSeconds = nextEta;
+                    route =
+                        $"portal depth {nextDepth} eta {nextEta:F2}s " +
+                        $"destination {destinationTile} " +
+                        $"exitEta {destinationEta:F2}s";
+                    return true;
+                }
+
+                visited[next] = new PathNode
+                {
+                    Tile = next,
+                    Parent = tile,
+                    Depth = nextDepth
+                };
+                open.Enqueue(next);
+            }
+        }
+
+        route = $"no route to portal {portalTile}";
+        return false;
+    }
 
     public bool TryFindAbilitySpringEscapeRoute(
         BattleModeComDifficultySettings settings,
@@ -6342,13 +6506,24 @@ public sealed class BattleModeComController : MonoBehaviour
                type != ItemType.Clock;
     }
 
-    private bool IsWalkableTile(Vector2Int tile, Vector2Int startTile)
+    private bool IsWalkableTile(
+        Vector2Int tile,
+        Vector2Int startTile,
+        bool allowStage7Portal = false)
     {
         if (!HasGroundTile(tile))
             return false;
 
         if (HasIndestructibleTile(tile))
             return false;
+
+        if (!allowStage7Portal &&
+            tile != startTile &&
+            GetStage7PortalAbility() is { } portalAbility &&
+            portalAbility.IsPortalTile(tile))
+        {
+            return false;
+        }
 
         // DestructiblePass: blocos destrutíveis deixam de ser obstáculo — abre rotas
         // de fuga, farm e perseguição através dos blocos em todo o pathfinding.
@@ -6391,6 +6566,14 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private BattleModeComStage7PortalEscapeAbility GetStage7PortalAbility()
+    {
+        if (stage7PortalAbility == null)
+            TryGetComponent(out stage7PortalAbility);
+
+        return stage7PortalAbility;
     }
 
     private AbilitySystem bombPassCheckAbilitySystem;
@@ -6731,12 +6914,49 @@ public sealed class BattleModeComController : MonoBehaviour
         if (IsCenteringTowardTileCenter(currentTile, requestedMove))
             return requestedMove;
 
-        if (hasSafeCenterTarget && currentTile == safeCenterTargetTile)
-            return requestedMove;
-
         Vector2Int nextTile = currentTile + DirectionToTile(requestedMove);
         if (nextTile == currentTile)
             return Vector2.zero;
+
+        BattleModeComStage7PortalEscapeAbility portalAbility =
+            GetStage7PortalAbility();
+        bool committedPortalMove =
+            portalAbility != null &&
+            portalAbility.IsCommittedPortalTarget(nextTile) &&
+            !string.IsNullOrEmpty(currentReason) &&
+            currentReason.StartsWith(
+                "stage 7 portal",
+                StringComparison.Ordinal);
+        if (portalAbility != null &&
+            portalAbility.IsPortalTile(nextTile) &&
+            !committedPortalMove)
+        {
+            portalAbility.LogPortalEntryBlocked(
+                nextTile,
+                "portal was not selected by the escape planner");
+            wanderTargetExpiresTime = -10f;
+            hasSafeCenterTarget = false;
+            nextDecisionTime = Time.time;
+
+            Vector2 detour = FindBestFallbackMove(
+                settings,
+                currentTile,
+                null,
+                out string detourReason);
+            if (detour != Vector2.zero)
+            {
+                portalAbility.LogPortalEntryBlocked(
+                    nextTile,
+                    $"reroute:{FirstMoveDescription(detour)} " +
+                    $"reason:{detourReason}");
+                return detour;
+            }
+
+            return Vector2.zero;
+        }
+
+        if (hasSafeCenterTarget && currentTile == safeCenterTargetTile)
+            return requestedMove;
 
         if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility tankAwareness))
         {
@@ -6772,7 +6992,10 @@ public sealed class BattleModeComController : MonoBehaviour
             float kickCurrentDanger = GetDangerSeconds(currentTile, null);
             float kickNextDanger = GetDangerSeconds(nextTile, null);
             float kickNextArrivalSeconds = EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
-            bool kickNextWalkable = IsWalkableTile(nextTile, currentTile);
+            bool kickNextWalkable = IsWalkableTile(
+                nextTile,
+                currentTile,
+                allowStage7Portal: committedPortalMove);
             float kickNextMargin = GetSurvivalMarginSeconds(nextTile, kickNextArrivalSeconds, settings, null);
 
             LogKickBombRiskDiagnostic(
@@ -6788,7 +7011,10 @@ public sealed class BattleModeComController : MonoBehaviour
             return requestedMove;
         }
 
-        if (!IsWalkableTile(nextTile, currentTile))
+        if (!IsWalkableTile(
+                nextTile,
+                currentTile,
+                allowStage7Portal: committedPortalMove))
         {
             LogPostPlantEscapeDiagnostic(
                 "SAFETY_BLOCKED",
@@ -6852,6 +7078,33 @@ public sealed class BattleModeComController : MonoBehaviour
                  nextDanger > springArrivalSeconds + DangerTimingMarginSeconds))
             {
                 return requestedMove;
+            }
+        }
+
+        if (portalAbility != null)
+        {
+            if (committedPortalMove)
+            {
+                float portalArrivalSeconds =
+                    EstimateFirstMoveTraversalSeconds(
+                        DirectionToTile(requestedMove));
+                if (portalAbility.IsPortalExitSafe(
+                        nextTile,
+                        portalArrivalSeconds,
+                        settings,
+                        out string portalTrace) &&
+                    (float.IsInfinity(currentDanger) ||
+                     currentDanger >
+                     portalArrivalSeconds +
+                     DangerTimingMarginSeconds))
+                {
+                    return requestedMove;
+                }
+
+                portalAbility.LogPortalEntryBlocked(
+                    nextTile,
+                    portalTrace);
+                return Vector2.zero;
             }
         }
 

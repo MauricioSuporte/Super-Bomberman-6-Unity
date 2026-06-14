@@ -133,6 +133,66 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             TryHandlePlayer(players[i]);
     }
 
+    public float TeleportDurationSeconds
+        => Mathf.Max(0.01f, teleportSeconds);
+
+    public void CopyPortalCells(List<Vector2Int> destination)
+    {
+        if (destination == null)
+            return;
+
+        destination.Clear();
+        if (portalCells == null)
+            return;
+
+        for (int i = 0; i < portalCells.Length; i++)
+            destination.Add(portalCells[i]);
+    }
+
+    public bool IsPortalCell(Vector2Int cell)
+        => GetPortalIndex(ToCell(cell)) >= 0;
+
+    public bool IsMovementAtPortal(
+        MovementController mover,
+        Vector2Int portalCell)
+    {
+        return mover != null &&
+               mover.Rigidbody != null &&
+               WorldToCell(mover.Rigidbody.position) ==
+               ToCell(portalCell);
+    }
+
+    public bool TryGetPortalWorldCenter(
+        Vector2Int portalCell,
+        out Vector2 worldCenter)
+    {
+        if (!IsPortalCell(portalCell))
+        {
+            worldCenter = Vector2.zero;
+            return false;
+        }
+
+        ResolveReferences();
+        worldCenter = GetCellCenter(ToCell(portalCell));
+        return true;
+    }
+
+    public bool TryGetClockwiseDestination(
+        Vector2Int source,
+        out Vector2Int destination)
+    {
+        int sourceIndex = GetPortalIndex(ToCell(source));
+        if (sourceIndex < 0 || portalCells == null || portalCells.Length < 2)
+        {
+            destination = source;
+            return false;
+        }
+
+        destination =
+            portalCells[GetClockwiseDestinationIndex(sourceIndex)];
+        return true;
+    }
+
     void TryHandlePlayer(MovementController mover)
     {
         if (mover == null || mover.Rigidbody == null || !mover.CompareTag("Player"))
@@ -173,6 +233,14 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         Vector3Int destinationCell = ToCell(portalCells[destinationIndex]);
         Vector2 source = GetCellCenter(sourceCell);
         Vector2 destination = GetCellCenter(destinationCell);
+
+        if (mover.TryGetComponent(
+                out BattleModeComStage7PortalEscapeAbility comPortalAbility))
+        {
+            comPortalAbility.LogTeleportStarted(
+                portalCells[sourceIndex],
+                portalCells[destinationIndex]);
+        }
 
         TeleportState state = CaptureAndApplyTeleportState(mover);
         activeStates[mover] = state;
@@ -231,6 +299,13 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         {
             RestoreTeleportState(mover, state);
             activeStates.Remove(mover);
+            if (comPortalAbility != null)
+            {
+                comPortalAbility.LogTeleportCompleted(
+                    portalCells[sourceIndex],
+                    portalCells[destinationIndex]);
+            }
+
             StartCoroutine(ReleaseTeleporterAfterGrace(mover, destinationCell));
         }
     }
@@ -490,6 +565,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     int GetPortalIndex(Vector3Int cell)
     {
+        if (portalCells == null)
+            return -1;
+
         for (int i = 0; i < portalCells.Length; i++)
         {
             if (ToCell(portalCells[i]) == cell)
