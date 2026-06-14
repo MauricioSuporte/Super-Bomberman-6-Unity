@@ -9,6 +9,7 @@ public static class BattleModeComStageAbilityLoader
     private const string BattleMode5SceneName = "BattleMode_5";
     private const string BattleMode6SceneName = "BattleMode_6";
     private const string BattleMode7SceneName = "BattleMode_7";
+    private const string BattleMode8SceneName = "BattleMode_8";
 
     public static bool EnsureForActiveStage(GameObject playerObject)
     {
@@ -29,6 +30,8 @@ public static class BattleModeComStageAbilityLoader
                 EnsureAbility<BattleModeComStage6RedirectionKickAbility>(playerObject),
             BattleMode7SceneName =>
                 EnsureAbility<BattleModeComStage7PortalEscapeAbility>(playerObject),
+            BattleMode8SceneName =>
+                EnsureAbility<BattleModeComStage8PowerGroundAwarenessAbility>(playerObject),
             _ => false
         };
     }

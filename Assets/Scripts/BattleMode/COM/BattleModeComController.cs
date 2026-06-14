@@ -156,6 +156,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private Tilemap indestructibleTilemap;
     private BattleSuddenDeathController suddenDeathController;
     private BattleModeComStage7PortalEscapeAbility stage7PortalAbility;
+    private BattleModeComStage8PowerGroundAwarenessAbility stage8PowerGroundAbility;
+    private bool stage8PowerGroundAbilityResolved;
     private int explosionMask;
     private int playerId = 1;
     private float tileSize = 1f;
@@ -2653,16 +2655,17 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
-            if (!CanBombHitDestructible(tile, Mathf.Max(1, bombController.GetPlannedExplosionRadius())))
+            int radius = GetPlannedBombRadiusAt(tile);
+            if (!CanBombHitDestructible(tile, radius))
                 continue;
 
-            if (WouldBlastHitUsefulItem(tile, Mathf.Max(1, bombController.GetPlannedExplosionRadius()), out ItemType itemType, out Vector2Int itemTile))
+            if (WouldBlastHitUsefulItem(tile, radius, out ItemType itemType, out Vector2Int itemTile))
             {
                 RejectVerbose($"FarmDestructible recusado queimaria item {itemType}@{itemTile}");
                 continue;
             }
 
-            if (!CanPlantBombWithEscape(tile, Mathf.Max(1, bombController.GetPlannedExplosionRadius()), settings, out Vector2 escapeMove, out _))
+            if (!CanPlantBombWithEscape(tile, radius, settings, out Vector2 escapeMove, out _))
             {
                 RejectVerbose($"FarmDestructible recusado sem fuga {tile}");
                 continue;
@@ -2716,7 +2719,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int targetTile, out int targetDistance))
             return false;
 
-        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
+        int radius = GetPlannedBombRadiusAt(myTile);
         if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
             !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
             CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
@@ -2771,7 +2774,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (bombController == null || bombController.BombsRemaining <= 0)
             return false;
 
-        int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
+        int radius = GetPlannedBombRadiusAt(myTile);
         GatherReachableSafeTiles(myTile, settings.searchDepth + 3, settings);
 
         // --- Passo 1: tenta acertar inimigo diretamente (como TryBuildCombatCandidate) ---
@@ -2811,10 +2814,11 @@ public sealed class BattleModeComController : MonoBehaviour
             for (int i = 0; i < reachableTiles.Count; i++)
             {
                 Vector2Int tile = reachableTiles[i];
+                int tileRadius = GetPlannedBombRadiusAt(tile);
                 if (IsBombAtTile(tile)) continue;
-                if (WouldBlastHitUsefulItem(tile, radius, out _, out _)) continue;
-                if (!IsTileInBlastLineRuntime(tile, targetTile, radius)) continue;
-                if (!CanPlantAdditionalBombWithEscape(tile, radius, settings, out Vector2 esc, out _, out _)) continue;
+                if (WouldBlastHitUsefulItem(tile, tileRadius, out _, out _)) continue;
+                if (!IsTileInBlastLineRuntime(tile, targetTile, tileRadius)) continue;
+                if (!CanPlantAdditionalBombWithEscape(tile, tileRadius, settings, out Vector2 esc, out _, out _)) continue;
                 if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
                 if (path.Distance < bestCombatDist)
                 {
@@ -2857,10 +2861,11 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
+            int tileRadius = GetPlannedBombRadiusAt(tile);
             if (IsBombAtTile(tile)) continue;
-            if (!CanBombHitDestructible(tile, radius)) continue;
-            if (WouldBlastHitUsefulItem(tile, radius, out _, out _)) continue;
-            if (!CanPlantAdditionalBombWithEscape(tile, radius, settings, out Vector2 esc, out _, out _)) continue;
+            if (!CanBombHitDestructible(tile, tileRadius)) continue;
+            if (WouldBlastHitUsefulItem(tile, tileRadius, out _, out _)) continue;
+            if (!CanPlantAdditionalBombWithEscape(tile, tileRadius, settings, out Vector2 esc, out _, out _)) continue;
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
 
             float score = -path.Distance * 10f + GetDecisionNoise(9000 + i, FarmTargetJitter);
@@ -3187,8 +3192,10 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private List<Vector2Int> BuildOwnChainPlanBlastTiles(Vector2Int firstTile, Vector2Int secondTile, int radius)
     {
-        List<Vector2Int> blastTiles = BuildBlastTiles(firstTile, radius);
-        List<Vector2Int> secondBlast = BuildBlastTiles(secondTile, radius);
+        int firstRadius = GetPlannedBombRadiusAt(firstTile, radius);
+        int secondRadius = GetPlannedBombRadiusAt(secondTile, radius);
+        List<Vector2Int> blastTiles = BuildBlastTiles(firstTile, firstRadius);
+        List<Vector2Int> secondBlast = BuildBlastTiles(secondTile, secondRadius);
 
         for (int i = 0; i < secondBlast.Count; i++)
         {
@@ -3722,6 +3729,7 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
+            int tileRadius = GetPlannedBombRadiusAt(tile, radius);
             if (onlyCurrentTile && tile != myTile)
                 continue;
 
@@ -3732,7 +3740,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
             }
 
-            if (WouldBlastHitUsefulItem(tile, radius, out ItemType hitItemType, out Vector2Int hitItemTile))
+            if (WouldBlastHitUsefulItem(tile, tileRadius, out ItemType hitItemType, out Vector2Int hitItemTile))
             {
                 cntBlastHitsItem++;
                 AddChainRejectSample(ref rejectSamples, $"item:{tile}->{hitItemType}@{hitItemTile}");
@@ -3742,7 +3750,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
             if (!TryGetLinkedOwnBombTriggerSeconds(
                     tile,
-                    radius,
+                    tileRadius,
                     out float triggerSeconds,
                     out bool createsTurn,
                     out Vector2Int linkedBombTile,
@@ -3761,7 +3769,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
             }
 
-            if (!TryBuildChainBlastTiles(tile, radius, out List<Vector2Int> chainBlastTiles))
+            if (!TryBuildChainBlastTiles(tile, tileRadius, out List<Vector2Int> chainBlastTiles))
             {
                 cntNoBlastTiles++;
                 AddChainRejectSample(ref rejectSamples, $"noBlast:{tile} link:{linkedBombTile}");
@@ -5876,6 +5884,7 @@ public sealed class BattleModeComController : MonoBehaviour
         out Vector2 escapeMove,
         out Vector2Int escapeTile)
     {
+        radius = GetPlannedBombRadiusAt(plantTile, radius);
         List<Vector2Int> plannedBlast = BuildBlastTiles(plantTile, radius);
         int directBlastTileCount = plannedBlast.Count;
         bool expandedByStage = AppendPlannedBombStageDanger(
@@ -6285,6 +6294,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private bool TryBuildChainBlastTiles(Vector2Int plantTile, int radius, out List<Vector2Int> chainBlastTiles)
     {
+        radius = GetPlannedBombRadiusAt(plantTile, radius);
         chainBlastTiles = BuildBlastTiles(plantTile, radius);
         Queue<Vector2Int> triggeredBombTiles = new();
         HashSet<Vector2Int> visitedBombTiles = new();
@@ -6294,7 +6304,9 @@ public sealed class BattleModeComController : MonoBehaviour
         while (triggeredBombTiles.Count > 0)
         {
             Vector2Int bombTile = triggeredBombTiles.Dequeue();
-            int bombRadius = GetBombRadiusAtTile(bombTile, radius);
+            int bombRadius = GetPlannedBombRadiusAt(
+                bombTile,
+                GetBombRadiusAtTile(bombTile, radius));
             List<Vector2Int> bombBlast = BuildBlastTiles(bombTile, bombRadius);
 
             for (int i = 0; i < bombBlast.Count; i++)
@@ -6576,6 +6588,35 @@ public sealed class BattleModeComController : MonoBehaviour
         return stage7PortalAbility;
     }
 
+    private BattleModeComStage8PowerGroundAwarenessAbility GetStage8PowerGroundAbility()
+    {
+        if (!stage8PowerGroundAbilityResolved)
+        {
+            TryGetComponent(out stage8PowerGroundAbility);
+            stage8PowerGroundAbilityResolved = true;
+        }
+
+        return stage8PowerGroundAbility;
+    }
+
+    private int GetPlannedBombRadiusAt(
+        Vector2Int plantTile,
+        int baseRadius = -1)
+    {
+        int radius = baseRadius > 0
+            ? baseRadius
+            : bombController != null
+                ? bombController.GetPlannedExplosionRadius()
+                : 1;
+        radius = Mathf.Max(1, radius);
+
+        BattleModeComStage8PowerGroundAwarenessAbility ability =
+            GetStage8PowerGroundAbility();
+        return ability != null
+            ? ability.GetEffectivePlannedRadius(plantTile, radius)
+            : radius;
+    }
+
     private AbilitySystem bombPassCheckAbilitySystem;
 
     /// <summary>
@@ -6801,6 +6842,26 @@ public sealed class BattleModeComController : MonoBehaviour
             tile,
             radius,
             BlocksPredictedExplosion);
+    }
+
+    public bool DoesBombBlastReachTileWithRadius(
+        Bomb bomb,
+        Vector2Int bombTile,
+        Vector2Int tile,
+        int radius)
+    {
+        if (bomb == null ||
+            bomb.HasExploded ||
+            bomb.IsBeingHeldByPowerGlove)
+        {
+            return false;
+        }
+
+        return IsBombBlastReachingTile(
+            bomb,
+            bombTile,
+            tile,
+            Mathf.Max(1, radius));
     }
 
     public void AppendAbilityBlastTiles(
