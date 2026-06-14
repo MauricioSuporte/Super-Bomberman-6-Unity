@@ -1942,19 +1942,27 @@ public class GameManager : MonoBehaviour
             return;
 
         int amount = UnityEngine.Random.Range(randomEggsMin, randomEggsMax + 1);
-        List<GameObject> randomEggPrefabs = BuildRandomEggPrefabPool();
-        if (randomEggPrefabs.Count <= 0)
+        List<GameObject> configuredEggPrefabs = BuildConfiguredEggPrefabPool();
+        if (configuredEggPrefabs.Count <= 0)
             return;
 
-        for (int i = 0; i < amount && cursor < indices.Count; i++)
+        for (int i = configuredEggPrefabs.Count - 1; i > 0; i--)
         {
-            GameObject prefab = randomEggPrefabs[UnityEngine.Random.Range(0, randomEggPrefabs.Count)];
+            int swapIndex = UnityEngine.Random.Range(0, i + 1);
+            (configuredEggPrefabs[i], configuredEggPrefabs[swapIndex]) =
+                (configuredEggPrefabs[swapIndex], configuredEggPrefabs[i]);
+        }
+
+        int spawnAmount = Mathf.Min(amount, configuredEggPrefabs.Count);
+        for (int i = 0; i < spawnAmount && cursor < indices.Count; i++)
+        {
+            GameObject prefab = configuredEggPrefabs[i];
             if (prefab != null)
                 orderToSpawn[indices[cursor++]] = prefab;
         }
     }
 
-    List<GameObject> BuildRandomEggPrefabPool()
+    List<GameObject> BuildConfiguredEggPrefabPool()
     {
         int[] amounts = SaveSystem.GetBattleModeLouieAmounts(GetDefaultBattleModeLouieAmounts());
         List<GameObject> results = new(BattleModeRandomEggMountTypes.Length);
