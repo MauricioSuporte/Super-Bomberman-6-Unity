@@ -102,6 +102,11 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     bool clockwise;
     bool fast;
 
+    public bool IsClockwise => clockwise;
+    public bool IsFast => fast;
+    public float SpeedTilesPerSecond =>
+        fast ? fastSpeedTilesPerSecond : slowSpeedTilesPerSecond;
+
     void Awake()
     {
         EnsureBombFields();
@@ -170,6 +175,100 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         ref int radius,
         ref bool pierce)
         => false;
+
+    public bool TryGetConveyorMotion(
+        Vector2 worldPosition,
+        out Vector2 direction,
+        out float speedTilesPerSecond)
+    {
+        ResolveReferences();
+        if (conveyorCells.Count == 0)
+            BuildConveyorPath();
+
+        direction = Vector2.zero;
+        speedTilesPerSecond = 0f;
+        if (groundTilemap == null)
+            return false;
+
+        Vector3Int cell = groundTilemap.WorldToCell(worldPosition);
+        if (!IsActiveConveyorCell(cell))
+            return false;
+
+        direction = GetConveyorDirection(cell);
+        speedTilesPerSecond = SpeedTilesPerSecond;
+        return direction != Vector2.zero;
+    }
+
+    public bool TryPredictConveyorWorldPosition(
+        Vector2 worldPosition,
+        float seconds,
+        out Vector2 predictedWorldPosition)
+    {
+        ResolveReferences();
+        if (conveyorCells.Count == 0)
+            BuildConveyorPath();
+
+        predictedWorldPosition = worldPosition;
+        if (groundTilemap == null)
+            return false;
+
+        Vector3Int currentCell = groundTilemap.WorldToCell(worldPosition);
+        if (!IsActiveConveyorCell(currentCell))
+            return false;
+
+        Dictionary<Vector3Int, Vector3Int> map =
+            clockwise ? clockwiseNextCell : counterClockwiseNextCell;
+        float remainingDistance =
+            Mathf.Max(0f, seconds) *
+            Mathf.Max(0.01f, SpeedTilesPerSecond) *
+            ResolveTileSize();
+        Vector2 currentPosition = worldPosition;
+
+        int guard = 0;
+        while (remainingDistance > 0.0001f && guard++ < 128)
+        {
+            if (!map.TryGetValue(currentCell, out Vector3Int nextCell))
+                break;
+
+            Vector2 nextCenter = GetCellCenterWorld(nextCell);
+            float segmentDistance = Vector2.Distance(currentPosition, nextCenter);
+            if (segmentDistance > remainingDistance)
+            {
+                currentPosition = Vector2.MoveTowards(
+                    currentPosition,
+                    nextCenter,
+                    remainingDistance);
+                remainingDistance = 0f;
+                break;
+            }
+
+            currentPosition = nextCenter;
+            remainingDistance -= segmentDistance;
+            currentCell = nextCell;
+        }
+
+        predictedWorldPosition = currentPosition;
+        return true;
+    }
+
+    public void CopyConveyorWorldPositions(List<Vector2> destination)
+    {
+        if (destination == null)
+            return;
+
+        destination.Clear();
+        ResolveReferences();
+        if (conveyorCells.Count == 0)
+            BuildConveyorPath();
+        if (groundTilemap == null)
+            return;
+
+        foreach (Vector3Int cell in conveyorCells)
+        {
+            if (IsActiveConveyorCell(cell))
+                destination.Add(GetCellCenterWorld(cell));
+        }
+    }
 
     void MovePlayers(float maxDistance)
     {

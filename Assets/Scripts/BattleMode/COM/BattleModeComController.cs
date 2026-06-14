@@ -6586,6 +6586,58 @@ public sealed class BattleModeComController : MonoBehaviour
             BlocksPredictedExplosion);
     }
 
+    public bool DoesPredictedBombBlastReachTile(
+        Bomb bomb,
+        Vector2Int predictedBombTile,
+        Vector2Int tile)
+    {
+        if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
+            return false;
+
+        int radius = bomb.Owner != null
+            ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb))
+            : Mathf.Max(
+                1,
+                bomb.ExplosionRadiusOverride > 0
+                    ? bomb.ExplosionRadiusOverride
+                    : 2);
+
+        bool BlocksPredictedExplosion(Vector2Int check)
+        {
+            if (HasIndestructibleTile(check))
+                return true;
+
+            if (!bomb.IsPierceBomb && HasDestructibleTile(check))
+                return true;
+
+            return false;
+        }
+
+        return IsTileInBlastLine(
+            predictedBombTile,
+            tile,
+            radius,
+            BlocksPredictedExplosion);
+    }
+
+    public void AppendAbilityBlastTiles(
+        Vector2Int origin,
+        int radius,
+        List<Vector2Int> destination)
+    {
+        if (destination == null)
+            return;
+
+        List<Vector2Int> blastTiles = BuildBlastTiles(
+            origin,
+            Mathf.Max(1, radius));
+        for (int i = 0; i < blastTiles.Count; i++)
+        {
+            if (!destination.Contains(blastTiles[i]))
+                destination.Add(blastTiles[i]);
+        }
+    }
+
     private bool BlocksExplosionForPierce(Vector2Int tile)
     {
         return HasIndestructibleTile(tile) || IsBombAtTile(tile);
