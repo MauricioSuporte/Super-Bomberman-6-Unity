@@ -86,6 +86,8 @@ public class GameManager : MonoBehaviour
 
     public int EnemiesAlive { get; private set; }
     public int PendingHiddenEnemies { get; private set; }
+    public bool IsBattleRoundResolutionTriggered =>
+        IsBattleModeScene() && (restartingRound || endStageTriggered || battleTimerExpired);
 
     public event Action OnAllEnemiesDefeated;
 

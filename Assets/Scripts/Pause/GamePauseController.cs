@@ -198,12 +198,26 @@ public class GamePauseController : MonoBehaviour
         if (NormalGameOverOverlay.IsTransitionActive)
             return true;
 
+        bool isBattleMode = SceneManager.GetActiveScene().name.StartsWith(
+            battleModeStageScenePrefix,
+            System.StringComparison.OrdinalIgnoreCase);
+
+        if (isBattleMode &&
+            GameManager.Instance != null &&
+            GameManager.Instance.IsBattleRoundResolutionTriggered)
+        {
+            return true;
+        }
+
         if (StageIntroTransition.Instance != null)
         {
             if (StageIntroTransition.Instance.IntroRunning ||
                 StageIntroTransition.Instance.EndingRunning)
                 return true;
         }
+
+        if (isBattleMode)
+            return false;
 
         var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
 
