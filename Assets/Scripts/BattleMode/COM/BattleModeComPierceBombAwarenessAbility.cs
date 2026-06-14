@@ -61,6 +61,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
     private PlayerIdentity identity;
     private MovementController movement;
     private BombController bombController;
+    private BattleModeComController comController;
     private AbilitySystem abilitySystem;
     private GameManager gameManager;
     private Tilemap groundTilemap;
@@ -138,6 +139,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         if (identity == null) TryGetComponent(out identity);
         if (movement == null) TryGetComponent(out movement);
         if (bombController == null) TryGetComponent(out bombController);
+        if (comController == null) TryGetComponent(out comController);
         if (abilitySystem == null) TryGetComponent(out abilitySystem);
 
         ownColliders = GetComponentsInChildren<Collider2D>(true);
@@ -416,7 +418,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         {
             Vector2Int check = source.Tile + dir * step;
 
-            if (HasIndestructibleTile(check))
+            if (BlocksExplosionAtIndestructible(check))
                 return false;
 
             if (HasDestructibleTile(check))
@@ -493,7 +495,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         {
             Vector2Int check = snapshot.Tile + dir * step;
 
-            if (HasIndestructibleTile(check))
+            if (BlocksExplosionAtIndestructible(check))
                 return false;
 
             if (HasDestructibleTile(check))
@@ -818,6 +820,13 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
     private bool HasIndestructibleTile(Vector2Int tile) =>
         indestructibleTilemap != null &&
         indestructibleTilemap.HasTile(indestructibleTilemap.WorldToCell(TileToWorld(tile)));
+
+    private bool BlocksExplosionAtIndestructible(Vector2Int tile)
+    {
+        return HasIndestructibleTile(tile) &&
+               (comController == null ||
+                !comController.IsExplosionPassThroughTile(tile));
+    }
 
     private bool IsOwnCollider(Collider2D colliderToCheck)
     {

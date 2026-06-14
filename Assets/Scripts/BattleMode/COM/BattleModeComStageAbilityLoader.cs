@@ -15,6 +15,7 @@ public static class BattleModeComStageAbilityLoader
     private const string BattleMode11SceneName = "BattleMode_11";
     private const string BattleMode12SceneName = "BattleMode_12";
     private const string BattleMode14SceneName = "BattleMode_14";
+    private const string BattleMode15SceneName = "BattleMode_15";
 
     public static bool EnsureForActiveStage(GameObject playerObject)
     {
@@ -49,6 +50,9 @@ public static class BattleModeComStageAbilityLoader
                 EnsureAbility<BattleModeComStage9MinecartAbility>(playerObject),
             BattleMode14SceneName =>
                 EnsureAbility<BattleModeComStage14DynamiteMagnetAbility>(
+                    playerObject),
+            BattleMode15SceneName =>
+                EnsureAbility<BattleModeComStage15PassThroughBlastAbility>(
                     playerObject),
             _ => false
         };

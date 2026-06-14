@@ -154,6 +154,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
+    private IndestructibleTileResolver indestructibleTileResolver;
     private BattleSuddenDeathController suddenDeathController;
     private BattleModeComStage7PortalEscapeAbility stage7PortalAbility;
     private BattleModeComStage8PowerGroundAwarenessAbility stage8PowerGroundAbility;
@@ -362,6 +363,12 @@ public sealed class BattleModeComController : MonoBehaviour
             groundTilemap = gameManager.groundTilemap;
             destructibleTilemap = gameManager.destructibleTilemap;
             indestructibleTilemap = gameManager.indestructibleTilemap;
+        }
+
+        if (indestructibleTileResolver == null)
+        {
+            indestructibleTileResolver =
+                FindAnyObjectByType<IndestructibleTileResolver>();
         }
 
         if (suddenDeathController == null || !suddenDeathController.isActiveAndEnabled)
@@ -6602,7 +6609,7 @@ public sealed class BattleModeComController : MonoBehaviour
             {
                 Vector2Int tile = plantTile + dir * step;
 
-                if (HasIndestructibleTile(tile))
+                if (BlocksExplosionAtIndestructible(tile))
                     break;
 
                 if (HasDestructibleTile(tile))
@@ -6915,7 +6922,42 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private bool BlocksExplosion(Vector2Int tile)
     {
-        return HasIndestructibleTile(tile) || HasDestructibleTile(tile) || IsBombAtTile(tile);
+        return BlocksExplosionAtIndestructible(tile) ||
+               HasDestructibleTile(tile) ||
+               IsBombAtTile(tile);
+    }
+
+    public bool IsExplosionPassThroughTile(Vector2Int tile)
+    {
+        if (indestructibleTilemap == null ||
+            indestructibleTileResolver == null)
+        {
+            return false;
+        }
+
+        Vector3Int cell = WorldToCell(indestructibleTilemap, tile);
+        TileBase tileAsset = indestructibleTilemap.GetTile(cell);
+        if (tileAsset == null ||
+            !indestructibleTileResolver.TryGetHandler(
+                tileAsset,
+                out IIndestructibleTileHandler handler) ||
+            handler is not IIndestructibleExplosionPassThroughHandler
+                passThroughHandler)
+        {
+            return false;
+        }
+
+        return passThroughHandler.AllowsExplosionPassThrough(
+            bombController,
+            TileToWorld(tile),
+            cell,
+            tileAsset);
+    }
+
+    private bool BlocksExplosionAtIndestructible(Vector2Int tile)
+    {
+        return HasIndestructibleTile(tile) &&
+               !IsExplosionPassThroughTile(tile);
     }
 
     private float GetDangerSeconds(Vector2Int tile, List<Vector2Int> plannedBlastTiles)
@@ -7002,7 +7044,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         bool BlocksPredictedExplosion(Vector2Int check)
         {
-            if (HasIndestructibleTile(check))
+            if (BlocksExplosionAtIndestructible(check))
                 return true;
 
             if (!bomb.IsPierceBomb && HasDestructibleTile(check))
@@ -7036,7 +7078,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         bool BlocksPredictedExplosion(Vector2Int check)
         {
-            if (HasIndestructibleTile(check))
+            if (BlocksExplosionAtIndestructible(check))
                 return true;
 
             if (!bomb.IsPierceBomb && HasDestructibleTile(check))
@@ -7092,7 +7134,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private bool BlocksExplosionForPierce(Vector2Int tile)
     {
-        return HasIndestructibleTile(tile) || IsBombAtTile(tile);
+        return BlocksExplosionAtIndestructible(tile) || IsBombAtTile(tile);
     }
 
     private string ResolveEscapeAbilityThreatKey(Vector2Int tile)
