@@ -2578,6 +2578,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -2590,8 +2592,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             bool moved = false;
             if (!stageCarouselAnimating &&
-                (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft) ||
-                input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp) ||
+                (MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _) ||
+                MenuDirectionalPressed(input, PlayerAction.MoveUp, out _) ||
                 input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL)))
             {
                 BeginStageCarouselMove(-1);
@@ -2599,8 +2601,8 @@ public sealed class BattleModeMenu : MonoBehaviour
                 moved = true;
             }
             else if (!stageCarouselAnimating &&
-                     (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight) ||
-                     input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown) ||
+                     (MenuDirectionalPressed(input, PlayerAction.MoveRight, out _) ||
+                     MenuDirectionalPressed(input, PlayerAction.MoveDown, out _) ||
                      input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR)))
             {
                 BeginStageCarouselMove(1);
@@ -2627,6 +2629,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 {
                     PlaySfx(deniedSfx, deniedSfxVolume);
                     ShowStageLockedHint(stageIndex);
+                    CapturePreviousHeldInputs(input);
                     yield return null;
                     continue;
                 }
@@ -2637,6 +2640,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             }
 
             UpdateStageSelectVisuals();
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
