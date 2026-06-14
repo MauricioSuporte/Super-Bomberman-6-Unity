@@ -703,9 +703,9 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 66ab2fcdf144f8444bf09b24ffb7402a, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
-  selectMusic: {fileID: 8300000, guid: 29f635040cdc7f144b219e759a63322a, type: 3}
-  selectMusicLoop: {fileID: 8300000, guid: e6520f966a421b744ae979fc42092360, type: 3}
-  selectMusicVolume: 1
+  selectMusic: {fileID: 8300000, guid: b3d478d94f4d2d94c93a2ef59a47cc1b, type: 3}
+  selectMusicLoop: {fileID: 0}
+  selectMusicVolume: 0.5
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1
@@ -1498,6 +1498,7 @@ MonoBehaviour:
   hardDifficultySelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   hardcoreDifficultySelectedColor: {r: 0, g: 0, b: 0, a: 1}
   hardcoreDifficultyOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  lockedDifficultySelectedAlpha: 0.35
   difficultyColumnSpacing: 28
   optionFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   optionFontMaterialPreset: {fileID: 0}
