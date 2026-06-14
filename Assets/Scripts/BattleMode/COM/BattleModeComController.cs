@@ -1036,20 +1036,22 @@ public sealed class BattleModeComController : MonoBehaviour
             currentDangerSeconds = Mathf.Min(currentDangerSeconds, tankThreatSeconds);
         }
 
-        bool enteredOpeningFarmTarget =
-            IsOpeningFarmPriorityActive() &&
+        bool enteredFarmTarget =
             currentAction == BattleModeComActionType.FarmDestructible &&
             hasCurrentTarget &&
+            bombController != null &&
+            bombController.BombsRemaining > 0 &&
+            !HasOwnUnresolvedBombOrExplosion() &&
             myTile == currentTargetTile;
 
-        if (inDanger || enteredOpeningFarmTarget || Time.time >= nextDecisionTime)
+        if (inDanger || enteredFarmTarget || Time.time >= nextDecisionTime)
         {
-            if (enteredOpeningFarmTarget)
+            if (enteredFarmTarget)
             {
                 LogOpeningFarmDiagnostic(
-                    IsOpeningFarmTargetReached(currentTargetTile)
-                        ? "OPENING_FARM_TARGET_REACHED"
-                        : "OPENING_FARM_TARGET_CENTERING",
+                    IsFarmTargetReached(currentTargetTile)
+                        ? "FARM_TARGET_REACHED"
+                        : "FARM_TARGET_CENTERING",
                     myTile,
                     currentDangerSeconds,
                     $"target:{currentTargetTile} forcing immediate decision " +
@@ -1442,7 +1444,7 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
-        if (TryContinueOpeningFarmCommitment(settings, myTile, currentDangerSeconds))
+        if (TryContinueFarmCommitment(settings, myTile, currentDangerSeconds))
             return;
 
         bool walkToChainCommitActive =
@@ -1555,19 +1557,19 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
-        if (TryGetOpeningFarmPriorityCandidate(out CandidateAction openingFarm))
+        if (TryGetFarmPriorityCandidate(out CandidateAction priorityFarm))
         {
             LogOpeningFarmDiagnostic(
-                "OPENING_FARM_PRIORITY",
+                IsOpeningFarmPriorityActive() ? "OPENING_FARM_PRIORITY" : "FARM_PRIORITY",
                 myTile,
                 currentDangerSeconds,
-                $"selected:{FormatOpeningCandidate(openingFarm)}");
+                $"selected:{FormatOpeningCandidate(priorityFarm)}");
             ExecuteSelectedCandidate(
                 settings,
                 myTile,
                 currentDangerSeconds,
-                openingFarm,
-                "openingFarmPriority");
+                priorityFarm,
+                IsOpeningFarmPriorityActive() ? "openingFarmPriority" : "farmPriority");
             return;
         }
 
@@ -1599,19 +1601,64 @@ public sealed class BattleModeComController : MonoBehaviour
         ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, selected, selected.HasRoute ? "found" : "none");
     }
 
-    private bool TryContinueOpeningFarmCommitment(
+    private bool TryContinueFarmCommitment(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
         float currentDangerSeconds)
     {
-        if (openingFarmReadyStartedTime < 0f ||
-            Time.time - openingFarmReadyStartedTime > OpeningFarmPriorityDurationSeconds ||
-            lastBombTapTime >= openingFarmReadyStartedTime ||
+        if (bombController == null ||
+            bombController.BombsRemaining <= 0 ||
+            HasOwnUnresolvedBombOrExplosion() ||
             currentAction != BattleModeComActionType.FarmDestructible ||
-            !hasCurrentTarget ||
-            IsOpeningFarmTargetReached(currentTargetTile))
+            !hasCurrentTarget)
         {
             return false;
+        }
+
+        int radius = GetPlannedBombRadiusAt(currentTargetTile);
+        int destructibleCount = CountBombHitDestructibles(currentTargetTile, radius);
+        if (destructibleCount <= 0 ||
+            WouldBlastHitUsefulItem(currentTargetTile, radius, out _, out _))
+        {
+            return false;
+        }
+
+        if (IsFarmTargetReached(currentTargetTile))
+        {
+            if (!CanPlantBombWithEscape(
+                    currentTargetTile,
+                    radius,
+                    settings,
+                    out Vector2 escapeMove,
+                    out _))
+            {
+                return false;
+            }
+
+            CandidateAction plant = new CandidateAction
+            {
+                Action = BattleModeComActionType.FarmDestructible,
+                Weight = settings.farmDestructibleWeight,
+                TargetTile = currentTargetTile,
+                HasTarget = true,
+                FirstMove = escapeMove,
+                HasRoute = true,
+                Reason = $"plant committed farm bomb blocks {destructibleCount}",
+                InputDescription = AppendInput("ActionA", FirstMoveDescription(escapeMove)),
+                TapBomb = true
+            };
+            LogOpeningFarmDiagnostic(
+                "FARM_COMMIT_PLANT",
+                myTile,
+                currentDangerSeconds,
+                $"selected:{FormatOpeningCandidate(plant)}");
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                plant,
+                "farmCommit");
+            return true;
         }
 
         Vector2 move;
@@ -1639,24 +1686,24 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
 
         LogOpeningFarmDiagnostic(
-            "OPENING_FARM_COMMIT",
+            "FARM_COMMIT",
             myTile,
             currentDangerSeconds,
             $"target:{currentTargetTile} move:{FirstMoveDescription(move)} " +
-            $"reached:{IsOpeningFarmTargetReached(currentTargetTile)}");
+            $"reached:{IsFarmTargetReached(currentTargetTile)}");
         SetCurrentDecision(
             BattleModeComActionType.FarmDestructible,
             move,
             true,
             currentTargetTile,
-            "continue opening farm target",
+            "continue committed farm target",
             FirstMoveDescription(move),
             currentDangerSeconds,
-            "openingFarmCommit");
+            "farmCommit");
         return true;
     }
 
-    private bool IsOpeningFarmTargetReached(Vector2Int targetTile)
+    private bool IsFarmTargetReached(Vector2Int targetTile)
     {
         if (WorldToTile(transform.position) != targetTile)
             return false;
@@ -1664,12 +1711,16 @@ public sealed class BattleModeComController : MonoBehaviour
         return IsCenteredOnTile(targetTile);
     }
 
-    private bool TryGetOpeningFarmPriorityCandidate(out CandidateAction candidate)
+    private bool TryGetFarmPriorityCandidate(out CandidateAction candidate)
     {
         candidate = default;
 
-        if (!IsOpeningFarmPriorityActive())
+        if (bombController == null ||
+            bombController.BombsRemaining <= 0 ||
+            HasOwnUnresolvedBombOrExplosion())
+        {
             return false;
+        }
 
         for (int i = 0; i < candidates.Count; i++)
         {
