@@ -437,8 +437,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private readonly List<string> matchModeEntries = new()
     {
-        "Single Match",
-        "Tag Match"
+        "<b>Single Match</b>",
+        "<b>Tag Match</b>"
     };
 
     private readonly List<string> playerEntries = new();
@@ -1074,6 +1074,14 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private IEnumerator ConfirmPlayerSelection()
     {
+        if (GetEnabledBattlePlayerCount() < 2)
+        {
+            PlaySfx(deniedSfx, deniedSfxVolume);
+            cursorConfirmVisual = false;
+            UpdateOptionVisuals();
+            yield break;
+        }
+
         PlaySfx(confirmSfx, confirmSfxVolume);
         SaveSystem.SetBattleModePlayerControlModes(playerModes);
 
@@ -1095,6 +1103,21 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         UpdateOptionVisuals();
+    }
+
+    private int GetEnabledBattlePlayerCount()
+    {
+        if (playerModes == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < playerModes.Length; i++)
+        {
+            if (playerModes[i] != BattleModePlayerControlMode.Off)
+                count++;
+        }
+
+        return count;
     }
 
     private IEnumerator PlayLeftPanelCursorAdvanceAnimation()
