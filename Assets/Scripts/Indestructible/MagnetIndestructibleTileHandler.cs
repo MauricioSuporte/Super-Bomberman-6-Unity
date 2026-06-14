@@ -5,6 +5,26 @@ using UnityEngine.Tilemaps;
 
 public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestructibleTileHandler
 {
+    public readonly struct BombPullPrediction
+    {
+        public BombPullPrediction(
+            Vector2Int sourceTile,
+            Vector2Int destinationTile,
+            Vector2Int magnetTile,
+            Vector2Int facingDirection)
+        {
+            SourceTile = sourceTile;
+            DestinationTile = destinationTile;
+            MagnetTile = magnetTile;
+            FacingDirection = facingDirection;
+        }
+
+        public Vector2Int SourceTile { get; }
+        public Vector2Int DestinationTile { get; }
+        public Vector2Int MagnetTile { get; }
+        public Vector2Int FacingDirection { get; }
+    }
+
     [Header("References")]
     [SerializeField] private Tilemap indestructibleTilemap;
     [SerializeField] private Tilemap destructibleTilemap;
@@ -30,6 +50,61 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
     private readonly Dictionary<Vector3Int, int> _dirIndexByCell = new();
     private readonly List<Vector3Int> _magnetCells = new();
     private Coroutine _scanRoutine;
+
+    public bool TryPredictBombPull(
+        Vector2Int sourceTile,
+        out BombPullPrediction prediction)
+    {
+        prediction = default;
+        if (!isActiveAndEnabled || indestructibleTilemap == null)
+            return false;
+
+        Vector3Int sourceCell = new(sourceTile.x, sourceTile.y, 0);
+        for (int i = 0; i < _magnetCells.Count; i++)
+        {
+            Vector3Int magnetCell = _magnetCells[i];
+            if (!IsAnyMagnetTile(indestructibleTilemap.GetTile(magnetCell)))
+                continue;
+
+            _dirIndexByCell.TryGetValue(magnetCell, out int idx);
+            Vector3Int dir = DirFromIndex(idx);
+            Vector3Int delta = sourceCell - magnetCell;
+            bool aligned =
+                (dir.x != 0 && delta.y == 0 && delta.x * dir.x > 0) ||
+                (dir.y != 0 && delta.x == 0 && delta.y * dir.y > 0);
+            if (!aligned)
+                continue;
+
+            int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+            if (distance < 2 || distance > maxPullDistance)
+                continue;
+
+            if (HasIndestructibleBetweenOrAt(magnetCell, sourceCell, dir) ||
+                HasDestructibleBetweenOrAt(magnetCell, sourceCell, dir) ||
+                HasBombBetween(magnetCell, sourceCell, dir))
+            {
+                continue;
+            }
+
+            prediction = new BombPullPrediction(
+                sourceTile,
+                new Vector2Int(magnetCell.x + dir.x, magnetCell.y + dir.y),
+                new Vector2Int(magnetCell.x, magnetCell.y),
+                new Vector2Int(dir.x, dir.y));
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool IsMagnetCell(Vector2Int tile)
+    {
+        if (indestructibleTilemap == null)
+            return false;
+
+        return IsAnyMagnetTile(
+            indestructibleTilemap.GetTile(new Vector3Int(tile.x, tile.y, 0)));
+    }
 
     void Awake()
     {

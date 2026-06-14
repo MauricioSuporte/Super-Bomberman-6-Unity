@@ -12,9 +12,13 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     readonly HashSet<Vector3Int> _triggered = new();
     readonly HashSet<Vector3Int> _scheduled = new();
+    readonly Dictionary<Vector3Int, float> _scheduledDetonationTimes = new();
 
     static AudioClip _dynamiteExplosionSfx;
     AudioSource _audio;
+
+    public int ExplosionRadius => Mathf.Max(0, explosionRadius);
+    public float TriggerDelaySeconds => Mathf.Max(0f, startStepDelaySeconds);
 
     void Awake()
     {
@@ -40,6 +44,7 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
         if (!_scheduled.Add(cell))
             return true;
 
+        _scheduledDetonationTimes[cell] = Time.time + TriggerDelaySeconds;
         source.ClearDestructibleForEffect(worldPos, spawnDestructiblePrefab: false, spawnHiddenObject: false);
 
         Vector2 p = GetGroundTileCenter(source, worldPos);
@@ -56,6 +61,21 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
         SpawnStartAndExplode(source, origin);
 
         _scheduled.Remove(cell);
+        _scheduledDetonationTimes.Remove(cell);
+    }
+
+    public void CopyScheduledDetonations(
+        List<Vector3Int> cells,
+        List<float> secondsRemaining)
+    {
+        if (cells == null || secondsRemaining == null)
+            return;
+
+        foreach (KeyValuePair<Vector3Int, float> pair in _scheduledDetonationTimes)
+        {
+            cells.Add(pair.Key);
+            secondsRemaining.Add(Mathf.Max(0f, pair.Value - Time.time));
+        }
     }
 
     void SpawnStartAndExplode(BombController source, Vector2 p)
