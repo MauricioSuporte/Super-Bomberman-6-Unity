@@ -43,11 +43,14 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
     readonly HashSet<MovementController> waitingForSpringExit = new();
     readonly Dictionary<Vector3Int, Coroutine> swapRoutines = new();
     readonly List<Vector3Int> landingCandidates = new(32);
+    readonly List<Vector3Int> safeComLandingCandidates = new(32);
     readonly Queue<Vector3Int> bfsQueue = new();
     readonly Dictionary<Vector3Int, int> bfsDistance = new();
 
     Tile[] springSwapTiles;
     Sprite generatedShadowSprite;
+
+    public float JumpDurationSeconds => Mathf.Max(0.05f, jumpSeconds);
 
     void Awake()
     {
@@ -122,8 +125,25 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         if (waitingForSpringExit.Contains(mover))
             return;
 
-        if (!TryPickLandingCell(springCell, out Vector3Int landingCell))
+        bool hasSpringAbility =
+            mover.TryGetComponent(out BattleModeComStage4SpringEscapeAbility springAbility);
+        if (!TryPickLandingCell(mover, springCell, out Vector3Int landingCell))
+        {
+            if (hasSpringAbility)
+            {
+                springAbility.LogSpringLaunchBlocked(GetCellCenter(springCell));
+                return;
+            }
+
             landingCell = springCell;
+        }
+
+        if (hasSpringAbility)
+        {
+            springAbility.LogSpringLaunch(
+                GetCellCenter(springCell),
+                GetCellCenter(landingCell));
+        }
 
         StartCoroutine(SpringJumpRoutine(mover, springCell, landingCell));
     }
@@ -214,6 +234,12 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                     mover.EnableExclusiveFromState();
                     mover.SetExplosionInvulnerable(prevPlayerExplosionInvulnerable);
                 }
+            }
+
+            if (mover != null &&
+                mover.TryGetComponent(out BattleModeComStage4SpringEscapeAbility springAbility))
+            {
+                springAbility.LogSpringLanding(start, end);
             }
 
             bool restoreGameplayState = mover == null || !mover.IsEndingStage;
@@ -418,7 +444,97 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         SetExclusiveUnmountedSpringRenderer(riding, null);
     }
 
-    bool TryPickLandingCell(Vector3Int startCell, out Vector3Int landingCell)
+    bool TryPickLandingCell(
+        MovementController mover,
+        Vector3Int startCell,
+        out Vector3Int landingCell)
+    {
+        BuildLandingCandidates(startCell);
+
+        if (landingCandidates.Count <= 0)
+        {
+            landingCell = startCell;
+            return false;
+        }
+
+        if (mover != null &&
+            mover.TryGetComponent(out BattleModeComStage4SpringEscapeAbility springAbility))
+        {
+            safeComLandingCandidates.Clear();
+            for (int i = 0; i < landingCandidates.Count; i++)
+            {
+                Vector3Int candidate = landingCandidates[i];
+                if (springAbility.IsImmediateLandingSafe(GetCellCenter(candidate)))
+                    safeComLandingCandidates.Add(candidate);
+            }
+
+            if (safeComLandingCandidates.Count <= 0)
+            {
+                landingCell = startCell;
+                return false;
+            }
+
+            landingCell =
+                safeComLandingCandidates[Random.Range(0, safeComLandingCandidates.Count)];
+            return true;
+        }
+
+        landingCell = landingCandidates[Random.Range(0, landingCandidates.Count)];
+        return true;
+    }
+
+    public void CopySpringWorldPositions(List<Vector2> destination)
+    {
+        if (destination == null)
+            return;
+
+        destination.Clear();
+        ResolveReferences();
+        if (groundTilemap == null)
+            return;
+
+        BoundsInt bounds = groundTilemap.cellBounds;
+        foreach (Vector3Int cell in bounds.allPositionsWithin)
+        {
+            if (IsSpringTile(groundTilemap.GetTile(cell)))
+                destination.Add(GetCellCenter(cell));
+        }
+    }
+
+    public bool CopyLandingWorldPositions(
+        Vector2 springWorldPosition,
+        List<Vector2> destination)
+    {
+        if (destination == null)
+            return false;
+
+        destination.Clear();
+        ResolveReferences();
+        if (groundTilemap == null)
+            return false;
+
+        Vector3Int springCell = groundTilemap.WorldToCell(springWorldPosition);
+        if (!IsSpringTile(groundTilemap.GetTile(springCell)))
+            return false;
+
+        BuildLandingCandidates(springCell);
+        for (int i = 0; i < landingCandidates.Count; i++)
+            destination.Add(GetCellCenter(landingCandidates[i]));
+
+        return destination.Count > 0;
+    }
+
+    public bool IsSpringWorldPosition(Vector2 worldPosition)
+    {
+        ResolveReferences();
+        if (groundTilemap == null)
+            return false;
+
+        Vector3Int cell = groundTilemap.WorldToCell(worldPosition);
+        return IsSpringTile(groundTilemap.GetTile(cell));
+    }
+
+    void BuildLandingCandidates(Vector3Int startCell)
     {
         landingCandidates.Clear();
         bfsQueue.Clear();
@@ -443,15 +559,6 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             TryEnqueue(current + Vector3Int.left, distance + 1);
             TryEnqueue(current + Vector3Int.right, distance + 1);
         }
-
-        if (landingCandidates.Count <= 0)
-        {
-            landingCell = startCell;
-            return false;
-        }
-
-        landingCell = landingCandidates[Random.Range(0, landingCandidates.Count)];
-        return true;
     }
 
     void TryEnqueue(Vector3Int next, int distance)

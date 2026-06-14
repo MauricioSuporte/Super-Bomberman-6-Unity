@@ -5,6 +5,7 @@ public static class BattleModeComStageAbilityLoader
 {
     private const string BattleMode2SceneName = "BattleMode_2";
     private const string BattleMode3SceneName = "BattleMode_3";
+    private const string BattleMode4SceneName = "BattleMode_4";
 
     public static bool EnsureForActiveStage(GameObject playerObject)
     {
@@ -17,6 +18,8 @@ public static class BattleModeComStageAbilityLoader
                 EnsureAbility<BattleModeComStage2FallingBombAbility>(playerObject),
             BattleMode3SceneName =>
                 EnsureAbility<BattleModeComStage3PowderTrailAbility>(playerObject),
+            BattleMode4SceneName =>
+                EnsureAbility<BattleModeComStage4SpringEscapeAbility>(playerObject),
             _ => false
         };
     }

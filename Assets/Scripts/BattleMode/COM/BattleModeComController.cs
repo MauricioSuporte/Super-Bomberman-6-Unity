@@ -5285,6 +5285,107 @@ public sealed class BattleModeComController : MonoBehaviour
             out route);
     }
 
+    public float GetAbilityDangerSeconds(Vector2Int tile)
+        => GetDangerSeconds(tile, null);
+
+    public bool TryFindAbilitySpringEscapeRoute(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        Vector2Int springTile,
+        out Vector2 firstMove,
+        out int distance,
+        out float arrivalSeconds,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        distance = 0;
+        arrivalSeconds = 0f;
+        route = "none";
+
+        if (start == springTile)
+        {
+            route = "spring current tile";
+            return true;
+        }
+
+        visited.Clear();
+        open.Clear();
+        visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
+        open.Enqueue(start);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+
+            if (node.Depth >= settings.searchDepth + 3)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next) || !IsWalkableTile(next, start))
+                    continue;
+
+                int nextDepth = node.Depth + 1;
+                float nextEta =
+                    EstimateEscapeTraversalSeconds(start, tile, next, nextDepth);
+                bool isSpringGoal = next == springTile;
+
+                if (isSpringGoal)
+                {
+                    float springDanger = GetDangerSeconds(next, null);
+                    if (!float.IsInfinity(springDanger) &&
+                        springDanger <= nextEta + DangerTimingMarginSeconds)
+                    {
+                        continue;
+                    }
+                }
+                else if (IsDangerousAt(next, nextEta, settings, null))
+                {
+                    continue;
+                }
+
+                Vector2Int firstStep = Vector2Int.zero;
+
+                if (isSpringGoal)
+                {
+                    firstStep = tile == start
+                        ? next - start
+                        : ReconstructFirstStep(start, tile);
+                    float firstEta = EstimateFirstMoveTraversalSeconds(firstStep);
+                    float currentDanger = GetDangerSeconds(start, null);
+                    if (!float.IsInfinity(currentDanger) &&
+                        currentDanger <= firstEta + DangerTimingMarginSeconds)
+                    {
+                        continue;
+                    }
+                }
+
+                visited[next] = new PathNode
+                {
+                    Tile = next,
+                    Parent = tile,
+                    Depth = nextDepth
+                };
+
+                if (!isSpringGoal)
+                {
+                    open.Enqueue(next);
+                    continue;
+                }
+
+                firstMove = TileDirectionToVector(firstStep);
+                distance = nextDepth;
+                arrivalSeconds = nextEta;
+                route = $"spring depth {nextDepth} eta {nextEta:F2}s";
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public int CountSafeEscapeFirstSteps(
         BattleModeComDifficultySettings settings,
         Vector2Int start)
@@ -6665,6 +6766,42 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (ShouldAllowOwnChainTimedMove(nextTile, nextArrivalSecondsForOwnChain, settings))
             return requestedMove;
+
+        if (TryGetComponent(out BattleModeComStage4SpringEscapeAbility springAbility))
+        {
+            bool committedSpringMove =
+                springAbility.IsCommittedSpringTarget(nextTile) &&
+                !string.IsNullOrEmpty(currentReason) &&
+                currentReason.StartsWith(
+                    "escape stage 4 spring",
+                    StringComparison.Ordinal);
+
+            if (springAbility.IsSpringTile(nextTile) &&
+                !committedSpringMove &&
+                !springAbility.HasSafeImmediateLanding(
+                    nextTile,
+                    out string springBlockTrace))
+            {
+                springAbility.LogSpringEntryBlocked(nextTile, springBlockTrace);
+                return Vector2.zero;
+            }
+        }
+
+        if (springAbility != null &&
+            springAbility.IsCommittedSpringTarget(nextTile) &&
+            !string.IsNullOrEmpty(currentReason) &&
+            currentReason.StartsWith("escape stage 4 spring", StringComparison.Ordinal))
+        {
+            float springArrivalSeconds =
+                EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
+            if ((float.IsInfinity(currentDanger) ||
+                 currentDanger > springArrivalSeconds + DangerTimingMarginSeconds) &&
+                (float.IsInfinity(nextDanger) ||
+                 nextDanger > springArrivalSeconds + DangerTimingMarginSeconds))
+            {
+                return requestedMove;
+            }
+        }
 
         if (!float.IsInfinity(currentDanger))
         {
