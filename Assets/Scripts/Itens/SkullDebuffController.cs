@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -13,7 +12,6 @@ public sealed class SkullDebuffController : MonoBehaviour
     const string TransferSfxResourcesPath = "Sounds/infected";
     static readonly bool DebugSkullTransfer = false;
 
-    static readonly Dictionary<string, float> transferCooldownUntil = new();
     static AudioClip transferSfx;
 
     enum SkullDebuffType
@@ -32,6 +30,7 @@ public sealed class SkullDebuffController : MonoBehaviour
     SkullDebuffType activeEffect;
     bool hasActiveEffect;
     float activeEffectEndsAt;
+    float nextTransferAt;
     float nextSkippedLogAt;
 
     public void ApplyRandom(float durationSeconds = DefaultDurationSeconds)
@@ -41,10 +40,10 @@ public sealed class SkullDebuffController : MonoBehaviour
         float duration = Mathf.Max(0.01f, durationSeconds);
         var effect = (SkullDebuffType)UnityEngine.Random.Range(0, 6);
 
-        ApplyEffect(effect, duration);
+        ApplyEffect(effect, duration, startTransferCooldown: false);
     }
 
-    void ApplyEffect(SkullDebuffType effect, float durationSeconds)
+    void ApplyEffect(SkullDebuffType effect, float durationSeconds, bool startTransferCooldown)
     {
         CacheReferences();
         ClearActiveEffect();
@@ -53,6 +52,9 @@ public sealed class SkullDebuffController : MonoBehaviour
         activeEffect = effect;
         hasActiveEffect = true;
         activeEffectEndsAt = Time.time + duration;
+        nextTransferAt = startTransferCooldown
+            ? Time.time + TransferCooldownSeconds
+            : 0f;
 
         LogTransfer($"apply owner:{GetOwnerName()} effect:{effect} duration:{duration:F2}s");
 
@@ -208,6 +210,7 @@ public sealed class SkullDebuffController : MonoBehaviour
 
         hasActiveEffect = false;
         activeEffectEndsAt = 0f;
+        nextTransferAt = 0f;
     }
 
     public void ClearForArenaRemoval()
@@ -226,6 +229,7 @@ public sealed class SkullDebuffController : MonoBehaviour
         bombController?.ClearTemporarySkullBombModifiers();
         hasActiveEffect = false;
         activeEffectEndsAt = 0f;
+        nextTransferAt = 0f;
 
         LogTransfer($"expired owner:{GetOwnerName()}");
     }
@@ -261,6 +265,12 @@ public sealed class SkullDebuffController : MonoBehaviour
         if (!HasTransferableEffect())
             return false;
 
+        if (Time.time < nextTransferAt)
+        {
+            LogTransferSkipped(source, $"cooldown remaining:{nextTransferAt - Time.time:F2}s");
+            return false;
+        }
+
         if (other == null)
         {
             LogTransferSkipped(source, "other-null");
@@ -291,12 +301,6 @@ public sealed class SkullDebuffController : MonoBehaviour
         if (target == null || target == gameObject)
             return false;
 
-        if (IsTransferOnCooldown(gameObject, target, out float remainingCooldown))
-        {
-            LogTransferSkipped(source, $"cooldown target:{target.name} remaining:{remainingCooldown:F2}s");
-            return false;
-        }
-
         if (target.TryGetComponent<SkullDebuffController>(out var targetSkull) &&
             targetSkull != null &&
             targetSkull.HasTransferableEffect())
@@ -311,9 +315,7 @@ public sealed class SkullDebuffController : MonoBehaviour
         float remaining = GetRemainingDuration();
         SkullDebuffType effect = activeEffect;
 
-        MarkTransferCooldown(gameObject, target);
-        targetSkull.MarkRecentTransfer(gameObject);
-        targetSkull.ApplyEffect(effect, remaining);
+        targetSkull.ApplyEffect(effect, remaining, startTransferCooldown: true);
         ClearActiveEffect();
         PlayTransferSfx(target);
 
@@ -322,56 +324,6 @@ public sealed class SkullDebuffController : MonoBehaviour
             $"effect:{effect} remaining:{remaining:F2}s sfx:{(transferSfx != null)}");
 
         return true;
-    }
-
-    void MarkRecentTransfer(GameObject otherPlayer)
-    {
-        if (otherPlayer == null)
-            return;
-
-        MarkTransferCooldown(gameObject, otherPlayer);
-    }
-
-    static bool IsTransferOnCooldown(GameObject a, GameObject b, out float remaining)
-    {
-        remaining = 0f;
-
-        string key = GetTransferPairKey(a, b);
-        if (string.IsNullOrEmpty(key))
-            return true;
-
-        if (!transferCooldownUntil.TryGetValue(key, out float until))
-            return false;
-
-        remaining = Mathf.Max(0f, until - Time.time);
-        return Time.time < until;
-    }
-
-    static void MarkTransferCooldown(GameObject a, GameObject b)
-    {
-        string key = GetTransferPairKey(a, b);
-        if (string.IsNullOrEmpty(key))
-            return;
-
-        transferCooldownUntil[key] = Time.time + TransferCooldownSeconds;
-    }
-
-    static string GetTransferPairKey(GameObject a, GameObject b)
-    {
-        if (a == null || b == null)
-            return null;
-
-        string first = a.GetEntityId().ToString();
-        string second = b.GetEntityId().ToString();
-
-        if (string.CompareOrdinal(first, second) > 0)
-        {
-            string tmp = first;
-            first = second;
-            second = tmp;
-        }
-
-        return $"{first}:{second}";
     }
 
     static void PlayTransferSfx(GameObject target)
