@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BattleRevengeController))]
 public sealed class BattleRevengeComController : MonoBehaviour
 {
-    private static readonly bool EnableSurgicalLogs = false;
+    private static readonly Dictionary<int, int> TargetByCartOwner = new();
 
     private const float ThinkIntervalSeconds = 0.12f;
     private const float ChargeStepSeconds = 0.12f;
@@ -17,6 +18,11 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private const float NormalDifficultyNextShotDelaySeconds = 5f;
     private const float EasyDifficultyNextShotDelaySeconds = 10f;
     private const float SameWallTargetAxisTolerance = 0.25f;
+    private const float DiagnosticLogIntervalSeconds = 0.75f;
+    private const float OscillationWindowSeconds = 1.5f;
+    private const float StalledMovementSeconds = 2f;
+    private const float MinimumProgressDistance = 0.2f;
+    private const int OscillationReversalThreshold = 4;
 
     private const int MinLaunchDistanceTiles = 3;
     private const int MaxLaunchDistanceTiles = 7;
@@ -46,8 +52,15 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private float launchHoldStartedAt;
     private int desiredLaunchDistance = MinLaunchDistanceTiles;
     private float nextAiLaunchAllowedAt;
-    private float lastSurgicalLogTime = -10f;
-    private string lastSurgicalLogKey = string.Empty;
+    private float lastDiagnosticLogTime = -10f;
+    private string lastDiagnosticLogKey = string.Empty;
+    private int trackedTargetId;
+    private PlayerAction lastMovementAction;
+    private float oscillationWindowStartedAt;
+    private int movementReversalCount;
+    private Vector2 progressAnchorPosition;
+    private float progressAnchorTime;
+    private int assignedOwnerId;
 
     public void Initialize(BattleRevengeController ownerCart)
     {
@@ -67,8 +80,14 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
     private void OnDisable()
     {
+        ReleaseTargetAssignment();
         ClearSyntheticInputs();
         holdingLaunch = false;
+    }
+
+    private void OnDestroy()
+    {
+        ReleaseTargetAssignment();
     }
 
     private void Update()
@@ -78,7 +97,6 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         if (!CanControl())
         {
-            SLog("CONTROL_DISABLED", $"holding:{holdingLaunch}", force: holdingLaunch);
             ClearSyntheticInputs();
             holdingLaunch = false;
             return;
@@ -112,15 +130,14 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         if (TryFindLaunchPlan(out LaunchPlan launchPlan))
         {
-            SLog("PLAN_SELECTED", FormatPlan(launchPlan), force: launchPlan.HasViableShot);
+            TrackTarget(launchPlan);
             DriveTowardLaunchPlan(launchPlan);
             return;
         }
 
         PlayerAction roamAction = GetRoamAction();
-        SLog("ROAM", $"targets:0 action:{roamAction}");
         StopCharging();
-        SetMovement(roamAction);
+        ApplyTrackedMovement(roamAction, default, "no-target");
     }
 
     private void DriveTowardLaunchPlan(LaunchPlan plan)
@@ -134,16 +151,14 @@ public sealed class BattleRevengeComController : MonoBehaviour
                 StopCharging();
 
                 PlayerAction roamAction = GetRoamAction();
-                SLog(
-                    "SHOT_WAITING_RECHARGE",
-                    $"{FormatPlan(plan)} remaining:{remaining:F2} action:{roamAction}");
-
-                SetMovement(roamAction);
+                DiagnosticLog(
+                    "SHOT_BLOCKED",
+                    $"reason:cooldown remaining:{remaining:F2} {FormatPlan(plan)} action:{roamAction}");
+                ApplyTrackedMovement(roamAction, plan, "cooldown");
                 return;
             }
 
             ClearMovementInputs();
-            SLog("SHOT_VIABLE", FormatPlan(plan), force: true);
             HandleLaunchCharge(plan.DistanceTiles);
             return;
         }
@@ -151,8 +166,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
         StopCharging();
 
         PlayerAction patrolAction = GetPatrolAction(plan);
-        SLog("PATROL_NO_SHOT", $"{FormatPlan(plan)} action:{patrolAction}");
-        SetMovement(patrolAction);
+        ApplyTrackedMovement(patrolAction, plan, "approach");
     }
 
     private bool CanStartOrContinueLaunch()
@@ -166,75 +180,219 @@ public sealed class BattleRevengeComController : MonoBehaviour
     private bool TryFindLaunchPlan(out LaunchPlan bestPlan)
     {
         bestPlan = default;
-        bool foundTarget = false;
         float bestScore = float.NegativeInfinity;
 
         activePlayers.Clear();
         PlayerIdentity.GetActivePlayers(activePlayers);
 
-        for (int i = 0; i < activePlayers.Count; i++)
+        PlayerIdentity target = SelectPriorityTarget();
+        if (target == null)
+            return false;
+
+        int wins = GameSession.Instance != null ? GameSession.Instance.GetBattleMatchWins(target.playerId) : 0;
+        Vector2 targetPosition = target.transform.position;
+
+        for (int distance = MinLaunchDistanceTiles; distance <= MaxLaunchDistanceTiles; distance++)
         {
-            PlayerIdentity target = activePlayers[i];
-            if (!IsValidTarget(target))
+            if (!BattleRevengeSystem.Instance.TryGetPredictedLandingPosition(cart, distance, out Vector2 landing))
                 continue;
 
-            foundTarget = true;
-            int wins = GameSession.Instance != null ? GameSession.Instance.GetBattleMatchWins(target.playerId) : 0;
-            Vector2 targetPosition = target.transform.position;
+            float landingError = Vector2.Distance(landing, targetPosition);
+            float score = wins * 100f - landingError * 12f;
 
-            for (int distance = MinLaunchDistanceTiles; distance <= MaxLaunchDistanceTiles; distance++)
+            if (landingError <= DirectHitTolerance)
+                score += 80f;
+            else if (landingError <= NearHitTolerance)
+                score += 30f;
+
+            score += UnityEngine.Random.Range(-scoreNoiseMagnitude, scoreNoiseMagnitude);
+
+            if (score > bestScore)
             {
-                if (!BattleRevengeSystem.Instance.TryGetPredictedLandingPosition(cart, distance, out Vector2 landing))
-                    continue;
-
-                float landingError = Vector2.Distance(landing, targetPosition);
-                float score = wins * 100f - landingError * 12f;
-
-                if (landingError <= DirectHitTolerance)
-                    score += 80f;
-                else if (landingError <= NearHitTolerance)
-                    score += 30f;
-
-                score += UnityEngine.Random.Range(-scoreNoiseMagnitude, scoreNoiseMagnitude);
-
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestPlan = new LaunchPlan
-                    {
-                        Target = target,
-                        TargetWins = wins,
-                        DistanceTiles = distance,
-                        LandingError = landingError,
-                        HasViableShot = ShouldTakeShot(landingError),
-                        DesiredWall = ResolveDesiredWallForTarget(targetPosition)
-                    };
-                }
-            }
-
-            float approachScore = wins * 100f - Vector2.Distance(cart.transform.position, targetPosition);
-            approachScore += UnityEngine.Random.Range(-scoreNoiseMagnitude, scoreNoiseMagnitude);
-
-            if (approachScore > bestScore)
-            {
-                bestScore = approachScore;
+                bestScore = score;
                 bestPlan = new LaunchPlan
                 {
                     Target = target,
                     TargetWins = wins,
-                    DistanceTiles = MinLaunchDistanceTiles,
-                    LandingError = float.PositiveInfinity,
-                    HasViableShot = false,
+                    DistanceTiles = distance,
+                    LandingError = landingError,
+                    HasViableShot = ShouldTakeShot(landingError),
                     DesiredWall = ResolveDesiredWallForTarget(targetPosition)
                 };
             }
         }
 
-        bool foundPlan = foundTarget && bestPlan.Target != null;
-        if (!foundPlan)
-            SLog("NO_TARGET", $"activePlayers:{activePlayers.Count}");
+        float approachScore = wins * 100f - Vector2.Distance(cart.transform.position, targetPosition);
 
-        return foundPlan;
+        if (approachScore > bestScore)
+        {
+            bestPlan = new LaunchPlan
+            {
+                Target = target,
+                TargetWins = wins,
+                DistanceTiles = MinLaunchDistanceTiles,
+                LandingError = float.PositiveInfinity,
+                HasViableShot = false,
+                DesiredWall = ResolveDesiredWallForTarget(targetPosition)
+            };
+        }
+
+        return bestPlan.Target != null;
+    }
+
+    private PlayerIdentity SelectPriorityTarget()
+    {
+        PlayerIdentity bestTarget = null;
+        int bestWins = int.MinValue;
+        int bestAttackerCount = int.MaxValue;
+        float bestDistance = float.PositiveInfinity;
+        int validTargetCount = 0;
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            if (IsValidTarget(activePlayers[i]))
+                validTargetCount++;
+        }
+
+        if (validTargetCount == 0)
+        {
+            ReleaseTargetAssignment();
+            return null;
+        }
+
+        int ownerId = cart.OwnerPlayerId;
+        int assignedCartCount = TargetByCartOwner.ContainsKey(ownerId)
+            ? TargetByCartOwner.Count
+            : TargetByCartOwner.Count + 1;
+        int targetCapacity = Mathf.Max(1, Mathf.CeilToInt(assignedCartCount / (float)validTargetCount));
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity candidate = activePlayers[i];
+            if (!IsValidTarget(candidate))
+                continue;
+
+            int wins = GameSession.Instance != null
+                ? GameSession.Instance.GetBattleMatchWins(candidate.playerId)
+                : 0;
+            int attackerCount = CountOtherCartsTargeting(candidate.playerId, ownerId);
+
+            if (attackerCount >= targetCapacity)
+                continue;
+
+            if (wins > bestWins)
+            {
+                bestTarget = candidate;
+                bestWins = wins;
+                bestAttackerCount = attackerCount;
+                bestDistance = Vector2.Distance(cart.transform.position, candidate.transform.position);
+                continue;
+            }
+
+            if (wins < bestWins)
+                continue;
+
+            if (attackerCount < bestAttackerCount)
+            {
+                bestTarget = candidate;
+                bestAttackerCount = attackerCount;
+                bestDistance = Vector2.Distance(cart.transform.position, candidate.transform.position);
+                continue;
+            }
+
+            if (attackerCount > bestAttackerCount)
+                continue;
+
+            if (candidate.playerId == trackedTargetId)
+            {
+                bestTarget = candidate;
+                bestDistance = Vector2.Distance(cart.transform.position, candidate.transform.position);
+                continue;
+            }
+
+            if (bestTarget != null && bestTarget.playerId == trackedTargetId)
+                continue;
+
+            float distance = Vector2.Distance(cart.transform.position, candidate.transform.position);
+            if (distance < bestDistance)
+            {
+                bestTarget = candidate;
+                bestDistance = distance;
+            }
+        }
+
+        if (bestTarget == null)
+            bestTarget = SelectLeastContestedTarget(ownerId);
+
+        if (bestTarget != null)
+        {
+            if (assignedOwnerId != 0 && assignedOwnerId != ownerId)
+                TargetByCartOwner.Remove(assignedOwnerId);
+
+            TargetByCartOwner[ownerId] = bestTarget.playerId;
+            assignedOwnerId = ownerId;
+        }
+
+        return bestTarget;
+    }
+
+    private PlayerIdentity SelectLeastContestedTarget(int ownerId)
+    {
+        PlayerIdentity bestTarget = null;
+        int bestAttackerCount = int.MaxValue;
+        int bestWins = int.MinValue;
+        float bestDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity candidate = activePlayers[i];
+            if (!IsValidTarget(candidate))
+                continue;
+
+            int attackerCount = CountOtherCartsTargeting(candidate.playerId, ownerId);
+            int wins = GameSession.Instance != null
+                ? GameSession.Instance.GetBattleMatchWins(candidate.playerId)
+                : 0;
+            float distance = Vector2.Distance(cart.transform.position, candidate.transform.position);
+
+            bool isBetter =
+                attackerCount < bestAttackerCount ||
+                (attackerCount == bestAttackerCount && wins > bestWins) ||
+                (attackerCount == bestAttackerCount && wins == bestWins && candidate.playerId == trackedTargetId) ||
+                (attackerCount == bestAttackerCount && wins == bestWins && distance < bestDistance);
+
+            if (!isBetter)
+                continue;
+
+            bestTarget = candidate;
+            bestAttackerCount = attackerCount;
+            bestWins = wins;
+            bestDistance = distance;
+        }
+
+        return bestTarget;
+    }
+
+    private static int CountOtherCartsTargeting(int targetPlayerId, int excludedOwnerId)
+    {
+        int count = 0;
+
+        foreach (KeyValuePair<int, int> assignment in TargetByCartOwner)
+        {
+            if (assignment.Key != excludedOwnerId && assignment.Value == targetPlayerId)
+                count++;
+        }
+
+        return count;
+    }
+
+    private void ReleaseTargetAssignment()
+    {
+        if (assignedOwnerId == 0)
+            return;
+
+        TargetByCartOwner.Remove(assignedOwnerId);
+        assignedOwnerId = 0;
     }
 
     private bool ShouldTakeShot(float landingError)
@@ -280,7 +438,7 @@ public sealed class BattleRevengeComController : MonoBehaviour
         PlayerInputManager input = PlayerInputManager.Instance;
         if (input == null)
         {
-            SLog("CHARGE_ABORT", "missing PlayerInputManager", force: true);
+            DiagnosticLog("SHOT_BLOCKED", "reason:missing-input-manager", force: true);
             return;
         }
 
@@ -297,9 +455,9 @@ public sealed class BattleRevengeComController : MonoBehaviour
             launchHoldStartedAt = Time.unscaledTime;
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, true);
 
-            SLog(
-                "CHARGE_START",
-                $"distance:{desiredLaunchDistance} holdStart:{launchHoldStartedAt:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
+            DiagnosticLog(
+                "SHOT_START",
+                $"distance:{desiredLaunchDistance} holdStart:{launchHoldStartedAt:F2}",
                 force: true);
 
             return;
@@ -311,8 +469,8 @@ public sealed class BattleRevengeComController : MonoBehaviour
         float heldSeconds = Time.unscaledTime - launchHoldStartedAt;
         if (heldSeconds >= requiredHoldSeconds)
         {
-            SLog(
-                "CHARGE_RELEASE",
+            DiagnosticLog(
+                "SHOT_RELEASE",
                 $"distance:{desiredLaunchDistance} held:{heldSeconds:F2} required:{requiredHoldSeconds:F2}",
                 force: true);
 
@@ -320,10 +478,6 @@ public sealed class BattleRevengeComController : MonoBehaviour
         }
         else
         {
-            SLog(
-                "CHARGE_HOLD",
-                $"distance:{desiredLaunchDistance} held:{heldSeconds:F2} required:{requiredHoldSeconds:F2}");
-
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, true);
         }
     }
@@ -337,7 +491,6 @@ public sealed class BattleRevengeComController : MonoBehaviour
         if (input != null)
             input.SetSyntheticHeld(cart.OwnerPlayerId, PlayerAction.ActionA, false);
 
-        SLog("CHARGE_STOP", $"distance:{desiredLaunchDistance}", force: true);
         holdingLaunch = false;
     }
 
@@ -352,11 +505,6 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
         float delaySeconds = GetNextShotDelaySeconds();
         nextAiLaunchAllowedAt = Time.unscaledTime + delaySeconds;
-
-        SLog(
-            "CHARGE_STOP_AND_RECHARGE",
-            $"distance:{desiredLaunchDistance} delay:{delaySeconds:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
-            force: true);
 
         holdingLaunch = false;
     }
@@ -486,12 +634,49 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
     private RevengeTargetWall ResolveDesiredWallForTarget(Vector2 targetPosition)
     {
+        if (GameManager.Instance == null || GameManager.Instance.groundTilemap == null)
+            return ResolveDesiredWallFromRelativePosition(targetPosition);
+
+        Tilemap groundTilemap = GameManager.Instance.groundTilemap;
+        BoundsInt cellBounds = groundTilemap.cellBounds;
+        Vector3 minCenter = groundTilemap.GetCellCenterWorld(cellBounds.min);
+        Vector3 maxCenter = groundTilemap.GetCellCenterWorld(
+            new Vector3Int(cellBounds.xMax - 1, cellBounds.yMax - 1, cellBounds.zMin));
+
+        float leftDistance = Mathf.Abs(targetPosition.x - minCenter.x);
+        float rightDistance = Mathf.Abs(maxCenter.x - targetPosition.x);
+        float bottomDistance = Mathf.Abs(targetPosition.y - minCenter.y);
+        float topDistance = Mathf.Abs(maxCenter.y - targetPosition.y);
+
+        float closestDistance = leftDistance;
+        RevengeTargetWall closestWall = RevengeTargetWall.Left;
+
+        if (rightDistance < closestDistance)
+        {
+            closestDistance = rightDistance;
+            closestWall = RevengeTargetWall.Right;
+        }
+
+        if (bottomDistance < closestDistance)
+        {
+            closestDistance = bottomDistance;
+            closestWall = RevengeTargetWall.Bottom;
+        }
+
+        if (topDistance < closestDistance)
+            closestWall = RevengeTargetWall.Top;
+
+        return closestWall;
+    }
+
+    private RevengeTargetWall ResolveDesiredWallFromRelativePosition(Vector2 targetPosition)
+    {
         Vector2 delta = targetPosition - (Vector2)cart.transform.position;
 
         if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
-            return delta.x >= 0f ? RevengeTargetWall.Left : RevengeTargetWall.Right;
+            return delta.x >= 0f ? RevengeTargetWall.Right : RevengeTargetWall.Left;
 
-        return delta.y >= 0f ? RevengeTargetWall.Bottom : RevengeTargetWall.Top;
+        return delta.y >= 0f ? RevengeTargetWall.Top : RevengeTargetWall.Bottom;
     }
 
     private float GetNextThinkInterval()
@@ -508,6 +693,83 @@ public sealed class BattleRevengeComController : MonoBehaviour
         int ownerId = cart.OwnerPlayerId;
         for (int i = 0; i < MovementActions.Length; i++)
             input.SetSyntheticHeld(ownerId, MovementActions[i], MovementActions[i] == action);
+    }
+
+    private void ApplyTrackedMovement(PlayerAction action, LaunchPlan plan, string reason)
+    {
+        TrackMovement(action, plan, reason);
+        SetMovement(action);
+    }
+
+    private void TrackTarget(LaunchPlan plan)
+    {
+        int targetId = plan.Target != null ? plan.Target.playerId : 0;
+        if (targetId == trackedTargetId)
+            return;
+
+        DiagnosticLog(
+            "TARGET_CHANGED",
+            $"from:P{trackedTargetId} to:P{targetId} attackers:{CountOtherCartsTargeting(targetId, cart.OwnerPlayerId) + 1} " +
+            $"{FormatPlan(plan)}",
+            force: true);
+
+        trackedTargetId = targetId;
+        ResetMovementDiagnostics();
+    }
+
+    private void TrackMovement(PlayerAction action, LaunchPlan plan, string reason)
+    {
+        float now = Time.unscaledTime;
+        Vector2 currentPosition = cart != null ? (Vector2)cart.transform.position : Vector2.zero;
+
+        if (oscillationWindowStartedAt <= 0f || now - oscillationWindowStartedAt > OscillationWindowSeconds)
+        {
+            oscillationWindowStartedAt = now;
+            movementReversalCount = 0;
+        }
+
+        if (IsOppositeMovement(lastMovementAction, action))
+            movementReversalCount++;
+
+        if (movementReversalCount >= OscillationReversalThreshold)
+        {
+            DiagnosticLog(
+                "OSCILLATION",
+                $"reversals:{movementReversalCount} window:{now - oscillationWindowStartedAt:F2} " +
+                $"previous:{lastMovementAction} current:{action} reason:{reason} {FormatPlan(plan)}",
+                force: true);
+
+            oscillationWindowStartedAt = now;
+            movementReversalCount = 0;
+        }
+
+        float movedDistance = Vector2.Distance(progressAnchorPosition, currentPosition);
+        if (movedDistance >= MinimumProgressDistance)
+        {
+            progressAnchorPosition = currentPosition;
+            progressAnchorTime = now;
+        }
+        else if (now - progressAnchorTime >= StalledMovementSeconds)
+        {
+            DiagnosticLog(
+                "STALLED",
+                $"duration:{now - progressAnchorTime:F2} moved:{movedDistance:F2} action:{action} " +
+                $"reason:{reason} {FormatPlan(plan)}",
+                force: true);
+
+            progressAnchorPosition = currentPosition;
+            progressAnchorTime = now;
+        }
+
+        lastMovementAction = action;
+    }
+
+    private static bool IsOppositeMovement(PlayerAction previous, PlayerAction current)
+    {
+        return (previous == PlayerAction.MoveUp && current == PlayerAction.MoveDown) ||
+               (previous == PlayerAction.MoveDown && current == PlayerAction.MoveUp) ||
+               (previous == PlayerAction.MoveLeft && current == PlayerAction.MoveRight) ||
+               (previous == PlayerAction.MoveRight && current == PlayerAction.MoveLeft);
     }
 
     private void ClearMovementInputs()
@@ -533,6 +795,8 @@ public sealed class BattleRevengeComController : MonoBehaviour
         desiredLaunchDistance = MinLaunchDistanceTiles;
         nextAiLaunchAllowedAt = 0f;
         sameWallFallbackStep = UnityEngine.Random.value < 0.5f ? -1 : 1;
+        trackedTargetId = 0;
+        ResetMovementDiagnostics();
 
         RandomizePersonality();
 
@@ -540,14 +804,15 @@ public sealed class BattleRevengeComController : MonoBehaviour
         roamWallSwitchAt = Time.unscaledTime + UnityEngine.Random.Range(0f, roamIntervalSeconds);
 
         ClearSyntheticInputs();
+    }
 
-        SLog(
-            "RESET",
-            $"roamIndex:{roamWallIndex} roamStep:{roamWallStep} sameWallStep:{sameWallFallbackStep} " +
-            $"thinkJitter:{thinkIntervalJitter:F3} roamInterval:{roamIntervalSeconds:F2} " +
-            $"noise:{scoreNoiseMagnitude:F1} releaseJitter:{releaseJitterSeconds:F3} " +
-            $"nearChance:{nearShotChance:F2} nextAllowed:{nextAiLaunchAllowedAt:F2}",
-            force: true);
+    private void ResetMovementDiagnostics()
+    {
+        lastMovementAction = default;
+        oscillationWindowStartedAt = Time.unscaledTime;
+        movementReversalCount = 0;
+        progressAnchorPosition = cart != null ? (Vector2)cart.transform.position : Vector2.zero;
+        progressAnchorTime = Time.unscaledTime;
     }
 
     private void RandomizePersonality()
@@ -591,19 +856,20 @@ public sealed class BattleRevengeComController : MonoBehaviour
             $"currentWall:{currentWall} cartPos:{(cart != null ? cart.transform.position.ToString() : "null")}";
     }
 
-    private void SLog(string key, string message, bool force = false)
+    private void DiagnosticLog(string key, string message, bool force = false)
     {
-        if (!EnableSurgicalLogs)
+        string logKey = key;
+        if (!force &&
+            logKey == lastDiagnosticLogKey &&
+            Time.unscaledTime - lastDiagnosticLogTime < DiagnosticLogIntervalSeconds)
+        {
             return;
+        }
 
-        string logKey = key + ":" + message;
-        if (!force && logKey == lastSurgicalLogKey && Time.unscaledTime - lastSurgicalLogTime < 0.35f)
-            return;
-
-        lastSurgicalLogKey = logKey;
-        lastSurgicalLogTime = Time.unscaledTime;
+        lastDiagnosticLogKey = logKey;
+        lastDiagnosticLogTime = Time.unscaledTime;
 
         int ownerId = cart != null ? cart.OwnerPlayerId : 0;
-        Debug.Log($"[BattleRevengeCOM][P{ownerId}] t:{Time.unscaledTime:F2} {key} {message}", this);
+        Debug.Log($"[BattleRevengeCartCOM][P{ownerId}] t:{Time.unscaledTime:F2} {key} {message}", this);
     }
 }
