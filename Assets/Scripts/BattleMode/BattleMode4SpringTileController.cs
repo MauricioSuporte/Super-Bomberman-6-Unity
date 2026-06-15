@@ -166,6 +166,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         Vector2 end = GetCellCenter(landingCell);
         Vector2 faceDir = ResolveFacing(mover, start, end);
 
+        ThrowHeldPowerGloveBomb(mover);
         CancelActiveMountMovementAbilities(mover);
 
         bool prevInputLocked = mover.InputLocked;
@@ -282,6 +283,16 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
         if (blackDash != null && blackDash.DashActive)
             blackDash.CancelDashForExternalInterruption();
+    }
+
+    static void ThrowHeldPowerGloveBomb(MovementController mover)
+    {
+        if (mover != null &&
+            mover.TryGetComponent(out PowerGloveAbility powerGlove) &&
+            powerGlove.IsHoldingBomb)
+        {
+            powerGlove.ThrowHeldBombForExternalTransition();
+        }
     }
 
     void ReleaseJumperAfterGrace(MovementController mover, bool waitForSpringExit)

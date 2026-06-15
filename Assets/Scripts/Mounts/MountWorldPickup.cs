@@ -22,8 +22,10 @@ public sealed class MountWorldPickup : MonoBehaviour
             _col.enabled = true;
     }
 
-    static bool PlayerHoldingBombWithPowerGlove(GameObject player)
+    static bool TryGetHeldPowerGlove(GameObject player, out PowerGloveAbility glove)
     {
+        glove = null;
+
         if (player == null)
             return false;
 
@@ -32,7 +34,7 @@ public sealed class MountWorldPickup : MonoBehaviour
 
         ab.RebuildCache();
 
-        var glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
+        glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
         return glove != null && glove.IsEnabled && glove.IsHoldingBomb;
     }
 
@@ -55,9 +57,6 @@ public sealed class MountWorldPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerRidingController>(out var rider) && rider != null && rider.IsPlaying)
             return;
 
-        if (PlayerHoldingBombWithPowerGlove(player))
-            return;
-
         if (!player.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
             return;
 
@@ -73,6 +72,9 @@ public sealed class MountWorldPickup : MonoBehaviour
 
         if (type == MountedType.None)
             return;
+
+        if (TryGetHeldPowerGlove(player, out var powerGlove))
+            powerGlove.ThrowHeldBombForExternalTransition();
 
         consumed = true;
 

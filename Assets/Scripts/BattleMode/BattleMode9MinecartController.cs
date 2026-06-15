@@ -422,6 +422,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 ? BuildBattleMode12PathToPortal(startRouteIndex)
                 : railPath);
 
+        ThrowHeldPowerGloveBomb(mover);
         CancelActiveMountMovementAbilities(mover);
         RideState state = CaptureAndApplyRideState(mover);
         activeStates[mover] = state;
@@ -1359,6 +1360,16 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
         if (blackDash != null && blackDash.DashActive)
             blackDash.CancelDashForExternalInterruption();
+    }
+
+    static void ThrowHeldPowerGloveBomb(MovementController mover)
+    {
+        if (mover != null &&
+            mover.TryGetComponent(out PowerGloveAbility powerGlove) &&
+            powerGlove.IsHoldingBomb)
+        {
+            powerGlove.ThrowHeldBombForExternalTransition();
+        }
     }
 
     void RestoreRideState(MovementController mover, RideState state)

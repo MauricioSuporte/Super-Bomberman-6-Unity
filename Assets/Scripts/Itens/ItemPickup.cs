@@ -244,6 +244,13 @@ public class ItemPickup : MonoBehaviour
 
     bool PlayerHoldingBombWithPowerGlove(GameObject player)
     {
+        return TryGetHeldPowerGlove(player, out _);
+    }
+
+    bool TryGetHeldPowerGlove(GameObject player, out PowerGloveAbility glove)
+    {
+        glove = null;
+
         if (player == null)
             return false;
 
@@ -252,7 +259,7 @@ public class ItemPickup : MonoBehaviour
 
         ab.RebuildCache();
 
-        var glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
+        glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
         return glove != null && glove.IsEnabled && glove.IsHoldingBomb;
     }
 
@@ -449,11 +456,11 @@ public class ItemPickup : MonoBehaviour
         bool isEgg = IsLouieEgg(type);
         Vector2 mountFacing = ResolveMountFacing(player);
 
-        if (isEgg && PlayerHoldingBombWithPowerGlove(player))
-            return;
-
         if (isEgg && PlayerAlreadyMounted(player))
         {
+            if (PlayerHoldingBombWithPowerGlove(player))
+                return;
+
             var q = GetOrCreateEggQueue(player);
 
             if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
@@ -465,6 +472,9 @@ public class ItemPickup : MonoBehaviour
 
         if (isEgg)
         {
+            if (TryGetHeldPowerGlove(player, out var powerGlove))
+                powerGlove.ThrowHeldBombForExternalTransition();
+
             if (TryMountEggWithArc(player, mountFacing))
             {
                 DestroyWithAnimation();
@@ -674,10 +684,11 @@ public class ItemPickup : MonoBehaviour
 
             var player = other.gameObject;
 
-            if (IsLouieEgg(type))
+            if (IsLouieEgg(type) &&
+                PlayerAlreadyMounted(player) &&
+                PlayerHoldingBombWithPowerGlove(player))
             {
-                if (PlayerHoldingBombWithPowerGlove(player))
-                    return;
+                return;
             }
 
             if (type == ItemType.Skull)

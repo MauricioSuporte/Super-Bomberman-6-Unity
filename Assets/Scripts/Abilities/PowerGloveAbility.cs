@@ -283,6 +283,58 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         RestoreBombControllerInputModeIfNeeded("DestroyHeldBombIfHolding");
     }
 
+    public bool ThrowHeldBombForExternalTransition()
+    {
+        if (!holding || !isHoldingBomb || !IsHeldBombValid())
+            return false;
+
+        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
+        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
+
+        pickupRoutine = null;
+        releaseRoutine = null;
+        landWatchRoutine = null;
+
+        Vector2 throwDirection = GetCurrentFacingDirection();
+        Bomb thrownBomb = heldBomb;
+
+        holding = false;
+        isHoldingBomb = false;
+        animLocking = false;
+        activeCarryRenderer = null;
+
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
+
+        SnapHeldBombToPlayerGround();
+        DetachBombFromPlayerKeepWorld();
+        SetBombSorting(GroundOrderInLayer);
+
+        if (heldBombCollider != null)
+            heldBombCollider.enabled = true;
+
+        SetHeldBombPowerGloveHeld(false);
+        ThrowHeldBomb(throwDirection);
+
+        if (movement != null)
+        {
+            movement.SetExternalVisualSuppressed(false);
+            SetMoveSprites(true);
+
+            if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
+                movement.EnableExclusiveFromState();
+        }
+
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "ExternalTransitionThrow");
+        RestoreBombControllerInputModeIfNeeded("ExternalTransitionThrow");
+
+        if (thrownBomb != null && !thrownBomb.HasExploded)
+            landWatchRoutine = StartCoroutine(WatchBombLandingThenResume(thrownBomb));
+
+        return true;
+    }
+
     private void EmergencyUnlockAndReset(string reason)
     {
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
