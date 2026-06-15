@@ -549,6 +549,8 @@ public class GamePauseController : MonoBehaviour
             label.SetPauseConfirmReturnToBossRush(w, s, confirmIndex);
         else if (confirmTarget == PauseExitTarget.WorldMap)
             label.SetPauseConfirmReturnToWorldMap(w, s, confirmIndex);
+        else if (isBattleModeStage)
+            label.SetBattleModePauseConfirmReturnToTitle(w, s, confirmIndex);
         else
             label.SetPauseConfirmReturnToTitle(w, s, confirmIndex);
     }

@@ -159,24 +159,33 @@ public class StageLabel : MonoBehaviour
 
     public void SetPauseConfirmReturnToWorldMap(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to World Map?");
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to World Map?", true);
     }
 
     public void SetPauseConfirmReturnToBossRush(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Boss Rush?");
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Boss Rush?", true);
     }
 
     public void SetPauseConfirmReturnToTitle(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Title Screen?");
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Title Screen?", true);
     }
 
-    void SetPauseConfirmQuestion(int world, int stage, int selectedIndex, string question)
+    public void SetBattleModePauseConfirmReturnToTitle(int world, int stage, int selectedIndex)
+    {
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Title Screen?", false);
+    }
+
+    void SetPauseConfirmQuestion(int world, int stage, int selectedIndex, string question, bool showStageHeader)
     {
         EnsureNoWrap();
 
         string stageNumber = $"{world}-{stage}";
+        string stageHeader = showStageHeader
+            ? $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+              $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n"
+            : string.Empty;
 
         string ArrowVisible(string text) => $"<color=#FF6F31>> </color>{text}";
         string ArrowHidden(string text) => $"<color=#00000000>> </color>{text}";
@@ -193,8 +202,7 @@ public class StageLabel : MonoBehaviour
 
         stageText.text =
             "<align=center>" +
-            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
-            $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
+            stageHeader +
             $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
             $"<size={S(SizeConfirmTitle)}><color=#E8E8E8>{question}</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}><indent={indent}>{noOpt}</indent></size>\n" +
@@ -259,11 +267,11 @@ public class StageLabel : MonoBehaviour
 
     public void SetPauseConfirmRestartRound(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Restart Round?");
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Restart Round?", false);
     }
 
     public void SetPauseConfirmReturnToStageSelect(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Stage Select?");
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Stage Select?", false);
     }
 }
