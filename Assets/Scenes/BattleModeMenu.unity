@@ -1191,7 +1191,7 @@ MonoBehaviour:
   - {fileID: 2273416014071709654, guid: 4d11d2e957185b14a8a90544ec4660b0, type: 3}
   - {fileID: 2273416014071709654, guid: 158f2ef3a3826a54d995ca3a09ba97a2, type: 3}
   - {fileID: 2273416014071709654, guid: 0b88553d721c2dd419fba889dcda636f, type: 3}
-  louieSelectDisabledTint: {r: 0.08, g: 0.08, b: 0.08, a: 0.85}
+  louieSelectDisabledTint: {r: 0.3, g: 0.3, b: 0.3, a: 0.7}
   handicapSelectEmptyMountAlpha: 0.45
   handicapSelectMountSizeMultiplier: 0.8
   handicapSelectRootOffset: {x: 0, y: 0}

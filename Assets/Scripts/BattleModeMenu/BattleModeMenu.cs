@@ -339,7 +339,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Min(0f)] private float louieSelectHintLineSpacing = 18f;
     [SerializeField, Min(0)] private int louieSelectMaxAmount = 99;
     [SerializeField] private GameObject[] louieSelectMountPrefabs = new GameObject[9];
-    [SerializeField] private Color louieSelectDisabledTint = new(0.08f, 0.08f, 0.08f, 0.85f);
+    [SerializeField] private Color louieSelectDisabledTint = new(0.3f, 0.3f, 0.3f, 0.7f);
     [SerializeField, Range(0f, 1f)] private float handicapSelectEmptyMountAlpha = 0.45f;
     [SerializeField, Min(0.01f)] private float handicapSelectMountSizeMultiplier = 1f;
     [SerializeField] private Vector2 handicapSelectRootOffset = Vector2.zero;
