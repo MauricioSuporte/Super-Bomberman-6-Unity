@@ -370,6 +370,12 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
+        if (TryGetMobileDirectionalHeld(action, playerId, out bool mobileDirectionalHeld) &&
+            mobileDirectionalHeld)
+        {
+            return true;
+        }
+
         return IsSyntheticHeld(playerId, action) || ReadHeldRawCached(playerId, action);
     }
 
