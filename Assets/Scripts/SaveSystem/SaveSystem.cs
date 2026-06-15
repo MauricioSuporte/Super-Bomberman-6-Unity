@@ -1791,4 +1791,13 @@ public static class SaveSystem
             active ? BattleModePlayerControlMode.Man : BattleModePlayerControlMode.Com
         );
     }
+
+    public static bool IsControlPlayerActive(int playerId)
+    {
+        EnsureLoaded();
+        EnsureControlProfiles(data);
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        return data.controls[playerId - 1].active;
+    }
 }

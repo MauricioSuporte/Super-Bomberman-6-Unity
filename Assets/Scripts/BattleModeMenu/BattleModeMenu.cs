@@ -5990,9 +5990,25 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (playerModes == null || playerModes.Length == 0)
             return;
 
-        int current = (int)playerModes[Mathf.Clamp(selectedPlayerIndex, 0, playerModes.Length - 1)];
-        int next = WrapIndex(current + direction, 3);
-        playerModes[selectedPlayerIndex] = (BattleModePlayerControlMode)next;
+        int playerIndex = Mathf.Clamp(selectedPlayerIndex, 0, playerModes.Length - 1);
+        int playerId = playerIndex + 1;
+        int current = (int)playerModes[playerIndex];
+        int step = direction < 0 ? -1 : 1;
+
+        for (int i = 0; i < 3; i++)
+        {
+            int next = WrapIndex(current + (step * (i + 1)), 3);
+            BattleModePlayerControlMode nextMode = (BattleModePlayerControlMode)next;
+
+            if (nextMode == BattleModePlayerControlMode.Man &&
+                !SaveSystem.IsControlPlayerActive(playerId))
+            {
+                continue;
+            }
+
+            playerModes[playerIndex] = nextMode;
+            return;
+        }
     }
 
     private string GetPlayerModeDisplayName(BattleModePlayerControlMode mode)
