@@ -19,6 +19,7 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
 
     readonly List<int> activePlayerIds = new(GameSession.MaxPlayerId);
     readonly List<BattleModeHudState> hiddenBattleHuds = new();
+    RectTransform blackBackdrop;
     bool skipRequested;
 
     struct BattleModeHudState
@@ -69,7 +70,30 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         if (overlay == null)
             overlay = presenter.gameObject.AddComponent<BattleRoundWinScoreboardOverlay>();
 
+        overlay.blackBackdrop = CreateBlackBackdrop(parent, presenter.transform, presenter.gameObject.layer);
         return overlay;
+    }
+
+    static RectTransform CreateBlackBackdrop(Transform parent, Transform overlayTransform, int layer)
+    {
+        GameObject go = new GameObject("RoundWinScoreboardBlackBackdrop", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        go.layer = layer;
+
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.localScale = Vector3.one;
+
+        Image image = go.GetComponent<Image>();
+        image.color = Color.black;
+        image.raycastTarget = false;
+
+        rect.SetAsLastSibling();
+        overlayTransform.SetAsLastSibling();
+        return rect;
     }
 
     static RectTransform ResolveSafeFrame()
@@ -324,6 +348,15 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
 
         Destroy(activeOverlay.gameObject);
         activeOverlay = null;
+    }
+
+    void OnDestroy()
+    {
+        if (blackBackdrop != null)
+            Destroy(blackBackdrop.gameObject);
+
+        if (activeOverlay == this)
+            activeOverlay = null;
     }
 
     static float GetSlideDistance(RectTransform parentRect, RectTransform ownRect)

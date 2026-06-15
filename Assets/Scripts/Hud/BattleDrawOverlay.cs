@@ -38,6 +38,7 @@ public sealed class BattleDrawOverlay : MonoBehaviour
 
     RectTransform rootRect;
     RectTransform runtimeRoot;
+    RectTransform blackBackdrop;
     CanvasGroup canvasGroup;
     Sprite backgroundSprite;
     Sprite[] letterSprites;
@@ -86,7 +87,30 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         if (instance.GetComponent<CanvasGroup>() == null)
             instance.AddComponent<CanvasGroup>();
 
+        overlay.blackBackdrop = CreateBlackBackdrop(parent, instance.transform, instance.layer);
         return overlay;
+    }
+
+    static RectTransform CreateBlackBackdrop(Transform parent, Transform overlayTransform, int layer)
+    {
+        GameObject go = new GameObject("BattleDrawBlackBackdrop", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        go.layer = layer;
+
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.localScale = Vector3.one;
+
+        Image image = go.GetComponent<Image>();
+        image.color = Color.black;
+        image.raycastTarget = false;
+
+        rect.SetAsLastSibling();
+        overlayTransform.SetAsLastSibling();
+        return rect;
     }
 
     static RectTransform ResolveSafeFrame()
@@ -435,6 +459,15 @@ public sealed class BattleDrawOverlay : MonoBehaviour
 
         Destroy(activeOverlay.gameObject);
         activeOverlay = null;
+    }
+
+    void OnDestroy()
+    {
+        if (blackBackdrop != null)
+            Destroy(blackBackdrop.gameObject);
+
+        if (activeOverlay == this)
+            activeOverlay = null;
     }
 
     Image CreateImage(string childName, Sprite sprite)
