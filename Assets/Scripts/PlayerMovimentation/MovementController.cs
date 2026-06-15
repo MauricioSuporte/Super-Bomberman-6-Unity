@@ -1274,6 +1274,20 @@ public class MovementController : MonoBehaviour, IKillable
         if (cachedHealth == null)
             cachedHealth = GetComponent<CharacterHealth>();
 
+        var renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers != null)
+        {
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer sr = renderers[i];
+                if (sr == null)
+                    continue;
+
+                if (!temporarySpeedBlinkOriginalColors.ContainsKey(sr))
+                    temporarySpeedBlinkOriginalColors.Add(sr, sr.color);
+            }
+        }
+
         if (cachedHealth != null)
         {
             if (useBlack)
@@ -1281,28 +1295,20 @@ public class MovementController : MonoBehaviour, IKillable
             else
                 cachedHealth.ClearPersistentTint();
         }
-
-        var renderers = GetComponentsInChildren<SpriteRenderer>(true);
-        if (renderers == null || renderers.Length == 0)
-            return;
-
-        for (int i = 0; i < renderers.Length; i++)
+        else if (renderers != null)
         {
-            SpriteRenderer sr = renderers[i];
-            if (sr == null)
-                continue;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer sr = renderers[i];
+                if (sr == null)
+                    continue;
 
-            if (!temporarySpeedBlinkOriginalColors.ContainsKey(sr))
-                temporarySpeedBlinkOriginalColors.Add(sr, sr.color);
-
-            if (cachedHealth != null)
-                continue;
-
-            Color original = temporarySpeedBlinkOriginalColors[sr];
-            float currentAlpha = sr.color.a;
-            sr.color = useBlack
-                ? new Color(0f, 0f, 0f, currentAlpha)
-                : new Color(original.r, original.g, original.b, currentAlpha);
+                Color original = temporarySpeedBlinkOriginalColors[sr];
+                float currentAlpha = sr.color.a;
+                sr.color = useBlack
+                    ? new Color(0f, 0f, 0f, currentAlpha)
+                    : new Color(original.r, original.g, original.b, currentAlpha);
+            }
         }
 
         ApplyMountedVisualBlinkColor(useBlack);
