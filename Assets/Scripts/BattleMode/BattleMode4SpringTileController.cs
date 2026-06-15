@@ -41,6 +41,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
     readonly HashSet<TileBase> registeredTiles = new();
     readonly HashSet<MovementController> activeJumpers = new();
     readonly HashSet<MovementController> waitingForSpringExit = new();
+    readonly HashSet<Vector3Int> activeSpringCells = new();
     readonly Dictionary<Vector3Int, Coroutine> swapRoutines = new();
     readonly List<Vector3Int> landingCandidates = new(32);
     readonly List<Vector3Int> safeComLandingCandidates = new(32);
@@ -79,6 +80,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         swapRoutines.Clear();
         activeJumpers.Clear();
         waitingForSpringExit.Clear();
+        activeSpringCells.Clear();
     }
 
     void Update()
@@ -125,6 +127,12 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         if (waitingForSpringExit.Contains(mover))
             return;
 
+        if (activeSpringCells.Contains(springCell))
+        {
+            waitingForSpringExit.Add(mover);
+            return;
+        }
+
         var pinkJump = mover.GetComponent<PinkLouieJumpAbility>();
         if (pinkJump != null && pinkJump.JumpActive)
             return;
@@ -149,6 +157,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                 GetCellCenter(landingCell));
         }
 
+        activeSpringCells.Add(springCell);
         StartCoroutine(SpringJumpRoutine(mover, springCell, landingCell));
     }
 
@@ -220,6 +229,8 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         }
         finally
         {
+            activeSpringCells.Remove(springCell);
+
             if (shadow != null)
                 Destroy(shadow);
 
@@ -263,12 +274,28 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             if (restoreGameplayState && playerCollider != null)
                 playerCollider.enabled = prevColliderEnabled;
 
+            if (restoreGameplayState)
+                TryResolvePlayerBounceAfterLanding(mover, faceDir);
+
             if (inputManager != null)
                 inputManager.SetSpringLauncherInputGate(playerId, false);
 
             bool landedOnSpring = groundTilemap != null && IsSpringTile(groundTilemap.GetTile(landingCell));
             ReleaseJumperAfterGrace(mover, landedOnSpring);
         }
+    }
+
+    static void TryResolvePlayerBounceAfterLanding(MovementController mover, Vector2 landingFacing)
+    {
+        if (mover == null)
+            return;
+
+        Vector2 direction = Cardinalize(landingFacing);
+        if (direction == Vector2.zero)
+            direction = Vector2.right;
+
+        if (mover.TryGetComponent(out PlayerPushedOutOfInvalidTile resolver) && resolver != null)
+            resolver.NotifyExternalPushed(direction);
     }
 
     void CancelActiveMountMovementAbilities(MovementController mover)

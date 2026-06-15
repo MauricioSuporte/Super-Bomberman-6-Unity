@@ -423,6 +423,7 @@ MonoBehaviour:
   destructiblePassAmount: 1
   invincibleSuitAmount: 0
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 3
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -443,7 +444,9 @@ MonoBehaviour:
   groundTile: {fileID: 11400000, guid: 5258ac5e1e635c64ea81a8f1f7123161, type: 2}
   groundShadowTile: {fileID: 0}
   indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
   groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -6775,12 +6778,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 6
-  activePlayerMask: 63
+  activePlayerCount: 2
+  activePlayerMask: 3
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0

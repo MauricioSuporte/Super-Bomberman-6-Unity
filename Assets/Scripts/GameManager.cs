@@ -1389,7 +1389,7 @@ public class GameManager : MonoBehaviour
         {
             if (IsBattleModeScene())
             {
-                TriggerBattleDrawSequence();
+                TriggerBattleDrawSequence(showTimeUp: false);
                 return;
             }
 
@@ -1743,10 +1743,10 @@ public class GameManager : MonoBehaviour
         if (battleTimerExpiredElapsedSeconds < BattleTimeUpDelayAfterTimerExpiredSeconds)
             return;
 
-        TriggerBattleDrawSequence();
+        TriggerBattleDrawSequence(showTimeUp: true);
     }
 
-    void TriggerBattleDrawSequence()
+    void TriggerBattleDrawSequence(bool showTimeUp)
     {
         if (battleTimerExpired || restartingRound || endStageTriggered)
             return;
@@ -1754,12 +1754,14 @@ public class GameManager : MonoBehaviour
         battleTimerExpired = true;
         restartingRound = true;
         endStageTriggered = true;
-        battleTimeRemainingSeconds = 0f;
 
-        StartCoroutine(BattleDrawSequenceRoutine());
+        if (showTimeUp)
+            battleTimeRemainingSeconds = 0f;
+
+        StartCoroutine(BattleDrawSequenceRoutine(showTimeUp));
     }
 
-    IEnumerator BattleDrawSequenceRoutine()
+    IEnumerator BattleDrawSequenceRoutine(bool showTimeUp)
     {
         BattleRevengeSystem.BlockAndRemoveAllActiveCartsForRoundEnd();
 
@@ -1767,8 +1769,11 @@ public class GameManager : MonoBehaviour
         if (suddenDeathController != null)
             suddenDeathController.StopSuddenDeathAndClearVisuals();
 
-        PrepareActivePlayersForBattleTimeUp();
-        yield return BattleTimeUpOverlay.PlayRoutine();
+        if (showTimeUp)
+        {
+            PrepareActivePlayersForBattleTimeUp();
+            yield return BattleTimeUpOverlay.PlayRoutine();
+        }
 
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(BattleDrawPreFadeDuration);
