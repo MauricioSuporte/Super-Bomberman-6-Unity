@@ -50,6 +50,7 @@ public class ItemPickup : MonoBehaviour
     IItemPickupBehavior _behavior;
 
     const float SkullBounceSecondsPerTile = 0.12f;
+    const float MovingBombDestroyShrinkDuration = 0.5f;
     const float SkullBounceFlipIntervalSeconds = 0.04f;
     const float SkullBounceDefaultProtectionSeconds = 0.20f;
     const float SkullBounceExplosionProtectionSeconds = 1.05f;
@@ -1567,6 +1568,42 @@ public class ItemPickup : MonoBehaviour
         if (_col != null)
             _col.enabled = false;
 
+        Destroy(gameObject);
+    }
+
+    public void DestroyFromMovingBombImpact()
+    {
+        if (type == ItemType.Skull || isBeingDestroyed)
+            return;
+
+        if (IsLouieEgg(type))
+        {
+            DestroySilently();
+            return;
+        }
+
+        isBeingDestroyed = true;
+
+        if (_col != null)
+            _col.enabled = false;
+
+        StartCoroutine(ShrinkAndDestroyRoutine());
+    }
+
+    IEnumerator ShrinkAndDestroyRoutine()
+    {
+        Vector3 initialScale = transform.localScale;
+        float elapsed = 0f;
+
+        while (elapsed < MovingBombDestroyShrinkDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / MovingBombDestroyShrinkDuration);
+            transform.localScale = Vector3.Lerp(initialScale, Vector3.zero, t);
+            yield return null;
+        }
+
+        transform.localScale = Vector3.zero;
         Destroy(gameObject);
     }
 

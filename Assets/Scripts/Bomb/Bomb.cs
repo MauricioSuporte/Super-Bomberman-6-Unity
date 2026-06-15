@@ -2318,7 +2318,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (pickup.TryBounceSkull(impactDirection, kickTileSize, bombCollider))
                 continue;
 
-            pickup.DestroySilently();
+            pickup.DestroyFromMovingBombImpact();
         }
     }
 

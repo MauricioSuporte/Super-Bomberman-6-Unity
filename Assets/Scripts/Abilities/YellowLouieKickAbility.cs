@@ -1412,7 +1412,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (pickup == null || pickup.type == ItemType.Skull)
                 continue;
 
-            pickup.DestroySilently();
+            pickup.DestroyFromMovingBombImpact();
         }
     }
 
