@@ -151,7 +151,7 @@ public sealed class BattleModeComStage9MinecartAbility :
         if (IsAvailable &&
             punishCommit &&
             myTile == minecartController.ExitTile &&
-            !minecartController.SuddenDeathStarted &&
+            !ShouldBlockMinecartForSuddenDeath() &&
             minecartController.RideActive &&
             minecartController.CurrentRider != movement &&
             TryBuildPunishDecision(
@@ -353,7 +353,7 @@ public sealed class BattleModeComStage9MinecartAbility :
 
         UpdateRideObservation();
 
-        if (minecartController.SuddenDeathStarted)
+        if (ShouldBlockMinecartForSuddenDeath())
         {
             bool hadCommit = punishCommit || cartUseCommit;
             punishCommit = false;
@@ -767,7 +767,7 @@ public sealed class BattleModeComStage9MinecartAbility :
         trace = "no minecart rail commitment";
         if (!punishCommit ||
             !IsAvailable ||
-            minecartController.SuddenDeathStarted ||
+            ShouldBlockMinecartForSuddenDeath() ||
             !minecartController.RideActive ||
             minecartController.CurrentRider == movement ||
             nextTile != minecartController.ExitTile)
@@ -798,6 +798,18 @@ public sealed class BattleModeComStage9MinecartAbility :
     public bool IsPunishExitTile(Vector2Int tile)
         => minecartController != null &&
            tile == minecartController.ExitTile;
+
+    private bool ShouldBlockMinecartForSuddenDeath()
+    {
+        if (minecartController == null ||
+            !minecartController.SuddenDeathStarted)
+        {
+            return false;
+        }
+
+        return BattleModeRules.Instance == null ||
+               !BattleModeRules.Instance.UseReducedSuddenDeath;
+    }
 
     public void LogCommittedRailEntry(
         Vector2Int currentTile,
