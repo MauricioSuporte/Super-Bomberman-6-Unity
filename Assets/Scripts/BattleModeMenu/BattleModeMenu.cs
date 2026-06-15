@@ -356,7 +356,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 handicapSelectOptionNumberOffset = new(0f, 9f);
     [SerializeField] private Vector2 handicapSelectOptionTextSize = new(60f, 30f);
     [SerializeField] private int handicapSelectOptionFontSize = 22;
-    [SerializeField] private Vector2 handicapSelectCursorOffset = new(-46f, 0f);
+    [SerializeField] private Vector2 handicapSelectCursorOffset = Vector2.zero;
+    [SerializeField] private Vector2 handicapSelectLouieCursorOffset = new(0f, -8f);
     [SerializeField] private Vector2 handicapSelectCursorSize = new(62f, 62f);
     [SerializeField] private Vector2 handicapSelectHintOffset = new(0f, -300f);
     [SerializeField] private Vector2 handicapSelectHintSize = new(900f, 76f);
@@ -553,6 +554,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<TextMeshProUGUI> louieSelectAmountTexts = new();
     private TextMeshProUGUI louieSelectHintText;
     private RectTransform louieSelectCursorRt;
+    private Image louieSelectCursorImage;
     private AnimatedSpriteRenderer louieSelectCursorRenderer;
     private int[] workingBattleLouieAmounts;
     private int selectedLouieIndex;
@@ -561,6 +563,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<HandicapRowVisual> handicapRows = new();
     private TextMeshProUGUI handicapSelectHintText;
     private RectTransform handicapSelectCursorRt;
+    private Image handicapSelectCursorImage;
     private AnimatedSpriteRenderer handicapSelectCursorRenderer;
     private SaveData.BattleModeHandicapSave workingBattleHandicap;
     private int selectedHandicapRow;
@@ -4496,18 +4499,15 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void CreateLouieSelectCursor()
     {
-        AnimatedSpriteRenderer source = specificCursorRenderer != null
-            ? specificCursorRenderer
-            : leftPanel != null ? leftPanel.CursorRenderer : null;
-        GameObject cursorGo = source != null
-            ? Instantiate(source.gameObject, louieSelectRoot, false)
-            : new GameObject("LouieSelectCursor", typeof(RectTransform));
-        cursorGo.name = "LouieSelectCursor";
+        GameObject cursorGo = new(
+            "LouieSelectCursor",
+            typeof(RectTransform),
+            typeof(Image),
+            typeof(AnimatedSpriteRenderer));
+        cursorGo.transform.SetParent(louieSelectRoot, false);
 
         louieSelectCursorRt = cursorGo.transform as RectTransform;
-        if (louieSelectCursorRt == null)
-            louieSelectCursorRt = cursorGo.AddComponent<RectTransform>();
-
+        louieSelectCursorImage = cursorGo.GetComponent<Image>();
         louieSelectCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
         louieSelectCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
         louieSelectCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -4515,11 +4515,22 @@ public sealed class BattleModeMenu : MonoBehaviour
         louieSelectCursorRt.sizeDelta = louieSelectCursorSize;
         louieSelectCursorRt.localScale = Vector3.one;
 
+        if (louieSelectCursorImage != null)
+        {
+            louieSelectCursorImage.raycastTarget = false;
+            louieSelectCursorImage.preserveAspect = true;
+            louieSelectCursorImage.sprite = GetItemSelectCursorSprite(0);
+        }
+
         if (louieSelectCursorRenderer != null)
         {
+            louieSelectCursorRenderer.idleSprite = GetItemSelectCursorSprite(0);
+            louieSelectCursorRenderer.animationSprite = GetItemSelectCursorAnimationSprites();
+            louieSelectCursorRenderer.animationTime = itemSelectCursorFrameSeconds;
+            louieSelectCursorRenderer.useSequenceDuration = false;
             louieSelectCursorRenderer.SetFrozen(false);
             louieSelectCursorRenderer.frameOffsets = null;
-            louieSelectCursorRenderer.idle = true;
+            louieSelectCursorRenderer.idle = false;
             louieSelectCursorRenderer.loop = true;
             louieSelectCursorRenderer.CurrentFrame = 0;
             louieSelectCursorRenderer.RefreshFrame();
@@ -4779,17 +4790,15 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (louieSelectCursorRenderer == null)
             return;
 
-        if (optionCursorAdvanceAnimating)
-            return;
+        Sprite[] animation = GetItemSelectCursorAnimationSprites();
+        if (animation.Length > 0)
+            louieSelectCursorRenderer.animationSprite = animation;
 
-        bool confirming = louieSelectCursorConfirmTimer > 0f;
-        louieSelectCursorRenderer.idle = !confirming;
-        louieSelectCursorRenderer.loop = !confirming;
-        if (confirming)
-        {
-            louieSelectCursorRenderer.useSequenceDuration = true;
-            louieSelectCursorRenderer.sequenceDuration = Mathf.Max(0.01f, optionCursorAdvanceSeconds);
-        }
+        louieSelectCursorRenderer.idleSprite = GetItemSelectCursorSprite(0);
+        louieSelectCursorRenderer.animationTime = Mathf.Max(0.01f, itemSelectCursorFrameSeconds);
+        louieSelectCursorRenderer.useSequenceDuration = false;
+        louieSelectCursorRenderer.idle = false;
+        louieSelectCursorRenderer.loop = true;
         louieSelectCursorRenderer.SetFrozen(false);
         louieSelectCursorRenderer.RefreshFrame();
     }
@@ -5051,16 +5060,16 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void CreateHandicapSelectCursor()
     {
-        AnimatedSpriteRenderer source = leftPanel != null ? leftPanel.CursorRenderer : null;
-        GameObject cursorGo = source != null
-            ? Instantiate(source.gameObject, handicapSelectRoot, false)
-            : new GameObject("HandicapSelectCursor", typeof(RectTransform));
+        GameObject cursorGo = new(
+            "HandicapSelectCursor",
+            typeof(RectTransform),
+            typeof(Image),
+            typeof(AnimatedSpriteRenderer));
+        cursorGo.transform.SetParent(handicapSelectRoot, false);
 
-        cursorGo.name = "HandicapSelectCursor";
+        handicapSelectCursorImage = cursorGo.GetComponent<Image>();
         handicapSelectCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
         handicapSelectCursorRt = cursorGo.transform as RectTransform;
-        if (handicapSelectCursorRt == null)
-            handicapSelectCursorRt = cursorGo.AddComponent<RectTransform>();
 
         handicapSelectCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
         handicapSelectCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -5068,11 +5077,22 @@ public sealed class BattleModeMenu : MonoBehaviour
         handicapSelectCursorRt.sizeDelta = handicapSelectCursorSize;
         handicapSelectCursorRt.localScale = Vector3.one;
 
+        if (handicapSelectCursorImage != null)
+        {
+            handicapSelectCursorImage.raycastTarget = false;
+            handicapSelectCursorImage.preserveAspect = true;
+            handicapSelectCursorImage.sprite = GetItemSelectCursorSprite(0);
+        }
+
         if (handicapSelectCursorRenderer != null)
         {
+            handicapSelectCursorRenderer.idleSprite = GetItemSelectCursorSprite(0);
+            handicapSelectCursorRenderer.animationSprite = GetItemSelectCursorAnimationSprites();
+            handicapSelectCursorRenderer.animationTime = itemSelectCursorFrameSeconds;
+            handicapSelectCursorRenderer.useSequenceDuration = false;
             handicapSelectCursorRenderer.SetFrozen(false);
             handicapSelectCursorRenderer.frameOffsets = null;
-            handicapSelectCursorRenderer.idle = true;
+            handicapSelectCursorRenderer.idle = false;
             handicapSelectCursorRenderer.loop = true;
             handicapSelectCursorRenderer.CurrentFrame = 0;
             handicapSelectCursorRenderer.RefreshFrame();
@@ -5140,7 +5160,13 @@ public sealed class BattleModeMenu : MonoBehaviour
             selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow, 1);
             handicapSelectCursorRt.gameObject.SetActive(handicapRows.Count > 0 && IsHandicapPlayerVisible(selectedHandicapRow));
             handicapSelectCursorRt.sizeDelta = handicapSelectCursorSize;
-            handicapSelectCursorRt.anchoredPosition = GetHandicapCellPosition(selectedHandicapRow, selectedHandicapColumn) + handicapSelectCursorOffset;
+            Vector2 selectedColumnOffset = selectedHandicapColumn == 0
+                ? handicapSelectLouieCursorOffset
+                : Vector2.zero;
+            handicapSelectCursorRt.anchoredPosition =
+                GetHandicapCellPosition(selectedHandicapRow, selectedHandicapColumn) +
+                handicapSelectCursorOffset +
+                selectedColumnOffset;
             handicapSelectCursorRt.SetAsLastSibling();
             handicapSelectCursorRenderer?.SetExternalBaseLocalPosition(handicapSelectCursorRt.localPosition);
             UpdateHandicapSelectCursorAnimationState();
@@ -5448,17 +5474,15 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (handicapSelectCursorRenderer == null)
             return;
 
-        if (optionCursorAdvanceAnimating)
-            return;
+        Sprite[] animation = GetItemSelectCursorAnimationSprites();
+        if (animation.Length > 0)
+            handicapSelectCursorRenderer.animationSprite = animation;
 
-        bool confirming = handicapSelectCursorConfirmTimer > 0f;
-        handicapSelectCursorRenderer.idle = !confirming;
-        handicapSelectCursorRenderer.loop = !confirming;
-        if (confirming)
-        {
-            handicapSelectCursorRenderer.useSequenceDuration = true;
-            handicapSelectCursorRenderer.sequenceDuration = Mathf.Max(0.01f, optionCursorAdvanceSeconds);
-        }
+        handicapSelectCursorRenderer.idleSprite = GetItemSelectCursorSprite(0);
+        handicapSelectCursorRenderer.animationTime = Mathf.Max(0.01f, itemSelectCursorFrameSeconds);
+        handicapSelectCursorRenderer.useSequenceDuration = false;
+        handicapSelectCursorRenderer.idle = false;
+        handicapSelectCursorRenderer.loop = true;
         handicapSelectCursorRenderer.SetFrozen(false);
         handicapSelectCursorRenderer.RefreshFrame();
     }

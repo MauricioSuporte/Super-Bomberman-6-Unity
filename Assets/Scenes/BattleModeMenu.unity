@@ -487,6 +487,8 @@ MonoBehaviour:
   lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   selectedTint: {r: 1, g: 1, b: 1, a: 1}
+  directionalRepeatInitialDelay: 0.22
+  directionalRepeatInterval: 0.12
   skinCursorPrefab: {fileID: 7207817685866332595, guid: 7343d27b278e105479b8c1724e1c399a, type: 3}
   staggerCursorStartByPlayer: 1
   cursorSpriteByPlayer:
@@ -921,6 +923,8 @@ MonoBehaviour:
   optionCursorAdvanceSeconds: 0.25
   directionalRepeatInitialDelay: 0.22
   directionalRepeatInterval: 0.12
+  playerModeRepeatInitialDelay: 0.4
+  playerModeRepeatInterval: 0.3
   promptTitleText: {fileID: 0}
   matchModePrompt: BATTLE MODE
   playerSelectPrompt: PLAYER SELECT
@@ -1170,8 +1174,8 @@ MonoBehaviour:
   louieSelectAmountOffset: {x: 28, y: 0}
   louieSelectAmountSize: {x: 64, y: 36}
   louieSelectAmountFontSize: 32
-  louieSelectCursorOffset: {x: -65, y: 0}
-  louieSelectCursorSize: {x: 62, y: 62}
+  louieSelectCursorOffset: {x: 0, y: -10}
+  louieSelectCursorSize: {x: 224, y: 224}
   louieSelectHintOffset: {x: 0, y: -300}
   louieSelectHintSize: {x: 900, y: 76}
   louieSelectHintFontSize: 28
@@ -1204,8 +1208,9 @@ MonoBehaviour:
   handicapSelectOptionNumberOffset: {x: 0, y: 9}
   handicapSelectOptionTextSize: {x: 60, y: 30}
   handicapSelectOptionFontSize: 22
-  handicapSelectCursorOffset: {x: -46, y: 0}
-  handicapSelectCursorSize: {x: 62, y: 62}
+  handicapSelectCursorOffset: {x: 0, y: 0}
+  handicapSelectLouieCursorOffset: {x: 0, y: -8}
+  handicapSelectCursorSize: {x: 175, y: 175}
   handicapSelectHintOffset: {x: 0, y: -330}
   handicapSelectHintSize: {x: 900, y: 76}
   handicapSelectHintFontSize: 18
@@ -1268,6 +1273,8 @@ MonoBehaviour:
   battleMatchWins: 000000000000000000000000000000000000000000000000
   hardNormalGameRunInProgress: 0
   hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -1982,6 +1989,7 @@ MonoBehaviour:
   hardDifficultySelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   hardcoreDifficultySelectedColor: {r: 0, g: 0, b: 0, a: 1}
   hardcoreDifficultyOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  lockedDifficultySelectedAlpha: 0.35
   difficultyColumnSpacing: 20
   optionFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   optionFontMaterialPreset: {fileID: 0}
