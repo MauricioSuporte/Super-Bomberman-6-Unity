@@ -1059,6 +1059,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  hardCampaignExtraLife: 0
   speedInternal: 224
   playerId: 1
   enableDualInput: 1
@@ -1171,7 +1172,6 @@ MonoBehaviour:
   louieHeadOnlyUp: {fileID: 2416730774578172526}
   louieHeadOnlyDown: {fileID: 322766889923848232}
   louieHeadOnlyLeft: {fileID: 697825381996431721}
-  debugHeadOnlyOffsets: 1
   louieJumpAscendUp: {fileID: 5131881532400322688}
   louieJumpAscendDown: {fileID: 7648548795749759961}
   louieJumpAscendLeft: {fileID: 1010222876959472078}
@@ -2586,6 +2586,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 8710357416395413427, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   animationSprite:
+  - {fileID: 1683228720, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: -1814828863, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1233878687, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1814828863, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1683228720, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
@@ -2594,8 +2596,6 @@ MonoBehaviour:
   - {fileID: 139836029, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 593624743, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1818433443, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 1683228720, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -1814828863, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
@@ -2952,6 +2952,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 884247829, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   animationSprite:
+  - {fileID: 2059163866, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: -481080184, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1128162417, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -481080184, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 2059163866, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
@@ -2960,8 +2962,6 @@ MonoBehaviour:
   - {fileID: -964585663, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1065029944, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 611575559, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 2059163866, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -481080184, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
@@ -3080,6 +3080,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: -602360420, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   animationSprite:
+  - {fileID: 928865548, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 1342542981, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 605112351, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1342542981, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 928865548, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
@@ -3088,8 +3090,6 @@ MonoBehaviour:
   - {fileID: 1356467591, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1180899425, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 780230157, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 928865548, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 1342542981, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
