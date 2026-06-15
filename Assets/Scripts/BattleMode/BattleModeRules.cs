@@ -100,6 +100,7 @@ public sealed class BattleModeRules : MonoBehaviour
     [SerializeField] private BattleMusicSelection battleMusic = BattleMusicSelection.Random;
     [SerializeField] private bool enableRevengeBomber;
     [SerializeField] private bool enableSuddenDeath = true;
+    private BattleModeSuddenDeathSetting suddenDeathSetting = BattleModeSuddenDeathSetting.Random;
     [SerializeField] private bool enableItemDropsAfterDeath = true;
 
     [Header("Teams")]
@@ -119,6 +120,9 @@ public sealed class BattleModeRules : MonoBehaviour
     public float RoundTimerSeconds => GetRoundTimerSeconds(roundTimer);
     public bool EnableRevengeBomber => enableRevengeBomber;
     public bool EnableSuddenDeath => enableSuddenDeath;
+    public BattleModeSuddenDeathSetting SuddenDeathSetting => suddenDeathSetting;
+    public bool UseReducedSuddenDeath =>
+        suddenDeathSetting == BattleModeSuddenDeathSetting.Off;
     public bool EnableItemDropsAfterDeath => enableItemDropsAfterDeath;
 
     void Awake()
@@ -169,7 +173,8 @@ public sealed class BattleModeRules : MonoBehaviour
         victoriesToWinMatch = SaveSystem.GetBattleModeBattlesToWin();
         roundTimer = SaveSystem.GetBattleModeRoundTimerMode();
         enableRevengeBomber = SaveSystem.GetBattleModeRevengeBomberEnabled();
-        enableSuddenDeath = ResolveSuddenDeath(SaveSystem.GetBattleModeSuddenDeathSetting());
+        suddenDeathSetting = SaveSystem.GetBattleModeSuddenDeathSetting();
+        enableSuddenDeath = ResolveSuddenDeath(suddenDeathSetting);
         ApplySavedTeams();
     }
 

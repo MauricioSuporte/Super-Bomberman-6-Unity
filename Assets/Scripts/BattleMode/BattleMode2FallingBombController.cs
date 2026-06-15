@@ -391,7 +391,9 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
         if (suddenDeathController != null && suddenDeathController.SuddenDeathStarted)
             return true;
 
-        if (BattleModeRules.Instance == null || !BattleModeRules.Instance.EnableSuddenDeath)
+        if (BattleModeRules.Instance == null ||
+            (!BattleModeRules.Instance.EnableSuddenDeath &&
+             !BattleModeRules.Instance.UseReducedSuddenDeath))
             return false;
 
         if (GameManager.Instance == null || !GameManager.Instance.HasBattleTimeLimit)

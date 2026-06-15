@@ -7,6 +7,8 @@ using UnityEngine.Tilemaps;
 public sealed class BattleSuddenDeathController : MonoBehaviour
 {
     const float SuddenDeathTriggerTime = 50f;
+    const float ReducedSuddenDeathEndTime = 30f;
+    const int ReducedSuddenDeathRingCount = 2;
 
     [Header("References")]
     [SerializeField] private Tilemap indestructibleTilemap;
@@ -68,6 +70,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     bool suddenDeathDropsStarted;
     float suddenDeathDropStartRemainingTime;
+    float suddenDeathDropEndRemainingTime;
     readonly HashSet<Vector3Int> scheduledShadowCells = new HashSet<Vector3Int>();
     readonly HashSet<GameObject> activeShadowVisuals = new HashSet<GameObject>();
     readonly HashSet<GameObject> activeFallingVisuals = new HashSet<GameObject>();
@@ -156,7 +159,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (rawRemaining > suddenDeathShadowStartRemainingTime)
             return false;
 
-        float dropWindowDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
+        float dropWindowDuration = GetDropWindowDuration();
         float currentTimelineElapsed = Mathf.Clamp(
             suddenDeathShadowStartRemainingTime - rawRemaining,
             0f,
@@ -264,7 +267,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (BattleModeRules.Instance == null)
             return false;
 
-        if (!BattleModeRules.Instance.EnableSuddenDeath)
+        if (!BattleModeRules.Instance.EnableSuddenDeath &&
+            !BattleModeRules.Instance.UseReducedSuddenDeath)
             return false;
 
         if (!BattleModeRules.Instance.UsesRoundTimer)
@@ -324,6 +328,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             suddenDeathShadowStartRemainingTime - shadowLeadTime,
             0f,
             SuddenDeathTriggerTime);
+        suddenDeathDropEndRemainingTime = IsReducedSuddenDeath()
+            ? Mathf.Min(
+                ReducedSuddenDeathEndTime + fallingDuration,
+                suddenDeathDropStartRemainingTime)
+            : 0f;
 
         BattleRevengeBomberBlocker.Block();
         StartCoroutine(RemoveAllRevengeBombersFromSceneRoutine());
@@ -343,13 +352,15 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         nextDropIndex = 0;
 
         float slotDuration = suddenDeathPath.Count > 0
-            ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
+            ? GetDropWindowDuration() / suddenDeathPath.Count
             : 0f;
 
         LogFlow(
             $"BeginSuddenDeath: remainingStart={remainingTimeAtStart:0.000}, " +
             $"shadowStartAt={suddenDeathShadowStartRemainingTime:0.000}, " +
             $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
+            $"dropEndAt={suddenDeathDropEndRemainingTime:0.000}, " +
+            $"lastTileLandsAt={Mathf.Max(0f, suddenDeathDropEndRemainingTime - fallingDuration):0.000}, " +
             $"shadowLeadTime={shadowLeadTime:0.000}, " +
             $"fallingDuration={fallingDuration:0.000}, " +
             $"pathCount={suddenDeathPath.Count}, " +
@@ -374,7 +385,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (rawRemaining > suddenDeathShadowStartRemainingTime)
             return;
 
-        float dropWindowDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
+        float dropWindowDuration = GetDropWindowDuration();
 
         float currentTimelineElapsed = Mathf.Clamp(
             suddenDeathShadowStartRemainingTime - rawRemaining,
@@ -404,7 +415,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         float elapsedSinceDropsStarted = Mathf.Clamp(
-            dropWindowDuration - Mathf.Clamp(rawRemaining, 0f, dropWindowDuration),
+            suddenDeathDropStartRemainingTime -
+                Mathf.Clamp(
+                    rawRemaining,
+                    suddenDeathDropEndRemainingTime,
+                    suddenDeathDropStartRemainingTime),
             0f,
             dropWindowDuration);
 
@@ -433,7 +448,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         while (nextDropIndex < targetDropCount)
             DropNextTile();
 
-        if (rawRemaining <= 0f)
+        if (rawRemaining <= suddenDeathDropEndRemainingTime)
         {
             EnsureQueuedShadows(shadowLeadTime + dropWindowDuration, dropWindowDuration);
             UpdateQueuedShadows(shadowLeadTime + dropWindowDuration);
@@ -442,7 +457,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 DropNextTile();
 
             suddenDeathFinished = true;
-            LogFlow("ProcessTileDrops: tempo zerado, restante da arena foi fechado.");
+            LogFlow(
+                $"ProcessTileDrops: limite de {suddenDeathDropEndRemainingTime:0.000}s atingido, " +
+                "restante do caminho foi fechado.");
         }
     }
 
@@ -465,7 +482,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         nextDropIndex++;
 
         float slotDuration = suddenDeathPath.Count > 0
-            ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
+            ? GetDropWindowDuration() / suddenDeathPath.Count
             : 0f;
 
         if (HasBlockingIndestructibleAt(cell))
@@ -1315,19 +1332,26 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         int bottom = bounds.yMin;
         int top = bounds.yMax - 1;
 
-        switch (selectedDropPattern)
+        if (IsReducedSuddenDeath())
         {
-            case SuddenDeathDropPattern.Spiral:
-                BuildSpiralPath(left, right, bottom, top);
-                break;
+            BuildReducedClosingPath(left, right, bottom, top);
+        }
+        else
+        {
+            switch (selectedDropPattern)
+            {
+                case SuddenDeathDropPattern.Spiral:
+                    BuildSpiralPath(left, right, bottom, top);
+                    break;
 
-            case SuddenDeathDropPattern.Horizontal:
-                BuildHorizontalPath(left, right, bottom, top);
-                break;
+                case SuddenDeathDropPattern.Horizontal:
+                    BuildHorizontalPath(left, right, bottom, top);
+                    break;
 
-            case SuddenDeathDropPattern.Vertical:
-                BuildVerticalPath(left, right, bottom, top);
-                break;
+                case SuddenDeathDropPattern.Vertical:
+                    BuildVerticalPath(left, right, bottom, top);
+                    break;
+            }
         }
 
         if (logSuddenDeathFlow)
@@ -1335,7 +1359,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (suddenDeathPath.Count > 0)
             {
                 float slotDuration = suddenDeathPath.Count > 0
-                    ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
+                    ? GetDropWindowDuration() / suddenDeathPath.Count
                     : 0f;
 
                 LogFlow(
@@ -1343,6 +1367,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                     $"existingSlots={existingIndestructibleSlotsInPath}, " +
                     $"emptySlots={emptySlotsInPath}, " +
                     $"slotDuration={slotDuration:0.000}, " +
+                    $"reduced={IsReducedSuddenDeath()}, " +
                     $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, " +
                     $"first={suddenDeathPath[0]}, last={suddenDeathPath[suddenDeathPath.Count - 1]}");
             }
@@ -1605,6 +1630,36 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
     }
 
+    void BuildReducedClosingPath(int left, int right, int bottom, int top)
+    {
+        for (int ringIndex = 0;
+             ringIndex < ReducedSuddenDeathRingCount &&
+             left <= right &&
+             bottom <= top;
+             ringIndex++)
+        {
+            List<Vector3Int> ring = new List<Vector3Int>();
+            AddRingCells(ring, left, right, bottom, top);
+
+            ring = ReorderRingFromCorner(
+                ring,
+                left,
+                right,
+                bottom,
+                top,
+                selectedStartCorner,
+                selectedClockwise);
+
+            for (int i = 0; i < ring.Count; i++)
+                AddCellIfValid(ring[i]);
+
+            left++;
+            right--;
+            bottom++;
+            top--;
+        }
+    }
+
     void BuildHorizontalPath(int left, int right, int bottom, int top)
     {
         bool startFromTop = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.TopRight;
@@ -1784,6 +1839,19 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return shadowLeadTime;
 
         return shadowLeadTime + (((index + 1f) / suddenDeathPath.Count) * dropWindowDuration);
+    }
+
+    float GetDropWindowDuration()
+    {
+        return Mathf.Max(
+            0.0001f,
+            suddenDeathDropStartRemainingTime - suddenDeathDropEndRemainingTime);
+    }
+
+    static bool IsReducedSuddenDeath()
+    {
+        return BattleModeRules.Instance != null &&
+               BattleModeRules.Instance.UseReducedSuddenDeath;
     }
 
     public void StopSuddenDeathAndClearVisuals()
