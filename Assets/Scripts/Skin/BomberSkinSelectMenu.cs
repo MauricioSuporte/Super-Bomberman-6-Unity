@@ -1315,7 +1315,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
             battleSkinTargetPlayerIds.Add(GameSession.MinPlayerId);
 
         if (results.Count <= 0)
-            results.Add(GameSession.MinPlayerId);
+            results.Add(battleSkinTargetPlayerIds[0]);
+
+        for (int i = 0; i < results.Count; i++)
+            battleComQueue.Remove(results[i]);
     }
 
     int GetCursorInputPlayerId(PlayerCursorState ps)
