@@ -122,6 +122,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [Header("Input Timing")]
     [SerializeField, Min(0.01f)] private float directionalRepeatInitialDelay = 0.22f;
     [SerializeField, Min(0.01f)] private float directionalRepeatInterval = 0.12f;
+    [SerializeField, Min(0.01f)] private float playerModeRepeatInitialDelay = 0.4f;
+    [SerializeField, Min(0.01f)] private float playerModeRepeatInterval = 0.3f;
 
     [Header("Prompt Title (optional)")]
     [SerializeField] private TextMeshProUGUI promptTitleText;
@@ -1032,9 +1034,19 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateOptionVisuals();
         }
 
-        bool moveLeft = MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _);
+        bool moveLeft = MenuDirectionalPressed(
+            input,
+            PlayerAction.MoveLeft,
+            playerModeRepeatInitialDelay,
+            playerModeRepeatInterval,
+            out _);
         bool actionL = MenuButtonPressed(input, PlayerAction.ActionL, out _);
-        bool moveRight = MenuDirectionalPressed(input, PlayerAction.MoveRight, out _);
+        bool moveRight = MenuDirectionalPressed(
+            input,
+            PlayerAction.MoveRight,
+            playerModeRepeatInitialDelay,
+            playerModeRepeatInterval,
+            out _);
         bool actionR = MenuButtonPressed(input, PlayerAction.ActionR, out _);
         bool previousMode = moveLeft || actionL;
         bool nextMode = moveRight || actionR;
@@ -1448,6 +1460,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = teamSelectionPlayerIds.Count <= 0;
         while (!done)
         {
@@ -1456,14 +1470,14 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             if (input != null)
             {
-                if (input.GetDown(inputPlayerId, PlayerAction.MoveUp) ||
-                    input.GetDown(inputPlayerId, PlayerAction.MoveLeft))
+                if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _) ||
+                    MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _))
                 {
                     selectedTeamIndex = WrapIndex(selectedTeamIndex - 1, TeamIds.Length);
                     moved = true;
                 }
-                else if (input.GetDown(inputPlayerId, PlayerAction.MoveDown) ||
-                         input.GetDown(inputPlayerId, PlayerAction.MoveRight))
+                else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _) ||
+                         MenuDirectionalPressed(input, PlayerAction.MoveRight, out _))
                 {
                     selectedTeamIndex = WrapIndex(selectedTeamIndex + 1, TeamIds.Length);
                     moved = true;
@@ -1507,6 +1521,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 {
                     PlaySfx(deniedSfx, deniedSfxVolume);
                     UpdateTeamSelectVisuals(true);
+                    CapturePreviousHeldInputs(input);
                     yield return null;
                     continue;
                 }
@@ -1537,6 +1552,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamPreviewTimer += Time.unscaledDeltaTime;
             TickTeamCelebrationTimers();
             UpdateTeamSelectVisuals(false);
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -2124,6 +2140,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -2135,12 +2153,12 @@ public sealed class BattleModeMenu : MonoBehaviour
             }
 
             bool moved = false;
-            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
             {
                 selectedRuleIndex = WrapIndex(selectedRuleIndex - 1, ruleRows.Count);
                 moved = true;
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
             {
                 selectedRuleIndex = WrapIndex(selectedRuleIndex + 1, ruleRows.Count);
                 moved = true;
@@ -2152,9 +2170,9 @@ public sealed class BattleModeMenu : MonoBehaviour
                 UpdateRuleConfigVisuals();
             }
 
-            bool previousValue = input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft) ||
+            bool previousValue = MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _) ||
                                  input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL);
-            bool nextValue = input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight) ||
+            bool nextValue = MenuDirectionalPressed(input, PlayerAction.MoveRight, out _) ||
                              input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR);
             if (previousValue || nextValue)
             {
@@ -2182,6 +2200,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             }
 
             UpdateRuleConfigVisuals();
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -3193,6 +3212,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -3203,13 +3224,13 @@ public sealed class BattleModeMenu : MonoBehaviour
                 continue;
             }
 
-            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
             {
                 selectedSpecificSettingIndex = WrapIndex(selectedSpecificSettingIndex - 1, SpecificSettingsOptions.Length);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                 UpdateSpecificSettingsVisuals();
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
             {
                 selectedSpecificSettingIndex = WrapIndex(selectedSpecificSettingIndex + 1, SpecificSettingsOptions.Length);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
@@ -3267,6 +3288,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             }
 
             UpdateSpecificSettingsVisuals();
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -3299,6 +3321,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -3309,13 +3333,13 @@ public sealed class BattleModeMenu : MonoBehaviour
                 continue;
             }
 
-            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
             {
                 selectedMusicIndex = WrapIndex(selectedMusicIndex - 1, GetBattleMusicSelections().Length);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                 UpdateMusicSelectVisuals();
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
             {
                 selectedMusicIndex = WrapIndex(selectedMusicIndex + 1, GetBattleMusicSelections().Length);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
@@ -3340,6 +3364,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             UpdateMusicSelectVisuals();
             musicSelectCursorConfirmTimer = Mathf.Max(0f, musicSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -3656,6 +3681,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -3674,25 +3701,25 @@ public sealed class BattleModeMenu : MonoBehaviour
                 SaveCurrentBattleItemAmounts();
                 done = true;
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _))
             {
                 selectedItemIndex = WrapIndex(selectedItemIndex - 1, itemCount);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                 UpdateItemSelectVisuals();
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveRight, out _))
             {
                 selectedItemIndex = WrapIndex(selectedItemIndex + 1, itemCount);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                 UpdateItemSelectVisuals();
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
             {
                 selectedItemIndex = WrapIndex(selectedItemIndex - columns, itemCount);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                 UpdateItemSelectVisuals();
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
             {
                 selectedItemIndex = WrapIndex(selectedItemIndex + columns, itemCount);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
@@ -3725,6 +3752,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             UpdateItemSelectVisuals();
             itemSelectCursorConfirmTimer = Mathf.Max(0f, itemSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -4313,6 +4341,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -4325,22 +4355,22 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             int count = GetLouieSelectEntryCount();
             int columns = Mathf.Max(1, louieSelectColumns);
-            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft))
+            if (MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _))
             {
                 selectedLouieIndex = WrapIndex(selectedLouieIndex - 1, count);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveRight, out _))
             {
                 selectedLouieIndex = WrapIndex(selectedLouieIndex + 1, count);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
             {
                 selectedLouieIndex = WrapIndex(selectedLouieIndex - columns, count);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
             {
                 selectedLouieIndex = WrapIndex(selectedLouieIndex + columns, count);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
@@ -4368,6 +4398,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             UpdateLouieSelectVisuals();
             louieSelectCursorConfirmTimer = Mathf.Max(0f, louieSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -4819,6 +4850,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
 
+        CapturePreviousHeldInputs(input);
+
         bool done = false;
         while (!done)
         {
@@ -4829,22 +4862,22 @@ public sealed class BattleModeMenu : MonoBehaviour
                 continue;
             }
 
-            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft))
+            if (MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _))
             {
                 selectedHandicapColumn = WrapIndex(selectedHandicapColumn - 1, GetHandicapSelectColumnCount());
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveRight, out _))
             {
                 selectedHandicapColumn = WrapIndex(selectedHandicapColumn + 1, GetHandicapSelectColumnCount());
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
             {
                 selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow - 1, -1);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
             {
                 selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow + 1, 1);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
@@ -4888,6 +4921,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             UpdateHandicapSelectVisuals();
             handicapSelectCursorConfirmTimer = Mathf.Max(0f, handicapSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            CapturePreviousHeldInputs(input);
             yield return null;
         }
 
@@ -6073,6 +6107,21 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private bool MenuDirectionalPressed(PlayerInputManager input, PlayerAction action, out int triggeringPlayerId)
     {
+        return MenuDirectionalPressed(
+            input,
+            action,
+            directionalRepeatInitialDelay,
+            directionalRepeatInterval,
+            out triggeringPlayerId);
+    }
+
+    private bool MenuDirectionalPressed(
+        PlayerInputManager input,
+        PlayerAction action,
+        float initialDelay,
+        float repeatInterval,
+        out int triggeringPlayerId)
+    {
         triggeringPlayerId = 0;
 
         int actionIndex = (int)action;
@@ -6086,13 +6135,13 @@ public sealed class BattleModeMenu : MonoBehaviour
         float now = Time.unscaledTime;
         if (!previousMenuHeld[actionIndex])
         {
-            nextMenuRepeatTime[actionIndex] = now + Mathf.Max(0.01f, directionalRepeatInitialDelay);
+            nextMenuRepeatTime[actionIndex] = now + Mathf.Max(0.01f, initialDelay);
             return true;
         }
 
         if (now >= nextMenuRepeatTime[actionIndex])
         {
-            nextMenuRepeatTime[actionIndex] = now + Mathf.Max(0.01f, directionalRepeatInterval);
+            nextMenuRepeatTime[actionIndex] = now + Mathf.Max(0.01f, repeatInterval);
             return true;
         }
 

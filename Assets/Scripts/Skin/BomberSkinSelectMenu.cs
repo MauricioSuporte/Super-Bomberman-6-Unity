@@ -42,6 +42,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] Color normalTint = Color.white;
     [SerializeField] Color selectedTint = Color.white;
 
+    [Header("Input Timing")]
+    [SerializeField, Min(0.01f)] float directionalRepeatInitialDelay = 0.22f;
+    [SerializeField, Min(0.01f)] float directionalRepeatInterval = 0.12f;
+
     [Header("Cursor Prefab (RectTransform)")]
     [SerializeField] RectTransform skinCursorPrefab;
 
@@ -266,6 +270,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
     readonly List<int> battleSkinTargetPlayerIds = new(GameSession.MaxPlayerId);
     readonly List<int> battleComQueue = new(GameSession.MaxPlayerId);
+    readonly bool[,] previousDirectionalHeld = new bool[GameSession.MaxPlayerId + 1, 4];
+    readonly float[,] nextDirectionalRepeatTime = new float[GameSession.MaxPlayerId + 1, 4];
     readonly Dictionary<int, List<PlayerCursorState>> battleConfirmedByInput = new();
     int nextBattleComQueueIndex;
 
@@ -502,6 +508,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             temporaryHiddenCanvasGroup.alpha = previousCanvasGroupAlpha;
 
         menuActive = true;
+        ResetDirectionalRepeatState();
 
         DumpHintSpacing("SelectSkinRoutine.BeforeFadeIn");
 
@@ -557,10 +564,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
                 int pid = GetCursorInputPlayerId(ps);
 
-                bool upDown = input != null && input.GetDown(pid, PlayerAction.MoveUp);
-                bool downDown = input != null && input.GetDown(pid, PlayerAction.MoveDown);
-                bool leftDown = input != null && input.GetDown(pid, PlayerAction.MoveLeft);
-                bool rightDown = input != null && input.GetDown(pid, PlayerAction.MoveRight);
+                bool upDown = DirectionalPressed(input, pid, PlayerAction.MoveUp);
+                bool downDown = DirectionalPressed(input, pid, PlayerAction.MoveDown);
+                bool leftDown = DirectionalPressed(input, pid, PlayerAction.MoveLeft);
+                bool rightDown = DirectionalPressed(input, pid, PlayerAction.MoveRight);
                 bool aDown = input != null && input.GetDown(pid, PlayerAction.ActionA);
                 bool bDown = input != null && input.GetDown(pid, PlayerAction.ActionB);
                 bool startDown = input != null && input.GetDown(pid, PlayerAction.Start);
@@ -1152,6 +1159,58 @@ public class BomberSkinSelectMenu : MonoBehaviour
             int p = Mathf.Clamp(activePlayerIds[i], GameSession.MinPlayerId, GameSession.MaxPlayerId);
             var st = CreateCursorState(p, p, false);
             players.Add(st);
+        }
+    }
+
+    bool DirectionalPressed(PlayerInputManager input, int playerId, PlayerAction action)
+    {
+        int directionIndex = action switch
+        {
+            PlayerAction.MoveUp => 0,
+            PlayerAction.MoveDown => 1,
+            PlayerAction.MoveLeft => 2,
+            PlayerAction.MoveRight => 3,
+            _ => -1
+        };
+
+        int clampedPlayerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        if (input == null || directionIndex < 0)
+            return false;
+
+        bool held = input.Get(clampedPlayerId, action);
+        if (!held)
+        {
+            previousDirectionalHeld[clampedPlayerId, directionIndex] = false;
+            nextDirectionalRepeatTime[clampedPlayerId, directionIndex] = 0f;
+            return false;
+        }
+
+        float now = Time.unscaledTime;
+        if (!previousDirectionalHeld[clampedPlayerId, directionIndex])
+        {
+            previousDirectionalHeld[clampedPlayerId, directionIndex] = true;
+            nextDirectionalRepeatTime[clampedPlayerId, directionIndex] =
+                now + Mathf.Max(0.01f, directionalRepeatInitialDelay);
+            return true;
+        }
+
+        if (now < nextDirectionalRepeatTime[clampedPlayerId, directionIndex])
+            return false;
+
+        nextDirectionalRepeatTime[clampedPlayerId, directionIndex] =
+            now + Mathf.Max(0.01f, directionalRepeatInterval);
+        return true;
+    }
+
+    void ResetDirectionalRepeatState()
+    {
+        for (int playerId = 0; playerId <= GameSession.MaxPlayerId; playerId++)
+        {
+            for (int directionIndex = 0; directionIndex < 4; directionIndex++)
+            {
+                previousDirectionalHeld[playerId, directionIndex] = false;
+                nextDirectionalRepeatTime[playerId, directionIndex] = 0f;
+            }
         }
     }
 
