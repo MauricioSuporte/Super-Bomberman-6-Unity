@@ -125,6 +125,10 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         if (waitingForSpringExit.Contains(mover))
             return;
 
+        var pinkJump = mover.GetComponent<PinkLouieJumpAbility>();
+        if (pinkJump != null && pinkJump.JumpActive)
+            return;
+
         bool hasSpringAbility =
             mover.TryGetComponent(out BattleModeComStage4SpringEscapeAbility springAbility);
         if (!TryPickLandingCell(mover, springCell, out Vector3Int landingCell))
@@ -161,6 +165,8 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         Vector2 start = GetCellCenter(springCell);
         Vector2 end = GetCellCenter(landingCell);
         Vector2 faceDir = ResolveFacing(mover, start, end);
+
+        CancelActiveMountMovementAbilities(mover);
 
         bool prevInputLocked = mover.InputLocked;
         bool prevPlayerExplosionInvulnerable = mover.explosionInvulnerable;
@@ -262,6 +268,20 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             bool landedOnSpring = groundTilemap != null && IsSpringTile(groundTilemap.GetTile(landingCell));
             ReleaseJumperAfterGrace(mover, landedOnSpring);
         }
+    }
+
+    void CancelActiveMountMovementAbilities(MovementController mover)
+    {
+        if (mover == null)
+            return;
+
+        var greenDash = mover.GetComponent<GreenLouieDashAbility>();
+        if (greenDash != null && greenDash.DashActive)
+            greenDash.CancelDashForExternalInterruption();
+
+        var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
+        if (blackDash != null && blackDash.DashActive)
+            blackDash.CancelDashForExternalInterruption();
     }
 
     void ReleaseJumperAfterGrace(MovementController mover, bool waitForSpringExit)

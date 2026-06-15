@@ -566,8 +566,22 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (mover.IsRidingPlaying())
             return true;
 
-        if (mover.InputLocked || mover.ExternalMovementOverride || mover.VisualOverrideActive)
+        var pinkJump = mover.GetComponent<PinkLouieJumpAbility>();
+        if (pinkJump != null && pinkJump.JumpActive)
             return true;
+
+        bool interruptibleDashActive =
+            (mover.TryGetComponent(out GreenLouieDashAbility greenDash) &&
+             greenDash.DashActive) ||
+            (mover.TryGetComponent(out BlackLouieDashPushAbility blackDash) &&
+             blackDash.DashActive);
+
+        if ((mover.InputLocked && !interruptibleDashActive) ||
+            mover.ExternalMovementOverride ||
+            mover.VisualOverrideActive)
+        {
+            return true;
+        }
 
         return false;
     }
@@ -1345,10 +1359,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
         if (blackDash != null && blackDash.DashActive)
             blackDash.CancelDashForExternalInterruption();
-
-        var pinkJump = mover.GetComponent<PinkLouieJumpAbility>();
-        if (pinkJump != null && pinkJump.JumpActive)
-            pinkJump.CancelJumpForExternalInterruption();
     }
 
     void RestoreRideState(MovementController mover, RideState state)
