@@ -423,6 +423,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (sr == null)
                 continue;
 
+            if (mc.CompareTag("Player") && IsPlayerProtectedFromAirborneBombImpact(mc))
+                continue;
+
             stunned ??= new HashSet<StunReceiver>();
             if (!stunned.Add(sr))
                 continue;
@@ -442,6 +445,44 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 SpawnExpelledPersistentItem(mc, expelledType);
             }
         }
+    }
+
+    private bool IsPlayerProtectedFromAirborneBombImpact(MovementController player)
+    {
+        if (player == null)
+            return false;
+
+        float tileSize = Mathf.Max(0.0001f, kickTileSize);
+        Vector2 playerTileCenter = new(
+            Mathf.Round(player.transform.position.x / tileSize) * tileSize,
+            Mathf.Round(player.transform.position.y / tileSize) * tileSize);
+
+        int mask = LayerMask.GetMask("Stage", "Bomb");
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(
+            playerTileCenter,
+            Vector2.one * (tileSize * 0.55f),
+            0f,
+            mask);
+
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Collider2D overlap = overlaps[i];
+            if (overlap == null || overlap.gameObject == gameObject)
+                continue;
+
+            Bomb occupyingBomb =
+                overlap.GetComponent<Bomb>() ??
+                overlap.GetComponentInParent<Bomb>() ??
+                overlap.GetComponentInChildren<Bomb>();
+
+            if (occupyingBomb != null && occupyingBomb != this && !occupyingBomb.HasExploded)
+                return true;
+
+            if (overlap.CompareTag(TagDestructibles))
+                return true;
+        }
+
+        return false;
     }
 
     private void PlayLoseItemSfx(MovementController movementController)
