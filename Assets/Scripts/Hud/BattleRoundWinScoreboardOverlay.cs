@@ -20,6 +20,7 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
     readonly List<int> activePlayerIds = new(GameSession.MaxPlayerId);
     readonly List<BattleModeHudState> hiddenBattleHuds = new();
     RectTransform blackBackdrop;
+    BattleOverlayAudioIsolation audioIsolation;
     bool skipRequested;
 
     struct BattleModeHudState
@@ -170,6 +171,7 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         if (presenter == null || rect == null)
             yield break;
 
+        audioIsolation = BattleOverlayAudioIsolation.Begin(gameObject);
         HideBattleModeHud();
         PopulateActivePlayerIds();
 
@@ -258,20 +260,10 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
                (input.AnyGetDown(PlayerAction.ActionA) || input.AnyGetDown(PlayerAction.Start));
     }
 
-    static void StopOverlayAudio()
+    void StopOverlayAudio()
     {
-        if (GameMusicController.Instance != null)
-        {
-            GameMusicController.Instance.StopMusic();
-            GameMusicController.Instance.StopSfx();
-        }
-
-        AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
-        for (int i = 0; i < audioSources.Length; i++)
-        {
-            if (audioSources[i] != null)
-                audioSources[i].Stop();
-        }
+        if (audioIsolation != null)
+            audioIsolation.Stop();
     }
 
     void PopulateActivePlayerIds()
@@ -299,11 +291,8 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         if (matchEndJingleClip == null)
             return;
 
-        AudioSource audioSource = FindAnyObjectByType<AudioSource>();
-        if (audioSource == null)
-            audioSource = gameObject.AddComponent<AudioSource>();
-
-        audioSource.PlayOneShot(matchEndJingleClip);
+        if (audioIsolation != null)
+            audioIsolation.Play(matchEndJingleClip);
     }
 
     void HideBattleModeHud()

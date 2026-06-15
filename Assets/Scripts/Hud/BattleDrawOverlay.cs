@@ -40,6 +40,7 @@ public sealed class BattleDrawOverlay : MonoBehaviour
     RectTransform runtimeRoot;
     RectTransform blackBackdrop;
     CanvasGroup canvasGroup;
+    BattleOverlayAudioIsolation audioIsolation;
     Sprite backgroundSprite;
     Sprite[] letterSprites;
     bool skipRequested;
@@ -183,6 +184,7 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         canvasGroup = GetComponent<CanvasGroup>();
         RectTransform parentRect = transform.parent as RectTransform;
 
+        audioIsolation = BattleOverlayAudioIsolation.Begin(gameObject);
         HideBattleModeHud();
         EnsureSpritesLoaded();
         BuildUi();
@@ -403,30 +405,16 @@ public sealed class BattleDrawOverlay : MonoBehaviour
                (input.AnyGetDown(PlayerAction.ActionA) || input.AnyGetDown(PlayerAction.Start));
     }
 
-    static void StopOverlayAudio()
+    void StopOverlayAudio()
     {
-        if (GameMusicController.Instance != null)
-        {
-            GameMusicController.Instance.StopMusic();
-            GameMusicController.Instance.StopSfx();
-        }
-
-        AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
-        for (int i = 0; i < audioSources.Length; i++)
-        {
-            if (audioSources[i] != null)
-                audioSources[i].Stop();
-        }
+        if (audioIsolation != null)
+            audioIsolation.Stop();
     }
 
     void PlayDrawMusic()
     {
-        if (GameMusicController.Instance != null)
-        {
-            GameMusicController.Instance.StopMusic();
-            if (drawMusic != null)
-                GameMusicController.Instance.PlayMusic(drawMusic, drawMusicVolume, false);
-        }
+        if (audioIsolation != null)
+            audioIsolation.Play(drawMusic, drawMusicVolume);
     }
 
     void HideBattleModeHud()

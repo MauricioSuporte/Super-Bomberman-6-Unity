@@ -57,6 +57,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     RectTransform runtimeRoot;
     RectMask2D runtimeMask;
     CanvasGroup canvasGroup;
+    BattleOverlayAudioIsolation audioIsolation;
     Sprite backgroundSprite;
     Sprite victoryTextSprite;
     Sprite[] blueFrames;
@@ -197,6 +198,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         canvasGroup = GetComponent<CanvasGroup>();
         RectTransform parentRect = transform.parent as RectTransform;
 
+        audioIsolation = BattleOverlayAudioIsolation.Begin(gameObject);
         EnsureSpritesLoaded();
         BuildUi();
         ConfigureRoot(parentRect);
@@ -538,20 +540,10 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
                (input.AnyGetDown(PlayerAction.ActionA) || input.AnyGetDown(PlayerAction.Start));
     }
 
-    static void StopOverlayAudio()
+    void StopOverlayAudio()
     {
-        if (GameMusicController.Instance != null)
-        {
-            GameMusicController.Instance.StopMusic();
-            GameMusicController.Instance.StopSfx();
-        }
-
-        AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
-        for (int i = 0; i < audioSources.Length; i++)
-        {
-            if (audioSources[i] != null)
-                audioSources[i].Stop();
-        }
+        if (audioIsolation != null)
+            audioIsolation.Stop();
     }
 
     void UpdateWinnerBomberEntrance(float elapsed)
@@ -712,12 +704,8 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
     void PlayWinMatchMusic()
     {
-        if (GameMusicController.Instance == null)
-            return;
-
-        GameMusicController.Instance.StopMusic();
-        if (winMatchMusic != null)
-            GameMusicController.Instance.PlayMusic(winMatchMusic, winMatchMusicVolume, false);
+        if (audioIsolation != null)
+            audioIsolation.Play(winMatchMusic, winMatchMusicVolume);
     }
 
     Image CreateImage(string childName, Sprite sprite)
