@@ -3318,6 +3318,55 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
+    public void PlayBattleTimeUpSequence()
+    {
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        bool canceledRidingTransition = cachedCompanion != null
+            && cachedCompanion.CancelRidingTransitionForEndStage();
+
+        if (cachedRiding == null)
+            TryGetComponent(out cachedRiding);
+
+        if (!canceledRidingTransition && cachedRiding != null && cachedRiding.IsPlaying)
+            cachedRiding.CancelRiding();
+
+        SetExternalVisualSuppressed(false);
+        SetVisualOverrideActive(false);
+        SetExternalMovementOverride(false);
+
+        isEndingStage = true;
+        SetExplosionInvulnerable(true);
+
+        CharacterHealth[] healths = GetComponentsInChildren<CharacterHealth>(true);
+        for (int i = 0; i < healths.Length; i++)
+            healths[i]?.SetExternalInvulnerability(true);
+
+        if (abilitySystem != null)
+            abilitySystem.DisableAll();
+
+        inputLocked = true;
+        inactivityMountedDownOverride = false;
+        ResetDualInputAxes();
+
+        if (spriteLock != null && spriteLock.IsLocked)
+            spriteLock.EndLock();
+
+        if (bombController != null)
+            bombController.enabled = false;
+
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
+
+        direction = Vector2.zero;
+        hasInput = false;
+        ForceIdleFacing(Vector2.down, "PlayBattleTimeUpSequence");
+
+        if (TryGetComponent<InactivityAnimation>(out var inactivity) && inactivity != null)
+            inactivity.PlayBattleTimeUpPose(isMounted);
+    }
+
     public void SetSuppressInactivityAnimation(bool suppress)
     {
         suppressInactivityAnimation = suppress;

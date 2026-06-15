@@ -67,7 +67,7 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
     const float BattleDrawPreFadeDuration = 1f;
-    const float BattleDrawFallbackAfterTimerExpiredSeconds = 15f;
+    const float BattleTimeUpDelayAfterTimerExpiredSeconds = 1f;
     static readonly WaitForSecondsRealtime waitBattleDrawPreFadeDelay = new(BattleDrawPreFadeDuration);
     const float BattleRoundWinShowDelay = 1f;
     static readonly WaitForSecondsRealtime waitRoundWinScoreboardDelay = new(BattleRoundWinShowDelay);
@@ -1740,7 +1740,7 @@ public class GameManager : MonoBehaviour
 
         battleTimerExpiredElapsedSeconds += Time.unscaledDeltaTime;
 
-        if (battleTimerExpiredElapsedSeconds < BattleDrawFallbackAfterTimerExpiredSeconds)
+        if (battleTimerExpiredElapsedSeconds < BattleTimeUpDelayAfterTimerExpiredSeconds)
             return;
 
         TriggerBattleDrawSequence();
@@ -1767,6 +1767,9 @@ public class GameManager : MonoBehaviour
         if (suddenDeathController != null)
             suddenDeathController.StopSuddenDeathAndClearVisuals();
 
+        PrepareActivePlayersForBattleTimeUp();
+        yield return BattleTimeUpOverlay.PlayRoutine();
+
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(BattleDrawPreFadeDuration);
 
@@ -1787,6 +1790,32 @@ public class GameManager : MonoBehaviour
 
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);
+    }
+
+    static void PrepareActivePlayersForBattleTimeUp()
+    {
+        MovementController[] players =
+            FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            MovementController player = players[i];
+            if (player == null ||
+                !player.gameObject.activeInHierarchy ||
+                !player.CompareTag("Player") ||
+                player.isDead)
+            {
+                continue;
+            }
+
+            if (player.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+                glove.DestroyHeldBombIfHolding();
+
+            if (player.TryGetComponent<BombController>(out var bombController) && bombController != null)
+                bombController.ClearPlantedBombsOnStageEnd(false);
+
+            player.PlayBattleTimeUpSequence();
+        }
     }
 
     bool RegisterBattleVictory(MovementController survivingPlayer)

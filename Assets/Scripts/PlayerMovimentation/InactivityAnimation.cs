@@ -27,6 +27,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     private float lastInputTime;
 
     private bool isPlaying;
+    private bool externalPoseActive;
     private EmoteTarget currentTarget;
 
     private MountVisualController cachedLouieVisual;
@@ -45,8 +46,59 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     public void CancelForExternalOverride()
     {
+        externalPoseActive = false;
         StopEmote();
         lastInputTime = Time.time;
+    }
+
+    public void PlayBattleTimeUpPose(bool mounted)
+    {
+        externalPoseActive = false;
+        StopEmote();
+        externalPoseActive = true;
+
+        isPlaying = true;
+        usingAlt = false;
+        activeRenderer = null;
+
+        if (mounted)
+        {
+            currentTarget = EmoteTarget.Mount;
+            movement.SetInactivityMountedDownOverride(true);
+
+            MountVisualController louieVisual = ResolveLouieVisual();
+            if (louieVisual != null)
+            {
+                AnimatedSpriteRenderer mountAfk2 =
+                    louieVisual.LouieInactivityEmoteLoopAlt != null
+                        ? louieVisual.LouieInactivityEmoteLoopAlt
+                        : louieVisual.LouieInactivityEmoteLoop;
+
+                louieVisual.SetInactivityEmote(mountAfk2, true);
+            }
+
+            SetPlayerEmoteEnabled(false);
+            return;
+        }
+
+        currentTarget = EmoteTarget.Player;
+        activeRenderer = emoteLoopRenderer != null
+            ? emoteLoopRenderer
+            : emoteLoopRendererAlt;
+
+        movement.SetInactivityMountedDownOverride(false);
+        movement.SetVisualOverrideActive(true);
+
+        if (activeRenderer != null)
+        {
+            activeRenderer.loop = true;
+            activeRenderer.idle = false;
+            activeRenderer.pingPong = false;
+            activeRenderer.CurrentFrame = 0;
+            activeRenderer.RefreshFrame();
+        }
+
+        SetPlayerEmoteEnabled(true);
     }
 
     private void Awake()
@@ -60,12 +112,14 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private void OnEnable()
     {
+        externalPoseActive = false;
         lastInputTime = Time.time;
         StopEmote();
     }
 
     private void OnDisable()
     {
+        externalPoseActive = false;
         StopEmote();
     }
 
@@ -74,6 +128,9 @@ public sealed class InactivityAnimation : MonoBehaviour
         using var performanceSample = BattleModePerformanceMarkers.InactivityAnimationUpdate.Auto();
 
         if (movement == null)
+            return;
+
+        if (externalPoseActive)
             return;
 
         if (movement.SuppressInactivityAnimation)
