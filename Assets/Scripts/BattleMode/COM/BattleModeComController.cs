@@ -1160,14 +1160,6 @@ public sealed class BattleModeComController : MonoBehaviour
             }
         }
 
-        LogDestructiblePassMovementState(
-            myTile,
-            currentDangerSeconds,
-            oscDiagDecidedMove,
-            oscDiagAfterSafeCenter,
-            oscDiagAfterTurnAxis,
-            currentMoveInput);
-
         SetMovementInput(currentMoveInput);
         TrackBehaviorDiagnostics(myTile, currentDangerSeconds);
         SetActionAHeld(currentHoldActionA);
@@ -6524,61 +6516,6 @@ public sealed class BattleModeComController : MonoBehaviour
             return "enforce";
 
         return "decision";
-    }
-
-    private void LogDestructiblePassMovementState(
-        Vector2Int myTile,
-        float dangerSeconds,
-        Vector2 decided,
-        Vector2 afterSafeCenter,
-        Vector2 afterTurnAxis,
-        Vector2 afterEnforce)
-    {
-        if (!EnableDestructiblePassOscillationDiagnostics ||
-            !IsCurrentDestructiblePassDiagnosticContext())
-        {
-            return;
-        }
-
-        Vector2Int appliedDir = DirectionToTile(afterEnforce);
-        Vector2Int decidedDir = DirectionToTile(decided);
-        if (appliedDir == Vector2Int.zero && decidedDir == Vector2Int.zero)
-            return;
-
-        string changedAt = DescribeMovementPipelineChange(
-            decided,
-            afterSafeCenter,
-            afterTurnAxis,
-            afterEnforce);
-        string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
-        string safeCenter = hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none";
-        string key =
-            $"{myTile}:{currentAction}:{target}:{currentReason}:{FirstMoveDescription(decided)}:" +
-            $"{FirstMoveDescription(afterEnforce)}:{changedAt}";
-
-        if (key == destPassOscLastStateLogKey &&
-            Time.time - destPassOscLastStateLogTime < 0.35f)
-        {
-            return;
-        }
-
-        destPassOscLastStateLogKey = key;
-        destPassOscLastStateLogTime = Time.time;
-
-        Vector2 centerOffset = (Vector2)transform.position - TileToWorld(myTile);
-        Vector2Int nextTile = appliedDir == Vector2Int.zero ? myTile : myTile + appliedDir;
-        Debug.LogWarning(
-            $"[BattleCOMDestructiblePassOsc][P{playerId}] event:MOVE_STATE frame:{Time.frameCount} t:{Time.time:F2} " +
-            $"tile:{myTile} next:{nextTile} pos:{transform.position} centerOffset:{centerOffset} " +
-            $"danger:{FormatDanger(dangerSeconds)} nextDanger:{FormatDanger(GetDangerSeconds(nextTile, null))} " +
-            $"pipeline[decided:{FirstMoveDescription(decided)} safeCenter:{FirstMoveDescription(afterSafeCenter)} " +
-            $"turnAxis:{FirstMoveDescription(afterTurnAxis)} enforce:{FirstMoveDescription(afterEnforce)} " +
-            $"changedAt:{changedAt}] action:{currentAction} route:{destPassOscCurrentRoute} " +
-            $"target:{target} safeCenterTarget:{safeCenter} reason:{currentReason} " +
-            $"input:{currentInputDescription} escapeRoute:{currentMoveFollowsEscapeRoute} " +
-            $"walkableNext:{IsWalkableTile(nextTile, myTile)} destNext:{HasDestructibleTile(nextTile)} " +
-            $"indNext:{HasIndestructibleTile(nextTile)} bombNext:{(IsBombAtTile(nextTile) ? "yes" : "no")}",
-            this);
     }
 
     private void LogBehaviorStart()
