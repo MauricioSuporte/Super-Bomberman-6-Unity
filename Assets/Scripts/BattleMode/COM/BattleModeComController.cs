@@ -17,6 +17,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float BehaviorStoppedDangerSeconds = 0.5f;
     private const float BehaviorOscillationWindowSeconds = 1.5f;
     private const float BehaviorRepeatLogSeconds = 0.75f;
+    private const float SkullSpeedDecisionIntervalSeconds = 0.015f;
     private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
     private static readonly bool EnableDeathDiagnostics = false;
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
@@ -1029,6 +1030,19 @@ public sealed class BattleModeComController : MonoBehaviour
 
         BattleModeComputerLevel difficulty = ResolveDifficulty();
         BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(difficulty);
+        bool hasSkullSpeedCadence = IsCurrentSkullSpeedDiagnosticContext();
+        if (hasSkullSpeedCadence)
+        {
+            settings.decisionInterval = Mathf.Min(
+                settings.decisionInterval,
+                SkullSpeedDecisionIntervalSeconds);
+            settings.dangerDecisionInterval = Mathf.Min(
+                settings.dangerDecisionInterval,
+                SkullSpeedDecisionIntervalSeconds);
+            if (nextDecisionTime > Time.time + settings.decisionInterval)
+                nextDecisionTime = Time.time;
+        }
+
         if (TryGetComponent(
                 out BattleModeComStage10PowerZoneAggressionAbility
                     powerZoneAggression))
@@ -1893,14 +1907,14 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
 
         Vector2 delta = TileToWorld(targetTile) - (Vector2)transform.position;
-        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+        float tolerance = GetPlantAlignmentTolerance();
         return Mathf.Abs(delta.x) <= tolerance && Mathf.Abs(delta.y) <= tolerance;
     }
 
     private Vector2 GetMoveTowardPlantCenter(Vector2Int targetTile)
     {
         Vector2 delta = TileToWorld(targetTile) - (Vector2)transform.position;
-        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+        float tolerance = GetPlantAlignmentTolerance();
 
         if (Mathf.Abs(delta.x) > tolerance && Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
             return delta.x > 0f ? Vector2.right : Vector2.left;
@@ -1909,6 +1923,17 @@ public sealed class BattleModeComController : MonoBehaviour
             return delta.y > 0f ? Vector2.up : Vector2.down;
 
         return Vector2.zero;
+    }
+
+    private float GetPlantAlignmentTolerance()
+    {
+        float baseTolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+
+        if (!IsCurrentSkullSpeedDiagnosticContext() || movement == null)
+            return baseTolerance;
+
+        float skullStep = movement.speed * tileSize * Time.fixedDeltaTime;
+        return Mathf.Max(baseTolerance, skullStep * 0.55f);
     }
 
     private bool TryGetStageProgressPriorityCandidate(
@@ -6466,6 +6491,22 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool IsDestructiblePassDiagnosticContext() =>
         IsBattleModeScene() &&
         ComCanPassThroughDestructibles();
+
+    private bool IsCurrentSkullSpeedDiagnosticContext(out SkullDebuffController skullDebuff)
+    {
+        skullDebuff = null;
+
+        if (!IsBattleModeScene())
+            return false;
+
+        if (!TryGetComponent(out skullDebuff) || skullDebuff == null)
+            return false;
+
+        return skullDebuff.HasActiveFastSpeedEffect;
+    }
+
+    private bool IsCurrentSkullSpeedDiagnosticContext() =>
+        IsCurrentSkullSpeedDiagnosticContext(out _);
 
     private static string DescribeMovementPipelineChange(
         Vector2 decided,

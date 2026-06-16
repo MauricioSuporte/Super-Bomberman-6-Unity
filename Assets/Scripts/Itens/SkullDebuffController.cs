@@ -33,6 +33,11 @@ public sealed class SkullDebuffController : MonoBehaviour
     float nextTransferAt;
     float nextSkippedLogAt;
 
+    public bool HasActiveFastSpeedEffect =>
+        hasActiveEffect &&
+        activeEffect == SkullDebuffType.FastSpeed &&
+        GetRemainingDuration() > 0.01f;
+
     public void ApplyRandom(float durationSeconds = DefaultDurationSeconds)
     {
         CacheReferences();
