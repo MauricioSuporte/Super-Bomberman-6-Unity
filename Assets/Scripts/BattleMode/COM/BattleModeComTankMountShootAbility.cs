@@ -13,7 +13,7 @@ using UnityEngine.Tilemaps;
 public sealed class BattleModeComTankMountShootAbility : MonoBehaviour, IBattleModeComAbility
 {
     public const int DiagnosticPlayerIdFilter = 0;
-    public static readonly bool EnableTankShootDiagnostics = true;
+    public static readonly bool EnableTankShootDiagnostics = false;
 
     private const int MinimumSafeTargetDistanceTiles = 3;
     private const float SurgicalLogIntervalSeconds = 0.35f;

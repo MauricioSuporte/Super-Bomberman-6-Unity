@@ -10,7 +10,7 @@ public sealed class BattleModeComStage4SpringEscapeAbility :
     MonoBehaviour,
     IBattleModeComStageAbility
 {
-    public static readonly bool EnableSpringDiagnostics = true;
+    public static readonly bool EnableSpringDiagnostics = false;
     public const int DiagnosticPlayerIdFilter = 0;
 
     private readonly List<Vector2> springWorldPositions = new();

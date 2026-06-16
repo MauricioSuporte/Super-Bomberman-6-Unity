@@ -10,7 +10,7 @@ public sealed class BattleModeComStage9MinecartAbility :
     IBattleModeComStageAbility,
     IBattleModeComDangerProvider
 {
-    public static readonly bool EnableMinecartDiagnostics = true;
+    public static readonly bool EnableMinecartDiagnostics = false;
     public const int DiagnosticPlayerIdFilter = 0;
 
     private const float PunishRideChance = 0.45f;

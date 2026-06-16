@@ -31,7 +31,7 @@ public sealed class BattleModeComBombPassAbility : MonoBehaviour, IBattleModeCom
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
     // Diagnóstico da fuga via BombPass — ATIVO para investigar por que a IA
     // não cria rotas de fuga atravessando bombas.
-    public static readonly bool EnableBombPassEscapeDiagnostics = true;
+    public static readonly bool EnableBombPassEscapeDiagnostics = false;
     private static bool EnableSurgicalDiagnostics => EnableBombPassEscapeDiagnostics;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 

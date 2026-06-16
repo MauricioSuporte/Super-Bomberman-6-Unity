@@ -25,7 +25,7 @@ public sealed class BattleModeComRedLouiePunchStunAbility : MonoBehaviour, IBatt
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnableRedLouieStunDiagnostics = true;
+    public static readonly bool EnableRedLouieStunDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // Distância máxima (em tiles, centro a centro) para considerar o adversário

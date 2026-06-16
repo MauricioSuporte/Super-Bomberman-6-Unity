@@ -13,7 +13,7 @@ using UnityEngine.Tilemaps;
 public sealed class BattleModeComTankThreatAwarenessAbility : MonoBehaviour, IBattleModeComAbility
 {
     public const int DiagnosticPlayerIdFilter = 0;
-    public static readonly bool EnableTankThreatDiagnostics = true;
+    public static readonly bool EnableTankThreatDiagnostics = false;
 
     private const int MaximumPredictionTiles = 24;
     private const int ImpactExplosionRadius = 1;

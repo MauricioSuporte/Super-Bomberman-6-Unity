@@ -9,7 +9,7 @@ public sealed class BattleModeComStage7PortalEscapeAbility :
     MonoBehaviour,
     IBattleModeComStageAbility
 {
-    public static readonly bool EnablePortalDiagnostics = true;
+    public static readonly bool EnablePortalDiagnostics = false;
     public const int DiagnosticPlayerIdFilter = 6;
 
     private const float OptionalPortalInitialDelayMinSeconds = 1.5f;

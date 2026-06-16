@@ -27,7 +27,7 @@ public sealed class BattleModeComControlBombAwarenessAbility : MonoBehaviour, IB
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnableControlAwarenessDiagnostics = true;
+    public static readonly bool EnableControlAwarenessDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     private const float DodgeStuckSeconds = 0.25f;

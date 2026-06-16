@@ -113,6 +113,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     private MovementController movement;
     private BombController bombController;
     private BombPunchAbility punchAbility;
+    private PlayerMountCompanion mountCompanion;
     private GameManager gameManager;
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
@@ -141,7 +142,9 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         get
         {
             CacheReferences();
-            return punchAbility != null && punchAbility.IsEnabled;
+            return punchAbility != null &&
+                   punchAbility.IsEnabled &&
+                   CanUsePunchWhileMounted();
         }
     }
 
@@ -154,6 +157,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (movement == null) TryGetComponent(out movement);
         if (bombController == null) TryGetComponent(out bombController);
         if (punchAbility == null) TryGetComponent(out punchAbility);
+        if (mountCompanion == null) TryGetComponent(out mountCompanion);
 
         ownColliders = GetComponentsInChildren<Collider2D>(true);
 
@@ -192,7 +196,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         if (!IsAvailable)
         {
-            lastDecisionTrace = "emergency: punch unavailable";
+            if (!CanUsePunchWhileMounted())
+                ResetSequence();
+
+            lastDecisionTrace = CanUsePunchWhileMounted()
+                ? "emergency: punch unavailable"
+                : $"emergency: punch unavailable mounted:{GetMountedTypeLabel()}";
             return false;
         }
 
@@ -229,7 +238,12 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         if (!IsAvailable)
         {
-            lastDecisionTrace = "candidate: punch unavailable";
+            if (!CanUsePunchWhileMounted())
+                ResetSequence();
+
+            lastDecisionTrace = CanUsePunchWhileMounted()
+                ? "candidate: punch unavailable"
+                : $"candidate: punch unavailable mounted:{GetMountedTypeLabel()}";
             return false;
         }
 
@@ -1518,6 +1532,33 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         }
 
         return BuildDefensiveScanSummary();
+    }
+
+    private bool CanUsePunchWhileMounted()
+    {
+        MountedType type = GetMountedType();
+
+        if (type != MountedType.None)
+            return type == MountedType.Blue;
+
+        return movement == null || !movement.IsMounted;
+    }
+
+    private MountedType GetMountedType()
+    {
+        return mountCompanion != null
+            ? mountCompanion.GetMountedLouieType()
+            : MountedType.None;
+    }
+
+    private string GetMountedTypeLabel()
+    {
+        MountedType type = GetMountedType();
+
+        if (type != MountedType.None)
+            return type.ToString();
+
+        return movement != null && movement.IsMounted ? "MountedUnknown" : "None";
     }
 
     private static int DifficultyWeight(BattleModeComDifficultySettings settings) =>

@@ -56,7 +56,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float OpeningFarmDiagnosticRepeatSeconds = 0.12f;
     private const float OpeningFarmPriorityDurationSeconds = 4f;
     private const int OpeningFarmDiagnosticPlayerIdFilter = 0;
-    private static readonly bool EnablePostPlantActionDiagnostics = true;
+    private static readonly bool EnablePostPlantActionDiagnostics = false;
     private const float PostPlantActionDiagnosticRepeatSeconds = 0.6f;
     private const int PostPlantActionDiagnosticPlayerIdFilter = 0;
     private Vector2Int oscDiagLastDecisionDir;
@@ -113,6 +113,12 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float ChainBombFuseSafetyMarginSeconds = 0.25f;
     private const int ChainBombMinimumEscapeBranches = 2;
     private const int AdditionalBombMinimumEscapeBranches = 2;
+    private const int HardSingleExitTrapSearchDepth = 8;
+    private const int HardSingleExitTrapMaxPlantDistance = 6;
+    private const int HardSingleExitItemThreatDistance = 6;
+    private static readonly bool EnableHardSingleExitTrapDiagnostics = true;
+    private const int HardSingleExitTrapDiagnosticPlayerIdFilter = 0;
+    private const float HardSingleExitTrapDiagnosticRepeatSeconds = 0.35f;
     private const float ChainBombMaxPlantingSeconds = 2.0f;
     private const float OwnChainPlanChance = 0.35f;
     private const int OwnChainSecondBombDistance = 2;
@@ -245,6 +251,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastAbilityDecisionTraceLogKey = string.Empty;
     private float lastStage3PlantDiagnosticTime = -10f;
     private string lastStage3PlantDiagnosticKey = string.Empty;
+    private float lastHardSingleExitTrapDiagnosticTime = -10f;
+    private string lastHardSingleExitTrapDiagnosticKey = string.Empty;
     private bool abilityDecisionEvaluatedThisThink;
     private bool behaviorStartLogged;
     private Vector2 behaviorLastProgressPosition;
@@ -907,7 +915,7 @@ public sealed class BattleModeComController : MonoBehaviour
     // Log de cada tap sintético de ActionB/ActionC com o motivo da decisão —
     // identifica QUEM está pressionando o botão quando o comportamento parece
     // spam (ex.: ActionC repetido do PurpleLouie).
-    private static readonly bool EnableInputTapDiagnostics = true;
+    private static readonly bool EnableInputTapDiagnostics = false;
 
     private void LogInputTapDiagnostic(
         string action,
@@ -2741,6 +2749,42 @@ public sealed class BattleModeComController : MonoBehaviour
         return joined.Length <= 420 ? joined : joined.Substring(0, 420) + "...";
     }
 
+    private void LogHardSingleExitTrapDiagnostic(
+        string key,
+        Vector2Int myTile,
+        string message,
+        bool force = false)
+    {
+        if (!EnableHardSingleExitTrapDiagnostics || !IsBattleModeScene())
+            return;
+
+        if (HardSingleExitTrapDiagnosticPlayerIdFilter != 0 &&
+            playerId != HardSingleExitTrapDiagnosticPlayerIdFilter)
+        {
+            return;
+        }
+
+        string logKey = $"{key}:{myTile}:{message}";
+        if (!force &&
+            logKey == lastHardSingleExitTrapDiagnosticKey &&
+            Time.time - lastHardSingleExitTrapDiagnosticTime <
+            HardSingleExitTrapDiagnosticRepeatSeconds)
+        {
+            return;
+        }
+
+        lastHardSingleExitTrapDiagnosticKey = logKey;
+        lastHardSingleExitTrapDiagnosticTime = Time.time;
+
+        Debug.LogWarning(
+            $"[BattleCOMSingleExitTrap][P{playerId}] frame:{Time.frameCount} " +
+            $"t:{Time.time:F2} tile:{myTile} key:{key} action:{currentAction} " +
+            $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+            $"bombs:{(bombController != null ? bombController.BombsRemaining : -1)} " +
+            $"msg:{message}",
+            this);
+    }
+
     private void ExecuteEscape(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -2875,6 +2919,26 @@ public sealed class BattleModeComController : MonoBehaviour
         else
             Reject("FarmDestructible", "sem rota segura para farm");
 
+        if (TryBuildHardSingleExitTrapCandidate(settings, myTile, out CandidateAction hardTrap))
+            AddCandidate(hardTrap);
+        else if (settings.difficulty == BattleModeComputerLevel.Hard &&
+                 (bombController == null || bombController.BombsRemaining <= 0))
+        {
+            Reject("HardSingleExitTrap", "sem bomba");
+            LogHardSingleExitTrapDiagnostic(
+                "NO_BOMBS",
+                myTile,
+                "Hard single-exit trap skipped: no bombs remaining");
+        }
+        else if (settings.difficulty == BattleModeComputerLevel.Hard)
+        {
+            Reject("HardSingleExitTrap", "sem adversario em saida unica");
+            LogHardSingleExitTrapDiagnostic(
+                "NO_TARGET",
+                myTile,
+                "Hard single-exit trap skipped: no enemy currently in a one-exit tile");
+        }
+
         if (TryBuildCombatCandidate(settings, myTile, out CandidateAction combat))
             AddCandidate(combat);
         else if (bombController == null || bombController.BombsRemaining <= 0)
@@ -2950,6 +3014,24 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             Vector2Int itemTile = WorldToTile(item.transform.position);
+            if (settings.difficulty == BattleModeComputerLevel.Hard &&
+                IsSingleExitTrapTile(itemTile, myTile, out Vector2Int itemExitTile, out _) &&
+                CanEnemyReachTrapExit(
+                    itemExitTile,
+                    HardSingleExitItemThreatDistance,
+                    out PlayerIdentity threat,
+                    out Vector2Int threatTile,
+                    out int threatDistance))
+            {
+                RejectVerbose($"CollectItem item em beco com saida unica {item.type}@{itemTile} exit:{itemExitTile}");
+                LogHardSingleExitTrapDiagnostic(
+                    "ITEM_TRAP_RISK",
+                    myTile,
+                    $"skip item:{item.type}@{itemTile} exit:{itemExitTile} " +
+                    $"threat:P{threat.playerId}@{threatTile} threatDistance:{threatDistance}");
+                continue;
+            }
+
             if (!IsWalkableTile(itemTile, myTile))
             {
                 RejectVerbose($"CollectItem item bloqueado {item.type}@{itemTile}");
@@ -3156,6 +3238,319 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         RejectVerbose($"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
+        return false;
+    }
+
+    private bool TryBuildHardSingleExitTrapCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (settings.difficulty != BattleModeComputerLevel.Hard)
+            return false;
+
+        if (bombController == null || bombController.BombsRemaining <= 0)
+        {
+            LogHardSingleExitTrapDiagnostic(
+                "NO_BOMBS",
+                myTile,
+                "candidate unavailable: no bombs remaining");
+            return false;
+        }
+
+        if (!TryFindBestSingleExitEnemyTrap(
+                settings,
+                myTile,
+                out PlayerIdentity target,
+                out Vector2Int targetTile,
+                out Vector2Int exitTile,
+                out PathResult path))
+        {
+            LogHardSingleExitTrapDiagnostic(
+                "NO_TARGET",
+                myTile,
+                "candidate unavailable: no reachable enemy trapped in one-exit tile");
+            return false;
+        }
+
+        int radius = GetPlannedBombRadiusAt(exitTile);
+        if (WouldBlastHitUsefulItem(exitTile, radius, out ItemType itemType, out Vector2Int itemTile))
+        {
+            LogHardSingleExitTrapDiagnostic(
+                "REJECT_ITEM_BLAST",
+                myTile,
+                $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius} " +
+                $"wouldHitItem:{itemType}@{itemTile}");
+            return false;
+        }
+
+        bool plantNow = myTile == exitTile;
+        if (plantNow && !IsCenteredOnTile(exitTile))
+        {
+            Vector2 centerMove = GetMoveTowardTileCenter(exitTile);
+            if (centerMove == Vector2.zero)
+            {
+                LogHardSingleExitTrapDiagnostic(
+                    "REJECT_CENTER",
+                    myTile,
+                    $"target:P{target.playerId}@{targetTile} exit:{exitTile} centerMove:none");
+                return false;
+            }
+
+            candidate = new CandidateAction
+            {
+                Action = BattleModeComActionType.CombatPlant,
+                Weight = Mathf.Max(1, settings.combatPlantWeight + 95),
+                TargetTile = exitTile,
+                HasTarget = true,
+                FirstMove = centerMove,
+                HasRoute = true,
+                Reason = $"center single-exit trap tile for P{target.playerId} at {exitTile}",
+                InputDescription = FirstMoveDescription(centerMove),
+                TapBomb = false
+            };
+            LogHardSingleExitTrapDiagnostic(
+                "CENTER_EXIT",
+                myTile,
+                $"target:P{target.playerId}@{targetTile} exit:{exitTile} " +
+                $"move:{FirstMoveDescription(centerMove)} radius:{radius} pathDistance:{path.Distance}");
+            return true;
+        }
+
+        if (!CanPlantBombWithEscape(exitTile, radius, settings, out Vector2 escapeMove, out _))
+        {
+            LogHardSingleExitTrapDiagnostic(
+                "REJECT_NO_ESCAPE",
+                myTile,
+                $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius} " +
+                $"plantNow:{plantNow} pathDistance:{path.Distance}");
+            return false;
+        }
+
+        Vector2 firstMove = plantNow
+            ? escapeMove
+            : path.FirstMove;
+
+        if (plantNow && firstMove == Vector2.zero)
+        {
+            LogHardSingleExitTrapDiagnostic(
+                "REJECT_ZERO_ESCAPE",
+                myTile,
+                $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius}");
+            return false;
+        }
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.CombatPlant,
+            Weight = Mathf.Max(1, settings.combatPlantWeight + 95),
+            TargetTile = exitTile,
+            HasTarget = true,
+            FirstMove = firstMove,
+            HasRoute = true,
+            Reason = plantNow
+                ? $"trap P{target.playerId} single exit at {exitTile} from {targetTile}"
+                : $"approach single-exit trap P{target.playerId} exit {exitTile} distance {path.Distance}",
+            InputDescription = plantNow
+                ? AppendInput("ActionA", FirstMoveDescription(firstMove))
+                : FirstMoveDescription(firstMove),
+            TapBomb = plantNow
+        };
+        LogHardSingleExitTrapDiagnostic(
+            plantNow ? "PLANT_EXIT" : "APPROACH_EXIT",
+            myTile,
+            $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius} " +
+            $"pathDistance:{path.Distance} move:{FirstMoveDescription(firstMove)} " +
+            $"escape:{FirstMoveDescription(escapeMove)} tapBomb:{plantNow}");
+        return true;
+    }
+
+    private bool TryFindBestSingleExitEnemyTrap(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out PlayerIdentity bestTarget,
+        out Vector2Int bestTargetTile,
+        out Vector2Int bestExitTile,
+        out PathResult bestPath)
+    {
+        bestTarget = null;
+        bestTargetTile = myTile;
+        bestExitTile = myTile;
+        bestPath = default;
+
+        int bestDistance = int.MaxValue;
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (!player.TryGetComponent<MovementController>(out var targetMovement) ||
+                targetMovement == null ||
+                targetMovement.isDead ||
+                targetMovement.IsEndingStage)
+            {
+                continue;
+            }
+
+            if (IsAlly(player.playerId))
+                continue;
+
+            Vector2Int targetTile = WorldToTile(player.transform.position);
+            if (!IsSingleExitTrapTile(targetTile, targetTile, out Vector2Int exitTile, out int openExits))
+            {
+                LogHardSingleExitTrapDiagnostic(
+                    "TARGET_NOT_TRAPPED",
+                    myTile,
+                    $"target:P{player.playerId}@{targetTile} openExits:{openExits}");
+                continue;
+            }
+
+            if (IsBombAtTile(exitTile))
+            {
+                LogHardSingleExitTrapDiagnostic(
+                    "EXIT_HAS_BOMB",
+                    myTile,
+                    $"target:P{player.playerId}@{targetTile} exit:{exitTile}");
+                continue;
+            }
+
+            PathResult path;
+            if (myTile == exitTile)
+            {
+                path = new PathResult
+                {
+                    Found = true,
+                    FirstMove = Vector2.zero,
+                    Distance = 0
+                };
+            }
+            else if (!TryFindPath(
+                         myTile,
+                         exitTile,
+                         Mathf.Max(HardSingleExitTrapSearchDepth, settings.searchDepth),
+                         true,
+                         settings,
+                         null,
+                         out path))
+            {
+                LogHardSingleExitTrapDiagnostic(
+                    "EXIT_UNREACHABLE",
+                    myTile,
+                    $"target:P{player.playerId}@{targetTile} exit:{exitTile} " +
+                    $"searchDepth:{Mathf.Max(HardSingleExitTrapSearchDepth, settings.searchDepth)}");
+                continue;
+            }
+
+            if (path.Distance > HardSingleExitTrapMaxPlantDistance)
+            {
+                LogHardSingleExitTrapDiagnostic(
+                    "EXIT_TOO_FAR",
+                    myTile,
+                    $"target:P{player.playerId}@{targetTile} exit:{exitTile} " +
+                    $"pathDistance:{path.Distance} max:{HardSingleExitTrapMaxPlantDistance}");
+                continue;
+            }
+
+            if (path.Distance >= bestDistance)
+            {
+                continue;
+            }
+
+            bestTarget = player;
+            bestTargetTile = targetTile;
+            bestExitTile = exitTile;
+            bestPath = path;
+            bestDistance = path.Distance;
+            LogHardSingleExitTrapDiagnostic(
+                "BEST_TARGET",
+                myTile,
+                $"target:P{player.playerId}@{targetTile} exit:{exitTile} pathDistance:{path.Distance}");
+        }
+
+        return bestTarget != null;
+    }
+
+    private bool IsSingleExitTrapTile(
+        Vector2Int tile,
+        Vector2Int origin,
+        out Vector2Int exitTile,
+        out int openExits)
+    {
+        exitTile = tile;
+        openExits = 0;
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int next = tile + CardinalTiles[i];
+            if (!IsWalkableTile(next, origin))
+                continue;
+
+            openExits++;
+            exitTile = next;
+            if (openExits > 1)
+                return false;
+        }
+
+        return openExits == 1;
+    }
+
+    private bool CanEnemyReachTrapExit(
+        Vector2Int exitTile,
+        int maxDistance,
+        out PlayerIdentity threat,
+        out Vector2Int threatTile,
+        out int threatDistance)
+    {
+        threat = null;
+        threatTile = exitTile;
+        threatDistance = int.MaxValue;
+
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (!player.TryGetComponent<MovementController>(out var targetMovement) ||
+                targetMovement == null ||
+                targetMovement.isDead ||
+                targetMovement.IsEndingStage)
+            {
+                continue;
+            }
+
+            if (IsAlly(player.playerId))
+                continue;
+
+            Vector2Int enemyTile = WorldToTile(player.transform.position);
+            if (Manhattan(enemyTile, exitTile) > maxDistance)
+                continue;
+
+            if (TryFindPath(
+                    enemyTile,
+                    exitTile,
+                    maxDistance,
+                    false,
+                    BattleModeComDifficultySettings.For(BattleModeComputerLevel.Hard),
+                    null,
+                    out _))
+            {
+                threat = player;
+                threatTile = enemyTile;
+                threatDistance = Manhattan(enemyTile, exitTile);
+                return true;
+            }
+        }
+
         return false;
     }
 

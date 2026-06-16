@@ -11,7 +11,7 @@ using UnityEngine;
 public sealed class BattleModeComMoleDrillEscapeAbility : MonoBehaviour, IBattleModeComAbility
 {
     public const int DiagnosticPlayerIdFilter = 0;
-    public static readonly bool EnableMoleDrillDiagnostics = true;
+    public static readonly bool EnableMoleDrillDiagnostics = false;
 
     private const float StartupSafetyMarginSeconds = 0.12f;
     private const float SurgicalLogIntervalSeconds = 0.35f;

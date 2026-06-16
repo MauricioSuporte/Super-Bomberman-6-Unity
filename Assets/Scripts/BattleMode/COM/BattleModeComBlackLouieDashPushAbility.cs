@@ -39,7 +39,7 @@ public sealed class BattleModeComBlackLouieDashPushAbility : MonoBehaviour, IBat
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnableBlackLouiePushDiagnostics = true;
+    public static readonly bool EnableBlackLouiePushDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento (espelham BlackLouieDashPushAbility) ===

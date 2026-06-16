@@ -31,7 +31,7 @@ public sealed class BattleModeComGreenLouieDashAbility : MonoBehaviour, IBattleM
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnableGreenLouieDashDiagnostics = true;
+    public static readonly bool EnableGreenLouieDashDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento ===

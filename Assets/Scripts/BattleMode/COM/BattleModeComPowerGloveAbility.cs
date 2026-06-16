@@ -44,6 +44,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     private MovementController movement;
     private BombController bombController;
     private PowerGloveAbility powerGlove;
+    private PlayerMountCompanion mountCompanion;
     private GameManager gameManager;
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
@@ -86,6 +87,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     public bool ShouldPrioritizeEmergency(Vector2Int myTile)
     {
         CacheReferences();
+        if (IsMountedOnAnyMount())
+            return false;
+
         return HasActiveSequence ||
                (IsAvailable && FindPotentialPickupBombAt(myTile) != null);
     }
@@ -99,7 +103,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
                    powerGlove.IsEnabled &&
                    movement != null &&
                    !movement.isDead &&
-                   !movement.IsMounted &&
+                   !IsMountedOnAnyMount() &&
                    !movement.IsRidingPlaying();
         }
     }
@@ -134,6 +138,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         if (powerGlove == null)
             TryGetComponent(out powerGlove);
 
+        if (mountCompanion == null)
+            TryGetComponent(out mountCompanion);
+
         if (movement != null)
             tileSize = Mathf.Max(0.01f, movement.tileSize);
 
@@ -151,6 +158,15 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         explosionMask = LayerMask.GetMask("Explosion");
     }
 
+    private bool IsMountedOnAnyMount()
+    {
+        if (movement != null && movement.IsMounted)
+            return true;
+
+        return mountCompanion != null &&
+               mountCompanion.GetMountedLouieType() != MountedType.None;
+    }
+
     public bool TryBuildEmergencyDecision(
         BattleModeComDifficultySettings settings,
         BattleModeComController controller,
@@ -164,7 +180,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         if (!IsAvailable)
         {
             ResetSequence("emergency unavailable");
-            lastDecisionTrace = "emergency power glove unavailable";
+            lastDecisionTrace = IsMountedOnAnyMount()
+                ? "emergency power glove unavailable: mounted"
+                : "emergency power glove unavailable";
             return false;
         }
 
@@ -233,7 +251,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         if (!IsAvailable)
         {
             ResetSequence("candidate unavailable");
-            lastDecisionTrace = "candidate power glove unavailable";
+            lastDecisionTrace = IsMountedOnAnyMount()
+                ? "candidate power glove unavailable: mounted"
+                : "candidate power glove unavailable";
             return false;
         }
 

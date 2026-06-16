@@ -31,7 +31,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnablePurpleLineDiagnostics = true;
+    public static readonly bool EnablePurpleLineDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento ===

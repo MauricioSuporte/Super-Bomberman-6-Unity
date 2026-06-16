@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 public sealed class BattleSuddenDeathController : MonoBehaviour
 {
     const float SuddenDeathTriggerTime = 50f;
+    const float SuddenDeathEndTime = 5f;
     const float ReducedSuddenDeathEndTime = 30f;
     const int ReducedSuddenDeathRingCount = 2;
 
@@ -332,7 +333,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             ? Mathf.Min(
                 ReducedSuddenDeathEndTime + fallingDuration,
                 suddenDeathDropStartRemainingTime)
-            : 0f;
+            : Mathf.Min(
+                SuddenDeathEndTime + fallingDuration,
+                suddenDeathDropStartRemainingTime);
 
         BattleRevengeBomberBlocker.Block();
         StartCoroutine(RemoveAllRevengeBombersFromSceneRoutine());
