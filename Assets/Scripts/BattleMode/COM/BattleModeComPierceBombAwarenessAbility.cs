@@ -37,7 +37,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnablePierceAwarenessDiagnostics = false;
+    public static readonly bool EnablePierceAwarenessDiagnostics = true;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento ===
@@ -178,16 +178,21 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         if (!IsAvailable)
         {
             lastDecisionTrace = "emergency unavailable";
+            LogSurgical("EMERGENCY_UNAVAILABLE", $"my:{myTile} nativeDanger:{FormatDanger(currentDangerSeconds)}", force: true);
             return false;
         }
 
         RefreshBombSnapshots();
+        LogOwnPierceContext("EMERGENCY", myTile, currentDangerSeconds);
 
         // Só interfere se há pierce no campo ou cadeia atravessando blocos —
         // sem isso o modelo nativo é equivalente e a fuga nativa resolve.
         if (!snapshotHasPierce && !snapshotHasChainThroughBlocks)
         {
             lastDecisionTrace = "emergency no pierce/chain threat on field";
+            LogSurgical("EMERGENCY_GATE_NO_PIERCE",
+                $"my:{myTile} bombs:{bombSnapshots.Count} pierce:{snapshotHasPierce} chainThroughBlocks:{snapshotHasChainThroughBlocks} nativeDanger:{FormatDanger(currentDangerSeconds)}",
+                force: true);
             return false;
         }
 
@@ -195,8 +200,15 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         if (float.IsInfinity(pierceDanger) || pierceDanger > ThreatFuseWindowSeconds)
         {
             lastDecisionTrace = $"emergency tile not pierce-threatened ({FormatDanger(pierceDanger)})";
+            LogSurgical("EMERGENCY_GATE_TILE_SAFE",
+                $"my:{myTile} pierceDanger:{FormatDanger(pierceDanger)} window:{ThreatFuseWindowSeconds:F1} nativeDanger:{FormatDanger(currentDangerSeconds)} scan:{BuildNeighborScanSummary(settings, myTile)}",
+                force: true);
             return false;
         }
+
+        LogSurgical("EMERGENCY_DODGE_ATTEMPT",
+            $"my:{myTile} pierceDanger:{FormatDanger(pierceDanger)} nativeDanger:{FormatDanger(currentDangerSeconds)}",
+            force: true);
 
         // Sob perigo nativo + ameaça pierce: fornece fuga cujo destino é seguro
         // TAMBÉM no modelo pierce-aware (a fuga nativa pode escolher um tile atrás
@@ -219,14 +231,18 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         if (!IsAvailable)
         {
             lastDecisionTrace = "candidate unavailable";
+            LogSurgical("CANDIDATE_UNAVAILABLE", $"my:{myTile}", force: true);
             return false;
         }
 
         RefreshBombSnapshots();
+        LogOwnPierceContext("CANDIDATE", myTile, float.PositiveInfinity);
 
         if (!snapshotHasPierce && !snapshotHasChainThroughBlocks)
         {
             lastDecisionTrace = "candidate no pierce/chain threat on field";
+            LogSurgical("CANDIDATE_GATE_NO_PIERCE",
+                $"my:{myTile} bombs:{bombSnapshots.Count} pierce:{snapshotHasPierce} chainThroughBlocks:{snapshotHasChainThroughBlocks}");
             ClearDodgeStuckState();
             dodgeLastTile = myTile;
             return false;
@@ -236,10 +252,17 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         if (float.IsInfinity(pierceDanger) || pierceDanger > ThreatFuseWindowSeconds)
         {
             lastDecisionTrace = $"candidate tile not pierce-threatened ({FormatDanger(pierceDanger)})";
+            LogSurgical("CANDIDATE_GATE_TILE_SAFE",
+                $"my:{myTile} pierceDanger:{FormatDanger(pierceDanger)} window:{ThreatFuseWindowSeconds:F1} scan:{BuildNeighborScanSummary(settings, myTile)}",
+                force: true);
             ClearDodgeStuckState();
             dodgeLastTile = myTile;
             return false;
         }
+
+        LogSurgical("CANDIDATE_DODGE_ATTEMPT",
+            $"my:{myTile} pierceDanger:{FormatDanger(pierceDanger)}",
+            force: true);
 
         // O ponto desta ability: o tile parece seguro no modelo NATIVO (senão o
         // controller já estaria em inDanger e a fuga nativa/emergency cuidaria),
@@ -298,7 +321,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
             TargetTile = target,
             HasTarget = true,
             FirstMove = firstMove,
-            Reason = "pierce-dodge blast through blocks",
+            Reason = "pierce escape dodge blast through blocks",
             InputDescription = FirstMoveDescription(firstMove)
         };
 
@@ -882,6 +905,50 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
         if (float.IsInfinity(seconds)) return "safe";
         if (seconds <= 0f) return "now";
         return $"{seconds:F2}";
+    }
+
+    /// <summary>
+    /// Loga, sob perigo ou avaliação, o contexto das bombas PRÓPRIAS no campo — em
+    /// especial pierce bombs recém-plantadas. Permite ver no console exatamente o
+    /// fuse efetivo da própria pierce, se a IA está em cima dela e qual o perigo
+    /// pierce-aware no tile atual. Diagnóstico do caso "planta pierce e fica parada".
+    /// </summary>
+    private void LogOwnPierceContext(string phase, Vector2Int myTile, float nativeDanger)
+    {
+        if (!EnablePierceAwarenessDiagnostics) return;
+
+        int ownPierce = 0;
+        bool standingOnOwnPierce = false;
+        float nearestOwnPierceFuse = float.PositiveInfinity;
+        Vector2Int nearestOwnPierceTile = myTile;
+
+        for (int i = 0; i < bombSnapshots.Count; i++)
+        {
+            BombSnapshot snapshot = bombSnapshots[i];
+            bool isMine = snapshot.Bomb != null && snapshot.Bomb.Owner == bombController;
+            if (!isMine || !snapshot.Pierce)
+                continue;
+
+            ownPierce++;
+            if (snapshot.Tile == myTile)
+                standingOnOwnPierce = true;
+
+            if (snapshot.EffectiveFuse < nearestOwnPierceFuse)
+            {
+                nearestOwnPierceFuse = snapshot.EffectiveFuse;
+                nearestOwnPierceTile = snapshot.Tile;
+            }
+        }
+
+        if (ownPierce == 0)
+            return;
+
+        float pierceDangerHere = GetPierceAwareDangerSeconds(myTile);
+        LogSurgical($"{phase}_OWN_PIERCE",
+            $"my:{myTile} ownPierce:{ownPierce} onTopOfOwn:{standingOnOwnPierce} " +
+            $"nearestTile:{nearestOwnPierceTile} nearestFuse:{FormatDanger(nearestOwnPierceFuse)} " +
+            $"pierceDangerHere:{FormatDanger(pierceDangerHere)} nativeDanger:{FormatDanger(nativeDanger)}",
+            force: true);
     }
 
     private void LogSurgical(string key, string message, bool force = false)

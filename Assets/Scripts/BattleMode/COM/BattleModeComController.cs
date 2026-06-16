@@ -22,6 +22,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private static readonly bool EnableDeathDiagnostics = false;
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
     private static readonly bool EnableKickBombRiskDiagnostics = false;
+    private static readonly bool EnablePierceEscapeGateDiagnostics = true;
+    private const int PierceEscapeGateDiagnosticPlayerIdFilter = 0;
+    private const float PierceEscapeGateLogIntervalSeconds = 0.25f;
 
     // Log cirúrgico de ExecuteEscape — desativado enquanto investigamos o patrol.
     private static readonly bool EnableEscapeDiagnostics = false;
@@ -254,6 +257,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastDecisionTraceLogKey = string.Empty;
     private float lastAbilityDecisionTraceLogTime = -10f;
     private string lastAbilityDecisionTraceLogKey = string.Empty;
+    private float lastPierceEscapeGateLogTime = -10f;
+    private string lastPierceEscapeGateLogKey = string.Empty;
     private float lastStage3PlantDiagnosticTime = -10f;
     private string lastStage3PlantDiagnosticKey = string.Empty;
     private float lastHardLouieSecurePickupDiagnosticTime = -10f;
@@ -2015,6 +2020,8 @@ public sealed class BattleModeComController : MonoBehaviour
             selected.Action == BattleModeComActionType.Reposition &&
             !string.IsNullOrEmpty(selected.Reason) &&
             (selected.Reason.Contains("escape", StringComparison.OrdinalIgnoreCase) ||
+             selected.Reason.Contains("pierce-dodge", StringComparison.OrdinalIgnoreCase) ||
+             selected.Reason.Contains("pierce dodge", StringComparison.OrdinalIgnoreCase) ||
              selected.Reason.StartsWith("tank-threat dodge", StringComparison.Ordinal));
 
         if (selected.Action == BattleModeComActionType.Reposition && selected.HasTarget)
@@ -2036,6 +2043,24 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (selected.TapBomb && Time.time - lastBombTapTime >= BombTapCooldownSeconds)
         {
+            // Log cirúrgico do plantio: por que plantou aqui e o que o blast atinge.
+            // Compara a guarda normal (pierce-cega) com um scan pierce-aware para
+            // expor itens que serão queimados atrás de blocos com pierce + fogo alto.
+            {
+                int plantRadius = GetPlannedBombRadiusAt(selected.TargetTile);
+                bool willPierce = bombController != null && bombController.WillNextBombBePierce();
+                int destrHit = CountBombHitDestructibles(selected.TargetTile, plantRadius);
+                bool blindItemHit = WouldBlastHitUsefulItem(
+                    selected.TargetTile, plantRadius, out ItemType blindItemType, out Vector2Int blindItemTile);
+                bool pierceItemHit = WouldPierceBlastHitUsefulItem(
+                    selected.TargetTile, plantRadius, out ItemType pierceItemType, out Vector2Int pierceItemTile);
+                Debug.LogWarning(
+                    $"[BattleCOMPlant][P{playerId}] PLANT_COMMIT tile:{selected.TargetTile} " +
+                    $"action:{selected.Action} route:{route} reason:{selected.Reason} " +
+                    $"radius:{plantRadius} pierce:{willPierce} destructibles:{destrHit} " +
+                    $"blindItemHit:{blindItemHit}{(blindItemHit ? $"({blindItemType}@{blindItemTile})" : "")} " +
+                    $"pierceItemHit:{pierceItemHit}{(pierceItemHit ? $"({pierceItemType}@{pierceItemTile})" : "")}");
+            }
             LogStage3P5PlantDiagnostic(
                 "TAP",
                 myTile,
@@ -2836,6 +2861,49 @@ public sealed class BattleModeComController : MonoBehaviour
             $"action:{currentAction} move:{FirstMoveDescription(currentMoveInput)} target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
             $"safeCenter:{safe} bombsRemaining:{(bombController != null ? bombController.BombsRemaining : -1)} " +
             $"ownPending:{HasOwnUnresolvedBombOrExplosion()} msg:{message}",
+            this);
+    }
+
+    private void LogPierceEscapeGateDiagnostic(
+        string key,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        string message,
+        bool force = false)
+    {
+        if (!EnablePierceEscapeGateDiagnostics)
+            return;
+
+        if (PierceEscapeGateDiagnosticPlayerIdFilter != 0 &&
+            playerId != PierceEscapeGateDiagnosticPlayerIdFilter)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(currentReason) ||
+            currentReason.IndexOf("pierce", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            return;
+        }
+
+        string logKey = $"{key}:{myTile}:{currentReason}:{currentInputDescription}";
+        if (!force &&
+            logKey == lastPierceEscapeGateLogKey &&
+            Time.time - lastPierceEscapeGateLogTime < PierceEscapeGateLogIntervalSeconds)
+        {
+            return;
+        }
+
+        lastPierceEscapeGateLogKey = logKey;
+        lastPierceEscapeGateLogTime = Time.time;
+
+        Debug.LogWarning(
+            $"[BattleCOMPierceEscapeGate][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(currentDangerSeconds)} " +
+            $"key:{key} action:{currentAction} move:{FirstMoveDescription(currentMoveInput)} " +
+            $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+            $"safeCenter:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
+            $"followsEscape:{currentMoveFollowsEscapeRoute} msg:{message}",
             this);
     }
 
@@ -4846,8 +4914,8 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         int firstRadius = GetPlannedBombRadiusAt(firstTile, radius);
         int secondRadius = GetPlannedBombRadiusAt(secondTile, radius);
-        List<Vector2Int> blastTiles = BuildBlastTiles(firstTile, firstRadius);
-        List<Vector2Int> secondBlast = BuildBlastTiles(secondTile, secondRadius);
+        List<Vector2Int> blastTiles = BuildPlannedBombBlastTiles(firstTile, firstRadius);
+        List<Vector2Int> secondBlast = BuildPlannedBombBlastTiles(secondTile, secondRadius);
 
         for (int i = 0; i < secondBlast.Count; i++)
         {
@@ -4865,7 +4933,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
-            List<Vector2Int> bombBlast = BuildBlastTiles(bombTile, radius);
+            List<Vector2Int> bombBlast = BuildBlastTilesForActiveBomb(bombTile, radius);
             for (int i = 0; i < bombBlast.Count; i++)
             {
                 if (!blastTiles.Contains(bombBlast[i]))
@@ -4933,7 +5001,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             List<Vector2Int> plannedBlastTiles = new List<Vector2Int>(currentBlastTiles);
-            List<Vector2Int> candidateBlastTiles = BuildBlastTiles(candidateTile, radius);
+            List<Vector2Int> candidateBlastTiles = BuildPlannedBombBlastTiles(candidateTile, radius);
             for (int b = 0; b < candidateBlastTiles.Count; b++)
             {
                 if (!plannedBlastTiles.Contains(candidateBlastTiles[b]))
@@ -5252,7 +5320,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
             Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
             int bombRadius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb)) : myRadius;
-            List<Vector2Int> blastTiles = BuildBlastTiles(bombTile, bombRadius);
+            List<Vector2Int> blastTiles = BuildBlastTilesForActiveBomb(bombTile, bombRadius);
 
             for (int i = 0; i < blastTiles.Count; i++)
             {
@@ -7982,7 +8050,7 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         radius = GetPlannedBombRadiusAt(plantTile, radius);
-        List<Vector2Int> plannedBlast = BuildBlastTiles(plantTile, radius);
+        List<Vector2Int> plannedBlast = BuildPlannedBombBlastTiles(plantTile, radius);
         int directBlastTileCount = plannedBlast.Count;
         bool expandedByStage = AppendPlannedBombStageDanger(
             plantTile,
@@ -8279,10 +8347,31 @@ public sealed class BattleModeComController : MonoBehaviour
         return false;
     }
 
+    private List<Vector2Int> BuildPlannedBombBlastTiles(Vector2Int origin, int radius)
+    {
+        bool pierce = bombController != null && bombController.WillNextBombBePierce();
+        return BuildBlastTiles(origin, radius, pierce);
+    }
+
+    private List<Vector2Int> BuildBlastTilesForActiveBomb(Vector2Int origin, int radius)
+    {
+        Bomb bomb = FindBombAtTile(origin);
+        bool pierce = bomb != null && bomb.IsPierceBomb;
+        return BuildBlastTiles(origin, radius, pierce);
+    }
+
     private List<Vector2Int> BuildBlastTiles(Vector2Int origin, int radius)
+    {
+        return BuildBlastTiles(origin, radius, pierce: false);
+    }
+
+    private List<Vector2Int> BuildBlastTiles(Vector2Int origin, int radius, bool pierce)
     {
         List<Vector2Int> tiles = new();
         tiles.Add(origin);
+        Func<Vector2Int, bool> blocksExplosion = pierce
+            ? (Func<Vector2Int, bool>)BlocksExplosionForPierce
+            : BlocksExplosion;
 
         for (int i = 0; i < CardinalTiles.Length; i++)
         {
@@ -8292,7 +8381,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 Vector2Int tile = origin + dir * step;
                 tiles.Add(tile);
 
-                if (BlocksExplosion(tile))
+                if (blocksExplosion(tile))
                     break;
             }
         }
@@ -8392,7 +8481,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool TryBuildChainBlastTiles(Vector2Int plantTile, int radius, out List<Vector2Int> chainBlastTiles)
     {
         radius = GetPlannedBombRadiusAt(plantTile, radius);
-        chainBlastTiles = BuildBlastTiles(plantTile, radius);
+        chainBlastTiles = BuildPlannedBombBlastTiles(plantTile, radius);
         Queue<Vector2Int> triggeredBombTiles = new();
         HashSet<Vector2Int> visitedBombTiles = new();
 
@@ -8404,7 +8493,7 @@ public sealed class BattleModeComController : MonoBehaviour
             int bombRadius = GetPlannedBombRadiusAt(
                 bombTile,
                 GetBombRadiusAtTile(bombTile, radius));
-            List<Vector2Int> bombBlast = BuildBlastTiles(bombTile, bombRadius);
+            List<Vector2Int> bombBlast = BuildBlastTilesForActiveBomb(bombTile, bombRadius);
 
             for (int i = 0; i < bombBlast.Count; i++)
             {
@@ -8483,6 +8572,36 @@ public sealed class BattleModeComController : MonoBehaviour
 
             Vector2Int tile = WorldToTile(item.transform.position);
             if (!IsTileInBlastLineRuntime(origin, tile, radius))
+                continue;
+
+            itemType = item.type;
+            itemTile = tile;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Igual a WouldBlastHitUsefulItem, mas modela a explosão como PIERCE
+    /// (atravessa blocos destrutíveis, parando só no indestrutível). Serve para
+    /// diagnosticar itens que a guarda normal (pierce-cega) não enxerga atrás de
+    /// blocos quando o COM está com pierce bomb + fogo alto.
+    /// </summary>
+    private bool WouldPierceBlastHitUsefulItem(Vector2Int origin, int radius, out ItemType itemType, out Vector2Int itemTile)
+    {
+        itemType = default;
+        itemTile = origin;
+
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null || !item.gameObject.activeInHierarchy || !IsUsefulItem(item.type))
+                continue;
+
+            Vector2Int tile = WorldToTile(item.transform.position);
+            if (!IsTileInBlastLine(origin, tile, radius, BlocksExplosionForPierce))
                 continue;
 
             itemType = item.type;
@@ -8820,16 +8939,21 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private bool IsBombAtTile(Vector2Int tile)
     {
+        return FindBombAtTile(tile) != null;
+    }
+
+    private Bomb FindBombAtTile(Vector2Int tile)
+    {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
             if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                 continue;
 
             if (WorldToTile(bomb.GetLogicalPosition()) == tile)
-                return true;
+                return bomb;
         }
 
-        return false;
+        return null;
     }
 
     private bool BlocksExplosion(Vector2Int tile)
@@ -9390,6 +9514,14 @@ public sealed class BattleModeComController : MonoBehaviour
                 currentDanger > nextArrivalSeconds + DangerTimingMarginSeconds &&
                 !IsDangerousAt(nextTile, nextArrivalSeconds, settings, null))
             {
+                LogPierceEscapeGateDiagnostic(
+                    "ALLOW_ESCAPE_TRANSIT",
+                    currentTile,
+                    currentDanger,
+                    $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} " +
+                    $"nextDanger:{FormatDanger(nextDanger)} nextArrival:{nextArrivalSeconds:F2}s " +
+                    $"target:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
+                    $"reason:{currentReason}");
                 return requestedMove;
             }
 
@@ -9408,6 +9540,16 @@ public sealed class BattleModeComController : MonoBehaviour
 
             if (nextMargin + DangerTimingMarginSeconds < currentMargin)
             {
+                LogPierceEscapeGateDiagnostic(
+                    "HOLD_DANGER_TIMING",
+                    currentTile,
+                    currentDanger,
+                    $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} " +
+                    $"nextDanger:{FormatDanger(nextDanger)} currentMargin:{currentMargin:F2}s " +
+                    $"nextMargin:{nextMargin:F2}s nextArrival:{nextArrivalSeconds:F2}s " +
+                    $"target:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
+                    $"reason:{currentReason}",
+                    force: true);
                 LogPostPlantEscapeDiagnostic(
                     "SAFETY_HOLD_DANGER_TIMING",
                     currentTile,

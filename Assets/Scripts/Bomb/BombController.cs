@@ -586,6 +586,18 @@ public partial class BombController : MonoBehaviour
         return abilitySystem != null && abilitySystem.IsEnabled(PierceBombAbility.AbilityId);
     }
 
+    /// <summary>
+    /// Prediz se a PRÓXIMA bomba plantada seria pierce, respeitando a mesma
+    /// precedência usada no plantio real (power > control > pierce). Usado por
+    /// diagnósticos da IA para saber se o blast atravessará blocos.
+    /// </summary>
+    public bool WillNextBombBePierce()
+    {
+        bool canUsePowerNow = CanUsePowerBombNow();
+        bool controlEnabled = !canUsePowerNow && IsControlEnabled();
+        return !canUsePowerNow && !controlEnabled && IsPierceEnabled();
+    }
+
     private bool IsControlEnabled()
     {
         var abilitySystem = GetAbilitySystem();
