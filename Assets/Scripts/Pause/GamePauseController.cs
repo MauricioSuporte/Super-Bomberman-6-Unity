@@ -122,7 +122,10 @@ public class GamePauseController : MonoBehaviour
         Time.timeScale = 1f;
 
         if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
+        {
+            StageIntroTransition.Instance.stageLabel.HidePauseWindow();
             StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
+        }
 
         lastScreenW = Screen.width;
         lastScreenH = Screen.height;
@@ -285,7 +288,10 @@ public class GamePauseController : MonoBehaviour
             GameMusicController.Instance.ResumeMusic();
 
         if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
+        {
+            StageIntroTransition.Instance.stageLabel.HidePauseWindow();
             StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
+        }
 
         confirmReturn = false;
         confirmTarget = PauseExitTarget.None;
@@ -614,7 +620,10 @@ public class GamePauseController : MonoBehaviour
             GameMusicController.Instance.ResumeMusic();
 
         if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
+        {
+            StageIntroTransition.Instance.stageLabel.HidePauseWindow();
             StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
+        }
     }
 
     bool TryGetAnyPlayerDown(PlayerAction action, out int pid)

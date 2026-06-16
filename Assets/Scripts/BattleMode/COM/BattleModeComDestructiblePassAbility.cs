@@ -30,9 +30,9 @@ public sealed class BattleModeComDestructiblePassAbility : MonoBehaviour, IBattl
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnableDestructiblePassDiagnostics = false;
+    public static readonly bool EnableDestructiblePassDiagnostics = true;
     private static bool EnableSurgicalDiagnostics => EnableDestructiblePassDiagnostics;
-    private const float SurgicalLogIntervalSeconds = 0.35f;
+    private const float SurgicalLogIntervalSeconds = 0.25f;
 
     // === Constantes de comportamento ===
     private const float OffensiveCooldownSeconds = 3.0f;

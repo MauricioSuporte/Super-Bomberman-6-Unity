@@ -37,9 +37,8 @@ public sealed class BattleModeComController : MonoBehaviour
     // COM does or does not execute a line/corner chain explosion plan.
     private static readonly bool EnableChainBombDiagnostics = false;
 
-    // Diagnóstico cirúrgico de oscilação: loga reversões de decisão e do input aplicado
-    // (com o pipeline de pós-processamento) para identificar qual estágio inverte a direção.
-    private static readonly bool EnableOscillationDiagnostics = false;
+    // Diagnostico cirurgico de oscilacao apenas para DestructiblePass.
+    private static readonly bool EnableDestructiblePassOscillationDiagnostics = true;
 
     // Watchdog de comportamento ([BattleCOMBehavior]) — desativado durante a
     // investigação da fuga com BombPass para reduzir ruído no console.
@@ -59,15 +58,17 @@ public sealed class BattleModeComController : MonoBehaviour
     private static readonly bool EnablePostPlantActionDiagnostics = false;
     private const float PostPlantActionDiagnosticRepeatSeconds = 0.6f;
     private const int PostPlantActionDiagnosticPlayerIdFilter = 0;
-    private Vector2Int oscDiagLastDecisionDir;
-    private float oscDiagLastDecisionTime = -10f;
-    private string oscDiagLastDecisionReason = string.Empty;
-    private string oscDiagLastDecisionRoute = string.Empty;
-    private Vector2Int oscDiagLastDecisionTarget;
-    private string oscDiagCurrentRoute = string.Empty;
-    private Vector2Int oscDiagLastAppliedDir;
-    private float oscDiagLastAppliedTime = -10f;
-    private float oscDiagLastFlipLogTime = -10f;
+    private Vector2Int destPassOscLastDecisionDir;
+    private float destPassOscLastDecisionTime = -10f;
+    private string destPassOscLastDecisionReason = string.Empty;
+    private string destPassOscLastDecisionRoute = string.Empty;
+    private Vector2Int destPassOscLastDecisionTarget;
+    private string destPassOscCurrentRoute = string.Empty;
+    private Vector2Int destPassOscLastAppliedDir;
+    private float destPassOscLastAppliedTime = -10f;
+    private float destPassOscLastFlipLogTime = -10f;
+    private float destPassOscLastStateLogTime = -10f;
+    private string destPassOscLastStateLogKey = string.Empty;
     private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
     private const float ChainBombDiagLogIntervalSeconds = 0.45f;
     private const int ChainBombRejectSampleLimit = 4;
@@ -876,14 +877,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 $"REMOVED BattleModeComDestructiblePassAbility isCom:{isCom} enabled:{destructiblePassEnabled}");
         }
 
-        if (isCom && Time.frameCount - lastDestructiblePassLoadDiagnosticFrame >= 300)
-        {
-            lastDestructiblePassLoadDiagnosticFrame = Time.frameCount;
-            LogDestructiblePassLoadDiagnostic(
-                $"load check persistent:{persistentDestructiblePassEnabled} enabled:{destructiblePassEnabled} " +
-                $"com:{(destructiblePassCom != null || (isCom && destructiblePassEnabled))}");
-        }
-
         if (isCom && Time.frameCount - lastBombPassLoadDiagnosticFrame >= 300)
         {
             lastBombPassLoadDiagnosticFrame = Time.frameCount;
@@ -920,7 +913,6 @@ public sealed class BattleModeComController : MonoBehaviour
     }
 
     private int lastBombPassLoadDiagnosticFrame = -9999;
-    private int lastDestructiblePassLoadDiagnosticFrame = -9999;
     private int lastControlBombLoadDiagnosticFrame = -9999;
 
     // Log de cada tap sintético de ActionB/ActionC com o motivo da decisão —
@@ -1111,30 +1103,36 @@ public sealed class BattleModeComController : MonoBehaviour
             oscDiagAfterTurnAxis,
             currentMoveInput);
 
-        if (EnableOscillationDiagnostics)
+        if (EnableDestructiblePassOscillationDiagnostics &&
+            IsCurrentDestructiblePassDiagnosticContext())
         {
             Vector2Int appliedDir = DirectionToTile(currentMoveInput);
             if (appliedDir != Vector2Int.zero &&
-                oscDiagLastAppliedDir == -appliedDir &&
-                Time.time - oscDiagLastAppliedTime < 0.6f &&
-                Time.time - oscDiagLastFlipLogTime > 0.1f)
+                destPassOscLastAppliedDir == -appliedDir &&
+                Time.time - destPassOscLastAppliedTime < 0.6f &&
+                Time.time - destPassOscLastFlipLogTime > 0.1f)
             {
-                oscDiagLastFlipLogTime = Time.time;
+                destPassOscLastFlipLogTime = Time.time;
                 Vector2 diagCenterOffset = (Vector2)transform.position - TileToWorld(myTile);
                 Vector2Int firstStep = DirectionToTile(oscDiagDecidedMove);
                 float nextDanger = firstStep == Vector2Int.zero
                     ? float.PositiveInfinity
                     : GetDangerSeconds(myTile + firstStep, null);
+                string changedAt = DescribeMovementPipelineChange(
+                    oscDiagDecidedMove,
+                    oscDiagAfterSafeCenter,
+                    oscDiagAfterTurnAxis,
+                    currentMoveInput);
                 Debug.LogWarning(
-                    $"[BattleCOMOscDiag][P{playerId}] event:INPUT_FLIP frame:{Time.frameCount} t:{Time.time:F2} " +
+                    $"[BattleCOMDestructiblePassOsc][P{playerId}] event:INPUT_FLIP frame:{Time.frameCount} t:{Time.time:F2} " +
                     $"tile:{myTile} pos:{transform.position} centerOffset:{diagCenterOffset} " +
                     $"danger:{FormatDanger(currentDangerSeconds)} nextDanger:{FormatDanger(nextDanger)} " +
-                    $"prevApplied:{oscDiagLastAppliedDir} age:{Time.time - oscDiagLastAppliedTime:F2}s " +
+                    $"prevApplied:{destPassOscLastAppliedDir} age:{Time.time - destPassOscLastAppliedTime:F2}s " +
                     $"pipeline[decided:{FirstMoveDescription(oscDiagDecidedMove)} " +
                     $"safeCenter:{FirstMoveDescription(oscDiagAfterSafeCenter)} " +
                     $"turnAxis:{FirstMoveDescription(oscDiagAfterTurnAxis)} " +
-                    $"enforce:{FirstMoveDescription(currentMoveInput)}] " +
-                    $"action:{currentAction} reason:{currentReason} route:{oscDiagCurrentRoute} " +
+                    $"enforce:{FirstMoveDescription(currentMoveInput)} changedAt:{changedAt}] " +
+                    $"action:{currentAction} reason:{currentReason} route:{destPassOscCurrentRoute} " +
                     $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
                     $"safeCenterTarget:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
                     $"followsEscape:{currentMoveFollowsEscapeRoute}",
@@ -1143,10 +1141,18 @@ public sealed class BattleModeComController : MonoBehaviour
 
             if (appliedDir != Vector2Int.zero)
             {
-                oscDiagLastAppliedDir = appliedDir;
-                oscDiagLastAppliedTime = Time.time;
+                destPassOscLastAppliedDir = appliedDir;
+                destPassOscLastAppliedTime = Time.time;
             }
         }
+
+        LogDestructiblePassMovementState(
+            myTile,
+            currentDangerSeconds,
+            oscDiagDecidedMove,
+            oscDiagAfterSafeCenter,
+            oscDiagAfterTurnAxis,
+            currentMoveInput);
 
         SetMovementInput(currentMoveInput);
         TrackBehaviorDiagnostics(myTile, currentDangerSeconds);
@@ -1736,6 +1742,9 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
         }
 
+        if (!IsValidBombPlantTile(currentTargetTile))
+            return false;
+
         int radius = GetPlannedBombRadiusAt(currentTargetTile);
         int destructibleCount = CountBombHitDestructibles(currentTargetTile, radius);
         if (destructibleCount <= 0 ||
@@ -1744,16 +1753,57 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
         }
 
+        if (myTile == currentTargetTile && !IsPlantAlignedOnTile(currentTargetTile))
+        {
+            Vector2 alignMove = GetMoveTowardPlantCenter(currentTargetTile);
+            if (alignMove == Vector2.zero)
+                alignMove = GetMoveTowardTileCenter(currentTargetTile);
+
+            SetCurrentDecision(
+                BattleModeComActionType.FarmDestructible,
+                alignMove,
+                true,
+                currentTargetTile,
+                "align committed farm plant",
+                FirstMoveDescription(alignMove),
+                currentDangerSeconds,
+                "farmCommit");
+            return true;
+        }
+
         if (IsFarmTargetReached(currentTargetTile))
         {
+            if (Time.time - lastBombTapTime < BombTapCooldownSeconds)
+            {
+                SetCurrentDecision(
+                    BattleModeComActionType.FarmDestructible,
+                    Vector2.zero,
+                    true,
+                    currentTargetTile,
+                    "wait committed farm bomb cooldown",
+                    "none",
+                    currentDangerSeconds,
+                    "farmCommit");
+                return true;
+            }
+
             if (!CanPlantBombWithEscape(
                     currentTargetTile,
                     radius,
                     settings,
-                    out Vector2 escapeMove,
+                    out _,
                     out _))
             {
-                return false;
+                SetCurrentDecision(
+                    BattleModeComActionType.FarmDestructible,
+                    Vector2.zero,
+                    true,
+                    currentTargetTile,
+                    "hold committed farm no escape yet",
+                    "none",
+                    currentDangerSeconds,
+                    "farmCommit");
+                return true;
             }
 
             CandidateAction plant = new CandidateAction
@@ -1762,10 +1812,10 @@ public sealed class BattleModeComController : MonoBehaviour
                 Weight = settings.farmDestructibleWeight,
                 TargetTile = currentTargetTile,
                 HasTarget = true,
-                FirstMove = escapeMove,
+                FirstMove = Vector2.zero,
                 HasRoute = true,
                 Reason = $"plant committed farm bomb blocks {destructibleCount}",
-                InputDescription = AppendInput("ActionA", FirstMoveDescription(escapeMove)),
+                InputDescription = "ActionA",
                 TapBomb = true
             };
             LogOpeningFarmDiagnostic(
@@ -1832,6 +1882,30 @@ public sealed class BattleModeComController : MonoBehaviour
         return IsCenteredOnTile(targetTile);
     }
 
+    private bool IsPlantAlignedOnTile(Vector2Int targetTile)
+    {
+        if (WorldToTile(transform.position) != targetTile)
+            return false;
+
+        Vector2 delta = TileToWorld(targetTile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+        return Mathf.Abs(delta.x) <= tolerance && Mathf.Abs(delta.y) <= tolerance;
+    }
+
+    private Vector2 GetMoveTowardPlantCenter(Vector2Int targetTile)
+    {
+        Vector2 delta = TileToWorld(targetTile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+
+        if (Mathf.Abs(delta.x) > tolerance && Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
+            return delta.x > 0f ? Vector2.right : Vector2.left;
+
+        if (Mathf.Abs(delta.y) > tolerance)
+            return delta.y > 0f ? Vector2.up : Vector2.down;
+
+        return Vector2.zero;
+    }
+
     private bool TryGetStageProgressPriorityCandidate(
         out CandidateAction candidate)
     {
@@ -1890,6 +1964,16 @@ public sealed class BattleModeComController : MonoBehaviour
         currentReason = selected.Reason;
         currentInputDescription = selected.InputDescription;
         currentHoldActionA = selected.HoldActionA;
+        destPassOscCurrentRoute = route;
+        TrackDestructiblePassDecisionFlip(
+            selected.FirstMove,
+            selected.Action,
+            selected.HasTarget,
+            selected.TargetTile,
+            selected.Reason,
+            selected.InputDescription,
+            currentDangerSeconds,
+            route);
         currentMoveFollowsEscapeRoute =
             selected.Action == BattleModeComActionType.Reposition &&
             !string.IsNullOrEmpty(selected.Reason) &&
@@ -6260,40 +6344,9 @@ public sealed class BattleModeComController : MonoBehaviour
         float dangerSeconds,
         string route)
     {
-        if (EnableOscillationDiagnostics)
-        {
-            Vector2Int newDir = DirectionToTile(move);
-            if (newDir != Vector2Int.zero &&
-                oscDiagLastDecisionDir == -newDir &&
-                Time.time - oscDiagLastDecisionTime < 1.0f &&
-                Time.time - oscDiagLastFlipLogTime > 0.1f)
-            {
-                oscDiagLastFlipLogTime = Time.time;
-                Vector2Int diagTile = WorldToTile(transform.position);
-                Vector2 diagCenterOffset = (Vector2)transform.position - TileToWorld(diagTile);
-                Debug.LogWarning(
-                    $"[BattleCOMOscDiag][P{playerId}] event:DECISION_FLIP frame:{Time.frameCount} t:{Time.time:F2} " +
-                    $"tile:{diagTile} pos:{transform.position} centerOffset:{diagCenterOffset} " +
-                    $"danger:{FormatDanger(dangerSeconds)} " +
-                    $"PREV[dir:{oscDiagLastDecisionDir} age:{Time.time - oscDiagLastDecisionTime:F2}s " +
-                    $"reason:{oscDiagLastDecisionReason} route:{oscDiagLastDecisionRoute} target:{oscDiagLastDecisionTarget}] " +
-                    $"NEW[dir:{newDir} action:{action} reason:{reason} route:{route} target:{target} input:{input}] " +
-                    $"safeCenter:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
-                    $"followsEscape:{currentMoveFollowsEscapeRoute}",
-                    this);
-            }
+        TrackDestructiblePassDecisionFlip(move, action, hasTarget, target, reason, input, dangerSeconds, route);
 
-            if (newDir != Vector2Int.zero)
-            {
-                oscDiagLastDecisionDir = newDir;
-                oscDiagLastDecisionTime = Time.time;
-                oscDiagLastDecisionReason = reason;
-                oscDiagLastDecisionRoute = route;
-                oscDiagLastDecisionTarget = target;
-            }
-        }
-
-        oscDiagCurrentRoute = route;
+        destPassOscCurrentRoute = route;
         currentAction = action;
         currentMoveInput = move;
         hasCurrentTarget = hasTarget;
@@ -6337,6 +6390,134 @@ public sealed class BattleModeComController : MonoBehaviour
 
         BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(ResolveDifficulty());
         LogDecision(settings, WorldToTile(transform.position), dangerSeconds, route);
+    }
+
+    private void TrackDestructiblePassDecisionFlip(
+        Vector2 move,
+        BattleModeComActionType action,
+        bool hasTarget,
+        Vector2Int target,
+        string reason,
+        string input,
+        float dangerSeconds,
+        string route)
+    {
+        if (!EnableDestructiblePassOscillationDiagnostics ||
+            !IsDestructiblePassDiagnosticContext())
+        {
+            return;
+        }
+
+        Vector2Int newDir = DirectionToTile(move);
+        if (newDir != Vector2Int.zero &&
+            destPassOscLastDecisionDir == -newDir &&
+            Time.time - destPassOscLastDecisionTime < 1.0f &&
+            Time.time - destPassOscLastFlipLogTime > 0.1f)
+        {
+            destPassOscLastFlipLogTime = Time.time;
+            Vector2Int diagTile = WorldToTile(transform.position);
+            Vector2 diagCenterOffset = (Vector2)transform.position - TileToWorld(diagTile);
+            Debug.LogWarning(
+                $"[BattleCOMDestructiblePassOsc][P{playerId}] event:DECISION_FLIP frame:{Time.frameCount} t:{Time.time:F2} " +
+                $"tile:{diagTile} pos:{transform.position} centerOffset:{diagCenterOffset} " +
+                $"danger:{FormatDanger(dangerSeconds)} " +
+                $"PREV[dir:{destPassOscLastDecisionDir} age:{Time.time - destPassOscLastDecisionTime:F2}s " +
+                $"reason:{destPassOscLastDecisionReason} route:{destPassOscLastDecisionRoute} target:{destPassOscLastDecisionTarget}] " +
+                $"NEW[dir:{newDir} action:{action} reason:{reason} route:{route} " +
+                $"target:{(hasTarget ? target.ToString() : "none")} input:{input}] " +
+                $"safeCenter:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
+                $"followsEscape:{currentMoveFollowsEscapeRoute}",
+                this);
+        }
+
+        if (newDir != Vector2Int.zero)
+        {
+            destPassOscLastDecisionDir = newDir;
+            destPassOscLastDecisionTime = Time.time;
+            destPassOscLastDecisionReason = reason;
+            destPassOscLastDecisionRoute = route;
+            destPassOscLastDecisionTarget = target;
+        }
+    }
+
+    private bool IsCurrentDestructiblePassDiagnosticContext() =>
+        IsDestructiblePassDiagnosticContext();
+
+    private bool IsDestructiblePassDiagnosticContext() =>
+        IsBattleModeScene() &&
+        ComCanPassThroughDestructibles();
+
+    private static string DescribeMovementPipelineChange(
+        Vector2 decided,
+        Vector2 afterSafeCenter,
+        Vector2 afterTurnAxis,
+        Vector2 afterEnforce)
+    {
+        if (DirectionToTile(decided) != DirectionToTile(afterSafeCenter))
+            return "safeCenter";
+
+        if (DirectionToTile(afterSafeCenter) != DirectionToTile(afterTurnAxis))
+            return "turnAxis";
+
+        if (DirectionToTile(afterTurnAxis) != DirectionToTile(afterEnforce))
+            return "enforce";
+
+        return "decision";
+    }
+
+    private void LogDestructiblePassMovementState(
+        Vector2Int myTile,
+        float dangerSeconds,
+        Vector2 decided,
+        Vector2 afterSafeCenter,
+        Vector2 afterTurnAxis,
+        Vector2 afterEnforce)
+    {
+        if (!EnableDestructiblePassOscillationDiagnostics ||
+            !IsCurrentDestructiblePassDiagnosticContext())
+        {
+            return;
+        }
+
+        Vector2Int appliedDir = DirectionToTile(afterEnforce);
+        Vector2Int decidedDir = DirectionToTile(decided);
+        if (appliedDir == Vector2Int.zero && decidedDir == Vector2Int.zero)
+            return;
+
+        string changedAt = DescribeMovementPipelineChange(
+            decided,
+            afterSafeCenter,
+            afterTurnAxis,
+            afterEnforce);
+        string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
+        string safeCenter = hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none";
+        string key =
+            $"{myTile}:{currentAction}:{target}:{currentReason}:{FirstMoveDescription(decided)}:" +
+            $"{FirstMoveDescription(afterEnforce)}:{changedAt}";
+
+        if (key == destPassOscLastStateLogKey &&
+            Time.time - destPassOscLastStateLogTime < 0.35f)
+        {
+            return;
+        }
+
+        destPassOscLastStateLogKey = key;
+        destPassOscLastStateLogTime = Time.time;
+
+        Vector2 centerOffset = (Vector2)transform.position - TileToWorld(myTile);
+        Vector2Int nextTile = appliedDir == Vector2Int.zero ? myTile : myTile + appliedDir;
+        Debug.LogWarning(
+            $"[BattleCOMDestructiblePassOsc][P{playerId}] event:MOVE_STATE frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} next:{nextTile} pos:{transform.position} centerOffset:{centerOffset} " +
+            $"danger:{FormatDanger(dangerSeconds)} nextDanger:{FormatDanger(GetDangerSeconds(nextTile, null))} " +
+            $"pipeline[decided:{FirstMoveDescription(decided)} safeCenter:{FirstMoveDescription(afterSafeCenter)} " +
+            $"turnAxis:{FirstMoveDescription(afterTurnAxis)} enforce:{FirstMoveDescription(afterEnforce)} " +
+            $"changedAt:{changedAt}] action:{currentAction} route:{destPassOscCurrentRoute} " +
+            $"target:{target} safeCenterTarget:{safeCenter} reason:{currentReason} " +
+            $"input:{currentInputDescription} escapeRoute:{currentMoveFollowsEscapeRoute} " +
+            $"walkableNext:{IsWalkableTile(nextTile, myTile)} destNext:{HasDestructibleTile(nextTile)} " +
+            $"indNext:{HasIndestructibleTile(nextTile)} bombNext:{(IsBombAtTile(nextTile) ? "yes" : "no")}",
+            this);
     }
 
     private void LogBehaviorStart()
@@ -7793,6 +7974,15 @@ public sealed class BattleModeComController : MonoBehaviour
         out Vector2 escapeMove,
         out Vector2Int escapeTile)
     {
+        escapeMove = Vector2.zero;
+        escapeTile = plantTile;
+
+        if (!IsValidBombPlantTile(plantTile))
+        {
+            RejectVerbose($"PlantEscape recusado tile nao plantavel {plantTile}");
+            return false;
+        }
+
         radius = GetPlannedBombRadiusAt(plantTile, radius);
         List<Vector2Int> plannedBlast = BuildBlastTiles(plantTile, radius);
         int directBlastTileCount = plannedBlast.Count;
@@ -8498,6 +8688,14 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private bool IsValidBombPlantTile(Vector2Int tile)
+    {
+        return HasGroundTile(tile) &&
+               !HasIndestructibleTile(tile) &&
+               !HasDestructibleTile(tile) &&
+               !IsBombAtTile(tile);
     }
 
     private BattleModeComStage7PortalEscapeAbility GetStage7PortalAbility()
