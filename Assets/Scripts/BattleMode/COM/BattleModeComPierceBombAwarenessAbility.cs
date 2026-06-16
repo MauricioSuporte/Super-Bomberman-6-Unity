@@ -37,7 +37,7 @@ public sealed class BattleModeComPierceBombAwarenessAbility : MonoBehaviour, IBa
 {
     // === Filtro de diagnóstico ===
     public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnablePierceAwarenessDiagnostics = true;
+    public static readonly bool EnablePierceAwarenessDiagnostics = false;
     private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento ===

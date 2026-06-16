@@ -22,9 +22,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private static readonly bool EnableDeathDiagnostics = false;
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
     private static readonly bool EnableKickBombRiskDiagnostics = false;
-    private static readonly bool EnablePierceEscapeGateDiagnostics = true;
-    private const int PierceEscapeGateDiagnosticPlayerIdFilter = 0;
-    private const float PierceEscapeGateLogIntervalSeconds = 0.25f;
+    private static readonly bool EnableItemPriorityDiagnostics = true;
+    private const int ItemPriorityDiagnosticPlayerIdFilter = 0;
+    private const float ItemPriorityLogIntervalSeconds = 0.35f;
 
     // Log cirúrgico de ExecuteEscape — desativado enquanto investigamos o patrol.
     private static readonly bool EnableEscapeDiagnostics = false;
@@ -110,6 +110,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float SuddenDeathUnsafeLeadSeconds = 1f;
     private const int ItemPriorityDistance = 7;
     private const int NearbyItemFarmBlockDistance = 5;
+    private const int MaxUsefulQueuedLouieEggs = 2;
+    private const float RecentItemPickupFarmLockoutSeconds = 1.6f;
     private const int MinimumStageProgressSearchDepth = 32;
     private const int MaxDecisionBufferEntries = 32;
     private const float PersonalityWeightJitter = 0.18f;
@@ -257,8 +259,10 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastDecisionTraceLogKey = string.Empty;
     private float lastAbilityDecisionTraceLogTime = -10f;
     private string lastAbilityDecisionTraceLogKey = string.Empty;
-    private float lastPierceEscapeGateLogTime = -10f;
-    private string lastPierceEscapeGateLogKey = string.Empty;
+    private float lastItemPriorityLogTime = -10f;
+    private string lastItemPriorityLogKey = string.Empty;
+    private Vector2Int recentItemPickupTile = new(int.MinValue, int.MinValue);
+    private float recentItemPickupFarmLockoutUntil = -10f;
     private float lastStage3PlantDiagnosticTime = -10f;
     private string lastStage3PlantDiagnosticKey = string.Empty;
     private float lastHardLouieSecurePickupDiagnosticTime = -10f;
@@ -1212,6 +1216,7 @@ public sealed class BattleModeComController : MonoBehaviour
         lastWeightedRoll = -1;
         lastWeightedTotal = -1;
         EnsurePersonalitySeed();
+        UpdateRecentItemPickupMemory(settings, myTile, currentDangerSeconds);
 
         if (hardLouieSecurePlanActive &&
             TryBuildHardLouieSecurePickupCandidate(
@@ -1341,7 +1346,28 @@ public sealed class BattleModeComController : MonoBehaviour
             // se existe oportunidade de plantar mais uma bomba em chain. Isso preserva as
             // estratégias de kick-chain e chain-explosion que foram quebradas quando o Codex
             // colocou o escape route antes do chain candidate.
+            int rejectedBeforeChainItemProbe = rejectedActions.Count;
+            bool reachableItemBeforeChain = HasReachableUsefulItem(
+                myTile,
+                settings,
+                GetStageProgressSearchDepth(settings),
+                out ItemPickup itemBeforeChain,
+                out int itemBeforeChainDistance);
+            TrimRejectedActions(rejectedBeforeChainItemProbe);
+            if (reachableItemBeforeChain && itemBeforeChain != null)
+            {
+                LogItemPriorityDiagnostic(
+                    "CHAIN_DEFERRED_FOR_ITEM",
+                    myTile,
+                    currentDangerSeconds,
+                    $"item:{itemBeforeChain.type}@{WorldToTile(itemBeforeChain.transform.position)} " +
+                    $"distance:{itemBeforeChainDistance} " +
+                    $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                    force: true);
+            }
+
             if (!chainPlantingTimeExpired &&
+                !reachableItemBeforeChain &&
                 ShouldAttemptDifficultyChance(settings.advancedBombPlanChance) &&
                 TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
             {
@@ -1380,6 +1406,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 TryBuildPostPlantActionCandidate(
                     settings,
                     myTile,
+                    currentDangerSeconds,
                     out CandidateAction postPlantAction,
                     out postPlantActionTrace))
             {
@@ -1557,6 +1584,15 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (TryExecuteReachableItemPriority(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                "postOwnBombResolved"))
+        {
+            return;
+        }
+
         if (TryContinueFarmCommitment(settings, myTile, currentDangerSeconds))
             return;
 
@@ -1672,6 +1708,12 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         BuildCandidates(settings, myTile);
+        LogItemPriorityDiagnostic(
+            "CANDIDATES_BUILT",
+            myTile,
+            currentDangerSeconds,
+            $"candidates:{FormatOpeningCandidates()} rejected:{FormatRejectedForLog()} " +
+            $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}");
 
         if (candidates.Count <= 0)
         {
@@ -1689,6 +1731,8 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (TryGetStageProgressPriorityCandidate(
                 settings,
+                myTile,
+                currentDangerSeconds,
                 out CandidateAction priorityProgress))
         {
             bool itemPriority =
@@ -1761,10 +1805,34 @@ public sealed class BattleModeComController : MonoBehaviour
         if (!IsValidBombPlantTile(currentTargetTile))
             return false;
 
+        if (IsRecentItemPickupFarmLocked(currentTargetTile))
+        {
+            LogItemPriorityDiagnostic(
+                "FARM_COMMIT_RECENT_PICKUP_LOCKED",
+                myTile,
+                currentDangerSeconds,
+                $"farmTarget:{currentTargetTile} lockoutRemaining:{recentItemPickupFarmLockoutUntil - Time.time:F2}s " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                force: true);
+            return false;
+        }
+
+        if (TryBuildCollectCandidate(settings, myTile, out CandidateAction collectAfterFarmBomb))
+        {
+            LogItemPriorityDiagnostic(
+                "FARM_COMMIT_DEFERRED_FOR_ITEM",
+                myTile,
+                currentDangerSeconds,
+                $"farmTarget:{currentTargetTile} collect:{FormatOpeningCandidate(collectAfterFarmBomb)} " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                force: true);
+            return false;
+        }
+
         int radius = GetPlannedBombRadiusAt(currentTargetTile);
         int destructibleCount = CountBombHitDestructibles(currentTargetTile, radius);
         if (destructibleCount <= 0 ||
-            WouldBlastHitUsefulItem(currentTargetTile, radius, out _, out _))
+            WouldPlannedBombHitUsefulItem(currentTargetTile, radius, out _, out _))
         {
             return false;
         }
@@ -1926,26 +1994,41 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         float baseTolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
 
-        if (!IsCurrentSkullSpeedDiagnosticContext() || movement == null)
+        if (movement == null)
             return baseTolerance;
 
-        float skullStep = movement.speed * tileSize * Time.fixedDeltaTime;
-        return Mathf.Max(baseTolerance, skullStep * 0.55f);
+        float movementStep = movement.speed * tileSize * Time.fixedDeltaTime;
+        return Mathf.Max(baseTolerance, movementStep * 0.55f);
     }
 
     private bool TryGetStageProgressPriorityCandidate(
         BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
         out CandidateAction candidate)
     {
         candidate = default;
 
         if (HasOwnUnresolvedBombOrExplosion())
         {
+            LogItemPriorityDiagnostic(
+                "PRIORITY_SKIP_OWN_BOMB",
+                myTile,
+                currentDangerSeconds,
+                BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings)));
             return false;
         }
 
         if (!ShouldAttemptDifficultyChance(settings.stageProgressPriorityChance))
+        {
+            LogItemPriorityDiagnostic(
+                "PRIORITY_CHANCE_FAILED",
+                myTile,
+                currentDangerSeconds,
+                $"chance:{settings.stageProgressPriorityChance:F2} " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}");
             return false;
+        }
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -1954,11 +2037,25 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             candidate = current;
+            LogItemPriorityDiagnostic(
+                "PRIORITY_ITEM_SELECTED",
+                myTile,
+                currentDangerSeconds,
+                $"candidate:{FormatOpeningCandidate(candidate)} " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                force: true);
             return true;
         }
 
         if (bombController == null || bombController.BombsRemaining <= 0)
+        {
+            LogItemPriorityDiagnostic(
+                "PRIORITY_NO_ITEM_NO_BOMB",
+                myTile,
+                currentDangerSeconds,
+                BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings)));
             return false;
+        }
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -1967,10 +2064,48 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             candidate = current;
+            LogItemPriorityDiagnostic(
+                "PRIORITY_FARM_SELECTED",
+                myTile,
+                currentDangerSeconds,
+                $"candidate:{FormatOpeningCandidate(candidate)} " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                force: true);
             return true;
         }
 
+        LogItemPriorityDiagnostic(
+            "PRIORITY_NO_PROGRESS_CANDIDATE",
+            myTile,
+            currentDangerSeconds,
+            $"candidates:{FormatOpeningCandidates()} " +
+            $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}");
         return false;
+    }
+
+    private bool TryExecuteReachableItemPriority(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        string route)
+    {
+        if (!TryBuildCollectCandidate(settings, myTile, out CandidateAction collect))
+            return false;
+
+        LogItemPriorityDiagnostic(
+            "IMMEDIATE_ITEM_PRIORITY",
+            myTile,
+            currentDangerSeconds,
+            $"route:{route} selected:{FormatOpeningCandidate(collect)} " +
+            $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+            force: true);
+        ExecuteSelectedCandidate(
+            settings,
+            myTile,
+            currentDangerSeconds,
+            collect,
+            route);
+        return true;
     }
 
     private bool ShouldAttemptDifficultyChance(float chance)
@@ -2043,24 +2178,12 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (selected.TapBomb && Time.time - lastBombTapTime >= BombTapCooldownSeconds)
         {
-            // Log cirúrgico do plantio: por que plantou aqui e o que o blast atinge.
-            // Compara a guarda normal (pierce-cega) com um scan pierce-aware para
-            // expor itens que serão queimados atrás de blocos com pierce + fogo alto.
-            {
-                int plantRadius = GetPlannedBombRadiusAt(selected.TargetTile);
-                bool willPierce = bombController != null && bombController.WillNextBombBePierce();
-                int destrHit = CountBombHitDestructibles(selected.TargetTile, plantRadius);
-                bool blindItemHit = WouldBlastHitUsefulItem(
-                    selected.TargetTile, plantRadius, out ItemType blindItemType, out Vector2Int blindItemTile);
-                bool pierceItemHit = WouldPierceBlastHitUsefulItem(
-                    selected.TargetTile, plantRadius, out ItemType pierceItemType, out Vector2Int pierceItemTile);
-                Debug.LogWarning(
-                    $"[BattleCOMPlant][P{playerId}] PLANT_COMMIT tile:{selected.TargetTile} " +
-                    $"action:{selected.Action} route:{route} reason:{selected.Reason} " +
-                    $"radius:{plantRadius} pierce:{willPierce} destructibles:{destrHit} " +
-                    $"blindItemHit:{blindItemHit}{(blindItemHit ? $"({blindItemType}@{blindItemTile})" : "")} " +
-                    $"pierceItemHit:{pierceItemHit}{(pierceItemHit ? $"({pierceItemType}@{pierceItemTile})" : "")}");
-            }
+            LogBombOverItemDecision(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                selected,
+                route);
             LogStage3P5PlantDiagnostic(
                 "TAP",
                 myTile,
@@ -2864,49 +2987,6 @@ public sealed class BattleModeComController : MonoBehaviour
             this);
     }
 
-    private void LogPierceEscapeGateDiagnostic(
-        string key,
-        Vector2Int myTile,
-        float currentDangerSeconds,
-        string message,
-        bool force = false)
-    {
-        if (!EnablePierceEscapeGateDiagnostics)
-            return;
-
-        if (PierceEscapeGateDiagnosticPlayerIdFilter != 0 &&
-            playerId != PierceEscapeGateDiagnosticPlayerIdFilter)
-        {
-            return;
-        }
-
-        if (string.IsNullOrEmpty(currentReason) ||
-            currentReason.IndexOf("pierce", StringComparison.OrdinalIgnoreCase) < 0)
-        {
-            return;
-        }
-
-        string logKey = $"{key}:{myTile}:{currentReason}:{currentInputDescription}";
-        if (!force &&
-            logKey == lastPierceEscapeGateLogKey &&
-            Time.time - lastPierceEscapeGateLogTime < PierceEscapeGateLogIntervalSeconds)
-        {
-            return;
-        }
-
-        lastPierceEscapeGateLogKey = logKey;
-        lastPierceEscapeGateLogTime = Time.time;
-
-        Debug.LogWarning(
-            $"[BattleCOMPierceEscapeGate][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
-            $"tile:{myTile} pos:{transform.position} danger:{FormatDanger(currentDangerSeconds)} " +
-            $"key:{key} action:{currentAction} move:{FirstMoveDescription(currentMoveInput)} " +
-            $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
-            $"safeCenter:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
-            $"followsEscape:{currentMoveFollowsEscapeRoute} msg:{message}",
-            this);
-    }
-
     private void LogKickBombRiskDiagnostic(
         string key,
         Vector2Int myTile,
@@ -3230,9 +3310,9 @@ public sealed class BattleModeComController : MonoBehaviour
             if (item == null || !item.gameObject.activeInHierarchy)
                 continue;
 
-            if (!IsUsefulItem(item.type))
+            if (!IsUsefulItemForComCollection(item, out string itemRejectReason))
             {
-                RejectVerbose($"CollectItem item perigoso {item.type}");
+                RejectVerbose($"CollectItem {itemRejectReason}");
                 continue;
             }
 
@@ -3307,7 +3387,14 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         if (bestItem == null)
+        {
+            LogItemPriorityDiagnostic(
+                "COLLECT_NO_CANDIDATE",
+                myTile,
+                GetDangerSeconds(myTile, null),
+                BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings)));
             return false;
+        }
 
         candidate = new CandidateAction
         {
@@ -3320,6 +3407,12 @@ public sealed class BattleModeComController : MonoBehaviour
             Reason = $"item {bestItem.type} distance {bestDistance}",
             InputDescription = FirstMoveDescription(bestMove)
         };
+        LogItemPriorityDiagnostic(
+            "COLLECT_CANDIDATE",
+            myTile,
+            GetDangerSeconds(myTile, null),
+            $"candidate:{FormatOpeningCandidate(candidate)} score:{bestScore:F2} " +
+            $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}");
         return true;
     }
 
@@ -3357,12 +3450,18 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
+            if (IsRecentItemPickupFarmLocked(tile))
+            {
+                RejectVerbose($"FarmDestructible adiado tile recem-coletado {tile}");
+                continue;
+            }
+
             int radius = GetPlannedBombRadiusAt(tile);
             int destructibleCount = CountBombHitDestructibles(tile, radius);
             if (destructibleCount <= 0)
                 continue;
 
-            if (WouldBlastHitUsefulItem(tile, radius, out ItemType itemType, out Vector2Int itemTile))
+            if (WouldPlannedBombHitUsefulItem(tile, radius, out ItemType itemType, out Vector2Int itemTile))
             {
                 RejectVerbose($"FarmDestructible recusado queimaria item {itemType}@{itemTile}");
                 continue;
@@ -3441,7 +3540,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         int radius = GetPlannedBombRadiusAt(myTile);
         if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
-            !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
+            !WouldPlannedBombHitUsefulItem(myTile, radius, out _, out _) &&
             CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
         {
             candidate = new CandidateAction
@@ -3857,6 +3956,9 @@ public sealed class BattleModeComController : MonoBehaviour
         ref Vector2 bestEscapeMove,
         ref int bestDistance)
     {
+        if (!CanComCollectLooseWorldMount())
+            return;
+
         MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
         for (int i = 0; i < pickups.Length; i++)
         {
@@ -4002,6 +4104,56 @@ public sealed class BattleModeComController : MonoBehaviour
                type == ItemType.RedLouieEgg;
     }
 
+    private bool IsUsefulItemForComCollection(ItemPickup item, out string rejectReason)
+    {
+        rejectReason = string.Empty;
+
+        if (item == null)
+        {
+            rejectReason = "item invalido";
+            return false;
+        }
+
+        if (!IsUsefulItem(item.type))
+        {
+            rejectReason = $"item perigoso {item.type}";
+            return false;
+        }
+
+        if (IsLouieEggItem(item.type) &&
+            !CanComCollectLouieEgg(out int queuedEggCount))
+        {
+            rejectReason =
+                $"ovo Louie ignorado fila cheia {queuedEggCount}/{MaxUsefulQueuedLouieEggs}";
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool CanComCollectLouieEgg(out int queuedEggCount)
+    {
+        queuedEggCount = GetComQueuedLouieEggCount();
+
+        if (IsComUnmounted())
+            return true;
+
+        return queuedEggCount < MaxUsefulQueuedLouieEggs;
+    }
+
+    private int GetComQueuedLouieEggCount()
+    {
+        if (TryGetComponent<MountEggQueue>(out var queue) && queue != null)
+            return Mathf.Max(0, queue.Count);
+
+        return 0;
+    }
+
+    private bool CanComCollectLooseWorldMount()
+    {
+        return IsComUnmounted();
+    }
+
     private bool HasOwnExplosionAtTile(Vector2Int tile)
     {
         BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
@@ -4045,7 +4197,7 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         int radius = GetPlannedBombRadiusAt(exitTile);
-        if (WouldBlastHitUsefulItem(exitTile, radius, out _, out _))
+        if (WouldPlannedBombHitUsefulItem(exitTile, radius, out _, out _))
         {
             return false;
         }
@@ -4277,6 +4429,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool TryBuildPostPlantActionCandidate(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
+        float currentDangerSeconds,
         out CandidateAction candidate,
         out string trace)
     {
@@ -4286,6 +4439,11 @@ public sealed class BattleModeComController : MonoBehaviour
         if (bombController == null)
         {
             trace = "missing bomb controller";
+            LogItemPriorityDiagnostic(
+                "POST_PLANT_NO_BOMB_CONTROLLER",
+                myTile,
+                currentDangerSeconds,
+                BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings)));
             return false;
         }
 
@@ -4298,8 +4456,21 @@ public sealed class BattleModeComController : MonoBehaviour
             trace =
                 $"safe item collection selected target:{candidate.TargetTile} " +
                 $"reason:{candidate.Reason}";
+            LogItemPriorityDiagnostic(
+                "POST_PLANT_COLLECT_SELECTED",
+                myTile,
+                currentDangerSeconds,
+                $"candidate:{FormatOpeningCandidate(candidate)} " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                force: true);
             return true;
         }
+
+        LogItemPriorityDiagnostic(
+            "POST_PLANT_COLLECT_UNAVAILABLE",
+            myTile,
+            currentDangerSeconds,
+            BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings)));
 
         if (bombController.BombsRemaining > 0 &&
             TryBuildSecondBombCandidate(
@@ -4310,6 +4481,13 @@ public sealed class BattleModeComController : MonoBehaviour
             trace =
                 $"reserved bomb action selected bombsRemaining:{bombController.BombsRemaining} " +
                 $"target:{candidate.TargetTile} tapBomb:{candidate.TapBomb}";
+            LogItemPriorityDiagnostic(
+                "POST_PLANT_SECOND_BOMB_SELECTED",
+                myTile,
+                currentDangerSeconds,
+                $"candidate:{FormatOpeningCandidate(candidate)} " +
+                $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+                force: true);
             return true;
         }
 
@@ -4355,7 +4533,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 Vector2Int tile = reachableTiles[i];
                 int radius = GetPlannedBombRadiusAt(tile);
                 if (IsBombAtTile(tile) ||
-                    WouldBlastHitUsefulItem(tile, radius, out _, out _) ||
+                    WouldPlannedBombHitUsefulItem(tile, radius, out _, out _) ||
                     !IsTileInBlastLineRuntime(tile, targetTile, radius) ||
                     !CanPlantBombWithEscape(tile, radius, settings, out _, out _) ||
                     !TryFindPath(
@@ -4410,13 +4588,16 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
+            if (IsRecentItemPickupFarmLocked(tile))
+                continue;
+
             int radius = GetPlannedBombRadiusAt(tile);
             if (IsBombAtTile(tile))
                 continue;
 
             int destructibleCount = CountBombHitDestructibles(tile, radius);
             if (destructibleCount <= 0 ||
-                WouldBlastHitUsefulItem(tile, radius, out _, out _) ||
+                WouldPlannedBombHitUsefulItem(tile, radius, out _, out _) ||
                 !CanPlantBombWithEscape(tile, radius, settings, out _, out _) ||
                 !TryFindPath(
                     myTile,
@@ -4492,7 +4673,7 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             // Na posição atual
             if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
-                !WouldBlastHitUsefulItem(myTile, radius, out _, out _) &&
+                !WouldPlannedBombHitUsefulItem(myTile, radius, out _, out _) &&
                 CanPlantAdditionalBombWithEscape(
                     myTile,
                     radius,
@@ -4526,7 +4707,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 Vector2Int tile = reachableTiles[i];
                 int tileRadius = GetPlannedBombRadiusAt(tile);
                 if (IsBombAtTile(tile)) continue;
-                if (WouldBlastHitUsefulItem(tile, tileRadius, out _, out _)) continue;
+                if (WouldPlannedBombHitUsefulItem(tile, tileRadius, out _, out _)) continue;
                 if (!IsTileInBlastLineRuntime(tile, targetTile, tileRadius)) continue;
                 if (!CanPlantAdditionalBombWithEscape(tile, tileRadius, settings, out Vector2 esc, out _, out _)) continue;
                 if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
@@ -4571,10 +4752,12 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < reachableTiles.Count; i++)
         {
             Vector2Int tile = reachableTiles[i];
+            if (IsRecentItemPickupFarmLocked(tile)) continue;
+
             int tileRadius = GetPlannedBombRadiusAt(tile);
             if (IsBombAtTile(tile)) continue;
             if (!CanBombHitDestructible(tile, tileRadius)) continue;
-            if (WouldBlastHitUsefulItem(tile, tileRadius, out _, out _)) continue;
+            if (WouldPlannedBombHitUsefulItem(tile, tileRadius, out _, out _)) continue;
             if (!CanPlantAdditionalBombWithEscape(tile, tileRadius, settings, out Vector2 esc, out _, out _)) continue;
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
 
@@ -5460,7 +5643,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
             }
 
-            if (WouldBlastHitUsefulItem(tile, tileRadius, out ItemType hitItemType, out Vector2Int hitItemTile))
+            if (WouldPlannedBombHitUsefulItem(tile, tileRadius, out ItemType hitItemType, out Vector2Int hitItemTile))
             {
                 cntBlastHitsItem++;
                 AddChainRejectSample(ref rejectSamples, $"item:{tile}->{hitItemType}@{hitItemTile}");
@@ -5679,8 +5862,12 @@ public sealed class BattleModeComController : MonoBehaviour
         for (int i = 0; i < items.Length; i++)
         {
             ItemPickup item = items[i];
-            if (item == null || !item.gameObject.activeInHierarchy || !IsUsefulItem(item.type))
+            if (item == null ||
+                !item.gameObject.activeInHierarchy ||
+                !IsUsefulItemForComCollection(item, out _))
+            {
                 continue;
+            }
 
             Vector2Int itemTile = WorldToTile(item.transform.position);
             int manhattan = Manhattan(myTile, itemTile);
@@ -5701,6 +5888,56 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return foundItem != null;
+    }
+
+    private void UpdateRecentItemPickupMemory(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds)
+    {
+        if (currentAction != BattleModeComActionType.CollectItem ||
+            !hasCurrentTarget ||
+            Manhattan(myTile, currentTargetTile) > 1 ||
+            HasUsefulItemAtTile(currentTargetTile))
+        {
+            return;
+        }
+
+        recentItemPickupTile = currentTargetTile;
+        recentItemPickupFarmLockoutUntil = Time.time + RecentItemPickupFarmLockoutSeconds;
+        LogItemPriorityDiagnostic(
+            "RECENT_ITEM_PICKUP_LOCKOUT",
+            myTile,
+            currentDangerSeconds,
+            $"pickupTile:{recentItemPickupTile} lockout:{RecentItemPickupFarmLockoutSeconds:F2}s " +
+            $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+            force: true);
+    }
+
+    private bool IsRecentItemPickupFarmLocked(Vector2Int tile)
+    {
+        return tile == recentItemPickupTile &&
+               Time.time < recentItemPickupFarmLockoutUntil;
+    }
+
+    private bool HasUsefulItemAtTile(Vector2Int tile)
+    {
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null ||
+                !item.gameObject.activeInHierarchy ||
+                !IsUsefulItemForComCollection(item, out _))
+            {
+                continue;
+            }
+
+            if (WorldToTile(item.transform.position) == tile)
+                return true;
+        }
+
+        return false;
     }
 
     private bool ShouldHoldDangerTile(
@@ -6146,6 +6383,211 @@ public sealed class BattleModeComController : MonoBehaviour
             $"bombs:{bombsRemaining}/{totalBombs} own:{FormatOwnChainBombs()} " +
             $"message:{message}",
             this);
+    }
+
+    private void LogBombOverItemDecision(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        CandidateAction selected,
+        string route)
+    {
+        if (!EnableItemPriorityDiagnostics)
+            return;
+
+        int radius = GetPlannedBombRadiusAt(selected.TargetTile);
+        bool plannedHitsItem = WouldPlannedBombHitUsefulItem(
+            selected.TargetTile,
+            radius,
+            out ItemType hitItemType,
+            out Vector2Int hitItemTile);
+        int rejectedBeforeItemProbe = rejectedActions.Count;
+        bool hasReachableItem = HasReachableUsefulItem(
+            myTile,
+            settings,
+            GetStageProgressSearchDepth(settings),
+            out ItemPickup reachableItem,
+            out int reachableDistance);
+        TrimRejectedActions(rejectedBeforeItemProbe);
+
+        if (!plannedHitsItem && !hasReachableItem)
+            return;
+
+        string reachable = hasReachableItem && reachableItem != null
+            ? $"{reachableItem.type}@{WorldToTile(reachableItem.transform.position)} dist:{reachableDistance}"
+            : "none";
+        string hit = plannedHitsItem
+            ? $"{hitItemType}@{hitItemTile}"
+            : "none";
+
+        LogItemPriorityDiagnostic(
+            "BOMB_SELECTED_WITH_ITEM_CONTEXT",
+            myTile,
+            currentDangerSeconds,
+            $"route:{route} selected:{FormatOpeningCandidate(selected)} " +
+            $"radius:{radius} plannedHit:{hit} reachable:{reachable} " +
+            $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}",
+            force: plannedHitsItem);
+    }
+
+    private void LogItemPriorityDiagnostic(
+        string key,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        string message,
+        bool force = false)
+    {
+        if (!EnableItemPriorityDiagnostics)
+            return;
+
+        if (ItemPriorityDiagnosticPlayerIdFilter != 0 &&
+            playerId != ItemPriorityDiagnosticPlayerIdFilter)
+        {
+            return;
+        }
+
+        string logKey = $"{key}:{myTile}:{message}";
+        if (!force &&
+            logKey == lastItemPriorityLogKey &&
+            Time.time - lastItemPriorityLogTime < ItemPriorityLogIntervalSeconds)
+        {
+            return;
+        }
+
+        lastItemPriorityLogKey = logKey;
+        lastItemPriorityLogTime = Time.time;
+
+        Debug.LogWarning(
+            $"[BattleCOMItemPriority][P{playerId}] frame:{Time.frameCount} t:{Time.time:F2} " +
+            $"tile:{myTile} danger:{FormatDanger(currentDangerSeconds)} key:{key} " +
+            $"action:{currentAction} target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
+            $"bombs:{(bombController != null ? bombController.BombsRemaining : -1)} " +
+            $"msg:{message}",
+            this);
+    }
+
+    private string BuildItemPrioritySummary(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        int maxDistance)
+    {
+        int useful = 0;
+        int notUseful = 0;
+        int blocked = 0;
+        int tooFar = 0;
+        int noRoute = 0;
+        int reachable = 0;
+        int threatened = 0;
+        int bestDistance = int.MaxValue;
+        ItemType bestType = default;
+        Vector2Int bestTile = myTile;
+        string samples = string.Empty;
+
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null || !item.gameObject.activeInHierarchy)
+                continue;
+
+            Vector2Int itemTile = WorldToTile(item.transform.position);
+            if (!IsUsefulItemForComCollection(item, out string itemRejectReason))
+            {
+                notUseful++;
+                AppendItemPrioritySample(ref samples, $"{item.type}@{itemTile}:{itemRejectReason}");
+                continue;
+            }
+
+            useful++;
+            int manhattan = Manhattan(myTile, itemTile);
+            if (manhattan > maxDistance)
+            {
+                tooFar++;
+                AppendItemPrioritySample(ref samples, $"{item.type}@{itemTile}:far{manhattan}");
+                continue;
+            }
+
+            if (!IsWalkableTile(itemTile, myTile))
+            {
+                blocked++;
+                AppendItemPrioritySample(ref samples, $"{item.type}@{itemTile}:blocked");
+                continue;
+            }
+
+            int rejectedBeforePathProbe = rejectedActions.Count;
+            bool hasPath = TryFindPath(
+                    myTile,
+                    itemTile,
+                    maxDistance,
+                    true,
+                    settings,
+                    null,
+                    out PathResult path);
+            TrimRejectedActions(rejectedBeforePathProbe);
+
+            if (!hasPath)
+            {
+                noRoute++;
+                AppendItemPrioritySample(ref samples, $"{item.type}@{itemTile}:noRoute");
+                continue;
+            }
+
+            reachable++;
+            float danger = GetDangerSeconds(itemTile, null);
+            if (!float.IsInfinity(danger))
+                threatened++;
+
+            AppendItemPrioritySample(
+                ref samples,
+                $"{item.type}@{itemTile}:d{path.Distance}/danger:{FormatDanger(danger)}");
+
+            if (path.Distance >= bestDistance)
+                continue;
+
+            bestDistance = path.Distance;
+            bestType = item.type;
+            bestTile = itemTile;
+        }
+
+        string best = bestDistance == int.MaxValue
+            ? "none"
+            : $"{bestType}@{bestTile}/d{bestDistance}";
+        return
+            $"items useful:{useful} reachable:{reachable} threatened:{threatened} " +
+            $"blocked:{blocked} noRoute:{noRoute} tooFar:{tooFar} ignored:{notUseful} " +
+            $"best:{best} samples:{(string.IsNullOrEmpty(samples) ? "none" : samples)}";
+    }
+
+    private static void AppendItemPrioritySample(ref string samples, string sample)
+    {
+        if (string.IsNullOrEmpty(sample))
+            return;
+
+        int count = 0;
+        if (!string.IsNullOrEmpty(samples))
+        {
+            for (int i = 0; i < samples.Length; i++)
+            {
+                if (samples[i] == '|')
+                    count++;
+            }
+
+            count++;
+        }
+
+        if (count >= 4)
+            return;
+
+        if (!string.IsNullOrEmpty(samples))
+            samples += " | ";
+
+        samples += sample;
+    }
+
+    private void TrimRejectedActions(int count)
+    {
+        while (rejectedActions.Count > count)
+            rejectedActions.RemoveAt(rejectedActions.Count - 1);
     }
 
     private void AddChainRejectSample(ref string samples, string sample)
@@ -8086,7 +8528,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 return false;
             }
 
-            if (!IsCenteredOnTile(plantTile) || NeedsTurnAxisCentering(plantTile, firstStep))
+            if (!IsPlantAlignedOnTile(plantTile) || NeedsPlantEscapeAxisCentering(plantTile, firstStep))
                 return false;
 
             Vector2Int firstEscapeTile = plantTile + firstStep;
@@ -8558,50 +9000,30 @@ public sealed class BattleModeComController : MonoBehaviour
         return count;
     }
 
-    private bool WouldBlastHitUsefulItem(Vector2Int origin, int radius, out ItemType itemType, out Vector2Int itemTile)
+    private bool WouldPlannedBombHitUsefulItem(
+        Vector2Int origin,
+        int radius,
+        out ItemType itemType,
+        out Vector2Int itemTile)
     {
         itemType = default;
         itemTile = origin;
 
+        List<Vector2Int> plannedBlastTiles =
+            BuildPlannedBombBlastTiles(origin, Mathf.Max(1, radius));
         ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
         for (int i = 0; i < items.Length; i++)
         {
             ItemPickup item = items[i];
-            if (item == null || !item.gameObject.activeInHierarchy || !IsUsefulItem(item.type))
+            if (item == null ||
+                !item.gameObject.activeInHierarchy ||
+                !IsUsefulItemForComCollection(item, out _))
+            {
                 continue;
+            }
 
             Vector2Int tile = WorldToTile(item.transform.position);
-            if (!IsTileInBlastLineRuntime(origin, tile, radius))
-                continue;
-
-            itemType = item.type;
-            itemTile = tile;
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Igual a WouldBlastHitUsefulItem, mas modela a explosão como PIERCE
-    /// (atravessa blocos destrutíveis, parando só no indestrutível). Serve para
-    /// diagnosticar itens que a guarda normal (pierce-cega) não enxerga atrás de
-    /// blocos quando o COM está com pierce bomb + fogo alto.
-    /// </summary>
-    private bool WouldPierceBlastHitUsefulItem(Vector2Int origin, int radius, out ItemType itemType, out Vector2Int itemTile)
-    {
-        itemType = default;
-        itemTile = origin;
-
-        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
-        for (int i = 0; i < items.Length; i++)
-        {
-            ItemPickup item = items[i];
-            if (item == null || !item.gameObject.activeInHierarchy || !IsUsefulItem(item.type))
-                continue;
-
-            Vector2Int tile = WorldToTile(item.transform.position);
-            if (!IsTileInBlastLine(origin, tile, radius, BlocksExplosionForPierce))
+            if (!plannedBlastTiles.Contains(tile))
                 continue;
 
             itemType = item.type;
@@ -9514,14 +9936,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 currentDanger > nextArrivalSeconds + DangerTimingMarginSeconds &&
                 !IsDangerousAt(nextTile, nextArrivalSeconds, settings, null))
             {
-                LogPierceEscapeGateDiagnostic(
-                    "ALLOW_ESCAPE_TRANSIT",
-                    currentTile,
-                    currentDanger,
-                    $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} " +
-                    $"nextDanger:{FormatDanger(nextDanger)} nextArrival:{nextArrivalSeconds:F2}s " +
-                    $"target:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
-                    $"reason:{currentReason}");
                 return requestedMove;
             }
 
@@ -9540,16 +9954,6 @@ public sealed class BattleModeComController : MonoBehaviour
 
             if (nextMargin + DangerTimingMarginSeconds < currentMargin)
             {
-                LogPierceEscapeGateDiagnostic(
-                    "HOLD_DANGER_TIMING",
-                    currentTile,
-                    currentDanger,
-                    $"requested:{FirstMoveDescription(requestedMove)} next:{nextTile} " +
-                    $"nextDanger:{FormatDanger(nextDanger)} currentMargin:{currentMargin:F2}s " +
-                    $"nextMargin:{nextMargin:F2}s nextArrival:{nextArrivalSeconds:F2}s " +
-                    $"target:{(hasSafeCenterTarget ? safeCenterTargetTile.ToString() : "none")} " +
-                    $"reason:{currentReason}",
-                    force: true);
                 LogPostPlantEscapeDiagnostic(
                     "SAFETY_HOLD_DANGER_TIMING",
                     currentTile,
@@ -9777,6 +10181,20 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
         float tolerance = Mathf.Max(0.01f, tileSize * TurnAxisCenterTolerance);
+
+        if (requestedDirection.x != 0)
+            return Mathf.Abs(delta.y) > tolerance;
+
+        if (requestedDirection.y != 0)
+            return Mathf.Abs(delta.x) > tolerance;
+
+        return false;
+    }
+
+    private bool NeedsPlantEscapeAxisCentering(Vector2Int currentTile, Vector2Int requestedDirection)
+    {
+        Vector2 delta = TileToWorld(currentTile) - (Vector2)transform.position;
+        float tolerance = GetPlantAlignmentTolerance();
 
         if (requestedDirection.x != 0)
             return Mathf.Abs(delta.y) > tolerance;
