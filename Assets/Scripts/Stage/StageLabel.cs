@@ -42,14 +42,13 @@ public class StageLabel : MonoBehaviour
     [SerializeField] Color pauseWindowHighlightBorder = new Color(1f, 0.96f, 0.08f, 1f);
     [SerializeField] Color pauseWindowInnerBorder = new Color(0.05f, 0f, 0f, 1f);
     [SerializeField] Color pauseWindowShadow = new Color(0.22f, 0.08f, 0f, 0.82f);
-    [SerializeField] Vector2 pauseWindowPaddingAtDesign = new Vector2(44f, 28f);
+    [SerializeField] Vector2 pauseWindowPaddingAtDesign = new Vector2(44f, 40f);
+    [SerializeField, Min(0f)] float pauseWindowMinVerticalPaddingAtDesign = 56f;
     [SerializeField, Min(1f)] float pauseWindowOuterBorderThicknessAtDesign = 5f;
     [SerializeField, Min(1f)] float pauseWindowGoldBorderThicknessAtDesign = 5f;
     [SerializeField, Min(1f)] float pauseWindowHighlightThicknessAtDesign = 3f;
     [SerializeField, Min(1f)] float pauseWindowInnerBorderThicknessAtDesign = 5f;
     [SerializeField] Vector2 pauseWindowShadowDistanceAtDesign = new Vector2(7f, -7f);
-    [SerializeField] bool logPauseWindowDiagnostics = false;
-
     RectTransform pauseWindowRect;
     RectTransform pauseWindowFillRect;
     Image pauseWindowImage;
@@ -57,12 +56,7 @@ public class StageLabel : MonoBehaviour
     Shadow pauseWindowShadowEffect;
     readonly RectTransform[] pauseWindowFrameRects = new RectTransform[16];
     readonly Image[] pauseWindowFrameImages = new Image[16];
-    bool pauseWindowLastVisibleState;
-    Vector2 lastLoggedWindowSize = new Vector2(float.MinValue, float.MinValue);
-    Vector2 lastLoggedWindowPosition = new Vector2(float.MinValue, float.MinValue);
-    float lastLoggedPreferredWidth = float.MinValue;
-    int lastLoggedTextSiblingIndex = int.MinValue;
-    int lastLoggedWindowSiblingIndex = int.MinValue;
+    readonly Vector3[] textWorldCorners = new Vector3[4];
 
     float _lastUiScale = -999f;
     int _lastBaseScaleInt = -999;
@@ -193,6 +187,7 @@ public class StageLabel : MonoBehaviour
             $"<size={S(SizeMenuItem)}>{retTitle}</size>" +
             "</align>";
 
+        ApplyRectScale("SetPauseMenu");
         SetPauseWindowVisible(true);
     }
 
@@ -248,6 +243,7 @@ public class StageLabel : MonoBehaviour
             $"<size={S(SizeMenuItem)}><indent={indent}>{yesOpt}</indent></size>" +
             "</align>";
 
+        ApplyRectScale("SetPauseConfirmQuestion");
         SetPauseWindowVisible(true);
     }
 
@@ -307,6 +303,7 @@ public class StageLabel : MonoBehaviour
             $"<size={S(SizeMenuItem)}>{retTitle}</size>" +
             "</align>";
 
+        ApplyRectScale("SetBattleModePauseMenu");
         SetPauseWindowVisible(true);
     }
 
@@ -340,11 +337,6 @@ public class StageLabel : MonoBehaviour
             return;
 
         pauseWindowRect.gameObject.SetActive(visible);
-        if (pauseWindowLastVisibleState != visible)
-        {
-            pauseWindowLastVisibleState = visible;
-            LogPauseWindow($"Visibility changed -> {visible}");
-        }
 
         if (visible)
             SyncPauseWindow();
@@ -388,7 +380,6 @@ public class StageLabel : MonoBehaviour
         CreatePauseWindowFrame();
 
         PlacePauseWindowBehindText();
-        LogPauseWindow("Created runtime pause window");
         SyncPauseWindow();
     }
 
@@ -400,16 +391,19 @@ public class StageLabel : MonoBehaviour
         RectTransform textRect = stageText.rectTransform;
         Canvas.ForceUpdateCanvases();
         stageText.ForceMeshUpdate(true, true);
-        pauseWindowRect.anchorMin = textRect.anchorMin;
-        pauseWindowRect.anchorMax = textRect.anchorMax;
-        pauseWindowRect.pivot = textRect.pivot;
-        pauseWindowRect.anchoredPosition = textRect.anchoredPosition;
+        RectTransform parent = pauseWindowRect.parent as RectTransform;
+        pauseWindowRect.anchorMin = new Vector2(0.5f, 0.5f);
+        pauseWindowRect.anchorMax = new Vector2(0.5f, 0.5f);
+        pauseWindowRect.pivot = new Vector2(0.5f, 0.5f);
+        pauseWindowRect.anchoredPosition = GetTextCenterInParent(parent, textRect);
 
         float preferredWidth = stageText.preferredWidth;
         float preferredHeight = stageText.preferredHeight;
-        float targetWidth = Mathf.Max(textRect.sizeDelta.x, preferredWidth);
-        float targetHeight = Mathf.Max(textRect.sizeDelta.y, preferredHeight);
-        Vector2 padding = pauseWindowPaddingAtDesign * UiScale;
+        float targetWidth = preferredWidth > 1f ? preferredWidth : textRect.sizeDelta.x;
+        float targetHeight = preferredHeight > 1f ? preferredHeight : textRect.sizeDelta.y;
+        Vector2 paddingAtDesign = pauseWindowPaddingAtDesign;
+        paddingAtDesign.y = Mathf.Max(paddingAtDesign.y, pauseWindowMinVerticalPaddingAtDesign);
+        Vector2 padding = paddingAtDesign * UiScale;
         pauseWindowRect.sizeDelta = new Vector2(
             targetWidth + padding.x,
             targetHeight + padding.y);
@@ -426,9 +420,27 @@ public class StageLabel : MonoBehaviour
         SyncPauseWindowFrame();
 
         PlacePauseWindowBehindText();
-        LogPauseWindow(
-            $"Synced window. textSize={textRect.sizeDelta} preferred=({preferredWidth:F2},{preferredHeight:F2}) " +
-            $"windowSize={pauseWindowRect.sizeDelta} pos={pauseWindowRect.anchoredPosition}");
+    }
+
+    Vector2 GetTextCenterInParent(RectTransform parent, RectTransform textRect)
+    {
+        if (parent == null || textRect == null)
+            return textRect != null ? textRect.anchoredPosition : Vector2.zero;
+
+        textRect.GetWorldCorners(textWorldCorners);
+        Vector3 worldCenter = (textWorldCorners[0] + textWorldCorners[2]) * 0.5f;
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(stageText.canvas != null ? stageText.canvas.worldCamera : null, worldCenter);
+
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screenPoint, stageText.canvas != null ? stageText.canvas.worldCamera : null, out Vector2 localPoint))
+        {
+            Vector2 centerAnchorReference = new Vector2(
+                parent.rect.width * (0.5f - parent.pivot.x),
+                parent.rect.height * (0.5f - parent.pivot.y));
+
+            return localPoint - centerAnchorReference;
+        }
+
+        return textRect.anchoredPosition;
     }
 
     void CreatePauseWindowFrame()
@@ -528,36 +540,5 @@ public class StageLabel : MonoBehaviour
         int targetIndex = Mathf.Max(0, textRect.GetSiblingIndex() - 1);
         if (pauseWindowRect.GetSiblingIndex() != targetIndex)
             pauseWindowRect.SetSiblingIndex(targetIndex);
-    }
-
-    void LogPauseWindow(string message)
-    {
-        if (!logPauseWindowDiagnostics || pauseWindowRect == null || stageText == null)
-            return;
-
-        RectTransform textRect = stageText.rectTransform;
-        float preferredWidth = stageText.preferredWidth;
-        bool changed =
-            lastLoggedWindowSize != pauseWindowRect.sizeDelta ||
-            lastLoggedWindowPosition != pauseWindowRect.anchoredPosition ||
-            !Mathf.Approximately(lastLoggedPreferredWidth, preferredWidth) ||
-            lastLoggedTextSiblingIndex != textRect.GetSiblingIndex() ||
-            lastLoggedWindowSiblingIndex != pauseWindowRect.GetSiblingIndex();
-
-        if (!changed && !message.StartsWith("Visibility changed") && !message.StartsWith("Created runtime"))
-            return;
-
-        lastLoggedWindowSize = pauseWindowRect.sizeDelta;
-        lastLoggedWindowPosition = pauseWindowRect.anchoredPosition;
-        lastLoggedPreferredWidth = preferredWidth;
-        lastLoggedTextSiblingIndex = textRect.GetSiblingIndex();
-        lastLoggedWindowSiblingIndex = pauseWindowRect.GetSiblingIndex();
-
-        Debug.Log(
-            $"[StageLabel][PauseWindow] {message} | textSibling={textRect.GetSiblingIndex()} " +
-            $"windowSibling={pauseWindowRect.GetSiblingIndex()} textPos={textRect.anchoredPosition} " +
-            $"windowPos={pauseWindowRect.anchoredPosition} textRect={textRect.sizeDelta} " +
-            $"preferred=({stageText.preferredWidth:F2},{stageText.preferredHeight:F2}) windowRect={pauseWindowRect.sizeDelta}",
-            this);
     }
 }
