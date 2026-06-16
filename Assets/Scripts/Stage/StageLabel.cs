@@ -123,7 +123,12 @@ public class StageLabel : MonoBehaviour
 
     void OnDisable()
     {
-        HidePauseWindow();
+        DestroyPauseWindow();
+    }
+
+    void OnDestroy()
+    {
+        DestroyPauseWindow();
     }
 
     void Update()
@@ -319,6 +324,9 @@ public class StageLabel : MonoBehaviour
 
     public void HidePauseWindow()
     {
+        if (pauseWindowRect == null)
+            return;
+
         SetPauseWindowVisible(false);
     }
 
@@ -330,6 +338,9 @@ public class StageLabel : MonoBehaviour
                 pauseWindowRect.gameObject.SetActive(false);
             return;
         }
+
+        if (!visible && pauseWindowRect == null)
+            return;
 
         EnsurePauseWindow();
 
@@ -420,6 +431,30 @@ public class StageLabel : MonoBehaviour
         SyncPauseWindowFrame();
 
         PlacePauseWindowBehindText();
+    }
+
+    void DestroyPauseWindow()
+    {
+        if (pauseWindowRect == null)
+            return;
+
+        GameObject go = pauseWindowRect.gameObject;
+        pauseWindowRect = null;
+        pauseWindowFillRect = null;
+        pauseWindowImage = null;
+        pauseWindowFillImage = null;
+        pauseWindowShadowEffect = null;
+
+        for (int i = 0; i < pauseWindowFrameRects.Length; i++)
+        {
+            pauseWindowFrameRects[i] = null;
+            pauseWindowFrameImages[i] = null;
+        }
+
+        if (Application.isPlaying)
+            Destroy(go);
+        else
+            DestroyImmediate(go);
     }
 
     Vector2 GetTextCenterInParent(RectTransform parent, RectTransform textRect)
