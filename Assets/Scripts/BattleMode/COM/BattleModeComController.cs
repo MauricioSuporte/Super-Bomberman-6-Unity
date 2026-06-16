@@ -116,9 +116,12 @@ public sealed class BattleModeComController : MonoBehaviour
     private const int HardSingleExitTrapSearchDepth = 8;
     private const int HardSingleExitTrapMaxPlantDistance = 6;
     private const int HardSingleExitItemThreatDistance = 6;
-    private static readonly bool EnableHardSingleExitTrapDiagnostics = true;
-    private const int HardSingleExitTrapDiagnosticPlayerIdFilter = 0;
-    private const float HardSingleExitTrapDiagnosticRepeatSeconds = 0.35f;
+    private const float HardLouieSecurePickupLeadSeconds = 0.30f;
+    private const float HardLouieSecurePickupPlanTimeoutSeconds = 4.5f;
+    private const int HardLouieSecurePickupSearchDepth = 8;
+    private static readonly bool EnableHardLouieSecurePickupDiagnostics = false;
+    private const int HardLouieSecurePickupDiagnosticPlayerIdFilter = 0;
+    private const float HardLouieSecurePickupDiagnosticRepeatSeconds = 0.35f;
     private const float ChainBombMaxPlantingSeconds = 2.0f;
     private const float OwnChainPlanChance = 0.35f;
     private const int OwnChainSecondBombDistance = 2;
@@ -251,8 +254,16 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastAbilityDecisionTraceLogKey = string.Empty;
     private float lastStage3PlantDiagnosticTime = -10f;
     private string lastStage3PlantDiagnosticKey = string.Empty;
-    private float lastHardSingleExitTrapDiagnosticTime = -10f;
-    private string lastHardSingleExitTrapDiagnosticKey = string.Empty;
+    private float lastHardLouieSecurePickupDiagnosticTime = -10f;
+    private string lastHardLouieSecurePickupDiagnosticKey = string.Empty;
+    private bool hardLouieSecurePlanActive;
+    private bool hardLouieSecureBombPlanted;
+    private Vector2Int hardLouieSecurePickupTile;
+    private Vector2Int hardLouieSecureExitTile;
+    private Vector2Int hardLouieSecureWaitTile;
+    private Transform hardLouieSecureTarget;
+    private string hardLouieSecureTargetLabel = string.Empty;
+    private float hardLouieSecurePlanStartedTime = -10f;
     private bool abilityDecisionEvaluatedThisThink;
     private bool behaviorStartLogged;
     private Vector2 behaviorLastProgressPosition;
@@ -1185,6 +1196,22 @@ public sealed class BattleModeComController : MonoBehaviour
         lastWeightedTotal = -1;
         EnsurePersonalitySeed();
 
+        if (hardLouieSecurePlanActive &&
+            TryBuildHardLouieSecurePickupCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                out CandidateAction committedLouieSecure))
+        {
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                committedLouieSecure,
+                "louieSecurePickup");
+            return;
+        }
+
         if (inDanger)
         {
             if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility tankAwareness) &&
@@ -1607,6 +1634,21 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (TryEmitControlBomb(settings, myTile, currentDangerSeconds))
             return;
+
+        if (TryBuildHardLouieSecurePickupCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                out CandidateAction louieSecure))
+        {
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                louieSecure,
+                "louieSecurePickup");
+            return;
+        }
 
         BuildCandidates(settings, myTile);
 
@@ -2749,35 +2791,35 @@ public sealed class BattleModeComController : MonoBehaviour
         return joined.Length <= 420 ? joined : joined.Substring(0, 420) + "...";
     }
 
-    private void LogHardSingleExitTrapDiagnostic(
+    private void LogHardLouieSecurePickupDiagnostic(
         string key,
         Vector2Int myTile,
         string message,
         bool force = false)
     {
-        if (!EnableHardSingleExitTrapDiagnostics || !IsBattleModeScene())
+        if (!EnableHardLouieSecurePickupDiagnostics || !IsBattleModeScene())
             return;
 
-        if (HardSingleExitTrapDiagnosticPlayerIdFilter != 0 &&
-            playerId != HardSingleExitTrapDiagnosticPlayerIdFilter)
+        if (HardLouieSecurePickupDiagnosticPlayerIdFilter != 0 &&
+            playerId != HardLouieSecurePickupDiagnosticPlayerIdFilter)
         {
             return;
         }
 
         string logKey = $"{key}:{myTile}:{message}";
         if (!force &&
-            logKey == lastHardSingleExitTrapDiagnosticKey &&
-            Time.time - lastHardSingleExitTrapDiagnosticTime <
-            HardSingleExitTrapDiagnosticRepeatSeconds)
+            logKey == lastHardLouieSecurePickupDiagnosticKey &&
+            Time.time - lastHardLouieSecurePickupDiagnosticTime <
+            HardLouieSecurePickupDiagnosticRepeatSeconds)
         {
             return;
         }
 
-        lastHardSingleExitTrapDiagnosticKey = logKey;
-        lastHardSingleExitTrapDiagnosticTime = Time.time;
+        lastHardLouieSecurePickupDiagnosticKey = logKey;
+        lastHardLouieSecurePickupDiagnosticTime = Time.time;
 
         Debug.LogWarning(
-            $"[BattleCOMSingleExitTrap][P{playerId}] frame:{Time.frameCount} " +
+            $"[BattleCOMLouieSecurePickup][P{playerId}] frame:{Time.frameCount} " +
             $"t:{Time.time:F2} tile:{myTile} key:{key} action:{currentAction} " +
             $"target:{(hasCurrentTarget ? currentTargetTile.ToString() : "none")} " +
             $"bombs:{(bombController != null ? bombController.BombsRemaining : -1)} " +
@@ -2925,18 +2967,10 @@ public sealed class BattleModeComController : MonoBehaviour
                  (bombController == null || bombController.BombsRemaining <= 0))
         {
             Reject("HardSingleExitTrap", "sem bomba");
-            LogHardSingleExitTrapDiagnostic(
-                "NO_BOMBS",
-                myTile,
-                "Hard single-exit trap skipped: no bombs remaining");
         }
         else if (settings.difficulty == BattleModeComputerLevel.Hard)
         {
             Reject("HardSingleExitTrap", "sem adversario em saida unica");
-            LogHardSingleExitTrapDiagnostic(
-                "NO_TARGET",
-                myTile,
-                "Hard single-exit trap skipped: no enemy currently in a one-exit tile");
         }
 
         if (TryBuildCombatCandidate(settings, myTile, out CandidateAction combat))
@@ -3014,21 +3048,37 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             Vector2Int itemTile = WorldToTile(item.transform.position);
+            bool isLouieEgg = IsLouieEggItem(item.type);
+            bool isSingleExitLouieEgg = false;
+            Vector2Int louieEggExitTile = itemTile;
+            if (isLouieEgg)
+            {
+                isSingleExitLouieEgg = IsSingleExitTrapTile(
+                    itemTile,
+                    myTile,
+                    out louieEggExitTile,
+                    out _);
+            }
+
+            if (settings.difficulty == BattleModeComputerLevel.Hard &&
+                isLouieEgg &&
+                IsComUnmounted() &&
+                isSingleExitLouieEgg)
+            {
+                RejectVerbose($"CollectItem ovo Louie em beco exige pickup seguro {item.type}@{itemTile}");
+                continue;
+            }
+
             if (settings.difficulty == BattleModeComputerLevel.Hard &&
                 IsSingleExitTrapTile(itemTile, myTile, out Vector2Int itemExitTile, out _) &&
                 CanEnemyReachTrapExit(
                     itemExitTile,
                     HardSingleExitItemThreatDistance,
-                    out PlayerIdentity threat,
-                    out Vector2Int threatTile,
-                    out int threatDistance))
+                    out _,
+                    out _,
+                    out _))
             {
                 RejectVerbose($"CollectItem item em beco com saida unica {item.type}@{itemTile} exit:{itemExitTile}");
-                LogHardSingleExitTrapDiagnostic(
-                    "ITEM_TRAP_RISK",
-                    myTile,
-                    $"skip item:{item.type}@{itemTile} exit:{itemExitTile} " +
-                    $"threat:P{threat.playerId}@{threatTile} threatDistance:{threatDistance}");
                 continue;
             }
 
@@ -3241,6 +3291,544 @@ public sealed class BattleModeComController : MonoBehaviour
         return false;
     }
 
+    private bool TryBuildHardLouieSecurePickupCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (settings.difficulty != BattleModeComputerLevel.Hard)
+        {
+            ResetHardLouieSecurePickupPlan("not-hard", myTile);
+            return false;
+        }
+
+        if (!IsComUnmounted())
+        {
+            ResetHardLouieSecurePickupPlan("mounted", myTile);
+            return false;
+        }
+
+        if (hardLouieSecurePlanActive &&
+            !IsHardLouieSecureTargetStillAvailable())
+        {
+            ResetHardLouieSecurePickupPlan("target-gone", myTile);
+            return false;
+        }
+
+        if (hardLouieSecurePlanActive &&
+            Time.time - hardLouieSecurePlanStartedTime >
+            HardLouieSecurePickupPlanTimeoutSeconds)
+        {
+            ResetHardLouieSecurePickupPlan("timeout", myTile);
+            return false;
+        }
+
+        if (!hardLouieSecurePlanActive)
+        {
+            if (bombController == null || bombController.BombsRemaining <= 0)
+            {
+                LogHardLouieSecurePickupDiagnostic(
+                    "NO_BOMBS",
+                    myTile,
+                    "cannot start secure Louie pickup without bombs");
+                return false;
+            }
+
+            if (!TryFindBestSingleExitLouiePickup(
+                    settings,
+                    myTile,
+                    out Transform target,
+                    out string label,
+                    out Vector2Int pickupTile,
+                    out Vector2Int exitTile,
+                    out Vector2Int waitTile,
+                    out PathResult exitPath,
+                    out Vector2 initialEscapeMove))
+            {
+                LogHardLouieSecurePickupDiagnostic(
+                    "NO_TARGET",
+                    myTile,
+                    "no unmounted one-exit Louie egg/world pickup found");
+                return false;
+            }
+
+            hardLouieSecurePlanActive = true;
+            hardLouieSecureBombPlanted = false;
+            hardLouieSecureTarget = target;
+            hardLouieSecureTargetLabel = label;
+            hardLouieSecurePickupTile = pickupTile;
+            hardLouieSecureExitTile = exitTile;
+            hardLouieSecureWaitTile = exitTile;
+            hardLouieSecurePlanStartedTime = Time.time;
+
+            LogHardLouieSecurePickupDiagnostic(
+                "START",
+                myTile,
+                $"target:{label}@{pickupTile} exit:{exitTile} wait:{hardLouieSecureWaitTile} " +
+                $"exitDistance:{exitPath.Distance} escape:{FirstMoveDescription(initialEscapeMove)}",
+                force: true);
+        }
+
+        float remainingFuseSeconds = float.PositiveInfinity;
+        if (HasOwnBombAtTile(hardLouieSecureExitTile, out remainingFuseSeconds))
+            hardLouieSecureBombPlanted = true;
+
+        bool ownExplosionActive =
+            HasOwnExplosionAtTile(hardLouieSecureExitTile) ||
+            HasOwnExplosionAtTile(hardLouieSecurePickupTile);
+
+        if (!hardLouieSecureBombPlanted && !ownExplosionActive)
+        {
+            if (myTile != hardLouieSecureExitTile)
+            {
+                if (!TryFindPath(
+                        myTile,
+                        hardLouieSecureExitTile,
+                        Mathf.Max(HardLouieSecurePickupSearchDepth, settings.searchDepth),
+                        true,
+                        settings,
+                        null,
+                        out PathResult exitPath))
+                {
+                    ResetHardLouieSecurePickupPlan("exit-unreachable", myTile);
+                    return false;
+                }
+
+                candidate = new CandidateAction
+                {
+                    Action = BattleModeComActionType.Reposition,
+                    Weight = Mathf.Max(1, settings.collectItemWeight + 160),
+                    TargetTile = hardLouieSecureExitTile,
+                    HasTarget = true,
+                    FirstMove = exitPath.FirstMove,
+                    HasRoute = true,
+                    Reason = $"louie-secure move to exit {hardLouieSecureExitTile} for {hardLouieSecureTargetLabel}",
+                    InputDescription = FirstMoveDescription(exitPath.FirstMove)
+                };
+                LogHardLouieSecurePickupDiagnostic(
+                    "MOVE_TO_EXIT",
+                    myTile,
+                    $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                    $"exit:{hardLouieSecureExitTile} distance:{exitPath.Distance} " +
+                    $"move:{FirstMoveDescription(exitPath.FirstMove)}");
+                return true;
+            }
+
+            if (!IsCenteredOnTile(hardLouieSecureExitTile))
+            {
+                Vector2 centerMove = GetMoveTowardTileCenter(hardLouieSecureExitTile);
+                if (centerMove == Vector2.zero)
+                {
+                    ResetHardLouieSecurePickupPlan("center-failed", myTile);
+                    return false;
+                }
+
+                candidate = new CandidateAction
+                {
+                    Action = BattleModeComActionType.Reposition,
+                    Weight = Mathf.Max(1, settings.collectItemWeight + 160),
+                    TargetTile = hardLouieSecureExitTile,
+                    HasTarget = true,
+                    FirstMove = centerMove,
+                    HasRoute = true,
+                    Reason = $"louie-secure center exit {hardLouieSecureExitTile}",
+                    InputDescription = FirstMoveDescription(centerMove)
+                };
+                LogHardLouieSecurePickupDiagnostic(
+                    "CENTER_EXIT",
+                    myTile,
+                    $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                    $"exit:{hardLouieSecureExitTile} move:{FirstMoveDescription(centerMove)}");
+                return true;
+            }
+
+            int radius = GetPlannedBombRadiusAt(hardLouieSecureExitTile);
+            hardLouieSecureWaitTile = hardLouieSecureExitTile;
+            candidate = new CandidateAction
+            {
+                Action = BattleModeComActionType.CombatPlant,
+                Weight = Mathf.Max(1, settings.collectItemWeight + 180),
+                TargetTile = hardLouieSecureWaitTile,
+                HasTarget = true,
+                FirstMove = Vector2.zero,
+                HasRoute = true,
+                Reason = $"louie-secure plant exit bomb for {hardLouieSecureTargetLabel}",
+                InputDescription = "ActionA",
+                TapBomb = true
+            };
+            LogHardLouieSecurePickupDiagnostic(
+                "PLANT_EXIT",
+                myTile,
+                $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                $"exit:{hardLouieSecureExitTile} wait:{hardLouieSecureWaitTile} " +
+                $"radius:{radius} holdUntilFuse:{HardLouieSecurePickupLeadSeconds:F2}s",
+                force: true);
+            return true;
+        }
+
+        if (ownExplosionActive)
+        {
+            ResetHardLouieSecurePickupPlan("missed-pre-explosion-window", myTile);
+            return false;
+        }
+
+        bool collectWindow =
+            remainingFuseSeconds > 0f &&
+            remainingFuseSeconds <= HardLouieSecurePickupLeadSeconds;
+
+        if (collectWindow)
+        {
+            if (myTile == hardLouieSecurePickupTile)
+            {
+                candidate = new CandidateAction
+                {
+                    Action = BattleModeComActionType.CollectItem,
+                    Weight = Mathf.Max(1, settings.collectItemWeight + 200),
+                    TargetTile = hardLouieSecurePickupTile,
+                    HasTarget = true,
+                    FirstMove = Vector2.zero,
+                    HasRoute = true,
+                    Reason = $"louie-secure collecting {hardLouieSecureTargetLabel}",
+                    InputDescription = "none"
+                };
+                LogHardLouieSecurePickupDiagnostic(
+                    "ON_PICKUP_TILE",
+                    myTile,
+                    $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                    $"explosion:{ownExplosionActive} fuse:{remainingFuseSeconds:F2}s");
+                return true;
+            }
+
+            if (TryFindAbilityRouteToDangerousGoal(
+                    settings,
+                    myTile,
+                    hardLouieSecurePickupTile,
+                    4,
+                    out Vector2 collectMove,
+                    out int collectDistance,
+                    out float collectEta,
+                    out string collectRoute))
+            {
+                candidate = new CandidateAction
+                {
+                    Action = BattleModeComActionType.CollectItem,
+                    Weight = Mathf.Max(1, settings.collectItemWeight + 200),
+                    TargetTile = hardLouieSecurePickupTile,
+                    HasTarget = true,
+                    FirstMove = collectMove,
+                    HasRoute = true,
+                    Reason = $"louie-secure collect before own bomb explosion {hardLouieSecureTargetLabel}",
+                    InputDescription = FirstMoveDescription(collectMove)
+                };
+                LogHardLouieSecurePickupDiagnostic(
+                    "COLLECT_PRE_EXPLOSION",
+                    myTile,
+                    $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                    $"exit:{hardLouieSecureExitTile} wait:{hardLouieSecureWaitTile} " +
+                    $"fuse:{remainingFuseSeconds:F2}s eta:{collectEta:F2}s " +
+                    $"distance:{collectDistance} move:{FirstMoveDescription(collectMove)} route:{collectRoute}",
+                    force: true);
+                return true;
+            }
+
+            LogHardLouieSecurePickupDiagnostic(
+                "COLLECT_PATH_BLOCKED",
+                myTile,
+                $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                $"exit:{hardLouieSecureExitTile} fuse:{remainingFuseSeconds:F2}s");
+        }
+
+        if (myTile != hardLouieSecureWaitTile)
+        {
+            LogHardLouieSecurePickupDiagnostic(
+                "WAIT_TILE_LOST",
+                myTile,
+                $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                $"wait:{hardLouieSecureWaitTile} fuse:{remainingFuseSeconds:F2}s");
+            ResetHardLouieSecurePickupPlan("left-exit-wait-tile", myTile);
+            return false;
+        }
+
+        Vector2 waitMove = IsCenteredOnTile(myTile)
+            ? Vector2.zero
+            : GetMoveTowardTileCenter(myTile);
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.Stopped,
+            Weight = Mathf.Max(1, settings.collectItemWeight + 160),
+            TargetTile = hardLouieSecureWaitTile,
+            HasTarget = true,
+            FirstMove = waitMove,
+            HasRoute = true,
+            Reason = $"louie-secure wait fuse {remainingFuseSeconds:F2}s",
+            InputDescription = FirstMoveDescription(waitMove)
+        };
+        LogHardLouieSecurePickupDiagnostic(
+            "WAIT_FUSE",
+            myTile,
+            $"target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+            $"exit:{hardLouieSecureExitTile} wait:{hardLouieSecureWaitTile} " +
+            $"fuse:{remainingFuseSeconds:F2}s collectAt:<={HardLouieSecurePickupLeadSeconds:F2}s");
+        return true;
+    }
+
+    private bool TryFindBestSingleExitLouiePickup(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out Transform bestTarget,
+        out string bestLabel,
+        out Vector2Int bestPickupTile,
+        out Vector2Int bestExitTile,
+        out Vector2Int bestWaitTile,
+        out PathResult bestExitPath,
+        out Vector2 bestEscapeMove)
+    {
+        bestTarget = null;
+        bestLabel = string.Empty;
+        bestPickupTile = myTile;
+        bestExitTile = myTile;
+        bestWaitTile = myTile;
+        bestExitPath = default;
+        bestEscapeMove = Vector2.zero;
+
+        int bestDistance = int.MaxValue;
+        EvaluateLouieEggTargets(
+            settings,
+            myTile,
+            ref bestTarget,
+            ref bestLabel,
+            ref bestPickupTile,
+            ref bestExitTile,
+            ref bestWaitTile,
+            ref bestExitPath,
+            ref bestEscapeMove,
+            ref bestDistance);
+        EvaluateLouieWorldTargets(
+            settings,
+            myTile,
+            ref bestTarget,
+            ref bestLabel,
+            ref bestPickupTile,
+            ref bestExitTile,
+            ref bestWaitTile,
+            ref bestExitPath,
+            ref bestEscapeMove,
+            ref bestDistance);
+
+        return bestTarget != null;
+    }
+
+    private void EvaluateLouieEggTargets(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        ref Transform bestTarget,
+        ref string bestLabel,
+        ref Vector2Int bestPickupTile,
+        ref Vector2Int bestExitTile,
+        ref Vector2Int bestWaitTile,
+        ref PathResult bestExitPath,
+        ref Vector2 bestEscapeMove,
+        ref int bestDistance)
+    {
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null || !item.gameObject.activeInHierarchy || !IsLouieEggItem(item.type))
+                continue;
+
+            TryConsiderHardLouieSecureTarget(
+                settings,
+                myTile,
+                item.transform,
+                item.type.ToString(),
+                ref bestTarget,
+                ref bestLabel,
+                ref bestPickupTile,
+                ref bestExitTile,
+                ref bestWaitTile,
+                ref bestExitPath,
+                ref bestEscapeMove,
+                ref bestDistance);
+        }
+    }
+
+    private void EvaluateLouieWorldTargets(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        ref Transform bestTarget,
+        ref string bestLabel,
+        ref Vector2Int bestPickupTile,
+        ref Vector2Int bestExitTile,
+        ref Vector2Int bestWaitTile,
+        ref PathResult bestExitPath,
+        ref Vector2 bestEscapeMove,
+        ref int bestDistance)
+    {
+        MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < pickups.Length; i++)
+        {
+            MountWorldPickup pickup = pickups[i];
+            if (pickup == null || !pickup.gameObject.activeInHierarchy)
+                continue;
+
+            TryConsiderHardLouieSecureTarget(
+                settings,
+                myTile,
+                pickup.transform,
+                pickup.gameObject.name,
+                ref bestTarget,
+                ref bestLabel,
+                ref bestPickupTile,
+                ref bestExitTile,
+                ref bestWaitTile,
+                ref bestExitPath,
+                ref bestEscapeMove,
+                ref bestDistance);
+        }
+    }
+
+    private void TryConsiderHardLouieSecureTarget(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        Transform target,
+        string label,
+        ref Transform bestTarget,
+        ref string bestLabel,
+        ref Vector2Int bestPickupTile,
+        ref Vector2Int bestExitTile,
+        ref Vector2Int bestWaitTile,
+        ref PathResult bestExitPath,
+        ref Vector2 bestEscapeMove,
+        ref int bestDistance)
+    {
+        if (target == null)
+            return;
+
+        Vector2Int pickupTile = WorldToTile(target.position);
+        if (!IsSingleExitTrapTile(pickupTile, myTile, out Vector2Int exitTile, out _))
+        {
+            return;
+        }
+
+        if (IsBombAtTile(exitTile))
+        {
+            return;
+        }
+
+        if (!TryFindPath(
+                myTile,
+                exitTile,
+                Mathf.Max(HardLouieSecurePickupSearchDepth, settings.searchDepth),
+                true,
+                settings,
+                null,
+                out PathResult exitPath))
+        {
+            return;
+        }
+
+        if (exitPath.Distance >= bestDistance)
+        {
+            return;
+        }
+
+        int radius = GetPlannedBombRadiusAt(exitTile);
+        if (!CanPlantBombWithEscape(
+                exitTile,
+                radius,
+                settings,
+                out Vector2 escapeMove,
+                out Vector2Int waitTile))
+        {
+            LogHardLouieSecurePickupDiagnostic(
+                "REJECT_NO_ESCAPE",
+                myTile,
+                $"target:{label}@{pickupTile} exit:{exitTile} radius:{radius}");
+            return;
+        }
+
+        bestTarget = target;
+        bestLabel = label;
+        bestPickupTile = pickupTile;
+        bestExitTile = exitTile;
+        bestWaitTile = waitTile;
+        bestExitPath = exitPath;
+        bestEscapeMove = escapeMove;
+        bestDistance = exitPath.Distance;
+    }
+
+    private bool IsHardLouieSecureTargetStillAvailable()
+    {
+        return hardLouieSecureTarget != null &&
+               hardLouieSecureTarget.gameObject != null &&
+               hardLouieSecureTarget.gameObject.activeInHierarchy;
+    }
+
+    private void ResetHardLouieSecurePickupPlan(string reason, Vector2Int myTile)
+    {
+        if (hardLouieSecurePlanActive)
+        {
+            LogHardLouieSecurePickupDiagnostic(
+                "RESET",
+                myTile,
+                $"reason:{reason} target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+                $"exit:{hardLouieSecureExitTile} wait:{hardLouieSecureWaitTile}",
+                force: true);
+        }
+
+        hardLouieSecurePlanActive = false;
+        hardLouieSecureBombPlanted = false;
+        hardLouieSecureTarget = null;
+        hardLouieSecureTargetLabel = string.Empty;
+        hardLouieSecurePlanStartedTime = -10f;
+    }
+
+    private bool IsComUnmounted()
+    {
+        if (movement != null && movement.IsMounted)
+            return false;
+
+        if (TryGetComponent<PlayerMountCompanion>(out var companion) &&
+            companion != null &&
+            companion.HasMountedLouie())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsLouieEggItem(ItemType type)
+    {
+        return type == ItemType.BlueLouieEgg ||
+               type == ItemType.BlackLouieEgg ||
+               type == ItemType.PurpleLouieEgg ||
+               type == ItemType.GreenLouieEgg ||
+               type == ItemType.YellowLouieEgg ||
+               type == ItemType.PinkLouieEgg ||
+               type == ItemType.RedLouieEgg;
+    }
+
+    private bool HasOwnExplosionAtTile(Vector2Int tile)
+    {
+        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < explosions.Length; i++)
+        {
+            BombExplosion explosion = explosions[i];
+            if (explosion == null || explosion.Owner != bombController)
+                continue;
+
+            if (WorldToTile(explosion.transform.position) == tile)
+                return true;
+        }
+
+        return false;
+    }
+
     private bool TryBuildHardSingleExitTrapCandidate(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -3253,10 +3841,6 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (bombController == null || bombController.BombsRemaining <= 0)
         {
-            LogHardSingleExitTrapDiagnostic(
-                "NO_BOMBS",
-                myTile,
-                "candidate unavailable: no bombs remaining");
             return false;
         }
 
@@ -3268,21 +3852,12 @@ public sealed class BattleModeComController : MonoBehaviour
                 out Vector2Int exitTile,
                 out PathResult path))
         {
-            LogHardSingleExitTrapDiagnostic(
-                "NO_TARGET",
-                myTile,
-                "candidate unavailable: no reachable enemy trapped in one-exit tile");
             return false;
         }
 
         int radius = GetPlannedBombRadiusAt(exitTile);
-        if (WouldBlastHitUsefulItem(exitTile, radius, out ItemType itemType, out Vector2Int itemTile))
+        if (WouldBlastHitUsefulItem(exitTile, radius, out _, out _))
         {
-            LogHardSingleExitTrapDiagnostic(
-                "REJECT_ITEM_BLAST",
-                myTile,
-                $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius} " +
-                $"wouldHitItem:{itemType}@{itemTile}");
             return false;
         }
 
@@ -3292,10 +3867,6 @@ public sealed class BattleModeComController : MonoBehaviour
             Vector2 centerMove = GetMoveTowardTileCenter(exitTile);
             if (centerMove == Vector2.zero)
             {
-                LogHardSingleExitTrapDiagnostic(
-                    "REJECT_CENTER",
-                    myTile,
-                    $"target:P{target.playerId}@{targetTile} exit:{exitTile} centerMove:none");
                 return false;
             }
 
@@ -3311,21 +3882,11 @@ public sealed class BattleModeComController : MonoBehaviour
                 InputDescription = FirstMoveDescription(centerMove),
                 TapBomb = false
             };
-            LogHardSingleExitTrapDiagnostic(
-                "CENTER_EXIT",
-                myTile,
-                $"target:P{target.playerId}@{targetTile} exit:{exitTile} " +
-                $"move:{FirstMoveDescription(centerMove)} radius:{radius} pathDistance:{path.Distance}");
             return true;
         }
 
         if (!CanPlantBombWithEscape(exitTile, radius, settings, out Vector2 escapeMove, out _))
         {
-            LogHardSingleExitTrapDiagnostic(
-                "REJECT_NO_ESCAPE",
-                myTile,
-                $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius} " +
-                $"plantNow:{plantNow} pathDistance:{path.Distance}");
             return false;
         }
 
@@ -3335,10 +3896,6 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (plantNow && firstMove == Vector2.zero)
         {
-            LogHardSingleExitTrapDiagnostic(
-                "REJECT_ZERO_ESCAPE",
-                myTile,
-                $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius}");
             return false;
         }
 
@@ -3358,12 +3915,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 : FirstMoveDescription(firstMove),
             TapBomb = plantNow
         };
-        LogHardSingleExitTrapDiagnostic(
-            plantNow ? "PLANT_EXIT" : "APPROACH_EXIT",
-            myTile,
-            $"target:P{target.playerId}@{targetTile} exit:{exitTile} radius:{radius} " +
-            $"pathDistance:{path.Distance} move:{FirstMoveDescription(firstMove)} " +
-            $"escape:{FirstMoveDescription(escapeMove)} tapBomb:{plantNow}");
         return true;
     }
 
@@ -3402,21 +3953,13 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             Vector2Int targetTile = WorldToTile(player.transform.position);
-            if (!IsSingleExitTrapTile(targetTile, targetTile, out Vector2Int exitTile, out int openExits))
+            if (!IsSingleExitTrapTile(targetTile, targetTile, out Vector2Int exitTile, out _))
             {
-                LogHardSingleExitTrapDiagnostic(
-                    "TARGET_NOT_TRAPPED",
-                    myTile,
-                    $"target:P{player.playerId}@{targetTile} openExits:{openExits}");
                 continue;
             }
 
             if (IsBombAtTile(exitTile))
             {
-                LogHardSingleExitTrapDiagnostic(
-                    "EXIT_HAS_BOMB",
-                    myTile,
-                    $"target:P{player.playerId}@{targetTile} exit:{exitTile}");
                 continue;
             }
 
@@ -3439,21 +3982,11 @@ public sealed class BattleModeComController : MonoBehaviour
                          null,
                          out path))
             {
-                LogHardSingleExitTrapDiagnostic(
-                    "EXIT_UNREACHABLE",
-                    myTile,
-                    $"target:P{player.playerId}@{targetTile} exit:{exitTile} " +
-                    $"searchDepth:{Mathf.Max(HardSingleExitTrapSearchDepth, settings.searchDepth)}");
                 continue;
             }
 
             if (path.Distance > HardSingleExitTrapMaxPlantDistance)
             {
-                LogHardSingleExitTrapDiagnostic(
-                    "EXIT_TOO_FAR",
-                    myTile,
-                    $"target:P{player.playerId}@{targetTile} exit:{exitTile} " +
-                    $"pathDistance:{path.Distance} max:{HardSingleExitTrapMaxPlantDistance}");
                 continue;
             }
 
@@ -3467,10 +4000,6 @@ public sealed class BattleModeComController : MonoBehaviour
             bestExitTile = exitTile;
             bestPath = path;
             bestDistance = path.Distance;
-            LogHardSingleExitTrapDiagnostic(
-                "BEST_TARGET",
-                myTile,
-                $"target:P{player.playerId}@{targetTile} exit:{exitTile} pathDistance:{path.Distance}");
         }
 
         return bestTarget != null;
@@ -7950,6 +8479,9 @@ public sealed class BattleModeComController : MonoBehaviour
                 if (hit.GetComponentInParent<ItemPickup>() != null)
                     continue;
 
+                if (hit.GetComponentInParent<MountWorldPickup>() != null)
+                    continue;
+
                 if (hit.GetComponentInParent<PlayerIdentity>() != null)
                     continue;
 
@@ -8554,6 +9086,9 @@ public sealed class BattleModeComController : MonoBehaviour
         float nextDanger = GetDangerSeconds(nextTile, null);
         float nextArrivalSecondsForOwnChain = EstimateFirstMoveTraversalSeconds(DirectionToTile(requestedMove));
 
+        if (ShouldAllowHardLouieSecurePickupMove(currentTile, nextTile))
+            return requestedMove;
+
         BattleModeComStage9MinecartAbility minecartAbility =
             GetStage9MinecartAbility();
         if (minecartAbility != null &&
@@ -8752,6 +9287,44 @@ public sealed class BattleModeComController : MonoBehaviour
 
         float margin = GetSurvivalMarginSeconds(nextTile, arrivalSeconds, settings, null);
         return margin >= OwnChainUnsafeMoveMarginSeconds;
+    }
+
+    private bool ShouldAllowHardLouieSecurePickupMove(Vector2Int currentTile, Vector2Int nextTile)
+    {
+        if (!hardLouieSecurePlanActive)
+            return false;
+
+        if (currentAction != BattleModeComActionType.CollectItem &&
+            currentAction != BattleModeComActionType.Reposition)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(currentReason) ||
+            !currentReason.StartsWith("louie-secure", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (nextTile != hardLouieSecureExitTile &&
+            nextTile != hardLouieSecurePickupTile)
+        {
+            return false;
+        }
+
+        bool ownBombPreExplosion =
+            HasOwnBombAtTile(hardLouieSecureExitTile, out float remainingFuseSeconds) &&
+            remainingFuseSeconds > 0f &&
+            remainingFuseSeconds <= HardLouieSecurePickupLeadSeconds;
+        if (!ownBombPreExplosion)
+            return false;
+
+        LogHardLouieSecurePickupDiagnostic(
+            "ALLOW_PRE_EXPLOSION_ENTRY",
+            currentTile,
+            $"next:{nextTile} target:{hardLouieSecureTargetLabel}@{hardLouieSecurePickupTile} " +
+            $"exit:{hardLouieSecureExitTile} fuse:{remainingFuseSeconds:F2}s");
+        return true;
     }
 
     private Vector2 ApplyTurnAxisCentering(Vector2Int currentTile, Vector2 requestedMove)

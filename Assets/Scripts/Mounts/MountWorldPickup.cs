@@ -150,4 +150,5 @@ public sealed class MountWorldPickup : MonoBehaviour
 
         return MountedType.None;
     }
+
 }

@@ -2666,13 +2666,17 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         if (layer == explosionLayer && explosionInvulnerable)
+        {
             return;
+        }
 
         if (cachedHealth == null)
             cachedHealth = GetComponent<CharacterHealth>();
 
         if (cachedHealth != null && cachedHealth.IsInvulnerable)
+        {
             return;
+        }
 
         float cd = Mathf.Max(0.01f, contactDamageCooldownSeconds);
 
