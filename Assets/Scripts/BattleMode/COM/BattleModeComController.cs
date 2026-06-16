@@ -1331,6 +1331,7 @@ public sealed class BattleModeComController : MonoBehaviour
             // estratégias de kick-chain e chain-explosion que foram quebradas quando o Codex
             // colocou o escape route antes do chain candidate.
             if (!chainPlantingTimeExpired &&
+                ShouldAttemptDifficultyChance(settings.advancedBombPlanChance) &&
                 TryBuildChainBombCandidate(settings, myTile, currentDangerSeconds, onlyCurrentTile: false, out CandidateAction chain))
             {
                 LogPostPlantEscapeDiagnostic(
@@ -1364,6 +1365,7 @@ public sealed class BattleModeComController : MonoBehaviour
             // Caso contrario, prepara uma posicao ofensiva ou de farm para a proxima.
             string postPlantActionTrace = "current tile still has timed danger";
             if (float.IsInfinity(currentDangerSeconds) &&
+                ShouldAttemptDifficultyChance(settings.postPlantActionChance) &&
                 TryBuildPostPlantActionCandidate(
                     settings,
                     myTile,
@@ -1552,6 +1554,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         if (!walkToChainCommitActive &&
             float.IsInfinity(currentDangerSeconds) &&
+            ShouldAttemptDifficultyChance(settings.advancedBombPlanChance) &&
             TryBuildOwnChainStartCandidate(settings, myTile, out CandidateAction ownChainStart))
         {
             if (ownChainStart.TapBomb)
@@ -1618,6 +1621,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         // Tenta encontrar um tile no blast de bomba inimiga para plantar uma chain
         if (float.IsInfinity(currentDangerSeconds) &&
+            ShouldAttemptDifficultyChance(settings.advancedBombPlanChance) &&
             TryBuildWalkToChainCandidate(settings, myTile, currentDangerSeconds, out CandidateAction walkChain))
         {
             if (!walkChain.TapBomb)
@@ -1673,6 +1677,7 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         if (TryGetStageProgressPriorityCandidate(
+                settings,
                 out CandidateAction priorityProgress))
         {
             bool itemPriority =
@@ -1907,6 +1912,7 @@ public sealed class BattleModeComController : MonoBehaviour
     }
 
     private bool TryGetStageProgressPriorityCandidate(
+        BattleModeComDifficultySettings settings,
         out CandidateAction candidate)
     {
         candidate = default;
@@ -1915,6 +1921,9 @@ public sealed class BattleModeComController : MonoBehaviour
         {
             return false;
         }
+
+        if (!ShouldAttemptDifficultyChance(settings.stageProgressPriorityChance))
+            return false;
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -1940,6 +1949,17 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool ShouldAttemptDifficultyChance(float chance)
+    {
+        if (chance >= 1f)
+            return true;
+
+        if (chance <= 0f)
+            return false;
+
+        return UnityEngine.Random.value < chance;
     }
 
     private bool IsOpeningFarmPriorityActive()

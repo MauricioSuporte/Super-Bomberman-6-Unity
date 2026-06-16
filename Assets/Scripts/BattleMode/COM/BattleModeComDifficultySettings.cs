@@ -12,6 +12,9 @@ public sealed class BattleModeComDifficultySettings
     public float safeTileMinimumSeconds = 0.35f;
     [Range(0f, 1f)] public float hesitationChance;
     [Range(0f, 1f)] public float escapeAbilityChance = 0.5f;
+    [Range(0f, 1f)] public float stageProgressPriorityChance = 1f;
+    [Range(0f, 1f)] public float postPlantActionChance = 1f;
+    [Range(0f, 1f)] public float advancedBombPlanChance = 1f;
 
     public int stoppedWeight;
     public int patrolWeight;
@@ -31,14 +34,17 @@ public sealed class BattleModeComDifficultySettings
                     dangerDecisionInterval = 0.1f,
                     searchDepth = 6,
                     dangerReactionSeconds = 0.22f,
-                    safeTileMinimumSeconds = 0.2f,
-                    hesitationChance = 0.12f,
+                    safeTileMinimumSeconds = 0.28f,
+                    hesitationChance = 0.14f,
                     escapeAbilityChance = 0.25f,
-                    stoppedWeight = 4,
+                    stageProgressPriorityChance = 0.75f,
+                    postPlantActionChance = 0.45f,
+                    advancedBombPlanChance = 0f,
+                    stoppedWeight = 6,
                     patrolWeight = 18,
-                    collectItemWeight = 60,
-                    farmDestructibleWeight = 40,
-                    combatPlantWeight = 10
+                    collectItemWeight = 42,
+                    farmDestructibleWeight = 38,
+                    combatPlantWeight = 12
                 };
 
             case BattleModeComputerLevel.Hard:
@@ -52,6 +58,9 @@ public sealed class BattleModeComDifficultySettings
                     safeTileMinimumSeconds = 0.45f,
                     hesitationChance = 0.01f,
                     escapeAbilityChance = 1f,
+                    stageProgressPriorityChance = 1f,
+                    postPlantActionChance = 1f,
+                    advancedBombPlanChance = 1f,
                     stoppedWeight = 1,
                     patrolWeight = 8,
                     collectItemWeight = 55,
@@ -70,6 +79,9 @@ public sealed class BattleModeComDifficultySettings
                     safeTileMinimumSeconds = 0.35f,
                     hesitationChance = 0.04f,
                     escapeAbilityChance = 0.5f,
+                    stageProgressPriorityChance = 1f,
+                    postPlantActionChance = 1f,
+                    advancedBombPlanChance = 1f,
                     stoppedWeight = 2,
                     patrolWeight = 12,
                     collectItemWeight = 65,
