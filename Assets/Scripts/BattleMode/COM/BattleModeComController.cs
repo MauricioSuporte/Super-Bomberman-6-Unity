@@ -3246,6 +3246,11 @@ public sealed class BattleModeComController : MonoBehaviour
             InputDescription = "none"
         });
 
+        if (TryBuildDestroyDeniedMountCandidate(settings, myTile, out CandidateAction destroyMount))
+            AddCandidate(destroyMount);
+        else if (!IsComUnmounted())
+            Reject("DestroyMountPickup", "sem ovo/montaria vulneravel");
+
         if (TryBuildCollectCandidate(settings, myTile, out CandidateAction collect))
             AddCandidate(collect);
         else
@@ -3442,6 +3447,233 @@ public sealed class BattleModeComController : MonoBehaviour
             $"candidate:{FormatOpeningCandidate(candidate)} score:{bestScore:F2} " +
             $"{BuildItemPrioritySummary(settings, myTile, GetStageProgressSearchDepth(settings))}");
         return true;
+    }
+
+    private bool TryBuildDestroyDeniedMountCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (IsComUnmounted() || bombController == null || bombController.BombsRemaining <= 0)
+            return false;
+
+        if (!TryFindBestDeniedMountBombTarget(
+                settings,
+                myTile,
+                out Vector2Int targetTile,
+                out string targetLabel,
+                out Vector2Int plantTile,
+                out Vector2 firstMove,
+                out Vector2 escapeMove,
+                out int distance,
+                out bool plantNow))
+        {
+            return false;
+        }
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.CombatPlant,
+            Weight = Mathf.Max(settings.combatPlantWeight + 140, settings.collectItemWeight + 180),
+            TargetTile = plantNow ? targetTile : plantTile,
+            HasTarget = true,
+            FirstMove = plantNow ? escapeMove : firstMove,
+            HasRoute = true,
+            Reason = plantNow
+                ? $"destroy denied mount pickup {targetLabel}@{targetTile}"
+                : $"move to destroy denied mount pickup {targetLabel}@{targetTile} distance {distance}",
+            InputDescription = plantNow
+                ? AppendInput("ActionA", FirstMoveDescription(escapeMove))
+                : FirstMoveDescription(firstMove),
+            TapBomb = plantNow
+        };
+
+        return true;
+    }
+
+    private bool TryFindBestDeniedMountBombTarget(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out Vector2Int bestTargetTile,
+        out string bestTargetLabel,
+        out Vector2Int bestPlantTile,
+        out Vector2 bestFirstMove,
+        out Vector2 bestEscapeMove,
+        out int bestDistance,
+        out bool bestPlantNow)
+    {
+        bestTargetTile = myTile;
+        bestTargetLabel = string.Empty;
+        bestPlantTile = myTile;
+        bestFirstMove = Vector2.zero;
+        bestEscapeMove = Vector2.zero;
+        bestDistance = int.MaxValue;
+        bestPlantNow = false;
+
+        GatherReachableSafeTiles(myTile, GetStageProgressSearchDepth(settings), settings);
+
+        float bestScore = float.NegativeInfinity;
+        ConsiderDeniedMountEggBombTargets(
+            settings,
+            myTile,
+            ref bestTargetTile,
+            ref bestTargetLabel,
+            ref bestPlantTile,
+            ref bestFirstMove,
+            ref bestEscapeMove,
+            ref bestDistance,
+            ref bestPlantNow,
+            ref bestScore);
+        ConsiderDeniedWorldMountBombTargets(
+            settings,
+            myTile,
+            ref bestTargetTile,
+            ref bestTargetLabel,
+            ref bestPlantTile,
+            ref bestFirstMove,
+            ref bestEscapeMove,
+            ref bestDistance,
+            ref bestPlantNow,
+            ref bestScore);
+
+        return bestScore > float.NegativeInfinity;
+    }
+
+    private void ConsiderDeniedMountEggBombTargets(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        ref Vector2Int bestTargetTile,
+        ref string bestTargetLabel,
+        ref Vector2Int bestPlantTile,
+        ref Vector2 bestFirstMove,
+        ref Vector2 bestEscapeMove,
+        ref int bestDistance,
+        ref bool bestPlantNow,
+        ref float bestScore)
+    {
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null ||
+                !item.gameObject.activeInHierarchy ||
+                !IsDeniedMountItemForMountedCom(item))
+            {
+                continue;
+            }
+
+            TryConsiderDeniedMountBombTarget(
+                settings,
+                myTile,
+                WorldToTile(item.transform.position),
+                item.type.ToString(),
+                ref bestTargetTile,
+                ref bestTargetLabel,
+                ref bestPlantTile,
+                ref bestFirstMove,
+                ref bestEscapeMove,
+                ref bestDistance,
+                ref bestPlantNow,
+                ref bestScore);
+        }
+    }
+
+    private void ConsiderDeniedWorldMountBombTargets(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        ref Vector2Int bestTargetTile,
+        ref string bestTargetLabel,
+        ref Vector2Int bestPlantTile,
+        ref Vector2 bestFirstMove,
+        ref Vector2 bestEscapeMove,
+        ref int bestDistance,
+        ref bool bestPlantNow,
+        ref float bestScore)
+    {
+        MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < pickups.Length; i++)
+        {
+            MountWorldPickup pickup = pickups[i];
+            if (pickup == null || !pickup.gameObject.activeInHierarchy)
+                continue;
+
+            TryConsiderDeniedMountBombTarget(
+                settings,
+                myTile,
+                WorldToTile(pickup.transform.position),
+                pickup.gameObject.name,
+                ref bestTargetTile,
+                ref bestTargetLabel,
+                ref bestPlantTile,
+                ref bestFirstMove,
+                ref bestEscapeMove,
+                ref bestDistance,
+                ref bestPlantNow,
+                ref bestScore);
+        }
+    }
+
+    private void TryConsiderDeniedMountBombTarget(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        Vector2Int targetTile,
+        string targetLabel,
+        ref Vector2Int bestTargetTile,
+        ref string bestTargetLabel,
+        ref Vector2Int bestPlantTile,
+        ref Vector2 bestFirstMove,
+        ref Vector2 bestEscapeMove,
+        ref int bestDistance,
+        ref bool bestPlantNow,
+        ref float bestScore)
+    {
+        for (int i = 0; i < reachableTiles.Count; i++)
+        {
+            Vector2Int plantTile = reachableTiles[i];
+            if (plantTile == targetTile || !IsValidBombPlantTile(plantTile))
+                continue;
+
+            int radius = GetPlannedBombRadiusAt(plantTile);
+            if (!IsTileInBlastLineRuntime(plantTile, targetTile, radius))
+                continue;
+
+            if (WouldPlannedBombHitProtectedUsefulItem(plantTile, radius, out _, out _))
+                continue;
+
+            if (!CanPlantBombWithEscape(plantTile, radius, settings, out Vector2 escapeMove, out _))
+                continue;
+
+            if (!TryFindPath(
+                    myTile,
+                    plantTile,
+                    GetStageProgressSearchDepth(settings),
+                    true,
+                    settings,
+                    null,
+                    out PathResult path))
+            {
+                continue;
+            }
+
+            float score =
+                1000f -
+                path.Distance * 12f -
+                Manhattan(plantTile, targetTile) * 2f +
+                GetDecisionNoise(targetTile.GetHashCode(), ItemTargetJitter);
+            if (score <= bestScore)
+                continue;
+
+            bestTargetTile = targetTile;
+            bestTargetLabel = targetLabel;
+            bestPlantTile = plantTile;
+            bestFirstMove = path.FirstMove;
+            bestEscapeMove = escapeMove;
+            bestDistance = path.Distance;
+            bestPlantNow = plantTile == myTile;
+            bestScore = score;
+        }
     }
 
     private bool TryBuildFarmCandidate(
@@ -4152,11 +4384,20 @@ public sealed class BattleModeComController : MonoBehaviour
             !CanComCollectLouieEgg(out int queuedEggCount))
         {
             rejectReason =
-                $"ovo Louie ignorado fila cheia {queuedEggCount}/{MaxUsefulQueuedLouieEggs}";
+                IsComUnmounted()
+                    ? $"ovo Louie ignorado fila cheia {queuedEggCount}/{MaxUsefulQueuedLouieEggs}"
+                    : "ovo Louie ignorado montado";
             return false;
         }
 
         return true;
+    }
+
+    private bool IsDeniedMountItemForMountedCom(ItemPickup item)
+    {
+        return item != null &&
+               IsLouieEggItem(item.type) &&
+               !IsComUnmounted();
     }
 
     private bool CanComCollectLouieEgg(out int queuedEggCount)
@@ -4166,7 +4407,7 @@ public sealed class BattleModeComController : MonoBehaviour
         if (IsComUnmounted())
             return true;
 
-        return queuedEggCount < MaxUsefulQueuedLouieEggs;
+        return false;
     }
 
     private int GetComQueuedLouieEggCount()
@@ -9034,6 +9275,35 @@ public sealed class BattleModeComController : MonoBehaviour
         out ItemType itemType,
         out Vector2Int itemTile)
     {
+        return WouldPlannedBombHitUsefulItem(
+            origin,
+            radius,
+            allowDeniedMountItemsForMountedCom: false,
+            out itemType,
+            out itemTile);
+    }
+
+    private bool WouldPlannedBombHitProtectedUsefulItem(
+        Vector2Int origin,
+        int radius,
+        out ItemType itemType,
+        out Vector2Int itemTile)
+    {
+        return WouldPlannedBombHitUsefulItem(
+            origin,
+            radius,
+            allowDeniedMountItemsForMountedCom: true,
+            out itemType,
+            out itemTile);
+    }
+
+    private bool WouldPlannedBombHitUsefulItem(
+        Vector2Int origin,
+        int radius,
+        bool allowDeniedMountItemsForMountedCom,
+        out ItemType itemType,
+        out Vector2Int itemTile)
+    {
         itemType = default;
         itemTile = origin;
 
@@ -9053,6 +9323,12 @@ public sealed class BattleModeComController : MonoBehaviour
             Vector2Int tile = WorldToTile(item.transform.position);
             if (!plannedBlastTiles.Contains(tile))
                 continue;
+
+            if (allowDeniedMountItemsForMountedCom &&
+                IsDeniedMountItemForMountedCom(item))
+            {
+                continue;
+            }
 
             itemType = item.type;
             itemTile = tile;
