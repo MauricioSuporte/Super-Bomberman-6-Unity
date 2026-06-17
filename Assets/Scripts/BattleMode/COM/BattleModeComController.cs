@@ -1052,9 +1052,13 @@ public sealed class BattleModeComController : MonoBehaviour
                 nextDecisionTime = Time.time;
         }
 
-        if (TryGetComponent(
-                out BattleModeComStage10PowerZoneAggressionAbility
-                    powerZoneAggression))
+        if (difficulty == BattleModeComputerLevel.Hard)
+        {
+            ApplyHardAggressionSettings(settings);
+        }
+        else if (TryGetComponent(
+                     out BattleModeComStage10PowerZoneAggressionAbility
+                         powerZoneAggression))
         {
             powerZoneAggression.ApplyAggressionSettings(settings);
         }
@@ -1172,6 +1176,30 @@ public sealed class BattleModeComController : MonoBehaviour
         SetMovementInput(currentMoveInput);
         TrackBehaviorDiagnostics(myTile, currentDangerSeconds);
         SetActionAHeld(currentHoldActionA);
+    }
+
+    private static void ApplyHardAggressionSettings(
+        BattleModeComDifficultySettings settings)
+    {
+        if (settings == null)
+            return;
+
+        settings.decisionInterval =
+            Mathf.Max(0.08f, settings.decisionInterval * 0.75f);
+        settings.hesitationChance *= 0.4f;
+        settings.stoppedWeight =
+            Mathf.Max(1, Mathf.RoundToInt(settings.stoppedWeight * 0.4f));
+        settings.patrolWeight =
+            Mathf.Max(1, Mathf.RoundToInt(settings.patrolWeight * 0.65f));
+        settings.farmDestructibleWeight =
+            Mathf.Max(
+                1,
+                Mathf.RoundToInt(
+                    settings.farmDestructibleWeight * 0.75f));
+        settings.combatPlantWeight =
+            Mathf.Max(
+                settings.combatPlantWeight + 15,
+                Mathf.RoundToInt(settings.combatPlantWeight * 1.55f));
     }
 
     private bool IsReadyToThink()

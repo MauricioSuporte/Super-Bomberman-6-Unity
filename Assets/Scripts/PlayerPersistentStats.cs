@@ -754,6 +754,30 @@ public static class PlayerPersistentStats
 
         var s = Get(playerId);
 
+        ResetBattleRevengeRespawnState(s);
+
+        int battleModeStageIndex = GetActiveBattleModeStageIndex();
+        SaveData.BattleModeHandicapSave handicap = ShouldApplyHandicapOnBattleRevengeRespawn(battleModeStageIndex)
+            ? SaveSystem.GetBattleModeHandicapForStage(battleModeStageIndex)
+            : null;
+
+        ApplyBattleModeHandicap(playerId, s, handicap, battleModeStageIndex);
+
+        if (stageActive)
+        {
+            var stageState = _stage[playerId - 1];
+
+            ResetBattleRevengeRespawnState(stageState);
+            ApplyBattleModeHandicap(playerId, stageState, handicap, battleModeStageIndex);
+            stageState.Skin = s.Skin;
+        }
+    }
+
+    static void ResetBattleRevengeRespawnState(PlayerState s)
+    {
+        if (s == null)
+            return;
+
         s.Life = 1;
         s.BombAmount = 1;
         s.ExplosionRadius = 2;
@@ -773,33 +797,11 @@ public static class PlayerPersistentStats
 
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
+    }
 
-        if (stageActive)
-        {
-            var stageState = _stage[playerId - 1];
-
-            stageState.Life = 1;
-            stageState.BombAmount = 1;
-            stageState.ExplosionRadius = 2;
-            stageState.SpeedInternal = ClampSpeedInternal(BaseSpeedNormal + SpeedStep);
-
-            stageState.CanKickBombs = false;
-            stageState.CanPunchBombs = false;
-            stageState.HasPowerGlove = false;
-            stageState.CanPassBombs = false;
-            stageState.CanPassDestructibles = false;
-            stageState.HasPierceBombs = false;
-            stageState.HasControlBombs = false;
-            stageState.HasPowerBomb = false;
-            stageState.HasRubberBombs = false;
-            stageState.HasMagnetBomb = false;
-            stageState.HasFullFire = false;
-
-            stageState.MountedLouie = MountedType.None;
-            stageState.QueuedEggs.Clear();
-
-            stageState.Skin = s.Skin;
-        }
+    static bool ShouldApplyHandicapOnBattleRevengeRespawn(int battleModeStageIndex)
+    {
+        return battleModeStageIndex == 10 || battleModeStageIndex == 11;
     }
 
     static void ResetGameplayStateKeepingSkin(PlayerState s)
