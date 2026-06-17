@@ -9,7 +9,9 @@ public class EndingScreenController : MonoBehaviour
     private static readonly WaitForSecondsRealtime _waitFrame = new(0.01f);
 
     [Header("Debug")]
+#pragma warning disable CS0414
     [SerializeField] bool enableSurgicalLogs = true;
+#pragma warning restore CS0414
 
     [Header("UI")]
     public Image endingImage;
@@ -37,6 +39,7 @@ public class EndingScreenController : MonoBehaviour
     [SerializeField] string titleSceneName = "TitleScreen";
 
     [Header("Static Labels")]
+#pragma warning disable CS0414
     [SerializeField]
     string demoCompleteLabel =
         "<size=52><color=#1ABC00>DEMO 4</color>  <color=#E8E8E8>COMPLETE!</color></size>";
@@ -51,8 +54,10 @@ public class EndingScreenController : MonoBehaviour
     string returnBlock =
         "<size=34><color=#FF6F31>PRESS START</color></size>\n" +
         "<size=30><color=#E8E8E8>TO RETURN TO TITLE SCREEN</color></size>";
+#pragma warning restore CS0414
 
     [Header("Credits")]
+#pragma warning disable CS0414
     [SerializeField, TextArea(12, 40)]
     string creditsBlock =
         "Super Bomberman 6 v0.4.0\n" +
@@ -97,12 +102,15 @@ public class EndingScreenController : MonoBehaviour
         "wolfguarder\n\n" +
         "Base of the Game\n" +
         "Zigurous";
+#pragma warning restore CS0414
 
     [SerializeField, Min(1f)] float creditsScrollSpeed = 80f;
     [SerializeField] float creditsStartBottomPadding = 80f;
     [SerializeField] float creditsEndTopPadding = 80f;
     [SerializeField, Min(1f)] float finalMessageScrollSpeed = 220f;
+#pragma warning disable CS0414
     [SerializeField] float finalMessageTargetY = -12f;
+#pragma warning restore CS0414
 
     [Header("Auto Layout Fix")]
     [SerializeField] bool autoRepositionMessageText = true;

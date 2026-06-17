@@ -338,7 +338,7 @@ public sealed class BattleModeComStage14DynamiteMagnetAbility :
         {
             TileBase tile = destructibleTilemap.GetTile(cell);
             if (!destructibleResolver.TryGetHandler(tile, out var handler) ||
-                handler != dynamiteHandler)
+                (Object)handler != dynamiteHandler)
             {
                 continue;
             }

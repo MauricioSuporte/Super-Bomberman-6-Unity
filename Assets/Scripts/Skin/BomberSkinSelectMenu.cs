@@ -55,7 +55,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Tooltip("Optional: override cursor sprite per player (index 0 = P1, ..., 5 = P6).")]
     [SerializeField] Sprite[] cursorSpriteByPlayer = new Sprite[GameSession.MaxPlayerId];
     [SerializeField] bool logCursorPositionDebug = true;
-    [SerializeField, Min(1)] int cursorPositionDebugFrames = 8;
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;

@@ -6,7 +6,9 @@ using UnityEngine.UI;
 public class EndingStarComemoration : MonoBehaviour
 {
     [Header("Debug")]
+#pragma warning disable CS0414
     [SerializeField] bool enableSurgicalLogs = true;
+#pragma warning restore CS0414
 
     [Header("References")]
     [SerializeField] RectTransform spawnArea;

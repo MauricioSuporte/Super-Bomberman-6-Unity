@@ -19,7 +19,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float BehaviorRepeatLogSeconds = 0.75f;
     private const float SkullSpeedDecisionIntervalSeconds = 0.015f;
     private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
+#pragma warning disable CS0414
     private static readonly bool EnableDeathDiagnostics = false;
+#pragma warning restore CS0414
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
     private static readonly bool EnableKickBombRiskDiagnostics = false;
     private static readonly bool EnableItemPriorityDiagnostics = true;
@@ -71,7 +73,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2Int destPassOscLastAppliedDir;
     private float destPassOscLastAppliedTime = -10f;
     private float destPassOscLastFlipLogTime = -10f;
+#pragma warning disable CS0414
     private float destPassOscLastStateLogTime = -10f;
+#pragma warning restore CS0414
     private string destPassOscLastStateLogKey = string.Empty;
     private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
     private const float ChainBombDiagLogIntervalSeconds = 0.45f;
@@ -159,8 +163,10 @@ public sealed class BattleModeComController : MonoBehaviour
     [SerializeField, Range(4, MaxDecisionBufferEntries)] private int decisionBufferSize = 16;
     [SerializeField] private bool debugDecisionTrace = true;
     [SerializeField] private int decisionTracePlayerIdFilter = 0;
+#pragma warning disable CS0414
     [SerializeField] private bool debugAbilityDecisionTrace = true;
     [SerializeField] private int abilityDecisionTracePlayerIdFilter = 0;
+#pragma warning restore CS0414
 
     private readonly List<string> recentDecisions = new();
     private readonly List<PlayerIdentity> activePlayers = new(6);
@@ -257,7 +263,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastKickBombRiskLogKey = string.Empty;
     private float lastDecisionTraceLogTime = -10f;
     private string lastDecisionTraceLogKey = string.Empty;
+#pragma warning disable CS0414
     private float lastAbilityDecisionTraceLogTime = -10f;
+#pragma warning restore CS0414
     private string lastAbilityDecisionTraceLogKey = string.Empty;
     private float lastItemPriorityLogTime = -10f;
     private string lastItemPriorityLogKey = string.Empty;

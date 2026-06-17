@@ -33,7 +33,9 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] Image fadeImage;
     [SerializeField] float fadeDuration = 0.5f;
     [SerializeField, Range(0.001f, 0.1f)] float maxFadeStepDelta = 0.033f;
+#pragma warning disable CS0414
     [SerializeField] bool logOpenFlowDiagnostics = true;
+#pragma warning restore CS0414
 
     [Header("Music")]
     [SerializeField] AudioClip controlsMusic;

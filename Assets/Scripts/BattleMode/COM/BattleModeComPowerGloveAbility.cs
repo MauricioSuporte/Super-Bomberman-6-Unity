@@ -57,7 +57,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     private float nextOffensiveTime = -10f;
     private int offensiveChanceFrame = -1;
     private bool offensiveChanceResult;
-    private int bombChanceOpportunityId = int.MinValue;
+    private string bombChanceOpportunityId = string.Empty;
     private BattleModeComputerLevel bombChanceDifficulty;
     private bool bombChanceResult;
     private Vector2Int authorizedPlantTile;
@@ -201,7 +201,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             !RollBombOpportunityChance(settings, potentialBomb))
         {
             lastDecisionTrace =
-                $"emergency chance failed chance:{GetUsageChance(settings):P0} bomb:{potentialBomb.GetInstanceID()}";
+                $"emergency chance failed chance:{GetUsageChance(settings):P0} bomb:{potentialBomb.GetEntityId()}";
             return false;
         }
 
@@ -276,7 +276,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             if (!pickupAuthorized)
             {
                 lastDecisionTrace =
-                    $"candidate chance failed chance:{GetUsageChance(settings):P0} bomb:{existingBomb.GetInstanceID()}";
+                    $"candidate chance failed chance:{GetUsageChance(settings):P0} bomb:{existingBomb.GetEntityId()}";
                 return false;
             }
 
@@ -1286,7 +1286,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
         if (bomb == null)
             return false;
 
-        int opportunityId = bomb.GetInstanceID();
+        string opportunityId = bomb.GetEntityId().ToString();
         if (bombChanceOpportunityId == opportunityId &&
             bombChanceDifficulty == settings.difficulty)
         {
@@ -1309,7 +1309,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
     private void ResetBombChanceOpportunity()
     {
-        bombChanceOpportunityId = int.MinValue;
+        bombChanceOpportunityId = string.Empty;
         bombChanceResult = false;
     }
 

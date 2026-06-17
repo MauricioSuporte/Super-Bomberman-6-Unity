@@ -32,7 +32,7 @@ public sealed class TankShot : MonoBehaviour
     public float Speed => speed;
     public GameObject Owner => _owner;
     public bool ImpactHandled => _impactHandled;
-    public int ShotId => GetInstanceID();
+    public int ShotId => GetEntityId().GetHashCode();
 
     public void Init(Vector2 dir, float projectileSpeed, LayerMask mask, GameObject owner)
     {

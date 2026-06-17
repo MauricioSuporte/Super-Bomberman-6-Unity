@@ -82,7 +82,9 @@ public sealed class AchievementsMenu : MonoBehaviour
     [SerializeField] private Vector2 listScrollbarSize = new(12f, 410f);
     [SerializeField] private Vector2 detailOffset = new(0f, -275f);
     [SerializeField] private Vector2 detailSize = new(880f, 130f);
+#pragma warning disable CS0414
     [SerializeField] private int rowFontSize = 24;
+#pragma warning restore CS0414
     [SerializeField] private int rowDescriptionFontSize = 20;
     [SerializeField] private int detailFontSize = 22;
     [SerializeField] private Vector2 progressTextOffset = new(0f, 304f);
@@ -598,7 +600,7 @@ public sealed class AchievementsMenu : MonoBehaviour
         tmp.color = new Color(0.96f, 0.91f, 0.72f);
         tmp.raycastTarget = false;
         tmp.overflowMode = TextOverflowModes.Overflow;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
         tmp.fontStyle = forceBold ? FontStyles.Bold : FontStyles.Normal;
         ApplyBattleModeTextMaterial(tmp);
         return tmp;

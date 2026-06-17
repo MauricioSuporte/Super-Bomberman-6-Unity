@@ -37,9 +37,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField] private float angryEyesYOffset = 0.3f;
 
     [Header("Angry - Arc (pre-chase)")]
+#pragma warning disable CS0414
     [SerializeField, Min(0f)] private float angryArcSeconds = 1f;
+#pragma warning restore CS0414
     [SerializeField, Min(0f)] private float angryArcRadius = 1.25f;
+#pragma warning disable CS0414
     [SerializeField] private bool angryArcClockwise = true;
+#pragma warning restore CS0414
 
     [Header("Angry - Chase Steering")]
     [SerializeField, Range(0.1f, 1f)] private float angryChaseSpeedMultiplier = 0.75f;
@@ -55,8 +59,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Wink / Kiss Attack")]
     [SerializeField] private bool enableWinkAttack = true;
+#pragma warning disable CS0414
     [SerializeField, Min(0f)] private float winkMinInterval = 3f;
     [SerializeField, Min(0f)] private float winkMaxInterval = 5f;
+#pragma warning restore CS0414
     [SerializeField, Min(0f)] private float winkHoldDuration = 1f;
     private bool nextWinkOrKissAttackShouldBeWink = true;
 

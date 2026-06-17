@@ -368,8 +368,8 @@ public sealed class BattleModeComHazardAwarenessAbility : MonoBehaviour, IBattle
 
         // Verifica colisões físicas (outros players, bombas sólidas, etc.)
         Vector3 worldPos = TileToWorld(tile);
-        int hitCount = Physics2D.OverlapCircleNonAlloc(
-            worldPos, tileSize * 0.3f, obstacleHits, obstacleFilter.layerMask);
+        int hitCount = Physics2D.OverlapCircle(
+            worldPos, tileSize * 0.3f, obstacleFilter, obstacleHits);
 
         for (int i = 0; i < hitCount; i++)
         {
