@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 public sealed class BattleRevengeComController : MonoBehaviour
 {
     private static readonly Dictionary<int, int> TargetByCartOwner = new();
+    private static readonly bool EnableCartComDiagnostics = false;
 
     private const float ThinkIntervalSeconds = 0.12f;
     private const float ChargeStepSeconds = 0.12f;
@@ -858,6 +859,9 @@ public sealed class BattleRevengeComController : MonoBehaviour
 
     private void DiagnosticLog(string key, string message, bool force = false)
     {
+        if (!EnableCartComDiagnostics)
+            return;
+
         string logKey = key;
         if (!force &&
             logKey == lastDiagnosticLogKey &&

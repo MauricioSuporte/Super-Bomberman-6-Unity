@@ -63,7 +63,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private SuddenDeathHurryUpUI hurryUpUI;
 
     [Header("Debug")]
-    [SerializeField] private bool enableDebugLogs = true;
+    [SerializeField] private bool enableDebugLogs = false;
     [SerializeField] private bool logSuddenDeathFlow = true;
     [SerializeField] private bool logVisualFlow = true;
     [SerializeField] private bool logShadowFlow = true;

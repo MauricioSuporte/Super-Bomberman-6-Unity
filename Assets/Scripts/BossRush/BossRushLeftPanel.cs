@@ -8,7 +8,7 @@ public class BossRushLeftPanel : MonoBehaviour
     const string LOG = "[BossRushLeftPanel]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
     [SerializeField] bool dumpDifficultyLayoutEveryUpdate = false;
 
     [Header("Difficulty List")]

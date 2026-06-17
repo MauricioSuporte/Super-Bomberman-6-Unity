@@ -7,7 +7,7 @@ public class EndingStarComemoration : MonoBehaviour
 {
     [Header("Debug")]
 #pragma warning disable CS0414
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicallogs = false;
 #pragma warning restore CS0414
 
     [Header("References")]

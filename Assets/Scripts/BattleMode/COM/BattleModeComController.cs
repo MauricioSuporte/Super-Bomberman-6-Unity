@@ -19,12 +19,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float BehaviorRepeatLogSeconds = 0.75f;
     private const float SkullSpeedDecisionIntervalSeconds = 0.015f;
     private static readonly bool EnableEscapeAbilityChanceDiagnostics = false;
-#pragma warning disable CS0414
-    private static readonly bool EnableDeathDiagnostics = false;
-#pragma warning restore CS0414
     private static readonly bool EnablePostPlantEscapeDiagnostics = false;
     private static readonly bool EnableKickBombRiskDiagnostics = false;
-    private static readonly bool EnableItemPriorityDiagnostics = true;
+    private static readonly bool EnableItemPriorityDiagnostics = false;
     private const int ItemPriorityDiagnosticPlayerIdFilter = 0;
     private const float ItemPriorityLogIntervalSeconds = 0.35f;
 
@@ -44,7 +41,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private static readonly bool EnableChainBombDiagnostics = false;
 
     // Diagnostico cirurgico de oscilacao apenas para DestructiblePass.
-    private static readonly bool EnableDestructiblePassOscillationDiagnostics = true;
+    private static readonly bool EnableDestructiblePassOscillationDiagnostics = false;
 
     // Watchdog de comportamento ([BattleCOMBehavior]) — desativado durante a
     // investigação da fuga com BombPass para reduzir ruído no console.

@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public sealed class TankShot : MonoBehaviour
 {
-    public static readonly bool EnableTankShotDiagnostics = true;
+    public static readonly bool EnableTankShotDiagnostics = false;
 
     [SerializeField, Min(0.1f)] private float speed = 8f;
     [SerializeField] private LayerMask hitMask;

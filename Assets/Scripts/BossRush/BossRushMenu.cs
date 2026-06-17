@@ -9,7 +9,7 @@ public class BossRushMenu : MonoBehaviour
     const string LOG = "[BossRushMenu]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
 
     [Header("UI Root")]
     [SerializeField] GameObject root;

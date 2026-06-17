@@ -31,7 +31,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
 
     [Header("Debug")]
-    private bool debugKickTrace = true;
+    private bool debugKickTrace = false;
 
     private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
     private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();

@@ -8,7 +8,7 @@ public class BossRushRightPanel : MonoBehaviour
     const string LOG = "[BossRushRightPanel]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
 
     [Header("Title")]
     [SerializeField] TextMeshProUGUI titleText;

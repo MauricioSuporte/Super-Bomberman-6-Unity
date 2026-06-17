@@ -8,7 +8,7 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 public sealed class BattleRevengeSystem : MonoBehaviour
 {
-    private static readonly bool EnableSurgicalLogs = true;
+    private static readonly bool EnableSurgicalLogs = false;
 
     [SerializeField] private BattleRevengeController cartPrefab;
     private readonly float cartBombCooldownSeconds = 2f;

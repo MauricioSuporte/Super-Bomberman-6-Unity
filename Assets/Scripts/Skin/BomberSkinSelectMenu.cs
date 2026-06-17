@@ -10,7 +10,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     const string LOG = "[BomberSkinSelectMenu]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
     [SerializeField] bool logHintSpacingEveryUpdate = false;
 
     [Header("Auto Fix Layout")]

@@ -13,7 +13,7 @@ public sealed class ElectroMovementController : PersecutingEnemyMovementControll
     private const string LOG = "[ElectroMovementController]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] private bool enableSurgicalLogs = true;
+    [SerializeField] private bool enableSurgicalLogs = false;
     [SerializeField, Min(0.05f)] private float abilityLogInterval = 0.5f;
 
     [Header("Walk Sprites (4 dirs)")]

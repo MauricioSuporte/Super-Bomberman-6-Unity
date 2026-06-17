@@ -34,7 +34,7 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] float fadeDuration = 0.5f;
     [SerializeField, Range(0.001f, 0.1f)] float maxFadeStepDelta = 0.033f;
 #pragma warning disable CS0414
-    [SerializeField] bool logOpenFlowDiagnostics = true;
+    [SerializeField] bool logOpenFlowDiagnostics = false;
 #pragma warning restore CS0414
 
     [Header("Music")]
