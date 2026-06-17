@@ -29,6 +29,7 @@ public static class BossRushSession
 
     public static bool IsActive => active;
     public static bool HasLastCompletedRun => hasLastCompletedRun;
+    public static BossRushDifficulty CurrentDifficulty => selectedDifficulty;
     public static BossRushDifficulty LastCompletedDifficulty => lastCompletedDifficulty;
     public static float LastCompletedTime => lastCompletedTime;
     public static int LastCompletedRank => lastCompletedRank;
