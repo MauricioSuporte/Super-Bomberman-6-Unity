@@ -1937,7 +1937,7 @@ MonoBehaviour:
   backOptionVolume: 1
   deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedOptionVolume: 1
-  resetSaveCompletedSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
+  resetSaveCompletedSfx: {fileID: 8300000, guid: ce0ca761e372457ca254ba3311cc5b9a, type: 3}
   resetSaveCompletedVolume: 1
   resetSaveCompletedMessage: SAVE DATA ERASED
   resetSaveCompletedShowSeconds: 2

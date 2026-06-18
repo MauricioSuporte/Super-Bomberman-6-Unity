@@ -1721,7 +1721,7 @@ MonoBehaviour:
   moveOptionVolume: 1
   backSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   backVolume: 1
-  resetSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
+  resetSfx: {fileID: 8300000, guid: ce0ca761e372457ca254ba3311cc5b9a, type: 3}
   resetVolume: 1
   lockedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   lockedVolume: 1
