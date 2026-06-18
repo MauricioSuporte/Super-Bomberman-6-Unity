@@ -34,7 +34,7 @@ public static class PlayerPersistentStats
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasMagnetBomb = true;
-        public bool HasFullFire = true;
+        public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
         public BomberSkin Skin = BomberSkin.White;

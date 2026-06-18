@@ -3667,16 +3667,16 @@ MonoBehaviour:
   rubberBombSprite: {fileID: 21300000, guid: f64b2a392886c7b44a8699c010d9d434, type: 3}
   magnetBombSprite: {fileID: 21300000, guid: 26d3f026d23a935449bfaba3057c603c, type: 3}
   digitSprites:
-  - {fileID: -6629531029891648246, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -4217592887472625829, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -4412911677491635961, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -6395529614303463221, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -4417143251372694878, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: 728446850243192315, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: 5108088467900000851, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -519400735672398794, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -1344653293438560547, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -1033873727, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
+  - {fileID: 905470350162025073, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1620449166, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1470848104, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1117295556, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -558414233, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1615284097, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: 892443036, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1540379943, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: 1071621713, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: 543590862, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
   kickPowerupSprite: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
   bombPassPowerupSprite: {fileID: 21300000, guid: c592a8fe57d69c14e8f9ac5cc8fbf6f2, type: 3}
   punchPowerupSprite: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
@@ -3742,16 +3742,16 @@ MonoBehaviour:
   team2BackgroundSprite: {fileID: 21300000, guid: b9c4b011a134cd6468ac59491304c835, type: 3}
   team3BackgroundSprite: {fileID: 21300000, guid: 95d06910d6e97654cb96f77aa60e8814, type: 3}
   digitSprites:
-  - {fileID: -6629531029891648246, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -4217592887472625829, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -4412911677491635961, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -6395529614303463221, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -4417143251372694878, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: 728446850243192315, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: 5108088467900000851, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -519400735672398794, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -1344653293438560547, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
-  - {fileID: -1033873727, guid: feff846cd7fa3574b9d4a229336c0a00, type: 3}
+  - {fileID: 905470350162025073, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1620449166, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1470848104, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1117295556, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -558414233, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1615284097, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: 892443036, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -1540379943, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: 1071621713, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: 543590862, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
   victoryDigitSprites:
   - {fileID: 905470350162025073, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
   - {fileID: -3743038799579813963, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}

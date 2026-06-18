@@ -1031,15 +1031,10 @@ public sealed class BattleModeHud : MonoBehaviour
     {
         int digit = Mathf.Clamp(value, 0, 9);
 
-        if (digitSprites == null || digitSprites.Length == 0)
+        if (digitSprites == null || digit < 0 || digit >= digitSprites.Length)
             return null;
 
-        // BattleMode/Numbers.png is arranged visually as 1,2,3,4,5,6,7,8,9,0.
-        int spriteIndex = digit == 0 ? digitSprites.Length - 1 : digit - 1;
-        if (spriteIndex < 0 || spriteIndex >= digitSprites.Length)
-            return null;
-
-        return digitSprites[spriteIndex];
+        return digitSprites[digit];
     }
 
     Sprite GetVictoryDigitSprite(int value)
