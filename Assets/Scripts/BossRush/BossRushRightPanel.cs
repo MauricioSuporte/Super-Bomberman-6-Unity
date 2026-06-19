@@ -51,7 +51,6 @@ public class BossRushRightPanel : MonoBehaviour
 
     [Header("Target Time")]
     [SerializeField] TextMeshProUGUI targetTimeText;
-    [SerializeField] string targetTimeFormat = "TARGET {0}";
     [SerializeField] string noTargetTimeText = "";
     [SerializeField] int targetTimeFontSize = 15;
     [SerializeField] float targetTimeHeight = 22f;
@@ -62,7 +61,6 @@ public class BossRushRightPanel : MonoBehaviour
 
     [Header("New Record Label")]
     [SerializeField] TextMeshProUGUI newRecordText;
-    [SerializeField] string newRecordLabel = "NEW RECORD!";
     [SerializeField] int newRecordFontSize = 14;
     [SerializeField] float newRecordHeight = 20f;
     [SerializeField] float newRecordOffsetY = -6f;

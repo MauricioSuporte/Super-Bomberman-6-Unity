@@ -136,7 +136,6 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Top Left Label")]
     [SerializeField] Text worldStageLabel;
-    [SerializeField] string worldLabelPrefix = "WORLD ";
     [SerializeField] string stageSeparator = " - ";
 
     [SerializeField] int worldStageLabelReferenceWidth = 256;

@@ -55,19 +55,12 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Prompt Title (optional)")]
     [SerializeField] private TextMeshProUGUI promptTitleText;
-    [SerializeField] private string mainPrompt = "NORMAL GAME";
-    [SerializeField] private string newGamePrompt = "START WHICH FILE?";
-    [SerializeField] private string difficultyPrompt = "SELECT DIFFICULTY";
-    [SerializeField] private string continuePrompt = "CONTINUE WHICH FILE?";
-    [SerializeField] private string deletePrompt = "DELETE WHICH FILE?";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
 
     [Header("Save Slots")]
     [SerializeField, Min(1)] private int slotCount = 3;
-    [SerializeField] private string slotLabelPrefix = "File ";
-    [SerializeField] private string emptySlotDisplay = "- - -";
     [SerializeField, Min(0)] private int progressColumnSpacing = 1;
     [SerializeField] private float deleteFeedbackSeconds = 0.5f;
 
@@ -98,10 +91,6 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Disabled / Feedback Message")]
     [SerializeField] private TextMeshProUGUI disabledOptionText;
-    [SerializeField] private string disabledNewGameMessage = "NO EMPTY SLOT";
-    [SerializeField] private string disabledContinueMessage = "NO SAVE DATA";
-    [SerializeField] private string disabledDeleteMessage = "NO SAVE DATA";
-    [SerializeField] private string disabledHardcoreMessage = "CLEAR NORMAL GAME ON HARD";
     [SerializeField] private float disabledMessageShowSeconds = 1.5f;
     [SerializeField] private int disabledMessageFontSize = 22;
     [SerializeField] private Color disabledMessageFaceColor = new Color32(231, 63, 63, 255);

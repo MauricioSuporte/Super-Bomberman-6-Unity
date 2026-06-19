@@ -69,7 +69,6 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField] bool nightmareUnlocked = false;
     [SerializeField] AudioClip deniedOptionSfx;
     [SerializeField, Range(0f, 1f)] float deniedOptionVolume = 1f;
-    [SerializeField] string nightmareLockedMessage = "UNLOCKED BY CLEARING HARD";
 
     [Header("Locked Difficulty Message UI")]
     [SerializeField] TextMeshProUGUI nightmareLockedText;

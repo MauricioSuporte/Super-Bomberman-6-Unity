@@ -127,16 +127,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     [Header("Prompt Title (optional)")]
     [SerializeField] private TextMeshProUGUI promptTitleText;
-    [SerializeField] private string matchModePrompt = "BATTLE MODE";
-    [SerializeField] private string playerSelectPrompt = "PLAYER SELECT";
-    [SerializeField] private string skinSelectPrompt = "CHARACTER SELECT";
-    [SerializeField] private string teamSelectPrompt = "TEAM MEMBERS";
-    [SerializeField] private string ruleSelectPrompt = "RULE CONFIG";
-    [SerializeField] private string stageSelectPrompt = "STAGE SELECT";
-    [SerializeField] private string specificSettingsPrompt = "SPECIFIC SETTINGS";
-    [SerializeField] private string musicSelectPrompt = "SELECT MUSIC";
-    [SerializeField] private string itemSelectPrompt = "SELECT ITEMS";
-    [SerializeField] private string handicapSelectPrompt = "SELECT HANDICAP";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -244,7 +234,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 stageNameSize = new(620f, 42f);
     [SerializeField] private Vector2 stageLockedHintOffset = new(0f, -324f);
     [SerializeField] private Vector2 stageLockedHintSize = new(620f, 84f);
-    [SerializeField] private string stageLockedHintMessage = "WIN STAGE 10 IN BATTLE MODE";
     [SerializeField] private string stageLockedHintHex = "#FF3B30";
     [SerializeField, Min(0f)] private float stageLockedHintShowSeconds = 5f;
     [SerializeField] private int stageSelectFontSize = 32;

@@ -44,9 +44,6 @@ public sealed class NormalGameAIManager : MonoBehaviour
     private const bool HuntEnemies = true;
     private const bool CollectItems = true;
 
-    // Logs cirúrgicos no Console (deixe true enquanto estiver depurando).
-    private const bool DebugLogs = false;
-
     // Frequência (s) de procurar players novos para anexar a IA.
     private const float RescanInterval = 0.5f;
 
@@ -57,7 +54,6 @@ public sealed class NormalGameAIManager : MonoBehaviour
 
     private float rescanTimer;
     private bool lastEnableAI;
-    private float diagTimer = -10f;
 
     /// <summary>
     /// Cria o manager automaticamente em qualquer cena assim que o jogo inicia,
@@ -73,9 +69,6 @@ public sealed class NormalGameAIManager : MonoBehaviour
         go.AddComponent<NormalGameAIManager>();
         DontDestroyOnLoad(go);
 
-        if (DebugLogs)
-            Debug.Log("[NormalGameAIManager] Bootstrap OK — define ENABLE_NORMAL_GAME_AI ativo, manager criado. " +
-                      $"EnableAI={EnableAI}, alvos={{{string.Join(",", AiPlayerIds)}}}.");
     }
 
     private void Awake()
@@ -125,9 +118,6 @@ public sealed class NormalGameAIManager : MonoBehaviour
         scratch.Clear();
         PlayerIdentity.GetActivePlayers(scratch);
 
-        int targetsFound = 0;
-        int controlled = 0;
-
         for (int i = 0; i < scratch.Count; i++)
         {
             PlayerIdentity id = scratch[i];
@@ -135,8 +125,6 @@ public sealed class NormalGameAIManager : MonoBehaviour
                 continue;
             if (System.Array.IndexOf(AiPlayerIds, id.playerId) < 0)
                 continue;
-
-            targetsFound++;
 
             // Segurança: em Battle Mode o BattleModeComController é quem controla.
             if (id.TryGetComponent<BattleModeComController>(out var com) && com != null && com.enabled)
@@ -150,29 +138,14 @@ public sealed class NormalGameAIManager : MonoBehaviour
             {
                 ctrl = id.gameObject.AddComponent<NormalGameAIController>();
                 ctrl.Configure(id.playerId);
-                if (DebugLogs)
-                    Debug.Log($"[NormalGameAIManager] IA anexada ao player {id.playerId}.", this);
             }
 
             // Aplica/atualiza tuning.
             ctrl.farmDestructibles = FarmDestructibles;
             ctrl.huntEnemies = HuntEnemies;
             ctrl.collectItems = CollectItems;
-            ctrl.debugLogs = DebugLogs;
+            ctrl.debugLogs = false;
             ctrl.enabled = true;
-            controlled++;
-        }
-
-        // Panorama throttled: confirma se a IA encontrou os players-alvo.
-        if (DebugLogs && Time.time - diagTimer >= 2f)
-        {
-            diagTimer = Time.time;
-            if (targetsFound == 0)
-                Debug.Log($"[NormalGameAIManager] players na cena:{scratch.Count} | alvos {{{string.Join(",", AiPlayerIds)}}} encontrados:0 " +
-                          "— nenhum P2/P3/P4 na cena. Com ENABLE_NORMAL_GAME_AI eles deveriam ser spawnados automaticamente; " +
-                          "verifique se a cena tem um PlayersSpawner.", this);
-            else
-                Debug.Log($"[NormalGameAIManager] players na cena:{scratch.Count} | alvos encontrados:{targetsFound} | controlados pela IA:{controlled}.", this);
         }
     }
 
@@ -188,8 +161,6 @@ public sealed class NormalGameAIManager : MonoBehaviour
                 continue;
             if (id.TryGetComponent<NormalGameAIController>(out var ctrl) && ctrl != null)
             {
-                if (DebugLogs)
-                    Debug.Log($"[NormalGameAIManager] IA removida do player {id.playerId}.", this);
                 Destroy(ctrl);
             }
         }
