@@ -45,7 +45,7 @@ public sealed class NormalGameAIManager : MonoBehaviour
     private const bool CollectItems = true;
 
     // Logs cirúrgicos no Console (deixe true enquanto estiver depurando).
-    private const bool DebugLogs = true;
+    private const bool DebugLogs = false;
 
     // Frequência (s) de procurar players novos para anexar a IA.
     private const float RescanInterval = 0.5f;

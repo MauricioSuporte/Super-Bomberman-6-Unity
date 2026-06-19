@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public sealed class SaveData
 {
     public int activeSlotIndex = -1;
+    public int language = (int)GameLanguage.English;
 
     public List<string> unlockedSkins = new();
 

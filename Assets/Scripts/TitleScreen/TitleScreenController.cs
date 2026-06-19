@@ -50,6 +50,26 @@ public class TitleScreenController : MonoBehaviour
     [Header("Menu Text (TMP)")]
     public TMP_Text menuText;
 
+    [Header("Localized Font Fallback")]
+    [SerializeField] TMP_FontAsset japaneseFallbackFontAsset;
+    [SerializeField] string[] japaneseFallbackOsFontNames =
+    {
+        "Yu Gothic",
+        "Yu Gothic UI",
+        "Yu Mincho",
+        "Meiryo",
+        "Meiryo UI",
+        "MS Gothic",
+        "MS UI Gothic",
+        "MS Mincho",
+        "Noto Sans CJK JP",
+        "Noto Sans JP",
+        "Segoe UI",
+        "Arial",
+        "Liberation Sans"
+    };
+    [SerializeField, Min(16)] int japaneseFallbackSamplingPointSize = 90;
+
     [Header("Reference Frame (SafeFrame4x3)")]
     [SerializeField] RectTransform referenceRect;
 
@@ -180,7 +200,8 @@ public class TitleScreenController : MonoBehaviour
         Options = 2,
         Video = 3,
         ResetSaveConfirm = 4,
-        GameModes = 5
+        GameModes = 5,
+        Language = 6
     }
 
     enum StartFlowMode
@@ -211,8 +232,9 @@ public class TitleScreenController : MonoBehaviour
     const int GAME_MODE_IDX_BATTLE = 2;
 
     const int OPTIONS_IDX_CONTROLS = 0;
-    int OptionsVideoIndex => IsVideoMenuAvailable ? 1 : -1;
-    int OptionsResetSaveIndex => IsVideoMenuAvailable ? 2 : 1;
+    const int OPTIONS_IDX_LANGUAGE = 1;
+    int OptionsVideoIndex => IsVideoMenuAvailable ? 2 : -1;
+    int OptionsResetSaveIndex => IsVideoMenuAvailable ? 3 : 2;
 
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
@@ -227,6 +249,8 @@ public class TitleScreenController : MonoBehaviour
     bool bootedSession;
 
     Material runtimeMenuMat;
+    readonly System.Collections.Generic.List<TMP_FontAsset> runtimeLanguageFallbackFontAssets = new();
+    bool warnedMissingJapaneseFallback;
     RectTransform menuRect;
 
     Coroutine pushStartRoutine;
@@ -340,6 +364,14 @@ public class TitleScreenController : MonoBehaviour
     {
         if (runtimeMenuMat != null)
             Destroy(runtimeMenuMat);
+
+        for (int i = 0; i < runtimeLanguageFallbackFontAssets.Count; i++)
+        {
+            if (runtimeLanguageFallbackFontAssets[i] != null)
+                Destroy(runtimeLanguageFallbackFontAssets[i]);
+        }
+
+        runtimeLanguageFallbackFontAssets.Clear();
     }
 
     RectTransform ResolveReferenceRect()
@@ -874,7 +906,11 @@ public class TitleScreenController : MonoBehaviour
         pushStartText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
         pushStartText.alignment = TextAlignmentOptions.Center;
         pushStartText.color = Color.white;
-        pushStartText.text = $"<color={pushStartHex}>{pushStartLabel}</color>";
+        string label = GameTextDatabase.Title?.PushStart;
+        if (string.IsNullOrEmpty(label))
+            label = pushStartLabel;
+
+        pushStartText.text = $"<color={pushStartHex}>{label}</color>";
         pushStartText.gameObject.SetActive(false);
     }
 
@@ -1414,11 +1450,11 @@ public class TitleScreenController : MonoBehaviour
             }
 
             bool backPressedByPad =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
                 TryGetAnyPlayerDown(PlayerAction.ActionB, out _);
 
             bool backPressedByMouse =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
                 IsPointerBackPressed();
 
             if (backPressedByPad || backPressedByMouse)
@@ -1447,6 +1483,11 @@ public class TitleScreenController : MonoBehaviour
                     menuMode = MenuMode.Options;
                     menuIndex = Mathf.Max(0, OptionsVideoIndex);
                 }
+                else if (menuMode == MenuMode.Language)
+                {
+                    menuMode = MenuMode.Options;
+                    menuIndex = OPTIONS_IDX_LANGUAGE;
+                }
                 else if (menuMode == MenuMode.ResetSaveConfirm)
                 {
                     menuMode = MenuMode.Options;
@@ -1459,6 +1500,33 @@ public class TitleScreenController : MonoBehaviour
 
                 while (AnyPlayerHeld(PlayerAction.ActionB))
                     yield return null;
+
+                yield return null;
+                continue;
+            }
+
+            if (menuMode == MenuMode.Language)
+            {
+                bool confirm = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _) || IsPointerConfirmPressedOnCurrentSelection();
+
+                if (confirm)
+                {
+                    GameLanguage[] languages = GameTextDatabase.SupportedLanguages;
+                    if (languages != null && menuIndex >= 0 && menuIndex < languages.Length)
+                    {
+                        PlaySelectSfx();
+                        SaveSystem.SetLanguage(languages[menuIndex]);
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+                    }
+
+                    while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                        yield return null;
+
+                    yield return null;
+                    continue;
+                }
 
                 yield return null;
                 continue;
@@ -1616,7 +1684,7 @@ public class TitleScreenController : MonoBehaviour
                     if (menuIndex == GAME_MODE_IDX_BOSS_RUSH && !forceBossRushUnlocked)
                     {
                         PlayDeniedSfx();
-                        ShowBossRushLockedMessage(bossRushLockedMessage, bossRushLockedMessageHex, bossRushLockedShowSeconds);
+                        ShowBossRushLockedMessage(GetLocalizedBossRushLockedMessage(), bossRushLockedMessageHex, bossRushLockedShowSeconds);
 
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
@@ -1685,6 +1753,23 @@ public class TitleScreenController : MonoBehaviour
                         locked = false;
 
                         while (AnyPlayerHeldAnyMenuKey())
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    if (menuIndex == OPTIONS_IDX_LANGUAGE)
+                    {
+                        locked = false;
+
+                        menuMode = MenuMode.Language;
+                        menuIndex = GetCurrentLanguageIndex();
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
 
                         yield return null;
@@ -1766,7 +1851,7 @@ public class TitleScreenController : MonoBehaviour
                     RefreshMenuText();
 
                     ShowBossRushLockedMessage(
-                        resetSaveCompletedMessage,
+                        GetLocalizedResetSaveCompletedMessage(),
                         bossRushLockedMessageHex,
                         resetSaveCompletedShowSeconds
                     );
@@ -1819,10 +1904,37 @@ public class TitleScreenController : MonoBehaviour
     {
         if (menuMode == MenuMode.PlayerCount) return 4;
         if (menuMode == MenuMode.GameModes) return 3;
-        if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 3 : 2;
+        if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 4 : 3;
+        if (menuMode == MenuMode.Language) return GameTextDatabase.SupportedLanguages.Length;
         if (menuMode == MenuMode.Video) return 2;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
         return 4;
+    }
+
+    int GetCurrentLanguageIndex()
+    {
+        GameLanguage current = SaveSystem.GetLanguage();
+        GameLanguage[] languages = GameTextDatabase.SupportedLanguages;
+
+        for (int i = 0; i < languages.Length; i++)
+        {
+            if (languages[i] == current)
+                return i;
+        }
+
+        return 0;
+    }
+
+    string GetLocalizedBossRushLockedMessage()
+    {
+        string message = GameTextDatabase.Title?.BossRushLocked;
+        return string.IsNullOrEmpty(message) ? bossRushLockedMessage : message;
+    }
+
+    string GetLocalizedResetSaveCompletedMessage()
+    {
+        string message = GameTextDatabase.Title?.SaveDataErased;
+        return string.IsNullOrEmpty(message) ? resetSaveCompletedMessage : message;
     }
 
     int GetGameModeIndexForPendingStartFlow()
@@ -1935,16 +2047,22 @@ public class TitleScreenController : MonoBehaviour
         if (menuText == null)
             return;
 
+        ApplyLanguageFontFallback();
+
         const string baseRgb = "FFFFE7";
         const string warnRgb = "#FF5A4A";
         int size = MenuFontSizeScaled;
+        TitleScreenText text = GameTextDatabase.Title;
+
+        if (pushStartText != null)
+            pushStartText.text = $"<color={pushStartHex}>{text.PushStart}</color>";
 
         if (menuMode == MenuMode.Main)
         {
-            string gameModes = $"<color=#{baseRgb}FF>GAME MODES</color>";
-            string achievements = $"<color=#{baseRgb}FF>ACHIEVEMENTS</color>";
-            string options = $"<color=#{baseRgb}FF>OPTIONS</color>";
-            string exit = $"<color=#{baseRgb}FF>EXIT</color>";
+            string gameModes = $"<color=#{baseRgb}FF>{text.GameModes}</color>";
+            string achievements = $"<color=#{baseRgb}FF>{text.Achievements}</color>";
+            string options = $"<color=#{baseRgb}FF>{text.Options}</color>";
+            string exit = $"<color=#{baseRgb}FF>{text.Exit}</color>";
 
             menuText.text =
                 "<align=left>" +
@@ -1960,11 +2078,11 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuMode == MenuMode.GameModes)
         {
-            string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
+            string normal = $"<color=#{baseRgb}FF>{text.NormalGame}</color>";
             string bossRush = forceBossRushUnlocked
-                ? $"<color=#{baseRgb}FF>BOSS RUSH</color>"
-                : $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
-            string battleMode = $"<color=#{baseRgb}FF>BATTLE MODE</color>";
+                ? $"<color=#{baseRgb}FF>{text.BossRush}</color>"
+                : $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>{text.BossRush}</color>";
+            string battleMode = $"<color=#{baseRgb}FF>{text.BattleMode}</color>";
 
             menuText.text =
                 "<align=left>" +
@@ -1979,16 +2097,18 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuMode == MenuMode.Options)
         {
-            string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
-            string resetSave = $"<color={warnRgb}>RESET SAVE</color>";
+            string controls = $"<color=#{baseRgb}FF>{text.Controls}</color>";
+            string language = $"<color=#{baseRgb}FF>{text.Language}</color>";
+            string resetSave = $"<color={warnRgb}>{text.ResetSave}</color>";
 
             if (IsVideoMenuAvailable)
             {
-                string video = $"<color=#{baseRgb}FF>VIDEO</color>";
+                string video = $"<color=#{baseRgb}FF>{text.Video}</color>";
 
                 menuText.text =
                     "<align=left>" +
                     $"<size={size}>{controls}</size>\n" +
+                    $"<size={size}>{language}</size>\n" +
                     $"<size={size}>{video}</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
@@ -1998,6 +2118,7 @@ public class TitleScreenController : MonoBehaviour
                 menuText.text =
                     "<align=left>" +
                     $"<size={size}>{controls}</size>\n" +
+                    $"<size={size}>{language}</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
             }
@@ -2006,12 +2127,33 @@ public class TitleScreenController : MonoBehaviour
             return;
         }
 
+        if (menuMode == MenuMode.Language)
+        {
+            GameLanguage current = SaveSystem.GetLanguage();
+            GameLanguage[] languages = GameTextDatabase.SupportedLanguages;
+            string body = "<align=left>";
+
+            for (int i = 0; i < languages.Length; i++)
+            {
+                GameLanguage language = languages[i];
+                string color = language == current ? pushStartHex : $"#{baseRgb}FF";
+                body += $"<size={size}><color={color}>{GameTextDatabase.GetLanguageNativeName(language)}</color></size>";
+                if (i < languages.Length - 1)
+                    body += "\n";
+            }
+
+            menuText.text = body + "</align>";
+
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+            return;
+        }
+
         if (menuMode == MenuMode.PlayerCount)
         {
-            string p1 = $"<color=#{baseRgb}FF>1 PLAYER</color>";
-            string p2 = $"<color=#{baseRgb}FF>2 PLAYERS</color>";
-            string p3 = $"<color=#{baseRgb}FF>3 PLAYERS</color>";
-            string p4 = $"<color=#{baseRgb}FF>4 PLAYERS</color>";
+            string p1 = $"<color=#{baseRgb}FF>{text.Player1}</color>";
+            string p2 = $"<color=#{baseRgb}FF>{text.Player2}</color>";
+            string p3 = $"<color=#{baseRgb}FF>{text.Player3}</color>";
+            string p4 = $"<color=#{baseRgb}FF>{text.Player4}</color>";
 
             menuText.text =
                 "<align=left>" +
@@ -2027,13 +2169,13 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuMode == MenuMode.ResetSaveConfirm)
         {
-            string l2 = $"<color={warnRgb}>THIS WILL ERASE:</color>";
-            string l3 = $"<color={pushStartHex}>ALL NORMAL GAME SAVES</color>";
-            string l4 = $"<color={pushStartHex}>UNLOCKED SKINS / MODES</color>";
-            string l5 = $"<color={pushStartHex}>BOSS RUSH RECORDS</color>";
-            string l6 = $"<color={pushStartHex}>CONTROLS</color>";
-            string cancel = $"<color=#{baseRgb}FF>CANCEL</color>";
-            string confirm = $"<color={warnRgb}>RESET SAVE</color>";
+            string l2 = $"<color={warnRgb}>{text.ResetWarning}</color>";
+            string l3 = $"<color={pushStartHex}>{text.ResetNormalSaves}</color>";
+            string l4 = $"<color={pushStartHex}>{text.ResetUnlocks}</color>";
+            string l5 = $"<color={pushStartHex}>{text.ResetBossRushRecords}</color>";
+            string l6 = $"<color={pushStartHex}>{text.ResetControls}</color>";
+            string cancel = $"<color=#{baseRgb}FF>{text.Cancel}</color>";
+            string confirm = $"<color={warnRgb}>{text.ResetSave}</color>";
 
             menuText.text =
                 "<align=left>" +
@@ -2060,18 +2202,135 @@ public class TitleScreenController : MonoBehaviour
 
         menuText.text =
             "<align=left>" +
-            $"<size={size}>FULLSCREEN</size>\n" +
-            $"<size={size}>WINDOW SIZE</size>" +
+            $"<size={size}>{text.Fullscreen}</size>\n" +
+            $"<size={size}>{text.WindowSize}</size>" +
             "</align>";
 
         EnsureVideoValuesText();
 
         if (videoValuesText != null)
         {
-            string fs = _videoFullscreen ? "ON" : "OFF";
+            string fs = _videoFullscreen ? text.On : text.Off;
             string ws = $"{Mathf.Max(1, _videoWindowMult)}x";
             videoValuesText.text = $"{fs}\n{ws}";
         }
+    }
+
+    void ApplyLanguageFontFallback()
+    {
+        GameLanguage language = SaveSystem.GetLanguage();
+        if (language == GameLanguage.English && menuMode != MenuMode.Language)
+            return;
+
+        char probeCharacter = GetFallbackProbeCharacter(language);
+        TMP_FontAsset fallback = ResolveJapaneseFallbackFontAsset(probeCharacter);
+        if (fallback == null)
+            return;
+
+        AddFallbackFont(menuText != null ? menuText.font : null, fallback);
+        AddFallbackFont(pushStartText != null ? pushStartText.font : null, fallback);
+        AddFallbackFont(footerText != null ? footerText.font : null, fallback);
+        AddFallbackFont(bossRushLockedText != null ? bossRushLockedText.font : null, fallback);
+        AddFallbackFont(videoValuesText != null ? videoValuesText.font : null, fallback);
+    }
+
+    char GetFallbackProbeCharacter(GameLanguage language)
+    {
+        if (menuMode == MenuMode.Language || language == GameLanguage.Japanese)
+            return '日';
+
+        return language == GameLanguage.Spanish ? 'ñ' : 'ç';
+    }
+
+    TMP_FontAsset ResolveJapaneseFallbackFontAsset(char probeCharacter)
+    {
+        if (japaneseFallbackFontAsset != null)
+        {
+            if (japaneseFallbackFontAsset.HasCharacter(probeCharacter, true, true))
+                return japaneseFallbackFontAsset;
+
+            if (!warnedMissingJapaneseFallback)
+            {
+                warnedMissingJapaneseFallback = true;
+                Debug.LogWarning($"[TitleScreen] Assigned fallback font [{japaneseFallbackFontAsset.name}] does not contain required character [{probeCharacter}].");
+            }
+        }
+
+        for (int i = 0; i < runtimeLanguageFallbackFontAssets.Count; i++)
+        {
+            TMP_FontAsset fallback = runtimeLanguageFallbackFontAssets[i];
+            if (fallback != null && fallback.HasCharacter(probeCharacter, false, true))
+                return fallback;
+        }
+
+        if (japaneseFallbackOsFontNames != null)
+        {
+            for (int i = 0; i < japaneseFallbackOsFontNames.Length; i++)
+            {
+                string familyName = japaneseFallbackOsFontNames[i];
+                if (string.IsNullOrWhiteSpace(familyName))
+                    continue;
+
+                TMP_FontAsset created = CreateJapaneseFallbackFromOsFont(familyName, probeCharacter);
+                if (created == null)
+                    continue;
+
+                runtimeLanguageFallbackFontAssets.Add(created);
+                return created;
+            }
+        }
+
+        if (!warnedMissingJapaneseFallback)
+        {
+            warnedMissingJapaneseFallback = true;
+            Debug.LogWarning($"[TitleScreen] No TMP fallback font was found for required character [{probeCharacter}]. Assign japaneseFallbackFontAsset or install a compatible OS font.");
+        }
+
+        return null;
+    }
+
+    TMP_FontAsset CreateJapaneseFallbackFromOsFont(string familyName, char probeCharacter)
+    {
+        try
+        {
+            int samplingPointSize = Mathf.Max(16, japaneseFallbackSamplingPointSize);
+            TMP_FontAsset fontAsset = TMP_FontAsset.CreateFontAsset(
+                familyName,
+                "Regular",
+                samplingPointSize
+            );
+
+            if (fontAsset == null)
+                return null;
+
+            fontAsset.name = familyName + " Japanese Fallback";
+            fontAsset.atlasPopulationMode = AtlasPopulationMode.DynamicOS;
+            fontAsset.isMultiAtlasTexturesEnabled = true;
+
+            if (!fontAsset.HasCharacter(probeCharacter, false, true))
+            {
+                Destroy(fontAsset);
+                return null;
+            }
+
+            return fontAsset;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    static void AddFallbackFont(TMP_FontAsset source, TMP_FontAsset fallback)
+    {
+        if (source == null || fallback == null || source == fallback)
+            return;
+
+        if (source.fallbackFontAssetTable == null)
+            source.fallbackFontAssetTable = new System.Collections.Generic.List<TMP_FontAsset>();
+
+        if (!source.fallbackFontAssetTable.Contains(fallback))
+            source.fallbackFontAssetTable.Add(fallback);
     }
 
     void StartPushStartBlink()

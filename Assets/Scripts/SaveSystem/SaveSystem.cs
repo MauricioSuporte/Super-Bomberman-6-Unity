@@ -750,6 +750,19 @@ public static class SaveSystem
         return data.videoSettings;
     }
 
+    public static GameLanguage GetLanguage()
+    {
+        EnsureLoaded();
+        return NormalizeLanguage(data.language);
+    }
+
+    public static void SetLanguage(GameLanguage language)
+    {
+        EnsureLoaded();
+        data.language = (int)NormalizeLanguage((int)language);
+        Save();
+    }
+
     public static void SetVideoSettings(bool fullscreen, int windowSizeMultiplier)
     {
         EnsureLoaded();
@@ -920,6 +933,8 @@ public static class SaveSystem
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
             d.activeSlotIndex = -1;
 
+        d.language = (int)NormalizeLanguage(d.language);
+
         d.videoSettings ??= new SavedVideoSettings();
         EnsureBattleModeItemAmounts(d, GameManager.GetDefaultBattleModeHiddenItemAmounts());
         EnsureBattleModeLouieAmounts(d, GameManager.GetDefaultBattleModeLouieAmounts());
@@ -939,6 +954,13 @@ public static class SaveSystem
         EnsureBattleModePlayerTeams(d);
         EnsureBattleModeManStageWins(d);
         NormalizeBattleModeStageUnlocks(d);
+    }
+
+    private static GameLanguage NormalizeLanguage(int language)
+    {
+        return Enum.IsDefined(typeof(GameLanguage), language)
+            ? (GameLanguage)language
+            : GameLanguage.English;
     }
 
     private static void NormalizeBattleModeStageUnlocks(SaveData d)
