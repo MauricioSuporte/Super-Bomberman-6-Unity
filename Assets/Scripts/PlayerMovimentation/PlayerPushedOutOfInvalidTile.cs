@@ -426,6 +426,9 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
                 if (bomb != null && bomb.HasExploded)
                     continue;
 
+                if (bomb != null && !bomb.IsSolid)
+                    continue;
+
                 if (canPassBombs)
                     continue;
 
