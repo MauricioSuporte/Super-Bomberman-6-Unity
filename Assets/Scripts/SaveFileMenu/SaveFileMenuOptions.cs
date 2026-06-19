@@ -526,6 +526,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (optionFontAsset != null)
             txt.font = optionFontAsset;
 
+        LocalizedTmpFontFallback.Apply(txt);
         txt.textWrappingMode = TextWrappingModes.NoWrap;
         txt.overflowMode = TextOverflowModes.Overflow;
         txt.richText = true;
@@ -737,13 +738,14 @@ public class SaveFileMenuOptions : MonoBehaviour
         ApplyOptionTextStyle(txt, style.FaceColor, style.OutlineColor);
     }
 
-    private static string GetDifficultyColumnDisplayName(int style)
+    private string GetDifficultyColumnDisplayName(int style)
     {
+        CommonMenuText text = GameTextDatabase.Common;
         return style switch
         {
-            1 => "HARD",
-            2 => "HARDCORE",
-            _ => "NORMAL"
+            1 => text.Hard,
+            2 => text.Hardcore,
+            _ => text.Normal
         };
     }
 

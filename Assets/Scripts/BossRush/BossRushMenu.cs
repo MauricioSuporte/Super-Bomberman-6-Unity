@@ -394,7 +394,7 @@ public class BossRushMenu : MonoBehaviour
 
                     PlayDeniedSfx();
 
-                    if (!string.IsNullOrEmpty(nightmareLockedMessage))
+                    if (!string.IsNullOrEmpty(GameTextDatabase.BossRushMenu.NightmareLocked))
                         ShowNightmareLockedMessage();
                     else
                         SLog("Input Confirm Denied | nightmareLockedMessage empty");
@@ -912,13 +912,14 @@ public class BossRushMenu : MonoBehaviour
 
         ApplyNightmareLockedTextVisualStyle();
 
-        nightmareLockedText.text = nightmareLockedMessage;
+        LocalizedTmpFontFallback.Apply(nightmareLockedText);
+        nightmareLockedText.text = GameTextDatabase.BossRushMenu.NightmareLocked;
         nightmareLockedText.gameObject.SetActive(true);
         nightmareLockedText.transform.SetAsLastSibling();
 
         SLog(
             $"ShowNightmareLockedMessage | " +
-            $"text='{nightmareLockedMessage}' " +
+            $"text='{GameTextDatabase.BossRushMenu.NightmareLocked}' " +
             $"activeSelf={nightmareLockedText.gameObject.activeSelf} " +
             $"activeInHierarchy={nightmareLockedText.gameObject.activeInHierarchy} " +
             $"rootActive={(root != null && root.activeInHierarchy)} " +

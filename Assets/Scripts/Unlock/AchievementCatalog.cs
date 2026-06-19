@@ -32,85 +32,57 @@ public static class AchievementCatalog
         }
     }
 
-    public static readonly AchievementInfo[] All =
+    public static AchievementInfo[] All => BuildAll();
+
+    private static AchievementInfo[] BuildAll()
     {
-        Skin(BomberSkin.Gray, "GRAY", "Gray Bomber"),
-        Skin(BomberSkin.Orange, "ORANGE", "Orange Bomber"),
-        Skin(BomberSkin.Purple, "PURPLE", "Purple Bomber"),
-        Skin(BomberSkin.Olive, "OLIVE", "Olive Bomber"),
-        Skin(BomberSkin.Cyan, "CYAN", "Cyan Bomber"),
-        Skin(BomberSkin.Brown, "BROWN", "Brown Bomber"),
-        Skin(BomberSkin.DarkGreen, "DARK GREEN", "Dark Green Bomber"),
-        Skin(BomberSkin.DarkBlue, "DARK BLUE", "Dark Blue Bomber"),
-        Skin(BomberSkin.Magenta, "MAGENTA", "Magenta Bomber"),
-        Skin(BomberSkin.Nightmare, "NIGHTMARE", "Nightmare Bomber"),
-        Skin(BomberSkin.Gold, "GOLD", "Gold Bomber"),
-        new(
-            "BossRush",
-            "BOSS RUSH",
-            "CLEAR NORMAL GAME ON ANY DIFFICULTY",
-            "Boss Rush Mode",
-            () => SaveSystem.Data.bossRushUnlocked,
-            UnlockToastCatalog.LoadBossRushIcon
-        ),
-        new(
-            "BossRushNightmare",
-            "BOSS RUSH NIGHTMARE",
-            "CLEAR BOSS RUSH ON HARD",
-            "Boss Rush Nightmare Difficulty",
-            SaveSystem.IsNightmareUnlocked,
-            UnlockToastCatalog.LoadNightmareIcon
-        ),
-        new(
-            "Hardcore",
-            "HARDCORE",
-            "CLEAR NORMAL GAME ON HARD",
-            "Hardcore Difficulty",
-            UnlockProgress.IsHardcoreUnlocked,
-            UnlockToastCatalog.LoadHardcoreIcon
-        ),
-        new(
-            "BattleModeStage11",
-            "BATTLE STAGE 11",
-            "WIN STAGE 10 IN BATTLE MODE",
-            "Battle Mode Stage 11",
-            UnlockProgress.IsBattleModeStage11Unlocked,
-            () => UnlockToastCatalog.LoadBattleModeStageIcon(11)
-        ),
-        new(
-            "BattleModeStage12",
-            "BATTLE STAGE 12",
-            "WIN STAGES 7 AND 9 IN BATTLE MODE",
-            "Battle Mode Stage 12",
-            UnlockProgress.IsBattleModeStage12Unlocked,
-            () => UnlockToastCatalog.LoadBattleModeStageIcon(12)
-        ),
-        new(
-            "BattleModeStage13",
-            "BATTLE STAGE 13",
-            "WIN ANY STAGE IN BATTLE MODE",
-            "Battle Mode Stage 13",
-            UnlockProgress.IsBattleModeStage13Unlocked,
-            () => UnlockToastCatalog.LoadBattleModeStageIcon(13)
-        ),
-        new(
-            "BattleModeStage14",
-            "BATTLE STAGE 14",
-            "WIN 7 DIFFERENT STAGES IN BATTLE MODE",
-            "Battle Mode Stage 14",
-            UnlockProgress.IsBattleModeStage14Unlocked,
-            () => UnlockToastCatalog.LoadBattleModeStageIcon(14)
-        ),
-        new(
-            "BattleModeStage15",
-            "BATTLE STAGE 15",
-            "WIN ALL OTHER STAGES IN BATTLE MODE",
-            "Battle Mode Stage 15",
-            UnlockProgress.IsBattleModeStage15Unlocked,
-            () => UnlockToastCatalog.LoadBattleModeStageIcon(15)
-        ),
-        Skin(BomberSkin.Golden, "GOLDEN", "Golden Bomber", requiredForGolden: false)
-    };
+        UnlockText text = GameTextDatabase.Unlocks;
+
+        return new[]
+        {
+            Skin(BomberSkin.Gray, "GRAY"),
+            Skin(BomberSkin.Orange, "ORANGE"),
+            Skin(BomberSkin.Purple, "PURPLE"),
+            Skin(BomberSkin.Olive, "OLIVE"),
+            Skin(BomberSkin.Cyan, "CYAN"),
+            Skin(BomberSkin.Brown, "BROWN"),
+            Skin(BomberSkin.DarkGreen, "DARK GREEN"),
+            Skin(BomberSkin.DarkBlue, "DARK BLUE"),
+            Skin(BomberSkin.Magenta, "MAGENTA"),
+            Skin(BomberSkin.Nightmare, "NIGHTMARE"),
+            Skin(BomberSkin.Gold, "GOLD"),
+            new(
+                "BossRush",
+                text.AchievementBossRush,
+                text.HintClearNormalAny,
+                text.RewardBossRush,
+                () => SaveSystem.Data.bossRushUnlocked,
+                UnlockToastCatalog.LoadBossRushIcon
+            ),
+            new(
+                "BossRushNightmare",
+                text.AchievementBossRushNightmare,
+                text.HintClearBossRushHard,
+                text.RewardBossRushNightmare,
+                SaveSystem.IsNightmareUnlocked,
+                UnlockToastCatalog.LoadNightmareIcon
+            ),
+            new(
+                "Hardcore",
+                text.AchievementHardcore,
+                text.HintClearNormalHard,
+                text.RewardHardcore,
+                UnlockProgress.IsHardcoreUnlocked,
+                UnlockToastCatalog.LoadHardcoreIcon
+            ),
+            BattleStage(11, text.HintWinBattleStage10, UnlockProgress.IsBattleModeStage11Unlocked),
+            BattleStage(12, text.HintWinBattleStages7And9, UnlockProgress.IsBattleModeStage12Unlocked),
+            BattleStage(13, text.HintWinAnyBattleStage, UnlockProgress.IsBattleModeStage13Unlocked),
+            BattleStage(14, text.HintWin7BattleStages, UnlockProgress.IsBattleModeStage14Unlocked),
+            BattleStage(15, text.HintWinAllOtherBattleStages, UnlockProgress.IsBattleModeStage15Unlocked),
+            Skin(BomberSkin.Golden, text.AchievementGolden, requiredForGolden: false)
+        };
+    }
 
     public static bool AreAllRequiredForGoldenUnlocked()
     {
@@ -130,17 +102,32 @@ public static class AchievementCatalog
     private static AchievementInfo Skin(
         BomberSkin skin,
         string name,
-        string rewardText,
         bool requiredForGolden = true)
     {
+        UnlockText text = GameTextDatabase.Unlocks;
+
         return new AchievementInfo(
             skin.ToString(),
             name,
             SkinUnlockHintCatalog.GetHint(skin),
-            rewardText,
+            string.Format(text.RewardSkin, name),
             () => SaveSystem.Data.unlockedSkins.Contains(skin.ToString()),
             () => UnlockToastCatalog.LoadIcon(skin),
             requiredForGolden
+        );
+    }
+
+    private static AchievementInfo BattleStage(int stageIndex, string hint, Func<bool> isUnlocked)
+    {
+        UnlockText text = GameTextDatabase.Unlocks;
+
+        return new AchievementInfo(
+            "BattleModeStage" + stageIndex,
+            string.Format(text.AchievementBattleStage, stageIndex),
+            hint,
+            string.Format(text.RewardBattleStage, stageIndex),
+            isUnlocked,
+            () => UnlockToastCatalog.LoadBattleModeStageIcon(stageIndex)
         );
     }
 }

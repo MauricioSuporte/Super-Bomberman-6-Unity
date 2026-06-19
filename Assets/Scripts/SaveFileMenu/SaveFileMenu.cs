@@ -68,7 +68,7 @@ public class SaveFileMenu : MonoBehaviour
     [SerializeField, Min(1)] private int slotCount = 3;
     [SerializeField] private string slotLabelPrefix = "File ";
     [SerializeField] private string emptySlotDisplay = "- - -";
-    [SerializeField, Min(0)] private int progressColumnSpacing = 3;
+    [SerializeField, Min(0)] private int progressColumnSpacing = 1;
     [SerializeField] private float deleteFeedbackSeconds = 0.5f;
 
     [Header("Animated Backgrounds")]
@@ -396,7 +396,7 @@ public class SaveFileMenu : MonoBehaviour
                     if (!HasAnyAvailableNewGameSlot())
                     {
                         PlayDeniedSfx();
-                        ShowDisabledMessage(disabledNewGameMessage, disabledMessageShowSeconds);
+                        ShowDisabledMessage(GameTextDatabase.SaveFile.NoEmptySlot, disabledMessageShowSeconds);
                         yield break;
                     }
 
@@ -409,7 +409,7 @@ public class SaveFileMenu : MonoBehaviour
                     if (!HasAnyExistingSlot())
                     {
                         PlayDeniedSfx();
-                        ShowDisabledMessage(disabledContinueMessage, disabledMessageShowSeconds);
+                        ShowDisabledMessage(GameTextDatabase.SaveFile.NoSaveData, disabledMessageShowSeconds);
                         yield break;
                     }
 
@@ -422,7 +422,7 @@ public class SaveFileMenu : MonoBehaviour
                     if (!HasAnyExistingSlot())
                     {
                         PlayDeniedSfx();
-                        ShowDisabledMessage(disabledDeleteMessage, disabledMessageShowSeconds);
+                        ShowDisabledMessage(GameTextDatabase.SaveFile.NoSaveData, disabledMessageShowSeconds);
                         yield break;
                     }
 
@@ -643,11 +643,12 @@ public class SaveFileMenu : MonoBehaviour
 
     private string GetMainOptionDisplayName(SaveFileOption option)
     {
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
         return option switch
         {
-            SaveFileOption.NewGame => "New Game",
-            SaveFileOption.Continue => "Continue",
-            SaveFileOption.DeleteFile => "Delete File",
+            SaveFileOption.NewGame => text.NewGame,
+            SaveFileOption.Continue => text.Continue,
+            SaveFileOption.DeleteFile => text.DeleteFile,
             _ => option.ToString()
         };
     }
@@ -769,34 +770,39 @@ public class SaveFileMenu : MonoBehaviour
         if (promptTitleText == null)
             return;
 
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
+        LocalizedTmpFontFallback.Apply(promptTitleText);
         promptTitleText.text = _state switch
         {
-            MenuState.SelectNewGameSlot => newGamePrompt,
-            MenuState.SelectNewGameDifficulty => difficultyPrompt,
-            MenuState.SelectContinueSlot => continuePrompt,
-            MenuState.SelectDeleteSlot => deletePrompt,
-            _ => mainPrompt
+            MenuState.SelectNewGameSlot => text.NewGamePrompt,
+            MenuState.SelectNewGameDifficulty => text.DifficultyPrompt,
+            MenuState.SelectContinueSlot => text.ContinuePrompt,
+            MenuState.SelectDeleteSlot => text.DeletePrompt,
+            _ => text.MainPrompt
         };
     }
 
     private string BuildSlotDisplayText(SaveSlotInfo info)
     {
-        string fileText = $"{slotLabelPrefix}{info.SlotIndex}";
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
+        string fileText = $"{text.SlotLabelPrefix}{info.SlotIndex}";
         string progressText = info.Exists
             ? $"{Mathf.Clamp(info.CompletionPercent, 0, 200):000}%"
-            : emptySlotDisplay;
+            : text.EmptySlot;
 
-        return $"{fileText}{new string(' ', Mathf.Max(0, progressColumnSpacing))}{progressText}";
+        int spacing = Mathf.Min(Mathf.Max(0, progressColumnSpacing), 1);
+        return $"{fileText}{new string(' ', spacing)}{progressText}";
     }
 
     private string GetDifficultyDisplayName(NormalGameDifficulty difficulty)
     {
+        CommonMenuText text = GameTextDatabase.Common;
         return difficulty switch
         {
-            NormalGameDifficulty.Normal => "NORMAL",
-            NormalGameDifficulty.Hard => "HARD",
-            NormalGameDifficulty.Hardcore => "HARDCORE",
-            _ => "NORMAL"
+            NormalGameDifficulty.Normal => text.Normal,
+            NormalGameDifficulty.Hard => text.Hard,
+            NormalGameDifficulty.Hardcore => text.Hardcore,
+            _ => text.Normal
         };
     }
 
@@ -1299,11 +1305,11 @@ public class SaveFileMenu : MonoBehaviour
         string message = _state switch
         {
             MenuState.Main => GetMainDisabledMessage(),
-            MenuState.SelectContinueSlot => disabledContinueMessage,
-            MenuState.SelectDeleteSlot => disabledDeleteMessage,
-            MenuState.SelectNewGameSlot => disabledNewGameMessage,
-            MenuState.SelectNewGameDifficulty => disabledHardcoreMessage,
-            _ => disabledContinueMessage
+            MenuState.SelectContinueSlot => GameTextDatabase.SaveFile.NoSaveData,
+            MenuState.SelectDeleteSlot => GameTextDatabase.SaveFile.NoSaveData,
+            MenuState.SelectNewGameSlot => GameTextDatabase.SaveFile.NoEmptySlot,
+            MenuState.SelectNewGameDifficulty => GameTextDatabase.SaveFile.HardcoreLocked,
+            _ => GameTextDatabase.SaveFile.NoSaveData
         };
 
         ShowDisabledMessage(message, disabledMessageShowSeconds);
@@ -1315,10 +1321,10 @@ public class SaveFileMenu : MonoBehaviour
 
         return option switch
         {
-            SaveFileOption.NewGame => disabledNewGameMessage,
-            SaveFileOption.Continue => disabledContinueMessage,
-            SaveFileOption.DeleteFile => disabledDeleteMessage,
-            _ => disabledContinueMessage
+            SaveFileOption.NewGame => GameTextDatabase.SaveFile.NoEmptySlot,
+            SaveFileOption.Continue => GameTextDatabase.SaveFile.NoSaveData,
+            SaveFileOption.DeleteFile => GameTextDatabase.SaveFile.NoSaveData,
+            _ => GameTextDatabase.SaveFile.NoSaveData
         };
     }
 
@@ -1337,6 +1343,7 @@ public class SaveFileMenu : MonoBehaviour
 
         ApplyDisabledMessageVisualStyle();
 
+        LocalizedTmpFontFallback.Apply(disabledOptionText);
         disabledOptionText.text = message;
         disabledOptionText.gameObject.SetActive(true);
         disabledOptionText.transform.SetAsLastSibling();

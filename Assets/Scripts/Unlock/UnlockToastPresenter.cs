@@ -650,6 +650,7 @@ public class UnlockToastPresenter : MonoBehaviour
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.enableAutoSizing = true;
         text.color = isTitle ? titleColor : subtitleColor;
+        LocalizedTmpFontFallback.Apply(text);
 
         SLog($"SetupText | isTitle={isTitle} | hasFont={(text.font != null)} | hasMaterial={(sourceMaterial != null)}");
     }

@@ -397,12 +397,13 @@ public class BossRushLeftPanel : MonoBehaviour
 
     string GetDifficultyDisplayName(BossRushDifficulty difficulty)
     {
+        CommonMenuText text = GameTextDatabase.Common;
         switch (difficulty)
         {
-            case BossRushDifficulty.EASY: return "EASY";
-            case BossRushDifficulty.NORMAL: return "NORMAL";
-            case BossRushDifficulty.HARD: return "HARD";
-            case BossRushDifficulty.NIGHTMARE: return "NIGHTMARE";
+            case BossRushDifficulty.EASY: return text.Easy;
+            case BossRushDifficulty.NORMAL: return text.Normal;
+            case BossRushDifficulty.HARD: return text.Hard;
+            case BossRushDifficulty.NIGHTMARE: return text.Nightmare;
             default: return difficulty.ToString();
         }
     }
@@ -441,6 +442,7 @@ public class BossRushLeftPanel : MonoBehaviour
         if (difficultyFontAsset != null)
             txt.font = difficultyFontAsset;
 
+        LocalizedTmpFontFallback.Apply(txt);
         txt.textWrappingMode = TextWrappingModes.NoWrap;
         txt.overflowMode = TextOverflowModes.Overflow;
         txt.enableAutoSizing = difficultyAutoSize;

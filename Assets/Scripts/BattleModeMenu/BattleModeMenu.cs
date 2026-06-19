@@ -438,11 +438,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
 
-    private readonly List<string> matchModeEntries = new()
-    {
-        "<b>Single Match</b>",
-        "<b>Tag Match</b>"
-    };
+    private readonly List<string> matchModeEntries = new();
 
     private readonly List<string> playerEntries = new();
     private readonly List<int> battleEnabledPlayerIds = new(GameSession.MaxPlayerId);
@@ -1233,12 +1229,20 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (leftPanel != null)
         {
             leftPanel.HideCursor();
+            RefreshMatchModeEntries();
             leftPanel.SetEntries(matchModeEntries, displayEnabled);
         }
 
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
         UpdateOptionVisuals();
+    }
+
+    private void RefreshMatchModeEntries()
+    {
+        matchModeEntries.Clear();
+        matchModeEntries.Add($"<b>{GameTextDatabase.BattleModeMenu.SingleMatch}</b>");
+        matchModeEntries.Add($"<b>{GameTextDatabase.BattleModeMenu.TagMatch}</b>");
     }
 
     private void BuildPlayerSelectMenu()
@@ -1750,6 +1754,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (promptTitleText != null && promptTitleText.font != null)
             label.font = promptTitleText.font;
         ApplyTeamLabelFont(label);
+        LocalizedTmpFontFallback.Apply(label);
 
         RectTransform labelRt = label.rectTransform;
         labelRt.anchorMin = new Vector2(0f, 0.5f);
@@ -2100,13 +2105,13 @@ public sealed class BattleModeMenu : MonoBehaviour
         };
     }
 
-    private static string GetTeamDisplayName(BattleModeRules.TeamId teamId)
+    private string GetTeamDisplayName(BattleModeRules.TeamId teamId)
     {
         return teamId switch
         {
-            BattleModeRules.TeamId.Red => "Red",
-            BattleModeRules.TeamId.Green => "Green",
-            _ => "Blue"
+            BattleModeRules.TeamId.Red => GameTextDatabase.BattleModeMenu.TeamRed,
+            BattleModeRules.TeamId.Green => GameTextDatabase.BattleModeMenu.TeamGreen,
+            _ => GameTextDatabase.BattleModeMenu.TeamBlue
         };
     }
 
@@ -2374,11 +2379,11 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         string[] labels =
         {
-            "Computer Level",
-            "Battles To Win",
-            "Time Limit",
-            "Sudden Death",
-            "Revenge Bomber"
+            GameTextDatabase.BattleModeMenu.ComputerLevel,
+            GameTextDatabase.BattleModeMenu.BattlesToWin,
+            GameTextDatabase.BattleModeMenu.TimeLimit,
+            GameTextDatabase.BattleModeMenu.SuddenDeath,
+            GameTextDatabase.BattleModeMenu.RevengeBomber
         };
 
         string[] values =
@@ -2387,7 +2392,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             ColorizeRuleValue(ruleBattlesToWin.ToString(), ruleGreenHex),
             ColorizeRuleValue(GetTimerModeDisplayName(ruleTimerMode), ruleGreenHex),
             ColorizeRuleValue(GetSuddenDeathDisplayName(ruleSuddenDeath), GetSuddenDeathColor(ruleSuddenDeath)),
-            ColorizeRuleValue(ruleRevengeBomber ? "ON" : "OFF", ruleRevengeBomber ? ruleGreenHex : ruleBlueHex)
+            ColorizeRuleValue(ruleRevengeBomber ? GameTextDatabase.Common.On : GameTextDatabase.Common.Off, ruleRevengeBomber ? ruleGreenHex : ruleBlueHex)
         };
 
         for (int i = 0; i < ruleRows.Count; i++)
@@ -2463,6 +2468,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (leftPanel != null)
         {
             leftPanel.ApplyOptionTextStyleTo(text, Color.white);
+            LocalizedTmpFontFallback.Apply(text);
             text.fontSize = ruleFontSize;
             text.richText = true;
             text.UpdateMeshPadding();
@@ -2472,6 +2478,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         ApplyTeamLabelFont(text);
+        LocalizedTmpFontFallback.Apply(text);
         text.fontSize = ruleFontSize;
         text.richText = true;
         text.UpdateMeshPadding();
@@ -2506,13 +2513,13 @@ public sealed class BattleModeMenu : MonoBehaviour
         return 2;
     }
 
-    private static string GetComputerLevelDisplayName(BattleModeComputerLevel level)
+    private string GetComputerLevelDisplayName(BattleModeComputerLevel level)
     {
         return level switch
         {
-            BattleModeComputerLevel.Easy => "Easy",
-            BattleModeComputerLevel.Hard => "Hard",
-            _ => "Normal"
+            BattleModeComputerLevel.Easy => GameTextDatabase.BattleModeMenu.Easy,
+            BattleModeComputerLevel.Hard => GameTextDatabase.BattleModeMenu.Hard,
+            _ => GameTextDatabase.BattleModeMenu.Normal
         };
     }
 
@@ -2526,7 +2533,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         };
     }
 
-    private static string GetTimerModeDisplayName(BattleModeRules.RoundTimerMode timerMode)
+    private string GetTimerModeDisplayName(BattleModeRules.RoundTimerMode timerMode)
     {
         return timerMode switch
         {
@@ -2535,17 +2542,17 @@ public sealed class BattleModeMenu : MonoBehaviour
             BattleModeRules.RoundTimerMode.ThreeMinutes => "3:00",
             BattleModeRules.RoundTimerMode.FourMinutes => "4:00",
             BattleModeRules.RoundTimerMode.FiveMinutes => "5:00",
-            _ => "Infinite"
+            _ => GameTextDatabase.Common.Infinite
         };
     }
 
-    private static string GetSuddenDeathDisplayName(BattleModeSuddenDeathSetting setting)
+    private string GetSuddenDeathDisplayName(BattleModeSuddenDeathSetting setting)
     {
         return setting switch
         {
-            BattleModeSuddenDeathSetting.Off => "OFF",
-            BattleModeSuddenDeathSetting.On => "ON",
-            _ => "Random"
+            BattleModeSuddenDeathSetting.Off => GameTextDatabase.Common.Off,
+            BattleModeSuddenDeathSetting.On => GameTextDatabase.Common.On,
+            _ => GameTextDatabase.Common.Random
         };
     }
 
@@ -2790,7 +2797,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (stageTitleText != null)
         {
-            stageTitleText.text = $"STAGE {stageIndex}";
+            stageTitleText.text = string.Format(GameTextDatabase.Common.Stage, stageIndex);
             stageTitleText.fontSize = stageSelectFontSize;
             stageTitleText.rectTransform.anchoredPosition = stageTitleOffset;
             stageTitleText.rectTransform.sizeDelta = stageTitleSize;
@@ -2968,6 +2975,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (leftPanel != null)
         {
             leftPanel.ApplyOptionTextStyleTo(text, Color.white);
+            LocalizedTmpFontFallback.Apply(text);
             text.fontSize = stageSelectFontSize;
             text.richText = true;
             text.alignment = TextAlignmentOptions.Center;
@@ -2978,6 +2986,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         ApplyTeamLabelFont(text);
+        LocalizedTmpFontFallback.Apply(text);
         text.fontSize = stageSelectFontSize;
         text.richText = true;
         text.alignment = TextAlignmentOptions.Center;
@@ -3068,19 +3077,19 @@ public sealed class BattleModeMenu : MonoBehaviour
             return battleStageNames[index];
         }
 
-        return $"Battle Stage {stageIndex}";
+        return string.Format(GameTextDatabase.Common.BattleStage, stageIndex);
     }
 
     private string GetBattleStageUnlockHint(int stageIndex)
     {
         return stageIndex switch
         {
-            11 => stageLockedHintMessage,
-            12 => "WIN STAGES 7 AND 9 IN BATTLE MODE",
-            13 => "WIN ANY STAGE IN BATTLE MODE",
-            14 => "WIN 7 DIFFERENT STAGES IN BATTLE MODE",
-            15 => "WIN ALL OTHER STAGES IN BATTLE MODE",
-            _ => stageLockedHintMessage
+            11 => GameTextDatabase.Unlocks.HintWinBattleStage10,
+            12 => GameTextDatabase.Unlocks.HintWinBattleStages7And9,
+            13 => GameTextDatabase.Unlocks.HintWinAnyBattleStage,
+            14 => GameTextDatabase.Unlocks.HintWin7BattleStages,
+            15 => GameTextDatabase.Unlocks.HintWinAllOtherBattleStages,
+            _ => GameTextDatabase.Unlocks.HintWinBattleStage10
         };
     }
 
@@ -3517,8 +3526,10 @@ public sealed class BattleModeMenu : MonoBehaviour
             text.fontSize = musicSelectFontSize;
 
             bool selected = GameMusicController.IsBattleModeMusicSelected(workingBattleMusicSelectionMask, selections[i]);
-            text.text = GameMusicController.FormatBattleModeMusicDisplayName(
-                GameMusicController.GetBattleModeMusicDisplayName(selections[i]));
+            text.text = selections[i] == BattleModeRules.BattleMusicSelection.Random
+                ? GameTextDatabase.Common.Random
+                : GameMusicController.FormatBattleModeMusicDisplayName(
+                    GameMusicController.GetBattleModeMusicDisplayName(selections[i]));
             text.color = GetMusicSelectTextColor(selected);
             ApplySpecificSettingsTextStyle(text);
 
@@ -3862,7 +3873,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         itemSelectHintText.raycastTarget = false;
         itemSelectHintText.textWrappingMode = TextWrappingModes.NoWrap;
         itemSelectHintText.overflowMode = TextOverflowModes.Overflow;
-        itemSelectHintText.text = "\u2190 \u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        itemSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
         ApplySpecificSettingsTextStyle(itemSelectHintText);
     }
 
@@ -3986,7 +3997,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             hintRt.sizeDelta = itemSelectHintSize;
 
             itemSelectHintText.color = GetMusicSelectTextColor(false);
-            itemSelectHintText.text = "←→↑↓: Choose\nA/C: Change Number\nB: Back";
+            itemSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
             ApplySpecificSettingsTextStyle(itemSelectHintText);
             itemSelectHintText.fontSize = itemSelectHintFontSize;
             itemSelectHintText.lineSpacing = itemSelectHintLineSpacing;
@@ -4291,8 +4302,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         return entry.Kind switch
         {
-            GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin => "MIN",
-            GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax => "MAX",
+            GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin => GameTextDatabase.Common.Min,
+            GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax => GameTextDatabase.Common.Max,
             _ => string.Empty
         };
     }
@@ -4493,7 +4504,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         louieSelectHintText.raycastTarget = false;
         louieSelectHintText.textWrappingMode = TextWrappingModes.NoWrap;
         louieSelectHintText.overflowMode = TextOverflowModes.Overflow;
-        louieSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        louieSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
         ApplySpecificSettingsTextStyle(louieSelectHintText);
     }
 
@@ -4610,7 +4621,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             hintRt.anchoredPosition = louieSelectHintOffset;
             hintRt.sizeDelta = louieSelectHintSize;
             louieSelectHintText.color = GetMusicSelectTextColor(false);
-            louieSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+            louieSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
             ApplySpecificSettingsTextStyle(louieSelectHintText);
             louieSelectHintText.fontSize = louieSelectHintFontSize;
             louieSelectHintText.alignment = TextAlignmentOptions.Center;
@@ -5045,10 +5056,10 @@ public sealed class BattleModeMenu : MonoBehaviour
         handicapSelectHintText.raycastTarget = false;
         handicapSelectHintText.textWrappingMode = TextWrappingModes.NoWrap;
         handicapSelectHintText.overflowMode = TextOverflowModes.Overflow;
-        handicapSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
-        handicapSelectHintText.text = "←→↑↓: Choose\nA/C: Change Number\nB: Back";
+        handicapSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
+        handicapSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
 
-        handicapSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        handicapSelectHintText.text = GameTextDatabase.BattleModeMenu.ChooseChangeBack;
         ApplySpecificSettingsTextStyle(handicapSelectHintText);
 
         handicapSelectHintText.enableAutoSizing = false;
@@ -5765,7 +5776,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             textRt.anchoredPosition = GetSpecificOptionPosition(i);
             textRt.sizeDelta = specificOptionRowSize;
             text.fontSize = specificSettingsFontSize;
-            text.text = SpecificSettingsOptions[i];
+            text.text = GetSpecificSettingsDisplayName(SpecificSettingsOptions[i]);
             text.color = i == SpecificSettingsOptions.Length - 1 ? Color.green : Color.white;
             ApplySpecificSettingsTextStyle(text);
         }
@@ -5778,6 +5789,21 @@ public sealed class BattleModeMenu : MonoBehaviour
             specificCursorRt.anchoredPosition = GetSpecificOptionPosition(rowIndex) + specificCursorOffset;
             specificCursorRenderer?.SetExternalBaseLocalPosition(specificCursorRt.localPosition);
         }
+    }
+
+    private string GetSpecificSettingsDisplayName(string optionId)
+    {
+        BattleModeMenuText text = GameTextDatabase.BattleModeMenu;
+
+        return optionId switch
+        {
+            "Items" => text.Items,
+            "Handicap" => text.Handicap,
+            "Louies" => text.Louies,
+            "Music" => text.Music,
+            "Start" => text.Start,
+            _ => optionId
+        };
     }
 
     private void UpdateBattleStartBlink()
@@ -5898,6 +5924,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (leftPanel != null)
         {
             leftPanel.ApplyOptionTextStyleTo(text, text.color);
+            LocalizedTmpFontFallback.Apply(text);
             text.fontSize = specificSettingsFontSize;
             text.alignment = TextAlignmentOptions.MidlineLeft;
             text.UpdateMeshPadding();
@@ -5907,6 +5934,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         ApplyTeamLabelFont(text);
+        LocalizedTmpFontFallback.Apply(text);
     }
 
     private void RefreshPlayerSelectEntries()
@@ -6015,10 +6043,10 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         return mode switch
         {
-            BattleModePlayerControlMode.Man => "MAN",
-            BattleModePlayerControlMode.Com => "COM",
-            BattleModePlayerControlMode.Off => "OFF",
-            _ => "OFF"
+            BattleModePlayerControlMode.Man => GameTextDatabase.BattleModeMenu.Man,
+            BattleModePlayerControlMode.Com => GameTextDatabase.BattleModeMenu.Com,
+            BattleModePlayerControlMode.Off => GameTextDatabase.Common.Off,
+            _ => GameTextDatabase.Common.Off
         };
     }
 
@@ -6276,19 +6304,20 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (promptTitleText == null)
             return;
 
+        LocalizedTmpFontFallback.Apply(promptTitleText);
         promptTitleText.text = state switch
         {
-            MenuState.PlayerSelect => playerSelectPrompt,
-            MenuState.SkinSelect => skinSelectPrompt,
-            MenuState.TeamSelect => teamSelectPrompt,
-            MenuState.RuleConfig => ruleSelectPrompt,
-            MenuState.StageSelect => stageSelectPrompt,
-            MenuState.SpecificSettings => specificSettingsPrompt,
-            MenuState.MusicSelect => musicSelectPrompt,
-            MenuState.ItemSelect => itemSelectPrompt,
-            MenuState.LouieSelect => "SELECT LOUIES",
-            MenuState.HandicapSelect => handicapSelectPrompt,
-            _ => matchModePrompt
+            MenuState.PlayerSelect => GameTextDatabase.BattleModeMenu.PlayerSelect,
+            MenuState.SkinSelect => GameTextDatabase.BattleModeMenu.CharacterSelect,
+            MenuState.TeamSelect => GameTextDatabase.BattleModeMenu.TeamMembers,
+            MenuState.RuleConfig => GameTextDatabase.BattleModeMenu.RuleConfig,
+            MenuState.StageSelect => GameTextDatabase.BattleModeMenu.StageSelect,
+            MenuState.SpecificSettings => GameTextDatabase.BattleModeMenu.SpecificSettings,
+            MenuState.MusicSelect => GameTextDatabase.BattleModeMenu.SelectMusic,
+            MenuState.ItemSelect => GameTextDatabase.BattleModeMenu.SelectItems,
+            MenuState.LouieSelect => GameTextDatabase.BattleModeMenu.SelectLouies,
+            MenuState.HandicapSelect => GameTextDatabase.BattleModeMenu.SelectHandicap,
+            _ => GameTextDatabase.BattleModeMenu.BattleMode
         };
     }
 

@@ -20,106 +20,169 @@ public static class UnlockToastCatalog
 
     public static ToastInfo Get(BomberSkin skin)
     {
+        UnlockText text = GameTextDatabase.Unlocks;
+
         switch (skin)
         {
             case BomberSkin.Gray:
                 return new ToastInfo(
-                    "You Know The One",
-                    "Gray Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/GrayBomber"
                 );
 
             case BomberSkin.Orange:
                 return new ToastInfo(
-                    "Orange You Glad?",
-                    "Orange Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/OrangeBomber"
                 );
 
             case BomberSkin.Purple:
                 return new ToastInfo(
-                    "That’s A Grape Idea!",
-                    "Purple Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/PurpleBomber"
                 );
 
             case BomberSkin.Olive:
                 return new ToastInfo(
-                    "Olive You!",
-                    "Olive Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/OliveBomber"
                 );
 
             case BomberSkin.Cyan:
                 return new ToastInfo(
-                    "Cyan is the impostor!",
-                    "Cyan Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/CyanBomber"
                 );
 
             case BomberSkin.Brown:
                 return new ToastInfo(
-                    "That Stinks!",
-                    "Brown Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/BrownBomber"
                 );
 
             case BomberSkin.DarkGreen:
                 return new ToastInfo(
-                    "Green Means Go!",
-                    "Dark Green Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/DarkGreenBomber"
                 );
 
             case BomberSkin.DarkBlue:
                 return new ToastInfo(
-                    "Feeling Blue?",
-                    "Dark Blue Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/DarkBlueBomber"
                 );
 
             case BomberSkin.Magenta:
                 return new ToastInfo(
-                    "Magenta Mayhem",
-                    "Magenta Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/MagentaBomber"
                 );
 
             case BomberSkin.Nightmare:
                 return new ToastInfo(
-                    "You Are The Nightmare",
-                    "Nightmare Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/NightmareBomber"
                 );
 
             case BomberSkin.Gold:
                 return new ToastInfo(
-                    "Perfect As Gold",
-                    "Gold Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/GoldBomber"
                 );
 
             case BomberSkin.Golden:
                 return new ToastInfo(
-                    "Are You Human?",
-                    "Golden Bomber Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/GoldenBomber"
                 );
 
             default:
                 return new ToastInfo(
-                    "New Character",
-                    $"{skin} Unlocked",
+                    text.ToastNewCharacter,
+                    string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     $"UI/Unlocks/Icons/{skin}"
                 );
         }
     }
 
+    private static string GetSkinDisplayName(BomberSkin skin)
+    {
+        return SaveSystem.GetLanguage() switch
+        {
+            GameLanguage.Japanese => skin switch
+            {
+                BomberSkin.Gray => "グレー",
+                BomberSkin.Orange => "オレンジ",
+                BomberSkin.Purple => "パープル",
+                BomberSkin.Olive => "オリーブ",
+                BomberSkin.Cyan => "シアン",
+                BomberSkin.Brown => "ブラウン",
+                BomberSkin.DarkGreen => "ダークグリーン",
+                BomberSkin.DarkBlue => "ダークブルー",
+                BomberSkin.Magenta => "マゼンタ",
+                BomberSkin.Nightmare => "ナイトメア",
+                BomberSkin.Gold => "ゴールド",
+                BomberSkin.Golden => "ゴールデン",
+                _ => skin.ToString()
+            },
+            GameLanguage.Spanish => skin switch
+            {
+                BomberSkin.Gray => "Gris",
+                BomberSkin.Orange => "Naranja",
+                BomberSkin.Purple => "Morado",
+                BomberSkin.Olive => "Oliva",
+                BomberSkin.Cyan => "Cian",
+                BomberSkin.Brown => "Marrón",
+                BomberSkin.DarkGreen => "Verde Oscuro",
+                BomberSkin.DarkBlue => "Azul Oscuro",
+                BomberSkin.Magenta => "Magenta",
+                BomberSkin.Nightmare => "Pesadilla",
+                BomberSkin.Gold => "Dorado",
+                BomberSkin.Golden => "Áureo",
+                _ => skin.ToString()
+            },
+            GameLanguage.PortugueseBr => skin switch
+            {
+                BomberSkin.Gray => "Cinza",
+                BomberSkin.Orange => "Laranja",
+                BomberSkin.Purple => "Roxo",
+                BomberSkin.Olive => "Oliva",
+                BomberSkin.Cyan => "Ciano",
+                BomberSkin.Brown => "Marrom",
+                BomberSkin.DarkGreen => "Verde Escuro",
+                BomberSkin.DarkBlue => "Azul Escuro",
+                BomberSkin.Magenta => "Magenta",
+                BomberSkin.Nightmare => "Pesadelo",
+                BomberSkin.Gold => "Dourado",
+                BomberSkin.Golden => "Áureo",
+                _ => skin.ToString()
+            },
+            _ => skin switch
+            {
+                BomberSkin.DarkGreen => "Dark Green",
+                BomberSkin.DarkBlue => "Dark Blue",
+                _ => skin.ToString()
+            }
+        };
+    }
+
     public static ToastInfo GetBossRush()
     {
         return new ToastInfo(
-            "It’s Time To Duel!",
-            "Boss Rush Unlocked",
+            GameTextDatabase.Unlocks.ToastBossRushTitle,
+            GameTextDatabase.Unlocks.ToastBossRushSubtitle,
             "UI/Unlocks/Icons/BossRush"
         );
     }
@@ -127,8 +190,8 @@ public static class UnlockToastCatalog
     public static ToastInfo GetNightmare()
     {
         return new ToastInfo(
-            "Are You Good Enough?",
-            "Nightmare Difficulty Unlocked",
+            GameTextDatabase.Unlocks.ToastNightmareTitle,
+            GameTextDatabase.Unlocks.ToastNightmareSubtitle,
             "UI/Unlocks/Icons/NightmareDifficulty"
         );
     }
@@ -136,8 +199,8 @@ public static class UnlockToastCatalog
     public static ToastInfo GetHardcore()
     {
         return new ToastInfo(
-            "No More Second Chances",
-            "Hardcore Difficulty Unlocked",
+            GameTextDatabase.Unlocks.ToastHardcoreTitle,
+            GameTextDatabase.Unlocks.ToastHardcoreSubtitle,
             "UI/Unlocks/Icons/Hardcore"
         );
     }
@@ -146,8 +209,8 @@ public static class UnlockToastCatalog
     {
         int normalized = Mathf.Clamp(stageIndex, 11, 15);
         return new ToastInfo(
-            $"Battle Stage {normalized}",
-            $"Battle Mode Stage {normalized} Unlocked",
+            string.Format(GameTextDatabase.Unlocks.ToastBattleStageTitle, normalized),
+            string.Format(GameTextDatabase.Unlocks.ToastBattleStageSubtitle, normalized),
             $"UI/Unlocks/Icons/Stage{normalized}"
         );
     }

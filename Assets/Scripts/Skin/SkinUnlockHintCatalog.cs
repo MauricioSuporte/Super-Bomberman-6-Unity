@@ -2,43 +2,45 @@
 {
     public static string GetHint(BomberSkin skin)
     {
+        UnlockText text = GameTextDatabase.Unlocks;
+
         switch (skin)
         {
             case BomberSkin.Gray:
-                return @"UNLOCKED BY A CHEAT ""KODE""";
+                return text.HintCheatKode;
 
             case BomberSkin.Orange:
-                return "CLEAR NORMAL GAME ON NORMAL DIFFICULTY";
+                return text.HintClearNormalNormal;
 
             case BomberSkin.Purple:
-                return "CLEAR NORMAL GAME ON HARD DIFFICULTY";
+                return text.HintClearNormalHard;
 
             case BomberSkin.Olive:
-                return "CLEAR BOSS RUSH ON EASY";
+                return text.HintClearBossRushEasy;
 
             case BomberSkin.Cyan:
-                return "CLEAR BOSS RUSH ON NORMAL";
+                return text.HintClearBossRushNormal;
 
             case BomberSkin.Brown:
-                return "CLEAR BOSS RUSH ON HARD";
+                return text.HintClearBossRushHard;
 
             case BomberSkin.DarkGreen:
-                return "CLEAR BOSS RUSH ON EASY UNDER 4:00";
+                return text.HintClearBossRushEasyUnder4;
 
             case BomberSkin.DarkBlue:
-                return "CLEAR BOSS RUSH ON NORMAL UNDER 4:00";
+                return text.HintClearBossRushNormalUnder4;
 
             case BomberSkin.Magenta:
-                return "CLEAR BOSS RUSH ON HARD UNDER 5:00";
+                return text.HintClearBossRushHardUnder5;
 
             case BomberSkin.Nightmare:
-                return "CLEAR BOSS RUSH ON NIGHTMARE";
+                return text.HintClearBossRushNightmare;
 
             case BomberSkin.Gold:
-                return "CLEAR NORMAL GAME ON HARDCORE DIFFICULTY";
+                return text.HintClearNormalHardcore;
 
             case BomberSkin.Golden:
-                return "UNLOCK ALL OTHER ACHIEVEMENTS";
+                return text.HintUnlockAllOtherAchievements;
 
             default:
                 return "";

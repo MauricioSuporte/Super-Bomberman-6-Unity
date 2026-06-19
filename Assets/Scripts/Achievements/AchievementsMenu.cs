@@ -347,6 +347,7 @@ public sealed class AchievementsMenu : MonoBehaviour
             row.CheckImage.color = Color.white;
             row.Icon.sprite = entry.LoadIcon != null ? entry.LoadIcon() : null;
             row.Icon.color = unlocked ? Color.white : new Color(0.52f, 0.52f, 0.52f, 0.9f);
+            LocalizedTmpFontFallback.Apply(row.Label);
             row.Label.text = entry.Hint;
             row.Label.color = selected ? new Color(1f, 0.95f, 0.32f) : new Color(0.96f, 0.91f, 0.72f);
             row.Background.color = selected ? new Color(0.44f, 0.34f, 0.04f, 0.84f) : (rowIndex % 2 == 0 ? new Color(0.19f, 0.16f, 0.03f, 0.72f) : new Color(0.11f, 0.09f, 0.02f, 0.72f));
@@ -403,7 +404,10 @@ public sealed class AchievementsMenu : MonoBehaviour
         int percent = Mathf.RoundToInt(ratio * 100f);
 
         if (progressText != null)
-            progressText.text = $"Unlocked: {unlocked} of {entries.Count}";
+        {
+            LocalizedTmpFontFallback.Apply(progressText);
+            progressText.text = string.Format(GameTextDatabase.AchievementsMenu.Progress, unlocked, entries.Count);
+        }
 
         if (progressFillImage != null)
         {
@@ -433,15 +437,24 @@ public sealed class AchievementsMenu : MonoBehaviour
 
         if (detailTitleText != null)
         {
-            detailTitleText.text = $"{entry.Name} - {(unlocked ? "OBTAINED" : "LOCKED")}";
+            LocalizedTmpFontFallback.Apply(detailTitleText);
+            string state = unlocked ? GameTextDatabase.Common.Obtained : GameTextDatabase.Common.Locked;
+            detailTitleText.text = string.Format(GameTextDatabase.AchievementsMenu.DetailState, entry.Name, state);
             detailTitleText.color = unlocked ? new Color(0.45f, 1f, 0.42f) : new Color(1f, 0.88f, 0.24f);
         }
 
         if (detailDescriptionText != null)
+        {
+            LocalizedTmpFontFallback.Apply(detailDescriptionText);
             detailDescriptionText.text = entry.Hint;
+        }
 
         if (detailUnlocksText != null)
-            detailUnlocksText.text = $"{(unlocked ? "Unlocked" : "Unlocks")}: {entry.RewardText}";
+        {
+            LocalizedTmpFontFallback.Apply(detailUnlocksText);
+            string label = unlocked ? GameTextDatabase.Common.Unlocked : GameTextDatabase.Common.Unlocks;
+            detailUnlocksText.text = string.Format(GameTextDatabase.AchievementsMenu.RewardLine, label, entry.RewardText);
+        }
     }
 
     private void EnsureCheckboxSprites()

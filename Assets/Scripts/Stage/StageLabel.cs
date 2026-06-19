@@ -143,6 +143,7 @@ public class StageLabel : MonoBehaviour
         stageText.textWrappingMode = TextWrappingModes.NoWrap;
         stageText.overflowMode = TextOverflowModes.Overflow;
         stageText.richText = true;
+        LocalizedTmpFontFallback.Apply(stageText);
     }
 
     public void SetStage(int world, int stage)
@@ -151,10 +152,11 @@ public class StageLabel : MonoBehaviour
         SetPauseWindowVisible(false);
 
         string stageNumber = $"{world}-{stage}";
+        PauseMenuText text = GameTextDatabase.Pause;
 
         stageText.text =
             "<align=center>" +
-            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            $"<size={S(SizeStageLabel)}><color=#1ABC00>{text.Stage}</color></size>  " +
             $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>" +
             "</align>";
     }
@@ -164,29 +166,30 @@ public class StageLabel : MonoBehaviour
         EnsureNoWrap();
 
         string stageNumber = $"{world}-{stage}";
+        PauseMenuText text = GameTextDatabase.Pause;
 
         string resume = selectedIndex == 0
-            ? "<color=#FF6F31>> RESUME</color>"
-            : "<color=#E8E8E8>  RESUME</color>";
+            ? $"<color=#FF6F31>>{text.Resume}</color>"
+            : $"<color=#E8E8E8>  {text.Resume}</color>";
 
         string secondOptionText = isBossRush
-            ? $"RETURN{NBSP}TO{NBSP}BOSS{NBSP}RUSH"
-            : $"RETURN{NBSP}TO{NBSP}WORLD{NBSP}MAP";
+            ? NoWrap(text.ReturnToBossRush)
+            : NoWrap(text.ReturnToWorldMap);
 
         string retSecondOption = selectedIndex == 1
-            ? $"<color=#FF6F31>> {secondOptionText}</color>"
+            ? $"<color=#FF6F31>>{secondOptionText}</color>"
             : $"<color=#E8E8E8>  {secondOptionText}</color>";
 
-        string titleText = $"RETURN{NBSP}TO{NBSP}TITLE";
+        string titleText = NoWrap(text.ReturnToTitle);
         string retTitle = selectedIndex == 2
-            ? $"<color=#FF6F31>> {titleText}</color>"
+            ? $"<color=#FF6F31>>{titleText}</color>"
             : $"<color=#E8E8E8>  {titleText}</color>";
 
         stageText.text =
             "<align=center>" +
-            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            $"<size={S(SizeStageLabel)}><color=#1ABC00>{text.Stage}</color></size>  " +
             $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
-            $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
+            $"<size={S(SizePauseTitle)}><color=#3392FF>{text.Pause}</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
             $"<size={S(SizeMenuItem)}>{retSecondOption}</size>\n" +
             $"<size={S(SizeMenuItem)}>{retTitle}</size>" +
@@ -198,22 +201,22 @@ public class StageLabel : MonoBehaviour
 
     public void SetPauseConfirmReturnToWorldMap(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to World Map?", true);
+        SetPauseConfirmQuestion(world, stage, selectedIndex, GameTextDatabase.Pause.ReturnToWorldMapQuestion, true);
     }
 
     public void SetPauseConfirmReturnToBossRush(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Boss Rush?", true);
+        SetPauseConfirmQuestion(world, stage, selectedIndex, GameTextDatabase.Pause.ReturnToBossRushQuestion, true);
     }
 
     public void SetPauseConfirmReturnToTitle(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Title Screen?", true);
+        SetPauseConfirmQuestion(world, stage, selectedIndex, GameTextDatabase.Pause.ReturnToTitleQuestion, true);
     }
 
     public void SetBattleModePauseConfirmReturnToTitle(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Title Screen?", false);
+        SetPauseConfirmQuestion(world, stage, selectedIndex, GameTextDatabase.Pause.ReturnToTitleQuestion, false);
     }
 
     void SetPauseConfirmQuestion(int world, int stage, int selectedIndex, string question, bool showStageHeader)
@@ -221,28 +224,30 @@ public class StageLabel : MonoBehaviour
         EnsureNoWrap();
 
         string stageNumber = $"{world}-{stage}";
+        PauseMenuText text = GameTextDatabase.Pause;
+        CommonMenuText common = GameTextDatabase.Common;
         string stageHeader = showStageHeader
-            ? $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            ? $"<size={S(SizeStageLabel)}><color=#1ABC00>{text.Stage}</color></size>  " +
               $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n"
             : string.Empty;
 
-        string ArrowVisible(string text) => $"<color=#FF6F31>> </color>{text}";
-        string ArrowHidden(string text) => $"<color=#00000000>> </color>{text}";
+        string ArrowVisible(string text) => $"<color=#FF6F31>></color>{text}";
+        string ArrowHidden(string text) => $"<color=#00000000>></color>{text}";
 
         string noOpt = selectedIndex == 0
-            ? ArrowVisible("<color=#FF6F31>NO</color>")
-            : ArrowHidden("<color=#E8E8E8>NO</color>");
+            ? ArrowVisible($"<color=#FF6F31>{common.No}</color>")
+            : ArrowHidden($"<color=#E8E8E8>{common.No}</color>");
 
         string yesOpt = selectedIndex == 1
-            ? ArrowVisible("<color=#FF6F31>YES</color>")
-            : ArrowHidden("<color=#E8E8E8>YES</color>");
+            ? ArrowVisible($"<color=#FF6F31>{common.Yes}</color>")
+            : ArrowHidden($"<color=#E8E8E8>{common.Yes}</color>");
 
         int indent = Px(OptionsIndentPxBase);
 
         stageText.text =
             "<align=center>" +
             stageHeader +
-            $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
+            $"<size={S(SizePauseTitle)}><color=#3392FF>{text.Pause}</color></size>\n\n" +
             $"<size={S(SizeConfirmTitle)}><color=#E8E8E8>{question}</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}><indent={indent}>{noOpt}</indent></size>\n" +
             $"<size={S(SizeMenuItem)}><indent={indent}>{yesOpt}</indent></size>" +
@@ -280,28 +285,29 @@ public class StageLabel : MonoBehaviour
     public void SetBattleModePauseMenu(int world, int stage, int selectedIndex)
     {
         EnsureNoWrap();
+        PauseMenuText text = GameTextDatabase.Pause;
 
         string resume = selectedIndex == 0
-            ? "<color=#FF6F31>> RESUME</color>"
-            : "<color=#E8E8E8>  RESUME</color>";
+            ? $"<color=#FF6F31>>{text.Resume}</color>"
+            : $"<color=#E8E8E8>  {text.Resume}</color>";
 
         string restartRound = selectedIndex == 1
-            ? "<color=#FF6F31>> RESTART ROUND</color>"
-            : "<color=#E8E8E8>  RESTART ROUND</color>";
+            ? $"<color=#FF6F31>>{text.RestartRound}</color>"
+            : $"<color=#E8E8E8>  {text.RestartRound}</color>";
 
-        string stageSelectText = $"RETURN{NBSP}TO{NBSP}STAGE{NBSP}SELECT";
+        string stageSelectText = NoWrap(text.ReturnToStageSelect);
         string retStageSelect = selectedIndex == 2
-            ? $"<color=#FF6F31>> {stageSelectText}</color>"
+            ? $"<color=#FF6F31>>{stageSelectText}</color>"
             : $"<color=#E8E8E8>  {stageSelectText}</color>";
 
-        string titleText = $"RETURN{NBSP}TO{NBSP}TITLE";
+        string titleText = NoWrap(text.ReturnToTitle);
         string retTitle = selectedIndex == 3
-            ? $"<color=#FF6F31>> {titleText}</color>"
+            ? $"<color=#FF6F31>>{titleText}</color>"
             : $"<color=#E8E8E8>  {titleText}</color>";
 
         stageText.text =
             "<align=center>" +
-            $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
+            $"<size={S(SizePauseTitle)}><color=#3392FF>{text.Pause}</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
             $"<size={S(SizeMenuItem)}>{restartRound}</size>\n" +
             $"<size={S(SizeMenuItem)}>{retStageSelect}</size>\n" +
@@ -314,12 +320,17 @@ public class StageLabel : MonoBehaviour
 
     public void SetPauseConfirmRestartRound(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Restart Round?", false);
+        SetPauseConfirmQuestion(world, stage, selectedIndex, GameTextDatabase.Pause.RestartRoundQuestion, false);
     }
 
     public void SetPauseConfirmReturnToStageSelect(int world, int stage, int selectedIndex)
     {
-        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Stage Select?", false);
+        SetPauseConfirmQuestion(world, stage, selectedIndex, GameTextDatabase.Pause.ReturnToStageSelectQuestion, false);
+    }
+
+    static string NoWrap(string value)
+    {
+        return string.IsNullOrEmpty(value) ? string.Empty : value.Replace(" ", NBSP);
     }
 
     public void HidePauseWindow()

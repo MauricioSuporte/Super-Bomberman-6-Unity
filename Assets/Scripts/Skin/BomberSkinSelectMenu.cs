@@ -2468,6 +2468,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         ApplyUnlockHintVisualStyle();
 
+        LocalizedTmpFontFallback.Apply(unlockHintText);
         unlockHintText.text = message;
         unlockHintText.gameObject.SetActive(true);
         unlockHintText.transform.SetAsLastSibling();

@@ -1217,7 +1217,7 @@ public class WorldMapController : MonoBehaviour
             return;
 
         int worldNumber = currentWorldIndex + 1;
-        string text = worldLabelPrefix + worldNumber;
+        string text = GameTextDatabase.WorldMap.WorldPrefix + worldNumber;
 
         var node = GetHoveredNode();
         if (node != null)
@@ -1230,6 +1230,7 @@ public class WorldMapController : MonoBehaviour
             text += stageSeparator + stageSuffix;
         }
 
+        LocalizedTmpFontFallback.Apply(worldStageLabel);
         worldStageLabel.text = text;
     }
 

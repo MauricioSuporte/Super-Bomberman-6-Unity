@@ -290,6 +290,7 @@ public class EndingScreenController : MonoBehaviour
 
         if (messageText != null)
         {
+            LocalizedTmpFontFallback.Apply(messageText);
             messageText.text = BuildCreditsMessage();
             messageText.gameObject.SetActive(true);
             messageText.alpha = 1f;
@@ -361,6 +362,7 @@ public class EndingScreenController : MonoBehaviour
 
         if (messageText != null)
         {
+            LocalizedTmpFontFallback.Apply(messageText);
             messageText.text = finalMessage;
             messageText.alpha = 1f;
             ApplyFinalMessageLayout();
@@ -582,10 +584,11 @@ public class EndingScreenController : MonoBehaviour
         const string defaultColor = "#E8E8E8";
         const string greenTitleColor = "#8CFF8C";
         const string yellowTitleColor = "#FFF68A";
+        CreditsText credits = GameTextDatabase.Credits;
 
         string text =
             $"<color={greenTitleColor}>Super Bomberman 6 v0.4.0</color>\n" +
-            $"<color={defaultColor}>Tribute to Bomberman</color>\n\n" +
+            $"<color={defaultColor}>{credits.Tribute}</color>\n\n" +
 
             $"<color={greenTitleColor}>Bomberman</color>\n" +
             $"<color={defaultColor}>Copyright 1983</color>\n" +
@@ -593,10 +596,10 @@ public class EndingScreenController : MonoBehaviour
 
             $"<color={greenTitleColor}>Super Bomberman 6</color>\n\n" +
 
-            $"<color={yellowTitleColor}>Coding</color>\n" +
+            $"<color={yellowTitleColor}>{credits.Coding}</color>\n" +
             $"<color={defaultColor}>MauricioSuporte</color>\n\n" +
 
-            $"<color={yellowTitleColor}>Sprite Contribution</color>\n" +
+            $"<color={yellowTitleColor}>{credits.SpriteContribution}</color>\n" +
             $"<color={defaultColor}>Srplay</color>\n" +
             $"<color={defaultColor}>Joao1417</color>\n" +
             $"<color={defaultColor}>WeirdFoxDreams</color>\n" +
@@ -604,7 +607,7 @@ public class EndingScreenController : MonoBehaviour
             $"<color={defaultColor}>Kurobon94</color>\n" +
             $"<color={defaultColor}>LeroyUrocyon</color>\n\n" +
 
-            $"<color={yellowTitleColor}>Playtesting/Feedback</color>\n" +
+            $"<color={yellowTitleColor}>{credits.PlaytestingFeedback}</color>\n" +
             $"<color={defaultColor}>Kaaos Gameplays</color>\n" +
             $"<color={defaultColor}>Joaololpvp</color>\n" +
             $"<color={defaultColor}>Blackingstar</color>\n" +
@@ -628,10 +631,10 @@ public class EndingScreenController : MonoBehaviour
             $"<color={defaultColor}>Rangelukaz</color>\n" +
             $"<color={defaultColor}>JonasS JK Ninja</color>\n\n" +
 
-            $"<color={yellowTitleColor}>Sounds/Musics</color>\n" +
+            $"<color={yellowTitleColor}>{credits.SoundsMusics}</color>\n" +
             $"<color={defaultColor}>wolfguarder</color>\n\n" +
 
-            $"<color={yellowTitleColor}>Base of the Game</color>\n" +
+            $"<color={yellowTitleColor}>{credits.BaseOfTheGame}</color>\n" +
             $"<color={defaultColor}>Zigurous</color>";
 
         return $"<size=36>{text}</size>";
@@ -649,18 +652,19 @@ public class EndingScreenController : MonoBehaviour
         const string yellowTitleColor = "#FFF68A";
         const string blueTitleColor = "#3392FF";
         const string orangeTitleColor = "#FF6F31";
+        CreditsText credits = GameTextDatabase.Credits;
 
         string text =
-            $"<color={greenTitleColor}>DEMO 4 COMPLETE!</color>{spacer}" +
+            $"<color={greenTitleColor}>{credits.DemoComplete}</color>{spacer}" +
 
             $"<color={yellowTitleColor}>{statsBlock}</color>{bigSpacer}" +
 
-            $"<color={blueTitleColor}>OPEN SOURCE PROJECT</color>\n" +
+            $"<color={blueTitleColor}>{credits.OpenSourceProject}</color>\n" +
             $"<color={defaultColor}>github.com/MauricioSuporte/</color>\n" +
             $"<color={defaultColor}>Super-Bomberman-6-Unity</color>{bigSpacer}" +
 
-            $"<color={orangeTitleColor}>PRESS START</color>\n" +
-            $"<color={defaultColor}>TO RETURN TO TITLE SCREEN</color>";
+            $"<color={orangeTitleColor}>{credits.PressStart}</color>\n" +
+            $"<color={defaultColor}>{credits.ReturnToTitle}</color>";
 
         return $"<size=36>{text}</size>";
     }
@@ -668,8 +672,8 @@ public class EndingScreenController : MonoBehaviour
     string BuildStatsBlock(EndingProgressInfo progress)
     {
         return
-            $"STAGE COMPLETION: {progress.CompletionPercent}%\n" +
-            $"ACHIEVEMENTS UNLOCKED: {progress.UnlockedAchievementsCount} OF {progress.TotalAchievementsCount} {progress.AchievementsPercent}%";
+            $"{GameTextDatabase.Credits.StageCompletion}: {progress.CompletionPercent}%\n" +
+            $"{GameTextDatabase.Credits.AchievementsUnlocked}: {progress.UnlockedAchievementsCount} {GameTextDatabase.Credits.Of} {progress.TotalAchievementsCount} {progress.AchievementsPercent}%";
     }
 
     void ApplyCreditsLayout()
