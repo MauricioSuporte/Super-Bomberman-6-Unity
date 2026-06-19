@@ -3,6 +3,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class BattleOverlayAudioIsolation : MonoBehaviour
 {
+    static readonly bool EnableAudioIsolationLogs = true;
     static int activeIsolationCount;
     static bool listenerWasPaused;
 
@@ -57,8 +58,10 @@ public sealed class BattleOverlayAudioIsolation : MonoBehaviour
         activeIsolationCount++;
         isolationActive = true;
 
+        AudioIsolationLog($"Activate | owner='{gameObject.name}' | activeCount={activeIsolationCount} | listenerWasPaused={listenerWasPaused}");
         StopGameplayAudio();
         AudioListener.pause = true;
+        AudioIsolationLog($"Activate | AudioListener.pause set true | owner='{gameObject.name}'");
     }
 
     void EnsureAudioSource()
@@ -84,6 +87,7 @@ public sealed class BattleOverlayAudioIsolation : MonoBehaviour
     {
         if (GameMusicController.Instance != null)
         {
+            AudioIsolationLog("StopGameplayAudio | stopping GameMusicController music/sfx");
             GameMusicController.Instance.StopMusic();
             GameMusicController.Instance.StopSfx();
         }
@@ -92,9 +96,32 @@ public sealed class BattleOverlayAudioIsolation : MonoBehaviour
         for (int i = 0; i < audioSources.Length; i++)
         {
             AudioSource source = audioSources[i];
-            if (source != null && source != overlayAudioSource)
-                source.Stop();
+            if (source == null || source == overlayAudioSource)
+                continue;
+
+            string sourceName = source.gameObject != null ? source.gameObject.name : string.Empty;
+            string clipName = source.clip != null ? source.clip.name : "(none)";
+            bool isUnlockToastSfx = sourceName == UnlockToastPresenter.UnlockSfxSourceName;
+
+            if (isUnlockToastSfx)
+            {
+                AudioIsolationLog($"StopGameplayAudio | keeping unlock toast sfx | source='{sourceName}' | clip='{clipName}' | ignorePause={source.ignoreListenerPause} | isPlaying={source.isPlaying}");
+                continue;
+            }
+
+            if (source.isPlaying)
+                AudioIsolationLog($"StopGameplayAudio | stopping source='{sourceName}' | clip='{clipName}' | ignorePause={source.ignoreListenerPause}");
+
+            source.Stop();
         }
+    }
+
+    static void AudioIsolationLog(string message)
+    {
+        if (!EnableAudioIsolationLogs)
+            return;
+
+        Debug.Log($"[BattleOverlayAudioIsolation] {message}");
     }
 
     void OnDestroy()
@@ -106,6 +133,9 @@ public sealed class BattleOverlayAudioIsolation : MonoBehaviour
         activeIsolationCount = Mathf.Max(0, activeIsolationCount - 1);
 
         if (activeIsolationCount == 0)
+        {
             AudioListener.pause = listenerWasPaused;
+            AudioIsolationLog($"OnDestroy | restored AudioListener.pause={listenerWasPaused}");
+        }
     }
 }

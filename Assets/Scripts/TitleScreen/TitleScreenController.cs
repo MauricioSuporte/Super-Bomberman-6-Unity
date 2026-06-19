@@ -1514,8 +1514,17 @@ public class TitleScreenController : MonoBehaviour
                     GameLanguage[] languages = GameTextDatabase.SupportedLanguages;
                     if (languages != null && menuIndex >= 0 && menuIndex < languages.Length)
                     {
+                        locked = true;
                         PlaySelectSfx();
+
+                        if (cursorRenderer != null)
+                            yield return cursorRenderer.PlayCycles(2);
+
                         SaveSystem.SetLanguage(languages[menuIndex]);
+                        menuMode = MenuMode.Options;
+                        menuIndex = OPTIONS_IDX_LANGUAGE;
+                        locked = false;
+
                         HideFooterMessageImmediate();
                         HideBossRushLockedMessageImmediate();
                         RefreshMenuText();

@@ -24,6 +24,7 @@ public class GameMusicController : MonoBehaviour
 
     private AudioSource musicSource;
     private AudioSource sfxSource;
+    private AudioSource unpausedSfxSource;
     Coroutine musicTransitionRoutine;
     Coroutine preloadAndPlayRoutine;
     bool musicPausedForGamePause;
@@ -68,6 +69,12 @@ public class GameMusicController : MonoBehaviour
         sfxSource.playOnAwake = false;
         sfxSource.loop = false;
         sfxSource.clip = null;
+
+        unpausedSfxSource = gameObject.AddComponent<AudioSource>();
+        unpausedSfxSource.playOnAwake = false;
+        unpausedSfxSource.loop = false;
+        unpausedSfxSource.clip = null;
+        unpausedSfxSource.ignoreListenerPause = true;
 
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
@@ -250,6 +257,14 @@ public class GameMusicController : MonoBehaviour
             return;
 
         sfxSource.PlayOneShot(clip, volume);
+    }
+
+    public void PlaySfxIgnoringListenerPause(AudioClip clip, float volume = 1f)
+    {
+        if (clip == null || unpausedSfxSource == null)
+            return;
+
+        unpausedSfxSource.PlayOneShot(clip, volume);
     }
 
     public void StopMusic()
