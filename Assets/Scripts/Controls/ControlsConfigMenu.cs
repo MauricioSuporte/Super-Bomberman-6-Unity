@@ -45,6 +45,26 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Text (TMP)")]
     [SerializeField] TMP_Text menuText;
 
+    [Header("Localized Font Fallback")]
+    [SerializeField] TMP_FontAsset localizedFallbackFontAsset;
+    [SerializeField] string[] localizedFallbackOsFontNames =
+    {
+        "Yu Gothic",
+        "Yu Gothic UI",
+        "Yu Mincho",
+        "Meiryo",
+        "Meiryo UI",
+        "MS Gothic",
+        "MS UI Gothic",
+        "MS Mincho",
+        "Noto Sans CJK JP",
+        "Noto Sans JP",
+        "Segoe UI",
+        "Arial",
+        "Liberation Sans"
+    };
+    [SerializeField, Min(16)] int localizedFallbackSamplingPointSize = 90;
+
     [Header("Title")]
     [SerializeField] int titleFontSize = 46;
     [SerializeField] float titleVOffset = 26f;
@@ -161,6 +181,8 @@ public class ControlsConfigMenu : MonoBehaviour
     int confirmResetPlayerId;
 
     Material runtimeMenuMat;
+    readonly List<TMP_FontAsset> runtimeLanguageFallbackFontAssets = new();
+    bool warnedMissingLanguageFallback;
     Coroutine cursorPulseRoutine;
     Dictionary<PlayerAction, Binding> bulkSnapshot;
 
@@ -510,6 +532,14 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         if (runtimeMenuMat != null)
             Destroy(runtimeMenuMat);
+
+        for (int i = 0; i < runtimeLanguageFallbackFontAssets.Count; i++)
+        {
+            if (runtimeLanguageFallbackFontAssets[i] != null)
+                Destroy(runtimeLanguageFallbackFontAssets[i]);
+        }
+
+        runtimeLanguageFallbackFontAssets.Clear();
     }
 
     void ResolveMenuLayoutRoot()
@@ -696,6 +726,120 @@ public class ControlsConfigMenu : MonoBehaviour
         }
     }
 
+    void ApplyLanguageFontFallback()
+    {
+        GameLanguage language = SaveSystem.GetLanguage();
+        if (language == GameLanguage.English)
+            return;
+
+        char probeCharacter = GetFallbackProbeCharacter(language);
+        TMP_FontAsset fallback = ResolveLanguageFallbackFontAsset(probeCharacter);
+        if (fallback == null)
+            return;
+
+        AddFallbackFont(menuText != null ? menuText.font : null, fallback);
+        AddFallbackFont(footerText != null ? footerText.font : null, fallback);
+    }
+
+    static char GetFallbackProbeCharacter(GameLanguage language)
+    {
+        if (language == GameLanguage.Japanese)
+            return '日';
+
+        return language == GameLanguage.Spanish ? 'ñ' : 'ç';
+    }
+
+    TMP_FontAsset ResolveLanguageFallbackFontAsset(char probeCharacter)
+    {
+        if (localizedFallbackFontAsset != null)
+        {
+            if (localizedFallbackFontAsset.HasCharacter(probeCharacter, true, true))
+                return localizedFallbackFontAsset;
+
+            if (!warnedMissingLanguageFallback)
+            {
+                warnedMissingLanguageFallback = true;
+                Debug.LogWarning($"[ControlsMenu] Assigned fallback font [{localizedFallbackFontAsset.name}] does not contain required character [{probeCharacter}].");
+            }
+        }
+
+        for (int i = 0; i < runtimeLanguageFallbackFontAssets.Count; i++)
+        {
+            TMP_FontAsset fallback = runtimeLanguageFallbackFontAssets[i];
+            if (fallback != null && fallback.HasCharacter(probeCharacter, false, true))
+                return fallback;
+        }
+
+        if (localizedFallbackOsFontNames != null)
+        {
+            for (int i = 0; i < localizedFallbackOsFontNames.Length; i++)
+            {
+                string familyName = localizedFallbackOsFontNames[i];
+                if (string.IsNullOrWhiteSpace(familyName))
+                    continue;
+
+                TMP_FontAsset created = CreateFallbackFromOsFont(familyName, probeCharacter);
+                if (created == null)
+                    continue;
+
+                runtimeLanguageFallbackFontAssets.Add(created);
+                return created;
+            }
+        }
+
+        if (!warnedMissingLanguageFallback)
+        {
+            warnedMissingLanguageFallback = true;
+            Debug.LogWarning($"[ControlsMenu] No TMP fallback font was found for required character [{probeCharacter}]. Assign localizedFallbackFontAsset or install a compatible OS font.");
+        }
+
+        return null;
+    }
+
+    TMP_FontAsset CreateFallbackFromOsFont(string familyName, char probeCharacter)
+    {
+        try
+        {
+            int samplingPointSize = Mathf.Max(16, localizedFallbackSamplingPointSize);
+            TMP_FontAsset fontAsset = TMP_FontAsset.CreateFontAsset(
+                familyName,
+                "Regular",
+                samplingPointSize
+            );
+
+            if (fontAsset == null)
+                return null;
+
+            fontAsset.name = familyName + " Controls Fallback";
+            fontAsset.atlasPopulationMode = AtlasPopulationMode.DynamicOS;
+            fontAsset.isMultiAtlasTexturesEnabled = true;
+
+            if (!fontAsset.HasCharacter(probeCharacter, false, true))
+            {
+                Destroy(fontAsset);
+                return null;
+            }
+
+            return fontAsset;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    static void AddFallbackFont(TMP_FontAsset source, TMP_FontAsset fallback)
+    {
+        if (source == null || fallback == null || source == fallback)
+            return;
+
+        if (source.fallbackFontAssetTable == null)
+            source.fallbackFontAssetTable = new List<TMP_FontAsset>();
+
+        if (!source.fallbackFontAssetTable.Contains(fallback))
+            source.fallbackFontAssetTable.Add(fallback);
+    }
+
     static void TrySetFloat(Material m, string prop, float value)
     {
         if (m != null && m.HasProperty(prop))
@@ -782,7 +926,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     string CurrentWaitLinkId()
     {
-        return LINK_WAIT_PREFIX + ActionToLabel(CurrentBulkAction());
+        return LINK_WAIT_PREFIX + CurrentBulkAction();
     }
 
     bool IsPlayerActiveForMenu(int playerId)
@@ -803,7 +947,7 @@ public class ControlsConfigMenu : MonoBehaviour
         var session = GameSession.Instance;
         if (session == null)
         {
-            ShowBlockedMessage("PLAYER ACTIVATION IS UNAVAILABLE.");
+            ShowBlockedMessage(GameTextDatabase.Controls.PlayerActivationUnavailable);
             return false;
         }
 
@@ -817,7 +961,8 @@ public class ControlsConfigMenu : MonoBehaviour
 
     void ShowBlockedMessageForKey(KeyCode key)
     {
-        ShowBlockedMessage($"KEY {PrettyKeyName(key)} IS ALREADY IN USE!\nPLEASE PRESS ANOTHER KEY.");
+        ControlsMenuText text = GameTextDatabase.Controls;
+        ShowBlockedMessage(string.Format(text.KeyAlreadyInUse, PrettyKeyName(key)) + "\n" + text.PleasePressAnotherKey);
     }
 
     void ShowBlockedMessage(string message)
@@ -1475,6 +1620,8 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuText == null)
             return;
 
+        ApplyLanguageFontFallback();
+
         ApplyMenuGlobalOffset();
         ApplyMenuTextRectScale();
 
@@ -1483,10 +1630,11 @@ public class ControlsConfigMenu : MonoBehaviour
         int bodySize = ScaledFont(EffectiveBodyFontSize);
         int footerSize = ScaledFont(EffectiveFooterFontSize);
         int gridSize = ScaledFont(state == MenuState.BulkRemap ? EffectiveRemapGridFontSize : EffectiveSelectGridFontSize);
+        ControlsMenuText text = GameTextDatabase.Controls;
 
         string header =
             RepeatNewLine(Mathf.Max(0, headerTopPaddingLines)) +
-            $"<align=center><size={titleSize}><color={colorHint}><voffset={titleVO}>CONTROLS</voffset></color></size></align>" +
+            $"<align=center><size={titleSize}><color={colorHint}><voffset={titleVO}>{text.Title}</voffset></color></size></align>" +
             RepeatNewLine(Mathf.Max(0, headerBottomPaddingLines)) +
             "\n";
 
@@ -1497,7 +1645,7 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             body += "<align=center>";
             body += RepeatSizedSpacerLines(EffectiveSelectTitleToBodyGapLines, bodySize);
-            body += $"<size={bodySize}><color={colorBlueSoft}>CHOOSE A PLAYER</color></size>\n\n";
+            body += $"<size={bodySize}><color={colorBlueSoft}>{text.ChoosePlayer}</color></size>\n\n";
             body += "</align><align=left>";
 
             int selectorRowGap = Mathf.Max(0, playerBlockGapLines - 1);
@@ -1518,30 +1666,30 @@ public class ControlsConfigMenu : MonoBehaviour
                 RepeatNewLine(Mathf.Max(0, footerGapLines + footerExtraNewLines)) +
                 $"<align=center>" +
                 $"<size={footerSize}>" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>MAP CONTROLS</color>\n" +
-                $"<color={colorHint}>LEFT / RIGHT:</color> <color={colorWhite}>TOGGLE PLAYER</color>\n" +
-                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS</color>\n" +
-                $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN</color>" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>{text.MapControls}</color>\n" +
+                $"<color={colorHint}>{text.MoveLeft} / {text.MoveRight}:</color> <color={colorWhite}>{text.TogglePlayer}</color>\n" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>{text.RestoreDefaultKeys}</color>\n" +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>{text.Return}</color>" +
                 $"</size></align>";
         }
         else if (state == MenuState.ConfirmReset)
         {
-            string yesText = confirmResetIndex == 0 ? $"<color={colorHint}>YES</color>" : $"<color={colorWhite}>YES</color>";
-            string noText = confirmResetIndex == 1 ? $"<color={colorHint}>NO</color>" : $"<color={colorWhite}>NO</color>";
+            string yesText = confirmResetIndex == 0 ? $"<color={colorHint}>{text.Yes}</color>" : $"<color={colorWhite}>{text.Yes}</color>";
+            string noText = confirmResetIndex == 1 ? $"<color={colorHint}>{text.No}</color>" : $"<color={colorWhite}>{text.No}</color>";
 
             body += "<align=center>";
             body += RepeatSizedSpacerLines(EffectiveConfirmTitleToBodyGapLines, bodySize);
             body +=
                 $"<size={bodySize}>" +
-                $"<color={colorHint}>RESTORE DEFAULT KEYS?</color>\n" +
-                $"<color={colorWhite}>PLAYER {confirmResetPlayerId}</color>\n\n" +
+                $"<color={colorHint}>{text.RestoreDefaultKeysQuestion}</color>\n" +
+                $"<color={colorWhite}>{text.Player} {confirmResetPlayerId}</color>\n\n" +
                 $"<link=\"{LINK_RESET_YES}\">{yesText}</link>    <link=\"{LINK_RESET_NO}\">{noText}</link>" +
                 $"</size></align>";
 
             footer +=
                 $"<align=center><size={footerSize}>" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM</color>    " +
-                $"<color={colorHint}>B:</color> <color={colorWhite}>CANCEL</color>" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>{text.Confirm}</color>    " +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>{text.Cancel}</color>" +
                 $"</size></align>";
         }
         else if (state == MenuState.WaitForInput)
@@ -1549,17 +1697,17 @@ public class ControlsConfigMenu : MonoBehaviour
             body += "<align=center>";
             body += RepeatSizedSpacerLines(EffectiveWaitTitleToBodyGapLines, bodySize);
             body +=
-                $"<size={bodySize}><color={colorBlueSoft}>CONFIGURING PLAYER {targetPlayerId}</color></size>\n\n" +
+                $"<size={bodySize}><color={colorBlueSoft}>{text.ConfiguringPlayer} {targetPlayerId}</color></size>\n\n" +
                 $"<size={footerSize}>" +
-                $"<color={colorWhite}>PRESS THE CONTROLS YOU WANT</color>\n" +
-                $"<color={colorWhite}>TO USE FOR THIS PLAYER.</color>\n\n" +
-                $"<link=\"{LINK_WAIT_START}\"><color={colorHint}>PRESS ANY KEY OR BUTTON</color></link>\n" +
-                $"<color={colorWhite}>TO START MAPPING</color>" +
+                $"<color={colorWhite}>{text.PressControlsYouWant}</color>\n" +
+                $"<color={colorWhite}>{text.ToUseForThisPlayer}</color>\n\n" +
+                $"<link=\"{LINK_WAIT_START}\"><color={colorHint}>{text.PressAnyKeyOrButton}</color></link>\n" +
+                $"<color={colorWhite}>{text.ToStartMapping}</color>" +
                 $"</size></align>";
 
             footer +=
                 $"<align=center><size={footerSize}>" +
-                $"<color={colorPlayerSelectedRed}>ESC / B TO CANCEL</color>" +
+                $"<color={colorPlayerSelectedRed}>{text.EscBToCancel}</color>" +
                 $"</size></align>";
         }
         else
@@ -1572,24 +1720,24 @@ public class ControlsConfigMenu : MonoBehaviour
 
             body += "<align=center>";
             body +=
-                $"<size={bodySize}><color={colorBlueSoft}>CONFIGURING PLAYER {targetPlayerId}</color></size>\n";
+                $"<size={bodySize}><color={colorBlueSoft}>{text.ConfiguringPlayer} {targetPlayerId}</color></size>\n";
             body += RepeatSizedSpacerLines(EffectiveRemapTitleToBodyGapLines, bodySize);
             body +=
-                $"<size={gridSize}><color={colorPlayerSelectedRed}>PLAYER {targetPlayerId}</color></size>\n";
+                $"<size={gridSize}><color={colorPlayerSelectedRed}>{text.Player} {targetPlayerId}</color></size>\n";
             body += "</align>";
 
             AppendBulkRemapVerticalList(ref body, targetPlayerId, gridSize);
 
             footer +=
                 $"<align=center><size={footerSize}>" +
-                $"<color={colorHint}>CHOOSE A BUTTON FOR:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
+                $"<color={colorHint}>{text.ChooseButtonFor}</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
                 blocked +
-                $"<color={colorPlayerSelectedRed}>ESC TO CANCEL</color>\n\n" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
-                $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
-                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
-                $"<color={colorHint}>L (RIDING):</color> <color={colorWhite}>DISMOUNT</color>\n" +
-                $"<color={colorHint}>R:</color> <color={colorWhite}>STOP KICKED BOMBS</color>" +
+                $"<color={colorPlayerSelectedRed}>{text.EscToCancel}</color>\n\n" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>{text.ConfirmPlaceBomb}</color>\n" +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>{text.ReturnExplodeControlBomb}</color>\n" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>{text.RestoreDefaultKeysAbilities}</color>\n" +
+                $"<color={colorHint}>L ({text.Riding}):</color> <color={colorWhite}>{text.Dismount}</color>\n" +
+                $"<color={colorHint}>R:</color> <color={colorWhite}>{text.StopKickedBombs}</color>" +
                 $"</size></align>";
         }
 
@@ -1617,6 +1765,7 @@ public class ControlsConfigMenu : MonoBehaviour
     void SetFooterText(string text)
     {
         EnsureFooterText();
+        ApplyLanguageFontFallback();
 
         if (footerText == null)
             return;
@@ -1633,8 +1782,9 @@ public class ControlsConfigMenu : MonoBehaviour
 
         string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
         string statusColor = active ? colorPlayerGreen : colorPlayerSelectedRed;
-        string status = active ? "ON" : "OFF";
-        string playerLabel = $"PLAYER {playerId}";
+        ControlsMenuText text = GameTextDatabase.Controls;
+        string status = active ? text.On : text.Off;
+        string playerLabel = $"{text.Player} {playerId}";
         float labelX = ScaledFloat(250f);
         float valueX = ScaledFloat(580f);
         float statusX = valueX + (status.Length == 2 ? gridSize * 0.5f : 0f);
@@ -1696,7 +1846,8 @@ public class ControlsConfigMenu : MonoBehaviour
 
         bool selected = playerSelectIndex == selIndex;
         string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
-        string tag = $"<color={playerColor}>PLAYER {pid}</color>";
+        ControlsMenuText text = GameTextDatabase.Controls;
+        string tag = $"<color={playerColor}>{text.Player} {pid}</color>";
 
         string u = BindingToShort(p.GetBinding(PlayerAction.MoveUp));
         string d = BindingToShort(p.GetBinding(PlayerAction.MoveDown));
@@ -1729,15 +1880,15 @@ public class ControlsConfigMenu : MonoBehaviour
         string txt = lineIndex switch
         {
             0 => $"<align=center>{tag}</align>",
-            1 => $"<pos={ll}>{Lbl(PlayerAction.MoveUp, "UP:")}</pos><pos={lv}>{u}</pos>" +
+            1 => $"<pos={ll}>{Lbl(PlayerAction.MoveUp, text.MoveUp + ":")}</pos><pos={lv}>{u}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionA, "A:")}</pos><pos={rv}>{a}</pos>",
-            2 => $"<pos={ll}>{Lbl(PlayerAction.MoveDown, "DOWN:")}</pos><pos={lv}>{d}</pos>" +
+            2 => $"<pos={ll}>{Lbl(PlayerAction.MoveDown, text.MoveDown + ":")}</pos><pos={lv}>{d}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionB, "B:")}</pos><pos={rv}>{b}</pos>",
-            3 => $"<pos={ll}>{Lbl(PlayerAction.MoveLeft, "LEFT:")}</pos><pos={lv}>{l}</pos>" +
+            3 => $"<pos={ll}>{Lbl(PlayerAction.MoveLeft, text.MoveLeft + ":")}</pos><pos={lv}>{l}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionC, "C:")}</pos><pos={rv}>{c}</pos>",
-            4 => $"<pos={ll}>{Lbl(PlayerAction.MoveRight, "RIGHT:")}</pos><pos={lv}>{r}</pos>" +
+            4 => $"<pos={ll}>{Lbl(PlayerAction.MoveRight, text.MoveRight + ":")}</pos><pos={lv}>{r}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionL, "L:")}</pos><pos={rv}>{lBtn}</pos>",
-            5 => $"<pos={ll}>{Lbl(PlayerAction.Start, "START:")}</pos><pos={lv}>{st}</pos>" +
+            5 => $"<pos={ll}>{Lbl(PlayerAction.Start, text.Start + ":")}</pos><pos={lv}>{st}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionR, "R:")}</pos><pos={rv}>{rBtn}</pos>",
             _ => string.Empty
         };
@@ -1933,20 +2084,22 @@ public class ControlsConfigMenu : MonoBehaviour
         return new string('\u00A0', leftPadding) + text + new string('\u00A0', rightPadding);
     }
 
-    static string ActionToLabel(PlayerAction a)
+    string ActionToLabel(PlayerAction a)
     {
+        ControlsMenuText text = GameTextDatabase.Controls;
+
         return a switch
         {
-            PlayerAction.MoveUp => "UP",
-            PlayerAction.MoveDown => "DOWN",
-            PlayerAction.MoveLeft => "LEFT",
-            PlayerAction.MoveRight => "RIGHT",
-            PlayerAction.Start => "START",
-            PlayerAction.ActionA => "A",
-            PlayerAction.ActionB => "B",
-            PlayerAction.ActionC => "C",
-            PlayerAction.ActionL => "L",
-            PlayerAction.ActionR => "R",
+            PlayerAction.MoveUp => text.MoveUp,
+            PlayerAction.MoveDown => text.MoveDown,
+            PlayerAction.MoveLeft => text.MoveLeft,
+            PlayerAction.MoveRight => text.MoveRight,
+            PlayerAction.Start => text.Start,
+            PlayerAction.ActionA => text.ActionA,
+            PlayerAction.ActionB => text.ActionB,
+            PlayerAction.ActionC => text.ActionC,
+            PlayerAction.ActionL => text.ActionL,
+            PlayerAction.ActionR => text.ActionR,
             _ => a.ToString().ToUpperInvariant(),
         };
     }
