@@ -20,20 +20,20 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 3;
-        public int BombAmount = 5;
-        public int ExplosionRadius = 9;
-        public int SpeedInternal = BaseSpeedNormal + (SpeedStep * 5);
+        public int Life = 1;
+        public int BombAmount = 1;
+        public int ExplosionRadius = 2;
+        public int SpeedInternal = BaseSpeedNormal /*+ (SpeedStep * 5)*/;
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = true;
-        public bool HasPowerGlove = true;
-        public bool CanPassBombs = true;
-        public bool CanPassDestructibles = true;
+        public bool CanPunchBombs = false;
+        public bool HasPowerGlove = false;
+        public bool CanPassBombs = false;
+        public bool CanPassDestructibles = false;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
-        public bool HasMagnetBomb = true;
+        public bool HasMagnetBomb = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;

@@ -237,7 +237,36 @@ public sealed class PlayersSpawner : MonoBehaviour
 
         if (results.Count <= 0)
             results.Add(GameSession.MinPlayerId);
+
+#if ENABLE_NORMAL_GAME_AI
+        TryFillNormalGameAiPlayers(results);
+#endif
     }
+
+#if ENABLE_NORMAL_GAME_AI
+    // Dev-only (sob ENABLE_NORMAL_GAME_AI): quando o Normal Game está rodando
+    // só com P1 e a IA está ligada, completa a lista com P2/P3/P4 para gravar
+    // gameplays de 4 jogadores estando sozinho. Sincroniza o GameSession para
+    // manter HUD e condições de jogo coerentes. Não age em Battle Mode/Boss Rush.
+    void TryFillNormalGameAiPlayers(List<int> results)
+    {
+        if (!NormalGameAIManager.EnableAI)
+            return;
+        if (BossRushSession.IsActive || IsBattleModeScene())
+            return;
+        if (results.Count != 1 || !results.Contains(GameSession.MinPlayerId))
+            return;
+
+        for (int id = 2; id <= 4; id++)
+        {
+            if (!results.Contains(id))
+                results.Add(id);
+        }
+
+        if (GameSession.Instance != null)
+            GameSession.Instance.SetActivePlayerIds(results);
+    }
+#endif
 
     Vector3 ResolveSpawnPosition(int index, Vector2[] preset)
     {
