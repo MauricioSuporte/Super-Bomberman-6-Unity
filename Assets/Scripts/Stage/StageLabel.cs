@@ -57,6 +57,7 @@ public class StageLabel : MonoBehaviour
     readonly RectTransform[] pauseWindowFrameRects = new RectTransform[16];
     readonly Image[] pauseWindowFrameImages = new Image[16];
     readonly Vector3[] textWorldCorners = new Vector3[4];
+    float pauseWindowOptionsWidth = -1f;
 
     float _lastUiScale = -999f;
     int _lastBaseScaleInt = -999;
@@ -149,6 +150,7 @@ public class StageLabel : MonoBehaviour
     public void SetStage(int world, int stage)
     {
         EnsureNoWrap();
+        pauseWindowOptionsWidth = -1f;
         SetPauseWindowVisible(false);
 
         string stageNumber = $"{world}-{stage}";
@@ -168,22 +170,18 @@ public class StageLabel : MonoBehaviour
         string stageNumber = $"{world}-{stage}";
         PauseMenuText text = GameTextDatabase.Pause;
 
-        string resume = selectedIndex == 0
-            ? $"<color=#FF6F31>>{text.Resume}</color>"
-            : $"<color=#E8E8E8>  {text.Resume}</color>";
+        string resume = FormatPauseOption(text.Resume, selectedIndex == 0);
 
         string secondOptionText = isBossRush
             ? NoWrap(text.ReturnToBossRush)
             : NoWrap(text.ReturnToWorldMap);
 
-        string retSecondOption = selectedIndex == 1
-            ? $"<color=#FF6F31>>{secondOptionText}</color>"
-            : $"<color=#E8E8E8>  {secondOptionText}</color>";
+        string retSecondOption = FormatPauseOption(secondOptionText, selectedIndex == 1);
 
         string titleText = NoWrap(text.ReturnToTitle);
-        string retTitle = selectedIndex == 2
-            ? $"<color=#FF6F31>>{titleText}</color>"
-            : $"<color=#E8E8E8>  {titleText}</color>";
+        string retTitle = FormatPauseOption(titleText, selectedIndex == 2);
+
+        pauseWindowOptionsWidth = MeasureLargestPauseOptionWidth(resume, retSecondOption, retTitle);
 
         stageText.text =
             "<align=center>" +
@@ -243,6 +241,9 @@ public class StageLabel : MonoBehaviour
             : ArrowHidden($"<color=#E8E8E8>{common.Yes}</color>");
 
         int indent = Px(OptionsIndentPxBase);
+        pauseWindowOptionsWidth = Mathf.Max(
+            MeasureRichTextWidth(SizeConfirmTitle, $"<color=#E8E8E8>{question}</color>"),
+            MeasureLargestPauseOptionWidth(noOpt, yesOpt));
 
         stageText.text =
             "<align=center>" +
@@ -287,23 +288,17 @@ public class StageLabel : MonoBehaviour
         EnsureNoWrap();
         PauseMenuText text = GameTextDatabase.Pause;
 
-        string resume = selectedIndex == 0
-            ? $"<color=#FF6F31>>{text.Resume}</color>"
-            : $"<color=#E8E8E8>  {text.Resume}</color>";
+        string resume = FormatPauseOption(text.Resume, selectedIndex == 0);
 
-        string restartRound = selectedIndex == 1
-            ? $"<color=#FF6F31>>{text.RestartRound}</color>"
-            : $"<color=#E8E8E8>  {text.RestartRound}</color>";
+        string restartRound = FormatPauseOption(text.RestartRound, selectedIndex == 1);
 
         string stageSelectText = NoWrap(text.ReturnToStageSelect);
-        string retStageSelect = selectedIndex == 2
-            ? $"<color=#FF6F31>>{stageSelectText}</color>"
-            : $"<color=#E8E8E8>  {stageSelectText}</color>";
+        string retStageSelect = FormatPauseOption(stageSelectText, selectedIndex == 2);
 
         string titleText = NoWrap(text.ReturnToTitle);
-        string retTitle = selectedIndex == 3
-            ? $"<color=#FF6F31>>{titleText}</color>"
-            : $"<color=#E8E8E8>  {titleText}</color>";
+        string retTitle = FormatPauseOption(titleText, selectedIndex == 3);
+
+        pauseWindowOptionsWidth = MeasureLargestPauseOptionWidth(resume, restartRound, retStageSelect, retTitle);
 
         stageText.text =
             "<align=center>" +
@@ -331,6 +326,41 @@ public class StageLabel : MonoBehaviour
     static string NoWrap(string value)
     {
         return string.IsNullOrEmpty(value) ? string.Empty : value.Replace(" ", NBSP);
+    }
+
+    static string FormatPauseOption(string text, bool selected)
+    {
+        string arrow = selected
+            ? "<color=#FF6F31>></color>"
+            : "<color=#00000000>></color>";
+        string color = selected ? "#FF6F31" : "#E8E8E8";
+        return $"{arrow}<color={color}>{text}</color>";
+    }
+
+    float MeasureLargestPauseOptionWidth(params string[] options)
+    {
+        if (stageText == null || options == null || options.Length == 0)
+            return -1f;
+
+        float maxWidth = -1f;
+        for (int i = 0; i < options.Length; i++)
+        {
+            if (string.IsNullOrEmpty(options[i]))
+                continue;
+
+            maxWidth = Mathf.Max(maxWidth, MeasureRichTextWidth(SizeMenuItem, options[i]));
+        }
+
+        return maxWidth;
+    }
+
+    float MeasureRichTextWidth(int size, string text)
+    {
+        if (stageText == null || string.IsNullOrEmpty(text))
+            return -1f;
+
+        Vector2 preferred = stageText.GetPreferredValues($"<size={S(size)}>{text}</size>");
+        return preferred.x;
     }
 
     public void HidePauseWindow()
@@ -421,7 +451,9 @@ public class StageLabel : MonoBehaviour
 
         float preferredWidth = stageText.preferredWidth;
         float preferredHeight = stageText.preferredHeight;
-        float targetWidth = preferredWidth > 1f ? preferredWidth : textRect.sizeDelta.x;
+        float targetWidth = pauseWindowOptionsWidth > 1f
+            ? pauseWindowOptionsWidth
+            : (preferredWidth > 1f ? preferredWidth : textRect.sizeDelta.x);
         float targetHeight = preferredHeight > 1f ? preferredHeight : textRect.sizeDelta.y;
         Vector2 paddingAtDesign = pauseWindowPaddingAtDesign;
         paddingAtDesign.y = Mathf.Max(paddingAtDesign.y, pauseWindowMinVerticalPaddingAtDesign);
