@@ -775,6 +775,29 @@ public static class SaveSystem
         Save();
     }
 
+    public static bool GetMobileTouchButtonsVisible()
+    {
+        EnsureLoaded();
+
+        data.videoSettings ??= new SavedVideoSettings();
+
+        return data.videoSettings.mobileTouchButtonsVisible;
+    }
+
+    public static void SetMobileTouchButtonsVisible(bool visible)
+    {
+        EnsureLoaded();
+
+        data.videoSettings ??= new SavedVideoSettings();
+
+        if (data.videoSettings.mobileTouchButtonsVisible == visible)
+            return;
+
+        data.videoSettings.mobileTouchButtonsVisible = visible;
+        data.videoSettings.mobileTouchButtonsVisibilityInitialized = true;
+        Save();
+    }
+
     private static BossRushDifficultyTimesSave GetOrCreateBossRushTimesEntry(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -942,6 +965,12 @@ public static class SaveSystem
 
         if (d.videoSettings.windowSizeMultiplier < 1)
             d.videoSettings.windowSizeMultiplier = 4;
+
+        if (!d.videoSettings.mobileTouchButtonsVisibilityInitialized)
+        {
+            d.videoSettings.mobileTouchButtonsVisible = true;
+            d.videoSettings.mobileTouchButtonsVisibilityInitialized = true;
+        }
 
         d.battleModeMatchMode = (int)NormalizeBattleModeMatchMode(d.battleModeMatchMode);
         d.battleModeComputerLevel = (int)NormalizeBattleModeComputerLevel(d.battleModeComputerLevel);

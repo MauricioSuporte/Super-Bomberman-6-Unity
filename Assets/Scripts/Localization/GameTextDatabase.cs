@@ -256,6 +256,7 @@ public static class GameTextDatabase
         Controls = "CONTROLS",
         Language = "LANGUAGE",
         Video = "VIDEO",
+        TouchButtons = "TOUCH BUTTONS",
         ResetSave = "RESET SAVE",
         Player1 = "1 PLAYER",
         Player2 = "2 PLAYERS",
@@ -288,6 +289,7 @@ public static class GameTextDatabase
         Controls = "操作設定",
         Language = "言語",
         Video = "ビデオ",
+        TouchButtons = "TOUCH BUTTONS",
         ResetSave = "セーブ消去",
         Player1 = "1人プレイ",
         Player2 = "2人プレイ",
@@ -320,6 +322,7 @@ public static class GameTextDatabase
         Controls = "CONTROLES",
         Language = "IDIOMA",
         Video = "VIDEO",
+        TouchButtons = "BOTONES TOUCH",
         ResetSave = "BORRAR PARTIDA",
         Player1 = "1 JUGADOR",
         Player2 = "2 JUGADORES",
@@ -352,6 +355,7 @@ public static class GameTextDatabase
         Controls = "CONTROLES",
         Language = "IDIOMA",
         Video = "VIDEO",
+        TouchButtons = "BOTÕES TOUCH",
         ResetSave = "APAGAR SAVE",
         Player1 = "1 JOGADOR",
         Player2 = "2 JOGADORES",
@@ -1142,6 +1146,7 @@ public sealed class TitleScreenText
     public string Controls;
     public string Language;
     public string Video;
+    public string TouchButtons;
     public string ResetSave;
     public string Player1;
     public string Player2;

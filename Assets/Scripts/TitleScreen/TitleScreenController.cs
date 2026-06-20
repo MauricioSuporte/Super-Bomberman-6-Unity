@@ -125,6 +125,7 @@ public class TitleScreenController : MonoBehaviour
     [Header("Video Values (Separate TMP)")]
     [SerializeField] TextMeshProUGUI videoValuesText;
     [SerializeField] float videoValuesRightPadding = 100f;
+    float mobileTouchButtonsValueRightPadding = 100f;
 
     [Header("Audio")]
     public AudioClip titleMusic;
@@ -189,6 +190,7 @@ public class TitleScreenController : MonoBehaviour
     bool bossRushInspectorDefaultUnlocked;
     public bool BossRushInspectorOverrideUnlocked => bossRushInspectorDefaultUnlocked;
     bool IsVideoMenuAvailable => allowVideoMenu && !Application.isMobilePlatform;
+    bool IsMobileTouchButtonsOptionAvailable => Application.isMobilePlatform;
 
     Vector2 _lastMouseScreenPosition;
     bool _hasLastMouseScreenPosition;
@@ -234,7 +236,8 @@ public class TitleScreenController : MonoBehaviour
     const int OPTIONS_IDX_CONTROLS = 0;
     const int OPTIONS_IDX_LANGUAGE = 1;
     int OptionsVideoIndex => IsVideoMenuAvailable ? 2 : -1;
-    int OptionsResetSaveIndex => IsVideoMenuAvailable ? 3 : 2;
+    int OptionsTouchButtonsIndex => IsMobileTouchButtonsOptionAvailable ? 2 : -1;
+    int OptionsResetSaveIndex => (IsVideoMenuAvailable || IsMobileTouchButtonsOptionAvailable) ? 3 : 2;
 
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
@@ -853,6 +856,10 @@ public class TitleScreenController : MonoBehaviour
             videoValuesText.raycastTarget = false;
         }
 
+        RectTransform valueRoot = GetUiRootForGeneratedText();
+        if (valueRoot != null && videoValuesText.transform.parent != valueRoot)
+            videoValuesText.transform.SetParent(valueRoot, false);
+
         videoValuesRect = videoValuesText.rectTransform;
         videoValuesRect.anchorMin = new Vector2(1f, 0.5f);
         videoValuesRect.anchorMax = new Vector2(1f, 0.5f);
@@ -999,7 +1006,9 @@ public class TitleScreenController : MonoBehaviour
         if (videoValuesText == null || videoValuesRect == null || menuText == null)
             return;
 
-        bool show = menuMode == MenuMode.Video && IsVideoMenuAvailable;
+        bool showVideoValues = menuMode == MenuMode.Video && IsVideoMenuAvailable;
+        bool showMobileTouchValue = menuMode == MenuMode.Options && IsMobileTouchButtonsOptionAvailable;
+        bool show = showVideoValues || showMobileTouchValue;
         if (!show)
         {
             if (videoValuesText.gameObject.activeSelf)
@@ -1021,13 +1030,15 @@ public class TitleScreenController : MonoBehaviour
         if (root == null)
             return;
 
-        TMP_LineInfo li0 = ti.lineInfo[0];
+        int valueLine = showMobileTouchValue ? OptionsTouchButtonsIndex : 0;
+        TMP_LineInfo li0 = ti.lineInfo[Mathf.Clamp(valueLine, 0, ti.lineCount - 1)];
         float yTopMenuLocal = li0.ascender;
 
         Vector3 world = menuText.rectTransform.TransformPoint(new Vector3(0f, yTopMenuLocal, 0f));
         Vector3 rootLocal = root.InverseTransformPoint(world);
 
-        float x = -Mathf.Round(ScaledFloat(videoValuesRightPadding));
+        float rightPadding = showMobileTouchValue ? mobileTouchButtonsValueRightPadding : videoValuesRightPadding;
+        float x = -Mathf.Round(ScaledFloat(rightPadding));
         float y = Mathf.Round(rootLocal.y);
 
         videoValuesRect.anchoredPosition = new Vector2(x, y);
@@ -1271,8 +1282,11 @@ public class TitleScreenController : MonoBehaviour
             float left = li.lineExtents.min.x - padX;
             float right = li.lineExtents.max.x + padX;
 
-            if (menuMode == MenuMode.Video)
+            if (menuMode == MenuMode.Video ||
+                (menuMode == MenuMode.Options && IsMobileTouchButtonsOptionAvailable && i == OptionsTouchButtonsIndex))
+            {
                 right += Mathf.Max(40f, ScaledFloat(videoValuesRightPadding + 40f));
+            }
 
             if (localPoint.x >= left && localPoint.x <= right &&
                 localPoint.y >= bottom && localPoint.y <= top)
@@ -1802,6 +1816,27 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
+                    if (IsMobileTouchButtonsOptionAvailable && menuIndex == OptionsTouchButtonsIndex)
+                    {
+                        locked = false;
+
+                        bool visible = !SaveSystem.GetMobileTouchButtonsVisible();
+                        SaveSystem.SetMobileTouchButtonsVisible(visible);
+
+                        if (MobileControlsRoot.Instance != null)
+                            MobileControlsRoot.Instance.RefreshVisibilityFromSavedPreference();
+
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
                     if (menuIndex == OptionsResetSaveIndex)
                     {
                         menuMode = MenuMode.ResetSaveConfirm;
@@ -1913,7 +1948,7 @@ public class TitleScreenController : MonoBehaviour
     {
         if (menuMode == MenuMode.PlayerCount) return 4;
         if (menuMode == MenuMode.GameModes) return 3;
-        if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 4 : 3;
+        if (menuMode == MenuMode.Options) return (IsVideoMenuAvailable || IsMobileTouchButtonsOptionAvailable) ? 4 : 3;
         if (menuMode == MenuMode.Language) return GameTextDatabase.SupportedLanguages.Length;
         if (menuMode == MenuMode.Video) return 2;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
@@ -2121,6 +2156,23 @@ public class TitleScreenController : MonoBehaviour
                     $"<size={size}>{video}</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
+            }
+            else if (IsMobileTouchButtonsOptionAvailable)
+            {
+                string touchButtons = $"<color=#{baseRgb}FF>{text.TouchButtons}</color>";
+
+                menuText.text =
+                    "<align=left>" +
+                    $"<size={size}>{controls}</size>\n" +
+                    $"<size={size}>{language}</size>\n" +
+                    $"<size={size}>{touchButtons}</size>\n" +
+                    $"<size={size}>{resetSave}</size>" +
+                    "</align>";
+
+                EnsureVideoValuesText();
+
+                if (videoValuesText != null)
+                    videoValuesText.text = SaveSystem.GetMobileTouchButtonsVisible() ? text.On : text.Off;
             }
             else
             {
