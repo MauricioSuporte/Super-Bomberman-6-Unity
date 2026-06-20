@@ -334,12 +334,27 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         RemoveKickOriginBlocker();
     }
 
+    private bool IsBlockedFromMagnetMovement =>
+        HasExploded || IsBeingKicked || IsBeingPunched || IsBeingHeldByPowerGlove;
+
+    private void StopMagnetMovement()
+    {
+        if (magnetRoutine == null)
+            return;
+
+        StopCoroutine(magnetRoutine);
+        magnetRoutine = null;
+        RemoveMagnetOriginBlocker();
+    }
+
     public void SetPowerGloveHeld(bool held)
     {
         IsBeingHeldByPowerGlove = held;
 
         if (!held)
             return;
+
+        StopMagnetMovement();
 
         charactersInside.Clear();
 
@@ -666,6 +681,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (punchRoutine != null)
             StopCoroutine(punchRoutine);
 
+        StopMagnetMovement();
         RemoveKickOriginBlocker();
 
         WasMovedByKickOrPunch = true;
@@ -1201,7 +1217,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     {
         isBeingMovedByYellowLouie = moving && !HasExploded;
         if (isBeingMovedByYellowLouie)
+        {
             WasMovedByKickOrPunch = true;
+            StopMagnetMovement();
+        }
     }
 
     public void ForceSetLogicalPosition(Vector2 worldPos)
@@ -1299,6 +1318,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (kickRoutine != null)
             StopCoroutine(kickRoutine);
+
+        StopMagnetMovement();
 
         isKicked = true;
         WasMovedByKickOrPunch = true;
@@ -1724,7 +1745,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float originBlockerSize,
         bool originBlockerUseTrigger)
     {
-        if (HasExploded || isKicked || isPunched)
+        if (IsBlockedFromMagnetMovement)
             return false;
 
         if (magnetRoutine != null)
@@ -1783,6 +1804,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 break;
 
+            if (IsBlockedFromMagnetMovement)
+                break;
+
             if (remainingSteps > 0 && remainingSteps-- == 0)
                 break;
 
@@ -1800,6 +1824,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             float travelTime = kickTileSize / speed;
             float elapsed = 0f;
             bool cancelAndReturn = false;
+            bool externalMovementInterrupted = false;
 
             while (elapsed < travelTime)
             {
@@ -1807,6 +1832,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 {
                     RemoveMagnetOriginBlocker();
                     yield break;
+                }
+
+                if (IsBlockedFromMagnetMovement)
+                {
+                    externalMovementInterrupted = true;
+                    break;
                 }
 
                 if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
@@ -1825,6 +1856,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
                 yield return waitFixed;
             }
+
+            if (externalMovementInterrupted)
+                break;
 
             if (cancelAndReturn)
             {
