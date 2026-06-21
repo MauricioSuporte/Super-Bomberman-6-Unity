@@ -30,21 +30,21 @@ public sealed class BattleModeComDifficultySettings
                 return new BattleModeComDifficultySettings
                 {
                     difficulty = level,
-                    decisionInterval = 0.36f,
+                    decisionInterval = 0.28f,
                     dangerDecisionInterval = 0.1f,
                     searchDepth = 6,
                     dangerReactionSeconds = 0.22f,
                     safeTileMinimumSeconds = 0.28f,
-                    hesitationChance = 0.14f,
+                    hesitationChance = 0.06f,
                     escapeAbilityChance = 0.25f,
-                    stageProgressPriorityChance = 0.75f,
-                    postPlantActionChance = 0.45f,
+                    stageProgressPriorityChance = 1f,
+                    postPlantActionChance = 0.75f,
                     advancedBombPlanChance = 0f,
-                    stoppedWeight = 6,
-                    patrolWeight = 18,
+                    stoppedWeight = 3,
+                    patrolWeight = 12,
                     collectItemWeight = 42,
                     farmDestructibleWeight = 38,
-                    combatPlantWeight = 12
+                    combatPlantWeight = 24
                 };
 
             case BattleModeComputerLevel.Hard:

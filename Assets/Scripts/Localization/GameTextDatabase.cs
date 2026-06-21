@@ -1003,7 +1003,7 @@ public static class GameTextDatabase
         ToastNightmareSubtitle = "Nightmare Difficulty Unlocked",
         ToastHardcoreTitle = "No More Second Chances",
         ToastHardcoreSubtitle = "Hardcore Difficulty Unlocked",
-        ToastBattleStageTitle = "Battle Stage {0}",
+        ToastBattleStageTitle = "New Stage",
         ToastBattleStageSubtitle = "Battle Mode Stage {0} Unlocked"
     };
 
@@ -1045,7 +1045,7 @@ public static class GameTextDatabase
         ToastNightmareSubtitle = "ナイトメア難易度解放",
         ToastHardcoreTitle = "もう後戻りはできない",
         ToastHardcoreSubtitle = "ハードコア難易度解放",
-        ToastBattleStageTitle = "バトルステージ {0}",
+        ToastBattleStageTitle = "新ステージ",
         ToastBattleStageSubtitle = "バトルモード ステージ {0} 解放"
     };
 
@@ -1087,7 +1087,7 @@ public static class GameTextDatabase
         ToastNightmareSubtitle = "Dificultad Pesadilla desbloqueada",
         ToastHardcoreTitle = "No hay segundas oportunidades",
         ToastHardcoreSubtitle = "Dificultad Extrema desbloqueada",
-        ToastBattleStageTitle = "Escenario Batalla {0}",
+        ToastBattleStageTitle = "Nuevo escenario",
         ToastBattleStageSubtitle = "Escenario {0} de Modo Batalla desbloqueado"
     };
 
@@ -1129,7 +1129,7 @@ public static class GameTextDatabase
         ToastNightmareSubtitle = "Dificuldade Pesadelo liberada",
         ToastHardcoreTitle = "Sem segundas chances",
         ToastHardcoreSubtitle = "Dificuldade Extremo liberada",
-        ToastBattleStageTitle = "Estágio Batalha {0}",
+        ToastBattleStageTitle = "Novo estágio",
         ToastBattleStageSubtitle = "Estágio {0} do Modo Batalha liberado"
     };
 }

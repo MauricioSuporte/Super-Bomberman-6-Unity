@@ -17,7 +17,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     public float jumpDurationSeconds = 0.8f;
     public int forwardCells = 2;
     public float jumpArcHeight = 1f;
-    public float jumpCooldownSeconds = 0.25f;
+    public float jumpCooldownSeconds = 0.1f;
 
     [Header("Invulnerability")]
     public bool invulnerableDuringJump = true;
@@ -133,8 +133,6 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         int pid = movement.PlayerId;
         if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
             return;
-
-        nextAllowedTime = Time.time + jumpCooldownSeconds;
 
         if (routine != null)
             return;
@@ -278,6 +276,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
                 routine = null;
                 deathCancelInProgress = false;
+                StartJumpCooldown();
                 yield break;
             }
 
@@ -302,6 +301,12 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         routine = null;
         deathCancelInProgress = false;
+        StartJumpCooldown();
+    }
+
+    void StartJumpCooldown()
+    {
+        nextAllowedTime = Time.time + Mathf.Max(0f, jumpCooldownSeconds);
     }
 
     void BindShadowToPinkLouie()
@@ -642,6 +647,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null && !movement.isDead)
             movement.SetInputLocked(false);
+
+        StartJumpCooldown();
     }
 
     public void CancelJumpForExternalInterruption()

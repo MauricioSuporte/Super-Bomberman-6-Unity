@@ -209,7 +209,7 @@ public static class UnlockToastCatalog
     {
         int normalized = Mathf.Clamp(stageIndex, 11, 15);
         return new ToastInfo(
-            string.Format(GameTextDatabase.Unlocks.ToastBattleStageTitle, normalized),
+            GameTextDatabase.Unlocks.ToastBattleStageTitle,
             string.Format(GameTextDatabase.Unlocks.ToastBattleStageSubtitle, normalized),
             $"UI/Unlocks/Icons/Stage{normalized}"
         );

@@ -1342,6 +1342,13 @@ public class GameManager : MonoBehaviour
 
     void EvaluatePlayerWinState()
     {
+        if (IsBattleModeScene() &&
+            BattleRevengeSystem.Instance != null &&
+            BattleRevengeSystem.Instance.HasRespawnSwapInProgress)
+        {
+            return;
+        }
+
         int aliveNotDead = 0;
         MovementController survivingPlayer = null;
         List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);

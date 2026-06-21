@@ -41,7 +41,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
     readonly HashSet<TileBase> registeredTiles = new();
     readonly HashSet<MovementController> activeJumpers = new();
     readonly HashSet<MovementController> waitingForSpringExit = new();
-    readonly HashSet<Vector3Int> activeSpringCells = new();
+    readonly Dictionary<MovementController, Vector3Int> occupiedSpringCells = new();
     readonly Dictionary<Vector3Int, Coroutine> swapRoutines = new();
     readonly List<Vector3Int> landingCandidates = new(32);
     readonly List<Vector3Int> safeComLandingCandidates = new(32);
@@ -80,7 +80,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         swapRoutines.Clear();
         activeJumpers.Clear();
         waitingForSpringExit.Clear();
-        activeSpringCells.Clear();
+        occupiedSpringCells.Clear();
     }
 
     void Update()
@@ -121,15 +121,16 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         if (!IsSpringTile(groundTile))
         {
             waitingForSpringExit.Remove(mover);
+            occupiedSpringCells.Remove(mover);
             return;
         }
 
         if (waitingForSpringExit.Contains(mover))
             return;
 
-        if (activeSpringCells.Contains(springCell))
+        if (occupiedSpringCells.TryGetValue(mover, out Vector3Int occupiedSpringCell) &&
+            occupiedSpringCell == springCell)
         {
-            waitingForSpringExit.Add(mover);
             return;
         }
 
@@ -157,7 +158,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                 GetCellCenter(landingCell));
         }
 
-        activeSpringCells.Add(springCell);
+        occupiedSpringCells[mover] = springCell;
         StartCoroutine(SpringJumpRoutine(mover, springCell, landingCell));
     }
 
@@ -229,8 +230,6 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         }
         finally
         {
-            activeSpringCells.Remove(springCell);
-
             if (shadow != null)
                 Destroy(shadow);
 
@@ -665,7 +664,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             return;
 
         if (swapRoutines.TryGetValue(cell, out Coroutine running) && running != null)
-            StopCoroutine(running);
+            return;
 
         swapRoutines[cell] = StartCoroutine(SpringTileSwapRoutine(cell));
     }
@@ -867,12 +866,20 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
     bool IsSpringTile(TileBase tile)
     {
-        if (tile == null || springGroundTiles == null)
+        if (tile == null)
             return false;
 
-        for (int i = 0; i < springGroundTiles.Length; i++)
+        return ContainsTile(springGroundTiles, tile) || ContainsTile(springSwapTiles, tile);
+    }
+
+    static bool ContainsTile(TileBase[] tiles, TileBase tile)
+    {
+        if (tiles == null || tile == null)
+            return false;
+
+        for (int i = 0; i < tiles.Length; i++)
         {
-            if (springGroundTiles[i] == tile)
+            if (tiles[i] == tile)
                 return true;
         }
 

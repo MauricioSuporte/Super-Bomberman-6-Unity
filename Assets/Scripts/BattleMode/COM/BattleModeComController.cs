@@ -86,6 +86,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const string BattleMode3SceneName = "BattleMode_3";
 
     private const float BombTapCooldownSeconds = 0.35f;
+    private const float EasyMaxNoBombPlantIntervalSeconds = 2.5f;
     private const float ActionATapCooldownSeconds = 0.08f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
     private const float PunchTapCooldownSeconds = 0.15f;
@@ -1762,6 +1763,26 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        if (TryGetOverdueEasyPlantCandidate(
+                settings,
+                currentDangerSeconds,
+                out CandidateAction overduePlant))
+        {
+            LogOpeningFarmDiagnostic(
+                "EASY_OVERDUE_PLANT",
+                myTile,
+                currentDangerSeconds,
+                $"selected:{FormatOpeningCandidate(overduePlant)} " +
+                $"lastBombAge:{Time.time - lastBombTapTime:F2}s");
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                overduePlant,
+                "easyOverduePlant");
+            return;
+        }
+
         if (TryGetStageProgressPriorityCandidate(
                 settings,
                 myTile,
@@ -1819,6 +1840,48 @@ public sealed class BattleModeComController : MonoBehaviour
             currentDangerSeconds,
             $"selected:{FormatOpeningCandidate(selected)} roll:{lastWeightedRoll}/{lastWeightedTotal}");
         ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, selected, selected.HasRoute ? "found" : "none");
+    }
+
+    private bool TryGetOverdueEasyPlantCandidate(
+        BattleModeComDifficultySettings settings,
+        float currentDangerSeconds,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (settings == null || settings.difficulty != BattleModeComputerLevel.Easy)
+            return false;
+
+        if (bombController == null || bombController.BombsRemaining <= 0)
+            return false;
+
+        if (HasOwnUnresolvedBombOrExplosion() || !float.IsInfinity(currentDangerSeconds))
+            return false;
+
+        if (Time.time - lastBombTapTime < EasyMaxNoBombPlantIntervalSeconds)
+            return false;
+
+        int bestWeight = 0;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            CandidateAction current = candidates[i];
+            if (!current.TapBomb)
+                continue;
+
+            if (current.Action != BattleModeComActionType.FarmDestructible &&
+                current.Action != BattleModeComActionType.CombatPlant)
+            {
+                continue;
+            }
+
+            if (current.Weight <= bestWeight)
+                continue;
+
+            candidate = current;
+            bestWeight = current.Weight;
+        }
+
+        return bestWeight > 0;
     }
 
     private bool TryContinueFarmCommitment(

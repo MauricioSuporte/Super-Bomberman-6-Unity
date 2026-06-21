@@ -40,6 +40,31 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     public static BattleRevengeSystem Instance { get; private set; }
 
     public float CartBombCooldownSeconds => cartBombCooldownSeconds;
+    public bool HasRespawnSwapInProgress => respawnSwapsInProgress.Count > 0;
+
+    public bool ShouldPreserveCartForSuddenDeath(BattleRevengeController cart)
+    {
+        return cart != null && respawnSwapsInProgress.Contains(cart.OwnerPlayerId);
+    }
+
+    public void DisableAfterCurrentRespawnSwapsForSuddenDeath()
+    {
+        if (!HasRespawnSwapInProgress)
+        {
+            enabled = false;
+            return;
+        }
+
+        StartCoroutine(DisableAfterRespawnSwapsRoutine());
+    }
+
+    private IEnumerator DisableAfterRespawnSwapsRoutine()
+    {
+        while (HasRespawnSwapInProgress)
+            yield return null;
+
+        enabled = false;
+    }
 
     public bool IsRuntimeEnabled =>
         Application.isPlaying &&
@@ -188,19 +213,14 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             if (swapFinalized)
                 return;
 
-            if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
-                return;
-
             if (!victimDeathFinished || !revengeJumpFinished)
                 return;
 
             swapFinalized = true;
-            respawnSwapsInProgress.Remove(respawnPlayerId);
 
             victim.RemoveForBattleRevengeSwap();
 
             activeCartsByOwner.Remove(respawnPlayerId);
-            activeCartsByOwner[victimPlayerId] = cart;
 
             if (!respawningPlayerReleased)
             {
@@ -213,14 +233,44 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 respawningPlayerReleased = true;
             }
 
-            cart.ReenterAs(
-                victimPlayerId,
-                victim,
-                newCartPosition,
-                newInwardDirection);
-            ConfigureComController(cart);
+            bool revengeBlocked = BattleRevengeBomberBlocker.PreventNewRevengeBombers;
 
-            GameManager.Instance?.CheckWinState();
+            if (revengeBlocked)
+            {
+                if (PlayerInputManager.Instance != null && GameSession.IsValidPlayerId(victimPlayerId))
+                    PlayerInputManager.Instance.ClearSyntheticPlayer(victimPlayerId);
+
+                if (cart != null)
+                {
+                    cart.PlayExit(() =>
+                    {
+                        if (cart != null)
+                            Destroy(cart.gameObject);
+                    });
+                }
+            }
+            else
+            {
+                activeCartsByOwner[victimPlayerId] = cart;
+
+                cart.ReenterAs(
+                    victimPlayerId,
+                    victim,
+                    newCartPosition,
+                    newInwardDirection);
+                ConfigureComController(cart);
+            }
+
+            if (revengeBlocked)
+            {
+                respawnSwapsInProgress.Remove(respawnPlayerId);
+                GameManager.Instance?.CheckWinState();
+            }
+            else
+            {
+                GameManager.Instance?.CheckWinState();
+                respawnSwapsInProgress.Remove(respawnPlayerId);
+            }
         }
 
         victim.PlayBattleRevengeSwapDeathSequence(() =>
@@ -237,9 +287,6 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             jumpFacing,
             () =>
             {
-                if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
-                    return;
-
                 if (!respawningPlayerReleased)
                 {
                     respawningPlayer.RespawnFromBattleRevenge(

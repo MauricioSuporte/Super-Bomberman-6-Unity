@@ -1299,6 +1299,12 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (cart == null)
                 continue;
 
+            if (BattleRevengeSystem.Instance != null &&
+                BattleRevengeSystem.Instance.ShouldPreserveCartForSuddenDeath(cart))
+            {
+                continue;
+            }
+
             pendingExits++;
 
             cart.PlayExit(() =>
@@ -1317,7 +1323,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         for (int i = 0; i < revengeSystems.Length; i++)
         {
             if (revengeSystems[i] != null)
-                revengeSystems[i].enabled = false;
+                revengeSystems[i].DisableAfterCurrentRespawnSwapsForSuddenDeath();
         }
     }
 
