@@ -11,9 +11,9 @@ public class GameMusicController : MonoBehaviour
     static readonly BattleModeMusicConfig[] BattleModeMusicConfigs =
     {
         new(BattleModeRules.BattleMusicSelection.SB1Battle, "SB1 - Battle", 0.5f),
-        new(BattleModeRules.BattleMusicSelection.SB2Battle1, "SB2 - Battle1", 0.5f),
-        new(BattleModeRules.BattleMusicSelection.SB2Battle2, "SB2 - Battle2", 0.5f, "SB2 - Battle2 Loop", 0.5f),
-        new(BattleModeRules.BattleMusicSelection.SB2Battle3, "SB2 - Battle3", 0.5f, "SB2 - Battle3 Loop", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB2Battle1, "SB2 - Battle1", 0.6f),
+        new(BattleModeRules.BattleMusicSelection.SB2Battle2, "SB2 - Battle2", 0.6f, "SB2 - Battle2 Loop", 0.6f),
+        new(BattleModeRules.BattleMusicSelection.SB2Battle3, "SB2 - Battle3", 0.6f, "SB2 - Battle3 Loop", 0.6f),
         new(BattleModeRules.BattleMusicSelection.SB3Battle, "SB3 - Battle", 0.3f, "SB3 - Battle Loop", 0.3f),
         new(BattleModeRules.BattleMusicSelection.SB4Battle, "SB4 - Battle", 0.5f, "SB4 - Battle Loop", 0.5f),
         new(BattleModeRules.BattleMusicSelection.SB5Battle1, "SB5 - Battle1", 0.5f, "SB5 - Battle1 Loop", 0.5f, "SB5 - Battle1 Critical", 0.5f),
