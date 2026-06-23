@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Threading;
 using Assets.Scripts.SaveSystem;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,15 +12,26 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
     const string LargeImageText = "Super Bomberman 6";
     const string SmallImageKey = "sb6_logo";
     const string SmallImageText = "Super Bomberman 6";
-    const float RetryConnectSeconds = 10f;
     const float RefreshSeconds = 15f;
+
+    // De quanto em quanto tempo a worker thread reavalia a conexão (caso o Discord
+    // seja aberto depois). Não afeta a main thread — roda toda em background.
+    const int WorkerReconnectPollMs = 5000;
 
     static DiscordRichPresenceController instance;
 
     DiscordIpcClient client;
-    WaitForSeconds retryDelay;
-    WaitForSeconds refreshDelay;
     long startedAtUnixSeconds;
+
+    // ===== Ponte main thread -> worker thread =====
+    // A main thread monta a activity (lendo estado do jogo) e a entrega aqui.
+    // A worker thread consome e faz TODO o I/O bloqueante do named pipe.
+    readonly object gate = new object();
+    DiscordRichPresenceActivity pendingActivity;
+    bool activityDirty;
+    volatile bool workerRunning;
+    Thread workerThread;
+    AutoResetEvent workerSignal;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Bootstrap()
@@ -41,17 +53,16 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
         }
 
         instance = this;
-        retryDelay = new WaitForSeconds(RetryConnectSeconds);
-        refreshDelay = new WaitForSeconds(RefreshSeconds);
         startedAtUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         client = new DiscordIpcClient(ApplicationId);
+
+        StartWorker();
     }
 
     void OnEnable()
     {
         SceneManager.sceneLoaded += HandleSceneLoaded;
-        StartCoroutine(ConnectionLoop());
-        StartCoroutine(RefreshLoop());
+        StartCoroutine(PresenceLoop());
     }
 
     void OnDisable()
@@ -61,47 +72,124 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        if (client == null)
-            return;
+        StopWorker();
+    }
 
-        client.ClearActivity();
-        client.Dispose();
-        client = null;
+    void OnDestroy()
+    {
+        if (instance == this)
+            instance = null;
+
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        StopWorker();
     }
 
     void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        UpdatePresence(scene.name);
+        PostPresence(scene.name);
     }
 
-    IEnumerator ConnectionLoop()
+    // Atualiza a presença periodicamente (player count, timestamps podem mudar).
+    // Apenas monta o estado e sinaliza a worker — nunca toca no pipe.
+    IEnumerator PresenceLoop()
     {
-        while (enabled)
-        {
-            if (client != null && !client.IsConnected)
-                client.TryConnect();
+        var wait = new WaitForSeconds(RefreshSeconds);
 
-            UpdatePresence(SceneManager.GetActiveScene().name);
-            yield return retryDelay;
+        while (true)
+        {
+            PostPresence(SceneManager.GetActiveScene().name);
+            yield return wait;
         }
     }
 
-    IEnumerator RefreshLoop()
-    {
-        while (enabled)
-        {
-            UpdatePresence(SceneManager.GetActiveScene().name);
-            yield return refreshDelay;
-        }
-    }
-
-    void UpdatePresence(string sceneName)
+    // === Main thread: monta a activity (lê APIs do Unity) e entrega à worker ===
+    void PostPresence(string sceneName)
     {
         if (client == null)
             return;
 
-        var activity = BuildActivity(sceneName);
-        client.SetActivity(activity);
+        DiscordRichPresenceActivity activity = BuildActivity(sceneName);
+
+        lock (gate)
+        {
+            pendingActivity = activity;
+            activityDirty = true;
+        }
+
+        workerSignal?.Set();
+    }
+
+    // ===== Worker thread: TODO o I/O bloqueante do Discord acontece aqui =====
+    void StartWorker()
+    {
+        workerSignal = new AutoResetEvent(false);
+        workerRunning = true;
+        workerThread = new Thread(WorkerLoop)
+        {
+            IsBackground = true,
+            Name = "DiscordIpcWorker"
+        };
+        workerThread.Start();
+    }
+
+    void WorkerLoop()
+    {
+        while (workerRunning)
+        {
+            // Acorda por novo estado (Set) ou por timeout (reavaliar reconexão).
+            workerSignal.WaitOne(WorkerReconnectPollMs);
+
+            if (!workerRunning)
+                break;
+
+            DiscordRichPresenceActivity activity;
+            bool dirty;
+            lock (gate)
+            {
+                activity = pendingActivity;
+                dirty = activityDirty;
+            }
+
+            if (activity == null)
+                continue;
+
+            bool wasConnected = client.IsConnected;
+            if (!wasConnected)
+                client.TryConnect(); // barato quando o Discord está fechado (guard de pipe)
+
+            // Envia quando há mudança nova, ou logo após uma (re)conexão.
+            if (client.IsConnected && (dirty || !wasConnected))
+            {
+                client.SetActivity(activity);
+
+                lock (gate)
+                {
+                    if (pendingActivity == activity)
+                        activityDirty = false;
+                }
+            }
+        }
+
+        // Encerramento limpo — ainda fora da main thread.
+        try { client?.ClearActivity(); } catch { /* Discord pode já estar fechado */ }
+        try { client?.Dispose(); } catch { /* idem */ }
+    }
+
+    void StopWorker()
+    {
+        if (workerThread == null)
+            return;
+
+        workerRunning = false;
+        workerSignal?.Set();
+
+        // Dá um tempo para a worker enviar o "clear" e desconectar. Sendo background
+        // thread, mesmo que estoure o timeout o processo encerra normalmente.
+        workerThread.Join(1000);
+        workerThread = null;
+
+        workerSignal?.Dispose();
+        workerSignal = null;
     }
 
     DiscordRichPresenceActivity BuildActivity(string sceneName)

@@ -32,6 +32,11 @@ public sealed class DiscordIpcClient : IDisposable
         {
             string pipeName = "discord-ipc-" + i;
 
+            // Se o named pipe não existe (Discord fechado), pula sem bloquear.
+            // Sem este guard, pipe.Connect() abaixo trava a thread por todo o timeout.
+            if (!PipeExists(pipeName))
+                continue;
+
             try
             {
                 pipe = new NamedPipeClientStream(
@@ -58,6 +63,20 @@ public sealed class DiscordIpcClient : IDisposable
 #endif
 
         return false;
+    }
+
+    static bool PipeExists(string pipeName)
+    {
+        try
+        {
+            // No Windows os named pipes ficam sob \\.\pipe\. File.Exists é uma checagem
+            // rápida e NÃO bloqueante — ao contrário de NamedPipeClientStream.Connect().
+            return File.Exists(@"\\.\pipe\" + pipeName);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public void SetActivity(DiscordRichPresenceActivity activity)

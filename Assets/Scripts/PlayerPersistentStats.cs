@@ -20,7 +20,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
+        public int Life = 999;
         public int BombAmount = 1;
         public int ExplosionRadius = 2;
         public int SpeedInternal = BaseSpeedNormal /*+ (SpeedStep * 5)*/;
