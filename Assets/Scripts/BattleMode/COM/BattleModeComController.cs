@@ -2852,6 +2852,11 @@ public sealed class BattleModeComController : MonoBehaviour
         string outcome,
         string trace)
     {
+        // Diagnóstico desligado: evaluations só alimenta o no-op LogAbilityDecisionTrace.
+        // Pular evita a concatenação O(n²) de strings a cada Think (alocação/GC).
+        if (!EnableDecisionTraceDiagnostics)
+            return;
+
         if (!string.IsNullOrEmpty(evaluations))
             evaluations += " | ";
 
@@ -2863,6 +2868,11 @@ public sealed class BattleModeComController : MonoBehaviour
         BattleModeComAbilityDecision decision,
         string trace)
     {
+        // Diagnóstico desligado: o consumidor (LogAbilityDecisionTrace) é no-op.
+        // Evita montar esta string grande a cada habilidade/Think (alocação/GC).
+        if (!EnableDecisionTraceDiagnostics)
+            return string.Empty;
+
         string target = decision.HasTarget ? decision.TargetTile.ToString() : "none";
         string input = string.IsNullOrWhiteSpace(decision.InputDescription)
             ? "none"
