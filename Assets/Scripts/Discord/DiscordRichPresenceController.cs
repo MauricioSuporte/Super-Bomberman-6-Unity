@@ -138,7 +138,7 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
 
         if (sceneName.StartsWith("BattleMode_", StringComparison.Ordinal))
         {
-            activity.Details = "Battle Mode";
+            activity.Details = FormatBattleModeDetails();
             activity.State = FormatBattleModeName(sceneName) + " - " + playerText;
             return activity;
         }
@@ -252,6 +252,40 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
             BossRushDifficulty.EASY => "Easy",
             BossRushDifficulty.HARD => "Hard",
             BossRushDifficulty.NIGHTMARE => "Nightmare",
+            _ => "Normal"
+        };
+    }
+
+    static string FormatBattleModeDetails()
+    {
+        if (!HasBattleModeComPlayer())
+            return "Battle Mode";
+
+        BattleModeComputerLevel level = BattleModeRules.Instance != null
+            ? BattleModeRules.Instance.CurrentComputerLevel
+            : SaveSystem.GetBattleModeComputerLevel();
+
+        return "Battle Mode - COM: " + FormatBattleModeComputerLevel(level);
+    }
+
+    static bool HasBattleModeComPlayer()
+    {
+        BattleModePlayerControlMode[] modes = SaveSystem.GetBattleModePlayerControlModes();
+        for (int i = 0; i < modes.Length; i++)
+        {
+            if (modes[i] == BattleModePlayerControlMode.Com)
+                return true;
+        }
+
+        return false;
+    }
+
+    static string FormatBattleModeComputerLevel(BattleModeComputerLevel level)
+    {
+        return level switch
+        {
+            BattleModeComputerLevel.Easy => "Easy",
+            BattleModeComputerLevel.Hard => "Hard",
             _ => "Normal"
         };
     }
