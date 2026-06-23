@@ -157,6 +157,18 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] int footerFontSize = 36;
     [SerializeField] float footerOffsetFromLastLineY = -40f;
 
+    [Header("Version Label (TMP)")]
+    [SerializeField] bool showVersionLabel = true;
+    [SerializeField] TextMeshProUGUI versionText;
+    [Tooltip("{0} é substituído por Application.version (bundleVersion em Project Settings).")]
+    [SerializeField] string versionLabelFormat = "DEMO v{0}";
+    [Tooltip("Cor RGB do rótulo (sem #). Combina com o menu (FFFFE7 = branco quente).")]
+    [SerializeField] string versionLabelRgb = "FFFFE7";
+    [SerializeField, Range(0f, 1f)] float versionLabelAlpha = 0.9f;
+    [SerializeField] int versionLabelFontSize = 26;
+    [Tooltip("Margem inferior (usa Y; X é ignorado quando centralizado), em unidades BASE @ designUpscale.")]
+    [SerializeField] Vector2 versionLabelMargin = new(14f, 12f);
+
     [Header("Boss Rush Lock")]
     [SerializeField] bool forceBossRushUnlocked = true;
     [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
@@ -268,6 +280,8 @@ public class TitleScreenController : MonoBehaviour
 
     RectTransform videoValuesRect;
 
+    RectTransform versionRect;
+
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
 
@@ -297,6 +311,8 @@ public class TitleScreenController : MonoBehaviour
     float BossRushLockedBottomMarginScaled => ScaledFloat(bossRushLockedBottomMargin);
     float MenuExtraYOffsetScaled => ScaledFloat(menuExtraYOffset);
     float PushStartExtraYOffsetScaled => ScaledFloat(pushStartExtraYOffset);
+    int VersionFontSizeScaled => ScaledFont(versionLabelFontSize);
+    Vector2 VersionMarginScaled => ScaledVec(versionLabelMargin);
 
     public void SetBossRushUnlocked(bool unlocked)
     {
@@ -342,6 +358,7 @@ public class TitleScreenController : MonoBehaviour
         EnsureFooterText();
         EnsureBossRushLockedText();
         EnsureVideoValuesText();
+        EnsureVersionText();
 
         ForceHide();
     }
@@ -641,6 +658,7 @@ public class TitleScreenController : MonoBehaviour
         EnsureFooterText();
         EnsureBossRushLockedText();
         EnsureVideoValuesText();
+        EnsureVersionText();
 
         ApplyScaledFontSettings();
         RefreshMenuTextInternal();
@@ -649,6 +667,7 @@ public class TitleScreenController : MonoBehaviour
         UpdateFooterPosition();
         UpdateBossRushLockedPosition();
         UpdateVideoValuesPosition();
+        UpdateVersionPosition();
 
         if (titleLogoIntro != null)
         {
@@ -681,6 +700,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (videoValuesText != null)
             videoValuesText.fontSize = MenuFontSizeScaled;
+
+        if (versionText != null)
+            versionText.fontSize = VersionFontSizeScaled;
     }
 
     void ApplyCursorScale()
@@ -772,6 +794,7 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.fontMaterial = runtimeMenuMat;
         if (bossRushLockedText != null) bossRushLockedText.fontMaterial = runtimeMenuMat;
         if (videoValuesText != null) videoValuesText.fontMaterial = runtimeMenuMat;
+        if (versionText != null) versionText.fontMaterial = runtimeMenuMat;
     }
 
     void ApplyMenuAnchoredPosition()
@@ -878,6 +901,104 @@ public class TitleScreenController : MonoBehaviour
         videoValuesText.alignment = TextAlignmentOptions.TopRight;
         videoValuesText.color = Color.white;
         videoValuesText.gameObject.SetActive(false);
+    }
+
+    void EnsureVersionText()
+    {
+        if (menuText == null)
+            return;
+
+        if (!showVersionLabel)
+        {
+            if (versionText != null)
+                versionText.gameObject.SetActive(false);
+            return;
+        }
+
+        bool justCreated = false;
+
+        if (versionText == null)
+        {
+            GameObject go = new("VersionText", typeof(RectTransform));
+            RectTransform root = GetUiRootForGeneratedText();
+            if (root != null) go.transform.SetParent(root, false);
+            else go.transform.SetParent(menuText.transform, false);
+
+            versionText = go.AddComponent<TextMeshProUGUI>();
+            versionText.raycastTarget = false;
+            justCreated = true;
+        }
+
+        RectTransform versionRoot = GetUiRootForGeneratedText();
+        if (versionRoot != null && versionText.transform.parent != versionRoot)
+            versionText.transform.SetParent(versionRoot, false);
+
+        versionRect = versionText.rectTransform;
+        versionRect.anchorMin = new Vector2(0.5f, 0f);
+        versionRect.anchorMax = new Vector2(0.5f, 0f);
+        versionRect.pivot = new Vector2(0.5f, 0f);
+        versionRect.sizeDelta = Vector2.zero;
+        versionRect.localScale = Vector3.one;
+
+        versionText.richText = true;
+        versionText.font = menuText.font;
+        versionText.fontStyle = menuText.fontStyle;
+        versionText.fontSize = VersionFontSizeScaled;
+        versionText.textWrappingMode = TextWrappingModes.NoWrap;
+        versionText.overflowMode = TextOverflowModes.Overflow;
+        versionText.extraPadding = true;
+        versionText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
+        versionText.alignment = TextAlignmentOptions.Bottom;
+        versionText.text = BuildVersionLabel();
+
+        UpdateVersionPosition();
+
+        if (justCreated)
+            versionText.gameObject.SetActive(false);
+    }
+
+    string BuildVersionLabel()
+    {
+        string version = Application.version;
+        if (string.IsNullOrEmpty(version))
+            version = "?";
+
+        string label;
+        if (string.IsNullOrEmpty(versionLabelFormat))
+        {
+            label = version;
+        }
+        else
+        {
+            try
+            {
+                label = string.Format(versionLabelFormat, version);
+            }
+            catch (System.FormatException)
+            {
+                label = versionLabelFormat;
+            }
+        }
+
+        string rgb = string.IsNullOrEmpty(versionLabelRgb)
+            ? "FFFFE7"
+            : versionLabelRgb.Replace("#", "");
+
+        return $"<color={ColorWithAlpha(rgb, versionLabelAlpha)}>{label}</color>";
+    }
+
+    void UpdateVersionPosition()
+    {
+        if (versionText == null || versionRect == null)
+            return;
+
+        versionText.fontSize = VersionFontSizeScaled;
+
+        Vector2 margin = VersionMarginScaled;
+        versionRect.anchoredPosition = new Vector2(
+            0f,
+            Mathf.Round(margin.y)
+        );
     }
 
     void EnsurePushStartText()
@@ -1076,6 +1197,7 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.gameObject.SetActive(false);
         if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
         if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+        if (versionText != null) versionText.gameObject.SetActive(false);
 
         if (titleLogoIntro != null)
             titleLogoIntro.HideImmediate();
@@ -1119,6 +1241,10 @@ public class TitleScreenController : MonoBehaviour
         EnsureFooterText();
         EnsureBossRushLockedText();
         EnsureVideoValuesText();
+        EnsureVersionText();
+
+        if (versionText != null)
+            versionText.gameObject.SetActive(showVersionLabel);
 
         if (cursorRenderer != null)
         {
@@ -1411,6 +1537,7 @@ public class TitleScreenController : MonoBehaviour
             if (pushStartText != null) pushStartText.gameObject.SetActive(false);
             if (footerText != null) footerText.gameObject.SetActive(false);
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+            if (versionText != null) versionText.gameObject.SetActive(false);
 
             while (Running)
                 yield return null;
@@ -2011,6 +2138,7 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.gameObject.SetActive(false);
         if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
         if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+        if (versionText != null) versionText.gameObject.SetActive(false);
         if (titleLogoIntro != null) titleLogoIntro.HideImmediate();
 
         StopPushStartBlink();
@@ -2040,6 +2168,7 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.gameObject.SetActive(false);
         if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
         if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+        if (versionText != null) versionText.gameObject.SetActive(false);
         if (titleLogoIntro != null) titleLogoIntro.HideImmediate();
 
         StopPushStartBlink();
