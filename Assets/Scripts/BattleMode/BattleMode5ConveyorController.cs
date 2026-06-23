@@ -283,6 +283,12 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
                 continue;
 
             int objectKey = GetObjectKey(mover.gameObject);
+            if (ShouldIgnorePlayerConveyorEffect(mover))
+            {
+                ClearObjectConveyorState(objectKey);
+                continue;
+            }
+
             if (!TryGetConveyorTarget(
                     objectKey,
                     mover.Rigidbody.position,
@@ -311,6 +317,30 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
             Vector2 next = Vector2.MoveTowards(mover.Rigidbody.position, target, maxDistance);
             mover.Rigidbody.MovePosition(next);
         }
+    }
+
+    static bool ShouldIgnorePlayerConveyorEffect(MovementController mover)
+    {
+        if (mover == null)
+            return false;
+
+        if (mover.TryGetComponent<GreenLouieDashAbility>(out var greenDash) &&
+            greenDash != null &&
+            greenDash.DashActive)
+        {
+            return true;
+        }
+
+        if (mover.TryGetComponent<BlackLouieDashPushAbility>(out var blackDash) &&
+            blackDash != null &&
+            blackDash.DashActive)
+        {
+            return true;
+        }
+
+        return mover.TryGetComponent<MoleMountDrillAbility>(out var moleDrill) &&
+               moleDrill != null &&
+               moleDrill.Running;
     }
 
     void ApplyPlayerMovementInfluence(MovementController mover, Vector3Int sourceCell)
