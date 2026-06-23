@@ -494,6 +494,8 @@ public class GamePauseController : MonoBehaviour
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
+        bool exitingBattleModeStage = IsBattleModeStageActive;
+
         ForceUnpause(resumeMusic: false);
 
         exitingToScene = false;
@@ -502,6 +504,9 @@ public class GamePauseController : MonoBehaviour
 
         if (cancelBossRushRun && BossRushSession.IsActive)
             BossRushSession.CancelRun();
+
+        if (exitingBattleModeStage)
+            ResetBattleRoundStateForExit();
 
         if (endBattleMatch && GameSession.Instance != null)
             GameSession.Instance.EndBattleMatch();
@@ -522,6 +527,12 @@ public class GamePauseController : MonoBehaviour
             TitleScreenSkip.SkipNextIntro = true;
 
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+    }
+
+    static void ResetBattleRoundStateForExit()
+    {
+        BattleRevengeSystem.BlockAndRemoveAllActiveCartsForRoundEnd();
+        PlayerPersistentStats.RollbackStage();
     }
 
     void RefreshPauseUI()

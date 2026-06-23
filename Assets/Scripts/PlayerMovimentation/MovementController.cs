@@ -447,6 +447,12 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsPlayer() => CompareTag("Player");
 
+    private static bool IsBattleModeScene()
+    {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+
     public bool IsRidingPlaying()
     {
         if (cachedRiding == null)
@@ -2827,6 +2833,7 @@ public class MovementController : MonoBehaviour, IKillable
             !battleRevengeSwapDeathPending)
         {
             if (!BossRushSession.IsActive &&
+                !IsBattleModeScene() &&
                 SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore)
             {
                 GameSession.Instance?.MarkHardcorePlayerEliminated(playerId);

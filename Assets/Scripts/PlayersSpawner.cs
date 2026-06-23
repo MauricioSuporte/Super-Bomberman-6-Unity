@@ -155,6 +155,7 @@ public sealed class PlayersSpawner : MonoBehaviour
                 continue;
 
             if (!BossRushSession.IsActive &&
+                !IsBattleModeScene() &&
                 SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore &&
                 GameSession.Instance != null &&
                 !GameSession.Instance.ShouldSpawnHardcorePlayer(playerId))
