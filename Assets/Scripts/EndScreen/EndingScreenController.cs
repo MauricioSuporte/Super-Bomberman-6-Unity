@@ -629,7 +629,8 @@ public class EndingScreenController : MonoBehaviour
             $"<color={defaultColor}>Love Vixen</color>\n" +
             $"<color={defaultColor}>Juliocesargamesbr</color>\n" +
             $"<color={defaultColor}>Rangelukaz</color>\n" +
-            $"<color={defaultColor}>JonasS JK Ninja</color>\n\n" +
+            $"<color={defaultColor}>JonasS JK Ninja</color>\n" +
+            $"<color={defaultColor}>Mauh Gamer</color>\n\n" +
 
             $"<color={yellowTitleColor}>{credits.SoundsMusics}</color>\n" +
             $"<color={defaultColor}>wolfguarder</color>\n\n" +
