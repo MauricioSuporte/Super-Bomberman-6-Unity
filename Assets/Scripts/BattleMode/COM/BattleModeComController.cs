@@ -540,11 +540,13 @@ public sealed class BattleModeComController : MonoBehaviour
 
         BattleModeComKickBombAbility exactKickCom = FindExactKickBombComAbility();
         TryGetComponent<BattleModeComYellowLouieKickAbility>(out var yellowLouieKickCom);
+        bool removedKickConflict = false;
 
         if ((!isCom || !yellowLouieKickEnabled) && yellowLouieKickCom != null)
         {
             Destroy(yellowLouieKickCom);
             yellowLouieKickCom = null;
+            removedKickConflict = true;
             abilitySystemVersion = -2;
         }
 
@@ -556,10 +558,14 @@ public sealed class BattleModeComController : MonoBehaviour
             {
                 Destroy(exactKickCom);
                 exactKickCom = null;
+                removedKickConflict = true;
             }
 
-            yellowLouieKickCom = gameObject.AddComponent<BattleModeComYellowLouieKickAbility>();
-            abilitySystemVersion = -2;
+            if (!removedKickConflict)
+            {
+                yellowLouieKickCom = gameObject.AddComponent<BattleModeComYellowLouieKickAbility>();
+                abilitySystemVersion = -2;
+            }
         }
 
         if (isCom &&
@@ -568,9 +574,12 @@ public sealed class BattleModeComController : MonoBehaviour
             yellowLouieKickCom == null &&
             exactKickCom == null)
         {
-            gameObject.AddComponent<BattleModeComKickBombAbility>();
-            abilitySystemVersion = -2;
-            LogKickLoadDiagnostic("added BattleModeComKickBombAbility");
+            if (!removedKickConflict)
+            {
+                gameObject.AddComponent<BattleModeComKickBombAbility>();
+                abilitySystemVersion = -2;
+                LogKickLoadDiagnostic("added BattleModeComKickBombAbility");
+            }
         }
 
         if ((!isCom || !kickEnabled || yellowLouieKickEnabled) && exactKickCom != null)
