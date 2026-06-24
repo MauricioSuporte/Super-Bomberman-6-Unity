@@ -242,6 +242,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 portalCells[destinationIndex]);
         }
 
+        CancelActiveMountMovementAbilities(mover);
+
         TeleportState state = CaptureAndApplyTeleportState(mover);
         activeStates[mover] = state;
 
@@ -352,6 +354,24 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         SetHealthInvulnerability(state.healths, true);
 
         return state;
+    }
+
+    void CancelActiveMountMovementAbilities(MovementController mover)
+    {
+        if (mover == null)
+            return;
+
+        var greenDash = mover.GetComponent<GreenLouieDashAbility>();
+        if (greenDash != null && greenDash.DashActive)
+            greenDash.CancelDashForExternalInterruption();
+
+        var pinkJump = mover.GetComponent<PinkLouieJumpAbility>();
+        if (pinkJump != null && pinkJump.JumpActive)
+            pinkJump.CancelJumpForExternalInterruption();
+
+        var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
+        if (blackDash != null && blackDash.DashActive)
+            blackDash.CancelDashForExternalInterruption();
     }
 
     void RestoreTeleportState(MovementController mover, TeleportState state)
