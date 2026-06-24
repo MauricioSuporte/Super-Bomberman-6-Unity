@@ -194,7 +194,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             {
                 var src = audioSource != null ? audioSource : FindAnyPlayerAudioSource();
                 if (src != null)
-                    src.PlayOneShot(shotSfx, shotVolume);
+                    GameAudioSettings.PlaySfx(src, shotSfx, shotVolume);
             }
 
             float t = Mathf.Max(0f, shootLockSeconds);

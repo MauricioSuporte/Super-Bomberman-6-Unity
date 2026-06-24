@@ -223,7 +223,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             StartJumpInvulnerabilityOnly(mountedLouieHealth);
 
         if (audioSource != null && jumpSfx != null)
-            audioSource.PlayOneShot(jumpSfx, jumpSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, jumpSfx, jumpSfxVolume);
 
         StartJumpVisuals(dir != Vector2.zero ? dir : faceDir);
 

@@ -859,9 +859,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             return;
 
         if (mover.TryGetComponent(out AudioSource audio) && audio != null)
-            audio.PlayOneShot(springSfx);
+            GameAudioSettings.PlaySfx(audio, springSfx);
         else
-            AudioSource.PlayClipAtPoint(springSfx, mover.transform.position);
+            GameAudioSettings.PlaySfxAtPoint(springSfx, mover.transform.position);
     }
 
     bool IsSpringTile(TileBase tile)

@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -1716,7 +1716,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
         var audio = FindAudioSource();
         if (audio != null && clip != null)
-            audio.PlayOneShot(clip, Mathf.Clamp01(vol));
+            GameAudioSettings.PlaySfx(audio, clip, Mathf.Clamp01(vol));
     }
 
     AudioSource FindAudioSource()

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -28,6 +28,7 @@ public class GameMusicController : MonoBehaviour
     Coroutine musicTransitionRoutine;
     Coroutine preloadAndPlayRoutine;
     bool musicPausedForGamePause;
+    float currentMusicVolume = 1f;
     const float MusicLoadTimeoutSeconds = 5f;
 
     public AudioClip defaultMusic;
@@ -77,6 +78,7 @@ public class GameMusicController : MonoBehaviour
         unpausedSfxSource.ignoreListenerPause = true;
 
         SceneManager.sceneLoaded += HandleSceneLoaded;
+        GameAudioSettings.Changed += HandleAudioSettingsChanged;
     }
 
     private void Start()
@@ -94,6 +96,7 @@ public class GameMusicController : MonoBehaviour
             return;
 
         SceneManager.sceneLoaded -= HandleSceneLoaded;
+        GameAudioSettings.Changed -= HandleAudioSettingsChanged;
         Instance = null;
     }
 
@@ -134,7 +137,8 @@ public class GameMusicController : MonoBehaviour
 
         musicSource.loop = loop;
         musicSource.clip = clip;
-        musicSource.volume = volume;
+        currentMusicVolume = Mathf.Clamp01(volume);
+        musicSource.volume = GameAudioSettings.ApplyMusicVolume(currentMusicVolume);
         musicSource.pitch = pitch;
 
         if (restart || !sameClip || !musicSource.isPlaying)
@@ -170,7 +174,8 @@ public class GameMusicController : MonoBehaviour
 
         musicSource.loop = false;
         musicSource.clip = introClip;
-        musicSource.volume = introVolume;
+        currentMusicVolume = Mathf.Clamp01(introVolume);
+        musicSource.volume = GameAudioSettings.ApplyMusicVolume(currentMusicVolume);
         musicSource.pitch = pitch;
 
         if (restart || !sameClip || !musicSource.isPlaying)
@@ -256,7 +261,7 @@ public class GameMusicController : MonoBehaviour
         if (clip == null || sfxSource == null)
             return;
 
-        sfxSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(sfxSource, clip, volume);
     }
 
     public void PlaySfxIgnoringListenerPause(AudioClip clip, float volume = 1f)
@@ -264,7 +269,7 @@ public class GameMusicController : MonoBehaviour
         if (clip == null || unpausedSfxSource == null)
             return;
 
-        unpausedSfxSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(unpausedSfxSource, clip, volume);
     }
 
     public void StopMusic()
@@ -275,6 +280,7 @@ public class GameMusicController : MonoBehaviour
         musicSource.Stop();
         musicSource.clip = null;
         musicSource.pitch = 1f;
+        currentMusicVolume = 1f;
         musicPausedForGamePause = false;
         StopMusicTransitionRoutine();
     }
@@ -328,7 +334,7 @@ public class GameMusicController : MonoBehaviour
         if (sfxSource == null || clip == null)
             return;
 
-        sfxSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(sfxSource, clip, volume);
     }
 
     public void ResumeMusicWithPitch(float pitch)
@@ -473,6 +479,12 @@ public class GameMusicController : MonoBehaviour
 
         if (musicSource.isPlaying)
             musicSource.Pause();
+    }
+
+    void HandleAudioSettingsChanged()
+    {
+        if (musicSource != null)
+            musicSource.volume = GameAudioSettings.ApplyMusicVolume(currentMusicVolume);
     }
 
     void PreloadSelectedBattleMusic()

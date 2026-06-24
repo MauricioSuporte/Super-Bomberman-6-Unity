@@ -493,8 +493,6 @@ public class UnlockToastPresenter : MonoBehaviour
         DontDestroyOnLoad(temp);
 
         AudioSource source = temp.AddComponent<AudioSource>();
-        source.clip = unlockSfx;
-        source.volume = 1f;
         source.loop = false;
         source.playOnAwake = false;
         source.ignoreListenerPause = true;
@@ -506,7 +504,7 @@ public class UnlockToastPresenter : MonoBehaviour
         if (musicSource != null)
             source.outputAudioMixerGroup = musicSource.outputAudioMixerGroup;
 
-        source.Play();
+        GameAudioSettings.PlaySfxClip(source, unlockSfx);
 
         Destroy(temp, unlockSfx.length + 0.1f);
         UnlockSfxLog($"PlayUnlockSfx via protected temporary AudioSource | source='{temp.name}' | clip='{unlockSfx.name}' | length={unlockSfx.length:0.000} | listenerPaused={AudioListener.pause} | isPlaying={source.isPlaying}");

@@ -205,7 +205,7 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
 
         if (TryGetComponent<AudioSource>(out var src))
         {
-            src.PlayOneShot(puzzleCompleteSfx, puzzleCompleteVolume);
+            GameAudioSettings.PlaySfx(src, puzzleCompleteSfx, puzzleCompleteVolume);
             return;
         }
 
@@ -213,9 +213,7 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
         temp.transform.position = transform.position;
 
         var audio = temp.AddComponent<AudioSource>();
-        audio.clip = puzzleCompleteSfx;
-        audio.volume = puzzleCompleteVolume;
-        audio.Play();
+        GameAudioSettings.PlaySfxClip(audio, puzzleCompleteSfx, puzzleCompleteVolume);
 
         Destroy(temp, puzzleCompleteSfx.length);
     }

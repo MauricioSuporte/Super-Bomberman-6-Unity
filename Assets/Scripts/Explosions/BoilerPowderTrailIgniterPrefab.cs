@@ -156,7 +156,7 @@ namespace Assets.Scripts.Explosions
             {
                 ResolveSfxSourceIfNeeded();
                 if (sfxSource != null)
-                    sfxSource.PlayOneShot(preIgniteClip, Mathf.Clamp01(preIgniteVolume));
+                    GameAudioSettings.PlaySfx(sfxSource, preIgniteClip, Mathf.Clamp01(preIgniteVolume));
             }
 
             StartSteamForBoiler();

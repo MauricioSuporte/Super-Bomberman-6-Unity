@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -2888,7 +2888,7 @@ public class MovementController : MonoBehaviour, IKillable
         BeginDeathCommon();
 
         if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
 
         DisableAllFootSprites();
         DisableAllMountedSprites();
@@ -3114,10 +3114,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (audioSource.isPlaying)
             audioSource.Stop();
 
-        audioSource.clip = holeDeathSfx;
-        audioSource.volume = holeDeathSfxVolume;
         audioSource.loop = false;
-        audioSource.Play();
+        GameAudioSettings.PlaySfxClip(audioSource, holeDeathSfx, holeDeathSfxVolume);
     }
 
     private AnimatedSpriteRenderer PickRendererForHoleDeathVisual()

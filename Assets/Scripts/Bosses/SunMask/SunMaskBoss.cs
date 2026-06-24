@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -609,7 +609,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (audioSource == null) return;
         if (damagedSfx == null) return;
 
-        audioSource.PlayOneShot(damagedSfx, Mathf.Clamp01(damagedSfxVolume));
+        GameAudioSettings.PlaySfx(audioSource, damagedSfx, Mathf.Clamp01(damagedSfxVolume));
     }
 
     void CacheDirectionBeforeHurt()
@@ -1001,7 +1001,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
                 deathSfxOwner = s;
 
-                s.PlayOneShot(deathExplosionSfx, 1f);
+                GameAudioSettings.PlaySfx(s, deathExplosionSfx, 1f);
 
                 float clipDuration = deathExplosionSfx.length / Mathf.Max(0.01f, Mathf.Abs(pitch));
                 Destroy(go, clipDuration + 0.1f);
@@ -1015,7 +1015,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         audioSource.Stop();
         audioSource.pitch = pitch;
-        audioSource.PlayOneShot(deathExplosionSfx, deathExplosionSfxVolume);
+        GameAudioSettings.PlaySfx(audioSource, deathExplosionSfx, deathExplosionSfxVolume);
         audioSource.pitch = 1f;
     }
 

@@ -147,7 +147,7 @@ public abstract class EndStage : MonoBehaviour
             "StageEnd");
 
         if (audio != null && enterSfx != null)
-            audio.PlayOneShot(enterSfx);
+            GameAudioSettings.PlaySfx(audio, enterSfx);
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();

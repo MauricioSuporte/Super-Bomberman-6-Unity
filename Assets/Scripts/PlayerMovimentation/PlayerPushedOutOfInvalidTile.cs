@@ -650,9 +650,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         if (_audio.isPlaying && _audio.clip == bounceSfx)
             _audio.Stop();
 
-        _audio.clip = bounceSfx;
-        _audio.volume = bounceSfxVolume;
-        _audio.Play();
+        GameAudioSettings.PlaySfxClip(_audio, bounceSfx, bounceSfxVolume);
     }
 
     private static string FormatVec(Vector2 value)

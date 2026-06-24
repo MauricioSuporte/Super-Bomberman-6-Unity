@@ -451,7 +451,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         LoadDefaultSfxIfNeeded();
 
         if (enterSfx != null && audioSource != null)
-            audioSource.PlayOneShot(enterSfx, enterSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, enterSfx, enterSfxVolume);
     }
 
     int SpawnTeleportStarsAlongPath(Vector2 source, Vector2 destination, float normalizedTime, int alreadySpawned)

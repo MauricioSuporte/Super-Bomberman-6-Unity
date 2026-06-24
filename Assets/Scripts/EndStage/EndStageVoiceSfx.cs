@@ -65,6 +65,9 @@ public static class EndStageVoiceSfx
 
     public static bool TryPlayRandomGood(AudioSource audio)
     {
+        if (!GameAudioSettings.VoicesEnabled)
+            return false;
+
         if (audio == null)
             return false;
 
@@ -88,8 +91,7 @@ public static class EndStageVoiceSfx
         if (clip == null)
             return false;
 
-        float volume = GetGoodClipVolume(pick);
-        audio.PlayOneShot(clip, volume);
+        GameAudioSettings.PlayVoiceSfx(audio, clip, GetGoodClipVolume(pick));
         return true;
     }
 
@@ -100,6 +102,9 @@ public static class EndStageVoiceSfx
 
     static bool TryPlaySkull(AudioSource audio, float volume, string context)
     {
+        if (!GameAudioSettings.VoicesEnabled)
+            return false;
+
         if (audio == null)
         {
             SLog(context, "TryPlaySkull | audio=NULL");
@@ -114,7 +119,7 @@ public static class EndStageVoiceSfx
             return false;
         }
 
-        audio.PlayOneShot(skullClip, volume);
+        GameAudioSettings.PlayVoiceSfx(audio, skullClip, volume);
         SLog(context, $"TryPlaySkull | clip={skullClip.name} volume={volume}");
         return true;
     }

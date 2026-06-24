@@ -2124,7 +2124,7 @@ public partial class BombController : MonoBehaviour
         AudioClip clip = GetExplosionSfx(radius, pierce);
 
         if (clip != null)
-            source.PlayOneShot(clip, explosionSfxVolume);
+            GameAudioSettings.PlaySfx(source, clip, explosionSfxVolume);
     }
 
     public void PlayExplosionSfxExclusive(AudioSource source, int radius, bool pierce = false)
@@ -2148,7 +2148,7 @@ public partial class BombController : MonoBehaviour
             currentExplosionAudio.Stop();
 
         currentExplosionAudio = source;
-        currentExplosionAudio.PlayOneShot(clip, explosionSfxVolume);
+        GameAudioSettings.PlaySfx(currentExplosionAudio, clip, explosionSfxVolume);
     }
 
     private void PlayPlaceBombSfx()
@@ -2160,7 +2160,7 @@ public partial class BombController : MonoBehaviour
         if (src == null)
             return;
 
-        src.PlayOneShot(placeBombSfx);
+        GameAudioSettings.PlaySfx(src, placeBombSfx);
     }
 
     private void PlayWaterDestroySfx()
@@ -2172,7 +2172,7 @@ public partial class BombController : MonoBehaviour
         if (src == null)
             return;
 
-        src.PlayOneShot(waterDestroySfx, waterDestroyVolume);
+        GameAudioSettings.PlaySfx(src, waterDestroySfx, waterDestroyVolume);
     }
 
     private void PlayHoleDestroySfx()
@@ -2184,7 +2184,7 @@ public partial class BombController : MonoBehaviour
         if (src == null)
             return;
 
-        src.PlayOneShot(holeDestroySfx, holeDestroyVolume);
+        GameAudioSettings.PlaySfx(src, holeDestroySfx, holeDestroyVolume);
     }
 
     private void TryApplyGroundExplosionModifiers(Vector2 worldPos, ref int radius, ref bool pierce)

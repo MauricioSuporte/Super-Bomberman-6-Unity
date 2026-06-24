@@ -442,7 +442,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             source = player.GetComponentInChildren<AudioSource>(true);
 
         if (source != null)
-            source.PlayOneShot(playerImpulseSfx, playerImpulseSfxVolume);
+            GameAudioSettings.PlaySfx(source, playerImpulseSfx, playerImpulseSfxVolume);
     }
 
     IEnumerator PlayerImpulseRoutine(

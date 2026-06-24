@@ -56,9 +56,8 @@ public class HudsonLogoIntro : MonoBehaviour
             return;
 
         sfxSource.Stop();
-        sfxSource.clip = hudsonFx;
         sfxSource.loop = false;
-        sfxSource.Play();
+        GameAudioSettings.PlaySfxClip(sfxSource, hudsonFx);
     }
 
     public void ForceHide()

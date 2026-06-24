@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -113,7 +113,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         if (stunnedSomeone)
         {
             if (audioSource != null && punchSfx != null)
-                audioSource.PlayOneShot(punchSfx, punchSfxVolume);
+                GameAudioSettings.PlaySfx(audioSource, punchSfx, punchSfxVolume);
 
             float cooldownSeconds = stunnedBattlePlayer
                 ? battlePlayerSuccessCooldownSeconds

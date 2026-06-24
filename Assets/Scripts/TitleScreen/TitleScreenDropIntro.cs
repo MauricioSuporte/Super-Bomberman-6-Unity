@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -1007,7 +1007,7 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         source.playOnAwake = false;
         source.spatialBlend = 0f;
-        source.PlayOneShot(characterDropStartSfx, characterDropStartSfxVolume);
+        GameAudioSettings.PlaySfx(source, characterDropStartSfx, characterDropStartSfxVolume);
     }
 
     Sprite GetFallingSprite(CharacterDropSlot slot)

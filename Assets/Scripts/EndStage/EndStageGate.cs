@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -78,7 +78,7 @@ public sealed class EndStageGate : EndStage
             yield return new WaitForSeconds(openDelay);
 
         if (openGateSfx != null && audioSource != null)
-            audioSource.PlayOneShot(openGateSfx);
+            GameAudioSettings.PlaySfx(audioSource, openGateSfx);
 
         if (HasMidTiles())
         {

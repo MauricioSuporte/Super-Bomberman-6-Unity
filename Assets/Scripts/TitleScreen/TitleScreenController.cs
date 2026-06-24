@@ -215,7 +215,8 @@ public class TitleScreenController : MonoBehaviour
         Video = 3,
         ResetSaveConfirm = 4,
         GameModes = 5,
-        Language = 6
+        Language = 6,
+        Sound = 7
     }
 
     enum StartFlowMode
@@ -247,12 +248,18 @@ public class TitleScreenController : MonoBehaviour
 
     const int OPTIONS_IDX_CONTROLS = 0;
     const int OPTIONS_IDX_LANGUAGE = 1;
-    int OptionsVideoIndex => IsVideoMenuAvailable ? 2 : -1;
-    int OptionsTouchButtonsIndex => IsMobileTouchButtonsOptionAvailable ? 2 : -1;
-    int OptionsResetSaveIndex => (IsVideoMenuAvailable || IsMobileTouchButtonsOptionAvailable) ? 3 : 2;
+    const int OPTIONS_IDX_SOUND = 2;
+    int OptionsVideoIndex => IsVideoMenuAvailable ? 3 : -1;
+    int OptionsTouchButtonsIndex => IsMobileTouchButtonsOptionAvailable ? 3 : -1;
+    int OptionsResetSaveIndex => (IsVideoMenuAvailable || IsMobileTouchButtonsOptionAvailable) ? 4 : 3;
 
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
+
+    const int SOUND_IDX_MUSIC = 0;
+    const int SOUND_IDX_SFX = 1;
+    const int SOUND_IDX_VOICES = 2;
+    const float SOUND_VOLUME_STEP = 0.1f;
 
     const int RESET_SAVE_IDX_CANCEL = 0;
     const int RESET_SAVE_IDX_CONFIRM = 1;
@@ -1128,8 +1135,9 @@ public class TitleScreenController : MonoBehaviour
             return;
 
         bool showVideoValues = menuMode == MenuMode.Video && IsVideoMenuAvailable;
+        bool showSoundValues = menuMode == MenuMode.Sound;
         bool showMobileTouchValue = menuMode == MenuMode.Options && IsMobileTouchButtonsOptionAvailable;
-        bool show = showVideoValues || showMobileTouchValue;
+        bool show = showVideoValues || showSoundValues || showMobileTouchValue;
         if (!show)
         {
             if (videoValuesText.gameObject.activeSelf)
@@ -1409,6 +1417,7 @@ public class TitleScreenController : MonoBehaviour
             float right = li.lineExtents.max.x + padX;
 
             if (menuMode == MenuMode.Video ||
+                menuMode == MenuMode.Sound ||
                 (menuMode == MenuMode.Options && IsMobileTouchButtonsOptionAvailable && i == OptionsTouchButtonsIndex))
             {
                 right += Mathf.Max(40f, ScaledFloat(videoValuesRightPadding + 40f));
@@ -1591,11 +1600,11 @@ public class TitleScreenController : MonoBehaviour
             }
 
             bool backPressedByPad =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Sound || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
                 TryGetAnyPlayerDown(PlayerAction.ActionB, out _);
 
             bool backPressedByMouse =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Sound || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
                 IsPointerBackPressed();
 
             if (backPressedByPad || backPressedByMouse)
@@ -1623,6 +1632,11 @@ public class TitleScreenController : MonoBehaviour
                 {
                     menuMode = MenuMode.Options;
                     menuIndex = Mathf.Max(0, OptionsVideoIndex);
+                }
+                else if (menuMode == MenuMode.Sound)
+                {
+                    menuMode = MenuMode.Options;
+                    menuIndex = OPTIONS_IDX_SOUND;
                 }
                 else if (menuMode == MenuMode.Language)
                 {
@@ -1676,6 +1690,52 @@ public class TitleScreenController : MonoBehaviour
 
                     yield return null;
                     continue;
+                }
+
+                yield return null;
+                continue;
+            }
+
+            if (menuMode == MenuMode.Sound)
+            {
+                bool left = TryGetAnyPlayerDown(PlayerAction.MoveLeft, out _);
+                bool right = TryGetAnyPlayerDown(PlayerAction.MoveRight, out _);
+                bool confirm = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _) || IsPointerConfirmPressedOnCurrentSelection();
+
+                if (left || right || confirm)
+                {
+                    bool changed = false;
+
+                    if (menuIndex == SOUND_IDX_MUSIC)
+                    {
+                        float delta = left ? -SOUND_VOLUME_STEP : SOUND_VOLUME_STEP;
+                        GameAudioSettings.SetMusicVolume(GameAudioSettings.MusicVolume + delta);
+                        changed = true;
+                    }
+                    else if (menuIndex == SOUND_IDX_SFX)
+                    {
+                        float delta = left ? -SOUND_VOLUME_STEP : SOUND_VOLUME_STEP;
+                        GameAudioSettings.SetSfxVolume(GameAudioSettings.SfxVolume + delta);
+                        changed = true;
+                    }
+                    else if (menuIndex == SOUND_IDX_VOICES)
+                    {
+                        GameAudioSettings.SetVoicesEnabled(!GameAudioSettings.VoicesEnabled);
+                        changed = true;
+                    }
+
+                    if (changed)
+                    {
+                        PlaySelectSfx();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA) ||
+                               AnyPlayerHeld(PlayerAction.MoveLeft) || AnyPlayerHeld(PlayerAction.MoveRight))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
                 }
 
                 yield return null;
@@ -1926,6 +1986,23 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
+                    if (menuIndex == OPTIONS_IDX_SOUND)
+                    {
+                        locked = false;
+
+                        menuMode = MenuMode.Sound;
+                        menuIndex = 0;
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
                     if (IsVideoMenuAvailable && menuIndex == OptionsVideoIndex)
                     {
                         locked = false;
@@ -2075,8 +2152,9 @@ public class TitleScreenController : MonoBehaviour
     {
         if (menuMode == MenuMode.PlayerCount) return 4;
         if (menuMode == MenuMode.GameModes) return 3;
-        if (menuMode == MenuMode.Options) return (IsVideoMenuAvailable || IsMobileTouchButtonsOptionAvailable) ? 4 : 3;
+        if (menuMode == MenuMode.Options) return (IsVideoMenuAvailable || IsMobileTouchButtonsOptionAvailable) ? 5 : 4;
         if (menuMode == MenuMode.Language) return GameTextDatabase.SupportedLanguages.Length;
+        if (menuMode == MenuMode.Sound) return 3;
         if (menuMode == MenuMode.Video) return 2;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
         return 4;
@@ -2272,6 +2350,7 @@ public class TitleScreenController : MonoBehaviour
         {
             string controls = $"<color=#{baseRgb}FF>{text.Controls}</color>";
             string language = $"<color=#{baseRgb}FF>{text.Language}</color>";
+            string sound = $"<color=#{baseRgb}FF>{TitleLabel(text.Sound, "SOM")}</color>";
             string resetSave = $"<color={warnRgb}>{text.ResetSave}</color>";
 
             if (IsVideoMenuAvailable)
@@ -2282,6 +2361,7 @@ public class TitleScreenController : MonoBehaviour
                     "<align=left>" +
                     $"<size={size}>{controls}</size>\n" +
                     $"<size={size}>{language}</size>\n" +
+                    $"<size={size}>{sound}</size>\n" +
                     $"<size={size}>{video}</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
@@ -2294,6 +2374,7 @@ public class TitleScreenController : MonoBehaviour
                     "<align=left>" +
                     $"<size={size}>{controls}</size>\n" +
                     $"<size={size}>{language}</size>\n" +
+                    $"<size={size}>{sound}</size>\n" +
                     $"<size={size}>{touchButtons}</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
@@ -2309,11 +2390,34 @@ public class TitleScreenController : MonoBehaviour
                     "<align=left>" +
                     $"<size={size}>{controls}</size>\n" +
                     $"<size={size}>{language}</size>\n" +
+                    $"<size={size}>{sound}</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
             }
 
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+            return;
+        }
+
+        if (menuMode == MenuMode.Sound)
+        {
+            menuText.text =
+                "<align=left>" +
+                $"<size={size}>{TitleLabel(text.MusicVolume, "MUSICA")}</size>\n" +
+                $"<size={size}>{TitleLabel(text.SfxVolume, "SFX")}</size>\n" +
+                $"<size={size}>{TitleLabel(text.Voices, "VOZES")}</size>" +
+                "</align>";
+
+            EnsureVideoValuesText();
+
+            if (videoValuesText != null)
+            {
+                string music = $"{GameAudioSettings.VolumePercent(GameAudioSettings.MusicVolume)}%";
+                string sfx = $"{GameAudioSettings.VolumePercent(GameAudioSettings.SfxVolume)}%";
+                string voices = GameAudioSettings.VoicesEnabled ? text.On : text.Off;
+                videoValuesText.text = $"{music}\n{sfx}\n{voices}";
+            }
+
             return;
         }
 
@@ -2404,6 +2508,11 @@ public class TitleScreenController : MonoBehaviour
             string ws = $"{Mathf.Max(1, _videoWindowMult)}x";
             videoValuesText.text = $"{fs}\n{ws}";
         }
+    }
+
+    static string TitleLabel(string localized, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(localized) ? fallback : localized;
     }
 
     void ApplyLanguageFontFallback()

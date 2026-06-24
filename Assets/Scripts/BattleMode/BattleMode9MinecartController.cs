@@ -2474,7 +2474,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     {
         EnsureAudioSource();
         if (clip != null && audioSource != null)
-            audioSource.PlayOneShot(clip, Mathf.Clamp01(volume));
+            GameAudioSettings.PlaySfx(audioSource, clip, Mathf.Clamp01(volume));
     }
 
     void PlayRideLoopSfx()
@@ -2483,10 +2483,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (rideLoopSfx == null || audioSource == null)
             return;
 
-        audioSource.clip = rideLoopSfx;
         audioSource.loop = true;
-        audioSource.volume = sfxVolume;
-        audioSource.Play();
+        GameAudioSettings.PlaySfxClip(audioSource, rideLoopSfx, sfxVolume);
         rideLoopPausedForGamePause = false;
         SyncRideLoopSfxWithPause();
     }

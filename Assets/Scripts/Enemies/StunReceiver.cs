@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -155,9 +155,9 @@ public class StunReceiver : MonoBehaviour
             return;
 
         if (cachedAudioSource != null)
-            cachedAudioSource.PlayOneShot(clip, 1f);
+            GameAudioSettings.PlaySfx(cachedAudioSource, clip, 1f);
         else
-            AudioSource.PlayClipAtPoint(clip, transform.position, 1f);
+            GameAudioSettings.PlaySfxAtPoint(clip, transform.position, 1f);
     }
 
     private static AudioClip GetRandomStunClip()

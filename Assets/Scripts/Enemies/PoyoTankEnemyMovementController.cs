@@ -728,7 +728,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             SpawnProjectile(dir);
 
             if (shotSfx != null && _audioSource != null)
-                _audioSource.PlayOneShot(shotSfx);
+                GameAudioSettings.PlaySfx(_audioSource, shotSfx);
         }
 
         float remain = total - windup;

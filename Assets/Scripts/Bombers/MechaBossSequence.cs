@@ -756,7 +756,7 @@ public class MechaBossSequence : MonoBehaviour
                 var audio = p.GetComponent<AudioSource>();
                 if (audio != null)
                 {
-                    audio.PlayOneShot(endStageEnterSfx);
+                    GameAudioSettings.PlaySfx(audio, endStageEnterSfx);
                     playedEnter = true;
                 }
             }

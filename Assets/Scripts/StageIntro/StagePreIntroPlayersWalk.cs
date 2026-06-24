@@ -999,7 +999,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 if (walkLoopSource != null && s_walkLoopClip != null)
                 {
                     walkLoopSource.Stop();
-                    walkLoopSource.PlayOneShot(s_walkLoopClip, walkLoopVolume);
+                    GameAudioSettings.PlaySfx(walkLoopSource, s_walkLoopClip, walkLoopVolume);
                 }
 
                 nextWalkStepSfxAtUnscaled = now + WalkStepSfxIntervalSeconds;

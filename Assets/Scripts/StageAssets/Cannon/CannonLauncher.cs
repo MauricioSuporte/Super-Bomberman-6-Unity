@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -148,7 +148,7 @@ public sealed class CannonLauncher : MonoBehaviour
         if (fireSfxDelay > 0f)
             yield return new WaitForSeconds(fireSfxDelay);
 
-        audioSource.PlayOneShot(fireSfx);
+        GameAudioSettings.PlaySfx(audioSource, fireSfx);
     }
 
     private IEnumerator PlayCannonFire(float totalSeconds, float smokeAtSeconds)

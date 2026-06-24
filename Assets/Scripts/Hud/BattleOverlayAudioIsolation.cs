@@ -29,10 +29,8 @@ public sealed class BattleOverlayAudioIsolation : MonoBehaviour
 
         EnsureAudioSource();
         overlayAudioSource.Stop();
-        overlayAudioSource.clip = clip;
-        overlayAudioSource.volume = Mathf.Clamp01(volume);
         overlayAudioSource.loop = loop;
-        overlayAudioSource.Play();
+        GameAudioSettings.PlaySfxClip(overlayAudioSource, clip, volume);
     }
 
     public void Stop()

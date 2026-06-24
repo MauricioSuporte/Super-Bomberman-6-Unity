@@ -519,7 +519,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         source ??= audioSource;
 
         if (source != null)
-            source.PlayOneShot(cachedLoseItemClip, loseItemSfxVolume);
+            GameAudioSettings.PlaySfx(source, cachedLoseItemClip, loseItemSfxVolume);
     }
 
     private void SpawnExpelledPersistentItem(MovementController movementController, ItemType itemType)
@@ -2266,7 +2266,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (!canPlay)
             return;
 
-        audioSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(audioSource, clip, volume);
     }
 
     private void TryPlayKickSfx_StopOthers(AudioClip clip, float volume)
@@ -2283,7 +2283,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         audioSource.Stop();
-        audioSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(audioSource, clip, volume);
     }
 
     private AudioClip GetKickBounceClip()

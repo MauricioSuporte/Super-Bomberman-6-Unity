@@ -218,7 +218,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         if (bombMoveSfxSource == null)
             return;
 
-        bombMoveSfxSource.PlayOneShot(bombMoveClip, Mathf.Clamp01(bombMoveVolume));
+        GameAudioSettings.PlaySfx(bombMoveSfxSource, bombMoveClip, Mathf.Clamp01(bombMoveVolume));
     }
 
     private void FinalizeBoilerOnce()

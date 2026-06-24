@@ -333,6 +333,9 @@ public sealed class SkullDebuffController : MonoBehaviour
 
     static void PlayTransferSfx(GameObject target)
     {
+        if (!GameAudioSettings.VoicesEnabled)
+            return;
+
         if (target == null)
             return;
 
@@ -344,9 +347,9 @@ public sealed class SkullDebuffController : MonoBehaviour
 
         var audio = target.GetComponent<AudioSource>();
         if (audio != null)
-            audio.PlayOneShot(transferSfx, 1f);
+            GameAudioSettings.PlayVoiceSfx(audio, transferSfx, 1f);
         else
-            AudioSource.PlayClipAtPoint(transferSfx, target.transform.position, 1f);
+            GameAudioSettings.PlayVoiceSfxAtPoint(transferSfx, target.transform.position, 1f);
     }
 
     static Vector2 RandomCardinalDirection()

@@ -1938,7 +1938,7 @@ public class GameManager : MonoBehaviour
 
         if (audioSource != null)
         {
-            audioSource.PlayOneShot(battleVictorySfx);
+            GameAudioSettings.PlaySfx(audioSource, battleVictorySfx);
             survivingPlayer.StartCoroutine(PlayVictoryVoiceAfterDelay(audioSource, hasNightmareBomberWinner, 1f));
         }
     }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -516,7 +516,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             kickSfxOwner = audioSource;
             audioSource.Stop();
-            audioSource.PlayOneShot(clip, volume);
+            GameAudioSettings.PlaySfx(audioSource, clip, volume);
         }
     }
 
@@ -532,7 +532,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             kickSfxOwner = audioSource;
             audioSource.Stop();
-            audioSource.PlayOneShot(clip, volume);
+            GameAudioSettings.PlaySfx(audioSource, clip, volume);
         }
     }
 

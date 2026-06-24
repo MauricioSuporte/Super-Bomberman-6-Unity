@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -218,7 +218,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
 
         if (drillSfx != null && audioSource != null)
-            audioSource.PlayOneShot(drillSfx, drillVolume);
+            GameAudioSettings.PlaySfx(audioSource, drillSfx, drillVolume);
 
         if (movement == null || rb == null)
         {

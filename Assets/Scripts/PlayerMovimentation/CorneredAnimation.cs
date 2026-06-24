@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [DefaultExecutionOrder(-45)]
 [DisallowMultipleComponent]
@@ -534,7 +534,7 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
 
         lastSfxTime = now;
-        audioSource.PlayOneShot(clip, corneredSfxVolume);
+        GameAudioSettings.PlaySfx(audioSource, clip, corneredSfxVolume);
     }
 
     private void LoadBlockedSfxClips()

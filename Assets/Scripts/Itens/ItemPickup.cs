@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -298,7 +298,7 @@ public class ItemPickup : MonoBehaviour
 
         var audio = player.GetComponent<AudioSource>();
         if (audio != null)
-            audio.PlayOneShot(collectSfx, Mathf.Clamp01(collectVolume));
+            GameAudioSettings.PlaySfx(audio, collectSfx, Mathf.Clamp01(collectVolume));
     }
 
     bool ShouldPlayPlayerExtraSfx()
@@ -321,6 +321,9 @@ public class ItemPickup : MonoBehaviour
         if (!ShouldPlayPlayerExtraSfx())
             return;
 
+        if (!GameAudioSettings.VoicesEnabled)
+            return;
+
         var playerAudio = player.GetComponent<AudioSource>();
         if (playerAudio == null)
             return;
@@ -336,7 +339,7 @@ public class ItemPickup : MonoBehaviour
         audio.pitch = playerAudio.pitch;
         audio.Stop();
         audio.clip = playerExtraSfx;
-        audio.volume = Mathf.Clamp01(playerAudio.volume * playerExtraVolume);
+        audio.volume = GameAudioSettings.ApplyVoiceSfxVolume(playerAudio.volume * playerExtraVolume);
         audio.Play();
     }
 
@@ -1627,9 +1630,9 @@ public class ItemPickup : MonoBehaviour
         transform.position = p;
 
         // IMPORTANTE:
-        // O AnimatedSpriteRenderer est√° no mesmo GameObject do item.
+        // O AnimatedSpriteRenderer est· no mesmo GameObject do item.
         // Se ele usar frameOffsets, ele pode restaurar o localPosition antigo.
-        // Ent√£o atualizamos a base visual para a posi√ß√£o local atual.
+        // Ent„o atualizamos a base visual para a posiÁ„o local atual.
         SyncSkullAnimatedRendererBasePosition();
 
         if (syncPhysics)

@@ -255,6 +255,7 @@ public static class GameTextDatabase
         BattleMode = "BATTLE MODE",
         Controls = "CONTROLS",
         Language = "LANGUAGE",
+        Sound = "SOUND",
         Video = "VIDEO",
         TouchButtons = "TOUCH BUTTONS",
         ResetSave = "RESET SAVE",
@@ -264,6 +265,9 @@ public static class GameTextDatabase
         Player4 = "4 PLAYERS",
         Fullscreen = "FULLSCREEN",
         WindowSize = "WINDOW SIZE",
+        MusicVolume = "MUSIC",
+        SfxVolume = "SFX",
+        Voices = "VOICES",
         On = "ON",
         Off = "OFF",
         ResetWarning = "THIS WILL ERASE:",
@@ -321,6 +325,7 @@ public static class GameTextDatabase
         BattleMode = "MODO BATALLA",
         Controls = "CONTROLES",
         Language = "IDIOMA",
+        Sound = "SONIDO",
         Video = "VIDEO",
         TouchButtons = "BOTONES TOUCH",
         ResetSave = "BORRAR PARTIDA",
@@ -354,6 +359,7 @@ public static class GameTextDatabase
         BattleMode = "MODO BATALHA",
         Controls = "CONTROLES",
         Language = "IDIOMA",
+        Sound = "SOM",
         Video = "VIDEO",
         TouchButtons = "BOTÕES TOUCH",
         ResetSave = "APAGAR SAVE",
@@ -1145,6 +1151,7 @@ public sealed class TitleScreenText
     public string BattleMode;
     public string Controls;
     public string Language;
+    public string Sound;
     public string Video;
     public string TouchButtons;
     public string ResetSave;
@@ -1154,6 +1161,9 @@ public sealed class TitleScreenText
     public string Player4;
     public string Fullscreen;
     public string WindowSize;
+    public string MusicVolume;
+    public string SfxVolume;
+    public string Voices;
     public string On;
     public string Off;
     public string ResetWarning;

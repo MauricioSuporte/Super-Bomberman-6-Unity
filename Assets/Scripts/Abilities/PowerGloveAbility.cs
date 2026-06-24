@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -386,6 +386,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void PlayRandomThrowSfx()
     {
+        if (!GameAudioSettings.VoicesEnabled)
+            return;
+
         if (audioSource == null)
             return;
 
@@ -401,7 +404,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             var clip = throwSfxClips[idx];
             if (clip != null)
             {
-                audioSource.PlayOneShot(clip, Mathf.Clamp01(throwSfxVolume));
+                GameAudioSettings.PlayVoiceSfx(audioSource, clip, throwSfxVolume);
                 return;
             }
         }

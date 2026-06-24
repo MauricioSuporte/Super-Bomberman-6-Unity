@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -170,9 +170,9 @@ public sealed class SpringLauncher : MonoBehaviour
                 if (jumpSfx != null)
                 {
                     if (audio != null)
-                        audio.PlayOneShot(jumpSfx);
+                        GameAudioSettings.PlaySfx(audio, jumpSfx);
                     else
-                        AudioSource.PlayClipAtPoint(jumpSfx, mover.transform.position);
+                        GameAudioSettings.PlaySfxAtPoint(jumpSfx, mover.transform.position);
                 }
 
                 mover.SetExplosionInvulnerable(true);

@@ -269,7 +269,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             stun.CancelStunForDeath();
 
         if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
 
         if (rb != null)
             rb.linearVelocity = Vector2.zero;

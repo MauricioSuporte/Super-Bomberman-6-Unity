@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -77,13 +77,13 @@ public sealed class EndStageGateAnimated : EndStage
             yield return new WaitForSeconds(unlockSfxDelay);
 
         if (unlockGateSfx != null && audioSource != null)
-            audioSource.PlayOneShot(unlockGateSfx);
+            GameAudioSettings.PlaySfx(audioSource, unlockGateSfx);
 
         if (openSfxDelayAfterUnlock > 0f)
             yield return new WaitForSeconds(openSfxDelayAfterUnlock);
 
         if (openGateSfx != null && audioSource != null)
-            audioSource.PlayOneShot(openGateSfx);
+            GameAudioSettings.PlaySfx(audioSource, openGateSfx);
 
         if (snapOpenToClosedOnUnlock && openRoot != null && closedRoot != null)
         {

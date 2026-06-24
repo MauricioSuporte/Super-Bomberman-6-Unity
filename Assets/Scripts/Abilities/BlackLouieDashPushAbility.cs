@@ -1,4 +1,4 @@
-ï»¿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -152,7 +152,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         if (audioSource != null && dashSfx != null)
-            audioSource.PlayOneShot(dashSfx, dashSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, dashSfx, dashSfxVolume);
 
         float duration = Mathf.Max(0.01f, dashMoveSeconds);
 
@@ -250,7 +250,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     {
         float hold = Mathf.Max(0f, impactHoldSeconds);
 
-        // MantÃ©m o Ãºltimo frame visÃ­vel no local do impacto.
+        // Mantém o último frame visível no local do impacto.
         if (hold > 0f)
         {
             if (externalAnimator is BlackLouieDashAnimator anim)

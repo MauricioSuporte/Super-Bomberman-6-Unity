@@ -214,7 +214,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 $"dir:{FormatVec(dir.normalized)} redirected:{redirected}");
 
             if (redirected && audioSource != null && kickSfx != null)
-                audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+                GameAudioSettings.PlaySfx(audioSource, kickSfx, kickSfxVolume);
 
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
             {
@@ -234,7 +234,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         if (audioSource != null && kickSfx != null)
-            audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, kickSfx, kickSfxVolume);
 
         yield return MixedChainRoutine(
             dir,

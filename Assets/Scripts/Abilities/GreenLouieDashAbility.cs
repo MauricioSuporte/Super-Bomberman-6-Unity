@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -117,7 +117,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         originalSpeed = movement.speed;
 
         if (audioSource != null && dashSfx != null)
-            audioSource.PlayOneShot(dashSfx, dashSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, dashSfx, dashSfxVolume);
 
         movement.speed = dashSpeed;
         movement.SetInputLocked(true, false);

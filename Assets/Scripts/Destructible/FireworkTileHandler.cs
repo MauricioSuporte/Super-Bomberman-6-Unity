@@ -249,7 +249,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         if (phase2StartSfx == null || _audio == null)
             return;
 
-        _audio.PlayOneShot(phase2StartSfx, phase2StartSfxVolume);
+        GameAudioSettings.PlaySfx(_audio, phase2StartSfx, phase2StartSfxVolume);
     }
 
     IEnumerator SpawnBurstPhaseInArea(

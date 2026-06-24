@@ -577,7 +577,7 @@ public class GamePauseController : MonoBehaviour
         if (pauseSfx == null || sfxSource == null)
             return;
 
-        sfxSource.PlayOneShot(pauseSfx);
+        GameAudioSettings.PlaySfx(sfxSource, pauseSfx);
     }
 
     void PlayMoveSfx()
@@ -585,7 +585,7 @@ public class GamePauseController : MonoBehaviour
         if (moveOptionSfx == null || sfxSource == null)
             return;
 
-        sfxSource.PlayOneShot(moveOptionSfx, moveOptionVolume);
+        GameAudioSettings.PlaySfx(sfxSource, moveOptionSfx, moveOptionVolume);
     }
 
     void PlaySelectSfx()
@@ -593,7 +593,7 @@ public class GamePauseController : MonoBehaviour
         if (selectOptionSfx == null || sfxSource == null)
             return;
 
-        sfxSource.PlayOneShot(selectOptionSfx, selectOptionVolume);
+        GameAudioSettings.PlaySfx(sfxSource, selectOptionSfx, selectOptionVolume);
     }
 
     void PlayBackConfirmSfx()
@@ -601,7 +601,7 @@ public class GamePauseController : MonoBehaviour
         if (backConfirmSfx == null || sfxSource == null)
             return;
 
-        sfxSource.PlayOneShot(backConfirmSfx, backConfirmVolume);
+        GameAudioSettings.PlaySfx(sfxSource, backConfirmSfx, backConfirmVolume);
     }
 
     int Wrap(int v, int count)

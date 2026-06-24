@@ -1025,7 +1025,7 @@ public sealed class AchievementsMenu : MonoBehaviour
 
         EnsureLocalAudioSources();
         if (localSfxSource != null)
-            localSfxSource.PlayOneShot(clip, volume);
+            GameAudioSettings.PlaySfx(localSfxSource, clip, volume);
     }
 
     private void EnsureLocalAudioSources()
