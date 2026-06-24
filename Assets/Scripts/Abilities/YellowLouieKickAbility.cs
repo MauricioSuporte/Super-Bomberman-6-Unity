@@ -2,6 +2,7 @@ using Assets.Scripts.Interface;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
@@ -10,6 +11,7 @@ using UnityEngine.Tilemaps;
 public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "YellowLouieDestructibleKick";
+    const string BattleMode6SceneName = "BattleMode_6";
 
     [SerializeField] private bool enabledAbility = true;
 
@@ -41,6 +43,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     MovementController movement;
     Rigidbody2D rb;
     AudioSource audioSource;
+    BattleMode6RedirectionController stage6RedirectionController;
 
     Coroutine routine;
     Coroutine kickVisualRoutine;
@@ -651,6 +654,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         float tileSize = movement.tileSize;
         float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
         var queue = new List<Bomb>(8) { firstBomb };
+        var queueDirections = new List<Vector2>(8) { kickDir };
         int segment = 0;
         SetYellowLouieBombMoving(firstBomb);
 
@@ -662,31 +666,32 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         {
             releaseInputIfNeeded?.Invoke();
 
-            ExtendBombQueue(queue, kickDir, tileSize);
+            ExtendBombQueue(queue, queueDirections, tileSize);
             for (int i = 0; i < queue.Count; i++)
                 SetYellowLouieBombMoving(queue[i]);
 
-            if (queue.Count == 0)
+            if (queue.Count == 0 || queueDirections.Count != queue.Count)
             {
                 LogKickTrace("bomb-queue-stop empty-queue");
                 ClearYellowLouieBombMovement();
                 yield break;
             }
 
-            if (!CanMoveBombQueue(queue, kickDir, tileSize, destructibleTilemap, transfer))
+            Vector2 frontDirection = queueDirections[queueDirections.Count - 1];
+            if (!CanMoveBombQueue(queue, queueDirections, tileSize, destructibleTilemap, transfer))
             {
                 Bomb front = queue[queue.Count - 1];
                 Vector2 frontCell = front != null ? SnapToGrid(front.transform.position, tileSize) : Vector2.zero;
-                Vector2 nextCell = frontCell + kickDir * tileSize;
+                Vector2 nextCell = frontCell + frontDirection * tileSize;
 
                 if (front != null &&
                     front.IsRubberBomb &&
                     (transfer == null || !transfer.hitDestructible) &&
-                    TryReverseRubberBombQueue(queue, ref kickDir, tileSize, destructibleTilemap, transfer))
+                    TryReverseRubberBombQueue(queue, queueDirections, tileSize, destructibleTilemap, transfer))
                 {
                     LogKickTrace(
                         $"bomb-queue-rubber-bounce segment:{segment} queue:{FormatBombQueue(queue)} " +
-                        $"newDir:{FormatVec(kickDir)} blocked:{FormatVec(nextCell)}");
+                        $"newDir:{FormatVec(queueDirections[queueDirections.Count - 1])} blocked:{FormatVec(nextCell)}");
                     front.PlayKickBounceSfx();
                     continue;
                 }
@@ -705,6 +710,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             var bodies = new Rigidbody2D[queue.Count];
             var frontBomb = queue[queue.Count - 1];
             var frontStart = SnapToGrid(frontBomb.transform.position, tileSize);
+            frontDirection = queueDirections[queueDirections.Count - 1];
             var frontCollider = frontBomb.GetComponent<Collider2D>();
 
             for (int i = 0; i < queue.Count; i++)
@@ -718,11 +724,11 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                 bomb.MarkMovedByKickOrPunch();
                 starts[i] = SnapToGrid(bomb.transform.position, tileSize);
-                ends[i] = starts[i] + kickDir * tileSize;
+                ends[i] = starts[i] + queueDirections[i] * tileSize;
                 bodies[i] = bomb.GetComponent<Rigidbody2D>();
             }
 
-            StartBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart);
+            StartBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart);
 
             LogKickTrace(
                 $"bomb-queue-segment segment:{segment} queue:{FormatBombQueue(queue)} " +
@@ -773,7 +779,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                 Vector2 frontPosition = Vector2.Lerp(frontStart, ends[ends.Length - 1], t);
                 DestroyNonSkullItemsAtWorld(frontPosition);
-                UpdateBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart, t);
+                UpdateBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart, t);
 
                 yield return null;
             }
@@ -787,15 +793,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         bomb.ForceSetLogicalPosition(starts[i]);
                 }
 
-                FinishBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, frontStart);
+                FinishBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart);
 
                 if (frontBomb != null &&
                     frontBomb.IsRubberBomb &&
-                    TryReverseRubberBombQueue(queue, ref kickDir, tileSize, destructibleTilemap, transfer))
+                    TryReverseRubberBombQueue(queue, queueDirections, tileSize, destructibleTilemap, transfer))
                 {
                     LogKickTrace(
                         $"bomb-queue-rubber-moving-bomb-bounce segment:{segment} " +
-                        $"queue:{FormatBombQueue(queue)} newDir:{FormatVec(kickDir)}");
+                        $"queue:{FormatBombQueue(queue)} newDir:{FormatVec(queueDirections[queueDirections.Count - 1])}");
                     frontBomb.PlayKickBounceSfx();
                     continue;
                 }
@@ -819,7 +825,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 _bombEarlyKickUnlocked.Remove(bomb);
             }
 
-            FinishBombQueuePushedSkulls(transfer, kickDir, tileSize, frontCollider, ends[ends.Length - 1]);
+            FinishBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, ends[ends.Length - 1]);
             DestroyNonSkullItemsAtWorld(ends[ends.Length - 1]);
 
             LogKickTrace(
@@ -827,15 +833,58 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 $"logicalFirst:{FormatVec(queue[0] != null ? queue[0].GetLogicalPosition() : Vector2.zero)} " +
                 $"firstFuse:{FormatFuse(queue[0])}");
 
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Vector2 nextDirection = queueDirections[i];
+                TryApplyStage6Redirection(queue[i], ref nextDirection, tileSize);
+                queueDirections[i] = nextDirection;
+            }
+
             segment++;
         }
 
         ClearYellowLouieBombMovement();
     }
 
-    void ExtendBombQueue(List<Bomb> queue, Vector2 kickDir, float tileSize)
+    void TryApplyStage6Redirection(Bomb frontBomb, ref Vector2 kickDir, float tileSize)
     {
-        if (queue == null || queue.Count == 0)
+        if (!string.Equals(SceneManager.GetActiveScene().name, BattleMode6SceneName, System.StringComparison.Ordinal))
+            return;
+
+        if (frontBomb == null || frontBomb.HasExploded)
+            return;
+
+        if (stage6RedirectionController == null || !stage6RedirectionController.isActiveAndEnabled)
+            stage6RedirectionController = FindAnyObjectByType<BattleMode6RedirectionController>();
+
+        if (stage6RedirectionController == null || !stage6RedirectionController.isActiveAndEnabled)
+            return;
+
+        Vector2 frontCell = SnapToGrid(frontBomb.transform.position, tileSize);
+        var tile = new Vector2Int(
+            Mathf.RoundToInt(frontCell.x / Mathf.Max(0.0001f, tileSize)),
+            Mathf.RoundToInt(frontCell.y / Mathf.Max(0.0001f, tileSize)));
+
+        if (!stage6RedirectionController.TryGetRedirection(tile, out Vector2Int redirectedDirection) ||
+            redirectedDirection == Vector2Int.zero)
+        {
+            return;
+        }
+
+        Vector2 nextKickDir = new(redirectedDirection.x, redirectedDirection.y);
+        if (nextKickDir == kickDir)
+            return;
+
+        LogKickTrace(
+            $"bomb-queue-stage6-redirect bomb:{FormatBomb(frontBomb)} " +
+            $"tile:{tile} from:{FormatVec(kickDir)} to:{FormatVec(nextKickDir)}");
+
+        kickDir = nextKickDir;
+    }
+
+    void ExtendBombQueue(List<Bomb> queue, List<Vector2> queueDirections, float tileSize)
+    {
+        if (queue == null || queueDirections == null || queue.Count == 0 || queueDirections.Count != queue.Count)
             return;
 
         var seen = new HashSet<Bomb>(queue);
@@ -846,6 +895,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (front == null)
                 return;
 
+            Vector2 kickDir = queueDirections[queueDirections.Count - 1];
             Vector2 frontCell = SnapToGrid(front.transform.position, tileSize);
             Vector2 nextCell = frontCell + kickDir * tileSize;
 
@@ -859,13 +909,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 return;
 
             queue.Add(nextBomb);
+            queueDirections.Add(kickDir);
             seen.Add(nextBomb);
         }
     }
 
     bool CanMoveBombQueue(
         List<Bomb> queue,
-        Vector2 kickDir,
+        List<Vector2> queueDirections,
         float tileSize,
         Tilemap destructibleTilemap,
         BombQueueTransfer transfer,
@@ -874,12 +925,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (transfer != null)
             transfer.Reset();
 
-        if (queue == null || queue.Count == 0)
+        if (queue == null || queueDirections == null || queue.Count == 0 || queueDirections.Count != queue.Count)
             return false;
 
         for (int i = 0; validateKickEligibility && i < queue.Count; i++)
         {
             Bomb bomb = queue[i];
+            Vector2 kickDir = queueDirections[i];
             if (bomb == null ||
                 (bomb.IsBeingKicked &&
                  !bomb.IsBeingMovedByYellowLouie) ||
@@ -894,8 +946,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (front == null)
             return false;
 
+        Vector2 frontDirection = queueDirections[queueDirections.Count - 1];
         Vector2 frontCell = SnapToGrid(front.transform.position, tileSize);
-        Vector2 nextCellWorld = frontCell + kickDir * tileSize;
+        Vector2 nextCellWorld = frontCell + frontDirection * tileSize;
         Vector3Int nextTileCell = new Vector3Int(
             Mathf.RoundToInt(nextCellWorld.x / tileSize),
             Mathf.RoundToInt(nextCellWorld.y / tileSize),
@@ -933,7 +986,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             }
         }
 
-        if (IsMixedChainSolidAt(nextCellWorld, kickDir, front))
+        if (IsMixedChainSolidAt(nextCellWorld, frontDirection, front))
             return false;
 
         return true;
@@ -1041,12 +1094,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     bool TryReverseRubberBombQueue(
         List<Bomb> queue,
-        ref Vector2 kickDir,
+        List<Vector2> queueDirections,
         float tileSize,
         Tilemap destructibleTilemap,
         BombQueueTransfer transfer)
     {
-        if (queue == null || queue.Count == 0)
+        if (queue == null || queueDirections == null || queue.Count == 0 || queueDirections.Count != queue.Count)
             return false;
 
         for (int i = 0; i < queue.Count; i++)
@@ -1060,18 +1113,27 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             }
         }
 
-        Vector2 reversedDirection = -kickDir;
+        var originalDirections = new Vector2[queueDirections.Count];
+        for (int i = 0; i < queueDirections.Count; i++)
+            originalDirections[i] = queueDirections[i];
 
         queue.Reverse();
+        queueDirections.Reverse();
+        for (int i = 0; i < queueDirections.Count; i++)
+            queueDirections[i] = -queueDirections[i];
+
         if (!CanMoveBombQueue(
                 queue,
-                reversedDirection,
+                queueDirections,
                 tileSize,
                 destructibleTilemap,
                 transfer,
                 validateKickEligibility: false))
         {
             queue.Reverse();
+            queueDirections.Clear();
+            for (int i = 0; i < originalDirections.Length; i++)
+                queueDirections.Add(originalDirections[i]);
             return false;
         }
 
@@ -1083,7 +1145,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             _bombEarlyKickUnlocked.Remove(bomb);
         }
 
-        kickDir = reversedDirection;
         return true;
     }
 
