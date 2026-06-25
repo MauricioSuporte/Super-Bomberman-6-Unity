@@ -66,6 +66,12 @@ public sealed class PlayerManualDismount : MonoBehaviour
 
         bool held = input.Get(movement.PlayerId, dismountAction);
 
+        if (IsPinkLouieJumpActive())
+        {
+            wasHeld = held;
+            return;
+        }
+
         if (held && !wasHeld)
             TryManualDismount();
 
@@ -102,6 +108,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
             return;
 
         if (!movement.IsMounted || !companion.HasMountedLouie())
+            return;
+
+        if (IsPinkLouieJumpActive())
             return;
 
         Vector2 facingAtPress = movement.Direction != Vector2.zero
@@ -187,6 +196,17 @@ public sealed class PlayerManualDismount : MonoBehaviour
             rider.ridingSeconds = previousRidingSeconds;
             return;
         }
+    }
+
+    bool IsPinkLouieJumpActive()
+    {
+        return movement != null &&
+               movement.IsMounted &&
+               companion != null &&
+               companion.GetMountedLouieType() == MountedType.Pink &&
+               TryGetComponent<PinkLouieJumpAbility>(out var pinkJump) &&
+               pinkJump != null &&
+               pinkJump.JumpActive;
     }
 
     static void TryResolveDismountBounce(MovementController movement, Vector2 facing)
