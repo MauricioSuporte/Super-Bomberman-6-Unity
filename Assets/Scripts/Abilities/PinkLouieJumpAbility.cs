@@ -55,6 +55,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     float mountedPlayerBaseLocalY;
     bool mountedPlayerBaseLocalYCached;
     bool mountedPlayerArcActive;
+    Collider2D[] jumpDisabledColliders;
+    bool[] jumpDisabledColliderPreviousEnabled;
+    bool jumpCollisionsDisabled;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -203,6 +206,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             movement.ForceFacingDirection(dir);
 
         movement.SetInputLocked(true, false);
+        DisablePlayerCollisionsForJump();
 
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
@@ -269,6 +273,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
                     ResetMountedPlayerJumpArc();
                     StopJumpVisuals();
                     shadow?.EndJump();
+                    RestorePlayerCollisionsAfterJump();
 
                     if (movement != null)
                         movement.SetInputLocked(false);
@@ -294,6 +299,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         {
             StopJumpVisuals();
             shadow?.EndJump();
+            RestorePlayerCollisionsAfterJump();
 
             if (movement != null)
                 movement.SetInputLocked(false);
@@ -474,6 +480,51 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         return louieMove.GetComponent<CharacterHealth>();
     }
 
+    void DisablePlayerCollisionsForJump()
+    {
+        if (jumpCollisionsDisabled)
+            return;
+
+        jumpDisabledColliders = GetComponents<Collider2D>();
+        if (jumpDisabledColliders == null || jumpDisabledColliders.Length == 0)
+            return;
+
+        jumpDisabledColliderPreviousEnabled = new bool[jumpDisabledColliders.Length];
+
+        for (int i = 0; i < jumpDisabledColliders.Length; i++)
+        {
+            Collider2D col = jumpDisabledColliders[i];
+            if (col == null)
+                continue;
+
+            jumpDisabledColliderPreviousEnabled[i] = col.enabled;
+            col.enabled = false;
+        }
+
+        jumpCollisionsDisabled = true;
+    }
+
+    void RestorePlayerCollisionsAfterJump()
+    {
+        if (!jumpCollisionsDisabled)
+            return;
+
+        if (jumpDisabledColliders != null && jumpDisabledColliderPreviousEnabled != null)
+        {
+            int count = Mathf.Min(jumpDisabledColliders.Length, jumpDisabledColliderPreviousEnabled.Length);
+            for (int i = 0; i < count; i++)
+            {
+                Collider2D col = jumpDisabledColliders[i];
+                if (col != null)
+                    col.enabled = jumpDisabledColliderPreviousEnabled[i];
+            }
+        }
+
+        jumpDisabledColliders = null;
+        jumpDisabledColliderPreviousEnabled = null;
+        jumpCollisionsDisabled = false;
+    }
+
     void HandleLoseLouieMidJump(Vector3 projectedGroundPos, Vector3Int startCell, Tilemap destructible, Tilemap indestructible, Tilemap ground)
     {
         if (rb == null)
@@ -641,6 +692,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
         shadow?.EndJump();
@@ -690,6 +742,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
         shadow?.EndJump();
