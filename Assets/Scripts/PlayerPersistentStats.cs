@@ -20,21 +20,21 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 999;
-        public int BombAmount = 99;
+        public int Life = 1;
+        public int BombAmount = 1;
         public int ExplosionRadius = 2;
         public int SpeedInternal = BaseSpeedNormal /*+ (SpeedStep * 5)*/;
         public bool CanKickBombs = false;
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
+        public bool CanPassDestructibles = false;
+        public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasMagnetBomb = false;
-        public bool HasFullFire = true;
+        public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.Pink;
         public BomberSkin Skin = BomberSkin.White;
