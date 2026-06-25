@@ -1,9 +1,12 @@
-﻿using System.Collections;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class SkinSelectBootstrap : MonoBehaviour
 {
+    readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
+
     [Header("Skin Select")]
     [SerializeField] BomberSkinSelectMenu skinSelectMenu;
 
@@ -61,15 +64,14 @@ public class SkinSelectBootstrap : MonoBehaviour
             }
         }
 
-        int count = 1;
-        if (GameSession.Instance != null)
-            count = GameSession.Instance.ActivePlayerCount;
+        PopulateConfiguredPlayerIds(configuredPlayerIds);
 
-        for (int p = 1; p <= count; p++)
+        for (int i = 0; i < configuredPlayerIds.Count; i++)
         {
-            var chosen = skinSelectMenu.GetSelectedSkin(p);
-            PlayerPersistentStats.Get(p).Skin = chosen;
-            PlayerPersistentStats.SaveSelectedSkin(p);
+            int playerId = configuredPlayerIds[i];
+            var chosen = skinSelectMenu.GetSelectedSkin(playerId);
+            PlayerPersistentStats.Get(playerId).Skin = chosen;
+            PlayerPersistentStats.SaveSelectedSkin(playerId);
         }
 
         switch (SkinSelectFlowRouter.NextDestination)
@@ -135,5 +137,19 @@ public class SkinSelectBootstrap : MonoBehaviour
                     break;
                 }
         }
+    }
+
+    void PopulateConfiguredPlayerIds(List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (GameSession.Instance != null)
+            GameSession.Instance.GetActivePlayerIds(results);
+
+        if (results.Count <= 0)
+            results.Add(GameSession.MinPlayerId);
     }
 }

@@ -1,36 +1,40 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 [ExecuteAlways]
 public sealed class HudPushStartInGridLayout : MonoBehaviour
 {
-    [Header("Text References Per Player")]
-    [SerializeField] private TextMeshProUGUI[] pushStartTexts = new TextMeshProUGUI[4];
+    [Header("Sprite References Per Player")]
+    [SerializeField] private Image[] pushStartImages = new Image[4];
+
+    [Header("Sprite")]
+    [SerializeField] private Sprite pushStartSprite;
+    [SerializeField] private Color spriteColor = Color.white;
+    [SerializeField] private bool preserveAspect = true;
 
     [Header("Grid Logical Size (SNES pixels)")]
     [SerializeField] private float[] gridWidths = new float[4] { 46f, 46f, 46f, 20f };
     [SerializeField] private float gridHeight = 19f;
 
-    [Header("Text Logical Size (SNES pixels)")]
-    [SerializeField] private Vector2 defaultTextSize = new(24f, 7f);
+    [Header("Sprite Logical Size (SNES pixels)")]
+    [SerializeField] private Vector2 defaultSpriteSize = new Vector2(23f, 19f);
 
-    [SerializeField]
-    private Vector2[] textSizes = new Vector2[4]
+    private Vector2[] spriteSizes = new Vector2[4]
     {
-        new(24f, 7f),
-        new(24f, 7f),
-        new(24f, 7f),
-        new(16f, 7f)
+        new Vector2(23f, 19f),
+        new Vector2(23f, 19f),
+        new Vector2(23f, 19f),
+        new Vector2(23f, 19f)
     };
 
-    [Header("Text Offset Inside Each Grid (SNES pixels)")]
+    [Header("Sprite Offset Inside Each Grid (SNES pixels)")]
     [SerializeField]
-    private Vector2[] textOffsets = new Vector2[4]
+    private Vector2[] spriteOffsets = new Vector2[4]
     {
-        new(18f, 6f),
-        new(18f, 6f),
-        new(18f, 6f),
-        new(2f, 6f)
+        new Vector2(11.5f, 0f),
+        new Vector2(11.5f, 0f),
+        new Vector2(11.5f, 0f),
+        new Vector2(2f, 0f)
     };
 
     [Header("Optional Per Player Global Offset (SNES pixels)")]
@@ -43,46 +47,17 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
         Vector2.zero
     };
 
-    [Header("Text Content")]
-    [SerializeField] private string pushStartLabel = "PUSH START";
-
-    [Header("Text Style")]
-    [SerializeField] private TMP_FontAsset fontAsset;
-    [SerializeField] private int baseFontSize = 7;
-    [SerializeField] private FontStyles fontStyle = FontStyles.Bold;
-    [SerializeField] private Color textColor = Color.white;
-    [SerializeField] private bool richText = true;
-    [SerializeField] private bool extraPadding = true;
-
-    [Header("Dynamic Scale")]
-    [SerializeField] private bool dynamicScale = true;
-    [SerializeField] private int referenceWidth = 256;
-    [SerializeField] private int referenceHeight = 224;
-    [SerializeField, Min(1)] private int designUpscale = 1;
-    [SerializeField, Min(0.01f)] private float extraScaleMultiplier = 1f;
-    [SerializeField, Min(0.01f)] private float minScale = 0.5f;
-    [SerializeField, Min(0.01f)] private float maxScale = 10f;
-
     [Header("Blink")]
     [SerializeField] private float blinkInterval = 1f;
 
     private bool blinkVisible = true;
     private float lastBlinkRealtime;
-    private RectTransform cachedRootRect;
-    private float currentUiScale = 1f;
 
     void LateUpdate()
     {
-        UpdateUiScale();
         UpdateBlink();
-        UpdateTexts();
+        UpdateImages();
         UpdateLayout();
-    }
-
-    void UpdateUiScale()
-    {
-        cachedRootRect = ResolveReferenceRect();
-        currentUiScale = ComputeUiScale();
     }
 
     void UpdateBlink()
@@ -111,47 +86,37 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
         }
     }
 
-    void UpdateTexts()
+    void UpdateImages()
     {
-        int activePlayerCount = GetActivePlayerCount();
-        int scaledFontSize = ScaledFont(baseFontSize);
-
-        for (int i = 0; i < pushStartTexts.Length; i++)
+        for (int i = 0; i < pushStartImages.Length; i++)
         {
-            TextMeshProUGUI text = pushStartTexts[i];
-            if (text == null)
+            Image image = pushStartImages[i];
+            if (image == null)
                 continue;
 
-            bool playerAtivo = i < activePlayerCount;
+            bool playerAtivo = IsPlayerAtivo(i + 1);
             bool shouldShow = !playerAtivo && blinkVisible;
 
-            if (fontAsset != null)
-                text.font = fontAsset;
+            if (pushStartSprite != null)
+                image.sprite = pushStartSprite;
 
-            text.text = pushStartLabel;
-            text.fontSize = scaledFontSize;
-            text.fontStyle = fontStyle;
-            text.color = textColor;
-            text.richText = richText;
-            text.extraPadding = extraPadding;
-            text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.overflowMode = TextOverflowModes.Overflow;
-            text.alignment = TextAlignmentOptions.Center;
-
-            text.enabled = shouldShow;
+            image.color = spriteColor;
+            image.preserveAspect = preserveAspect;
+            image.raycastTarget = false;
+            image.enabled = shouldShow;
         }
     }
 
     void UpdateLayout()
     {
-        for (int i = 0; i < pushStartTexts.Length; i++)
+        for (int i = 0; i < pushStartImages.Length; i++)
         {
-            TextMeshProUGUI text = pushStartTexts[i];
-            if (text == null)
+            Image image = pushStartImages[i];
+            if (image == null)
                 continue;
 
-            RectTransform textRect = text.rectTransform;
-            RectTransform parentGrid = textRect.parent as RectTransform;
+            RectTransform imageRect = image.rectTransform;
+            RectTransform parentGrid = imageRect.parent as RectTransform;
 
             if (parentGrid == null)
                 continue;
@@ -176,66 +141,25 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
             float minY = bottom / logicalGridHeight;
             float maxY = top / logicalGridHeight;
 
-            textRect.anchorMin = new Vector2(minX, minY);
-            textRect.anchorMax = new Vector2(maxX, maxY);
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-            textRect.localScale = Vector3.one;
+            imageRect.anchorMin = new Vector2(minX, minY);
+            imageRect.anchorMax = new Vector2(maxX, maxY);
+            imageRect.offsetMin = Vector2.zero;
+            imageRect.offsetMax = Vector2.zero;
+            imageRect.localScale = Vector3.one;
         }
     }
 
-    RectTransform ResolveReferenceRect()
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null)
-            return null;
-
-        Transform safeFrame = canvas.transform.Find("SafeFrame4x3");
-        if (safeFrame is RectTransform safeFrameRect)
-            return safeFrameRect;
-
-        return canvas.transform as RectTransform;
-    }
-
-    float ComputeUiScale()
-    {
-        if (!dynamicScale)
-            return 1f;
-
-        RectTransform root = cachedRootRect;
-        if (root == null)
-            return 1f;
-
-        Rect r = root.rect;
-        float usedW = Mathf.Max(1f, r.width);
-        float usedH = Mathf.Max(1f, r.height);
-
-        float sx = usedW / Mathf.Max(1f, referenceWidth);
-        float sy = usedH / Mathf.Max(1f, referenceHeight);
-        float baseScaleRaw = Mathf.Min(sx, sy);
-
-        float ui = (baseScaleRaw / Mathf.Max(1f, designUpscale)) * Mathf.Max(0.01f, extraScaleMultiplier);
-        ui = Mathf.Clamp(ui, minScale, maxScale);
-
-        return ui;
-    }
-
-    int ScaledFont(int baseSize)
-    {
-        return Mathf.Clamp(Mathf.RoundToInt(baseSize * currentUiScale), 1, 500);
-    }
-
-    int GetActivePlayerCount()
+    bool IsPlayerAtivo(int playerId)
     {
         if (Application.isPlaying && GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            return GameSession.Instance.IsPlayerActive(playerId);
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)
-            return 4;
+            return playerId >= 1 && playerId <= 4;
 #endif
 
-        return 1;
+        return playerId == 1;
     }
 
     float GetGridWidth(int index)
@@ -248,18 +172,18 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
 
     Vector2 GetOffset(int index)
     {
-        if (textOffsets != null && index >= 0 && index < textOffsets.Length)
-            return textOffsets[index];
+        if (spriteOffsets != null && index >= 0 && index < spriteOffsets.Length)
+            return spriteOffsets[index];
 
-        return new Vector2(18f, 6f);
+        return new Vector2(11.5f, 0f);
     }
 
     Vector2 GetSize(int index)
     {
-        if (textSizes != null && index >= 0 && index < textSizes.Length)
-            return textSizes[index];
+        if (spriteSizes != null && index >= 0 && index < spriteSizes.Length)
+            return spriteSizes[index];
 
-        return defaultTextSize;
+        return defaultSpriteSize;
     }
 
     Vector2 GetPlayerAdjustment(int index)
@@ -285,80 +209,34 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
     void EnsureArraySizes()
     {
         if (gridWidths == null || gridWidths.Length != 4)
+            gridWidths = new float[4] { 46f, 46f, 46f, 20f };
+
+        if (spriteSizes == null || spriteSizes.Length != 4)
         {
-            float[] newGridWidths = new float[4] { 46f, 46f, 46f, 20f };
-
-            if (gridWidths != null)
+            spriteSizes = new Vector2[4]
             {
-                for (int i = 0; i < Mathf.Min(gridWidths.Length, newGridWidths.Length); i++)
-                    newGridWidths[i] = gridWidths[i];
-            }
-
-            gridWidths = newGridWidths;
+                new Vector2(23f, 19f),
+                new Vector2(23f, 19f),
+                new Vector2(23f, 19f),
+                new Vector2(23f, 19f)
+            };
         }
 
-        if (textOffsets == null || textOffsets.Length != 4)
+        if (spriteOffsets == null || spriteOffsets.Length != 4)
         {
-            Vector2[] newOffsets = new Vector2[4]
+            spriteOffsets = new Vector2[4]
             {
-                new(18f, 6f),
-                new(18f, 6f),
-                new(18f, 6f),
-                new(2f, 6f)
+                new Vector2(11.5f, 0f),
+                new Vector2(11.5f, 0f),
+                new Vector2(11.5f, 0f),
+                new Vector2(2f, 0f)
             };
-
-            if (textOffsets != null)
-            {
-                for (int i = 0; i < Mathf.Min(textOffsets.Length, newOffsets.Length); i++)
-                    newOffsets[i] = textOffsets[i];
-            }
-
-            textOffsets = newOffsets;
-        }
-
-        if (textSizes == null || textSizes.Length != 4)
-        {
-            Vector2[] newSizes = new Vector2[4]
-            {
-                new(24f, 7f),
-                new(24f, 7f),
-                new(24f, 7f),
-                new(16f, 7f)
-            };
-
-            if (textSizes != null)
-            {
-                for (int i = 0; i < Mathf.Min(textSizes.Length, newSizes.Length); i++)
-                    newSizes[i] = textSizes[i];
-            }
-
-            textSizes = newSizes;
         }
 
         if (playerOffsetAdjustments == null || playerOffsetAdjustments.Length != 4)
-        {
-            Vector2[] newAdjustments = new Vector2[4];
+            playerOffsetAdjustments = new Vector2[4];
 
-            if (playerOffsetAdjustments != null)
-            {
-                for (int i = 0; i < Mathf.Min(playerOffsetAdjustments.Length, newAdjustments.Length); i++)
-                    newAdjustments[i] = playerOffsetAdjustments[i];
-            }
-
-            playerOffsetAdjustments = newAdjustments;
-        }
-
-        if (pushStartTexts == null || pushStartTexts.Length != 4)
-        {
-            TextMeshProUGUI[] newTexts = new TextMeshProUGUI[4];
-
-            if (pushStartTexts != null)
-            {
-                for (int i = 0; i < Mathf.Min(pushStartTexts.Length, newTexts.Length); i++)
-                    newTexts[i] = pushStartTexts[i];
-            }
-
-            pushStartTexts = newTexts;
-        }
+        if (pushStartImages == null || pushStartImages.Length != 4)
+            pushStartImages = new Image[4];
     }
 }

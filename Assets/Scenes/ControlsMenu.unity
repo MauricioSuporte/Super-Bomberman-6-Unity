@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 59654201}
-  - component: {fileID: 59654200}
   m_Layer: 0
   m_Name: StageSettings
   m_TagString: Untagged
@@ -136,20 +135,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &59654200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 59654199}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a284d4030dc9c84caeaae28969ab361, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
-  stageDefaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
-  musicVolume: 0.8
 --- !u!4 &59654201
 Transform:
   m_ObjectHideFlags: 0
@@ -220,11 +205,13 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -234,6 +221,9 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 1
+  skullAmount: 0
+  randomEggsMin: 0
+  randomEggsMax: 0
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
@@ -241,6 +231,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 0}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -986,7 +980,6 @@ MonoBehaviour:
   direction: 1
   snapUvToTexturePixels: 1
   applySizeToReferenceRect: 1
-  logChanges: 0
 --- !u!1 &1107666575
 GameObject:
   m_ObjectHideFlags: 0
@@ -1053,6 +1046,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 1
+  activePlayerMask: 1
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -1146,6 +1146,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1453,8 +1454,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
+  defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 1
+  defaultMusicVolume: 0.8
+  defaultMusicLoopVolume: 0.8
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1673,22 +1676,37 @@ MonoBehaviour:
   referenceRect: {fileID: 1599199474}
   menuLayoutRoot: {fileID: 1876253041}
   menuGlobalYOffset: 0
+  usePixelPerfectMenuLayout: 1
+  menuTextBoxReferenceSize: {x: 246, y: 190}
+  selectMenuOffset: {x: 0, y: 0}
+  waitMenuOffset: {x: 0, y: 0}
+  remapMenuOffset: {x: 0, y: 0}
+  selectTitleToBodyGapLines: 2
   fadeImage: {fileID: 336813435}
-  fadeInDuration: 0.5
-  fadeOutDuration: 0.5
-  controlsMusic: {fileID: 8300000, guid: 995a31f86fa5dcd4e8e4ba88dc2854cf, type: 3}
-  controlsMusicVolume: 1
+  fadeDuration: 0.5
+  maxFadeStepDelta: 0.033
+  logOpenFlowDiagnostics: 1
+  controlsMusic: {fileID: 8300000, guid: cb664d6e50930ce42ba645a9be8cc7fe, type: 3}
+  controlsMusicLoop: {fileID: 0}
+  controlsMusicVolume: 0.5
   menuText: {fileID: 534844157}
   titleFontSize: 32
   titleVOffset: 26
   headerTopPaddingLines: 1
   headerBottomPaddingLines: 0
   bodyFontSize: 24
+  footerText: {fileID: 0}
   footerGapLines: 0
   footerFontSize: 20
   footerExtraNewLines: 1
+  footerBottomPadding: 12
   selectGridFontSize: 22
   playerBlockGapLines: 1
+  minTitleFontSize: 42
+  minBodyFontSize: 34
+  minFooterFontSize: 26
+  minSelectGridFontSize: 32
+  minRemapGridFontSize: 30
   forceBold: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.42
@@ -1703,7 +1721,7 @@ MonoBehaviour:
   moveOptionVolume: 1
   backSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   backVolume: 1
-  resetSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
+  resetSfx: {fileID: 8300000, guid: ce0ca761e372457ca254ba3311cc5b9a, type: 3}
   resetVolume: 1
   lockedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   lockedVolume: 1

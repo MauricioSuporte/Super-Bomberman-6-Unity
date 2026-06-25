@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 
+using System.Collections.Generic;
+
 public class MountVisualController : MonoBehaviour
 {
     [Header("Owner")]
@@ -10,6 +12,9 @@ public class MountVisualController : MonoBehaviour
 
     [Header("Keep Move Animation When Idle")]
     [SerializeField] private bool keepMoveAnimationWhenIdle = false;
+
+    [Header("Walk Animation Timing")]
+    [SerializeField] private bool scaleWalkAnimationWithOwnerSpeed = true;
 
     [Header("HeadOnly Player Visual Offsets (local, per direction)")]
     [SerializeField] private Vector2 headOnlyUpLocalOffset = Vector2.zero;
@@ -25,6 +30,11 @@ public class MountVisualController : MonoBehaviour
     public AnimatedSpriteRenderer louieDown;
     public AnimatedSpriteRenderer louieLeft;
     public AnimatedSpriteRenderer louieRight;
+
+    [Header("HeadOnly Mount Visuals")]
+    [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyUp;
+    [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyDown;
+    [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyLeft;
 
     [Header("Jump Ascend")]
     [SerializeField] private AnimatedSpriteRenderer louieJumpAscendUp;
@@ -71,6 +81,9 @@ public class MountVisualController : MonoBehaviour
     private bool playingEndStage;
     private bool playingInactivity;
     private bool playingCornered;
+    private bool playingExternalStun;
+    private bool playingCartHeadOnly;
+    private bool externalStunShakeActive;
 
     private bool isPinkLouieVisual;
     private MovementController louieMovement;
@@ -93,8 +106,37 @@ public class MountVisualController : MonoBehaviour
     private bool externalTintActive;
     private Color externalTintColor = Color.white;
     private float externalTintNormalized;
+    private bool playerEffectTintActive;
+    private Color playerEffectTintColor = Color.white;
+    private float playerEffectTintNormalized;
 
     private AnimatedSpriteRenderer activeLouieInactivityRenderer;
+    private AnimatedSpriteRenderer activeExternalStunRenderer;
+    private Vector3 externalStunShakeOffset;
+    private float debugWalkAnimationNextLogTime;
+    private int debugWalkAnimationLastLouieFrame = -1;
+    private int debugWalkAnimationLastOwnerFrame = -1;
+    private float debugWalkAnimationLastLouieFrameTime = -1f;
+    private AnimatedSpriteRenderer debugWalkAnimationLastRenderer;
+    private Vector2 debugWalkAnimationLastFaceDir = Vector2.zero;
+    private bool hasLastWalkAnimationState;
+    private Vector2 lastWalkAnimationFaceDir = Vector2.down;
+    private bool lastWalkAnimationWasIdle = true;
+    private AnimatedSpriteRenderer lastWalkAnimationRenderer;
+    private Vector2 cartHeadOnlyFacing = Vector2.down;
+    private Vector2 cartHeadOnlyUpOffset = Vector2.zero;
+    private Vector2 cartHeadOnlyDownOffset = Vector2.zero;
+    private Vector2 cartHeadOnlyLeftOffset = Vector2.zero;
+    private Vector2 cartHeadOnlyRightOffset = Vector2.zero;
+    private bool cartHeadOnlyOffsetsActive;
+    private readonly Dictionary<AnimatedSpriteRenderer, AnimationTimingSnapshot> originalAnimationTiming = new();
+
+    private struct AnimationTimingSnapshot
+    {
+        public float AnimationTime;
+        public bool UseSequenceDuration;
+        public float SequenceDuration;
+    }
 
     public AnimatedSpriteRenderer LouieInactivityEmoteLoop => louieInactivityEmoteLoop;
     public AnimatedSpriteRenderer LouieInactivityEmoteLoopAlt => louieInactivityEmoteLoopAlt;
@@ -113,11 +155,22 @@ public class MountVisualController : MonoBehaviour
 
     private JumpPhase jumpPhase = JumpPhase.Ascend;
 
+    private void OnValidate()
+    {
+        ResolveHeadOnlyVisualReferences();
+    }
+
     public void SetTemporaryHeadOnlyDownDelta(Vector2 delta, bool active)
     {
         temporaryHeadOnlyDownDelta = delta;
         temporaryHeadOnlyDownDeltaActive = active;
 
+        headOnlyOffsetsApplied = false;
+        ApplyHeadOnlyOffsetsIfNeeded(force: true);
+    }
+
+    public void RefreshHeadOnlyPlayerOffsets()
+    {
         headOnlyOffsetsApplied = false;
         ApplyHeadOnlyOffsetsIfNeeded(force: true);
     }
@@ -132,12 +185,24 @@ public class MountVisualController : MonoBehaviour
         externalTintNormalized = Mathf.Clamp01(normalized01);
     }
 
+    public void SetPlayerEffectTint(bool active, Color tintColor, float normalized01)
+    {
+        playerEffectTintActive = active;
+        playerEffectTintColor = tintColor;
+        playerEffectTintNormalized = Mathf.Clamp01(normalized01);
+    }
+
     public void Bind(MovementController movement)
     {
         owner = movement;
         playingEndStage = false;
         playingInactivity = false;
         playingCornered = false;
+        playingExternalStun = false;
+        playingCartHeadOnly = false;
+        externalStunShakeActive = false;
+        activeExternalStunRenderer = null;
+        externalStunShakeOffset = Vector3.zero;
         suppressedByRedBoat = false;
 
         headOnlyOffsetsApplied = false;
@@ -145,12 +210,22 @@ public class MountVisualController : MonoBehaviour
         externalTintActive = false;
         externalTintColor = Color.white;
         externalTintNormalized = 1f;
+        playerEffectTintActive = false;
+        playerEffectTintColor = Color.white;
+        playerEffectTintNormalized = 1f;
 
         playingJump = false;
         jumpFacing = Vector2.down;
         jumpPhase = JumpPhase.Ascend;
+        cartHeadOnlyFacing = Vector2.down;
+        cartHeadOnlyUpOffset = Vector2.zero;
+        cartHeadOnlyDownOffset = Vector2.zero;
+        cartHeadOnlyLeftOffset = Vector2.zero;
+        cartHeadOnlyRightOffset = Vector2.zero;
+        cartHeadOnlyOffsetsActive = false;
 
         CacheAllRenderers();
+        ResolveHeadOnlyVisualReferences();
 
         if (louieMovement == null)
             TryGetComponent(out louieMovement);
@@ -198,6 +273,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmote(bool on)
     {
+        if (playingExternalStun)
+            return;
+
         if (on)
         {
             SetInactivityEmote(louieInactivityEmoteLoop, true);
@@ -224,6 +302,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmote(AnimatedSpriteRenderer chosenRenderer, bool refreshFrameOnEnter)
     {
+        if (playingExternalStun)
+            return;
+
         playingEndStage = false;
         playingCornered = false;
         playingJump = false;
@@ -269,10 +350,15 @@ public class MountVisualController : MonoBehaviour
 
     public bool TryPlayEndStage(float totalTime, int frameCount)
     {
+        if (playingExternalStun)
+            return false;
+
         if (louieEndStage == null)
             return false;
 
         playingInactivity = false;
+        playingJump = false;
+        playingCartHeadOnly = false;
         playingEndStage = true;
 
         HardExclusive(louieEndStage);
@@ -292,6 +378,9 @@ public class MountVisualController : MonoBehaviour
 
     public void ForceIdleUp()
     {
+        if (playingExternalStun)
+            return;
+
         playingInactivity = false;
         playingEndStage = false;
         playingCornered = false;
@@ -314,6 +403,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmoteRandom(float chanceAlt)
     {
+        if (playingExternalStun)
+            return;
+
         float chance = Mathf.Clamp01(chanceAlt);
 
         var chosen =
@@ -328,6 +420,27 @@ public class MountVisualController : MonoBehaviour
     {
         allSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         allAnimatedRenderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        CacheOriginalAnimationTiming();
+    }
+
+    private void CacheOriginalAnimationTiming()
+    {
+        if (allAnimatedRenderers == null)
+            return;
+
+        for (int i = 0; i < allAnimatedRenderers.Length; i++)
+        {
+            AnimatedSpriteRenderer renderer = allAnimatedRenderers[i];
+            if (renderer == null || originalAnimationTiming.ContainsKey(renderer))
+                continue;
+
+            originalAnimationTiming.Add(renderer, new AnimationTimingSnapshot
+            {
+                AnimationTime = renderer.animationTime,
+                UseSequenceDuration = renderer.useSequenceDuration,
+                SequenceDuration = renderer.sequenceDuration
+            });
+        }
     }
 
     private void LateUpdate()
@@ -337,7 +450,7 @@ public class MountVisualController : MonoBehaviour
             playingInactivity = false;
             playingEndStage = false;
             playingJump = false;
-            transform.localPosition = localOffset;
+            ApplyCurrentLocalOffset();
             return;
         }
 
@@ -351,7 +464,7 @@ public class MountVisualController : MonoBehaviour
         {
             if (owner.IsHoleDeathInProgress)
             {
-                transform.localPosition = localOffset;
+                ApplyCurrentLocalOffset();
                 return;
             }
 
@@ -359,7 +472,7 @@ public class MountVisualController : MonoBehaviour
             return;
         }
 
-        transform.localPosition = localOffset;
+        ApplyCurrentLocalOffset();
 
         bool ownerOnRedBoat = BoatRideZone.IsRidingBoat(owner);
 
@@ -381,9 +494,17 @@ public class MountVisualController : MonoBehaviour
         else
             ClearHeadOnlyOffsetsIfNeeded();
 
-        if (playingJump)
+        if (playingCartHeadOnly)
+        {
+            EnsureCartHeadOnlyExclusive();
+        }
+        else if (playingJump)
         {
             EnsureJumpExclusive();
+        }
+        else if (playingExternalStun)
+        {
+            EnsureExternalStunExclusive();
         }
         else if (playingCornered)
         {
@@ -404,6 +525,8 @@ public class MountVisualController : MonoBehaviour
 
 
             ApplyDirection(faceDir, isIdle);
+            if (scaleWalkAnimationWithOwnerSpeed)
+                AdvanceManualWalkAnimation();
 
             ApplyPinkRidingHorizontalFlipOverride(faceDir);
 
@@ -413,6 +536,96 @@ public class MountVisualController : MonoBehaviour
 
         ApplyBlinkSyncFromOwnerIfNeeded();
         ApplyExternalTintIfNeeded();
+        ApplyPlayerEffectTintIfNeeded();
+        LogWalkAnimationFramesIfNeeded();
+    }
+
+    private void LogWalkAnimationFramesIfNeeded()
+    {
+        if (owner == null || active == null)
+            return;
+
+        if (playingEndStage || playingInactivity || playingCornered || playingExternalStun || playingJump || playingCartHeadOnly)
+            return;
+
+        AnimatedSpriteRenderer ownerRenderer = owner.ActiveSpriteRenderer;
+        int louieFrame = active.CurrentFrame;
+        int ownerFrame = ownerRenderer != null ? ownerRenderer.CurrentFrame : -1;
+        int louieFrameCount = GetAnimationFrameCount(active);
+
+        Vector2 ownerDir = owner.Direction;
+        bool isIdle = ownerDir == Vector2.zero;
+        Vector2 faceDir = isIdle ? owner.FacingDirection : ownerDir;
+
+        bool rendererChanged = debugWalkAnimationLastRenderer != null && active != debugWalkAnimationLastRenderer;
+        bool faceChanged = debugWalkAnimationLastFaceDir != Vector2.zero && faceDir != debugWalkAnimationLastFaceDir;
+        bool louieFrameChanged = louieFrame != debugWalkAnimationLastLouieFrame;
+        bool ownerFrameChanged = ownerFrame != debugWalkAnimationLastOwnerFrame;
+        bool frameChanged = louieFrameChanged || ownerFrameChanged;
+
+        if (!frameChanged && !rendererChanged && !faceChanged && Time.unscaledTime < debugWalkAnimationNextLogTime)
+            return;
+
+        float now = Time.unscaledTime;
+        bool sameAnimationStream =
+            !rendererChanged &&
+            !faceChanged &&
+            debugWalkAnimationLastLouieFrame >= 0 &&
+            debugWalkAnimationLastRenderer == active;
+
+        int framesAdvanced = sameAnimationStream && louieFrameChanged
+            ? GetLoopedFrameAdvance(debugWalkAnimationLastLouieFrame, louieFrame, louieFrameCount)
+            : 0;
+
+        int skippedFrames = Mathf.Max(0, framesAdvanced - 1);
+        float frameDelta = debugWalkAnimationLastLouieFrameTime >= 0f
+            ? now - debugWalkAnimationLastLouieFrameTime
+            : 0f;
+
+        float expectedFrameTime = Mathf.Max(0.0001f, active.animationTime);
+        float expectedSteps = frameDelta > 0f ? frameDelta / expectedFrameTime : 0f;
+
+        debugWalkAnimationLastLouieFrame = louieFrame;
+        debugWalkAnimationLastOwnerFrame = ownerFrame;
+        debugWalkAnimationLastRenderer = active;
+        debugWalkAnimationLastFaceDir = faceDir;
+        debugWalkAnimationNextLogTime = now;
+
+        if (louieFrameChanged || rendererChanged || faceChanged)
+            debugWalkAnimationLastLouieFrameTime = now;
+    }
+
+    private static int GetLoopedFrameAdvance(int previousFrame, int currentFrame, int frameCount)
+    {
+        frameCount = Mathf.Max(1, frameCount);
+
+        if (currentFrame >= previousFrame)
+            return currentFrame - previousFrame;
+
+        return currentFrame + frameCount - previousFrame;
+    }
+
+    private static string GetRendererDebug(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return "null";
+
+        int frameCount = GetAnimationFrameCount(renderer);
+        string spriteName = "null";
+        bool flipX = false;
+        Vector3 localPos = renderer.transform.localPosition;
+
+        if (renderer.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+        {
+            spriteName = sr.sprite != null ? sr.sprite.name : "null";
+            flipX = sr.flipX;
+            localPos = sr.transform.localPosition;
+        }
+
+        return $"{renderer.name} frame:{renderer.CurrentFrame}/{frameCount} sprite:{spriteName} " +
+               $"animTime:{renderer.animationTime:F4} timer:{renderer.DebugFrameTimer:F4} " +
+               $"idle:{renderer.idle} loop:{renderer.loop} flipX:{flipX} " +
+               $"localPos:{localPos} enabled:{renderer.isActiveAndEnabled}";
     }
 
     private void ApplyExternalTintIfNeeded()
@@ -434,6 +647,28 @@ public class MountVisualController : MonoBehaviour
             tint.a = baseColor.a;
 
             sr.color = Color.Lerp(tint, baseColor, externalTintNormalized);
+        }
+    }
+
+    private void ApplyPlayerEffectTintIfNeeded()
+    {
+        if (!playerEffectTintActive)
+            return;
+
+        if (louieSpriteRenderers == null || louieSpriteRenderers.Length == 0)
+            return;
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var sr = louieSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            var baseColor = sr.color;
+            var tint = playerEffectTintColor;
+            tint.a = baseColor.a;
+
+            sr.color = Color.Lerp(tint, baseColor, playerEffectTintNormalized);
         }
     }
 
@@ -574,6 +809,64 @@ public class MountVisualController : MonoBehaviour
         louieEndStage.RefreshFrame();
     }
 
+    public void SetExternalStunVisual(AnimatedSpriteRenderer stunRenderer, bool on)
+    {
+        if (!on || stunRenderer == null)
+        {
+            bool wasPlayingExternalStun = playingExternalStun;
+            playingExternalStun = false;
+            activeExternalStunRenderer = null;
+
+            if (!wasPlayingExternalStun || owner == null)
+                return;
+
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+            ApplyDirection(faceDir, isIdle);
+            return;
+        }
+
+        playingInactivity = false;
+        playingEndStage = false;
+        playingCornered = false;
+        playingJump = false;
+        playingExternalStun = true;
+        activeExternalStunRenderer = stunRenderer;
+
+        EnsureExternalStunExclusive();
+    }
+
+    public void SetExternalStunShake(Vector3 localOffset, bool on)
+    {
+        externalStunShakeActive = on;
+        externalStunShakeOffset = on ? localOffset : Vector3.zero;
+        ApplyCurrentLocalOffset();
+    }
+
+    private void ApplyCurrentLocalOffset()
+    {
+        Vector3 offset = localOffset;
+        if (externalStunShakeActive)
+            offset += externalStunShakeOffset;
+
+        transform.localPosition = offset;
+    }
+
+    private void EnsureExternalStunExclusive()
+    {
+        if (activeExternalStunRenderer == null)
+        {
+            playingExternalStun = false;
+            return;
+        }
+
+        HardExclusive(activeExternalStunRenderer);
+        activeExternalStunRenderer.loop = true;
+        activeExternalStunRenderer.idle = false;
+        activeExternalStunRenderer.pingPong = false;
+        activeExternalStunRenderer.RefreshFrame();
+    }
+
     private void HardExclusive(AnimatedSpriteRenderer keep)
     {
         if (allSpriteRenderers == null || allAnimatedRenderers == null)
@@ -698,16 +991,32 @@ public class MountVisualController : MonoBehaviour
         if (target == null)
             return;
 
-        if (active != target)
+        if (scaleWalkAnimationWithOwnerSpeed)
+            ApplyOwnerWalkAnimationTiming(target);
+        else
+            RestoreOriginalAnimationTiming(target);
+
+        bool rendererChanged = active != target;
+        if (rendererChanged)
+        {
+            if (active != null)
+                active.SetManualAnimationUpdate(false);
+
             SetExclusive(target);
+        }
 
         SetRendererBranchEnabled(active, true);
 
         bool shouldIdle = isIdle && !keepMoveAnimationWhenIdle;
+        string restartReason = scaleWalkAnimationWithOwnerSpeed && !shouldIdle && !rendererChanged
+            ? GetWalkAnimationRestartReason(target, faceDir)
+            : null;
+        bool shouldRestart = restartReason != null;
 
         active.pingPong = false;
         active.idle = shouldIdle;
         active.loop = !shouldIdle;
+        active.SetManualAnimationUpdate(scaleWalkAnimationWithOwnerSpeed && !shouldIdle);
 
         if (active != null && active.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
         {
@@ -718,7 +1027,100 @@ public class MountVisualController : MonoBehaviour
         }
 
         ApplyPinkRightXFix(faceDir);
-        active.RefreshFrame();
+
+        if (shouldRestart)
+            active.RestartAnimation();
+        else
+            active.RefreshFrame();
+
+        hasLastWalkAnimationState = true;
+        lastWalkAnimationRenderer = active;
+        lastWalkAnimationFaceDir = faceDir;
+        lastWalkAnimationWasIdle = shouldIdle;
+    }
+
+    private string GetWalkAnimationRestartReason(AnimatedSpriteRenderer target, Vector2 faceDir)
+    {
+        if (!hasLastWalkAnimationState)
+            return "first-active-frame";
+
+        if (lastWalkAnimationRenderer != target)
+            return null;
+
+        if (lastWalkAnimationWasIdle)
+            return "idle-to-move";
+
+        if (UsesMirroredHorizontalRenderer(target) &&
+            IsHorizontalDirectionFlip(lastWalkAnimationFaceDir, faceDir))
+            return "mirrored-horizontal-flip";
+
+        return null;
+    }
+
+    private bool UsesMirroredHorizontalRenderer(AnimatedSpriteRenderer renderer)
+    {
+        return renderer == louieLeft && (louieRight == null || isPinkLouieVisual);
+    }
+
+    private void AdvanceManualWalkAnimation()
+    {
+        if (active == null)
+            return;
+
+        if (active.idle)
+            return;
+
+        if (!IsWalkRenderer(active))
+            return;
+
+        if (active.RespectGamePause && GamePauseController.IsPaused)
+            return;
+
+        active.AdvanceAnimation(Time.unscaledDeltaTime, Time.deltaTime);
+    }
+
+    private bool IsWalkRenderer(AnimatedSpriteRenderer renderer)
+    {
+        return renderer == louieUp ||
+               renderer == louieDown ||
+               renderer == louieLeft ||
+               renderer == louieRight;
+    }
+
+    private static bool IsHorizontalDirectionFlip(Vector2 previousFaceDir, Vector2 currentFaceDir)
+    {
+        return Mathf.Abs(previousFaceDir.x) > 0.01f &&
+               Mathf.Abs(currentFaceDir.x) > 0.01f &&
+               Mathf.Sign(previousFaceDir.x) != Mathf.Sign(currentFaceDir.x);
+    }
+
+    private void ApplyOwnerWalkAnimationTiming(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null || owner == null)
+            return;
+
+        renderer.useSequenceDuration = false;
+        renderer.animationTime = owner.GetWalkAnimationFrameTimeForFrameCount(GetAnimationFrameCount(renderer));
+    }
+
+    private void RestoreOriginalAnimationTiming(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        if (!originalAnimationTiming.TryGetValue(renderer, out var snapshot))
+            return;
+
+        renderer.useSequenceDuration = snapshot.UseSequenceDuration;
+        renderer.sequenceDuration = snapshot.SequenceDuration;
+        renderer.animationTime = snapshot.AnimationTime;
+    }
+
+    private static int GetAnimationFrameCount(AnimatedSpriteRenderer renderer)
+    {
+        return renderer != null && renderer.animationSprite != null && renderer.animationSprite.Length > 0
+            ? renderer.animationSprite.Length
+            : 4;
     }
 
     private void ApplyPinkRightXFix(Vector2 faceDir)
@@ -744,6 +1146,10 @@ public class MountVisualController : MonoBehaviour
         SetRendererBranchEnabled(louieDown, keep == louieDown);
         SetRendererBranchEnabled(louieLeft, keep == louieLeft);
         SetRendererBranchEnabled(louieRight, keep == louieRight);
+
+        SetRendererBranchEnabled(louieHeadOnlyUp, keep == louieHeadOnlyUp);
+        SetRendererBranchEnabled(louieHeadOnlyDown, keep == louieHeadOnlyDown);
+        SetRendererBranchEnabled(louieHeadOnlyLeft, keep == louieHeadOnlyLeft);
 
         SetRendererBranchEnabled(louieJumpAscendUp, keep == louieJumpAscendUp);
         SetRendererBranchEnabled(louieJumpAscendDown, keep == louieJumpAscendDown);
@@ -786,6 +1192,9 @@ public class MountVisualController : MonoBehaviour
         if (r == null)
             return;
 
+        if (!on)
+            r.SetManualAnimationUpdate(false);
+
         r.enabled = on;
 
         var srs = r.GetComponentsInChildren<SpriteRenderer>(true);
@@ -801,6 +1210,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetCornered(bool on)
     {
+        if (playingExternalStun)
+            return;
+
         if (louieCornered == null)
             return;
 
@@ -871,8 +1283,237 @@ public class MountVisualController : MonoBehaviour
             louieJumpUp != null || louieJumpDown != null || louieJumpLeft != null || louieJumpRight != null;
     }
 
+    public bool HasJumpDescendVisuals()
+    {
+        return
+            louieJumpDescendUp != null ||
+            louieJumpDescendDown != null ||
+            louieJumpDescendLeft != null ||
+            louieJumpDescendRight != null;
+    }
+
+    public bool HasHeadOnlyVisuals()
+    {
+        ResolveHeadOnlyVisualReferences();
+
+        return
+            louieHeadOnlyUp != null ||
+            louieHeadOnlyDown != null ||
+            louieHeadOnlyLeft != null;
+    }
+
+    public void SetCartHeadOnlyVisual(bool on, Vector2 facing)
+    {
+        ResolveHeadOnlyVisualReferences();
+
+        if (on && !HasHeadOnlyVisuals())
+        {
+            playingCartHeadOnly = false;
+            HideCartHeadOnlyVisuals();
+            return;
+        }
+
+        playingCartHeadOnly = on;
+
+        if (facing != Vector2.zero)
+            cartHeadOnlyFacing = Cardinalize(facing);
+
+        if (!playingCartHeadOnly)
+        {
+            HideCartHeadOnlyVisuals();
+            return;
+        }
+
+        playingInactivity = false;
+        playingEndStage = false;
+        playingCornered = false;
+        playingJump = false;
+        playingExternalStun = false;
+        EnsureCartHeadOnlyExclusive();
+    }
+
+    public void SetCartHeadOnlyOffsets(Vector2 up, Vector2 down, Vector2 left, Vector2 right)
+    {
+        cartHeadOnlyUpOffset = up;
+        cartHeadOnlyDownOffset = down;
+        cartHeadOnlyLeftOffset = left;
+        cartHeadOnlyRightOffset = right;
+        cartHeadOnlyOffsetsActive = true;
+
+        if (playingCartHeadOnly)
+            EnsureCartHeadOnlyExclusive();
+    }
+
+    public void ClearCartHeadOnlyOffsets()
+    {
+        ClearHeadOnlyRendererOffset(louieHeadOnlyUp);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyDown);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyLeft);
+
+        cartHeadOnlyUpOffset = Vector2.zero;
+        cartHeadOnlyDownOffset = Vector2.zero;
+        cartHeadOnlyLeftOffset = Vector2.zero;
+        cartHeadOnlyRightOffset = Vector2.zero;
+        cartHeadOnlyOffsetsActive = false;
+    }
+
+    private void EnsureCartHeadOnlyExclusive()
+    {
+        if (!playingCartHeadOnly)
+            return;
+
+        AnimatedSpriteRenderer target = PickHeadOnlyRenderer(cartHeadOnlyFacing);
+        if (target == null)
+        {
+            playingCartHeadOnly = false;
+            return;
+        }
+
+        HardExclusive(target);
+        target.idle = true;
+        target.loop = false;
+        target.pingPong = false;
+        ApplyHeadOnlyFlip(target, cartHeadOnlyFacing);
+        ApplyCartHeadOnlyOffset(target, cartHeadOnlyFacing);
+        target.RefreshFrame();
+    }
+
+    private AnimatedSpriteRenderer PickHeadOnlyRenderer(Vector2 faceDir)
+    {
+        ResolveHeadOnlyVisualReferences();
+
+        faceDir = Cardinalize(faceDir);
+
+        if (faceDir == Vector2.up)
+            return louieHeadOnlyUp != null ? louieHeadOnlyUp : louieHeadOnlyDown;
+
+        if (faceDir == Vector2.left)
+            return louieHeadOnlyLeft != null ? louieHeadOnlyLeft : louieHeadOnlyDown;
+
+        if (faceDir == Vector2.right)
+            return louieHeadOnlyLeft != null ? louieHeadOnlyLeft : louieHeadOnlyDown;
+
+        return louieHeadOnlyDown ?? louieHeadOnlyUp ?? louieHeadOnlyLeft;
+    }
+
+    private bool ShouldFlipHeadOnlyRenderer(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        return faceDir == Vector2.right && renderer == louieHeadOnlyLeft;
+    }
+
+    private void ApplyHeadOnlyFlip(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        if (renderer == null)
+            return;
+
+        if (!renderer.TryGetComponent<SpriteRenderer>(out var sr) || sr == null)
+            return;
+
+        sr.flipX = ShouldFlipHeadOnlyRenderer(renderer, faceDir);
+    }
+
+    private void ApplyCartHeadOnlyOffset(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        if (renderer == null)
+            return;
+
+        ClearHeadOnlyRendererOffset(louieHeadOnlyUp);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyDown);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyLeft);
+
+        if (!cartHeadOnlyOffsetsActive)
+            return;
+
+        Vector2 offset = PickCartHeadOnlyOffset(faceDir);
+        renderer.SetRuntimeBaseLocalX(offset.x);
+        renderer.SetRuntimeBaseLocalY(offset.y);
+    }
+
+    private Vector2 PickCartHeadOnlyOffset(Vector2 faceDir)
+    {
+        faceDir = Cardinalize(faceDir);
+
+        if (faceDir == Vector2.up)
+            return cartHeadOnlyUpOffset;
+
+        if (faceDir == Vector2.left)
+            return cartHeadOnlyLeftOffset;
+
+        if (faceDir == Vector2.right)
+            return cartHeadOnlyRightOffset;
+
+        return cartHeadOnlyDownOffset;
+    }
+
+    private static void ClearHeadOnlyRendererOffset(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.ClearRuntimeBaseOffset();
+    }
+
+    private void HideCartHeadOnlyVisuals()
+    {
+        SetRendererBranchEnabled(louieHeadOnlyUp, false);
+        SetRendererBranchEnabled(louieHeadOnlyDown, false);
+        SetRendererBranchEnabled(louieHeadOnlyLeft, false);
+    }
+
+    private void ResolveHeadOnlyVisualReferences()
+    {
+        if (louieHeadOnlyUp == null)
+            louieHeadOnlyUp = FindDirectOrNestedHeadOnly("HeadOnlyUp");
+
+        if (louieHeadOnlyDown == null)
+            louieHeadOnlyDown = FindDirectOrNestedHeadOnly("HeadOnlyDown");
+
+        if (louieHeadOnlyLeft == null)
+            louieHeadOnlyLeft = FindDirectOrNestedHeadOnly("HeadOnlyLeft");
+    }
+
+    private AnimatedSpriteRenderer FindDirectOrNestedHeadOnly(params string[] childNames)
+    {
+        if (childNames == null || childNames.Length == 0)
+            return null;
+
+        var trs = GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < trs.Length; i++)
+        {
+            Transform t = trs[i];
+            if (t == null)
+                continue;
+
+            if (!MatchesAnyName(t.name, childNames))
+                continue;
+
+            AnimatedSpriteRenderer renderer = t.GetComponent<AnimatedSpriteRenderer>();
+            if (renderer != null)
+                return renderer;
+        }
+
+        return null;
+    }
+
+    private static bool MatchesAnyName(string value, params string[] names)
+    {
+        if (string.IsNullOrWhiteSpace(value) || names == null)
+            return false;
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(names[i]) && value == names[i])
+                return true;
+        }
+
+        return false;
+    }
+
     public void SetJumpVisual(bool on, Vector2 facing, bool descending = false)
     {
+        if (playingExternalStun)
+            return;
+
         if (on && !HasJumpVisuals())
             return;
 
@@ -888,6 +1529,12 @@ public class MountVisualController : MonoBehaviour
 
         if (!playingJump)
         {
+            if (playingEndStage)
+            {
+                EnsureEndStageExclusive();
+                return;
+            }
+
             if (owner == null)
                 return;
 

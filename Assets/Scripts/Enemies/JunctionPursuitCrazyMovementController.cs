@@ -181,7 +181,7 @@ public sealed class JunctionPursuitCrazyMovementController : JunctionTurningEnem
 
         var audioSource = GetComponent<AudioSource>();
         if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
 
         if (rb != null)
             rb.linearVelocity = Vector2.zero;

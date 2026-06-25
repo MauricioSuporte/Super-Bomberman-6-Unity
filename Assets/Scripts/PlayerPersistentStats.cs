@@ -5,8 +5,6 @@ using UnityEngine.SceneManagement;
 public static class PlayerPersistentStats
 {
     static bool sessionBooted;
-    static bool stageAnyItemPickupCollected;
-    static bool stageStartedWithDefaultState;
 
     public const int MaxBombAmount = 9;
     public const int MaxExplosionRadius = 9;
@@ -16,13 +14,16 @@ public static class PlayerPersistentStats
     public const int MaxSpeedInternal = BaseSpeedNormal + (MaxSpeedUps * SpeedStep);
     public const int MinSpeedInternal = BaseSpeedNormal;
     public const int SpeedDivisor = 64;
+    const int MinimumDroppedBombAmount = 1;
+    const int MinimumDroppedExplosionRadius = 2;
+    const int MinimumDroppedSpeedLevel = 2;
 
     public sealed class PlayerState
     {
         public int Life = 1;
         public int BombAmount = 1;
-        public int ExplosionRadius = 1;
-        public int SpeedInternal = MinSpeedInternal;
+        public int ExplosionRadius = 2;
+        public int SpeedInternal = BaseSpeedNormal /*+ (SpeedStep * 5)*/;
         public bool CanKickBombs = false;
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
@@ -35,7 +36,7 @@ public static class PlayerPersistentStats
         public bool HasMagnetBomb = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.None;
+        public MountedType MountedLouie = MountedType.Pink;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);
@@ -46,16 +47,20 @@ public static class PlayerPersistentStats
         }
     }
 
-    static readonly PlayerState[] _p = new PlayerState[4]
+    static readonly PlayerState[] _p = new PlayerState[6]
     {
+        new(),
+        new(),
         new(),
         new(),
         new(),
         new()
     };
 
-    static readonly PlayerState[] _stage = new PlayerState[4]
+    static readonly PlayerState[] _stage = new PlayerState[6]
     {
+        new(),
+        new(),
         new(),
         new(),
         new(),
@@ -66,7 +71,7 @@ public static class PlayerPersistentStats
 
     public static PlayerState Get(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
         return _p[playerId - 1];
     }
 
@@ -77,7 +82,7 @@ public static class PlayerPersistentStats
 
         SaveSystem.Reload();
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             LoadSelectedSkinInternal(i);
             ClampSelectedSkinIfLocked(i);
@@ -94,10 +99,10 @@ public static class PlayerPersistentStats
 
     public static void SaveSelectedSkin(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         var s = Get(playerId);
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
 
         switch (playerId)
         {
@@ -105,6 +110,8 @@ public static class PlayerPersistentStats
             case 2: SaveSystem.Data.player2SelectedSkin = (int)s.Skin; break;
             case 3: SaveSystem.Data.player3SelectedSkin = (int)s.Skin; break;
             case 4: SaveSystem.Data.player4SelectedSkin = (int)s.Skin; break;
+            case 5: SaveSystem.Data.player5SelectedSkin = (int)s.Skin; break;
+            case 6: SaveSystem.Data.player6SelectedSkin = (int)s.Skin; break;
         }
 
         SaveSystem.Save();
@@ -112,7 +119,7 @@ public static class PlayerPersistentStats
 
     static void LoadSelectedSkinInternal(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         var s = Get(playerId);
 
@@ -122,20 +129,23 @@ public static class PlayerPersistentStats
             2 => SaveSystem.Data.player2SelectedSkin,
             3 => SaveSystem.Data.player3SelectedSkin,
             4 => SaveSystem.Data.player4SelectedSkin,
-            _ => (int)BomberSkin.White
+            5 => SaveSystem.Data.player5SelectedSkin,
+            6 => SaveSystem.Data.player6SelectedSkin,
+            _ => (int)GetDefaultSkinForPlayer(playerId)
         };
 
         if (!System.Enum.IsDefined(typeof(BomberSkin), raw))
-            raw = (int)BomberSkin.White;
+            raw = (int)GetDefaultSkinForPlayer(playerId);
 
         s.Skin = (BomberSkin)raw;
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
     }
 
     public static void ClampSelectedSkinIfLocked(int playerId)
     {
+        playerId = Mathf.Clamp(playerId, 1, 6);
         var s = Get(playerId);
-        BomberSkin clamped = UnlockProgress.ClampToUnlocked(s.Skin);
+        BomberSkin clamped = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
 
         if (s.Skin != clamped)
         {
@@ -146,7 +156,7 @@ public static class PlayerPersistentStats
 
     public static void ResetToDefaultsAll()
     {
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
             ResetToDefaults(i);
 
         sessionBooted = true;
@@ -154,6 +164,7 @@ public static class PlayerPersistentStats
 
     public static void ResetToDefaults(int playerId)
     {
+        playerId = Mathf.Clamp(playerId, 1, 6);
         var s = Get(playerId);
 
         s.BombAmount = 1;
@@ -177,8 +188,24 @@ public static class PlayerPersistentStats
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
-        s.Skin = UnlockProgress.GetFallbackUnlockedSkin(BomberSkin.White);
+        s.Skin = UnlockProgress.GetFallbackUnlockedSkin(GetDefaultSkinForPlayer(playerId));
         SaveSelectedSkin(playerId);
+    }
+
+    public static BomberSkin GetDefaultSkinForPlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        return playerId switch
+        {
+            1 => BomberSkin.White,
+            2 => BomberSkin.Black,
+            3 => BomberSkin.Blue,
+            4 => BomberSkin.Red,
+            5 => BomberSkin.Green,
+            6 => BomberSkin.Yellow,
+            _ => BomberSkin.White
+        };
     }
 
     static void ResetTemporaryPowerups(PlayerState s)
@@ -211,7 +238,7 @@ public static class PlayerPersistentStats
 
     public static void StageResetTemporaryPowerupsOnDeath(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         BeginStage();
 
@@ -230,16 +257,30 @@ public static class PlayerPersistentStats
     public static int ClampSpeedInternal(int internalSpeed)
         => Mathf.Clamp(internalSpeed, MinSpeedInternal, MaxSpeedInternal);
 
+    public static int SpeedLevelToInternal(int speedLevel)
+    {
+        int clampedLevel = Mathf.Clamp(speedLevel, 1, MaxSpeedUps + 1);
+        return ClampSpeedInternal(MinSpeedInternal + ((clampedLevel - 1) * SpeedStep));
+    }
+
+    public static int SpeedInternalToLevel(int speedInternal)
+    {
+        int clampedSpeed = ClampSpeedInternal(speedInternal);
+        int diff = clampedSpeed - MinSpeedInternal;
+        int steps = diff / SpeedStep;
+        return Mathf.Clamp(steps + 1, 1, MaxSpeedUps + 1);
+    }
+
     static int GetPlayerIdFrom(Component c)
     {
         if (c == null) return 1;
 
         if (c.TryGetComponent<PlayerIdentity>(out var id))
-            return Mathf.Clamp(id.playerId, 1, 4);
+            return Mathf.Clamp(id.playerId, 1, 6);
 
         var parentId = c.GetComponentInParent<PlayerIdentity>(true);
         if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
+            return Mathf.Clamp(parentId.playerId, 1, 6);
 
         return 1;
     }
@@ -368,6 +409,89 @@ public static class PlayerPersistentStats
         }
     }
 
+    public static void SyncBattleModeComAbilityScripts(GameObject playerGo, int playerId)
+    {
+        if (playerGo == null)
+            return;
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        var s = GetRuntime(playerId);
+
+        if (s.CanKickBombs)
+            EnsureBattleModeComKickBombAbility(playerGo, playerId);
+        else
+            RemoveBattleModeComKickBombAbility(playerGo);
+
+        if (s.CanPunchBombs)
+            EnsureBattleModeComAbility<BattleModeComPunchBombAbility>(playerGo, playerId);
+        else
+            RemoveBattleModeComAbility<BattleModeComPunchBombAbility>(playerGo);
+
+        if (s.HasPowerGlove)
+            EnsureBattleModeComAbility<BattleModeComPowerGloveAbility>(playerGo, playerId);
+        else
+            RemoveBattleModeComAbility<BattleModeComPowerGloveAbility>(playerGo);
+    }
+
+    static void EnsureBattleModeComKickBombAbility(GameObject playerGo, int playerId)
+    {
+        if (playerGo == null)
+            return;
+
+        if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+        {
+            RemoveBattleModeComKickBombAbility(playerGo);
+            return;
+        }
+
+        if (!playerGo.TryGetComponent<BattleModeComKickBombAbility>(out _))
+            playerGo.AddComponent<BattleModeComKickBombAbility>();
+    }
+
+    static void RemoveBattleModeComKickBombAbility(GameObject playerGo)
+    {
+        if (playerGo == null)
+            return;
+
+        var abilities = playerGo.GetComponents<BattleModeComKickBombAbility>();
+        for (int i = 0; i < abilities.Length; i++)
+        {
+            BattleModeComKickBombAbility ability = abilities[i];
+            if (ability != null &&
+                ability.GetType() == typeof(BattleModeComKickBombAbility))
+            {
+                Object.Destroy(ability);
+            }
+        }
+    }
+
+    static void EnsureBattleModeComAbility<T>(GameObject playerGo, int playerId)
+        where T : MonoBehaviour
+    {
+        if (playerGo == null)
+            return;
+
+        if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+        {
+            RemoveBattleModeComAbility<T>(playerGo);
+            return;
+        }
+
+        if (!playerGo.TryGetComponent<T>(out _))
+            playerGo.AddComponent<T>();
+    }
+
+    static void RemoveBattleModeComAbility<T>(GameObject playerGo)
+        where T : MonoBehaviour
+    {
+        if (playerGo == null)
+            return;
+
+        T ability = playerGo.GetComponent<T>();
+        if (ability != null)
+            Object.Destroy(ability);
+    }
+
     public static void LoadInto(int playerId, MovementController movement, BombController bomb)
     {
         var s = Get(playerId);
@@ -402,8 +526,16 @@ public static class PlayerPersistentStats
 
             abilitySystem.RebuildCache();
 
-            if (s.CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
-            else abilitySystem.Disable(BombKickAbility.AbilityId);
+            if (s.CanKickBombs)
+            {
+                abilitySystem.Enable(BombKickAbility.AbilityId);
+                EnsureBattleModeComKickBombAbility(movement.gameObject, playerId);
+            }
+            else
+            {
+                abilitySystem.Disable(BombKickAbility.AbilityId);
+                RemoveBattleModeComKickBombAbility(movement.gameObject);
+            }
 
             bool shouldEnablePunch =
                 s.CanPunchBombs ||
@@ -491,6 +623,7 @@ public static class PlayerPersistentStats
                     q.RestoreQueuedEggTypesOldestToNewest(null, null);
             }
         }
+
     }
 
     public static void SaveFrom(MovementController movement, BombController bomb)
@@ -586,6 +719,91 @@ public static class PlayerPersistentStats
             to.QueuedEggs.AddRange(from.QueuedEggs);
     }
 
+    public static PlayerState CloneState(PlayerState source)
+    {
+        if (source == null)
+            return null;
+
+        PlayerState clone = new();
+        CopyState(source, clone);
+        return clone;
+    }
+
+    public static PlayerState CreateLoadoutSnapshot(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        return CloneState(Get(playerId));
+    }
+
+    public static void ApplySnapshotToLoadState(int playerId, PlayerState snapshot)
+    {
+        if (snapshot == null)
+            return;
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        CopyState(snapshot, _p[playerId - 1]);
+
+        if (stageActive)
+            CopyState(snapshot, _stage[playerId - 1]);
+    }
+
+    public static void ApplyBattleRevengeRespawnLoadout(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        var s = Get(playerId);
+
+        ResetBattleRevengeRespawnState(s);
+
+        int battleModeStageIndex = GetActiveBattleModeStageIndex();
+        SaveData.BattleModeHandicapSave handicap = ShouldApplyHandicapOnBattleRevengeRespawn(battleModeStageIndex)
+            ? SaveSystem.GetBattleModeHandicapForStage(battleModeStageIndex)
+            : null;
+
+        ApplyBattleModeHandicap(playerId, s, handicap, battleModeStageIndex);
+
+        if (stageActive)
+        {
+            var stageState = _stage[playerId - 1];
+
+            ResetBattleRevengeRespawnState(stageState);
+            ApplyBattleModeHandicap(playerId, stageState, handicap, battleModeStageIndex);
+            stageState.Skin = s.Skin;
+        }
+    }
+
+    static void ResetBattleRevengeRespawnState(PlayerState s)
+    {
+        if (s == null)
+            return;
+
+        s.Life = 1;
+        s.BombAmount = 1;
+        s.ExplosionRadius = 2;
+        s.SpeedInternal = ClampSpeedInternal(BaseSpeedNormal + SpeedStep);
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedType.None;
+        s.QueuedEggs.Clear();
+    }
+
+    static bool ShouldApplyHandicapOnBattleRevengeRespawn(int battleModeStageIndex)
+    {
+        return battleModeStageIndex == 10 || battleModeStageIndex == 11;
+    }
+
     static void ResetGameplayStateKeepingSkin(PlayerState s)
     {
         if (s == null)
@@ -623,8 +841,150 @@ public static class PlayerPersistentStats
             ResetGameplayStateKeepingSkin(_stage[i]);
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
+    }
+
+    public static void ResetBattleModeLoadouts(BattleModeRules rules)
+    {
+        int battleModeStageIndex = GetActiveBattleModeStageIndex();
+        SaveData.BattleModeHandicapSave handicap = SaveSystem.GetBattleModeHandicapForStage(battleModeStageIndex);
+
+        for (int i = 1; i <= 6; i++)
+        {
+            ResetBattleModeStateKeepingSkin(_p[i - 1]);
+            rules?.ApplyStartingLoadout(i, _p[i - 1]);
+            ApplyBattleModeHandicap(i, _p[i - 1], handicap, battleModeStageIndex);
+
+            CopyState(_p[i - 1], _stage[i - 1]);
+        }
+
+        stageActive = false;
+    }
+
+    static int GetActiveBattleModeStageIndex()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        const string prefix = "BattleMode_";
+        if (!string.IsNullOrEmpty(sceneName) &&
+            sceneName.StartsWith(prefix, System.StringComparison.Ordinal) &&
+            int.TryParse(sceneName.Substring(prefix.Length), out int parsed))
+        {
+            return Mathf.Clamp(parsed, 1, 15);
+        }
+
+        return SaveSystem.GetBattleModeStageIndex();
+    }
+
+    static void ApplyBattleModeHandicap(
+        int playerId,
+        PlayerState state,
+        SaveData.BattleModeHandicapSave handicap,
+        int battleModeStageIndex)
+    {
+        if (state == null || handicap?.players == null)
+            return;
+
+        int index = Mathf.Clamp(playerId - 1, 0, handicap.players.Length - 1);
+        SaveData.BattleModeHandicapPlayerSave player = handicap.players[index];
+        if (player == null)
+            return;
+
+        state.Life = 1 + Mathf.Clamp(player.life, 0, 9);
+        state.BombAmount = Mathf.Clamp(player.bombAmount, 1, MaxBombAmount);
+        state.ExplosionRadius = Mathf.Clamp(player.blastRadius, 1, MaxExplosionRadius);
+        state.SpeedInternal = SpeedLevelToInternal(player.speedLevel);
+        state.MountedLouie = EnumIsMountedType(player.mountedLouie)
+            ? (MountedType)player.mountedLouie
+            : MountedType.None;
+
+        state.CanPunchBombs = player.punchBomb;
+        state.HasPowerGlove = player.powerGlove;
+        state.HasFullFire = player.fullFire;
+        state.CanPassDestructibles = player.destructiblePass;
+
+        ApplyHandicapBombType(state, (BattleModeHandicapBombType)player.bombType);
+        ApplyHandicapMovementAbility(state, (BattleModeHandicapMovementAbility)player.movementAbility);
+
+    }
+
+    static bool EnumIsMountedType(int value)
+    {
+        return System.Enum.IsDefined(typeof(MountedType), value);
+    }
+
+    static void ApplyHandicapBombType(PlayerState state, BattleModeHandicapBombType bombType)
+    {
+        state.HasPierceBombs = false;
+        state.HasControlBombs = false;
+        state.HasPowerBomb = false;
+        state.HasRubberBombs = false;
+        state.HasMagnetBomb = false;
+
+        switch (bombType)
+        {
+            case BattleModeHandicapBombType.Power:
+                state.HasPowerBomb = true;
+                break;
+
+            case BattleModeHandicapBombType.Rubber:
+                state.HasRubberBombs = true;
+                break;
+
+            case BattleModeHandicapBombType.Pierce:
+                state.HasPierceBombs = true;
+                break;
+
+            case BattleModeHandicapBombType.Control:
+                state.HasControlBombs = true;
+                break;
+
+            case BattleModeHandicapBombType.Magnet:
+                state.HasMagnetBomb = true;
+                break;
+        }
+    }
+
+    static void ApplyHandicapMovementAbility(PlayerState state, BattleModeHandicapMovementAbility movementAbility)
+    {
+        state.CanKickBombs = false;
+        state.CanPassBombs = false;
+
+        switch (movementAbility)
+        {
+            case BattleModeHandicapMovementAbility.Kick:
+                state.CanKickBombs = true;
+                break;
+            case BattleModeHandicapMovementAbility.BombPass:
+                state.CanPassBombs = true;
+                break;
+        }
+    }
+
+    static void ResetBattleModeStateKeepingSkin(PlayerState s)
+    {
+        if (s == null)
+            return;
+
+        s.Life = 1;
+        s.BombAmount = 1;
+        s.ExplosionRadius = 2;
+        s.SpeedInternal = SpeedLevelToInternal(2);
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedType.None;
+        s.QueuedEggs.Clear();
+
+        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
     }
 
     public static void BeginStage()
@@ -632,15 +992,12 @@ public static class PlayerPersistentStats
         if (stageActive)
             return;
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
             CopyState(baseState, st);
         }
-
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = AreAllTrackedPlayersInDefaultState(_stage);
 
         stageActive = true;
     }
@@ -650,7 +1007,7 @@ public static class PlayerPersistentStats
         if (!stageActive)
             return;
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
@@ -658,8 +1015,6 @@ public static class PlayerPersistentStats
         }
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
     }
 
     public static void RollbackStage()
@@ -667,7 +1022,7 @@ public static class PlayerPersistentStats
         if (!stageActive)
             return;
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
@@ -675,8 +1030,6 @@ public static class PlayerPersistentStats
         }
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
     }
 
     static MountedType EggToLouie(ItemType t)
@@ -707,7 +1060,7 @@ public static class PlayerPersistentStats
 
     public static void StageApplyPickup(int playerId, ItemType type)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
         BeginStage();
 
         var s = _stage[playerId - 1];
@@ -815,6 +1168,201 @@ public static class PlayerPersistentStats
         }
     }
 
+    public static bool StageTryExpelRandomPersistentItem(
+        MovementController movement,
+        BombController bomb,
+        out ItemType expelledType)
+    {
+        expelledType = default;
+
+        if (movement == null || !movement.CompareTag("Player"))
+            return false;
+
+        int playerId = Mathf.Clamp(movement.PlayerId, 1, 6);
+        BeginStage();
+
+        var s = _stage[playerId - 1];
+        var candidates = new List<ItemType>(16);
+
+        if (s.BombAmount > MinimumDroppedBombAmount)
+            candidates.Add(ItemType.ExtraBomb);
+
+        if (s.ExplosionRadius > MinimumDroppedExplosionRadius)
+            candidates.Add(ItemType.BlastRadius);
+
+        int minimumDroppedSpeedInternal = SpeedLevelToInternal(MinimumDroppedSpeedLevel);
+        if (s.SpeedInternal > minimumDroppedSpeedInternal)
+            candidates.Add(ItemType.SpeedIncrese);
+
+        if (s.CanKickBombs)
+            candidates.Add(ItemType.BombKick);
+
+        if (s.CanPunchBombs)
+            candidates.Add(ItemType.BombPunch);
+
+        if (s.HasPowerGlove)
+            candidates.Add(ItemType.PowerGlove);
+
+        if (s.CanPassBombs)
+            candidates.Add(ItemType.BombPass);
+
+        if (s.CanPassDestructibles)
+            candidates.Add(ItemType.DestructiblePass);
+
+        if (s.HasPierceBombs)
+            candidates.Add(ItemType.PierceBomb);
+
+        if (s.HasControlBombs)
+            candidates.Add(ItemType.ControlBomb);
+
+        if (s.HasPowerBomb)
+            candidates.Add(ItemType.PowerBomb);
+
+        if (s.HasRubberBombs)
+            candidates.Add(ItemType.RubberBomb);
+
+        if (s.HasMagnetBomb)
+            candidates.Add(ItemType.MagnetBomb);
+
+        if (s.HasFullFire)
+            candidates.Add(ItemType.FullFire);
+
+        if (candidates.Count == 0)
+            return false;
+
+        expelledType = candidates[Random.Range(0, candidates.Count)];
+        RemoveStageItem(s, expelledType);
+        ApplyExpelledRuntimeItem(movement, bomb, expelledType, s);
+        return true;
+    }
+
+    static void RemoveStageItem(PlayerState s, ItemType type)
+    {
+        switch (type)
+        {
+            case ItemType.ExtraBomb:
+                s.BombAmount = Mathf.Max(MinimumDroppedBombAmount, s.BombAmount - 1);
+                break;
+
+            case ItemType.BlastRadius:
+                s.ExplosionRadius = Mathf.Max(MinimumDroppedExplosionRadius, s.ExplosionRadius - 1);
+                break;
+
+            case ItemType.SpeedIncrese:
+                s.SpeedInternal = Mathf.Max(SpeedLevelToInternal(MinimumDroppedSpeedLevel), s.SpeedInternal - SpeedStep);
+                break;
+
+            case ItemType.BombKick:
+                s.CanKickBombs = false;
+                break;
+
+            case ItemType.BombPunch:
+                s.CanPunchBombs = false;
+                break;
+
+            case ItemType.PowerGlove:
+                s.HasPowerGlove = false;
+                break;
+
+            case ItemType.BombPass:
+                s.CanPassBombs = false;
+                break;
+
+            case ItemType.DestructiblePass:
+                s.CanPassDestructibles = false;
+                break;
+
+            case ItemType.PierceBomb:
+                s.HasPierceBombs = false;
+                break;
+
+            case ItemType.ControlBomb:
+                s.HasControlBombs = false;
+                break;
+
+            case ItemType.PowerBomb:
+                s.HasPowerBomb = false;
+                break;
+
+            case ItemType.RubberBomb:
+                s.HasRubberBombs = false;
+                break;
+
+            case ItemType.MagnetBomb:
+                s.HasMagnetBomb = false;
+                break;
+
+            case ItemType.FullFire:
+                s.HasFullFire = false;
+                break;
+        }
+    }
+
+    static void ApplyExpelledRuntimeItem(
+        MovementController movement,
+        BombController bomb,
+        ItemType type,
+        PlayerState s)
+    {
+        if (movement != null && type == ItemType.SpeedIncrese)
+            movement.ApplySpeedInternal(s.SpeedInternal);
+
+        if (bomb != null)
+        {
+            if (type == ItemType.ExtraBomb)
+                bomb.bombAmout = Mathf.Max(MinimumDroppedBombAmount, s.BombAmount);
+
+            if (type == ItemType.BlastRadius)
+                bomb.explosionRadius = Mathf.Max(MinimumDroppedExplosionRadius, s.ExplosionRadius);
+        }
+
+        if (movement == null)
+            return;
+
+        if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem) || abilitySystem == null)
+            return;
+
+        switch (type)
+        {
+            case ItemType.BombKick:
+                abilitySystem.Disable(BombKickAbility.AbilityId);
+                RemoveBattleModeComKickBombAbility(movement.gameObject);
+                break;
+            case ItemType.BombPunch:
+                abilitySystem.Disable(BombPunchAbility.AbilityId);
+                RemoveBattleModeComAbility<BattleModeComPunchBombAbility>(movement.gameObject);
+                break;
+            case ItemType.PowerGlove:
+                abilitySystem.Disable(PowerGloveAbility.AbilityId);
+                RemoveBattleModeComAbility<BattleModeComPowerGloveAbility>(movement.gameObject);
+                break;
+            case ItemType.BombPass:
+                abilitySystem.Disable(BombPassAbility.AbilityId);
+                break;
+            case ItemType.DestructiblePass:
+                abilitySystem.Disable(DestructiblePassAbility.AbilityId);
+                break;
+            case ItemType.PierceBomb:
+                abilitySystem.Disable(PierceBombAbility.AbilityId);
+                break;
+            case ItemType.ControlBomb:
+                abilitySystem.Disable(ControlBombAbility.AbilityId);
+                break;
+            case ItemType.PowerBomb:
+                abilitySystem.Disable(PowerBombAbility.AbilityId);
+                break;
+            case ItemType.RubberBomb:
+                abilitySystem.Disable(RubberBombAbility.AbilityId);
+                break;
+            case ItemType.MagnetBomb:
+                abilitySystem.Disable(MagnetBombAbility.AbilityId);
+                break;
+            case ItemType.FullFire:
+                abilitySystem.Disable(FullFireAbility.AbilityId);
+                break;
+        }
+    }
+
     public static void StageCaptureFromRuntime(MovementController movement, BombController bomb)
     {
         if (movement == null && bomb == null)
@@ -869,100 +1417,8 @@ public static class PlayerPersistentStats
 
     public static PlayerState GetRuntime(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
         return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
     }
 
-    static bool IsStage1_1OnlyUnlockedStage()
-    {
-        if (!StageUnlockProgress.IsUnlocked("Stage_1-1"))
-            return false;
-
-        return !StageUnlockProgress.IsUnlocked("Stage_1-2");
-    }
-
-    static bool IsValidPerfectExplosionRadiusForCurrentScene(int explosionRadius)
-    {
-        string sceneName = SceneManager.GetActiveScene().name;
-
-        if (sceneName == "Stage_1-1")
-        {
-            int expectedRadius = IsStage1_1OnlyUnlockedStage() ? 1 : 2;
-            return explosionRadius == expectedRadius;
-        }
-
-        return explosionRadius == 1 || explosionRadius == 2;
-    }
-
-    static bool IsDefaultState(PlayerState s)
-    {
-        if (s == null)
-            return false;
-
-        if (s.Life != 1)
-            return false;
-
-        if (s.BombAmount != 1)
-            return false;
-
-        if (!IsValidPerfectExplosionRadiusForCurrentScene(s.ExplosionRadius))
-            return false;
-
-        if (s.SpeedInternal != MinSpeedInternal)
-            return false;
-
-        if (s.CanKickBombs) return false;
-        if (s.CanPunchBombs) return false;
-        if (s.HasPowerGlove) return false;
-        if (s.CanPassBombs) return false;
-        if (s.CanPassDestructibles) return false;
-        if (s.HasPierceBombs) return false;
-        if (s.HasControlBombs) return false;
-        if (s.HasPowerBomb) return false;
-        if (s.HasRubberBombs) return false;
-        if (s.HasMagnetBomb) return false;
-        if (s.HasFullFire) return false;
-
-        if (s.MountedLouie != MountedType.None)
-            return false;
-
-        if (s.QueuedEggs != null && s.QueuedEggs.Count > 0)
-            return false;
-
-        return true;
-    }
-
-    static bool AreAllTrackedPlayersInDefaultState(PlayerState[] states)
-    {
-        if (states == null || states.Length == 0)
-            return false;
-
-        for (int i = 0; i < states.Length; i++)
-        {
-            if (!IsDefaultState(states[i]))
-                return false;
-        }
-
-        return true;
-    }
-
-    public static void NotifyStageItemPickupCollected()
-    {
-        BeginStage();
-        stageAnyItemPickupCollected = true;
-    }
-
-    public static bool IsCurrentStagePerfectClear()
-    {
-        if (!stageActive)
-            return false;
-
-        if (!stageStartedWithDefaultState)
-            return false;
-
-        if (stageAnyItemPickupCollected)
-            return false;
-
-        return AreAllTrackedPlayersInDefaultState(_stage);
-    }
 }

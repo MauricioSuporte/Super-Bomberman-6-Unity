@@ -341,7 +341,7 @@ public class ChameleonMovementController : EnemyMovementController
 
         isTransforming = false;
         isDisguised = true;
-        speed = disguisedSpeed;
+        speed = disguisedSpeed * campaignDifficultySpeedMultiplier;
 
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;

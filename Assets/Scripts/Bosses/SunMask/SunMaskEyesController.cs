@@ -29,7 +29,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
         Damaged,
         HoldSul,
         IntroHold,
-        IntroSpin
+        IntroSpin,
+        HardAttackBlack
     }
 
     [Header("Eye Roots (children of SunMask)")]
@@ -61,6 +62,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
     private AnimatedSpriteRenderer _rightDamagedSingle;
     private AnimatedSpriteRenderer _leftDamagedSingle;
+    private Color _rightDamagedBaseColor = Color.white;
+    private Color _leftDamagedBaseColor = Color.white;
 
     private AnimatedSpriteRenderer _rightSulNormal;
     private AnimatedSpriteRenderer _leftSulNormal;
@@ -99,6 +102,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         CacheEyeChildren(rightEyeRoot, _rightNormal, out _rightDamagedSingle);
         CacheEyeChildren(leftEyeRoot, _leftNormal, out _leftDamagedSingle);
+        _rightDamagedBaseColor = GetRendererColor(_rightDamagedSingle);
+        _leftDamagedBaseColor = GetRendererColor(_leftDamagedSingle);
 
         _rightNormal.TryGetValue(EyeDir.Sul, out _rightSulNormal);
         _leftNormal.TryGetValue(EyeDir.Sul, out _leftSulNormal);
@@ -175,7 +180,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
         UpdateAngryEyeOffset();
         UpdateDeathSulOffset();
 
-        if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul || _override == EyeOverride.IntroHold || _override == EyeOverride.IntroSpin)
+        if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul || _override == EyeOverride.IntroHold || _override == EyeOverride.IntroSpin || _override == EyeOverride.HardAttackBlack)
             return;
 
         if (useDamagedEyesWhenBossHurt)
@@ -425,6 +430,28 @@ public sealed class SunMaskEyesController : MonoBehaviour
         _deathEyesRoutine = StartCoroutine(DeathEyesRoutine_DamagedThenSul(damagedDuration));
     }
 
+    public void BeginHardAttackBlackDamagedEyes()
+    {
+        _override = EyeOverride.HardAttackBlack;
+        ApplyEyeSet(EyeSet.Damaged, force: true);
+        SetRendererColor(_rightDamagedSingle, Color.black);
+        SetRendererColor(_leftDamagedSingle, Color.black);
+    }
+
+    public void ClearHardAttackBlackDamagedEyes()
+    {
+        if (_override != EyeOverride.HardAttackBlack)
+            return;
+
+        SetRendererColor(_rightDamagedSingle, _rightDamagedBaseColor);
+        SetRendererColor(_leftDamagedSingle, _leftDamagedBaseColor);
+        _override = EyeOverride.None;
+        _currentSet = EyeSet.Normal;
+        _hasSet = false;
+        _currentTarget = null;
+        _nextRetargetTime = 0f;
+    }
+
     private IEnumerator DeathEyesRoutine_DamagedThenSul(float damagedDuration)
     {
         SetOverrideDamaged();
@@ -510,6 +537,17 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         if (on && refresh)
             r.RefreshFrame();
+    }
+
+    private static Color GetRendererColor(AnimatedSpriteRenderer r)
+    {
+        return r != null && r.TryGetComponent<SpriteRenderer>(out var sr) ? sr.color : Color.white;
+    }
+
+    private static void SetRendererColor(AnimatedSpriteRenderer r, Color color)
+    {
+        if (r != null && r.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.color = color;
     }
 
     private static void DisableAll(Dictionary<EyeDir, AnimatedSpriteRenderer> map)

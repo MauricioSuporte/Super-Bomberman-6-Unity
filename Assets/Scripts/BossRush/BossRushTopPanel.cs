@@ -8,9 +8,6 @@ public class BossRushTopPanel : MonoBehaviour
 {
     const string LOG = "[BossRushTopPanel]";
 
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-
     [Header("Header")]
     [SerializeField] TextMeshProUGUI startWithText;
     [SerializeField] string startWithLabel = "Start with";
@@ -152,12 +149,6 @@ public class BossRushTopPanel : MonoBehaviour
         ApplyScaledFonts();
         ApplyLayoutFormatting();
         ForceRebuild();
-
-        SLog(
-            $"SetDifficulty | difficulty={difficulty} " +
-            $"bomb={itemAmount} fire={itemAmount} speed={itemAmount} heart={heartAmount} " +
-            $"uiScale={_currentUiScale:0.###}"
-        );
     }
 
     void OnDestroy()
@@ -266,8 +257,6 @@ public class BossRushTopPanel : MonoBehaviour
         _baseAnchoredPosition = rt.anchoredPosition;
         _baseSizeDelta = rt.sizeDelta;
         _rootRectCaptured = true;
-
-        SLog($"CaptureBaseRootRect | anchoredPos={_baseAnchoredPosition} sizeDelta={_baseSizeDelta}");
     }
 
     void ApplyScaledRootRect()
@@ -290,11 +279,6 @@ public class BossRushTopPanel : MonoBehaviour
 
         rt.anchoredPosition = scaledPos;
         rt.sizeDelta = scaledSize;
-
-        SLog(
-            $"ApplyScaledRootRect | uiScale={_currentUiScale:0.###} " +
-            $"anchoredPos={scaledPos} sizeDelta={scaledSize}"
-        );
     }
 
     void SetAmountText(TextMeshProUGUI target, int value)
@@ -652,13 +636,5 @@ public class BossRushTopPanel : MonoBehaviour
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);
-    }
-
-    void SLog(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}", this);
     }
 }

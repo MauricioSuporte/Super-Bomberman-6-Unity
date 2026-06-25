@@ -24,15 +24,17 @@ public static class BossRushSession
     static float lastCompletedTime;
     static int lastCompletedRank = -1;
 
-    static int runPlayerCount = 1;
-    static readonly bool[] eliminatedPlayers = new bool[4];
+    static int runPlayerMask = GameSession.CreateMaskFromCount(1);
+    static readonly bool[] eliminatedPlayers = new bool[GameSession.MaxPlayerId + 1];
 
     public static bool IsActive => active;
     public static bool HasLastCompletedRun => hasLastCompletedRun;
+    public static BossRushDifficulty CurrentDifficulty => selectedDifficulty;
     public static BossRushDifficulty LastCompletedDifficulty => lastCompletedDifficulty;
     public static float LastCompletedTime => lastCompletedTime;
     public static int LastCompletedRank => lastCompletedRank;
-    public static int RunPlayerCount => Mathf.Clamp(runPlayerCount, 1, 4);
+    public static int RunPlayerCount => GameSession.CountPlayersInMask(runPlayerMask);
+    public static int RunPlayerMask => runPlayerMask;
 
     public static void StartRun(BossRushDifficulty difficulty, BossRushLoadoutPreset preset)
     {
@@ -49,9 +51,9 @@ public static class BossRushSession
         lastCompletedRank = -1;
         lastCompletedTime = 0f;
 
-        runPlayerCount = 1;
+        runPlayerMask = GameSession.CreateMaskFromCount(1);
         if (GameSession.Instance != null)
-            runPlayerCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            runPlayerMask = SanitizeRunPlayerMask(GameSession.Instance.ActivePlayerMask);
 
         ClearEliminatedPlayers();
         ApplySelectedLoadoutToRunPlayers();
@@ -182,27 +184,49 @@ public static class BossRushSession
         }
     }
 
+    public static bool IsRunPlayer(int playerId)
+    {
+        if (!GameSession.IsValidPlayerId(playerId))
+            return false;
+
+        return (runPlayerMask & PlayerIdToMask(playerId)) != 0;
+    }
+
+    public static void GetRunPlayerIds(System.Collections.Generic.List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
+        {
+            if (IsRunPlayer(playerId))
+                results.Add(playerId);
+        }
+    }
+
     public static bool ShouldSpawnPlayer(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
 
         if (!active)
             return true;
 
-        if (playerId > RunPlayerCount)
+        if (!IsRunPlayer(playerId))
             return false;
 
-        return !eliminatedPlayers[playerId - 1];
+        return !eliminatedPlayers[playerId];
     }
 
     public static bool IsPlayerEliminated(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
 
-        if (playerId > RunPlayerCount)
+        if (!IsRunPlayer(playerId))
             return true;
 
-        return eliminatedPlayers[playerId - 1];
+        return eliminatedPlayers[playerId];
     }
 
     public static void MarkPlayerEliminated(int playerId)
@@ -210,12 +234,12 @@ public static class BossRushSession
         if (!active)
             return;
 
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
 
-        if (playerId > RunPlayerCount)
+        if (!IsRunPlayer(playerId))
             return;
 
-        eliminatedPlayers[playerId - 1] = true;
+        eliminatedPlayers[playerId] = true;
 
         var state = PlayerPersistentStats.Get(playerId);
         if (state != null)
@@ -230,7 +254,7 @@ public static class BossRushSession
         if (RunPlayerCount <= 1)
             return;
 
-        bool[] aliveFlags = new bool[4];
+        bool[] aliveFlags = new bool[GameSession.MaxPlayerId + 1];
 
         var identities = UnityEngine.Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include);
 
@@ -240,8 +264,8 @@ public static class BossRushSession
             if (identity == null)
                 continue;
 
-            int playerId = Mathf.Clamp(identity.playerId, 1, 4);
-            if (playerId > RunPlayerCount)
+            int playerId = Mathf.Clamp(identity.playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+            if (!IsRunPlayer(playerId))
                 continue;
 
             MovementController movement = null;
@@ -255,20 +279,23 @@ public static class BossRushSession
                 !movement.isDead;
 
             if (alive)
-                aliveFlags[playerId - 1] = true;
+                aliveFlags[playerId] = true;
         }
 
-        for (int playerId = 1; playerId <= RunPlayerCount; playerId++)
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
         {
-            if (!aliveFlags[playerId - 1])
+            if (IsRunPlayer(playerId) && !aliveFlags[playerId])
                 MarkPlayerEliminated(playerId);
         }
     }
 
     static void ApplySelectedLoadoutToRunPlayers()
     {
-        for (int playerId = 1; playerId <= RunPlayerCount; playerId++)
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
         {
+            if (!IsRunPlayer(playerId))
+                continue;
+
             var state = PlayerPersistentStats.Get(playerId);
             if (state == null)
                 continue;
@@ -310,7 +337,7 @@ public static class BossRushSession
 
         if (unlocked)
         {
-            for (int playerId = 1; playerId <= 4; playerId++)
+            for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
                 PlayerPersistentStats.ClampSelectedSkinIfLocked(playerId);
         }
     }
@@ -328,7 +355,7 @@ public static class BossRushSession
 
         if (unlocked)
         {
-            for (int playerId = 1; playerId <= 4; playerId++)
+            for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
                 PlayerPersistentStats.ClampSelectedSkinIfLocked(playerId);
         }
     }
@@ -377,8 +404,8 @@ public static class BossRushSession
 
     static void ClearEliminatedPlayers()
     {
-        for (int i = 0; i < eliminatedPlayers.Length; i++)
-            eliminatedPlayers[i] = false;
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
+            eliminatedPlayers[playerId] = false;
     }
 
     static void ClearRuntimeState(bool keepLastCompletedRun = false)
@@ -388,7 +415,7 @@ public static class BossRushSession
         currentStageIndex = 0;
         selectedPreset = null;
         elapsedSeconds = 0f;
-        runPlayerCount = 1;
+        runPlayerMask = GameSession.CreateMaskFromCount(1);
 
         ClearEliminatedPlayers();
 
@@ -402,10 +429,11 @@ public static class BossRushSession
 
     static void ResetAllRunPlayers()
     {
-        int count = Mathf.Clamp(runPlayerCount, 1, 4);
-
-        for (int playerId = 1; playerId <= count; playerId++)
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
         {
+            if (!IsRunPlayer(playerId))
+                continue;
+
             var state = PlayerPersistentStats.Get(playerId);
             if (state == null)
                 continue;
@@ -433,5 +461,21 @@ public static class BossRushSession
 
             state.Skin = preservedSkin;
         }
+    }
+
+    static int SanitizeRunPlayerMask(int mask)
+    {
+        int sanitizedMask = mask & ((1 << GameSession.MaxPlayerId) - 1);
+
+        if (sanitizedMask == 0)
+            sanitizedMask = GameSession.CreateMaskFromCount(1);
+
+        return sanitizedMask;
+    }
+
+    static int PlayerIdToMask(int playerId)
+    {
+        int clampedPlayerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        return 1 << (clampedPlayerId - 1);
     }
 }

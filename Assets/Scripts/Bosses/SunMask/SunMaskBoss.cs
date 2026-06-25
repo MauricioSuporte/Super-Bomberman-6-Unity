@@ -1,6 +1,7 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(SunMaskMovement))]
@@ -10,6 +11,9 @@ using UnityEngine;
 [RequireComponent(typeof(CircleCollider2D))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
+    const int HardExtraLife = 2;
+    const float HardSpeedMultiplier = 1.5f;
+
     [Header("References")]
     public CharacterHealth characterHealth;
     public SunMaskMovement movement;
@@ -33,11 +37,20 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField] private float angryEyesYOffset = 0.3f;
 
     [Header("Angry - Arc (pre-chase)")]
+#pragma warning disable CS0414
     [SerializeField, Min(0f)] private float angryArcSeconds = 1f;
+#pragma warning restore CS0414
     [SerializeField, Min(0f)] private float angryArcRadius = 1.25f;
+#pragma warning disable CS0414
     [SerializeField] private bool angryArcClockwise = true;
+#pragma warning restore CS0414
 
     [Header("Angry - Chase Steering")]
+    [SerializeField, Range(0.1f, 1f)] private float angryChaseSpeedMultiplier = 0.75f;
+    [SerializeField, Min(0f)] private float angryChaseCloseSlowDistance = 7f;
+    [SerializeField, Range(0.1f, 1f)] private float angryChaseCloseSpeedMultiplier = 0.55f;
+    [SerializeField, Min(0f)] private float angryChaseMinimumSpeed = 1.5f;
+    [SerializeField, Range(0.1f, 1f)] private float angryChaseCloseTurnSpeedMultiplier = 0.35f;
     [SerializeField, Min(0.01f)] private float angryRetargetInterval = 0.08f;
     [SerializeField, Min(1f)] private float angryTurnSpeedDegrees = 220f;
 
@@ -46,9 +59,12 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Wink / Kiss Attack")]
     [SerializeField] private bool enableWinkAttack = true;
+#pragma warning disable CS0414
     [SerializeField, Min(0f)] private float winkMinInterval = 3f;
     [SerializeField, Min(0f)] private float winkMaxInterval = 5f;
+#pragma warning restore CS0414
     [SerializeField, Min(0f)] private float winkHoldDuration = 1f;
+    private bool nextWinkOrKissAttackShouldBeWink = true;
 
     [SerializeField] private AnimatedSpriteRenderer winkRenderer;
     [SerializeField] private AnimatedSpriteRenderer kissRenderer;
@@ -69,6 +85,19 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField, Min(0f)] private float heartSpawnRadius = 0.35f;
     [SerializeField, Min(0f)] private float heartFloatAmplitude = 0.08f;
     [SerializeField, Min(0f)] private float heartFloatFrequency = 3.5f;
+
+    [Header("Hard/Hardcore Low Health Special Attack")]
+    [SerializeField] private bool enableHardLowHealthSpecialAttack = true;
+    [SerializeField] private Vector2 hardSpecialCenter = new(-3f, -2f);
+    [SerializeField, Min(0.01f)] private float hardSpecialMoveDuration = 2f;
+    [SerializeField, Min(0f)] private float hardSpecialClosedHoldDuration = 1f;
+    [SerializeField, Min(0f)] private float hardSpecialDamagedHoldDuration = 1f;
+    [SerializeField, Min(1)] private int hardSpecialWinkBurstCount = 5;
+    [SerializeField, Min(0f)] private float hardSpecialWinkBurstInterval = 1f;
+    [SerializeField, Min(0.01f)] private float hardSpecialStarSpeed = 4f;
+    [FormerlySerializedAs("hardSpecialStarTurnSpeedDegrees")]
+    [SerializeField] private float hardSpecialStarCurveDegrees = 12f;
+    [SerializeField, Range(0.01f, 1f)] private float hardSpecialSecondHeartSpeedMultiplier = 0.5f;
 
     [Header("Timings")]
     [Min(0f)] public float hurtStopDuration = 0.5f;
@@ -136,6 +165,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private bool isDead;
     private bool inWinkAttack;
     private bool inAngry;
+    private bool hardLowHealthSpecialPerformed;
+    private bool hardLowHealthSpecialCompleted;
+    private bool inHardLowHealthSpecial;
+    private bool hardSpecialCanEnterAngry;
 
     private int initialFightLife;
     private bool fightLifeInitialized;
@@ -145,6 +178,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private Coroutine deathExplosionsRoutine;
     private Coroutine winkRoutine;
     private Coroutine angryRoutine;
+    private Coroutine hardLowHealthSpecialRoutine;
 
     private Rigidbody2D rb;
     private AudioSource audioSource;
@@ -265,6 +299,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (!movement)
             movement = GetComponent<SunMaskMovement>();
 
+        ApplyCampaignDifficultyModifiers();
+
         eyes = GetComponentInChildren<SunMaskEyesController>(true);
 
         if (characterHealth != null)
@@ -290,6 +326,42 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         }
     }
 
+    void ApplyCampaignDifficultyModifiers()
+    {
+        if (!UsesHardCampaignModifiers())
+            return;
+
+        if (characterHealth != null)
+            characterHealth.AddLife(HardExtraLife);
+
+        if (movement != null)
+            movement.ApplySpeedMultiplier(HardSpeedMultiplier);
+    }
+
+    static bool UsesHardCampaignModifiers()
+    {
+        if (BossRushSession.IsActive ||
+            !string.Equals(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                "Stage_2-7",
+                System.StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        Assets.Scripts.SaveSystem.StageSlot slot = SaveSystem.ActiveSlot;
+        if (slot == null || !slot.started)
+            return false;
+
+        Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty =
+            System.Enum.IsDefined(typeof(Assets.Scripts.SaveSystem.NormalGameDifficulty), slot.difficulty)
+                ? (Assets.Scripts.SaveSystem.NormalGameDifficulty)slot.difficulty
+                : Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        return difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard ||
+               difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore;
+    }
+
     void OnDestroy()
     {
         if (characterHealth != null)
@@ -304,6 +376,12 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         isDead = false;
         inWinkAttack = false;
         inAngry = false;
+        hardLowHealthSpecialPerformed = false;
+        hardLowHealthSpecialCompleted = false;
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
+
+        nextWinkOrKissAttackShouldBeWink = true;
 
         nextTouchDamageTime = 0f;
         nextDeathSfxTime = 0f;
@@ -319,6 +397,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
+        if (hardLowHealthSpecialRoutine != null) { StopCoroutine(hardLowHealthSpecialRoutine); hardLowHealthSpecialRoutine = null; }
 
         if (movement != null)
             movement.enabled = true;
@@ -354,9 +433,15 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
+        if (hardLowHealthSpecialRoutine != null) { StopCoroutine(hardLowHealthSpecialRoutine); hardLowHealthSpecialRoutine = null; }
 
         inWinkAttack = false;
         inAngry = false;
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
+
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
 
         ClearLowHealthTint();
     }
@@ -488,6 +573,25 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         RefreshLowHealthTint();
         PlayDamagedSfx();
 
+        bool startHardLowHealthSpecial = ShouldStartHardLowHealthSpecialAttack();
+        if (startHardLowHealthSpecial)
+        {
+            hardLowHealthSpecialPerformed = true;
+
+            if (angryRoutine != null)
+            {
+                StopCoroutine(angryRoutine);
+                angryRoutine = null;
+            }
+
+            inAngry = false;
+            hardLowHealthSpecialRoutine = StartCoroutine(HardLowHealthSpecialAttackRoutine());
+        }
+        else if (hardLowHealthSpecialCompleted)
+        {
+            SpawnCurvedStarBurst(-Mathf.Abs(hardSpecialStarCurveDegrees), hardSpecialStarSpeed);
+        }
+
         if (inAngry)
             return;
 
@@ -497,6 +601,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             StopCoroutine(hurtRoutine);
 
         hurtRoutine = StartCoroutine(HurtStopRoutine());
+
     }
 
     void PlayDamagedSfx()
@@ -504,7 +609,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (audioSource == null) return;
         if (damagedSfx == null) return;
 
-        audioSource.PlayOneShot(damagedSfx, Mathf.Clamp01(damagedSfxVolume));
+        GameAudioSettings.PlaySfx(audioSource, damagedSfx, Mathf.Clamp01(damagedSfxVolume));
     }
 
     void CacheDirectionBeforeHurt()
@@ -551,6 +656,176 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         hurtRoutine = null;
     }
 
+    bool ShouldStartHardLowHealthSpecialAttack()
+    {
+        return enableHardLowHealthSpecialAttack &&
+               !hardLowHealthSpecialPerformed &&
+               !inHardLowHealthSpecial &&
+               characterHealth != null &&
+               fightLifeInitialized &&
+               characterHealth.life < (initialFightLife * 0.5f) &&
+               UsesHardCampaignModifiers();
+    }
+
+    IEnumerator HardLowHealthSpecialAttackRoutine()
+    {
+        yield return null;
+        while (!isDead && characterHealth != null && characterHealth.IsInvulnerable)
+            yield return null;
+
+        if (isDead)
+        {
+            hardLowHealthSpecialRoutine = null;
+            yield break;
+        }
+
+        inHardLowHealthSpecial = true;
+        inWinkAttack = true;
+        hardSpecialCanEnterAngry = false;
+
+        if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
+        if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
+
+        StopMovement_DisableComponent();
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        EnableOnly(closedRenderer);
+        SetRendererStaticFirstFrame(closedRenderer);
+
+        float moveDuration = Mathf.Max(0.01f, hardSpecialMoveDuration);
+        float closedHoldDuration = Mathf.Max(0f, hardSpecialClosedHoldDuration);
+        float damagedHoldDuration = Mathf.Max(0f, hardSpecialDamagedHoldDuration);
+        int burstCount = Mathf.Max(1, hardSpecialWinkBurstCount);
+        float interval = Mathf.Max(0f, hardSpecialWinkBurstInterval);
+        float attackInvulnerability =
+            moveDuration +
+            closedHoldDuration +
+            damagedHoldDuration +
+            interval * Mathf.Max(0, burstCount - 1);
+        characterHealth.StartTemporaryInvulnerability(attackInvulnerability, withBlink: false);
+
+        yield return MoveToHardSpecialCenter(moveDuration);
+        if (closedHoldDuration > 0f && !isDead)
+            yield return new WaitForSeconds(closedHoldDuration);
+
+        if (isDead)
+        {
+            hardLowHealthSpecialRoutine = null;
+            yield break;
+        }
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.PlayDefaultMusic(restart: true);
+
+        EnableOnly(hurtRenderer);
+        SetRendererAsLooping(hurtRenderer, looping: true);
+        if (eyes != null)
+            eyes.BeginHardAttackBlackDamagedEyes();
+
+        if (damagedHoldDuration > 0f)
+            yield return new WaitForSeconds(damagedHoldDuration);
+
+        for (int i = 0; i < burstCount && !isDead; i++)
+        {
+            SpawnCurvedStarBurst(
+                i % 2 == 0 ? -hardSpecialStarCurveDegrees : hardSpecialStarCurveDegrees,
+                hardSpecialStarSpeed);
+
+            if (i < burstCount - 1)
+            {
+                if (interval > 0f)
+                    yield return new WaitForSeconds(interval);
+            }
+        }
+
+        if (!isDead)
+        {
+            hardSpecialCanEnterAngry = true;
+            yield return HardSpecialKissFinishRoutine();
+        }
+
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
+
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
+        inWinkAttack = false;
+        hardLowHealthSpecialCompleted = true;
+        hardLowHealthSpecialRoutine = null;
+
+        if (!isDead && !inAngry)
+        {
+            if (movement != null)
+                movement.enabled = true;
+
+            EnableOnly(walkRenderer);
+            SetRendererAsLooping(walkRenderer, looping: true);
+        }
+
+        if (!isDead && enableWinkAttack && winkRoutine == null)
+            winkRoutine = StartCoroutine(WinkAttackLoop());
+    }
+
+    IEnumerator MoveToHardSpecialCenter(float duration)
+    {
+        Vector2 start = rb != null ? rb.position : (Vector2)transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < duration && !isDead)
+        {
+            elapsed += Time.deltaTime;
+            Vector2 next = Vector2.Lerp(start, hardSpecialCenter, Mathf.Clamp01(elapsed / duration));
+            if (movement != null)
+                next = movement.SnapToPixelPerfect(next);
+            else
+                next = SnapToPixel(next);
+
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.MovePosition(next);
+            }
+            else
+            {
+                transform.position = next;
+            }
+
+            yield return null;
+        }
+
+        if (!isDead)
+        {
+            Vector2 end = movement != null ? movement.SnapToPixelPerfect(hardSpecialCenter) : SnapToPixel(hardSpecialCenter);
+            if (rb != null)
+            {
+                rb.position = end;
+                rb.MovePosition(end);
+            }
+            else
+            {
+                transform.position = end;
+            }
+        }
+    }
+
+    IEnumerator HardSpecialKissFinishRoutine()
+    {
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
+
+        EnableOnly(kissRenderer);
+        SetRendererStaticFirstFrame(kissRenderer);
+
+        SpawnHeart(1f);
+        SpawnHeart(hardSpecialSecondHeartSpeedMultiplier);
+
+        float hold = Mathf.Max(0f, winkHoldDuration);
+        if (hold > 0f)
+            yield return new WaitForSeconds(hold);
+    }
+
     void OnDied() => Kill();
 
     public void Kill()
@@ -563,12 +838,18 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         isDead = true;
         inWinkAttack = false;
         inAngry = false;
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
 
         ClearLowHealthTint();
 
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
+        if (hardLowHealthSpecialRoutine != null) { StopCoroutine(hardLowHealthSpecialRoutine); hardLowHealthSpecialRoutine = null; }
+
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
 
         if (deathRoutine != null)
             StopCoroutine(deathRoutine);
@@ -720,7 +1001,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
                 deathSfxOwner = s;
 
-                s.PlayOneShot(deathExplosionSfx, 1f);
+                GameAudioSettings.PlaySfx(s, deathExplosionSfx, 1f);
 
                 float clipDuration = deathExplosionSfx.length / Mathf.Max(0.01f, Mathf.Abs(pitch));
                 Destroy(go, clipDuration + 0.1f);
@@ -734,7 +1015,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         audioSource.Stop();
         audioSource.pitch = pitch;
-        audioSource.PlayOneShot(deathExplosionSfx, deathExplosionSfxVolume);
+        GameAudioSettings.PlaySfx(audioSource, deathExplosionSfx, deathExplosionSfxVolume);
         audioSource.pitch = 1f;
     }
 
@@ -763,27 +1044,23 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     IEnumerator WinkAttackLoop()
     {
+        const float fixedAttackInterval = 5f;
+
         while (!isDead)
         {
-            float minI = Mathf.Max(0f, winkMinInterval);
-            float maxI = Mathf.Max(minI, winkMaxInterval);
-            float wait = Random.Range(minI, maxI);
-
-            if (wait > 0f)
-                yield return new WaitForSeconds(wait);
-            else
-                yield return null;
+            yield return new WaitForSeconds(fixedAttackInterval);
 
             if (isDead) continue;
             if (!enableWinkAttack) continue;
             if (inWinkAttack) continue;
             if (inAngry) continue;
+            if (inHardLowHealthSpecial) continue;
             if (hurtRoutine != null) continue;
             if (deathRoutine != null) continue;
             if (movement != null && !movement.enabled) continue;
 
-            bool canWink = (winkRenderer != null && starProjectilePrefab != null);
-            bool canKiss = (kissRenderer != null && heartPrefab != null);
+            bool canWink = winkRenderer != null && starProjectilePrefab != null;
+            bool canKiss = kissRenderer != null && heartPrefab != null;
 
             if (!canWink && !canKiss)
                 continue;
@@ -810,10 +1087,17 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         AnimatedSpriteRenderer previous = GetCurrentRenderer();
 
-        float roll = Random.value;
         bool doWink;
-        if (canWink && canKiss) doWink = roll < 0.5f;
-        else doWink = canWink;
+
+        if (canWink && canKiss)
+        {
+            doWink = nextWinkOrKissAttackShouldBeWink;
+            nextWinkOrKissAttackShouldBeWink = !nextWinkOrKissAttackShouldBeWink;
+        }
+        else
+        {
+            doWink = canWink;
+        }
 
         if (doWink)
         {
@@ -822,7 +1106,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
             if (!isDead)
             {
-                SpawnStarBurst();
+                if (hardLowHealthSpecialCompleted)
+                    SpawnCurvedStarBurst(-Mathf.Abs(hardSpecialStarCurveDegrees), hardSpecialStarSpeed);
+                else
+                    SpawnStarBurst();
             }
         }
         else
@@ -833,6 +1120,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (!isDead)
             {
                 SpawnHeart();
+                if (hardLowHealthSpecialCompleted)
+                    SpawnHeart(hardSpecialSecondHeartSpeedMultiplier);
             }
         }
 
@@ -881,7 +1170,26 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         }
     }
 
-    void SpawnHeart()
+    void SpawnCurvedStarBurst(float angularSpeedDegrees, float burstSpeed)
+    {
+        Vector2 origin = transform.position;
+
+        for (int i = 0; i < StarDirs.Length; i++)
+        {
+            Vector2 dir = StarDirs[i];
+            Vector2 spawnPos = SnapToPixel(origin + dir * Mathf.Max(0f, starSpawnRadius));
+
+            StarProjectile proj = Instantiate(starProjectilePrefab, spawnPos, Quaternion.identity);
+            if (proj == null)
+                continue;
+
+            proj.damage = Mathf.Max(1, starDamage);
+            proj.obstacleMask = starObstacleMask;
+            proj.InitializeCurved(dir, Mathf.Max(0.01f, burstSpeed), starLifeTime, angularSpeedDegrees);
+        }
+    }
+
+    void SpawnHeart(float speedMultiplier = 1f)
     {
         Vector2 origin = transform.position;
         Vector2 randomOffset = Random.insideUnitCircle * Mathf.Max(0f, heartSpawnRadius);
@@ -895,7 +1203,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         heart.SetBoss(this);
 
         heart.Initialize(
-            speed: heartSpeed,
+            speed: heartSpeed * Mathf.Max(0f, speedMultiplier),
             lifeTime: heartLifeTime,
             floatAmplitude: heartFloatAmplitude,
             floatFrequency: heartFloatFrequency
@@ -905,6 +1213,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public void NotifyHeartDestroyedByPlayer(MovementController playerWhoDestroyed)
     {
         if (isDead) return;
+        if ((inHardLowHealthSpecial || hardLowHealthSpecialRoutine != null) && !hardSpecialCanEnterAngry) return;
         if (playerWhoDestroyed == null) return;
         if (playerWhoDestroyed.isDead || playerWhoDestroyed.IsEndingStage) return;
 
@@ -946,19 +1255,24 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (freeze > 0f)
             yield return new WaitForSeconds(freeze);
 
-        float total = Mathf.Max(0f, angryChaseSeconds);
-        float arcDur = Mathf.Clamp(angryArcSeconds, 0f, total);
-        float chaseDur = Mathf.Max(0f, total - arcDur);
+        float angrySpeed = movement != null ? Mathf.Max(0.01f, movement.speed) : 2.5f;
+        float chaseSpeed = Mathf.Max(0.01f, angrySpeed * angryChaseSpeedMultiplier);
+        float effectiveChaseSpeed = chaseSpeed;
 
-        if (!isDead && arcDur > 0f && angryArcRadius > 0f && targetPlayer != null && !targetPlayer.isDead && !targetPlayer.IsEndingStage)
+        if (!isDead &&
+            angryArcRadius > 0f &&
+            targetPlayer != null &&
+            !targetPlayer.isDead &&
+            !targetPlayer.IsEndingStage)
         {
-            yield return MoveSemiCircleTowardTarget(targetPlayer, arcDur, angryArcRadius, angryArcClockwise);
+            yield return MoveFullCircleClockwiseTowardTarget(targetPlayer, angryArcRadius, angrySpeed);
         }
 
+        float chaseDur = Mathf.Max(0f, angryChaseSeconds);
         float endTime = Time.time + chaseDur;
 
         Vector2 chaseDir;
-        if (targetPlayer != null)
+        if (targetPlayer != null && rb != null)
         {
             Vector2 initialTo = (Vector2)targetPlayer.transform.position - rb.position;
             if (initialTo.sqrMagnitude > 0.0001f)
@@ -973,6 +1287,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         float nextRetargetTime = 0f;
         Vector2 desiredDir = chaseDir;
+        Vector2 continuousChasePosition = rb != null ? rb.position : (Vector2)transform.position;
 
         while (!isDead && Time.time < endTime)
         {
@@ -992,13 +1307,18 @@ public class SunMaskBoss : MonoBehaviour, IKillable
                         desiredDir = to.normalized;
                 }
 
-                float maxRadiansDelta = angryTurnSpeedDegrees * Mathf.Deg2Rad * Time.fixedDeltaTime;
+                float distanceToPlayer = Vector2.Distance(pos, (Vector2)targetPlayer.transform.position);
+                effectiveChaseSpeed = ResolveAngryChaseSpeed(chaseSpeed, distanceToPlayer);
+
+                float effectiveTurnSpeedDegrees = ResolveAngryChaseTurnSpeed(distanceToPlayer);
+                float maxRadiansDelta = effectiveTurnSpeedDegrees * Mathf.Deg2Rad * Time.fixedDeltaTime;
                 Vector3 v = Vector3.RotateTowards(chaseDir, desiredDir, maxRadiansDelta, 0f);
                 chaseDir = (Vector2)v.normalized;
 
-                float spd = (movement != null) ? Mathf.Max(0.01f, movement.speed) : 2.5f;
-                Vector2 step = chaseDir * (spd * Time.fixedDeltaTime);
-                Vector2 next = SnapToPixel(pos + step);
+                Vector2 step = chaseDir * (effectiveChaseSpeed * Time.fixedDeltaTime);
+                continuousChasePosition += step;
+                ResolveAngryChaseBounds(ref continuousChasePosition, ref chaseDir, ref desiredDir);
+                Vector2 next = SnapToPixel(continuousChasePosition);
 
                 rb.MovePosition(next);
             }
@@ -1045,10 +1365,90 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         angryRoutine = null;
     }
 
-    IEnumerator MoveSemiCircleTowardTarget(MovementController target, float duration, float radius, bool clockwise)
+    float ResolveAngryChaseSpeed(float baseChaseSpeed, float distanceToPlayer)
+    {
+        float slowDistance = Mathf.Max(7f, angryChaseCloseSlowDistance);
+        if (slowDistance <= 0f || distanceToPlayer >= slowDistance)
+            return baseChaseSpeed;
+
+        float closeMultiplier = Mathf.Clamp(angryChaseCloseSpeedMultiplier, 0.45f, 1f);
+        float t = Mathf.Clamp01(distanceToPlayer / slowDistance);
+        float multiplier = Mathf.Lerp(closeMultiplier, 1f, t);
+        return Mathf.Max(Mathf.Max(0.01f, angryChaseMinimumSpeed), baseChaseSpeed * multiplier);
+    }
+
+    float ResolveAngryChaseTurnSpeed(float distanceToPlayer)
+    {
+        float slowDistance = Mathf.Max(7f, angryChaseCloseSlowDistance);
+        if (slowDistance <= 0f || distanceToPlayer >= slowDistance)
+            return angryTurnSpeedDegrees;
+
+        float closeMultiplier = Mathf.Clamp(angryChaseCloseTurnSpeedMultiplier, 0.1f, 0.45f);
+        float t = Mathf.Clamp01(distanceToPlayer / slowDistance);
+        float multiplier = Mathf.Lerp(closeMultiplier, 1f, t);
+        return Mathf.Max(1f, angryTurnSpeedDegrees * multiplier);
+    }
+
+    bool ResolveAngryChaseBounds(ref Vector2 position, ref Vector2 chaseDir, ref Vector2 desiredDir)
+    {
+        if (movement == null || !movement.useBounds)
+            return false;
+
+        bool hitX = false;
+        bool hitY = false;
+
+        if (position.x < movement.minBounds.x)
+        {
+            position.x = movement.minBounds.x + (movement.minBounds.x - position.x);
+            hitX = true;
+        }
+        else if (position.x > movement.maxBounds.x)
+        {
+            position.x = movement.maxBounds.x - (position.x - movement.maxBounds.x);
+            hitX = true;
+        }
+
+        if (position.y < movement.minBounds.y)
+        {
+            position.y = movement.minBounds.y + (movement.minBounds.y - position.y);
+            hitY = true;
+        }
+        else if (position.y > movement.maxBounds.y)
+        {
+            position.y = movement.maxBounds.y - (position.y - movement.maxBounds.y);
+            hitY = true;
+        }
+
+        if (!hitX && !hitY)
+            return false;
+
+        if (hitX)
+        {
+            chaseDir.x *= -1f;
+            desiredDir.x *= -1f;
+        }
+
+        if (hitY)
+        {
+            chaseDir.y *= -1f;
+            desiredDir.y *= -1f;
+        }
+
+        position.x = Mathf.Clamp(position.x, movement.minBounds.x, movement.maxBounds.x);
+        position.y = Mathf.Clamp(position.y, movement.minBounds.y, movement.maxBounds.y);
+
+        chaseDir = chaseDir.sqrMagnitude > 0.0001f ? chaseDir.normalized : Vector2.down;
+        desiredDir = desiredDir.sqrMagnitude > 0.0001f ? desiredDir.normalized : chaseDir;
+        return true;
+    }
+
+    IEnumerator MoveFullCircleClockwiseTowardTarget(MovementController target, float radius, float moveSpeed)
     {
         if (rb == null || target == null)
             yield break;
+
+        radius = Mathf.Max(0.01f, radius);
+        moveSpeed = Mathf.Max(0.01f, moveSpeed);
 
         Vector2 start = SnapToPixel(rb.position);
         Vector2 toTarget = (Vector2)target.transform.position - start;
@@ -1058,31 +1458,34 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         Vector2 dir = toTarget.normalized;
 
-        Vector2 center = SnapToPixel(start + dir * radius);
+        Vector2 center = SnapToPixel(start - dir * radius);
         Vector2 v0 = start - center;
 
-        float sign = clockwise ? -1f : 1f;
+        float angularSpeedDegrees = (moveSpeed / radius) * Mathf.Rad2Deg;
+        float travelledDegrees = 0f;
 
-        float t = 0f;
-        while (!isDead && t < duration)
+        while (!isDead && travelledDegrees < 360f)
         {
             if (target == null || target.isDead || target.IsEndingStage)
                 break;
 
-            float a = (t / duration) * 180f * sign;
-            Vector2 p = center + Rotate(v0, a);
+            float stepDegrees = angularSpeedDegrees * Time.fixedDeltaTime;
+            float nextTravelledDegrees = Mathf.Min(360f, travelledDegrees + stepDegrees);
+
+            float angle = -nextTravelledDegrees;
+            Vector2 p = center + Rotate(v0, angle);
             p = SnapToPixel(p);
 
             rb.MovePosition(p);
 
-            t += Time.fixedDeltaTime;
+            travelledDegrees = nextTravelledDegrees;
+
             yield return new WaitForFixedUpdate();
         }
 
         if (!isDead && target != null && !target.isDead && !target.IsEndingStage)
         {
-            Vector2 endP = center + Rotate(v0, 180f * sign);
-            rb.MovePosition(SnapToPixel(endP));
+            rb.MovePosition(start);
         }
     }
 
@@ -1117,6 +1520,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void EnableOnly(AnimatedSpriteRenderer target)
     {
         if (walkRenderer != null) walkRenderer.enabled = (target == walkRenderer);
+        if (closedRenderer != null) closedRenderer.enabled = (target == closedRenderer);
         if (angryRenderer != null) angryRenderer.enabled = (target == angryRenderer);
         if (winkRenderer != null) winkRenderer.enabled = (target == winkRenderer);
         if (kissRenderer != null) kissRenderer.enabled = (target == kissRenderer);

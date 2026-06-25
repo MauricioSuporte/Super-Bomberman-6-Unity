@@ -3,15 +3,10 @@
 public class GlobalUnlockController : MonoBehaviour
 {
     private static readonly bool EnableSurgicalLogs = false;
-    private const string LifeUpResourcesPath = "Sounds/LifeUp";
 
     private static GlobalUnlockController instance;
 
-    private AudioClip lifeUpSfx;
     private int konamiStep;
-    private float lastUnlockSfxRealtime = -999f;
-
-    [SerializeField] private float unlockSfxDebounceSeconds = 0.20f;
 
     private enum KonamiToken
     {
@@ -62,9 +57,8 @@ public class GlobalUnlockController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         UnlockProgress.ReloadFromDisk();
-        lifeUpSfx = Resources.Load<AudioClip>(LifeUpResourcesPath);
 
-        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Gray)} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Orange)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Purple)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()} | lifeUpLoaded={(lifeUpSfx != null)}");
+        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Gray)} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Orange)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Purple)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()}");
 
         UnlockToastPresenter.EnsureInScene();
     }
@@ -77,6 +71,14 @@ public class GlobalUnlockController : MonoBehaviour
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
 
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
+        UnlockProgress.OnHardcoreUnlocked += HandleHardcoreUnlocked;
+
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
+        UnlockProgress.OnBattleModeStageUnlocked += HandleBattleModeStageUnlocked;
+
         SLog("OnEnable | unlock listeners registered");
     }
 
@@ -84,6 +86,9 @@ public class GlobalUnlockController : MonoBehaviour
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
 
         SLog("OnDisable | unlock listeners removed");
     }
@@ -151,28 +156,29 @@ public class GlobalUnlockController : MonoBehaviour
     private void HandleSkinUnlocked(BomberSkin skin)
     {
         SLog($"HandleSkinUnlocked | skin={skin}");
-        TryPlayUnlockSfx();
     }
 
     private void HandleBossRushUnlocked()
     {
         SLog("HandleBossRushUnlocked");
-        TryPlayUnlockSfx();
     }
 
-    private void TryPlayUnlockSfx()
+    private void HandleHardcoreUnlocked()
     {
-        float now = Time.unscaledTime;
+        SLog("HandleHardcoreUnlocked");
+    }
 
-        if (now - lastUnlockSfxRealtime < unlockSfxDebounceSeconds)
-        {
-            SLog($"TryPlayUnlockSfx skipped by debounce | elapsed={(now - lastUnlockSfxRealtime):0.000} | debounce={unlockSfxDebounceSeconds:0.000}");
+    private void HandleBattleModeStage11Unlocked()
+    {
+        SLog("HandleBattleModeStage11Unlocked");
+    }
+
+    private void HandleBattleModeStageUnlocked(int stageIndex)
+    {
+        if (stageIndex == 11)
             return;
-        }
 
-        lastUnlockSfxRealtime = now;
-        SLog("TryPlayUnlockSfx accepted");
-        PlayUnlockSfx();
+        SLog($"HandleBattleModeStageUnlocked | stage={stageIndex}");
     }
 
     private KonamiToken ReadKonamiTokenThisFrame(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown)
@@ -208,37 +214,6 @@ public class GlobalUnlockController : MonoBehaviour
 
         SLog($"AdvanceKonami mismatch | pressed={pressed} | previousStep={previous} | resetStep={konamiStep}");
         return false;
-    }
-
-    private void PlayUnlockSfx()
-    {
-        if (lifeUpSfx == null)
-        {
-            SLog("PlayUnlockSfx aborted | lifeUpSfx is null");
-            return;
-        }
-
-        var music = GameMusicController.Instance;
-        if (music != null)
-        {
-            SLog("PlayUnlockSfx via GameMusicController");
-            music.PlaySfx(lifeUpSfx, 1f);
-            return;
-        }
-
-        SLog("PlayUnlockSfx via temporary AudioSource");
-
-        GameObject temp = new GameObject("TempUnlockSfx");
-        DontDestroyOnLoad(temp);
-
-        var source = temp.AddComponent<AudioSource>();
-        source.clip = lifeUpSfx;
-        source.volume = 1f;
-        source.loop = false;
-        source.playOnAwake = false;
-        source.Play();
-
-        Destroy(temp, lifeUpSfx.length + 0.1f);
     }
 
     private static void SLog(string message)

@@ -221,7 +221,7 @@ public sealed class MagnetBomb : MonoBehaviour
         {
             Vector2 cur = origin + dir * (tileSize * i);
 
-            Collider2D target = Physics2D.OverlapBox(cur, box, 0f, targetMask);
+            Collider2D target = FindValidTargetAt(cur, box);
             if (target != null)
             {
                 stepsToTarget = i;
@@ -230,6 +230,111 @@ public sealed class MagnetBomb : MonoBehaviour
 
             if (IsScanBlockedAt(cur, box))
                 return false;
+        }
+
+        return false;
+    }
+
+    private Collider2D FindValidTargetAt(Vector2 worldCenter, Vector2 boxSize)
+    {
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, boxSize, 0f, targetMask);
+        if (hits == null || hits.Length == 0)
+            return null;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (IsValidTarget(hit, out string rejectReason))
+                return hit;
+        }
+
+        return null;
+    }
+
+    private bool IsValidTarget(Collider2D target, out string rejectReason)
+    {
+        rejectReason = string.Empty;
+
+        if (target == null)
+        {
+            rejectReason = "collider is null";
+            return false;
+        }
+
+        if (target.transform == transform || target.transform.IsChildOf(transform))
+        {
+            rejectReason = "candidate is this bomb or its child";
+            return false;
+        }
+
+        if (!IsBattleModeActive())
+            return true;
+
+        int playerLayer = LayerMask.NameToLayer("Player");
+        if (playerLayer < 0 || target.gameObject.layer != playerLayer)
+            return true;
+
+        BombController owner = bomb != null ? bomb.Owner : null;
+        if (owner == null || !GameSession.IsValidPlayerId(owner.PlayerId))
+            return true;
+
+        if (!TryGetPlayerId(target, out int targetPlayerId))
+        {
+            rejectReason = "battle mode active, but candidate PlayerId could not be resolved";
+            return false;
+        }
+
+        BattleModeRules rules = BattleModeRules.Instance;
+        if (rules == null)
+            return true;
+
+        if (targetPlayerId == owner.PlayerId)
+        {
+            rejectReason = $"owner player ownerPlayer:{owner.PlayerId} targetPlayer:{targetPlayerId}";
+            return false;
+        }
+
+        if (!rules.UsesTeams)
+            return true;
+
+        BattleModeRules.TeamId targetTeam = rules.GetTeamForPlayer(targetPlayerId);
+        BattleModeRules.TeamId ownerTeam = rules.GetTeamForPlayer(owner.PlayerId);
+        if (targetTeam == ownerTeam)
+        {
+            rejectReason = $"same team ownerPlayer:{owner.PlayerId}/{ownerTeam} targetPlayer:{targetPlayerId}/{targetTeam}";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsBattleModeActive()
+    {
+        return BattleModeRules.Instance != null;
+    }
+
+    private static bool TryGetPlayerId(Collider2D target, out int playerId)
+    {
+        playerId = 0;
+
+        if (target == null)
+            return false;
+
+        BombController bombController = target.GetComponentInParent<BombController>();
+        if (bombController != null && GameSession.IsValidPlayerId(bombController.PlayerId))
+        {
+            playerId = bombController.PlayerId;
+            return true;
+        }
+
+        PlayerIdentity identity = target.GetComponentInParent<PlayerIdentity>();
+        if (identity != null && GameSession.IsValidPlayerId(identity.playerId))
+        {
+            playerId = identity.playerId;
+            return true;
         }
 
         return false;
@@ -259,7 +364,11 @@ public sealed class MagnetBomb : MonoBehaviour
         {
             int ownerLayer = owner.gameObject.layer;
 
-            if (ownerLayer == playerLayer)
+            if (ownerLayer == playerLayer && IsBattleModeActive())
+            {
+                resolvedTargetLayer = playerLayer;
+            }
+            else if (ownerLayer == playerLayer)
             {
                 resolvedTargetLayer = enemyLayer;
             }

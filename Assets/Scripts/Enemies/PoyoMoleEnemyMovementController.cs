@@ -707,7 +707,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             ForceNoFlipOn(phaseSprite);
 
             if (playSfx && abilityStartPhase1Sfx != null && _audio != null)
-                _audio.PlayOneShot(abilityStartPhase1Sfx, Mathf.Clamp01(abilityStartPhase1SfxVolume));
+                GameAudioSettings.PlaySfx(_audio, abilityStartPhase1Sfx, Mathf.Clamp01(abilityStartPhase1SfxVolume));
 
             yield return new WaitForSecondsRealtime(dur);
 
@@ -717,7 +717,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         else
         {
             if (playSfx && abilityStartPhase1Sfx != null && _audio != null)
-                _audio.PlayOneShot(abilityStartPhase1Sfx, Mathf.Clamp01(abilityStartPhase1SfxVolume));
+                GameAudioSettings.PlaySfx(_audio, abilityStartPhase1Sfx, Mathf.Clamp01(abilityStartPhase1SfxVolume));
 
             yield return new WaitForSecondsRealtime(dur);
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -31,12 +31,24 @@ public class MovementController : MonoBehaviour, IKillable
     public LayerMask obstacleMask;
     private int abilitySystemVersion;
 
+    [Header("Normal Game Difficulty")]
+    [SerializeField, Min(0)] private int hardCampaignExtraLife;
+
     [Header("Speed (SB5 Internal)")]
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
+    private const int ReferenceWalkAnimationFrameCount = 4;
+    private const float BaseWalkAnimationFrameTime = 1f / 6f;
+    private const float MinWalkAnimationFrameTime = 1f / 10f;
+    private const float MaxWalkAnimationFrameTime = 1f / 3f;
+    private Coroutine temporarySpeedOverrideRoutine;
+    private bool hasTemporarySpeedOverride;
+    private int temporarySpeedOverrideRestoreInternal;
+    private Coroutine temporarySpeedBlinkRoutine;
+    private readonly Dictionary<SpriteRenderer, Color> temporarySpeedBlinkOriginalColors = new();
 
     [Header("Player Id (only used if tagged Player)")]
-    [SerializeField, Range(1, 4)] private int playerId = 1;
+    [SerializeField, Range(1, 6)] private int playerId = 1;
     public int PlayerId => playerId;
 
     [Header("Dual-Input (Zig-Zag / SB1 Style)")]
@@ -210,6 +222,9 @@ public class MovementController : MonoBehaviour, IKillable
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
 
+    private bool battleRevengeSwapDeathPending;
+    private Action battleRevengeSwapDeathCompleted;
+
     private enum MoveAxis
     {
         None = 0,
@@ -225,19 +240,28 @@ public class MovementController : MonoBehaviour, IKillable
     private StunReceiver stunReceiver;
 
     private CharacterHealth cachedHealth;
+    private bool hardCampaignExtraLifeApplied;
     private PlayerMountCompanion cachedCompanion;
     private PlayerRidingController cachedRiding;
 
     protected AnimatedSpriteRenderer activeSpriteRenderer;
+    public AnimatedSpriteRenderer ActiveSpriteRenderer => activeSpriteRenderer;
 
     private IMovementAbility[] movementAbilities = Array.Empty<IMovementAbility>();
     private int explosionLayer;
     private int enemyLayer;
+    private int bombLayer;
+    private ContactFilter2D obstacleContactFilter;
+    private readonly Collider2D[] obstacleOverlapBuffer = new Collider2D[16];
 
     private bool inactivityMountedDownOverride;
 
     [SerializeField] private bool externalMovementOverride;
     public bool ExternalMovementOverride => externalMovementOverride;
+    private bool externalMovementAllowsHazardDamage;
+    public bool ExternalMovementAllowsHazardDamage => externalMovementAllowsHazardDamage;
+    private float externalMovementSpeedMultiplier = 1f;
+    private float externalMovementSpeedMultiplierUntil;
 
     private void SetFacingDirection(Vector2 newFace, string reason)
     {
@@ -246,7 +270,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetPlayerId(int id)
     {
-        playerId = Mathf.Clamp(id, 1, 4);
+        playerId = Mathf.Clamp(id, 1, 6);
 
         if (!IsPlayer())
             return;
@@ -280,6 +304,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         cachedHealth = GetComponent<CharacterHealth>();
+        ApplyHardCampaignExtraLife();
         TryGetComponent(out cachedCompanion);
         TryGetComponent(out cachedRiding);
         TryGetComponent(out spriteLock);
@@ -289,9 +314,45 @@ public class MovementController : MonoBehaviour, IKillable
 
         explosionLayer = LayerMask.NameToLayer("Explosion");
         enemyLayer = LayerMask.NameToLayer("Enemy");
+        bombLayer = LayerMask.NameToLayer("Bomb");
+        RebuildObstacleContactFilter();
 
         CacheMovementAbilities();
         InitRuntimeState(loadPersistent: true);
+    }
+
+    private void ApplyHardCampaignExtraLife()
+    {
+        if (hardCampaignExtraLifeApplied ||
+            hardCampaignExtraLife <= 0 ||
+            cachedHealth == null ||
+            !CompareTag("BossBomber") ||
+            gameObject.layer != LayerMask.NameToLayer("Enemy") ||
+            BossRushSession.IsActive)
+        {
+            return;
+        }
+
+        if (!UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal))
+            return;
+
+        Assets.Scripts.SaveSystem.StageSlot slot = SaveSystem.ActiveSlot;
+        if (slot == null || !slot.started)
+            return;
+
+        Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty =
+            Enum.IsDefined(typeof(Assets.Scripts.SaveSystem.NormalGameDifficulty), slot.difficulty)
+                ? (Assets.Scripts.SaveSystem.NormalGameDifficulty)slot.difficulty
+                : Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        if (difficulty != Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard &&
+            difficulty != Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore)
+        {
+            return;
+        }
+
+        hardCampaignExtraLifeApplied = true;
+        cachedHealth.AddLife(hardCampaignExtraLife);
     }
 
     protected virtual void OnEnable()
@@ -301,7 +362,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void OnDisable()
     {
+        ClearTemporarySpeedOverride(restoreSpeed: true);
+        StopTemporarySpeedBlink(restoreColors: true);
         touchingHazards.Clear();
+    }
+
+    private void OnValidate()
+    {
+        RebuildObstacleContactFilter();
+
+        if (!Application.isPlaying)
+            return;
     }
 
     private void InitRuntimeState(bool loadPersistent)
@@ -376,6 +447,12 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsPlayer() => CompareTag("Player");
 
+    private static bool IsBattleModeScene()
+    {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+
     public bool IsRidingPlaying()
     {
         if (cachedRiding == null)
@@ -384,7 +461,7 @@ public class MovementController : MonoBehaviour, IKillable
         return cachedRiding != null && cachedRiding.IsPlaying;
     }
 
-    private static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
+    private void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
     {
         if (r == null) return;
 
@@ -410,6 +487,31 @@ public class MovementController : MonoBehaviour, IKillable
         SetMany(false,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
             headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
+    }
+
+    private void EnableOnlyPlayerSpriteOutsideMountVisual(AnimatedSpriteRenderer keep)
+    {
+        AnimatedSpriteRenderer[] anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            AnimatedSpriteRenderer anim = anims[i];
+            if (anim == null)
+                continue;
+
+            if (anim.GetComponentInParent<MountVisualController>(true) != null)
+                continue;
+
+            bool enabled = anim == keep;
+            anim.enabled = enabled;
+
+            if (anim.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+                sr.enabled = enabled;
+
+            SpriteRenderer[] childSprites = anim.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int s = 0; s < childSprites.Length; s++)
+                if (childSprites[s] != null)
+                    childSprites[s].enabled = enabled;
+        }
     }
 
     public void SetAllSpritesVisible(bool visible)
@@ -453,6 +555,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
+
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
@@ -891,33 +995,468 @@ public class MovementController : MonoBehaviour, IKillable
         return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
     }
 
+    public void ApplyMountedBounceVisual(Vector2 faceDir, bool preferHeadOnly)
+    {
+        if (!isMounted)
+            return;
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        AnimatedSpriteRenderer target = preferHeadOnly
+            ? PickMountedHeadOnlyRenderer(faceDir)
+            : PickMountedRenderer(faceDir);
+
+        if (target == null)
+            target = PickMountedRenderer(faceDir);
+
+        if (target == null)
+            return;
+
+        Vector2 face = GetFacing(faceDir);
+        if (face != Vector2.zero)
+            SetFacingDirection(face, "ApplyMountedBounceVisual");
+
+        target.idle = true;
+        target.loop = false;
+        target.pingPong = false;
+        SetAnimEnabled(target, true);
+        activeSpriteRenderer = target;
+        target.RefreshFrame();
+        ApplyFlipForHorizontal(facingDirection);
+    }
+
+    public void ClearMountedBounceVisual()
+    {
+        DisableAllMountedSprites();
+    }
+
+    private AnimatedSpriteRenderer PickMountedHeadOnlyRenderer(Vector2 dir)
+    {
+        Vector2 face = GetFacing(dir);
+        bool hasHead =
+            headOnlyUp != null ||
+            headOnlyDown != null ||
+            headOnlyLeft != null ||
+            headOnlyRight != null;
+
+        if (!hasHead)
+            return null;
+
+        if (face == Vector2.up) return headOnlyUp ?? headOnlyDown ?? headOnlyLeft ?? headOnlyRight;
+        if (face == Vector2.down) return headOnlyDown ?? headOnlyUp ?? headOnlyLeft ?? headOnlyRight;
+        if (face == Vector2.left) return headOnlyLeft ?? headOnlyDown ?? headOnlyUp ?? headOnlyRight;
+        if (face == Vector2.right) return headOnlyRight ?? headOnlyLeft ?? headOnlyDown ?? headOnlyUp;
+
+        return headOnlyDown ?? headOnlyUp ?? headOnlyLeft ?? headOnlyRight;
+    }
+
+    public AnimatedSpriteRenderer GetMountedDownRendererForExternalStun(bool preferHeadOnly)
+    {
+        if (preferHeadOnly && useHeadOnlyWhenMountedRuntime && headOnlyDown != null)
+            return headOnlyDown;
+
+        if (mountedSpriteDown != null)
+            return mountedSpriteDown;
+
+        if (headOnlyDown != null)
+            return headOnlyDown;
+
+        return spriteRendererDown;
+    }
+
+    public void CopyHeadOnlyVisualsTo(
+        AnimatedSpriteRenderer targetUp,
+        AnimatedSpriteRenderer targetDown,
+        AnimatedSpriteRenderer targetLeft,
+        AnimatedSpriteRenderer targetRight)
+    {
+        CopyAnimatedSpriteRenderer(headOnlyUp != null ? headOnlyUp : spriteRendererUp, targetUp);
+        CopyAnimatedSpriteRenderer(headOnlyDown != null ? headOnlyDown : spriteRendererDown, targetDown);
+        CopyAnimatedSpriteRenderer(headOnlyLeft != null ? headOnlyLeft : spriteRendererLeft, targetLeft);
+        CopyAnimatedSpriteRenderer(headOnlyRight != null ? headOnlyRight : spriteRendererRight, targetRight);
+
+        LogAnimatedRendererState("CopiedTarget-Up", targetUp);
+        LogAnimatedRendererState("CopiedTarget-Down", targetDown);
+        LogAnimatedRendererState("CopiedTarget-Left", targetLeft);
+        LogAnimatedRendererState("CopiedTarget-Right", targetRight);
+    }
+
+    private static void LogAnimatedRendererState(string label, AnimatedSpriteRenderer renderer)
+    {
+        renderer.TryGetComponent(out SpriteRenderer sr);
+
+        int animCount = renderer.animationSprite != null ? renderer.animationSprite.Length : -1;
+        string idleName = renderer.idleSprite != null ? renderer.idleSprite.name : "null";
+        string shownName = sr != null && sr.sprite != null ? sr.sprite.name : "null";
+    }
+
+    static void CopyAnimatedSpriteRenderer(AnimatedSpriteRenderer source, AnimatedSpriteRenderer target)
+    {
+        if (source == null || target == null)
+            return;
+
+        target.idleSprite = source.idleSprite;
+        target.animationSprite = source.animationSprite != null
+            ? (Sprite[])source.animationSprite.Clone()
+            : Array.Empty<Sprite>();
+        target.allowFlipX = source.allowFlipX;
+        target.animationTime = source.animationTime;
+        target.useSequenceDuration = source.useSequenceDuration;
+        target.sequenceDuration = source.sequenceDuration;
+        target.loop = source.loop;
+        target.idle = source.idle;
+        target.frameOffsets = source.frameOffsets != null
+            ? (Vector2[])source.frameOffsets.Clone()
+            : Array.Empty<Vector2>();
+        target.pingPong = source.pingPong;
+        target.disableOffsetsIfThisObjectHasRigidbody2D = source.disableOffsetsIfThisObjectHasRigidbody2D;
+
+        if (source.TryGetComponent<SpriteRenderer>(out var sourceRenderer) &&
+            target.TryGetComponent<SpriteRenderer>(out var targetRenderer))
+        {
+            targetRenderer.flipX = sourceRenderer.flipX;
+            targetRenderer.flipY = sourceRenderer.flipY;
+            targetRenderer.color = sourceRenderer.color;
+        }
+
+        target.RefreshFrame();
+    }
+
     public void ApplySpeedInternal(int newInternal)
     {
         speedInternal = PlayerPersistentStats.ClampSpeedInternal(newInternal);
         speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+
+        if (IsPlayer())
+            ApplyWalkAnimationTimingToMovementSprites();
+    }
+
+    public void ApplyTemporarySpeedOverride(int newInternal, float durationSeconds)
+    {
+        if (temporarySpeedOverrideRoutine != null)
+        {
+            StopCoroutine(temporarySpeedOverrideRoutine);
+            temporarySpeedOverrideRoutine = null;
+        }
+
+        if (!hasTemporarySpeedOverride)
+            temporarySpeedOverrideRestoreInternal = speedInternal;
+
+        hasTemporarySpeedOverride = true;
+        ApplySpeedInternalUnclamped(newInternal);
+        StartTemporarySpeedBlink(durationSeconds);
+        temporarySpeedOverrideRoutine = StartCoroutine(TemporarySpeedOverride(durationSeconds));
+    }
+
+    public void ApplyTemporarySkullVisual(float durationSeconds)
+    {
+        StartTemporarySpeedBlink(durationSeconds);
+    }
+
+    public void ClearTemporarySpeedOverride()
+    {
+        ClearTemporarySpeedOverride(restoreSpeed: true);
+    }
+
+    public void ClearTemporarySkullVisual()
+    {
+        StopTemporarySpeedBlink(restoreColors: true);
+    }
+
+    IEnumerator TemporarySpeedOverride(float durationSeconds)
+    {
+        yield return new WaitForSeconds(Mathf.Max(0f, durationSeconds));
+        temporarySpeedOverrideRoutine = null;
+        ClearTemporarySpeedOverride(restoreSpeed: true);
+    }
+
+    void ClearTemporarySpeedOverride(bool restoreSpeed)
+    {
+        if (temporarySpeedOverrideRoutine != null)
+        {
+            StopCoroutine(temporarySpeedOverrideRoutine);
+            temporarySpeedOverrideRoutine = null;
+        }
+
+        if (!hasTemporarySpeedOverride)
+            return;
+
+        hasTemporarySpeedOverride = false;
+
+        if (restoreSpeed)
+            ApplySpeedInternal(temporarySpeedOverrideRestoreInternal);
+
+        StopTemporarySpeedBlink(restoreColors: true);
+    }
+
+    void ApplySpeedInternalUnclamped(int newInternal)
+    {
+        speedInternal = Mathf.Max(0, newInternal);
+        speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+
+        if (IsPlayer())
+            ApplyWalkAnimationTimingToMovementSprites();
+    }
+
+    public float GetWalkAnimationFrameTime()
+    {
+        float speedScale = Mathf.Sqrt(speedInternal / (float)PlayerPersistentStats.BaseSpeedNormal);
+        float frameTime = BaseWalkAnimationFrameTime / Mathf.Max(0.01f, speedScale);
+
+        return Mathf.Clamp(frameTime, MinWalkAnimationFrameTime, MaxWalkAnimationFrameTime);
+    }
+
+    public float GetWalkAnimationFrameTimeForFrameCount(int animationFrameCount)
+    {
+        int frameCount = Mathf.Max(1, animationFrameCount);
+        return GetWalkAnimationFrameTime() * ReferenceWalkAnimationFrameCount / frameCount;
+    }
+
+    void ApplyWalkAnimationTiming(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.useSequenceDuration = false;
+        renderer.animationTime = GetWalkAnimationFrameTimeForFrameCount(GetAnimationFrameCount(renderer));
+    }
+
+    static int GetAnimationFrameCount(AnimatedSpriteRenderer renderer)
+    {
+        return renderer != null && renderer.animationSprite != null && renderer.animationSprite.Length > 0
+            ? renderer.animationSprite.Length
+            : ReferenceWalkAnimationFrameCount;
+    }
+
+    void ApplyWalkAnimationTimingToMovementSprites()
+    {
+        ApplyWalkAnimationTiming(spriteRendererUp);
+        ApplyWalkAnimationTiming(spriteRendererDown);
+        ApplyWalkAnimationTiming(spriteRendererLeft);
+        ApplyWalkAnimationTiming(spriteRendererRight);
+        ApplyWalkAnimationTiming(mountedSpriteUp);
+        ApplyWalkAnimationTiming(mountedSpriteDown);
+        ApplyWalkAnimationTiming(mountedSpriteLeft);
+        ApplyWalkAnimationTiming(mountedSpriteRight);
+        ApplyWalkAnimationTiming(headOnlyUp);
+        ApplyWalkAnimationTiming(headOnlyDown);
+        ApplyWalkAnimationTiming(headOnlyLeft);
+        ApplyWalkAnimationTiming(headOnlyRight);
+    }
+
+    void StartTemporarySpeedBlink(float durationSeconds)
+    {
+        StopTemporarySpeedBlink(restoreColors: true);
+        temporarySpeedBlinkRoutine = StartCoroutine(TemporarySpeedBlink(durationSeconds));
+    }
+
+    IEnumerator TemporarySpeedBlink(float durationSeconds)
+    {
+        float duration = Mathf.Max(0f, durationSeconds);
+        float elapsed = 0f;
+        const float blinkInterval = 0.1f;
+        bool blackFrame = true;
+
+        while (elapsed < duration)
+        {
+            ApplyTemporarySpeedBlinkColor(blackFrame);
+            blackFrame = !blackFrame;
+
+            float step = Mathf.Min(blinkInterval, duration - elapsed);
+            if (step <= 0f)
+                break;
+
+            elapsed += step;
+            yield return new WaitForSeconds(step);
+        }
+
+        temporarySpeedBlinkRoutine = null;
+        StopTemporarySpeedBlink(restoreColors: true);
+    }
+
+    void ApplyTemporarySpeedBlinkColor(bool useBlack)
+    {
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        var renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers != null)
+        {
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer sr = renderers[i];
+                if (sr == null)
+                    continue;
+
+                if (!temporarySpeedBlinkOriginalColors.ContainsKey(sr))
+                    temporarySpeedBlinkOriginalColors.Add(sr, sr.color);
+            }
+        }
+
+        if (cachedHealth != null)
+        {
+            if (useBlack)
+                cachedHealth.SetPersistentTint(Color.black);
+            else
+                cachedHealth.ClearPersistentTint();
+        }
+        else if (renderers != null)
+        {
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer sr = renderers[i];
+                if (sr == null)
+                    continue;
+
+                Color original = temporarySpeedBlinkOriginalColors[sr];
+                float currentAlpha = sr.color.a;
+                sr.color = useBlack
+                    ? new Color(0f, 0f, 0f, currentAlpha)
+                    : new Color(original.r, original.g, original.b, currentAlpha);
+            }
+        }
+
+        ApplyMountedVisualBlinkColor(useBlack);
+        ApplyHudPortraitBlinkColor(useBlack);
+    }
+
+    void StopTemporarySpeedBlink(bool restoreColors)
+    {
+        if (temporarySpeedBlinkRoutine != null)
+        {
+            StopCoroutine(temporarySpeedBlinkRoutine);
+            temporarySpeedBlinkRoutine = null;
+        }
+
+        if (restoreColors)
+        {
+            if (cachedHealth == null)
+                cachedHealth = GetComponent<CharacterHealth>();
+
+            cachedHealth?.ClearPersistentTint();
+
+            foreach (var kv in temporarySpeedBlinkOriginalColors)
+            {
+                if (kv.Key != null)
+                {
+                    Color current = kv.Key.color;
+                    Color original = kv.Value;
+                    kv.Key.color = new Color(original.r, original.g, original.b, current.a);
+                }
+            }
+        }
+
+        temporarySpeedBlinkOriginalColors.Clear();
+
+        if (restoreColors)
+        {
+            ClearMountedVisualBlinkColor();
+            ClearHudPortraitBlinkColor();
+        }
+    }
+
+    void ApplyMountedVisualBlinkColor(bool useBlack)
+    {
+        var mountVisuals = GetComponentsInChildren<MountVisualController>(true);
+        if (mountVisuals == null || mountVisuals.Length == 0)
+            return;
+
+        for (int i = 0; i < mountVisuals.Length; i++)
+        {
+            MountVisualController visual = mountVisuals[i];
+            if (visual == null)
+                continue;
+
+            if (useBlack)
+                visual.SetPlayerEffectTint(true, Color.black, 0f);
+            else
+                visual.SetPlayerEffectTint(false, Color.white, 1f);
+        }
+    }
+
+    void ClearMountedVisualBlinkColor()
+    {
+        var mountVisuals = GetComponentsInChildren<MountVisualController>(true);
+        if (mountVisuals == null || mountVisuals.Length == 0)
+            return;
+
+        for (int i = 0; i < mountVisuals.Length; i++)
+        {
+            MountVisualController visual = mountVisuals[i];
+            if (visual != null)
+                visual.SetPlayerEffectTint(false, Color.white, 1f);
+        }
+    }
+
+    void ApplyHudPortraitBlinkColor(bool useBlack)
+    {
+        Color color = useBlack ? Color.black : Color.white;
+
+        var hudPortrait = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hudPortrait != null)
+            hudPortrait.SetPlayerPortraitTint(playerId, color);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.SetPlayerPortraitTint(playerId, color);
+    }
+
+    void ClearHudPortraitBlinkColor()
+    {
+        var hudPortrait = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hudPortrait != null)
+            hudPortrait.ClearPlayerPortraitTint(playerId);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.ClearPlayerPortraitTint(playerId);
     }
 
     public bool TryAddSpeedUp(int speedStep = PlayerPersistentStats.SpeedStep)
     {
-        int before = speedInternal;
+        int before = hasTemporarySpeedOverride
+            ? temporarySpeedOverrideRestoreInternal
+            : speedInternal;
+
+        if (hasTemporarySpeedOverride)
+        {
+            temporarySpeedOverrideRestoreInternal = PlayerPersistentStats.ClampSpeedInternal(
+                temporarySpeedOverrideRestoreInternal + speedStep);
+            return temporarySpeedOverrideRestoreInternal != before;
+        }
+
         ApplySpeedInternal(speedInternal + speedStep);
         return speedInternal != before;
+    }
+
+    private void RebuildObstacleContactFilter()
+    {
+        obstacleContactFilter = new ContactFilter2D { useLayerMask = true };
+        obstacleContactFilter.SetLayerMask(obstacleMask);
+        obstacleContactFilter.useTriggers = true;
+    }
+
+    private int GetObstacleHitCount(Vector2 worldPosition, Vector2 size)
+    {
+        return Physics2D.OverlapBox(worldPosition, size, 0f, obstacleContactFilter, obstacleOverlapBuffer);
     }
 
     private bool IsSolidAtCustom(Vector2 worldPosition, float sizeMul)
     {
         Vector2 size = Vector2.one * (tileSize * sizeMul);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
-        if (hits == null || hits.Length == 0)
+        int hitCount = GetObstacleHitCount(worldPosition, size);
+        if (hitCount <= 0)
             return false;
 
         bool canPassDestructibles = abilitySystem != null &&
                                    abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = obstacleOverlapBuffer[i];
+            obstacleOverlapBuffer[i] = null;
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
 
@@ -937,7 +1476,7 @@ public class MovementController : MonoBehaviour, IKillable
                 && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (hit.gameObject.layer == bombLayer)
             {
                 var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
                 if (bomb != null)
@@ -962,6 +1501,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.PlayerFixedUpdate.Auto();
+
         if (UpdateBombReentryCentering())
             return;
 
@@ -1520,16 +2061,17 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Vector2 size = Vector2.one * (tileSize * 0.6f);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
-        if (hits == null || hits.Length == 0)
+        int hitCount = GetObstacleHitCount(worldPosition, size);
+        if (hitCount <= 0)
             return false;
 
         bool canPassDestructibles = abilitySystem != null &&
                                    abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = obstacleOverlapBuffer[i];
+            obstacleOverlapBuffer[i] = null;
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
 
@@ -1552,7 +2094,7 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (hit.gameObject.layer == bombLayer)
             {
                 var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
                 if (bomb != null)
@@ -1585,15 +2127,16 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Vector2 size = GetBlockProbeSize(dirForSize);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
-        if (hits != null && hits.Length > 0)
+        int hitCount = GetObstacleHitCount(targetPosition, size);
+        if (hitCount > 0)
         {
             bool canPassDestructibles = abilitySystem != null &&
                                        abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-            for (int h = 0; h < hits.Length; h++)
+            for (int h = 0; h < hitCount; h++)
             {
-                var hit = hits[h];
+                var hit = obstacleOverlapBuffer[h];
+                obstacleOverlapBuffer[h] = null;
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
 
@@ -1665,7 +2208,7 @@ public class MovementController : MonoBehaviour, IKillable
 
             foreach (var bomb in Bomb.ActiveBombs)
             {
-                if (bomb == null || bomb.HasExploded)
+                if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                     continue;
 
                 if (bomb.IsSolid || bomb.IsBeingPunched)
@@ -1870,7 +2413,7 @@ public class MovementController : MonoBehaviour, IKillable
             Bomb bomb = kv.Key;
             BombPlantTraversalState state = kv.Value;
 
-            if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
             {
                 bombsToRemove ??= new List<Bomb>();
                 bombsToRemove.Add(bomb);
@@ -1962,15 +2505,16 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Vector2 size = GetBlockProbeSize(dirForSize);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
-        if (hits != null && hits.Length > 0)
+        int hitCount = GetObstacleHitCount(targetPosition, size);
+        if (hitCount > 0)
         {
             bool canPassDestructibles = abilitySystem != null &&
                                        abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-            for (int h = 0; h < hits.Length; h++)
+            for (int h = 0; h < hitCount; h++)
             {
-                var hit = hits[h];
+                var hit = obstacleOverlapBuffer[h];
+                obstacleOverlapBuffer[h] = null;
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
 
@@ -2055,6 +2599,8 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         bool isIdle = (direction == Vector2.zero);
+        if (IsPlayer())
+            ApplyWalkAnimationTiming(spriteRenderer);
 
         if (activeSpriteRenderer != spriteRenderer)
         {
@@ -2109,7 +2655,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void TryApplyHazardDamage(Collider2D other)
     {
-        if (externalMovementOverride)
+        if (externalMovementOverride && !externalMovementAllowsHazardDamage)
             return;
 
         if (isDead || isEndingStage)
@@ -2126,13 +2672,17 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         if (layer == explosionLayer && explosionInvulnerable)
+        {
             return;
+        }
 
         if (cachedHealth == null)
             cachedHealth = GetComponent<CharacterHealth>();
 
         if (cachedHealth != null && cachedHealth.IsInvulnerable)
+        {
             return;
+        }
 
         float cd = Mathf.Max(0.01f, contactDamageCooldownSeconds);
 
@@ -2181,6 +2731,16 @@ public class MovementController : MonoBehaviour, IKillable
         if (cachedHealth != null)
         {
             bool fromExplosion = (layer == explosionLayer);
+
+            if (fromExplosion &&
+                cachedHealth.life <= 1 &&
+                BattleRevengeSystem.Instance != null &&
+                BattleRevengeSystem.Instance.TryHandleLethalRevengeHit(this, other))
+            {
+                nextContactDamageTime = Time.time + cd;
+                return;
+            }
+
             cachedHealth.TakeDamage(1, fromExplosion);
             nextContactDamageTime = Time.time + cd;
             return;
@@ -2236,7 +2796,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    private void BeginDeathCommon()
+    private void BeginArenaRemovalCommon(bool notifyGameManagerDeath, bool resetStagePowerups)
     {
         isDead = true;
         inputLocked = true;
@@ -2250,21 +2810,49 @@ public class MovementController : MonoBehaviour, IKillable
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
 
-        if (IsPlayer() && checkWinStateOnDeath)
+        if (TryGetComponent<SkullDebuffController>(out var skullDebuff) && skullDebuff != null)
+            skullDebuff.ClearForArenaRemoval();
+        else
+            ClearTemporarySkullVisual();
+
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        if (cachedHealth != null)
         {
+            cachedHealth.SetExternalInvulnerability(false);
+            cachedHealth.StopInvulnerability();
+        }
+
+        if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+            glove.DestroyHeldBombIfHolding();
+
+        if (IsPlayer() &&
+            notifyGameManagerDeath &&
+            checkWinStateOnDeath &&
+            !battleRevengeSwapDeathPending)
+        {
+            if (!BossRushSession.IsActive &&
+                !IsBattleModeScene() &&
+                SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore)
+            {
+                GameSession.Instance?.MarkHardcorePlayerEliminated(playerId);
+            }
+
             var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
-                gm.NotifyPlayerDeathStarted();
+                gm.NotifyPlayerDeathStarted(this);
         }
 
         touchingHazards.Clear();
 
         if (IsPlayer())
         {
-            PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
-
             if (TryGetComponent<MountEggQueue>(out var q) && q != null)
                 q.ClearQueueNow(resetHistoryToOwner: true, animateShift: false);
+
+            if (resetStagePowerups)
+                PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
         }
 
         if (abilitySystem != null)
@@ -2283,6 +2871,11 @@ public class MovementController : MonoBehaviour, IKillable
             col.enabled = false;
     }
 
+    private void BeginDeathCommon()
+    {
+        BeginArenaRemovalCommon(notifyGameManagerDeath: true, resetStagePowerups: true);
+    }
+
     protected virtual void DeathSequence()
     {
         if (isDead || isEndingStage)
@@ -2295,7 +2888,7 @@ public class MovementController : MonoBehaviour, IKillable
         BeginDeathCommon();
 
         if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
 
         DisableAllFootSprites();
         DisableAllMountedSprites();
@@ -2336,6 +2929,18 @@ public class MovementController : MonoBehaviour, IKillable
     {
         deathRequestedByExplosion = false;
 
+        if (battleRevengeSwapDeathPending)
+        {
+            battleRevengeSwapDeathPending = false;
+
+            Action callback = battleRevengeSwapDeathCompleted;
+            battleRevengeSwapDeathCompleted = null;
+
+            callback?.Invoke();
+            return;
+        }
+
+        BattleRevengeSystem.Instance?.HandlePlayerDeathCompleted(this);
         Died?.Invoke(this);
         gameObject.SetActive(false);
 
@@ -2344,6 +2949,118 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!checkWinStateOnDeath)
             return;
+    }
+
+    public void RemoveForBattleRevengeSwap()
+    {
+        if (isEndingStage)
+            return;
+
+        CancelInvoke(nameof(OnDeathSequenceEnded));
+        holeDeathInProgress = false;
+        deathRequestedByExplosion = false;
+
+        if (_holeDeathVisualRoutine != null)
+        {
+            StopCoroutine(_holeDeathVisualRoutine);
+            _holeDeathVisualRoutine = null;
+        }
+
+        NotifyHudPortraitDeathIfPlayer();
+        BeginArenaRemovalCommon(notifyGameManagerDeath: false, resetStagePowerups: false);
+
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        if (cachedCompanion != null)
+            cachedCompanion.ClearMountedStateForForcedArenaRemoval();
+
+        transform.localScale = Vector3.one;
+        SetAllSpritesVisible(false);
+        gameObject.SetActive(false);
+    }
+
+    public void RespawnFromBattleRevenge(Vector2 worldPosition, float invulnerabilitySeconds, float blinkInterval)
+    {
+        CancelInvoke(nameof(OnDeathSequenceEnded));
+        holeDeathInProgress = false;
+        deathRequestedByExplosion = false;
+        isEndingStage = false;
+        isDead = false;
+        inputLocked = false;
+        inactivityMountedDownOverride = false;
+        nextContactDamageTime = 0f;
+        direction = Vector2.zero;
+        hasInput = false;
+
+        if (_holeDeathVisualRoutine != null)
+        {
+            StopCoroutine(_holeDeathVisualRoutine);
+            _holeDeathVisualRoutine = null;
+        }
+
+        ResetDualInputAxes();
+        ResetSingleInputTurnState();
+        touchingHazards.Clear();
+
+        if (spriteLock != null && spriteLock.IsLocked)
+            spriteLock.EndLock();
+
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        if (cachedCompanion != null)
+            cachedCompanion.ClearMountedStateForForcedArenaRemoval();
+
+        if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+            glove.DestroyHeldBombIfHolding();
+
+        if (Rigidbody != null)
+        {
+            Rigidbody.simulated = true;
+            Rigidbody.linearVelocity = Vector2.zero;
+            Rigidbody.angularVelocity = 0f;
+            Rigidbody.position = worldPosition;
+        }
+
+        transform.position = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+        transform.localScale = Vector3.one;
+
+        if (TryGetComponent(out Collider2D col) && col != null)
+            col.enabled = true;
+
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        int respawnLife = cachedHealth != null ? Mathf.Max(1, cachedHealth.life) : 1;
+        cachedHealth?.ResetForRespawn(respawnLife);
+
+        if (bombController != null)
+        {
+            bombController.enabled = true;
+            PlayerPersistentStats.LoadInto(playerId, this, bombController);
+            bombController.ResetRuntimeStateAfterRespawn();
+        }
+
+        CacheMovementAbilities();
+        SyncMountedFromPersistent();
+        ApplySpeedInternal(speedInternal);
+        SetExplosionInvulnerable(false);
+        SetExternalVisualSuppressed(false);
+        EnableExclusiveFromState();
+
+        if (cachedHealth != null && invulnerabilitySeconds > 0f)
+            cachedHealth.StartSpawnInvulnerability(invulnerabilitySeconds, blinkInterval);
+
+        NotifyHudPortraitRespawnIfPlayer();
+    }
+
+    public void SetBattleRevengeJumpInvulnerabilityNoBlink(bool enabled)
+    {
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        cachedHealth?.SetExternalInvulnerability(enabled);
     }
 
     private void HoleDeathSequence()
@@ -2397,10 +3114,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (audioSource.isPlaying)
             audioSource.Stop();
 
-        audioSource.clip = holeDeathSfx;
-        audioSource.volume = holeDeathSfxVolume;
         audioSource.loop = false;
-        audioSource.Play();
+        GameAudioSettings.PlaySfxClip(audioSource, holeDeathSfx, holeDeathSfxVolume);
     }
 
     private AnimatedSpriteRenderer PickRendererForHoleDeathVisual()
@@ -2489,11 +3204,44 @@ public class MovementController : MonoBehaviour, IKillable
         var hud = FindAnyObjectByType<HudPortraitInGridLayout>();
         if (hud != null)
             hud.OnPlayerDied(PlayerId);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.OnPlayerDied(PlayerId);
+    }
+
+    private void NotifyHudPortraitRespawnIfPlayer()
+    {
+        if (!IsPlayer())
+            return;
+
+        var hud = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hud != null)
+            hud.OnPlayerRespawn(PlayerId);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.OnPlayerRespawn(PlayerId);
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
     {
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        bool canceledRidingTransition = cachedCompanion != null
+            && cachedCompanion.CancelRidingTransitionForEndStage();
+
+        if (cachedRiding == null)
+            TryGetComponent(out cachedRiding);
+
+        if (!canceledRidingTransition && cachedRiding != null && cachedRiding.IsPlaying)
+            cachedRiding.CancelRiding();
+
         isEndingStage = true;
+        SetExternalVisualSuppressed(false);
+        SetVisualOverrideActive(false);
+        SetExternalMovementOverride(false);
         SetExplosionInvulnerable(true);
 
         if (abilitySystem != null)
@@ -2515,6 +3263,14 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (snapToPortalCenter)
                 Rigidbody.position = portalCenter;
+        }
+
+        if (snapToPortalCenter)
+        {
+            Vector3 snappedPosition = transform.position;
+            snappedPosition.x = portalCenter.x;
+            snappedPosition.y = portalCenter.y;
+            transform.position = snappedPosition;
         }
 
         direction = Vector2.zero;
@@ -2569,6 +3325,55 @@ public class MovementController : MonoBehaviour, IKillable
 
             activeSpriteRenderer = endSprite;
         }
+    }
+
+    public void PlayBattleTimeUpSequence()
+    {
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        bool canceledRidingTransition = cachedCompanion != null
+            && cachedCompanion.CancelRidingTransitionForEndStage();
+
+        if (cachedRiding == null)
+            TryGetComponent(out cachedRiding);
+
+        if (!canceledRidingTransition && cachedRiding != null && cachedRiding.IsPlaying)
+            cachedRiding.CancelRiding();
+
+        SetExternalVisualSuppressed(false);
+        SetVisualOverrideActive(false);
+        SetExternalMovementOverride(false);
+
+        isEndingStage = true;
+        SetExplosionInvulnerable(true);
+
+        CharacterHealth[] healths = GetComponentsInChildren<CharacterHealth>(true);
+        for (int i = 0; i < healths.Length; i++)
+            healths[i]?.SetExternalInvulnerability(true);
+
+        if (abilitySystem != null)
+            abilitySystem.DisableAll();
+
+        inputLocked = true;
+        inactivityMountedDownOverride = false;
+        ResetDualInputAxes();
+
+        if (spriteLock != null && spriteLock.IsLocked)
+            spriteLock.EndLock();
+
+        if (bombController != null)
+            bombController.enabled = false;
+
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
+
+        direction = Vector2.zero;
+        hasInput = false;
+        ForceIdleFacing(Vector2.down, "PlayBattleTimeUpSequence");
+
+        if (TryGetComponent<InactivityAnimation>(out var inactivity) && inactivity != null)
+            inactivity.PlayBattleTimeUpPose(isMounted);
     }
 
     public void SetSuppressInactivityAnimation(bool suppress)
@@ -2693,6 +3498,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (up != null)
         {
+            EnableOnlyPlayerSpriteOutsideMountVisual(up);
             SetAnimEnabled(up, true);
             up.idle = true;
             up.loop = false;
@@ -3105,8 +3911,22 @@ public class MovementController : MonoBehaviour, IKillable
     private float GetRawMoveWorldPerFixedFrame()
     {
         float dt = Time.fixedDeltaTime;
-        float speedWorldPerSecond = speed * tileSize;
+        float speedWorldPerSecond = speed * tileSize * GetExternalMovementSpeedMultiplier();
         return speedWorldPerSecond * dt;
+    }
+
+    public void ApplyExternalMovementSpeedMultiplier(float multiplier, float durationSeconds)
+    {
+        externalMovementSpeedMultiplier = Mathf.Max(0f, multiplier);
+        externalMovementSpeedMultiplierUntil = Time.time + Mathf.Max(0f, durationSeconds);
+    }
+
+    private float GetExternalMovementSpeedMultiplier()
+    {
+        if (externalMovementSpeedMultiplierUntil <= 0f || Time.time > externalMovementSpeedMultiplierUntil)
+            return 1f;
+
+        return Mathf.Max(0f, externalMovementSpeedMultiplier);
     }
 
     private float GetQuantizedMoveWorldPerFixedFrame(Vector2 moveDir, float rawWorldStep)
@@ -3176,9 +3996,12 @@ public class MovementController : MonoBehaviour, IKillable
     public void SetExternalMovementOverride(bool active)
     {
         externalMovementOverride = active;
+        externalMovementSpeedMultiplier = 1f;
+        externalMovementSpeedMultiplierUntil = 0f;
 
         if (active)
         {
+            externalMovementAllowsHazardDamage = false;
             direction = Vector2.zero;
             hasInput = false;
             currentAxis = MoveAxis.None;
@@ -3191,6 +4014,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
         else
         {
+            externalMovementAllowsHazardDamage = false;
             direction = Vector2.zero;
             hasInput = false;
             currentAxis = MoveAxis.None;
@@ -3198,6 +4022,11 @@ public class MovementController : MonoBehaviour, IKillable
             if (Rigidbody != null)
                 Rigidbody.linearVelocity = Vector2.zero;
         }
+    }
+
+    public void SetExternalMovementAllowsHazardDamage(bool allowed)
+    {
+        externalMovementAllowsHazardDamage = allowed;
     }
 
     public void ShowSpringLauncherLookUp(Vector2 faceDir)
@@ -3636,6 +4465,12 @@ public class MovementController : MonoBehaviour, IKillable
                 continue;
             }
 
+            if (bomb.IsBeingHeldByPowerGlove)
+            {
+                LogBombEscape($"[KickAdj] skip held bomb:{bomb.name}", verbose: true);
+                continue;
+            }
+
             if (bomb.IsBeingKicked || bomb.IsBeingPunched)
             {
                 LogBombEscape(
@@ -3742,6 +4577,7 @@ public class MovementController : MonoBehaviour, IKillable
         return debugCurvas && (!IsPlayer() || playerId == debugCurvasPlayerId);
     }
 
+    [System.Diagnostics.Conditional("ENABLE_MOVEMENT_DIAGNOSTICS")]
     private void LogCurve(string msg, bool verbose = false)
     {
         if (!ShouldLogCurve())
@@ -3753,6 +4589,7 @@ public class MovementController : MonoBehaviour, IKillable
         Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
     }
 
+    [System.Diagnostics.Conditional("ENABLE_MOVEMENT_DIAGNOSTICS")]
     private void LogBombEscape(string message, bool verbose = false)
     {
         if (!debugBombEscape)
@@ -3885,5 +4722,18 @@ public class MovementController : MonoBehaviour, IKillable
         target.y = Mathf.Round(target.y / tileSize) * tileSize;
 
         return target;
+    }
+
+    public void PlayBattleRevengeSwapDeathSequence(Action onCompleted)
+    {
+        if (isEndingStage)
+            return;
+
+        battleRevengeSwapDeathPending = true;
+        battleRevengeSwapDeathCompleted = onCompleted;
+        deathRequestedByExplosion = true;
+
+        if (!isDead)
+            DeathSequence();
     }
 }

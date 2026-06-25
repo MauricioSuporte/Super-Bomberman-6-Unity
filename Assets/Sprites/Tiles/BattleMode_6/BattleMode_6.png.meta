@@ -1,0 +1,2537 @@
+fileFormatVersion: 2
+guid: 9174ebd96968ba74b94d427ed59f2a9f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5248489105372525531
+    second: BattleMode_6_0
+  - first:
+      213: -8584429020131022926
+    second: BattleMode_6_1
+  - first:
+      213: -8721059241026915010
+    second: BattleMode_6_2
+  - first:
+      213: 490228431825797563
+    second: BattleMode_6_3
+  - first:
+      213: 6728988443621223583
+    second: BattleMode_6_4
+  - first:
+      213: 4832182680107468073
+    second: BattleMode_6_5
+  - first:
+      213: -8035418607459276932
+    second: BattleMode_6_6
+  - first:
+      213: -916115823439128214
+    second: BattleMode_6_7
+  - first:
+      213: -5780259537355763320
+    second: BattleMode_6_8
+  - first:
+      213: -7868346667117590087
+    second: BattleMode_6_9
+  - first:
+      213: -8903098873965284051
+    second: BattleMode_6_10
+  - first:
+      213: 2322676254127613228
+    second: BattleMode_6_11
+  - first:
+      213: -7583826096129210606
+    second: BattleMode_6_12
+  - first:
+      213: 2872143317450893127
+    second: BattleMode_6_13
+  - first:
+      213: 2404985560189293191
+    second: BattleMode_6_14
+  - first:
+      213: 8999582761294990469
+    second: BattleMode_6_15
+  - first:
+      213: -2927781472037305151
+    second: BattleMode_6_16
+  - first:
+      213: -1094926622954747998
+    second: BattleMode_6_17
+  - first:
+      213: 3179267725556995655
+    second: BattleMode_6_18
+  - first:
+      213: 7663085684796469705
+    second: BattleMode_6_19
+  - first:
+      213: 1275791393687357048
+    second: BattleMode_6_20
+  - first:
+      213: 5936358505449915348
+    second: BattleMode_6_21
+  - first:
+      213: 7874086499295063256
+    second: BattleMode_6_22
+  - first:
+      213: 6287554719935746409
+    second: BattleMode_6_23
+  - first:
+      213: -5037146524849862797
+    second: BattleMode_6_24
+  - first:
+      213: 8673775832140955950
+    second: BattleMode_6_25
+  - first:
+      213: 1316255769933142571
+    second: BattleMode_6_26
+  - first:
+      213: -1644780265982492350
+    second: BattleMode_6_27
+  - first:
+      213: -8344590332518383571
+    second: BattleMode_6_28
+  - first:
+      213: -5551332118513032604
+    second: BattleMode_6_29
+  - first:
+      213: -1455022224450449850
+    second: BattleMode_6_30
+  - first:
+      213: 2980850838829740693
+    second: BattleMode_6_31
+  - first:
+      213: 710667571488808518
+    second: BattleMode_6_32
+  - first:
+      213: -5152768904336426887
+    second: BattleMode_6_33
+  - first:
+      213: 5420566069405726242
+    second: BattleMode_6_34
+  - first:
+      213: 8873340508436719067
+    second: BattleMode_6_35
+  - first:
+      213: 1028070144851357394
+    second: BattleMode_6_36
+  - first:
+      213: 2391551471039690736
+    second: BattleMode_6_37
+  - first:
+      213: -4796176880163521757
+    second: BattleMode_6_38
+  - first:
+      213: 4552336474922024016
+    second: BattleMode_6_39
+  - first:
+      213: 6423289787142213218
+    second: BattleMode_6_40
+  - first:
+      213: -1073184094879475862
+    second: BattleMode_6_41
+  - first:
+      213: 1065704449616013525
+    second: BattleMode_6_42
+  - first:
+      213: -5656359960209200918
+    second: BattleMode_6_43
+  - first:
+      213: -6813209005381865948
+    second: BattleMode_6_44
+  - first:
+      213: -1960625916647809375
+    second: BattleMode_6_45
+  - first:
+      213: 6509438843551165707
+    second: BattleMode_6_46
+  - first:
+      213: -3824867033219660697
+    second: BattleMode_6_47
+  - first:
+      213: -3884542885682959658
+    second: BattleMode_6_48
+  - first:
+      213: 8313306920446344816
+    second: BattleMode_6_49
+  - first:
+      213: -1794410542854060217
+    second: BattleMode_6_50
+  - first:
+      213: 1677262640164891360
+    second: BattleMode_6_51
+  - first:
+      213: 6805326118090010771
+    second: BattleMode_6_52
+  - first:
+      213: -3145622173826814771
+    second: BattleMode_6_53
+  - first:
+      213: 6449233393786580896
+    second: BattleMode_6_54
+  - first:
+      213: 2150291354430439831
+    second: BattleMode_6_55
+  - first:
+      213: 2656262512263668656
+    second: BattleMode_6_56
+  - first:
+      213: -132935997653615309
+    second: BattleMode_6_57
+  - first:
+      213: -7398747814631149127
+    second: BattleMode_6_58
+  - first:
+      213: -5744196675713540505
+    second: BattleMode_6_59
+  - first:
+      213: -1635494051141656469
+    second: BattleMode_6_60
+  - first:
+      213: 5087817679101496157
+    second: BattleMode_6_61
+  - first:
+      213: 3011900793675084974
+    second: BattleMode_6_62
+  - first:
+      213: 4948464737154378523
+    second: BattleMode_6_63
+  - first:
+      213: -3278339244334685908
+    second: BattleMode_6_64
+  - first:
+      213: -2551474621608705497
+    second: BattleMode_6_65
+  - first:
+      213: 3289273247320989609
+    second: BattleMode_6_66
+  - first:
+      213: -3361249015498099673
+    second: BattleMode_6_67
+  - first:
+      213: -5576366451940287607
+    second: BattleMode_6_68
+  - first:
+      213: 5418533815990055409
+    second: BattleMode_6_69
+  - first:
+      213: -5361843602697623881
+    second: BattleMode_6_70
+  - first:
+      213: 6632945517544856540
+    second: BattleMode_6_71
+  - first:
+      213: 464818009413023546
+    second: BattleMode_6_72
+  - first:
+      213: 3390090693036574272
+    second: BattleMode_6_73
+  - first:
+      213: -699407754445156198
+    second: BattleMode_6_74
+  - first:
+      213: -881966309929982622
+    second: BattleMode_6_75
+  - first:
+      213: 2871212932804867401
+    second: BattleMode_6_76
+  - first:
+      213: -3585121653370381677
+    second: BattleMode_6_77
+  - first:
+      213: 8923728529962856981
+    second: BattleMode_6_78
+  - first:
+      213: 3288811795111902761
+    second: BattleMode_6_79
+  - first:
+      213: -941993855728124898
+    second: BattleMode_6_80
+  - first:
+      213: -828511654324193826
+    second: BattleMode_6_81
+  - first:
+      213: 4203586448468309938
+    second: BattleMode_6_82
+  - first:
+      213: 2383177680608041355
+    second: BattleMode_6_83
+  - first:
+      213: -4115880235093774149
+    second: BattleMode_6_84
+  - first:
+      213: 3960532120333178679
+    second: BattleMode_6_85
+  - first:
+      213: -5554583658452515221
+    second: BattleMode_6_86
+  - first:
+      213: 8036796609883488786
+    second: BattleMode_6_87
+  - first:
+      213: 1206804368519362253
+    second: BattleMode_6_88
+  - first:
+      213: 6311879026007293333
+    second: BattleMode_6_89
+  - first:
+      213: -5231146227083865996
+    second: BattleMode_6_90
+  - first:
+      213: -6510804202007007977
+    second: BattleMode_6_91
+  - first:
+      213: 2027010008885705697
+    second: BattleMode_6_92
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BattleMode_6_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52c43c267fe9927b0800000000000000
+      internalID: -5248489105372525531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_1
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b72987d94bfdd880800000000000000
+      internalID: -8584429020131022926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_2
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e35f37193d298f680800000000000000
+      internalID: -8721059241026915010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_3
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb106c15924adc600800000000000000
+      internalID: 490228431825797563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_4
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9c60c7765b226d50800000000000000
+      internalID: 6728988443621223583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_5
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 925c999ab8c5f0340800000000000000
+      internalID: 4832182680107468073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_6
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 188
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7763d899557c7090800000000000000
+      internalID: -8035418607459276932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_7
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a69dbca238d4943f0800000000000000
+      internalID: -916115823439128214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_8
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 881985e639468cfa0800000000000000
+      internalID: -5780259537355763320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_9
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b9c3d005640ec290800000000000000
+      internalID: -7868346667117590087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_10
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d257e19aeb6d17480800000000000000
+      internalID: -8903098873965284051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_11
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c25e28f3fbdcb3020800000000000000
+      internalID: 2322676254127613228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_12
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21781eda856d0c690800000000000000
+      internalID: -7583826096129210606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_13
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 171
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7472ca44127ebd720800000000000000
+      internalID: 2872143317450893127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_14
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 154
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 782d605ff99306120800000000000000
+      internalID: 2404985560189293191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_15
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 154
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58c87bde6d0f4ec70800000000000000
+      internalID: 8999582761294990469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_16
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 154
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c40f33634e6e57d0800000000000000
+      internalID: -2927781472037305151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_17
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 154
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a70aaf990a0ec0f0800000000000000
+      internalID: -1094926622954747998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_18
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 137
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74650b3e6270f1c20800000000000000
+      internalID: 3179267725556995655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_19
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 137
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c1bcad54dfb85a60800000000000000
+      internalID: 7663085684796469705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_20
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 137
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8764c3c538584b110800000000000000
+      internalID: 1275791393687357048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_21
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 137
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d306b8cb9e226250800000000000000
+      internalID: 5936358505449915348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_22
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 137
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8dc6e21d3ff564d60800000000000000
+      internalID: 7874086499295063256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_23
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 137
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 961d99374b1e14750800000000000000
+      internalID: 6287554719935746409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_24
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3770bb07ce5781ab0800000000000000
+      internalID: -5037146524849862797
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_25
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e214128e9217f5870800000000000000
+      internalID: 8673775832140955950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_26
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2a5c6026a7444210800000000000000
+      internalID: 1316255769933142571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_27
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2418a8000119c29e0800000000000000
+      internalID: -1644780265982492350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_28
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d20451add4f023c80800000000000000
+      internalID: -8344590332518383571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_29
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46260d5b9d4b5f2b0800000000000000
+      internalID: -5551332118513032604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_30
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64e0553fef8becbe0800000000000000
+      internalID: -1455022224450449850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_31
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5923fd07b0c1e5920800000000000000
+      internalID: 2980850838829740693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_32
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64edaf7146cccd900800000000000000
+      internalID: 710667571488808518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_33
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97839576bffad78b0800000000000000
+      internalID: -5152768904336426887
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_34
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 226b678ee18b93b40800000000000000
+      internalID: 5420566069405726242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_35
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 120
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd56470fd20742b70800000000000000
+      internalID: 8873340508436719067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_36
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2deac0c8950744e00800000000000000
+      internalID: 1028070144851357394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_37
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f73265546f703120800000000000000
+      internalID: 2391551471039690736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_38
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32b79e9e98e807db0800000000000000
+      internalID: -4796176880163521757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_39
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05cf7c597e52d2f30800000000000000
+      internalID: 4552336474922024016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_40
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26e8104870c142950800000000000000
+      internalID: 6423289787142213218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_41
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a671c1e60c84b11f0800000000000000
+      internalID: -1073184094879475862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_42
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d86ae2fc842ace00800000000000000
+      internalID: 1065704449616013525
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_43
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae8ecf9b5929081b0800000000000000
+      internalID: -5656359960209200918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_44
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42ea8bde18e9271a0800000000000000
+      internalID: -6813209005381865948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_45
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ae58ccdd157ac4e0800000000000000
+      internalID: -1960625916647809375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_46
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0d2ff4c32c265a50800000000000000
+      internalID: 6509438843551165707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_47
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 103
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76407d3c2b75beac0800000000000000
+      internalID: -3824867033219660697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_48
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6daa810a3d4571ac0800000000000000
+      internalID: -3884542885682959658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_49
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07e300e299cce5370800000000000000
+      internalID: 8313306920446344816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_50
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 747c7f35e19f817e0800000000000000
+      internalID: -1794410542854060217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_51
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0eaef061c75d64710800000000000000
+      internalID: 1677262640164891360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_52
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39071795c00617e50800000000000000
+      internalID: 6805326118090010771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_53
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcce5739c418854d0800000000000000
+      internalID: -3145622173826814771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_54
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0af6c362a97408950800000000000000
+      internalID: 6449233393786580896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_55
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7918b68189e57dd10800000000000000
+      internalID: 2150291354430439831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_56
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b3a9a17ea0fcd420800000000000000
+      internalID: 2656262512263668656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_57
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33d7ef91a67b72ef0800000000000000
+      internalID: -132935997653615309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_58
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b17636101e525990800000000000000
+      internalID: -7398747814631149127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_59
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76e5d18be838840b0800000000000000
+      internalID: -5744196675713540505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_60
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b60ef6163de8d49e0800000000000000
+      internalID: -1635494051141656469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_61
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5b0cc4093f8b9640800000000000000
+      internalID: 5087817679101496157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_62
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea478b960db6cc920800000000000000
+      internalID: 3011900793675084974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_63
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1b22a9d57a7ca440800000000000000
+      internalID: 4948464737154378523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_64
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c216530a3dff082d0800000000000000
+      internalID: -3278339244334685908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_65
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 722c6959957579cd0800000000000000
+      internalID: -2551474621608705497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_66
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9af53c35798d5ad20800000000000000
+      internalID: 3289273247320989609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_67
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 724ba9d34d17a51d0800000000000000
+      internalID: -3361249015498099673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_68
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98b91beb144cc92b0800000000000000
+      internalID: -5576366451940287607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_69
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f177890ccf723b40800000000000000
+      internalID: 5418533815990055409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_70
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b6e100d6a7e695b0800000000000000
+      internalID: -5361843602697623881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_71
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cdbd7cb2ec4fc0c50800000000000000
+      internalID: 6632945517544856540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_72
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a377440548d537600800000000000000
+      internalID: 464818009413023546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_73
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0468dca16850c0f20800000000000000
+      internalID: 3390090693036574272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_74
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a90942b5a543b46f0800000000000000
+      internalID: -699407754445156198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_75
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 265e2c06050a2c3f0800000000000000
+      internalID: -881966309929982622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_76
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 945775633f898d720800000000000000
+      internalID: 2871212932804867401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_77
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39a1c4ed9d61f3ec0800000000000000
+      internalID: -3585121653370381677
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_78
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 512747c61d377db70800000000000000
+      internalID: 8923728529962856981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_79
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92e72cc17e434ad20800000000000000
+      internalID: 3288811795111902761
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_80
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1c79b0449d5de2f0800000000000000
+      internalID: -941993855728124898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_81
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed53cbf3a098084f0800000000000000
+      internalID: -828511654324193826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_82
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b779937a93265a30800000000000000
+      internalID: 4203586448468309938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_83
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b891841597fb21120800000000000000
+      internalID: 2383177680608041355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_84
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb03f29abb471e6c0800000000000000
+      internalID: -4115880235093774149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_85
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 18
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 737dbf9caf2a6f630800000000000000
+      internalID: 3960532120333178679
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_86
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 18
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b668fb297972ae2b0800000000000000
+      internalID: -5554583658452515221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_87
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 18
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2124b289fef688f60800000000000000
+      internalID: 8036796609883488786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_88
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 18
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc67cf2ed2e6fb010800000000000000
+      internalID: 1206804368519362253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_89
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 1
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59d376a488c489750800000000000000
+      internalID: 6311879026007293333
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_90
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 1
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4709a86e83c3767b0800000000000000
+      internalID: -5231146227083865996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_91
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 1
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71d6041f21af4a5a0800000000000000
+      internalID: -6510804202007007977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode_6_92
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 1
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1eb3bcf0dd2612c10800000000000000
+      internalID: 2027010008885705697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 3adcdd09d74657247b81dd2e4d661b78
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":1.0,"y":1.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      BattleMode_6_0: -5248489105372525531
+      BattleMode_6_1: -8584429020131022926
+      BattleMode_6_10: -8903098873965284051
+      BattleMode_6_11: 2322676254127613228
+      BattleMode_6_12: -7583826096129210606
+      BattleMode_6_13: 2872143317450893127
+      BattleMode_6_14: 2404985560189293191
+      BattleMode_6_15: 8999582761294990469
+      BattleMode_6_16: -2927781472037305151
+      BattleMode_6_17: -1094926622954747998
+      BattleMode_6_18: 3179267725556995655
+      BattleMode_6_19: 7663085684796469705
+      BattleMode_6_2: -8721059241026915010
+      BattleMode_6_20: 1275791393687357048
+      BattleMode_6_21: 5936358505449915348
+      BattleMode_6_22: 7874086499295063256
+      BattleMode_6_23: 6287554719935746409
+      BattleMode_6_24: -5037146524849862797
+      BattleMode_6_25: 8673775832140955950
+      BattleMode_6_26: 1316255769933142571
+      BattleMode_6_27: -1644780265982492350
+      BattleMode_6_28: -8344590332518383571
+      BattleMode_6_29: -5551332118513032604
+      BattleMode_6_3: 490228431825797563
+      BattleMode_6_30: -1455022224450449850
+      BattleMode_6_31: 2980850838829740693
+      BattleMode_6_32: 710667571488808518
+      BattleMode_6_33: -5152768904336426887
+      BattleMode_6_34: 5420566069405726242
+      BattleMode_6_35: 8873340508436719067
+      BattleMode_6_36: 1028070144851357394
+      BattleMode_6_37: 2391551471039690736
+      BattleMode_6_38: -4796176880163521757
+      BattleMode_6_39: 4552336474922024016
+      BattleMode_6_4: 6728988443621223583
+      BattleMode_6_40: 6423289787142213218
+      BattleMode_6_41: -1073184094879475862
+      BattleMode_6_42: 1065704449616013525
+      BattleMode_6_43: -5656359960209200918
+      BattleMode_6_44: -6813209005381865948
+      BattleMode_6_45: -1960625916647809375
+      BattleMode_6_46: 6509438843551165707
+      BattleMode_6_47: -3824867033219660697
+      BattleMode_6_48: -3884542885682959658
+      BattleMode_6_49: 8313306920446344816
+      BattleMode_6_5: 4832182680107468073
+      BattleMode_6_50: -1794410542854060217
+      BattleMode_6_51: 1677262640164891360
+      BattleMode_6_52: 6805326118090010771
+      BattleMode_6_53: -3145622173826814771
+      BattleMode_6_54: 6449233393786580896
+      BattleMode_6_55: 2150291354430439831
+      BattleMode_6_56: 2656262512263668656
+      BattleMode_6_57: -132935997653615309
+      BattleMode_6_58: -7398747814631149127
+      BattleMode_6_59: -5744196675713540505
+      BattleMode_6_6: -8035418607459276932
+      BattleMode_6_60: -1635494051141656469
+      BattleMode_6_61: 5087817679101496157
+      BattleMode_6_62: 3011900793675084974
+      BattleMode_6_63: 4948464737154378523
+      BattleMode_6_64: -3278339244334685908
+      BattleMode_6_65: -2551474621608705497
+      BattleMode_6_66: 3289273247320989609
+      BattleMode_6_67: -3361249015498099673
+      BattleMode_6_68: -5576366451940287607
+      BattleMode_6_69: 5418533815990055409
+      BattleMode_6_7: -916115823439128214
+      BattleMode_6_70: -5361843602697623881
+      BattleMode_6_71: 6632945517544856540
+      BattleMode_6_72: 464818009413023546
+      BattleMode_6_73: 3390090693036574272
+      BattleMode_6_74: -699407754445156198
+      BattleMode_6_75: -881966309929982622
+      BattleMode_6_76: 2871212932804867401
+      BattleMode_6_77: -3585121653370381677
+      BattleMode_6_78: 8923728529962856981
+      BattleMode_6_79: 3288811795111902761
+      BattleMode_6_8: -5780259537355763320
+      BattleMode_6_80: -941993855728124898
+      BattleMode_6_81: -828511654324193826
+      BattleMode_6_82: 4203586448468309938
+      BattleMode_6_83: 2383177680608041355
+      BattleMode_6_84: -4115880235093774149
+      BattleMode_6_85: 3960532120333178679
+      BattleMode_6_86: -5554583658452515221
+      BattleMode_6_87: 8036796609883488786
+      BattleMode_6_88: 1206804368519362253
+      BattleMode_6_89: 6311879026007293333
+      BattleMode_6_9: -7868346667117590087
+      BattleMode_6_90: -5231146227083865996
+      BattleMode_6_91: -6510804202007007977
+      BattleMode_6_92: 2027010008885705697
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

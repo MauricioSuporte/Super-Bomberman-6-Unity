@@ -7,7 +7,7 @@ public class BossRushBootstrap : MonoBehaviour
     const string LOG = "[BossRushBootstrap]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
 
     [Header("Boss Rush")]
     [SerializeField] BossRushMenu bossRushMenu;

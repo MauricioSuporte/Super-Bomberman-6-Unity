@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class MobileInputBridge : MonoBehaviour
 {
+    private static readonly PlayerAction[] Actions = (PlayerAction[])System.Enum.GetValues(typeof(PlayerAction));
+
     public static MobileInputBridge Instance { get; private set; }
 
     private readonly Dictionary<PlayerAction, bool> held = new();
@@ -24,7 +26,7 @@ public class MobileInputBridge : MonoBehaviour
 
         Instance = this;
 
-        foreach (PlayerAction action in System.Enum.GetValues(typeof(PlayerAction)))
+        foreach (PlayerAction action in Actions)
         {
             held[action] = false;
             down[action] = false;
@@ -33,9 +35,8 @@ public class MobileInputBridge : MonoBehaviour
 
     void LateUpdate()
     {
-        var keys = new List<PlayerAction>(down.Keys);
-        for (int i = 0; i < keys.Count; i++)
-            down[keys[i]] = false;
+        for (int i = 0; i < Actions.Length; i++)
+            down[Actions[i]] = false;
     }
 
     public void Press(PlayerAction action)

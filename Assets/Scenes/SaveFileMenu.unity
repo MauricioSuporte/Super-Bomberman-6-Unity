@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 59654201}
-  - component: {fileID: 59654200}
   m_Layer: 0
   m_Name: StageSettings
   m_TagString: Untagged
@@ -136,20 +135,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &59654200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 59654199}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a284d4030dc9c84caeaae28969ab361, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
-  stageDefaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
-  musicVolume: 0.8
 --- !u!4 &59654201
 Transform:
   m_ObjectHideFlags: 0
@@ -220,11 +205,13 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -234,6 +221,9 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 1
+  skullAmount: 0
+  randomEggsMin: 0
+  randomEggsMax: 0
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
@@ -241,6 +231,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 0}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -678,14 +672,14 @@ MonoBehaviour:
   promptTitleText: {fileID: 0}
   mainPrompt: NORMAL GAME
   newGamePrompt: START WHICH FILE?
+  difficultyPrompt: SELECT DIFFICULTY
   continuePrompt: CONTINUE WHICH FILE?
   deletePrompt: DELETE WHICH FILE?
   leftPanel: {fileID: 2134452605}
   slotCount: 3
   slotLabelPrefix: 'File '
   emptySlotDisplay: '- - -'
-  noEmptyFileMessage: NO EMPTY FILE
-  deletedMessage: FILE DELETED
+  progressColumnSpacing: 4
   deleteFeedbackSeconds: 0.5
   mainMenuBackgrounds:
     sprites:
@@ -695,6 +689,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: 864b9b6b5efe49d45899170f19dde598, type: 3}
     - {fileID: 21300000, guid: ef20af382c81c974d8af72830ebe1fbc, type: 3}
+  difficultyBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: e84a0d923bc3f1349ba6f4ca7cfd0a09, type: 3}
+    - {fileID: 21300000, guid: b17c70fb031d5554687a156083ec5fd9, type: 3}
   continueBackgrounds:
     sprites:
     - {fileID: 21300000, guid: c956a44a74dbb164f95ad363992b3ed7, type: 3}
@@ -705,8 +703,9 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 66ab2fcdf144f8444bf09b24ffb7402a, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
-  selectMusic: {fileID: 8300000, guid: f00d9f900fd297944919451c777a3a99, type: 3}
-  selectMusicVolume: 1
+  selectMusic: {fileID: 8300000, guid: b3d478d94f4d2d94c93a2ef59a47cc1b, type: 3}
+  selectMusicLoop: {fileID: 0}
+  selectMusicVolume: 0.5
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1
@@ -717,10 +716,12 @@ MonoBehaviour:
   deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedOptionVolume: 1
   disabledOptionText: {fileID: 0}
+  disabledNewGameMessage: NO EMPTY SLOT
   disabledContinueMessage: NO SAVE DATA
   disabledDeleteMessage: NO SAVE DATA
+  disabledHardcoreMessage: CLEAR NORMAL GAME ON HARD
   disabledMessageShowSeconds: 1.5
-  disabledMessageFontSize: 22
+  disabledMessageFontSize: 32
   disabledMessageFaceColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   disabledMessageOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   disabledMessageFontAsset: {fileID: 11400000, guid: 85be15c3c761b0248a9f6b5e84031bc6, type: 2}
@@ -737,7 +738,7 @@ MonoBehaviour:
   disabledMessageUnderlaySoftness: 0
   disabledMessageUnderlayOffsetX: 0.25
   disabledMessageUnderlayOffsetY: -0.25
-  disabledMessageBottomMargin: 12
+  disabledMessageBottomMargin: 150
   dynamicScale: 1
   referenceWidth: 256
   referenceHeight: 224
@@ -776,6 +777,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 1
+  activePlayerMask: 1
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -869,6 +877,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1069,8 +1078,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
+  defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 1
+  defaultMusicVolume: 0.8
+  defaultMusicLoopVolume: 0.8
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1484,9 +1495,15 @@ MonoBehaviour:
   normalColor: {r: 0, g: 0.8235294, b: 0, a: 1}
   selectedColor: {r: 0, g: 1, b: 0.23529412, a: 1}
   disabledColor: {r: 0, g: 0.47058824, b: 0, a: 0.7058824}
+  hardDifficultySelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  hardcoreDifficultySelectedColor: {r: 0, g: 0, b: 0, a: 1}
+  hardcoreDifficultyOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  lockedDifficultySelectedAlpha: 0.35
+  difficultyColumnSpacing: 28
   optionFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   optionFontMaterialPreset: {fileID: 0}
   forceBold: 1
+  useRichTextEntryColors: 0
   autoSize: 0
   autoSizeMinRatio: 0.75
   useOutline: 1

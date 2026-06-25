@@ -51,8 +51,6 @@ public sealed class HudGridLayout : MonoBehaviour
         if (espacamentoInferior <= 0f)
             bottom = hudHeight - espacamentoSuperior - gridHeight;
 
-        int activePlayerCount = ObterQuantidadePlayersAtivos();
-
         float leftAtual = leftInicial;
 
         for (int i = 0; i < count; i++)
@@ -67,7 +65,7 @@ public sealed class HudGridLayout : MonoBehaviour
             float minY = bottom / hudHeight;
             float maxY = (bottom + gridHeight) / hudHeight;
 
-            bool playerAtivo = i < activePlayerCount;
+            bool playerAtivo = IsPlayerAtivo(i + 1);
 
             RectTransform gridNormal = ObterGrid(grids, i);
             RectTransform gridAlternativo = ObterGrid(gridsAlternativos, i);
@@ -89,17 +87,17 @@ public sealed class HudGridLayout : MonoBehaviour
         return Mathf.Max(countGridsNormais, countGridsAlternativos);
     }
 
-    int ObterQuantidadePlayersAtivos()
+    bool IsPlayerAtivo(int playerId)
     {
         if (Application.isPlaying && GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            return GameSession.Instance.IsPlayerActive(playerId);
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)
-            return 4;
+            return playerId >= 1 && playerId <= 4;
 #endif
 
-        return 1;
+        return playerId == 1;
     }
 
     RectTransform ObterGrid(RectTransform[] array, int index)

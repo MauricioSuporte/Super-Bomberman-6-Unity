@@ -1,16 +1,18 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class PlayersSpawner : MonoBehaviour
 {
     [Header("Player Prefab")]
     [SerializeField] private GameObject playerPrefab;
 
-    [Header("Legacy Spawn Points (1..4)")]
-    [SerializeField] private Transform[] spawnPoints = new Transform[4];
+    [Header("Legacy Spawn Points (1..6)")]
+    [SerializeField] private Transform[] spawnPoints = new Transform[6];
 
     [Header("Per Player Spawn Override")]
-    [SerializeField] private SpawnOverride[] playerOverrides = new SpawnOverride[4];
+    [SerializeField] private SpawnOverride[] playerOverrides = new SpawnOverride[6];
 
     [Header("Optional Parent")]
     [SerializeField] private Transform playersParent;
@@ -24,13 +26,16 @@ public sealed class PlayersSpawner : MonoBehaviour
     public bool IsBossStage => isBossStage;
 
     bool spawned;
+    readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
 
     static readonly Vector2[] NormalStagePositions =
     {
         new(-7f,  4f),
         new( 5f,  4f),
         new(-7f, -6f),
-        new( 5f, -6f)
+        new( 5f, -6f),
+        new(-5f, -1f),
+        new( 3f, -1f) 
     };
 
     static readonly Vector2[] BossStagePositions =
@@ -38,7 +43,9 @@ public sealed class PlayersSpawner : MonoBehaviour
         new(-3f, -6f),
         new( 1f, -6f),
         new(-5f, -6f),
-        new( 3f, -6f)
+        new( 3f, -6f),
+        new(-7f, -6f),
+        new( 5f, -6f) 
     };
 
     [Serializable]
@@ -90,6 +97,23 @@ public sealed class PlayersSpawner : MonoBehaviour
         spawned = true;
     }
 
+    public GameObject GetPlayerMountPrefabForType(MountedType type)
+    {
+        if (playerPrefab == null)
+            return null;
+
+        var companion = playerPrefab.GetComponent<PlayerMountCompanion>();
+        if (companion == null)
+            return null;
+
+        return type switch
+        {
+            MountedType.Mole => companion.molePrefab,
+            MountedType.Tank => companion.tankPrefab,
+            _ => null
+        };
+    }
+
     bool FindAnyPlayerInScene()
     {
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
@@ -117,21 +141,27 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     void SpawnPlayersInternal()
     {
-        int count = 1;
-
-        if (BossRushSession.IsActive)
-            count = BossRushSession.RunPlayerCount;
-        else if (GameSession.Instance != null)
-            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+        ResolveConfiguredPlayerIds(configuredPlayerIds);
 
         PlayerPersistentStats.EnsureSessionBooted();
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
-        for (int playerId = 1; playerId <= count; playerId++)
+        for (int i = 0; i < configuredPlayerIds.Count; i++)
         {
+            int playerId = configuredPlayerIds[i];
+
             if (BossRushSession.IsActive && !BossRushSession.ShouldSpawnPlayer(playerId))
                 continue;
+
+            if (!BossRushSession.IsActive &&
+                !IsBattleModeScene() &&
+                SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore &&
+                GameSession.Instance != null &&
+                !GameSession.Instance.ShouldSpawnHardcorePlayer(playerId))
+            {
+                continue;
+            }
 
             int index = playerId - 1;
             Vector3 spawnPos = ResolveSpawnPosition(index, preset);
@@ -161,8 +191,83 @@ public sealed class PlayersSpawner : MonoBehaviour
                 if (skins[s] != null)
                     skins[s].ApplyFromIdentity();
             }
+
+            ConfigureBattleModeComController(go, playerId);
         }
     }
+
+    void ConfigureBattleModeComController(GameObject playerObject, int playerId)
+    {
+        if (playerObject == null)
+            return;
+
+        bool isBattleModeScene = IsBattleModeScene();
+        BattleModePlayerControlMode controlMode = isBattleModeScene
+            ? SaveSystem.GetBattleModePlayerControlMode(playerId)
+            : BattleModePlayerControlMode.Off;
+
+        if (isBattleModeScene && controlMode == BattleModePlayerControlMode.Com)
+        {
+            var com = playerObject.GetComponent<BattleModeComController>();
+            if (com == null)
+                com = playerObject.AddComponent<BattleModeComController>();
+
+            com.enabled = true;
+            com.Initialize(playerId);
+            return;
+        }
+
+        if (playerObject.TryGetComponent<BattleModeComController>(out var existingCom) && existingCom != null)
+            existingCom.enabled = false;
+
+        if (PlayerInputManager.Instance != null)
+            PlayerInputManager.Instance.ClearSyntheticPlayer(playerId);
+    }
+
+    void ResolveConfiguredPlayerIds(List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (BossRushSession.IsActive)
+            BossRushSession.GetRunPlayerIds(results);
+        else if (GameSession.Instance != null)
+            GameSession.Instance.GetActivePlayerIds(results);
+
+        if (results.Count <= 0)
+            results.Add(GameSession.MinPlayerId);
+
+#if ENABLE_NORMAL_GAME_AI
+        TryFillNormalGameAiPlayers(results);
+#endif
+    }
+
+#if ENABLE_NORMAL_GAME_AI
+    // Dev-only (sob ENABLE_NORMAL_GAME_AI): quando o Normal Game está rodando
+    // só com P1 e a IA está ligada, completa a lista com P2/P3/P4 para gravar
+    // gameplays de 4 jogadores estando sozinho. Sincroniza o GameSession para
+    // manter HUD e condições de jogo coerentes. Não age em Battle Mode/Boss Rush.
+    void TryFillNormalGameAiPlayers(List<int> results)
+    {
+        if (!NormalGameAIManager.EnableAI)
+            return;
+        if (BossRushSession.IsActive || IsBattleModeScene())
+            return;
+        if (results.Count != 1 || !results.Contains(GameSession.MinPlayerId))
+            return;
+
+        for (int id = 2; id <= 4; id++)
+        {
+            if (!results.Contains(id))
+                results.Add(id);
+        }
+
+        if (GameSession.Instance != null)
+            GameSession.Instance.SetActivePlayerIds(results);
+    }
+#endif
 
     Vector3 ResolveSpawnPosition(int index, Vector2[] preset)
     {
@@ -193,11 +298,17 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     public Vector2 GetResolvedSpawnPosition(int playerId)
     {
-        int idx = Mathf.Clamp(playerId - 1, 0, 3);
+        int idx = Mathf.Clamp(playerId - 1, 0, 5);
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
         Vector3 pos = ResolveSpawnPosition(idx, preset);
         return (Vector2)pos;
+    }
+
+    static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
     }
 }

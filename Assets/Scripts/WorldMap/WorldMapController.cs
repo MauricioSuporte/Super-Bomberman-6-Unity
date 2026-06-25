@@ -27,6 +27,7 @@ public class WorldMapController : MonoBehaviour
 
         [Header("World Music")]
         public AudioClip worldMusic;
+        public AudioClip worldMusicLoop;
         [Range(0f, 1f)] public float worldMusicVolume = 1f;
         public bool loopWorldMusic = true;
 
@@ -39,7 +40,7 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] bool applyWorldCameraPosition = true;
 
     [Header("Input Owner")]
-    [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
+    [SerializeField, Range(1, 6)] int ownerPlayerId = 1;
 
     [Header("Worlds")]
     [SerializeField] List<WorldData> worlds = new List<WorldData>();
@@ -87,8 +88,9 @@ public class WorldMapController : MonoBehaviour
     [Header("Stage Icons")]
     [SerializeField] Sprite lockedStageSprite;
     [SerializeField] Sprite availableStageSprite;
-    [SerializeField] Sprite clearedStageSprite;
-    [SerializeField] Sprite perfectStageSprite;
+    [SerializeField] Sprite hardClearedStageSprite;
+    [SerializeField] Sprite normalClearedStageSprite;
+    [SerializeField] Sprite hardcoreClearedStageSprite;
     [SerializeField] Vector2 baseIconLogicalSize = new Vector2(8f, 8f);
     [SerializeField] Vector2 iconOffset = Vector2.zero;
     [SerializeField] bool preserveAspectOnIcons = true;
@@ -111,8 +113,9 @@ public class WorldMapController : MonoBehaviour
     [Header("Stage Icon Colors")]
     [SerializeField] Color lockedStageColor = Color.white;
     [SerializeField] Color availableStageColor = Color.white;
-    [SerializeField] Color clearedStageColor = Color.white;
-    [SerializeField] Color perfectStageColor = Color.white;
+    [SerializeField] Color hardClearedStageColor = Color.white;
+    [SerializeField] Color normalClearedStageColor = Color.white;
+    [SerializeField] Color hardcoreClearedStageColor = Color.white;
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
@@ -133,7 +136,6 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Top Left Label")]
     [SerializeField] Text worldStageLabel;
-    [SerializeField] string worldLabelPrefix = "WORLD ";
     [SerializeField] string stageSeparator = " - ";
 
     [SerializeField] int worldStageLabelReferenceWidth = 256;
@@ -156,6 +158,7 @@ public class WorldMapController : MonoBehaviour
     bool playingSelectedAnimation;
 
     AudioClip lastPlayedWorldMusic;
+    AudioClip lastPlayedWorldMusicLoopClip;
     float lastPlayedWorldMusicVolume;
     bool lastPlayedWorldMusicLoop;
 
@@ -474,8 +477,7 @@ public class WorldMapController : MonoBehaviour
 
         if (AreAllStagesCleared())
         {
-            if (!TryGetFirstNonPerfectStageInWorld(currentWorldIndex, out targetNodeIndex))
-                targetNodeIndex = GetLastUnlockedNodeIndex(currentWorldIndex);
+            targetNodeIndex = GetLastUnlockedNodeIndex(currentWorldIndex);
         }
         else
         {
@@ -488,33 +490,6 @@ public class WorldMapController : MonoBehaviour
 
         cursorLocalPosition = GetAnchorPositionInMovementArea(node.anchor);
         hoveredNodeIndex = targetNodeIndex;
-    }
-
-    bool TryGetFirstNonPerfectStageInWorld(int worldIndex, out int nodeIndex)
-    {
-        nodeIndex = 0;
-
-        if (worldIndex < 0 || worldIndex >= worlds.Count)
-            return false;
-
-        var world = worlds[worldIndex];
-        if (world == null || world.nodes == null)
-            return false;
-
-        for (int i = 0; i < world.nodes.Count; i++)
-        {
-            var node = world.nodes[i];
-            if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
-                continue;
-
-            if (!StageUnlockProgress.IsPerfect(node.sceneName))
-            {
-                nodeIndex = i;
-                return true;
-            }
-        }
-
-        return false;
     }
 
     void RefreshHoveredStage()
@@ -694,7 +669,6 @@ public class WorldMapController : MonoBehaviour
 
         bool isUnlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
         bool isCleared = StageUnlockProgress.IsCleared(node.sceneName);
-        bool isPerfect = StageUnlockProgress.IsPerfect(node.sceneName);
 
         Sprite sprite;
         Color color;
@@ -704,15 +678,25 @@ public class WorldMapController : MonoBehaviour
             sprite = lockedStageSprite;
             color = lockedStageColor;
         }
-        else if (isPerfect)
-        {
-            sprite = perfectStageSprite;
-            color = perfectStageColor;
-        }
         else if (isCleared)
         {
-            sprite = clearedStageSprite;
-            color = clearedStageColor;
+            switch (StageUnlockProgress.GetClearedDifficulty(node.sceneName))
+            {
+                case Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard:
+                    sprite = hardClearedStageSprite;
+                    color = hardClearedStageColor;
+                    break;
+
+                case Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore:
+                    sprite = hardcoreClearedStageSprite;
+                    color = hardcoreClearedStageColor;
+                    break;
+
+                default:
+                    sprite = normalClearedStageSprite;
+                    color = normalClearedStageColor;
+                    break;
+            }
         }
         else
         {
@@ -822,6 +806,7 @@ public class WorldMapController : MonoBehaviour
         {
             GameMusicController.Instance.StopMusic();
             lastPlayedWorldMusic = null;
+            lastPlayedWorldMusicLoopClip = null;
             lastPlayedWorldMusicVolume = 0f;
             lastPlayedWorldMusicLoop = false;
             return;
@@ -829,17 +814,47 @@ public class WorldMapController : MonoBehaviour
 
         bool sameClip =
             lastPlayedWorldMusic == world.worldMusic &&
+            lastPlayedWorldMusicLoopClip == world.worldMusicLoop &&
             Mathf.Approximately(lastPlayedWorldMusicVolume, world.worldMusicVolume) &&
             lastPlayedWorldMusicLoop == world.loopWorldMusic;
 
         if (!forceRestart && sameClip)
             return;
 
-        GameMusicController.Instance.PlayMusic(world.worldMusic, world.worldMusicVolume, world.loopWorldMusic);
+        PreloadWorldMusic(world);
+
+        if (world.worldMusicLoop != null)
+        {
+            GameMusicController.Instance.PlayMusicIntroThenLoop(
+                world.worldMusic,
+                world.worldMusicVolume,
+                world.worldMusicLoop,
+                world.worldMusicVolume);
+        }
+        else
+        {
+            GameMusicController.Instance.PlayMusic(world.worldMusic, world.worldMusicVolume, world.loopWorldMusic);
+        }
 
         lastPlayedWorldMusic = world.worldMusic;
+        lastPlayedWorldMusicLoopClip = world.worldMusicLoop;
         lastPlayedWorldMusicVolume = world.worldMusicVolume;
         lastPlayedWorldMusicLoop = world.loopWorldMusic;
+    }
+
+    static void PreloadWorldMusic(WorldData world)
+    {
+        if (world == null)
+            return;
+
+        PreloadAudioData(world.worldMusic);
+        PreloadAudioData(world.worldMusicLoop);
+    }
+
+    static void PreloadAudioData(AudioClip clip)
+    {
+        if (clip != null && clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
     }
 
     void PlaySfx(AudioClip clip, float volume)
@@ -1201,7 +1216,7 @@ public class WorldMapController : MonoBehaviour
             return;
 
         int worldNumber = currentWorldIndex + 1;
-        string text = worldLabelPrefix + worldNumber;
+        string text = GameTextDatabase.WorldMap.WorldPrefix + worldNumber;
 
         var node = GetHoveredNode();
         if (node != null)
@@ -1214,6 +1229,7 @@ public class WorldMapController : MonoBehaviour
             text += stageSeparator + stageSuffix;
         }
 
+        LocalizedTmpFontFallback.Apply(worldStageLabel);
         worldStageLabel.text = text;
     }
 
@@ -1338,12 +1354,6 @@ public class WorldMapController : MonoBehaviour
             int allClearWorldIndex;
             int allClearNodeIndex;
 
-            if (TryGetFirstNonPerfectStageAcrossWorlds(out allClearWorldIndex, out allClearNodeIndex))
-            {
-                initialNodeIndex = allClearNodeIndex;
-                return allClearWorldIndex;
-            }
-
             if (TryGetFirstValidStage(out allClearWorldIndex, out allClearNodeIndex))
             {
                 initialNodeIndex = allClearNodeIndex;
@@ -1444,34 +1454,6 @@ public class WorldMapController : MonoBehaviour
             return lastUnlocked;
 
         return Mathf.Clamp(world.defaultNodeIndex, 0, world.nodes.Count - 1);
-    }
-
-    bool TryGetFirstNonPerfectStageAcrossWorlds(out int worldIndex, out int nodeIndex)
-    {
-        for (int w = 0; w < worlds.Count; w++)
-        {
-            var world = worlds[w];
-            if (world == null || world.nodes == null)
-                continue;
-
-            for (int n = 0; n < world.nodes.Count; n++)
-            {
-                var node = world.nodes[n];
-                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
-                    continue;
-
-                if (!StageUnlockProgress.IsPerfect(node.sceneName))
-                {
-                    worldIndex = w;
-                    nodeIndex = n;
-                    return true;
-                }
-            }
-        }
-
-        worldIndex = 0;
-        nodeIndex = 0;
-        return false;
     }
 
     void RefreshClearedStageSpinAnimations()

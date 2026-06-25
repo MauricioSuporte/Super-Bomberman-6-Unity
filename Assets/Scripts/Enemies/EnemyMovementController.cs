@@ -1,7 +1,8 @@
-using System.Collections;
+using Assets.Scripts.SaveSystem;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
@@ -10,6 +11,9 @@ using UnityEngine;
 [RequireComponent(typeof(StunReceiver))]
 public class EnemyMovementController : MonoBehaviour, IKillable
 {
+    const int HardExtraLife = 1;
+    const float HardSpeedMultiplier = 1.5f;
+
     [Header("Stats")]
     public float speed = 2f;
     public float tileSize = 1f;
@@ -37,9 +41,11 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     protected Vector2 direction;
     protected Vector2 targetTile;
     protected bool isDead;
+    protected float campaignDifficultySpeedMultiplier = 1f;
 
     CharacterHealth health;
     AudioSource audioSource;
+    bool campaignDifficultyModifiersApplied;
 
     protected bool isInDamagedLoop;
 
@@ -63,9 +69,13 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
         health = GetComponent<CharacterHealth>();
+        ApplyCampaignDifficultyModifiers(health);
 
         if (health != null)
         {
+            if (health.playDamagedLoopInsteadOfBlink && spriteDamaged == null)
+                health.playDamagedLoopAndBlink = true;
+
             health.HitInvulnerabilityStarted += OnHitInvulnerabilityStarted;
             health.HitInvulnerabilityEnded += OnHitInvulnerabilityEnded;
             health.Died += OnHealthDied;
@@ -77,6 +87,39 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             audioSource.playOnAwake = false;
             audioSource.loop = false;
         }
+    }
+
+    protected void ApplyCampaignDifficultyModifiers(CharacterHealth targetHealth)
+    {
+        if (campaignDifficultyModifiersApplied || !UsesHardCampaignModifiers())
+            return;
+
+        campaignDifficultyModifiersApplied = true;
+        campaignDifficultySpeedMultiplier = HardSpeedMultiplier;
+        speed *= campaignDifficultySpeedMultiplier;
+
+        if (targetHealth != null)
+            targetHealth.AddLife(HardExtraLife);
+    }
+
+    bool UsesHardCampaignModifiers()
+    {
+        if (gameObject.layer != LayerMask.NameToLayer("Enemy") || BossRushSession.IsActive)
+            return false;
+
+        if (!SceneManager.GetActiveScene().name.StartsWith("Stage_", System.StringComparison.Ordinal))
+            return false;
+
+        StageSlot slot = SaveSystem.ActiveSlot;
+        if (slot == null || !slot.started)
+            return false;
+
+        NormalGameDifficulty difficulty = System.Enum.IsDefined(typeof(NormalGameDifficulty), slot.difficulty)
+            ? (NormalGameDifficulty)slot.difficulty
+            : NormalGameDifficulty.Normal;
+
+        return difficulty == NormalGameDifficulty.Hard ||
+               difficulty == NormalGameDifficulty.Hardcore;
     }
 
     protected virtual void OnDestroy()
@@ -226,7 +269,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             stun.CancelStunForDeath();
 
         if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
 
         if (rb != null)
             rb.linearVelocity = Vector2.zero;

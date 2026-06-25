@@ -9,7 +9,7 @@ public class BossRushMenu : MonoBehaviour
     const string LOG = "[BossRushMenu]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
 
     [Header("UI Root")]
     [SerializeField] GameObject root;
@@ -42,6 +42,7 @@ public class BossRushMenu : MonoBehaviour
 
     [Header("Music")]
     [SerializeField] AudioClip selectMusic;
+    [SerializeField] AudioClip selectMusicLoop;
     [SerializeField, Range(0f, 1f)] float selectMusicVolume = 1f;
     [SerializeField] bool loopSelectMusic = true;
 
@@ -68,7 +69,6 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField] bool nightmareUnlocked = false;
     [SerializeField] AudioClip deniedOptionSfx;
     [SerializeField, Range(0f, 1f)] float deniedOptionVolume = 1f;
-    [SerializeField] string nightmareLockedMessage = "UNLOCKED BY CLEARING HARD";
 
     [Header("Locked Difficulty Message UI")]
     [SerializeField] TextMeshProUGUI nightmareLockedText;
@@ -393,7 +393,7 @@ public class BossRushMenu : MonoBehaviour
 
                     PlayDeniedSfx();
 
-                    if (!string.IsNullOrEmpty(nightmareLockedMessage))
+                    if (!string.IsNullOrEmpty(GameTextDatabase.BossRushMenu.NightmareLocked))
                         ShowNightmareLockedMessage();
                     else
                         SLog("Input Confirm Denied | nightmareLockedMessage empty");
@@ -502,12 +502,35 @@ public class BossRushMenu : MonoBehaviour
             return;
 
         CapturePreviousMusicIfNeeded();
-        music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+        PreloadSelectMusic();
+
+        if (selectMusicLoop != null)
+        {
+            music.PlayMusicIntroThenLoop(
+                selectMusic,
+                selectMusicVolume,
+                selectMusicLoop,
+                selectMusicVolume);
+        }
+        else
+        {
+            music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+        }
 
         SLog(
             $"StartSelectMusic | clip={(selectMusic != null ? selectMusic.name : "NULL")} " +
+            $"loopClip={(selectMusicLoop != null ? selectMusicLoop.name : "NULL")} " +
             $"volume={selectMusicVolume:0.##} loop={loopSelectMusic}"
         );
+    }
+
+    void PreloadSelectMusic()
+    {
+        if (selectMusic != null && selectMusic.loadState == AudioDataLoadState.Unloaded)
+            selectMusic.LoadAudioData();
+
+        if (selectMusicLoop != null && selectMusicLoop.loadState == AudioDataLoadState.Unloaded)
+            selectMusicLoop.LoadAudioData();
     }
 
     void StopSelectMusicAndRestorePrevious(bool restorePrevious)
@@ -888,13 +911,14 @@ public class BossRushMenu : MonoBehaviour
 
         ApplyNightmareLockedTextVisualStyle();
 
-        nightmareLockedText.text = nightmareLockedMessage;
+        LocalizedTmpFontFallback.Apply(nightmareLockedText);
+        nightmareLockedText.text = GameTextDatabase.BossRushMenu.NightmareLocked;
         nightmareLockedText.gameObject.SetActive(true);
         nightmareLockedText.transform.SetAsLastSibling();
 
         SLog(
             $"ShowNightmareLockedMessage | " +
-            $"text='{nightmareLockedMessage}' " +
+            $"text='{GameTextDatabase.BossRushMenu.NightmareLocked}' " +
             $"activeSelf={nightmareLockedText.gameObject.activeSelf} " +
             $"activeInHierarchy={nightmareLockedText.gameObject.activeInHierarchy} " +
             $"rootActive={(root != null && root.activeInHierarchy)} " +

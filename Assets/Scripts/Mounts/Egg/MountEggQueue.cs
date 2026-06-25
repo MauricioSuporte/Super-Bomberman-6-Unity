@@ -173,6 +173,11 @@ public sealed class MountEggQueue : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.EggQueueUpdate.Auto();
+
+        if (_eggs.Count == 0)
+            return;
+
         ApplyEggLayerNow();
         ApplyEggSortingNow();
 
@@ -1560,9 +1565,14 @@ public sealed class MountEggQueue : MonoBehaviour
         if (v != null)
         {
             if (byExplosion)
+            {
                 v.PlayExplosionDestroy();
+                seconds = Mathf.Max(seconds, v.GetExplosionThenDestroyDuration());
+            }
             else
+            {
                 v.PlayDestroy();
+            }
         }
 
         if (!tr.TryGetComponent<Collider2D>(out var col))

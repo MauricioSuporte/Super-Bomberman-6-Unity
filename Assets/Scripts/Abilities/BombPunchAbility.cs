@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -108,6 +108,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility)
             return;
 
@@ -208,7 +210,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             return;
 
         if (audioSource != null && cachedPunchClip != null)
-            audioSource.PlayOneShot(cachedPunchClip);
+            GameAudioSettings.PlaySfx(audioSource, cachedPunchClip);
 
         if (punchLockRoutine != null)
             StopCoroutine(punchLockRoutine);

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [DefaultExecutionOrder(-45)]
 [DisallowMultipleComponent]
@@ -6,9 +6,16 @@
 [RequireComponent(typeof(AudioSource))]
 public sealed class CorneredAnimation : MonoBehaviour
 {
+    private static readonly string[] BlockedSfxResourcesPaths =
+    {
+        "Sounds/blocked",
+        "Sounds/blocked2"
+    };
+
     [Header("Cornered Visual")]
     [SerializeField] private AnimatedSpriteRenderer corneredLoopRenderer;
     [SerializeField] private bool refreshFrameOnEnter = true;
+    [SerializeField, Min(0.02f)] private float corneredCheckInterval = 0.1f;
 
     [Header("Blocking Detection")]
     [SerializeField, Min(0.1f)] private float probeDistanceMultiplier = 0.5f;
@@ -17,7 +24,7 @@ public sealed class CorneredAnimation : MonoBehaviour
     [SerializeField] private string indestructiblesName = "Indestructibles";
 
     [Header("SFX")]
-    [SerializeField] private AudioClip corneredSfx;
+    [SerializeField] private AudioClip[] blockedSfxClips;
     [SerializeField, Range(0f, 1f)] private float corneredSfxVolume = 1f;
     [SerializeField, Min(0f)] private float corneredSfxCooldown = 3f;
 
@@ -33,6 +40,10 @@ public sealed class CorneredAnimation : MonoBehaviour
     private float lastInputTime;
 
     private AnimatedSpriteRenderer activeCorneredRenderer;
+    private float nextCorneredCheckTime;
+    private int bombLayer;
+    private ContactFilter2D blockFilter;
+    private readonly Collider2D[] overlapResults = new Collider2D[16];
 
     private readonly Vector2[] cardinalDirs =
     {
@@ -64,8 +75,10 @@ public sealed class CorneredAnimation : MonoBehaviour
         if (blockMask.value == 0)
             blockMask = LayerMask.GetMask("Stage", "Bomb");
 
-        if (corneredSfx == null)
-            corneredSfx = Resources.Load<AudioClip>("Sounds/Cornered");
+        bombLayer = LayerMask.NameToLayer("Bomb");
+        RebuildBlockFilter();
+
+        LoadBlockedSfxClips();
 
         lastInputTime = Time.time;
 
@@ -75,6 +88,8 @@ public sealed class CorneredAnimation : MonoBehaviour
     private void OnValidate()
     {
         blockMask = LayerMask.GetMask("Stage", "Bomb");
+        bombLayer = LayerMask.NameToLayer("Bomb");
+        RebuildBlockFilter();
     }
 
     private void OnEnable()
@@ -90,6 +105,8 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.CorneredAnimationUpdate.Auto();
+
         if (movement == null)
             return;
 
@@ -102,10 +119,40 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
         }
 
+        if (Bomb.ActiveBombs.Count == 0)
+        {
+            if (isPlaying)
+                StopCornered();
+
+            return;
+        }
+
         if (HasAnyMovementIntent())
         {
             lastInputTime = Time.time;
 
+            if (isPlaying)
+                StopCornered();
+
+            return;
+        }
+
+        float silentTime = Time.time - lastInputTime;
+        if (!isPlaying && silentTime < inputSuppressSeconds)
+            return;
+
+        if (Time.time < nextCorneredCheckTime)
+            return;
+
+        nextCorneredCheckTime = Time.time + corneredCheckInterval;
+
+        Vector2 origin =
+            movement.Rigidbody != null
+                ? movement.Rigidbody.position
+                : (Vector2)transform.position;
+
+        if (!HasNearbyActiveBomb(origin))
+        {
             if (isPlaying)
                 StopCornered();
 
@@ -122,7 +169,6 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
         }
 
-        float silentTime = Time.time - lastInputTime;
         if (silentTime < inputSuppressSeconds)
         {
             if (isPlaying)
@@ -163,19 +209,7 @@ public sealed class CorneredAnimation : MonoBehaviour
         if (input == null)
             return false;
 
-        int id = movement.PlayerId;
-
-        return
-            input.Get(id, PlayerAction.MoveUp) ||
-            input.Get(id, PlayerAction.MoveDown) ||
-            input.Get(id, PlayerAction.MoveLeft) ||
-            input.Get(id, PlayerAction.MoveRight) ||
-            input.Get(id, PlayerAction.Start) ||
-            input.Get(id, PlayerAction.ActionA) ||
-            input.Get(id, PlayerAction.ActionB) ||
-            input.Get(id, PlayerAction.ActionC) ||
-            input.Get(id, PlayerAction.ActionL) ||
-            input.Get(id, PlayerAction.ActionR);
+        return input.HasAnyHeldInput(movement.PlayerId);
     }
 
     private bool IsCornered(out bool foundBomb)
@@ -212,6 +246,23 @@ public sealed class CorneredAnimation : MonoBehaviour
         return foundBomb;
     }
 
+    private bool HasNearbyActiveBomb(Vector2 playerOrigin)
+    {
+        float reach = Mathf.Max(0.01f, movement.tileSize) * 1.5f;
+
+        foreach (var bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2 offset = (Vector2)bomb.transform.position - playerOrigin;
+            if (Mathf.Abs(offset.x) <= reach && Mathf.Abs(offset.y) <= reach)
+                return true;
+        }
+
+        return false;
+    }
+
     private Vector2 GetProbePosition(Vector2 origin, Vector2 dir)
     {
         float tileSize = Mathf.Max(0.01f, movement.tileSize);
@@ -244,21 +295,22 @@ public sealed class CorneredAnimation : MonoBehaviour
         }
 
         Vector2 size = GetProbeSize(dir);
-        Collider2D[] hits = Physics2D.OverlapBoxAll(probePos, size, 0f, blockMask);
+        int hitCount = GetOverlapCount(probePos, size);
 
-        if (hits == null || hits.Length == 0)
+        if (hitCount <= 0)
             return false;
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = overlapResults[i];
+            overlapResults[i] = null;
             if (hit == null) continue;
 
             var go = hit.gameObject;
 
             if (go == gameObject) continue;
             if (hit.isTrigger) continue;
-            if (go.layer == LayerMask.NameToLayer("Bomb")) continue;
+            if (go.layer == bombLayer) continue;
 
             if (IsValidCorneredBlock(hit))
                 return true;
@@ -336,14 +388,15 @@ public sealed class CorneredAnimation : MonoBehaviour
         float tileSize = Mathf.Max(0.01f, movement.tileSize);
         Vector2 size = Vector2.one * (tileSize * 0.6f);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(origin, size, 0f, blockMask);
+        int hitCount = GetOverlapCount(origin, size);
 
-        if (hits == null)
+        if (hitCount <= 0)
             return false;
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = overlapResults[i];
+            overlapResults[i] = null;
             if (hit == null || hit.isTrigger) continue;
 
             var go = hit.gameObject;
@@ -354,6 +407,18 @@ public sealed class CorneredAnimation : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void RebuildBlockFilter()
+    {
+        blockFilter = new ContactFilter2D { useLayerMask = true };
+        blockFilter.SetLayerMask(blockMask);
+        blockFilter.useTriggers = true;
+    }
+
+    private int GetOverlapCount(Vector2 position, Vector2 size)
+    {
+        return Physics2D.OverlapBox(position, size, 0f, blockFilter, overlapResults);
     }
 
     private bool DoesProbeOverlapBombCollider(Vector2 probePos, Vector2 probeSize, Collider2D bombCol)
@@ -456,7 +521,11 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void PlayCorneredSfx()
     {
-        if (audioSource == null || corneredSfx == null)
+        if (audioSource == null)
+            return;
+
+        AudioClip clip = GetBlockedSfxClip();
+        if (clip == null)
             return;
 
         float now = Time.time;
@@ -465,6 +534,37 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
 
         lastSfxTime = now;
-        audioSource.PlayOneShot(corneredSfx, corneredSfxVolume);
+        GameAudioSettings.PlaySfx(audioSource, clip, corneredSfxVolume);
+    }
+
+    private void LoadBlockedSfxClips()
+    {
+        if (blockedSfxClips == null || blockedSfxClips.Length != BlockedSfxResourcesPaths.Length)
+            blockedSfxClips = new AudioClip[BlockedSfxResourcesPaths.Length];
+
+        for (int i = 0; i < BlockedSfxResourcesPaths.Length; i++)
+        {
+            if (blockedSfxClips[i] == null)
+                blockedSfxClips[i] = Resources.Load<AudioClip>(BlockedSfxResourcesPaths[i]);
+        }
+    }
+
+    private AudioClip GetBlockedSfxClip()
+    {
+        LoadBlockedSfxClips();
+
+        if (blockedSfxClips == null || blockedSfxClips.Length == 0)
+            return null;
+
+        int startIndex = Random.Range(0, blockedSfxClips.Length);
+        for (int i = 0; i < blockedSfxClips.Length; i++)
+        {
+            int index = (startIndex + i) % blockedSfxClips.Length;
+            AudioClip clip = blockedSfxClips[index];
+            if (clip != null)
+                return clip;
+        }
+
+        return null;
     }
 }

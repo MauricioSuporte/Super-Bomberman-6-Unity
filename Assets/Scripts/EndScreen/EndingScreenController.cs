@@ -1,6 +1,4 @@
-﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,6 +7,11 @@ using UnityEngine.UI;
 public class EndingScreenController : MonoBehaviour
 {
     private static readonly WaitForSecondsRealtime _waitFrame = new(0.01f);
+
+    [Header("Debug")]
+#pragma warning disable CS0414
+    [SerializeField] bool enableSurgicallogs = false;
+#pragma warning restore CS0414
 
     [Header("UI")]
     public Image endingImage;
@@ -30,13 +33,16 @@ public class EndingScreenController : MonoBehaviour
 
     public static EndingScreenController Instance { get; private set; }
 
+    bool creditsSkippedByUser;
+
     [Header("Return To Title")]
     [SerializeField] string titleSceneName = "TitleScreen";
 
     [Header("Static Labels")]
+#pragma warning disable CS0414
     [SerializeField]
-    string worldCompleteLabel =
-        "<size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>";
+    string demoCompleteLabel =
+        "<size=52><color=#1ABC00>DEMO 4</color>  <color=#E8E8E8>COMPLETE!</color></size>";
 
     [SerializeField]
     string openSourceBlock =
@@ -48,43 +54,63 @@ public class EndingScreenController : MonoBehaviour
     string returnBlock =
         "<size=34><color=#FF6F31>PRESS START</color></size>\n" +
         "<size=30><color=#E8E8E8>TO RETURN TO TITLE SCREEN</color></size>";
+#pragma warning restore CS0414
 
-    [Header("Dynamic Messages")]
-    private static readonly string message100 =
-        "Congratulations!\n" +
-        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
-        "That is only the beginning.\n" +
-        "Keep progressing through the demo\n" +
-        "and unlock the remaining Bombers.\n" +
-        "Tip: On the character select screen,\n" +
-        "move the cursor over unlocked characters\n" +
-        "to see how to unlock each Bomber.";
+    [Header("Credits")]
+#pragma warning disable CS0414
+    [SerializeField, TextArea(12, 40)]
+    string creditsBlock =
+        "Super Bomberman 6 v0.4.0\n" +
+        "Tribute to Bomberman\n\n" +
+        "Bomberman\n" +
+        "Copyright 1983\n" +
+        "Hudson Soft/Konami\n\n" +
+        "Super Bomberman 6\n\n" +
+        "Coding\n" +
+        "MauricioSuporte\n\n" +
+        "Sprite Contribution\n" +
+        "Srplay\n" +
+        "Joao1417\n" +
+        "WeirdFoxDreams\n" +
+        "Juliocesargamesbr\n" +
+        "Kurobon94\n" +
+        "LeroyUrocyon\n\n" +
+        "Playtesting/Feedback\n" +
+        "Kaaos Gameplays\n" +
+        "Joaololpvp\n" +
+        "Blackingstar\n" +
+        "Júlio Cesar\n" +
+        "Nico Netsumu\n" +
+        "Jei\n" +
+        "Kurobon94\n" +
+        "Tiago Deficigamer\n" +
+        "Ruivo\n" +
+        "Lopez238\n" +
+        "Yamishitsuji\n" +
+        "Luciandro Gamer\n" +
+        "Mackson\n" +
+        "perfig187\n" +
+        "adrianokof games\n" +
+        "Everton Def\n" +
+        "Gleydson Retrogen\n" +
+        "FLPStrike\n" +
+        "Love Vixen\n" +
+        "Juliocesargamesbr\n" +
+        "Rangelukaz\n" +
+        "JonasS JK Ninja\n\n" +
+        "Sounds/Musics\n" +
+        "wolfguarder\n\n" +
+        "Base of the Game\n" +
+        "Zigurous";
+#pragma warning restore CS0414
 
-    private static readonly string message101To199 =
-        "Amazing work!\n" +
-        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
-        "You are getting closer to total mastery.\n" +
-        "Keep pushing further\n" +
-        "and unlock every Bomber!\n" +
-        "Tip: On the character select screen,\n" +
-        "move the cursor over unlocked characters\n" +
-        "to see how to unlock each Bomber.";
-
-    private static readonly string message200NotAllBombers =
-        "Incredible!\n" +
-        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
-        "You have gone as far as possible in the demo.\n" +
-        "Now finish the last challenge:\n" +
-        "unlock every Bomber!\n" +
-        "Tip: On the character select screen,\n" +
-        "move the cursor over unlocked characters\n" +
-        "to see how to unlock each Bomber.";
-
-    private static readonly string message200AllBombers =
-        "TRUE COMPLETION!!\n" +
-        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
-        "You unlocked every Bomber\n" +
-        "and truly mastered the demo!";
+    [SerializeField, Min(1f)] float creditsScrollSpeed = 80f;
+    [SerializeField] float creditsStartBottomPadding = 80f;
+    [SerializeField] float creditsEndTopPadding = 80f;
+    [SerializeField, Min(1f)] float finalMessageScrollSpeed = 220f;
+#pragma warning disable CS0414
+    [SerializeField] float finalMessageTargetY = -12f;
+#pragma warning restore CS0414
 
     [Header("Auto Layout Fix")]
     [SerializeField] bool autoRepositionMessageText = true;
@@ -102,38 +128,29 @@ public class EndingScreenController : MonoBehaviour
 
     Material runtimeMsgMat;
 
-    enum EndingTier
-    {
-        Exactly100 = 0,
-        Between101And199 = 1,
-        Exactly200 = 2
-    }
-
     readonly struct EndingProgressInfo
     {
         public readonly int RegisteredStageCount;
         public readonly int ClearedStageCount;
-        public readonly int PerfectStageCount;
         public readonly int CompletionPercent;
-        public readonly int UnlockedBombersCount;
-        public readonly int TotalBombersCount;
-
-        public bool HasUnlockedAllBombers => TotalBombersCount > 0 && UnlockedBombersCount >= TotalBombersCount;
+        public readonly int UnlockedAchievementsCount;
+        public readonly int TotalAchievementsCount;
+        public readonly int AchievementsPercent;
 
         public EndingProgressInfo(
             int registeredStageCount,
             int clearedStageCount,
-            int perfectStageCount,
             int completionPercent,
-            int unlockedBombersCount,
-            int totalBombersCount)
+            int unlockedAchievementsCount,
+            int totalAchievementsCount,
+            int achievementsPercent)
         {
             RegisteredStageCount = registeredStageCount;
             ClearedStageCount = clearedStageCount;
-            PerfectStageCount = perfectStageCount;
             CompletionPercent = completionPercent;
-            UnlockedBombersCount = unlockedBombersCount;
-            TotalBombersCount = totalBombersCount;
+            UnlockedAchievementsCount = unlockedAchievementsCount;
+            TotalAchievementsCount = totalAchievementsCount;
+            AchievementsPercent = achievementsPercent;
         }
     }
 
@@ -245,6 +262,7 @@ public class EndingScreenController : MonoBehaviour
     public IEnumerator Play(Image fadeImageOptional)
     {
         Running = true;
+        creditsSkippedByUser = false;
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -257,7 +275,8 @@ public class EndingScreenController : MonoBehaviour
 
         EndingProgressInfo progress = BuildProgressInfo();
         string finalMessage = BuildEndingMessage(progress);
-        AudioClip selectedMusic = GetEndingMusic(progress);
+        AudioClip selectedMusic = GetEndingMusic();
+        float creditsEndY = 0f;
 
         if (endingImage != null)
         {
@@ -271,11 +290,13 @@ public class EndingScreenController : MonoBehaviour
 
         if (messageText != null)
         {
-            messageText.text = finalMessage;
+            LocalizedTmpFontFallback.Apply(messageText);
+            messageText.text = BuildCreditsMessage();
             messageText.gameObject.SetActive(true);
-            messageText.alpha = 0f;
+            messageText.alpha = 1f;
 
-            ApplyMessageLayoutFix();
+            ApplyCreditsLayout();
+            SetCreditsStartPosition(out float creditsStartY, out creditsEndY, out float creditsTextHeight);
 
             Canvas.ForceUpdateCanvases();
             messageText.ForceMeshUpdate();
@@ -293,7 +314,11 @@ public class EndingScreenController : MonoBehaviour
         }
 
         if (selectedMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayMusic(selectedMusic, musicVolume, false);
+            GameMusicController.Instance.PlayMusic(selectedMusic, musicVolume, true);
+
+        Coroutine creditsRoutine = messageText != null
+            ? StartCoroutine(RollCreditsRoutine(creditsEndY))
+            : null;
 
         float duration = 2f;
         float t = 0f;
@@ -310,9 +335,6 @@ public class EndingScreenController : MonoBehaviour
                 endingImage.color = c;
             }
 
-            if (messageText != null)
-                messageText.alpha = p;
-
             if (fadeImageOptional != null)
             {
                 Color fc = fadeImageOptional.color;
@@ -327,7 +349,30 @@ public class EndingScreenController : MonoBehaviour
             fadeImageOptional.gameObject.SetActive(false);
 
         PlayerInputManager input = PlayerInputManager.Instance;
+        if (input != null && input.AnyGet(PlayerAction.Start))
+        {
+            while (input != null && input.AnyGet(PlayerAction.Start))
+                yield return _waitFrame;
 
+            yield return null;
+        }
+
+        if (creditsRoutine != null)
+            yield return creditsRoutine;
+
+        if (messageText != null)
+        {
+            LocalizedTmpFontFallback.Apply(messageText);
+            messageText.text = finalMessage;
+            messageText.alpha = 1f;
+            ApplyFinalMessageLayout();
+            Canvas.ForceUpdateCanvases();
+            messageText.ForceMeshUpdate();
+        }
+
+        yield return RollFinalMessageRoutine(creditsSkippedByUser);
+
+        input = PlayerInputManager.Instance;
         if (input != null && input.AnyGet(PlayerAction.Start))
         {
             while (input != null && input.AnyGet(PlayerAction.Start))
@@ -355,6 +400,91 @@ public class EndingScreenController : MonoBehaviour
         PlayerPersistentStats.ResetSessionForReturnToTitle();
         TitleScreenSkip.SkipNextIntro = true;
         SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
+    }
+
+    IEnumerator RollCreditsRoutine(float endY)
+    {
+        if (messageText == null)
+            yield break;
+
+        RectTransform rt = messageText.rectTransform;
+        RectTransform parentRt = rt.parent as RectTransform;
+
+        if (rt == null || parentRt == null)
+            yield break;
+
+        PlayerInputManager input;
+
+        while (rt != null && rt.anchoredPosition.y < endY)
+        {
+            input = PlayerInputManager.Instance;
+            if (input != null && input.AnyGetDown(PlayerAction.Start))
+            {
+                creditsSkippedByUser = true;
+                break;
+            }
+
+            Vector2 pos = rt.anchoredPosition;
+            pos.y += creditsScrollSpeed * Time.unscaledDeltaTime;
+            rt.anchoredPosition = pos;
+
+            yield return null;
+        }
+    }
+
+    IEnumerator RollFinalMessageRoutine(bool instant)
+    {
+        if (messageText == null)
+            yield break;
+
+        RectTransform rt = messageText.rectTransform;
+        RectTransform parentRt = rt.parent as RectTransform;
+
+        if (rt == null || parentRt == null)
+            yield break;
+
+        Canvas.ForceUpdateCanvases();
+        messageText.ForceMeshUpdate();
+
+        float parentHeight = parentRt.rect.height > 1f ? parentRt.rect.height : Screen.height;
+        float textHeight = Mathf.Max(messageText.preferredHeight, 32f);
+
+        float halfParentHeight = parentHeight * 0.5f;
+        float halfTextHeight = textHeight * 0.5f;
+
+        float startY = -halfParentHeight - halfTextHeight - creditsStartBottomPadding;
+
+        float targetTopMargin = 12f;
+        float targetY = halfParentHeight - targetTopMargin - halfTextHeight;
+
+        Vector2 pos = rt.anchoredPosition;
+
+        if (instant)
+        {
+            pos.y = targetY;
+            rt.anchoredPosition = pos;
+            yield break;
+        }
+
+        pos.y = startY;
+        rt.anchoredPosition = pos;
+
+        float speed = finalMessageScrollSpeed * 2f;
+
+        while (rt != null && rt.anchoredPosition.y < targetY)
+        {
+            pos = rt.anchoredPosition;
+            pos.y = Mathf.Min(targetY, pos.y + speed * Time.unscaledDeltaTime);
+            rt.anchoredPosition = pos;
+            yield return null;
+        }
+
+        if (rt != null)
+        {
+            pos = rt.anchoredPosition;
+            pos.y = targetY;
+            rt.anchoredPosition = pos;
+        }
     }
 
     void ApplyVisualHierarchyOrder()
@@ -385,144 +515,229 @@ public class EndingScreenController : MonoBehaviour
     {
         int registeredStageCount = 0;
         int clearedStageCount = 0;
-        int perfectStageCount = 0;
 
         var slot = SaveSystem.ActiveSlot;
         if (slot != null)
         {
             registeredStageCount = slot.stageOrder != null ? slot.stageOrder.Count : 0;
             clearedStageCount = slot.clearedStages != null ? slot.clearedStages.Count : 0;
-            perfectStageCount = slot.perfectStages != null ? slot.perfectStages.Count : 0;
         }
 
-        int completionPercent = ComputeCompletionPercent(registeredStageCount, clearedStageCount, perfectStageCount);
-        int totalBombersCount = Enum.GetValues(typeof(BomberSkin)).Length;
-        int unlockedBombersCount = CountUnlockedBombers();
+        int completionPercent = ComputeCompletionPercent(registeredStageCount, clearedStageCount);
+        int totalAchievementsCount = AchievementCatalog.All != null ? AchievementCatalog.All.Length : 0;
+        int unlockedAchievementsCount = CountUnlockedAchievements();
+        int achievementsPercent = totalAchievementsCount > 0
+            ? Mathf.RoundToInt((unlockedAchievementsCount / (float)totalAchievementsCount) * 100f)
+            : 0;
 
         return new EndingProgressInfo(
             registeredStageCount,
             clearedStageCount,
-            perfectStageCount,
             completionPercent,
-            unlockedBombersCount,
-            totalBombersCount);
+            unlockedAchievementsCount,
+            totalAchievementsCount,
+            achievementsPercent);
     }
 
-    int ComputeCompletionPercent(int totalStages, int clearedCount, int perfectCount)
+    int ComputeCompletionPercent(int totalStages, int clearedCount)
     {
         if (totalStages <= 0)
             return 0;
 
-        float clearedPercent = (Mathf.Clamp(clearedCount, 0, totalStages) / (float)totalStages) * 100f;
-        float perfectPercent = (Mathf.Clamp(perfectCount, 0, totalStages) / (float)totalStages) * 100f;
+        int clampedCleared = Mathf.Clamp(clearedCount, 0, totalStages);
+        if (clampedCleared >= totalStages)
+        {
+            return SaveSystem.GetActiveNormalGameDifficulty() switch
+            {
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => 103,
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => 105,
+                _ => 100
+            };
+        }
 
-        return Mathf.RoundToInt(clearedPercent + perfectPercent);
+        return Mathf.RoundToInt((clampedCleared / (float)totalStages) * 100f);
     }
 
-    int CountUnlockedBombers()
+    int CountUnlockedAchievements()
     {
-        if (SaveSystem.Data == null || SaveSystem.Data.unlockedSkins == null)
+        if (AchievementCatalog.All == null)
             return 0;
 
-        HashSet<string> uniqueUnlocked = new(StringComparer.OrdinalIgnoreCase);
-
-        for (int i = 0; i < SaveSystem.Data.unlockedSkins.Count; i++)
+        int count = 0;
+        for (int i = 0; i < AchievementCatalog.All.Length; i++)
         {
-            string skinName = SaveSystem.Data.unlockedSkins[i];
-            if (string.IsNullOrWhiteSpace(skinName))
-                continue;
-
-            if (Enum.TryParse(skinName, true, out BomberSkin parsedSkin))
-                uniqueUnlocked.Add(parsedSkin.ToString());
+            var achievement = AchievementCatalog.All[i];
+            if (achievement.IsUnlocked != null && achievement.IsUnlocked())
+                count++;
         }
 
-        return uniqueUnlocked.Count;
+        return count;
     }
 
-    EndingTier GetEndingTier(EndingProgressInfo progress)
+    AudioClip GetEndingMusic()
     {
-        if (progress.CompletionPercent >= 200)
-            return EndingTier.Exactly200;
-
-        if (progress.CompletionPercent == 100)
-            return EndingTier.Exactly100;
-
-        return EndingTier.Between101And199;
+        return endingMusic200AllBombers != null ? endingMusic200AllBombers : endingMusic100;
     }
 
-    AudioClip GetEndingMusic(EndingProgressInfo progress)
+    string BuildCreditsMessage()
     {
-        EndingTier tier = GetEndingTier(progress);
+        const string defaultColor = "#E8E8E8";
+        const string greenTitleColor = "#8CFF8C";
+        const string yellowTitleColor = "#FFF68A";
+        CreditsText credits = GameTextDatabase.Credits;
 
-        if (tier == EndingTier.Exactly200)
-        {
-            if (progress.HasUnlockedAllBombers && endingMusic200AllBombers != null)
-                return endingMusic200AllBombers;
+        string text =
+            $"<color={greenTitleColor}>Super Bomberman 6 v0.4.0</color>\n" +
+            $"<color={defaultColor}>{credits.Tribute}</color>\n\n" +
 
-            return endingMusic200;
-        }
+            $"<color={greenTitleColor}>Bomberman</color>\n" +
+            $"<color={defaultColor}>Copyright 1983</color>\n" +
+            $"<color={defaultColor}>Hudson Soft/Konami</color>\n\n" +
 
-        if (tier == EndingTier.Between101And199)
-            return endingMusic101To199;
+            $"<color={greenTitleColor}>Super Bomberman 6</color>\n\n" +
 
-        return endingMusic100;
+            $"<color={yellowTitleColor}>{credits.Coding}</color>\n" +
+            $"<color={defaultColor}>MauricioSuporte</color>\n\n" +
+
+            $"<color={yellowTitleColor}>{credits.SpriteContribution}</color>\n" +
+            $"<color={defaultColor}>Srplay</color>\n" +
+            $"<color={defaultColor}>Joao1417</color>\n" +
+            $"<color={defaultColor}>WeirdFoxDreams</color>\n" +
+            $"<color={defaultColor}>Juliocesargamesbr</color>\n" +
+            $"<color={defaultColor}>Kurobon94</color>\n" +
+            $"<color={defaultColor}>LeroyUrocyon</color>\n\n" +
+
+            $"<color={yellowTitleColor}>{credits.PlaytestingFeedback}</color>\n" +
+            $"<color={defaultColor}>Kaaos Gameplays</color>\n" +
+            $"<color={defaultColor}>Joaololpvp</color>\n" +
+            $"<color={defaultColor}>Blackingstar</color>\n" +
+            $"<color={defaultColor}>Júlio Cesar</color>\n" +
+            $"<color={defaultColor}>Nico Netsumu</color>\n" +
+            $"<color={defaultColor}>Jei</color>\n" +
+            $"<color={defaultColor}>Kurobon94</color>\n" +
+            $"<color={defaultColor}>Tiago Deficigamer</color>\n" +
+            $"<color={defaultColor}>Ruivo</color>\n" +
+            $"<color={defaultColor}>Lopez238</color>\n" +
+            $"<color={defaultColor}>Yamishitsuji</color>\n" +
+            $"<color={defaultColor}>Luciandro Gamer</color>\n" +
+            $"<color={defaultColor}>Mackson</color>\n" +
+            $"<color={defaultColor}>perfig187</color>\n" +
+            $"<color={defaultColor}>adrianokof games</color>\n" +
+            $"<color={defaultColor}>Everton Def</color>\n" +
+            $"<color={defaultColor}>Gleydson Retrogen</color>\n" +
+            $"<color={defaultColor}>FLPStrike</color>\n" +
+            $"<color={defaultColor}>Love Vixen</color>\n" +
+            $"<color={defaultColor}>Juliocesargamesbr</color>\n" +
+            $"<color={defaultColor}>Rangelukaz</color>\n" +
+            $"<color={defaultColor}>JonasS JK Ninja</color>\n" +
+            $"<color={defaultColor}>Mauh Gamer</color>\n\n" +
+
+            $"<color={yellowTitleColor}>{credits.SoundsMusics}</color>\n" +
+            $"<color={defaultColor}>wolfguarder</color>\n\n" +
+
+            $"<color={yellowTitleColor}>{credits.BaseOfTheGame}</color>\n" +
+            $"<color={defaultColor}>Zigurous</color>";
+
+        return $"<size=36>{text}</size>";
     }
 
     string BuildEndingMessage(EndingProgressInfo progress)
     {
-        string bodyTemplate = GetBodyTemplate(progress);
-        string bodyText = ReplaceTokens(bodyTemplate, progress);
         string statsBlock = BuildStatsBlock(progress);
 
         string spacer = compactVerticalSpacing ? "\n\n" : "\n\n\n";
         string bigSpacer = compactVerticalSpacing ? "\n\n" : "\n\n\n";
 
-        return
-            $"{worldCompleteLabel}{spacer}" +
-            $"<size=30><color=#E8E8E8>{bodyText}</color></size>{spacer}" +
-            $"<size=26><color=#FFD54A>{statsBlock}</color></size>{bigSpacer}" +
-            $"{openSourceBlock}{bigSpacer}" +
-            $"{returnBlock}";
-    }
+        const string defaultColor = "#E8E8E8";
+        const string greenTitleColor = "#8CFF8C";
+        const string yellowTitleColor = "#FFF68A";
+        const string blueTitleColor = "#3392FF";
+        const string orangeTitleColor = "#FF6F31";
+        CreditsText credits = GameTextDatabase.Credits;
 
-    string GetBodyTemplate(EndingProgressInfo progress)
-    {
-        EndingTier tier = GetEndingTier(progress);
+        string text =
+            $"<color={greenTitleColor}>{credits.DemoComplete}</color>{spacer}" +
 
-        switch (tier)
-        {
-            case EndingTier.Exactly200:
-                return progress.HasUnlockedAllBombers
-                    ? message200AllBombers
-                    : message200NotAllBombers;
+            $"<color={yellowTitleColor}>{statsBlock}</color>{bigSpacer}" +
 
-            case EndingTier.Between101And199:
-                return message101To199;
+            $"<color={blueTitleColor}>{credits.OpenSourceProject}</color>\n" +
+            $"<color={defaultColor}>github.com/MauricioSuporte/</color>\n" +
+            $"<color={defaultColor}>Super-Bomberman-6-Unity</color>{bigSpacer}" +
 
-            default:
-                return message100;
-        }
-    }
+            $"<color={orangeTitleColor}>{credits.PressStart}</color>\n" +
+            $"<color={defaultColor}>{credits.ReturnToTitle}</color>";
 
-    string ReplaceTokens(string template, EndingProgressInfo progress)
-    {
-        if (string.IsNullOrEmpty(template))
-            return string.Empty;
-
-        return template
-            .Replace("{PERCENT}", progress.CompletionPercent.ToString())
-            .Replace("{CLEARED}", progress.ClearedStageCount.ToString())
-            .Replace("{TOTAL}", progress.RegisteredStageCount.ToString())
-            .Replace("{PERFECT}", progress.PerfectStageCount.ToString())
-            .Replace("{BOMBERS}", progress.UnlockedBombersCount.ToString())
-            .Replace("{BOMBERS_TOTAL}", progress.TotalBombersCount.ToString());
+        return $"<size=36>{text}</size>";
     }
 
     string BuildStatsBlock(EndingProgressInfo progress)
     {
         return
-            $"STAGE COMPLETION: {progress.CompletionPercent}%\n" +
-            $"BOMBERS UNLOCKED: {progress.UnlockedBombersCount}/{progress.TotalBombersCount}";
+            $"{GameTextDatabase.Credits.StageCompletion}: {progress.CompletionPercent}%\n" +
+            $"{GameTextDatabase.Credits.AchievementsUnlocked}: {progress.UnlockedAchievementsCount} {GameTextDatabase.Credits.Of} {progress.TotalAchievementsCount} {progress.AchievementsPercent}%";
+    }
+
+    void ApplyCreditsLayout()
+    {
+        if (messageText == null)
+            return;
+
+        RectTransform rt = messageText.rectTransform;
+        RectTransform parentRt = rt.parent as RectTransform;
+
+        if (rt == null || parentRt == null)
+            return;
+
+        float parentWidth = parentRt.rect.width > 1f ? parentRt.rect.width : Screen.width;
+        float parentHeight = parentRt.rect.height > 1f ? parentRt.rect.height : Screen.height;
+        float targetWidth = Mathf.Max(32f, parentWidth * Mathf.Clamp01(widthPercentOfParent) - (sideMargin * 2f));
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(targetWidth, parentHeight * 2f);
+        rt.anchoredPosition = Vector2.zero;
+
+        messageText.alignment = TextAlignmentOptions.Center;
+        messageText.overflowMode = TextOverflowModes.Overflow;
+        messageText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        Canvas.ForceUpdateCanvases();
+        messageText.ForceMeshUpdate();
+
+        float preferredHeight = Mathf.Max(messageText.preferredHeight, 32f);
+        rt.sizeDelta = new Vector2(targetWidth, preferredHeight);
+    }
+
+    void ApplyFinalMessageLayout()
+    {
+        if (messageText == null)
+            return;
+
+        RectTransform rt = messageText.rectTransform;
+        RectTransform parentRt = rt.parent as RectTransform;
+
+        if (rt == null || parentRt == null)
+            return;
+
+        float parentWidth = parentRt.rect.width > 1f ? parentRt.rect.width : Screen.width;
+        float targetWidth = Mathf.Max(32f, parentWidth * Mathf.Clamp01(widthPercentOfParent) - (sideMargin * 2f));
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(targetWidth, 800f);
+        rt.anchoredPosition = Vector2.zero;
+
+        messageText.alignment = TextAlignmentOptions.Center;
+        messageText.overflowMode = TextOverflowModes.Overflow;
+        messageText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        Canvas.ForceUpdateCanvases();
+        messageText.ForceMeshUpdate();
+
+        float preferredHeight = Mathf.Max(messageText.preferredHeight, 32f);
+        rt.sizeDelta = new Vector2(targetWidth, preferredHeight);
     }
 
     void ApplyMessageLayoutFix()
@@ -561,5 +776,37 @@ public class EndingScreenController : MonoBehaviour
         messageText.alignment = TextAlignmentOptions.TopGeoAligned;
         messageText.overflowMode = TextOverflowModes.Overflow;
         messageText.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
+    void SetCreditsStartPosition(out float startY, out float endY, out float textHeight)
+    {
+        startY = 0f;
+        endY = 0f;
+        textHeight = 0f;
+
+        if (messageText == null)
+            return;
+
+        RectTransform rt = messageText.rectTransform;
+        RectTransform parentRt = rt.parent as RectTransform;
+
+        if (rt == null || parentRt == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        messageText.ForceMeshUpdate();
+
+        float parentHeight = parentRt.rect.height > 1f ? parentRt.rect.height : Screen.height;
+        textHeight = Mathf.Max(messageText.preferredHeight, 32f);
+
+        float halfParentHeight = parentHeight * 0.5f;
+        float halfTextHeight = textHeight * 0.5f;
+
+        startY = -halfParentHeight - halfTextHeight + creditsStartBottomPadding;
+        endY = halfParentHeight + halfTextHeight + creditsEndTopPadding;
+
+        Vector2 pos = rt.anchoredPosition;
+        pos.y = startY;
+        rt.anchoredPosition = pos;
     }
 }

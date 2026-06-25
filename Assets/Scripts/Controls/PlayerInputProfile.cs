@@ -115,13 +115,15 @@ public class PlayerInputProfile
         if (pad == null)
             return;
 
-        gamepadDeviceId = pad.deviceId;
-        gamepadProduct = pad.description.product ?? "";
+        BindToInputDevice(pad, fallbackJoyIndexForDisplay);
+    }
 
-        if (fallbackJoyIndexForDisplay > 0)
-            joyIndex = fallbackJoyIndexForDisplay;
-        else
-            joyIndex = Mathf.Clamp(joyIndex, 1, 11);
+    public void BindToInputDevice(InputDevice device, int fallbackJoyIndexForDisplay = -1)
+    {
+        if (device == null)
+            return;
+
+        UniversalControllerInput.BindProfileToDevice(this, device, fallbackJoyIndexForDisplay);
     }
 
     public void ClearGamepadBinding()

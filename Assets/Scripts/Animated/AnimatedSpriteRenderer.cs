@@ -41,6 +41,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     public bool UseUnscaledTime => useUnscaledTime;
     public bool RespectGamePause => respectGamePause;
+    public float DebugFrameTimer => frameTimer;
 
     int animationFrame;
     int direction = 1;
@@ -62,6 +63,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     bool hasSavedRuntimeLockXState;
 
     float frameTimer;
+    bool manualAnimationUpdate;
 
     public int CurrentFrame
     {
@@ -145,6 +147,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AnimatedSpriteUpdate.Auto();
+
         if (!isActiveAndEnabled)
             return;
 
@@ -154,6 +158,23 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (respectGamePause && GamePauseController.IsPaused)
             return;
 
+        if (manualAnimationUpdate)
+            return;
+
+        AdvanceAnimation(Time.unscaledDeltaTime, Time.deltaTime);
+    }
+
+    public void SetManualAnimationUpdate(bool value)
+    {
+        if (manualAnimationUpdate == value)
+            return;
+
+        manualAnimationUpdate = value;
+        frameTimer = 0f;
+    }
+
+    public void AdvanceAnimation(float unscaledDeltaTime, float scaledDeltaTime)
+    {
         if (idle)
         {
             ApplyFrame();
@@ -165,7 +186,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         SetupTiming();
 
-        float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+        float dt = useUnscaledTime ? unscaledDeltaTime : scaledDeltaTime;
         if (dt <= 0f)
             return;
 
@@ -198,6 +219,14 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     }
 
     public void RefreshFrame() => ApplyFrame();
+
+    public void RestartAnimation()
+    {
+        direction = 1;
+        frameTimer = 0f;
+        CurrentFrame = 0;
+        ApplyFrame();
+    }
 
     public void SetFrozen(bool value)
     {

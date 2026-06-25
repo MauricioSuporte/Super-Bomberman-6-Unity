@@ -65,6 +65,7 @@ public class StageIntroClownMaskBoss : MonoBehaviour
         spotlightMatInstance.SetFloat("_Softness", Mathf.Clamp(softVp, 0.001f, 2f));
 
         spotlightImage.gameObject.SetActive(true);
+        BringSpotlightToFront();
     }
 
     public void DisableSpotlight()
@@ -101,11 +102,13 @@ public class StageIntroClownMaskBoss : MonoBehaviour
 
         spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, 0f));
         spotlightImage.gameObject.SetActive(true);
+        BringSpotlightToFront();
 
         float t = 0f;
 
         while (t < d)
         {
+            BringSpotlightToFront();
             t += Time.unscaledDeltaTime;
             float a = Mathf.Lerp(0f, endA, Mathf.Clamp01(t / d));
             spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
@@ -124,12 +127,14 @@ public class StageIntroClownMaskBoss : MonoBehaviour
         float d = Mathf.Max(0.001f, duration);
 
         spotlightImage.gameObject.SetActive(true);
+        BringSpotlightToFront();
 
         float startA = spotlightMatInstance.GetColor("_Color").a;
         float t = 0f;
 
         while (t < d)
         {
+            BringSpotlightToFront();
             t += Time.unscaledDeltaTime;
             float a = Mathf.Lerp(startA, endA, Mathf.Clamp01(t / d));
             spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
@@ -158,6 +163,12 @@ public class StageIntroClownMaskBoss : MonoBehaviour
                 true
             );
         }
+    }
+
+    void BringSpotlightToFront()
+    {
+        if (spotlightImage != null)
+            spotlightImage.transform.SetAsLastSibling();
     }
 
     void OnDestroy()

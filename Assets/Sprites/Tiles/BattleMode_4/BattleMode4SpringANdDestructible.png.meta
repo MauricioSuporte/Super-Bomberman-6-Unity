@@ -1,0 +1,543 @@
+fileFormatVersion: 2
+guid: b82ddac71b4561b4a8fec175339f996c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1292762754058123991
+    second: BattleMode4SpringANdDestructible_0
+  - first:
+      213: 2134811064591142761
+    second: BattleMode4SpringANdDestructible_1
+  - first:
+      213: -8925230999179294512
+    second: BattleMode4SpringANdDestructible_2
+  - first:
+      213: 1063979020377443130
+    second: BattleMode4SpringANdDestructible_3
+  - first:
+      213: 4735429680105307001
+    second: BattleMode4SpringANdDestructible_4
+  - first:
+      213: -5229064931683963379
+    second: BattleMode4SpringANdDestructible_5
+  - first:
+      213: -2422247146996981180
+    second: BattleMode4SpringANdDestructible_6
+  - first:
+      213: -6662785634685936744
+    second: BattleMode4SpringANdDestructible_7
+  - first:
+      213: -3763621368788179134
+    second: BattleMode4SpringANdDestructible_8
+  - first:
+      213: 8376440090776323850
+    second: BattleMode4SpringANdDestructible_9
+  - first:
+      213: -2882289619152828260
+    second: BattleMode4SpringANdDestructible_10
+  - first:
+      213: 2024106711182535389
+    second: BattleMode4SpringANdDestructible_11
+  - first:
+      213: 4473756901762568770
+    second: BattleMode4SpringANdDestructible_12
+  - first:
+      213: 7268082459006784075
+    second: BattleMode4SpringANdDestructible_13
+  - first:
+      213: -3970334681100378446
+    second: BattleMode4SpringANdDestructible_14
+  - first:
+      213: -7173265947864395301
+    second: BattleMode4SpringANdDestructible_15
+  - first:
+      213: 7279696082659649405
+    second: BattleMode4SpringANdDestructible_16
+  - first:
+      213: -2776410137264996801
+    second: BattleMode4SpringANdDestructible_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_1
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 50
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96f478f3a5f50ad10800000000000000
+      internalID: 2134811064591142761
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_2
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 50
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d80d93b1b5332480800000000000000
+      internalID: -8925230999179294512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_3
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 50
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3bc016284304ce00800000000000000
+      internalID: 1063979020377443130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_4
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 50
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97bb4856430a7b140800000000000000
+      internalID: 4735429680105307001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_6
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 33
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 442aa0dad03726ed0800000000000000
+      internalID: -2422247146996981180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_7
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 33
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89b18f524c70983a0800000000000000
+      internalID: -6662785634685936744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_8
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 33
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 247af4c3e4ee4cbc0800000000000000
+      internalID: -3763621368788179134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_9
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 33
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a07401dd1e71f3470800000000000000
+      internalID: 8376440090776323850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 17
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c988996ccdc0008d0800000000000000
+      internalID: -2882289619152828260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_11
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddae4836452171c10800000000000000
+      internalID: 2024106711182535389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_12
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 242920df23af51e30800000000000000
+      internalID: 4473756901762568770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_13
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b42d85f0d7a6dd460800000000000000
+      internalID: 7268082459006784075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_14
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2be199da4a986e8c0800000000000000
+      internalID: -3970334681100378446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_15
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd1132240a0737c90800000000000000
+      internalID: -7173265947864395301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_16
+      rect:
+        serializedVersion: 2
+        x: 85
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d772bb7840da60560800000000000000
+      internalID: 7279696082659649405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BattleMode4SpringANdDestructible_17
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3eb681b0b53879d0800000000000000
+      internalID: -2776410137264996801
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 7580d209fa90a314dbf7c23c3a15fcd4
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      BattleMode4SpringANdDestructible_0: -1292762754058123991
+      BattleMode4SpringANdDestructible_1: 2134811064591142761
+      BattleMode4SpringANdDestructible_10: -2882289619152828260
+      BattleMode4SpringANdDestructible_11: 2024106711182535389
+      BattleMode4SpringANdDestructible_12: 4473756901762568770
+      BattleMode4SpringANdDestructible_13: 7268082459006784075
+      BattleMode4SpringANdDestructible_14: -3970334681100378446
+      BattleMode4SpringANdDestructible_15: -7173265947864395301
+      BattleMode4SpringANdDestructible_16: 7279696082659649405
+      BattleMode4SpringANdDestructible_17: -2776410137264996801
+      BattleMode4SpringANdDestructible_2: -8925230999179294512
+      BattleMode4SpringANdDestructible_3: 1063979020377443130
+      BattleMode4SpringANdDestructible_4: 4735429680105307001
+      BattleMode4SpringANdDestructible_5: -5229064931683963379
+      BattleMode4SpringANdDestructible_6: -2422247146996981180
+      BattleMode4SpringANdDestructible_7: -6662785634685936744
+      BattleMode4SpringANdDestructible_8: -3763621368788179134
+      BattleMode4SpringANdDestructible_9: 8376440090776323850
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

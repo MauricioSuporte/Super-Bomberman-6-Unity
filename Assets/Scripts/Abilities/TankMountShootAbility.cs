@@ -7,6 +7,7 @@ using UnityEngine;
 public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "TankMountShoot";
+    public const float DefaultCooldownSeconds = 10f;
 
     [SerializeField] private bool enabledAbility = true;
 
@@ -15,7 +16,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     [Header("Timing")]
     [SerializeField, Min(0f)] private float shootLockSeconds = 0.25f;
-    private readonly float cooldownSeconds = 10f;
+    [SerializeField, Min(0f)] private float cooldownSeconds = DefaultCooldownSeconds;
 
     [Header("Cooldown Tint (Tank Sprites)")]
     [SerializeField] private bool tintTankOnCooldown = true;
@@ -52,6 +53,18 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool Running => running;
+    public float CooldownSeconds => cooldownSeconds;
+    public float CooldownRemainingSeconds => Mathf.Max(0f, cooldownUntil - Time.time);
+    public bool CanStartShot =>
+        enabledAbility &&
+        !running &&
+        routine == null &&
+        movement != null &&
+        !movement.isDead &&
+        !movement.InputLocked &&
+        Time.time >= cooldownUntil &&
+        IsMountedOnTank();
 
     private void Awake()
     {
@@ -91,6 +104,11 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
     {
         shotSfx = clip;
         shotVolume = Mathf.Clamp01(volume);
+    }
+
+    public void SetCooldownSeconds(float seconds)
+    {
+        cooldownSeconds = Mathf.Max(0f, seconds);
     }
 
     private void Update()
@@ -152,7 +170,12 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
         running = true;
 
-        Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : Cardinalize(lastFacingDir);
+        Vector2 facing = movement.Direction != Vector2.zero
+            ? movement.Direction
+            : movement.FacingDirection;
+        Vector2 dir = facing != Vector2.zero
+            ? Cardinalize(facing)
+            : (lastFacingDir == Vector2.zero ? Vector2.down : Cardinalize(lastFacingDir));
 
         if (lockInputWhileShooting)
             movement.SetInputLocked(true, false);
@@ -171,7 +194,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             {
                 var src = audioSource != null ? audioSource : FindAnyPlayerAudioSource();
                 if (src != null)
-                    src.PlayOneShot(shotSfx, shotVolume);
+                    GameAudioSettings.PlaySfx(src, shotSfx, shotVolume);
             }
 
             float t = Mathf.Max(0f, shootLockSeconds);

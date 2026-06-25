@@ -34,6 +34,8 @@ public sealed class PlayerManualDismount : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.PlayerAuxUpdate.Auto();
+
         if (movement == null || companion == null)
             return;
 
@@ -63,6 +65,12 @@ public sealed class PlayerManualDismount : MonoBehaviour
             return;
 
         bool held = input.Get(movement.PlayerId, dismountAction);
+
+        if (IsPinkLouieJumpActive())
+        {
+            wasHeld = held;
+            return;
+        }
 
         if (held && !wasHeld)
             TryManualDismount();
@@ -102,6 +110,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (!movement.IsMounted || !companion.HasMountedLouie())
             return;
 
+        if (IsPinkLouieJumpActive())
+            return;
+
         Vector2 facingAtPress = movement.Direction != Vector2.zero
             ? movement.Direction
             : movement.FacingDirection;
@@ -132,7 +143,10 @@ public sealed class PlayerManualDismount : MonoBehaviour
                 rider.ridingSeconds = previousRidingSeconds;
 
                 if (movement != null)
+                {
                     movement.ForceIdleFacing(facingAtPress, "TryManualDismount");
+                    TryResolveDismountBounce(movement, facingAtPress);
+                }
 
                 StartDetachedLouieInactivityLoop(detachedLouie, movement, detachedLouieSwitchInterval);
             },
@@ -182,6 +196,26 @@ public sealed class PlayerManualDismount : MonoBehaviour
             rider.ridingSeconds = previousRidingSeconds;
             return;
         }
+    }
+
+    bool IsPinkLouieJumpActive()
+    {
+        return movement != null &&
+               movement.IsMounted &&
+               companion != null &&
+               companion.GetMountedLouieType() == MountedType.Pink &&
+               TryGetComponent<PinkLouieJumpAbility>(out var pinkJump) &&
+               pinkJump != null &&
+               pinkJump.JumpActive;
+    }
+
+    static void TryResolveDismountBounce(MovementController movement, Vector2 facing)
+    {
+        if (movement == null)
+            return;
+
+        if (movement.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) && resolver != null)
+            resolver.NotifyExternalPushed(facing);
     }
 
     static void StartDetachedLouieInactivityLoop(

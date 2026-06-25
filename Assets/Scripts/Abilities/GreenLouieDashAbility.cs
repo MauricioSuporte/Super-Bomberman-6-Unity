@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -28,6 +28,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
     IGreenLouieDashExternalAnimator externalAnimator;
 
     int bombLayer;
+    int playerLayer;
 
     bool deathCancelInProgress;
 
@@ -43,6 +44,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         audioSource = GetComponent<AudioSource>();
 
         bombLayer = LayerMask.NameToLayer("Bomb");
+        playerLayer = LayerMask.NameToLayer("Player");
     }
 
     void OnDisable() => CancelDash();
@@ -103,14 +105,21 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         }
 
         Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
+        float dashSpeed = movement.speed * dashSpeedMultiplier;
+
+        if (!CanStartDash(dir, dashSpeed))
+        {
+            routine = null;
+            yield break;
+        }
 
         dashActive = true;
         originalSpeed = movement.speed;
 
         if (audioSource != null && dashSfx != null)
-            audioSource.PlayOneShot(dashSfx, dashSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, dashSfx, dashSfxVolume);
 
-        movement.speed *= dashSpeedMultiplier;
+        movement.speed = dashSpeed;
         movement.SetInputLocked(true, false);
 
         externalAnimator?.Play(dir);
@@ -171,6 +180,11 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
                 movement.SetInputLocked(false);
             }
         }
+    }
+
+    public void CancelDashForExternalInterruption()
+    {
+        CancelDash();
     }
 
     public void CancelDashForDeath()
@@ -244,6 +258,9 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject == gameObject)
                 continue;
 
+            if (IsPlayerCollider(hit))
+                continue;
+
             if (hit.isTrigger)
                 continue;
 
@@ -259,6 +276,27 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         return false;
     }
 
+    bool IsPlayerCollider(Collider2D hit)
+    {
+        if (hit == null)
+            return false;
+
+        if (hit.gameObject.layer == playerLayer)
+            return true;
+
+        var targetMovement = hit.GetComponentInParent<MovementController>();
+        return targetMovement != null && targetMovement.CompareTag("Player");
+    }
+
+    bool CanStartDash(Vector2 dir, float dashSpeed)
+    {
+        if (movement == null || rb == null)
+            return false;
+
+        Vector2 nextPos = rb.position + Mathf.Max(0.01f, dashSpeed) * Time.fixedDeltaTime * dir;
+        return !IsBlocked(nextPos, dir);
+    }
+
     public void Enable() => enabledAbility = true;
 
     public void Disable()
@@ -270,11 +308,11 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
     int GetPlayerId()
     {
         if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
-            return Mathf.Clamp(id.playerId, 1, 4);
+            return Mathf.Clamp(id.playerId, 1, 6);
 
         var parentId = GetComponentInParent<PlayerIdentity>(true);
         if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
+            return Mathf.Clamp(parentId.playerId, 1, 6);
 
         return 1;
     }

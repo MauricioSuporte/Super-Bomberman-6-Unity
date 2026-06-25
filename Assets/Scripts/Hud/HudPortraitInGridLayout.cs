@@ -43,6 +43,10 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
     readonly Dictionary<int, Sprite> portraitByIndex = new();
     private bool[] playerDead = new bool[4];
+    private bool[] portraitTintActive = new bool[4];
+    private bool[] portraitOriginalColorCaptured = new bool[4];
+    private Color[] portraitTintColors = new Color[4];
+    private Color[] portraitOriginalColors = new Color[4];
     bool loaded;
 
     void LateUpdate()
@@ -97,9 +101,17 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
             int portraitIndex = GetPortraitIndex(skin);
 
+            if (Application.isPlaying &&
+                GameSession.Instance != null &&
+                GameSession.Instance.IsHardcorePlayerEliminated(playerId))
+            {
+                playerDead[i] = true;
+            }
+
             bool isDead = playerDead[i];
 
             TrySetPortrait(portraitImage, portraitIndex, isDead);
+            ApplyPortraitTint(i);
         }
     }
 
@@ -318,5 +330,50 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             return;
 
         playerDead[index] = false;
+    }
+
+    public void SetPlayerPortraitTint(int playerId, Color color)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= portraitImages.Length)
+            return;
+
+        Image portraitImage = portraitImages[index];
+        if (portraitImage != null && !portraitOriginalColorCaptured[index])
+        {
+            portraitOriginalColors[index] = portraitImage.color;
+            portraitOriginalColorCaptured[index] = true;
+        }
+
+        portraitTintColors[index] = color;
+        portraitTintActive[index] = true;
+        ApplyPortraitTint(index);
+    }
+
+    public void ClearPlayerPortraitTint(int playerId)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= portraitImages.Length)
+            return;
+
+        portraitTintActive[index] = false;
+
+        Image portraitImage = portraitImages[index];
+        if (portraitImage != null && portraitOriginalColorCaptured[index])
+            portraitImage.color = portraitOriginalColors[index];
+
+        portraitOriginalColorCaptured[index] = false;
+    }
+
+    void ApplyPortraitTint(int index)
+    {
+        if (index < 0 || index >= portraitImages.Length)
+            return;
+
+        Image portraitImage = portraitImages[index];
+        if (portraitImage == null || !portraitTintActive[index])
+            return;
+
+        portraitImage.color = portraitTintColors[index];
     }
 }

@@ -20,12 +20,26 @@ public class MobileControlsRoot : MonoBehaviour
         ApplyPlatformVisibility();
     }
 
+    public void RefreshVisibilityFromSavedPreference()
+    {
+        ApplyPlatformVisibility();
+    }
+
+    public void SetTouchButtonsVisible(bool visible)
+    {
+        SaveSystem.SetMobileTouchButtonsVisible(visible);
+        ApplyPlatformVisibility();
+    }
+
     void ApplyPlatformVisibility()
     {
         bool shouldShow = true;
 
         if (showOnlyOnMobile)
             shouldShow = Application.isMobilePlatform;
+
+        if (shouldShow)
+            shouldShow = SaveSystem.GetMobileTouchButtonsVisible();
 
         gameObject.SetActive(shouldShow);
     }

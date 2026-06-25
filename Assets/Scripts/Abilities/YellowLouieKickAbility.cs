@@ -2,6 +2,7 @@ using Assets.Scripts.Interface;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
@@ -10,6 +11,7 @@ using UnityEngine.Tilemaps;
 public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "YellowLouieDestructibleKick";
+    const string BattleMode6SceneName = "BattleMode_6";
 
     [SerializeField] private bool enabledAbility = true;
 
@@ -30,17 +32,18 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public AudioClip kickSfx;
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
 
-    [Header("Bomb Kick")]
-    [SerializeField] private float bombKickOverlapSize = 0.60f;
-    [SerializeField] private float bombKickOriginBlockerSize = 0.90f;
-    [SerializeField] private bool bombKickOriginBlockerUseTrigger = false;
+    [Header("Debug")]
+    private bool debugKickTrace = false;
+
     private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
     private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();
+    private readonly HashSet<Bomb> yellowLouieMovingBombs = new();
     private Vector2 _lastOwnerDirection = Vector2.zero;
 
     MovementController movement;
     Rigidbody2D rb;
     AudioSource audioSource;
+    BattleMode6RedirectionController stage6RedirectionController;
 
     Coroutine routine;
     Coroutine kickVisualRoutine;
@@ -59,6 +62,22 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         None = 0,
         Bomb = 1,
         Tile = 2
+    }
+
+    sealed class BombQueueTransfer
+    {
+        public bool hitDestructible;
+        public Vector3Int destructibleCell;
+        public TileBase destructibleTile;
+        public readonly List<ItemPickup> pushedSkulls = new();
+
+        public void Reset()
+        {
+            hitDestructible = false;
+            destructibleCell = default;
+            destructibleTile = null;
+            pushedSkulls.Clear();
+        }
     }
 
     void Awake()
@@ -164,8 +183,42 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         bool hasBombInFront = TryGetBombAtCell(SnapToGrid(rb.position, movement.tileSize) + dir.normalized * movement.tileSize, out Bomb firstBomb);
         bool hasTileInFront = TryGetDestructibleAtCell(destructibleTilemap, frontCell, out TileBase firstTile);
 
+        LogKickTrace(
+            $"kick-start owner:{GetOwnerLabel()} ownerTile:{FormatVec(SnapToGrid(rb.position, movement.tileSize))} " +
+            $"dir:{FormatVec(dir.normalized)} frontCell:{frontCell} firstBomb:{FormatBomb(firstBomb)} " +
+            $"firstTile:{(firstTile != null ? firstTile.name : "none")}");
+
         if (!hasBombInFront && !hasTileInFront)
         {
+            LogKickTrace("kick-cancel no-bomb-or-tile-in-front");
+
+            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null)
+                        movement.SetInputLocked(false);
+                }
+            });
+
+            if (movement != null)
+                movement.SetInputLocked(false);
+
+            routine = null;
+            yield break;
+        }
+
+        if (firstBomb != null && firstBomb.IsBeingKicked)
+        {
+            bool redirected = firstBomb.TryRedirectKick(dir);
+            LogKickTrace(
+                $"kick-redirect-moving-bomb bomb:{FormatBomb(firstBomb)} " +
+                $"dir:{FormatVec(dir.normalized)} redirected:{redirected}");
+
+            if (redirected && audioSource != null && kickSfx != null)
+                GameAudioSettings.PlaySfx(audioSource, kickSfx, kickSfxVolume);
+
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
             {
                 if (!inputUnlockedAfterAnim)
@@ -184,7 +237,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         if (audioSource != null && kickSfx != null)
-            audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, kickSfx, kickSfxVolume);
 
         yield return MixedChainRoutine(
             dir,
@@ -424,7 +477,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
                     float tMove = 0f;
-                    bool enemyEnteredDestinationDuringMove = false;
+                    bool characterEnteredDestinationDuringMove = false;
 
                     while (tMove < 1f)
                     {
@@ -433,9 +486,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                         ReleaseInputIfNeeded();
 
-                        if (HasEnemyAt(to))
+                        if (HasPlayerAt(to) || HasEnemyAt(to))
                         {
-                            enemyEnteredDestinationDuringMove = true;
+                            characterEnteredDestinationDuringMove = true;
                             break;
                         }
 
@@ -447,7 +500,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         yield return null;
                     }
 
-                    if (enemyEnteredDestinationDuringMove)
+                    if (characterEnteredDestinationDuringMove)
                     {
                         release(nextCell);
                         ApplyShadowForCell(nextCell);
@@ -491,101 +544,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     if (currentBomb == null)
                         break;
 
-                    Vector2 currentBombCell = SnapToGrid(currentBomb.transform.position, tileSize);
-                    Vector3Int nextCell = new Vector3Int(
-                        Mathf.RoundToInt((currentBombCell.x + kickDir.x * tileSize) / tileSize),
-                        Mathf.RoundToInt((currentBombCell.y + kickDir.y * tileSize) / tileSize),
-                        0);
+                    var transfer = new BombQueueTransfer();
+                    yield return BombQueueRoutine(currentBomb, kickDir, destructibleTilemap, animEndTime, ReleaseInputIfNeeded, transfer);
 
-                    bool hasAdjacentBomb = TryGetBombAtCell(SnapToGrid(currentBomb.transform.position, tileSize) + kickDir * tileSize, out Bomb adjacentBomb)
-                                           && adjacentBomb != null
-                                           && adjacentBomb != currentBomb
-                                           && !adjacentBomb.IsBeingKicked;
-
-                    bool hasAdjacentTile = TryGetDestructibleAtCell(destructibleTilemap, nextCell, out TileBase adjacentTile);
-
-                    if (hasAdjacentBomb)
+                    if (transfer.hitDestructible && transfer.destructibleTile != null)
                     {
-                        currentBomb = adjacentBomb;
-                        moverType = ChainMoverType.Bomb;
-                        continue;
-                    }
-
-                    if (hasAdjacentTile)
-                    {
-                        BeginTileMover(nextCell, adjacentTile);
-                        continue;
-                    }
-
-                    bool started = StartBombKick(currentBomb, kickDir, destructibleTilemap);
-                    if (!started)
-                        break;
-
-                    Vector2 currentCell = SnapToGrid(currentBomb.transform.position, tileSize);
-                    Bomb nextBomb = null;
-                    TileBase nextTile = null;
-                    Vector3Int nextTileCell = default;
-                    while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
-                    {
-                        ReleaseInputIfNeeded();
-
-                        Vector2 snapped = SnapToGrid(currentBomb.transform.position, tileSize);
-                        if (snapped != currentCell)
-                            currentCell = snapped;
-
-                        Vector2 nextBombCellWorld = currentCell + kickDir * tileSize;
-                        nextTileCell = new Vector3Int(
-                            Mathf.RoundToInt(nextBombCellWorld.x / tileSize),
-                            Mathf.RoundToInt(nextBombCellWorld.y / tileSize),
-                            0);
-
-                        if (TryGetBombAtCell(nextBombCellWorld, out Bomb foundBomb) &&
-                            foundBomb != null &&
-                            foundBomb != currentBomb &&
-                            !foundBomb.IsBeingKicked)
-                        {
-                            nextBomb = foundBomb;
-                            break;
-                        }
-
-                        if (TryGetDestructibleAtCell(destructibleTilemap, nextTileCell, out TileBase foundTile))
-                        {
-                            nextTile = foundTile;
-                            break;
-                        }
-
-                        if (IsMixedChainSolidAt(nextBombCellWorld, kickDir, currentBomb))
-                        {
-                            break;
-                        }
-
-                        yield return null;
-                    }
-
-                    if (currentBomb != null && currentBomb.IsBeingKicked)
-                        currentBomb.StopKickAndSnapToGrid(tileSize);
-
-                    if (nextBomb != null)
-                    {
-                        currentBomb = nextBomb;
-                        moverType = ChainMoverType.Bomb;
-                        continue;
-                    }
-
-                    if (nextTile != null)
-                    {
-                        Bomb bombToBounce = currentBomb;
-                        bool shouldBounceBack = bombToBounce != null && bombToBounce.IsRubberBomb;
-
-                        BeginTileMover(nextTileCell, nextTile);
-
-                        if (shouldBounceBack && bombToBounce != null && !bombToBounce.HasExploded)
-                        {
-                            Vector2 reverseDir = -kickDir;
-                            StartBombKickInDirection(bombToBounce, reverseDir, destructibleTilemap);
-                        }
-
+                        BeginTileMover(transfer.destructibleCell, transfer.destructibleTile);
                         currentBomb = null;
+                        moverType = ChainMoverType.Tile;
                         continue;
                     }
 
@@ -623,54 +589,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (destructibleTilemap != null)
                 ApplyShadowForCell(currentTileCell);
         }
-    }
-
-    bool StartBombKickInDirection(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
-    {
-        if (bomb == null)
-            return false;
-
-        if (bomb.IsBeingKicked)
-            return false;
-
-        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
-            return false;
-
-        dir = dir.normalized;
-
-        if (!bomb.IsSolid && _bombPlantDirection.TryGetValue(bomb, out var plantDir))
-        {
-            plantDir = plantDir.normalized;
-
-            if (!_bombEarlyKickUnlocked.Contains(bomb))
-            {
-                if (Vector2.Dot(plantDir, dir) < -0.9f)
-                    _bombEarlyKickUnlocked.Add(bomb);
-                else
-                    return false;
-            }
-        }
-
-        LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
-
-        bool started = bomb.StartKick(
-            dir,
-            movement.tileSize,
-            bombObstacles,
-            destructibleTilemap,
-            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
-            bombKickOverlapSize,
-            bombKickOriginBlockerSize,
-            bombKickOriginBlockerUseTrigger
-        );
-
-        if (!started)
-            return false;
-
-        _bombPlantDirection.Remove(bomb);
-        _bombEarlyKickUnlocked.Remove(bomb);
-
-        return true;
     }
 
     bool TryGetBombAtCell(Vector2 worldCellCenter, out Bomb bomb)
@@ -721,7 +639,360 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return true;
     }
 
-    bool StartBombKick(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
+    IEnumerator BombQueueRoutine(
+        Bomb firstBomb,
+        Vector2 kickDir,
+        Tilemap destructibleTilemap,
+        float animEndTime,
+        System.Action releaseInputIfNeeded,
+        BombQueueTransfer transfer)
+    {
+        if (firstBomb == null || movement == null)
+            yield break;
+
+        kickDir = kickDir.normalized;
+        float tileSize = movement.tileSize;
+        float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+        var queue = new List<Bomb>(8) { firstBomb };
+        var queueDirections = new List<Vector2>(8) { kickDir };
+        int segment = 0;
+        SetYellowLouieBombMoving(firstBomb);
+
+        LogKickTrace(
+            $"bomb-queue-start dir:{FormatVec(kickDir)} first:{FormatBomb(firstBomb)} " +
+            $"remainingFuse:{FormatFuse(firstBomb)}");
+
+        while (enabledAbility && movement != null && !movement.isDead)
+        {
+            releaseInputIfNeeded?.Invoke();
+
+            ExtendBombQueue(queue, queueDirections, tileSize);
+            for (int i = 0; i < queue.Count; i++)
+                SetYellowLouieBombMoving(queue[i]);
+
+            if (queue.Count == 0 || queueDirections.Count != queue.Count)
+            {
+                LogKickTrace("bomb-queue-stop empty-queue");
+                ClearYellowLouieBombMovement();
+                yield break;
+            }
+
+            Vector2 frontDirection = queueDirections[queueDirections.Count - 1];
+            if (!CanMoveBombQueue(queue, queueDirections, tileSize, destructibleTilemap, transfer))
+            {
+                Bomb front = queue[queue.Count - 1];
+                Vector2 frontCell = front != null ? SnapToGrid(front.transform.position, tileSize) : Vector2.zero;
+                Vector2 nextCell = frontCell + frontDirection * tileSize;
+
+                if (front != null &&
+                    front.IsRubberBomb &&
+                    (transfer == null || !transfer.hitDestructible) &&
+                    TryReverseRubberBombQueue(queue, queueDirections, tileSize, destructibleTilemap, transfer))
+                {
+                    LogKickTrace(
+                        $"bomb-queue-rubber-bounce segment:{segment} queue:{FormatBombQueue(queue)} " +
+                        $"newDir:{FormatVec(queueDirections[queueDirections.Count - 1])} blocked:{FormatVec(nextCell)}");
+                    front.PlayKickBounceSfx();
+                    continue;
+                }
+
+                LogKickTrace(
+                    $"bomb-queue-stop blocked segment:{segment} queue:{FormatBombQueue(queue)} " +
+                    $"front:{FormatBomb(front)} next:{FormatVec(nextCell)} " +
+                    $"hitDestructible:{(transfer != null && transfer.hitDestructible)} " +
+                    $"destructibleCell:{(transfer != null ? transfer.destructibleCell.ToString() : "none")}");
+                ClearYellowLouieBombMovement();
+                yield break;
+            }
+
+            var starts = new Vector2[queue.Count];
+            var ends = new Vector2[queue.Count];
+            var bodies = new Rigidbody2D[queue.Count];
+            var frontBomb = queue[queue.Count - 1];
+            var frontStart = SnapToGrid(frontBomb.transform.position, tileSize);
+            frontDirection = queueDirections[queueDirections.Count - 1];
+            var frontCollider = frontBomb.GetComponent<Collider2D>();
+
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Bomb bomb = queue[i];
+                if (bomb == null || bomb.HasExploded)
+                {
+                    ClearYellowLouieBombMovement();
+                    yield break;
+                }
+
+                bomb.MarkMovedByKickOrPunch();
+                starts[i] = SnapToGrid(bomb.transform.position, tileSize);
+                ends[i] = starts[i] + queueDirections[i] * tileSize;
+                bodies[i] = bomb.GetComponent<Rigidbody2D>();
+            }
+
+            StartBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart);
+
+            LogKickTrace(
+                $"bomb-queue-segment segment:{segment} queue:{FormatBombQueue(queue)} " +
+                $"from:{FormatVec(starts[0])} to:{FormatVec(ends[0])} " +
+                $"frontTo:{FormatVec(ends[ends.Length - 1])} firstFuse:{FormatFuse(queue[0])}");
+
+            float tMove = 0f;
+            bool hitMovingBomb = false;
+            bool hitPlayer = false;
+            while (tMove < 1f)
+            {
+                if (!enabledAbility || movement == null || movement.isDead)
+                {
+                    ClearYellowLouieBombMovement();
+                    yield break;
+                }
+
+                if (Time.time >= animEndTime)
+                    releaseInputIfNeeded?.Invoke();
+
+                if (HasMovingBombOutsideQueueAtCell(ends[ends.Length - 1], queue))
+                {
+                    hitMovingBomb = true;
+                    break;
+                }
+
+                if (HasPlayerAt(ends[ends.Length - 1]))
+                {
+                    hitPlayer = true;
+                    break;
+                }
+
+                tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+                float t = Mathf.Clamp01(tMove);
+
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    Bomb bomb = queue[i];
+                    if (bomb == null || bomb.HasExploded)
+                        continue;
+
+                    Vector2 pos = Vector2.Lerp(starts[i], ends[i], t);
+                    if (bodies[i] != null)
+                        bodies[i].MovePosition(pos);
+
+                    bomb.transform.position = pos;
+                }
+
+                Vector2 frontPosition = Vector2.Lerp(frontStart, ends[ends.Length - 1], t);
+                DestroyNonSkullItemsAtWorld(frontPosition);
+                UpdateBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart, t);
+
+                yield return null;
+            }
+
+            if (hitMovingBomb || hitPlayer)
+            {
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    Bomb bomb = queue[i];
+                    if (bomb != null && !bomb.HasExploded)
+                        bomb.ForceSetLogicalPosition(starts[i]);
+                }
+
+                FinishBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart);
+
+                if (frontBomb != null &&
+                    frontBomb.IsRubberBomb &&
+                    TryReverseRubberBombQueue(queue, queueDirections, tileSize, destructibleTilemap, transfer))
+                {
+                    LogKickTrace(
+                        $"bomb-queue-rubber-moving-bomb-bounce segment:{segment} " +
+                        $"queue:{FormatBombQueue(queue)} newDir:{FormatVec(queueDirections[queueDirections.Count - 1])}");
+                    frontBomb.PlayKickBounceSfx();
+                    continue;
+                }
+
+                LogKickTrace(
+                    $"bomb-queue-stop dynamic-collision segment:{segment} " +
+                    $"reason:{(hitPlayer ? "player" : "moving-bomb")} " +
+                    $"queue:{FormatBombQueue(queue)} target:{FormatVec(ends[ends.Length - 1])}");
+                ClearYellowLouieBombMovement();
+                yield break;
+            }
+
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Bomb bomb = queue[i];
+                if (bomb == null || bomb.HasExploded)
+                    continue;
+
+                bomb.ForceSetLogicalPosition(ends[i]);
+                _bombPlantDirection.Remove(bomb);
+                _bombEarlyKickUnlocked.Remove(bomb);
+            }
+
+            FinishBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, ends[ends.Length - 1]);
+            DestroyNonSkullItemsAtWorld(ends[ends.Length - 1]);
+
+            LogKickTrace(
+                $"bomb-queue-segment-done segment:{segment} queue:{FormatBombQueue(queue)} " +
+                $"logicalFirst:{FormatVec(queue[0] != null ? queue[0].GetLogicalPosition() : Vector2.zero)} " +
+                $"firstFuse:{FormatFuse(queue[0])}");
+
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Vector2 nextDirection = queueDirections[i];
+                TryApplyStage6Redirection(queue[i], ref nextDirection, tileSize);
+                queueDirections[i] = nextDirection;
+            }
+
+            segment++;
+        }
+
+        ClearYellowLouieBombMovement();
+    }
+
+    void TryApplyStage6Redirection(Bomb frontBomb, ref Vector2 kickDir, float tileSize)
+    {
+        if (!string.Equals(SceneManager.GetActiveScene().name, BattleMode6SceneName, System.StringComparison.Ordinal))
+            return;
+
+        if (frontBomb == null || frontBomb.HasExploded)
+            return;
+
+        if (stage6RedirectionController == null || !stage6RedirectionController.isActiveAndEnabled)
+            stage6RedirectionController = FindAnyObjectByType<BattleMode6RedirectionController>();
+
+        if (stage6RedirectionController == null || !stage6RedirectionController.isActiveAndEnabled)
+            return;
+
+        Vector2 frontCell = SnapToGrid(frontBomb.transform.position, tileSize);
+        var tile = new Vector2Int(
+            Mathf.RoundToInt(frontCell.x / Mathf.Max(0.0001f, tileSize)),
+            Mathf.RoundToInt(frontCell.y / Mathf.Max(0.0001f, tileSize)));
+
+        if (!stage6RedirectionController.TryGetRedirection(tile, out Vector2Int redirectedDirection) ||
+            redirectedDirection == Vector2Int.zero)
+        {
+            return;
+        }
+
+        Vector2 nextKickDir = new(redirectedDirection.x, redirectedDirection.y);
+        if (nextKickDir == kickDir)
+            return;
+
+        LogKickTrace(
+            $"bomb-queue-stage6-redirect bomb:{FormatBomb(frontBomb)} " +
+            $"tile:{tile} from:{FormatVec(kickDir)} to:{FormatVec(nextKickDir)}");
+
+        kickDir = nextKickDir;
+    }
+
+    void ExtendBombQueue(List<Bomb> queue, List<Vector2> queueDirections, float tileSize)
+    {
+        if (queue == null || queueDirections == null || queue.Count == 0 || queueDirections.Count != queue.Count)
+            return;
+
+        var seen = new HashSet<Bomb>(queue);
+
+        while (queue.Count < Mathf.Max(1, maxChainTransfers))
+        {
+            Bomb front = queue[queue.Count - 1];
+            if (front == null)
+                return;
+
+            Vector2 kickDir = queueDirections[queueDirections.Count - 1];
+            Vector2 frontCell = SnapToGrid(front.transform.position, tileSize);
+            Vector2 nextCell = frontCell + kickDir * tileSize;
+
+            if (!TryGetBombAtCell(nextCell, out Bomb nextBomb))
+                return;
+
+            if (nextBomb == null || seen.Contains(nextBomb))
+                return;
+
+            if (!CanStartYellowBombKick(nextBomb, kickDir, unlockEarlyKick: false))
+                return;
+
+            queue.Add(nextBomb);
+            queueDirections.Add(kickDir);
+            seen.Add(nextBomb);
+        }
+    }
+
+    bool CanMoveBombQueue(
+        List<Bomb> queue,
+        List<Vector2> queueDirections,
+        float tileSize,
+        Tilemap destructibleTilemap,
+        BombQueueTransfer transfer,
+        bool validateKickEligibility = true)
+    {
+        if (transfer != null)
+            transfer.Reset();
+
+        if (queue == null || queueDirections == null || queue.Count == 0 || queueDirections.Count != queue.Count)
+            return false;
+
+        for (int i = 0; validateKickEligibility && i < queue.Count; i++)
+        {
+            Bomb bomb = queue[i];
+            Vector2 kickDir = queueDirections[i];
+            if (bomb == null ||
+                (bomb.IsBeingKicked &&
+                 !bomb.IsBeingMovedByYellowLouie) ||
+                (!bomb.IsBeingMovedByYellowLouie &&
+                 !CanStartYellowBombKick(bomb, kickDir, unlockEarlyKick: true)))
+            {
+                return false;
+            }
+        }
+
+        Bomb front = queue[queue.Count - 1];
+        if (front == null)
+            return false;
+
+        Vector2 frontDirection = queueDirections[queueDirections.Count - 1];
+        Vector2 frontCell = SnapToGrid(front.transform.position, tileSize);
+        Vector2 nextCellWorld = frontCell + frontDirection * tileSize;
+        Vector3Int nextTileCell = new Vector3Int(
+            Mathf.RoundToInt(nextCellWorld.x / tileSize),
+            Mathf.RoundToInt(nextCellWorld.y / tileSize),
+            0);
+
+        if (TryGetBombAtCell(nextCellWorld, out Bomb blockingBomb) &&
+            blockingBomb != null &&
+            !queue.Contains(blockingBomb))
+            return false;
+
+        if (TryGetDestructibleAtCell(destructibleTilemap, nextTileCell, out TileBase nextTile))
+        {
+            if (transfer != null)
+            {
+                transfer.hitDestructible = true;
+                transfer.destructibleCell = nextTileCell;
+                transfer.destructibleTile = nextTile;
+            }
+
+            return false;
+        }
+
+        if (HasEnemyAt(nextCellWorld))
+            return false;
+
+        CollectSkullsAt(nextCellWorld, out List<ItemPickup> pushedSkulls);
+
+        if (transfer != null)
+        {
+            transfer.pushedSkulls.Clear();
+            for (int i = 0; i < pushedSkulls.Count; i++)
+            {
+                if (pushedSkulls[i] != null && !transfer.pushedSkulls.Contains(pushedSkulls[i]))
+                    transfer.pushedSkulls.Add(pushedSkulls[i]);
+            }
+        }
+
+        if (IsMixedChainSolidAt(nextCellWorld, frontDirection, front))
+            return false;
+
+        return true;
+    }
+
+    bool CanStartYellowBombKick(Bomb bomb, Vector2 dir, bool unlockEarlyKick)
     {
         if (bomb == null)
             return false;
@@ -741,30 +1012,16 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (!_bombEarlyKickUnlocked.Contains(bomb))
             {
                 if (Vector2.Dot(plantDir, dir) < -0.9f)
-                    _bombEarlyKickUnlocked.Add(bomb);
+                {
+                    if (unlockEarlyKick)
+                        _bombEarlyKickUnlocked.Add(bomb);
+                }
                 else
+                {
                     return false;
+                }
             }
         }
-
-        LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
-
-        bool result = bomb.StartKick(
-            dir,
-            movement.tileSize,
-            bombObstacles,
-            destructibleTilemap,
-            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
-            bombKickOverlapSize,
-            bombKickOriginBlockerSize,
-            bombKickOriginBlockerUseTrigger
-        );
-
-        if (!result)
-            return false;
-
-        _bombPlantDirection.Remove(bomb);
-        _bombEarlyKickUnlocked.Remove(bomb);
 
         return true;
     }
@@ -774,7 +1031,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (movement == null)
             return true;
 
-        if (HasItemAt(nextCell))
+        if (currentBomb == null && HasBlockingNonSkullItemAt(nextCell, out _))
             return true;
 
         if (HasPlayerAt(nextCell))
@@ -816,6 +1073,16 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject.name == "YellowKickBlock_CurrentCell" || hit.gameObject.name == "YellowKickBlock_NextCell")
                 continue;
 
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup != null &&
+                (currentBomb != null || pickup.type == ItemType.Skull))
+            {
+                continue;
+            }
+
             if (hit.isTrigger)
                 continue;
 
@@ -823,6 +1090,133 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
+    }
+
+    bool TryReverseRubberBombQueue(
+        List<Bomb> queue,
+        List<Vector2> queueDirections,
+        float tileSize,
+        Tilemap destructibleTilemap,
+        BombQueueTransfer transfer)
+    {
+        if (queue == null || queueDirections == null || queue.Count == 0 || queueDirections.Count != queue.Count)
+            return false;
+
+        for (int i = 0; i < queue.Count; i++)
+        {
+            if (queue[i] == null ||
+                queue[i].HasExploded ||
+                (queue[i].IsBeingKicked &&
+                 !queue[i].IsBeingMovedByYellowLouie))
+            {
+                return false;
+            }
+        }
+
+        var originalDirections = new Vector2[queueDirections.Count];
+        for (int i = 0; i < queueDirections.Count; i++)
+            originalDirections[i] = queueDirections[i];
+
+        queue.Reverse();
+        queueDirections.Reverse();
+        for (int i = 0; i < queueDirections.Count; i++)
+            queueDirections[i] = -queueDirections[i];
+
+        if (!CanMoveBombQueue(
+                queue,
+                queueDirections,
+                tileSize,
+                destructibleTilemap,
+                transfer,
+                validateKickEligibility: false))
+        {
+            queue.Reverse();
+            queueDirections.Clear();
+            for (int i = 0; i < originalDirections.Length; i++)
+                queueDirections.Add(originalDirections[i]);
+            return false;
+        }
+
+        for (int i = 0; i < queue.Count; i++)
+        {
+            Bomb bomb = queue[i];
+            bomb.MarkMovedByKickOrPunch();
+            _bombPlantDirection.Remove(bomb);
+            _bombEarlyKickUnlocked.Remove(bomb);
+        }
+
+        return true;
+    }
+
+    void StartBombQueuePushedSkulls(
+        BombQueueTransfer transfer,
+        Vector2 kickDir,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 frontSegmentStart)
+    {
+        if (transfer == null || transfer.pushedSkulls.Count == 0)
+            return;
+
+        for (int i = transfer.pushedSkulls.Count - 1; i >= 0; i--)
+        {
+            ItemPickup skull = transfer.pushedSkulls[i];
+            if (skull == null ||
+                !skull.StartKickedBombPushSegment(kickDir, tileSize, ignoredCollider, frontSegmentStart, i + 1))
+            {
+                transfer.pushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    void UpdateBombQueuePushedSkulls(
+        BombQueueTransfer transfer,
+        Vector2 kickDir,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 frontSegmentStart,
+        float progress)
+    {
+        if (transfer == null || transfer.pushedSkulls.Count == 0)
+            return;
+
+        for (int i = transfer.pushedSkulls.Count - 1; i >= 0; i--)
+        {
+            ItemPickup skull = transfer.pushedSkulls[i];
+            if (skull == null ||
+                !skull.UpdateKickedBombPushSegment(kickDir, tileSize, ignoredCollider, frontSegmentStart, progress, i + 1))
+            {
+                transfer.pushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    void FinishBombQueuePushedSkulls(
+        BombQueueTransfer transfer,
+        Vector2 kickDir,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 frontBombWorldCenter)
+    {
+        if (transfer == null || transfer.pushedSkulls.Count == 0)
+            return;
+
+        for (int i = transfer.pushedSkulls.Count - 1; i >= 0; i--)
+        {
+            ItemPickup skull = transfer.pushedSkulls[i];
+            if (skull == null)
+                continue;
+
+            skull.TryMoveSkullInFrontOfKickedBomb(
+                kickDir,
+                tileSize,
+                ignoredCollider,
+                frontBombWorldCenter,
+                i + 1,
+                finishPush: true);
+        }
+
+        transfer.pushedSkulls.Clear();
     }
 
     float GetChainTransferDuration()
@@ -1008,11 +1402,119 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     bool HasItemAt(Vector3 center)
     {
+        return HasBlockingNonSkullItemAt(center, out _);
+    }
+
+    void CollectSkullsAt(Vector3 center, out List<ItemPickup> skulls)
+    {
+        skulls = new List<ItemPickup>();
+
+        int itemLayer = LayerMask.NameToLayer("Item");
+        if (itemLayer < 0)
+            return;
+
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float size = tileSize * 0.55f;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            center,
+            new Vector2(size, size),
+            0f,
+            1 << itemLayer);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null || hit.gameObject == gameObject)
+                continue;
+
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup != null &&
+                pickup.type == ItemType.Skull &&
+                !skulls.Contains(pickup))
+            {
+                skulls.Add(pickup);
+            }
+        }
+    }
+
+    void DestroyNonSkullItemsAtWorld(Vector2 worldCenter)
+    {
+        int itemLayer = LayerMask.NameToLayer("Item");
+        if (itemLayer < 0)
+            return;
+
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float size = tileSize * 0.45f;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            worldCenter,
+            new Vector2(size, size),
+            0f,
+            1 << itemLayer);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup == null || pickup.type == ItemType.Skull)
+                continue;
+
+            pickup.DestroyFromMovingBombImpact();
+        }
+    }
+
+    bool HasBlockingNonSkullItemAt(Vector3 center, out List<ItemPickup> skulls)
+    {
+        skulls = new List<ItemPickup>();
+
         int itemLayer = LayerMask.NameToLayer("Item");
         if (itemLayer < 0)
             return false;
 
-        return HasAnyColliderAt(center, 1 << itemLayer);
+        float ts = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float s = ts * 0.55f;
+
+        var hits = Physics2D.OverlapBoxAll(center, new Vector2(s, s), 0f, 1 << itemLayer);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        bool foundAnyItem = false;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null || hit.gameObject == gameObject)
+                continue;
+
+            ItemPickup pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup == null)
+                continue;
+
+            foundAnyItem = true;
+            if (pickup.type != ItemType.Skull)
+                return true;
+
+            if (!skulls.Contains(pickup))
+                skulls.Add(pickup);
+        }
+
+        return foundAnyItem && skulls.Count == 0;
     }
 
     bool HasPlayerAt(Vector3 center)
@@ -1060,6 +1562,59 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return false;
     }
 
+    bool HasMovingBombOutsideQueueAtCell(Vector2 worldCellCenter, List<Bomb> queue)
+    {
+        if (movement == null)
+            return false;
+
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            worldCellCenter,
+            Vector2.one * (movement.tileSize * 0.6f),
+            0f,
+            1 << bombLayer);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            Bomb bomb = hit.GetComponent<Bomb>() ?? hit.GetComponentInParent<Bomb>();
+            if (bomb != null &&
+                bomb.IsBeingKicked &&
+                (queue == null || !queue.Contains(bomb)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void SetYellowLouieBombMoving(Bomb bomb)
+    {
+        if (bomb == null || bomb.HasExploded || yellowLouieMovingBombs.Contains(bomb))
+            return;
+
+        yellowLouieMovingBombs.Add(bomb);
+        bomb.SetYellowLouieKickMovement(true);
+    }
+
+    void ClearYellowLouieBombMovement()
+    {
+        foreach (Bomb bomb in yellowLouieMovingBombs)
+        {
+            if (bomb != null)
+                bomb.SetYellowLouieKickMovement(false);
+        }
+
+        yellowLouieMovingBombs.Clear();
+    }
+
     void CancelKick()
     {
         if (routine != null)
@@ -1069,6 +1624,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
 
         StopKickVisuals();
+        ClearYellowLouieBombMovement();
 
         if (movement != null)
             movement.SetInputLocked(false);
@@ -1098,6 +1654,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             StopCoroutine(routine);
             routine = null;
         }
+
+        ClearYellowLouieBombMovement();
 
         if (kickVisualRoutine != null)
         {
@@ -1262,5 +1820,59 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             _bombPlantDirection.Remove(bombsToRemove[i]);
             _bombEarlyKickUnlocked.Remove(bombsToRemove[i]);
         }
+    }
+
+    void LogKickTrace(string message)
+    {
+        if (!debugKickTrace)
+            return;
+
+        Debug.Log($"[YellowLouieKickTrace][{name}] t:{Time.time:F3} {message}", this);
+    }
+
+    string GetOwnerLabel()
+    {
+        if (movement == null)
+            return name;
+
+        return $"P{movement.PlayerId}:{name}";
+    }
+
+    static string FormatVec(Vector2 value)
+    {
+        return $"({value.x:F2},{value.y:F2})";
+    }
+
+    static string FormatBomb(Bomb bomb)
+    {
+        if (bomb == null)
+            return "none";
+
+        return $"{bomb.name}@{FormatVec(bomb.GetLogicalPosition())}";
+    }
+
+    static string FormatFuse(Bomb bomb)
+    {
+        if (bomb == null)
+            return "n/a";
+
+        return bomb.RemainingFuseSeconds.ToString("F2");
+    }
+
+    static string FormatBombQueue(List<Bomb> queue)
+    {
+        if (queue == null || queue.Count == 0)
+            return "empty";
+
+        System.Text.StringBuilder sb = new();
+        for (int i = 0; i < queue.Count; i++)
+        {
+            if (i > 0)
+                sb.Append(" -> ");
+
+            sb.Append(FormatBomb(queue[i]));
+        }
+
+        return sb.ToString();
     }
 }

@@ -37,6 +37,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3026958387598246549
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -82,7 +83,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 3
-  m_Sprite: {fileID: 727772208, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: -8074880809719174170, guid: a192e6c57a711314793279ff31188763, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -91,7 +93,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!61 &3026958387598246551
 BoxCollider2D:
@@ -153,18 +154,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 727772208, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
   animationSprite:
-  - {fileID: 406729080, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: 1793085533, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: 233167089, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: -1842765562, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: 1501923500, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: -101350445, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
+  - {fileID: -7441649408072161595, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: 2274239414795133304, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: -3058957512661795591, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: 3505721219128610209, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: 2301290036765605013, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: 871739457554557160, guid: a192e6c57a711314793279ff31188763, type: 3}
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!114 &3440613785117735154
 MonoBehaviour:
   m_ObjectHideFlags: 0

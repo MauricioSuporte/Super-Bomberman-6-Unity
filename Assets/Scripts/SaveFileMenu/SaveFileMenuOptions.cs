@@ -27,10 +27,18 @@ public class SaveFileMenuOptions : MonoBehaviour
     [SerializeField] private Color selectedColor = new Color32(0, 255, 60, 255);
     [SerializeField] private Color disabledColor = new Color32(0, 120, 0, 180);
 
+    [Header("Difficulty Selection Colors")]
+    [SerializeField] private Color hardDifficultySelectedColor = new Color32(231, 63, 63, 255);
+    [SerializeField] private Color hardcoreDifficultySelectedColor = Color.black;
+    [SerializeField] private Color hardcoreDifficultyOutlineColor = new Color32(231, 63, 63, 255);
+    [SerializeField, Range(0.05f, 1f)] private float lockedDifficultySelectedAlpha = 0.35f;
+    [SerializeField, Min(0f)] private float difficultyColumnSpacing = 20f;
+
     [Header("TMP")]
     [SerializeField] private TMP_FontAsset optionFontAsset;
     [SerializeField] private Material optionFontMaterialPreset;
     [SerializeField] private bool forceBold = true;
+    [SerializeField] private bool useRichTextEntryColors;
     [SerializeField] private bool autoSize = false;
     [SerializeField, Range(0.25f, 1f)] private float autoSizeMinRatio = 0.75f;
 
@@ -60,9 +68,11 @@ public class SaveFileMenuOptions : MonoBehaviour
     [SerializeField] private float minCursorSize = 24f;
 
     private readonly List<TextMeshProUGUI> optionTexts = new();
+    private readonly List<TextMeshProUGUI> difficultyColumnTexts = new();
     private readonly Dictionary<TMP_Text, Material> runtimeMaterials = new();
     private readonly List<string> entries = new();
     private readonly List<bool> entryEnabled = new();
+    private readonly List<int> difficultyColumnStyles = new();
 
     private float _currentUiScale = 1f;
 
@@ -73,6 +83,9 @@ public class SaveFileMenuOptions : MonoBehaviour
     private bool _cursorBaseLoop = true;
     private bool _cursorAnimationStateCaptured;
     private bool _cursorAnimatingConfirmed;
+    private bool _cursorVisibilitySuppressed;
+    private bool _difficultySelectionMode;
+    private bool _coloredDifficultyColumnMode;
 
     private int _baseLayoutPaddingLeft;
     private int _baseLayoutPaddingRight;
@@ -81,6 +94,81 @@ public class SaveFileMenuOptions : MonoBehaviour
     private bool _layoutPaddingCaptured;
 
     public int Count => entries.Count;
+    public Vector2 CursorSizeDelta
+    {
+        get
+        {
+            RectTransform cursorRt = cursorRenderer != null ? cursorRenderer.transform as RectTransform : null;
+            return cursorRt != null ? cursorRt.sizeDelta : Vector2.zero;
+        }
+    }
+
+    public AnimatedSpriteRenderer CursorRenderer => cursorRenderer;
+    public TMP_FontAsset OptionFontAsset => optionFontAsset != null ? optionFontAsset : optionItemPrefab != null ? optionItemPrefab.font : null;
+    public Material OptionFontMaterialPreset => optionFontMaterialPreset;
+    public Color NormalColor => normalColor;
+    public Color SelectedColor => selectedColor;
+
+    public void ApplyOptionTextStyleTo(TextMeshProUGUI txt, Color faceColor)
+    {
+        ApplyOptionTextStyle(txt, faceColor);
+    }
+
+    public void SetDifficultySelectionMode(bool enabled)
+    {
+        _difficultySelectionMode = enabled;
+    }
+
+    public void SetColoredDifficultyColumnMode(bool enabled)
+    {
+        _coloredDifficultyColumnMode = enabled;
+    }
+
+    public void SetDifficultyColumnStyles(IReadOnlyList<int> styles)
+    {
+        difficultyColumnStyles.Clear();
+
+        if (styles == null)
+            return;
+
+        for (int i = 0; i < styles.Count; i++)
+            difficultyColumnStyles.Add(styles[i]);
+    }
+
+    public bool TryGetCursorDebugInfo(
+        out bool active,
+        out Vector3 localPosition,
+        out Vector2 anchoredPosition,
+        out Vector3 worldPosition,
+        out Vector2 sizeDelta,
+        out string parentName)
+    {
+        active = false;
+        localPosition = Vector3.zero;
+        anchoredPosition = Vector2.zero;
+        worldPosition = Vector3.zero;
+        sizeDelta = Vector2.zero;
+        parentName = "NULL";
+
+        if (cursorRenderer == null)
+            return false;
+
+        Transform cursorTransform = cursorRenderer.transform;
+        RectTransform cursorRt = cursorTransform as RectTransform;
+
+        active = cursorRenderer.gameObject.activeInHierarchy;
+        localPosition = cursorTransform.localPosition;
+        worldPosition = cursorTransform.position;
+        parentName = cursorTransform.parent != null ? cursorTransform.parent.name : "NULL";
+
+        if (cursorRt != null)
+        {
+            anchoredPosition = cursorRt.anchoredPosition;
+            sizeDelta = cursorRt.sizeDelta;
+        }
+
+        return true;
+    }
 
     public void Awake()
     {
@@ -121,6 +209,42 @@ public class SaveFileMenuOptions : MonoBehaviour
         ApplyOptionListLayoutSettings();
     }
 
+    public void ConfigureLayout(
+        int newFontSize,
+        float newOptionItemHeight,
+        Vector2 newOptionSpacing,
+        float newOptionContentOffsetX,
+        float newOptionContentOffsetY,
+        float newCursorExtraOffsetY,
+        float newBlockCenterX,
+        float newBlockCenterY,
+        float newCursorReservedWidth,
+        float newExtraBlockWidth,
+        float newExtraBlockHeight,
+        Vector2 newCursorOffset,
+        float newCursorHeightMultiplier,
+        float newMinCursorSize,
+        bool newUseRichTextEntryColors = false)
+    {
+        fontSize = Mathf.Max(1, newFontSize);
+        optionItemHeight = Mathf.Max(1f, newOptionItemHeight);
+        optionSpacing = newOptionSpacing;
+        optionContentOffsetX = newOptionContentOffsetX;
+        optionContentOffsetY = newOptionContentOffsetY;
+        cursorExtraOffsetY = newCursorExtraOffsetY;
+        blockCenterX = Mathf.Clamp01(newBlockCenterX);
+        blockCenterY = Mathf.Clamp01(newBlockCenterY);
+        cursorReservedWidth = Mathf.Max(0f, newCursorReservedWidth);
+        extraBlockWidth = newExtraBlockWidth;
+        extraBlockHeight = newExtraBlockHeight;
+        cursorOffset = newCursorOffset;
+        cursorHeightMultiplier = Mathf.Max(0.01f, newCursorHeightMultiplier);
+        minCursorSize = Mathf.Max(1f, newMinCursorSize);
+        useRichTextEntryColors = newUseRichTextEntryColors;
+
+        SetUiScale(_currentUiScale);
+    }
+
     public void SetUiScale(float uiScale)
     {
         _currentUiScale = uiScale;
@@ -134,7 +258,8 @@ public class SaveFileMenuOptions : MonoBehaviour
                 continue;
 
             bool enabled = i < entryEnabled.Count ? entryEnabled[i] : true;
-            ApplyOptionTextStyle(optionTexts[i], enabled ? normalColor : disabledColor);
+            OptionVisualStyle style = GetOptionVisualStyle(i, false, enabled);
+            ApplyOptionTextStyle(optionTexts[i], style.FaceColor, style.OutlineColor);
 
             RectTransform rt = optionTexts[i].rectTransform;
             rt.sizeDelta = new Vector2(0f, Mathf.Round(ScaledFloat(optionItemHeight)));
@@ -145,6 +270,9 @@ public class SaveFileMenuOptions : MonoBehaviour
                 le.minHeight = Mathf.Round(ScaledFloat(optionItemHeight));
                 le.preferredHeight = Mathf.Round(ScaledFloat(optionItemHeight));
             }
+
+            UpdateDifficultyColumnLayout(i);
+            ApplyDifficultyColumnStyle(i, false);
         }
 
         VerticalLayoutGroup layout = optionListRoot != null ? optionListRoot.GetComponent<VerticalLayoutGroup>() : null;
@@ -184,6 +312,23 @@ public class SaveFileMenuOptions : MonoBehaviour
         BuildOptionList();
     }
 
+    public void UpdateEntryTexts(IReadOnlyList<string> newEntries)
+    {
+        if (newEntries == null)
+            return;
+
+        int count = Mathf.Min(entries.Count, newEntries.Count);
+        for (int i = 0; i < count; i++)
+        {
+            entries[i] = newEntries[i] ?? string.Empty;
+
+            if (i >= optionTexts.Count || optionTexts[i] == null)
+                continue;
+
+            optionTexts[i].text = entries[i];
+        }
+    }
+
     public bool IsEntryEnabled(int index)
     {
         if (index < 0 || index >= entryEnabled.Count)
@@ -203,6 +348,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     public void BuildOptionList()
     {
         optionTexts.Clear();
+        difficultyColumnTexts.Clear();
 
         if (optionListRoot == null || optionItemPrefab == null)
             return;
@@ -234,8 +380,8 @@ public class SaveFileMenuOptions : MonoBehaviour
             txt.text = entries[i];
             txt.transform.SetAsLastSibling();
 
-            Color faceColor = entryEnabled[i] ? normalColor : disabledColor;
-            ApplyOptionTextStyle(txt, faceColor);
+            OptionVisualStyle style = GetOptionVisualStyle(i, false, entryEnabled[i]);
+            ApplyOptionTextStyle(txt, style.FaceColor, style.OutlineColor);
 
             RectTransform rt = txt.rectTransform;
             rt.anchorMin = new Vector2(0f, 0.5f);
@@ -259,6 +405,7 @@ public class SaveFileMenuOptions : MonoBehaviour
             le.flexibleWidth = 1f;
 
             optionTexts.Add(txt);
+            difficultyColumnTexts.Add(CreateDifficultyColumnText(txt, i));
         }
 
         if (cursorRenderer != null)
@@ -283,11 +430,9 @@ public class SaveFileMenuOptions : MonoBehaviour
 
             txt.text = i < entries.Count ? entries[i] : string.Empty;
 
-            Color faceColor = isSelected ? selectedColor : normalColor;
-            if (!enabled)
-                faceColor = disabledColor;
-
-            ApplyOptionTextStyle(txt, faceColor);
+            OptionVisualStyle style = GetOptionVisualStyle(i, isSelected, enabled);
+            ApplyOptionTextStyle(txt, style.FaceColor, style.OutlineColor);
+            ApplyDifficultyColumnStyle(i, isSelected);
         }
 
         UpdateCursorAnimationState(confirmed);
@@ -298,6 +443,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     {
         if (cursorRenderer != null)
         {
+            _cursorVisibilitySuppressed = false;
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
         }
@@ -310,6 +456,14 @@ public class SaveFileMenuOptions : MonoBehaviour
             UpdateCursorAnimationState(false);
             cursorRenderer.gameObject.SetActive(false);
         }
+    }
+
+    public void SetCursorVisibilitySuppressed(bool suppressed)
+    {
+        _cursorVisibilitySuppressed = suppressed;
+
+        if (suppressed && cursorRenderer != null)
+            cursorRenderer.gameObject.SetActive(false);
     }
 
     public void UpdateCursorPosition(int selectedIndex)
@@ -329,8 +483,6 @@ public class SaveFileMenuOptions : MonoBehaviour
             cursorRenderer.gameObject.SetActive(false);
             return;
         }
-
-        cursorRenderer.gameObject.SetActive(true);
 
         RectTransform txtRt = txt.rectTransform;
         RectTransform cursorRt = cursorRenderer.transform as RectTransform;
@@ -356,9 +508,17 @@ public class SaveFileMenuOptions : MonoBehaviour
         }
 
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
+
+        if (!_cursorVisibilitySuppressed)
+            cursorRenderer.gameObject.SetActive(true);
     }
 
     private void ApplyOptionTextStyle(TextMeshProUGUI txt, Color faceColor)
+    {
+        ApplyOptionTextStyle(txt, faceColor, outlineColor);
+    }
+
+    private void ApplyOptionTextStyle(TextMeshProUGUI txt, Color faceColor, Color textOutlineColor)
     {
         if (txt == null)
             return;
@@ -366,8 +526,10 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (optionFontAsset != null)
             txt.font = optionFontAsset;
 
+        LocalizedTmpFontFallback.Apply(txt);
         txt.textWrappingMode = TextWrappingModes.NoWrap;
         txt.overflowMode = TextOverflowModes.Overflow;
+        txt.richText = true;
         txt.enableAutoSizing = autoSize;
         txt.extraPadding = true;
         txt.alignment = TextAlignmentOptions.MidlineLeft;
@@ -389,7 +551,7 @@ public class SaveFileMenuOptions : MonoBehaviour
             txt.fontStyle &= ~FontStyles.Bold;
 
         Material runtimeMat = GetOrCreateRuntimeMaterial(txt);
-        ApplyMaterialStyle(runtimeMat, faceColor);
+        ApplyMaterialStyle(runtimeMat, faceColor, textOutlineColor);
 
         if (runtimeMat != null)
             txt.fontMaterial = runtimeMat;
@@ -425,7 +587,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         return runtimeMat;
     }
 
-    private void ApplyMaterialStyle(Material mat, Color faceColor)
+    private void ApplyMaterialStyle(Material mat, Color faceColor, Color textOutlineColor)
     {
         if (mat == null)
             return;
@@ -434,7 +596,7 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         if (useOutline)
         {
-            TrySetColor(mat, "_OutlineColor", outlineColor);
+            TrySetColor(mat, "_OutlineColor", textOutlineColor);
             TrySetFloat(mat, "_OutlineWidth", outlineWidth);
             TrySetFloat(mat, "_OutlineSoftness", outlineSoftness);
         }
@@ -461,6 +623,141 @@ public class SaveFileMenuOptions : MonoBehaviour
             TrySetFloat(mat, "_UnderlaySoftness", 0f);
             TrySetFloat(mat, "_UnderlayOffsetX", 0f);
             TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
+    }
+
+    private OptionVisualStyle GetOptionVisualStyle(int index, bool isSelected, bool enabled)
+    {
+        if (!enabled)
+        {
+            if (_difficultySelectionMode && isSelected && index == 2)
+            {
+                return new OptionVisualStyle(
+                    ApplyLockedDifficultyAlpha(hardcoreDifficultySelectedColor),
+                    ApplyLockedDifficultyAlpha(hardcoreDifficultyOutlineColor));
+            }
+
+            return new OptionVisualStyle(disabledColor, outlineColor);
+        }
+
+        if (_difficultySelectionMode)
+        {
+            if (!isSelected)
+                return new OptionVisualStyle(normalColor, outlineColor);
+
+            return index switch
+            {
+                0 => new OptionVisualStyle(selectedColor, outlineColor),
+                1 => new OptionVisualStyle(hardDifficultySelectedColor, outlineColor),
+                2 => new OptionVisualStyle(hardcoreDifficultySelectedColor, hardcoreDifficultyOutlineColor),
+                _ => new OptionVisualStyle(normalColor, outlineColor)
+            };
+        }
+
+        if (_coloredDifficultyColumnMode)
+            return new OptionVisualStyle(isSelected ? selectedColor : normalColor, outlineColor);
+
+        Color faceColor = useRichTextEntryColors
+            ? Color.white
+            : isSelected ? selectedColor : normalColor;
+
+        return new OptionVisualStyle(faceColor, outlineColor);
+    }
+
+    private Color ApplyLockedDifficultyAlpha(Color color)
+    {
+        color.a *= lockedDifficultySelectedAlpha;
+        return color;
+    }
+
+    private TextMeshProUGUI CreateDifficultyColumnText(TextMeshProUGUI rowText, int index)
+    {
+        if (!_coloredDifficultyColumnMode ||
+            rowText == null ||
+            index >= difficultyColumnStyles.Count ||
+            difficultyColumnStyles[index] < 0)
+            return null;
+
+        TextMeshProUGUI txt = Instantiate(optionItemPrefab, rowText.transform);
+        txt.gameObject.SetActive(true);
+        txt.enabled = true;
+        txt.text = GetDifficultyColumnDisplayName(difficultyColumnStyles[index]);
+
+        LayoutElement layout = txt.GetComponent<LayoutElement>();
+        if (layout != null)
+            layout.ignoreLayout = true;
+
+        ApplyOptionTextStyle(txt, normalColor, outlineColor);
+        UpdateDifficultyColumnLayout(txt, rowText, index);
+        return txt;
+    }
+
+    private void UpdateDifficultyColumnLayout(int index)
+    {
+        if (index < 0 || index >= difficultyColumnTexts.Count || index >= optionTexts.Count)
+            return;
+
+        TextMeshProUGUI txt = difficultyColumnTexts[index];
+        if (txt != null)
+            UpdateDifficultyColumnLayout(txt, optionTexts[index], index);
+    }
+
+    private void UpdateDifficultyColumnLayout(TextMeshProUGUI txt, TextMeshProUGUI rowText, int index)
+    {
+        if (txt == null || rowText == null || index < 0 || index >= entries.Count)
+            return;
+
+        RectTransform rt = txt.rectTransform;
+        rt.anchorMin = new Vector2(0f, 0.5f);
+        rt.anchorMax = new Vector2(0f, 0.5f);
+        rt.pivot = new Vector2(0f, 0.5f);
+        rt.anchoredPosition = new Vector2(
+            Mathf.Ceil(rowText.GetPreferredValues(entries[index]).x + ScaledFloat(difficultyColumnSpacing)),
+            0f);
+        rt.sizeDelta = new Vector2(
+            Mathf.Ceil(txt.GetPreferredValues(txt.text).x + ScaledFloat(8f)),
+            Mathf.Round(ScaledFloat(optionItemHeight)));
+    }
+
+    private void ApplyDifficultyColumnStyle(int index, bool isSelected)
+    {
+        if (!_coloredDifficultyColumnMode || index < 0 || index >= difficultyColumnTexts.Count)
+            return;
+
+        TextMeshProUGUI txt = difficultyColumnTexts[index];
+        if (txt == null || index >= difficultyColumnStyles.Count)
+            return;
+
+        OptionVisualStyle style = difficultyColumnStyles[index] switch
+        {
+            1 => new OptionVisualStyle(hardDifficultySelectedColor, outlineColor),
+            2 => new OptionVisualStyle(hardcoreDifficultySelectedColor, hardcoreDifficultyOutlineColor),
+            _ => new OptionVisualStyle(normalColor, outlineColor)
+        };
+
+        ApplyOptionTextStyle(txt, style.FaceColor, style.OutlineColor);
+    }
+
+    private string GetDifficultyColumnDisplayName(int style)
+    {
+        CommonMenuText text = GameTextDatabase.Common;
+        return style switch
+        {
+            1 => text.Hard,
+            2 => text.Hardcore,
+            _ => text.Normal
+        };
+    }
+
+    private readonly struct OptionVisualStyle
+    {
+        public readonly Color FaceColor;
+        public readonly Color OutlineColor;
+
+        public OptionVisualStyle(Color faceColor, Color outlineColor)
+        {
+            FaceColor = faceColor;
+            OutlineColor = outlineColor;
         }
     }
 
@@ -560,6 +857,15 @@ public class SaveFileMenuOptions : MonoBehaviour
         for (int i = 0; i < entries.Count; i++)
         {
             Vector2 preferred = measureTarget.GetPreferredValues(entries[i]);
+            if (_coloredDifficultyColumnMode &&
+                i < difficultyColumnStyles.Count &&
+                difficultyColumnStyles[i] >= 0)
+            {
+                Vector2 difficultyPreferred = measureTarget.GetPreferredValues(
+                    GetDifficultyColumnDisplayName(difficultyColumnStyles[i]));
+                preferred.x += ScaledFloat(difficultyColumnSpacing) + difficultyPreferred.x;
+            }
+
             if (preferred.x > max)
                 max = preferred.x;
         }

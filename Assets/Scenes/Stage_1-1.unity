@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 59654201}
-  - component: {fileID: 59654200}
   m_Layer: 0
   m_Name: StageSettings
   m_TagString: Untagged
@@ -136,20 +135,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &59654200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 59654199}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a284d4030dc9c84caeaae28969ab361, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
-  stageDefaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
-  musicVolume: 0.8
 --- !u!4 &59654201
 Transform:
   m_ObjectHideFlags: 0
@@ -273,6 +258,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &124024470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -447,11 +446,13 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -461,6 +462,9 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 1
+  skullAmount: 0
+  randomEggsMin: 0
+  randomEggsMax: 0
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
@@ -468,6 +472,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 11400000, guid: f704e9397d45007499442d8f715822a4, type: 2}
+  shadowDestructibleTile: {fileID: 11400000, guid: 6a5b2951a74a3344c84d3f7855801687, type: 2}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -1497,26 +1505,50 @@ PrefabInstance:
     - target: {fileID: 202508950050250889, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 202508950050250889, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 770640549414759375, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 770640549414759375, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1162281184452577441, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 2.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1162281184452577441, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1.75
       objectReference: {fileID: 0}
     - target: {fileID: 1271289946209990207, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1271289946209990207, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1612309431032465368, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.9130435
+      objectReference: {fileID: 0}
+    - target: {fileID: 1612309431032465368, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.76086956
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2367064353294770056, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Pivot.x
@@ -1598,29 +1630,77 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2430658914873831823, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430658914873831823, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2649763139092034220, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 2649763139092034220, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2844476466633808745, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.9130435
+      objectReference: {fileID: 0}
+    - target: {fileID: 2844476466633808745, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.76086956
+      objectReference: {fileID: 0}
+    - target: {fileID: 3453724974011753036, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3453724974011753036, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4596193090454659954, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4596193090454659954, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4642470739555972227, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 4642470739555972227, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4670846066677549432, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 4670846066677549432, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5241171386535993749, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5241171386535993749, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5341041689667360623, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Name
@@ -1629,50 +1709,74 @@ PrefabInstance:
     - target: {fileID: 5758117326499773164, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 5758117326499773164, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6307630273264470252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6307630273264470252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7126354152096357310, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7126354152096357310, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7140756365902866019, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 7140756365902866019, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7939262134427894252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.9130435
+      objectReference: {fileID: 0}
+    - target: {fileID: 7939262134427894252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.76086956
       objectReference: {fileID: 0}
     - target: {fileID: 8838027982064869938, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 8838027982064869938, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4614,6 +4718,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 1
+  activePlayerMask: 1
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -4843,9 +4956,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
+  defaultMusic: {fileID: 8300000, guid: b034eee40c83c2f48b4ccd22750eb29b, type: 3}
+  defaultMusicLoop: {fileID: 8300000, guid: 9de712755d2ffeb429a7800b2e3bb38a, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 1
+  defaultMusicVolume: 0.8
+  defaultMusicLoopVolume: 0.8
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0

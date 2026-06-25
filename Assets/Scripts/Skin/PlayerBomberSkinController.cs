@@ -14,7 +14,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (id == null || id.playerId <= 0)
             return;
 
-        int playerId = Mathf.Clamp(id.playerId, 1, 4);
+        int playerId = Mathf.Clamp(id.playerId, 1, 6);
         var skin = PlayerPersistentStats.Get(playerId).Skin;
 
         Apply(skin);

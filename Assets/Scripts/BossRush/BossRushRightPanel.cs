@@ -8,7 +8,7 @@ public class BossRushRightPanel : MonoBehaviour
     const string LOG = "[BossRushRightPanel]";
 
     [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool enableSurgicalLogs = false;
 
     [Header("Title")]
     [SerializeField] TextMeshProUGUI titleText;
@@ -51,7 +51,6 @@ public class BossRushRightPanel : MonoBehaviour
 
     [Header("Target Time")]
     [SerializeField] TextMeshProUGUI targetTimeText;
-    [SerializeField] string targetTimeFormat = "TARGET {0}";
     [SerializeField] string noTargetTimeText = "";
     [SerializeField] int targetTimeFontSize = 15;
     [SerializeField] float targetTimeHeight = 22f;
@@ -62,7 +61,6 @@ public class BossRushRightPanel : MonoBehaviour
 
     [Header("New Record Label")]
     [SerializeField] TextMeshProUGUI newRecordText;
-    [SerializeField] string newRecordLabel = "NEW RECORD!";
     [SerializeField] int newRecordFontSize = 14;
     [SerializeField] float newRecordHeight = 20f;
     [SerializeField] float newRecordOffsetY = -6f;
@@ -239,6 +237,7 @@ public class BossRushRightPanel : MonoBehaviour
 
         if (titleText != null)
         {
+            LocalizedTmpFontFallback.Apply(titleText);
             titleText.text = string.Format(titleFormat, GetDifficultyDisplayName(difficulty));
             ApplyTitleStyleForDifficulty(difficulty);
         }
@@ -915,7 +914,8 @@ public class BossRushRightPanel : MonoBehaviour
         rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(ScaledFloat(newRecordHeight), 8f));
 
         ConfigureNewRecordText(newRecordText);
-        newRecordText.text = newRecordLabel;
+        LocalizedTmpFontFallback.Apply(newRecordText);
+        newRecordText.text = GameTextDatabase.BossRushMenu.NewRecord;
         newRecordText.gameObject.SetActive(false);
     }
 
@@ -1240,12 +1240,13 @@ public class BossRushRightPanel : MonoBehaviour
 
     string GetDifficultyDisplayName(BossRushDifficulty difficulty)
     {
+        CommonMenuText text = GameTextDatabase.Common;
         switch (difficulty)
         {
-            case BossRushDifficulty.EASY: return "EASY";
-            case BossRushDifficulty.NORMAL: return "NORMAL";
-            case BossRushDifficulty.HARD: return "HARD";
-            case BossRushDifficulty.NIGHTMARE: return "NIGHTMARE";
+            case BossRushDifficulty.EASY: return text.Easy;
+            case BossRushDifficulty.NORMAL: return text.Normal;
+            case BossRushDifficulty.HARD: return text.Hard;
+            case BossRushDifficulty.NIGHTMARE: return text.Nightmare;
             default: return difficulty.ToString();
         }
     }
@@ -1406,6 +1407,7 @@ public class BossRushRightPanel : MonoBehaviour
         if (timeFontAsset != null)
             target.font = timeFontAsset;
 
+        LocalizedTmpFontFallback.Apply(target);
         target.alignment = TextAlignmentOptions.Center;
         target.textWrappingMode = TextWrappingModes.NoWrap;
         target.overflowMode = TextOverflowModes.Overflow;
@@ -1472,7 +1474,7 @@ public class BossRushRightPanel : MonoBehaviour
         if (target <= 0f)
             return noTargetTimeText;
 
-        return string.Format(targetTimeFormat, BossRushTimesProgress.FormatTime(target));
+        return string.Format(GameTextDatabase.BossRushMenu.Target, BossRushTimesProgress.FormatTime(target));
     }
 
     void SLog(string message)

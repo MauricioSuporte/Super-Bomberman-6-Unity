@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,6 +49,8 @@ public class PlayerMountCompanion : MonoBehaviour
     MovementController movement;
     CharacterHealth playerHealth;
 
+    const float RidingTransitionInvulnerabilityBufferSeconds = 0.05f;
+
     GameObject currentLouie;
     MountedType mountedType = MountedType.None;
 
@@ -64,8 +66,6 @@ public class PlayerMountCompanion : MonoBehaviour
 
     float dashInvulRemainingPlayer;
     float dashInvulRemainingLouie;
-
-    float ridingUninterruptibleUntil;
 
     float playerOriginalBlinkInterval;
     float playerOriginalTempSlowdownStartNormalized;
@@ -114,6 +114,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.MountCompanionUpdate.Auto();
+
         punchOwned = PlayerPersistentStats.GetRuntime(GetPlayerId()).CanPunchBombs;
 
         bool shouldLock =
@@ -167,6 +169,16 @@ public class PlayerMountCompanion : MonoBehaviour
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
     public bool HasMountedLouie() => currentLouie != null;
 
+    public void ClearMountedStateForForcedArenaRemoval()
+    {
+        if (currentLouie != null)
+            Destroy(currentLouie);
+
+        currentLouie = null;
+        ClearDashInvulnerabilityNow();
+        ResetMountedStateAndAbilities();
+    }
+
     public void RestoreMountedFromPersistent()
     {
         if (currentLouie != null)
@@ -183,6 +195,37 @@ public class PlayerMountCompanion : MonoBehaviour
             return false;
 
         return visual.TryPlayEndStage(totalTime, frameCount);
+    }
+
+    public bool CancelRidingTransitionForEndStage()
+    {
+        var rider = GetComponent<PlayerRidingController>();
+        if (rider == null || !rider.IsPlaying)
+            return false;
+
+        rider.CancelRiding();
+
+        if (autoRemountRoutine != null)
+        {
+            StopCoroutine(autoRemountRoutine);
+            autoRemountRoutine = null;
+        }
+
+        autoRemountRequested = false;
+
+        if (movement != null && !movement.IsMounted)
+        {
+            if (currentLouie != null)
+                Destroy(currentLouie);
+
+            currentLouie = null;
+            pendingMountSfx = null;
+            pendingMountVolume = 1f;
+            ClearDashInvulnerabilityNow();
+            ResetMountedStateAndAbilities();
+        }
+
+        return true;
     }
 
     public void Mount(MountedType type)
@@ -845,12 +888,12 @@ public class PlayerMountCompanion : MonoBehaviour
 
     #region Riding / Damage While Mounting
 
-    bool IsRidingUninterruptible() => Time.time < ridingUninterruptibleUntil;
+    float GetRidingTransitionInvulnerabilitySeconds(float seconds)
+        => Mathf.Max(0.01f, seconds) + RidingTransitionInvulnerabilityBufferSeconds;
 
     void MarkRidingUninterruptible(float seconds, bool blink)
     {
-        float s = Mathf.Max(0.01f, seconds);
-        ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
+        float s = GetRidingTransitionInvulnerabilitySeconds(seconds);
 
         ApplyTemporaryInvulnerabilityToPlayer(s, blink);
         ApplyTemporaryInvulnerabilityToTransitionLouie(s, blink);
@@ -912,8 +955,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
     public void ApplyRidingTransitionInvulnerability(float seconds, bool blink, GameObject detachedLouie = null)
     {
-        float s = Mathf.Max(0.01f, seconds);
-        ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
+        float s = GetRidingTransitionInvulnerabilitySeconds(seconds);
 
         ApplyTemporaryInvulnerabilityToPlayer(s, blink);
 
@@ -932,16 +974,8 @@ public class PlayerMountCompanion : MonoBehaviour
         if (movement != null && movement.isDead)
             return true;
 
-        if (IsRidingUninterruptible())
-            return true;
-
-        rider.CancelRiding();
-
-        RestorePendingWorldMountAsPickup();
-
-        if (playerHealth != null)
-            playerHealth.TakeDamage(Mathf.Max(1, damage));
-
+        // Riding transitions are resolved by their completion callback: mounting
+        // becomes mounted, and dismounting becomes vulnerable only afterward.
         return true;
     }
 
@@ -1682,7 +1716,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
         var audio = FindAudioSource();
         if (audio != null && clip != null)
-            audio.PlayOneShot(clip, Mathf.Clamp01(vol));
+            GameAudioSettings.PlaySfx(audio, clip, Mathf.Clamp01(vol));
     }
 
     AudioSource FindAudioSource()
@@ -1883,6 +1917,7 @@ public class PlayerMountCompanion : MonoBehaviour
                 : movement.FacingDirection;
 
             movement.ForceIdleFacing(facing, "FinishLoseMountAfterRidingWithoutLouie");
+            TryResolveDismountBounce(movement, facing);
         }
 
         if (movement != null && movement.TryGetComponent<CharacterHealth>(out var health))
@@ -1890,6 +1925,15 @@ public class PlayerMountCompanion : MonoBehaviour
 
         if (currentLouie == null)
             RequestAutoRemountFromQueue();
+    }
+
+    static void TryResolveDismountBounce(MovementController movement, Vector2 facing)
+    {
+        if (movement == null)
+            return;
+
+        if (movement.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) && resolver != null)
+            resolver.NotifyExternalPushed(facing);
     }
 
     #endregion
@@ -1933,11 +1977,11 @@ public class PlayerMountCompanion : MonoBehaviour
     int GetPlayerId()
     {
         if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
-            return Mathf.Clamp(id.playerId, 1, 4);
+            return Mathf.Clamp(id.playerId, 1, 6);
 
         var parentId = GetComponentInParent<PlayerIdentity>(true);
         if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
+            return Mathf.Clamp(parentId.playerId, 1, 6);
 
         return 1;
     }

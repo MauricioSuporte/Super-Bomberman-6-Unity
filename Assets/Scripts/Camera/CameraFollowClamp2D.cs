@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_2022_2_OR_NEWER
 using UnityEngine.U2D;
@@ -31,7 +32,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     private Camera cam;
 
     private Transform followTarget;
-    private PlayerIdentity[] cachedPlayers = new PlayerIdentity[0];
+    private readonly List<PlayerIdentity> cachedPlayers = new(8);
     private float refreshTimer;
 
     private Vector3 rawPos;
@@ -136,27 +137,42 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     void RefreshPlayers()
     {
-        cachedPlayers = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
+        PlayerIdentity.GetActivePlayers(cachedPlayers);
+    }
+
+    bool IsConfiguredPlayerActive(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+
+        if (BossRushSession.IsActive)
+            return BossRushSession.IsRunPlayer(playerId);
+
+        if (GameSession.Instance != null)
+            return GameSession.Instance.IsPlayerActive(playerId);
+
+        return playerId == GameSession.MinPlayerId;
     }
 
     bool TryUpdateFollowTargetPosition(out Vector3 position)
     {
         position = default;
 
-        if (cachedPlayers == null || cachedPlayers.Length == 0)
+        if (cachedPlayers.Count == 0)
             return false;
-
-        int activeCount = 1;
-        if (GameSession.Instance != null)
-            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
 
         if (!followAllPlayers)
         {
-            for (int i = 0; i < cachedPlayers.Length; i++)
+            for (int desiredPlayerId = GameSession.MinPlayerId; desiredPlayerId <= GameSession.MaxPlayerId; desiredPlayerId++)
             {
-                var p = cachedPlayers[i];
-                if (p != null && p.playerId == 1)
+                if (!IsConfiguredPlayerActive(desiredPlayerId))
+                    continue;
+
+                for (int i = 0; i < cachedPlayers.Count; i++)
                 {
+                    var p = cachedPlayers[i];
+                    if (p == null || p.playerId != desiredPlayerId)
+                        continue;
+
                     position = p.transform.position;
                     followTarget.position = position;
                     return true;
@@ -171,13 +187,13 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         Vector3 sum = Vector3.zero;
         int count = 0;
 
-        for (int i = 0; i < cachedPlayers.Length; i++)
+        for (int i = 0; i < cachedPlayers.Count; i++)
         {
             var p = cachedPlayers[i];
             if (p == null)
                 continue;
 
-            if (p.playerId < 1 || p.playerId > activeCount)
+            if (!IsConfiguredPlayerActive(p.playerId))
                 continue;
 
             sum += p.transform.position;
@@ -278,23 +294,19 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     private float GetFollowTilesPerSecond()
     {
-        if (!useTrackedPlayersSpeed || cachedPlayers == null || cachedPlayers.Length == 0)
+        if (!useTrackedPlayersSpeed || cachedPlayers.Count == 0)
             return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
-
-        int activeCount = 1;
-        if (GameSession.Instance != null)
-            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
 
         int highestInternal = speedInternal;
         bool foundAny = false;
 
-        for (int i = 0; i < cachedPlayers.Length; i++)
+        for (int i = 0; i < cachedPlayers.Count; i++)
         {
             var p = cachedPlayers[i];
             if (p == null)
                 continue;
 
-            if (p.playerId < 1 || p.playerId > activeCount)
+            if (!IsConfiguredPlayerActive(p.playerId))
                 continue;
 
             if (!p.TryGetComponent<MovementController>(out var movement) || movement == null)

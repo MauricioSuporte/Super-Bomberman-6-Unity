@@ -7,6 +7,7 @@ namespace Assets.Scripts.SaveSystem
     public sealed class SavedPlayerControls
     {
         public int playerId = 1;
+        public bool active = false;
         public int joyIndex = 1;
         public int gamepadDeviceId = -1;
         public string gamepadProduct = "";

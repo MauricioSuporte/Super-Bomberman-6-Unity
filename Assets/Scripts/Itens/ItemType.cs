@@ -24,5 +24,7 @@
     Clock = 21,
     PowerBomb = 22,
     RubberBomb = 23,
-    MagnetBomb = 24
+    MagnetBomb = 24,
+    Skull = 25,
+    OneUp = 26
 }

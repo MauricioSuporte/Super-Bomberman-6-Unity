@@ -4,6 +4,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public sealed class TankShot : MonoBehaviour
 {
+    public static readonly bool EnableTankShotDiagnostics = false;
+
     [SerializeField, Min(0.1f)] private float speed = 8f;
     [SerializeField] private LayerMask hitMask;
 
@@ -26,12 +28,26 @@ public sealed class TankShot : MonoBehaviour
 
     private bool _impactHandled;
 
+    public Vector2 Direction => _dir;
+    public float Speed => speed;
+    public GameObject Owner => _owner;
+    public bool ImpactHandled => _impactHandled;
+    public int ShotId => GetEntityId().GetHashCode();
+
     public void Init(Vector2 dir, float projectileSpeed, LayerMask mask, GameObject owner)
     {
         _dir = dir == Vector2.zero ? Vector2.down : dir.normalized;
         speed = Mathf.Max(0.1f, projectileSpeed);
         hitMask = mask;
         _owner = owner;
+
+        if (EnableTankShotDiagnostics)
+        {
+            Debug.LogWarning(
+                $"[TankShot][S{ShotId}] SPAWN owner:P{ResolveOwnerPlayerId()} " +
+                $"pos:{transform.position} dir:{_dir} speed:{speed:F2}",
+                this);
+        }
 
         _filter = new ContactFilter2D { useLayerMask = true, useTriggers = true };
         _filter.SetLayerMask(hitMask);
@@ -105,6 +121,19 @@ public sealed class TankShot : MonoBehaviour
 
         _impactHandled = true;
 
+        if (EnableTankShotDiagnostics)
+        {
+            string hitName = other != null ? other.name : "none";
+            int hitLayer = other != null ? other.gameObject.layer : -1;
+            int hitPlayerId = ResolveHitPlayerId(other);
+            string hitTarget = hitPlayerId > 0 ? $"P{hitPlayerId}" : "none";
+            Debug.LogWarning(
+                $"[TankShot][S{ShotId}] IMPACT owner:P{ResolveOwnerPlayerId()} " +
+                $"pos:{impactPos} hit:{hitName} layer:{hitLayer} " +
+                $"target:{hitTarget}",
+                this);
+        }
+
         if (_rb != null)
             _rb.MovePosition(impactPos);
 
@@ -114,6 +143,22 @@ public sealed class TankShot : MonoBehaviour
         TrySpawnExplosion(impactPos);
 
         Destroy(gameObject);
+    }
+
+    private int ResolveOwnerPlayerId()
+    {
+        if (_owner == null)
+            return 0;
+
+        PlayerIdentity ownerIdentity = _owner.GetComponentInParent<PlayerIdentity>();
+        return ownerIdentity != null ? ownerIdentity.playerId : 0;
+    }
+
+    private static int ResolveHitPlayerId(Collider2D other)
+    {
+        PlayerIdentity hitIdentity =
+            other != null ? other.GetComponentInParent<PlayerIdentity>() : null;
+        return hitIdentity != null ? hitIdentity.playerId : 0;
     }
 
     private void TryChainBomb(Collider2D other)

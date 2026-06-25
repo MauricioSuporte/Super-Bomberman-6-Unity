@@ -7,11 +7,15 @@ using UnityEngine.InputSystem.Controls;
 [DefaultExecutionOrder(-200)]
 public class PlayerInputManager : MonoBehaviour
 {
+    private const int MinSupportedPlayerId = 1;
+    private const int MaxSupportedPlayerId = 6;
+    private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
+
     public static PlayerInputManager Instance { get; private set; }
 
     [Header("Players (fallback if GameSession is missing)")]
-    [Tooltip("How many player profiles to create (1-4). Used only if GameSession.Instance is null.")]
-    [Range(1, 4)]
+    [Tooltip("How many player profiles to create (1-6). Used only if GameSession.Instance is null.")]
+    [Range(MinSupportedPlayerId, MaxSupportedPlayerId)]
     [SerializeField] int maxPlayers = 4;
 
     [Header("Analog As Dpad Fallback")]
@@ -43,8 +47,25 @@ public class PlayerInputManager : MonoBehaviour
 
     private readonly Dictionary<int, MovementController> playerControllers = new();
     private readonly HashSet<int> playersUsingSpringLauncher = new();
+    private readonly bool[] playersRidingBoat = new bool[MaxSupportedPlayerId + 1];
+    private readonly bool[] playersUsingSpringLauncherState = new bool[MaxSupportedPlayerId + 1];
+    private readonly bool[,] rawHeldCache = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[,] rawDownCache = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly int[,] rawHeldCacheStamp = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly int[,] rawDownCacheStamp = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[,] syntheticHeld = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[,] syntheticPreviousHeld = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly int[,] syntheticTapFrame = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[] anyHeldInputCache = new bool[MaxSupportedPlayerId + 1];
+    private readonly int[] anyHeldInputCacheStamp = new int[MaxSupportedPlayerId + 1];
+
+    private static readonly Dictionary<KeyCode, KeyControl> keyboardControlsByKeyCode = new();
+    private static Keyboard cachedKeyboard;
+    private static bool keyboardControlCacheReady;
 
     private float nextPlayersMapRefreshTime;
+    private int playerStateCacheStamp;
+    private int lastForcedPlayersMapRefreshStamp;
 
     int PlayerCount
     {
@@ -52,10 +73,21 @@ public class PlayerInputManager : MonoBehaviour
         {
             var gs = GameSession.Instance;
             if (gs != null)
-                return Mathf.Clamp(gs.ActivePlayerCount, 1, 4);
+                return Mathf.Clamp(gs.ActivePlayerCount, MinSupportedPlayerId, MaxSupportedPlayerId);
 
-            return Mathf.Clamp(maxPlayers, 1, 4);
+            return Mathf.Clamp(maxPlayers, MinSupportedPlayerId, MaxSupportedPlayerId);
         }
+    }
+
+    bool IsConfiguredActivePlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        var gs = GameSession.Instance;
+        if (gs != null)
+            return gs.IsPlayerActive(playerId);
+
+        return playerId <= PlayerCount;
     }
 
     void Awake()
@@ -75,11 +107,12 @@ public class PlayerInputManager : MonoBehaviour
 
     void Update()
     {
-        EnsureProfilesForPlayerCount();
-        RefreshPlayersMap(force: false);
+        using var performanceSample = BattleModePerformanceMarkers.InputUpdate.Auto();
 
-        int count = PlayerCount;
-        for (int id = 1; id <= count; id++)
+        EnsureProfilesForPlayerCount();
+        RefreshPlayerStateCache(forcePlayersMapRefresh: false);
+
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             var p = GetPlayer(id);
             ReadDirectionalDigital(p, id, out bool up, out bool down, out bool left, out bool right);
@@ -93,21 +126,29 @@ public class PlayerInputManager : MonoBehaviour
 
     void LateUpdate()
     {
-        int count = PlayerCount;
-        for (int id = 1; id <= count; id++)
+        using var performanceSample = BattleModePerformanceMarkers.InputUpdate.Auto();
+
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             prevUp[id] = curUp[id];
             prevDown[id] = curDown[id];
             prevLeft[id] = curLeft[id];
             prevRight[id] = curRight[id];
+
+            for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
+                syntheticPreviousHeld[id, actionIndex] = syntheticHeld[id, actionIndex];
         }
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void EnsureProfilesForPlayerCount()
     {
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             if (!players.TryGetValue(id, out var p) || p == null)
                 players[id] = new PlayerInputProfile(id);
@@ -148,19 +189,106 @@ public class PlayerInputManager : MonoBehaviour
             if (identity == null)
                 continue;
 
-            int pid = Mathf.Clamp(identity.playerId, 1, 4);
+            int pid = Mathf.Clamp(identity.playerId, 1, 6);
             playerControllers[pid] = mc;
         }
     }
 
+    private static int GetFrameStamp()
+    {
+        return Time.frameCount + 1;
+    }
+
+    private void InvalidatePlayerStateCache()
+    {
+        playerStateCacheStamp = 0;
+    }
+
+    private void RefreshPlayerStateCache(bool forcePlayersMapRefresh)
+    {
+        int frameStamp = GetFrameStamp();
+        if (!forcePlayersMapRefresh && playerStateCacheStamp == frameStamp)
+            return;
+
+        RefreshPlayersMap(force: forcePlayersMapRefresh);
+
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
+        {
+            bool isActivePlayer = IsConfiguredActivePlayer(id);
+            playersRidingBoat[id] = false;
+            playersUsingSpringLauncherState[id] = isActivePlayer && playersUsingSpringLauncher.Contains(id);
+
+            if (!isActivePlayer)
+                continue;
+
+            if (playerControllers.TryGetValue(id, out var mc) && mc != null)
+                playersRidingBoat[id] = BoatRideZone.IsRidingBoat(mc);
+        }
+
+        playerStateCacheStamp = frameStamp;
+
+        if (forcePlayersMapRefresh)
+            lastForcedPlayersMapRefreshStamp = frameStamp;
+    }
+
+    private static bool TryGetActionIndex(PlayerAction action, out int actionIndex)
+    {
+        actionIndex = (int)action;
+        return actionIndex >= 0 && actionIndex < PlayerActionCount;
+    }
+
     public void SetSpringLauncherInputGate(int playerId, bool enabled)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
 
         if (enabled)
             playersUsingSpringLauncher.Add(playerId);
         else
             playersUsingSpringLauncher.Remove(playerId);
+
+        InvalidatePlayerStateCache();
+    }
+
+    public void SetSyntheticHeld(int playerId, PlayerAction action, bool held)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return;
+
+        syntheticHeld[playerId, actionIndex] = held;
+        anyHeldInputCacheStamp[playerId] = 0;
+    }
+
+    public void TapSynthetic(int playerId, PlayerAction action)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return;
+
+        syntheticTapFrame[playerId, actionIndex] = Time.frameCount;
+        anyHeldInputCacheStamp[playerId] = 0;
+    }
+
+    public void ClearSyntheticPlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
+        {
+            syntheticHeld[playerId, actionIndex] = false;
+            syntheticPreviousHeld[playerId, actionIndex] = false;
+            syntheticTapFrame[playerId, actionIndex] = 0;
+        }
+
+        anyHeldInputCacheStamp[playerId] = 0;
+    }
+
+    public void ClearAllSyntheticInputs()
+    {
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
+            ClearSyntheticPlayer(id);
     }
 
     private bool IsActionBlockedWhileRidingBoat(PlayerAction action)
@@ -189,15 +317,16 @@ public class PlayerInputManager : MonoBehaviour
         if (!IsActionBlockedWhileRidingBoat(action))
             return false;
 
-        if (!playerControllers.TryGetValue(playerId, out var mc) || mc == null)
-        {
-            RefreshPlayersMap(force: true);
+        RefreshPlayerStateCache(forcePlayersMapRefresh: false);
 
-            if (!playerControllers.TryGetValue(playerId, out mc) || mc == null)
-                return false;
+        if (!playersRidingBoat[playerId] &&
+            (!playerControllers.TryGetValue(playerId, out var mc) || mc == null) &&
+            lastForcedPlayersMapRefreshStamp != GetFrameStamp())
+        {
+            RefreshPlayerStateCache(forcePlayersMapRefresh: true);
         }
 
-        return BoatRideZone.IsRidingBoat(mc);
+        return playersRidingBoat[playerId];
     }
 
     private bool ShouldBlockActionBecauseUsingSpringLauncher(int playerId, PlayerAction action)
@@ -205,15 +334,16 @@ public class PlayerInputManager : MonoBehaviour
         if (!blockNonDirectionalInputsWhileUsingSpringLauncher)
             return false;
 
-        if (!playersUsingSpringLauncher.Contains(playerId))
+        if (!IsActionBlockedWhileUsingSpringLauncher(action))
             return false;
 
-        return IsActionBlockedWhileUsingSpringLauncher(action);
+        RefreshPlayerStateCache(forcePlayersMapRefresh: false);
+        return playersUsingSpringLauncherState[playerId];
     }
 
     public PlayerInputProfile GetPlayer(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
 
         if (!players.TryGetValue(playerId, out var p) || p == null)
         {
@@ -232,7 +362,7 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool Get(PlayerAction action, int playerId = 1)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
@@ -240,39 +370,18 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
-        if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.Get(action))
-            return true;
-
-        if (TryGetMobileDirectionalHeld(action, playerId, out bool mobileDirectionalHeld) && mobileDirectionalHeld)
-            return true;
-
-        var p = GetPlayer(playerId);
-        var b = p.GetBinding(action);
-
-        if (b.kind == BindKind.Key)
-            return ReadKeyHeld(b.key);
-
-        if (b.kind == BindKind.DPad)
+        if (TryGetMobileDirectionalHeld(action, playerId, out bool mobileDirectionalHeld) &&
+            mobileDirectionalHeld)
         {
-            return b.dpadDir switch
-            {
-                0 => curUp[playerId],
-                1 => curDown[playerId],
-                2 => curLeft[playerId],
-                3 => curRight[playerId],
-                _ => false
-            };
+            return true;
         }
 
-        if (b.kind == BindKind.JoyButton)
-            return ReadGamepadButtonHeld(p, b.joyButton);
-
-        return false;
+        return IsSyntheticHeld(playerId, action) || ReadHeldRawCached(playerId, action);
     }
 
     public bool GetDown(PlayerAction action, int playerId = 1)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
@@ -280,45 +389,7 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
-        if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.GetDown(action))
-            return true;
-
-        if (TryGetMobileDirectionalDown(action, playerId, out bool mobileDirectionalDown) && mobileDirectionalDown)
-            return true;
-
-        var p = GetPlayer(playerId);
-        var b = p.GetBinding(action);
-
-        if (b.kind == BindKind.Key)
-            return ReadKeyDown(b.key);
-
-        if (b.kind == BindKind.DPad)
-        {
-            bool now = b.dpadDir switch
-            {
-                0 => curUp[playerId],
-                1 => curDown[playerId],
-                2 => curLeft[playerId],
-                3 => curRight[playerId],
-                _ => false
-            };
-
-            bool was = b.dpadDir switch
-            {
-                0 => prevUp[playerId],
-                1 => prevDown[playerId],
-                2 => prevLeft[playerId],
-                3 => prevRight[playerId],
-                _ => false
-            };
-
-            return now && !was;
-        }
-
-        if (b.kind == BindKind.JoyButton)
-            return ReadGamepadButtonDown(p, b.joyButton);
-
-        return false;
+        return IsSyntheticDown(playerId, action) || ReadDownRawCached(playerId, action);
     }
 
     bool TryGetMobileDirectionalHeld(PlayerAction action, int playerId, out bool held)
@@ -387,10 +458,11 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool AnyGet(PlayerAction action, out int playerId)
     {
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
+            if (!IsConfiguredActivePlayer(id))
+                continue;
+
             if (Get(action, id))
             {
                 playerId = id;
@@ -406,10 +478,11 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool AnyGetDown(PlayerAction action, out int playerId)
     {
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
+            if (!IsConfiguredActivePlayer(id))
+                continue;
+
             if (GetDown(action, id))
             {
                 playerId = id;
@@ -421,11 +494,175 @@ public class PlayerInputManager : MonoBehaviour
         return false;
     }
 
+    public bool HasAnyHeldInput(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        int frameStamp = GetFrameStamp();
+        if (anyHeldInputCacheStamp[playerId] == frameStamp)
+            return anyHeldInputCache[playerId];
+
+        bool hasInput =
+            (curUp.TryGetValue(playerId, out bool up) && up) ||
+            (curDown.TryGetValue(playerId, out bool down) && down) ||
+            (curLeft.TryGetValue(playerId, out bool left) && left) ||
+            (curRight.TryGetValue(playerId, out bool right) && right) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveUp) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveDown) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveLeft) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveRight) ||
+            ReadHeldRawCached(playerId, PlayerAction.Start) ||
+            ReadHeldRawCached(playerId, PlayerAction.ActionA) ||
+            ReadHeldRawCached(playerId, PlayerAction.ActionB) ||
+            ReadHeldRawCached(playerId, PlayerAction.ActionC) ||
+            ReadHeldRawCached(playerId, PlayerAction.ActionL) ||
+            ReadHeldRawCached(playerId, PlayerAction.ActionR) ||
+            HasAnySyntheticHeld(playerId);
+
+        anyHeldInputCache[playerId] = hasInput;
+        anyHeldInputCacheStamp[playerId] = frameStamp;
+        return hasInput;
+    }
+
+    private bool IsSyntheticHeld(int playerId, PlayerAction action)
+    {
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return false;
+
+        return syntheticHeld[playerId, actionIndex] ||
+               syntheticTapFrame[playerId, actionIndex] == Time.frameCount;
+    }
+
+    private bool IsSyntheticDown(int playerId, PlayerAction action)
+    {
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return false;
+
+        return syntheticTapFrame[playerId, actionIndex] == Time.frameCount ||
+               (syntheticHeld[playerId, actionIndex] && !syntheticPreviousHeld[playerId, actionIndex]);
+    }
+
+    private bool HasAnySyntheticHeld(int playerId)
+    {
+        for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
+        {
+            if (syntheticHeld[playerId, actionIndex] ||
+                syntheticTapFrame[playerId, actionIndex] == Time.frameCount)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool ReadHeldRawCached(int playerId, PlayerAction action)
+    {
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return ReadHeldRawUncached(playerId, action);
+
+        int frameStamp = GetFrameStamp();
+        if (rawHeldCacheStamp[playerId, actionIndex] == frameStamp)
+            return rawHeldCache[playerId, actionIndex];
+
+        bool value = ReadHeldRawUncached(playerId, action);
+        rawHeldCache[playerId, actionIndex] = value;
+        rawHeldCacheStamp[playerId, actionIndex] = frameStamp;
+        return value;
+    }
+
+    private bool ReadHeldRawUncached(int playerId, PlayerAction action)
+    {
+        if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.Get(action))
+            return true;
+
+        var p = GetPlayer(playerId);
+        var b = p.GetBinding(action);
+
+        if (b.kind == BindKind.Key)
+            return ReadKeyHeld(b.key);
+
+        if (b.kind == BindKind.DPad)
+        {
+            return b.dpadDir switch
+            {
+                0 => curUp.TryGetValue(playerId, out bool up) && up,
+                1 => curDown.TryGetValue(playerId, out bool down) && down,
+                2 => curLeft.TryGetValue(playerId, out bool left) && left,
+                3 => curRight.TryGetValue(playerId, out bool right) && right,
+                _ => false
+            };
+        }
+
+        if (b.kind == BindKind.JoyButton)
+            return ReadGamepadButtonHeld(p, b.joyButton);
+
+        return false;
+    }
+
+    private bool ReadDownRawCached(int playerId, PlayerAction action)
+    {
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return ReadDownRawUncached(playerId, action);
+
+        int frameStamp = GetFrameStamp();
+        if (rawDownCacheStamp[playerId, actionIndex] == frameStamp)
+            return rawDownCache[playerId, actionIndex];
+
+        bool value = ReadDownRawUncached(playerId, action);
+        rawDownCache[playerId, actionIndex] = value;
+        rawDownCacheStamp[playerId, actionIndex] = frameStamp;
+        return value;
+    }
+
+    private bool ReadDownRawUncached(int playerId, PlayerAction action)
+    {
+        if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.GetDown(action))
+            return true;
+
+        if (TryGetMobileDirectionalDown(action, playerId, out bool mobileDirectionalDown) && mobileDirectionalDown)
+            return true;
+
+        var p = GetPlayer(playerId);
+        var b = p.GetBinding(action);
+
+        if (b.kind == BindKind.Key)
+            return ReadKeyDown(b.key);
+
+        if (b.kind == BindKind.DPad)
+        {
+            bool now = b.dpadDir switch
+            {
+                0 => curUp[playerId],
+                1 => curDown[playerId],
+                2 => curLeft[playerId],
+                3 => curRight[playerId],
+                _ => false
+            };
+
+            bool was = b.dpadDir switch
+            {
+                0 => prevUp[playerId],
+                1 => prevDown[playerId],
+                2 => prevLeft[playerId],
+                3 => prevRight[playerId],
+                _ => false
+            };
+
+            return now && !was;
+        }
+
+        if (b.kind == BindKind.JoyButton)
+            return ReadGamepadButtonDown(p, b.joyButton);
+
+        return false;
+    }
+
     void ReadDirectionalDigital(PlayerInputProfile p, int playerId, out bool up, out bool down, out bool left, out bool right)
     {
         up = down = left = right = false;
 
-        ReadGamepadDirectionalDigital(p, out bool padUp, out bool padDown, out bool padLeft, out bool padRight);
+        ReadControllerDirectionalDigital(p, out bool padUp, out bool padDown, out bool padLeft, out bool padRight);
 
         up |= padUp;
         down |= padDown;
@@ -447,101 +684,29 @@ public class PlayerInputManager : MonoBehaviour
 
     }
 
-    void ReadGamepadDirectionalDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
+    void ReadControllerDirectionalDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
     {
-        var pad = ResolvePlayerGamepad(p);
+        var device = ResolvePlayerInputDevice(p);
 
-        if (pad == null)
+        if (device == null)
         {
             up = down = left = right = false;
             return;
         }
 
-        bool dUp = pad.dpad.up.isPressed;
-        bool dDown = pad.dpad.down.isPressed;
-        bool dLeft = pad.dpad.left.isPressed;
-        bool dRight = pad.dpad.right.isPressed;
-
-        ReadStickAsDigital(pad.leftStick, analogThreshold, out bool lsUp, out bool lsDown, out bool lsLeft, out bool lsRight);
-
-        bool rsUp = false, rsDown = false, rsLeft = false, rsRight = false;
-        if (includeRightStickAsDpad)
-            ReadStickAsDigital(pad.rightStick, analogThreshold, out rsUp, out rsDown, out rsLeft, out rsRight);
-
-        up = dUp || lsUp || rsUp;
-        down = dDown || lsDown || rsDown;
-        left = dLeft || lsLeft || rsLeft;
-        right = dRight || lsRight || rsRight;
+        UniversalControllerInput.ReadDirectionalDigital(
+            device,
+            analogThreshold,
+            includeRightStickAsDpad,
+            out up,
+            out down,
+            out left,
+            out right);
     }
 
-    static void ReadStickAsDigital(StickControl stick, float threshold, out bool up, out bool down, out bool left, out bool right)
+    static InputDevice ResolvePlayerInputDevice(PlayerInputProfile p)
     {
-        up = down = left = right = false;
-        if (stick == null)
-            return;
-
-        Vector2 v = stick.ReadValue();
-
-        up = v.y >= threshold;
-        down = v.y <= -threshold;
-        right = v.x >= threshold;
-        left = v.x <= -threshold;
-    }
-
-    static Gamepad ResolvePlayerGamepad(PlayerInputProfile p)
-    {
-        if (p == null)
-            return null;
-
-        var all = Gamepad.all;
-        if (all.Count == 0)
-            return null;
-
-        if (p.gamepadDeviceId >= 0)
-        {
-            for (int i = 0; i < all.Count; i++)
-            {
-                var pad = all[i];
-                if (pad == null)
-                    continue;
-
-                if (pad.deviceId == p.gamepadDeviceId)
-                {
-                    p.joyIndex = Mathf.Clamp(i + 1, 1, 11);
-                    return pad;
-                }
-            }
-        }
-
-        if (!string.IsNullOrEmpty(p.gamepadProduct))
-        {
-            for (int i = 0; i < all.Count; i++)
-            {
-                var pad = all[i];
-                if (pad == null)
-                    continue;
-
-                var product = pad.description.product ?? "";
-                if (string.Equals(product, p.gamepadProduct, StringComparison.OrdinalIgnoreCase))
-                {
-                    p.BindToGamepad(pad, i + 1);
-                    return pad;
-                }
-            }
-        }
-
-        int idx = Mathf.Clamp(p.joyIndex, 1, 11) - 1;
-        if (idx < 0 || idx >= all.Count)
-            return null;
-
-        var resolved = all[idx];
-        if (resolved != null)
-        {
-            p.BindToGamepad(resolved, idx + 1);
-            return resolved;
-        }
-
-        return null;
+        return UniversalControllerInput.ResolveProfileDevice(p);
     }
 
     static bool ReadKeyHeld(KeyCode k)
@@ -568,19 +733,27 @@ public class PlayerInputManager : MonoBehaviour
         if (kb == null)
             return false;
 
+        EnsureKeyboardControlCache(kb);
+        return keyboardControlsByKeyCode.TryGetValue(desiredKeyCode, out key) && key != null;
+    }
+
+    static void EnsureKeyboardControlCache(Keyboard kb)
+    {
+        if (keyboardControlCacheReady && cachedKeyboard == kb)
+            return;
+
+        keyboardControlsByKeyCode.Clear();
+        cachedKeyboard = kb;
+        keyboardControlCacheReady = true;
+
         foreach (var k in kb.allKeys)
         {
             if (k == null)
                 continue;
 
-            if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc) && kc == desiredKeyCode)
-            {
-                key = k;
-                return true;
-            }
+            if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc))
+                keyboardControlsByKeyCode[kc] = k;
         }
-
-        return false;
     }
 
     static bool TryMapInputSystemKeyToUnityKeyCode(Key key, out KeyCode kc)
@@ -655,39 +828,19 @@ public class PlayerInputManager : MonoBehaviour
 
     static bool ReadGamepadButtonHeld(PlayerInputProfile p, int btn)
     {
-        var pad = ResolvePlayerGamepad(p);
-        if (pad == null)
+        var device = ResolvePlayerInputDevice(p);
+        if (device == null)
             return false;
 
-        var c = MapLegacyButtonIndex(pad, btn);
-        return c != null && c.isPressed;
+        return UniversalControllerInput.ReadButtonHeld(device, btn);
     }
 
     static bool ReadGamepadButtonDown(PlayerInputProfile p, int btn)
     {
-        var pad = ResolvePlayerGamepad(p);
-        if (pad == null)
+        var device = ResolvePlayerInputDevice(p);
+        if (device == null)
             return false;
 
-        var c = MapLegacyButtonIndex(pad, btn);
-        return c != null && c.wasPressedThisFrame;
-    }
-
-    static ButtonControl MapLegacyButtonIndex(Gamepad pad, int btn)
-    {
-        return btn switch
-        {
-            0 => pad.buttonSouth,
-            1 => pad.buttonEast,
-            2 => pad.buttonWest,
-            3 => pad.buttonNorth,
-            4 => pad.leftShoulder,
-            5 => pad.rightShoulder,
-            6 => pad.leftTrigger,
-            7 => pad.rightTrigger,
-            8 => pad.startButton,
-            9 => pad.selectButton,
-            _ => null
-        };
+        return UniversalControllerInput.ReadButtonDown(device, btn);
     }
 }

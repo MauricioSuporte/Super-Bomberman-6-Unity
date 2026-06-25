@@ -70,6 +70,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
     {
         rb = GetComponent<Rigidbody2D>();
         _health = GetComponent<CharacterHealth>();
+        ApplyCampaignDifficultyModifiers(_health);
 
         if (obstacleMask.value == 0)
             obstacleMask = LayerMask.GetMask("Bomb", "Stage", "Enemy");
@@ -501,7 +502,10 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
         AnimatedSpriteRenderer dmg = _cachedEnergized ? spriteDamagedEnergized : spriteDamagedNormal;
         if (dmg == null)
+        {
+            _health.playDamagedLoopAndBlink = true;
             return;
+        }
 
         isInDamagedLoop = true;
         isStuck = false;
@@ -545,7 +549,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
         var audioSource = GetComponent<AudioSource>();
         if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
 
         if (rb != null)
             rb.linearVelocity = Vector2.zero;

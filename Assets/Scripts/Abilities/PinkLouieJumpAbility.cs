@@ -14,10 +14,10 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private bool enabledAbility = true;
 
     [Header("Jump")]
-    public float jumpDurationSeconds = 1f;
+    public float jumpDurationSeconds = 0.8f;
     public int forwardCells = 2;
     public float jumpArcHeight = 1f;
-    public float jumpCooldownSeconds = 0.25f;
+    public float jumpCooldownSeconds = 0.1f;
 
     [Header("Invulnerability")]
     public bool invulnerableDuringJump = true;
@@ -36,6 +36,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     CharacterHealth playerHealth;
     PlayerMountCompanion companion;
+    AbilitySystem abilitySystem;
 
     Coroutine routine;
     Coroutine visualRoutine;
@@ -43,6 +44,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     float nextAllowedTime;
 
     IPinkLouieJumpExternalAnimator externalAnimator;
+
+    int bombLayer;
 
     Transform jumpVisualRoot;
     Vector3 jumpVisualBaseLocalPosition;
@@ -52,9 +55,13 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     float mountedPlayerBaseLocalY;
     bool mountedPlayerBaseLocalYCached;
     bool mountedPlayerArcActive;
+    Collider2D[] jumpDisabledColliders;
+    bool[] jumpDisabledColliderPreviousEnabled;
+    bool jumpCollisionsDisabled;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool JumpActive => routine != null;
 
     bool deathCancelInProgress;
 
@@ -66,6 +73,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
+        TryGetComponent(out abilitySystem);
+
+        bombLayer = LayerMask.NameToLayer("Bomb");
 
         if (shadow == null)
             shadow = GetComponentInChildren<PinkLouieShadowController>(true);
@@ -127,8 +137,6 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
             return;
 
-        nextAllowedTime = Time.time + jumpCooldownSeconds;
-
         if (routine != null)
             return;
 
@@ -148,7 +156,10 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         CacheMountedPlayerBaseLocalY();
 
-        Vector2 inputDir = movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
+        Vector2 heldInputDir = GetHeldDirectionalInputCardinal();
+        Vector2 inputDir = heldInputDir != Vector2.zero
+            ? heldInputDir
+            : movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
         Vector2 faceDir = movement.FacingDirection != Vector2.zero ? movement.FacingDirection : Vector2.down;
 
         Vector2 dir = inputDir != Vector2.zero ? inputDir : Vector2.zero;
@@ -191,7 +202,11 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         Vector3 startPos = CellCenter(startCell, destructible, indestructible, ground);
         Vector3 endPos = CellCenter(targetCell, destructible, indestructible, ground);
 
+        if (dir != Vector2.zero)
+            movement.ForceFacingDirection(dir);
+
         movement.SetInputLocked(true, false);
+        DisablePlayerCollisionsForJump();
 
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
@@ -212,7 +227,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             StartJumpInvulnerabilityOnly(mountedLouieHealth);
 
         if (audioSource != null && jumpSfx != null)
-            audioSource.PlayOneShot(jumpSfx, jumpSfxVolume);
+            GameAudioSettings.PlaySfx(audioSource, jumpSfx, jumpSfxVolume);
 
         StartJumpVisuals(dir != Vector2.zero ? dir : faceDir);
 
@@ -258,6 +273,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
                     ResetMountedPlayerJumpArc();
                     StopJumpVisuals();
                     shadow?.EndJump();
+                    RestorePlayerCollisionsAfterJump();
 
                     if (movement != null)
                         movement.SetInputLocked(false);
@@ -265,6 +281,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
                 routine = null;
                 deathCancelInProgress = false;
+                StartJumpCooldown();
                 yield break;
             }
 
@@ -282,6 +299,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         {
             StopJumpVisuals();
             shadow?.EndJump();
+            RestorePlayerCollisionsAfterJump();
 
             if (movement != null)
                 movement.SetInputLocked(false);
@@ -289,6 +307,12 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         routine = null;
         deathCancelInProgress = false;
+        StartJumpCooldown();
+    }
+
+    void StartJumpCooldown()
+    {
+        nextAllowedTime = Time.time + Mathf.Max(0f, jumpCooldownSeconds);
     }
 
     void BindShadowToPinkLouie()
@@ -456,6 +480,51 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         return louieMove.GetComponent<CharacterHealth>();
     }
 
+    void DisablePlayerCollisionsForJump()
+    {
+        if (jumpCollisionsDisabled)
+            return;
+
+        jumpDisabledColliders = GetComponents<Collider2D>();
+        if (jumpDisabledColliders == null || jumpDisabledColliders.Length == 0)
+            return;
+
+        jumpDisabledColliderPreviousEnabled = new bool[jumpDisabledColliders.Length];
+
+        for (int i = 0; i < jumpDisabledColliders.Length; i++)
+        {
+            Collider2D col = jumpDisabledColliders[i];
+            if (col == null)
+                continue;
+
+            jumpDisabledColliderPreviousEnabled[i] = col.enabled;
+            col.enabled = false;
+        }
+
+        jumpCollisionsDisabled = true;
+    }
+
+    void RestorePlayerCollisionsAfterJump()
+    {
+        if (!jumpCollisionsDisabled)
+            return;
+
+        if (jumpDisabledColliders != null && jumpDisabledColliderPreviousEnabled != null)
+        {
+            int count = Mathf.Min(jumpDisabledColliders.Length, jumpDisabledColliderPreviousEnabled.Length);
+            for (int i = 0; i < count; i++)
+            {
+                Collider2D col = jumpDisabledColliders[i];
+                if (col != null)
+                    col.enabled = jumpDisabledColliderPreviousEnabled[i];
+            }
+        }
+
+        jumpDisabledColliders = null;
+        jumpDisabledColliderPreviousEnabled = null;
+        jumpCollisionsDisabled = false;
+    }
+
     void HandleLoseLouieMidJump(Vector3 projectedGroundPos, Vector3Int startCell, Tilemap destructible, Tilemap indestructible, Tilemap ground)
     {
         if (rb == null)
@@ -508,6 +577,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (hits == null || hits.Length == 0)
             return true;
 
+        bool canPassDestructibles = HasDestructiblePassEnabled();
+        bool canPassBombs = HasBombPassEnabled();
+
         for (int i = 0; i < hits.Length; i++)
         {
             var hit = hits[i];
@@ -520,8 +592,14 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             if (hit.isTrigger)
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                continue;
+
+            if (hit.gameObject.layer == bombLayer)
             {
+                if (canPassBombs)
+                    continue;
+
                 var bomb = hit.GetComponent<Bomb>();
                 var myBombController = GetComponent<BombController>();
 
@@ -537,6 +615,42 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         }
 
         return true;
+    }
+
+    bool HasDestructiblePassEnabled()
+    {
+        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassDestructibles)
+            return true;
+
+        if (abilitySystem == null && !TryGetComponent(out abilitySystem))
+            return false;
+
+        abilitySystem.RebuildCache();
+        return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+    }
+
+    bool HasBombPassEnabled()
+    {
+        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassBombs)
+            return true;
+
+        if (abilitySystem == null && !TryGetComponent(out abilitySystem))
+            return false;
+
+        abilitySystem.RebuildCache();
+        return abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+    }
+
+    int GetPlayerId()
+    {
+        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 6);
+
+        var parentId = GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 6);
+
+        return 1;
     }
 
     void StartJumpVisuals(Vector2 dir)
@@ -578,12 +692,23 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
         shadow?.EndJump();
 
         if (movement != null && !movement.isDead)
             movement.SetInputLocked(false);
+
+        StartJumpCooldown();
+    }
+
+    public void CancelJumpForExternalInterruption()
+    {
+        if (!JumpActive)
+            return;
+
+        CancelJump();
     }
 
     public void Enable()
@@ -617,8 +742,51 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
         shadow?.EndJump();
+    }
+
+    Vector2 GetHeldDirectionalInputCardinal()
+    {
+        var input = PlayerInputManager.Instance;
+        int playerId = movement != null ? movement.PlayerId : GetPlayerId();
+
+        if (input == null)
+            return Vector2.zero;
+
+        return ResolveHeldDirectionalInput(
+            input.Get(playerId, PlayerAction.MoveUp),
+            input.Get(playerId, PlayerAction.MoveDown),
+            input.Get(playerId, PlayerAction.MoveLeft),
+            input.Get(playerId, PlayerAction.MoveRight));
+    }
+
+    static Vector2 ResolveHeldDirectionalInput(bool up, bool down, bool left, bool right)
+    {
+        Vector2 vertical = Vector2.zero;
+        Vector2 horizontal = Vector2.zero;
+
+        if (up && !down)
+            vertical = Vector2.up;
+        else if (down && !up)
+            vertical = Vector2.down;
+
+        if (left && !right)
+            horizontal = Vector2.left;
+        else if (right && !left)
+            horizontal = Vector2.right;
+
+        if (horizontal != Vector2.zero && vertical == Vector2.zero)
+            return horizontal;
+
+        if (vertical != Vector2.zero && horizontal == Vector2.zero)
+            return vertical;
+
+        if (horizontal != Vector2.zero && vertical != Vector2.zero)
+            return horizontal + vertical;
+
+        return Vector2.zero;
     }
 }

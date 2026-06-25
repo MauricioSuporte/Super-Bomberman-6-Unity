@@ -682,6 +682,14 @@ MonoBehaviour:
   starSpeed: 3
   starLifeTime: 5
   starSpawnRadius: 0.1
+  enableHardLowHealthChainAttack: 1
+  logHardLowHealthChainAttack: 1
+  hardChainAttackCenter: {x: -1, y: -1}
+  hardChainStarsPerArm: 5
+  hardChainFirstStarDistance: 0.5
+  hardChainStarSpacing: 0.8
+  hardChainAttackDuration: 10
+  hardChainAngularSpeedDegrees: -90
   deathDuration: 5
   explosionPrefab: {fileID: 2886134669517775153, guid: 66b7ed489683a994eac3b1045b00af9c, type: 3}
   explosionSpawnInterval: 0.1

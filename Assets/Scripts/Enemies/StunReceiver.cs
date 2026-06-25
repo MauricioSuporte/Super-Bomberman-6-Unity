@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,8 +6,13 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class StunReceiver : MonoBehaviour
 {
+    private const string StunClipResourcesPrefix = "Sounds/stun";
+    private const int StunClipCount = 4;
+    private static readonly AudioClip[] stunClips = new AudioClip[StunClipCount];
+
     [Header("Debug")]
     [SerializeField] private bool isStunned;
+    [SerializeField] private bool debugStunVisual;
 
     [Header("Custom Stun Animation (AnimatedSpriteRenderer)")]
     [SerializeField] private bool useAnimatedStunRenderer = false;
@@ -64,16 +69,30 @@ public class StunReceiver : MonoBehaviour
     private bool savedStunRendererLoop;
 
     private bool stunVisualSuppressedByDamaged;
+    private bool stunVisualSuppressedByExternal;
     private bool hadFrozenBeforeDamaged;
+    private bool hadFrozenBeforeExternal;
     private bool stunVisualInitialized;
     private bool stunWantsCustomAnim;
+    private int externalVisualSuppressionCount;
 
     private MovementController cachedMovement;
     private BombController cachedBombController;
     private PlayerManualDismount cachedManualDismount;
+    private InactivityAnimation cachedInactivityAnimation;
+    private AudioSource cachedAudioSource;
 
     private bool savedBombControllerEnabled;
     private bool savedManualDismountEnabled;
+    private bool savedSuppressInactivityAnimation;
+    private MountVisualController activeMountedStunVisual;
+    private AnimatedSpriteRenderer activeMountedPlayerStunRenderer;
+    private bool savedMountedPlayerRendererEnabled;
+    private bool savedMountedPlayerRendererIdle;
+    private bool savedMountedPlayerRendererLoop;
+    private bool savedMountedPlayerSpriteEnabled;
+    private bool mountedStunUsesShakeOnly;
+    private bool loggedStunVisualStart;
 
     private MovementControllerAI cachedAIMove;
     private EnemyMovementController cachedEnemyMove;
@@ -83,6 +102,7 @@ public class StunReceiver : MonoBehaviour
     bool deferredRestoreWantsCustomAnim;
 
     bool customStunControllersRestored;
+    private AnimatedSpriteRenderer activeStunAnimatedRenderer;
 
     void Awake()
     {
@@ -91,6 +111,8 @@ public class StunReceiver : MonoBehaviour
         cachedMovement = GetComponent<MovementController>();
         cachedBombController = GetComponent<BombController>();
         cachedManualDismount = GetComponent<PlayerManualDismount>();
+        cachedInactivityAnimation = GetComponent<InactivityAnimation>();
+        cachedAudioSource = GetComponent<AudioSource>();
 
         cachedAIMove = GetComponent<MovementControllerAI>();
         cachedEnemyMove = GetComponent<EnemyMovementController>();
@@ -101,8 +123,12 @@ public class StunReceiver : MonoBehaviour
 
     public void Stun(float seconds)
     {
+        if (CompareTag("Player") && (isStunned || stunRoutine != null))
+            return;
+
         float dur = Mathf.Max(0.01f, seconds);
         float newEnd = Time.time + dur;
+        bool startingNewStun = !isStunned && stunRoutine == null;
 
         suppressRestore = false;
 
@@ -115,8 +141,35 @@ public class StunReceiver : MonoBehaviour
         if (!isStunned || newEnd > stunEndTime)
             stunEndTime = newEnd;
 
+        if (startingNewStun)
+            PlayRandomPlayerStunSfx();
+
         if (stunRoutine == null)
             stunRoutine = StartCoroutine(StunRoutine());
+    }
+
+    private void PlayRandomPlayerStunSfx()
+    {
+        if (!CompareTag("Player"))
+            return;
+
+        AudioClip clip = GetRandomStunClip();
+        if (clip == null)
+            return;
+
+        if (cachedAudioSource != null)
+            GameAudioSettings.PlaySfx(cachedAudioSource, clip, 1f);
+        else
+            GameAudioSettings.PlaySfxAtPoint(clip, transform.position, 1f);
+    }
+
+    private static AudioClip GetRandomStunClip()
+    {
+        int index = Random.Range(0, StunClipCount);
+        if (stunClips[index] == null)
+            stunClips[index] = Resources.Load<AudioClip>($"{StunClipResourcesPrefix}{index + 1}");
+
+        return stunClips[index];
     }
 
     public void CancelStun(bool restoreVisuals)
@@ -153,13 +206,20 @@ public class StunReceiver : MonoBehaviour
         }
         else
         {
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
             spriteBases.Clear();
             animStates.Clear();
             customStunActive = false;
+            activeStunAnimatedRenderer = null;
+            activeMountedStunVisual = null;
+            activeMountedPlayerStunRenderer = null;
         }
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
     }
 
     public void CancelStunForDeath()
@@ -188,30 +248,70 @@ public class StunReceiver : MonoBehaviour
 
         UnfreezeAnimationsKeepCurrentFrame();
 
-        if (stunAnimatedRenderer != null)
+        AnimatedSpriteRenderer renderer = activeStunAnimatedRenderer != null
+            ? activeStunAnimatedRenderer
+            : ResolveStunAnimatedRenderer();
+
+        if (renderer != null)
         {
-            stunAnimatedRenderer.idle = true;
-            stunAnimatedRenderer.loop = false;
-            SetAnimEnabled(stunAnimatedRenderer, false);
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
+
+            renderer.idle = true;
+            renderer.loop = false;
+            SetAnimEnabled(renderer, false);
         }
 
         customStunActive = false;
+        activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
 
         spriteBases.Clear();
         animStates.Clear();
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
+    }
+
+    public void SetVisualSuppressedByExternalTransition(bool suppressed)
+    {
+        if (suppressed)
+        {
+            externalVisualSuppressionCount++;
+            SuppressStunVisualForExternalTransition();
+            return;
+        }
+
+        externalVisualSuppressionCount = Mathf.Max(0, externalVisualSuppressionCount - 1);
+
+        if (externalVisualSuppressionCount > 0)
+            return;
+
+        if (isStunned)
+            stunVisualInitialized = false;
+
+        stunVisualSuppressedByExternal = false;
+        hadFrozenBeforeExternal = false;
     }
 
     IEnumerator StunRoutine()
     {
         isStunned = true;
 
-        bool wantsCustomAnim = useAnimatedStunRenderer && (stunAnimatedRenderer != null);
+        activeStunAnimatedRenderer = ResolveStunAnimatedRenderer();
+        bool wantsCustomAnim = useAnimatedStunRenderer && (activeStunAnimatedRenderer != null);
+        loggedStunVisualStart = false;
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
 
         stunVisualInitialized = false;
         stunWantsCustomAnim = wantsCustomAnim;
@@ -238,6 +338,7 @@ public class StunReceiver : MonoBehaviour
                 rb.linearVelocity = Vector2.zero;
 
             bool damagedActive = IsDamagedVisualActiveNow();
+            bool externalSuppressed = externalVisualSuppressionCount > 0;
 
             if (damagedActive)
             {
@@ -251,6 +352,8 @@ public class StunReceiver : MonoBehaviour
                     }
                     else
                     {
+                        ClearMountedStunShake();
+                        HideMountedPlayerDownForMountedStun();
                         hadFrozenBeforeDamaged = freezeAnimatedSprites && animStates.Count > 0;
                         if (freezeAnimatedSprites)
                             RestoreAnimations();
@@ -258,6 +361,21 @@ public class StunReceiver : MonoBehaviour
 
                     stunVisualSuppressedByDamaged = true;
                 }
+
+                if (freezeAnimatedSprites)
+                    UnfreezeAnimationsKeepCurrentFrame();
+
+                if (suppressRestore || !isActiveAndEnabled || !gameObject.activeInHierarchy)
+                    break;
+
+                yield return null;
+                continue;
+            }
+
+            if (externalSuppressed)
+            {
+                if (!stunVisualSuppressedByExternal)
+                    SuppressStunVisualForExternalTransition();
 
                 if (freezeAnimatedSprites)
                     UnfreezeAnimationsKeepCurrentFrame();
@@ -284,12 +402,32 @@ public class StunReceiver : MonoBehaviour
                 }
                 else
                 {
+                    ShowMountedPlayerDownForMountedStun();
+
                     if (freezeAnimatedSprites && hadFrozenBeforeDamaged)
                         FreezeAnimations();
                 }
 
                 stunVisualSuppressedByDamaged = false;
                 hadFrozenBeforeDamaged = false;
+            }
+
+            if (stunVisualSuppressedByExternal)
+            {
+                if (wantsCustomAnim)
+                {
+                    SuppressCustomStunVisual(false);
+                }
+                else
+                {
+                    ShowMountedPlayerDownForMountedStun();
+
+                    if (freezeAnimatedSprites && hadFrozenBeforeExternal)
+                        FreezeAnimations();
+                }
+
+                stunVisualSuppressedByExternal = false;
+                hadFrozenBeforeExternal = false;
             }
 
             bool doShake =
@@ -307,6 +445,9 @@ public class StunReceiver : MonoBehaviour
                 float y = Mathf.Cos(phase * 1.23f + seed) * amp;
 
                 var offset = new Vector3(x, y, 0f);
+
+                if (activeMountedStunVisual != null && mountedStunUsesShakeOnly)
+                    activeMountedStunVisual.SetExternalStunShake(offset, true);
 
                 for (int i = 0; i < spriteBases.Count; i++)
                 {
@@ -326,8 +467,13 @@ public class StunReceiver : MonoBehaviour
 
         int myToken = ++stunSessionToken;
         bool damagedStillActive = IsDamagedVisualActiveNow();
+        bool externalSuppressionStillActive = externalVisualSuppressionCount > 0;
 
-        if (!suppressRestore && isActiveAndEnabled && gameObject.activeInHierarchy)
+        if (externalSuppressionStillActive)
+        {
+            CompleteStunDuringExternalVisualSuppression();
+        }
+        else if (!suppressRestore && isActiveAndEnabled && gameObject.activeInHierarchy)
         {
             if (damagedStillActive)
             {
@@ -352,20 +498,83 @@ public class StunReceiver : MonoBehaviour
                     RestoreSpriteBases();
                     if (freezeAnimatedSprites)
                         RestoreAnimations();
+
+                    ClearMountedStunShake();
+                    HideMountedPlayerDownForMountedStun();
                 }
             }
         }
         else
         {
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
             spriteBases.Clear();
             animStates.Clear();
             customStunActive = false;
+            activeStunAnimatedRenderer = null;
+            activeMountedStunVisual = null;
+            activeMountedPlayerStunRenderer = null;
         }
 
         stunVisualSuppressedByDamaged = false;
+        if (!externalSuppressionStillActive)
+            stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        if (!externalSuppressionStillActive)
+            hadFrozenBeforeExternal = false;
 
         stunRoutine = null;
+    }
+
+    private void CompleteStunDuringExternalVisualSuppression()
+    {
+        RestoreCustomStunControllersIfNeeded();
+
+        ClearMountedStunShake();
+
+        if (activeMountedStunVisual != null)
+            activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+        if (activeStunAnimatedRenderer != null)
+        {
+            activeStunAnimatedRenderer.idle = savedStunRendererIdle;
+            activeStunAnimatedRenderer.loop = savedStunRendererLoop;
+            SetAnimEnabled(activeStunAnimatedRenderer, false);
+        }
+
+        UnfreezeAnimationsKeepCurrentFrame();
+
+        spriteBases.Clear();
+        animStates.Clear();
+        customStunActive = false;
+        activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
+    }
+
+    private void SuppressStunVisualForExternalTransition()
+    {
+        if (!isStunned)
+            return;
+
+        if (stunVisualInitialized)
+            RestoreSpriteBases();
+
+        if (stunWantsCustomAnim)
+        {
+            SuppressCustomStunVisual(true);
+        }
+        else
+        {
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
+            hadFrozenBeforeExternal = freezeAnimatedSprites && animStates.Count > 0;
+
+            if (freezeAnimatedSprites)
+                RestoreAnimations();
+        }
+
+        stunVisualSuppressedByExternal = true;
     }
 
     private IEnumerator DeferredRestoreAfterDamaged(int token)
@@ -401,9 +610,16 @@ public class StunReceiver : MonoBehaviour
 
         if (suppressRestore || !isActiveAndEnabled || !gameObject.activeInHierarchy)
         {
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
             spriteBases.Clear();
             animStates.Clear();
             customStunActive = false;
+            activeStunAnimatedRenderer = null;
+            activeMountedStunVisual = null;
+            activeMountedPlayerStunRenderer = null;
+            stunVisualSuppressedByExternal = false;
+            hadFrozenBeforeExternal = false;
             deferredVisualRestoreRoutine = null;
             yield break;
         }
@@ -447,6 +663,10 @@ public class StunReceiver : MonoBehaviour
         {
             var sr = srs[i];
             if (sr == null)
+                continue;
+
+            if (mountedStunUsesShakeOnly && activeMountedStunVisual != null &&
+                sr.GetComponentInParent<MountVisualController>(true) == activeMountedStunVisual)
                 continue;
 
             var t = sr.transform;
@@ -619,33 +839,44 @@ public class StunReceiver : MonoBehaviour
         if (customStunActive)
             return;
 
-        if (stunAnimatedRenderer == null)
-            stunAnimatedRenderer = GetComponent<AnimatedSpriteRenderer>();
+        activeStunAnimatedRenderer = ResolveStunAnimatedRenderer();
+        var renderer = activeStunAnimatedRenderer;
 
-        if (stunAnimatedRenderer != null)
+        if (renderer != null)
         {
-            savedStunRendererEnabled = stunAnimatedRenderer.enabled;
-            savedStunRendererIdle = stunAnimatedRenderer.idle;
-            savedStunRendererLoop = stunAnimatedRenderer.loop;
+            savedStunRendererEnabled = renderer.enabled;
+            savedStunRendererIdle = renderer.idle;
+            savedStunRendererLoop = renderer.loop;
         }
+
+        if (cachedInactivityAnimation != null)
+            cachedInactivityAnimation.CancelForExternalOverride();
 
         if (visualOverrideWhileStunned && cachedMovement != null)
         {
             savedVisualOverrideActive = cachedMovement.VisualOverrideActive;
+            savedSuppressInactivityAnimation = cachedMovement.SuppressInactivityAnimation;
+            cachedMovement.SetSuppressInactivityAnimation(true);
             cachedMovement.SetVisualOverrideActive(true);
         }
         else
         {
             savedVisualOverrideActive = false;
+            savedSuppressInactivityAnimation = false;
         }
 
-        if (stunAnimatedRenderer != null)
+        if (renderer != null)
         {
-            stunAnimatedRenderer.loop = true;
-            stunAnimatedRenderer.idle = false;
+            renderer.loop = true;
+            renderer.idle = false;
 
-            SetAnimEnabled(stunAnimatedRenderer, true);
-            stunAnimatedRenderer.RefreshFrame();
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(renderer, true);
+
+            ShowMountedPlayerDownForMountedStun();
+
+            SetAnimEnabled(renderer, true);
+            renderer.RefreshFrame();
         }
 
         if (ShouldAffectControllers())
@@ -674,19 +905,31 @@ public class StunReceiver : MonoBehaviour
         if (!customStunActive)
             return;
 
-        if (stunAnimatedRenderer == null)
+        var renderer = activeStunAnimatedRenderer;
+        if (renderer == null)
             return;
 
         if (suppress)
         {
-            SetAnimEnabled(stunAnimatedRenderer, false);
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
+
+            SetAnimEnabled(renderer, false);
             return;
         }
 
-        stunAnimatedRenderer.loop = true;
-        stunAnimatedRenderer.idle = false;
-        SetAnimEnabled(stunAnimatedRenderer, true);
-        stunAnimatedRenderer.RefreshFrame();
+        renderer.loop = true;
+        renderer.idle = false;
+        if (activeMountedStunVisual != null)
+            activeMountedStunVisual.SetExternalStunVisual(renderer, true);
+
+        ShowMountedPlayerDownForMountedStun();
+
+        SetAnimEnabled(renderer, true);
+        renderer.RefreshFrame();
     }
 
     private void ExitCustomStunOverrideVisualOnly()
@@ -694,20 +937,31 @@ public class StunReceiver : MonoBehaviour
         if (!customStunActive)
             return;
 
-        if (stunAnimatedRenderer != null)
+        if (activeStunAnimatedRenderer != null)
         {
-            stunAnimatedRenderer.idle = savedStunRendererIdle;
-            stunAnimatedRenderer.loop = savedStunRendererLoop;
-            SetAnimEnabled(stunAnimatedRenderer, savedStunRendererEnabled);
-            stunAnimatedRenderer.RefreshFrame();
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
+
+            activeStunAnimatedRenderer.idle = savedStunRendererIdle;
+            activeStunAnimatedRenderer.loop = savedStunRendererLoop;
+            SetAnimEnabled(activeStunAnimatedRenderer, savedStunRendererEnabled);
+            activeStunAnimatedRenderer.RefreshFrame();
         }
 
         if (visualOverrideWhileStunned && cachedMovement != null)
         {
-            cachedMovement.SetVisualOverrideActive(savedVisualOverrideActive);
+            cachedMovement.SetSuppressInactivityAnimation(savedSuppressInactivityAnimation);
+            if (!savedSuppressInactivityAnimation)
+                cachedMovement.SetVisualOverrideActive(savedVisualOverrideActive);
         }
 
         customStunActive = false;
+        activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
     }
 
     private void ExitCustomStunOverride()
@@ -717,20 +971,31 @@ public class StunReceiver : MonoBehaviour
 
         RestoreCustomStunControllersIfNeeded();
 
-        if (stunAnimatedRenderer != null)
+        if (activeStunAnimatedRenderer != null)
         {
-            stunAnimatedRenderer.idle = savedStunRendererIdle;
-            stunAnimatedRenderer.loop = savedStunRendererLoop;
-            SetAnimEnabled(stunAnimatedRenderer, savedStunRendererEnabled);
-            stunAnimatedRenderer.RefreshFrame();
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
+
+            activeStunAnimatedRenderer.idle = savedStunRendererIdle;
+            activeStunAnimatedRenderer.loop = savedStunRendererLoop;
+            SetAnimEnabled(activeStunAnimatedRenderer, savedStunRendererEnabled);
+            activeStunAnimatedRenderer.RefreshFrame();
         }
 
         if (visualOverrideWhileStunned && cachedMovement != null)
         {
-            cachedMovement.SetVisualOverrideActive(savedVisualOverrideActive);
+            cachedMovement.SetSuppressInactivityAnimation(savedSuppressInactivityAnimation);
+            if (!savedSuppressInactivityAnimation)
+                cachedMovement.SetVisualOverrideActive(savedVisualOverrideActive);
         }
 
         customStunActive = false;
+        activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
     }
 
     void OnDisable()
@@ -766,7 +1031,140 @@ public class StunReceiver : MonoBehaviour
         suppressRestore = false;
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
+    }
+
+    private AnimatedSpriteRenderer ResolveStunAnimatedRenderer()
+    {
+        if (cachedMovement != null && cachedMovement.IsMounted)
+        {
+            mountedStunUsesShakeOnly = false;
+
+            var mountedStunRenderer = ResolveMountedCustomStunAnimatedRenderer();
+            if (mountedStunRenderer != null)
+                return mountedStunRenderer;
+
+            if (mountedStunUsesShakeOnly)
+                return null;
+
+            AnimatedSpriteRenderer mountedRenderer = null;
+            Vector2 face = cachedMovement.FacingDirection;
+            if (face == Vector2.zero)
+                face = cachedMovement.Direction;
+            if (face == Vector2.zero)
+                face = Vector2.down;
+
+            if (Mathf.Abs(face.x) >= Mathf.Abs(face.y))
+            {
+                if (face.x >= 0f)
+                    mountedRenderer = cachedMovement.mountedSpriteRight != null ? cachedMovement.mountedSpriteRight : cachedMovement.mountedSpriteLeft;
+                else
+                    mountedRenderer = cachedMovement.mountedSpriteLeft != null ? cachedMovement.mountedSpriteLeft : cachedMovement.mountedSpriteRight;
+            }
+            else if (face.y >= 0f)
+            {
+                mountedRenderer = cachedMovement.mountedSpriteUp != null ? cachedMovement.mountedSpriteUp : cachedMovement.mountedSpriteDown;
+            }
+            else
+            {
+                mountedRenderer = cachedMovement.mountedSpriteDown != null ? cachedMovement.mountedSpriteDown : cachedMovement.mountedSpriteUp;
+            }
+
+            if (mountedRenderer != null)
+                return mountedRenderer;
+        }
+
+        if (stunAnimatedRenderer == null)
+            stunAnimatedRenderer = GetComponent<AnimatedSpriteRenderer>();
+
+        return stunAnimatedRenderer;
+    }
+
+    private AnimatedSpriteRenderer ResolveMountedCustomStunAnimatedRenderer()
+    {
+        if (cachedMovement == null)
+            return null;
+
+        var mountVisual = cachedMovement.GetComponentInChildren<MountVisualController>(true);
+        if (mountVisual == null)
+            return null;
+
+        var mountReceiver = mountVisual.GetComponentInParent<StunReceiver>();
+        if (mountReceiver == null || mountReceiver == this)
+            mountReceiver = mountVisual.GetComponentInChildren<StunReceiver>(true);
+
+        if (mountReceiver == null || mountReceiver == this)
+            return null;
+
+        activeMountedStunVisual = mountVisual;
+
+        if (!mountReceiver.useAnimatedStunRenderer)
+        {
+            mountedStunUsesShakeOnly = true;
+            return null;
+        }
+
+        if (mountReceiver.stunAnimatedRenderer == null)
+            return null;
+
+        return mountReceiver.stunAnimatedRenderer;
+    }
+
+    private void ShowMountedPlayerDownForMountedStun()
+    {
+        if (activeMountedStunVisual == null || cachedMovement == null)
+            return;
+
+        var renderer = cachedMovement.GetMountedDownRendererForExternalStun(activeMountedStunVisual.useHeadOnlyPlayerVisual);
+        if (renderer == null)
+            return;
+
+        if (activeMountedPlayerStunRenderer != renderer)
+        {
+            activeMountedPlayerStunRenderer = renderer;
+            savedMountedPlayerRendererEnabled = renderer.enabled;
+            savedMountedPlayerRendererIdle = renderer.idle;
+            savedMountedPlayerRendererLoop = renderer.loop;
+
+            if (renderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
+                savedMountedPlayerSpriteEnabled = sr.enabled;
+            else
+                savedMountedPlayerSpriteEnabled = false;
+        }
+
+        renderer.enabled = true;
+        renderer.idle = true;
+        renderer.loop = false;
+        renderer.pingPong = false;
+
+        if (renderer.TryGetComponent(out SpriteRenderer spriteRenderer) && spriteRenderer != null)
+            spriteRenderer.enabled = true;
+
+        renderer.RefreshFrame();
+    }
+
+    private void HideMountedPlayerDownForMountedStun()
+    {
+        if (activeMountedPlayerStunRenderer == null)
+            return;
+
+        var renderer = activeMountedPlayerStunRenderer;
+        renderer.enabled = savedMountedPlayerRendererEnabled;
+        renderer.idle = savedMountedPlayerRendererIdle;
+        renderer.loop = savedMountedPlayerRendererLoop;
+
+        if (renderer.TryGetComponent(out SpriteRenderer spriteRenderer) && spriteRenderer != null)
+            spriteRenderer.enabled = savedMountedPlayerSpriteEnabled;
+
+        renderer.RefreshFrame();
+    }
+
+    private void ClearMountedStunShake()
+    {
+        if (activeMountedStunVisual != null)
+            activeMountedStunVisual.SetExternalStunShake(Vector3.zero, false);
     }
 
     private void InitializeStunVisualIfNeeded(bool wantsCustomAnim)
@@ -785,11 +1183,23 @@ public class StunReceiver : MonoBehaviour
         }
         else
         {
+            ShowMountedPlayerDownForMountedStun();
             CaptureSpriteBases();
             ForceIdleAndApplyOffsets();
 
             if (freezeAnimatedSprites)
                 FreezeAnimations();
+
+            if (debugStunVisual && !loggedStunVisualStart)
+            {
+                Debug.Log(
+                    $"[StunReceiver] Shake stun visual start | target={name} | mounted={cachedMovement != null && cachedMovement.IsMounted} | " +
+                    $"mountedVisual={(activeMountedStunVisual != null ? activeMountedStunVisual.name : "null")} | " +
+                    $"mountedShakeOnly={mountedStunUsesShakeOnly} | spriteBases={spriteBases.Count} | shake={shakeWhileStunned} | " +
+                    $"freeze={freezeAnimatedSprites}",
+                    this);
+                loggedStunVisualStart = true;
+            }
         }
 
         stunVisualInitialized = true;

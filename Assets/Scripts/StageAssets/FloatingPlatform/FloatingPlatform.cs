@@ -264,9 +264,9 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         var pid = mc.GetComponentInParent<PlayerIdentity>();
         if (pid != null)
-            return Mathf.Clamp(pid.playerId, 1, 4);
+            return Mathf.Clamp(pid.playerId, 1, 6);
 
-        return Mathf.Clamp(mc.PlayerId, 1, 4);
+        return Mathf.Clamp(mc.PlayerId, 1, 6);
     }
 
     private Vector2 GetSharedRiderTargetWorldPos()

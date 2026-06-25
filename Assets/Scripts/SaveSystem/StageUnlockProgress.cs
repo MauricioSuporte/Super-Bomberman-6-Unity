@@ -69,21 +69,6 @@ public static class StageUnlockProgress
         return slot.clearedStages.Contains(normalized);
     }
 
-    public static bool IsPerfect(string sceneName)
-    {
-        var slot = SaveSystem.ActiveSlot;
-        if (slot == null)
-            return false;
-
-        EnsureDefaultUnlocked();
-
-        string normalized = Normalize(sceneName);
-        if (string.IsNullOrEmpty(normalized))
-            return false;
-
-        return slot.perfectStages.Contains(normalized);
-    }
-
     public static bool HasClearedAllRegisteredStages()
     {
         var slot = SaveSystem.ActiveSlot;
@@ -102,30 +87,6 @@ public static class StageUnlockProgress
                 continue;
 
             if (!slot.clearedStages.Contains(sceneName))
-                return false;
-        }
-
-        return true;
-    }
-
-    public static bool HasPerfectAllRegisteredStages()
-    {
-        var slot = SaveSystem.ActiveSlot;
-        if (slot == null)
-            return false;
-
-        EnsureDefaultUnlocked();
-
-        if (slot.stageOrder == null || slot.stageOrder.Count <= 0)
-            return false;
-
-        for (int i = 0; i < slot.stageOrder.Count; i++)
-        {
-            string sceneName = slot.stageOrder[i];
-            if (string.IsNullOrEmpty(sceneName))
-                continue;
-
-            if (!slot.perfectStages.Contains(sceneName))
                 return false;
         }
 
@@ -181,6 +142,28 @@ public static class StageUnlockProgress
         return count;
     }
 
+    public static Assets.Scripts.SaveSystem.NormalGameDifficulty GetClearedDifficulty(string sceneName)
+    {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        string normalized = Normalize(sceneName);
+        if (string.IsNullOrEmpty(normalized))
+            return Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        if (slot.hardcoreClearedStages != null && slot.hardcoreClearedStages.Contains(normalized))
+            return Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore;
+
+        if (slot.hardClearedStages != null && slot.hardClearedStages.Contains(normalized))
+            return Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard;
+
+        if (slot.normalClearedStages != null && slot.normalClearedStages.Contains(normalized))
+            return Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        return SaveSystem.GetActiveNormalGameDifficulty();
+    }
+
     public static void Unlock(string sceneName)
     {
         if (ShouldIgnoreProgressPersistence())
@@ -232,46 +215,8 @@ public static class StageUnlockProgress
             changed = true;
         }
 
-        bool rewardsChanged = TryUnlockAllClearRewards();
-
-        if (changed || rewardsChanged)
-            SaveSystem.Save();
-    }
-
-    public static void MarkPerfect(string sceneName)
-    {
-        if (ShouldIgnoreProgressPersistence())
-            return;
-
-        var slot = SaveSystem.ActiveSlot;
-        if (slot == null)
-            return;
-
-        EnsureDefaultUnlocked();
-
-        string normalized = Normalize(sceneName);
-        if (string.IsNullOrEmpty(normalized))
-            return;
-
-        bool changed = false;
-
-        if (!slot.unlockedStages.Contains(normalized))
-        {
-            slot.unlockedStages.Add(normalized);
+        if (MarkClearedForActiveDifficulty(slot, normalized))
             changed = true;
-        }
-
-        if (!slot.clearedStages.Contains(normalized))
-        {
-            slot.clearedStages.Add(normalized);
-            changed = true;
-        }
-
-        if (!slot.perfectStages.Contains(normalized))
-        {
-            slot.perfectStages.Add(normalized);
-            changed = true;
-        }
 
         bool rewardsChanged = TryUnlockAllClearRewards();
 
@@ -307,6 +252,9 @@ public static class StageUnlockProgress
             slot.clearedStages.Add(normalizedCurrent);
             changed = true;
         }
+
+        if (MarkClearedForActiveDifficulty(slot, normalizedCurrent))
+            changed = true;
 
         int currentIndex = slot.stageOrder.IndexOf(normalizedCurrent);
         if (currentIndex >= 0)
@@ -355,18 +303,26 @@ public static class StageUnlockProgress
 
         if (HasClearedAllRegisteredStages())
         {
-            if (UnlockProgress.Unlock(BomberSkin.Orange))
+            Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty = SaveSystem.GetActiveNormalGameDifficulty();
+            BomberSkin skinReward = difficulty switch
+            {
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => BomberSkin.Purple,
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => BomberSkin.Gold,
+                _ => BomberSkin.Orange
+            };
+
+            if (UnlockProgress.Unlock(skinReward))
                 changed = true;
 
-            if (UnlockProgress.Unlock(BomberSkin.Purple))
+            if (difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard &&
+                UnlockProgress.UnlockHardcore())
+            {
                 changed = true;
+            }
 
             if (UnlockProgress.UnlockBossRush())
                 changed = true;
         }
-
-        if (TryUnlockAllPerfectRewards())
-            changed = true;
 
         if (changed)
         {
@@ -377,22 +333,28 @@ public static class StageUnlockProgress
         return changed;
     }
 
-    private static bool TryUnlockAllPerfectRewards()
-    {
-        if (!HasPerfectAllRegisteredStages())
-            return false;
-
-        bool changed = false;
-
-        if (UnlockProgress.Unlock(BomberSkin.Gold))
-            changed = true;
-
-        return changed;
-    }
-
     private static string Normalize(string sceneName)
     {
         return string.IsNullOrWhiteSpace(sceneName) ? string.Empty : sceneName.Trim();
+    }
+
+    private static bool MarkClearedForActiveDifficulty(Assets.Scripts.SaveSystem.StageSlot slot, string sceneName)
+    {
+        if (slot == null || string.IsNullOrEmpty(sceneName))
+            return false;
+
+        List<string> target = SaveSystem.GetActiveNormalGameDifficulty() switch
+        {
+            Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => slot.hardClearedStages,
+            Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => slot.hardcoreClearedStages,
+            _ => slot.normalClearedStages
+        };
+
+        if (target == null || target.Contains(sceneName))
+            return false;
+
+        target.Add(sceneName);
+        return true;
     }
 
     private static bool ShouldIgnoreProgressPersistence()

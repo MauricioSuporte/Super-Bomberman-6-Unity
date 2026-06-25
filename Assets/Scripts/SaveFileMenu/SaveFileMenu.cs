@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Assets.Scripts.SaveSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,12 +9,15 @@ using UnityEngine.UI;
 
 public class SaveFileMenu : MonoBehaviour
 {
+    public static bool SelectNewGameOnNextOpen { get; set; }
+
     private enum MenuState
     {
         Main = 0,
         SelectNewGameSlot = 1,
         SelectContinueSlot = 2,
-        SelectDeleteSlot = 3
+        SelectDeleteSlot = 3,
+        SelectNewGameDifficulty = 4
     }
 
     [System.Serializable]
@@ -28,8 +32,8 @@ public class SaveFileMenu : MonoBehaviour
         public bool Exists;
         public int RegisteredStageCount;
         public int ClearedStageCount;
-        public int PerfectStageCount;
         public int CompletionPercent;
+        public NormalGameDifficulty Difficulty;
     }
 
     [Header("UI Root")]
@@ -51,23 +55,19 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Prompt Title (optional)")]
     [SerializeField] private TextMeshProUGUI promptTitleText;
-    [SerializeField] private string mainPrompt = "NORMAL GAME";
-    [SerializeField] private string newGamePrompt = "START WHICH FILE?";
-    [SerializeField] private string continuePrompt = "CONTINUE WHICH FILE?";
-    [SerializeField] private string deletePrompt = "DELETE WHICH FILE?";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
 
     [Header("Save Slots")]
     [SerializeField, Min(1)] private int slotCount = 3;
-    [SerializeField] private string slotLabelPrefix = "File ";
-    [SerializeField] private string emptySlotDisplay = "- - -";
+    [SerializeField, Min(0)] private int progressColumnSpacing = 1;
     [SerializeField] private float deleteFeedbackSeconds = 0.5f;
 
     [Header("Animated Backgrounds")]
     [SerializeField] private BackgroundSet mainMenuBackgrounds = new();
     [SerializeField] private BackgroundSet newGameBackgrounds = new();
+    [SerializeField] private BackgroundSet difficultyBackgrounds = new();
     [SerializeField] private BackgroundSet continueBackgrounds = new();
     [SerializeField] private BackgroundSet deleteBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
@@ -75,6 +75,7 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
+    [SerializeField] private AudioClip selectMusicLoop;
     [SerializeField, Range(0f, 1f)] private float selectMusicVolume = 1f;
     [SerializeField] private bool loopSelectMusic = true;
 
@@ -90,9 +91,6 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Disabled / Feedback Message")]
     [SerializeField] private TextMeshProUGUI disabledOptionText;
-    [SerializeField] private string disabledNewGameMessage = "NO EMPTY SLOT";
-    [SerializeField] private string disabledContinueMessage = "NO SAVE DATA";
-    [SerializeField] private string disabledDeleteMessage = "NO SAVE DATA";
     [SerializeField] private float disabledMessageShowSeconds = 1.5f;
     [SerializeField] private int disabledMessageFontSize = 22;
     [SerializeField] private Color disabledMessageFaceColor = new Color32(231, 63, 63, 255);
@@ -132,6 +130,13 @@ public class SaveFileMenu : MonoBehaviour
 
     private readonly List<string> _displayEntries = new();
     private readonly List<bool> _displayEnabled = new();
+    private readonly List<int> _displayDifficultyStyles = new();
+    private readonly NormalGameDifficulty[] _newGameDifficulties =
+    {
+        NormalGameDifficulty.Normal,
+        NormalGameDifficulty.Hard,
+        NormalGameDifficulty.Hardcore
+    };
 
     private MenuState _state = MenuState.Main;
 
@@ -139,6 +144,7 @@ public class SaveFileMenu : MonoBehaviour
     private bool confirmed;
     private bool menuActive;
     private bool _cursorConfirmVisual;
+    private int _pendingNewGameSlotIndex = -1;
 
     private int backgroundSpriteIndex;
     private float backgroundSwapTimer;
@@ -331,7 +337,12 @@ public class SaveFileMenu : MonoBehaviour
                     PlaySfx(returnSfx, returnSfxVolume);
                     HideDisabledMessageImmediate();
                     _cursorConfirmVisual = false;
-                    BuildMainMenu();
+
+                    if (_state == MenuState.SelectNewGameDifficulty)
+                        BuildSlotMenu(MenuState.SelectNewGameSlot);
+                    else
+                        BuildMainMenu();
+
                     UpdateOptionVisuals();
                     yield return null;
                     continue;
@@ -374,7 +385,7 @@ public class SaveFileMenu : MonoBehaviour
                     if (!HasAnyAvailableNewGameSlot())
                     {
                         PlayDeniedSfx();
-                        ShowDisabledMessage(disabledNewGameMessage, disabledMessageShowSeconds);
+                        ShowDisabledMessage(GameTextDatabase.SaveFile.NoEmptySlot, disabledMessageShowSeconds);
                         yield break;
                     }
 
@@ -387,7 +398,7 @@ public class SaveFileMenu : MonoBehaviour
                     if (!HasAnyExistingSlot())
                     {
                         PlayDeniedSfx();
-                        ShowDisabledMessage(disabledContinueMessage, disabledMessageShowSeconds);
+                        ShowDisabledMessage(GameTextDatabase.SaveFile.NoSaveData, disabledMessageShowSeconds);
                         yield break;
                     }
 
@@ -400,7 +411,7 @@ public class SaveFileMenu : MonoBehaviour
                     if (!HasAnyExistingSlot())
                     {
                         PlayDeniedSfx();
-                        ShowDisabledMessage(disabledDeleteMessage, disabledMessageShowSeconds);
+                        ShowDisabledMessage(GameTextDatabase.SaveFile.NoSaveData, disabledMessageShowSeconds);
                         yield break;
                     }
 
@@ -421,9 +432,28 @@ public class SaveFileMenu : MonoBehaviour
             case MenuState.SelectNewGameSlot:
                 PlaySfx(confirmSfx, confirmSfxVolume);
 
-                SaveSystem.DeleteSlot(slotZeroBased);
-                SaveSystem.SetActiveSlot(slotZeroBased);
-                SaveSystem.ResetSlot(slotZeroBased);
+                _pendingNewGameSlotIndex = slotZeroBased;
+                BuildDifficultyMenu();
+                UpdateOptionVisuals();
+                yield break;
+
+            case MenuState.SelectNewGameDifficulty:
+                PlaySfx(confirmSfx, confirmSfxVolume);
+
+                int pendingSlotIndex = _pendingNewGameSlotIndex;
+                if (pendingSlotIndex < 0 || pendingSlotIndex >= slotCount || SaveSystem.SlotExists(pendingSlotIndex))
+                {
+                    _pendingNewGameSlotIndex = -1;
+                    BuildSlotMenu(MenuState.SelectNewGameSlot);
+                    UpdateOptionVisuals();
+                    yield break;
+                }
+
+                NormalGameDifficulty difficulty = _newGameDifficulties[Mathf.Clamp(selectedIndex, 0, _newGameDifficulties.Length - 1)];
+
+                SaveSystem.DeleteSlot(pendingSlotIndex);
+                SaveSystem.SetActiveSlot(pendingSlotIndex);
+                SaveSystem.ResetSlot(pendingSlotIndex, difficulty);
                 EnsureActiveSlotStageOrderExistsFromBuildSettings();
                 StageUnlockProgress.ReloadFromPrefs();
 
@@ -474,6 +504,7 @@ public class SaveFileMenu : MonoBehaviour
     {
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
+        GameSession.Instance?.ResetNormalGameLivesSession();
 
         if (useWorldMapAfterSelection && !string.IsNullOrWhiteSpace(worldMapSceneName))
         {
@@ -503,8 +534,10 @@ public class SaveFileMenu : MonoBehaviour
     private void BuildMainMenu()
     {
         _state = MenuState.Main;
+        _pendingNewGameSlotIndex = -1;
         _displayEntries.Clear();
         _displayEnabled.Clear();
+        _displayDifficultyStyles.Clear();
 
         for (int i = 0; i < _mainOptions.Count; i++)
         {
@@ -513,7 +546,23 @@ public class SaveFileMenu : MonoBehaviour
             _displayEnabled.Add(IsMainOptionEnabled(option));
         }
 
-        selectedIndex = GetDefaultMainMenuSelectedIndex();
+        if (SelectNewGameOnNextOpen)
+        {
+            SelectNewGameOnNextOpen = false;
+
+            int newGameIndex = _mainOptions.IndexOf(SaveFileOption.NewGame);
+            selectedIndex =
+                newGameIndex >= 0 &&
+                newGameIndex < _displayEnabled.Count &&
+                _displayEnabled[newGameIndex]
+                    ? newGameIndex
+                    : GetDefaultMainMenuSelectedIndex();
+        }
+        else
+        {
+            selectedIndex = GetDefaultMainMenuSelectedIndex();
+        }
+
         ApplyEntriesToPanel();
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
@@ -524,11 +573,13 @@ public class SaveFileMenu : MonoBehaviour
         _state = targetState;
         _displayEntries.Clear();
         _displayEnabled.Clear();
+        _displayDifficultyStyles.Clear();
 
         for (int i = 1; i <= slotCount; i++)
         {
             SaveSlotInfo info = GetSaveSlotInfo(i);
             _displayEntries.Add(BuildSlotDisplayText(info));
+            _displayDifficultyStyles.Add(info.Exists ? (int)info.Difficulty : -1);
 
             bool enabled = targetState switch
             {
@@ -547,21 +598,46 @@ public class SaveFileMenu : MonoBehaviour
         ApplyCurrentBackgroundSprite(true);
     }
 
+    private void BuildDifficultyMenu()
+    {
+        _state = MenuState.SelectNewGameDifficulty;
+        _displayEntries.Clear();
+        _displayEnabled.Clear();
+        _displayDifficultyStyles.Clear();
+
+        for (int i = 0; i < _newGameDifficulties.Length; i++)
+        {
+            NormalGameDifficulty difficulty = _newGameDifficulties[i];
+            _displayEntries.Add(GetDifficultyDisplayName(difficulty));
+            _displayEnabled.Add(IsNewGameDifficultyUnlocked(difficulty));
+        }
+
+        selectedIndex = 0;
+        ApplyEntriesToPanel();
+        UpdatePromptTitle();
+        ApplyCurrentBackgroundSprite(true);
+    }
+
     private void ApplyEntriesToPanel()
     {
         if (leftPanel == null)
             return;
 
+        leftPanel.SetDifficultySelectionMode(_state == MenuState.SelectNewGameDifficulty);
+        leftPanel.SetColoredDifficultyColumnMode(
+            _state == MenuState.SelectContinueSlot || _state == MenuState.SelectDeleteSlot);
+        leftPanel.SetDifficultyColumnStyles(_displayDifficultyStyles);
         leftPanel.SetEntries(_displayEntries, _displayEnabled);
     }
 
     private string GetMainOptionDisplayName(SaveFileOption option)
     {
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
         return option switch
         {
-            SaveFileOption.NewGame => "New Game",
-            SaveFileOption.Continue => "Continue",
-            SaveFileOption.DeleteFile => "Delete File",
+            SaveFileOption.NewGame => text.NewGame,
+            SaveFileOption.Continue => text.Continue,
+            SaveFileOption.DeleteFile => text.DeleteFile,
             _ => option.ToString()
         };
     }
@@ -646,6 +722,8 @@ public class SaveFileMenu : MonoBehaviour
             return 0;
 
         int start = Mathf.Clamp(currentIndex, 0, _displayEnabled.Count - 1);
+        if (_state == MenuState.SelectNewGameDifficulty)
+            return (start + 1) % _displayEnabled.Count;
 
         for (int step = 1; step <= _displayEnabled.Count; step++)
         {
@@ -663,6 +741,8 @@ public class SaveFileMenu : MonoBehaviour
             return 0;
 
         int start = Mathf.Clamp(currentIndex, 0, _displayEnabled.Count - 1);
+        if (_state == MenuState.SelectNewGameDifficulty)
+            return (start - 1 + _displayEnabled.Count) % _displayEnabled.Count;
 
         for (int step = 1; step <= _displayEnabled.Count; step++)
         {
@@ -679,23 +759,45 @@ public class SaveFileMenu : MonoBehaviour
         if (promptTitleText == null)
             return;
 
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
+        LocalizedTmpFontFallback.Apply(promptTitleText);
         promptTitleText.text = _state switch
         {
-            MenuState.SelectNewGameSlot => newGamePrompt,
-            MenuState.SelectContinueSlot => continuePrompt,
-            MenuState.SelectDeleteSlot => deletePrompt,
-            _ => mainPrompt
+            MenuState.SelectNewGameSlot => text.NewGamePrompt,
+            MenuState.SelectNewGameDifficulty => text.DifficultyPrompt,
+            MenuState.SelectContinueSlot => text.ContinuePrompt,
+            MenuState.SelectDeleteSlot => text.DeletePrompt,
+            _ => text.MainPrompt
         };
     }
 
     private string BuildSlotDisplayText(SaveSlotInfo info)
     {
-        string fileText = $"{slotLabelPrefix}{info.SlotIndex}";
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
+        string fileText = $"{text.SlotLabelPrefix}{info.SlotIndex}";
         string progressText = info.Exists
             ? $"{Mathf.Clamp(info.CompletionPercent, 0, 200):000}%"
-            : emptySlotDisplay;
+            : text.EmptySlot;
 
-        return $"{fileText,-8} {progressText}";
+        int spacing = Mathf.Min(Mathf.Max(0, progressColumnSpacing), 1);
+        return $"{fileText}{new string(' ', spacing)}{progressText}";
+    }
+
+    private string GetDifficultyDisplayName(NormalGameDifficulty difficulty)
+    {
+        CommonMenuText text = GameTextDatabase.Common;
+        return difficulty switch
+        {
+            NormalGameDifficulty.Normal => text.Normal,
+            NormalGameDifficulty.Hard => text.Hard,
+            NormalGameDifficulty.Hardcore => text.Hardcore,
+            _ => text.Normal
+        };
+    }
+
+    private bool IsNewGameDifficultyUnlocked(NormalGameDifficulty difficulty)
+    {
+        return difficulty != NormalGameDifficulty.Hardcore || UnlockProgress.IsHardcoreUnlocked();
     }
 
     private SaveSlotInfo GetSaveSlotInfo(int slotIndex)
@@ -709,8 +811,8 @@ public class SaveFileMenu : MonoBehaviour
             Exists = false,
             RegisteredStageCount = 0,
             ClearedStageCount = 0,
-            PerfectStageCount = 0,
-            CompletionPercent = 0
+            CompletionPercent = 0,
+            Difficulty = NormalGameDifficulty.Normal
         };
 
         if (slot == null)
@@ -719,20 +821,31 @@ public class SaveFileMenu : MonoBehaviour
         info.Exists = SaveSystem.SlotExists(zeroBasedIndex);
         info.RegisteredStageCount = slot.stageOrder != null ? slot.stageOrder.Count : 0;
         info.ClearedStageCount = slot.clearedStages != null ? slot.clearedStages.Count : 0;
-        info.PerfectStageCount = slot.perfectStages != null ? slot.perfectStages.Count : 0;
-        info.CompletionPercent = ComputeCompletionPercent(info.RegisteredStageCount, info.ClearedStageCount, info.PerfectStageCount);
+        info.Difficulty = System.Enum.IsDefined(typeof(NormalGameDifficulty), slot.difficulty)
+            ? (NormalGameDifficulty)slot.difficulty
+            : NormalGameDifficulty.Normal;
+        info.CompletionPercent = ComputeCompletionPercent(info.RegisteredStageCount, info.ClearedStageCount, info.Difficulty);
 
         return info;
     }
 
-    private int ComputeCompletionPercent(int totalStages, int clearedCount, int perfectCount)
+    private int ComputeCompletionPercent(int totalStages, int clearedCount, NormalGameDifficulty difficulty)
     {
         if (totalStages <= 0)
             return 0;
 
-        float clearedPercent = (Mathf.Clamp(clearedCount, 0, totalStages) / (float)totalStages) * 100f;
-        float perfectPercent = (Mathf.Clamp(perfectCount, 0, totalStages) / (float)totalStages) * 100f;
-        return Mathf.RoundToInt(clearedPercent + perfectPercent);
+        int clampedCleared = Mathf.Clamp(clearedCount, 0, totalStages);
+        if (clampedCleared >= totalStages)
+        {
+            return difficulty switch
+            {
+                NormalGameDifficulty.Hard => 103,
+                NormalGameDifficulty.Hardcore => 105,
+                _ => 100
+            };
+        }
+
+        return Mathf.RoundToInt((clampedCleared / (float)totalStages) * 100f);
     }
 
     private static void EnsureActiveSlotStageOrderExistsFromBuildSettings()
@@ -801,7 +914,28 @@ public class SaveFileMenu : MonoBehaviour
         if (music == null || selectMusic == null)
             return;
 
+        PreloadSelectMusic();
+
+        if (selectMusicLoop != null)
+        {
+            music.PlayMusicIntroThenLoop(
+                selectMusic,
+                selectMusicVolume,
+                selectMusicLoop,
+                selectMusicVolume);
+            return;
+        }
+
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+    }
+
+    private void PreloadSelectMusic()
+    {
+        if (selectMusic != null && selectMusic.loadState == AudioDataLoadState.Unloaded)
+            selectMusic.LoadAudioData();
+
+        if (selectMusicLoop != null && selectMusicLoop.loadState == AudioDataLoadState.Unloaded)
+            selectMusicLoop.LoadAudioData();
     }
 
     private void PlayDeniedSfx()
@@ -960,6 +1094,7 @@ public class SaveFileMenu : MonoBehaviour
         return _state switch
         {
             MenuState.SelectNewGameSlot => newGameBackgrounds != null ? newGameBackgrounds.sprites : null,
+            MenuState.SelectNewGameDifficulty => difficultyBackgrounds != null ? difficultyBackgrounds.sprites : null,
             MenuState.SelectContinueSlot => continueBackgrounds != null ? continueBackgrounds.sprites : null,
             MenuState.SelectDeleteSlot => deleteBackgrounds != null ? deleteBackgrounds.sprites : null,
             _ => mainMenuBackgrounds != null ? mainMenuBackgrounds.sprites : null
@@ -1159,10 +1294,11 @@ public class SaveFileMenu : MonoBehaviour
         string message = _state switch
         {
             MenuState.Main => GetMainDisabledMessage(),
-            MenuState.SelectContinueSlot => disabledContinueMessage,
-            MenuState.SelectDeleteSlot => disabledDeleteMessage,
-            MenuState.SelectNewGameSlot => disabledNewGameMessage,
-            _ => disabledContinueMessage
+            MenuState.SelectContinueSlot => GameTextDatabase.SaveFile.NoSaveData,
+            MenuState.SelectDeleteSlot => GameTextDatabase.SaveFile.NoSaveData,
+            MenuState.SelectNewGameSlot => GameTextDatabase.SaveFile.NoEmptySlot,
+            MenuState.SelectNewGameDifficulty => GameTextDatabase.SaveFile.HardcoreLocked,
+            _ => GameTextDatabase.SaveFile.NoSaveData
         };
 
         ShowDisabledMessage(message, disabledMessageShowSeconds);
@@ -1174,10 +1310,10 @@ public class SaveFileMenu : MonoBehaviour
 
         return option switch
         {
-            SaveFileOption.NewGame => disabledNewGameMessage,
-            SaveFileOption.Continue => disabledContinueMessage,
-            SaveFileOption.DeleteFile => disabledDeleteMessage,
-            _ => disabledContinueMessage
+            SaveFileOption.NewGame => GameTextDatabase.SaveFile.NoEmptySlot,
+            SaveFileOption.Continue => GameTextDatabase.SaveFile.NoSaveData,
+            SaveFileOption.DeleteFile => GameTextDatabase.SaveFile.NoSaveData,
+            _ => GameTextDatabase.SaveFile.NoSaveData
         };
     }
 
@@ -1196,6 +1332,7 @@ public class SaveFileMenu : MonoBehaviour
 
         ApplyDisabledMessageVisualStyle();
 
+        LocalizedTmpFontFallback.Apply(disabledOptionText);
         disabledOptionText.text = message;
         disabledOptionText.gameObject.SetActive(true);
         disabledOptionText.transform.SetAsLastSibling();

@@ -7,6 +7,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 {
     [Header("Inactivity")]
     [SerializeField, Min(0.1f)] private float secondsToTrigger = 5f;
+    [SerializeField, Min(0.02f)] private float idleCheckInterval = 0.1f;
 
     [Header("Emote Visual (loop)")]
     [SerializeField] private AnimatedSpriteRenderer emoteLoopRenderer;
@@ -26,10 +27,12 @@ public sealed class InactivityAnimation : MonoBehaviour
     private float lastInputTime;
 
     private bool isPlaying;
+    private bool externalPoseActive;
     private EmoteTarget currentTarget;
 
     private MountVisualController cachedLouieVisual;
     private float nextLouieResolveTime;
+    private float nextIdleCheckTime;
 
     private enum EmoteTarget
     {
@@ -40,6 +43,63 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     public float ChanceAltAnimation => Mathf.Clamp01(chanceAltAnimation);
     public bool RefreshFrameOnEnter => refreshFrameOnEnter;
+
+    public void CancelForExternalOverride()
+    {
+        externalPoseActive = false;
+        StopEmote();
+        lastInputTime = Time.time;
+    }
+
+    public void PlayBattleTimeUpPose(bool mounted)
+    {
+        externalPoseActive = false;
+        StopEmote();
+        externalPoseActive = true;
+
+        isPlaying = true;
+        usingAlt = false;
+        activeRenderer = null;
+
+        if (mounted)
+        {
+            currentTarget = EmoteTarget.Mount;
+            movement.SetInactivityMountedDownOverride(true);
+
+            MountVisualController louieVisual = ResolveLouieVisual();
+            if (louieVisual != null)
+            {
+                AnimatedSpriteRenderer mountAfk2 =
+                    louieVisual.LouieInactivityEmoteLoopAlt != null
+                        ? louieVisual.LouieInactivityEmoteLoopAlt
+                        : louieVisual.LouieInactivityEmoteLoop;
+
+                louieVisual.SetInactivityEmote(mountAfk2, true);
+            }
+
+            SetPlayerEmoteEnabled(false);
+            return;
+        }
+
+        currentTarget = EmoteTarget.Player;
+        activeRenderer = emoteLoopRenderer != null
+            ? emoteLoopRenderer
+            : emoteLoopRendererAlt;
+
+        movement.SetInactivityMountedDownOverride(false);
+        movement.SetVisualOverrideActive(true);
+
+        if (activeRenderer != null)
+        {
+            activeRenderer.loop = true;
+            activeRenderer.idle = false;
+            activeRenderer.pingPong = false;
+            activeRenderer.CurrentFrame = 0;
+            activeRenderer.RefreshFrame();
+        }
+
+        SetPlayerEmoteEnabled(true);
+    }
 
     private void Awake()
     {
@@ -52,18 +112,25 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private void OnEnable()
     {
+        externalPoseActive = false;
         lastInputTime = Time.time;
         StopEmote();
     }
 
     private void OnDisable()
     {
+        externalPoseActive = false;
         StopEmote();
     }
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.InactivityAnimationUpdate.Auto();
+
         if (movement == null)
+            return;
+
+        if (externalPoseActive)
             return;
 
         if (movement.SuppressInactivityAnimation)
@@ -94,6 +161,16 @@ public sealed class InactivityAnimation : MonoBehaviour
             return;
         }
 
+        float idleTime = Time.time - lastInputTime;
+
+        if (!isPlaying && idleTime < secondsToTrigger)
+            return;
+
+        if (!isPlaying && Time.time < nextIdleCheckTime)
+            return;
+
+        nextIdleCheckTime = Time.time + idleCheckInterval;
+
         var desiredTarget = ResolveDesiredTarget();
 
         if (isPlaying && desiredTarget != currentTarget)
@@ -103,7 +180,7 @@ public sealed class InactivityAnimation : MonoBehaviour
             return;
         }
 
-        if (!isPlaying && (Time.time - lastInputTime) >= secondsToTrigger)
+        if (!isPlaying && idleTime >= secondsToTrigger)
             StartEmote(desiredTarget);
 
         if (isPlaying && Time.time >= nextSwitchTime)
@@ -166,19 +243,7 @@ public sealed class InactivityAnimation : MonoBehaviour
         if (input == null)
             return false;
 
-        int id = movement.PlayerId;
-
-        return
-            input.Get(id, PlayerAction.MoveUp) ||
-            input.Get(id, PlayerAction.MoveDown) ||
-            input.Get(id, PlayerAction.MoveLeft) ||
-            input.Get(id, PlayerAction.MoveRight) ||
-            input.Get(id, PlayerAction.Start) ||
-            input.Get(id, PlayerAction.ActionA) ||
-            input.Get(id, PlayerAction.ActionB) ||
-            input.Get(id, PlayerAction.ActionC) ||
-            input.Get(id, PlayerAction.ActionL) ||
-            input.Get(id, PlayerAction.ActionR);
+        return input.HasAnyHeldInput(movement.PlayerId);
     }
 
     private AnimatedSpriteRenderer ChooseRenderer(AnimatedSpriteRenderer primary, AnimatedSpriteRenderer alternative)

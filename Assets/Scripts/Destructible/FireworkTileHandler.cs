@@ -16,7 +16,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     static int _total;
     static int _destroyed;
-    static int _sceneBuildIndex = -1;
+    static ulong _sceneHandleRaw = ulong.MaxValue;
     static bool _pendingInvokeAtPhase2Start;
 
     [Header("Prefabs (3 phases)")]
@@ -72,15 +72,21 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
     readonly HashSet<Vector3Int> _triggered = new();
     AudioSource _audio;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticStateOnSubsystemRegistration()
+    {
+        ResetStageCounter();
+        _sceneHandleRaw = ulong.MaxValue;
+    }
+
     void Awake()
     {
-        int currentScene = SceneManager.GetActiveScene().buildIndex;
-        if (_sceneBuildIndex != currentScene)
+        Scene currentScene = SceneManager.GetActiveScene();
+        ulong currentSceneHandle = currentScene.handle.GetRawData();
+        if (_sceneHandleRaw != currentSceneHandle)
         {
-            _sceneBuildIndex = currentScene;
-            _total = 0;
-            _destroyed = 0;
-            _pendingInvokeAtPhase2Start = false;
+            _sceneHandleRaw = currentSceneHandle;
+            ResetStageCounter();
         }
 
         _audio = GetComponent<AudioSource>();
@@ -105,6 +111,13 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         int counted = TryAutoCountFireworks();
         if (counted > 0)
             _total = counted;
+    }
+
+    static void ResetStageCounter()
+    {
+        _total = 0;
+        _destroyed = 0;
+        _pendingInvokeAtPhase2Start = false;
     }
 
     int TryAutoCountFireworks()
@@ -236,7 +249,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         if (phase2StartSfx == null || _audio == null)
             return;
 
-        _audio.PlayOneShot(phase2StartSfx, phase2StartSfxVolume);
+        GameAudioSettings.PlaySfx(_audio, phase2StartSfx, phase2StartSfxVolume);
     }
 
     IEnumerator SpawnBurstPhaseInArea(

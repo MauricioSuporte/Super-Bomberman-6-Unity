@@ -23,6 +23,8 @@ public class TitleScreenBootstrap : MonoBehaviour
     [Header("Flow")]
     [SerializeField] string skinSelectSceneName = "SkinSelect";
     [SerializeField] string bossRushSceneName = "BossRush";
+    [SerializeField] string battleModeMenuSceneName = "BattleModeMenu";
+    [SerializeField] string achievementsSceneName = "Achievements";
 
     [Header("Hudson Fade")]
     [SerializeField, Min(0f)] float fadeOpenBeforeHudsonSeconds = 0.20f;
@@ -166,12 +168,30 @@ public class TitleScreenBootstrap : MonoBehaviour
             if (titleScreen.ControlsRequested)
                 yield break;
 
+            if (titleScreen.AchievementsRequested)
+            {
+                if (!string.IsNullOrEmpty(achievementsSceneName))
+                {
+                    SceneManager.LoadScene(achievementsSceneName);
+                    yield break;
+                }
+            }
+
             if (titleScreen.BossRushRequested)
             {
                 if (!string.IsNullOrEmpty(skinSelectSceneName))
                 {
                     SkinSelectFlowRouter.SetReturnToBossRush(bossRushSceneName);
                     SceneManager.LoadScene(skinSelectSceneName);
+                    yield break;
+                }
+            }
+
+            if (titleScreen.BattleModeRequested)
+            {
+                if (!string.IsNullOrEmpty(battleModeMenuSceneName))
+                {
+                    SceneManager.LoadScene(battleModeMenuSceneName);
                     yield break;
                 }
             }
@@ -224,5 +244,11 @@ public class TitleScreenBootstrap : MonoBehaviour
     public static void ResetLogoState()
     {
         hasPlayedLogoIntro = false;
+    }
+
+    public static void SkipNextIntroSequence()
+    {
+        hasPlayedLogoIntro = true;
+        TitleScreenSkip.SkipNextIntro = true;
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -151,7 +151,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             return;
 
         if (bomb.playerAudioSource != null && bomb.placeBombSfx != null)
-            bomb.playerAudioSource.PlayOneShot(bomb.placeBombSfx);
+            GameAudioSettings.PlaySfx(bomb.playerAudioSource, bomb.placeBombSfx);
     }
 
     bool DropBombsInFrontLine(Vector2 dir)

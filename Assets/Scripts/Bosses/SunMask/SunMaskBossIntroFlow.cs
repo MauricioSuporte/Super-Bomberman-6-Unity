@@ -96,7 +96,11 @@ public class SunMaskBossIntroFlow : BossIntroFlowBase
             if (!enableFlow) yield break;
 
             if (bossEyes != null && eyesSpinSeconds > 0f)
-                yield return bossEyes.PlayIntroSpinCounterClockwise(eyesSpinSeconds);
+            {
+                MaintainIntroPlayersAndBoss();
+                yield return PlayEyesSpinMaintainingIntroStateRoutine();
+                MaintainIntroPlayersAndBoss();
+            }
 
             if (!enableFlow) yield break;
 
@@ -137,6 +141,39 @@ public class SunMaskBossIntroFlow : BossIntroFlowBase
             bossEyes.BeginIntroHoldDown();
     }
 
+    private IEnumerator PlayEyesSpinMaintainingIntroStateRoutine()
+    {
+        bool spinDone = false;
+        StartCoroutine(RunEyesSpinRoutine(() => spinDone = true));
+
+        while (!spinDone)
+        {
+            if (!enableFlow)
+                yield break;
+
+            MaintainIntroPlayersAndBoss();
+            HoldEyesDown();
+            yield return null;
+        }
+    }
+
+    private IEnumerator RunEyesSpinRoutine(System.Action onDone)
+    {
+        if (bossEyes != null)
+            yield return bossEyes.PlayIntroSpinCounterClockwise(eyesSpinSeconds);
+
+        onDone?.Invoke();
+    }
+
+    private void MaintainIntroPlayersAndBoss()
+    {
+        RefreshPlayersRefs();
+        MaintainPlayersSafety();
+        LockPlayers(true);
+        ForcePlayersIdleUp();
+        LockBoss(true);
+    }
+
     private void SetBodyClosed(bool closed)
     {
         if (boss == null)
@@ -172,6 +209,9 @@ public class SunMaskBossIntroFlow : BossIntroFlowBase
         while (t < dur)
         {
             if (!enableFlow) yield break;
+
+            MaintainIntroPlayersAndBoss();
+            HoldEyesDown();
 
             if (!GamePauseController.IsPaused)
                 t += Time.deltaTime;

@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 59654201}
-  - component: {fileID: 59654200}
   m_Layer: 0
   m_Name: StageSettings
   m_TagString: Untagged
@@ -136,20 +135,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &59654200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 59654199}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a284d4030dc9c84caeaae28969ab361, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
-  stageDefaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
-  musicVolume: 0.8
 --- !u!4 &59654201
 Transform:
   m_ObjectHideFlags: 0
@@ -506,7 +491,6 @@ MonoBehaviour:
   thirdTimeText: {fileID: 1429402192}
   rowFontSize: 28
   rowHeight: 24
-  rankPreferredWidth: 120
   timePreferredWidth: 220
   firstLabel: 1
   secondLabel: 2
@@ -878,11 +862,13 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -892,6 +878,9 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 1
+  skullAmount: 0
+  randomEggsMin: 0
+  randomEggsMax: 0
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
@@ -899,6 +888,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 0}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -1438,6 +1431,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1611,7 +1618,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37a255ea6c092794cbeea6dc18c99fdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushTopPanel
-  enableSurgicalLogs: 0
   startWithText: {fileID: 2114126122}
   startWithLabel: Start with
   headerFontSize: 24
@@ -2195,6 +2201,7 @@ MonoBehaviour:
     hasControlBombs: 0
     hasPowerBomb: 0
     hasRubberBombs: 0
+    hasMagnetBomb: 0
     hasFullFire: 0
     mountedLouie: 0
     queuedEggs: 
@@ -2212,6 +2219,7 @@ MonoBehaviour:
     hasControlBombs: 0
     hasPowerBomb: 0
     hasRubberBombs: 0
+    hasMagnetBomb: 0
     hasFullFire: 0
     mountedLouie: 0
     queuedEggs: 
@@ -2229,6 +2237,7 @@ MonoBehaviour:
     hasControlBombs: 0
     hasPowerBomb: 0
     hasRubberBombs: 0
+    hasMagnetBomb: 0
     hasFullFire: 0
     mountedLouie: 0
     queuedEggs: 
@@ -2246,6 +2255,7 @@ MonoBehaviour:
     hasControlBombs: 0
     hasPowerBomb: 0
     hasRubberBombs: 0
+    hasMagnetBomb: 0
     hasFullFire: 0
     mountedLouie: 0
     queuedEggs: 
@@ -2257,8 +2267,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 2c8f76a7868ca93409006d64e213a246, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
-  selectMusic: {fileID: 8300000, guid: ebf478004a16e174e8b15f35f505d20c, type: 3}
-  selectMusicVolume: 1
+  selectMusic: {fileID: 8300000, guid: d5c304a10567ed84f9e3ecd287788aad, type: 3}
+  selectMusicLoop: {fileID: 8300000, guid: 8d3586685fd3efd4eab722a904bdadba, type: 3}
+  selectMusicVolume: 0.5
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1
@@ -2281,7 +2292,6 @@ MonoBehaviour:
   nightmareLockedMessage: UNLOCKED BY BEATING HARD DIFFICULTY
   nightmareLockedText: {fileID: 0}
   nightmareLockedFontSize: 26
-  nightmareLockedMessageHex: '#FF3B30'
   nightmareLockedShowSeconds: 2
   nightmareLockedBottomMargin: 18
   nightmareLockedFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
@@ -2339,6 +2349,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 1
+  activePlayerMask: 1
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -3221,8 +3240,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
+  defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 1
+  defaultMusicVolume: 0.8
+  defaultMusicLoopVolume: 0.8
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0

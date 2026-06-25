@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -18,9 +18,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     [Header("Timings")]
     private readonly float pickupLockTime = 0.1f;
     private readonly float releaseLockTime = 0.1f;
+    private const float MinimumBombAgeForPickupSeconds = 0.05f;
 
     [Header("Throw Settings")]
     [SerializeField, Min(1)] private int throwDistanceTiles = 3;
+    public int ThrowDistanceTiles => Mathf.Max(1, throwDistanceTiles);
 
     [Header("Pickup Sprites (PLAYER)")]
     [SerializeField] private AnimatedSpriteRenderer pickupUp;
@@ -81,6 +83,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool CanPickupBombNow(Bomb bomb)
+        => bomb != null &&
+           !bomb.HasExploded &&
+           Time.time - bomb.PlacedTime >= MinimumBombAgeForPickupSeconds;
 
     private const int CarryOrderInLayer = 6;
     private const int GroundOrderInLayer = 3;
@@ -112,6 +118,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (movement == null) return;
@@ -125,6 +133,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (GamePauseController.IsPaused) return;
@@ -142,8 +152,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (movement.InputLocked) return;
 
-        if (movement.Direction != Vector2.zero)
-            lastFacingDir = movement.Direction;
+        Vector2 currentFacingDir = GetCurrentFacingDirection();
+        if (currentFacingDir != Vector2.zero)
+        {
+            lastFacingDir = currentFacingDir;
+        }
 
         if (!holding)
         {
@@ -175,7 +188,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (!input.Get(pid, PlayerAction.ActionA))
         {
-            BeginRelease(lastFacingDir);
+            Vector2 releaseDir = GetCurrentFacingDirection();
+            BeginRelease(releaseDir);
             return;
         }
 
@@ -269,6 +283,58 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         RestoreBombControllerInputModeIfNeeded("DestroyHeldBombIfHolding");
     }
 
+    public bool ThrowHeldBombForExternalTransition()
+    {
+        if (!holding || !isHoldingBomb || !IsHeldBombValid())
+            return false;
+
+        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
+        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
+
+        pickupRoutine = null;
+        releaseRoutine = null;
+        landWatchRoutine = null;
+
+        Vector2 throwDirection = GetCurrentFacingDirection();
+        Bomb thrownBomb = heldBomb;
+
+        holding = false;
+        isHoldingBomb = false;
+        animLocking = false;
+        activeCarryRenderer = null;
+
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
+
+        SnapHeldBombToPlayerGround();
+        DetachBombFromPlayerKeepWorld();
+        SetBombSorting(GroundOrderInLayer);
+
+        if (heldBombCollider != null)
+            heldBombCollider.enabled = true;
+
+        SetHeldBombPowerGloveHeld(false);
+        ThrowHeldBomb(throwDirection);
+
+        if (movement != null)
+        {
+            movement.SetExternalVisualSuppressed(false);
+            SetMoveSprites(true);
+
+            if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
+                movement.EnableExclusiveFromState();
+        }
+
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "ExternalTransitionThrow");
+        RestoreBombControllerInputModeIfNeeded("ExternalTransitionThrow");
+
+        if (thrownBomb != null && !thrownBomb.HasExploded)
+            landWatchRoutine = StartCoroutine(WatchBombLandingThenResume(thrownBomb));
+
+        return true;
+    }
+
     private void EmergencyUnlockAndReset(string reason)
     {
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
@@ -320,6 +386,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void PlayRandomThrowSfx()
     {
+        if (!GameAudioSettings.VoicesEnabled)
+            return;
+
         if (audioSource == null)
             return;
 
@@ -335,7 +404,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             var clip = throwSfxClips[idx];
             if (clip != null)
             {
-                audioSource.PlayOneShot(clip, Mathf.Clamp01(throwSfxVolume));
+                GameAudioSettings.PlayVoiceSfx(audioSource, clip, throwSfxVolume);
                 return;
             }
         }
@@ -377,12 +446,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (!hit.TryGetComponent<Bomb>(out var bomb)) return;
         if (bomb == null) return;
-        if (bomb.HasExploded) return;
+        if (!CanPickupBombNow(bomb)) return;
 
         if (bomb.GetComponent<BoilerCapturedBomb>() != null) return;
 
+        Vector2 pickupDir = GetCurrentFacingDirection();
+
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
-        pickupRoutine = StartCoroutine(PickupRoutine(bomb, lastFacingDir));
+        pickupRoutine = StartCoroutine(PickupRoutine(bomb, pickupDir));
     }
 
     private IEnumerator PickupRoutine(Bomb bomb, Vector2 dir)
@@ -395,6 +466,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         CacheBombRefs(bomb);
+        SetHeldBombPowerGloveHeld(true);
 
         if (IsExternalBlockingDismount())
         {
@@ -601,6 +673,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
 
         PlayRandomThrowSfx();
+        SetHeldBombPowerGloveHeld(false);
         ThrowHeldBomb(dir);
 
         float t = 0f;
@@ -916,6 +989,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         bomb.SetFusePaused(pause);
     }
 
+    private void SetHeldBombPowerGloveHeld(bool held)
+    {
+        if (heldBomb != null)
+            heldBomb.SetPowerGloveHeld(held);
+    }
+
     private void RestoreBombControllerInputModeIfNeeded(string reason)
     {
         if (bombController == null)
@@ -1042,6 +1121,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (heldBomb != null && !heldBomb.HasExploded)
         {
+            SetHeldBombPowerGloveHeld(false);
             DetachBombFromPlayerKeepWorld();
 
             SetBombSorting(GroundOrderInLayer);
@@ -1130,6 +1210,20 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (movement.spriteRendererRight != null) movement.spriteRendererRight.enabled = enabled;
     }
 
+    private Vector2 GetCurrentFacingDirection()
+    {
+        if (movement == null)
+            return NormalizeCardinalOrDown(lastFacingDir);
+
+        if (movement.FacingDirection.sqrMagnitude > 0.01f)
+            return NormalizeCardinalOrDown(movement.FacingDirection);
+
+        if (movement.Direction.sqrMagnitude > 0.01f)
+            return NormalizeCardinalOrDown(movement.Direction);
+
+        return NormalizeCardinalOrDown(lastFacingDir);
+    }
+
     private static Vector2 NormalizeCardinalOrDown(Vector2 dir)
     {
         if (dir.sqrMagnitude <= 0.01f)
@@ -1210,6 +1304,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (heldBombSpriteRenderer != null)
             heldBombSpriteRenderer.sortingOrder = CarryOrderInLayer;
 
+        SetHeldBombPowerGloveHeld(false);
         DetachBombFromPlayerKeepWorld();
         bombGo.transform.position = new Vector3(visual.x, visual.y, bombGo.transform.position.z);
 

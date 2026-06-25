@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -7,10 +7,6 @@ using UnityEngine;
 [RequireComponent(typeof(MovementController))]
 public class BombKickAbility : MonoBehaviour, IMovementAbility
 {
-    [Header("Debug Bomb Kick")]
-    private readonly bool debugBombKick = false;
-    private readonly bool debugBombKickVerbose = false;
-
     public const string AbilityId = "BombKick";
 
     private const string KickClipResourcesPath = "Sounds/KickBomb";
@@ -67,6 +63,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility)
             return;
 
@@ -398,6 +396,22 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             PlayKickStop_InterruptPrevious(cachedKickStopClip, 1f);
     }
 
+    public void RegisterExternallyKickedBomb(Bomb bomb, bool playSfx = false)
+    {
+        if (!enabledAbility || bomb == null || bomb.HasExploded)
+            return;
+
+        kickedByMe.Add(bomb);
+        _bombPlantDirection.Remove(bomb);
+        _bombEarlyKickUnlocked.Remove(bomb);
+        movement?.CancelBombReentryCentering();
+
+        LogBombKick($"RegisterExternallyKickedBomb bomb:{bomb.name} kickedByMe:{kickedByMe.Count}");
+
+        if (playSfx)
+            PlayKick_InterruptPrevious(cachedKickClip, 1f);
+    }
+
     public bool CanConvertKickToPunch(Bomb bomb)
     {
         return enabledAbility &&
@@ -502,7 +516,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             kickSfxOwner = audioSource;
             audioSource.Stop();
-            audioSource.PlayOneShot(clip, volume);
+            GameAudioSettings.PlaySfx(audioSource, clip, volume);
         }
     }
 
@@ -518,7 +532,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             kickSfxOwner = audioSource;
             audioSource.Stop();
-            audioSource.PlayOneShot(clip, volume);
+            GameAudioSettings.PlaySfx(audioSource, clip, volume);
         }
     }
 
@@ -676,12 +690,5 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private void LogBombKick(string message, bool verbose = false)
     {
-        if (!debugBombKick)
-            return;
-
-        if (verbose && !debugBombKickVerbose)
-            return;
-
-        Debug.Log($"[BombKick][{name}] {message}", this);
     }
 }

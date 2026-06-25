@@ -14,6 +14,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
     public AudioClip bounceSfx;
     [Range(0f, 1f)] public float bounceSfxVolume = 1f;
+    [Range(0f, 1f)] public float loseItemSfxVolume = 1f;
     private static AudioClip magnetPullSfx;
     [Range(0f, 1f)] public float magnetPullSfxVolume = 1f;
     private static float bombSfxBlockedUntil = 0f;
@@ -21,7 +22,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private static readonly object kickSfxGate = new();
     private static AudioSource kickSfxCurrentSource;
     private const string RubberBounceClipResourcesPath = "Sounds/RubberBombBounce";
+    private const string LoseItemClipResourcesPath = "Sounds/Lose Item";
     private static AudioClip cachedRubberBounceClip;
+    private static AudioClip cachedLoseItemClip;
 
     [Header("Kick")]
     public float kickSpeed = 10f;
@@ -29,6 +32,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Header("Punch")]
     public float punchDuration = 0.22f;
     public float punchArcHeight = 0.9f;
+    [SerializeField, Min(0.01f)] private float punchMinSegmentDuration = 0.28f;
+    [SerializeField, Min(0f)] private float punchSecondsPerTile = 0.055f;
+    [SerializeField, Min(0.01f)] private float punchLandingBounceSpeedMultiplier = 2f;
+    [SerializeField, Min(1)] private int punchPixelsPerUnit = 16;
 
     [Header("Chain Explosion")]
     public float chainStepDelay = 0.1f;
@@ -49,17 +56,28 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public float PlacedTime { get; private set; }
     public bool IsControlBomb { get; set; }
 
-    public bool IsBeingKicked => isKicked;
+    public bool IsBeingKicked => isKicked || isBeingMovedByYellowLouie;
+
+    /// <summary>
+    /// Direção atual do chute (Vector2.zero quando a bomba não está sendo chutada).
+    /// Usada pela IA para prever a trajetória de RubberBombs (que ricocheteiam).
+    /// </summary>
+    public Vector2 CurrentKickDirection => isKicked ? kickDirection : Vector2.zero;
+    public bool IsBeingMovedByYellowLouie => isBeingMovedByYellowLouie;
     public bool IsBeingPunched => isPunched;
+    public bool WasMovedByKickOrPunch { get; private set; }
+    public bool IsBeingHeldByPowerGlove { get; private set; }
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
-    public bool CanBeKickedEarly => !HasExploded && !isKicked && !isPunched;
-    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
-    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
-    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
+    public bool CanBeKickedEarly => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove;
+    public bool CanBeKicked => !HasExploded && !IsBeingKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
+    public bool CanBePunched => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
+    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingHeldByPowerGlove && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
     public bool IsRubberBomb { get; set; }
+    public bool IsRevengeBomb { get; set; }
+    public int ExplosionRadiusOverride { get; set; }
 
     public bool IsBeingMagnetPulled => magnetRoutine != null;
 
@@ -76,12 +94,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private BoundsInt stageCellBounds;
 
     private bool isKicked;
+    private bool isBeingMovedByYellowLouie;
     private bool isPunched;
 
     private Vector2 kickDirection;
     private float kickTileSize = 1f;
     private LayerMask kickObstacleMask;
     private Tilemap kickDestructibleTilemap;
+    private IIndestructibleKickedBombHandler[] kickIndestructibleHandlers;
 
     private Coroutine kickRoutine;
     private Coroutine punchRoutine;
@@ -111,6 +131,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private float kickOverlapBoxSize = 0.60f;
     private float kickOriginBlockerSize = 0.90f;
     private bool kickOriginBlockerUseTrigger = false;
+    private readonly List<ItemPickup> kickPushedSkulls = new();
 
     private int stageLayer;
     private int stageMask;
@@ -141,6 +162,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (cachedRubberBounceClip == null)
             cachedRubberBounceClip = Resources.Load<AudioClip>(RubberBounceClipResourcesPath);
+
+        if (cachedLoseItemClip == null)
+            cachedLoseItemClip = Resources.Load<AudioClip>(LoseItemClipResourcesPath);
 
         lastPos = rb.position;
 
@@ -310,6 +334,34 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         RemoveKickOriginBlocker();
     }
 
+    private bool IsBlockedFromMagnetMovement =>
+        HasExploded || IsBeingKicked || IsBeingPunched || IsBeingHeldByPowerGlove;
+
+    private void StopMagnetMovement()
+    {
+        if (magnetRoutine == null)
+            return;
+
+        StopCoroutine(magnetRoutine);
+        magnetRoutine = null;
+        RemoveMagnetOriginBlocker();
+    }
+
+    public void SetPowerGloveHeld(bool held)
+    {
+        IsBeingHeldByPowerGlove = held;
+
+        if (!held)
+            return;
+
+        StopMagnetMovement();
+
+        charactersInside.Clear();
+
+        if (bombCollider != null)
+            bombCollider.isTrigger = true;
+    }
+
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
     {
         charactersInside.Clear();
@@ -386,12 +438,112 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (sr == null)
                 continue;
 
+            if (mc.CompareTag("Player") && IsPlayerProtectedFromAirborneBombImpact(mc))
+                continue;
+
             stunned ??= new HashSet<StunReceiver>();
             if (!stunned.Add(sr))
                 continue;
 
+            if (mc.CompareTag("Player") && sr.IsStunned)
+                continue;
+
             sr.Stun(seconds);
+
+            if (mc.CompareTag("Player") &&
+                PlayerPersistentStats.StageTryExpelRandomPersistentItem(
+                    mc,
+                    mc.GetComponent<BombController>(),
+                    out var expelledType))
+            {
+                PlayLoseItemSfx(mc);
+                SpawnExpelledPersistentItem(mc, expelledType);
+            }
         }
+    }
+
+    private bool IsPlayerProtectedFromAirborneBombImpact(MovementController player)
+    {
+        if (player == null)
+            return false;
+
+        float tileSize = Mathf.Max(0.0001f, kickTileSize);
+        Vector2 playerTileCenter = new(
+            Mathf.Round(player.transform.position.x / tileSize) * tileSize,
+            Mathf.Round(player.transform.position.y / tileSize) * tileSize);
+
+        int mask = LayerMask.GetMask("Stage", "Bomb");
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(
+            playerTileCenter,
+            Vector2.one * (tileSize * 0.55f),
+            0f,
+            mask);
+
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Collider2D overlap = overlaps[i];
+            if (overlap == null || overlap.gameObject == gameObject)
+                continue;
+
+            Bomb occupyingBomb =
+                overlap.GetComponent<Bomb>() ??
+                overlap.GetComponentInParent<Bomb>() ??
+                overlap.GetComponentInChildren<Bomb>();
+
+            if (occupyingBomb != null && occupyingBomb != this && !occupyingBomb.HasExploded)
+                return true;
+
+            if (overlap.CompareTag(TagDestructibles))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void PlayLoseItemSfx(MovementController movementController)
+    {
+        if (cachedLoseItemClip == null)
+            cachedLoseItemClip = Resources.Load<AudioClip>(LoseItemClipResourcesPath);
+
+        if (cachedLoseItemClip == null)
+            return;
+
+        AudioSource source = null;
+        if (movementController != null)
+        {
+            source = movementController.GetComponent<AudioSource>();
+            if (source == null)
+                source = movementController.GetComponentInChildren<AudioSource>(true);
+        }
+
+        source ??= audioSource;
+
+        if (source != null)
+            GameAudioSettings.PlaySfx(source, cachedLoseItemClip, loseItemSfxVolume);
+    }
+
+    private void SpawnExpelledPersistentItem(MovementController movementController, ItemType itemType)
+    {
+        if (movementController == null)
+            return;
+
+        ItemPickup prefab = AutoItemDatabase.Get(itemType);
+        if (prefab == null)
+            return;
+
+        Vector2 origin = movementController.transform.position;
+        float tileSize = Mathf.Max(0.0001f, movementController.tileSize);
+        Vector2 direction = RandomCardinalDir();
+
+        var item = Instantiate(prefab, origin, Quaternion.identity);
+        if (item == null)
+            return;
+
+        Collider2D ignoredCollider = movementController.GetComponent<Collider2D>();
+        if (ignoredCollider == null)
+            ignoredCollider = movementController.GetComponentInChildren<Collider2D>();
+
+        item.TryExpelItem(direction, tileSize, ignoredCollider, 3);
     }
 
     private bool IsKickBlocked(Vector2 target)
@@ -492,7 +644,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         LayerMask obstacleMask,
         Tilemap destructibleTilemap,
         float visualStartYOffset = 0f,
-        Vector2? logicalOriginOverride = null)
+        Vector2? logicalOriginOverride = null,
+        float? arcHeightOverride = null,
+        float? bounceArcHeightOverride = null)
     {
         bool canEarlyPunch = !HasExploded && !isKicked && !isPunched;
 
@@ -527,8 +681,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (punchRoutine != null)
             StopCoroutine(punchRoutine);
 
+        StopMagnetMovement();
         RemoveKickOriginBlocker();
 
+        WasMovedByKickOrPunch = true;
         isPunched = true;
 
         charactersInside.Clear();
@@ -540,6 +696,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
         float dur = Mathf.Max(punchDuration, Time.fixedDeltaTime);
+        float arcHeight = arcHeightOverride.HasValue
+            ? Mathf.Max(0f, arcHeightOverride.Value)
+            : punchArcHeight;
+        float bounceArcHeight = bounceArcHeightOverride.HasValue
+            ? Mathf.Max(0f, bounceArcHeightOverride.Value)
+            : arcHeight;
 
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
@@ -547,7 +709,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             distanceTiles,
             80,
             dur,
-            punchArcHeight));
+            arcHeight,
+            bounceArcHeight));
 
         return true;
     }
@@ -558,10 +721,15 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         int forwardSteps,
         int maxExtraBounces,
         float duration,
-        float arcHeight)
+        float arcHeight,
+        float bounceArcHeight)
     {
         Vector2 cur = logicalOrigin;
+        Vector2 lastPickupImpactDirection = kickDirection;
         int steps = Mathf.Max(1, forwardSteps);
+        float forwardDuration = GetPunchSegmentDuration(duration, steps);
+        float bounceDuration = GetPunchSegmentDuration(duration, 1);
+        float landingBounceDuration = bounceDuration / Mathf.Max(0.01f, punchLandingBounceSpeedMultiplier);
 
         bool wrapsDuringForward = false;
         {
@@ -621,7 +789,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 goto FINISH;
 
-            yield return PunchArcSegmentFixed(SegmentStart(cur), target, duration, arcHeight);
+            yield return PunchArcSegmentFixed(SegmentStart(cur), target, forwardDuration, arcHeight);
             cur = target;
 
             if (NotifyOwnerAt(cur))
@@ -629,8 +797,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
         else
         {
-            float segDuration = duration / Mathf.Max(1, steps);
-
             for (int i = 0; i < steps; i++)
             {
                 if (HasExploded)
@@ -650,7 +816,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     continue;
                 }
 
-                yield return PunchArcSegmentFixed(SegmentStart(cur), next, segDuration, arcHeight);
+                yield return PunchArcSegmentFixed(SegmentStart(cur), next, bounceDuration, bounceArcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
@@ -680,6 +846,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 if (!TryStepWithWrapDir(cur, dir, out var next, out var didWrap))
                     break;
 
+                lastPickupImpactDirection = dir;
+
                 if (didWrap)
                 {
                     TeleportTo(next);
@@ -695,7 +863,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StunMovementControllersAtTile(cur, 0.5f);
                 TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
-                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+                yield return PunchArcSegmentFixed(cur, next, landingBounceDuration, bounceArcHeight);
                 cur = next;
                 bouncesDone++;
 
@@ -731,7 +899,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StunMovementControllersAtTile(cur, 0.5f);
                 TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
-                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+                yield return PunchArcSegmentFixed(cur, next, landingBounceDuration, bounceArcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
@@ -741,7 +909,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     FINISH:
         TeleportTo(cur);
-        DestroyPickupsAtWorld(cur);
+        DestroyPickupsAtWorld(cur, lastPickupImpactDirection);
+        FinishKickPushedSkull(cur);
 
         isPunched = false;
         punchRoutine = null;
@@ -901,12 +1070,35 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     {
         rb.position = pos;
         transform.position = pos;
-        lastPos = pos;
+        SetLogicalTileCenter(pos);
+    }
+
+    private void SetLogicalTileCenter(Vector2 pos)
+    {
+        Vector2 snapped = SnapToGrid(pos, kickTileSize > 0f ? kickTileSize : 1f);
+        currentTileCenter = snapped;
+        lastPos = snapped;
+    }
+
+    private float GetPunchSegmentDuration(float baseDuration, int distanceTiles)
+    {
+        float distanceDuration = Mathf.Max(1, distanceTiles) * Mathf.Max(0f, punchSecondsPerTile);
+        return Mathf.Max(baseDuration, punchMinSegmentDuration, distanceDuration, Time.fixedDeltaTime);
+    }
+
+    private Vector2 SnapPunchArcPositionToPixelGrid(Vector2 pos)
+    {
+        int ppu = Mathf.Max(1, punchPixelsPerUnit);
+        pos.x = Mathf.Round(pos.x * ppu) / ppu;
+        pos.y = Mathf.Round(pos.y * ppu) / ppu;
+        return pos;
     }
 
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
     {
         duration = Mathf.Max(duration, Time.fixedDeltaTime);
+
+        SetLogicalTileCenter(end);
 
         float t = 0f;
         float inv = 1f / Mathf.Max(0.0001f, duration);
@@ -922,8 +1114,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 pos = Vector2.Lerp(start, end, a);
             float arc = Mathf.Sin(a * Mathf.PI) * arcHeight;
             pos.y += arc;
+            pos = SnapPunchArcPositionToPixelGrid(pos);
 
-            lastPos = pos;
             rb.MovePosition(pos);
 
             yield return waitFixed;
@@ -931,7 +1123,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         rb.position = end;
         transform.position = end;
-        lastPos = end;
+        SetLogicalTileCenter(end);
     }
 
     public void SetStageBoundsTilemap(Tilemap tilemap)
@@ -1002,6 +1194,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         this.owner = owner;
         PlacedTime = Time.time;
+        WasMovedByKickOrPunch = false;
 
         lastPos = rb.position;
 
@@ -1015,6 +1208,21 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public Vector2 GetLogicalPosition() => lastPos;
 
+    public void MarkMovedByKickOrPunch()
+    {
+        WasMovedByKickOrPunch = true;
+    }
+
+    public void SetYellowLouieKickMovement(bool moving)
+    {
+        isBeingMovedByYellowLouie = moving && !HasExploded;
+        if (isBeingMovedByYellowLouie)
+        {
+            WasMovedByKickOrPunch = true;
+            StopMagnetMovement();
+        }
+    }
+
     public void ForceSetLogicalPosition(Vector2 worldPos)
     {
         worldPos.x = Mathf.Round(worldPos.x);
@@ -1026,6 +1234,27 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             rb.position = worldPos;
 
         transform.position = worldPos;
+    }
+
+    public bool TryRedirectKick(Vector2 direction)
+    {
+        if (HasExploded || !isKicked || direction == Vector2.zero)
+            return false;
+
+        Vector2 cardinalDirection = Mathf.Abs(direction.x) > Mathf.Abs(direction.y)
+            ? new Vector2(Mathf.Sign(direction.x), 0f)
+            : new Vector2(0f, Mathf.Sign(direction.y));
+
+        if (cardinalDirection == Vector2.zero)
+            return false;
+
+        kickDirection = cardinalDirection;
+        return true;
+    }
+
+    public void PlayKickBounceSfx()
+    {
+        TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
     }
 
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
@@ -1090,7 +1319,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (kickRoutine != null)
             StopCoroutine(kickRoutine);
 
+        StopMagnetMovement();
+
         isKicked = true;
+        WasMovedByKickOrPunch = true;
 
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
@@ -1128,7 +1360,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             if (IsKickBlocked(next))
             {
-                if (IsRubberBomb)
+                bool handledByIndestructibleKickHandler = TryHandleIndestructibleKickBounce(
+                    next,
+                    out AudioClip handledBounceSfx,
+                    out float handledBounceSfxVolume);
+
+                if (handledByIndestructibleKickHandler || IsRubberBomb)
                 {
                     kickDirection = -kickDirection;
 
@@ -1140,7 +1377,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
                         break;
 
-                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    if (handledByIndestructibleKickHandler && IsBlockedByMaskAtWorld(back, kickBlockMoveMask, kickOverlapBoxSize))
+                        break;
+
+                    AudioClip bounceClip = handledBounceSfx != null ? handledBounceSfx : GetKickBounceClip();
+                    float bounceVolume = handledBounceSfx != null ? handledBounceSfxVolume : bounceSfxVolume;
+                    TryPlayKickSfx_StopOthers(bounceClip, bounceVolume);
                     continue;
                 }
 
@@ -1171,11 +1413,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
+            TryAttachKickPushedSkullAtWorld(next, kickDirection, currentTileCenter);
+
             EnsureKickOriginBlocker(currentTileCenter, kickOriginBlockerSize, kickOriginBlockerUseTrigger);
 
             float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
+            StartKickPushedSkullSegment(start);
 
             bool cancelAndReturn = false;
 
@@ -1200,6 +1445,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
                 lastPos = pos;
                 rb.MovePosition(pos);
+                UpdateKickPushedSkullSegment(start, a);
                 DestroyPickupsAtWorld(pos);
 
                 yield return waitFixed;
@@ -1214,6 +1460,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 transform.position = start;
                 lastPos = start;
                 currentTileCenter = start;
+                FinishKickPushedSkull(start);
 
                 RemoveKickOriginBlocker();
 
@@ -1233,6 +1480,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 transform.position = start;
                 lastPos = start;
                 currentTileCenter = start;
+                FinishKickPushedSkull(start);
 
                 RemoveKickOriginBlocker();
 
@@ -1253,6 +1501,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             rb.position = next;
             transform.position = next;
+            UpdateKickPushedSkullSegment(start, 1f);
 
             DestroyPickupsAtWorld(next);
 
@@ -1263,6 +1512,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = currentTileCenter;
         transform.position = currentTileCenter;
         lastPos = currentTileCenter;
+        FinishKickPushedSkull(currentTileCenter);
 
         isKicked = false;
         kickRoutine = null;
@@ -1274,7 +1524,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
     }
 
-    public void StopKickAndSnapToGrid(float tileSize)
+    public void StopKickAndSnapToGrid(float tileSize, Vector2? snapWorldPosOverride = null)
     {
         if (HasExploded)
             return;
@@ -1294,7 +1544,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         isKicked = false;
 
-        Vector2 cur = rb != null ? rb.position : (Vector2)transform.position;
+        Vector2 cur = snapWorldPosOverride ?? (rb != null ? rb.position : (Vector2)transform.position);
         Vector2 snapped = SnapToGrid(cur, tileSize);
 
         currentTileCenter = snapped;
@@ -1308,6 +1558,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         transform.position = snapped;
+        FinishKickPushedSkull(snapped);
 
         if (anim != null)
         {
@@ -1318,6 +1569,25 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         RecalculateCharactersInsideAt(snapped);
         if (bombCollider != null)
             bombCollider.isTrigger = charactersInside.Count > 0;
+    }
+
+    private void StopKickAndSnapToExplosionTile(Collider2D explosionCollider, float tileSize)
+    {
+        Vector2 hitWorldPos = rb != null ? rb.position : (Vector2)transform.position;
+
+        if (explosionCollider != null)
+        {
+            BombExplosion explosion =
+                explosionCollider.GetComponent<BombExplosion>() ??
+                explosionCollider.GetComponentInParent<BombExplosion>() ??
+                explosionCollider.GetComponentInChildren<BombExplosion>();
+
+            hitWorldPos = explosion != null
+                ? (Vector2)explosion.transform.position
+                : (Vector2)explosionCollider.bounds.center;
+        }
+
+        StopKickAndSnapToGrid(tileSize, hitWorldPos);
     }
 
     public void MarkAsExploded()
@@ -1356,10 +1626,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 return;
 
             if (isKicked)
-                StopKickAndSnapToGrid(kickTileSize);
+                StopKickAndSnapToExplosionTile(other, kickTileSize);
 
             if (owner != null)
-                owner.ExplodeBomb(gameObject);
+                owner.ExplodeBombChained(gameObject, other.transform.position);
 
             return;
         }
@@ -1475,7 +1745,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float originBlockerSize,
         bool originBlockerUseTrigger)
     {
-        if (HasExploded || isKicked || isPunched)
+        if (IsBlockedFromMagnetMovement)
             return false;
 
         if (magnetRoutine != null)
@@ -1534,6 +1804,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 break;
 
+            if (IsBlockedFromMagnetMovement)
+                break;
+
             if (remainingSteps > 0 && remainingSteps-- == 0)
                 break;
 
@@ -1551,6 +1824,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             float travelTime = kickTileSize / speed;
             float elapsed = 0f;
             bool cancelAndReturn = false;
+            bool externalMovementInterrupted = false;
 
             while (elapsed < travelTime)
             {
@@ -1558,6 +1832,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 {
                     RemoveMagnetOriginBlocker();
                     yield break;
+                }
+
+                if (IsBlockedFromMagnetMovement)
+                {
+                    externalMovementInterrupted = true;
+                    break;
                 }
 
                 if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
@@ -1576,6 +1856,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
                 yield return waitFixed;
             }
+
+            if (externalMovementInterrupted)
+                break;
 
             if (cancelAndReturn)
             {
@@ -1728,13 +2011,22 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 var h = hits[i];
                 if (h == null) continue;
                 if (h.gameObject == gameObject) continue;
-                if (h.isTrigger) continue;
 
                 if (h.transform.IsChildOf(transform))
                     continue;
 
                 if (h.gameObject.name == "KickBombOriginBlocker" || h.gameObject.name == "MagnetBombOriginBlocker")
                     continue;
+
+                Bomb blockingBomb = h.GetComponent<Bomb>() ?? h.GetComponentInParent<Bomb>();
+                if (blockingBomb != null &&
+                    blockingBomb != this &&
+                    blockingBomb.IsBeingKicked)
+                {
+                    return true;
+                }
+
+                if (h.isTrigger) continue;
 
                 return true;
             }
@@ -1974,7 +2266,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (!canPlay)
             return;
 
-        audioSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(audioSource, clip, volume);
     }
 
     private void TryPlayKickSfx_StopOthers(AudioClip clip, float volume)
@@ -1991,7 +2283,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         audioSource.Stop();
-        audioSource.PlayOneShot(clip, volume);
+        GameAudioSettings.PlaySfx(audioSource, clip, volume);
     }
 
     private AudioClip GetKickBounceClip()
@@ -2030,6 +2322,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void DestroyPickupsAtWorld(Vector2 worldCenter)
     {
+        DestroyPickupsAtWorld(worldCenter, kickDirection);
+    }
+
+    private void DestroyPickupsAtWorld(Vector2 worldCenter, Vector2 impactDirection)
+    {
         Vector2 size = Vector2.one * (kickTileSize * 0.45f);
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
 
@@ -2049,8 +2346,213 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (pickup == null)
                 continue;
 
-            pickup.DestroySilently();
+            if (TryAttachKickPushedSkull(pickup, impactDirection, worldCenter))
+                continue;
+
+            if (pickup.TryBounceSkull(impactDirection, kickTileSize, bombCollider))
+                continue;
+
+            pickup.DestroyFromMovingBombImpact();
         }
+    }
+
+    private bool TryHandleIndestructibleKickBounce(
+        Vector2 blockedWorldPos,
+        out AudioClip bounceSfx,
+        out float bounceSfxVolume)
+    {
+        bounceSfx = null;
+        bounceSfxVolume = 1f;
+
+        ResolveIndestructibleTilemapIfNeeded();
+
+        if (indestructibleTilemap == null)
+            return false;
+
+        Vector3Int blockedCell = indestructibleTilemap.WorldToCell(blockedWorldPos);
+        TileBase blockedTile = indestructibleTilemap.GetTile(blockedCell);
+        if (blockedTile == null)
+            return false;
+
+        EnsureKickedBombHandlers();
+        if (kickIndestructibleHandlers == null || kickIndestructibleHandlers.Length == 0)
+            return false;
+
+        for (int i = 0; i < kickIndestructibleHandlers.Length; i++)
+        {
+            var handler = kickIndestructibleHandlers[i];
+            if (handler == null)
+                continue;
+
+            if (handler.TryHandleKickedBombBlocked(
+                    this,
+                    currentTileCenter,
+                    blockedWorldPos,
+                    kickDirection,
+                    indestructibleTilemap,
+                    blockedCell,
+                    blockedTile,
+                    out AudioClip handledBounceSfx,
+                    out float handledBounceSfxVolume))
+            {
+                bounceSfx = handledBounceSfx;
+                bounceSfxVolume = Mathf.Clamp01(handledBounceSfxVolume);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void EnsureKickedBombHandlers()
+    {
+        if (kickIndestructibleHandlers != null && kickIndestructibleHandlers.Length > 0)
+            return;
+
+        MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+        if (behaviours == null || behaviours.Length == 0)
+        {
+            kickIndestructibleHandlers = System.Array.Empty<IIndestructibleKickedBombHandler>();
+            return;
+        }
+
+        var handlers = new System.Collections.Generic.List<IIndestructibleKickedBombHandler>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IIndestructibleKickedBombHandler handler)
+                handlers.Add(handler);
+        }
+
+        kickIndestructibleHandlers = handlers.Count > 0
+            ? handlers.ToArray()
+            : System.Array.Empty<IIndestructibleKickedBombHandler>();
+    }
+
+    private bool TryAttachKickPushedSkull(ItemPickup pickup, Vector2 impactDirection, Vector2 bombWorldCenter)
+    {
+        if (pickup == null || pickup.type != ItemType.Skull)
+            return false;
+
+        if (!kickPushedSkulls.Contains(pickup))
+            kickPushedSkulls.Add(pickup);
+
+        int pushDistanceTiles = GetKickPushedSkullDistanceTiles(pickup);
+        return pickup.TryMoveSkullInFrontOfKickedBomb(
+            impactDirection,
+            kickTileSize,
+            bombCollider,
+            bombWorldCenter,
+            pushDistanceTiles,
+            finishPush: false);
+    }
+
+    private bool TryAttachKickPushedSkullAtWorld(Vector2 worldCenter, Vector2 impactDirection, Vector2 bombWorldCenter)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * 0.45f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        bool attachedAny = false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            var pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (TryAttachKickPushedSkull(pickup, impactDirection, bombWorldCenter))
+                attachedAny = true;
+        }
+
+        return attachedAny;
+    }
+
+    private void StartKickPushedSkullSegment(Vector2 bombSegmentStart)
+    {
+        if (kickPushedSkulls.Count == 0)
+            return;
+
+        for (int i = kickPushedSkulls.Count - 1; i >= 0; i--)
+        {
+            var skull = kickPushedSkulls[i];
+            if (skull == null)
+            {
+                kickPushedSkulls.RemoveAt(i);
+                continue;
+            }
+
+            if (!skull.StartKickedBombPushSegment(
+                    kickDirection,
+                    kickTileSize,
+                    bombCollider,
+                    bombSegmentStart,
+                    i + 1))
+            {
+                kickPushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    private void UpdateKickPushedSkullSegment(Vector2 bombSegmentStart, float progress)
+    {
+        if (kickPushedSkulls.Count == 0)
+            return;
+
+        for (int i = kickPushedSkulls.Count - 1; i >= 0; i--)
+        {
+            var skull = kickPushedSkulls[i];
+            if (skull == null)
+            {
+                kickPushedSkulls.RemoveAt(i);
+                continue;
+            }
+
+            if (!skull.UpdateKickedBombPushSegment(
+                    kickDirection,
+                    kickTileSize,
+                    bombCollider,
+                    bombSegmentStart,
+                    progress,
+                    i + 1))
+            {
+                kickPushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    private void FinishKickPushedSkull(Vector2 bombWorldCenter)
+    {
+        if (kickPushedSkulls.Count == 0)
+            return;
+
+        for (int i = kickPushedSkulls.Count - 1; i >= 0; i--)
+        {
+            var skull = kickPushedSkulls[i];
+            if (skull == null)
+                continue;
+
+            skull.TryMoveSkullInFrontOfKickedBomb(
+                kickDirection,
+                kickTileSize,
+                bombCollider,
+                bombWorldCenter,
+                i + 1,
+                finishPush: true);
+        }
+
+        kickPushedSkulls.Clear();
+    }
+
+    private int GetKickPushedSkullDistanceTiles(ItemPickup pickup)
+    {
+        int index = kickPushedSkulls.IndexOf(pickup);
+        return Mathf.Max(1, index + 1);
     }
 
     private bool IsKickBlockedByCharacterOnImmediateExit(Vector2 origin, Vector2 next)

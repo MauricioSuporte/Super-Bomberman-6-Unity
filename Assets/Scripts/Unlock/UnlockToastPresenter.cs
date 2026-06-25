@@ -14,7 +14,10 @@ public class UnlockToastPresenter : MonoBehaviour
     const string IconName = "Icon";
     const string TitleName = "Title";
     const string SubtitleName = "Subtitle";
+    const string UnlockSfxResourcesPath = "Sounds/LifeUp";
+    public const string UnlockSfxSourceName = "TempUnlockToastSfx";
     static readonly bool EnableSurgicalLogs = false;
+    static readonly bool EnableUnlockSfxLogs = true;
 
     static UnlockToastPresenter instanceInScene;
 
@@ -28,6 +31,7 @@ public class UnlockToastPresenter : MonoBehaviour
     private readonly float visibleDuration = 5f;
     private readonly float fadeOutDuration = 0.20f;
     private readonly float queueGapDuration = 0.05f;
+    private readonly float unlockSfxDebounceSeconds = 0.20f;
 
     [Header("Dynamic Scale (Pixel Perfect friendly)")]
     [SerializeField] bool dynamicScale = true;
@@ -47,7 +51,7 @@ public class UnlockToastPresenter : MonoBehaviour
     [Header("Toast Extra Scaling")]
     [SerializeField, Min(0.5f)] float toastScaleMultiplier = 1.75f;
     [SerializeField, Min(0.5f)] float textScaleMultiplier = 1.10f;
-    [SerializeField, Range(0.20f, 0.80f)] float maxToastWidthPercentOfRoot = 0.42f;
+    [SerializeField, Range(0.20f, 0.90f)] float maxToastWidthPercentOfRoot = 0.70f;
 
     [Header("Layout")]
     [SerializeField, Min(1)] float baseLeftPadding = 8f;
@@ -85,6 +89,8 @@ public class UnlockToastPresenter : MonoBehaviour
     Canvas persistentCanvas;
     GraphicRaycaster persistentRaycaster;
     CanvasScaler persistentCanvasScaler;
+    AudioClip unlockSfx;
+    float lastUnlockSfxRealtime = -999f;
 
     Material runtimeTitleMaterial;
     Material runtimeSubtitleMaterial;
@@ -173,6 +179,47 @@ public class UnlockToastPresenter : MonoBehaviour
         instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
     }
 
+    public static void ShowBattleModeStage11Unlocked()
+    {
+        ShowBattleModeStageUnlocked(11);
+    }
+
+    public static void ShowHardcoreUnlocked()
+    {
+        EnsureInScene();
+
+        if (instanceInScene == null)
+        {
+            SLog("ShowHardcoreUnlocked aborted | instance null");
+            return;
+        }
+
+        var info = UnlockToastCatalog.GetHardcore();
+        Sprite icon = UnlockToastCatalog.LoadHardcoreIcon();
+
+        SLog($"ShowHardcoreUnlocked | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+
+        instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
+    }
+
+    public static void ShowBattleModeStageUnlocked(int stageIndex)
+    {
+        EnsureInScene();
+
+        if (instanceInScene == null)
+        {
+            SLog($"ShowBattleModeStageUnlocked aborted | instance null | stage={stageIndex}");
+            return;
+        }
+
+        var info = UnlockToastCatalog.GetBattleModeStage(stageIndex);
+        Sprite icon = UnlockToastCatalog.LoadBattleModeStageIcon(stageIndex);
+
+        SLog($"ShowBattleModeStageUnlocked | stage={stageIndex} | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+
+        instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
+    }
+
     void Awake()
     {
         if (instanceInScene != null && instanceInScene != this)
@@ -198,6 +245,14 @@ public class UnlockToastPresenter : MonoBehaviour
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
 
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
+        UnlockProgress.OnHardcoreUnlocked += HandleHardcoreUnlocked;
+
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
+        UnlockProgress.OnBattleModeStageUnlocked += HandleBattleModeStageUnlocked;
+
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
@@ -216,6 +271,9 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SLog("OnDisable");
     }
@@ -263,6 +321,27 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         SLog("HandleBossRushUnlocked received");
         ShowBossRushUnlocked();
+    }
+
+    void HandleHardcoreUnlocked()
+    {
+        SLog("HandleHardcoreUnlocked received");
+        ShowHardcoreUnlocked();
+    }
+
+    void HandleBattleModeStage11Unlocked()
+    {
+        SLog("HandleBattleModeStage11Unlocked received");
+        ShowBattleModeStageUnlocked(11);
+    }
+
+    void HandleBattleModeStageUnlocked(int stageIndex)
+    {
+        if (stageIndex == 11)
+            return;
+
+        SLog($"HandleBattleModeStageUnlocked received | stage={stageIndex}");
+        ShowBattleModeStageUnlocked(stageIndex);
     }
 
     void Enqueue(string title, string subtitle, Sprite icon)
@@ -355,6 +434,7 @@ public class UnlockToastPresenter : MonoBehaviour
 
         titleText.text = request.Title ?? "";
         subtitleText.text = request.Subtitle ?? "";
+        TryPlayUnlockSfx();
 
         if (request.Icon != null)
         {
@@ -376,6 +456,67 @@ public class UnlockToastPresenter : MonoBehaviour
         toastRoot.anchoredPosition = GetHiddenPosition();
 
         SLog($"ApplyToast | title={titleText.text} | subtitle={subtitleText.text} | iconEnabled={iconImage.enabled} | toastSize={(toastRoot != null ? toastRoot.sizeDelta.ToString() : "null")} | hiddenPos={toastRoot.anchoredPosition}");
+    }
+
+    void TryPlayUnlockSfx()
+    {
+        float now = Time.unscaledTime;
+        UnlockSfxLog($"TryPlayUnlockSfx requested | now={now:0.000} | last={lastUnlockSfxRealtime:0.000} | listenerPaused={AudioListener.pause} | activeScene={SceneManager.GetActiveScene().name}");
+
+        if (now - lastUnlockSfxRealtime < unlockSfxDebounceSeconds)
+        {
+            UnlockSfxLog($"TryPlayUnlockSfx skipped by debounce | elapsed={(now - lastUnlockSfxRealtime):0.000} | debounce={unlockSfxDebounceSeconds:0.000}");
+            SLog($"TryPlayUnlockSfx skipped by debounce | elapsed={(now - lastUnlockSfxRealtime):0.000}");
+            return;
+        }
+
+        lastUnlockSfxRealtime = now;
+        PlayUnlockSfx();
+    }
+
+    void PlayUnlockSfx()
+    {
+        if (unlockSfx == null)
+        {
+            unlockSfx = Resources.Load<AudioClip>(UnlockSfxResourcesPath);
+            UnlockSfxLog($"PlayUnlockSfx loaded resource | path={UnlockSfxResourcesPath} | found={(unlockSfx != null)}");
+        }
+
+        if (unlockSfx == null)
+        {
+            UnlockSfxLog($"PlayUnlockSfx aborted | missing resource={UnlockSfxResourcesPath}");
+            SLog($"PlayUnlockSfx aborted | missing resource={UnlockSfxResourcesPath}");
+            return;
+        }
+
+        GameObject temp = new GameObject(UnlockSfxSourceName);
+        DontDestroyOnLoad(temp);
+
+        AudioSource source = temp.AddComponent<AudioSource>();
+        source.loop = false;
+        source.playOnAwake = false;
+        source.ignoreListenerPause = true;
+
+        AudioSource musicSource = GameMusicController.Instance != null
+            ? GameMusicController.Instance.GetMusicSource()
+            : null;
+
+        if (musicSource != null)
+            source.outputAudioMixerGroup = musicSource.outputAudioMixerGroup;
+
+        GameAudioSettings.PlaySfxClip(source, unlockSfx);
+
+        Destroy(temp, unlockSfx.length + 0.1f);
+        UnlockSfxLog($"PlayUnlockSfx via protected temporary AudioSource | source='{temp.name}' | clip='{unlockSfx.name}' | length={unlockSfx.length:0.000} | listenerPaused={AudioListener.pause} | isPlaying={source.isPlaying}");
+        SLog("PlayUnlockSfx via temporary AudioSource");
+    }
+
+    static void UnlockSfxLog(string message)
+    {
+        if (!EnableUnlockSfxLogs)
+            return;
+
+        Debug.Log($"[UnlockToastSfx] {message}");
     }
 
     void EnsureBuilt()
@@ -573,10 +714,11 @@ public class UnlockToastPresenter : MonoBehaviour
 
         text.raycastTarget = false;
         text.alignment = TextAlignmentOptions.Left;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.overflowMode = TextOverflowModes.Ellipsis;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.overflowMode = TextOverflowModes.Overflow;
         text.enableAutoSizing = true;
         text.color = isTitle ? titleColor : subtitleColor;
+        LocalizedTmpFontFallback.Apply(text);
 
         SLog($"SetupText | isTitle={isTitle} | hasFont={(text.font != null)} | hasMaterial={(sourceMaterial != null)}");
     }
@@ -831,14 +973,14 @@ public class UnlockToastPresenter : MonoBehaviour
         titleText.enableAutoSizing = true;
         titleText.fontSizeMax = titleMaxSize;
         titleText.fontSizeMin = Mathf.Max(8, Mathf.RoundToInt(titleMaxSize * titleMinScaleRatio));
-        titleText.textWrappingMode = TextWrappingModes.NoWrap;
-        titleText.overflowMode = TextOverflowModes.Ellipsis;
+        titleText.textWrappingMode = TextWrappingModes.Normal;
+        titleText.overflowMode = TextOverflowModes.Overflow;
 
         subtitleText.enableAutoSizing = true;
         subtitleText.fontSizeMax = subtitleMaxSize;
         subtitleText.fontSizeMin = Mathf.Max(8, Mathf.RoundToInt(subtitleMaxSize * subtitleMinScaleRatio));
-        subtitleText.textWrappingMode = TextWrappingModes.NoWrap;
-        subtitleText.overflowMode = TextOverflowModes.Ellipsis;
+        subtitleText.textWrappingMode = TextWrappingModes.Normal;
+        subtitleText.overflowMode = TextOverflowModes.Overflow;
 
         float minWidth = ToastPx(baseToastWidthAtDesign);
         float minHeight = ToastPx(baseToastHeightAtDesign);
@@ -852,8 +994,9 @@ public class UnlockToastPresenter : MonoBehaviour
 
         float availableTextWidthAtMax = Mathf.Max(16f, maxWidthFromRoot - left - iconSize - gap - right);
 
-        titleText.rectTransform.sizeDelta = new Vector2(availableTextWidthAtMax, titleMaxSize + 8f);
-        subtitleText.rectTransform.sizeDelta = new Vector2(availableTextWidthAtMax, subtitleMaxSize + 8f);
+        float measureHeight = Mathf.Max(200f, rootSize.y > 0f ? rootSize.y : 200f);
+        titleText.rectTransform.sizeDelta = new Vector2(availableTextWidthAtMax, measureHeight);
+        subtitleText.rectTransform.sizeDelta = new Vector2(availableTextWidthAtMax, measureHeight);
 
         titleText.ForceMeshUpdate();
         subtitleText.ForceMeshUpdate();
@@ -861,10 +1004,18 @@ public class UnlockToastPresenter : MonoBehaviour
         float preferredTextWidth = Mathf.Max(titleText.preferredWidth, subtitleText.preferredWidth);
         float contentWidth = left + iconSize + gap + preferredTextWidth + right;
         float finalWidth = Mathf.Clamp(Mathf.Ceil(contentWidth), minWidth, maxWidthFromRoot);
+        float finalTextWidth = Mathf.Max(16f, finalWidth - left - iconSize - gap - right);
 
-        float titleHeight = Mathf.Ceil(titleMaxSize + TextPx(6f));
-        float subtitleHeight = Mathf.Ceil(subtitleMaxSize + TextPx(6f));
-        float contentHeight = Mathf.Max(minHeight, top + bottom + titleHeight + lineSpacing + subtitleHeight);
+        titleText.rectTransform.sizeDelta = new Vector2(finalTextWidth, measureHeight);
+        subtitleText.rectTransform.sizeDelta = new Vector2(finalTextWidth, measureHeight);
+        titleText.ForceMeshUpdate();
+        subtitleText.ForceMeshUpdate();
+
+        float titleHeight = Mathf.Ceil(Mathf.Max(titleMaxSize + TextPx(6f), titleText.preferredHeight + TextPx(4f)));
+        float subtitleHeight = Mathf.Ceil(Mathf.Max(subtitleMaxSize + TextPx(6f), subtitleText.preferredHeight + TextPx(4f)));
+        float contentTextHeight = top + bottom + titleHeight + lineSpacing + subtitleHeight;
+        float contentIconHeight = top + bottom + iconSize;
+        float contentHeight = Mathf.Max(minHeight, contentTextHeight, contentIconHeight);
         float finalHeight = Mathf.Ceil(contentHeight);
 
         toastRoot.anchorMin = new Vector2(1f, 1f);
@@ -885,6 +1036,7 @@ public class UnlockToastPresenter : MonoBehaviour
         iconRt.pivot = new Vector2(0f, 0.5f);
         iconRt.sizeDelta = new Vector2(iconSize, iconSize);
         iconRt.anchoredPosition = new Vector2(left, 0f);
+        iconImage.preserveAspect = true;
 
         float textLeft = left + iconSize + gap;
         float textRightInset = right;
