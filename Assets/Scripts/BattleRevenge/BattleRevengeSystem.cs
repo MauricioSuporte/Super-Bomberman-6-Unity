@@ -268,8 +268,8 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             }
             else
             {
-                GameManager.Instance?.CheckWinState();
                 respawnSwapsInProgress.Remove(respawnPlayerId);
+                GameManager.Instance?.CheckWinState();
             }
         }
 
