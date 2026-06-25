@@ -69,9 +69,12 @@ public class StunReceiver : MonoBehaviour
     private bool savedStunRendererLoop;
 
     private bool stunVisualSuppressedByDamaged;
+    private bool stunVisualSuppressedByExternal;
     private bool hadFrozenBeforeDamaged;
+    private bool hadFrozenBeforeExternal;
     private bool stunVisualInitialized;
     private bool stunWantsCustomAnim;
+    private int externalVisualSuppressionCount;
 
     private MovementController cachedMovement;
     private BombController cachedBombController;
@@ -214,7 +217,9 @@ public class StunReceiver : MonoBehaviour
         }
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
     }
 
     public void CancelStunForDeath()
@@ -269,7 +274,30 @@ public class StunReceiver : MonoBehaviour
         animStates.Clear();
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
+    }
+
+    public void SetVisualSuppressedByExternalTransition(bool suppressed)
+    {
+        if (suppressed)
+        {
+            externalVisualSuppressionCount++;
+            SuppressStunVisualForExternalTransition();
+            return;
+        }
+
+        externalVisualSuppressionCount = Mathf.Max(0, externalVisualSuppressionCount - 1);
+
+        if (externalVisualSuppressionCount > 0)
+            return;
+
+        if (isStunned)
+            stunVisualInitialized = false;
+
+        stunVisualSuppressedByExternal = false;
+        hadFrozenBeforeExternal = false;
     }
 
     IEnumerator StunRoutine()
@@ -281,7 +309,9 @@ public class StunReceiver : MonoBehaviour
         loggedStunVisualStart = false;
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
 
         stunVisualInitialized = false;
         stunWantsCustomAnim = wantsCustomAnim;
@@ -308,6 +338,7 @@ public class StunReceiver : MonoBehaviour
                 rb.linearVelocity = Vector2.zero;
 
             bool damagedActive = IsDamagedVisualActiveNow();
+            bool externalSuppressed = externalVisualSuppressionCount > 0;
 
             if (damagedActive)
             {
@@ -330,6 +361,21 @@ public class StunReceiver : MonoBehaviour
 
                     stunVisualSuppressedByDamaged = true;
                 }
+
+                if (freezeAnimatedSprites)
+                    UnfreezeAnimationsKeepCurrentFrame();
+
+                if (suppressRestore || !isActiveAndEnabled || !gameObject.activeInHierarchy)
+                    break;
+
+                yield return null;
+                continue;
+            }
+
+            if (externalSuppressed)
+            {
+                if (!stunVisualSuppressedByExternal)
+                    SuppressStunVisualForExternalTransition();
 
                 if (freezeAnimatedSprites)
                     UnfreezeAnimationsKeepCurrentFrame();
@@ -364,6 +410,24 @@ public class StunReceiver : MonoBehaviour
 
                 stunVisualSuppressedByDamaged = false;
                 hadFrozenBeforeDamaged = false;
+            }
+
+            if (stunVisualSuppressedByExternal)
+            {
+                if (wantsCustomAnim)
+                {
+                    SuppressCustomStunVisual(false);
+                }
+                else
+                {
+                    ShowMountedPlayerDownForMountedStun();
+
+                    if (freezeAnimatedSprites && hadFrozenBeforeExternal)
+                        FreezeAnimations();
+                }
+
+                stunVisualSuppressedByExternal = false;
+                hadFrozenBeforeExternal = false;
             }
 
             bool doShake =
@@ -403,8 +467,13 @@ public class StunReceiver : MonoBehaviour
 
         int myToken = ++stunSessionToken;
         bool damagedStillActive = IsDamagedVisualActiveNow();
+        bool externalSuppressionStillActive = externalVisualSuppressionCount > 0;
 
-        if (!suppressRestore && isActiveAndEnabled && gameObject.activeInHierarchy)
+        if (externalSuppressionStillActive)
+        {
+            CompleteStunDuringExternalVisualSuppression();
+        }
+        else if (!suppressRestore && isActiveAndEnabled && gameObject.activeInHierarchy)
         {
             if (damagedStillActive)
             {
@@ -448,9 +517,64 @@ public class StunReceiver : MonoBehaviour
         }
 
         stunVisualSuppressedByDamaged = false;
+        if (!externalSuppressionStillActive)
+            stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        if (!externalSuppressionStillActive)
+            hadFrozenBeforeExternal = false;
 
         stunRoutine = null;
+    }
+
+    private void CompleteStunDuringExternalVisualSuppression()
+    {
+        RestoreCustomStunControllersIfNeeded();
+
+        ClearMountedStunShake();
+
+        if (activeMountedStunVisual != null)
+            activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+        if (activeStunAnimatedRenderer != null)
+        {
+            activeStunAnimatedRenderer.idle = savedStunRendererIdle;
+            activeStunAnimatedRenderer.loop = savedStunRendererLoop;
+            SetAnimEnabled(activeStunAnimatedRenderer, false);
+        }
+
+        UnfreezeAnimationsKeepCurrentFrame();
+
+        spriteBases.Clear();
+        animStates.Clear();
+        customStunActive = false;
+        activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
+    }
+
+    private void SuppressStunVisualForExternalTransition()
+    {
+        if (!isStunned)
+            return;
+
+        if (stunVisualInitialized)
+            RestoreSpriteBases();
+
+        if (stunWantsCustomAnim)
+        {
+            SuppressCustomStunVisual(true);
+        }
+        else
+        {
+            ClearMountedStunShake();
+            HideMountedPlayerDownForMountedStun();
+            hadFrozenBeforeExternal = freezeAnimatedSprites && animStates.Count > 0;
+
+            if (freezeAnimatedSprites)
+                RestoreAnimations();
+        }
+
+        stunVisualSuppressedByExternal = true;
     }
 
     private IEnumerator DeferredRestoreAfterDamaged(int token)
@@ -494,6 +618,8 @@ public class StunReceiver : MonoBehaviour
             activeStunAnimatedRenderer = null;
             activeMountedStunVisual = null;
             activeMountedPlayerStunRenderer = null;
+            stunVisualSuppressedByExternal = false;
+            hadFrozenBeforeExternal = false;
             deferredVisualRestoreRoutine = null;
             yield break;
         }
@@ -905,7 +1031,9 @@ public class StunReceiver : MonoBehaviour
         suppressRestore = false;
 
         stunVisualSuppressedByDamaged = false;
+        stunVisualSuppressedByExternal = false;
         hadFrozenBeforeDamaged = false;
+        hadFrozenBeforeExternal = false;
     }
 
     private AnimatedSpriteRenderer ResolveStunAnimatedRenderer()

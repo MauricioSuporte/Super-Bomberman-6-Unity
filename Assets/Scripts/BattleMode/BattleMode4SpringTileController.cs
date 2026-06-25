@@ -196,6 +196,12 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         bool prevMountExplosionInvulnerable = mountMovement != null && mountMovement.explosionInvulnerable;
 
         CharacterHealth[] affectedHealth = mover.GetComponentsInChildren<CharacterHealth>(true);
+        StunReceiver stunReceiver = mover.GetComponent<StunReceiver>();
+        bool bombControllerDisabledByActiveStun =
+            hadBombController &&
+            !prevBombEnabled &&
+            stunReceiver != null &&
+            stunReceiver.IsStunned;
         var riding = mover.GetComponent<PlayerRidingController>();
         var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
         Vector2 prevMountLocalOffset = mountVisual != null ? mountVisual.localOffset : Vector2.zero;
@@ -213,6 +219,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             playerCollider.enabled = false;
 
         ApplyInvulnerability(mover, mountMovement, affectedHealth, true);
+        if (stunReceiver != null)
+            stunReceiver.SetVisualSuppressedByExternalTransition(true);
+
         PlaySpringSfx(mover);
 
         try
@@ -235,6 +244,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
             if (mountVisual != null)
                 mountVisual.localOffset = prevMountLocalOffset;
+
+            if (stunReceiver != null)
+                stunReceiver.SetVisualSuppressedByExternalTransition(false);
 
             ClearUnmountedSpringSprites(riding);
 
@@ -268,7 +280,11 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                 ApplyHealthInvulnerability(affectedHealth, false);
 
             if (restoreGameplayState && hadBombController && bombController != null)
-                bombController.enabled = prevBombEnabled;
+            {
+                bombController.enabled = bombControllerDisabledByActiveStun && !stunReceiver.IsStunned
+                    ? true
+                    : prevBombEnabled;
+            }
 
             if (restoreGameplayState && playerCollider != null)
                 playerCollider.enabled = prevColliderEnabled;
