@@ -298,6 +298,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
 
         int highestInternal = speedInternal;
+        float highestRuntimeSpeed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
         bool foundAny = false;
 
         for (int i = 0; i < cachedPlayers.Count; i++)
@@ -313,13 +314,38 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
                 continue;
 
             highestInternal = Mathf.Max(highestInternal, movement.SpeedInternal);
+            highestRuntimeSpeed = Mathf.Max(
+                highestRuntimeSpeed,
+                GetDashAwareRuntimeSpeed(p, movement));
             foundAny = true;
         }
 
         if (!foundAny)
             return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
 
-        return PlayerPersistentStats.InternalSpeedToTilesPerSecond(highestInternal);
+        return Mathf.Max(
+            PlayerPersistentStats.InternalSpeedToTilesPerSecond(highestInternal),
+            highestRuntimeSpeed);
+    }
+
+    private static float GetDashAwareRuntimeSpeed(
+        PlayerIdentity player,
+        MovementController movement)
+    {
+        if (player == null || movement == null)
+            return 0f;
+
+        if (!player.TryGetComponent<GreenLouieDashAbility>(out var dash) ||
+            dash == null ||
+            !dash.DashActive)
+        {
+            return 0f;
+        }
+
+        // Durante o dash, MovementController.speed recebe o mesmo multiplicador
+        // usado pelo deslocamento do Green Louie. A camera ainda quantiza esse
+        // valor em pixels inteiros pelo acumulador existente acima.
+        return Mathf.Max(0f, movement.speed);
     }
 
     private static Vector2 NormalizeCardinal(Vector2 dir)
