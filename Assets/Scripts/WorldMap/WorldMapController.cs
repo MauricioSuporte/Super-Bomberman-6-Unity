@@ -400,7 +400,24 @@ public class WorldMapController : MonoBehaviour
         ApplyInitialExplosionRadiusForStage(sceneName);
 
         StagePreIntroPlayersWalk.SkipOnNextLoad();
-        SceneManager.LoadScene(sceneName);
+        AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName);
+        if (loadOperation == null)
+        {
+            Debug.LogError($"Unable to start async scene load for '{sceneName}'.");
+            transitioning = false;
+            yield break;
+        }
+
+        loadOperation.allowSceneActivation = false;
+        while (loadOperation.progress < 0.9f)
+            yield return null;
+
+        // Keep the already-faded World Map visible for one final frame before activation.
+        yield return null;
+        loadOperation.allowSceneActivation = true;
+
+        while (!loadOperation.isDone)
+            yield return null;
     }
 
     bool IsStage1_1OnlyUnlockedStage()

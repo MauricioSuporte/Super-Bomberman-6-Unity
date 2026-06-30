@@ -401,6 +401,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
     IEnumerator PlayContinueSelectionRoutine()
     {
+        float continueFrameSeconds = Mathf.Max(0.01f, characterFrameSeconds * 0.5f);
         Vector2[] startingPositions = new Vector2[bomberImages.Length];
         for (int i = 0; i < bomberImages.Length; i++)
         {
@@ -412,12 +413,12 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         {
             SetBomberFrame(continueFrames, frameIndex);
             float frameElapsed = 0f;
-            while (frameElapsed < characterFrameSeconds)
+            while (frameElapsed < continueFrameSeconds)
             {
                 frameElapsed += Time.unscaledDeltaTime;
                 if (frameIndex >= 4)
                 {
-                    float exitProgress = Mathf.Clamp01((frameIndex - 4f + (frameElapsed / characterFrameSeconds)) / 8f);
+                    float exitProgress = Mathf.Clamp01((frameIndex - 4f + (frameElapsed / continueFrameSeconds)) / 8f);
                     Vector2 offset = Vector2.up * (continueExitDistance * exitProgress);
 
                     for (int i = 0; i < bomberImages.Length; i++)
