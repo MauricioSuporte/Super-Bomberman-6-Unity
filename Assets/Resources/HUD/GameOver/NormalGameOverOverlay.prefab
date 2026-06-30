@@ -62,39 +62,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NormalGameOverOverlay
   backgroundSprite: {fileID: 21300000, guid: 8e93b9e425bef4e488421cc44042f130, type: 3}
-  seatedBomberSprites:
-  - {fileID: 5363689899083879206, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
-  - {fileID: 7586704242452275006, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
-  - {fileID: 7390521138990443588, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
-  - {fileID: 5335988813256389173, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
-  tauntEyeSprites:
-  - {fileID: 8550902295204960151, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
-  - {fileID: 6020009786622063702, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
-  - {fileID: -592467618464454074, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
-  - {fileID: -6363692746851449938, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
   cursorSprites:
   - {fileID: 4941462090396089414, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
   - {fileID: 813685599856363850, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
-  continueWakeUpBomberSprites:
-  - {fileID: 6047014753219688286, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
-  - {fileID: 8247900976574566731, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
-  - {fileID: 740745263426848800, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
-  - {fileID: -5355563409783572962, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
-  continuePreparingBomberSprites:
-  - {fileID: 2722717681019038173, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
-  - {fileID: -2977207752289632425, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
-  - {fileID: -31827304475265179, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
-  - {fileID: -3381891667044105533, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
-  continueRunningBomberSprites:
-  - {fileID: 945614257895978032, guid: a4a71761d32873b41aabba039b04f379, type: 3}
-  - {fileID: -2744120886631420691, guid: a4a71761d32873b41aabba039b04f379, type: 3}
-  - {fileID: 4676124922752445310, guid: a4a71761d32873b41aabba039b04f379, type: 3}
-  - {fileID: 5329293198942421691, guid: a4a71761d32873b41aabba039b04f379, type: 3}
-  endBomberSprites:
-  - {fileID: 2189694687008990300, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
-  - {fileID: 4577402162591444139, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
-  - {fileID: 223371866641554991, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
-  - {fileID: 886122725345983342, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
+  characterSpriteResourcesPath: HUD/GameOver/Characters
   gameOverMusic: {fileID: 8300000, guid: 5986bee0e751c3140af44ce1275882f7, type: 3}
   gameOverMusicVolume: 1
   loopGameOverMusic: 0
@@ -105,13 +76,9 @@ MonoBehaviour:
   waitBeforeFadeInSeconds: 1.5
   fadeInSeconds: 1
   fadeOutSeconds: 1
-  eyeFrameSeconds: 0.13
+  characterFrameSeconds: 0.13
   confirmAnimationSeconds: 0.32
-  continueWakeUpSeconds: 0.25
-  continuePreparingSeconds: 0.25
-  continueRunJumpSeconds: 1
-  continueRunJumpDistance: 240
-  continueRunJumpArcHeight: 48
+  continueExitDistance: 180
   endFallSeconds: 2.2
   endFallQueueDelaySeconds: 0.08
   endBlackHolePosition: {x: 0, y: 0}
@@ -119,5 +86,4 @@ MonoBehaviour:
   endFallOrbitDegrees: 540
   endFallSpriteRotationDegrees: 720
   endFallFinalScale: 0
-  eyesOffsetY: 3
   cursorSize: {x: 16, y: 16}

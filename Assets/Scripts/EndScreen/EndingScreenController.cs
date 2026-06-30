@@ -60,7 +60,7 @@ public class EndingScreenController : MonoBehaviour
 #pragma warning disable CS0414
     [SerializeField, TextArea(12, 40)]
     string creditsBlock =
-        "Super Bomberman 6 v0.4.0\n" +
+        "Super Bomberman 6 v0.4.1\n" +
         "Tribute to Bomberman\n\n" +
         "Bomberman\n" +
         "Copyright 1983\n" +
@@ -587,7 +587,7 @@ public class EndingScreenController : MonoBehaviour
         CreditsText credits = GameTextDatabase.Credits;
 
         string text =
-            $"<color={greenTitleColor}>Super Bomberman 6 v0.4.0</color>\n" +
+            $"<color={greenTitleColor}>Super Bomberman 6 v0.4.1</color>\n" +
             $"<color={defaultColor}>{credits.Tribute}</color>\n\n" +
 
             $"<color={greenTitleColor}>Bomberman</color>\n" +
