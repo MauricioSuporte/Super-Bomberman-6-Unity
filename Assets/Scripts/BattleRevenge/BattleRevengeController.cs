@@ -963,7 +963,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (topHudOverlayRoot != null && topHudCanvas != null)
             return true;
 
-        BattleModeHud hud = FindFirstObjectByType<BattleModeHud>(FindObjectsInactive.Include);
+        BattleModeHud hud = FindAnyObjectByType<BattleModeHud>(FindObjectsInactive.Include);
         if (hud == null || hud.transform.parent == null)
             return false;
 
