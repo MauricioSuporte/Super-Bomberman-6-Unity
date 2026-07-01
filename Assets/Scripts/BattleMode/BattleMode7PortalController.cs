@@ -297,6 +297,36 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     public float TeleportDurationSeconds
         => Mathf.Max(0.01f, teleportSeconds);
 
+    public bool TryGetBombPortalTrajectory(
+        Vector2Int sourcePortal,
+        out Vector2Int destinationPortal,
+        out Vector2Int launchDirection,
+        out Vector2Int punchLandingTile)
+    {
+        destinationPortal = sourcePortal;
+        launchDirection = Vector2Int.zero;
+        punchLandingTile = sourcePortal;
+
+        int sourceIndex = GetPortalIndex(ToCell(sourcePortal));
+        if (sourceIndex < 0 || portalCells == null || portalCells.Length < 2)
+            return false;
+
+        int destinationIndex = GetClockwiseDestinationIndex(sourceIndex);
+        int nextPortalIndex = GetClockwiseDestinationIndex(destinationIndex);
+        destinationPortal = portalCells[destinationIndex];
+        Vector2Int nextPortal = portalCells[nextPortalIndex];
+        Vector2 direction = GetCardinalDirection(nextPortal - destinationPortal);
+        launchDirection = new Vector2Int(
+            Mathf.RoundToInt(direction.x),
+            Mathf.RoundToInt(direction.y));
+        if (launchDirection == Vector2Int.zero)
+            return false;
+
+        punchLandingTile =
+            destinationPortal + launchDirection * BombPortalPunchDistanceTiles;
+        return true;
+    }
+
     public void CopyPortalCells(List<Vector2Int> destination)
     {
         if (destination == null)
