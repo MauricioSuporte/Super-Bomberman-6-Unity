@@ -904,6 +904,12 @@ public class PlayerMountCompanion : MonoBehaviour
         if (playerHealth == null)
             return;
 
+        // StartTemporaryInvulnerability replaces the current health routine.
+        // Preserve protection that was already active before mounting instead
+        // of shortening it to the duration of the riding animation.
+        if (playerHealth.IsInvulnerable)
+            return;
+
         playerHealth.StartTemporaryInvulnerability(seconds, withBlink: blink);
     }
 
