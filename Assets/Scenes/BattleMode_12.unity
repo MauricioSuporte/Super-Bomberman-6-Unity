@@ -7800,9 +7800,12 @@ MonoBehaviour:
   teleportStarAnimationFrameTime: 0.1
   teleportStarSortingOrder: 90
   tilesPerSecond: 10
-  enterAnimationSeconds: 0.25
-  exitAnimationSeconds: 0.5
-  visualHopHeightTiles: 1.75
+  stage9TravelSeconds: 1.5
+  portalRouteLegSeconds: 0.5
+  enterAnimationSeconds: 0.2
+  enterHopHeightTiles: 2
+  exitAnimationSeconds: 0.45
+  exitHopHeightTiles: 3
   retriggerGraceSeconds: 0.08
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1

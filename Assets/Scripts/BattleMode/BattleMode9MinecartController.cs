@@ -68,9 +68,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     [Header("Motion")]
     [SerializeField, Min(0.05f)] private float tilesPerSecond = 5f;
-    [SerializeField, Min(0.01f)] private float enterAnimationSeconds = 0.25f;
-    [SerializeField, Min(0.01f)] private float exitAnimationSeconds = 0.5f;
-    [SerializeField, Min(0f)] private float visualHopHeightTiles = 1.75f;
+    [SerializeField, Min(0.01f)] private float stage9TravelSeconds = 1.5f;
+    [SerializeField, Min(0.01f)] private float portalRouteLegSeconds = 0.5f;
+    [SerializeField, Min(0.01f)] private float enterAnimationSeconds = 0.2f;
+    [SerializeField, Min(0f)] private float enterHopHeightTiles = 2f;
+    [SerializeField, Min(0.01f)] private float exitAnimationSeconds = 0.45f;
+    [SerializeField, Min(0f)] private float exitHopHeightTiles = 3f;
     [SerializeField, Min(0f)] private float retriggerGraceSeconds = 0.08f;
 
     [Header("Pixel Perfect")]
@@ -139,6 +142,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     Vector2 currentCartDirection = Vector2.right;
     MovementController currentRider;
     float cartMovePixelAccumulator;
+    Vector2 lastCartMoveDirection;
     bool rideLoopPausedForGamePause;
     bool cartDestroyedBySuddenDeath;
     int battleMode12CurrentRouteIndex;
@@ -436,7 +440,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         try
         {
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds, "Enter");
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds, enterHopHeightTiles, "Enter");
             rideEnterAnimationActive = false;
             if (mover == null || mover.IsEndingStage)
                 yield break;
@@ -484,7 +488,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 PlayOneShot(exitSfx);
                 rideExitAnimationActive = true;
                 rideExitAnimationStartedTime = Time.time;
-                yield return PlayEnterExitVisualRoutine(mover, state, exitStartWorld, actualExitWorld, actualExitFacing, exitAnimationSeconds, "Exit");
+                yield return PlayEnterExitVisualRoutine(mover, state, exitStartWorld, actualExitWorld, actualExitFacing, exitAnimationSeconds, exitHopHeightTiles, "Exit");
                 rideExitAnimationActive = false;
             }
             else
@@ -622,7 +626,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     IEnumerator MoveCartAroundRail(MovementController mover, RideState state)
     {
         SetActiveDangerRailPath(railPath);
-        yield return MoveCartAlongPath(mover, state, railPath);
+        yield return MoveCartAlongPath(mover, state, railPath, stage9TravelSeconds);
     }
 
     IEnumerator MoveCartThroughBattleMode12Route(
@@ -640,7 +644,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         List<Vector3Int> sourcePath = BuildBattleMode12PathToPortal(sourceRouteIndex);
         SetActiveDangerRailPath(sourcePath);
-        yield return MoveCartAlongPath(mover, state, sourcePath);
+        yield return MoveCartAlongPath(mover, state, sourcePath, portalRouteLegSeconds);
 
         if (state != null && state.cartDestroyedBySuddenDeath)
             yield break;
@@ -657,7 +661,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         List<Vector3Int> destinationPath = BuildBattleMode12PathFromPortalToStart(destinationRouteIndex);
         SetActiveDangerRailPath(destinationPath);
-        yield return MoveCartAlongPath(mover, state, destinationPath);
+        yield return MoveCartAlongPath(mover, state, destinationPath, portalRouteLegSeconds);
     }
 
     void SetActiveDangerRailPath(List<Vector3Int> path)
@@ -673,14 +677,30 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             activeDangerRailPath.Count > 1 ? 1 : 0;
     }
 
-    IEnumerator MoveCartAlongPath(MovementController mover, RideState state, List<Vector3Int> path)
+    IEnumerator MoveCartAlongPath(
+        MovementController mover,
+        RideState state,
+        List<Vector3Int> path,
+        float travelSeconds)
     {
         if (path == null || path.Count == 0)
             yield break;
 
         float tileSize = Mathf.Max(0.0001f, mover != null ? mover.tileSize : 1f);
-        float speed = Mathf.Max(0.05f, tilesPerSecond) * tileSize;
+        float pathTiles = 0f;
+        for (int i = 1; i < path.Count; i++)
+        {
+            pathTiles += Vector2.Distance(
+                GetCellCenter(path[i - 1]),
+                GetCellCenter(path[i])) / tileSize;
+        }
+
+        float speed = pathTiles > 0f
+            ? pathTiles * tileSize / Mathf.Max(0.01f, travelSeconds)
+            : Mathf.Max(0.05f, tilesPerSecond) * tileSize;
         var fixedWait = new WaitForFixedUpdate();
+        lastCartMoveDirection = Vector2.zero;
+        ResetCartPixelAccumulator();
 
         for (int i = 1; i < path.Count; i++)
         {
@@ -694,6 +714,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             if (dir == Vector2.zero)
                 dir = currentCartDirection;
 
+            if (dir != lastCartMoveDirection)
+            {
+                lastCartMoveDirection = dir;
+                ResetCartPixelAccumulator();
+            }
+
             if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir, "segment-start"))
                 yield break;
 
@@ -703,7 +729,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
             Vector2 position = start;
             ApplyCartRidePosition(mover, state, position, dir);
-            ResetCartPixelAccumulator();
 
             while (Vector2.Distance(position, end) > PixelWorldStep * 0.5f)
             {
@@ -832,7 +857,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 0,
                 activeDangerRailPath.Count - 1 - targetIndex);
         float travelTiles = partialTiles + fullTilesAfterTarget;
-        remaining += travelTiles / Mathf.Max(0.05f, tilesPerSecond);
+        remaining += travelTiles / GetActiveTravelTilesPerSecond();
         return remaining;
     }
 
@@ -889,7 +914,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 seconds =
                     remainingEnterSeconds +
                     travelTiles /
-                    Mathf.Max(0.05f, tilesPerSecond);
+                    GetActiveTravelTilesPerSecond();
                 return true;
             }
 
@@ -908,7 +933,11 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     {
         Vector2 source = QuantizeToPixelGrid(GetCellCenter(sourcePortal));
         Vector2 destination = QuantizeToPixelGrid(GetCellCenter(destinationPortal));
-        float duration = Mathf.Max(0.01f, teleportSeconds);
+        // teleportSeconds is the complete portal phase, including sinking and
+        // rising at the two ends of the teleport.
+        float duration = Mathf.Max(
+            0.01f,
+            teleportSeconds - Mathf.Max(0f, portalSinkSeconds) * 2f);
         float elapsed = 0f;
         int spawnedStars = 0;
 
@@ -1465,6 +1494,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         Vector2 end,
         Vector2 faceDir,
         float animationSeconds,
+        float hopHeightTiles,
         string phaseName)
     {
         if (mover == null || mover.Rigidbody == null)
@@ -1472,7 +1502,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         float duration = Mathf.Max(0.01f, animationSeconds);
         float half = duration * 0.5f;
-        float height = Mathf.Max(0f, visualHopHeightTiles) * Mathf.Max(0.0001f, mover.tileSize);
+        float height = Mathf.Max(0f, hopHeightTiles) * Mathf.Max(0.0001f, mover.tileSize);
         var riding = mover.GetComponent<PlayerRidingController>();
         var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
         Vector2 baseMountOffset = mountVisual != null ? mountVisual.localOffset : Vector2.zero;
@@ -1501,6 +1531,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         try
         {
             float elapsed = 0f;
+            var fixedWait = new WaitForFixedUpdate();
             while (elapsed < duration)
             {
                 if (mover.IsEndingStage)
@@ -1508,24 +1539,26 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
                 if (GamePauseController.IsPaused)
                 {
-                    yield return null;
+                    yield return fixedWait;
                     continue;
                 }
 
+                elapsed = Mathf.Min(duration, elapsed + Time.fixedDeltaTime);
                 float t = Mathf.Clamp01(elapsed / duration);
-                Vector2 ground = Vector2.Lerp(start, end, t);
+                Vector2 ground = QuantizeToPixelGrid(Vector2.Lerp(start, end, t));
 
-                bool descending = elapsed >= half;
+                bool descending = t >= 0.5f;
                 float phaseT = half > 0f
                     ? (descending ? Mathf.Clamp01((elapsed - half) / half) : Mathf.Clamp01(elapsed / half))
                     : 1f;
-                float visualHeight = descending
+                float visualHeight = QuantizeWorldToPixelStep(descending
                     ? Mathf.Lerp(height, 0f, phaseT)
-                    : Mathf.Lerp(0f, height, phaseT);
+                    : Mathf.Lerp(0f, height, phaseT));
 
                 if (mounted && mountVisual != null)
                 {
-                    mover.Rigidbody.position = ground + Vector2.up * visualHeight;
+                    mover.Rigidbody.MovePosition(
+                        QuantizeToPixelGrid(ground + Vector2.up * visualHeight));
 
                     if (!usePinkJumpAnimator && mountVisual.HasJumpVisuals())
                         mountVisual.SetJumpPhase(descending);
@@ -1535,15 +1568,14 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 }
                 else
                 {
-                    mover.Rigidbody.position = ground;
+                    mover.Rigidbody.MovePosition(ground);
                     ApplyUnmountedSpringSprite(riding, faceDir, !descending, visualHeight);
                 }
 
-                elapsed += Time.deltaTime;
-                yield return null;
+                yield return fixedWait;
             }
 
-            mover.Rigidbody.position = end;
+            mover.Rigidbody.MovePosition(QuantizeToPixelGrid(end));
         }
         finally
         {
@@ -1570,6 +1602,28 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 ClearUnmountedSpringSprites(riding);
             }
         }
+    }
+
+    float GetActiveTravelTilesPerSecond()
+    {
+        if (activeDangerRailPath.Count <= 1)
+            return Mathf.Max(0.05f, tilesPerSecond);
+
+        float tileWorldSize = groundTilemap != null
+            ? Mathf.Max(0.0001f, Mathf.Abs(groundTilemap.cellSize.x))
+            : 1f;
+        float pathTiles = 0f;
+        for (int i = 1; i < activeDangerRailPath.Count; i++)
+        {
+            pathTiles += Vector2.Distance(
+                GetCellCenter(activeDangerRailPath[i - 1]),
+                GetCellCenter(activeDangerRailPath[i])) / tileWorldSize;
+        }
+
+        float configuredSeconds = IsBattleMode12Active()
+            ? portalRouteLegSeconds
+            : stage9TravelSeconds;
+        return Mathf.Max(0.05f, pathTiles / Mathf.Max(0.01f, configuredSeconds));
     }
 
     void HandleCartCollisions(Vector2 position, Vector2 direction, MovementController rider)
@@ -2422,6 +2476,14 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         return new Vector2(
             Mathf.Round(world.x * ppu) / ppu,
             Mathf.Round(world.y * ppu) / ppu);
+    }
+
+    float QuantizeWorldToPixelStep(float worldValue)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return worldValue;
+
+        return Mathf.Round(worldValue * pixelsPerUnit) / pixelsPerUnit;
     }
 
     void ResetCartPixelAccumulator()
