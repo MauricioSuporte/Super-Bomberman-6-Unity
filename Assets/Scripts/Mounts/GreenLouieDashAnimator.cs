@@ -8,6 +8,12 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
     public AnimatedSpriteRenderer rollLeft;
     public AnimatedSpriteRenderer rollRight;
 
+    [Header("Dash Afterimage")]
+    [SerializeField, Min(0.01f)] private float afterimageInterval = 0.06f;
+    [SerializeField, Min(0.01f)] private float afterimageDuration = 0.22f;
+    [SerializeField, Range(0f, 1f)] private float afterimageInitialAlpha = 0.45f;
+    [SerializeField] private Color afterimageTint = new(0.65f, 1f, 0.65f, 1f);
+
     AnimatedSpriteRenderer active;
 
     struct CachedState
@@ -20,12 +26,14 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
 
     readonly List<CachedState> cachedMovementStates = new();
     bool dashing;
+    float nextAfterimageTime;
 
     public void Play(Vector2 dir)
     {
         CacheAndDisableAllMovementSprites();
 
         dashing = true;
+        nextAfterimageTime = Time.time;
 
         active = GetRoll(dir);
         DisableAllRolls();
@@ -94,6 +102,42 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
             if (s.enabled)
                 s.enabled = false;
         }
+
+        if (Time.time >= nextAfterimageTime)
+        {
+            SpawnAfterimage();
+            nextAfterimageTime = Time.time + Mathf.Max(0.01f, afterimageInterval);
+        }
+    }
+
+    void SpawnAfterimage()
+    {
+        if (active == null || !active.enabled ||
+            !active.TryGetComponent(out SpriteRenderer source) ||
+            source == null || source.sprite == null)
+            return;
+
+        GameObject ghost = new($"{name}_DashAfterimage");
+        ghost.layer = source.gameObject.layer;
+        ghost.transform.SetPositionAndRotation(source.transform.position, source.transform.rotation);
+        ghost.transform.localScale = source.transform.lossyScale;
+
+        SpriteRenderer ghostRenderer = ghost.AddComponent<SpriteRenderer>();
+        ghostRenderer.sprite = source.sprite;
+        ghostRenderer.flipX = source.flipX;
+        ghostRenderer.flipY = source.flipY;
+        ghostRenderer.sortingLayerID = source.sortingLayerID;
+        ghostRenderer.sortingOrder = source.sortingOrder - 1;
+        ghostRenderer.maskInteraction = source.maskInteraction;
+        ghostRenderer.spriteSortPoint = source.spriteSortPoint;
+        ghostRenderer.sharedMaterial = source.sharedMaterial;
+
+        Color color = source.color * afterimageTint;
+        color.a = source.color.a * afterimageTint.a * Mathf.Clamp01(afterimageInitialAlpha);
+        ghostRenderer.color = color;
+
+        LouieDashAfterimage fade = ghost.AddComponent<LouieDashAfterimage>();
+        fade.Initialize(ghostRenderer, Mathf.Max(0.01f, afterimageDuration));
     }
 
     AnimatedSpriteRenderer GetRoll(Vector2 dir)
@@ -155,5 +199,36 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         }
 
         cachedMovementStates.Clear();
+    }
+}
+
+sealed class LouieDashAfterimage : MonoBehaviour
+{
+    SpriteRenderer spriteRenderer;
+    float duration;
+    float elapsed;
+    float initialAlpha;
+
+    public void Initialize(SpriteRenderer renderer, float lifetime)
+    {
+        spriteRenderer = renderer;
+        duration = Mathf.Max(0.01f, lifetime);
+        initialAlpha = spriteRenderer != null ? spriteRenderer.color.a : 0f;
+    }
+
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        float progress = Mathf.Clamp01(elapsed / duration);
+
+        if (spriteRenderer != null)
+        {
+            Color color = spriteRenderer.color;
+            color.a = Mathf.Lerp(initialAlpha, 0f, progress);
+            spriteRenderer.color = color;
+        }
+
+        if (progress >= 1f)
+            Destroy(gameObject);
     }
 }

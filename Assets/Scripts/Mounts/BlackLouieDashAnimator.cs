@@ -9,6 +9,12 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
     public AnimatedSpriteRenderer dashLeft;
     public AnimatedSpriteRenderer dashRight;
 
+    [Header("Dash Afterimage")]
+    [SerializeField, Min(0.01f)] private float afterimageInterval = 0.06f;
+    [SerializeField, Min(0.01f)] private float afterimageDuration = 0.22f;
+    [SerializeField, Range(0f, 1f)] private float afterimageInitialAlpha = 0.45f;
+    [SerializeField] private Color afterimageTint = new(0.65f, 0.65f, 0.75f, 1f);
+
     AnimatedSpriteRenderer activeDash;
     MountVisualController riderVisual;
 
@@ -22,6 +28,8 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
     readonly List<bool> cachedDirectionObjectsActive = new();
 
     bool playing;
+    bool emitAfterimages;
+    float nextAfterimageTime;
 
     Coroutine holdRoutine;
 
@@ -71,6 +79,8 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         }
 
         playing = true;
+        emitAfterimages = true;
+        nextAfterimageTime = Time.time;
     }
 
     /// <summary>
@@ -91,6 +101,7 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         }
 
         ForceLastFrameAndFreeze(activeDash);
+        emitAfterimages = false;
 
         if (seconds <= 0f)
         {
@@ -160,6 +171,49 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
             riderVisual.enabled = true;
 
         playing = false;
+        emitAfterimages = false;
+    }
+
+    void LateUpdate()
+    {
+        if (!playing || !emitAfterimages || activeDash == null)
+            return;
+
+        if (Time.time < nextAfterimageTime)
+            return;
+
+        SpawnAfterimage();
+        nextAfterimageTime = Time.time + Mathf.Max(0.01f, afterimageInterval);
+    }
+
+    void SpawnAfterimage()
+    {
+        if (activeDash == null || !activeDash.enabled ||
+            !activeDash.TryGetComponent(out SpriteRenderer source) ||
+            source == null || !source.enabled || source.sprite == null)
+            return;
+
+        GameObject ghost = new($"{name}_DashAfterimage");
+        ghost.layer = source.gameObject.layer;
+        ghost.transform.SetPositionAndRotation(source.transform.position, source.transform.rotation);
+        ghost.transform.localScale = source.transform.lossyScale;
+
+        SpriteRenderer ghostRenderer = ghost.AddComponent<SpriteRenderer>();
+        ghostRenderer.sprite = source.sprite;
+        ghostRenderer.flipX = source.flipX;
+        ghostRenderer.flipY = source.flipY;
+        ghostRenderer.sortingLayerID = source.sortingLayerID;
+        ghostRenderer.sortingOrder = source.sortingOrder - 1;
+        ghostRenderer.maskInteraction = source.maskInteraction;
+        ghostRenderer.spriteSortPoint = source.spriteSortPoint;
+        ghostRenderer.sharedMaterial = source.sharedMaterial;
+
+        Color color = source.color * afterimageTint;
+        color.a = source.color.a * afterimageTint.a * Mathf.Clamp01(afterimageInitialAlpha);
+        ghostRenderer.color = color;
+
+        LouieDashAfterimage fade = ghost.AddComponent<LouieDashAfterimage>();
+        fade.Initialize(ghostRenderer, Mathf.Max(0.01f, afterimageDuration));
     }
 
     AnimatedSpriteRenderer GetDashSprite(Vector2 dir)
@@ -296,6 +350,7 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
 
         activeDash = null;
         playing = false;
+        emitAfterimages = false;
 
         cachedAnimators.Clear();
         cachedAnimatorEnabled.Clear();
