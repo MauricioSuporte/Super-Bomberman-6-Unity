@@ -318,13 +318,12 @@ public partial class BombController : MonoBehaviour
             return;
 
         var movement = GetMovement();
-        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
+        bool greenLouieDashActive = IsDashActive();
+        if (movement != null &&
+            ((movement.InputLocked && !greenLouieDashActive) || movement.isDead || movement.IsEndingStage))
             return;
 
         if (IsRidingTransitionActive())
-            return;
-
-        if (IsDashActive())
             return;
 
         if (GamePauseController.IsPaused)
@@ -339,7 +338,7 @@ public partial class BombController : MonoBehaviour
             if (bombsRemaining > 0 && input.GetDown(playerId, PlayerAction.ActionA))
                 PlaceBomb();
 
-            if (IsControlEnabled() && input.GetDown(playerId, PlayerAction.ActionB))
+            if (!greenLouieDashActive && IsControlEnabled() && input.GetDown(playerId, PlayerAction.ActionB))
                 TryExplodeOldestControlledBomb();
         }
         else
@@ -949,13 +948,11 @@ public partial class BombController : MonoBehaviour
             return;
 
         var movement = GetMovement();
-        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
+        if (movement != null &&
+            ((movement.InputLocked && !IsDashActive()) || movement.isDead || movement.IsEndingStage))
             return;
 
         if (IsRidingTransitionActive())
-            return;
-
-        if (IsDashActive())
             return;
 
         if (GamePauseController.IsPaused)
@@ -2834,9 +2831,6 @@ public partial class BombController : MonoBehaviour
             return false;
 
         if (IsRidingTransitionActive())
-            return false;
-
-        if (IsDashActive())
             return false;
 
         if (consumeBomb && bombsRemaining <= 0)
