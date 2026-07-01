@@ -9,6 +9,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 {
     const string BattleMode7SceneName = "BattleMode_7";
     const string DefaultEnterSfxResourcesPath = "Sounds/start";
+    const int BombPortalPunchDistanceTiles = 3;
 
     [Header("Portal Cells")]
     [SerializeField]
@@ -45,8 +46,10 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     AudioSource audioSource;
 
     readonly HashSet<MovementController> activeTeleporters = new();
+    readonly HashSet<Bomb> activeBombTeleporters = new();
     readonly Dictionary<MovementController, Vector3Int> waitingForPortalExit = new();
     readonly Dictionary<MovementController, TeleportState> activeStates = new();
+    readonly Dictionary<Bomb, Vector3Int> bombsWaitingForPortalExit = new();
 
     sealed class TeleportState
     {
@@ -62,6 +65,10 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         public CharacterHealth[] healths;
         public PlayerMountCompanion mountCompanion;
         public MountEggQueue eggQueue;
+        public Bomb heldBomb;
+        public PowerGloveAbility powerGlove;
+        public SpriteRenderer[] heldBombRenderers;
+        public bool[] heldBombRendererStates;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -113,7 +120,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
         activeStates.Clear();
         activeTeleporters.Clear();
+        activeBombTeleporters.Clear();
         waitingForPortalExit.Clear();
+        bombsWaitingForPortalExit.Clear();
     }
 
     void Update()
@@ -131,6 +140,158 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < players.Length; i++)
             TryHandlePlayer(players[i]);
+
+        TryHandleBombs();
+    }
+
+    void TryHandleBombs()
+    {
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null ||
+                bomb.HasExploded ||
+                bomb.IsBeingHeldByPowerGlove ||
+                bomb.IsBeingPunched ||
+                activeBombTeleporters.Contains(bomb))
+                continue;
+
+            Vector3Int currentCell = WorldToCell(bomb.GetLogicalPosition());
+
+            if (bombsWaitingForPortalExit.TryGetValue(bomb, out Vector3Int blockedCell))
+            {
+                if (currentCell == blockedCell)
+                    continue;
+
+                bombsWaitingForPortalExit.Remove(bomb);
+            }
+
+            int sourceIndex = GetPortalIndex(currentCell);
+            if (sourceIndex < 0)
+                continue;
+
+            StartCoroutine(TeleportAndPunchBombRoutine(bomb, sourceIndex));
+        }
+    }
+
+    IEnumerator TeleportAndPunchBombRoutine(Bomb bomb, int sourceIndex)
+    {
+        if (bomb == null || portalCells == null || portalCells.Length < 2)
+            yield break;
+
+        activeBombTeleporters.Add(bomb);
+
+        int destinationIndex = GetClockwiseDestinationIndex(sourceIndex);
+        int nextPortalIndex = GetClockwiseDestinationIndex(destinationIndex);
+
+        Vector3Int sourceCell = ToCell(portalCells[sourceIndex]);
+        Vector3Int destinationCell = ToCell(portalCells[destinationIndex]);
+        Vector2 source = GetCellCenter(sourceCell);
+        Vector2 destination = GetCellCenter(destinationCell);
+        Vector2 nextPortal = GetCellCenter(ToCell(portalCells[nextPortalIndex]));
+        Vector2 launchDirection = GetCardinalDirection(nextPortal - destination);
+
+        if (launchDirection == Vector2.zero)
+        {
+            activeBombTeleporters.Remove(bomb);
+            yield break;
+        }
+
+        bomb.ForceStopExternalMovementAndSnap(source);
+
+        SpriteRenderer[] renderers = bomb.GetComponentsInChildren<SpriteRenderer>(true);
+        bool[] rendererStates = CaptureRendererStates(renderers);
+        Collider2D bombCollider = bomb.GetComponent<Collider2D>();
+        bool colliderWasEnabled = bombCollider != null && bombCollider.enabled;
+        BombAtGroundTileNotifier notifier = bomb.GetComponent<BombAtGroundTileNotifier>();
+        bool notifierWasEnabled = notifier != null && notifier.enabled;
+
+        SetRenderersEnabled(renderers, false);
+        if (bombCollider != null)
+            bombCollider.enabled = false;
+        if (notifier != null)
+            notifier.enabled = false;
+
+        PlayEnterSfx();
+        int spawnedStars = 0;
+        if (spawnTeleportStars)
+        {
+            SpawnTeleportStar(source);
+            spawnedStars = 1;
+        }
+
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, teleportSeconds);
+        while (elapsed < duration)
+        {
+            if (bomb == null || bomb.HasExploded)
+            {
+                activeBombTeleporters.Remove(bomb);
+                yield break;
+            }
+
+            if (GamePauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            spawnedStars = SpawnTeleportStarsAlongPath(source, destination, t, spawnedStars);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (bomb == null || bomb.HasExploded)
+        {
+            activeBombTeleporters.Remove(bomb);
+            yield break;
+        }
+
+        bomb.ForceStopExternalMovementAndSnap(destination);
+        RestoreRendererStates(renderers, rendererStates);
+        if (bombCollider != null)
+            bombCollider.enabled = colliderWasEnabled;
+        if (notifier != null)
+            notifier.enabled = notifierWasEnabled;
+
+        SpawnTeleportStarsAlongPath(source, destination, 1f, spawnedStars);
+
+        BombController owner = bomb.Owner;
+        MovementController ownerMovement = owner != null
+            ? owner.GetComponent<MovementController>()
+            : null;
+        LayerMask obstacles = ownerMovement != null
+            ? ownerMovement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player")
+            : LayerMask.GetMask("Stage", "Enemy", "Bomb", "Player");
+        Tilemap destructibleTilemap = owner != null ? owner.destructibleTiles : null;
+        float tileSize = ownerMovement != null ? Mathf.Max(0.0001f, ownerMovement.tileSize) : 1f;
+
+        bool launched = bomb.StartPunch(
+            launchDirection,
+            tileSize,
+            BombPortalPunchDistanceTiles,
+            obstacles,
+            destructibleTilemap,
+            logicalOriginOverride: destination);
+
+        if (!launched)
+        {
+            activeBombTeleporters.Remove(bomb);
+            yield break;
+        }
+
+        bombsWaitingForPortalExit[bomb] = destinationCell;
+        activeBombTeleporters.Remove(bomb);
+    }
+
+    static Vector2 GetCardinalDirection(Vector2 direction)
+    {
+        if (direction == Vector2.zero)
+            return Vector2.zero;
+
+        return Mathf.Abs(direction.x) >= Mathf.Abs(direction.y)
+            ? new Vector2(Mathf.Sign(direction.x), 0f)
+            : new Vector2(0f, Mathf.Sign(direction.y));
     }
 
     public float TeleportDurationSeconds
@@ -325,6 +486,16 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             eggQueue = mover.GetComponentInChildren<MountEggQueue>(true),
         };
 
+        state.powerGlove = mover.GetComponent<PowerGloveAbility>();
+        state.heldBomb = state.powerGlove != null
+            ? state.powerGlove.HeldBombForExternalTransition
+            : null;
+        if (state.heldBomb != null)
+        {
+            state.heldBombRenderers = state.heldBomb.GetComponentsInChildren<SpriteRenderer>(true);
+            state.heldBombRendererStates = CaptureRendererStates(state.heldBombRenderers);
+        }
+
         state.prevColliderEnabled = state.playerCollider != null && state.playerCollider.enabled;
         state.prevMountExplosionInvulnerable = state.mountMovement != null && state.mountMovement.explosionInvulnerable;
         state.hadBombController = mover.TryGetComponent(out state.bombController) && state.bombController != null;
@@ -334,6 +505,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         mover.SetExternalMovementOverride(true);
         mover.SetVisualOverrideActive(true);
         mover.SetAllSpritesVisible(false);
+        state.powerGlove?.SetTeleportVisualSuppressed(true);
+        SetRenderersEnabled(state.heldBombRenderers, false);
         mover.SetExplosionInvulnerable(true);
 
         if (state.bombController != null)
@@ -392,6 +565,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
                 mover.EnableExclusiveFromState();
                 mover.SetExplosionInvulnerable(state.prevPlayerExplosionInvulnerable);
+                RestoreRendererStates(state.heldBombRenderers, state.heldBombRendererStates);
+                state.powerGlove?.SetTeleportVisualSuppressed(false);
             }
         }
 
@@ -622,6 +797,43 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         {
             if (healths[i] != null)
                 healths[i].SetExternalInvulnerability(enabled);
+        }
+    }
+
+    static bool[] CaptureRendererStates(SpriteRenderer[] renderers)
+    {
+        if (renderers == null)
+            return null;
+
+        bool[] states = new bool[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+            states[i] = renderers[i] != null && renderers[i].enabled;
+
+        return states;
+    }
+
+    static void SetRenderersEnabled(SpriteRenderer[] renderers, bool enabled)
+    {
+        if (renderers == null)
+            return;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+                renderers[i].enabled = enabled;
+        }
+    }
+
+    static void RestoreRendererStates(SpriteRenderer[] renderers, bool[] states)
+    {
+        if (renderers == null || states == null)
+            return;
+
+        int count = Mathf.Min(renderers.Length, states.Length);
+        for (int i = 0; i < count; i++)
+        {
+            if (renderers[i] != null)
+                renderers[i].enabled = states[i];
         }
     }
 
