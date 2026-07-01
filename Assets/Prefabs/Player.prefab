@@ -4232,7 +4232,7 @@ MonoBehaviour:
   rubberBombPrefab: {fileID: 147425199346742615, guid: 26d7fe4d167283544b2eef6186339436, type: 3}
   magnetBombPrefab: {fileID: 147425199346742615, guid: 851ce7b3e6e8c724dbbf6dae1abc11dc, type: 3}
   revengeBombPrefab: {fileID: 147425199346742615, guid: 57db8dbb73a5d57489893e05dba3ca00, type: 3}
-  bombFuseTime: 2
+  bombFuseTime: 2.3
   bombAmout: 1
   chainBombDelaySeconds: 0.1
   powerBombRadius: 15

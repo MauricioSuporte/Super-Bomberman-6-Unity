@@ -40,7 +40,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Header("Chain Explosion")]
     public float chainStepDelay = 0.1f;
 
-    public float FuseSeconds = 2f;
+    public float FuseSeconds = 2.3f;
     public bool IsFusePaused => fusePaused;
 
     [Header("Stage Wrap / Tilemaps")]

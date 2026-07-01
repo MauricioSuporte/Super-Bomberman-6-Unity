@@ -30,7 +30,7 @@ public partial class BombController : MonoBehaviour
     public GameObject rubberBombPrefab;
     public GameObject magnetBombPrefab;
     public GameObject revengeBombPrefab;
-    public float bombFuseTime = 2f;
+    public float bombFuseTime = 2.3f;
     public int bombAmout = 1;
 
     [Header("Chain Explosion")]

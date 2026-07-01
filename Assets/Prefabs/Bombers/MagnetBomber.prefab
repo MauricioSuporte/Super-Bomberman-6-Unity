@@ -258,7 +258,7 @@ MonoBehaviour:
   powerBombPrefab: {fileID: 0}
   rubberBombPrefab: {fileID: 0}
   magnetBombPrefab: {fileID: 0}
-  bombFuseTime: 2
+  bombFuseTime: 2.3
   bombAmout: 3
   chainBombDelaySeconds: 0.1
   powerBombRadius: 15
