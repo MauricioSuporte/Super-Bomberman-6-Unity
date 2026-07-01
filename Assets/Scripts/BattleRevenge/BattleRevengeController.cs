@@ -86,6 +86,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     [Header("Movement")]
     [SerializeField, Min(0.1f)] private float moveSpeed = 4f;
+    [SerializeField, Min(1f)] private float actionCSpeedMultiplier = 2f;
 
     [Header("Movement Tilt")]
     [SerializeField] private bool useMovementTilt = true;
@@ -253,6 +254,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             return;
 
         bool hasMovementInput = TryGetTargetWallFromInput(input, out CartEdge targetWall);
+        bool holdingActionC = input.Get(ownerPlayerId, PlayerAction.ActionC);
 
         if (hasMovementInput)
         {
@@ -264,7 +266,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             }
 
             Vector3 beforeMove = transform.position;
-            MoveTowardWallMidpoint(targetWall);
+            MoveTowardWallMidpoint(targetWall, holdingActionC);
             Vector3 afterMove = transform.position;
 
             UpdateMovementTilt(afterMove - beforeMove, true);
@@ -1394,7 +1396,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             : counterClockwise;
     }
 
-    private void MoveTowardWallMidpoint(CartEdge targetWall)
+    private void MoveTowardWallMidpoint(CartEdge targetWall, bool speedBoostActive)
     {
         float beforePerimeter = perimeterPosition;
         Vector3 beforePosition = transform.position;
@@ -1407,7 +1409,10 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (Mathf.Approximately(delta, 0f))
             return;
 
-        float step = moveSpeed * Time.unscaledDeltaTime;
+        float speedMultiplier = speedBoostActive
+            ? Mathf.Max(1f, actionCSpeedMultiplier)
+            : 1f;
+        float step = moveSpeed * speedMultiplier * Time.unscaledDeltaTime;
         float move = Mathf.Clamp(delta, -step, step);
 
         perimeterPosition = NormalizePerimeterPosition(perimeterPosition + move);
