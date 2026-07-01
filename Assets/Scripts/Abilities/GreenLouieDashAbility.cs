@@ -222,7 +222,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     bool HasBombPassEnabled()
     {
-        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassBombs)
+        if (PlayerPersistentStats.GetRuntime(GetPlayerId()).CanPassBombs)
             return true;
 
         if (!TryGetComponent<AbilitySystem>(out var abilitySystem) || abilitySystem == null)
@@ -261,13 +261,18 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
             if (IsPlayerCollider(hit))
                 continue;
 
+            if (hit.gameObject.layer == bombLayer)
+            {
+                if (canPassBombs)
+                    continue;
+
+                return true;
+            }
+
             if (hit.isTrigger)
                 continue;
 
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
-                continue;
-
-            if (canPassBombs && hit.gameObject.layer == bombLayer)
                 continue;
 
             return true;
