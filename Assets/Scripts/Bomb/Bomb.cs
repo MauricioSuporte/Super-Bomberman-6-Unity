@@ -1355,6 +1355,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
                     continue;
                 }
+
+                if (IsPowerBomb)
+                    StunMovementControllersAtTile(next, 0.5f);
                 break;
             }
 
@@ -1471,6 +1474,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     continue;
                 }
 
+                if (IsPowerBomb && TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
+                    StunMovementControllersAtTile(next, 0.5f);
+
                 break;
             }
 
@@ -1490,6 +1496,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
                     continue;
                 }
+
+                if (IsPowerBomb && TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
+                    StunMovementControllersAtTile(next, 0.5f);
 
                 break;
             }
