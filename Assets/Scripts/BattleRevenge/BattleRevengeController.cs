@@ -1060,9 +1060,11 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private Vector2 GetHeadOffset()
     {
+        Vector2 offset;
+
         if (currentCorner != CartCorner.None)
         {
-            return currentCorner switch
+            offset = currentCorner switch
             {
                 CartCorner.TopLeft => headOffsetTopLeft,
                 CartCorner.TopRight => headOffsetTopRight,
@@ -1071,15 +1073,36 @@ public sealed class BattleRevengeController : MonoBehaviour
                 _ => Vector2.zero
             };
         }
-
-        return currentEdge switch
+        else
         {
-            CartEdge.Left => headOffsetLeft,
-            CartEdge.Right => headOffsetRight,
-            CartEdge.Top => headOffsetTop,
-            CartEdge.Bottom => headOffsetBottom,
-            _ => Vector2.zero
-        };
+            offset = currentEdge switch
+            {
+                CartEdge.Left => headOffsetLeft,
+                CartEdge.Right => headOffsetRight,
+                CartEdge.Top => headOffsetTop,
+                CartEdge.Bottom => headOffsetBottom,
+                _ => Vector2.zero
+            };
+        }
+
+        if (currentSegment == CartSegment.Top && currentCorner == CartCorner.None)
+            offset.x += GetTopHeadTiltPixelOffset();
+
+        return offset;
+    }
+
+    private float GetTopHeadTiltPixelOffset()
+    {
+        float absoluteTilt = Mathf.Abs(currentTilt);
+        if (absoluteTilt <= 0.001f || tiltAngle <= 0f)
+            return 0f;
+
+        bool atMaximumTilt = absoluteTilt >= tiltAngle - 0.001f;
+        float offsetPixels = atMaximumTilt ? 2f : 1f;
+
+        // No topo, inclinação negativa representa movimento para a direita.
+        float horizontalDirection = currentTilt < 0f ? 1f : -1f;
+        return horizontalDirection * offsetPixels / PixelsPerUnit;
     }
 
     private Vector2 GetRechargeOffset() => currentEdge switch
