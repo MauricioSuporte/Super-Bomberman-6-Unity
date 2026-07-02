@@ -22,7 +22,6 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
     Vector2 lastFacingDir = Vector2.down;
     Coroutine routine;
 
-    float originalSpeed;
     bool dashActive;
 
     IGreenLouieDashExternalAnimator externalAnimator;
@@ -114,12 +113,10 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         }
 
         dashActive = true;
-        originalSpeed = movement.speed;
 
         if (audioSource != null && dashSfx != null)
             GameAudioSettings.PlaySfx(audioSource, dashSfx, dashSfxVolume);
 
-        movement.speed = dashSpeed;
         movement.SetInputLocked(true, false);
 
         externalAnimator?.Play(dir);
@@ -131,7 +128,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
                 if (!enabledAbility || movement == null || movement.isDead)
                     break;
 
-                Vector2 nextPos = rb.position + movement.speed * Time.fixedDeltaTime * dir;
+                Vector2 nextPos = rb.position + dashSpeed * Time.fixedDeltaTime * dir;
 
                 if (IsBlocked(nextPos, dir))
                     break;
@@ -150,7 +147,6 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
                 if (movement != null)
                 {
-                    movement.speed = originalSpeed;
                     movement.SetInputLocked(false);
                 }
             }
@@ -176,7 +172,6 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
             if (movement != null)
             {
-                movement.speed = originalSpeed;
                 movement.SetInputLocked(false);
             }
         }
