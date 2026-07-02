@@ -640,6 +640,16 @@ public static class SaveSystem
         return CloneBattleModeHandicap(source, GetBattleModeHandicapProfileKind(stageIndex));
     }
 
+    public static BattleModeHandicapSave GetDefaultBattleModeHandicapForStage(int stageIndex)
+    {
+        BattleModeHandicapProfileKind kind = GetBattleModeHandicapProfileKind(stageIndex);
+        BattleModeHandicapSave result = NormalizeBattleModeHandicap(null, kind);
+        if (kind == BattleModeHandicapProfileKind.Stage6)
+            ApplyStage6DefaultHandicap(result);
+
+        return result;
+    }
+
     public static void SetBattleModeHandicapForStage(int stageIndex, BattleModeHandicapSave handicap)
     {
         EnsureLoaded();

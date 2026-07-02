@@ -304,8 +304,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Sprite[] itemSelectCursorSprites = new Sprite[3];
     [SerializeField, Min(0.01f)] private float itemSelectCursorFrameSeconds = 0.08f;
     [SerializeField] private Vector2 itemSelectHintOffset = new(0f, -300f);
-    [SerializeField] private Vector2 itemSelectHintSize = new(900f, 76f);
-    [SerializeField] private int itemSelectHintFontSize = 18;
+    [SerializeField] private Vector2 itemSelectHintSize = new(900f, 120f);
+    [SerializeField] private int itemSelectHintFontSize = 24;
     [SerializeField, Min(0f)] private float itemSelectHintLineSpacing = 18f;
     [SerializeField, Min(0)] private int itemSelectMaxAmount = 99;
     [SerializeField] private Vector2 louieSelectRootOffset = Vector2.zero;
@@ -323,8 +323,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 louieSelectCursorOffset = Vector2.zero;
     [SerializeField] private Vector2 louieSelectCursorSize = new(62f, 62f);
     [SerializeField] private Vector2 louieSelectHintOffset = new(0f, -300f);
-    [SerializeField] private Vector2 louieSelectHintSize = new(900f, 76f);
-    [SerializeField] private int louieSelectHintFontSize = 32;
+    [SerializeField] private Vector2 louieSelectHintSize = new(900f, 120f);
+    [SerializeField] private int louieSelectHintFontSize = 24;
     [SerializeField, Min(0f)] private float louieSelectHintLineSpacing = 18f;
     [SerializeField, Min(0)] private int louieSelectMaxAmount = 99;
     [SerializeField] private GameObject[] louieSelectMountPrefabs = new GameObject[9];
@@ -349,7 +349,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 handicapSelectLouieCursorOffset = new(0f, -8f);
     [SerializeField] private Vector2 handicapSelectCursorSize = new(62f, 62f);
     [SerializeField] private Vector2 handicapSelectHintOffset = new(0f, -300f);
-    [SerializeField] private Vector2 handicapSelectHintSize = new(900f, 76f);
+    [SerializeField] private Vector2 handicapSelectHintSize = new(900f, 120f);
     [SerializeField] private int handicapSelectHintFontSize = 22;
     [SerializeField, Min(0f)] private float handicapSelectHintLineSpacing = 18f;
 
@@ -369,6 +369,18 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float deniedSfxVolume = 1f;
     [SerializeField] private AudioClip specificStartSfx;
     [SerializeField, Range(0f, 1f)] private float specificStartSfxVolume = 1f;
+    [SerializeField] private AudioClip restoreDefaultSfx;
+    [SerializeField, Range(0f, 1f)] private float restoreDefaultSfxVolume = 1f;
+
+    [Header("Restore Defaults Confirmation")]
+    [SerializeField] private Vector2 restoreDefaultsQuestionOffset = new(0f, 100f);
+    [SerializeField] private Vector2 restoreDefaultsQuestionSize = new(840f, 180f);
+    [SerializeField] private int restoreDefaultsQuestionFontSize = 30;
+    [SerializeField] private Vector2 restoreDefaultsOptionsOffset = new(40f, -55f);
+    [SerializeField] private Vector2 restoreDefaultsOptionsSize = new(260f, 130f);
+    [SerializeField] private float restoreDefaultsOptionRowSpacing = 56f;
+    [SerializeField] private Vector2 restoreDefaultsCursorOffset = new(-72f, 0f);
+    [SerializeField, Min(0f)] private float restoreDefaultsConfirmDelay = 0.5f;
 
     [Header("Dynamic Scale (Pixel Perfect SNES)")]
     [SerializeField] private bool dynamicScale = true;
@@ -554,6 +566,12 @@ public sealed class BattleModeMenu : MonoBehaviour
     private int selectedHandicapRow;
     private int selectedHandicapColumn;
     private float handicapSelectCursorConfirmTimer;
+    private RectTransform restoreDefaultsRoot;
+    private TextMeshProUGUI restoreDefaultsText;
+    private TextMeshProUGUI restoreDefaultsOptionsText;
+    private string restoreDefaultsQuestion;
+    private RectTransform restoreDefaultsCursorRt;
+    private AnimatedSpriteRenderer restoreDefaultsCursorRenderer;
     private BattleModeRules.BattleMusicSelection[] musicSelections;
     private int selectedMusicIndex;
     private int workingBattleMusicSelectionMask;
@@ -3728,6 +3746,15 @@ public sealed class BattleModeMenu : MonoBehaviour
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                 UpdateItemSelectVisuals();
             }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR))
+            {
+                yield return ConfirmRestoreDefaults(
+                    itemSelectRoot,
+                    RestoreBattleItemDefaults,
+                    GameTextDatabase.BattleModeMenu.RestoreItemsDefaultsQuestion);
+                UpdateItemSelectVisuals();
+            }
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
             {
                 PlaySfx(returnSfx, returnSfxVolume);
@@ -4378,6 +4405,15 @@ public sealed class BattleModeMenu : MonoBehaviour
                 selectedLouieIndex = WrapIndex(selectedLouieIndex + columns, count);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
             }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR))
+            {
+                yield return ConfirmRestoreDefaults(
+                    louieSelectRoot,
+                    RestoreBattleLouieDefaults,
+                    GameTextDatabase.BattleModeMenu.RestoreLouiesDefaultsQuestion);
+                UpdateLouieSelectVisuals();
+            }
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
             {
                 PlaySfx(returnSfx, returnSfxVolume);
@@ -4890,6 +4926,15 @@ public sealed class BattleModeMenu : MonoBehaviour
             {
                 selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow + 1, 1);
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR))
+            {
+                yield return ConfirmRestoreDefaults(
+                    handicapSelectRoot,
+                    RestoreBattleHandicapDefaults,
+                    GameTextDatabase.BattleModeMenu.RestoreHandicapDefaultsQuestion);
+                UpdateHandicapSelectVisuals();
             }
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
             {
@@ -5569,6 +5614,217 @@ public sealed class BattleModeMenu : MonoBehaviour
             return min;
 
         return value;
+    }
+
+    private void RestoreBattleItemDefaults()
+    {
+        workingBattleItemAmounts = GameManager.GetDefaultBattleModeHiddenItemAmounts();
+        SaveCurrentBattleItemAmounts();
+    }
+
+    private void RestoreBattleLouieDefaults()
+    {
+        workingBattleLouieAmounts = GameManager.GetDefaultBattleModeLouieAmounts();
+        SaveCurrentBattleLouieAmounts();
+    }
+
+    private void RestoreBattleHandicapDefaults()
+    {
+        int stageIndex = SaveSystem.GetBattleModeStageIndex();
+        workingBattleHandicap = SaveSystem.GetDefaultBattleModeHandicapForStage(stageIndex);
+        SaveCurrentBattleHandicap();
+    }
+
+    private IEnumerator ConfirmRestoreDefaults(RectTransform menuRoot, System.Action restoreAction, string question)
+    {
+        restoreDefaultsQuestion = question;
+        EnsureRestoreDefaultsConfirmationBuilt();
+        if (menuRoot != null)
+            menuRoot.gameObject.SetActive(false);
+
+        restoreDefaultsRoot.gameObject.SetActive(true);
+        restoreDefaultsRoot.SetAsLastSibling();
+
+        int selectedIndex = 1;
+        UpdateRestoreDefaultsConfirmationVisuals(selectedIndex);
+        PlaySfx(confirmSfx, confirmSfxVolume);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            int previousIndex = selectedIndex;
+            if (MenuDirectionalPressed(input, PlayerAction.MoveLeft, out _) ||
+                MenuDirectionalPressed(input, PlayerAction.MoveUp, out _))
+                selectedIndex = 0;
+            else if (MenuDirectionalPressed(input, PlayerAction.MoveRight, out _) ||
+                     MenuDirectionalPressed(input, PlayerAction.MoveDown, out _))
+                selectedIndex = 1;
+
+            if (selectedIndex != previousIndex)
+            {
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateRestoreDefaultsConfirmationVisuals(selectedIndex);
+            }
+
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                if (selectedIndex == 0)
+                {
+                    float confirmStartedAt = Time.realtimeSinceStartup;
+                    restoreAction?.Invoke();
+                    PlaySfx(restoreDefaultSfx != null ? restoreDefaultSfx : confirmSfx,
+                        restoreDefaultSfx != null ? restoreDefaultSfxVolume : confirmSfxVolume);
+                    yield return PlayOptionCursorAdvanceAnimation(restoreDefaultsCursorRenderer);
+
+                    float remainingDelay = restoreDefaultsConfirmDelay - (Time.realtimeSinceStartup - confirmStartedAt);
+                    if (remainingDelay > 0f)
+                        yield return new WaitForSecondsRealtime(remainingDelay);
+                }
+                else
+                {
+                    PlaySfx(returnSfx, returnSfxVolume);
+                }
+
+                done = true;
+            }
+
+            CapturePreviousHeldInputs(input);
+            yield return null;
+        }
+
+        restoreDefaultsRoot.gameObject.SetActive(false);
+        if (menuRoot != null)
+        {
+            menuRoot.gameObject.SetActive(true);
+            menuRoot.SetAsLastSibling();
+        }
+
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        CapturePreviousHeldInputs(input);
+    }
+
+    private void EnsureRestoreDefaultsConfirmationBuilt()
+    {
+        if (restoreDefaultsRoot != null)
+            return;
+
+        GameObject rootGo = new("RestoreDefaultsConfirmation", typeof(RectTransform), typeof(RectMask2D));
+        rootGo.transform.SetParent(GetMenuContentParent(), false);
+        restoreDefaultsRoot = rootGo.GetComponent<RectTransform>();
+        restoreDefaultsRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        restoreDefaultsRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        restoreDefaultsRoot.pivot = new Vector2(0.5f, 0.5f);
+        restoreDefaultsRoot.sizeDelta = GetStageCarouselMaskUiSize();
+        restoreDefaultsRoot.localScale = Vector3.one * currentUiScale;
+
+        GameObject textGo = new("RestoreDefaultsText", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGo.transform.SetParent(restoreDefaultsRoot, false);
+        restoreDefaultsText = textGo.GetComponent<TextMeshProUGUI>();
+        restoreDefaultsText.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        restoreDefaultsText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        restoreDefaultsText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        restoreDefaultsText.raycastTarget = false;
+        restoreDefaultsText.textWrappingMode = TextWrappingModes.Normal;
+        restoreDefaultsText.overflowMode = TextOverflowModes.Overflow;
+        restoreDefaultsText.alignment = TextAlignmentOptions.Center;
+
+        GameObject optionsGo = new("RestoreDefaultsOptions", typeof(RectTransform), typeof(TextMeshProUGUI));
+        optionsGo.transform.SetParent(restoreDefaultsRoot, false);
+        restoreDefaultsOptionsText = optionsGo.GetComponent<TextMeshProUGUI>();
+        restoreDefaultsOptionsText.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        restoreDefaultsOptionsText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        restoreDefaultsOptionsText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        restoreDefaultsOptionsText.raycastTarget = false;
+        restoreDefaultsOptionsText.textWrappingMode = TextWrappingModes.NoWrap;
+        restoreDefaultsOptionsText.overflowMode = TextOverflowModes.Overflow;
+        restoreDefaultsOptionsText.alignment = TextAlignmentOptions.MidlineLeft;
+
+        AnimatedSpriteRenderer cursorSource = specificCursorRenderer != null
+            ? specificCursorRenderer
+            : (leftPanel != null ? leftPanel.CursorRenderer : null);
+        GameObject cursorGo;
+        if (cursorSource != null)
+        {
+            cursorGo = Instantiate(cursorSource.gameObject, restoreDefaultsRoot, false);
+            cursorGo.name = "RestoreDefaultsCursor";
+        }
+        else
+        {
+            cursorGo = new GameObject("RestoreDefaultsCursor", typeof(RectTransform), typeof(Image), typeof(AnimatedSpriteRenderer));
+            cursorGo.transform.SetParent(restoreDefaultsRoot, false);
+        }
+
+        restoreDefaultsCursorRt = cursorGo.transform as RectTransform;
+        if (restoreDefaultsCursorRt == null)
+            restoreDefaultsCursorRt = cursorGo.AddComponent<RectTransform>();
+        restoreDefaultsCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        restoreDefaultsCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        restoreDefaultsCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        restoreDefaultsCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        restoreDefaultsCursorRt.localScale = Vector3.one;
+        if (restoreDefaultsCursorRenderer != null)
+        {
+            restoreDefaultsCursorRenderer.SetFrozen(false);
+            restoreDefaultsCursorRenderer.frameOffsets = null;
+            restoreDefaultsCursorRenderer.idle = true;
+            restoreDefaultsCursorRenderer.loop = true;
+            restoreDefaultsCursorRenderer.CurrentFrame = 0;
+            restoreDefaultsCursorRenderer.RefreshFrame();
+        }
+        restoreDefaultsRoot.gameObject.SetActive(false);
+    }
+
+    private void UpdateRestoreDefaultsConfirmationVisuals(int selectedIndex)
+    {
+        BattleModeMenuText text = GameTextDatabase.BattleModeMenu;
+        string yes = selectedIndex == 0 ? $"<color=#FFA621>{text.Yes}</color>" : text.Yes;
+        string no = selectedIndex == 1 ? $"<color=#FFA621>{text.No}</color>" : text.No;
+
+        restoreDefaultsRoot.sizeDelta = GetStageCarouselMaskUiSize();
+        ApplySpecificSettingsTextStyle(restoreDefaultsText);
+        LocalizedTmpFontFallback.Apply(restoreDefaultsText);
+        restoreDefaultsText.rectTransform.anchoredPosition = restoreDefaultsQuestionOffset;
+        float questionWidth = Mathf.Min(restoreDefaultsQuestionSize.x, restoreDefaultsRoot.sizeDelta.x);
+        restoreDefaultsText.rectTransform.sizeDelta = new Vector2(questionWidth, restoreDefaultsQuestionSize.y);
+        restoreDefaultsText.fontSize = restoreDefaultsQuestionFontSize;
+        restoreDefaultsText.textWrappingMode = TextWrappingModes.Normal;
+        restoreDefaultsText.overflowMode = TextOverflowModes.Ellipsis;
+        restoreDefaultsText.alignment = TextAlignmentOptions.Center;
+        restoreDefaultsText.text = restoreDefaultsQuestion;
+
+        ApplySpecificSettingsTextStyle(restoreDefaultsOptionsText);
+        LocalizedTmpFontFallback.Apply(restoreDefaultsOptionsText);
+        restoreDefaultsOptionsText.rectTransform.anchoredPosition = restoreDefaultsOptionsOffset;
+        restoreDefaultsOptionsText.rectTransform.sizeDelta = restoreDefaultsOptionsSize;
+        restoreDefaultsOptionsText.fontSize = restoreDefaultsQuestionFontSize;
+        restoreDefaultsOptionsText.text = $"<line-height={restoreDefaultsOptionRowSpacing}px>{yes}\n{no}</line-height>";
+
+        restoreDefaultsCursorRt.sizeDelta = specificCursorSize;
+        float optionY = selectedIndex == 0
+            ? restoreDefaultsOptionRowSpacing * 0.5f
+            : -restoreDefaultsOptionRowSpacing * 0.5f;
+        Vector2 optionsLeftCenter = restoreDefaultsOptionsOffset + new Vector2(-restoreDefaultsOptionsSize.x * 0.5f, optionY);
+        restoreDefaultsCursorRt.anchoredPosition = optionsLeftCenter + restoreDefaultsCursorOffset;
+        restoreDefaultsCursorRenderer?.SetExternalBaseLocalPosition(restoreDefaultsCursorRt.localPosition);
     }
 
     private IEnumerator ConfirmSpecificSettingsStart()
