@@ -124,6 +124,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Min(0.01f)] private float directionalRepeatInterval = 0.12f;
     [SerializeField, Min(0.01f)] private float playerModeRepeatInitialDelay = 0.4f;
     [SerializeField, Min(0.01f)] private float playerModeRepeatInterval = 0.3f;
+    [SerializeField, Min(0.01f)] private float valueRepeatInitialDelay = 0.5f;
+    [SerializeField, Min(0.01f)] private float valueRepeatInterval = 0.08f;
 
     [Header("Prompt Title (optional)")]
     [SerializeField] private TextMeshProUGUI promptTitleText;
@@ -3765,14 +3767,14 @@ public sealed class BattleModeMenu : MonoBehaviour
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 done = true;
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA))
+            else if (MenuValueChangePressed(input, PlayerAction.ActionA))
             {
                 ChangeSelectedBattleItemAmount(1);
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 itemSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
                 UpdateItemSelectVisuals();
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
+            else if (MenuValueChangePressed(input, PlayerAction.ActionC))
             {
                 ChangeSelectedBattleItemAmount(-1);
                 PlaySfx(confirmSfx, confirmSfxVolume);
@@ -4420,14 +4422,14 @@ public sealed class BattleModeMenu : MonoBehaviour
                 SaveCurrentBattleLouieAmounts();
                 done = true;
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA))
+            else if (MenuValueChangePressed(input, PlayerAction.ActionA))
             {
                 ChangeSelectedBattleLouieAmount(1);
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 UpdateLouieSelectVisuals();
                 RestartOptionCursorAdvanceFeedback(louieSelectCursorRenderer, ref louieSelectCursorConfirmTimer);
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
+            else if (MenuValueChangePressed(input, PlayerAction.ActionC))
             {
                 ChangeSelectedBattleLouieAmount(-1);
                 PlaySfx(confirmSfx, confirmSfxVolume);
@@ -4946,7 +4948,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 done = true;
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA))
+            else if (MenuValueChangePressed(input, PlayerAction.ActionA))
             {
                 if (ChangeSelectedHandicapValue(1))
                 {
@@ -4959,7 +4961,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                     PlaySfx(deniedSfx, deniedSfxVolume);
                 }
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
+            else if (MenuValueChangePressed(input, PlayerAction.ActionC))
             {
                 if (ChangeSelectedHandicapValue(-1))
                 {
@@ -6428,6 +6430,16 @@ public sealed class BattleModeMenu : MonoBehaviour
             out triggeringPlayerId);
     }
 
+    private bool MenuValueChangePressed(PlayerInputManager input, PlayerAction action)
+    {
+        return MenuDirectionalPressed(
+            input,
+            action,
+            valueRepeatInitialDelay,
+            valueRepeatInterval,
+            out _);
+    }
+
     private bool MenuDirectionalPressed(
         PlayerInputManager input,
         PlayerAction action,
@@ -6505,6 +6517,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         return new[]
         {
             PlayerAction.ActionA,
+            PlayerAction.ActionC,
             PlayerAction.ActionB,
             PlayerAction.Start,
             PlayerAction.MoveUp,
