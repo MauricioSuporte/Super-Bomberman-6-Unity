@@ -86,6 +86,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     readonly Dictionary<Vector3Int, float> activeFallingCellApplyTimes = new Dictionary<Vector3Int, float>();
     readonly HashSet<Vector3Int> scheduledOrPlacedCells = new HashSet<Vector3Int>();
     readonly Dictionary<Vector3Int, Coroutine> damageCoroutines = new Dictionary<Vector3Int, Coroutine>();
+    readonly HashSet<string> loggedComDamageContacts = new HashSet<string>();
     readonly List<Vector3Int> suddenDeathPath = new List<Vector3Int>();
 
     static Sprite cachedWhitePixelSprite;
@@ -169,6 +170,70 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         float dropElapsedTime = GetDropElapsedTimeForIndex(index, dropWindowDuration);
         seconds = Mathf.Max(0f, dropElapsedTime - currentTimelineElapsed) + Mathf.Max(0.01f, fallingDuration);
         return true;
+    }
+
+    public bool TryGetOverlappingThreatenedCell(
+        Collider2D[] playerColliders,
+        Vector3Int ignoredCell,
+        float maximumSeconds,
+        out Vector3Int threatenedCell,
+        out float seconds,
+        out Vector2 overlap)
+    {
+        threatenedCell = default;
+        seconds = float.PositiveInfinity;
+        overlap = Vector2.zero;
+
+        if (playerColliders == null || indestructibleTilemap == null)
+            return false;
+
+        bool found = false;
+
+        for (int i = 0; i < playerColliders.Length; i++)
+        {
+            Collider2D playerCollider = playerColliders[i];
+            if (playerCollider == null || !playerCollider.enabled || playerCollider.isTrigger)
+                continue;
+
+            Bounds playerBounds = playerCollider.bounds;
+            Vector3Int minCell = indestructibleTilemap.WorldToCell(playerBounds.min);
+            Vector3Int maxCell = indestructibleTilemap.WorldToCell(playerBounds.max);
+
+            for (int x = minCell.x - 1; x <= maxCell.x + 1; x++)
+            {
+                for (int y = minCell.y - 1; y <= maxCell.y + 1; y++)
+                {
+                    Vector3Int cell = new Vector3Int(x, y, ignoredCell.z);
+                    if (cell == ignoredCell ||
+                        !TryGetSecondsUntilSuddenDeathCell(cell, out float cellSeconds) ||
+                        cellSeconds > maximumSeconds)
+                    {
+                        continue;
+                    }
+
+                    Bounds cellBounds = GetWorldCellBounds(cell);
+                    float overlapX = Mathf.Min(playerBounds.max.x, cellBounds.max.x) -
+                                     Mathf.Max(playerBounds.min.x, cellBounds.min.x);
+                    float overlapY = Mathf.Min(playerBounds.max.y, cellBounds.max.y) -
+                                     Mathf.Max(playerBounds.min.y, cellBounds.min.y);
+                    if (overlapX < playerCellOverlapDamageThreshold ||
+                        overlapY < playerCellOverlapDamageThreshold)
+                    {
+                        continue;
+                    }
+
+                    if (found && cellSeconds >= seconds)
+                        continue;
+
+                    found = true;
+                    threatenedCell = cell;
+                    seconds = cellSeconds;
+                    overlap = new Vector2(overlapX, overlapY);
+                }
+            }
+        }
+
+        return found;
     }
 
     enum SuddenDeathDropPattern
@@ -299,6 +364,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
+        loggedComDamageContacts.Clear();
 
         if (hurryUpUI != null)
         {
@@ -1085,11 +1151,37 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (!IsPlayerStandingOrOverlappingCell(player, cell, out string damageReason))
                 continue;
 
+            LogComDamageContactOnce(player, cell, damageReason);
+
             if (logDamageFlow)
                 Log($"DamagePlayersStandingOnCell: {player.name} recebeu {damagePerTick} em {cell}. reason={damageReason}");
 
             ApplyDamage(player, damagePerTick);
         }
+    }
+
+    void LogComDamageContactOnce(GameObject player, Vector3Int cell, string damageReason)
+    {
+        BattleModeComController com = player != null
+            ? player.GetComponent<BattleModeComController>()
+            : null;
+        if (com == null)
+            return;
+
+        string contactKey = $"{player.GetInstanceID()}:{cell.x}:{cell.y}:{cell.z}";
+        if (!loggedComDamageContacts.Add(contactKey))
+            return;
+
+        Vector3 cellCenter = indestructibleTilemap.GetCellCenterWorld(cell);
+        Vector2 centerDelta = (Vector2)player.transform.position - (Vector2)cellCenter;
+
+        Debug.LogWarning(
+            $"[SuddenDeathCOMContact] COM atingida pelo tile de Sudden Death. " +
+            $"fallingCell={cell}, cellCenter={(Vector2)cellCenter}, " +
+            $"damageReason={damageReason}, centerDelta={centerDelta}, " +
+            $"overlapThreshold={playerCellOverlapDamageThreshold:0.000}. " +
+            com.BuildSuddenDeathDiagnosticSnapshot(),
+            player);
     }
 
     bool IsPlayerStandingOrOverlappingCell(GameObject player, Vector3Int cell, out string damageReason)
@@ -1875,6 +1967,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         suddenDeathStarted = false;
         suddenDeathDropsStarted = false;
         suddenDeathFinished = true;
+        loggedComDamageContacts.Clear();
 
         ClearAllQueuedShadowVisuals();
         ClearAllActiveDropVisuals();
