@@ -86,7 +86,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     readonly Dictionary<Vector3Int, float> activeFallingCellApplyTimes = new Dictionary<Vector3Int, float>();
     readonly HashSet<Vector3Int> scheduledOrPlacedCells = new HashSet<Vector3Int>();
     readonly Dictionary<Vector3Int, Coroutine> damageCoroutines = new Dictionary<Vector3Int, Coroutine>();
-    readonly HashSet<string> loggedComDamageContacts = new HashSet<string>();
     readonly List<Vector3Int> suddenDeathPath = new List<Vector3Int>();
 
     static Sprite cachedWhitePixelSprite;
@@ -236,6 +235,62 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return found;
     }
 
+    public bool CanMoveAwayFromActiveTile(
+        Collider2D obstacle,
+        Vector2 currentPosition,
+        Vector2 targetPosition)
+    {
+        if (obstacle == null || indestructibleTilemap == null)
+            return false;
+
+        Tilemap obstacleTilemap = obstacle.GetComponent<Tilemap>();
+        if (obstacleTilemap != indestructibleTilemap)
+            return false;
+
+        Vector2 movement = targetPosition - currentPosition;
+        if (movement.sqrMagnitude <= 0.000001f)
+            return false;
+
+        Vector3Int centerCell = indestructibleTilemap.WorldToCell(currentPosition);
+        Vector3Int moveDirection = Mathf.Abs(movement.x) >= Mathf.Abs(movement.y)
+            ? new Vector3Int(movement.x > 0f ? 1 : -1, 0, 0)
+            : new Vector3Int(0, movement.y > 0f ? 1 : -1, 0);
+
+        for (int x = centerCell.x - 1; x <= centerCell.x + 1; x++)
+        {
+            for (int y = centerCell.y - 1; y <= centerCell.y + 1; y++)
+            {
+                Vector3Int activeCell = new Vector3Int(x, y, centerCell.z);
+                if (!IsActiveSuddenDeathCell(activeCell))
+                    continue;
+
+                Bounds activeBounds = GetWorldCellBounds(activeCell);
+                Vector2 activeCenter = activeBounds.center;
+                Vector2 fromActive = currentPosition - activeCenter;
+
+                float proximityX = activeBounds.extents.x + 0.25f;
+                float proximityY = activeBounds.extents.y + 0.25f;
+                if (Mathf.Abs(fromActive.x) > proximityX ||
+                    Mathf.Abs(fromActive.y) > proximityY)
+                {
+                    continue;
+                }
+
+                if (fromActive.sqrMagnitude > 0.0001f &&
+                    Vector2.Dot(movement, fromActive) <= 0f)
+                    continue;
+
+                Vector3Int exitCell = activeCell + moveDirection;
+                if (IsActiveSuddenDeathCell(exitCell))
+                    continue;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     enum SuddenDeathDropPattern
     {
         Spiral = 0,
@@ -364,7 +419,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
-        loggedComDamageContacts.Clear();
 
         if (hurryUpUI != null)
         {
@@ -1151,37 +1205,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (!IsPlayerStandingOrOverlappingCell(player, cell, out string damageReason))
                 continue;
 
-            LogComDamageContactOnce(player, cell, damageReason);
-
             if (logDamageFlow)
                 Log($"DamagePlayersStandingOnCell: {player.name} recebeu {damagePerTick} em {cell}. reason={damageReason}");
 
             ApplyDamage(player, damagePerTick);
         }
-    }
-
-    void LogComDamageContactOnce(GameObject player, Vector3Int cell, string damageReason)
-    {
-        BattleModeComController com = player != null
-            ? player.GetComponent<BattleModeComController>()
-            : null;
-        if (com == null)
-            return;
-
-        string contactKey = $"{player.GetInstanceID()}:{cell.x}:{cell.y}:{cell.z}";
-        if (!loggedComDamageContacts.Add(contactKey))
-            return;
-
-        Vector3 cellCenter = indestructibleTilemap.GetCellCenterWorld(cell);
-        Vector2 centerDelta = (Vector2)player.transform.position - (Vector2)cellCenter;
-
-        Debug.LogWarning(
-            $"[SuddenDeathCOMContact] COM atingida pelo tile de Sudden Death. " +
-            $"fallingCell={cell}, cellCenter={(Vector2)cellCenter}, " +
-            $"damageReason={damageReason}, centerDelta={centerDelta}, " +
-            $"overlapThreshold={playerCellOverlapDamageThreshold:0.000}. " +
-            com.BuildSuddenDeathDiagnosticSnapshot(),
-            player);
     }
 
     bool IsPlayerStandingOrOverlappingCell(GameObject player, Vector3Int cell, out string damageReason)
@@ -1967,7 +1995,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         suddenDeathStarted = false;
         suddenDeathDropsStarted = false;
         suddenDeathFinished = true;
-        loggedComDamageContacts.Clear();
 
         ClearAllQueuedShadowVisuals();
         ClearAllActiveDropVisuals();

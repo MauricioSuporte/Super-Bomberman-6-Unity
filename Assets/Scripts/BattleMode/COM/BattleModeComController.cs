@@ -109,7 +109,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2Int turnAxisCenteringDir = Vector2Int.zero;
     private int turnAxisCenteringSign;
     private const float DangerTimingMarginSeconds = 0.08f;
-    private const float SuddenDeathUnsafeLeadSeconds = 1f;
+    private const float SuddenDeathUnsafeLeadSeconds = 2f;
     private const int ItemPriorityDistance = 7;
     private const int NearbyItemFarmBlockDistance = 5;
     private const int MaxUsefulQueuedLouieEggs = 2;
@@ -238,7 +238,6 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastOpeningFarmLogKey = string.Empty;
     private float lastPostPlantActionLogTime = -10f;
     private string lastPostPlantActionLogKey = string.Empty;
-    private bool suddenDeathBodyEscapeActive;
     private Vector2Int openingFarmLastAppliedDir;
     private float openingFarmLastAppliedTime = -10f;
     private int abilitySystemVersion = -1;
@@ -338,36 +337,6 @@ public sealed class BattleModeComController : MonoBehaviour
     }
 
     public IReadOnlyList<string> RecentDecisionLog => recentDecisions;
-
-    public string BuildSuddenDeathDiagnosticSnapshot()
-    {
-        Vector2 position = transform.position;
-        Vector2Int tile = WorldToTile(position);
-        Vector2 tileCenter = TileToWorld(tile);
-        Vector2 velocity = Vector2.zero;
-
-        if (TryGetComponent(out Rigidbody2D body) && body != null)
-            velocity = body.linearVelocity;
-
-        string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
-        string recentDecision = recentDecisions.Count > 0
-            ? recentDecisions[recentDecisions.Count - 1]
-            : "none";
-
-        float suddenDeathSeconds = float.PositiveInfinity;
-        bool hasSuddenDeathTiming = suddenDeathController != null &&
-            suddenDeathController.TryGetSecondsUntilSuddenDeathWorldPosition(
-                position,
-                out suddenDeathSeconds);
-
-        return
-            $"playerId={playerId}, position={position}, logicalTile={tile}, " +
-            $"tileCenter={tileCenter}, centerOffset={position - tileCenter}, " +
-            $"velocity={velocity}, action={currentAction}, move={currentMoveInput}, " +
-            $"target={target}, reason={currentReason}, input={currentInputDescription}, " +
-            $"suddenDeathAtPosition={(hasSuddenDeathTiming ? suddenDeathSeconds.ToString("0.000") + "s" : "none")}, " +
-            $"lastDecision={recentDecision}";
-    }
 
     public void Initialize(int id)
     {
@@ -1233,7 +1202,6 @@ public sealed class BattleModeComController : MonoBehaviour
             !suddenDeathController.SuddenDeathStarted ||
             indestructibleTilemap == null)
         {
-            suddenDeathBodyEscapeActive = false;
             return;
         }
 
@@ -1252,7 +1220,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 out float currentCellThreatSeconds) &&
             currentCellThreatSeconds <= SuddenDeathUnsafeLeadSeconds)
         {
-            suddenDeathBodyEscapeActive = false;
             return;
         }
 
@@ -1261,19 +1228,15 @@ public sealed class BattleModeComController : MonoBehaviour
                 currentCell,
                 SuddenDeathUnsafeLeadSeconds,
                 out Vector3Int threatenedCell,
-                out float threatSeconds,
-                out Vector2 overlap))
+                out _,
+                out _))
         {
-            suddenDeathBodyEscapeActive = false;
             return;
         }
 
         Vector2 escapeMove = GetMoveTowardTileCenter(currentTile);
         if (escapeMove == Vector2.zero)
             return;
-
-        BattleModeComActionType interruptedAction = currentAction;
-        string interruptedReason = currentReason;
 
         SetCurrentDecision(
             BattleModeComActionType.Reposition,
@@ -1288,18 +1251,6 @@ public sealed class BattleModeComController : MonoBehaviour
         hasSafeCenterTarget = true;
         safeCenterTargetTile = currentTile;
         nextDecisionTime = Time.time;
-
-        if (suddenDeathBodyEscapeActive)
-            return;
-
-        suddenDeathBodyEscapeActive = true;
-        Debug.LogWarning(
-            $"[BattleCOMSuddenDeathBodyEscape][P{playerId}] " +
-            $"cell:{currentCell} threatenedCell:{threatenedCell} " +
-            $"threatIn:{threatSeconds:F3}s overlap:{overlap} " +
-            $"position:{(Vector2)transform.position} move:{FirstMoveDescription(escapeMove)} " +
-            $"interruptedAction:{interruptedAction} interruptedReason:{interruptedReason}",
-            this);
     }
 
     private static void ApplyHardAggressionSettings(

@@ -253,6 +253,7 @@ public class MovementController : MonoBehaviour, IKillable
     private int bombLayer;
     private ContactFilter2D obstacleContactFilter;
     private readonly Collider2D[] obstacleOverlapBuffer = new Collider2D[16];
+    private BattleSuddenDeathController suddenDeathController;
 
     private bool inactivityMountedDownOverride;
 
@@ -1476,6 +1477,9 @@ public class MovementController : MonoBehaviour, IKillable
                 && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                 continue;
 
+            if (CanMoveAwayFromSuddenDeathTile(hit, worldPosition))
+                continue;
+
             if (hit.gameObject.layer == bombLayer)
             {
                 var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
@@ -2094,6 +2098,9 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
+            if (CanMoveAwayFromSuddenDeathTile(hit, worldPosition))
+                continue;
+
             if (hit.gameObject.layer == bombLayer)
             {
                 var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
@@ -2162,6 +2169,9 @@ public class MovementController : MonoBehaviour, IKillable
 
                 if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
                     && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
+                    continue;
+
+                if (CanMoveAwayFromSuddenDeathTile(hit, targetPosition))
                     continue;
 
                 var hitBomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
@@ -2373,6 +2383,35 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         return false;
+    }
+
+    private bool CanMoveAwayFromSuddenDeathTile(
+        Collider2D obstacle,
+        Vector2 targetPosition)
+    {
+        if (obstacle == null)
+            return false;
+
+        if (suddenDeathController == null ||
+            !suddenDeathController.isActiveAndEnabled)
+        {
+            suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+        }
+
+        if (suddenDeathController == null ||
+            !suddenDeathController.SuddenDeathStarted)
+        {
+            return false;
+        }
+
+        Vector2 currentPosition = Rigidbody != null
+            ? Rigidbody.position
+            : (Vector2)transform.position;
+
+        return suddenDeathController.CanMoveAwayFromActiveTile(
+            obstacle,
+            currentPosition,
+            targetPosition);
     }
 
     public void NotifyBombPlanted(Bomb bomb, Vector2 movementDirectionAtPlant)
