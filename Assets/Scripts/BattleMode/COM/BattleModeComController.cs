@@ -1423,6 +1423,41 @@ public sealed class BattleModeComController : MonoBehaviour
             return;
         }
 
+        // Evita que várias COMs no mesmo tile entrem juntas em planos de chain
+        // idênticos antes que o combate normal seja avaliado. No Hard, primeiro
+        // tenta punir o agrupamento com uma bomba; sem fuga segura, abre espaço.
+        if (settings.difficulty == BattleModeComputerLevel.Hard &&
+            TryBuildSameTileCombatPlantCandidate(
+                settings,
+                myTile,
+                out CandidateAction sameTilePlant))
+        {
+            ClearChainCommitmentsForCrowdSeparation();
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                sameTilePlant,
+                "sameTileCombatPriority");
+            return;
+        }
+
+        if (settings.difficulty == BattleModeComputerLevel.Hard &&
+            TryBuildCrowdSeparationCandidate(
+                settings,
+                myTile,
+                out CandidateAction crowdSeparation))
+        {
+            ClearChainCommitmentsForCrowdSeparation();
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                crowdSeparation,
+                "crowdSeparation");
+            return;
+        }
+
         if (HasOwnUnresolvedBombOrExplosion())
         {
             if (chainBombPlantingStartedTime < 0f)
@@ -3946,7 +3981,15 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
 
         int radius = GetPlannedBombRadiusAt(myTile);
-        if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
+        // Dois jogadores podem compartilhar o mesmo tile lógico enquanto seus
+        // colliders se atravessam. Esse caso não pertence a uma direção cardinal,
+        // então IsTileInBlastLineRuntime retorna false apesar de a bomba atingir
+        // ambos. Sem o teste de distância zero, a COM criava uma aproximação de
+        // caminho vazio e ficava selecionando CombatPlant sem mover nem plantar.
+        bool targetInsidePlantBlast =
+            targetDistance == 0 ||
+            IsTileInBlastLineRuntime(myTile, targetTile, radius);
+        if (targetInsidePlantBlast &&
             !WouldPlannedBombHitUsefulItem(myTile, radius, out _, out _) &&
             CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
         {
@@ -3966,7 +4009,8 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         if (targetDistance <= settings.searchDepth + radius + 2 &&
-            TryFindPath(myTile, targetTile, settings.searchDepth + 3, true, settings, null, out PathResult path))
+            TryFindPath(myTile, targetTile, settings.searchDepth + 3, true, settings, null, out PathResult path) &&
+            path.Distance > 0)
         {
             candidate = new CandidateAction
             {
@@ -3982,8 +4026,136 @@ public sealed class BattleModeComController : MonoBehaviour
             return true;
         }
 
-        RejectVerbose($"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
+        RejectVerbose(
+            targetDistance == 0
+                ? $"CombatPlant alvo P{target.playerId} no mesmo tile, mas sem fuga segura para plantar"
+                : $"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
         return false;
+    }
+
+    private bool TryBuildSameTileCombatPlantCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (!TryBuildCombatCandidate(settings, myTile, out CandidateAction combat) ||
+            !combat.TapBomb ||
+            !combat.HasTarget ||
+            combat.TargetTile != myTile)
+        {
+            return false;
+        }
+
+        combat.Weight += 100;
+        combat.Reason = $"same-tile combat priority; {combat.Reason}";
+        candidate = combat;
+        return true;
+    }
+
+    private bool TryBuildCrowdSeparationCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        int playersOnCurrentTile = CountOtherPlayersAtTile(myTile);
+        if (playersOnCurrentTile <= 0)
+            return false;
+
+        int directionOffset = Mathf.Abs(playerId - 1) % CardinalTiles.Length;
+        bool found = false;
+        int bestCongestion = int.MaxValue;
+        int bestOrder = int.MaxValue;
+        Vector2Int bestTile = myTile;
+        Vector2 bestMove = Vector2.zero;
+
+        for (int order = 0; order < CardinalTiles.Length; order++)
+        {
+            Vector2Int direction =
+                CardinalTiles[(directionOffset + order) % CardinalTiles.Length];
+            Vector2Int tile = myTile + direction;
+            if (!IsWalkableTile(tile, myTile) ||
+                !float.IsInfinity(GetDangerSeconds(tile, null)))
+            {
+                continue;
+            }
+
+            int congestion = CountOtherPlayersAtTile(tile);
+            for (int i = 0; i < CardinalTiles.Length; i++)
+                congestion += CountOtherPlayersAtTile(tile + CardinalTiles[i]);
+
+            if (found &&
+                (congestion > bestCongestion ||
+                 (congestion == bestCongestion && order >= bestOrder)))
+            {
+                continue;
+            }
+
+            found = true;
+            bestCongestion = congestion;
+            bestOrder = order;
+            bestTile = tile;
+            bestMove = direction;
+        }
+
+        if (!found)
+        {
+            RejectVerbose(
+                $"CrowdSeparation {playersOnCurrentTile + 1} jogadores em {myTile}, sem vizinho seguro");
+            return false;
+        }
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.Reposition,
+            Weight = settings.combatPlantWeight + 100,
+            TargetTile = bestTile,
+            HasTarget = true,
+            FirstMove = bestMove,
+            HasRoute = true,
+            Reason =
+                $"separate crowd of {playersOnCurrentTile + 1} players; " +
+                $"target congestion {bestCongestion}",
+            InputDescription = FirstMoveDescription(bestMove)
+        };
+        return true;
+    }
+
+    private int CountOtherPlayersAtTile(Vector2Int tile)
+    {
+        int count = 0;
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (!player.TryGetComponent<MovementController>(out var playerMovement) ||
+                playerMovement == null ||
+                playerMovement.isDead ||
+                playerMovement.IsEndingStage)
+            {
+                continue;
+            }
+
+            if (WorldToTile(player.transform.position) == tile)
+                count++;
+        }
+
+        return count;
+    }
+
+    private void ClearChainCommitmentsForCrowdSeparation()
+    {
+        walkToChainCommitted = false;
+        ownChainSeekCommitted = false;
+        ownChainPlanActive = false;
+        ownChainEscapeOnly = false;
     }
 
     private bool TryBuildHardLouieSecurePickupCandidate(

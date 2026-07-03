@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Collider2D))]
@@ -451,6 +452,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             sr.Stun(seconds);
 
             if (mc.CompareTag("Player") &&
+                CanLoseItemFromStunInCurrentScene() &&
                 PlayerPersistentStats.StageTryExpelRandomPersistentItem(
                     mc,
                     mc.GetComponent<BombController>(),
@@ -460,6 +462,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 SpawnExpelledPersistentItem(mc, expelledType);
             }
         }
+    }
+
+    private static bool CanLoseItemFromStunInCurrentScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName != "BattleMode_10" && sceneName != "BattleMode_11";
     }
 
     private bool IsPlayerProtectedFromAirborneBombImpact(MovementController player)
