@@ -73,7 +73,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool CanBeKickedEarly => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove;
     public bool CanBeKicked => !HasExploded && !IsBeingKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
-    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingHeldByPowerGlove && !IsBeingMagnetPulled;
+    public bool CanBeMagnetPulled => !HasMagnetIncompatibleMovement && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
     public bool IsRubberBomb { get; set; }
@@ -205,6 +205,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void FixedUpdate()
     {
+        // Kick movement includes kick bounces, while punch movement includes
+        // thrown/rubber-bomb bounces. Neither may coexist with magnet movement.
+        if (magnetRoutine != null && HasMagnetIncompatibleMovement)
+            StopMagnetMovement();
+
         if (!lockWorldPosActive)
             return;
 
@@ -335,8 +340,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         RemoveKickOriginBlocker();
     }
 
-    private bool IsBlockedFromMagnetMovement =>
+    private bool HasMagnetIncompatibleMovement =>
         HasExploded || IsBeingKicked || IsBeingPunched || IsBeingHeldByPowerGlove;
+
+    private bool IsBlockedFromMagnetMovement => HasMagnetIncompatibleMovement;
 
     private void StopMagnetMovement()
     {

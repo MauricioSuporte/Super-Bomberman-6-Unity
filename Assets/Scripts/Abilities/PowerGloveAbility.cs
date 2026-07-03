@@ -87,6 +87,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     public bool CanPickupBombNow(Bomb bomb)
         => bomb != null &&
            !bomb.HasExploded &&
+           !bomb.IsBeingKicked &&
+           !bomb.IsBeingMagnetPulled &&
            Time.time - bomb.PlacedTime >= MinimumBombAgeForPickupSeconds;
 
     private const int CarryOrderInLayer = 6;

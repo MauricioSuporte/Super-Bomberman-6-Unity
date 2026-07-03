@@ -4222,7 +4222,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -1795598344, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -485171935, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -3, z: 0}
@@ -4829,8 +4829,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 5
-  activePlayerMask: 61
+  activePlayerCount: 6
+  activePlayerMask: 63
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
