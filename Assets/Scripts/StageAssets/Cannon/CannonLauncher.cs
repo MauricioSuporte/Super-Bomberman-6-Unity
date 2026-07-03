@@ -98,6 +98,8 @@ public sealed class CannonLauncher : MonoBehaviour
             dir = Vector2.right;
         dir.Normalize();
 
+        CancelActiveMountMovementAbilities(mover);
+
         bool prevInputLocked = mover.InputLocked;
         mover.SetInputLocked(true, forceIdle: false);
 
@@ -138,6 +140,20 @@ public sealed class CannonLauncher : MonoBehaviour
             yield return new WaitForSeconds(rearmSeconds);
 
         busy = false;
+    }
+
+    private static void CancelActiveMountMovementAbilities(MovementController mover)
+    {
+        if (mover == null)
+            return;
+
+        var greenDash = mover.GetComponent<GreenLouieDashAbility>();
+        if (greenDash != null && greenDash.DashActive)
+            greenDash.CancelDashForExternalInterruption();
+
+        var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
+        if (blackDash != null && blackDash.DashActive)
+            blackDash.CancelDashForExternalInterruption();
     }
 
     private IEnumerator PlayFireSfxWithDelay()
