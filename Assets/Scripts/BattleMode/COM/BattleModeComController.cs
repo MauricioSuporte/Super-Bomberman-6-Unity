@@ -12,6 +12,9 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComController : MonoBehaviour
 {
+    private const int MaxOwnChainJunctionEvaluations = 3;
+    private const int MaxWalkToChainPathEvaluations = 8;
+    private const float InitialDecisionStaggerSeconds = 0.025f;
     private const float BehaviorProgressDistance = 0.08f;
     private const float BehaviorNoProgressSeconds = 0.75f;
     private const float BehaviorStoppedDangerSeconds = 0.5f;
@@ -343,6 +346,7 @@ public sealed class BattleModeComController : MonoBehaviour
         playerId = Mathf.Clamp(id, GameSession.MinPlayerId, GameSession.MaxPlayerId);
         initialized = true;
         CacheReferences();
+        ScheduleInitialDecision();
         RefreshRuntimeEnabledState();
     }
 
@@ -364,7 +368,15 @@ public sealed class BattleModeComController : MonoBehaviour
     private void Start()
     {
         CacheReferences();
+        ScheduleInitialDecision();
         RefreshRuntimeEnabledState();
+    }
+
+    private void ScheduleInitialDecision()
+    {
+        float stagger = Mathf.Max(0, playerId - GameSession.MinPlayerId) *
+                        InitialDecisionStaggerSeconds;
+        nextDecisionTime = Mathf.Max(nextDecisionTime, Time.time + stagger);
     }
 
     private void OnDisable()
@@ -5430,6 +5442,7 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2 bestFirstMove = Vector2.zero;
         Vector2Int bestSecondTile = myTile;
         int bestScore = int.MinValue;
+        int evaluatedJunctions = 0;
 
         GatherReachableSafeTiles(myTile, settings.searchDepth + 2, settings);
 
@@ -5441,6 +5454,11 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
             if (IsBombAtTile(junction) || CountOpenNeighbors(junction) < 4)
                 continue;
+
+            if (evaluatedJunctions >= MaxOwnChainJunctionEvaluations)
+                break;
+
+            evaluatedJunctions++;
 
             if (!TryFindPath(myTile, junction, settings.searchDepth + 2, true, settings, null, out PathResult junctionPath))
                 continue;
@@ -6075,6 +6093,7 @@ public sealed class BattleModeComController : MonoBehaviour
         bool bestPlantNow = false;
         float bestScore = float.NegativeInfinity;
         bool found = false;
+        int pathEvaluations = 0;
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
@@ -6104,6 +6123,18 @@ public sealed class BattleModeComController : MonoBehaviour
                 float requiredArrival = fuseLeft - settings.dangerReactionSeconds - ChainBombFuseSafetyMarginSeconds;
                 if (requiredArrival <= 0f)
                     continue;
+
+                int minimumDistance = Manhattan(myTile, plantTile);
+                if (EstimateTraversalSeconds(minimumDistance) >= requiredArrival)
+                {
+                    wtc_arrivalLate++;
+                    continue;
+                }
+
+                if (pathEvaluations >= MaxWalkToChainPathEvaluations)
+                    continue;
+
+                pathEvaluations++;
 
                 if (!TryFindPath(myTile, plantTile, settings.searchDepth + 4, false, settings, null, out PathResult path))
                 { wtc_noPath++; continue; }
