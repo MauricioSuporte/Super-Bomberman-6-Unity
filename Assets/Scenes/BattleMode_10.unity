@@ -910,7 +910,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2367064353294770056, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.87946427
+      value: 0.8973214
       objectReference: {fileID: 0}
     - target: {fileID: 2367064353294770056, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_SizeDelta.x
@@ -4078,7 +4078,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 175725864, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1587395625, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 3, y: -7, z: 0}
@@ -4213,7 +4213,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 124430982, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -95180379, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 6, y: -3, z: 0}
@@ -4564,7 +4564,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -1871863515, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1325004801, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 4, y: 5, z: 0}
@@ -4573,7 +4573,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 948470906, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1498975650, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: 5, z: 0}
@@ -4829,8 +4829,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 6
-  activePlayerMask: 63
+  activePlayerCount: 5
+  activePlayerMask: 61
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
