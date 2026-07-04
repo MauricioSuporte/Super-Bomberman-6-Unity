@@ -18,7 +18,10 @@ public sealed class DestructibleTileResolver : MonoBehaviour
     readonly Dictionary<TileBase, IDestructibleTileHandler> _map = new();
     readonly HashSet<TileBase> _registeredTiles = new();
 
-    void Awake() => Rebuild();
+    void Awake()
+    {
+        Rebuild();
+    }
 
     void OnValidate()
     {

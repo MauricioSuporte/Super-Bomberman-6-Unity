@@ -18,7 +18,10 @@ public sealed class GroundTileResolver : MonoBehaviour
     readonly Dictionary<TileBase, IGroundTileHandler> _map = new();
     readonly Dictionary<TileBase, IGroundTileHandler> _runtimeMap = new();
 
-    void Awake() => Rebuild();
+    void Awake()
+    {
+        Rebuild();
+    }
 
     void OnValidate()
     {

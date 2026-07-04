@@ -118,6 +118,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
+    private BattleMode7PortalController portalController;
     private ContactFilter2D obstacleFilter;
     private Collider2D[] ownColliders;
     private readonly Collider2D[] obstacleHits = new Collider2D[12];
@@ -158,6 +159,8 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
         if (bombController == null) TryGetComponent(out bombController);
         if (punchAbility == null) TryGetComponent(out punchAbility);
         if (mountCompanion == null) TryGetComponent(out mountCompanion);
+        if (portalController == null)
+            portalController = FindAnyObjectByType<BattleMode7PortalController>();
 
         ownColliders = GetComponentsInChildren<Collider2D>(true);
 
@@ -840,6 +843,41 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
             Vector2Int enemyTile = WorldToTile(player.transform.position);
 
+            if (portalController != null)
+            {
+                for (int directionIndex = 0;
+                     directionIndex < CardinalTiles.Length;
+                     directionIndex++)
+                {
+                    Vector2Int portalPunchDir = CardinalTiles[directionIndex];
+                    Vector2Int firstLanding =
+                        myTile + portalPunchDir * PunchDistanceTiles;
+                    if (!IsPunchLaneOpen(myTile, portalPunchDir) ||
+                        !portalController.TryGetBombPortalTrajectory(
+                            firstLanding,
+                            out _,
+                            out _,
+                            out Vector2Int portalLanding) ||
+                        !IsTileInBlastLine(
+                            portalLanding,
+                            enemyTile,
+                            bombController.GetPlannedExplosionRadius()))
+                    {
+                        continue;
+                    }
+
+                    float portalScore =
+                        Manhattan(portalLanding, enemyTile) - 10f;
+                    if (portalScore >= bestScore)
+                        continue;
+
+                    bestScore = portalScore;
+                    target = player;
+                    targetTile = enemyTile;
+                    punchDir = portalPunchDir;
+                }
+            }
+
             int dx = enemyTile.x - myTile.x;
             int dy = enemyTile.y - myTile.y;
 
@@ -861,17 +899,7 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
             if (dist < punchLandingDist || dist > punchLandingDist + 2) continue;
 
             // Verifica que o lane está aberto (sem paredes ou destrutíveis bloqueando).
-            bool laneOpen = true;
-            for (int step = 1; step <= PunchDistanceTiles; step++)
-            {
-                Vector2Int checkTile = myTile + dir * step;
-                if (HasIndestructibleTile(checkTile))
-                {
-                    laneOpen = false;
-                    break;
-                }
-            }
-            if (!laneOpen) continue;
+            if (!IsPunchLaneOpen(myTile, dir)) continue;
 
             float score = dist;
             if (score >= bestScore) continue;
@@ -884,6 +912,20 @@ public sealed class BattleModeComPunchBombAbility : MonoBehaviour, IBattleModeCo
 
         return target != null;
     }
+
+    private bool IsPunchLaneOpen(Vector2Int origin, Vector2Int direction)
+    {
+        for (int step = 1; step <= PunchDistanceTiles; step++)
+        {
+            if (HasIndestructibleTile(origin + direction * step))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static int Manhattan(Vector2Int a, Vector2Int b)
+        => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
 
     // Verifica se após socar a bomba a IA terá pelo menos 1 tile seguro para fugir.
     private bool HasEscapeAfterPunch(

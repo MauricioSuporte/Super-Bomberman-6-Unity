@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public sealed class BattleRevengeController : MonoBehaviour
@@ -86,6 +88,10 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     [Header("Movement")]
     [SerializeField, Min(0.1f)] private float moveSpeed = 4f;
+    [SerializeField, Min(1f)] private float actionCSpeedMultiplier = 2f;
+
+    [Header("Top HUD Overlap")]
+    [SerializeField, Range(0.1f, 1f)] private float topHudOverlapAlpha = 0.75f;
 
     [Header("Movement Tilt")]
     [SerializeField] private bool useMovementTilt = true;
@@ -145,6 +151,8 @@ public sealed class BattleRevengeController : MonoBehaviour
     private const int RechargeFrameCount = 33;
     private const float PixelsPerUnit = 16f;
     private const float MinSegmentLength = 0.0001f;
+    private const float BattleHudLogicalHeight = 27f;
+    private const float BattleTimerBottomExtension = 10f;
 
     private bool isAnimating;
     private Coroutine activeAnimationRoutine;
@@ -178,6 +186,12 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private float nextActionADebugAt;
     private bool lastHoldingActionA;
+
+    private readonly List<SpriteRenderer> cartSpriteRenderers = new();
+    private readonly Dictionary<SpriteRenderer, Image> topHudOverlayImages = new();
+    private RectTransform topHudOverlayRoot;
+    private RectTransform topHudSourceRect;
+    private Canvas topHudCanvas;
 
     public int OwnerPlayerId => ownerPlayerId;
     public bool DebugCornerTransitionEnabled => debugCornerTransition;
@@ -231,6 +245,7 @@ public sealed class BattleRevengeController : MonoBehaviour
     void Awake()
     {
         EnsureVisualRoot();
+        CacheCartSpriteRenderers();
         RefreshVisualByEdge();
         HideLandingIndicator();
         HideRechargeIndicator();
@@ -253,6 +268,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             return;
 
         bool hasMovementInput = TryGetTargetWallFromInput(input, out CartEdge targetWall);
+        bool holdingActionC = input.Get(ownerPlayerId, PlayerAction.ActionC);
 
         if (hasMovementInput)
         {
@@ -264,7 +280,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             }
 
             Vector3 beforeMove = transform.position;
-            MoveTowardWallMidpoint(targetWall);
+            MoveTowardWallMidpoint(targetWall, holdingActionC);
             Vector3 afterMove = transform.position;
 
             UpdateMovementTilt(afterMove - beforeMove, true);
@@ -358,6 +374,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     void OnDisable()
     {
+        HideTopHudOverlayImages();
         HideLandingIndicator();
         HideRechargeIndicator();
         currentTilt = 0f;
@@ -366,6 +383,12 @@ public sealed class BattleRevengeController : MonoBehaviour
         lastInputTargetWall = null;
         StopLaunchRecoil();
         ApplyTiltToActiveVisuals();
+    }
+
+    void OnDestroy()
+    {
+        if (topHudOverlayRoot != null)
+            Destroy(topHudOverlayRoot.gameObject);
     }
 
     private void EnsureVisualRoot()
@@ -832,6 +855,179 @@ public sealed class BattleRevengeController : MonoBehaviour
         ApplyHeadOffsetForCurrentEdge();
     }
 
+    private void CacheCartSpriteRenderers()
+    {
+        cartSpriteRenderers.Clear();
+
+        CacheCartSpriteRenderer(bodyUp);
+        CacheCartSpriteRenderer(bodyDown);
+        CacheCartSpriteRenderer(bodyLeft);
+        CacheCartSpriteRenderer(bodyRight);
+        CacheCartSpriteRenderer(headUp);
+        CacheCartSpriteRenderer(headDown);
+        CacheCartSpriteRenderer(headLeft);
+        CacheCartSpriteRenderer(headRight);
+        CacheCartSpriteRenderer(bodyTopLeft);
+        CacheCartSpriteRenderer(bodyTopRight);
+        CacheCartSpriteRenderer(bodyBottomLeft);
+        CacheCartSpriteRenderer(bodyBottomRight);
+        CacheCartSpriteRenderer(headTopLeft);
+        CacheCartSpriteRenderer(headTopRight);
+        CacheCartSpriteRenderer(headBottomLeft);
+        CacheCartSpriteRenderer(headBottomRight);
+    }
+
+    private void CacheCartSpriteRenderer(AnimatedSpriteRenderer animatedRenderer)
+    {
+        if (animatedRenderer == null ||
+            !animatedRenderer.TryGetComponent(out SpriteRenderer spriteRenderer) ||
+            spriteRenderer == null ||
+            cartSpriteRenderers.Contains(spriteRenderer))
+            return;
+
+        cartSpriteRenderers.Add(spriteRenderer);
+    }
+
+    private bool IsOverlappingTopHud()
+    {
+        return
+            currentSegment == CartSegment.Top ||
+            currentSegment == CartSegment.TopLeft ||
+            currentSegment == CartSegment.TopRight;
+    }
+
+    private void SyncTopHudOverlayImages()
+    {
+        if (!IsOverlappingTopHud() || !EnsureTopHudOverlayRoot())
+        {
+            HideTopHudOverlayImages();
+            return;
+        }
+
+        Camera worldCamera = Camera.main;
+        if (worldCamera == null)
+        {
+            HideTopHudOverlayImages();
+            return;
+        }
+
+        SyncTopHudOverlayRootRect();
+
+        for (int i = 0; i < cartSpriteRenderers.Count; i++)
+        {
+            SpriteRenderer source = cartSpriteRenderers[i];
+            if (source == null)
+                continue;
+
+            bool visible = source.enabled && source.gameObject.activeInHierarchy && source.sprite != null;
+            Image overlay = GetOrCreateTopHudOverlayImage(source);
+            overlay.enabled = visible;
+
+            if (!visible)
+                continue;
+
+            overlay.sprite = source.sprite;
+            Color color = source.color;
+            color.a *= Mathf.Clamp01(topHudOverlapAlpha);
+            overlay.color = color;
+
+            Vector2 screenPosition = worldCamera.WorldToScreenPoint(source.transform.position);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                topHudOverlayRoot,
+                screenPosition,
+                null,
+                out Vector2 localPosition);
+
+            RectTransform overlayRect = overlay.rectTransform;
+            overlayRect.anchoredPosition = localPosition;
+
+            float canvasScale = topHudCanvas != null ? Mathf.Max(0.0001f, topHudCanvas.scaleFactor) : 1f;
+            float pixelsPerWorldUnit = worldCamera.orthographic
+                ? worldCamera.pixelHeight / Mathf.Max(0.0001f, worldCamera.orthographicSize * 2f)
+                : source.sprite.pixelsPerUnit;
+            Vector3 worldScale = source.transform.lossyScale;
+            Vector2 spriteWorldSize = source.sprite.bounds.size;
+            overlayRect.sizeDelta = new Vector2(
+                spriteWorldSize.x * Mathf.Abs(worldScale.x) * pixelsPerWorldUnit / canvasScale,
+                spriteWorldSize.y * Mathf.Abs(worldScale.y) * pixelsPerWorldUnit / canvasScale);
+            overlayRect.localEulerAngles = new Vector3(0f, 0f, source.transform.eulerAngles.z);
+            overlayRect.localScale = new Vector3(
+                source.flipX ? -1f : 1f,
+                source.flipY ? -1f : 1f,
+                1f);
+        }
+    }
+
+    private bool EnsureTopHudOverlayRoot()
+    {
+        if (topHudOverlayRoot != null && topHudCanvas != null)
+            return true;
+
+        BattleModeHud hud = FindAnyObjectByType<BattleModeHud>(FindObjectsInactive.Include);
+        if (hud == null || hud.transform.parent == null)
+            return false;
+
+        topHudCanvas = hud.GetComponentInParent<Canvas>();
+        if (topHudCanvas == null)
+            return false;
+
+        GameObject rootObject = new GameObject(
+            $"RevengeCartHudOverlay_P{ownerPlayerId}",
+            typeof(RectTransform),
+            typeof(RectMask2D));
+        topHudOverlayRoot = rootObject.GetComponent<RectTransform>();
+        topHudOverlayRoot.SetParent(hud.transform.parent, false);
+
+        topHudSourceRect = hud.transform as RectTransform;
+        SyncTopHudOverlayRootRect();
+
+        topHudOverlayRoot.SetSiblingIndex(hud.transform.GetSiblingIndex() + 1);
+        return true;
+    }
+
+    private void SyncTopHudOverlayRootRect()
+    {
+        if (topHudOverlayRoot == null || topHudSourceRect == null)
+            return;
+
+        topHudOverlayRoot.anchorMin = topHudSourceRect.anchorMin;
+        topHudOverlayRoot.anchorMax = topHudSourceRect.anchorMax;
+        float timerExtension = topHudSourceRect.rect.height *
+            (BattleTimerBottomExtension / BattleHudLogicalHeight);
+        topHudOverlayRoot.anchoredPosition =
+            topHudSourceRect.anchoredPosition + Vector2.down * (timerExtension * 0.5f);
+        topHudOverlayRoot.sizeDelta =
+            topHudSourceRect.sizeDelta + new Vector2(0f, timerExtension);
+        topHudOverlayRoot.pivot = topHudSourceRect.pivot;
+    }
+
+    private Image GetOrCreateTopHudOverlayImage(SpriteRenderer source)
+    {
+        if (topHudOverlayImages.TryGetValue(source, out Image existing) && existing != null)
+            return existing;
+
+        GameObject imageObject = new GameObject(source.name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        RectTransform imageRect = imageObject.GetComponent<RectTransform>();
+        imageRect.SetParent(topHudOverlayRoot, false);
+        imageRect.anchorMin = imageRect.anchorMax = new Vector2(0.5f, 0.5f);
+        imageRect.pivot = new Vector2(0.5f, 0.5f);
+
+        Image image = imageObject.GetComponent<Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = false;
+        topHudOverlayImages[source] = image;
+        return image;
+    }
+
+    private void HideTopHudOverlayImages()
+    {
+        foreach (Image image in topHudOverlayImages.Values)
+        {
+            if (image != null)
+                image.enabled = false;
+        }
+    }
+
     private void ApplyHeadOffsetForCurrentEdge()
     {
         Vector2 offset = GetHeadOffset();
@@ -864,9 +1060,11 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private Vector2 GetHeadOffset()
     {
+        Vector2 offset;
+
         if (currentCorner != CartCorner.None)
         {
-            return currentCorner switch
+            offset = currentCorner switch
             {
                 CartCorner.TopLeft => headOffsetTopLeft,
                 CartCorner.TopRight => headOffsetTopRight,
@@ -875,15 +1073,36 @@ public sealed class BattleRevengeController : MonoBehaviour
                 _ => Vector2.zero
             };
         }
-
-        return currentEdge switch
+        else
         {
-            CartEdge.Left => headOffsetLeft,
-            CartEdge.Right => headOffsetRight,
-            CartEdge.Top => headOffsetTop,
-            CartEdge.Bottom => headOffsetBottom,
-            _ => Vector2.zero
-        };
+            offset = currentEdge switch
+            {
+                CartEdge.Left => headOffsetLeft,
+                CartEdge.Right => headOffsetRight,
+                CartEdge.Top => headOffsetTop,
+                CartEdge.Bottom => headOffsetBottom,
+                _ => Vector2.zero
+            };
+        }
+
+        if (currentSegment == CartSegment.Top && currentCorner == CartCorner.None)
+            offset.x += GetTopHeadTiltPixelOffset();
+
+        return offset;
+    }
+
+    private float GetTopHeadTiltPixelOffset()
+    {
+        float absoluteTilt = Mathf.Abs(currentTilt);
+        if (absoluteTilt <= 0.001f || tiltAngle <= 0f)
+            return 0f;
+
+        bool atMaximumTilt = absoluteTilt >= tiltAngle - 0.001f;
+        float offsetPixels = atMaximumTilt ? 2f : 1f;
+
+        // No topo, inclinação negativa representa movimento para a direita.
+        float horizontalDirection = currentTilt < 0f ? 1f : -1f;
+        return horizontalDirection * offsetPixels / PixelsPerUnit;
     }
 
     private Vector2 GetRechargeOffset() => currentEdge switch
@@ -1193,6 +1412,8 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     void LateUpdate()
     {
+        SyncTopHudOverlayImages();
+
         if (!debugCornerTransition || isAnimating)
             return;
 
@@ -1394,7 +1615,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             : counterClockwise;
     }
 
-    private void MoveTowardWallMidpoint(CartEdge targetWall)
+    private void MoveTowardWallMidpoint(CartEdge targetWall, bool speedBoostActive)
     {
         float beforePerimeter = perimeterPosition;
         Vector3 beforePosition = transform.position;
@@ -1407,7 +1628,10 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (Mathf.Approximately(delta, 0f))
             return;
 
-        float step = moveSpeed * Time.unscaledDeltaTime;
+        float speedMultiplier = speedBoostActive
+            ? Mathf.Max(1f, actionCSpeedMultiplier)
+            : 1f;
+        float step = moveSpeed * speedMultiplier * Time.unscaledDeltaTime;
         float move = Mathf.Clamp(delta, -step, step);
 
         perimeterPosition = NormalizePerimeterPosition(perimeterPosition + move);

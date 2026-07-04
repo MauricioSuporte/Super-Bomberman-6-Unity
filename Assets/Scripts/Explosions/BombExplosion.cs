@@ -7,6 +7,7 @@ public class BombExplosion : MonoBehaviour
 {
     private static readonly Dictionary<BombExplosion, Stack<BombExplosion>> Pools = new();
     private const string PierceExplosionSpritesPath = "Sprites/BombExplosions/PierceExplosion";
+    private const int DefaultSortingOrder = 3;
     private static Sprite[] pierceStartSprites;
     private static Sprite[] pierceMiddleSprites;
     private static Sprite[] pierceEndSprites;
@@ -36,6 +37,7 @@ public class BombExplosion : MonoBehaviour
     private Sprite[] defaultMiddleAnimation;
     private Sprite defaultEndIdle;
     private Sprite[] defaultEndAnimation;
+    private SpriteRenderer[] cachedSpriteRenderers;
     private Collider2D[] cachedColliders;
     private bool[] defaultColliderEnabledStates;
 
@@ -120,6 +122,7 @@ public class BombExplosion : MonoBehaviour
         IsRevengeBomb = false;
         usePierceSprites = false;
         isReleased = false;
+        RestoreDefaultSortingOrder();
         ResetRenderers();
         RestoreDefaultColliderStates();
 
@@ -132,6 +135,18 @@ public class BombExplosion : MonoBehaviour
         if (start != null) start.enabled = false;
         if (middle != null) middle.enabled = false;
         if (end != null) end.enabled = false;
+    }
+
+    private void RestoreDefaultSortingOrder()
+    {
+        if (cachedSpriteRenderers == null)
+            cachedSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < cachedSpriteRenderers.Length; i++)
+        {
+            if (cachedSpriteRenderers[i] != null)
+                cachedSpriteRenderers[i].sortingOrder = DefaultSortingOrder;
+        }
     }
 
     private void Release()

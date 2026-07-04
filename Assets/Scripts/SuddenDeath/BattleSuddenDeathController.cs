@@ -171,6 +171,126 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return true;
     }
 
+    public bool TryGetOverlappingThreatenedCell(
+        Collider2D[] playerColliders,
+        Vector3Int ignoredCell,
+        float maximumSeconds,
+        out Vector3Int threatenedCell,
+        out float seconds,
+        out Vector2 overlap)
+    {
+        threatenedCell = default;
+        seconds = float.PositiveInfinity;
+        overlap = Vector2.zero;
+
+        if (playerColliders == null || indestructibleTilemap == null)
+            return false;
+
+        bool found = false;
+
+        for (int i = 0; i < playerColliders.Length; i++)
+        {
+            Collider2D playerCollider = playerColliders[i];
+            if (playerCollider == null || !playerCollider.enabled || playerCollider.isTrigger)
+                continue;
+
+            Bounds playerBounds = playerCollider.bounds;
+            Vector3Int minCell = indestructibleTilemap.WorldToCell(playerBounds.min);
+            Vector3Int maxCell = indestructibleTilemap.WorldToCell(playerBounds.max);
+
+            for (int x = minCell.x - 1; x <= maxCell.x + 1; x++)
+            {
+                for (int y = minCell.y - 1; y <= maxCell.y + 1; y++)
+                {
+                    Vector3Int cell = new Vector3Int(x, y, ignoredCell.z);
+                    if (cell == ignoredCell ||
+                        !TryGetSecondsUntilSuddenDeathCell(cell, out float cellSeconds) ||
+                        cellSeconds > maximumSeconds)
+                    {
+                        continue;
+                    }
+
+                    Bounds cellBounds = GetWorldCellBounds(cell);
+                    float overlapX = Mathf.Min(playerBounds.max.x, cellBounds.max.x) -
+                                     Mathf.Max(playerBounds.min.x, cellBounds.min.x);
+                    float overlapY = Mathf.Min(playerBounds.max.y, cellBounds.max.y) -
+                                     Mathf.Max(playerBounds.min.y, cellBounds.min.y);
+                    if (overlapX < playerCellOverlapDamageThreshold ||
+                        overlapY < playerCellOverlapDamageThreshold)
+                    {
+                        continue;
+                    }
+
+                    if (found && cellSeconds >= seconds)
+                        continue;
+
+                    found = true;
+                    threatenedCell = cell;
+                    seconds = cellSeconds;
+                    overlap = new Vector2(overlapX, overlapY);
+                }
+            }
+        }
+
+        return found;
+    }
+
+    public bool CanMoveAwayFromActiveTile(
+        Collider2D obstacle,
+        Vector2 currentPosition,
+        Vector2 targetPosition)
+    {
+        if (obstacle == null || indestructibleTilemap == null)
+            return false;
+
+        Tilemap obstacleTilemap = obstacle.GetComponent<Tilemap>();
+        if (obstacleTilemap != indestructibleTilemap)
+            return false;
+
+        Vector2 movement = targetPosition - currentPosition;
+        if (movement.sqrMagnitude <= 0.000001f)
+            return false;
+
+        Vector3Int centerCell = indestructibleTilemap.WorldToCell(currentPosition);
+        Vector3Int moveDirection = Mathf.Abs(movement.x) >= Mathf.Abs(movement.y)
+            ? new Vector3Int(movement.x > 0f ? 1 : -1, 0, 0)
+            : new Vector3Int(0, movement.y > 0f ? 1 : -1, 0);
+
+        for (int x = centerCell.x - 1; x <= centerCell.x + 1; x++)
+        {
+            for (int y = centerCell.y - 1; y <= centerCell.y + 1; y++)
+            {
+                Vector3Int activeCell = new Vector3Int(x, y, centerCell.z);
+                if (!IsActiveSuddenDeathCell(activeCell))
+                    continue;
+
+                Bounds activeBounds = GetWorldCellBounds(activeCell);
+                Vector2 activeCenter = activeBounds.center;
+                Vector2 fromActive = currentPosition - activeCenter;
+
+                float proximityX = activeBounds.extents.x + 0.25f;
+                float proximityY = activeBounds.extents.y + 0.25f;
+                if (Mathf.Abs(fromActive.x) > proximityX ||
+                    Mathf.Abs(fromActive.y) > proximityY)
+                {
+                    continue;
+                }
+
+                if (fromActive.sqrMagnitude > 0.0001f &&
+                    Vector2.Dot(movement, fromActive) <= 0f)
+                    continue;
+
+                Vector3Int exitCell = activeCell + moveDirection;
+                if (IsActiveSuddenDeathCell(exitCell))
+                    continue;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     enum SuddenDeathDropPattern
     {
         Spiral = 0,

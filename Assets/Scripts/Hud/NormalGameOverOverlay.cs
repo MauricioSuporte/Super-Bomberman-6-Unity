@@ -22,17 +22,8 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
     [Header("Artwork")]
     [SerializeField] Sprite backgroundSprite;
-    [SerializeField] Sprite[] seatedBomberSprites;
-    [SerializeField] Sprite[] tauntEyeSprites;
     [SerializeField] Sprite[] cursorSprites;
-
-    [Header("Continue Animation Artwork")]
-    [SerializeField] Sprite[] continueWakeUpBomberSprites;
-    [SerializeField] Sprite[] continuePreparingBomberSprites;
-    [SerializeField] Sprite[] continueRunningBomberSprites;
-
-    [Header("End Animation Artwork")]
-    [SerializeField] Sprite[] endBomberSprites;
+    [SerializeField] string characterSpriteResourcesPath = "HUD/GameOver/Characters";
 
     [Header("Game Over Audio")]
     [SerializeField] AudioClip gameOverMusic;
@@ -49,15 +40,11 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     [SerializeField, Min(0f)] float waitBeforeFadeInSeconds = 3f;
     [SerializeField, Min(0.01f)] float fadeInSeconds = 1f;
     [SerializeField, Min(0.01f)] float fadeOutSeconds = 1f;
-    [SerializeField, Min(0.01f)] float eyeFrameSeconds = 0.13f;
+    [SerializeField, Min(0.01f)] float characterFrameSeconds = 0.13f;
     [SerializeField, Min(0f)] float confirmAnimationSeconds = 0.32f;
 
     [Header("Continue Animation")]
-    [SerializeField, Min(0f)] float continueWakeUpSeconds = 0.6f;
-    [SerializeField, Min(0f)] float continuePreparingSeconds = 0.5f;
-    [SerializeField, Min(0.01f)] float continueRunJumpSeconds = 0.8f;
-    [SerializeField, Min(0f)] float continueRunJumpDistance = 240f;
-    [SerializeField, Min(0f)] float continueRunJumpArcHeight = 48f;
+    [SerializeField, Min(0f)] float continueExitDistance = 180f;
 
     [Header("End Animation")]
     [SerializeField, Min(0.01f)] float endFallSeconds = 2.2f;
@@ -69,19 +56,20 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float endFallFinalScale;
 
     [Header("Layout")]
-    [SerializeField] float eyesOffsetY = 17f;
     [SerializeField] Vector2 cursorSize = new(16f, 16f);
 
     readonly Image[] bomberImages = new Image[4];
-    readonly Image[] eyeImages = new Image[8];
+    readonly Sprite[][] sufferingFrames = new Sprite[4][];
+    readonly Sprite[][] gameOverFrames = new Sprite[4][];
+    readonly Sprite[][] continueFrames = new Sprite[4][];
     Image cursorImage;
     CanvasGroup canvasGroup;
     RectMask2D viewportMask;
     bool inputEnabled;
     bool selectionCommitted;
     int selectedOption;
-    float eyeFrameTimer;
-    int eyeFrameIndex;
+    float characterFrameTimer;
+    int characterFrameIndex;
     bool confirmCursorAnimating;
     float confirmCursorTimer;
     int confirmCursorFrameIndex;
@@ -199,6 +187,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         if (shouldAutoConfirmEnd)
         {
             selectedOption = 1;
+            RestartCharacterLoop();
             PositionCursor();
         }
         HideNormalGameHudInCurrentScene();
@@ -236,7 +225,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         if (!gameObject.activeInHierarchy)
             return;
 
-        TickEyes();
+        TickCharacterAnimation();
         TickConfirmCursor();
 
         if (!inputEnabled || selectionCommitted)
@@ -285,19 +274,15 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
     void BuildUi()
     {
+        LoadCharacterSprites();
         CreateImage("Background", transform, backgroundSprite, Vector2.zero, new Vector2(ScreenWidth, ScreenHeight));
 
-        float[] bomberX = { -75f, -25f, 25f, 75f };
+        float[] bomberX = { -96f, -32f, 32f, 96f };
         for (int i = 0; i < bomberX.Length; i++)
         {
-            Sprite bomber = seatedBomberSprites != null && i < seatedBomberSprites.Length
-                ? seatedBomberSprites[i]
-                : null;
-            Image body = CreateImage($"Bomber_{i + 1}", transform, bomber, new Vector2(bomberX[i], -12f), new Vector2(48f, 60f));
+            Sprite bomber = GetFrame(sufferingFrames, i, 0);
+            Image body = CreateImage($"Bomber_{i + 1}", transform, bomber, new Vector2(bomberX[i], -5f), new Vector2(96f, 120f));
             bomberImages[i] = body;
-
-            eyeImages[i * 2] = CreateImage("Eye_Left", body.transform, GetEyeSprite(), new Vector2(-6f, eyesOffsetY), new Vector2(12f, 12f));
-            eyeImages[(i * 2) + 1] = CreateImage("Eye_Right", body.transform, GetEyeSprite(), new Vector2(6f, eyesOffsetY), new Vector2(12f, 12f));
         }
 
         cursorImage = CreateImage("Cursor", transform, GetCursorSprite(), Vector2.zero, cursorSize);
@@ -323,24 +308,49 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         return image;
     }
 
-    void TickEyes()
+    void LoadCharacterSprites()
     {
-        if (tauntEyeSprites == null || tauntEyeSprites.Length <= 1)
-            return;
-
-        eyeFrameTimer += Time.unscaledDeltaTime;
-        if (eyeFrameTimer < eyeFrameSeconds)
-            return;
-
-        eyeFrameTimer %= eyeFrameSeconds;
-        eyeFrameIndex = (eyeFrameIndex + 1) % tauntEyeSprites.Length;
-        Sprite sprite = tauntEyeSprites[eyeFrameIndex];
-
-        for (int i = 0; i < eyeImages.Length; i++)
+        for (int playerIndex = 0; playerIndex < bomberImages.Length; playerIndex++)
         {
-            if (eyeImages[i] != null)
-                eyeImages[i].sprite = sprite;
+            string playerPath = $"{characterSpriteResourcesPath}/Player{playerIndex + 1}";
+            sufferingFrames[playerIndex] = LoadNumberedSprites(playerPath, "dor_e_sofrimento", 9);
+            gameOverFrames[playerIndex] = LoadNumberedSprites(playerPath, "AAAAAAAAAAAAAAAAAAAAAAAAAAAA", 5);
+            continueFrames[playerIndex] = LoadNumberedSprites(playerPath, "morri_n_man", 12);
         }
+    }
+
+    static Sprite[] LoadNumberedSprites(string path, string prefix, int frameCount)
+    {
+        Sprite[] frames = new Sprite[frameCount];
+        for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
+            frames[frameIndex] = Resources.Load<Sprite>($"{path}/{prefix}{frameIndex + 1}");
+        return frames;
+    }
+
+    void TickCharacterAnimation()
+    {
+        if (selectionCommitted)
+            return;
+
+        Sprite[][] activeFrames = sufferingFrames;
+        int frameCount = activeFrames[0] != null ? activeFrames[0].Length : 0;
+        if (frameCount <= 1)
+            return;
+
+        characterFrameTimer += Time.unscaledDeltaTime;
+        while (characterFrameTimer >= characterFrameSeconds)
+        {
+            characterFrameTimer -= characterFrameSeconds;
+            characterFrameIndex = (characterFrameIndex + 1) % frameCount;
+            SetBomberFrame(activeFrames, characterFrameIndex);
+        }
+    }
+
+    void RestartCharacterLoop()
+    {
+        characterFrameTimer = 0f;
+        characterFrameIndex = 0;
+        SetBomberFrame(sufferingFrames, 0);
     }
 
     void TickConfirmCursor()
@@ -368,11 +378,6 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
             : new Vector2(-43f, -79f);
     }
 
-    Sprite GetEyeSprite()
-    {
-        return tauntEyeSprites != null && tauntEyeSprites.Length > 0 ? tauntEyeSprites[0] : null;
-    }
-
     Sprite GetCursorSprite()
     {
         return cursorSprites != null && cursorSprites.Length > 0 ? cursorSprites[0] : null;
@@ -396,17 +401,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
     IEnumerator PlayContinueSelectionRoutine()
     {
-        SetEyesVisible(false);
-        SetBomberSprites(continueWakeUpBomberSprites);
-        if (continueWakeUpSeconds > 0f)
-            yield return new WaitForSecondsRealtime(continueWakeUpSeconds);
-
-        SetBomberSprites(continuePreparingBomberSprites);
-        if (continuePreparingSeconds > 0f)
-            yield return new WaitForSecondsRealtime(continuePreparingSeconds);
-
-        SetBomberSprites(continueRunningBomberSprites);
-
+        float continueFrameSeconds = Mathf.Max(0.01f, characterFrameSeconds * 0.5f);
         Vector2[] startingPositions = new Vector2[bomberImages.Length];
         for (int i = 0; i < bomberImages.Length; i++)
         {
@@ -414,30 +409,33 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
                 startingPositions[i] = bomberImages[i].rectTransform.anchoredPosition;
         }
 
-        float elapsed = 0f;
-        float duration = Mathf.Max(0.01f, continueRunJumpSeconds);
-        while (elapsed < duration)
+        for (int frameIndex = 0; frameIndex < continueFrames[0].Length; frameIndex++)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float progress = Mathf.Clamp01(elapsed / duration);
-            Vector2 offset = new(
-                -continueRunJumpDistance * progress,
-                Mathf.Sin(progress * Mathf.PI) * continueRunJumpArcHeight);
-
-            for (int i = 0; i < bomberImages.Length; i++)
+            SetBomberFrame(continueFrames, frameIndex);
+            float frameElapsed = 0f;
+            while (frameElapsed < continueFrameSeconds)
             {
-                if (bomberImages[i] != null)
-                    bomberImages[i].rectTransform.anchoredPosition = startingPositions[i] + offset;
-            }
+                frameElapsed += Time.unscaledDeltaTime;
+                if (frameIndex >= 4)
+                {
+                    float exitProgress = Mathf.Clamp01((frameIndex - 4f + (frameElapsed / continueFrameSeconds)) / 8f);
+                    Vector2 offset = Vector2.up * (continueExitDistance * exitProgress);
 
-            yield return null;
+                    for (int i = 0; i < bomberImages.Length; i++)
+                    {
+                        if (bomberImages[i] != null)
+                            bomberImages[i].rectTransform.anchoredPosition = startingPositions[i] + offset;
+                    }
+                }
+
+                yield return null;
+            }
         }
     }
 
     IEnumerator PlayEndSelectionRoutine()
     {
-        SetEyesVisible(false);
-        SetBomberSprites(endBomberSprites);
+        SetBomberFrame(gameOverFrames, 0);
 
         Vector2[] originalOffsets = new Vector2[bomberImages.Length];
         Vector3[] startingScales = new Vector3[bomberImages.Length];
@@ -457,9 +455,16 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         float queueDelay = Mathf.Max(0f, endFallQueueDelaySeconds);
         float elapsed = 0f;
         float totalDuration = duration + (queueDelay * (bomberImages.Length - 1));
+        int lastAnimationFrame = -1;
         while (elapsed < totalDuration)
         {
             elapsed += Time.unscaledDeltaTime;
+            int animationFrame = Mathf.FloorToInt(elapsed / characterFrameSeconds) % gameOverFrames[0].Length;
+            if (animationFrame != lastAnimationFrame)
+            {
+                SetBomberFrame(gameOverFrames, animationFrame);
+                lastAnimationFrame = animationFrame;
+            }
 
             for (int i = 0; i < bomberImages.Length; i++)
             {
@@ -476,10 +481,8 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
                 float remainingRadius = 1f - easedProgress;
                 float orbitAngle = -endFallOrbitDegrees * easedProgress;
                 Vector2 spiralOffset = GetEndFallSpiralOffset(originalOffsets[i], orbitAngle, remainingRadius, easedProgress);
-                Vector3 scale = Vector3.Lerp(startingScales[i], startingScales[i] * endFallFinalScale, easedProgress);
-                float spriteRotation = -endFallSpriteRotationDegrees * easedProgress;
-                rect.localScale = scale;
-                rect.localRotation = startingRotations[i] * Quaternion.Euler(0f, 0f, spriteRotation);
+                rect.localScale = Vector3.Lerp(startingScales[i], startingScales[i] * endFallFinalScale, easedProgress);
+                rect.localRotation = startingRotations[i] * Quaternion.Euler(0f, 0f, -endFallSpriteRotationDegrees * easedProgress);
                 rect.anchoredPosition = endBlackHolePosition + spiralOffset;
             }
 
@@ -528,25 +531,22 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
             cursorImage.sprite = GetCursorSprite();
     }
 
-    void SetEyesVisible(bool visible)
+    void SetBomberFrame(Sprite[][] framesByPlayer, int frameIndex)
     {
-        for (int i = 0; i < eyeImages.Length; i++)
+        for (int playerIndex = 0; playerIndex < bomberImages.Length; playerIndex++)
         {
-            if (eyeImages[i] != null)
-                eyeImages[i].gameObject.SetActive(visible);
+            Sprite sprite = GetFrame(framesByPlayer, playerIndex, frameIndex);
+            if (bomberImages[playerIndex] != null && sprite != null)
+                bomberImages[playerIndex].sprite = sprite;
         }
     }
 
-    void SetBomberSprites(Sprite[] sprites)
+    static Sprite GetFrame(Sprite[][] framesByPlayer, int playerIndex, int frameIndex)
     {
-        if (sprites == null)
-            return;
-
-        for (int i = 0; i < bomberImages.Length && i < sprites.Length; i++)
-        {
-            if (bomberImages[i] != null && sprites[i] != null)
-                bomberImages[i].sprite = sprites[i];
-        }
+        if (framesByPlayer == null || playerIndex < 0 || playerIndex >= framesByPlayer.Length)
+            return null;
+        Sprite[] frames = framesByPlayer[playerIndex];
+        return frames != null && frameIndex >= 0 && frameIndex < frames.Length ? frames[frameIndex] : null;
     }
 
     float GetConfirmCursorFrameSeconds()

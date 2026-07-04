@@ -17,7 +17,7 @@ public class UnlockToastPresenter : MonoBehaviour
     const string UnlockSfxResourcesPath = "Sounds/LifeUp";
     public const string UnlockSfxSourceName = "TempUnlockToastSfx";
     static readonly bool EnableSurgicalLogs = false;
-    static readonly bool EnableUnlockSfxLogs = true;
+    static readonly bool EnableUnlockSfxLogs = false;
 
     static UnlockToastPresenter instanceInScene;
 

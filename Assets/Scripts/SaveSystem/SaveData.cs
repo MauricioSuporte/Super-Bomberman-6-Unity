@@ -75,6 +75,7 @@ public sealed class SaveData
     public int[] battleModeLouieAmounts;
     public BattleModeHandicapSave battleModeHandicapGeneric = new();
     public BattleModeHandicapSave battleModeHandicapPowerZone = new();
+    public bool battleModeHandicapPowerZoneInitialized;
     public BattleModeHandicapSave battleModeHandicapStage6 = new();
     public bool battleModeHandicapStage6Initialized;
     public SavedVideoSettings videoSettings = new();

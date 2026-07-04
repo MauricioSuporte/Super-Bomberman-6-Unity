@@ -17,7 +17,10 @@ public sealed class IndestructibleTileResolver : MonoBehaviour
 
     readonly Dictionary<TileBase, IIndestructibleTileHandler> _map = new();
 
-    void Awake() => Rebuild();
+    void Awake()
+    {
+        Rebuild();
+    }
 
     void OnValidate()
     {

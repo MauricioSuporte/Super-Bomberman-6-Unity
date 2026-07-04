@@ -12,6 +12,9 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComController : MonoBehaviour
 {
+    private const int MaxOwnChainJunctionEvaluations = 3;
+    private const int MaxWalkToChainPathEvaluations = 8;
+    private const float InitialDecisionStaggerSeconds = 0.025f;
     private const float BehaviorProgressDistance = 0.08f;
     private const float BehaviorNoProgressSeconds = 0.75f;
     private const float BehaviorStoppedDangerSeconds = 0.5f;
@@ -92,6 +95,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float PunchTapCooldownSeconds = 0.15f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
+    private const float SafeTileCenterSnapMaxDistance = 0.20f;
     private const float TurnAxisCenterTolerance = 0.045f;
 
     // Histerese da centralização de eixo: depois de considerado "centrado", só volta a
@@ -108,8 +112,12 @@ public sealed class BattleModeComController : MonoBehaviour
     // centro e consideramos centrado.
     private Vector2Int turnAxisCenteringDir = Vector2Int.zero;
     private int turnAxisCenteringSign;
+    private Vector2Int safeTileCenteringTile;
+    private Vector2Int safeTileCenteringDir;
+    private int safeTileCenteringSign;
+    private bool safeTileCenteringActive;
     private const float DangerTimingMarginSeconds = 0.08f;
-    private const float SuddenDeathUnsafeLeadSeconds = 1f;
+    private const float SuddenDeathUnsafeLeadSeconds = 2f;
     private const int ItemPriorityDistance = 7;
     private const int NearbyItemFarmBlockDistance = 5;
     private const int MaxUsefulQueuedLouieEggs = 2;
@@ -343,6 +351,7 @@ public sealed class BattleModeComController : MonoBehaviour
         playerId = Mathf.Clamp(id, GameSession.MinPlayerId, GameSession.MaxPlayerId);
         initialized = true;
         CacheReferences();
+        ScheduleInitialDecision();
         RefreshRuntimeEnabledState();
     }
 
@@ -364,7 +373,15 @@ public sealed class BattleModeComController : MonoBehaviour
     private void Start()
     {
         CacheReferences();
+        ScheduleInitialDecision();
         RefreshRuntimeEnabledState();
+    }
+
+    private void ScheduleInitialDecision()
+    {
+        float stagger = Mathf.Max(0, playerId - GameSession.MinPlayerId) *
+                        InitialDecisionStaggerSeconds;
+        nextDecisionTime = Mathf.Max(nextDecisionTime, Time.time + stagger);
     }
 
     private void OnDisable()
@@ -1136,6 +1153,8 @@ public sealed class BattleModeComController : MonoBehaviour
             hasSafeCenterTarget = true;
             safeCenterTargetTile = committedTankTarget;
         }
+        OverrideWithSuddenDeathBodyEscape(myTile, currentDangerSeconds);
+        OverrideWithExplosionBodyEscape(myTile, currentDangerSeconds);
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
         LogOpeningFarmMovementPipeline(
             myTile,
@@ -1191,6 +1210,133 @@ public sealed class BattleModeComController : MonoBehaviour
         SetMovementInput(currentMoveInput);
         TrackBehaviorDiagnostics(myTile, currentDangerSeconds);
         SetActionAHeld(currentHoldActionA);
+    }
+
+    private void OverrideWithSuddenDeathBodyEscape(
+        Vector2Int currentTile,
+        float currentDangerSeconds)
+    {
+        if (suddenDeathController == null ||
+            !suddenDeathController.SuddenDeathStarted ||
+            indestructibleTilemap == null)
+        {
+            return;
+        }
+
+        // Use the same logical tile convention as the COM planner. At exact
+        // half-cell positions Tilemap.WorldToCell and WorldToTile can disagree,
+        // which previously made this override pull the COM back into the tile
+        // that was about to fall.
+        Vector3Int currentCell = WorldToCell(indestructibleTilemap, currentTile);
+
+        // This override only repairs partial body overlap while the logical tile
+        // is still safe. If the logical tile itself is threatened, the regular
+        // escape planner must keep control so it can cross the boundary and flee
+        // to another tile instead of being recentered into danger.
+        if (suddenDeathController.TryGetSecondsUntilSuddenDeathCell(
+                currentCell,
+                out float currentCellThreatSeconds) &&
+            currentCellThreatSeconds <= SuddenDeathUnsafeLeadSeconds)
+        {
+            return;
+        }
+
+        if (!suddenDeathController.TryGetOverlappingThreatenedCell(
+                ownColliders,
+                currentCell,
+                SuddenDeathUnsafeLeadSeconds,
+                out Vector3Int threatenedCell,
+                out _,
+                out _))
+        {
+            return;
+        }
+
+        Vector2 escapeMove = GetMoveTowardTileCenter(currentTile);
+        if (escapeMove == Vector2.zero)
+            return;
+
+        SetCurrentDecision(
+            BattleModeComActionType.Reposition,
+            escapeMove,
+            true,
+            currentTile,
+            $"clear body from sudden death cell {threatenedCell}",
+            FirstMoveDescription(escapeMove),
+            currentDangerSeconds,
+            "suddenDeathBodyEscape");
+
+        hasSafeCenterTarget = true;
+        safeCenterTargetTile = currentTile;
+        nextDecisionTime = Time.time;
+    }
+
+    private void OverrideWithExplosionBodyEscape(
+        Vector2Int currentTile,
+        float currentDangerSeconds)
+    {
+        // The planner reasons in logical tiles, but damage is applied to the
+        // physical collider. On an exact tile boundary the logical tile can
+        // already be safe while the trailing edge still overlaps the blast in
+        // the previous tile. Stopping because that previous tile is unsafe
+        // leaves the COM straddling the explosion until it dies.
+        if (explosionMask == 0 || IsTileThreatened(currentTile, null))
+            return;
+
+        if (!TryGetOverlappingExplosion(out Collider2D overlappingExplosion))
+            return;
+
+        Vector2 escapeMove = GetMoveTowardTileCenter(currentTile);
+        if (escapeMove == Vector2.zero)
+            return;
+
+        Vector2Int explosionTile = WorldToTile(overlappingExplosion.bounds.center);
+        SetCurrentDecision(
+            BattleModeComActionType.Reposition,
+            escapeMove,
+            true,
+            currentTile,
+            $"clear body from active explosion at {explosionTile}",
+            FirstMoveDescription(escapeMove),
+            currentDangerSeconds,
+            "explosionBodyEscape");
+
+        hasSafeCenterTarget = true;
+        safeCenterTargetTile = currentTile;
+        currentMoveFollowsEscapeRoute = true;
+        nextDecisionTime = Time.time;
+    }
+
+    private bool TryGetOverlappingExplosion(out Collider2D overlappingExplosion)
+    {
+        overlappingExplosion = null;
+        if (ownColliders == null)
+            return false;
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            Collider2D ownCollider = ownColliders[i];
+            if (ownCollider == null || !ownCollider.enabled)
+                continue;
+
+            Bounds bounds = ownCollider.bounds;
+            Collider2D[] hits = Physics2D.OverlapBoxAll(
+                bounds.center,
+                bounds.size,
+                0f,
+                explosionMask);
+            for (int hitIndex = 0; hitIndex < hits.Length; hitIndex++)
+            {
+                Collider2D hit = hits[hitIndex];
+                if (hit == null || !Physics2D.Distance(hit, ownCollider).isOverlapped)
+                    continue;
+
+                overlappingExplosion = hit;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void ApplyHardAggressionSettings(
@@ -1360,6 +1506,41 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             ExecuteEscape(settings, myTile, currentDangerSeconds);
+            return;
+        }
+
+        // Evita que várias COMs no mesmo tile entrem juntas em planos de chain
+        // idênticos antes que o combate normal seja avaliado. No Hard, primeiro
+        // tenta punir o agrupamento com uma bomba; sem fuga segura, abre espaço.
+        if (settings.difficulty == BattleModeComputerLevel.Hard &&
+            TryBuildSameTileCombatPlantCandidate(
+                settings,
+                myTile,
+                out CandidateAction sameTilePlant))
+        {
+            ClearChainCommitmentsForCrowdSeparation();
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                sameTilePlant,
+                "sameTileCombatPriority");
+            return;
+        }
+
+        if (settings.difficulty == BattleModeComputerLevel.Hard &&
+            TryBuildCrowdSeparationCandidate(
+                settings,
+                myTile,
+                out CandidateAction crowdSeparation))
+        {
+            ClearChainCommitmentsForCrowdSeparation();
+            ExecuteSelectedCandidate(
+                settings,
+                myTile,
+                currentDangerSeconds,
+                crowdSeparation,
+                "crowdSeparation");
             return;
         }
 
@@ -3886,7 +4067,15 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
 
         int radius = GetPlannedBombRadiusAt(myTile);
-        if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
+        // Dois jogadores podem compartilhar o mesmo tile lógico enquanto seus
+        // colliders se atravessam. Esse caso não pertence a uma direção cardinal,
+        // então IsTileInBlastLineRuntime retorna false apesar de a bomba atingir
+        // ambos. Sem o teste de distância zero, a COM criava uma aproximação de
+        // caminho vazio e ficava selecionando CombatPlant sem mover nem plantar.
+        bool targetInsidePlantBlast =
+            targetDistance == 0 ||
+            IsTileInBlastLineRuntime(myTile, targetTile, radius);
+        if (targetInsidePlantBlast &&
             !WouldPlannedBombHitUsefulItem(myTile, radius, out _, out _) &&
             CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
         {
@@ -3906,7 +4095,8 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         if (targetDistance <= settings.searchDepth + radius + 2 &&
-            TryFindPath(myTile, targetTile, settings.searchDepth + 3, true, settings, null, out PathResult path))
+            TryFindPath(myTile, targetTile, settings.searchDepth + 3, true, settings, null, out PathResult path) &&
+            path.Distance > 0)
         {
             candidate = new CandidateAction
             {
@@ -3922,8 +4112,136 @@ public sealed class BattleModeComController : MonoBehaviour
             return true;
         }
 
-        RejectVerbose($"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
+        RejectVerbose(
+            targetDistance == 0
+                ? $"CombatPlant alvo P{target.playerId} no mesmo tile, mas sem fuga segura para plantar"
+                : $"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
         return false;
+    }
+
+    private bool TryBuildSameTileCombatPlantCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (!TryBuildCombatCandidate(settings, myTile, out CandidateAction combat) ||
+            !combat.TapBomb ||
+            !combat.HasTarget ||
+            combat.TargetTile != myTile)
+        {
+            return false;
+        }
+
+        combat.Weight += 100;
+        combat.Reason = $"same-tile combat priority; {combat.Reason}";
+        candidate = combat;
+        return true;
+    }
+
+    private bool TryBuildCrowdSeparationCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        int playersOnCurrentTile = CountOtherPlayersAtTile(myTile);
+        if (playersOnCurrentTile <= 0)
+            return false;
+
+        int directionOffset = Mathf.Abs(playerId - 1) % CardinalTiles.Length;
+        bool found = false;
+        int bestCongestion = int.MaxValue;
+        int bestOrder = int.MaxValue;
+        Vector2Int bestTile = myTile;
+        Vector2 bestMove = Vector2.zero;
+
+        for (int order = 0; order < CardinalTiles.Length; order++)
+        {
+            Vector2Int direction =
+                CardinalTiles[(directionOffset + order) % CardinalTiles.Length];
+            Vector2Int tile = myTile + direction;
+            if (!IsWalkableTile(tile, myTile) ||
+                !float.IsInfinity(GetDangerSeconds(tile, null)))
+            {
+                continue;
+            }
+
+            int congestion = CountOtherPlayersAtTile(tile);
+            for (int i = 0; i < CardinalTiles.Length; i++)
+                congestion += CountOtherPlayersAtTile(tile + CardinalTiles[i]);
+
+            if (found &&
+                (congestion > bestCongestion ||
+                 (congestion == bestCongestion && order >= bestOrder)))
+            {
+                continue;
+            }
+
+            found = true;
+            bestCongestion = congestion;
+            bestOrder = order;
+            bestTile = tile;
+            bestMove = direction;
+        }
+
+        if (!found)
+        {
+            RejectVerbose(
+                $"CrowdSeparation {playersOnCurrentTile + 1} jogadores em {myTile}, sem vizinho seguro");
+            return false;
+        }
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.Reposition,
+            Weight = settings.combatPlantWeight + 100,
+            TargetTile = bestTile,
+            HasTarget = true,
+            FirstMove = bestMove,
+            HasRoute = true,
+            Reason =
+                $"separate crowd of {playersOnCurrentTile + 1} players; " +
+                $"target congestion {bestCongestion}",
+            InputDescription = FirstMoveDescription(bestMove)
+        };
+        return true;
+    }
+
+    private int CountOtherPlayersAtTile(Vector2Int tile)
+    {
+        int count = 0;
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (!player.TryGetComponent<MovementController>(out var playerMovement) ||
+                playerMovement == null ||
+                playerMovement.isDead ||
+                playerMovement.IsEndingStage)
+            {
+                continue;
+            }
+
+            if (WorldToTile(player.transform.position) == tile)
+                count++;
+        }
+
+        return count;
+    }
+
+    private void ClearChainCommitmentsForCrowdSeparation()
+    {
+        walkToChainCommitted = false;
+        ownChainSeekCommitted = false;
+        ownChainPlanActive = false;
+        ownChainEscapeOnly = false;
     }
 
     private bool TryBuildHardLouieSecurePickupCandidate(
@@ -5198,6 +5516,7 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2 bestFirstMove = Vector2.zero;
         Vector2Int bestSecondTile = myTile;
         int bestScore = int.MinValue;
+        int evaluatedJunctions = 0;
 
         GatherReachableSafeTiles(myTile, settings.searchDepth + 2, settings);
 
@@ -5209,6 +5528,11 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
             if (IsBombAtTile(junction) || CountOpenNeighbors(junction) < 4)
                 continue;
+
+            if (evaluatedJunctions >= MaxOwnChainJunctionEvaluations)
+                break;
+
+            evaluatedJunctions++;
 
             if (!TryFindPath(myTile, junction, settings.searchDepth + 2, true, settings, null, out PathResult junctionPath))
                 continue;
@@ -5843,6 +6167,7 @@ public sealed class BattleModeComController : MonoBehaviour
         bool bestPlantNow = false;
         float bestScore = float.NegativeInfinity;
         bool found = false;
+        int pathEvaluations = 0;
 
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
@@ -5872,6 +6197,18 @@ public sealed class BattleModeComController : MonoBehaviour
                 float requiredArrival = fuseLeft - settings.dangerReactionSeconds - ChainBombFuseSafetyMarginSeconds;
                 if (requiredArrival <= 0f)
                     continue;
+
+                int minimumDistance = Manhattan(myTile, plantTile);
+                if (EstimateTraversalSeconds(minimumDistance) >= requiredArrival)
+                {
+                    wtc_arrivalLate++;
+                    continue;
+                }
+
+                if (pathEvaluations >= MaxWalkToChainPathEvaluations)
+                    continue;
+
+                pathEvaluations++;
 
                 if (!TryFindPath(myTile, plantTile, settings.searchDepth + 4, false, settings, null, out PathResult path))
                 { wtc_noPath++; continue; }
@@ -10629,7 +10966,10 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2 ApplySafeTileCentering(Vector2Int currentTile, Vector2 requestedMove)
     {
         if (!hasSafeCenterTarget)
+        {
+            ResetSafeTileCenteringTracking();
             return requestedMove;
+        }
 
         if (IsTileThreatened(currentTile, null))
             return requestedMove;
@@ -10637,13 +10977,77 @@ public sealed class BattleModeComController : MonoBehaviour
         if (currentTile != safeCenterTargetTile)
             return requestedMove;
 
+        Vector2 center = TileToWorld(currentTile);
+        Vector2 delta = center - (Vector2)transform.position;
+
+        if (!safeTileCenteringActive || safeTileCenteringTile != currentTile)
+        {
+            safeTileCenteringActive = true;
+            safeTileCenteringTile = currentTile;
+            safeTileCenteringDir =
+                DirectionToTile(GetMoveTowardTileCenter(currentTile));
+            safeTileCenteringSign = GetCenteringSign(delta, safeTileCenteringDir);
+        }
+
         if (IsCenteredOnTile(currentTile))
         {
+            SnapToSafeTileCenter(center);
             hasSafeCenterTarget = false;
+            ResetSafeTileCenteringTracking();
             return Vector2.zero;
         }
 
-        return GetMoveTowardTileCenter(currentTile);
+        int currentSign = GetCenteringSign(delta, safeTileCenteringDir);
+        bool crossedCenter =
+            safeTileCenteringDir != Vector2Int.zero &&
+            safeTileCenteringSign != 0 &&
+            currentSign != 0 &&
+            currentSign != safeTileCenteringSign;
+        if (crossedCenter && delta.magnitude <= tileSize * SafeTileCenterSnapMaxDistance)
+        {
+            SnapToSafeTileCenter(center);
+            hasSafeCenterTarget = false;
+            ResetSafeTileCenteringTracking();
+            return Vector2.zero;
+        }
+
+        Vector2 centeringMove = GetMoveTowardTileCenter(currentTile);
+        if (centeringMove != Vector2.zero)
+        {
+            safeTileCenteringDir = DirectionToTile(centeringMove);
+            safeTileCenteringSign = GetCenteringSign(delta, safeTileCenteringDir);
+        }
+
+        return centeringMove;
+    }
+
+    private void SnapToSafeTileCenter(Vector2 center)
+    {
+        if (movement != null && movement.Rigidbody != null)
+        {
+            movement.Rigidbody.position = center;
+            movement.Rigidbody.linearVelocity = Vector2.zero;
+        }
+
+        transform.position = new Vector3(center.x, center.y, transform.position.z);
+    }
+
+    private static int GetCenteringSign(Vector2 delta, Vector2Int direction)
+    {
+        if (direction.x != 0)
+            return delta.x > 0f ? 1 : delta.x < 0f ? -1 : 0;
+
+        if (direction.y != 0)
+            return delta.y > 0f ? 1 : delta.y < 0f ? -1 : 0;
+
+        return 0;
+    }
+
+    private void ResetSafeTileCenteringTracking()
+    {
+        safeTileCenteringActive = false;
+        safeTileCenteringDir = Vector2Int.zero;
+        safeTileCenteringSign = 0;
     }
 
     private bool IsCenteredOnTile(Vector2Int tile)

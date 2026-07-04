@@ -1063,7 +1063,8 @@ MonoBehaviour:
   speedInternal: 224
   playerId: 1
   enableDualInput: 1
-  dualInputCentreSnapTolerance: 0.18
+  dualInputCentreSnapTolerance: 0.75
+  turnAssistLateralSpeedMultiplier: 1.5
   dualInputSwitchCooldown: 0.08
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}

@@ -1158,8 +1158,8 @@ MonoBehaviour:
   - {fileID: 5683275989648866004, guid: b807c6cd0a7750a48bf6a607828d3595, type: 3}
   itemSelectCursorFrameSeconds: 0.5
   itemSelectHintOffset: {x: 0, y: -300}
-  itemSelectHintSize: {x: 900, y: 76}
-  itemSelectHintFontSize: 28
+  itemSelectHintSize: {x: 900, y: 120}
+  itemSelectHintFontSize: 24
   itemSelectHintLineSpacing: 18
   itemSelectMaxAmount: 99
   louieSelectRootOffset: {x: 0, y: 0}
@@ -1177,8 +1177,8 @@ MonoBehaviour:
   louieSelectCursorOffset: {x: 0, y: -10}
   louieSelectCursorSize: {x: 224, y: 224}
   louieSelectHintOffset: {x: 0, y: -300}
-  louieSelectHintSize: {x: 900, y: 76}
-  louieSelectHintFontSize: 28
+  louieSelectHintSize: {x: 900, y: 120}
+  louieSelectHintFontSize: 24
   louieSelectHintLineSpacing: 18
   louieSelectMaxAmount: 99
   louieSelectMountPrefabs:
@@ -1211,8 +1211,8 @@ MonoBehaviour:
   handicapSelectCursorOffset: {x: 0, y: 0}
   handicapSelectLouieCursorOffset: {x: 0, y: -8}
   handicapSelectCursorSize: {x: 175, y: 175}
-  handicapSelectHintOffset: {x: 0, y: -330}
-  handicapSelectHintSize: {x: 900, y: 76}
+  handicapSelectHintOffset: {x: 0, y: -324}
+  handicapSelectHintSize: {x: 900, y: 120}
   handicapSelectHintFontSize: 18
   handicapSelectHintLineSpacing: 18
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
@@ -1228,6 +1228,16 @@ MonoBehaviour:
   deniedSfxVolume: 1
   specificStartSfx: {fileID: 8300000, guid: 65bb48bbd86fe1848bca77982611e394, type: 3}
   specificStartSfxVolume: 1
+  restoreDefaultSfx: {fileID: 8300000, guid: ce0ca761e372457ca254ba3311cc5b9a, type: 3}
+  restoreDefaultSfxVolume: 1
+  restoreDefaultsQuestionOffset: {x: 0, y: 100}
+  restoreDefaultsQuestionSize: {x: 840, y: 180}
+  restoreDefaultsQuestionFontSize: 30
+  restoreDefaultsOptionsOffset: {x: 40, y: -55}
+  restoreDefaultsOptionsSize: {x: 260, y: 130}
+  restoreDefaultsOptionRowSpacing: 56
+  restoreDefaultsCursorOffset: {x: -72, y: 0}
+  restoreDefaultsConfirmDelay: 0.5
   dynamicScale: 1
   referenceWidth: 256
   referenceHeight: 224

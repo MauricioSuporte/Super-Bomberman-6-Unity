@@ -49,6 +49,7 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
+    private BattleMode7PortalController portalController;
     private readonly List<PlayerIdentity> activePlayers = new List<PlayerIdentity>(6);
 
     private SequenceState sequenceState;
@@ -140,6 +141,9 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
         if (mountCompanion == null)
             TryGetComponent(out mountCompanion);
+
+        if (portalController == null)
+            portalController = FindAnyObjectByType<BattleMode7PortalController>();
 
         if (movement != null)
             tileSize = Mathf.Max(0.01f, movement.tileSize);
@@ -953,6 +957,8 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
             if (landingTile == origin)
                 continue;
 
+            Vector2Int blastOrigin = ResolvePortalBombLanding(landingTile);
+
             int directionScore = int.MinValue;
             int directionTargetId = 0;
 
@@ -971,12 +977,12 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
                 Vector2Int targetTile = WorldToTile(player.transform.position);
                 int radius = GetBombRadius(bomb);
-                if (!IsTileInBlastLine(landingTile, targetTile, radius))
+                if (!IsTileInBlastLine(blastOrigin, targetTile, radius))
                     continue;
 
                 int score =
                     1000 -
-                    Manhattan(landingTile, targetTile) * 40 -
+                    Manhattan(blastOrigin, targetTile) * 40 -
                     Manhattan(origin, targetTile) * 4 +
                     CountOpenNeighbors(landingTile) * 3;
 
@@ -1008,6 +1014,18 @@ public sealed class BattleModeComPowerGloveAbility : MonoBehaviour, IBattleModeC
 
         return bestDirection != Vector2Int.zero &&
                (!requireOffensiveTarget || targetPlayerId != 0);
+    }
+
+    private Vector2Int ResolvePortalBombLanding(Vector2Int landingTile)
+    {
+        return portalController != null &&
+               portalController.TryGetBombPortalTrajectory(
+                   landingTile,
+                   out _,
+                   out _,
+                   out Vector2Int portalLandingTile)
+            ? portalLandingTile
+            : landingTile;
     }
 
     private Vector2Int PredictLandingTile(Vector2Int origin, Vector2Int direction)

@@ -139,7 +139,8 @@ MonoBehaviour:
   speedInternal: 224
   playerId: 1
   enableDualInput: 1
-  dualInputCentreSnapTolerance: 0.18
+  dualInputCentreSnapTolerance: 0.75
+  turnAssistLateralSpeedMultiplier: 1.5
   dualInputSwitchCooldown: 0.08
   spriteRendererUp: {fileID: 8848576671601051228}
   spriteRendererDown: {fileID: 8978142519152931095}
@@ -254,7 +255,7 @@ MonoBehaviour:
   powerBombPrefab: {fileID: 0}
   rubberBombPrefab: {fileID: 0}
   magnetBombPrefab: {fileID: 0}
-  bombFuseTime: 2
+  bombFuseTime: 2.3
   bombAmout: 1
   chainBombDelaySeconds: 0.1
   powerBombRadius: 15

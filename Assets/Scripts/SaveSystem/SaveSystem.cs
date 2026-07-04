@@ -640,6 +640,18 @@ public static class SaveSystem
         return CloneBattleModeHandicap(source, GetBattleModeHandicapProfileKind(stageIndex));
     }
 
+    public static BattleModeHandicapSave GetDefaultBattleModeHandicapForStage(int stageIndex)
+    {
+        BattleModeHandicapProfileKind kind = GetBattleModeHandicapProfileKind(stageIndex);
+        BattleModeHandicapSave result = NormalizeBattleModeHandicap(null, kind);
+        if (kind == BattleModeHandicapProfileKind.PowerZone)
+            ApplyPowerZoneDefaultHandicap(result);
+        if (kind == BattleModeHandicapProfileKind.Stage6)
+            ApplyStage6DefaultHandicap(result);
+
+        return result;
+    }
+
     public static void SetBattleModeHandicapForStage(int stageIndex, BattleModeHandicapSave handicap)
     {
         EnsureLoaded();
@@ -652,6 +664,7 @@ public static class SaveSystem
         {
             case BattleModeHandicapProfileKind.PowerZone:
                 data.battleModeHandicapPowerZone = normalized;
+                data.battleModeHandicapPowerZoneInitialized = true;
                 break;
             case BattleModeHandicapProfileKind.Stage6:
                 data.battleModeHandicapStage6 = normalized;
@@ -1414,7 +1427,17 @@ public static class SaveSystem
             return;
 
         d.battleModeHandicapGeneric = NormalizeBattleModeHandicap(d.battleModeHandicapGeneric, BattleModeHandicapProfileKind.Generic);
+        bool initializePowerZoneDefaults =
+            !d.battleModeHandicapPowerZoneInitialized &&
+            ShouldUsePowerZoneDefaultHandicap(d.battleModeHandicapPowerZone?.players);
         d.battleModeHandicapPowerZone = NormalizeBattleModeHandicap(d.battleModeHandicapPowerZone, BattleModeHandicapProfileKind.PowerZone);
+        if (!d.battleModeHandicapPowerZoneInitialized)
+        {
+            if (initializePowerZoneDefaults)
+                ApplyPowerZoneDefaultHandicap(d.battleModeHandicapPowerZone);
+
+            d.battleModeHandicapPowerZoneInitialized = true;
+        }
         d.battleModeHandicapStage6 = NormalizeBattleModeHandicap(d.battleModeHandicapStage6, BattleModeHandicapProfileKind.Stage6);
         if (!d.battleModeHandicapStage6Initialized)
         {
@@ -1500,12 +1523,6 @@ public static class SaveSystem
             player.movementAbility = Enum.IsDefined(typeof(BattleModeHandicapMovementAbility), player.movementAbility)
                 ? player.movementAbility
                 : (int)BattleModeHandicapMovementAbility.None;
-
-            if (profileKind == BattleModeHandicapProfileKind.PowerZone &&
-                ShouldUsePowerZoneDefaultHandicap(previous))
-            {
-                ApplyPowerZoneDefaultHandicap(player);
-            }
 
             if (profileKind == BattleModeHandicapProfileKind.PowerZone)
                 player.mountedLouie = (int)MountedType.None;
@@ -1597,6 +1614,18 @@ public static class SaveSystem
         player.movementAbility = (int)BattleModeHandicapMovementAbility.Kick;
         player.fullFire = false;
         player.destructiblePass = false;
+    }
+
+    private static void ApplyPowerZoneDefaultHandicap(BattleModeHandicapSave handicap)
+    {
+        if (handicap?.players == null)
+            return;
+
+        for (int i = 0; i < handicap.players.Length; i++)
+        {
+            handicap.players[i] ??= new BattleModeHandicapPlayerSave();
+            ApplyPowerZoneDefaultHandicap(handicap.players[i]);
+        }
     }
 
     private static void ApplyStage6DefaultHandicap(BattleModeHandicapSave handicap)

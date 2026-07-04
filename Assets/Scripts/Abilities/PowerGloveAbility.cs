@@ -65,6 +65,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private Rigidbody2D heldBombRb;
     private BombAtGroundTileNotifier heldBombNotifier;
     private SpriteRenderer heldBombSpriteRenderer;
+    private bool externalTeleportVisualSuppressed;
 
     private Transform heldBombOriginalParent;
     private Vector3 heldBombOriginalLocalPos;
@@ -86,6 +87,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     public bool CanPickupBombNow(Bomb bomb)
         => bomb != null &&
            !bomb.HasExploded &&
+           !bomb.IsBeingKicked &&
+           !bomb.IsBeingMagnetPulled &&
            Time.time - bomb.PlacedTime >= MinimumBombAgeForPickupSeconds;
 
     private const int CarryOrderInLayer = 6;
@@ -108,6 +111,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         holding = false;
         animLocking = false;
+        externalTeleportVisualSuppressed = false;
 
         movementLockCaptured = false;
         bombControllerUseAIInputOverridden = false;
@@ -115,6 +119,25 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private bool IsHeldBombValid()
         => heldBomb != null && !heldBomb.HasExploded;
+
+    public Bomb HeldBombForExternalTransition
+        => IsHeldBombValid() ? heldBomb : null;
+
+    public void SetTeleportVisualSuppressed(bool suppressed)
+    {
+        externalTeleportVisualSuppressed = suppressed;
+
+        if (suppressed)
+        {
+            SetAllPickupSprites(false);
+            SetAllCarrySprites(false);
+            activeCarryRenderer = null;
+            return;
+        }
+
+        if (holding && IsHeldBombValid())
+            UpdateCarryVisual();
+    }
 
     private void LateUpdate()
     {
@@ -129,6 +152,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if ((animLocking || holding || isHoldingBomb) && !IsHeldBombValid())
             EmergencyUnlockAndReset("LateUpdate_InvalidBomb");
+
+        if (externalTeleportVisualSuppressed)
+        {
+            SetAllPickupSprites(false);
+            SetAllCarrySprites(false);
+            activeCarryRenderer = null;
+        }
     }
 
     private void Update()
@@ -143,6 +173,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (StageIntroTransition.Instance != null &&
             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
             return;
+
+        if (externalTeleportVisualSuppressed)
+        {
+            SetAllPickupSprites(false);
+            SetAllCarrySprites(false);
+            activeCarryRenderer = null;
+            return;
+        }
 
         if (IsExternalBlockingDismount())
         {

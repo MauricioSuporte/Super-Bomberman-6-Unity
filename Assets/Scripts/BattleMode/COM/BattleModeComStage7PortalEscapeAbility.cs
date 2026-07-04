@@ -4,10 +4,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerIdentity))]
 [RequireComponent(typeof(MovementController))]
+[RequireComponent(typeof(BombController))]
 [RequireComponent(typeof(BattleModeComController))]
 public sealed class BattleModeComStage7PortalEscapeAbility :
     MonoBehaviour,
-    IBattleModeComStageAbility
+    IBattleModeComStageAbility,
+    IBattleModeComDangerProvider,
+    IBattleModeComPlannedBombDangerProvider
 {
     public static readonly bool EnablePortalDiagnostics = false;
     public const int DiagnosticPlayerIdFilter = 6;
@@ -21,10 +24,12 @@ public sealed class BattleModeComStage7PortalEscapeAbility :
     private const float DiagnosticThrottleSeconds = 0.5f;
 
     private readonly List<Vector2Int> portalCells = new();
+    private readonly List<Vector2Int> predictedBlastTiles = new();
 
     private PlayerIdentity identity;
     private MovementController movement;
     private BattleModeComController comController;
+    private BombController bombController;
     private BattleMode7PortalController portalController;
     private Vector2Int committedPortalTile;
     private Vector2Int committedDestinationTile;
@@ -82,6 +87,9 @@ public sealed class BattleModeComStage7PortalEscapeAbility :
 
         if (comController == null)
             TryGetComponent(out comController);
+
+        if (bombController == null)
+            TryGetComponent(out bombController);
 
         if (portalController == null)
         {
@@ -474,6 +482,104 @@ public sealed class BattleModeComStage7PortalEscapeAbility :
     public bool IsCommittedPortalTarget(Vector2Int tile)
         => hasCommittedPortal &&
            tile == committedPortalTile;
+
+    public bool TryGetDangerSeconds(
+        Vector2Int tile,
+        out float dangerSeconds)
+    {
+        dangerSeconds = float.PositiveInfinity;
+        if (!IsAvailable)
+            return false;
+
+        bool found = false;
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
+                continue;
+
+            Vector2Int sourceTile = WorldToTile(bomb.GetLogicalPosition());
+            if (!portalController.TryGetBombPortalTrajectory(
+                    sourceTile,
+                    out _,
+                    out Vector2Int launchDirection,
+                    out Vector2Int landingTile))
+            {
+                continue;
+            }
+
+            for (int step = 0; step <= 3; step++)
+            {
+                Vector2Int travelTile = landingTile - launchDirection * step;
+                if (tile != travelTile)
+                    continue;
+
+                dangerSeconds = Mathf.Min(
+                    dangerSeconds,
+                    portalController.TeleportDurationSeconds +
+                    (3 - step) * 0.08f);
+                found = true;
+            }
+
+            predictedBlastTiles.Clear();
+            comController.AppendAbilityBlastTiles(
+                landingTile,
+                GetBombRadius(bomb),
+                predictedBlastTiles);
+            if (predictedBlastTiles.Contains(tile))
+            {
+                float fuse = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
+                dangerSeconds = Mathf.Min(dangerSeconds, fuse + 0.25f);
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
+    public bool TryAppendPlannedBombDangerTiles(
+        Vector2Int plantTile,
+        List<Vector2Int> plannedDangerTiles)
+    {
+        if (plannedDangerTiles == null ||
+            !IsAvailable ||
+            !portalController.TryGetBombPortalTrajectory(
+                plantTile,
+                out _,
+                out Vector2Int launchDirection,
+                out Vector2Int landingTile))
+        {
+            return false;
+        }
+
+        for (int step = 0; step <= 3; step++)
+            AddUnique(plannedDangerTiles, landingTile - launchDirection * step);
+
+        predictedBlastTiles.Clear();
+        comController.AppendAbilityBlastTiles(
+            landingTile,
+            bombController.GetPlannedExplosionRadius(),
+            predictedBlastTiles);
+        for (int i = 0; i < predictedBlastTiles.Count; i++)
+            AddUnique(plannedDangerTiles, predictedBlastTiles[i]);
+
+        return true;
+    }
+
+    private int GetBombRadius(Bomb bomb)
+    {
+        if (bomb != null && bomb.Owner != null)
+            return Mathf.Max(1, bomb.Owner.GetPredictedBlastRadius(bomb));
+
+        return bombController != null
+            ? Mathf.Max(1, bombController.GetPredictedBlastRadius(bomb))
+            : 2;
+    }
+
+    private static void AddUnique(List<Vector2Int> tiles, Vector2Int tile)
+    {
+        if (!tiles.Contains(tile))
+            tiles.Add(tile);
+    }
 
     public bool IsPortalExitSafe(
         Vector2Int portalTile,

@@ -860,7 +860,12 @@ public static class GameTextDatabase
         TeamRed = "Red",
         TeamBlue = "Blue",
         TeamGreen = "Green",
-        ChooseChangeBack = "←→↑↓: Choose\nA/C: Change Number\nB: Back"
+        ChooseChangeBack = "←→↑↓: Choose\nA/C: Change Number\nB: Back\nL/R: Restore ALL to Default",
+        RestoreItemsDefaultsQuestion = "RESTORE ALL ITEMS TO DEFAULT VALUES?",
+        RestoreLouiesDefaultsQuestion = "RESTORE ALL LOUIES TO DEFAULT VALUES?",
+        RestoreHandicapDefaultsQuestion = "RESTORE ALL HANDICAPS TO DEFAULT VALUES?",
+        Yes = "YES",
+        No = "NO"
     };
 
     private static readonly BattleModeMenuText JapaneseBattleModeMenu = new()
@@ -896,7 +901,12 @@ public static class GameTextDatabase
         TeamRed = "赤",
         TeamBlue = "青",
         TeamGreen = "緑",
-        ChooseChangeBack = "←→↑↓: 選択\nA/C: 数を変更\nB: 戻る"
+        ChooseChangeBack = "←→↑↓: 選択\nA/C: 数を変更\nB: 戻る\nL/R: すべて初期設定に戻す",
+        RestoreItemsDefaultsQuestion = "すべてのアイテムを初期設定に戻しますか?",
+        RestoreLouiesDefaultsQuestion = "すべてのルーイを初期設定に戻しますか?",
+        RestoreHandicapDefaultsQuestion = "すべてのハンデを初期設定に戻しますか?",
+        Yes = "はい",
+        No = "いいえ"
     };
 
     private static readonly BattleModeMenuText SpanishBattleModeMenu = new()
@@ -932,7 +942,12 @@ public static class GameTextDatabase
         TeamRed = "Rojo",
         TeamBlue = "Azul",
         TeamGreen = "Verde",
-        ChooseChangeBack = "←→↑↓: Elegir\nA/C: Cambiar número\nB: Volver"
+        ChooseChangeBack = "←→↑↓: Elegir\nA/C: Cambiar número\nB: Volver\nL/R: Restaurar TODO por defecto",
+        RestoreItemsDefaultsQuestion = "¿RESTAURAR TODOS LOS OBJETOS A SUS VALORES POR DEFECTO?",
+        RestoreLouiesDefaultsQuestion = "¿RESTAURAR TODOS LOS LOUIES A SUS VALORES POR DEFECTO?",
+        RestoreHandicapDefaultsQuestion = "¿RESTAURAR TODAS LAS VENTAJAS A SUS VALORES POR DEFECTO?",
+        Yes = "SÍ",
+        No = "NO"
     };
 
     private static readonly BattleModeMenuText PortugueseBrBattleModeMenu = new()
@@ -968,7 +983,12 @@ public static class GameTextDatabase
         TeamRed = "Vermelho",
         TeamBlue = "Azul",
         TeamGreen = "Verde",
-        ChooseChangeBack = "←→↑↓: Escolher\nA/C: Mudar número\nB: Voltar"
+        ChooseChangeBack = "←→↑↓: Escolher\nA/C: Mudar número\nB: Voltar\nL/R: Restaurar TUDO para o padrão",
+        RestoreItemsDefaultsQuestion = "RESTAURAR TODOS OS ITENS PARA OS VALORES PADRÃO?",
+        RestoreLouiesDefaultsQuestion = "RESTAURAR TODOS OS LOUIES PARA OS VALORES PADRÃO?",
+        RestoreHandicapDefaultsQuestion = "RESTAURAR TODAS AS VANTAGENS PARA OS VALORES PADRÃO?",
+        Yes = "SIM",
+        No = "NÃO"
     };
 
     private static readonly UnlockText EnglishUnlocks = new()
@@ -1349,6 +1369,11 @@ public sealed class BattleModeMenuText
     public string TeamBlue;
     public string TeamGreen;
     public string ChooseChangeBack;
+    public string RestoreItemsDefaultsQuestion;
+    public string RestoreLouiesDefaultsQuestion;
+    public string RestoreHandicapDefaultsQuestion;
+    public string Yes;
+    public string No;
 }
 
 public sealed class UnlockText

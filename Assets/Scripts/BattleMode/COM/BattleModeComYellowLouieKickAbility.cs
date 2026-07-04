@@ -79,8 +79,6 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
         }
     }
 
-    protected override bool CanUseActionRStop => !IsMountedYellowLouieKickAvailable;
-
     protected override bool IsKickAbilityEnabled =>
         IsMountedYellowLouieKickAvailable || base.IsKickAbilityEnabled;
 

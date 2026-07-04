@@ -12,6 +12,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "YellowLouieDestructibleKick";
     const string BattleMode6SceneName = "BattleMode_6";
+    const string KickStopClipResourcesPath = "Sounds/kickstop";
+    static AudioClip cachedKickStopClip;
 
     [SerializeField] private bool enabledAbility = true;
 
@@ -85,6 +87,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         movement = GetComponent<MovementController>();
         rb = movement != null ? movement.Rigidbody : null;
         audioSource = GetComponent<AudioSource>();
+
+        if (cachedKickStopClip == null)
+            cachedKickStopClip = Resources.Load<AudioClip>(KickStopClipResourcesPath);
     }
 
     void OnDisable() => CancelKick();
@@ -121,9 +126,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (currentDir != Vector2.zero)
             NotifyOwnerDirectionChanged(currentDir);
 
-        if (Time.time < nextAllowedKickTime)
-            return;
-
         if (GamePauseController.IsPaused ||
             ClownMaskBoss.BossIntroRunning ||
             MechaBossSequence.MechaIntroRunning ||
@@ -133,7 +135,18 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         var input = PlayerInputManager.Instance;
         int pid = movement.PlayerId;
-        if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
+        if (input == null)
+            return;
+
+        if (input.GetDown(pid, PlayerAction.ActionR) &&
+            (routine != null || yellowLouieMovingBombs.Count > 0))
+        {
+            StopMovingBombsFromInput();
+            return;
+        }
+
+        if (Time.time < nextAllowedKickTime ||
+            !input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         nextAllowedKickTime = Time.time + kickCooldownSeconds;
@@ -662,7 +675,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             $"bomb-queue-start dir:{FormatVec(kickDir)} first:{FormatBomb(firstBomb)} " +
             $"remainingFuse:{FormatFuse(firstBomb)}");
 
-        while (enabledAbility && movement != null && !movement.isDead)
+        while (movement != null && !movement.isDead)
         {
             releaseInputIfNeeded?.Invoke();
 
@@ -740,7 +753,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             bool hitPlayer = false;
             while (tMove < 1f)
             {
-                if (!enabledAbility || movement == null || movement.isDead)
+                if (movement == null || movement.isDead)
                 {
                     ClearYellowLouieBombMovement();
                     yield break;
@@ -1615,6 +1628,30 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         yellowLouieMovingBombs.Clear();
     }
 
+    void StopMovingBombsFromInput()
+    {
+        bool stoppedAny = false;
+
+        foreach (Bomb bomb in yellowLouieMovingBombs)
+        {
+            if (bomb != null &&
+                !bomb.HasExploded &&
+                bomb.IsBeingMovedByYellowLouie)
+            {
+                stoppedAny = true;
+                break;
+            }
+        }
+
+        CancelKick();
+
+        if (!stoppedAny || audioSource == null || cachedKickStopClip == null)
+            return;
+
+        audioSource.Stop();
+        GameAudioSettings.PlaySfx(audioSource, cachedKickStopClip, 1f);
+    }
+
     void CancelKick()
     {
         if (routine != null)
@@ -1638,7 +1675,21 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public void Disable()
     {
         enabledAbility = false;
-        CancelKick();
+
+        if (routine != null && yellowLouieMovingBombs.Count > 0)
+        {
+            // Desmontar remove a habilidade, mas a bomba já chutada mantém
+            // sua trajetória. ActionR e interrupções reais ainda usam
+            // CancelKick para pará-la imediatamente.
+            StopKickVisuals();
+
+            if (movement != null)
+                movement.SetInputLocked(false);
+        }
+        else
+        {
+            CancelKick();
+        }
 
         _bombPlantDirection.Clear();
         _bombEarlyKickUnlocked.Clear();

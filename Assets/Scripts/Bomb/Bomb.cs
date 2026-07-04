@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Collider2D))]
@@ -40,7 +41,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Header("Chain Explosion")]
     public float chainStepDelay = 0.1f;
 
-    public float FuseSeconds = 2f;
+    public float FuseSeconds = 2.3f;
     public bool IsFusePaused => fusePaused;
 
     [Header("Stage Wrap / Tilemaps")]
@@ -72,7 +73,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool CanBeKickedEarly => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove;
     public bool CanBeKicked => !HasExploded && !IsBeingKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
-    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingHeldByPowerGlove && !IsBeingMagnetPulled;
+    public bool CanBeMagnetPulled => !HasMagnetIncompatibleMovement && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
     public bool IsRubberBomb { get; set; }
@@ -204,6 +205,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void FixedUpdate()
     {
+        // Kick movement includes kick bounces, while punch movement includes
+        // thrown/rubber-bomb bounces. Neither may coexist with magnet movement.
+        if (magnetRoutine != null && HasMagnetIncompatibleMovement)
+            StopMagnetMovement();
+
         if (!lockWorldPosActive)
             return;
 
@@ -334,8 +340,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         RemoveKickOriginBlocker();
     }
 
-    private bool IsBlockedFromMagnetMovement =>
+    private bool HasMagnetIncompatibleMovement =>
         HasExploded || IsBeingKicked || IsBeingPunched || IsBeingHeldByPowerGlove;
+
+    private bool IsBlockedFromMagnetMovement => HasMagnetIncompatibleMovement;
 
     private void StopMagnetMovement()
     {
@@ -451,6 +459,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             sr.Stun(seconds);
 
             if (mc.CompareTag("Player") &&
+                CanLoseItemFromStunInCurrentScene() &&
                 PlayerPersistentStats.StageTryExpelRandomPersistentItem(
                     mc,
                     mc.GetComponent<BombController>(),
@@ -460,6 +469,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 SpawnExpelledPersistentItem(mc, expelledType);
             }
         }
+    }
+
+    private static bool CanLoseItemFromStunInCurrentScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName != "BattleMode_10" && sceneName != "BattleMode_11";
     }
 
     private bool IsPlayerProtectedFromAirborneBombImpact(MovementController player)
@@ -1355,6 +1370,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
                     continue;
                 }
+
+                if (IsPowerBomb)
+                    StunMovementControllersAtTile(next, 0.5f);
                 break;
             }
 
@@ -1471,6 +1489,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     continue;
                 }
 
+                if (IsPowerBomb && TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
+                    StunMovementControllersAtTile(next, 0.5f);
+
                 break;
             }
 
@@ -1490,6 +1511,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
                     continue;
                 }
+
+                if (IsPowerBomb && TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
+                    StunMovementControllersAtTile(next, 0.5f);
 
                 break;
             }
