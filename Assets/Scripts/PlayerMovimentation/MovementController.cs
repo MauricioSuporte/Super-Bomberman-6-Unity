@@ -16,13 +16,6 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private int debugCurvasPlayerId = 1;
     private int _debugLastFixedFrameLogged = -1;
 
-    [Header("Debug Movement Input")]
-    [SerializeField] private bool debugMovementInput;
-    [SerializeField] private int debugMovementInputPlayerId = 1;
-    private int debugLastMovementInputMask = -1;
-    private string debugLastMovementDecisionKey;
-    private string debugLastPendingDecisionKey;
-
     [Header("Debug Bomb Escape")]
     [SerializeField] private bool debugBombEscape;
     [SerializeField] private bool debugBombEscapeVerbose;
@@ -620,22 +613,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         int axisCount = (vertDir != Vector2.zero ? 1 : 0) + (horizDir != Vector2.zero ? 1 : 0);
 
-        int inputMask =
-            (holdUp ? 1 : 0) |
-            (holdDown ? 2 : 0) |
-            (holdLeft ? 4 : 0) |
-            (holdRight ? 8 : 0);
-
-        LogMovementInputSnapshot(
-            inputMask,
-            holdUp,
-            holdDown,
-            holdLeft,
-            holdRight,
-            vertDir,
-            horizDir,
-            axisCount);
-
         LogCurve(
             $"HandleInput input U:{holdUp} D:{holdDown} L:{holdLeft} R:{holdRight} " +
             $"vert:{vertDir} horiz:{horizDir} axisCount:{axisCount} " +
@@ -671,11 +648,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (pendingSingleTurnDirection != Vector2.zero || lockedMovementDirection != Vector2.zero)
         {
-            LogMovementInputDecision(
-                "DUAL_INPUT_TAKEOVER",
-                vertDir != Vector2.zero ? vertDir : horizDir,
-                $"Clearing pendingSingle:{pendingSingleTurnDirection} locked:{lockedMovementDirection}");
-
             LogCurve(
                 $"DualInput takeover -> clear pendingSingle:{pendingSingleTurnDirection} " +
                 $"lockedDir:{lockedMovementDirection}",
@@ -861,16 +833,16 @@ public class MovementController : MonoBehaviour, IKillable
         return Mathf.Round(coordinate / tileSize) * tileSize;
     }
 
-    private void CaptureTurnAssistAlignmentTarget(Vector2 previousDir, Vector2 newDir)
+    private bool CaptureTurnAssistAlignmentTarget(Vector2 previousDir, Vector2 newDir)
     {
         if (tileSize <= 0.0001f)
-            return;
+            return false;
 
         previousDir = NormalizeCardinal(previousDir);
         newDir = NormalizeCardinal(newDir);
 
         if (newDir == Vector2.zero)
-            return;
+            return false;
 
         if (previousDir == Vector2.zero)
             previousDir = NormalizeCardinal(facingDirection);
@@ -879,7 +851,7 @@ public class MovementController : MonoBehaviour, IKillable
         bool turningToVertical = Mathf.Abs(newDir.y) > 0.01f && Mathf.Abs(previousDir.x) > 0.01f;
 
         if (!turningToHorizontal && !turningToVertical)
-            return;
+            return false;
 
         hasTurnAssistAlignmentTarget = false;
         turnAssistTargetAxis = MoveAxis.None;
@@ -915,13 +887,14 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         if (!preferredValid && !alternateValid)
-            return;
+            return false;
 
         float targetCoordinate = preferredValid ? preferredCoordinate : alternateCoordinate;
 
         hasTurnAssistAlignmentTarget = true;
         turnAssistTargetAxis = turningToHorizontal ? MoveAxis.Horizontal : MoveAxis.Vertical;
         turnAssistAlignmentCoordinate = targetCoordinate;
+        return true;
     }
 
     private bool EvaluateTurnAssistCandidate(
@@ -1123,6 +1096,42 @@ public class MovementController : MonoBehaviour, IKillable
 
         var foot = PickFootRenderer(dir);
         SetDirection(dir == Vector2.zero ? Vector2.zero : dir, foot);
+    }
+
+    private void ApplyBlockedMovementFacing(Vector2 faceDir)
+    {
+        faceDir = NormalizeCardinal(faceDir);
+        direction = Vector2.zero;
+        hasInput = false;
+
+        if (faceDir == Vector2.zero || IsRidingPlaying() || inactivityMountedDownOverride)
+            return;
+
+        SetFacingDirection(faceDir, "BlockedMovementInput");
+
+        if (externalVisualSuppressed || visualOverrideActive || IsSpriteLocked)
+            return;
+
+        AnimatedSpriteRenderer target;
+
+        if (isMounted)
+        {
+            DisableAllFootSprites();
+            DisableAllMountedSprites();
+            target = PickMountedRenderer(faceDir);
+            if (target == null)
+                target = mountedSpriteDown;
+        }
+        else
+        {
+            target = PickFootRenderer(faceDir);
+        }
+
+        SetDirection(faceDir, target);
+
+        // Keep the walking-facing visual while preventing logical movement.
+        direction = Vector2.zero;
+        hasInput = false;
     }
 
     private Vector2 GetFacing(Vector2 dir)
@@ -1695,18 +1704,10 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (pendingSingleTurnDirection != Vector2.zero)
         {
-            bool pendingBlocked = IsMoveBlocked(pendingSingleTurnDirection);
-            bool pendingNearCentre = IsAtTileCentreOnPerpendicularAxis(pendingSingleTurnDirection);
-            bool pendingExactlyAligned = IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection);
             bool canTurnNow =
-                !pendingBlocked &&
-                (pendingNearCentre || pendingExactlyAligned);
-
-            LogPendingMovementDecision(
-                canTurnNow ? "APPLY_PENDING" : "WAIT_PENDING",
-                pendingSingleTurnDirection,
-                $"blocked:{pendingBlocked} nearCentre:{pendingNearCentre} " +
-                $"exactlyAligned:{pendingExactlyAligned}");
+                !IsMoveBlocked(pendingSingleTurnDirection) &&
+                (IsAtTileCentreOnPerpendicularAxis(pendingSingleTurnDirection) ||
+                 IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection));
 
             LogCurve(
                 $"FixedUpdate pendingSingle check pending:{pendingSingleTurnDirection} " +
@@ -1727,10 +1728,6 @@ public class MovementController : MonoBehaviour, IKillable
                 SetFacingDirection(direction, "FixedUpdatePendingSingleTurn");
                 LogCurve($"FixedUpdate pendingSingle -> APPLY turn:{direction}");
             }
-        }
-        else
-        {
-            debugLastPendingDecisionKey = null;
         }
 
         float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
@@ -4457,11 +4454,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (singleDir == Vector2.zero)
         {
-            LogMovementInputDecision(
-                "STOP_NO_DIRECTION",
-                singleDir,
-                "No directional input remains; clearing pending and locked movement.");
-
             pendingSingleTurnDirection = Vector2.zero;
             lockedMovementDirection = Vector2.zero;
             ApplyDirectionFromVector(Vector2.zero);
@@ -4470,10 +4462,19 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (direction == Vector2.zero)
         {
-            LogMovementInputDecision(
-                "APPLY_FROM_IDLE",
-                singleDir,
-                "Current movement is idle, so the requested direction applies immediately.");
+            bool requestedBlockedFromIdle = IsMoveBlocked(singleDir);
+            bool hasValidTurnAssistTarget =
+                requestedBlockedFromIdle &&
+                CaptureTurnAssistAlignmentTarget(facingDirection, singleDir);
+
+            if (requestedBlockedFromIdle && !hasValidTurnAssistTarget)
+            {
+                pendingSingleTurnDirection = singleDir;
+                lockedMovementDirection = Vector2.zero;
+
+                ApplyBlockedMovementFacing(singleDir);
+                return;
+            }
 
             pendingSingleTurnDirection = Vector2.zero;
             lockedMovementDirection = Vector2.zero;
@@ -4489,11 +4490,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (sameAxis)
         {
-            LogMovementInputDecision(
-                "APPLY_SAME_AXIS",
-                singleDir,
-                "Requested direction uses the current axis; applying immediately.");
-
             pendingSingleTurnDirection = Vector2.zero;
             lockedMovementDirection = Vector2.zero;
 
@@ -4514,11 +4510,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!moveBlocked && (nearCentre || exactlyAligned))
         {
-            LogMovementInputDecision(
-                "APPLY_AXIS_TURN",
-                singleDir,
-                $"blocked:{moveBlocked} nearCentre:{nearCentre} exactlyAligned:{exactlyAligned}");
-
             pendingSingleTurnDirection = Vector2.zero;
             lockedMovementDirection = Vector2.zero;
 
@@ -4538,11 +4529,6 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (canUseAlignmentDirection)
             {
-                LogMovementInputDecision(
-                    "DUAL_EXIT_ALIGN",
-                    singleDir,
-                    $"alignmentDirection:{alignmentDirection} blocked:{moveBlocked}");
-
                 lockedMovementDirection = alignmentDirection;
 
                 LogCurve(
@@ -4554,12 +4540,6 @@ public class MovementController : MonoBehaviour, IKillable
             }
 
             lockedMovementDirection = Vector2.zero;
-
-            LogMovementInputDecision(
-                "DUAL_EXIT_WAIT_STOPPED",
-                singleDir,
-                $"requestedBlocked:{moveBlocked} alignmentDirection:{alignmentDirection} " +
-                $"alignmentUsable:{canUseAlignmentDirection}");
 
             LogCurve(
                 $"HandleSingleAxisTurn -> dual-exit stop pendingSingle:{pendingSingleTurnDirection} " +
@@ -4575,23 +4555,11 @@ public class MovementController : MonoBehaviour, IKillable
         {
             lockedMovementDirection = Vector2.zero;
 
-            LogMovementInputDecision(
-                "QUEUE_TURN_STOP_RELEASED_DIRECTION",
-                singleDir,
-                $"requestedBlocked:{moveBlocked} nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} " +
-                $"releasedDirection:{direction}; stopping while requested turn remains pending");
-
             ApplyDirectionFromVector(Vector2.zero);
             return;
         }
 
         lockedMovementDirection = direction;
-
-        LogMovementInputDecision(
-            "QUEUE_TURN_KEEP_CURRENT",
-            singleDir,
-            $"requestedBlocked:{moveBlocked} nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} " +
-            $"keepingDirection:{direction} because its input is still held");
 
         LogCurve($"HandleSingleAxisTurn -> arm pendingSingle:{pendingSingleTurnDirection} keep current:{direction}");
         ApplyDirectionFromVector(direction);
@@ -4933,81 +4901,6 @@ public class MovementController : MonoBehaviour, IKillable
     private bool ShouldLogCurve()
     {
         return debugCurvas && (!IsPlayer() || playerId == debugCurvasPlayerId);
-    }
-
-    private bool ShouldLogMovementInput()
-    {
-        return debugMovementInput &&
-               (!IsPlayer() || playerId == debugMovementInputPlayerId);
-    }
-
-    private void LogMovementInputSnapshot(
-        int inputMask,
-        bool holdUp,
-        bool holdDown,
-        bool holdLeft,
-        bool holdRight,
-        Vector2 verticalDirection,
-        Vector2 horizontalDirection,
-        int axisCount)
-    {
-        if (!ShouldLogMovementInput() || inputMask == debugLastMovementInputMask)
-            return;
-
-        debugLastMovementInputMask = inputMask;
-        Vector2 position = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
-
-        Debug.Log(
-            $"[MovementInput][P{playerId}][f:{Time.frameCount}] INPUT_CHANGED " +
-            $"U:{holdUp} D:{holdDown} L:{holdLeft} R:{holdRight} " +
-            $"vertical:{verticalDirection} horizontal:{horizontalDirection} axes:{axisCount} " +
-            $"pos:{position} current:{direction} pending:{pendingSingleTurnDirection} " +
-            $"locked:{lockedMovementDirection}",
-            this);
-    }
-
-    private void LogMovementInputDecision(string decision, Vector2 requestedDirection, string reason)
-    {
-        if (!ShouldLogMovementInput())
-            return;
-
-        string decisionKey =
-            $"{decision}|{requestedDirection}|{direction}|" +
-            $"{pendingSingleTurnDirection}|{lockedMovementDirection}|{reason}";
-
-        if (decisionKey == debugLastMovementDecisionKey)
-            return;
-
-        debugLastMovementDecisionKey = decisionKey;
-        Vector2 position = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
-
-        Debug.Log(
-            $"[MovementInput][P{playerId}][f:{Time.frameCount}] DECISION:{decision} " +
-            $"requested:{requestedDirection} pos:{position} current:{direction} " +
-            $"pending:{pendingSingleTurnDirection} locked:{lockedMovementDirection} reason:{reason}",
-            this);
-    }
-
-    private void LogPendingMovementDecision(string decision, Vector2 requestedDirection, string reason)
-    {
-        if (!ShouldLogMovementInput())
-            return;
-
-        string decisionKey =
-            $"{decision}|{requestedDirection}|{direction}|" +
-            $"{lockedMovementDirection}|{reason}";
-
-        if (decisionKey == debugLastPendingDecisionKey)
-            return;
-
-        debugLastPendingDecisionKey = decisionKey;
-        Vector2 position = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
-
-        Debug.Log(
-            $"[MovementInput][P{playerId}][f:{Time.frameCount}] PENDING:{decision} " +
-            $"requested:{requestedDirection} pos:{position} current:{direction} " +
-            $"locked:{lockedMovementDirection} reason:{reason}",
-            this);
     }
 
     [System.Diagnostics.Conditional("ENABLE_MOVEMENT_DIAGNOSTICS")]
