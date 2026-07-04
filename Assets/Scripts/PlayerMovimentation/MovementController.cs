@@ -55,8 +55,11 @@ public class MovementController : MonoBehaviour, IKillable
     [Tooltip("Enable the zig-zag behaviour when two directional buttons are held.")]
     [SerializeField] private bool enableDualInput = true;
 
-    [Tooltip("Distance (world units) from a tile centre on the perpendicular axis that triggers the axis swap.")]
-    [SerializeField, Range(0.01f, 0.49f)] private float dualInputCentreSnapTolerance = 0.18f;
+    [Tooltip("Fixed distance (world units) from the intended tile centre on the perpendicular axis that triggers the axis swap. This does not change with movement speed.")]
+    [SerializeField, Range(0.01f, 0.75f)] private float dualInputCentreSnapTolerance = 0.75f;
+
+    [Tooltip("Extra speed used only to finish the lateral alignment while the requested movement keeps its normal speed.")]
+    [SerializeField, Range(1f, 2f)] private float turnAssistLateralSpeedMultiplier = 1.5f;
 
     [Tooltip("Seconds to wait after a switch before the next switch can happen. Prevents rapid toggling on the same tile centre.")]
     [SerializeField, Range(0f, 0.5f)] private float dualInputSwitchCooldown = 0.08f;
@@ -69,6 +72,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     private Vector2 lockedMovementDirection = Vector2.zero;
     private Vector2 pendingSingleTurnDirection = Vector2.zero;
+
+    private bool hasTurnAssistAlignmentTarget;
+    private MoveAxis turnAssistTargetAxis = MoveAxis.None;
+    private float turnAssistAlignmentCoordinate;
 
     [Header("Sprites")]
     public AnimatedSpriteRenderer spriteRendererUp;
@@ -785,29 +792,161 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
 
-        float dynamicTolerance = dualInputCentreSnapTolerance;
-
-        if (speed >= 6f)
-            dynamicTolerance += 0.04f;
-
-        if (speed >= 7f)
-            dynamicTolerance += 0.04f;
-
-        if (speed >= 8f)
-            dynamicTolerance += 0.04f;
-
-        dynamicTolerance = Mathf.Min(dynamicTolerance, 0.49f);
+        Vector2 approachDir = direction != Vector2.zero ? direction : facingDirection;
+        float coordinate;
+        float targetCoordinate;
 
         if (Mathf.Abs(newDir.x) > 0.01f)
         {
-            float nearest = Mathf.Round(pos.y / tileSize) * tileSize;
-            return Mathf.Abs(pos.y - nearest) <= dynamicTolerance;
+            coordinate = pos.y;
+            targetCoordinate = GetApproachTileCentre(coordinate, approachDir.y);
         }
         else
         {
-            float nearest = Mathf.Round(pos.x / tileSize) * tileSize;
-            return Mathf.Abs(pos.x - nearest) <= dynamicTolerance;
+            coordinate = pos.x;
+            targetCoordinate = GetApproachTileCentre(coordinate, approachDir.x);
         }
+
+        float distance = Mathf.Abs(coordinate - targetCoordinate);
+        bool withinTolerance = IsWithinTurnAssistTolerance(distance);
+
+        return withinTolerance;
+    }
+
+    private bool IsWithinTurnAssistTolerance(float distance)
+    {
+        return distance <= dualInputCentreSnapTolerance;
+    }
+
+    private float GetApproachTileCentre(float coordinate, float approachDirection)
+    {
+        if (approachDirection < -0.01f)
+            return Mathf.Floor(coordinate / tileSize) * tileSize;
+
+        if (approachDirection > 0.01f)
+            return Mathf.Ceil(coordinate / tileSize) * tileSize;
+
+        return Mathf.Round(coordinate / tileSize) * tileSize;
+    }
+
+    private void CaptureTurnAssistAlignmentTarget(Vector2 previousDir, Vector2 newDir)
+    {
+        if (tileSize <= 0.0001f)
+            return;
+
+        previousDir = NormalizeCardinal(previousDir);
+        newDir = NormalizeCardinal(newDir);
+
+        if (newDir == Vector2.zero)
+            return;
+
+        if (previousDir == Vector2.zero)
+            previousDir = NormalizeCardinal(facingDirection);
+
+        bool turningToHorizontal = Mathf.Abs(newDir.x) > 0.01f && Mathf.Abs(previousDir.y) > 0.01f;
+        bool turningToVertical = Mathf.Abs(newDir.y) > 0.01f && Mathf.Abs(previousDir.x) > 0.01f;
+
+        if (!turningToHorizontal && !turningToVertical)
+            return;
+
+        hasTurnAssistAlignmentTarget = false;
+        turnAssistTargetAxis = MoveAxis.None;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+        float coordinate = turningToHorizontal ? pos.y : pos.x;
+        float approachDirection = turningToHorizontal ? previousDir.y : previousDir.x;
+        float preferredCoordinate = GetApproachTileCentre(coordinate, approachDirection);
+        float lowerCoordinate = Mathf.Floor(coordinate / tileSize) * tileSize;
+        float upperCoordinate = Mathf.Ceil(coordinate / tileSize) * tileSize;
+        float alternateCoordinate = Mathf.Approximately(preferredCoordinate, lowerCoordinate)
+            ? upperCoordinate
+            : lowerCoordinate;
+
+        bool preferredValid = EvaluateTurnAssistCandidate(
+            pos,
+            newDir,
+            turningToHorizontal,
+            coordinate,
+            preferredCoordinate);
+
+        bool hasDistinctAlternate = !Mathf.Approximately(alternateCoordinate, preferredCoordinate);
+        bool alternateValid = false;
+
+        if (!preferredValid && hasDistinctAlternate)
+        {
+            alternateValid = EvaluateTurnAssistCandidate(
+                pos,
+                newDir,
+                turningToHorizontal,
+                coordinate,
+                alternateCoordinate);
+        }
+
+        if (!preferredValid && !alternateValid)
+            return;
+
+        float targetCoordinate = preferredValid ? preferredCoordinate : alternateCoordinate;
+
+        hasTurnAssistAlignmentTarget = true;
+        turnAssistTargetAxis = turningToHorizontal ? MoveAxis.Horizontal : MoveAxis.Vertical;
+        turnAssistAlignmentCoordinate = targetCoordinate;
+    }
+
+    private bool EvaluateTurnAssistCandidate(
+        Vector2 position,
+        Vector2 requestedDirection,
+        bool turningToHorizontal,
+        float coordinate,
+        float targetCoordinate)
+    {
+        float distance = Mathf.Abs(coordinate - targetCoordinate);
+        if (!IsWithinTurnAssistTolerance(distance))
+            return false;
+
+        Vector2 targetPosition = turningToHorizontal
+            ? new Vector2(position.x, targetCoordinate)
+            : new Vector2(targetCoordinate, position.y);
+
+        if (IsBlockedAtPosition(targetPosition, requestedDirection, true))
+            return false;
+
+        return IsForwardOpen(targetPosition, requestedDirection);
+    }
+
+    private float GetPerpendicularAlignmentTarget(Vector2 position, bool axisIsHorizontal)
+    {
+        MoveAxis moveAxis = axisIsHorizontal ? MoveAxis.Horizontal : MoveAxis.Vertical;
+
+        if (hasTurnAssistAlignmentTarget && turnAssistTargetAxis == moveAxis)
+        {
+            float coordinate = axisIsHorizontal ? position.y : position.x;
+            if (Mathf.Abs(coordinate - turnAssistAlignmentCoordinate) <= dualInputCentreSnapTolerance + alignEpsilon)
+                return turnAssistAlignmentCoordinate;
+
+            hasTurnAssistAlignmentTarget = false;
+            turnAssistTargetAxis = MoveAxis.None;
+        }
+
+        return axisIsHorizontal
+            ? Mathf.Round(position.y / tileSize) * tileSize
+            : Mathf.Round(position.x / tileSize) * tileSize;
+    }
+
+    private void ClearTurnAssistAlignmentTargetIfReached(Vector2 position, bool axisIsHorizontal)
+    {
+        if (!hasTurnAssistAlignmentTarget)
+            return;
+
+        MoveAxis moveAxis = axisIsHorizontal ? MoveAxis.Horizontal : MoveAxis.Vertical;
+        if (turnAssistTargetAxis != moveAxis)
+            return;
+
+        float coordinate = axisIsHorizontal ? position.y : position.x;
+        if (Mathf.Abs(coordinate - turnAssistAlignmentCoordinate) > alignEpsilon)
+            return;
+
+        hasTurnAssistAlignmentTarget = false;
+        turnAssistTargetAxis = MoveAxis.None;
     }
 
     private bool WillCrossTileCentreOnPerpendicularAxisNextStep(Vector2 requestedTurnDir, Vector2 movementDir)
@@ -918,6 +1057,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (inactivityMountedDownOverride)
             return;
+
+        Vector2 previousDirection = direction;
+        CaptureTurnAssistAlignmentTarget(previousDirection, dir);
 
         hasInput = dir != Vector2.zero;
 
@@ -1532,6 +1674,7 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (canTurnNow)
             {
+                CaptureTurnAssistAlignmentTarget(direction, pendingSingleTurnDirection);
                 direction = pendingSingleTurnDirection;
                 hasInput = true;
                 pendingSingleTurnDirection = Vector2.zero;
@@ -1581,10 +1724,29 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
+        bool wasApplyingTurnAssist =
+            hasTurnAssistAlignmentTarget &&
+            turnAssistTargetAxis == currentAxis;
+
         Vector2 beforeAlign = position;
-        AlignPerpendicularForCurrentAxis(ref position, rawMoveWorld);
+        float alignmentBudget = wasApplyingTurnAssist
+            ? moveWorld * turnAssistLateralSpeedMultiplier
+            : moveWorld;
+
+        AlignPerpendicularForCurrentAxis(ref position, alignmentBudget);
         if (beforeAlign != position)
             LogCurve($"FixedUpdate AlignPerpendicular moved {beforeAlign} -> {position}");
+
+        if (beforeAlign != position && wasApplyingTurnAssist)
+        {
+            Vector2 lateralTarget = QuantizeToPixelGrid(position);
+            Vector2 forwardTarget = QuantizeToPixelGrid(lateralTarget + direction * moveWorld);
+            bool forwardBlocked = IsBlocked(forwardTarget);
+            Vector2 committedTarget = forwardBlocked ? lateralTarget : forwardTarget;
+
+            MovePositionPixelPerfect(committedTarget);
+            return;
+        }
 
         if (enableCorridorAxisLock && tileSize > 0.0001f)
         {
@@ -1614,6 +1776,7 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (canTurnAfterAlign)
             {
+                CaptureTurnAssistAlignmentTarget(direction, pendingSingleTurnDirection);
                 direction = pendingSingleTurnDirection;
                 hasInput = true;
                 pendingSingleTurnDirection = Vector2.zero;
@@ -1783,8 +1946,12 @@ public class MovementController : MonoBehaviour, IKillable
         float y0 = TileFloor(position.y, tileSize);
         float y1 = TileCeil(position.y, tileSize);
 
-        float cx = Mathf.Round(position.x / tileSize) * tileSize;
-        float cy = Mathf.Round(position.y / tileSize) * tileSize;
+        float cx = movingVertical
+            ? GetPerpendicularAlignmentTarget(position, axisIsHorizontal: false)
+            : Mathf.Round(position.x / tileSize) * tileSize;
+        float cy = movingHorizontal
+            ? GetPerpendicularAlignmentTarget(position, axisIsHorizontal: true)
+            : Mathf.Round(position.y / tileSize) * tileSize;
 
         if (movingHorizontal)
         {
@@ -1869,13 +2036,13 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (movingVertical && blockLeft && blockRight)
         {
-            float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+            float targetX = GetPerpendicularAlignmentTarget(position, axisIsHorizontal: false);
             position.x = Mathf.MoveTowards(position.x, targetX, moveSpeed);
         }
 
         if (movingHorizontal && blockUp && blockDown)
         {
-            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float targetY = GetPerpendicularAlignmentTarget(position, axisIsHorizontal: true);
             position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
         }
     }
@@ -1908,18 +2075,22 @@ public class MovementController : MonoBehaviour, IKillable
         if (tileSize <= 0.0001f)
             return;
 
-        float alignStep = Mathf.Min(moveSpeed, tileSize * 0.125f);
+        float alignStep = moveSpeed;
         Vector2 moveDir = direction;
 
         if (axisIsHorizontal)
         {
-            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float targetY = GetPerpendicularAlignmentTarget(position, axisIsHorizontal: true);
             float deltaY = position.y - targetY;
 
             if (Mathf.Abs(deltaY) <= alignEpsilon)
             {
                 Vector2 snapped = new(position.x, targetY);
-                bool canSnap = CanAlignToPerpendicularTarget(snapped, moveDir);
+                bool canSnap = CanMovePerpendicularlyForTurnAssist(
+                    position,
+                    snapped,
+                    moveDir,
+                    axisIsHorizontal: true);
 
                 LogCurve(
                     $"AlignPerpendicular H snapCheck pos:{position} targetY:{targetY:F3} deltaY:{deltaY:F4} " +
@@ -1927,14 +2098,21 @@ public class MovementController : MonoBehaviour, IKillable
                     verbose: true);
 
                 if (canSnap)
+                {
                     position.y = targetY;
+                    ClearTurnAssistAlignmentTargetIfReached(position, axisIsHorizontal: true);
+                }
 
                 return;
             }
 
             float newY = Mathf.MoveTowards(position.y, targetY, alignStep);
             Vector2 nextCandidate = new(position.x, newY);
-            bool canMove = CanAlignToPerpendicularTarget(nextCandidate, moveDir);
+            bool canMove = CanMovePerpendicularlyForTurnAssist(
+                position,
+                nextCandidate,
+                moveDir,
+                axisIsHorizontal: true);
 
             LogCurve(
                 $"AlignPerpendicular H pos:{position} targetY:{targetY:F3} deltaY:{deltaY:F4} " +
@@ -1942,18 +2120,25 @@ public class MovementController : MonoBehaviour, IKillable
                 verbose: true);
 
             if (canMove)
+            {
                 position.y = newY;
+                ClearTurnAssistAlignmentTargetIfReached(position, axisIsHorizontal: true);
+            }
 
             return;
         }
 
-        float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+        float targetX = GetPerpendicularAlignmentTarget(position, axisIsHorizontal: false);
         float deltaX = position.x - targetX;
 
         if (Mathf.Abs(deltaX) <= alignEpsilon)
         {
             Vector2 snapped = new(targetX, position.y);
-            bool canSnap = CanAlignToPerpendicularTarget(snapped, moveDir);
+            bool canSnap = CanMovePerpendicularlyForTurnAssist(
+                position,
+                snapped,
+                moveDir,
+                axisIsHorizontal: false);
 
             LogCurve(
                 $"AlignPerpendicular V snapCheck pos:{position} targetX:{targetX:F3} deltaX:{deltaX:F4} " +
@@ -1961,14 +2146,21 @@ public class MovementController : MonoBehaviour, IKillable
                 verbose: true);
 
             if (canSnap)
+            {
                 position.x = targetX;
+                ClearTurnAssistAlignmentTargetIfReached(position, axisIsHorizontal: false);
+            }
 
             return;
         }
 
         float newX = Mathf.MoveTowards(position.x, targetX, alignStep);
         Vector2 nextCandidate2 = new(newX, position.y);
-        bool canMove2 = CanAlignToPerpendicularTarget(nextCandidate2, moveDir);
+        bool canMove2 = CanMovePerpendicularlyForTurnAssist(
+            position,
+            nextCandidate2,
+            moveDir,
+            axisIsHorizontal: false);
 
         LogCurve(
             $"AlignPerpendicular V pos:{position} targetX:{targetX:F3} deltaX:{deltaX:F4} " +
@@ -1976,7 +2168,10 @@ public class MovementController : MonoBehaviour, IKillable
             verbose: true);
 
         if (canMove2)
+        {
             position.x = newX;
+            ClearTurnAssistAlignmentTargetIfReached(position, axisIsHorizontal: false);
+        }
     }
 
     private void TrySlideHorizontally(Vector2 position, float moveSpeed)
@@ -3767,6 +3962,27 @@ public class MovementController : MonoBehaviour, IKillable
         return true;
     }
 
+    private bool CanMovePerpendicularlyForTurnAssist(
+        Vector2 currentPos,
+        Vector2 candidatePos,
+        Vector2 moveDir,
+        bool axisIsHorizontal)
+    {
+        MoveAxis moveAxis = axisIsHorizontal ? MoveAxis.Horizontal : MoveAxis.Vertical;
+        bool hasMatchingAssist = hasTurnAssistAlignmentTarget && turnAssistTargetAxis == moveAxis;
+
+        if (!hasMatchingAssist)
+            return CanAlignToPerpendicularTarget(candidatePos, moveDir);
+
+        Vector2 lateralDir = NormalizeCardinal(candidatePos - currentPos);
+        if (lateralDir == Vector2.zero)
+            lateralDir = axisIsHorizontal ? Vector2.up : Vector2.right;
+
+        bool lateralBlocked = IsBlockedAtPosition(candidatePos, lateralDir, true);
+
+        return !lateralBlocked;
+    }
+
     protected bool IsMoveBlocked(Vector2 dir)
     {
         dir = NormalizeCardinal(dir);
@@ -4292,8 +4508,12 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
 
-        float centerX = Mathf.Round(pos.x / tileSize) * tileSize;
-        float centerY = Mathf.Round(pos.y / tileSize) * tileSize;
+        float centerX = Mathf.Abs(alignDir.x) > 0.01f
+            ? GetApproachTileCentre(pos.x, alignDir.x)
+            : Mathf.Round(pos.x / tileSize) * tileSize;
+        float centerY = Mathf.Abs(alignDir.y) > 0.01f
+            ? GetApproachTileCentre(pos.y, alignDir.y)
+            : Mathf.Round(pos.y / tileSize) * tileSize;
 
         Vector2 alignTarget =
             Mathf.Abs(alignDir.x) > 0.01f
@@ -4326,7 +4546,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (turningToVertical)
         {
-            float centerX = Mathf.Round(pos.x / tileSize) * tileSize;
+            float centerX = GetApproachTileCentre(pos.x, currentMove.x);
             float deltaX = centerX - pos.x;
 
             if (Mathf.Abs(deltaX) <= alignEpsilon)
@@ -4337,7 +4557,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (turningToHorizontal)
         {
-            float centerY = Mathf.Round(pos.y / tileSize) * tileSize;
+            float centerY = GetApproachTileCentre(pos.y, currentMove.y);
             float deltaY = centerY - pos.y;
 
             if (Mathf.Abs(deltaY) <= alignEpsilon)
