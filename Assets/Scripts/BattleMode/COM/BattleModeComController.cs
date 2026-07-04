@@ -95,6 +95,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private const float PunchTapCooldownSeconds = 0.15f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
     private const float SafeTileCenterTolerance = 0.08f;
+    private const float SafeTileCenterSnapMaxDistance = 0.20f;
     private const float TurnAxisCenterTolerance = 0.045f;
 
     // Histerese da centralização de eixo: depois de considerado "centrado", só volta a
@@ -111,6 +112,10 @@ public sealed class BattleModeComController : MonoBehaviour
     // centro e consideramos centrado.
     private Vector2Int turnAxisCenteringDir = Vector2Int.zero;
     private int turnAxisCenteringSign;
+    private Vector2Int safeTileCenteringTile;
+    private Vector2Int safeTileCenteringDir;
+    private int safeTileCenteringSign;
+    private bool safeTileCenteringActive;
     private const float DangerTimingMarginSeconds = 0.08f;
     private const float SuddenDeathUnsafeLeadSeconds = 2f;
     private const int ItemPriorityDistance = 7;
@@ -1149,6 +1154,7 @@ public sealed class BattleModeComController : MonoBehaviour
             safeCenterTargetTile = committedTankTarget;
         }
         OverrideWithSuddenDeathBodyEscape(myTile, currentDangerSeconds);
+        OverrideWithExplosionBodyEscape(myTile, currentDangerSeconds);
         currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
         LogOpeningFarmMovementPipeline(
             myTile,
@@ -1263,6 +1269,74 @@ public sealed class BattleModeComController : MonoBehaviour
         hasSafeCenterTarget = true;
         safeCenterTargetTile = currentTile;
         nextDecisionTime = Time.time;
+    }
+
+    private void OverrideWithExplosionBodyEscape(
+        Vector2Int currentTile,
+        float currentDangerSeconds)
+    {
+        // The planner reasons in logical tiles, but damage is applied to the
+        // physical collider. On an exact tile boundary the logical tile can
+        // already be safe while the trailing edge still overlaps the blast in
+        // the previous tile. Stopping because that previous tile is unsafe
+        // leaves the COM straddling the explosion until it dies.
+        if (explosionMask == 0 || IsTileThreatened(currentTile, null))
+            return;
+
+        if (!TryGetOverlappingExplosion(out Collider2D overlappingExplosion))
+            return;
+
+        Vector2 escapeMove = GetMoveTowardTileCenter(currentTile);
+        if (escapeMove == Vector2.zero)
+            return;
+
+        Vector2Int explosionTile = WorldToTile(overlappingExplosion.bounds.center);
+        SetCurrentDecision(
+            BattleModeComActionType.Reposition,
+            escapeMove,
+            true,
+            currentTile,
+            $"clear body from active explosion at {explosionTile}",
+            FirstMoveDescription(escapeMove),
+            currentDangerSeconds,
+            "explosionBodyEscape");
+
+        hasSafeCenterTarget = true;
+        safeCenterTargetTile = currentTile;
+        currentMoveFollowsEscapeRoute = true;
+        nextDecisionTime = Time.time;
+    }
+
+    private bool TryGetOverlappingExplosion(out Collider2D overlappingExplosion)
+    {
+        overlappingExplosion = null;
+        if (ownColliders == null)
+            return false;
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            Collider2D ownCollider = ownColliders[i];
+            if (ownCollider == null || !ownCollider.enabled)
+                continue;
+
+            Bounds bounds = ownCollider.bounds;
+            Collider2D[] hits = Physics2D.OverlapBoxAll(
+                bounds.center,
+                bounds.size,
+                0f,
+                explosionMask);
+            for (int hitIndex = 0; hitIndex < hits.Length; hitIndex++)
+            {
+                Collider2D hit = hits[hitIndex];
+                if (hit == null || !Physics2D.Distance(hit, ownCollider).isOverlapped)
+                    continue;
+
+                overlappingExplosion = hit;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void ApplyHardAggressionSettings(
@@ -10892,7 +10966,10 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2 ApplySafeTileCentering(Vector2Int currentTile, Vector2 requestedMove)
     {
         if (!hasSafeCenterTarget)
+        {
+            ResetSafeTileCenteringTracking();
             return requestedMove;
+        }
 
         if (IsTileThreatened(currentTile, null))
             return requestedMove;
@@ -10900,13 +10977,77 @@ public sealed class BattleModeComController : MonoBehaviour
         if (currentTile != safeCenterTargetTile)
             return requestedMove;
 
+        Vector2 center = TileToWorld(currentTile);
+        Vector2 delta = center - (Vector2)transform.position;
+
+        if (!safeTileCenteringActive || safeTileCenteringTile != currentTile)
+        {
+            safeTileCenteringActive = true;
+            safeTileCenteringTile = currentTile;
+            safeTileCenteringDir =
+                DirectionToTile(GetMoveTowardTileCenter(currentTile));
+            safeTileCenteringSign = GetCenteringSign(delta, safeTileCenteringDir);
+        }
+
         if (IsCenteredOnTile(currentTile))
         {
+            SnapToSafeTileCenter(center);
             hasSafeCenterTarget = false;
+            ResetSafeTileCenteringTracking();
             return Vector2.zero;
         }
 
-        return GetMoveTowardTileCenter(currentTile);
+        int currentSign = GetCenteringSign(delta, safeTileCenteringDir);
+        bool crossedCenter =
+            safeTileCenteringDir != Vector2Int.zero &&
+            safeTileCenteringSign != 0 &&
+            currentSign != 0 &&
+            currentSign != safeTileCenteringSign;
+        if (crossedCenter && delta.magnitude <= tileSize * SafeTileCenterSnapMaxDistance)
+        {
+            SnapToSafeTileCenter(center);
+            hasSafeCenterTarget = false;
+            ResetSafeTileCenteringTracking();
+            return Vector2.zero;
+        }
+
+        Vector2 centeringMove = GetMoveTowardTileCenter(currentTile);
+        if (centeringMove != Vector2.zero)
+        {
+            safeTileCenteringDir = DirectionToTile(centeringMove);
+            safeTileCenteringSign = GetCenteringSign(delta, safeTileCenteringDir);
+        }
+
+        return centeringMove;
+    }
+
+    private void SnapToSafeTileCenter(Vector2 center)
+    {
+        if (movement != null && movement.Rigidbody != null)
+        {
+            movement.Rigidbody.position = center;
+            movement.Rigidbody.linearVelocity = Vector2.zero;
+        }
+
+        transform.position = new Vector3(center.x, center.y, transform.position.z);
+    }
+
+    private static int GetCenteringSign(Vector2 delta, Vector2Int direction)
+    {
+        if (direction.x != 0)
+            return delta.x > 0f ? 1 : delta.x < 0f ? -1 : 0;
+
+        if (direction.y != 0)
+            return delta.y > 0f ? 1 : delta.y < 0f ? -1 : 0;
+
+        return 0;
+    }
+
+    private void ResetSafeTileCenteringTracking()
+    {
+        safeTileCenteringActive = false;
+        safeTileCenteringDir = Vector2Int.zero;
+        safeTileCenteringSign = 0;
     }
 
     private bool IsCenteredOnTile(Vector2Int tile)
