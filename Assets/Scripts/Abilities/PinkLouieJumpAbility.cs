@@ -43,6 +43,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     Coroutine visualRoutine;
 
     float nextAllowedTime;
+    bool hasExternalJumpDirection;
+    Vector2 externalJumpDirection;
 
     IPinkLouieJumpExternalAnimator externalAnimator;
 
@@ -113,6 +115,33 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         jumpSfxVolume = Mathf.Clamp01(volume);
     }
 
+    public bool TryStartExternalJump(Vector2 direction)
+    {
+        if (!enabledAbility)
+            return false;
+
+        if (!CompareTag("Player"))
+            return false;
+
+        if (movement == null || movement.isDead || rb == null)
+            return false;
+
+        if (Time.time < nextAllowedTime || routine != null)
+            return false;
+
+        if (GamePauseController.IsPaused ||
+            ClownMaskBoss.BossIntroRunning ||
+            MechaBossSequence.MechaIntroRunning ||
+            (StageIntroTransition.Instance != null &&
+             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
+            return false;
+
+        hasExternalJumpDirection = true;
+        externalJumpDirection = NormalizeCardinal(direction);
+        routine = StartCoroutine(JumpRoutine());
+        return true;
+    }
+
     void Update()
     {
         if (!enabledAbility)
@@ -158,7 +187,12 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         CacheMountedPlayerBaseLocalY();
 
-        Vector2 heldInputDir = GetHeldDirectionalInputCardinal();
+        Vector2 heldInputDir = hasExternalJumpDirection
+            ? externalJumpDirection
+            : GetHeldDirectionalInputCardinal();
+        hasExternalJumpDirection = false;
+        externalJumpDirection = Vector2.zero;
+
         Vector2 inputDir = heldInputDir != Vector2.zero
             ? heldInputDir
             : movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
@@ -813,5 +847,16 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             return horizontal + vertical;
 
         return Vector2.zero;
+    }
+
+    static Vector2 NormalizeCardinal(Vector2 direction)
+    {
+        if (direction == Vector2.zero)
+            return Vector2.zero;
+
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            return new Vector2(Mathf.Sign(direction.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(direction.y));
     }
 }

@@ -28,21 +28,16 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleModeComAbility
 {
-    // === Filtro de diagnóstico ===
-    public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnablePinkLouieJumpDiagnostics = false;
-    private const float SurgicalLogIntervalSeconds = 0.35f;
+    private static readonly bool PreservePinkJumpForExplosionDodge = true;
 
     // === Constantes de comportamento ===
     // Espelham o PinkLouieJumpAbility.
     private const float JumpDurationSeconds = 0.8f;
     private const int JumpForwardCells = 2;
-    // Janela de tap do dodge: a explosão precisa acontecer DURANTE o voo, com
-    // margem antes do pouso. (danger <= janela → pular agora)
-    private const float DirectionalDodgeWindowSeconds = 0.55f;
-    // Pulo parado: precisa que a explosão comece cedo o bastante para o fogo
-    // dissipar antes do pouso.
-    private const float InPlaceDodgeWindowSeconds = 0.30f;
+    private const float PinkJumpThreatWindowSeconds = 0.75f;
+    // Pulo parado e ultimo recurso: dispara com margem para o tap entrar antes
+    // da explosao e manter a IA no ar durante o estouro.
+    private const float InPlaceDodgeExecutionWindowSeconds = 0.70f;
     // Cooldown do pulo de mobilidade.
     private const float TravelMinBlockedJump = 1; // precisa pular por cima de >=1 tile bloqueado
 
@@ -59,6 +54,7 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
     private MovementController movement;
     private BombController bombController;
     private AbilitySystem abilitySystem;
+    private PinkLouieJumpAbility pinkJumpAbility;
     private GameManager gameManager;
     private Tilemap groundTilemap;
     private Tilemap destructibleTilemap;
@@ -72,7 +68,9 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
     // === Estado ===
     private float nextTravelJumpTime = -10f;
     private float nextPocketEscapeTime = -10f;
+    private float nextEmergencyJumpDecisionTime = -10f;
     private const float PocketEscapeCooldownSeconds = 1.0f;
+    private const float EmergencyJumpDecisionCooldownSeconds = JumpDurationSeconds + 0.05f;
 
     // Roll de precisão do dodge: UM roll por episódio de perigo. Se falhar, a IA
     // "errou o timing" e não pula durante este episódio.
@@ -96,9 +94,6 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
 
     // === Diagnóstico ===
     private string lastDecisionTrace = "not evaluated";
-    private float lastSurgicalLogTime = -10f;
-    private string lastSurgicalLogKey = string.Empty;
-
     // === IBattleModeComAbility ===
     public string DiagnosticName => "PinkLouieJump";
     public string LastDecisionTrace => lastDecisionTrace;
@@ -112,7 +107,8 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
                 return false;
 
             return abilitySystem != null &&
-                   abilitySystem.IsEnabled(PinkLouieJumpAbility.AbilityId);
+                   abilitySystem.IsEnabled(PinkLouieJumpAbility.AbilityId) &&
+                   (pinkJumpAbility == null || !pinkJumpAbility.JumpActive);
         }
     }
 
@@ -131,6 +127,7 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         if (movement == null) TryGetComponent(out movement);
         if (bombController == null) TryGetComponent(out bombController);
         if (abilitySystem == null) TryGetComponent(out abilitySystem);
+        if (pinkJumpAbility == null) TryGetComponent(out pinkJumpAbility);
 
         ownColliders = GetComponentsInChildren<Collider2D>(true);
 
@@ -179,9 +176,11 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
             return false;
         }
 
-        // Só usa o pulo quando NÃO há como fugir andando — explosões fugíveis
-        // ficam com a fuga nativa.
-        if (HasWalkingEscape(settings, myTile, currentDangerSeconds))
+        // Fora da janela critica, fuga andando ainda tem prioridade. Dentro da
+        // janela medida no playtest, deixa o Pink Jump executar a esquiva precisa.
+        bool inPinkJumpThreatWindow = currentDangerSeconds <= PinkJumpThreatWindowSeconds;
+
+        if (!inPinkJumpThreatWindow && HasWalkingEscape(settings, myTile, currentDangerSeconds))
         {
             lastDecisionTrace = "emergency walking escape exists";
             dodgeEpisodeActive = false;
@@ -193,9 +192,6 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         {
             dodgeEpisodeActive = true;
             dodgeEpisodeRollSuccess = Random.value <= DodgePrecision(settings);
-            LogSurgical("DODGE_ROLL",
-                $"my:{myTile} precision:{DodgePrecision(settings):F2} success:{dodgeEpisodeRollSuccess}",
-                force: true);
         }
 
         if (!dodgeEpisodeRollSuccess)
@@ -204,20 +200,24 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
             return false;
         }
 
+        if (Time.time < nextEmergencyJumpDecisionTime)
+        {
+            lastDecisionTrace = $"emergency jump decision cooldown {(nextEmergencyJumpDecisionTime - Time.time):F2}s";
+            return false;
+        }
+
         // 1. Pulo direcional para pouso seguro (preferido): pode pular cedo,
         // contanto que a explosão ocorra durante o voo OU o pouso seja seguro.
         if (TryFindDirectionalDodge(settings, myTile, currentDangerSeconds,
                 out Vector2Int dir, out Vector2Int landing))
         {
-            // Timing: espera a janela para garantir invulnerabilidade durante o
-            // estouro (pular cedo demais = aterrissar antes da explosão).
-            if (currentDangerSeconds > DirectionalDodgeWindowSeconds &&
-                !float.IsInfinity(GetDangerSeconds(landing)))
-            {
-                lastDecisionTrace =
-                    $"emergency waiting jump window danger:{currentDangerSeconds:F2}";
+            // Com pouso direcional seguro, pular cedo e sair da linha da bomba
+            // e melhor do que esperar a invulnerabilidade cobrir o estouro. Se
+            // o pouso tem um perigo proprio, esperar pode fechar a janela antes
+            // de o COM conseguir tocar no destino e continuar fugindo.
+            Vector2 jumpDirection = new Vector2(dir.x, dir.y);
+            if (!TryStartPinkJump(jumpDirection, "directional dodge", myTile, currentDangerSeconds))
                 return false;
-            }
 
             decision = new BattleModeComAbilityDecision
             {
@@ -225,24 +225,23 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
                 Weight = 340 + DifficultyWeight(settings),
                 TargetTile = landing,
                 HasTarget = true,
-                FirstMove = new Vector2(dir.x, dir.y),
+                FirstMove = jumpDirection,
                 Reason = "pinklouie-jump dodge",
-                InputDescription = AppendInput(FirstMoveDescription(dir), "ActionC"),
-                TapActionC = true
+                InputDescription = AppendInput(FirstMoveDescription(dir), "PinkJump")
             };
 
             lastDecisionTrace = $"emergency JUMP dir:{dir} landing:{landing} danger:{currentDangerSeconds:F2}";
-            LogSurgical("JUMP_DODGE",
-                $"my:{myTile} dir:{FirstMoveDescription(dir)} landing:{landing} " +
-                $"danger:{FormatDanger(currentDangerSeconds)}",
-                force: true);
+            nextEmergencyJumpDecisionTime = Time.time + EmergencyJumpDecisionCooldownSeconds;
             return true;
         }
 
         // 2. Pulo parado: sem pouso seguro em nenhuma direção. A explosão precisa
         // começar cedo o suficiente para dissipar antes do pouso.
-        if (currentDangerSeconds <= InPlaceDodgeWindowSeconds)
+        if (currentDangerSeconds <= InPlaceDodgeExecutionWindowSeconds)
         {
+            if (!TryStartPinkJump(Vector2.zero, "in-place dodge", myTile, currentDangerSeconds))
+                return false;
+
             decision = new BattleModeComAbilityDecision
             {
                 Action = BattleModeComActionType.Stopped,
@@ -251,19 +250,41 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
                 HasTarget = true,
                 FirstMove = Vector2.zero,
                 Reason = "pinklouie-jump dodge in place",
-                InputDescription = "ActionC",
-                TapActionC = true
+                InputDescription = "PinkJump"
             };
 
             lastDecisionTrace = $"emergency JUMP_IN_PLACE danger:{currentDangerSeconds:F2}";
-            LogSurgical("JUMP_IN_PLACE",
-                $"my:{myTile} danger:{FormatDanger(currentDangerSeconds)}", force: true);
+            nextEmergencyJumpDecisionTime = Time.time + EmergencyJumpDecisionCooldownSeconds;
             return true;
         }
 
         lastDecisionTrace =
             $"emergency waiting in-place window danger:{currentDangerSeconds:F2}";
         return false;
+    }
+
+    private bool TryStartPinkJump(
+        Vector2 direction,
+        string context,
+        Vector2Int myTile,
+        float currentDangerSeconds)
+    {
+        if (pinkJumpAbility == null)
+            TryGetComponent(out pinkJumpAbility);
+
+        if (pinkJumpAbility == null)
+        {
+            lastDecisionTrace = $"emergency {context} failed: missing PinkLouieJumpAbility";
+            return false;
+        }
+
+        if (!pinkJumpAbility.TryStartExternalJump(direction))
+        {
+            lastDecisionTrace = $"emergency {context} failed: jump ability refused start";
+            return false;
+        }
+
+        return true;
     }
 
     // =====================================================================
@@ -287,9 +308,22 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         // Fora de perigo: encerra qualquer episódio de dodge.
         dodgeEpisodeActive = false;
 
+        float currentDanger = GetDangerSeconds(myTile);
+        if (!float.IsInfinity(currentDanger))
+        {
+            lastDecisionTrace = $"candidate skipped while dangerous danger:{currentDanger:F2}";
+            return false;
+        }
+
         // PRIORIDADE: preso num bolsão sem saída andando (ex.: pulou para um tile
         // cercado). Planta bomba (para abrir os blocos) e pula para fora no mesmo
         // frame — fora do bolsão, a fuga nativa cuida do resto do fuse.
+        if (PreservePinkJumpForExplosionDodge)
+        {
+            lastDecisionTrace = "candidate disabled to preserve pink jump for explosion dodge";
+            return false;
+        }
+
         if (TryBuildPocketEscape(settings, myTile, out decision))
             return true;
 
@@ -328,8 +362,6 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         };
 
         lastDecisionTrace = $"candidate TRAVEL dir:{dir} landing:{landing}";
-        LogSurgical("JUMP_TRAVEL",
-            $"my:{myTile} dir:{FirstMoveDescription(dir)} landing:{landing}");
         return true;
     }
 
@@ -506,7 +538,6 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         if (!TryFindPocketExit(settings, myTile, out Vector2Int dir, out Vector2Int landing))
         {
             lastDecisionTrace = "pocket but no exit jump";
-            LogSurgical("POCKET_NO_EXIT", $"my:{myTile}", force: true);
             return false;
         }
 
@@ -533,10 +564,6 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         };
 
         lastDecisionTrace = $"pocket escape dir:{dir} landing:{landing} plant:{canPlant}";
-        LogSurgical("POCKET_ESCAPE",
-            $"my:{myTile} dir:{FirstMoveDescription(dir)} landing:{landing} plant:{canPlant} " +
-            $"bombsLeft:{(bombController != null ? bombController.BombsRemaining : -1)}",
-            force: true);
         return true;
     }
 
@@ -912,21 +939,4 @@ public sealed class BattleModeComPinkLouieJumpAbility : MonoBehaviour, IBattleMo
         return $"{seconds:F2}";
     }
 
-    private void LogSurgical(string key, string message, bool force = false)
-    {
-        if (!EnablePinkLouieJumpDiagnostics) return;
-
-        int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
-        if (DiagnosticPlayerIdFilter != 0 && id != DiagnosticPlayerIdFilter) return;
-
-        if (!force &&
-            key == lastSurgicalLogKey &&
-            Time.time - lastSurgicalLogTime < SurgicalLogIntervalSeconds)
-            return;
-
-        lastSurgicalLogKey = key;
-        lastSurgicalLogTime = Time.time;
-        Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
-        Debug.LogWarning($"[BattleCOM{DiagnosticName}][P{id}] tile:{tile} {key} {message}", this);
-    }
 }
