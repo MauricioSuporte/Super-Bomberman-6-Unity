@@ -126,6 +126,13 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (movement == null || movement.isDead || rb == null)
             return false;
 
+        if (TryGetComponent(out StunReceiver stunReceiver) &&
+            stunReceiver != null &&
+            stunReceiver.IsStunned)
+        {
+            return false;
+        }
+
         if (Time.time < nextAllowedTime || routine != null)
             return false;
 
