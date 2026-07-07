@@ -204,6 +204,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             stunReceiver.IsStunned;
         var riding = mover.GetComponent<PlayerRidingController>();
         var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
+        mover.TryGetComponent(out MountEggQueue eggQueue);
         Vector2 prevMountLocalOffset = mountVisual != null ? mountVisual.localOffset : Vector2.zero;
         var shadow = CreateShadow(start);
 
@@ -230,6 +231,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                 mover,
                 riding,
                 mountVisual,
+                eggQueue,
                 rb,
                 shadow,
                 start,
@@ -244,6 +246,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
             if (mountVisual != null)
                 mountVisual.localOffset = prevMountLocalOffset;
+
+            if (eggQueue != null)
+                eggQueue.ClearOwnerVisualFollowYOffset();
 
             if (stunReceiver != null)
                 stunReceiver.SetVisualSuppressedByExternalTransition(false);
@@ -363,6 +368,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         MovementController mover,
         PlayerRidingController riding,
         MountVisualController mountVisual,
+        MountEggQueue eggQueue,
         Rigidbody2D rb,
         GameObject shadow,
         Vector2 start,
@@ -403,6 +409,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
             float visualHeight = CalculateOffsetHeight(elapsed, up, holdStart, holdEnd, down, total, heightWorld);
             bool descending = elapsed >= holdEnd;
+            ApplyEggQueueJumpArc(eggQueue, ground, visualHeight);
 
             if (mounted && mountVisual != null)
             {
@@ -423,6 +430,8 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         rb.position = end;
         if (shadow != null)
             shadow.transform.position = new Vector3(end.x, end.y, shadow.transform.position.z);
+
+        ResetEggQueueJumpArc(eggQueue);
 
         if (mounted && mountVisual != null)
         {
@@ -448,6 +457,24 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             return 0f;
 
         return heightWorld;
+    }
+
+    static void ApplyEggQueueJumpArc(MountEggQueue eggQueue, Vector2 groundPosition, float arcY)
+    {
+        if (eggQueue == null)
+            return;
+
+        eggQueue.SetOwnerVisualFollowWorldPosition(
+            new Vector3(groundPosition.x, groundPosition.y + arcY, 0f),
+            exactFollow: true);
+    }
+
+    static void ResetEggQueueJumpArc(MountEggQueue eggQueue)
+    {
+        if (eggQueue == null)
+            return;
+
+        eggQueue.ClearOwnerVisualFollowYOffset();
     }
 
     void ApplyUnmountedSpringSprite(PlayerRidingController riding, Vector2 facing, bool ascending, float visualHeight)
