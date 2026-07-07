@@ -37,6 +37,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     CharacterHealth playerHealth;
     PlayerMountCompanion companion;
     AbilitySystem abilitySystem;
+    MountEggQueue eggQueue;
 
     Coroutine routine;
     Coroutine visualRoutine;
@@ -74,6 +75,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
         TryGetComponent(out abilitySystem);
+        TryGetComponent(out eggQueue);
 
         bombLayer = LayerMask.NameToLayer("Bomb");
 
@@ -262,6 +264,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             ApplyJumpVisualOffset(arc);
             ApplyMountedPlayerJumpArc(arc);
+            ApplyEggQueueJumpArc(arc);
 
             if (wasMountedAtStart && !movement.IsMounted)
             {
@@ -271,6 +274,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
                 {
                     ResetJumpVisualOffset();
                     ResetMountedPlayerJumpArc();
+                    ResetEggQueueJumpArc();
                     StopJumpVisuals();
                     shadow?.EndJump();
                     RestorePlayerCollisionsAfterJump();
@@ -290,6 +294,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         rb.position = endPos;
 
         if (invulnerableDuringJump)
@@ -435,6 +440,22 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         mountedPlayerArcActive = false;
     }
 
+    void ApplyEggQueueJumpArc(float arcY)
+    {
+        if (eggQueue == null && !TryGetComponent(out eggQueue))
+            return;
+
+        eggQueue.SetOwnerVisualFollowYOffset(arcY);
+    }
+
+    void ResetEggQueueJumpArc()
+    {
+        if (eggQueue == null && !TryGetComponent(out eggQueue))
+            return;
+
+        eggQueue.ClearOwnerVisualFollowYOffset();
+    }
+
     void StartJumpInvulnerabilityOnly(CharacterHealth mountedLouieHealth)
     {
         float seconds = Mathf.Max(0.01f, jumpDurationSeconds);
@@ -546,6 +567,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         rb.position = CellCenter(safeCell, destructible, indestructible, ground);
     }
 
@@ -674,6 +696,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         externalAnimator?.Stop();
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
     }
 
     void CancelJump()
@@ -692,6 +715,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
@@ -742,6 +766,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
