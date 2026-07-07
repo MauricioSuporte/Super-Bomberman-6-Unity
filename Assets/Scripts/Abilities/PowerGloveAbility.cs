@@ -14,6 +14,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     [Header("State (read-only)")]
     [SerializeField] private bool isHoldingBomb;
     public bool IsHoldingBomb => isHoldingBomb;
+    public bool IsProtectingFromStun => enabledAbility && (animLocking || holding || isHoldingBomb);
 
     [Header("Timings")]
     private readonly float pickupLockTime = 0.1f;

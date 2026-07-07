@@ -41,6 +41,7 @@ public class StunReceiver : MonoBehaviour
     bool suppressRestore;
 
     public bool IsStunned => isStunned;
+    public bool CanReceiveStun => !IsProtectedByPowerGlove();
 
     struct SpriteTBase
     {
@@ -123,6 +124,9 @@ public class StunReceiver : MonoBehaviour
 
     public void Stun(float seconds)
     {
+        if (!CanReceiveStun)
+            return;
+
         if (CompareTag("Player") && (isStunned || stunRoutine != null))
             return;
 
@@ -146,6 +150,14 @@ public class StunReceiver : MonoBehaviour
 
         if (stunRoutine == null)
             stunRoutine = StartCoroutine(StunRoutine());
+    }
+
+    bool IsProtectedByPowerGlove()
+    {
+        return CompareTag("Player") &&
+               TryGetComponent<PowerGloveAbility>(out var powerGlove) &&
+               powerGlove != null &&
+               powerGlove.IsProtectingFromStun;
     }
 
     private void PlayRandomPlayerStunSfx()

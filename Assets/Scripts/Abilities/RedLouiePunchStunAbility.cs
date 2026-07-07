@@ -239,6 +239,9 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
             if (receiver != null)
             {
+                if (!receiver.CanReceiveStun)
+                    continue;
+
                 stunnedReceivers ??= new HashSet<StunReceiver>();
                 if (!stunnedReceivers.Add(receiver))
                     continue;

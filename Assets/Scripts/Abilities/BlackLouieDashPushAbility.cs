@@ -331,7 +331,8 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         }
 
         var receiver = hit.GetComponentInParent<StunReceiver>() ?? hit.GetComponent<StunReceiver>();
-        receiver?.Stun(enemyStunSeconds);
+        if (receiver != null && receiver.CanReceiveStun)
+            receiver.Stun(enemyStunSeconds);
 
         StartCoroutine(PushTargetRoutine(targetRb, dir, tileSize));
         pushedTarget = true;

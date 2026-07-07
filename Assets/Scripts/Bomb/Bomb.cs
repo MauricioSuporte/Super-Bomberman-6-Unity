@@ -446,6 +446,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (sr == null)
                 continue;
 
+            if (!sr.CanReceiveStun)
+                continue;
+
             if (mc.CompareTag("Player") && IsPlayerProtectedFromAirborneBombImpact(mc))
                 continue;
 
