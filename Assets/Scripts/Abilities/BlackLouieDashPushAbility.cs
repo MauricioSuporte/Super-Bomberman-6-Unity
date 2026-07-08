@@ -98,7 +98,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     {
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
-        if (movement == null || movement.isDead) return;
+        if (movement == null || movement.isDead || movement.InputLocked) return;
         if (Time.time < nextAllowedTime) return;
 
         if (GamePauseController.IsPaused ||

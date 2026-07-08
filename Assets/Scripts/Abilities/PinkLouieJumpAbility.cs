@@ -123,7 +123,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return false;
 
-        if (movement == null || movement.isDead || rb == null)
+        if (movement == null || movement.isDead || movement.InputLocked || rb == null)
             return false;
 
         if (TryGetComponent(out StunReceiver stunReceiver) &&
@@ -157,7 +157,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return;
 
-        if (movement == null || movement.isDead)
+        if (movement == null || movement.isDead || movement.InputLocked)
             return;
 
         if (Time.time < nextAllowedTime)

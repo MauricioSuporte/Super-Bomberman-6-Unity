@@ -118,7 +118,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return;
 
-        if (movement == null || movement.isDead)
+        if (movement == null || movement.isDead || movement.InputLocked)
             return;
 
         PruneEarlyKickState();
