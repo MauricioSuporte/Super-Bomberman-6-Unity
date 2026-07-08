@@ -735,12 +735,36 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (primaryBlocked && secondaryBlocked)
         {
+            if (IsAtTileCenterForBlockedMovement(dualPrimary))
+            {
+                pendingTurnDirection = Vector2.zero;
+                return dualPrimary;
+            }
+
+            if (ShouldDelayDualAxisSwitchForBlockedDirection(dualPrimary))
+            {
+                pendingTurnDirection = Vector2.zero;
+                return dualPrimary;
+            }
+
+            if (ShouldDelayDualAxisSwitchForBlockedDirection(dualSecondary))
+            {
+                pendingTurnDirection = Vector2.zero;
+                return dualSecondary;
+            }
+
             pendingTurnDirection = Vector2.zero;
             return Vector2.zero;
         }
 
         if (primaryBlocked && !secondaryBlocked)
         {
+            if (ShouldDelayDualAxisSwitchForBlockedDirection(dualPrimary))
+            {
+                pendingTurnDirection = Vector2.zero;
+                return dualPrimary;
+            }
+
             LogCurve("ResolveDualInputZigZag -> primary blocked, forcing axis switch");
             DoAxisSwitch();
             pendingTurnDirection = Vector2.zero;
@@ -749,6 +773,12 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (dualSecondary == Vector2.zero || secondaryBlocked)
         {
+            if (secondaryBlocked && ShouldDelayDualAxisSwitchForBlockedDirection(dualSecondary))
+            {
+                pendingTurnDirection = Vector2.zero;
+                return dualSecondary;
+            }
+
             pendingTurnDirection = Vector2.zero;
             return dualPrimary;
         }
@@ -787,6 +817,37 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         return dualPrimary;
+    }
+
+    private bool ShouldDelayDualAxisSwitchForBlockedDirection(Vector2 blockedDirection)
+    {
+        if (tileSize <= 0.0001f)
+            return false;
+
+        Vector2 dir = NormalizeCardinal(blockedDirection);
+        if (dir == Vector2.zero)
+            return false;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+        Vector2 center = GetNearestTileCenter(pos);
+        float offsetFromCenter = Mathf.Abs(dir.x) > 0.01f
+            ? Mathf.Abs(pos.x - center.x)
+            : Mathf.Abs(pos.y - center.y);
+
+        return offsetFromCenter > alignEpsilon &&
+               offsetFromCenter <= dualInputCentreSnapTolerance + alignEpsilon;
+    }
+
+    private bool IsAtTileCenterForBlockedMovement(Vector2 moveDir)
+    {
+        if (tileSize <= 0.0001f || NormalizeCardinal(moveDir) == Vector2.zero)
+            return false;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+        Vector2 center = GetNearestTileCenter(pos);
+
+        return Mathf.Abs(pos.x - center.x) <= alignEpsilon &&
+               Mathf.Abs(pos.y - center.y) <= alignEpsilon;
     }
 
     private bool IsAtTileCentreOnPerpendicularAxis(Vector2 newDir)
@@ -1782,6 +1843,12 @@ public class MovementController : MonoBehaviour, IKillable
         {
             Vector2 lateralTarget = QuantizeToPixelGrid(position);
             Vector2 forwardTarget = QuantizeToPixelGrid(lateralTarget + direction * moveWorld);
+            if (TryClampStepAgainstBlockedTile(lateralTarget, forwardTarget, moveWorld, out Vector2 clampedForwardTarget))
+            {
+                MovePositionPixelPerfect(clampedForwardTarget);
+                return;
+            }
+
             bool forwardBlocked = IsBlocked(forwardTarget);
             Vector2 committedTarget = forwardBlocked ? lateralTarget : forwardTarget;
 
@@ -1854,6 +1921,12 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 targetPosition = position + direction * moveWorld;
         targetPosition = QuantizeToPixelGrid(targetPosition);
 
+        if (TryClampStepAgainstBlockedTile(position, targetPosition, moveWorld, out Vector2 clampedTargetPosition))
+        {
+            MovePositionPixelPerfect(clampedTargetPosition);
+            return;
+        }
+
         bool blocked = IsBlocked(targetPosition);
 
         LogCurve($"FixedUpdate target:{targetPosition} blocked:{blocked}");
@@ -1866,6 +1939,67 @@ public class MovementController : MonoBehaviour, IKillable
 
         LogCurve("FixedUpdate target blocked -> TrySlideIfBlocked");
         TrySlideIfBlocked(position, moveWorld, movingHorizontal, movingVertical);
+    }
+
+    private bool TryClampStepAgainstBlockedTile(
+        Vector2 position,
+        Vector2 targetPosition,
+        float moveWorld,
+        out Vector2 clampedTargetPosition)
+    {
+        clampedTargetPosition = targetPosition;
+
+        Vector2 dir = NormalizeCardinal(direction);
+        if (dir == Vector2.zero || tileSize <= 0.0001f)
+            return false;
+
+        Vector2 currentTileCenter = GetNearestTileCenter(position);
+        bool movingHorizontal = Mathf.Abs(dir.x) > 0.01f;
+        if (movingHorizontal)
+        {
+            if (Mathf.Abs(position.y - currentTileCenter.y) > alignEpsilon)
+                return false;
+        }
+        else if (Mathf.Abs(position.x - currentTileCenter.x) > alignEpsilon)
+        {
+            return false;
+        }
+
+        Vector2 blockedTileCenter = currentTileCenter + dir * tileSize;
+        bool nextBlocked = IsBlockedAtPosition(blockedTileCenter, dir, true);
+
+        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+            nextBlocked = IsBlockedAtPositionIgnoringBomb(blockedTileCenter, dir, _lastAdjKickedBomb);
+
+        if (!nextBlocked)
+            return false;
+
+        float currentAxisPosition = movingHorizontal ? position.x : position.y;
+        float targetAxisPosition = movingHorizontal ? targetPosition.x : targetPosition.y;
+        float centerAxisPosition = movingHorizontal ? currentTileCenter.x : currentTileCenter.y;
+        float directionSign = movingHorizontal ? Mathf.Sign(dir.x) : Mathf.Sign(dir.y);
+
+        bool targetCrossesCenter = directionSign > 0f
+            ? currentAxisPosition <= centerAxisPosition + alignEpsilon &&
+              targetAxisPosition >= centerAxisPosition - alignEpsilon
+            : currentAxisPosition >= centerAxisPosition - alignEpsilon &&
+              targetAxisPosition <= centerAxisPosition + alignEpsilon;
+
+        bool alreadyPastCenter = directionSign > 0f
+            ? currentAxisPosition > centerAxisPosition + alignEpsilon
+            : currentAxisPosition < centerAxisPosition - alignEpsilon;
+
+        if (!targetCrossesCenter && !alreadyPastCenter)
+            return false;
+
+        clampedTargetPosition = movingHorizontal
+            ? QuantizeToPixelGrid(new Vector2(currentTileCenter.x, position.y))
+            : QuantizeToPixelGrid(new Vector2(position.x, currentTileCenter.y));
+
+        LogCurve(
+            $"TryClampStepAgainstBlockedTile dir:{dir} nextBlocked:{nextBlocked} blockedTile:{blockedTileCenter} " +
+            $"position:{position} target:{targetPosition} clamped:{clampedTargetPosition} move:{moveWorld:F4}");
+        return true;
     }
 
     private bool TryClampBlockedAxisAndCenter(ref Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
@@ -1941,6 +2075,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         SyncMovementAbilitiesFromAbilitySystemIfChanged();
 
+        if (direction == Vector2.zero && TryCenterBlockedPendingMoveBeforeSkip())
+            return true;
+
         if (!hasInput || direction == Vector2.zero)
         {
             currentAxis = MoveAxis.None;
@@ -1957,6 +2094,61 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         return false;
+    }
+
+    private bool TryCenterBlockedPendingMoveBeforeSkip()
+    {
+        if (pendingSingleTurnDirection == Vector2.zero || tileSize <= 0.0001f || Rigidbody == null)
+            return false;
+
+        Vector2 pendingDir = NormalizeCardinal(pendingSingleTurnDirection);
+        if (pendingDir == Vector2.zero)
+            return false;
+
+        Vector2 position = QuantizeToPixelGrid(Rigidbody.position);
+        float centerX = Mathf.Round(position.x / tileSize) * tileSize;
+        float centerY = Mathf.Round(position.y / tileSize) * tileSize;
+        Vector2 currentTileCenter = new(centerX, centerY);
+        Vector2 nextTileCenter = currentTileCenter + pendingDir * tileSize;
+
+        bool pendingHorizontal = Mathf.Abs(pendingDir.x) > 0.01f;
+        if (pendingHorizontal)
+        {
+            if (Mathf.Abs(position.y - centerY) > alignEpsilon)
+                return false;
+        }
+        else if (Mathf.Abs(position.x - centerX) > alignEpsilon)
+        {
+            return false;
+        }
+
+        bool nextBlocked = IsBlockedAtPosition(nextTileCenter, pendingDir, true);
+
+        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+            nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, pendingDir, _lastAdjKickedBomb);
+
+        if (!nextBlocked)
+            return false;
+
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(pendingDir, GetRawMoveWorldPerFixedFrame());
+        if (moveWorld <= 0f)
+        {
+            currentAxis = MoveAxis.None;
+            return true;
+        }
+
+        Vector2 centeredPosition = position;
+        if (pendingHorizontal)
+            centeredPosition.x = Mathf.MoveTowards(position.x, centerX, moveWorld);
+        else
+            centeredPosition.y = Mathf.MoveTowards(position.y, centerY, moveWorld);
+
+        centeredPosition = QuantizeToPixelGrid(centeredPosition);
+
+        MovePositionPixelPerfect(centeredPosition);
+        currentAxis = MoveAxis.None;
+
+        return true;
     }
 
     private void UpdateCurrentAxis(bool movingHorizontal, bool movingVertical)
@@ -4472,6 +4664,14 @@ public class MovementController : MonoBehaviour, IKillable
                 pendingSingleTurnDirection = singleDir;
                 lockedMovementDirection = Vector2.zero;
 
+                if (IsAtTileCenterForBlockedMovement(singleDir))
+                {
+                    LogCurve($"HandleSingleAxisTurn -> blocked at center, animate:{singleDir}");
+                    pendingSingleTurnDirection = Vector2.zero;
+                    ApplyDirectionFromVector(singleDir);
+                    return;
+                }
+
                 ApplyBlockedMovementFacing(singleDir);
                 return;
             }
@@ -4913,6 +5113,16 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
+    }
+
+    private Vector2 GetNearestTileCenter(Vector2 position)
+    {
+        if (tileSize <= 0.0001f)
+            return position;
+
+        return new Vector2(
+            Mathf.Round(position.x / tileSize) * tileSize,
+            Mathf.Round(position.y / tileSize) * tileSize);
     }
 
     [System.Diagnostics.Conditional("ENABLE_MOVEMENT_DIAGNOSTICS")]
