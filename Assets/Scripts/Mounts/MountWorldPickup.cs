@@ -13,6 +13,19 @@ public sealed class MountWorldPickup : MonoBehaviour
     bool consumed;
     Collider2D _col;
 
+    public MountedType Type
+    {
+        get
+        {
+            if (type == MountedType.None)
+                type = ResolveTypeFromNameFallback(gameObject.name);
+
+            return type;
+        }
+    }
+
+    public bool IsAvailable => !consumed && isActiveAndEnabled && Type != MountedType.None;
+
     public void Init(MountedType t) => type = t;
 
     void Awake()
@@ -67,10 +80,7 @@ public sealed class MountWorldPickup : MonoBehaviour
         if (alreadyMounted)
             return;
 
-        if (type == MountedType.None)
-            type = ResolveTypeFromNameFallback(gameObject.name);
-
-        if (type == MountedType.None)
+        if (Type == MountedType.None)
             return;
 
         if (TryGetHeldPowerGlove(player, out var powerGlove))
@@ -88,7 +98,7 @@ public sealed class MountWorldPickup : MonoBehaviour
 
         comp.TryMountExistingLouieFromWorldWithArc(
             louieWorldInstance: gameObject,
-            louieType: type,
+            louieType: Type,
             worldQueueToAdopt: worldQueue,
             startWorldPos: startWorldPos,
             targetWorldPos: targetWorldPos

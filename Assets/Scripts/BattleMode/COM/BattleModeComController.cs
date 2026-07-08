@@ -3599,7 +3599,8 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         candidate = default;
         ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
-        ItemPickup bestItem = null;
+        bool foundTarget = false;
+        string bestLabel = string.Empty;
         Vector2 bestMove = Vector2.zero;
         Vector2Int bestTile = myTile;
         int bestDistance = int.MaxValue;
@@ -3679,7 +3680,8 @@ public sealed class BattleModeComController : MonoBehaviour
 
             if (score > bestScore)
             {
-                bestItem = item;
+                foundTarget = true;
+                bestLabel = item.type.ToString();
                 bestMove = path.FirstMove;
                 bestTile = itemTile;
                 bestDistance = path.Distance;
@@ -3687,7 +3689,64 @@ public sealed class BattleModeComController : MonoBehaviour
             }
         }
 
-        if (bestItem == null)
+        MountWorldPickup[] worldMountPickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < worldMountPickups.Length; i++)
+        {
+            MountWorldPickup pickup = worldMountPickups[i];
+            if (pickup == null || !pickup.gameObject.activeInHierarchy)
+                continue;
+
+            if (!IsUsefulWorldMountForComCollection(pickup, out string mountRejectReason))
+            {
+                RejectVerbose($"CollectItem {mountRejectReason}");
+                continue;
+            }
+
+            Vector2Int pickupTile = WorldToTile(pickup.transform.position);
+            if (settings.difficulty == BattleModeComputerLevel.Hard &&
+                IsSingleExitTrapTile(pickupTile, myTile, out Vector2Int pickupExitTile, out _))
+            {
+                RejectVerbose($"CollectItem montaria solta em beco exige pickup seguro {pickup.Type}@{pickupTile} exit:{pickupExitTile}");
+                continue;
+            }
+
+            if (!IsWalkableTile(pickupTile, myTile))
+            {
+                RejectVerbose($"CollectItem montaria solta bloqueada {pickup.Type}@{pickupTile}");
+                continue;
+            }
+
+            if (!TryFindPath(
+                    myTile,
+                    pickupTile,
+                    GetStageProgressSearchDepth(settings),
+                    true,
+                    settings,
+                    null,
+                    out PathResult path))
+            {
+                RejectVerbose($"CollectItem sem rota montaria solta {pickup.Type}@{pickupTile}");
+                continue;
+            }
+
+            float danger = GetDangerSeconds(pickupTile, null);
+            float dangerBonus = float.IsInfinity(danger) ? 2f : Mathf.Clamp(danger, 0f, 2f);
+            float score = -path.Distance * 10f +
+                          dangerBonus * 0.15f +
+                          GetDecisionNoise(2000 + i, ItemTargetJitter);
+
+            if (score > bestScore)
+            {
+                foundTarget = true;
+                bestLabel = $"{pickup.Type}Mount";
+                bestMove = path.FirstMove;
+                bestTile = pickupTile;
+                bestDistance = path.Distance;
+                bestScore = score;
+            }
+        }
+
+        if (!foundTarget)
         {
             LogItemPriorityDiagnostic(
                 "COLLECT_NO_CANDIDATE",
@@ -3705,7 +3764,7 @@ public sealed class BattleModeComController : MonoBehaviour
             HasTarget = true,
             FirstMove = bestMove,
             HasRoute = true,
-            Reason = $"item {bestItem.type} distance {bestDistance}",
+            Reason = $"item {bestLabel} distance {bestDistance}",
             InputDescription = FirstMoveDescription(bestMove)
         };
         LogItemPriorityDiagnostic(
@@ -4769,6 +4828,21 @@ public sealed class BattleModeComController : MonoBehaviour
                type == ItemType.RedLouieEgg;
     }
 
+    private static ItemType GetItemTypeForWorldMount(MountedType type)
+    {
+        return type switch
+        {
+            MountedType.Blue => ItemType.BlueLouieEgg,
+            MountedType.Black => ItemType.BlackLouieEgg,
+            MountedType.Purple => ItemType.PurpleLouieEgg,
+            MountedType.Green => ItemType.GreenLouieEgg,
+            MountedType.Yellow => ItemType.YellowLouieEgg,
+            MountedType.Pink => ItemType.PinkLouieEgg,
+            MountedType.Red => ItemType.RedLouieEgg,
+            _ => default
+        };
+    }
+
     private bool IsUsefulItemForComCollection(ItemPickup item, out string rejectReason)
     {
         rejectReason = string.Empty;
@@ -4792,6 +4866,31 @@ public sealed class BattleModeComController : MonoBehaviour
                 IsComUnmounted()
                     ? $"ovo Louie ignorado fila cheia {queuedEggCount}/{MaxUsefulQueuedLouieEggs}"
                     : "ovo Louie ignorado montado";
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsUsefulWorldMountForComCollection(MountWorldPickup pickup, out string rejectReason)
+    {
+        rejectReason = string.Empty;
+
+        if (pickup == null)
+        {
+            rejectReason = "montaria solta invalida";
+            return false;
+        }
+
+        if (!pickup.IsAvailable)
+        {
+            rejectReason = $"montaria solta indisponivel {pickup.Type}";
+            return false;
+        }
+
+        if (!CanComCollectLooseWorldMount())
+        {
+            rejectReason = "montaria solta ignorada montado";
             return false;
         }
 
@@ -6580,7 +6679,36 @@ public sealed class BattleModeComController : MonoBehaviour
             foundDistance = path.Distance;
         }
 
-        return foundItem != null;
+        MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < pickups.Length; i++)
+        {
+            MountWorldPickup pickup = pickups[i];
+            if (pickup == null ||
+                !pickup.gameObject.activeInHierarchy ||
+                !IsUsefulWorldMountForComCollection(pickup, out _))
+            {
+                continue;
+            }
+
+            Vector2Int pickupTile = WorldToTile(pickup.transform.position);
+            int manhattan = Manhattan(myTile, pickupTile);
+            if (manhattan > maxDistance)
+                continue;
+
+            if (!IsWalkableTile(pickupTile, myTile))
+                continue;
+
+            if (!TryFindPath(myTile, pickupTile, maxDistance, true, settings, null, out PathResult path))
+                continue;
+
+            if (path.Distance >= foundDistance)
+                continue;
+
+            foundItem = null;
+            foundDistance = path.Distance;
+        }
+
+        return foundDistance != int.MaxValue;
     }
 
     private void UpdateRecentItemPickupMemory(
@@ -6627,6 +6755,21 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             if (WorldToTile(item.transform.position) == tile)
+                return true;
+        }
+
+        MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < pickups.Length; i++)
+        {
+            MountWorldPickup pickup = pickups[i];
+            if (pickup == null ||
+                !pickup.gameObject.activeInHierarchy ||
+                !IsUsefulWorldMountForComCollection(pickup, out _))
+            {
+                continue;
+            }
+
+            if (WorldToTile(pickup.transform.position) == tile)
                 return true;
         }
 
@@ -7242,9 +7385,77 @@ public sealed class BattleModeComController : MonoBehaviour
             bestTile = itemTile;
         }
 
+        MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        string bestLabel = bestDistance == int.MaxValue ? string.Empty : bestType.ToString();
+        for (int i = 0; i < pickups.Length; i++)
+        {
+            MountWorldPickup pickup = pickups[i];
+            if (pickup == null || !pickup.gameObject.activeInHierarchy)
+                continue;
+
+            Vector2Int pickupTile = WorldToTile(pickup.transform.position);
+            string label = $"{pickup.Type}Mount";
+            if (!IsUsefulWorldMountForComCollection(pickup, out string pickupRejectReason))
+            {
+                notUseful++;
+                AppendItemPrioritySample(ref samples, $"{label}@{pickupTile}:{pickupRejectReason}");
+                continue;
+            }
+
+            useful++;
+            int manhattan = Manhattan(myTile, pickupTile);
+            if (manhattan > maxDistance)
+            {
+                tooFar++;
+                AppendItemPrioritySample(ref samples, $"{label}@{pickupTile}:far{manhattan}");
+                continue;
+            }
+
+            if (!IsWalkableTile(pickupTile, myTile))
+            {
+                blocked++;
+                AppendItemPrioritySample(ref samples, $"{label}@{pickupTile}:blocked");
+                continue;
+            }
+
+            int rejectedBeforePathProbe = rejectedActions.Count;
+            bool hasPath = TryFindPath(
+                    myTile,
+                    pickupTile,
+                    maxDistance,
+                    true,
+                    settings,
+                    null,
+                    out PathResult path);
+            TrimRejectedActions(rejectedBeforePathProbe);
+
+            if (!hasPath)
+            {
+                noRoute++;
+                AppendItemPrioritySample(ref samples, $"{label}@{pickupTile}:noRoute");
+                continue;
+            }
+
+            reachable++;
+            float danger = GetDangerSeconds(pickupTile, null);
+            if (!float.IsInfinity(danger))
+                threatened++;
+
+            AppendItemPrioritySample(
+                ref samples,
+                $"{label}@{pickupTile}:d{path.Distance}/danger:{FormatDanger(danger)}");
+
+            if (path.Distance >= bestDistance)
+                continue;
+
+            bestDistance = path.Distance;
+            bestLabel = label;
+            bestTile = pickupTile;
+        }
+
         string best = bestDistance == int.MaxValue
             ? "none"
-            : $"{bestType}@{bestTile}/d{bestDistance}";
+            : $"{bestLabel}@{bestTile}/d{bestDistance}";
         return
             $"items useful:{useful} reachable:{reachable} threatened:{threatened} " +
             $"blocked:{blocked} noRoute:{noRoute} tooFar:{tooFar} ignored:{notUseful} " +
@@ -9755,6 +9966,26 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             itemType = item.type;
+            itemTile = tile;
+            return true;
+        }
+
+        MountWorldPickup[] pickups = FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < pickups.Length; i++)
+        {
+            MountWorldPickup pickup = pickups[i];
+            if (pickup == null ||
+                !pickup.gameObject.activeInHierarchy ||
+                !IsUsefulWorldMountForComCollection(pickup, out _))
+            {
+                continue;
+            }
+
+            Vector2Int tile = WorldToTile(pickup.transform.position);
+            if (!plannedBlastTiles.Contains(tile))
+                continue;
+
+            itemType = GetItemTypeForWorldMount(pickup.Type);
             itemTile = tile;
             return true;
         }

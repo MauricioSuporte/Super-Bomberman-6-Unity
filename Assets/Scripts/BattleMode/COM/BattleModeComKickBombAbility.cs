@@ -2688,7 +2688,8 @@ public class BattleModeComKickBombAbility : MonoBehaviour, IBattleModeComAbility
                 if (hit == null || IsOwnCollider(hit))
                     continue;
 
-                if (hit.GetComponentInParent<ItemPickup>() != null)
+                if (hit.GetComponentInParent<ItemPickup>() != null ||
+                    hit.GetComponentInParent<MountWorldPickup>() != null)
                     continue;
 
                 if (hit.GetComponentInParent<PlayerIdentity>() != null)
