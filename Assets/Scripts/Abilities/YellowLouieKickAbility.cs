@@ -327,7 +327,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         void RefreshCurrentCellBlockerPosition(Vector3Int cell)
         {
             if (currentCellBlocker != null && destructibleTilemap != null)
-                currentCellBlocker.transform.position = destructibleTilemap.GetCellCenterWorld(cell);
+                SetPhysicsObjectPosition(currentCellBlocker, destructibleTilemap.GetCellCenterWorld(cell));
         }
 
         void DestroyNextCellBlocker()
@@ -401,6 +401,19 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
             if (destructibleTilemap == null || !tileRemovedFromMap || currentTile == null)
                 return;
+
+            Vector3Int settleCell = ResolveTileSettleCell(currentTileCell, kickDir, destructibleTilemap);
+            if (settleCell != currentTileCell)
+            {
+                release(currentTileCell);
+                ApplyShadowForCell(currentTileCell);
+                currentTileCell = settleCell;
+
+                if (!reservedLocal.Contains(currentTileCell))
+                    reserve(currentTileCell);
+
+                RefreshCurrentCellBlockerPosition(currentTileCell);
+            }
 
             destructibleTilemap.SetTile(currentTileCell, currentTile);
             destructibleTilemap.RefreshTile(currentTileCell);
@@ -550,9 +563,36 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (IsMixedChainSolidAt(destructibleTilemap.GetCellCenterWorld(nextCell), kickDir, currentBomb))
                     {
+                        TryFindCharacterOverlappingCell(
+                            destructibleTilemap,
+                            nextCell,
+                            out Collider2D solidCharacter,
+                            out string solidCharacterKind);
                         LogKickTrace(
                             $"tile-stop solid-ahead owner:{GetOwnerLabel()} next:{nextCell} " +
+                            $"characterKind:{solidCharacterKind} character:{FormatCollider(solidCharacter)} " +
                             $"active:{FormatActiveTileState()}");
+                        SettleCurrentTileAtCurrentCell();
+                        yield return ShakeSettledTileVisual(
+                            destructibleTilemap,
+                            currentTileCell,
+                            currentTile,
+                            stopShakeDuration,
+                            stopShakeAmplitude,
+                            stopShakeFrequency);
+
+                        break;
+                    }
+
+                    Vector3 from = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+                    Vector3 to = destructibleTilemap.GetCellCenterWorld(nextCell);
+
+                    if (TryFindCharacterOnTilePath(from, to, out Collider2D pathBlocker, out string pathBlockerKind))
+                    {
+                        LogKickTrace(
+                            $"tile-stop character-in-path-before-move owner:{GetOwnerLabel()} " +
+                            $"from:{currentTileCell} next:{nextCell} kind:{pathBlockerKind} " +
+                            $"hit:{FormatCollider(pathBlocker)} active:{FormatActiveTileState()}");
                         SettleCurrentTileAtCurrentCell();
                         yield return ShakeSettledTileVisual(
                             destructibleTilemap,
@@ -570,9 +610,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     DestroyNextCellBlocker();
                     nextCellBlocker = CreateCellBlocker(destructibleTilemap.GetCellCenterWorld(nextCell), "YellowKickBlock_NextCell");
-
-                    Vector3 from = destructibleTilemap.GetCellCenterWorld(currentTileCell);
-                    Vector3 to = destructibleTilemap.GetCellCenterWorld(nextCell);
 
                     float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
                     float tMove = 0f;
@@ -595,13 +632,25 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                         ReleaseInputIfNeeded();
 
-                        if (HasPlayerAt(to) || HasEnemyAt(to))
+                        Vector3 pathStart = ghost != null ? ghost.transform.position : Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+                        bool playerAtDestination = HasPlayerAt(to);
+                        bool enemyAtDestination = HasEnemyAt(to);
+                        bool characterInRemainingPath = TryFindCharacterOnTilePath(
+                            pathStart,
+                            to,
+                            out Collider2D movingPathBlocker,
+                            out string movingPathBlockerKind);
+
+                        if (playerAtDestination || enemyAtDestination || characterInRemainingPath)
                         {
                             characterEnteredDestinationDuringMove = true;
                             LogKickTrace(
                                 $"tile-move-dynamic-block owner:{GetOwnerLabel()} " +
                                 $"from:{currentTileCell} next:{nextCell} progress:{tMove:F2} " +
-                                $"player:{HasPlayerAt(to)} enemy:{HasEnemyAt(to)} active:{FormatActiveTileState()}");
+                                $"playerAtDest:{playerAtDestination} enemyAtDest:{enemyAtDestination} " +
+                                $"pathBlocked:{characterInRemainingPath} kind:{movingPathBlockerKind} " +
+                                $"hit:{FormatCollider(movingPathBlocker)} pathStart:{FormatVec(pathStart)} " +
+                                $"to:{FormatVec(to)} active:{FormatActiveTileState()}");
                             break;
                         }
 
@@ -609,7 +658,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         activeTileMoveProgress = Mathf.Clamp01(tMove);
 
                         if (ghost != null)
-                            ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+                            SetPhysicsObjectPosition(ghost, Vector3.Lerp(from, to, Mathf.Clamp01(tMove)));
                         UpdateActiveMovingTile(activeMovingTile, currentTileCell, ghost);
 
                         yield return null;
@@ -636,7 +685,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         DestroyNextCellBlocker();
 
                         if (ghost != null)
-                            ghost.transform.position = from;
+                            SetPhysicsObjectPosition(ghost, from);
 
                         RefreshCurrentCellBlockerPosition(currentTileCell);
                         SettleCurrentTileAtCurrentCell();
@@ -666,7 +715,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         progress: 1f);
 
                     if (ghost != null)
-                        ghost.transform.position = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+                        SetPhysicsObjectPosition(ghost, destructibleTilemap.GetCellCenterWorld(currentTileCell));
                     UpdateActiveMovingTile(activeMovingTile, currentTileCell, ghost);
 
                     DestroyCurrentCellBlocker();
@@ -1497,6 +1546,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     {
         GameObject ghost = new("YellowKickBlock_Ghost");
         ghost.transform.position = tilemap.GetCellCenterWorld(cell);
+        AddKinematicPhysicsBody(ghost);
 
         int stageLayer = LayerMask.NameToLayer("Stage");
         if (stageLayer >= 0)
@@ -1513,6 +1563,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         col.size = new Vector2(ts * 0.90f, ts * 0.90f);
         col.offset = Vector2.zero;
 
+        Physics2D.SyncTransforms();
         return ghost;
     }
 
@@ -1520,6 +1571,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     {
         GameObject blocker = new(objectName);
         blocker.transform.position = worldCenter;
+        AddKinematicPhysicsBody(blocker);
 
         int stageLayer = LayerMask.NameToLayer("Stage");
         if (stageLayer >= 0)
@@ -1532,7 +1584,33 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         col.size = new Vector2(ts * 0.90f, ts * 0.90f);
         col.offset = Vector2.zero;
 
+        Physics2D.SyncTransforms();
         return blocker;
+    }
+
+    void AddKinematicPhysicsBody(GameObject target)
+    {
+        if (target == null)
+            return;
+
+        var body = target.AddComponent<Rigidbody2D>();
+        body.bodyType = RigidbodyType2D.Kinematic;
+        body.gravityScale = 0f;
+        body.freezeRotation = true;
+        body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+    }
+
+    void SetPhysicsObjectPosition(GameObject target, Vector3 position)
+    {
+        if (target == null)
+            return;
+
+        if (target.TryGetComponent(out Rigidbody2D body) && body != null)
+            body.position = position;
+        else
+            target.transform.position = position;
+
+        Physics2D.SyncTransforms();
     }
 
     Sprite GetPreviewSprite(TileBase tile)
@@ -1708,6 +1786,183 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             return false;
 
         return HasAnyColliderAt(center, 1 << enemyLayer);
+    }
+
+    bool TryFindCharacterOnTilePath(Vector2 from, Vector2 to, out Collider2D character, out string characterKind)
+    {
+        character = null;
+        characterKind = "none";
+
+        if (movement == null)
+            return false;
+
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int mask = 0;
+
+        if (playerLayer >= 0)
+            mask |= 1 << playerLayer;
+        if (enemyLayer >= 0)
+            mask |= 1 << enemyLayer;
+        if (mask == 0)
+            return false;
+
+        Vector2 delta = to - from;
+        float distance = delta.magnitude;
+        Vector2 castDirection = distance > 0.0001f ? delta / distance : Vector2.zero;
+        Vector2 size = Vector2.one * (Mathf.Max(0.1f, movement.tileSize) * 0.88f);
+        RaycastHit2D[] hits = distance > 0.0001f
+            ? Physics2D.BoxCastAll(from, size, 0f, castDirection, distance, mask)
+            : System.Array.Empty<RaycastHit2D>();
+
+        Collider2D best = null;
+        float bestDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i].collider;
+            if (!IsBlockingCharacterCollider(hit, playerLayer, enemyLayer))
+                continue;
+
+            if (hits[i].distance < bestDistance)
+            {
+                best = hit;
+                bestDistance = hits[i].distance;
+            }
+        }
+
+        if (best == null)
+        {
+            Collider2D[] overlaps = Physics2D.OverlapBoxAll(to, size, 0f, mask);
+            for (int i = 0; i < overlaps.Length; i++)
+            {
+                if (!IsBlockingCharacterCollider(overlaps[i], playerLayer, enemyLayer))
+                    continue;
+
+                best = overlaps[i];
+                break;
+            }
+        }
+
+        if (best == null)
+            return false;
+
+        character = best;
+        characterKind = playerLayer >= 0 && best.gameObject.layer == playerLayer ? "player" : "enemy";
+        return true;
+    }
+
+    Vector3Int ResolveTileSettleCell(Vector3Int desiredCell, Vector2 kickDir, Tilemap destructibleTilemap)
+    {
+        if (destructibleTilemap == null)
+            return desiredCell;
+
+        if (!TryFindCharacterOverlappingCell(
+                destructibleTilemap,
+                desiredCell,
+                out Collider2D blocker,
+                out string blockerKind))
+        {
+            return desiredCell;
+        }
+
+        Vector3Int step = new(Mathf.RoundToInt(kickDir.x), Mathf.RoundToInt(kickDir.y), 0);
+        Vector3Int fallbackCell = desiredCell - step;
+
+        if (step != Vector3Int.zero &&
+            CanSettleTileAtCell(fallbackCell, destructibleTilemap))
+        {
+            LogKickTrace(
+                $"tile-settle-avoid-character owner:{GetOwnerLabel()} " +
+                $"desired:{desiredCell} fallback:{fallbackCell} kind:{blockerKind} " +
+                $"hit:{FormatCollider(blocker)}");
+            return fallbackCell;
+        }
+
+        LogKickTrace(
+            $"tile-settle-character-overlap-no-fallback owner:{GetOwnerLabel()} " +
+            $"desired:{desiredCell} fallback:{fallbackCell} kind:{blockerKind} " +
+            $"hit:{FormatCollider(blocker)}");
+        return desiredCell;
+    }
+
+    bool TryFindCharacterOverlappingCell(
+        Tilemap tilemap,
+        Vector3Int cell,
+        out Collider2D character,
+        out string characterKind)
+    {
+        character = null;
+        characterKind = "none";
+
+        if (tilemap == null || movement == null)
+            return false;
+
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int mask = 0;
+
+        if (playerLayer >= 0)
+            mask |= 1 << playerLayer;
+        if (enemyLayer >= 0)
+            mask |= 1 << enemyLayer;
+        if (mask == 0)
+            return false;
+
+        float ts = Mathf.Max(0.1f, movement.tileSize);
+        Vector2 center = tilemap.GetCellCenterWorld(cell);
+        Vector2 size = Vector2.one * (ts * 0.88f);
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(center, size, 0f, mask);
+
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Collider2D hit = overlaps[i];
+            if (!IsBlockingCharacterCollider(hit, playerLayer, enemyLayer))
+                continue;
+
+            character = hit;
+            characterKind = playerLayer >= 0 && hit.gameObject.layer == playerLayer ? "player" : "enemy";
+            return true;
+        }
+
+        return false;
+    }
+
+    bool CanSettleTileAtCell(Vector3Int cell, Tilemap destructibleTilemap)
+    {
+        if (destructibleTilemap == null)
+            return false;
+
+        if (destructibleTilemap.GetTile(cell) != null)
+            return false;
+
+        if (_reservedCells.Contains(cell))
+            return false;
+
+        if (TryFindCharacterOverlappingCell(destructibleTilemap, cell, out _, out _))
+            return false;
+
+        Vector3 center = destructibleTilemap.GetCellCenterWorld(cell);
+        return !IsMixedChainSolidAt(center, Vector2.zero, null);
+    }
+
+    bool IsBlockingCharacterCollider(Collider2D hit, int playerLayer, int enemyLayer)
+    {
+        if (hit == null || hit.isTrigger)
+            return false;
+
+        if (hit.gameObject == gameObject)
+            return false;
+
+        MovementController hitMovement = hit.GetComponent<MovementController>();
+        if (hitMovement == null)
+            hitMovement = hit.GetComponentInParent<MovementController>();
+        if (hitMovement != null && hitMovement == movement)
+            return false;
+
+        int layer = hit.gameObject.layer;
+        return (playerLayer >= 0 && layer == playerLayer) ||
+               (enemyLayer >= 0 && layer == enemyLayer);
     }
 
     bool HasAnyColliderAt(Vector3 center, int mask)
@@ -2269,6 +2524,23 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     static string FormatVec(Vector2 value)
     {
         return $"({value.x:F2},{value.y:F2})";
+    }
+
+    static string FormatVec(Vector3 value)
+    {
+        return $"({value.x:F2},{value.y:F2})";
+    }
+
+    static string FormatCollider(Collider2D collider)
+    {
+        if (collider == null)
+            return "none";
+
+        string layerName = LayerMask.LayerToName(collider.gameObject.layer);
+        if (string.IsNullOrEmpty(layerName))
+            layerName = collider.gameObject.layer.ToString();
+
+        return $"{collider.name} layer:{layerName} pos:{FormatVec(collider.bounds.center)}";
     }
 
     static string FormatBomb(Bomb bomb)
