@@ -89,6 +89,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
         124, 125, 126, 127, 128, 129, 130, 131, 132,
         133, 134, 135, 136, 137, 138, 139, 140
     };
+    static readonly int[] TinyBomberEndStageFrames =
+    {
+        104, 105, 106, 129, 130, 132, 133, 134, 135, 136
+    };
 
     [Header("EndStage Offset + Stop")]
     [SerializeField] float endStageYOffset = 10f;
@@ -203,7 +207,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     List<BomberCharacter> selectableCharacters = new()
     {
         BomberCharacter.Bomberman,
-        BomberCharacter.LadyBomber
+        BomberCharacter.LadyBomber,
+        BomberCharacter.TinyBomber
     };
 
     [Header("Palettes (L/R order)")]
@@ -694,11 +699,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void EnsureSelectableCharacters()
     {
-        selectableCharacters ??= new List<BomberCharacter>(2);
+        selectableCharacters ??= new List<BomberCharacter>(3);
 
         selectableCharacters.Clear();
         selectableCharacters.Add(BomberCharacter.Bomberman);
         selectableCharacters.Add(BomberCharacter.LadyBomber);
+        selectableCharacters.Add(BomberCharacter.TinyBomber);
 
         if (selectableSkins == null || selectableSkins.Count == 0)
             selectableSkins = new List<BomberSkin>(BomberSkinResourceCatalog.BombermanSkins);
@@ -789,9 +795,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     int[] GetEndStageFrames(BomberCharacter character)
     {
-        return character == BomberCharacter.LadyBomber
-            ? LadyBomberEndStageFrames
-            : endStageFrames;
+        return character switch
+        {
+            BomberCharacter.LadyBomber => LadyBomberEndStageFrames,
+            BomberCharacter.TinyBomber => TinyBomberEndStageFrames,
+            _ => endStageFrames
+        };
     }
 
     static bool ShouldLoopEndStage(BomberCharacter character)

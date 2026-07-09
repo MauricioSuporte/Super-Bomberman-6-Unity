@@ -1,5 +1,6 @@
 public enum BomberCharacter
 {
     Bomberman,
-    LadyBomber
+    LadyBomber,
+    TinyBomber
 }

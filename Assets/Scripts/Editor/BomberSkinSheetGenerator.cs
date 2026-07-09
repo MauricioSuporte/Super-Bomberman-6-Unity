@@ -38,7 +38,12 @@ public static class BomberSkinSheetGenerator
             BomberCharacter.LadyBomber,
             "Assets/Resources/Sprites/LadyBomber/LadyBomber.png",
             "Assets/Resources/Sprites/LadyBomber/BombermanPallete.png",
-            "Assets/Resources/Sprites/LadyBomber/Generated/LadyBomber")
+            "Assets/Resources/Sprites/LadyBomber/Generated/LadyBomber"),
+        new CharacterSkinSheetSource(
+            BomberCharacter.TinyBomber,
+            "Assets/Resources/Sprites/TinyBomber/TinyBomber.png",
+            "Assets/Resources/Sprites/TinyBomber/BombermanPallete.png",
+            "Assets/Resources/Sprites/TinyBomber/Generated/TinyBomber")
     };
 
     static readonly BomberSkin[] BombermanSkins =

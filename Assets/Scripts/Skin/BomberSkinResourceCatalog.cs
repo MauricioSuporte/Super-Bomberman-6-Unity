@@ -2,6 +2,7 @@ public static class BomberSkinResourceCatalog
 {
     public const string BombermanGeneratedResourcesPath = "Sprites/Bomberman/Generated/Bomberman";
     public const string LadyBomberGeneratedResourcesPath = "Sprites/LadyBomber/Generated/LadyBomber";
+    public const string TinyBomberGeneratedResourcesPath = "Sprites/TinyBomber/Generated/TinyBomber";
 
     public static readonly BomberSkin[] BombermanSkins =
     {
@@ -38,6 +39,7 @@ public static class BomberSkinResourceCatalog
         {
             BomberCharacter.Bomberman => BombermanGeneratedResourcesPath,
             BomberCharacter.LadyBomber => LadyBomberGeneratedResourcesPath,
+            BomberCharacter.TinyBomber => TinyBomberGeneratedResourcesPath,
             _ => BombermanGeneratedResourcesPath
         };
     }
@@ -48,6 +50,7 @@ public static class BomberSkinResourceCatalog
         {
             BomberCharacter.Bomberman => "Bomber",
             BomberCharacter.LadyBomber => "LadyBomber",
+            BomberCharacter.TinyBomber => "TinyBomber",
             _ => "Bomber"
         };
 

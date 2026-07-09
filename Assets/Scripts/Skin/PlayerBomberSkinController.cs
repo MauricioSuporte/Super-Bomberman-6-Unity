@@ -16,6 +16,7 @@ public class PlayerBomberSkinController : MonoBehaviour
     const float LadyBomberEndStageSpeedMultiplier = 1.5f;
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
     static readonly int[] BombermanEndStageFrames = { 105, 104, 106, 104, 105, 106 };
+    static readonly int[] TinyBomberEndStageFrames = { 104, 105, 106, 129, 130, 132, 133, 134, 135, 136 };
     static readonly int[] LadyBomberEndStageFrames =
     {
         124, 125, 126, 127, 128, 129, 130, 131, 132,
@@ -227,9 +228,12 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     static int[] GetEndStageFrames(BomberCharacter character)
     {
-        return character == BomberCharacter.LadyBomber
-            ? LadyBomberEndStageFrames
-            : BombermanEndStageFrames;
+        return character switch
+        {
+            BomberCharacter.LadyBomber => LadyBomberEndStageFrames,
+            BomberCharacter.TinyBomber => TinyBomberEndStageFrames,
+            _ => BombermanEndStageFrames
+        };
     }
 
     static bool ShouldLoopEndStage(BomberCharacter character)
