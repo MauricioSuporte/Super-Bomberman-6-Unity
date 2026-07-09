@@ -1,5 +1,5 @@
-﻿fileFormatVersion: 2
-guid: ab9418fc38b846d397eb36f527e58a1e
+fileFormatVersion: 2
+guid: a60e19457eef941408200f3fc25ac38e
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -425,6 +425,9 @@ TextureImporter:
   - first:
       213: 5205710523888739563
     second: YellowLadyBomber_140
+  - first:
+      213: -8267322038622471337
+    second: YellowLadyBomber_141
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -2758,7 +2761,7 @@ TextureImporter:
       name: YellowLadyBomber_101
       rect:
         serializedVersion: 2
-        x: 1280
+        x: 1472
         y: 192
         width: 64
         height: 64
@@ -2780,8 +2783,8 @@ TextureImporter:
       name: YellowLadyBomber_102
       rect:
         serializedVersion: 2
-        x: 1344
-        y: 192
+        x: 0
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -2802,8 +2805,8 @@ TextureImporter:
       name: YellowLadyBomber_103
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 192
+        x: 64
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -2824,8 +2827,8 @@ TextureImporter:
       name: YellowLadyBomber_104
       rect:
         serializedVersion: 2
-        x: 1472
-        y: 192
+        x: 128
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -2846,7 +2849,7 @@ TextureImporter:
       name: YellowLadyBomber_105
       rect:
         serializedVersion: 2
-        x: 0
+        x: 192
         y: 128
         width: 64
         height: 64
@@ -2868,7 +2871,7 @@ TextureImporter:
       name: YellowLadyBomber_106
       rect:
         serializedVersion: 2
-        x: 64
+        x: 256
         y: 128
         width: 64
         height: 64
@@ -2890,7 +2893,7 @@ TextureImporter:
       name: YellowLadyBomber_107
       rect:
         serializedVersion: 2
-        x: 128
+        x: 320
         y: 128
         width: 64
         height: 64
@@ -2912,7 +2915,7 @@ TextureImporter:
       name: YellowLadyBomber_108
       rect:
         serializedVersion: 2
-        x: 192
+        x: 384
         y: 128
         width: 64
         height: 64
@@ -2934,7 +2937,7 @@ TextureImporter:
       name: YellowLadyBomber_109
       rect:
         serializedVersion: 2
-        x: 256
+        x: 448
         y: 128
         width: 64
         height: 64
@@ -2956,7 +2959,7 @@ TextureImporter:
       name: YellowLadyBomber_110
       rect:
         serializedVersion: 2
-        x: 320
+        x: 512
         y: 128
         width: 64
         height: 64
@@ -2978,7 +2981,7 @@ TextureImporter:
       name: YellowLadyBomber_111
       rect:
         serializedVersion: 2
-        x: 384
+        x: 576
         y: 128
         width: 64
         height: 64
@@ -3000,7 +3003,7 @@ TextureImporter:
       name: YellowLadyBomber_112
       rect:
         serializedVersion: 2
-        x: 448
+        x: 640
         y: 128
         width: 64
         height: 64
@@ -3022,7 +3025,7 @@ TextureImporter:
       name: YellowLadyBomber_113
       rect:
         serializedVersion: 2
-        x: 512
+        x: 704
         y: 128
         width: 64
         height: 64
@@ -3044,7 +3047,7 @@ TextureImporter:
       name: YellowLadyBomber_114
       rect:
         serializedVersion: 2
-        x: 576
+        x: 768
         y: 128
         width: 64
         height: 64
@@ -3066,7 +3069,7 @@ TextureImporter:
       name: YellowLadyBomber_115
       rect:
         serializedVersion: 2
-        x: 640
+        x: 832
         y: 128
         width: 64
         height: 64
@@ -3088,7 +3091,7 @@ TextureImporter:
       name: YellowLadyBomber_116
       rect:
         serializedVersion: 2
-        x: 704
+        x: 896
         y: 128
         width: 64
         height: 64
@@ -3110,7 +3113,7 @@ TextureImporter:
       name: YellowLadyBomber_117
       rect:
         serializedVersion: 2
-        x: 768
+        x: 960
         y: 128
         width: 64
         height: 64
@@ -3132,7 +3135,7 @@ TextureImporter:
       name: YellowLadyBomber_118
       rect:
         serializedVersion: 2
-        x: 832
+        x: 1024
         y: 128
         width: 64
         height: 64
@@ -3154,7 +3157,7 @@ TextureImporter:
       name: YellowLadyBomber_119
       rect:
         serializedVersion: 2
-        x: 896
+        x: 1088
         y: 128
         width: 64
         height: 64
@@ -3176,7 +3179,7 @@ TextureImporter:
       name: YellowLadyBomber_120
       rect:
         serializedVersion: 2
-        x: 960
+        x: 1152
         y: 128
         width: 64
         height: 64
@@ -3198,7 +3201,7 @@ TextureImporter:
       name: YellowLadyBomber_121
       rect:
         serializedVersion: 2
-        x: 1024
+        x: 1216
         y: 128
         width: 64
         height: 64
@@ -3220,7 +3223,7 @@ TextureImporter:
       name: YellowLadyBomber_122
       rect:
         serializedVersion: 2
-        x: 1088
+        x: 1280
         y: 128
         width: 64
         height: 64
@@ -3242,7 +3245,7 @@ TextureImporter:
       name: YellowLadyBomber_123
       rect:
         serializedVersion: 2
-        x: 1152
+        x: 1472
         y: 128
         width: 64
         height: 64
@@ -3264,8 +3267,8 @@ TextureImporter:
       name: YellowLadyBomber_124
       rect:
         serializedVersion: 2
-        x: 1216
-        y: 128
+        x: 320
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3286,8 +3289,8 @@ TextureImporter:
       name: YellowLadyBomber_125
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 128
+        x: 384
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3308,8 +3311,8 @@ TextureImporter:
       name: YellowLadyBomber_126
       rect:
         serializedVersion: 2
-        x: 1344
-        y: 128
+        x: 448
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3330,8 +3333,8 @@ TextureImporter:
       name: YellowLadyBomber_127
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 128
+        x: 512
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3352,8 +3355,8 @@ TextureImporter:
       name: YellowLadyBomber_128
       rect:
         serializedVersion: 2
-        x: 1472
-        y: 128
+        x: 576
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3374,7 +3377,7 @@ TextureImporter:
       name: YellowLadyBomber_129
       rect:
         serializedVersion: 2
-        x: 704
+        x: 640
         y: 64
         width: 64
         height: 64
@@ -3396,7 +3399,7 @@ TextureImporter:
       name: YellowLadyBomber_130
       rect:
         serializedVersion: 2
-        x: 768
+        x: 704
         y: 64
         width: 64
         height: 64
@@ -3418,7 +3421,7 @@ TextureImporter:
       name: YellowLadyBomber_131
       rect:
         serializedVersion: 2
-        x: 832
+        x: 768
         y: 64
         width: 64
         height: 64
@@ -3440,7 +3443,7 @@ TextureImporter:
       name: YellowLadyBomber_132
       rect:
         serializedVersion: 2
-        x: 896
+        x: 832
         y: 64
         width: 64
         height: 64
@@ -3462,7 +3465,7 @@ TextureImporter:
       name: YellowLadyBomber_133
       rect:
         serializedVersion: 2
-        x: 960
+        x: 896
         y: 64
         width: 64
         height: 64
@@ -3484,7 +3487,7 @@ TextureImporter:
       name: YellowLadyBomber_134
       rect:
         serializedVersion: 2
-        x: 1024
+        x: 960
         y: 64
         width: 64
         height: 64
@@ -3506,7 +3509,7 @@ TextureImporter:
       name: YellowLadyBomber_135
       rect:
         serializedVersion: 2
-        x: 1088
+        x: 1024
         y: 64
         width: 64
         height: 64
@@ -3528,7 +3531,7 @@ TextureImporter:
       name: YellowLadyBomber_136
       rect:
         serializedVersion: 2
-        x: 1152
+        x: 1088
         y: 64
         width: 64
         height: 64
@@ -3550,7 +3553,7 @@ TextureImporter:
       name: YellowLadyBomber_137
       rect:
         serializedVersion: 2
-        x: 1216
+        x: 1152
         y: 64
         width: 64
         height: 64
@@ -3572,7 +3575,7 @@ TextureImporter:
       name: YellowLadyBomber_138
       rect:
         serializedVersion: 2
-        x: 1280
+        x: 1216
         y: 64
         width: 64
         height: 64
@@ -3594,7 +3597,7 @@ TextureImporter:
       name: YellowLadyBomber_139
       rect:
         serializedVersion: 2
-        x: 1344
+        x: 1280
         y: 64
         width: 64
         height: 64
@@ -3616,7 +3619,7 @@ TextureImporter:
       name: YellowLadyBomber_140
       rect:
         serializedVersion: 2
-        x: 1408
+        x: 1344
         y: 64
         width: 64
         height: 64
@@ -3638,6 +3641,28 @@ TextureImporter:
       name: YellowLadyBomber_141
       rect:
         serializedVersion: 2
+        x: 1408
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75b36247862944d80800000000000000
+      internalID: -8267322038622471337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowLadyBomber_142
+      rect:
+        serializedVersion: 2
         x: 1472
         y: 64
         width: 64
@@ -3650,14 +3675,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7934995ba449de44985529a23c05ed9e
-      internalID: 1162701655
+      spriteID: e41abb2986cee124c880a1afd4f88d2c
+      internalID: -603349169
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: YellowLadyBomber_142
+      name: YellowLadyBomber_143
       rect:
         serializedVersion: 2
         x: 1408
@@ -3672,14 +3697,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b608953a473de174ba7b1c9e25329902
-      internalID: -1505764298
+      spriteID: 5176bd04a42e0424fa311966cab38d08
+      internalID: 1669808860
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: YellowLadyBomber_143
+      name: YellowLadyBomber_144
       rect:
         serializedVersion: 2
         x: 1472
@@ -3694,8 +3719,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 914b27627b32c0c45a986a309af59db4
-      internalID: 1640765322
+      spriteID: bdaae00772e20464f9736c49b45ec265
+      internalID: 1283991248
       vertices: []
       indices: 
       edges: []
@@ -3704,7 +3729,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 16d95eded7e3034498e89a126c5e5655
+    spriteID: 0b41c467a861fa54f8e31d0362ceaea1
     internalID: 0
     vertices: []
     indices: 
@@ -3764,9 +3789,10 @@ TextureImporter:
       YellowLadyBomber_139: 5976827149777335674
       YellowLadyBomber_14: 5309473467101928211
       YellowLadyBomber_140: 5205710523888739563
-      YellowLadyBomber_141: 1162701655
-      YellowLadyBomber_142: -1505764298
-      YellowLadyBomber_143: 1640765322
+      YellowLadyBomber_141: -8267322038622471337
+      YellowLadyBomber_142: -603349169
+      YellowLadyBomber_143: 1669808860
+      YellowLadyBomber_144: 1283991248
       YellowLadyBomber_15: -6478997567270596932
       YellowLadyBomber_16: -176805284491116770
       YellowLadyBomber_17: -2928879260159101480

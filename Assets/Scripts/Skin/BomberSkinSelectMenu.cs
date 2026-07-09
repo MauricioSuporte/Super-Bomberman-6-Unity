@@ -80,8 +80,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Preview Animations")]
     [SerializeField] float downFrameTime = 0.22f;
     [SerializeField] float endStageFrameTime = 0.1f;
+    [SerializeField, Min(0.01f)] float ladyBomberEndStageSpeedMultiplier = 1.5f;
     [SerializeField] int[] downFrames = new[] { 1, 0, 1, 2, 3, 4, 3, 2 };
     [SerializeField] int[] endStageFrames = new[] { 105, 104, 106, 104, 105, 106 };
+
+    static readonly int[] LadyBomberEndStageFrames =
+    {
+        124, 125, 126, 127, 128, 129, 130, 131, 132,
+        133, 134, 135, 136, 137, 138, 139, 140
+    };
 
     [Header("EndStage Offset + Stop")]
     [SerializeField] float endStageYOffset = 10f;
@@ -780,6 +787,40 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return character + ":" + skin;
     }
 
+    int[] GetEndStageFrames(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber
+            ? LadyBomberEndStageFrames
+            : endStageFrames;
+    }
+
+    static bool ShouldLoopEndStage(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber;
+    }
+
+    int GetEndStageFrame(BomberCharacter character, int frameIndex)
+    {
+        int[] frames = GetEndStageFrames(character);
+        if (frames == null || frames.Length == 0)
+            return idleFrameIndex;
+
+        int index = ShouldLoopEndStage(character)
+            ? Mathf.Abs(frameIndex) % frames.Length
+            : Mathf.Clamp(frameIndex, 0, frames.Length - 1);
+
+        return frames[index];
+    }
+
+    float GetEndStageFrameTime(BomberCharacter character)
+    {
+        float baseTime = Mathf.Max(0.001f, endStageFrameTime);
+        if (character != BomberCharacter.LadyBomber)
+            return baseTime;
+
+        return baseTime / Mathf.Max(0.01f, ladyBomberEndStageSpeedMultiplier);
+    }
+
     public BomberCharacter GetSelectedCharacter(int playerId)
     {
         playerId = Mathf.Clamp(playerId, 1, 6);
@@ -825,8 +866,20 @@ public class BomberSkinSelectMenu : MonoBehaviour
     public Sprite GetBattleModeTeamCelebrationSprite(BomberCharacter character, BomberSkin skin, int frameIndex)
     {
         int frame = idleFrameIndex;
-        if (endStageFrames != null && endStageFrames.Length > 0)
-            frame = endStageFrames[Mathf.Clamp(frameIndex, 0, endStageFrames.Length - 1)];
+        int[] frames = GetEndStageFrames(character);
+        if (frames != null && frames.Length > 0)
+        {
+            if (ShouldLoopEndStage(character) && frameIndex == int.MaxValue)
+                frameIndex = Mathf.FloorToInt(Time.unscaledTime / GetEndStageFrameTime(character));
+            else if (character == BomberCharacter.LadyBomber)
+                frameIndex = Mathf.FloorToInt(frameIndex * Mathf.Max(0.01f, ladyBomberEndStageSpeedMultiplier));
+
+            int index = ShouldLoopEndStage(character)
+                ? Mathf.Abs(frameIndex) % frames.Length
+                : Mathf.Clamp(frameIndex, 0, frames.Length - 1);
+
+            frame = frames[index];
+        }
 
         return GetSpriteByFrame(character, skin, frame) ?? GetIdleSprite(character, skin);
     }
@@ -979,17 +1032,19 @@ public class BomberSkinSelectMenu : MonoBehaviour
             endStageBySlot[slotIndex] = st;
         }
 
+        int[] frames = GetEndStageFrames(character);
+        bool loopEndStage = ShouldLoopEndStage(character);
         int finalFrameIndex = 0;
-        if (endStageFrames != null && endStageFrames.Length > 0)
-            finalFrameIndex = endStageFrames.Length - 1;
+        if (frames != null && frames.Length > 0)
+            finalFrameIndex = loopEndStage ? 0 : frames.Length - 1;
 
         st.slotIndex = slotIndex;
         st.character = character;
         st.skin = skin;
         st.timer = 0f;
         st.frameIdx = finalFrameIndex;
-        st.loopsDone = Mathf.Max(1, endStageLoopsToStop);
-        st.stopped = true;
+        st.loopsDone = loopEndStage ? 0 : Mathf.Max(1, endStageLoopsToStop);
+        st.stopped = !loopEndStage;
 
         if (slotIndex >= 0 && slotIndex < slotImages.Count)
         {
@@ -1001,9 +1056,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
                 img.rectTransform.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
 
-                if (endStageFrames != null && endStageFrames.Length > 0)
+                if (frames != null && frames.Length > 0)
                 {
-                    int frame = endStageFrames[Mathf.Clamp(finalFrameIndex, 0, endStageFrames.Length - 1)];
+                    int frame = frames[Mathf.Clamp(finalFrameIndex, 0, frames.Length - 1)];
                     img.sprite = GetSpriteByFrame(character, skin, frame) ?? GetIdleSprite(character, skin);
                 }
                 else
@@ -1051,10 +1106,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 img.rectTransform.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
             }
 
-            if (endStageFrames != null && endStageFrames.Length > 0)
+            int[] frames = GetEndStageFrames(st.character);
+            if (frames != null && frames.Length > 0)
             {
-                int frameIndex = Mathf.Clamp(st.frameIdx, 0, endStageFrames.Length - 1);
-                int frame = endStageFrames[frameIndex];
+                int frameIndex = ShouldLoopEndStage(st.character)
+                    ? Mathf.Abs(st.frameIdx) % frames.Length
+                    : Mathf.Clamp(st.frameIdx, 0, frames.Length - 1);
+                int frame = frames[frameIndex];
                 img.sprite = GetSpriteByFrame(st.character, st.skin, frame) ?? GetIdleSprite(st.character, st.skin);
             }
             else
@@ -1178,17 +1236,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void TickEndStageClocks()
     {
-        if (endStageFrames == null || endStageFrames.Length == 0)
-            return;
-
-        float ft = Mathf.Max(0.001f, endStageFrameTime);
-
         foreach (var kv in endStageBySlot)
         {
             var st = kv.Value;
             if (st == null || st.stopped)
                 continue;
 
+            int[] frames = GetEndStageFrames(st.character);
+            if (frames == null || frames.Length == 0)
+                continue;
+
+            float ft = GetEndStageFrameTime(st.character);
             st.timer += Time.unscaledDeltaTime;
 
             while (st.timer >= ft)
@@ -1197,18 +1255,26 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
                 int next = st.frameIdx + 1;
 
-                if (next >= endStageFrames.Length)
+                if (next >= frames.Length)
                 {
-                    st.loopsDone++;
-
-                    if (st.loopsDone >= Mathf.Max(1, endStageLoopsToStop))
+                    if (ShouldLoopEndStage(st.character))
                     {
-                        st.stopped = true;
-                        st.frameIdx = endStageFrames.Length - 1;
-                        break;
+                        st.loopsDone++;
+                        next = 0;
                     }
+                    else
+                    {
+                        st.loopsDone++;
 
-                    next = 0;
+                        if (st.loopsDone >= Mathf.Max(1, endStageLoopsToStop))
+                        {
+                            st.stopped = true;
+                            st.frameIdx = frames.Length - 1;
+                            break;
+                        }
+
+                        next = 0;
+                    }
                 }
 
                 st.frameIdx = next;
@@ -1263,7 +1329,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     rt.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
                 }
 
-                int f = endStageFrames[Mathf.Clamp(st.frameIdx, 0, endStageFrames.Length - 1)];
+                int f = GetEndStageFrame(st.character, st.frameIdx);
                 img.sprite = GetSpriteByFrame(st.character, st.skin, f) ?? GetIdleSprite(st.character, st.skin);
             }
             else

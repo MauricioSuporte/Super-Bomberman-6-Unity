@@ -20,10 +20,10 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
-        public int BombAmount = 1;
-        public int ExplosionRadius = 2;
-        public int SpeedInternal = BaseSpeedNormal /*+ (SpeedStep * 5)*/;
+        public int Life = 9;
+        public int BombAmount = 9;
+        public int ExplosionRadius = 9;
+        public int SpeedInternal = BaseSpeedNormal + (SpeedStep * 9);
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = false;

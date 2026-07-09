@@ -11,9 +11,16 @@ public class PlayerBomberSkinController : MonoBehaviour
     [SerializeField] private bool enableSurgicalLogs;
 
     readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> skinFrameMaps = new();
+    readonly Dictionary<AnimatedSpriteRenderer, float> baseAnimationTimes = new();
 
+    const float LadyBomberEndStageSpeedMultiplier = 1.5f;
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
-    static readonly int[] EndStageFrames = { 105, 104, 106, 104, 105, 106 };
+    static readonly int[] BombermanEndStageFrames = { 105, 104, 106, 104, 105, 106 };
+    static readonly int[] LadyBomberEndStageFrames =
+    {
+        124, 125, 126, 127, 128, 129, 130, 131, 132,
+        133, 134, 135, 136, 137, 138, 139, 140
+    };
 
     readonly struct WalkDefinition
     {
@@ -118,13 +125,16 @@ public class PlayerBomberSkinController : MonoBehaviour
             ApplyWalkDefinition(renderer, definition, targetMap, skin);
         }
 
+        int[] endStageFrames = GetEndStageFrames(character);
         ApplyFrameSequence(
             FindAnimatedRenderer("EndStage"),
             "EndStage",
-            EndStageFrames[0],
-            EndStageFrames,
+            endStageFrames[0],
+            endStageFrames,
             targetMap,
-            skin
+            skin,
+            loop: ShouldLoopEndStage(character),
+            speedMultiplier: GetEndStageSpeedMultiplier(character)
         );
 
         for (int i = 0; i < PunchDefinitions.Length; i++)
@@ -215,6 +225,25 @@ public class PlayerBomberSkinController : MonoBehaviour
                actualName == expectedName.Replace("Right", "Rigth");
     }
 
+    static int[] GetEndStageFrames(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber
+            ? LadyBomberEndStageFrames
+            : BombermanEndStageFrames;
+    }
+
+    static bool ShouldLoopEndStage(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber;
+    }
+
+    static float GetEndStageSpeedMultiplier(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber
+            ? LadyBomberEndStageSpeedMultiplier
+            : 1f;
+    }
+
     void ApplyWalkDefinition(
         AnimatedSpriteRenderer renderer,
         WalkDefinition definition,
@@ -268,7 +297,8 @@ public class PlayerBomberSkinController : MonoBehaviour
         int[] frames,
         Dictionary<int, Sprite> targetMap,
         BomberSkin skin,
-        bool loop = true)
+        bool loop = true,
+        float speedMultiplier = 1f)
     {
         if (renderer == null)
         {
@@ -299,12 +329,27 @@ public class PlayerBomberSkinController : MonoBehaviour
         renderer.animationSprite = animation;
         renderer.loop = loop;
         renderer.pingPong = false;
+        ApplyAnimationSpeed(renderer, speedMultiplier);
         renderer.RefreshFrame();
 
         if (renderer.TryGetComponent<SpriteRenderer>(out var spriteRenderer) && spriteRenderer != null)
             spriteRenderer.sprite = renderer.idleSprite;
 
         SLog($"ApplyFrameSequence | skin={skin} renderer={rendererName} idle={idleFrame} frames={string.Join(",", frames)}");
+    }
+
+    void ApplyAnimationSpeed(AnimatedSpriteRenderer renderer, float speedMultiplier)
+    {
+        if (renderer == null)
+            return;
+
+        if (!baseAnimationTimes.TryGetValue(renderer, out float baseTime) || baseTime <= 0f)
+        {
+            baseTime = Mathf.Max(0.0001f, renderer.animationTime);
+            baseAnimationTimes[renderer] = baseTime;
+        }
+
+        renderer.animationTime = baseTime / Mathf.Max(0.0001f, speedMultiplier);
     }
 
     static int[] GetWalkFrames(int idleFrame)
