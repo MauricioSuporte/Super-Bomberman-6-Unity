@@ -3,11 +3,36 @@ using UnityEngine;
 
 public class PlayerBomberSkinController : MonoBehaviour
 {
+    const string LogPrefix = "[PlayerBomberSkinController]";
+
     [Header("Sprite Settings")]
     [SerializeField] private BomberCharacter character = BomberCharacter.Bomberman;
     [SerializeField] private string spritesResourcesPath = BomberSkinResourceCatalog.BombermanGeneratedResourcesPath;
+    [SerializeField] private bool enableSurgicalLogs;
 
-    readonly Dictionary<BomberSkin, Dictionary<string, Sprite>> skinMaps = new();
+    readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> skinFrameMaps = new();
+
+    static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
+
+    readonly struct WalkDefinition
+    {
+        public readonly string RendererName;
+        public readonly int IdleFrame;
+
+        public WalkDefinition(string rendererName, int idleFrame)
+        {
+            RendererName = rendererName;
+            IdleFrame = idleFrame;
+        }
+    }
+
+    static readonly WalkDefinition[] WalkDefinitions =
+    {
+        new("Down", 2),
+        new("Right", 25),
+        new("Left", 48),
+        new("Up", 72)
+    };
 
     public void ApplyFromIdentity()
     {
@@ -31,42 +56,17 @@ public class PlayerBomberSkinController : MonoBehaviour
     {
         EnsureCache(skin);
 
-        if (!skinMaps.TryGetValue(skin, out var targetMap) || targetMap.Count == 0)
-            return;
-
-        var animated = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < animated.Length; i++)
+        if (!skinFrameMaps.TryGetValue(skin, out var targetMap) || targetMap.Count == 0)
         {
-            var asr = animated[i];
-            if (asr == null) continue;
-
-            if (IsInsideMountedLouie(asr))
-                continue;
-
-            asr.idleSprite = SwapBySuffix(asr.idleSprite, targetMap);
-
-            if (asr.animationSprite != null)
-            {
-                for (int f = 0; f < asr.animationSprite.Length; f++)
-                    asr.animationSprite[f] = SwapBySuffix(asr.animationSprite[f], targetMap);
-            }
-
-            asr.RefreshFrame();
+            SLog($"Apply skipped | skin={skin} no sprites loaded from {spritesResourcesPath}");
+            return;
         }
 
-        var spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < spriteRenderers.Length; i++)
+        for (int i = 0; i < WalkDefinitions.Length; i++)
         {
-            var sr = spriteRenderers[i];
-            if (sr == null) continue;
-
-            if (IsInsideMountedLouie(sr))
-                continue;
-
-            if (sr.GetComponentInParent<AnimatedSpriteRenderer>() != null)
-                continue;
-
-            sr.sprite = SwapBySuffix(sr.sprite, targetMap);
+            WalkDefinition definition = WalkDefinitions[i];
+            AnimatedSpriteRenderer renderer = FindAnimatedRenderer(definition.RendererName);
+            ApplyWalkDefinition(renderer, definition, targetMap, skin);
         }
     }
 
@@ -77,18 +77,20 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     void EnsureCache(BomberSkin skin)
     {
-        if (skinMaps.ContainsKey(skin))
+        if (skinFrameMaps.ContainsKey(skin))
             return;
 
-        skinMaps[skin] = BuildSheetMap(BomberSkinResourceCatalog.GetSheetName(character, skin));
+        skinFrameMaps[skin] = BuildFrameMap(BomberSkinResourceCatalog.GetSheetName(character, skin));
     }
 
-    Dictionary<string, Sprite> BuildSheetMap(string sheetName)
+    Dictionary<int, Sprite> BuildFrameMap(string sheetName)
     {
-        var map = new Dictionary<string, Sprite>(256);
+        var map = new Dictionary<int, Sprite>(256);
 
         string sheetPath = $"{spritesResourcesPath}/{sheetName}";
         var sprites = Resources.LoadAll<Sprite>(sheetPath);
+
+        SLog($"BuildFrameMap | sheetPath={sheetPath} sprites={(sprites != null ? sprites.Length : 0)}");
 
         if (sprites == null || sprites.Length == 0)
             return map;
@@ -98,40 +100,120 @@ public class PlayerBomberSkinController : MonoBehaviour
             var s = sprites[i];
             if (s == null) continue;
 
-            if (!map.ContainsKey(s.name))
-                map.Add(s.name, s);
+            if (!TryExtractFrameIndex(s.name, out int frameIndex))
+                continue;
+
+            if (!map.ContainsKey(frameIndex))
+                map.Add(frameIndex, s);
         }
 
         return map;
     }
 
-    Sprite SwapBySuffix(Sprite current, Dictionary<string, Sprite> targetMap)
+    AnimatedSpriteRenderer FindAnimatedRenderer(string rendererName)
     {
-        if (current == null)
-            return null;
-
-        if (!TryExtractSuffix(current.name, out var suffix))
-            return current;
-
-        foreach (var kv in targetMap)
+        var animated = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < animated.Length; i++)
         {
-            if (kv.Key.EndsWith(suffix))
-                return kv.Value;
+            AnimatedSpriteRenderer renderer = animated[i];
+            if (renderer == null)
+                continue;
+
+            if (!IsRendererNameMatch(renderer.gameObject.name, rendererName))
+                continue;
+
+            if (IsInsideMountedLouie(renderer))
+                continue;
+
+            return renderer;
         }
 
-        return current;
+        return null;
     }
 
-    bool TryExtractSuffix(string spriteName, out string suffix)
+    static bool IsRendererNameMatch(string actualName, string expectedName)
     {
-        suffix = null;
+        if (actualName == expectedName)
+            return true;
 
-        int idx = spriteName.LastIndexOf('_');
-        if (idx < 0)
+        return expectedName == "Right" && actualName == "Rigth";
+    }
+
+    void ApplyWalkDefinition(
+        AnimatedSpriteRenderer renderer,
+        WalkDefinition definition,
+        Dictionary<int, Sprite> targetMap,
+        BomberSkin skin)
+    {
+        if (renderer == null)
+        {
+            SLog($"ApplyWalkDefinition skipped | skin={skin} renderer={definition.RendererName} missing");
+            return;
+        }
+
+        if (!targetMap.TryGetValue(definition.IdleFrame, out Sprite idleSprite))
+        {
+            SLog($"ApplyWalkDefinition skipped | skin={skin} renderer={definition.RendererName} idleFrame={definition.IdleFrame} missing");
+            return;
+        }
+
+        Sprite[] animation = new Sprite[WalkFramePattern.Length];
+        for (int i = 0; i < WalkFramePattern.Length; i++)
+        {
+            int frame = definition.IdleFrame + WalkFramePattern[i];
+            if (!targetMap.TryGetValue(frame, out Sprite sprite))
+            {
+                SLog($"ApplyWalkDefinition skipped | skin={skin} renderer={definition.RendererName} frame={frame} missing");
+                return;
+            }
+
+            animation[i] = sprite;
+        }
+
+        renderer.idleSprite = idleSprite;
+        renderer.animationSprite = animation;
+        renderer.loop = true;
+        renderer.pingPong = false;
+        renderer.RefreshFrame();
+
+        if (renderer.TryGetComponent<SpriteRenderer>(out var spriteRenderer) && spriteRenderer != null)
+            spriteRenderer.sprite = renderer.idleSprite;
+
+        SLog(
+            $"ApplyWalkDefinition | skin={skin} renderer={definition.RendererName} " +
+            $"idle={definition.IdleFrame} frames={string.Join(",", GetWalkFrames(definition.IdleFrame))}"
+        );
+    }
+
+    static int[] GetWalkFrames(int idleFrame)
+    {
+        int[] frames = new int[WalkFramePattern.Length];
+        for (int i = 0; i < WalkFramePattern.Length; i++)
+            frames[i] = idleFrame + WalkFramePattern[i];
+
+        return frames;
+    }
+
+    static bool TryExtractFrameIndex(string spriteName, out int frameIndex)
+    {
+        frameIndex = -1;
+
+        if (string.IsNullOrWhiteSpace(spriteName))
             return false;
 
-        suffix = spriteName[idx..];
-        return true;
+        int idx = spriteName.LastIndexOf('_');
+        if (idx < 0 || idx >= spriteName.Length - 1)
+            return false;
+
+        return int.TryParse(spriteName[(idx + 1)..], out frameIndex);
+    }
+
+    void SLog(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"{LogPrefix} {message}", this);
     }
 
     void OnValidate()

@@ -76,12 +76,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Resources")]
     [SerializeField] BomberCharacter character = BomberCharacter.Bomberman;
     [SerializeField] string spritesResourcesPath = BomberSkinResourceCatalog.BombermanGeneratedResourcesPath;
-    [SerializeField] int idleFrameIndex = 16;
+    [SerializeField] int idleFrameIndex = 2;
 
     [Header("Preview Animations")]
     [SerializeField] float downFrameTime = 0.22f;
     [SerializeField] float endStageFrameTime = 0.1f;
-    [SerializeField] int[] downFrames = new[] { 14, 16, 18, 16 };
+    [SerializeField] int[] downFrames = new[] { 1, 0, 1, 2, 3, 4, 3, 2 };
     [SerializeField] int[] endStageFrames = new[] { 148, 148, 146, 148, 147, 148, 146, 148, 147, 147 };
 
     [Header("EndStage Offset + Stop")]

@@ -6,7 +6,6 @@ using UnityEngine;
 
 public static class BomberSkinSheetGenerator
 {
-    const string LogPrefix = "[BomberSkinSheetGenerator]";
     const string SourceSheetAssetPath = "Assets/Resources/Sprites/Bomberman/Bomberman.png";
     const string PaletteAssetPath = "Assets/Resources/Sprites/Bomberman/BombermanPallete.png";
     const string OutputFolderAssetPath = "Assets/Resources/Sprites/Bomberman/Generated/Bomberman";
@@ -51,16 +50,12 @@ public static class BomberSkinSheetGenerator
     {
         if (EditorApplication.isCompiling)
         {
-            Debug.Log($"{LogPrefix} Unity is compiling; delaying generation.");
             EditorApplication.delayCall += GenerateMissingBombermanSheets;
             return;
         }
 
         if (!File.Exists(SourceSheetAssetPath) || !File.Exists(PaletteAssetPath))
-        {
-            Debug.LogWarning($"{LogPrefix} Missing source sheet or palette. source='{SourceSheetAssetPath}' palette='{PaletteAssetPath}'");
             return;
-        }
 
         EnsureFolder(OutputFolderAssetPath);
 
@@ -68,16 +63,10 @@ public static class BomberSkinSheetGenerator
         Texture2D palette = LoadTexture(PaletteAssetPath);
 
         if (source == null || palette == null)
-        {
-            Debug.LogWarning($"{LogPrefix} Could not decode source sheet or palette.");
             return;
-        }
 
         int skinCount = Mathf.Min(BombermanSkins.Length, palette.width - 1);
-        int created = 0;
-        int skipped = 0;
-
-        Debug.Log($"{LogPrefix} Start | source={SourceSheetAssetPath} palette={PaletteAssetPath} paletteSize={palette.width}x{palette.height} skins={skinCount}");
+        bool generatedAny = false;
 
         for (int i = 0; i < skinCount; i++)
         {
@@ -87,11 +76,7 @@ public static class BomberSkinSheetGenerator
             string outputPath = $"{OutputFolderAssetPath}/{sheetName}.png";
 
             if (File.Exists(outputPath))
-            {
-                skipped++;
-                Debug.Log($"{LogPrefix} Skip | skin={skin} path={outputPath}");
                 continue;
-            }
 
             Dictionary<Color32, Color32> colorMap = BuildPaletteMap(palette, paletteColumn);
             Texture2D generated = Recolor(source, colorMap);
@@ -99,18 +84,14 @@ public static class BomberSkinSheetGenerator
 
             Object.DestroyImmediate(generated);
             WriteMetaFromSource(outputPath, sheetName);
-            created++;
-
-            Debug.Log($"{LogPrefix} Created | skin={skin} paletteColumn={paletteColumn} mappedColors={colorMap.Count} path={outputPath}");
+            generatedAny = true;
         }
 
         Object.DestroyImmediate(source);
         Object.DestroyImmediate(palette);
 
-        if (created > 0)
+        if (generatedAny)
             AssetDatabase.Refresh();
-
-        Debug.Log($"{LogPrefix} Done | created={created} skipped={skipped} output={OutputFolderAssetPath}");
     }
 
     static Texture2D LoadTexture(string assetPath)
