@@ -1985,7 +1985,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private Sprite GetTeamMemberSprite(int playerId, bool isCurrent)
     {
-        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
         bool assigned = teamAssigned != null &&
             playerId >= 1 &&
             playerId < teamAssigned.Length &&
@@ -1996,20 +1995,20 @@ public sealed class BattleModeMenu : MonoBehaviour
         {
             int frame = Mathf.FloorToInt(celebrationTime / 0.1f);
             return skinSelectMenu != null
-                ? skinSelectMenu.GetBattleModeTeamCelebrationSprite(skin, frame)
+                ? skinSelectMenu.GetBattleModeTeamCelebrationSprite(playerId, frame)
                 : null;
         }
 
         if (assigned)
         {
             return skinSelectMenu != null
-                ? skinSelectMenu.GetBattleModeTeamCelebrationSprite(skin, int.MaxValue)
+                ? skinSelectMenu.GetBattleModeTeamCelebrationSprite(playerId, int.MaxValue)
                 : null;
         }
 
         int previewFrame = Mathf.FloorToInt(teamPreviewTimer / 0.22f);
         return skinSelectMenu != null
-            ? skinSelectMenu.GetBattleModeTeamPreviewSprite(skin, previewFrame)
+            ? skinSelectMenu.GetBattleModeTeamPreviewSprite(playerId, previewFrame)
             : null;
     }
 
@@ -5275,9 +5274,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (skinSelectMenu == null)
             return null;
 
-        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
         int previewFrame = Mathf.FloorToInt(teamPreviewTimer / Mathf.Max(0.01f, handicapSelectPlayerFrameSeconds));
-        return skinSelectMenu.GetBattleModeTeamPreviewSprite(skin, previewFrame);
+        return skinSelectMenu.GetBattleModeTeamPreviewSprite(playerId, previewFrame);
     }
 
     private void UpdateHandicapOptionVisuals(HandicapRowVisual row, SaveData.BattleModeHandicapPlayerSave player)

@@ -70,6 +70,8 @@ public class SkinSelectBootstrap : MonoBehaviour
         {
             int playerId = configuredPlayerIds[i];
             var chosen = skinSelectMenu.GetSelectedSkin(playerId);
+            var chosenCharacter = skinSelectMenu.GetSelectedCharacter(playerId);
+            PlayerPersistentStats.Get(playerId).Character = chosenCharacter;
             PlayerPersistentStats.Get(playerId).Skin = chosen;
             PlayerPersistentStats.SaveSelectedSkin(playerId);
         }

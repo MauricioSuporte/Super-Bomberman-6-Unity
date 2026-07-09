@@ -288,7 +288,10 @@ public class MovementController : MonoBehaviour, IKillable
 
         var skin = GetComponentInChildren<PlayerBomberSkinController>(true);
         if (skin != null)
-            skin.Apply(PlayerPersistentStats.Get(playerId).Skin);
+        {
+            var state = PlayerPersistentStats.Get(playerId);
+            skin.Apply(state.Character, state.Skin);
+        }
 
         SyncMountedFromPersistent();
         ApplySpeedInternal(speedInternal);

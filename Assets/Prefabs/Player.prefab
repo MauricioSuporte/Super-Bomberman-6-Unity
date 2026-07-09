@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &123108581728754592
 GameObject:
@@ -812,7 +812,7 @@ Transform:
   m_GameObject: {fileID: 766710722019102173}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.05, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -867,7 +867,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6483543200235620609, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  m_Sprite: {fileID: 3106523974937055205, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -889,10 +889,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -6483543200235620609, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  idleSprite: {fileID: 3106523974937055205, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   animationSprite:
-  - {fileID: 2416694255222873370, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -6483543200235620609, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 3106523974937055205, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
+  - {fileID: -4360669528290711617, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
@@ -5327,7 +5327,7 @@ Transform:
   m_GameObject: {fileID: 6530556802187073845}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.47, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5382,7 +5382,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4823317564226349528, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  m_Sprite: {fileID: 1026787317579299053, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -5404,10 +5404,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 4823317564226349528, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  idleSprite: {fileID: 1026787317579299053, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   animationSprite:
-  - {fileID: 1838304852158882139, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: 4823317564226349528, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 1026787317579299053, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
+  - {fileID: 773946541847379957, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
@@ -6653,7 +6653,7 @@ Transform:
   m_GameObject: {fileID: 8560675118705275457}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.11, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6708,7 +6708,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5054021255246217886, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  m_Sprite: {fileID: 7709057029215199465, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6730,10 +6730,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 5054021255246217886, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  idleSprite: {fileID: 7709057029215199465, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   animationSprite:
-  - {fileID: -7969094100027227725, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: 5054021255246217886, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 7709057029215199465, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
+  - {fileID: -7039136813013527105, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
@@ -6773,7 +6773,7 @@ Transform:
   m_GameObject: {fileID: 8900479660486598124}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.08, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6828,7 +6828,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -7700812863909436665, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  m_Sprite: {fileID: -8799987425752558643, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6850,10 +6850,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -7700812863909436665, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  idleSprite: {fileID: -8799987425752558643, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   animationSprite:
-  - {fileID: -7602339355782139553, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -7700812863909436665, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -8799987425752558643, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
+  - {fileID: -2498509792677876152, guid: 60b4e583157f28b40b611895ff4fa6a5, type: 3}
   allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0

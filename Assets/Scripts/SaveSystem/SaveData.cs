@@ -52,6 +52,12 @@ public sealed class SaveData
     public int player4SelectedSkin = (int)BomberSkin.Red;
     public int player5SelectedSkin = (int)BomberSkin.Green;
     public int player6SelectedSkin = (int)BomberSkin.Yellow;
+    public int player1SelectedCharacter = (int)BomberCharacter.Bomberman;
+    public int player2SelectedCharacter = (int)BomberCharacter.Bomberman;
+    public int player3SelectedCharacter = (int)BomberCharacter.Bomberman;
+    public int player4SelectedCharacter = (int)BomberCharacter.Bomberman;
+    public int player5SelectedCharacter = (int)BomberCharacter.Bomberman;
+    public int player6SelectedCharacter = (int)BomberCharacter.Bomberman;
 
     public List<StageSlot> slots = new()
     {

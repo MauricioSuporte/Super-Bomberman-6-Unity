@@ -300,6 +300,7 @@ public static class BossRushSession
             if (state == null)
                 continue;
 
+            BomberCharacter preservedCharacter = state.Character;
             BomberSkin preservedSkin = state.Skin;
 
             state.Life = 1;
@@ -323,6 +324,7 @@ public static class BossRushSession
 
             selectedPreset?.ApplyTo(state);
 
+            state.Character = preservedCharacter;
             state.Skin = preservedSkin;
         }
     }
@@ -438,6 +440,7 @@ public static class BossRushSession
             if (state == null)
                 continue;
 
+            BomberCharacter preservedCharacter = state.Character;
             BomberSkin preservedSkin = state.Skin;
 
             state.Life = 1;
@@ -459,6 +462,7 @@ public static class BossRushSession
             state.MountedLouie = MountedType.None;
             state.QueuedEggs.Clear();
 
+            state.Character = preservedCharacter;
             state.Skin = preservedSkin;
         }
     }

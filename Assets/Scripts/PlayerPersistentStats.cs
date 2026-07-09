@@ -25,7 +25,7 @@ public static class PlayerPersistentStats
         public int ExplosionRadius = 2;
         public int SpeedInternal = BaseSpeedNormal /*+ (SpeedStep * 5)*/;
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = false;
+        public bool CanPunchBombs = true;
         public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
@@ -37,6 +37,7 @@ public static class PlayerPersistentStats
         public bool HasFullFire = true;
 
         public MountedType MountedLouie = MountedType.None;
+        public BomberCharacter Character = BomberCharacter.Bomberman;
         public BomberSkin Skin = BomberSkin.Alternative4;
 
         public readonly List<ItemType> QueuedEggs = new(8);
@@ -84,6 +85,7 @@ public static class PlayerPersistentStats
 
         for (int i = 1; i <= 6; i++)
         {
+            LoadSelectedCharacterInternal(i);
             LoadSelectedSkinInternal(i);
             ClampSelectedSkinIfLocked(i);
         }
@@ -102,6 +104,7 @@ public static class PlayerPersistentStats
         playerId = Mathf.Clamp(playerId, 1, 6);
 
         var s = Get(playerId);
+        s.Character = NormalizeCharacter(s.Character);
         s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
 
         switch (playerId)
@@ -114,7 +117,39 @@ public static class PlayerPersistentStats
             case 6: SaveSystem.Data.player6SelectedSkin = (int)s.Skin; break;
         }
 
+        switch (playerId)
+        {
+            case 1: SaveSystem.Data.player1SelectedCharacter = (int)s.Character; break;
+            case 2: SaveSystem.Data.player2SelectedCharacter = (int)s.Character; break;
+            case 3: SaveSystem.Data.player3SelectedCharacter = (int)s.Character; break;
+            case 4: SaveSystem.Data.player4SelectedCharacter = (int)s.Character; break;
+            case 5: SaveSystem.Data.player5SelectedCharacter = (int)s.Character; break;
+            case 6: SaveSystem.Data.player6SelectedCharacter = (int)s.Character; break;
+        }
+
         SaveSystem.Save();
+    }
+
+    static void LoadSelectedCharacterInternal(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        var s = Get(playerId);
+
+        int raw = playerId switch
+        {
+            1 => SaveSystem.Data.player1SelectedCharacter,
+            2 => SaveSystem.Data.player2SelectedCharacter,
+            3 => SaveSystem.Data.player3SelectedCharacter,
+            4 => SaveSystem.Data.player4SelectedCharacter,
+            5 => SaveSystem.Data.player5SelectedCharacter,
+            6 => SaveSystem.Data.player6SelectedCharacter,
+            _ => (int)BomberCharacter.Bomberman
+        };
+
+        s.Character = System.Enum.IsDefined(typeof(BomberCharacter), raw)
+            ? NormalizeCharacter((BomberCharacter)raw)
+            : BomberCharacter.Bomberman;
     }
 
     static void LoadSelectedSkinInternal(int playerId)
@@ -188,6 +223,7 @@ public static class PlayerPersistentStats
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
+        s.Character = BomberCharacter.Bomberman;
         s.Skin = UnlockProgress.GetFallbackUnlockedSkin(GetDefaultSkinForPlayer(playerId));
         SaveSelectedSkin(playerId);
     }
@@ -504,6 +540,7 @@ public static class PlayerPersistentStats
 
         s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal);
         s.Life = Mathf.Max(1, s.Life);
+        s.Character = NormalizeCharacter(s.Character);
         s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
 
         if (movement != null)
@@ -712,6 +749,7 @@ public static class PlayerPersistentStats
         to.HasFullFire = from.HasFullFire;
 
         to.MountedLouie = from.MountedLouie;
+        to.Character = from.Character;
         to.Skin = from.Skin;
 
         to.QueuedEggs.Clear();
@@ -769,6 +807,7 @@ public static class PlayerPersistentStats
 
             ResetBattleRevengeRespawnState(stageState);
             ApplyBattleModeHandicap(playerId, stageState, handicap, battleModeStageIndex);
+            stageState.Character = s.Character;
             stageState.Skin = s.Skin;
         }
     }
@@ -829,6 +868,7 @@ public static class PlayerPersistentStats
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
+        s.Character = NormalizeCharacter(s.Character);
         s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
     }
 
@@ -984,7 +1024,15 @@ public static class PlayerPersistentStats
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
+        s.Character = NormalizeCharacter(s.Character);
         s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+    }
+
+    static BomberCharacter NormalizeCharacter(BomberCharacter character)
+    {
+        return System.Enum.IsDefined(typeof(BomberCharacter), character)
+            ? character
+            : BomberCharacter.Bomberman;
     }
 
     public static void BeginStage()

@@ -1057,8 +1057,6 @@ MonoBehaviour:
   - {fileID: -4504312422501787600, guid: eaa9627faa60f324db3163a9b5403bf9, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
-  character: 0
-  spritesResourcesPath: Sprites/Bomberman/Generated/Bomberman
   idleFrameIndex: 2
   downFrameTime: 0.1
   endStageFrameTime: 0.1
@@ -1112,6 +1110,7 @@ MonoBehaviour:
   unlockHintUnderlayOffsetX: 0.25
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
+  selectableCharacters: 0000000001000000
   selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000900000011000000140000000c000000100000000e0000001200000013000000000000001500000016000000170000001800000019000000
 --- !u!224 &1311323898
 RectTransform:
@@ -1162,8 +1161,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 2
-  activePlayerMask: 3
+  activePlayerCount: 1
+  activePlayerMask: 1
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0

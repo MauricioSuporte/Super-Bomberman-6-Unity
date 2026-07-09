@@ -589,7 +589,7 @@ public class StageIntroTransition : MonoBehaviour
             var skins = id.GetComponentsInChildren<PlayerBomberSkinController>(true);
             for (int s = 0; s < skins.Length; s++)
                 if (skins[s] != null)
-                    skins[s].Apply(state.Skin);
+                    skins[s].Apply(state.Character, state.Skin);
         }
     }
 

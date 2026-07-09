@@ -35,6 +35,26 @@ public class PlayerBomberSkinController : MonoBehaviour
         new("Up", 72)
     };
 
+    readonly struct FrameSequenceDefinition
+    {
+        public readonly string RendererName;
+        public readonly int[] Frames;
+
+        public FrameSequenceDefinition(string rendererName, int[] frames)
+        {
+            RendererName = rendererName;
+            Frames = frames;
+        }
+    }
+
+    static readonly FrameSequenceDefinition[] PunchDefinitions =
+    {
+        new("PunchDown", new[] { 21, 22 }),
+        new("PunchRight", new[] { 44, 45 }),
+        new("PunchLeft", new[] { 67, 68 }),
+        new("PunchUp", new[] { 91, 92 })
+    };
+
     public void ApplyFromIdentity()
     {
         var id = GetComponentInParent<PlayerIdentity>(true);
@@ -42,19 +62,46 @@ public class PlayerBomberSkinController : MonoBehaviour
             return;
 
         int playerId = Mathf.Clamp(id.playerId, 1, 6);
-        var skin = PlayerPersistentStats.Get(playerId).Skin;
+        var state = PlayerPersistentStats.Get(playerId);
 
-        Apply(skin);
+        Apply(state.Character, state.Skin);
     }
 
     public void SetSkin(int playerId, BomberSkin skin)
     {
-        PlayerPersistentStats.Get(playerId).Skin = skin;
-        Apply(skin);
+        var state = PlayerPersistentStats.Get(playerId);
+        state.Skin = skin;
+        Apply(state.Character, skin);
+    }
+
+    public void SetCharacterAndSkin(int playerId, BomberCharacter selectedCharacter, BomberSkin skin)
+    {
+        var state = PlayerPersistentStats.Get(playerId);
+        state.Character = selectedCharacter;
+        state.Skin = skin;
+        Apply(selectedCharacter, skin);
     }
 
     public void Apply(BomberSkin skin)
     {
+        Apply(character, skin);
+    }
+
+    public void Apply(BomberCharacter selectedCharacter, BomberSkin skin)
+    {
+        if (character != selectedCharacter)
+        {
+            character = selectedCharacter;
+            spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
+            skinFrameMaps.Clear();
+        }
+        else if (string.IsNullOrWhiteSpace(spritesResourcesPath) ||
+                 spritesResourcesPath != BomberSkinResourceCatalog.GetGeneratedResourcesPath(character))
+        {
+            spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
+            skinFrameMaps.Clear();
+        }
+
         skin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin);
         EnsureCache(skin);
 
@@ -79,6 +126,20 @@ public class PlayerBomberSkinController : MonoBehaviour
             targetMap,
             skin
         );
+
+        for (int i = 0; i < PunchDefinitions.Length; i++)
+        {
+            FrameSequenceDefinition definition = PunchDefinitions[i];
+            ApplyFrameSequence(
+                FindAnimatedRenderer(definition.RendererName),
+                definition.RendererName,
+                definition.Frames[0],
+                definition.Frames,
+                targetMap,
+                skin,
+                loop: false
+            );
+        }
     }
 
     bool IsInsideMountedLouie(Component c)
@@ -147,7 +208,11 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (actualName == expectedName)
             return true;
 
-        return expectedName == "Right" && actualName == "Rigth";
+        if (expectedName == "Right" && actualName == "Rigth")
+            return true;
+
+        return expectedName.EndsWith("Right", System.StringComparison.Ordinal) &&
+               actualName == expectedName.Replace("Right", "Rigth");
     }
 
     void ApplyWalkDefinition(
@@ -202,7 +267,8 @@ public class PlayerBomberSkinController : MonoBehaviour
         int idleFrame,
         int[] frames,
         Dictionary<int, Sprite> targetMap,
-        BomberSkin skin)
+        BomberSkin skin,
+        bool loop = true)
     {
         if (renderer == null)
         {
@@ -231,7 +297,7 @@ public class PlayerBomberSkinController : MonoBehaviour
 
         renderer.idleSprite = idleSprite;
         renderer.animationSprite = animation;
-        renderer.loop = true;
+        renderer.loop = loop;
         renderer.pingPong = false;
         renderer.RefreshFrame();
 
