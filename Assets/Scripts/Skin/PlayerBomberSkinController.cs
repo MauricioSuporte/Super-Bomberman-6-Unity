@@ -4,7 +4,8 @@ using UnityEngine;
 public class PlayerBomberSkinController : MonoBehaviour
 {
     [Header("Sprite Settings")]
-    [SerializeField] private string spritesResourcesPath = "Sprites/Bombers/Bomberman";
+    [SerializeField] private BomberCharacter character = BomberCharacter.Bomberman;
+    [SerializeField] private string spritesResourcesPath = BomberSkinResourceCatalog.BombermanGeneratedResourcesPath;
 
     readonly Dictionary<BomberSkin, Dictionary<string, Sprite>> skinMaps = new();
 
@@ -79,7 +80,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (skinMaps.ContainsKey(skin))
             return;
 
-        skinMaps[skin] = BuildSheetMap(GetSheetName(skin));
+        skinMaps[skin] = BuildSheetMap(BomberSkinResourceCatalog.GetSheetName(character, skin));
     }
 
     Dictionary<string, Sprite> BuildSheetMap(string sheetName)
@@ -133,8 +134,12 @@ public class PlayerBomberSkinController : MonoBehaviour
         return true;
     }
 
-    string GetSheetName(BomberSkin skin)
+    void OnValidate()
     {
-        return skin + "Bomber";
+        if (string.IsNullOrWhiteSpace(spritesResourcesPath) ||
+            spritesResourcesPath == "Sprites/Bombers/Bomberman")
+        {
+            spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
+        }
     }
 }

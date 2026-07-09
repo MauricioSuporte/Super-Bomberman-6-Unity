@@ -374,7 +374,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 878884cd17e7c3648951f8120973589e, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
-  spritesResourcesPath: Sprites/Bombers/Bomberman
+  spritesResourcesPath: Sprites/Bomberman/Generated/Bomberman
   idleFrameIndex: 16
   downFrameTime: 0.22
   endStageFrameTime: 0.1
@@ -428,7 +428,7 @@ MonoBehaviour:
   unlockHintUnderlayOffsetX: 0.25
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
-  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000700000011000000090000000c000000100000000e000000120000001300000000000000
+  selectableSkins: 0100000003000000040000000b000000080000000d0000000f0000000e0000000200000010000000110000000c00000005000000090000000a00000014000000060000001500000013000000000000001200000016000000170000001800000019000000
 --- !u!1 &336813434
 GameObject:
   m_ObjectHideFlags: 0

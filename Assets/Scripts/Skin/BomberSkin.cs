@@ -19,5 +19,11 @@
     Brown,
     DarkGreen,
     Nightmare,
-    Gold
+    Gold,
+    DarkPurple,
+    LightBlue,
+    Alternative1,
+    Alternative2,
+    Alternative3,
+    Alternative4
 }

@@ -4505,7 +4505,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 677a646a087998447bda0547ea7a7b48, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBomberSkinController
-  spritesResourcesPath: Sprites/Bombers/Bomberman
+  spritesResourcesPath: Sprites/Bomberman/Generated/Bomberman
 --- !u!114 &2475403701411458639
 MonoBehaviour:
   m_ObjectHideFlags: 0

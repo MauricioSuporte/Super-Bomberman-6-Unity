@@ -74,7 +74,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     float _backgroundSwapTimer;
 
     [Header("Resources")]
-    [SerializeField] string spritesResourcesPath = "Sprites/Bombers/Bomberman";
+    [SerializeField] BomberCharacter character = BomberCharacter.Bomberman;
+    [SerializeField] string spritesResourcesPath = BomberSkinResourceCatalog.BombermanGeneratedResourcesPath;
     [SerializeField] int idleFrameIndex = 16;
 
     [Header("Preview Animations")]
@@ -195,26 +196,31 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField]
     List<BomberSkin> selectableSkins = new()
     {
-        BomberSkin.Golden,
         BomberSkin.White,
-        BomberSkin.Gray,
         BomberSkin.Black,
         BomberSkin.Red,
-        BomberSkin.Orange,
-        BomberSkin.Yellow,
-        BomberSkin.Olive,
-        BomberSkin.Green,
-        BomberSkin.Cyan,
-        BomberSkin.Aqua,
         BomberSkin.Blue,
-        BomberSkin.DarkBlue,
+        BomberSkin.Green,
         BomberSkin.Purple,
-        BomberSkin.Magenta,
         BomberSkin.Pink,
+        BomberSkin.Magenta,
+        BomberSkin.Gray,
         BomberSkin.Brown,
         BomberSkin.DarkGreen,
+        BomberSkin.DarkBlue,
+        BomberSkin.Orange,
+        BomberSkin.Cyan,
+        BomberSkin.Aqua,
+        BomberSkin.DarkPurple,
+        BomberSkin.Yellow,
+        BomberSkin.LightBlue,
+        BomberSkin.Gold,
+        BomberSkin.Golden,
         BomberSkin.Nightmare,
-        BomberSkin.Gold
+        BomberSkin.Alternative1,
+        BomberSkin.Alternative2,
+        BomberSkin.Alternative3,
+        BomberSkin.Alternative4
     };
 
     readonly Dictionary<BomberSkin, Sprite> idleCache = new();
@@ -1869,7 +1875,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (sheetFrameCache.TryGetValue(skin, out var map) && map != null)
             return map;
 
-        string sheetName = skin + "Bomber";
+        string sheetName = BomberSkinResourceCatalog.GetSheetName(character, skin);
         string sheetPath = $"{spritesResourcesPath}/{sheetName}";
         var sprites = Resources.LoadAll<Sprite>(sheetPath);
 
@@ -1915,6 +1921,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         for (int i = 0; i < selectableSkins.Count; i++)
             GetIdleSprite(selectableSkins[i]);
+    }
+
+    void OnValidate()
+    {
+        if (string.IsNullOrWhiteSpace(spritesResourcesPath) ||
+            spritesResourcesPath == "Sprites/Bombers/Bomberman")
+        {
+            spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
+        }
     }
 
     IEnumerator FadeInRoutine()
