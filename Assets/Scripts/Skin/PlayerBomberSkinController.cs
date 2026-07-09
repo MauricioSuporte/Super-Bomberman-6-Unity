@@ -13,6 +13,7 @@ public class PlayerBomberSkinController : MonoBehaviour
     readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> skinFrameMaps = new();
 
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
+    static readonly int[] EndStageFrames = { 105, 104, 106, 104, 105, 106 };
 
     readonly struct WalkDefinition
     {
@@ -69,6 +70,15 @@ public class PlayerBomberSkinController : MonoBehaviour
             AnimatedSpriteRenderer renderer = FindAnimatedRenderer(definition.RendererName);
             ApplyWalkDefinition(renderer, definition, targetMap, skin);
         }
+
+        ApplyFrameSequence(
+            FindAnimatedRenderer("EndStage"),
+            "EndStage",
+            EndStageFrames[0],
+            EndStageFrames,
+            targetMap,
+            skin
+        );
     }
 
     bool IsInsideMountedLouie(Component c)
@@ -184,6 +194,51 @@ public class PlayerBomberSkinController : MonoBehaviour
             $"ApplyWalkDefinition | skin={skin} renderer={definition.RendererName} " +
             $"idle={definition.IdleFrame} frames={string.Join(",", GetWalkFrames(definition.IdleFrame))}"
         );
+    }
+
+    void ApplyFrameSequence(
+        AnimatedSpriteRenderer renderer,
+        string rendererName,
+        int idleFrame,
+        int[] frames,
+        Dictionary<int, Sprite> targetMap,
+        BomberSkin skin)
+    {
+        if (renderer == null)
+        {
+            SLog($"ApplyFrameSequence skipped | skin={skin} renderer={rendererName} missing");
+            return;
+        }
+
+        if (!targetMap.TryGetValue(idleFrame, out Sprite idleSprite))
+        {
+            SLog($"ApplyFrameSequence skipped | skin={skin} renderer={rendererName} idleFrame={idleFrame} missing");
+            return;
+        }
+
+        Sprite[] animation = new Sprite[frames.Length];
+        for (int i = 0; i < frames.Length; i++)
+        {
+            int frame = frames[i];
+            if (!targetMap.TryGetValue(frame, out Sprite sprite))
+            {
+                SLog($"ApplyFrameSequence skipped | skin={skin} renderer={rendererName} frame={frame} missing");
+                return;
+            }
+
+            animation[i] = sprite;
+        }
+
+        renderer.idleSprite = idleSprite;
+        renderer.animationSprite = animation;
+        renderer.loop = true;
+        renderer.pingPong = false;
+        renderer.RefreshFrame();
+
+        if (renderer.TryGetComponent<SpriteRenderer>(out var spriteRenderer) && spriteRenderer != null)
+            spriteRenderer.sprite = renderer.idleSprite;
+
+        SLog($"ApplyFrameSequence | skin={skin} renderer={rendererName} idle={idleFrame} frames={string.Join(",", frames)}");
     }
 
     static int[] GetWalkFrames(int idleFrame)

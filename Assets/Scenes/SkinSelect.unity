@@ -676,6 +676,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1015,9 +1029,12 @@ MonoBehaviour:
   columns: 5
   cellSize: {x: 56, y: 56}
   spacing: {x: 12, y: 12}
+  skinSpriteScaleMultiplier: 2
   lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   selectedTint: {r: 1, g: 1, b: 1, a: 1}
+  directionalRepeatInitialDelay: 0.22
+  directionalRepeatInterval: 0.12
   skinCursorPrefab: {fileID: 7207817685866332595, guid: 7343d27b278e105479b8c1724e1c399a, type: 3}
   staggerCursorStartByPlayer: 1
   cursorSpriteByPlayer:
@@ -1028,10 +1045,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
   - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
   logCursorPositionDebug: 1
-  cursorPositionDebugFrames: 8
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
-  cursorYOffset: 10
+  cursorYOffset: 7
   cursorBlinkWhileNotConfirmed: 1
   cursorBlinkSpeed: 5.5
   cursorBlinkMinAlpha: 0.25
@@ -1041,13 +1057,14 @@ MonoBehaviour:
   - {fileID: -4504312422501787600, guid: eaa9627faa60f324db3163a9b5403bf9, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
+  character: 0
   spritesResourcesPath: Sprites/Bomberman/Generated/Bomberman
   idleFrameIndex: 2
-  downFrameTime: 0.22
+  downFrameTime: 0.1
   endStageFrameTime: 0.1
   downFrames: 0100000000000000010000000200000003000000040000000300000002000000
-  endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
-  endStageYOffset: 10
+  endStageFrames: 69000000680000006a00000068000000690000006a000000
+  endStageYOffset: 2
   endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: e4c38e02c55a4284ab2b5678b839b24f, type: 3}
   selectMusicLoop: {fileID: 0}
@@ -1095,7 +1112,7 @@ MonoBehaviour:
   unlockHintUnderlayOffsetX: 0.25
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
-  selectableSkins: 0100000003000000040000000b000000080000000d0000000f0000000e0000000200000010000000110000000c00000005000000090000000a00000014000000060000001500000013000000000000001200000016000000170000001800000019000000
+  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000900000011000000140000000c000000100000000e0000001200000013000000000000001500000016000000170000001800000019000000
 --- !u!224 &1311323898
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1145,14 +1162,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 6
-  activePlayerMask: 63
+  activePlayerCount: 2
+  activePlayerMask: 3
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
   hardNormalGameRunInProgress: 0
   hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0

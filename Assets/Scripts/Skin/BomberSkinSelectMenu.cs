@@ -38,6 +38,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] int columns = 4;
     [SerializeField] Vector2 cellSize = new(120f, 120f);
     [SerializeField] Vector2 spacing = new(16f, 16f);
+    [SerializeField, Min(0.1f)] float skinSpriteScaleMultiplier = 2f;
     [SerializeField] Color lockedTint = new(1f, 1f, 1f, 0.35f);
     [SerializeField] Color normalTint = Color.white;
     [SerializeField] Color selectedTint = Color.white;
@@ -82,7 +83,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] float downFrameTime = 0.22f;
     [SerializeField] float endStageFrameTime = 0.1f;
     [SerializeField] int[] downFrames = new[] { 1, 0, 1, 2, 3, 4, 3, 2 };
-    [SerializeField] int[] endStageFrames = new[] { 148, 148, 146, 148, 147, 148, 146, 148, 147, 147 };
+    [SerializeField] int[] endStageFrames = new[] { 105, 104, 106, 104, 105, 106 };
 
     [Header("EndStage Offset + Stop")]
     [SerializeField] float endStageYOffset = 10f;
@@ -1641,11 +1642,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
             img.enabled = false;
 
             var imgRt = img.rectTransform;
-            imgRt.anchorMin = Vector2.zero;
-            imgRt.anchorMax = Vector2.one;
+            imgRt.anchorMin = new Vector2(0.5f, 0.5f);
+            imgRt.anchorMax = new Vector2(0.5f, 0.5f);
             imgRt.pivot = new Vector2(0.5f, 0.5f);
-            imgRt.offsetMin = Vector2.zero;
-            imgRt.offsetMax = Vector2.zero;
+            imgRt.anchoredPosition = Vector2.zero;
+            imgRt.sizeDelta = GetSkinSpriteDisplaySize();
             imgRt.localScale = Vector3.one;
             imgRt.localRotation = Quaternion.identity;
 
@@ -2191,6 +2192,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             grid.spacing = spacing;
         }
 
+        ApplySkinSpriteDisplaySizes();
+
         var gridRt = gridRoot as RectTransform;
         if (gridRt != null)
         {
@@ -2204,6 +2207,29 @@ public class BomberSkinSelectMenu : MonoBehaviour
             float totalH = rows * cellSize.y + (rows - 1) * spacing.y;
 
             gridRt.sizeDelta = new Vector2(totalW, totalH);
+        }
+    }
+
+    Vector2 GetSkinSpriteDisplaySize()
+    {
+        return cellSize * Mathf.Max(0.1f, skinSpriteScaleMultiplier);
+    }
+
+    void ApplySkinSpriteDisplaySizes()
+    {
+        Vector2 displaySize = GetSkinSpriteDisplaySize();
+
+        for (int i = 0; i < slotImages.Count; i++)
+        {
+            Image img = slotImages[i];
+            if (img == null || img.rectTransform == null)
+                continue;
+
+            RectTransform imgRt = img.rectTransform;
+            imgRt.anchorMin = new Vector2(0.5f, 0.5f);
+            imgRt.anchorMax = new Vector2(0.5f, 0.5f);
+            imgRt.pivot = new Vector2(0.5f, 0.5f);
+            imgRt.sizeDelta = displaySize;
         }
     }
 

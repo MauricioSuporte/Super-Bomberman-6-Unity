@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -379,7 +379,7 @@ MonoBehaviour:
   downFrameTime: 0.22
   endStageFrameTime: 0.1
   downFrames: 0100000000000000010000000200000003000000040000000300000002000000
-  endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
+  endStageFrames: 69000000680000006a00000068000000690000006a000000
   endStageYOffset: 10
   endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: 41467db587cc70f42af59ac5abd81be3, type: 3}
