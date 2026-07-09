@@ -341,6 +341,23 @@ public class PlayerInputManager : MonoBehaviour
         return playersUsingSpringLauncherState[playerId];
     }
 
+    private bool ShouldBlockActionBecauseStunned(int playerId)
+    {
+        RefreshPlayerStateCache(forcePlayersMapRefresh: false);
+
+        if ((!playerControllers.TryGetValue(playerId, out var mc) || mc == null) &&
+            lastForcedPlayersMapRefreshStamp != GetFrameStamp())
+        {
+            RefreshPlayerStateCache(forcePlayersMapRefresh: true);
+            playerControllers.TryGetValue(playerId, out mc);
+        }
+
+        return mc != null &&
+               mc.TryGetComponent(out StunReceiver stunReceiver) &&
+               stunReceiver != null &&
+               stunReceiver.IsStunned;
+    }
+
     public PlayerInputProfile GetPlayer(int playerId)
     {
         playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
@@ -364,6 +381,9 @@ public class PlayerInputManager : MonoBehaviour
     {
         playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
 
+        if (ShouldBlockActionBecauseStunned(playerId))
+            return false;
+
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
 
@@ -382,6 +402,9 @@ public class PlayerInputManager : MonoBehaviour
     public bool GetDown(PlayerAction action, int playerId = 1)
     {
         playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        if (ShouldBlockActionBecauseStunned(playerId))
+            return false;
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
@@ -497,6 +520,9 @@ public class PlayerInputManager : MonoBehaviour
     public bool HasAnyHeldInput(int playerId)
     {
         playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        if (ShouldBlockActionBecauseStunned(playerId))
+            return false;
 
         int frameStamp = GetFrameStamp();
         if (anyHeldInputCacheStamp[playerId] == frameStamp)

@@ -176,7 +176,7 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
     [SerializeField] TextMeshProUGUI bossRushLockedText;
     [SerializeField] int bossRushLockedFontSize = 34;
-    [SerializeField] float bossRushLockedBottomMargin = 30f;
+    [SerializeField] float bossRushLockedBottomMargin = 64f;
     [SerializeField] float bossRushLockedShowSeconds = 2f;
 
     [Header("Controls Scene")]

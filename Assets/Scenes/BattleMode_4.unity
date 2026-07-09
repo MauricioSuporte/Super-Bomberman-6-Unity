@@ -6793,7 +6793,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 2
-  activePlayerMask: 5
+  activePlayerMask: 3
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0

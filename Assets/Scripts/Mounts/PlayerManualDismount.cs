@@ -54,6 +54,12 @@ public sealed class PlayerManualDismount : MonoBehaviour
             return;
         }
 
+        if (movement.InputLocked)
+        {
+            wasHeld = false;
+            return;
+        }
+
         if (rider != null && rider.IsPlaying)
             return;
 
@@ -105,6 +111,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
             return;
 
         if (IsExternalBlockingDismount())
+            return;
+
+        if (movement.InputLocked)
             return;
 
         if (!movement.IsMounted || !companion.HasMountedLouie())

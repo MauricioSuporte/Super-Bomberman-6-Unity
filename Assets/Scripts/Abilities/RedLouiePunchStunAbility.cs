@@ -68,7 +68,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return;
 
-        if (movement == null || movement.isDead)
+        if (movement == null || movement.isDead || movement.InputLocked)
             return;
 
         if (Time.time < nextAllowedTime)
@@ -239,6 +239,9 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
             if (receiver != null)
             {
+                if (!receiver.CanReceiveStun)
+                    continue;
+
                 stunnedReceivers ??= new HashSet<StunReceiver>();
                 if (!stunnedReceivers.Add(receiver))
                     continue;

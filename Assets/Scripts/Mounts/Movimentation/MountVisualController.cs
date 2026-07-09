@@ -190,6 +190,9 @@ public class MountVisualController : MonoBehaviour
         playerEffectTintActive = active;
         playerEffectTintColor = tintColor;
         playerEffectTintNormalized = Mathf.Clamp01(normalized01);
+
+        if (!playerEffectTintActive)
+            RestoreLouieOriginalColors();
     }
 
     public void Bind(MovementController movement)
@@ -213,6 +216,7 @@ public class MountVisualController : MonoBehaviour
         playerEffectTintActive = false;
         playerEffectTintColor = Color.white;
         playerEffectTintNormalized = 1f;
+        RestoreLouieOriginalColors();
 
         playingJump = false;
         jumpFacing = Vector2.down;
@@ -225,6 +229,7 @@ public class MountVisualController : MonoBehaviour
         cartHeadOnlyOffsetsActive = false;
 
         CacheAllRenderers();
+        RestoreLouieOriginalColors();
         ResolveHeadOnlyVisualReferences();
 
         if (louieMovement == null)
@@ -669,6 +674,24 @@ public class MountVisualController : MonoBehaviour
             tint.a = baseColor.a;
 
             sr.color = Color.Lerp(tint, baseColor, playerEffectTintNormalized);
+        }
+    }
+
+    private void RestoreLouieOriginalColors()
+    {
+        if (louieSpriteRenderers == null || louieOriginalColors == null)
+            return;
+
+        int count = Mathf.Min(louieSpriteRenderers.Length, louieOriginalColors.Length);
+        for (int i = 0; i < count; i++)
+        {
+            var sr = louieSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            Color original = louieOriginalColors[i];
+            original.a = sr.color.a;
+            sr.color = original;
         }
     }
 

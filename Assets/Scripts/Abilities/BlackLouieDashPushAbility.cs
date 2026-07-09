@@ -98,7 +98,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     {
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
-        if (movement == null || movement.isDead) return;
+        if (movement == null || movement.isDead || movement.InputLocked) return;
         if (Time.time < nextAllowedTime) return;
 
         if (GamePauseController.IsPaused ||
@@ -331,7 +331,8 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         }
 
         var receiver = hit.GetComponentInParent<StunReceiver>() ?? hit.GetComponent<StunReceiver>();
-        receiver?.Stun(enemyStunSeconds);
+        if (receiver != null && receiver.CanReceiveStun)
+            receiver.Stun(enemyStunSeconds);
 
         StartCoroutine(PushTargetRoutine(targetRb, dir, tileSize));
         pushedTarget = true;

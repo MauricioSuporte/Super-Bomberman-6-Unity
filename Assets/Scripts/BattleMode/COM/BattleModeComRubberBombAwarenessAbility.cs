@@ -552,7 +552,8 @@ public sealed class BattleModeComRubberBombAwarenessAbility : MonoBehaviour, IBa
                 if (hit == null || IsOwnCollider(hit))
                     continue;
 
-                if (hit.GetComponentInParent<ItemPickup>() != null)
+                if (hit.GetComponentInParent<ItemPickup>() != null ||
+                    hit.GetComponentInParent<MountWorldPickup>() != null)
                     continue;
 
                 if (hit.GetComponentInParent<PlayerIdentity>() != null)

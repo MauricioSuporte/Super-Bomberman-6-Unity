@@ -4123,6 +4123,9 @@ MonoBehaviour:
   debugCurvas: 0
   debugCurvasVerbose: 0
   debugCurvasPlayerId: 1
+  debugDownBlock: 1
+  debugDownBlockVerbose: 1
+  debugDownBlockPlayerId: 1
   debugBombEscape: 0
   debugBombEscapeVerbose: 0
   deathSfx: {fileID: 8300000, guid: d09be99ae21a8d540ac21a0593b254f5, type: 3}
@@ -4131,6 +4134,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  hardCampaignExtraLife: 0
   speedInternal: 224
   playerId: 1
   enableDualInput: 1

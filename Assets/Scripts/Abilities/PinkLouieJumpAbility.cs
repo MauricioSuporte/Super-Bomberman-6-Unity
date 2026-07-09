@@ -37,11 +37,14 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     CharacterHealth playerHealth;
     PlayerMountCompanion companion;
     AbilitySystem abilitySystem;
+    MountEggQueue eggQueue;
 
     Coroutine routine;
     Coroutine visualRoutine;
 
     float nextAllowedTime;
+    bool hasExternalJumpDirection;
+    Vector2 externalJumpDirection;
 
     IPinkLouieJumpExternalAnimator externalAnimator;
 
@@ -74,6 +77,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
         TryGetComponent(out abilitySystem);
+        TryGetComponent(out eggQueue);
 
         bombLayer = LayerMask.NameToLayer("Bomb");
 
@@ -111,6 +115,40 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         jumpSfxVolume = Mathf.Clamp01(volume);
     }
 
+    public bool TryStartExternalJump(Vector2 direction)
+    {
+        if (!enabledAbility)
+            return false;
+
+        if (!CompareTag("Player"))
+            return false;
+
+        if (movement == null || movement.isDead || movement.InputLocked || rb == null)
+            return false;
+
+        if (TryGetComponent(out StunReceiver stunReceiver) &&
+            stunReceiver != null &&
+            stunReceiver.IsStunned)
+        {
+            return false;
+        }
+
+        if (Time.time < nextAllowedTime || routine != null)
+            return false;
+
+        if (GamePauseController.IsPaused ||
+            ClownMaskBoss.BossIntroRunning ||
+            MechaBossSequence.MechaIntroRunning ||
+            (StageIntroTransition.Instance != null &&
+             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
+            return false;
+
+        hasExternalJumpDirection = true;
+        externalJumpDirection = NormalizeCardinal(direction);
+        routine = StartCoroutine(JumpRoutine());
+        return true;
+    }
+
     void Update()
     {
         if (!enabledAbility)
@@ -119,7 +157,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return;
 
-        if (movement == null || movement.isDead)
+        if (movement == null || movement.isDead || movement.InputLocked)
             return;
 
         if (Time.time < nextAllowedTime)
@@ -156,7 +194,12 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         CacheMountedPlayerBaseLocalY();
 
-        Vector2 heldInputDir = GetHeldDirectionalInputCardinal();
+        Vector2 heldInputDir = hasExternalJumpDirection
+            ? externalJumpDirection
+            : GetHeldDirectionalInputCardinal();
+        hasExternalJumpDirection = false;
+        externalJumpDirection = Vector2.zero;
+
         Vector2 inputDir = heldInputDir != Vector2.zero
             ? heldInputDir
             : movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
@@ -262,6 +305,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             ApplyJumpVisualOffset(arc);
             ApplyMountedPlayerJumpArc(arc);
+            ApplyEggQueueJumpArc(arc);
 
             if (wasMountedAtStart && !movement.IsMounted)
             {
@@ -271,6 +315,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
                 {
                     ResetJumpVisualOffset();
                     ResetMountedPlayerJumpArc();
+                    ResetEggQueueJumpArc();
                     StopJumpVisuals();
                     shadow?.EndJump();
                     RestorePlayerCollisionsAfterJump();
@@ -290,6 +335,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         rb.position = endPos;
 
         if (invulnerableDuringJump)
@@ -435,6 +481,22 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         mountedPlayerArcActive = false;
     }
 
+    void ApplyEggQueueJumpArc(float arcY)
+    {
+        if (eggQueue == null && !TryGetComponent(out eggQueue))
+            return;
+
+        eggQueue.SetOwnerVisualFollowYOffset(arcY);
+    }
+
+    void ResetEggQueueJumpArc()
+    {
+        if (eggQueue == null && !TryGetComponent(out eggQueue))
+            return;
+
+        eggQueue.ClearOwnerVisualFollowYOffset();
+    }
+
     void StartJumpInvulnerabilityOnly(CharacterHealth mountedLouieHealth)
     {
         float seconds = Mathf.Max(0.01f, jumpDurationSeconds);
@@ -546,6 +608,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         rb.position = CellCenter(safeCell, destructible, indestructible, ground);
     }
 
@@ -674,6 +737,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         externalAnimator?.Stop();
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
     }
 
     void CancelJump()
@@ -692,6 +756,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
@@ -742,6 +807,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
+        ResetEggQueueJumpArc();
         RestorePlayerCollisionsAfterJump();
 
         externalAnimator?.Stop();
@@ -788,5 +854,16 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             return horizontal + vertical;
 
         return Vector2.zero;
+    }
+
+    static Vector2 NormalizeCardinal(Vector2 direction)
+    {
+        if (direction == Vector2.zero)
+            return Vector2.zero;
+
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            return new Vector2(Mathf.Sign(direction.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(direction.y));
     }
 }

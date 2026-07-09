@@ -1641,6 +1641,21 @@ public partial class BombController : MonoBehaviour
                 break;
             }
 
+            if (YellowLouieKickAbility.TryHandleMovingDestructibleExplosion(
+                    this,
+                    position,
+                    pierce,
+                    out bool movingDestructibleBlocksExplosion))
+            {
+                SpawnExplosionDamageHitbox(position, origin, sourceBomb);
+                result.Reach = Mathf.Max(result.Reach, i + 1);
+
+                if (movingDestructibleBlocksExplosion)
+                    break;
+
+                continue;
+            }
+
             var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);
             if (itemHit != null)
             {
@@ -1901,6 +1916,20 @@ public partial class BombController : MonoBehaviour
                 }
 
                 break;
+            }
+
+            if (YellowLouieKickAbility.TryHandleMovingDestructibleExplosion(
+                    this,
+                    position,
+                    pierce,
+                    out bool movingDestructibleBlocksExplosion))
+            {
+                SpawnExplosionDamageHitbox(position, origin);
+
+                if (movingDestructibleBlocksExplosion)
+                    break;
+
+                continue;
             }
 
             var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);

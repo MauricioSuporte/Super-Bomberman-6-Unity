@@ -105,6 +105,7 @@ public sealed class MountEggQueue : MonoBehaviour
     int _historyHead;
     int _historyCount;
     float _historyTimeCarry;
+    float _historyDistanceCarry;
     int _ignoreOwnerInvulnerabilityUntilFrame = -1;
     bool _suppressedByRedBoat;
 
@@ -131,6 +132,11 @@ public sealed class MountEggQueue : MonoBehaviour
 
     Vector3 _lastOwnerPos;
     bool _hasLastOwnerPos;
+    float _lastOwnerMeasuredSpeed;
+    float _ownerVisualFollowYOffset;
+    bool _ownerVisualFollowWorldOverrideActive;
+    bool _ownerVisualFollowExact;
+    Vector3 _ownerVisualFollowWorldOverride;
 
     Vector3 _lastRealOwnerPos;
     bool _hasLastRealOwnerPos;
@@ -216,14 +222,20 @@ public sealed class MountEggQueue : MonoBehaviour
             }
         }
 
-        Vector3 ownerPos = GetOwnerWorldPos();
+        Vector3 ownerPos = GetOwnerFollowWorldPos();
         ownerPos.z = 0f;
 
         bool movedByPosThisFrame = false;
         if (_hasLastOwnerPos)
         {
             float j = Mathf.Max(0f, jitterIgnoreDelta);
-            movedByPosThisFrame = (ownerPos - _lastOwnerPos).sqrMagnitude > (j * j);
+            Vector3 ownerFrameDelta = ownerPos - _lastOwnerPos;
+            movedByPosThisFrame = ownerFrameDelta.sqrMagnitude > (j * j);
+            _lastOwnerMeasuredSpeed = ownerFrameDelta.magnitude / Mathf.Max(QDelta(), 0.0001f);
+        }
+        else
+        {
+            _lastOwnerMeasuredSpeed = 0f;
         }
 
         bool isMoving = IsOwnerMoving(ownerPos, movedByPosThisFrame);
@@ -531,6 +543,7 @@ public sealed class MountEggQueue : MonoBehaviour
             _historyHead = 0;
             _historyCount = 0;
             _historyTimeCarry = 0f;
+            _historyDistanceCarry = 0f;
             _hasLastRealOwnerPos = false;
         }
     }
@@ -538,6 +551,7 @@ public sealed class MountEggQueue : MonoBehaviour
     void ResetRuntimeState()
     {
         _historyTimeCarry = 0f;
+        _historyDistanceCarry = 0f;
 
         _hasLastOwnerPos = false;
         _hasLastRealOwnerPos = false;
@@ -563,12 +577,24 @@ public sealed class MountEggQueue : MonoBehaviour
         return transform.position;
     }
 
+    Vector3 GetOwnerFollowWorldPos()
+    {
+        if (_ownerVisualFollowWorldOverrideActive)
+            return _ownerVisualFollowWorldOverride;
+
+        Vector3 pos = GetOwnerWorldPos();
+        pos.y += _ownerVisualFollowYOffset;
+        return pos;
+    }
+
     float GetOwnerWorldSpeedPerSecond()
     {
-        if (_ownerMove != null)
-            return Mathf.Max(0.01f, _ownerMove.speed * _ownerMove.tileSize);
+        float measuredSpeed = Mathf.Max(0f, _lastOwnerMeasuredSpeed);
 
-        return 5f;
+        if (_ownerMove != null)
+            return Mathf.Max(0.01f, _ownerMove.speed * _ownerMove.tileSize, measuredSpeed);
+
+        return Mathf.Max(5f, measuredSpeed);
     }
 
     bool IsOwnerMoving(Vector3 ownerPosWorld, bool movedByPositionThisFrame)
@@ -627,8 +653,9 @@ public sealed class MountEggQueue : MonoBehaviour
         _historyHead = 0;
         _historyCount = 0;
         _historyTimeCarry = 0f;
+        _historyDistanceCarry = 0f;
 
-        Vector3 p = GetOwnerWorldPos();
+        Vector3 p = GetOwnerFollowWorldPos();
         p.z = 0f;
 
         float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
@@ -646,7 +673,7 @@ public sealed class MountEggQueue : MonoBehaviour
     {
         EnsureHistoryBuffer();
 
-        Vector3 p = GetOwnerWorldPos();
+        Vector3 p = GetOwnerFollowWorldPos();
         p.z = 0f;
 
         for (int i = 0; i < _history.Length; i++)
@@ -655,6 +682,7 @@ public sealed class MountEggQueue : MonoBehaviour
         _historyHead = 0;
         _historyCount = _history.Length;
         _historyTimeCarry = 0f;
+        _historyDistanceCarry = 0f;
 
         _lastRealOwnerPos = p;
         _hasLastRealOwnerPos = true;
@@ -672,7 +700,7 @@ public sealed class MountEggQueue : MonoBehaviour
     Vector3 GetRecentHistory(int recentIndex)
     {
         if (_historyCount <= 0)
-            return GetOwnerWorldPos();
+            return GetOwnerFollowWorldPos();
 
         recentIndex = Mathf.Clamp(recentIndex, 0, _historyCount - 1);
 
@@ -688,7 +716,7 @@ public sealed class MountEggQueue : MonoBehaviour
         if (!isMoving)
             return;
 
-        Vector3 p = GetOwnerWorldPos();
+        Vector3 p = GetOwnerFollowWorldPos();
         p.z = 0f;
 
         if (!_hasLastRealOwnerPos)
@@ -697,6 +725,7 @@ public sealed class MountEggQueue : MonoBehaviour
             _hasLastRealOwnerPos = true;
             RecordHistory(p);
             _historyTimeCarry = 0f;
+            _historyDistanceCarry = 0f;
             return;
         }
 
@@ -718,6 +747,12 @@ public sealed class MountEggQueue : MonoBehaviour
 
         _lastRealOwnerPos = p;
 
+        if (_ownerVisualFollowExact)
+        {
+            TrackOwnerPositionDistanceBased(p, seg, segLen);
+            return;
+        }
+
         float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
         float speed = Mathf.Max(0.000001f, GetOwnerWorldSpeedPerSecond());
         float secondsPerPoint = Mathf.Max(0.000001f, spacing / speed);
@@ -731,9 +766,28 @@ public sealed class MountEggQueue : MonoBehaviour
         }
     }
 
+    void TrackOwnerPositionDistanceBased(Vector3 p, Vector3 seg, float segLen)
+    {
+        if (segLen <= 0.000001f)
+            return;
+
+        float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
+        Vector3 start = p - seg;
+        Vector3 dir = seg / segLen;
+        float distanceFromStart = spacing - _historyDistanceCarry;
+
+        while (distanceFromStart <= segLen)
+        {
+            RecordHistory(start + dir * distanceFromStart);
+            distanceFromStart += spacing;
+        }
+
+        _historyDistanceCarry = Mathf.Repeat(_historyDistanceCarry + segLen, spacing);
+    }
+
     Vector3 SampleBackDistance(float backDistanceWorld)
     {
-        Vector3 head = GetOwnerWorldPos();
+        Vector3 head = GetOwnerFollowWorldPos();
         head.z = 0f;
 
         if (_historyCount <= 0)
@@ -765,6 +819,35 @@ public sealed class MountEggQueue : MonoBehaviour
         }
 
         return prev;
+    }
+
+    #endregion
+
+    #region Owner Visual Follow Offset
+
+    public void SetOwnerVisualFollowYOffset(float worldYOffset)
+    {
+        _ownerVisualFollowWorldOverrideActive = false;
+        _ownerVisualFollowExact = false;
+        _ownerVisualFollowYOffset = worldYOffset;
+    }
+
+    public void ClearOwnerVisualFollowYOffset()
+    {
+        _ownerVisualFollowYOffset = 0f;
+        _ownerVisualFollowWorldOverrideActive = false;
+        _ownerVisualFollowExact = false;
+    }
+
+    public void SetOwnerVisualFollowWorldPosition(Vector3 worldPosition, bool exactFollow)
+    {
+        worldPosition.z = 0f;
+        if (!_ownerVisualFollowWorldOverrideActive)
+            _historyDistanceCarry = 0f;
+
+        _ownerVisualFollowWorldOverride = worldPosition;
+        _ownerVisualFollowWorldOverrideActive = true;
+        _ownerVisualFollowExact = exactFollow;
     }
 
     #endregion
@@ -826,6 +909,9 @@ public sealed class MountEggQueue : MonoBehaviour
         }
 
         if (useIdleShift && idleDequeueSnap)
+            return targetWorld;
+
+        if (_ownerVisualFollowExact)
             return targetWorld;
 
         return Vector3.MoveTowards(before, targetWorld, maxStep);
@@ -1592,6 +1678,9 @@ public sealed class MountEggQueue : MonoBehaviour
         if (anyTransformOnEgg == null || consumerPlayer == null || _eggs.Count == 0)
             return false;
 
+        if (_ownerVisualFollowExact)
+            return false;
+
         if (_ownerPlayerId == -1)
             CacheOwnerIdentity();
 
@@ -1644,6 +1733,8 @@ public sealed class MountEggQueue : MonoBehaviour
 
         Vector3 startWorldPos = consumerPlayer.transform.position;
         Vector3 targetWorldPos = ResolveConsumedEggMountWorldPosition(consumedTr);
+        if (!CanConsumerMountAtWorldPosition(consumerPlayer, targetWorldPos))
+            return false;
 
         RemoveEggAtIndexNoDestroy(idx);
         PostQueueChanged(animateShift: true);
@@ -1710,6 +1801,55 @@ public sealed class MountEggQueue : MonoBehaviour
 
         worldPos.z = 0f;
         return worldPos;
+    }
+
+    bool CanConsumerMountAtWorldPosition(GameObject consumerPlayer, Vector3 targetWorldPos)
+    {
+        if (consumerPlayer == null)
+            return false;
+
+        var gm = FindAnyObjectByType<GameManager>();
+        Tilemap ground = gm != null ? gm.groundTilemap : ResolveGroundTilemapNear(targetWorldPos);
+        Tilemap destructible = gm != null ? gm.destructibleTilemap : null;
+        Tilemap indestructible = gm != null ? gm.indestructibleTilemap : null;
+
+        Vector3Int cell;
+        if (ground != null)
+            cell = ground.WorldToCell(targetWorldPos);
+        else if (destructible != null)
+            cell = destructible.WorldToCell(targetWorldPos);
+        else if (indestructible != null)
+            cell = indestructible.WorldToCell(targetWorldPos);
+        else
+            return true;
+
+        if (ground != null && ground.GetTile(cell) == null)
+            return false;
+
+        if (indestructible != null && indestructible.GetTile(cell) != null)
+            return false;
+
+        if (destructible != null &&
+            destructible.GetTile(cell) != null &&
+            !ConsumerCanPassDestructibles(consumerPlayer))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool ConsumerCanPassDestructibles(GameObject consumerPlayer)
+    {
+        int playerId = ResolvePlayerIdFrom(consumerPlayer);
+        if (playerId >= 1 && playerId <= 6 && PlayerPersistentStats.Get(playerId).CanPassDestructibles)
+            return true;
+
+        if (!consumerPlayer.TryGetComponent(out AbilitySystem abilitySystem) || abilitySystem == null)
+            return false;
+
+        abilitySystem.RebuildCache();
+        return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
     }
 
     Vector2 ResolveMountFacingForConsumer(GameObject consumerPlayer)

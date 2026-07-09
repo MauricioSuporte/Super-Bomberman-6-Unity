@@ -392,6 +392,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         if (mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy)
             return;
 
+        if (IsPinkLouieJumping(mover))
+            return;
+
         Vector3Int currentCell = WorldToCell(mover.Rigidbody.position);
 
         if (waitingForPortalExit.TryGetValue(mover, out Vector3Int blockedCell))
@@ -411,6 +414,14 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
         int destinationIndex = GetClockwiseDestinationIndex(portalIndex);
         StartCoroutine(TeleportRoutine(mover, portalIndex, destinationIndex));
+    }
+
+    static bool IsPinkLouieJumping(MovementController mover)
+    {
+        return mover != null &&
+               mover.TryGetComponent(out PinkLouieJumpAbility pinkJump) &&
+               pinkJump != null &&
+               pinkJump.JumpActive;
     }
 
     IEnumerator TeleportRoutine(MovementController mover, int sourceIndex, int destinationIndex)

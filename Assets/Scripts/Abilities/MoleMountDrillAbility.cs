@@ -60,6 +60,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
     public bool Running => running;
+    public bool IsProtectingFromStun => enabledAbility && running;
     public float StartupInvulnerabilityDelaySeconds =>
         externalAnimator is MoleMountDrillAnimator anim
             ? Mathf.Max(0f, anim.Phase1Duration)
