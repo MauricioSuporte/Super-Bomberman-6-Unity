@@ -309,6 +309,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 itemSelectHintSize = new(900f, 120f);
     [SerializeField] private int itemSelectHintFontSize = 24;
     [SerializeField, Min(0f)] private float itemSelectHintLineSpacing = 18f;
+    [SerializeField] private bool logItemSelectHintStyle = true;
     [SerializeField, Min(0)] private int itemSelectMaxAmount = 99;
     [SerializeField] private Vector2 louieSelectRootOffset = Vector2.zero;
     [SerializeField] private Vector2 louieSelectGridOffset = new(0f, 8f);
@@ -537,6 +538,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<TextMeshProUGUI> itemSelectIconLabelTexts = new();
     private readonly List<TextMeshProUGUI> itemSelectAmountTexts = new();
     private TextMeshProUGUI itemSelectHintText;
+    private bool itemSelectHintStyleLogged;
     private RectTransform itemSelectCursorRt;
     private Image itemSelectCursorImage;
     private AnimatedSpriteRenderer itemSelectCursorRenderer;
@@ -4019,6 +4021,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             itemSelectHintText.fontSize = itemSelectHintFontSize;
             itemSelectHintText.lineSpacing = itemSelectHintLineSpacing;
             itemSelectHintText.alignment = TextAlignmentOptions.Center;
+            LogItemSelectHintStyle("UpdateItemSelectVisuals.AfterFinalStyle");
         }
 
         if (itemSelectCursorRt != null)
@@ -4030,6 +4033,37 @@ public sealed class BattleModeMenu : MonoBehaviour
             itemSelectCursorRenderer?.SetExternalBaseLocalPosition(itemSelectCursorRt.localPosition);
             UpdateItemSelectCursorAnimationState();
         }
+    }
+
+    private void LogItemSelectHintStyle(string context)
+    {
+        if (!logItemSelectHintStyle || itemSelectHintStyleLogged || itemSelectHintText == null)
+            return;
+
+        itemSelectHintStyleLogged = true;
+
+        string fontName = itemSelectHintText.font != null ? itemSelectHintText.font.name : "NULL";
+        string materialName = itemSelectHintText.fontMaterial != null ? itemSelectHintText.fontMaterial.name : "NULL";
+        string sharedMaterialName = itemSelectHintText.fontSharedMaterial != null ? itemSelectHintText.fontSharedMaterial.name : "NULL";
+        string leftPanelName = leftPanel != null ? leftPanel.name : "NULL";
+        string leftPanelFontName = leftPanel != null && leftPanel.OptionFontAsset != null ? leftPanel.OptionFontAsset.name : "NULL";
+        string leftPanelMaterialName = leftPanel != null && leftPanel.OptionFontMaterialPreset != null ? leftPanel.OptionFontMaterialPreset.name : "NULL";
+        RectTransform rt = itemSelectHintText.rectTransform;
+
+        Debug.Log(
+            $"[BattleModeMenu][ItemSelectHintStyle] {context} " +
+            $"leftPanel={leftPanelName} leftPanelFont={leftPanelFontName} leftPanelMaterial={leftPanelMaterialName} " +
+            $"font={fontName} fontMaterial={materialName} sharedMaterial={sharedMaterialName} " +
+            $"fontSize={itemSelectHintText.fontSize:0.###} lineSpacing={itemSelectHintText.lineSpacing:0.###} " +
+            $"fontStyle={itemSelectHintText.fontStyle} alignment={itemSelectHintText.alignment} " +
+            $"color={itemSelectHintText.color} faceColor={itemSelectHintText.faceColor} outlineColor={itemSelectHintText.outlineColor} " +
+            $"outlineWidth={itemSelectHintText.outlineWidth:0.###} extraPadding={itemSelectHintText.extraPadding} " +
+            $"wrapping={itemSelectHintText.textWrappingMode} overflow={itemSelectHintText.overflowMode} " +
+            $"currentUiScale={currentUiScale:0.###} rootScale={(itemSelectRoot != null ? itemSelectRoot.localScale.ToString() : "NULL")} " +
+            $"anchorMin={(rt != null ? rt.anchorMin.ToString() : "NULL")} anchorMax={(rt != null ? rt.anchorMax.ToString() : "NULL")} " +
+            $"pivot={(rt != null ? rt.pivot.ToString() : "NULL")} anchoredPosition={(rt != null ? rt.anchoredPosition.ToString() : "NULL")} " +
+            $"sizeDelta={(rt != null ? rt.sizeDelta.ToString() : "NULL")} localScale={(rt != null ? rt.localScale.ToString() : "NULL")}",
+            this);
     }
 
     private Vector2 GetItemSelectCellPosition(int itemIndex, int columns, int rows)

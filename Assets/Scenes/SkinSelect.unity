@@ -1017,6 +1017,7 @@ MonoBehaviour:
   forceBackgroundStretchToRootPanel: 0
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562754}
+  leftPanel: {fileID: 0}
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
   fadeOutOnConfirmDuration: 1
@@ -1060,6 +1061,7 @@ MonoBehaviour:
   idleFrameIndex: 2
   downFrameTime: 0.1
   endStageFrameTime: 0.1
+  ladyBomberEndStageSpeedMultiplier: 1.5
   downFrames: 0100000000000000010000000200000003000000040000000300000002000000
   endStageFrames: 69000000680000006a00000068000000690000006a000000
   endStageYOffset: 2
@@ -1110,7 +1112,23 @@ MonoBehaviour:
   unlockHintUnderlayOffsetX: 0.25
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
-  selectableCharacters: 0000000001000000
+  selectedSkinsListRoot: {fileID: 0}
+  selectedSkinsListBaseAnchoredPos: {x: 0, y: 85}
+  selectedSkinEntryBaseSpacing: 12
+  selectedSkinSpriteYOffset: -8
+  selectedSkinCurrentCursorAlpha: 0.45
+  selectedSkinPendingCursorAlpha: 0.25
+  selectedSkinPreviewAlpha: 0.55
+  selectedSkinConfirmAnimationSeconds: 0.85
+  footerHintText: {fileID: 0}
+  footerHintFontAsset: {fileID: 0}
+  footerHintFontMaterialPreset: {fileID: 0}
+  logFooterHintStyle: 1
+  footerHintBaseAnchoredPos: {x: 0, y: -60}
+  footerHintBaseSize: {x: 900, y: 48}
+  footerHintFontSize: 22
+  footerHintLineSpacing: 12
+  selectableCharacters: 000000000100000002000000
   selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000900000011000000140000000c000000100000000e0000001200000013000000000000001500000016000000170000001800000019000000
 --- !u!224 &1311323898
 RectTransform:

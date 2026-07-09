@@ -860,6 +860,7 @@ public static class GameTextDatabase
         TeamRed = "Red",
         TeamBlue = "Blue",
         TeamGreen = "Green",
+        SkinSelectHints = "←→↑↓: Choose\nA/Start: Select\nB: Back\nL/R: Change Color",
         ChooseChangeBack = "←→↑↓: Choose\nA/C: Change Number\nB: Back\nL/R: Restore ALL to Default",
         RestoreItemsDefaultsQuestion = "RESTORE ALL ITEMS TO DEFAULT VALUES?",
         RestoreLouiesDefaultsQuestion = "RESTORE ALL LOUIES TO DEFAULT VALUES?",
@@ -898,6 +899,7 @@ public static class GameTextDatabase
         Hard = "ハード",
         Man = "人間",
         Com = "CPU",
+        SkinSelectHints = "←→↑↓: 選択\nA/Start: 決定\nB: 戻る\nL/R: 色を変更",
         TeamRed = "赤",
         TeamBlue = "青",
         TeamGreen = "緑",
@@ -939,6 +941,7 @@ public static class GameTextDatabase
         Hard = "Difícil",
         Man = "JUG",
         Com = "CPU",
+        SkinSelectHints = "←→↑↓: Elegir\nA/Start: Seleccionar\nB: Volver\nL/R: Cambiar color",
         TeamRed = "Rojo",
         TeamBlue = "Azul",
         TeamGreen = "Verde",
@@ -980,6 +983,7 @@ public static class GameTextDatabase
         Hard = "Difícil",
         Man = "JOG",
         Com = "CPU",
+        SkinSelectHints = "←→↑↓: Escolher\nA/Start: Selecionar\nB: Voltar\nL/R: Trocar cor",
         TeamRed = "Vermelho",
         TeamBlue = "Azul",
         TeamGreen = "Verde",
@@ -1369,6 +1373,7 @@ public sealed class BattleModeMenuText
     public string TeamBlue;
     public string TeamGreen;
     public string ChooseChangeBack;
+    public string SkinSelectHints;
     public string RestoreItemsDefaultsQuestion;
     public string RestoreLouiesDefaultsQuestion;
     public string RestoreHandicapDefaultsQuestion;
