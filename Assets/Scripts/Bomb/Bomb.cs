@@ -63,7 +63,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     /// Direção atual do chute (Vector2.zero quando a bomba não está sendo chutada).
     /// Usada pela IA para prever a trajetória de RubberBombs (que ricocheteiam).
     /// </summary>
-    public Vector2 CurrentKickDirection => isKicked ? kickDirection : Vector2.zero;
+    public Vector2 CurrentKickDirection => IsBeingKicked ? kickDirection : Vector2.zero;
     public bool IsBeingMovedByYellowLouie => isBeingMovedByYellowLouie;
     public bool IsBeingPunched => isPunched;
     public bool WasMovedByKickOrPunch { get; private set; }
@@ -1239,6 +1239,40 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             WasMovedByKickOrPunch = true;
             StopMagnetMovement();
         }
+        else
+        {
+            RemoveKickOriginBlocker();
+        }
+    }
+
+    public void BeginYellowLouieKickSegment(
+        Vector2 direction,
+        float tileSize,
+        Vector2 segmentOrigin,
+        float originBlockerSize,
+        bool originBlockerUseTrigger)
+    {
+        if (HasExploded || direction == Vector2.zero)
+            return;
+
+        isBeingMovedByYellowLouie = true;
+        WasMovedByKickOrPunch = true;
+        StopMagnetMovement();
+
+        kickDirection = direction.normalized;
+        kickTileSize = Mathf.Max(0.0001f, tileSize);
+        kickOriginBlockerSize = Mathf.Clamp(originBlockerSize, 0.2f, 1.2f);
+        kickOriginBlockerUseTrigger = originBlockerUseTrigger;
+
+        EnsureKickOriginBlocker(segmentOrigin, kickOriginBlockerSize, kickOriginBlockerUseTrigger);
+    }
+
+    public void EndYellowLouieKickSegment()
+    {
+        if (!isBeingMovedByYellowLouie)
+            return;
+
+        RemoveKickOriginBlocker();
     }
 
     public void ForceSetLogicalPosition(Vector2 worldPos)
