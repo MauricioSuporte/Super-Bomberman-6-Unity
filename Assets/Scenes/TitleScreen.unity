@@ -952,12 +952,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenLogoDropIntro
   logoImage: {fileID: 1797125730}
   logoFrames:
-  - {fileID: 1584859444399050731, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
-  - {fileID: 7898370078986968613, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
-  - {fileID: 371191097891888966, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
-  - {fileID: -3541977968402563015, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
-  - {fileID: 5962710452785465411, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
-  - {fileID: -7456460305171201392, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
+  - {fileID: 21300000, guid: 69e3a2ce602fec24681ae5f225443c7b, type: 3}
+  - {fileID: 21300000, guid: 35a576484f460794ba59de55f89387d6, type: 3}
+  - {fileID: 21300000, guid: a4cde016161f9684f95ae9a9b372c794, type: 3}
+  - {fileID: 21300000, guid: bb4c4a37398c2d545b80ed445a24db97, type: 3}
+  - {fileID: 21300000, guid: 9fdc3ab6ced69a84eb6178279d74213e, type: 3}
+  - {fileID: 21300000, guid: ec3d4dc146077f546bd29b45e71258cc, type: 3}
   logoFrameDuration: 0.08
   animateLogo: 1
   loopLogoAnimation: 1
