@@ -15,17 +15,7 @@ public static class SaveSystem
     private static bool loaded;
     private static SaveData data;
 
-    private static readonly BomberSkin[] defaultUnlockedSkins =
-    {
-        BomberSkin.White,
-        BomberSkin.Black,
-        BomberSkin.Blue,
-        BomberSkin.Red,
-        BomberSkin.Yellow,
-        BomberSkin.Green,
-        BomberSkin.Aqua,
-        BomberSkin.Pink,
-    };
+    private static readonly BomberSkin[] defaultUnlockedSkins = BomberSkinResourceCatalog.BombermanSkins;
 
     private static readonly PlayerAction[] controlActions =
     {
@@ -948,22 +938,28 @@ public static class SaveSystem
         if (d.unlockedSkins.Contains(BomberSkin.Purple.ToString()))
             d.hardcoreUnlocked = true;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player1SelectedSkin))
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player1SelectedSkin) ||
+            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player1SelectedSkin))
             d.player1SelectedSkin = (int)BomberSkin.White;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player2SelectedSkin))
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player2SelectedSkin) ||
+            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player2SelectedSkin))
             d.player2SelectedSkin = (int)BomberSkin.Black;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player3SelectedSkin))
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player3SelectedSkin) ||
+            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player3SelectedSkin))
             d.player3SelectedSkin = (int)BomberSkin.Blue;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player4SelectedSkin))
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player4SelectedSkin) ||
+            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player4SelectedSkin))
             d.player4SelectedSkin = (int)BomberSkin.Red;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player5SelectedSkin))
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player5SelectedSkin) ||
+            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player5SelectedSkin))
             d.player5SelectedSkin = (int)BomberSkin.Green;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player6SelectedSkin))
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player6SelectedSkin) ||
+            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player6SelectedSkin))
             d.player6SelectedSkin = (int)BomberSkin.Yellow;
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)

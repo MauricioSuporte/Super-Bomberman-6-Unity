@@ -194,34 +194,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     [Header("Skins (menu order)")]
     [SerializeField]
-    List<BomberSkin> selectableSkins = new()
-    {
-        BomberSkin.White,
-        BomberSkin.Black,
-        BomberSkin.Red,
-        BomberSkin.Blue,
-        BomberSkin.Green,
-        BomberSkin.Purple,
-        BomberSkin.Pink,
-        BomberSkin.Magenta,
-        BomberSkin.Gray,
-        BomberSkin.Brown,
-        BomberSkin.DarkGreen,
-        BomberSkin.DarkBlue,
-        BomberSkin.Orange,
-        BomberSkin.Cyan,
-        BomberSkin.Aqua,
-        BomberSkin.DarkPurple,
-        BomberSkin.Yellow,
-        BomberSkin.LightBlue,
-        BomberSkin.Gold,
-        BomberSkin.Golden,
-        BomberSkin.Nightmare,
-        BomberSkin.Alternative1,
-        BomberSkin.Alternative2,
-        BomberSkin.Alternative3,
-        BomberSkin.Alternative4
-    };
+    List<BomberSkin> selectableSkins = new(BomberSkinResourceCatalog.BombermanSkins);
 
     readonly Dictionary<BomberSkin, Sprite> idleCache = new();
     readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> sheetFrameCache = new();

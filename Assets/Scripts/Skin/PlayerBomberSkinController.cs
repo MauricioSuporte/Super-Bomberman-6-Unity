@@ -54,6 +54,7 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     public void Apply(BomberSkin skin)
     {
+        skin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin);
         EnsureCache(skin);
 
         if (!skinFrameMaps.TryGetValue(skin, out var targetMap) || targetMap.Count == 0)
