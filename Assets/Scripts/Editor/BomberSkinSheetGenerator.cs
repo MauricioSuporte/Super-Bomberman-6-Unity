@@ -1,14 +1,45 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
 public static class BomberSkinSheetGenerator
 {
-    const string SourceSheetAssetPath = "Assets/Resources/Sprites/Bomberman/Bomberman.png";
-    const string PaletteAssetPath = "Assets/Resources/Sprites/Bomberman/BombermanPallete.png";
-    const string OutputFolderAssetPath = "Assets/Resources/Sprites/Bomberman/Generated/Bomberman";
+    readonly struct CharacterSkinSheetSource
+    {
+        public CharacterSkinSheetSource(
+            BomberCharacter character,
+            string sourceSheetAssetPath,
+            string paletteAssetPath,
+            string outputFolderAssetPath)
+        {
+            Character = character;
+            SourceSheetAssetPath = sourceSheetAssetPath;
+            PaletteAssetPath = paletteAssetPath;
+            OutputFolderAssetPath = outputFolderAssetPath;
+        }
+
+        public BomberCharacter Character { get; }
+        public string SourceSheetAssetPath { get; }
+        public string PaletteAssetPath { get; }
+        public string OutputFolderAssetPath { get; }
+    }
+
+    static readonly CharacterSkinSheetSource[] CharacterSources =
+    {
+        new CharacterSkinSheetSource(
+            BomberCharacter.Bomberman,
+            "Assets/Resources/Sprites/Bomberman/Bomberman.png",
+            "Assets/Resources/Sprites/Bomberman/BombermanPallete.png",
+            "Assets/Resources/Sprites/Bomberman/Generated/Bomberman"),
+        new CharacterSkinSheetSource(
+            BomberCharacter.LadyBomber,
+            "Assets/Resources/Sprites/LadyBomber/LadyBomber.png",
+            "Assets/Resources/Sprites/LadyBomber/BombermanPallete.png",
+            "Assets/Resources/Sprites/LadyBomber/Generated/LadyBomber")
+    };
 
     static readonly BomberSkin[] BombermanSkins =
     {
@@ -45,7 +76,7 @@ public static class BomberSkinSheetGenerator
         EditorApplication.delayCall += GenerateMissingBombermanSheets;
     }
 
-    [MenuItem("Tools/Bomberman/Generate Missing Bomberman Skin Sheets")]
+    [MenuItem("Tools/Bomberman/Generate Missing Bomber Skin Sheets")]
     public static void GenerateMissingBombermanSheets()
     {
         if (EditorApplication.isCompiling)
@@ -54,16 +85,30 @@ public static class BomberSkinSheetGenerator
             return;
         }
 
-        if (!File.Exists(SourceSheetAssetPath) || !File.Exists(PaletteAssetPath))
-            return;
+        bool generatedAny = false;
 
-        EnsureFolder(OutputFolderAssetPath);
+        for (int i = 0; i < CharacterSources.Length; i++)
+        {
+            if (GenerateMissingSheets(CharacterSources[i]))
+                generatedAny = true;
+        }
 
-        Texture2D source = LoadTexture(SourceSheetAssetPath);
-        Texture2D palette = LoadTexture(PaletteAssetPath);
+        if (generatedAny)
+            AssetDatabase.Refresh();
+    }
+
+    static bool GenerateMissingSheets(CharacterSkinSheetSource sheetSource)
+    {
+        if (!File.Exists(sheetSource.SourceSheetAssetPath) || !File.Exists(sheetSource.PaletteAssetPath))
+            return false;
+
+        EnsureFolder(sheetSource.OutputFolderAssetPath);
+
+        Texture2D source = LoadTexture(sheetSource.SourceSheetAssetPath);
+        Texture2D palette = LoadTexture(sheetSource.PaletteAssetPath);
 
         if (source == null || palette == null)
-            return;
+            return false;
 
         int skinCount = Mathf.Min(BombermanSkins.Length, palette.width - 1);
         bool generatedAny = false;
@@ -72,8 +117,8 @@ public static class BomberSkinSheetGenerator
         {
             BomberSkin skin = BombermanSkins[i];
             int paletteColumn = i + 1;
-            string sheetName = BomberSkinResourceCatalog.GetSheetName(BomberCharacter.Bomberman, skin);
-            string outputPath = $"{OutputFolderAssetPath}/{sheetName}.png";
+            string sheetName = BomberSkinResourceCatalog.GetSheetName(sheetSource.Character, skin);
+            string outputPath = $"{sheetSource.OutputFolderAssetPath}/{sheetName}.png";
 
             if (File.Exists(outputPath))
                 continue;
@@ -83,15 +128,14 @@ public static class BomberSkinSheetGenerator
             File.WriteAllBytes(outputPath, generated.EncodeToPNG());
 
             Object.DestroyImmediate(generated);
-            WriteMetaFromSource(outputPath, sheetName);
+            WriteMetaFromSource(sheetSource.SourceSheetAssetPath, outputPath, sheetName);
             generatedAny = true;
         }
 
         Object.DestroyImmediate(source);
         Object.DestroyImmediate(palette);
 
-        if (generatedAny)
-            AssetDatabase.Refresh();
+        return generatedAny;
     }
 
     static Texture2D LoadTexture(string assetPath)
@@ -147,17 +191,18 @@ public static class BomberSkinSheetGenerator
         return generated;
     }
 
-    static void WriteMetaFromSource(string outputPath, string sheetName)
+    static void WriteMetaFromSource(string sourceSheetAssetPath, string outputPath, string sheetName)
     {
-        string sourceMetaPath = SourceSheetAssetPath + ".meta";
+        string sourceMetaPath = sourceSheetAssetPath + ".meta";
         string outputMetaPath = outputPath + ".meta";
 
         if (!File.Exists(sourceMetaPath) || File.Exists(outputMetaPath))
             return;
 
         string meta = File.ReadAllText(sourceMetaPath);
-        meta = meta.Replace("guid: 160e5ada7044944489c9570364dd86f5", "guid: " + GUID.Generate().ToString());
-        meta = meta.Replace("Bomberman_", sheetName + "_");
+        string sourceSheetName = Path.GetFileNameWithoutExtension(sourceSheetAssetPath);
+        meta = Regex.Replace(meta, @"^guid: \w+", "guid: " + GUID.Generate().ToString(), RegexOptions.Multiline);
+        meta = meta.Replace(sourceSheetName + "_", sheetName + "_");
         File.WriteAllText(outputMetaPath, meta);
     }
 

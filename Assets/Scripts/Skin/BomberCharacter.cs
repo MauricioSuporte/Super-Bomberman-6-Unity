@@ -1,4 +1,5 @@
 public enum BomberCharacter
 {
-    Bomberman
+    Bomberman,
+    LadyBomber
 }

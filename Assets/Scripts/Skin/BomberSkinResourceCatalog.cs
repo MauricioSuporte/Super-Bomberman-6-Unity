@@ -1,6 +1,7 @@
 public static class BomberSkinResourceCatalog
 {
     public const string BombermanGeneratedResourcesPath = "Sprites/Bomberman/Generated/Bomberman";
+    public const string LadyBomberGeneratedResourcesPath = "Sprites/LadyBomber/Generated/LadyBomber";
 
     public static readonly BomberSkin[] BombermanSkins =
     {
@@ -36,6 +37,7 @@ public static class BomberSkinResourceCatalog
         return character switch
         {
             BomberCharacter.Bomberman => BombermanGeneratedResourcesPath,
+            BomberCharacter.LadyBomber => LadyBomberGeneratedResourcesPath,
             _ => BombermanGeneratedResourcesPath
         };
     }
@@ -45,6 +47,7 @@ public static class BomberSkinResourceCatalog
         string characterSuffix = character switch
         {
             BomberCharacter.Bomberman => "Bomber",
+            BomberCharacter.LadyBomber => "LadyBomber",
             _ => "Bomber"
         };
 
