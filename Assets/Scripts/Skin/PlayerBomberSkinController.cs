@@ -15,6 +15,14 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     const float LadyBomberEndStageSpeedMultiplier = 1.5f;
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
+    static readonly int[] BombermanAfkFrames = { 126, 125, 124, 125, 126, 127, 128, 127 };
+    static readonly int[] LadyBomberAfkFrames = { 122, 121, 120, 119, 118, 121 };
+    static readonly int[] TinyBomberAfkFrames =
+    {
+        126, 125, 124, 125, 124, 125, 124, 125,
+        126, 127, 128, 127, 128, 127, 128, 127
+    };
+    static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
     static readonly int[] BombermanEndStageFrames = { 105, 104, 106, 104, 105, 106 };
     static readonly int[] TinyBomberEndStageFrames = { 104, 105, 106, 129, 130, 132, 133, 134, 135, 136 };
     static readonly int[] LadyBomberEndStageFrames =
@@ -126,6 +134,25 @@ public class PlayerBomberSkinController : MonoBehaviour
             ApplyWalkDefinition(renderer, definition, targetMap, skin);
         }
 
+        int[] afkFrames = GetAfkFrames(character);
+        ApplyFrameSequence(
+            FindAnimatedRenderer("Afk"),
+            "Afk",
+            afkFrames[0],
+            afkFrames,
+            targetMap,
+            skin
+        );
+
+        ApplyFrameSequence(
+            FindAnimatedRenderer("Afk2"),
+            "Afk2",
+            DismountedAfk2Frames[0],
+            DismountedAfk2Frames,
+            targetMap,
+            skin
+        );
+
         int[] endStageFrames = GetEndStageFrames(character);
         ApplyFrameSequence(
             FindAnimatedRenderer("EndStage"),
@@ -233,6 +260,16 @@ public class PlayerBomberSkinController : MonoBehaviour
             BomberCharacter.LadyBomber => LadyBomberEndStageFrames,
             BomberCharacter.TinyBomber => TinyBomberEndStageFrames,
             _ => BombermanEndStageFrames
+        };
+    }
+
+    static int[] GetAfkFrames(BomberCharacter character)
+    {
+        return character switch
+        {
+            BomberCharacter.LadyBomber => LadyBomberAfkFrames,
+            BomberCharacter.TinyBomber => TinyBomberAfkFrames,
+            _ => BombermanAfkFrames
         };
     }
 

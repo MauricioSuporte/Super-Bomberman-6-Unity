@@ -593,6 +593,15 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
+        if (TryGetComponent<InactivityAnimation>(out var inactivity) &&
+            inactivity != null &&
+            inactivity.SuppressMovementInput)
+        {
+            ApplyDirectionFromVector(Vector2.zero);
+            ResetDualInputAxes();
+            return;
+        }
+
         var input = PlayerInputManager.Instance;
         if (input == null)
         {

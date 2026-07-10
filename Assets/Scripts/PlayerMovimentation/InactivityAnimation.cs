@@ -28,6 +28,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private bool isPlaying;
     private bool externalPoseActive;
+    private bool manualTriggerHeld;
     private EmoteTarget currentTarget;
 
     private MountVisualController cachedLouieVisual;
@@ -43,10 +44,12 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     public float ChanceAltAnimation => Mathf.Clamp01(chanceAltAnimation);
     public bool RefreshFrameOnEnter => refreshFrameOnEnter;
+    public bool SuppressMovementInput => manualTriggerHeld;
 
     public void CancelForExternalOverride()
     {
         externalPoseActive = false;
+        manualTriggerHeld = false;
         StopEmote();
         lastInputTime = Time.time;
     }
@@ -54,6 +57,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     public void PlayBattleTimeUpPose(bool mounted)
     {
         externalPoseActive = false;
+        manualTriggerHeld = false;
         StopEmote();
         externalPoseActive = true;
 
@@ -113,6 +117,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     private void OnEnable()
     {
         externalPoseActive = false;
+        manualTriggerHeld = false;
         lastInputTime = Time.time;
         StopEmote();
     }
@@ -120,6 +125,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     private void OnDisable()
     {
         externalPoseActive = false;
+        manualTriggerHeld = false;
         StopEmote();
     }
 
@@ -149,6 +155,19 @@ public sealed class InactivityAnimation : MonoBehaviour
 
             lastInputTime = Time.time;
             return;
+        }
+
+        if (TryStartManualEmote())
+            return;
+
+        if (manualTriggerHeld)
+        {
+            var input = PlayerInputManager.Instance;
+            if (input != null && input.Get(movement.PlayerId, PlayerAction.ActionL))
+                return;
+
+            manualTriggerHeld = false;
+            lastInputTime = Time.time;
         }
 
         if (HasAnyPlayerInput())
@@ -344,6 +363,33 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         if (wasPlaying && movement != null)
             HudPortraitStateNotifier.SetInactive(movement.PlayerId, false);
+    }
+
+    private bool TryStartManualEmote()
+    {
+        if (!CompareTag("Player"))
+            return false;
+
+        var input = PlayerInputManager.Instance;
+        if (input == null || !input.Get(movement.PlayerId, PlayerAction.ActionL))
+            return false;
+
+        bool directionPressed =
+            input.GetDown(movement.PlayerId, PlayerAction.MoveUp) ||
+            input.GetDown(movement.PlayerId, PlayerAction.MoveDown) ||
+            input.GetDown(movement.PlayerId, PlayerAction.MoveLeft) ||
+            input.GetDown(movement.PlayerId, PlayerAction.MoveRight);
+
+        if (!directionPressed)
+            return false;
+
+        manualTriggerHeld = true;
+        lastInputTime = Time.time;
+
+        if (!isPlaying)
+            StartEmote(ResolveDesiredTarget());
+
+        return true;
     }
 
     private void SetPlayerEmoteEnabled(bool on)
