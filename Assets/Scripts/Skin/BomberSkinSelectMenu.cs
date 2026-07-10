@@ -13,15 +13,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     const float FooterHintItemSelectLineSpacing = 18f;
     const float NormalGameFooterHintYOffset = 20f;
 
-    [Header("Performance Diagnostics")]
-    [Tooltip("Logs one timing summary whenever the skin-select screen is opened. Disable after profiling.")]
-
-    [SerializeField, HideInInspector] bool logHintSpacingEveryUpdate;
-    [SerializeField, HideInInspector] bool logSelectedSkinsListSpacing;
-    [SerializeField, HideInInspector] bool logSelectedSkinsListPositions;
-    [SerializeField, HideInInspector] bool logBattleModeBackFlow;
-    [SerializeField, HideInInspector] bool enableSurgicalLogs;
-
     [Header("Auto Fix Layout")]
     [SerializeField] bool forceRootPanelStretchToParent = false;
     [SerializeField] bool forceBackgroundStretchToRootPanel = false;
@@ -65,7 +56,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     [Tooltip("Optional: override cursor sprite per player (index 0 = P1, ..., 5 = P6).")]
     [SerializeField] Sprite[] cursorSpriteByPlayer = new Sprite[GameSession.MaxPlayerId];
-    [SerializeField] bool logCursorPositionDebug = true;
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;
@@ -232,9 +222,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     Material footerHintRuntimeMaterial;
     string _lastUnlockHintMessage = string.Empty;
 
-    readonly Vector3[] _hintWorldCorners = new Vector3[4];
-    readonly Vector3[] _refWorldCorners = new Vector3[4];
-
     [Header("Characters (menu order)")]
     [SerializeField]
     List<BomberCharacter> selectableCharacters = new()
@@ -252,8 +239,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     // This keeps opening time independent from the total number of registered skins.
     readonly Dictionary<string, Sprite> idleCache = new();
     readonly Dictionary<string, Dictionary<int, Sprite>> sheetFrameCache = new();
-    int spriteSheetsLoadedThisOpen;
-    float spriteSheetLoadSecondsThisOpen;
 
     readonly List<RectTransform> slotRoots = new();
     readonly List<Image> slotImages = new();
@@ -285,8 +270,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     int overlapZTick;
 
     int[] selectedBySlot;
-    int cursorPositionDebugFramesRemaining;
-    string cursorPositionDebugContext = string.Empty;
 
     sealed class PlayerCursorState
     {
@@ -346,13 +329,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         EnsureUnlockHintText();
         EnsureFooterHintText();
 
-        SLog(
-            $"Awake | root={(root != null ? root.name : "NULL")} " +
-            $"referenceRect={(referenceRect != null ? referenceRect.name : "NULL")} " +
-            $"rootPanel={(rootPanel != null ? rootPanel.name : "NULL")} " +
-            $"uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt}"
-        );
-
         if (root != null)
             root.SetActive(false);
     }
@@ -382,8 +358,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         UpdateFooterHintVisual();
         UpdateUnlockHint();
 
-        if (logHintSpacingEveryUpdate)
-            DumpHintSpacing("Update");
     }
 
     void LateUpdate()
@@ -396,8 +370,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CycleOverlappedCursors();
         UpdateSelectedSkinsListVisuals();
 
-        if (logHintSpacingEveryUpdate)
-            DumpHintSpacing("LateUpdate");
     }
 
     public void Hide()
@@ -426,21 +398,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (gridRoot != null)
             gridRoot.gameObject.SetActive(false);
 
-        SLog("Hide | menuActive=false");
-
         if (root != null) root.SetActive(false);
         else gameObject.SetActive(false);
     }
 
     public IEnumerator SelectSkinRoutine()
     {
-        float loadStartedAt = Time.realtimeSinceStartup;
-        float gridAndLayoutSeconds = 0f;
-        float cursorUiSeconds = 0f;
-        float finalLayoutSeconds = 0f;
-        float inputReleaseWaitSeconds = 0f;
-        spriteSheetsLoadedThisOpen = 0;
-        spriteSheetLoadSecondsThisOpen = 0f;
         bool resumeFromSavedSkins = ResumeBattleModeSelectionFromSavedSkins;
         ResumeBattleModeSelectionFromSavedSkins = false;
 
@@ -528,16 +491,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyDynamicScaleIfNeeded(true);
 
         Canvas.ForceUpdateCanvases();
-        gridAndLayoutSeconds = Time.realtimeSinceStartup - loadStartedAt;
         if (gridRoot is RectTransform gridRtBefore)
             LayoutRebuilder.ForceRebuildLayoutImmediate(gridRtBefore);
         Canvas.ForceUpdateCanvases();
 
         BuildPlayerCursors(configuredPlayerIds);
         RebuildSelectedSkinsListVisuals();
-        cursorUiSeconds = Time.realtimeSinceStartup - loadStartedAt - gridAndLayoutSeconds;
 
-        float inputReleaseWaitStartedAt = Time.realtimeSinceStartup;
         if (!resumeFromSavedSkins)
         {
             for (int i = 0; i < configuredPlayerIds.Count; i++)
@@ -556,10 +516,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 }
             }
         }
-
-        inputReleaseWaitSeconds = Time.realtimeSinceStartup - inputReleaseWaitStartedAt;
-
-        float finalLayoutStartedAt = Time.realtimeSinceStartup;
 
         for (int i = 0; i < players.Count; i++)
             InitializeCursorSelection(players[i]);
@@ -586,7 +542,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CycleOverlappedCursors();
 
         Canvas.ForceUpdateCanvases();
-        finalLayoutSeconds = Time.realtimeSinceStartup - finalLayoutStartedAt;
 
         if (shouldRestoreCanvasGroupAlpha && temporaryHiddenCanvasGroup != null)
             temporaryHiddenCanvasGroup.alpha = previousCanvasGroupAlpha;
@@ -661,14 +616,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             bool confirmPressed = startDown || aDown;
             bool backPressed = bDown;
-
-            if (backPressed && logBattleModeBackFlow)
-            {
-                SLog(
-                    $"BattleBack.Input | active={DescribeCursor(ps)} inputPid={pid} " +
-                    $"allConfirmed={AllPlayersConfirmed()} activeCursor={DescribeCursor(GetActiveSelectionCursor())} " +
-                    $"stack={DescribeBattleStack(pid)} players={DescribeAllCursors()}");
-            }
 
             if (moved)
             {
@@ -1001,14 +948,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (useBattleModeComAssignment)
             PushBattleConfirmedCursor(ps);
 
-        if (logBattleModeBackFlow)
-        {
-            int inputPlayerId = GetCursorInputPlayerId(ps);
-            SLog(
-                $"BattleBack.Confirm | confirmed={DescribeCursor(ps)} inputPid={inputPlayerId} " +
-                $"stack={DescribeBattleStack(inputPlayerId)} players={DescribeAllCursors()}");
-        }
-
         StartEndStageForCursor(ps);
 
         if (ps.cursorImg != null)
@@ -1034,24 +973,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         if (ps == null || !ps.confirmed || ps.selectedIndex < 0)
         {
-            if (logBattleModeBackFlow)
-                SLog($"BattleBack.UnconfirmSkipped | cursor={DescribeCursor(ps)} players={DescribeAllCursors()}");
-
             return;
         }
 
         int slot = ps.selectedIndex;
-
-        if (logBattleModeBackFlow)
-            SLog($"BattleBack.UnconfirmBefore | cursor={DescribeCursor(ps)} slot={slot} players={DescribeAllCursors()}");
 
         ps.confirmed = false;
         ps.selectedIndex = -1;
         StopEndStageForCursor(ps);
         RebuildSelectedSlotOwner(slot);
 
-        if (logBattleModeBackFlow)
-            SLog($"BattleBack.UnconfirmAfter | cursor={DescribeCursor(ps)} slot={slot} players={DescribeAllCursors()}");
     }
 
     PlayerCursorState GetActiveSelectionCursor()
@@ -1075,15 +1006,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             PlayerCursorState previousBattleCursor = GetHighestConfirmedBefore(activeCursor.playerId);
             if (previousBattleCursor == null)
                 return false;
-
-            if (logBattleModeBackFlow)
-            {
-                int inputPlayerId = GetCursorInputPlayerId(activeCursor);
-                SLog(
-                    $"BattleBack.SequentialToBattle | active={DescribeCursor(activeCursor)} inputPid={inputPlayerId} " +
-                    $"previous={DescribeCursor(previousBattleCursor)} previousStack={DescribeBattleStack(GetCursorInputPlayerId(previousBattleCursor))} " +
-                    $"activeStack={DescribeBattleStack(inputPlayerId)} players={DescribeAllCursors()}");
-            }
 
             RemoveBattleConfirmedCursorFromStack(previousBattleCursor);
             UnconfirmCursor(previousBattleCursor);
@@ -1667,32 +1589,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return st;
     }
 
-    static string FormatPlayerIds(List<int> playerIds)
-    {
-        if (playerIds == null || playerIds.Count == 0)
-            return string.Empty;
-
-        string s = string.Empty;
-        for (int i = 0; i < playerIds.Count; i++)
-        {
-            if (i > 0)
-                s += ",";
-            s += playerIds[i].ToString();
-        }
-
-        return s;
-    }
-
-    static string FormatVec2(Vector2 value)
-    {
-        return $"({value.x:0.##},{value.y:0.##})";
-    }
-
-    static string FormatVec3(Vector3 value)
-    {
-        return $"({value.x:0.##},{value.y:0.##},{value.z:0.##})";
-    }
-
     void PopulateBattleModeSkinSelectionIds(List<int> results)
     {
         if (results == null)
@@ -1766,12 +1662,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (!stack.Contains(ps))
             stack.Add(ps);
 
-        if (logBattleModeBackFlow)
-        {
-            SLog(
-                $"BattleBack.StackPush | pushed={DescribeCursor(ps)} inputPid={inputPlayerId} " +
-                $"stack={DescribeBattleStack(inputPlayerId)} players={DescribeAllCursors()}");
-        }
     }
 
     void RemoveBattleConfirmedCursorFromStack(PlayerCursorState ps)
@@ -1783,14 +1673,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (!battleConfirmedByInput.TryGetValue(inputPlayerId, out var stack) || stack == null)
             return;
 
-        bool removed = stack.Remove(ps);
-
-        if (logBattleModeBackFlow)
-        {
-            SLog(
-                $"BattleBack.StackRemovePrevious | removed={removed} previous={DescribeCursor(ps)} inputPid={inputPlayerId} " +
-                $"stack={DescribeBattleStack(inputPlayerId)} players={DescribeAllCursors()}");
-        }
+        stack.Remove(ps);
     }
 
     void AssignNextBattleComCursor(int inputPlayerId)
@@ -1822,44 +1705,19 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         inputPlayerId = Mathf.Clamp(inputPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
 
-        if (logBattleModeBackFlow)
-        {
-            SLog(
-                $"BattleBack.HandleBegin | inputPid={inputPlayerId} active={DescribeCursor(activeCursor)} " +
-                $"activeCursorNow={DescribeCursor(GetActiveSelectionCursor())} stack={DescribeBattleStack(inputPlayerId)} " +
-                $"players={DescribeAllCursors()}");
-        }
-
         if (!battleConfirmedByInput.TryGetValue(inputPlayerId, out var stack) || stack == null || stack.Count <= 0)
         {
-            if (logBattleModeBackFlow)
-                SLog($"BattleBack.HandleNoStack | inputPid={inputPlayerId} players={DescribeAllCursors()}");
-
             return false;
         }
 
         PlayerCursorState previous = stack[stack.Count - 1];
         stack.RemoveAt(stack.Count - 1);
 
-        if (logBattleModeBackFlow)
-        {
-            SLog(
-                $"BattleBack.StackPop | inputPid={inputPlayerId} popped={DescribeCursor(previous)} " +
-                $"stackAfterPop={DescribeBattleStack(inputPlayerId)} playersBeforeUnconfirm={DescribeAllCursors()}");
-        }
-
         UnconfirmCursor(previous);
         previous.inputPlayerId = inputPlayerId;
 
         if (previous.cursorRt != null)
             previous.cursorRt.gameObject.SetActive(true);
-
-        if (logBattleModeBackFlow)
-        {
-            SLog(
-                $"BattleBack.HandleEnd | inputPid={inputPlayerId} restored={DescribeCursor(previous)} " +
-                $"stack={DescribeBattleStack(inputPlayerId)} players={DescribeAllCursors()}");
-        }
 
         return true;
     }
@@ -1876,14 +1734,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         {
             if (!BattleModeBackPressed(input, playerId))
                 continue;
-
-            if (logBattleModeBackFlow)
-            {
-                SLog(
-                    $"BattleBack.CompletedInput | inputPid={playerId} " +
-                    $"hasActiveForInput={HasActiveUnconfirmedCursorForInput(playerId)} " +
-                    $"stack={DescribeBattleStack(playerId)} players={DescribeAllCursors()}");
-            }
 
             if (HasActiveUnconfirmedCursorForInput(playerId))
                 continue;
@@ -2262,15 +2112,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         selectedSkinsListRoot.anchoredPosition = selectedSkinsListBaseAnchoredPos * scale;
         selectedSkinsListRoot.sizeDelta = new Vector2(totalWidth, entrySize.y);
 
-        if (logSelectedSkinsListPositions)
-        {
-            SLog(
-                $"SelectedSkinsList.Layout | count={count} scale={scale:0.###} " +
-                $"entrySize={entrySize} spacingPx={spacingPx:0.###} totalWidth={totalWidth:0.###} startX={startX:0.###} " +
-                $"rootPos={selectedSkinsListRoot.anchoredPosition} rootSize={selectedSkinsListRoot.sizeDelta} " +
-                $"rootParent={(selectedSkinsListRoot.parent != null ? selectedSkinsListRoot.parent.name : "NULL")}");
-        }
-
         PlayerCursorState active = GetActiveSelectionCursor();
 
         for (int i = 0; i < count; i++)
@@ -2310,14 +2151,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             visual.root.anchoredPosition = new Vector2(startX + i * (entrySize.x + spacingPx), 0f);
             visual.root.sizeDelta = entrySize;
             visual.root.localScale = Vector3.one;
-
-            if (logSelectedSkinsListPositions)
-            {
-                SLog(
-                    $"SelectedSkinsList.Entry | index={i} player={cursor.playerId} confirmed={cursor.confirmed} " +
-                    $"anchoredPos={visual.root.anchoredPosition} size={visual.root.sizeDelta} " +
-                    $"worldPos={visual.root.position} parent={visual.root.parent.name}");
-            }
 
             if (visual.cursorImage != null)
             {
@@ -2364,24 +2197,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
         bool held = input.Get(clampedPlayerId, PlayerAction.ActionB);
         if (!held)
         {
-            if (battleBackReleaseRequired[clampedPlayerId] && logBattleModeBackFlow)
-                SLog($"BattleBack.Release | inputPid={clampedPlayerId}");
-
             battleBackReleaseRequired[clampedPlayerId] = false;
             return false;
         }
 
         if (battleBackReleaseRequired[clampedPlayerId])
-        {
-            if (input.GetDown(clampedPlayerId, PlayerAction.ActionB) && logBattleModeBackFlow)
-            {
-                SLog(
-                    $"BattleBack.IgnoredHeldDown | inputPid={clampedPlayerId} " +
-                    $"active={DescribeCursor(GetActiveSelectionCursor())} stack={DescribeBattleStack(clampedPlayerId)}");
-            }
-
             return false;
-        }
 
         if (!input.GetDown(clampedPlayerId, PlayerAction.ActionB))
             return false;
@@ -2403,31 +2224,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         float maxWidth = GetSelectedSkinsListMaxWidth();
         if (maxWidth <= 0f)
-        {
-            if (logSelectedSkinsListSpacing)
-            {
-                SLog(
-                    $"SelectedSkinsList.Spacing | count={count} compact=true configured={selectedSkinEntryCompactSpacing:0.###} " +
-                    $"scale={scale:0.###} requestedPx={requestedSpacingPx:0.###} safeWidth={maxWidth:0.###} " +
-                    $"finalPx={requestedSpacingPx:0.###} reason=no-safe-frame");
-            }
-
             return requestedSpacingPx;
-        }
 
         float maxSpacingToFit = (maxWidth - (count * entryWidth)) / Mathf.Max(1, count - 1);
         float finalSpacingPx = Mathf.Min(requestedSpacingPx, maxSpacingToFit);
-
-        if (logSelectedSkinsListSpacing)
-        {
-            float entriesWidth = count * entryWidth;
-            SLog(
-                $"SelectedSkinsList.Spacing | count={count} compact=true configured={selectedSkinEntryCompactSpacing:0.###} " +
-                $"scale={scale:0.###} requestedPx={requestedSpacingPx:0.###} " +
-                $"entryWidth={entryWidth:0.###} entriesWidth={entriesWidth:0.###} safeWidth={maxWidth:0.###} " +
-                $"maxSpacingToFit={maxSpacingToFit:0.###} finalPx={finalSpacingPx:0.###} " +
-                $"entriesExceedSafeFrame={entriesWidth > maxWidth}");
-        }
 
         return finalSpacingPx;
     }
@@ -2666,7 +2466,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void UpdateAllCursorsToSelected()
     {
-        bool shouldLog = logCursorPositionDebug && cursorPositionDebugFramesRemaining > 0;
         PlayerCursorState activeCursor = GetActiveSelectionCursor();
 
         for (int i = 0; i < players.Count; i++)
@@ -2710,9 +2509,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
         }
-
-        if (shouldLog)
-            cursorPositionDebugFramesRemaining--;
     }
 
     void CycleOverlappedCursors()
@@ -2870,7 +2666,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         string spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
         string sheetName = BomberSkinResourceCatalog.GetSheetName(character, skin);
         string sheetPath = $"{spritesResourcesPath}/{sheetName}";
-        float loadStartedAt = Time.realtimeSinceStartup;
         var sprites = Resources.LoadAll<Sprite>(sheetPath);
 
         map = new Dictionary<int, Sprite>();
@@ -2897,8 +2692,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
         }
 
-        spriteSheetsLoadedThisOpen++;
-        spriteSheetLoadSecondsThisOpen += Time.realtimeSinceStartup - loadStartedAt;
         sheetFrameCache[cacheKey] = map;
         return map;
     }
@@ -3166,34 +2959,21 @@ public class BomberSkinSelectMenu : MonoBehaviour
         UpdateFooterHintVisual();
         ApplyUnlockHintVisualStyle();
 
-        float bottomOffsetForLog;
+        float bottomOffset;
         if (referenceRect != null)
-            bottomOffsetForLog = referenceRect.rect.height * unlockHintBottomPercentOfReferenceHeight;
+            bottomOffset = referenceRect.rect.height * unlockHintBottomPercentOfReferenceHeight;
         else
-            bottomOffsetForLog = unlockHintBottomMargin * _currentUiScale;
+            bottomOffset = unlockHintBottomMargin * _currentUiScale;
 
         if (unlockHintRect != null)
         {
-            unlockHintRect.anchoredPosition = new Vector2(0f, bottomOffsetForLog);
+            unlockHintRect.anchoredPosition = new Vector2(0f, bottomOffset);
             unlockHintRect.sizeDelta = new Vector2(
                 unlockHintWidth * _currentUiScale,
                 unlockHintHeight * _currentUiScale
             );
         }
 
-        SLog(
-            $"ApplyDynamicScaleIfNeeded | " +
-            $"Screen=({sw}x{sh}) camRect={camRect} " +
-            $"refSource={refSource} refPx={refPx} " +
-            $"uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} " +
-            $"hintBottomMargin={unlockHintBottomMargin:0.###} " +
-            $"hintBottomPercent={unlockHintBottomPercentOfReferenceHeight:0.######} " +
-            $"resolvedBottomOffset={bottomOffsetForLog:0.###} " +
-            $"hintWidth={unlockHintWidth:0.###} scaledHintWidth={unlockHintWidth * _currentUiScale:0.###} " +
-            $"hintHeight={unlockHintHeight:0.###} scaledHintHeight={unlockHintHeight * _currentUiScale:0.###}"
-        );
-
-        DumpHintSpacing("ApplyDynamicScaleIfNeeded");
     }
 
     void ApplyScaledLayout()
@@ -3349,7 +3129,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             unlockHintText = go.AddComponent<TextMeshProUGUI>();
             unlockHintText.raycastTarget = false;
 
-            SLog("EnsureUnlockHintText | created runtime TMP");
         }
 
         unlockHintRect = unlockHintText.rectTransform;
@@ -3381,16 +3160,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         unlockHintText.gameObject.SetActive(false);
         _lastUnlockHintMessage = string.Empty;
 
-        SLog(
-            $"EnsureUnlockHintText | " +
-            $"anchoredPos={unlockHintRect.anchoredPosition} " +
-            $"sizeDelta={unlockHintRect.sizeDelta} " +
-            $"fontSize={unlockHintText.fontSize:0.###} " +
-            $"font={(unlockHintText.font != null ? unlockHintText.font.name : "NULL")} " +
-            $"bottomOffsetResolved={bottomOffset:0.###}"
-        );
-
-        DumpHintSpacing("EnsureUnlockHintText");
     }
 
     void ApplyUnlockHintVisualStyle()
@@ -3528,17 +3297,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             unlockHintRect.sizeDelta = new Vector2(width, finalHeight);
 
-            SLog(
-                $"ShowUnlockHint | " +
-                $"message='{message}' " +
-                $"width={width:0.###} baseHeight={baseHeight:0.###} " +
-                $"preferredHeight={preferredHeight:0.###} minHeight={minHeight:0.###} finalHeight={finalHeight:0.###} " +
-                $"anchoredPos={unlockHintRect.anchoredPosition}"
-            );
         }
 
         _lastUnlockHintMessage = message;
-        DumpHintSpacing("ShowUnlockHint");
     }
 
     void HideUnlockHintImmediate()
@@ -3549,70 +3310,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         unlockHintText.text = string.Empty;
         unlockHintText.gameObject.SetActive(false);
         _lastUnlockHintMessage = string.Empty;
-    }
-
-    void DumpHintSpacing(string context)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        if (unlockHintRect == null)
-        {
-            SLog($"{context} | unlockHintRect=NULL");
-            return;
-        }
-
-        if (referenceRect == null)
-        {
-            SLog($"{context} | referenceRect=NULL");
-            return;
-        }
-
-        Canvas canvas = GetRootCanvas();
-        Camera cam = null;
-
-        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            cam = canvas.worldCamera != null ? canvas.worldCamera : GetMainCameraSafe();
-
-        referenceRect.GetWorldCorners(_refWorldCorners);
-        unlockHintRect.GetWorldCorners(_hintWorldCorners);
-
-        Vector2 refBL = RectTransformUtility.WorldToScreenPoint(cam, _refWorldCorners[0]);
-        Vector2 refTL = RectTransformUtility.WorldToScreenPoint(cam, _refWorldCorners[1]);
-        Vector2 refTR = RectTransformUtility.WorldToScreenPoint(cam, _refWorldCorners[2]);
-
-        Vector2 hintBL = RectTransformUtility.WorldToScreenPoint(cam, _hintWorldCorners[0]);
-        Vector2 hintTL = RectTransformUtility.WorldToScreenPoint(cam, _hintWorldCorners[1]);
-        Vector2 hintTR = RectTransformUtility.WorldToScreenPoint(cam, _hintWorldCorners[2]);
-
-        float bottomGapPx = hintBL.y - refBL.y;
-        float leftInsetPx = hintBL.x - refBL.x;
-        float rightInsetPx = refTR.x - hintTR.x;
-
-        float normalizedBottomGap = referenceRect.rect.height > 0.001f
-            ? bottomGapPx / referenceRect.rect.height
-            : 0f;
-
-        float resolvedBottomOffset = 0f;
-
-        if (referenceRect != null)
-            resolvedBottomOffset = referenceRect.rect.height * unlockHintBottomPercentOfReferenceHeight;
-        else
-            resolvedBottomOffset = unlockHintBottomMargin * _currentUiScale;
-
-        SLog(
-            $"{context} | " +
-            $"screen=({Screen.width}x{Screen.height}) " +
-            $"uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} " +
-            $"hintBottomMargin={unlockHintBottomMargin:0.###} " +
-            $"hintBottomPercent={unlockHintBottomPercentOfReferenceHeight:0.######} " +
-            $"resolvedBottomOffset={resolvedBottomOffset:0.###} " +
-            $"hintAnchoredPos={unlockHintRect.anchoredPosition} hintSize={unlockHintRect.sizeDelta} " +
-            $"refRectLocalSize={referenceRect.rect.size} refScreenBL={refBL} refScreenTL={refTL} " +
-            $"hintScreenBL={hintBL} hintScreenTL={hintTL} " +
-            $"bottomGapPx={bottomGapPx:0.###} normalizedBottomGap={normalizedBottomGap:0.######} " +
-            $"leftInsetPx={leftInsetPx:0.###} rightInsetPx={rightInsetPx:0.###}"
-        );
     }
 
     PlayerCursorState GetLowestUnconfirmedCursor()
@@ -3697,67 +3394,4 @@ public class BomberSkinSelectMenu : MonoBehaviour
             mat.SetColor(prop, value);
     }
 
-    [System.Diagnostics.Conditional("BOMBER_SKIN_SELECT_LEGACY_LOGS")]
-    void SLog(string message)
-    {
-    }
-
-    string DescribeCursor(PlayerCursorState ps)
-    {
-        if (ps == null)
-            return "NULL";
-
-        return
-            $"P{ps.playerId}/In{GetCursorInputPlayerId(ps)}" +
-            $" idx={ps.index}" +
-            $" confirmed={ps.confirmed}" +
-            $" selectedIndex={ps.selectedIndex}" +
-            $" character={ps.selectedCharacter}" +
-            $" skin={ps.selected}" +
-            $" palette={ps.selectedPaletteIndex}" +
-            $" battleCom={ps.battleComCursor}" +
-            $" activeRt={(ps.cursorRt != null && ps.cursorRt.gameObject.activeSelf)}";
-    }
-
-    string DescribeAllCursors()
-    {
-        if (players == null || players.Count <= 0)
-            return "[]";
-
-        System.Text.StringBuilder sb = new();
-        sb.Append('[');
-
-        for (int i = 0; i < players.Count; i++)
-        {
-            if (i > 0)
-                sb.Append(" | ");
-
-            sb.Append(DescribeCursor(players[i]));
-        }
-
-        sb.Append(']');
-        return sb.ToString();
-    }
-
-    string DescribeBattleStack(int inputPlayerId)
-    {
-        inputPlayerId = Mathf.Clamp(inputPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
-
-        if (!battleConfirmedByInput.TryGetValue(inputPlayerId, out var stack) || stack == null || stack.Count <= 0)
-            return "[]";
-
-        System.Text.StringBuilder sb = new();
-        sb.Append('[');
-
-        for (int i = 0; i < stack.Count; i++)
-        {
-            if (i > 0)
-                sb.Append(" -> ");
-
-            sb.Append(DescribeCursor(stack[i]));
-        }
-
-        sb.Append(']');
-        return sb.ToString();
-    }
 }
