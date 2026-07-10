@@ -3538,6 +3538,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (isDead || isEndingStage)
             return;
 
+        NotifyHudPortraitDeathIfPlayer();
+
         holeDeathInProgress = true;
 
         BeginDeathCommon();
@@ -3696,6 +3698,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
     {
+        if (IsPlayer())
+            HudPortraitStateNotifier.SetVictory(PlayerId, true);
+
         if (cachedCompanion == null)
             TryGetComponent(out cachedCompanion);
 
@@ -3799,6 +3804,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void PlayBattleTimeUpSequence()
     {
+        if (IsPlayer())
+            HudPortraitStateNotifier.SetTimeUp(PlayerId, true);
+
         if (cachedCompanion == null)
             TryGetComponent(out cachedCompanion);
 

@@ -43,6 +43,10 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
     readonly Dictionary<int, Sprite> portraitByIndex = new();
     private bool[] playerDead = new bool[4];
+    private bool[] playerCornered = new bool[4];
+    private bool[] playerInactive = new bool[4];
+    private bool[] playerTimeUp = new bool[4];
+    private bool[] playerVictory = new bool[4];
     private bool[] portraitTintActive = new bool[4];
     private bool[] portraitOriginalColorCaptured = new bool[4];
     private Color[] portraitTintColors = new Color[4];
@@ -108,9 +112,9 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
                 playerDead[i] = true;
             }
 
-            bool isDead = playerDead[i];
+            int expressionIndex = GetExpressionIndex(i);
 
-            TrySetPortrait(portraitImage, playerId, portraitIndex, isDead);
+            TrySetPortrait(portraitImage, playerId, portraitIndex, expressionIndex);
             ApplyPortraitTint(i);
         }
     }
@@ -273,12 +277,25 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
         }
     }
 
-    void TrySetPortrait(Image portraitImage, int playerId, int legacyIndex, bool isDead)
+    int GetExpressionIndex(int index)
+    {
+        if (playerDead[index])
+            return HudCharacterPortraitCatalog.DeadExpression;
+        if (playerVictory[index])
+            return HudCharacterPortraitCatalog.VictoryExpression;
+        if (playerTimeUp[index])
+            return HudCharacterPortraitCatalog.TimeUpExpression;
+        if (playerCornered[index])
+            return HudCharacterPortraitCatalog.CorneredExpression;
+        if (playerInactive[index])
+            return HudCharacterPortraitCatalog.InactivityExpression;
+
+        return HudCharacterPortraitCatalog.DefaultExpression;
+    }
+
+    void TrySetPortrait(Image portraitImage, int playerId, int legacyIndex, int expressionIndex)
     {
         PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
-        int expressionIndex = isDead
-            ? HudCharacterPortraitCatalog.DeadExpression
-            : HudCharacterPortraitCatalog.LiveExpression;
         Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
 
         if (generatedPortrait != null)
@@ -289,7 +306,7 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             return;
         }
 
-        string path = isDead
+        string path = expressionIndex == HudCharacterPortraitCatalog.DeadExpression
             ? "HUD/PortraitBombersDead"
             : "HUD/PortraitBombersLive";
 
@@ -344,6 +361,25 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             return;
 
         playerDead[index] = false;
+        playerCornered[index] = false;
+        playerInactive[index] = false;
+        playerTimeUp[index] = false;
+        playerVictory[index] = false;
+    }
+
+    public void SetPlayerPortraitState(int playerId, HudPortraitState state, bool active)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= playerDead.Length || playerDead[index])
+            return;
+
+        switch (state)
+        {
+            case HudPortraitState.Cornered: playerCornered[index] = active; break;
+            case HudPortraitState.Inactive: playerInactive[index] = active; break;
+            case HudPortraitState.TimeUp: playerTimeUp[index] = active; break;
+            case HudPortraitState.Victory: playerVictory[index] = active; break;
+        }
     }
 
     public void SetPlayerPortraitTint(int playerId, Color color)

@@ -2,8 +2,14 @@ using UnityEngine;
 
 public static class HudCharacterPortraitCatalog
 {
-    public const int LiveExpression = 0;
-    public const int DeadExpression = 5;
+    public const int DefaultExpression = 0;
+    public const int DeadExpression = 1;
+    public const int TimeUpExpression = 2;
+    public const int CorneredExpression = 3;
+    public const int InactivityExpression = 4;
+    public const int VictoryExpression = 5;
+
+    public const int LiveExpression = DefaultExpression;
 
     public static Sprite Load(BomberCharacter character, BomberSkin skin, int expressionIndex)
     {

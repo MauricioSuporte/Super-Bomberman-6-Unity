@@ -459,6 +459,7 @@ public sealed class CorneredAnimation : MonoBehaviour
         activeCorneredRenderer = GetCorneredRenderer();
 
         isPlaying = true;
+        HudPortraitStateNotifier.SetCornered(movement.PlayerId, true);
 
         movement.SetSuppressInactivityAnimation(true);
 
@@ -490,6 +491,8 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void StopCornered()
     {
+        bool wasPlaying = isPlaying;
+
         if (movement != null && movement.IsMounted)
         {
             var mountVisual = GetComponentInChildren<MountVisualController>(true);
@@ -506,6 +509,9 @@ public sealed class CorneredAnimation : MonoBehaviour
         isPlaying = false;
         hasBombInBlock = false;
         activeCorneredRenderer = null;
+
+        if (wasPlaying && movement != null)
+            HudPortraitStateNotifier.SetCornered(movement.PlayerId, false);
     }
 
     private void SetCorneredEnabled(bool on)

@@ -263,6 +263,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         isPlaying = true;
         currentTarget = target;
+        HudPortraitStateNotifier.SetInactive(movement.PlayerId, true);
 
         if (target == EmoteTarget.Mount)
         {
@@ -304,6 +305,8 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private void StopEmote()
     {
+        bool wasPlaying = isPlaying;
+
         if (!isPlaying && currentTarget == EmoteTarget.None)
         {
             SetPlayerEmoteEnabled(false);
@@ -338,6 +341,9 @@ public sealed class InactivityAnimation : MonoBehaviour
         isPlaying = false;
         currentTarget = EmoteTarget.None;
         activeRenderer = null;
+
+        if (wasPlaying && movement != null)
+            HudPortraitStateNotifier.SetInactive(movement.PlayerId, false);
     }
 
     private void SetPlayerEmoteEnabled(bool on)

@@ -153,6 +153,10 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private Color pushStartColor = Color.white;
 
     readonly bool[] playerDead = new bool[MaxPlayers];
+    readonly bool[] playerCornered = new bool[MaxPlayers];
+    readonly bool[] playerInactive = new bool[MaxPlayers];
+    readonly bool[] playerTimeUp = new bool[MaxPlayers];
+    readonly bool[] playerVictory = new bool[MaxPlayers];
     readonly CharacterHealth[] playerHealthCache = new CharacterHealth[MaxPlayers];
     readonly List<Sprite> activePowerupBuffer = new List<Sprite>(6);
     readonly List<int> activePlayerIdsBuffer = new List<int>(MaxPlayers);
@@ -308,6 +312,25 @@ public sealed class BattleModeHud : MonoBehaviour
             return;
 
         playerDead[index] = false;
+        playerCornered[index] = false;
+        playerInactive[index] = false;
+        playerTimeUp[index] = false;
+        playerVictory[index] = false;
+    }
+
+    public void SetPlayerPortraitState(int playerId, HudPortraitState state, bool active)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= playerDead.Length || playerDead[index])
+            return;
+
+        switch (state)
+        {
+            case HudPortraitState.Cornered: playerCornered[index] = active; break;
+            case HudPortraitState.Inactive: playerInactive[index] = active; break;
+            case HudPortraitState.TimeUp: playerTimeUp[index] = active; break;
+            case HudPortraitState.Victory: playerVictory[index] = active; break;
+        }
     }
 
     public void SetPlayerPortraitTint(int playerId, Color color)
@@ -989,9 +1012,7 @@ public sealed class BattleModeHud : MonoBehaviour
     Sprite GetPortraitSprite(int playerId, bool useDeadPortrait)
     {
         PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
-        int expressionIndex = useDeadPortrait
-            ? HudCharacterPortraitCatalog.DeadExpression
-            : HudCharacterPortraitCatalog.LiveExpression;
+        int expressionIndex = GetPortraitExpressionIndex(playerId, useDeadPortrait);
         Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
         if (generatedPortrait != null)
             return generatedPortrait;
@@ -999,12 +1020,31 @@ public sealed class BattleModeHud : MonoBehaviour
         BomberSkin skin = stats.Skin;
         int portraitIndex = GetPortraitIndex(skin);
 
-        Dictionary<int, Sprite> source = useDeadPortrait ? deadPortraits : livePortraits;
+        Dictionary<int, Sprite> source = expressionIndex == HudCharacterPortraitCatalog.DeadExpression
+            ? deadPortraits
+            : livePortraits;
         Sprite sprite;
         if (source.TryGetValue(portraitIndex, out sprite))
             return sprite;
 
         return null;
+    }
+
+    int GetPortraitExpressionIndex(int playerId, bool useDeadPortrait)
+    {
+        int index = playerId - 1;
+        if (useDeadPortrait || index < 0 || index >= playerDead.Length || playerDead[index])
+            return HudCharacterPortraitCatalog.DeadExpression;
+        if (playerVictory[index])
+            return HudCharacterPortraitCatalog.VictoryExpression;
+        if (playerTimeUp[index])
+            return HudCharacterPortraitCatalog.TimeUpExpression;
+        if (playerCornered[index])
+            return HudCharacterPortraitCatalog.CorneredExpression;
+        if (playerInactive[index])
+            return HudCharacterPortraitCatalog.InactivityExpression;
+
+        return HudCharacterPortraitCatalog.DefaultExpression;
     }
 
     int GetPortraitIndex(BomberSkin skin)
