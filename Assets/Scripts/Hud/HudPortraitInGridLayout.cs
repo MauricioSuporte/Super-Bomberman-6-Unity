@@ -12,8 +12,8 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     [SerializeField] private string portraitsResourcesPath = "HUD/PortraitBombersLive";
 
     [Header("Portrait Logical Size (SNES pixels)")]
-    [SerializeField] private float portraitWidth = 16f;
-    [SerializeField] private float portraitHeight = 16f;
+    [SerializeField] private float portraitWidth = 32f;
+    [SerializeField] private float portraitHeight = 32f;
 
     [Header("Parent Grid Logical Size (SNES pixels)")]
     [SerializeField] private float[] gridWidths = new float[4] { 46f, 46f, 46f, 20f };
@@ -35,10 +35,10 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     [SerializeField]
     private Vector2[] portraitSizes = new Vector2[4]
     {
-        new(16f, 16f),
-        new(16f, 16f),
-        new(16f, 16f),
-        new(16f, 16f)
+        new(32f, 32f),
+        new(32f, 32f),
+        new(32f, 32f),
+        new(32f, 32f)
     };
 
     readonly Dictionary<int, Sprite> portraitByIndex = new();
@@ -110,7 +110,7 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
             bool isDead = playerDead[i];
 
-            TrySetPortrait(portraitImage, portraitIndex, isDead);
+            TrySetPortrait(portraitImage, playerId, portraitIndex, isDead);
             ApplyPortraitTint(i);
         }
     }
@@ -273,8 +273,22 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
         }
     }
 
-    void TrySetPortrait(Image portraitImage, int index, bool isDead)
+    void TrySetPortrait(Image portraitImage, int playerId, int legacyIndex, bool isDead)
     {
+        PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
+        int expressionIndex = isDead
+            ? HudCharacterPortraitCatalog.DeadExpression
+            : HudCharacterPortraitCatalog.LiveExpression;
+        Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
+
+        if (generatedPortrait != null)
+        {
+            portraitImage.sprite = generatedPortrait;
+            portraitImage.enabled = true;
+            portraitImage.preserveAspect = false;
+            return;
+        }
+
         string path = isDead
             ? "HUD/PortraitBombersDead"
             : "HUD/PortraitBombersLive";
@@ -301,7 +315,7 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
             if (int.TryParse(name[(underscore + 1)..], out int idx))
             {
-                if (idx == index)
+                if (idx == legacyIndex)
                 {
                     portraitImage.sprite = sprite;
                     portraitImage.enabled = true;

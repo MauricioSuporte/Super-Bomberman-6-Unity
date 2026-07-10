@@ -56,7 +56,7 @@ public sealed class BattleModeHud : MonoBehaviour
     const string TimerBackgroundResourcesPath = "HUD/BattleMode/TimerPanel";
     const string TimerDigitsResourcesPath = "HUD/BattleMode/TimerDigits";
 
-    const float PortraitSize = 16f;
+    const float PortraitSize = 32f;
     const float PortraitY = 2f;
     const float OuterHudEdgePadding = 1f;
     const float PortraitToPowerupGap = 2f;
@@ -988,7 +988,15 @@ public sealed class BattleModeHud : MonoBehaviour
 
     Sprite GetPortraitSprite(int playerId, bool useDeadPortrait)
     {
-        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
+        PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
+        int expressionIndex = useDeadPortrait
+            ? HudCharacterPortraitCatalog.DeadExpression
+            : HudCharacterPortraitCatalog.LiveExpression;
+        Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
+        if (generatedPortrait != null)
+            return generatedPortrait;
+
+        BomberSkin skin = stats.Skin;
         int portraitIndex = GetPortraitIndex(skin);
 
         Dictionary<int, Sprite> source = useDeadPortrait ? deadPortraits : livePortraits;

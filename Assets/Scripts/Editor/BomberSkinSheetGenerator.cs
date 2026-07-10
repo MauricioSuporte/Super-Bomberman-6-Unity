@@ -100,6 +100,8 @@ public static class BomberSkinSheetGenerator
 
         if (generatedAny)
             AssetDatabase.Refresh();
+
+        BomberHudPortraitGenerator.GenerateAll();
     }
 
     static bool GenerateMissingSheets(CharacterSkinSheetSource sheetSource)

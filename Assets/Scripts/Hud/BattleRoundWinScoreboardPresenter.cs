@@ -600,7 +600,15 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
     Sprite GetPortraitSprite(int playerId)
     {
-        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
+        PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
+        Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(
+            stats.Character,
+            stats.Skin,
+            HudCharacterPortraitCatalog.LiveExpression);
+        if (generatedPortrait != null)
+            return generatedPortrait;
+
+        BomberSkin skin = stats.Skin;
         int portraitIndex = GetPortraitIndex(skin);
 
         if (portraits.TryGetValue(portraitIndex, out Sprite sprite))

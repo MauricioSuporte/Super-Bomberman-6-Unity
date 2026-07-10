@@ -3530,8 +3530,8 @@ MonoBehaviour:
   - {fileID: 1876202010136796203}
   - {fileID: 2417022464569542573}
   portraitsResourcesPath: HUD/PortraitBombersLive
-  portraitWidth: 16
-  portraitHeight: 16
+  portraitWidth: 32
+  portraitHeight: 32
   gridWidths:
   - 46
   - 46
@@ -3545,10 +3545,10 @@ MonoBehaviour:
   - {x: -16, y: 1}
   useIndividualSizes: 0
   portraitSizes:
-  - {x: 16, y: 16}
-  - {x: 16, y: 16}
-  - {x: 16, y: 16}
-  - {x: 16, y: 16}
+  - {x: 32, y: 32}
+  - {x: 32, y: 32}
+  - {x: 32, y: 32}
+  - {x: 32, y: 32}
 --- !u!114 &6923586800974108403
 MonoBehaviour:
   m_ObjectHideFlags: 0
