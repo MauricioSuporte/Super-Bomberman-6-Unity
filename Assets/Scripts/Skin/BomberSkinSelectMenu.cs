@@ -3013,6 +3013,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return cellSize * Mathf.Max(0.1f, skinSpriteScaleMultiplier);
     }
 
+    public float GetPreviewMovementFrameSeconds()
+    {
+        return Mathf.Max(0.01f, downFrameTime);
+    }
+
+    public Vector2 GetPreviewSkinDisplaySize()
+    {
+        ApplyDynamicScaleIfNeeded();
+        return GetSkinSpriteDisplaySize();
+    }
+
     Vector2 GetGridCursorDisplaySize()
     {
         return new Vector2(

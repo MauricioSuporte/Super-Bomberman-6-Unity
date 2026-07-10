@@ -340,7 +340,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Min(0f)] private float handicapSelectRowSpacing = 4f;
     [SerializeField] private Vector2 handicapSelectPlayerOffset = new(-410f, 0f);
     [SerializeField] private Vector2 handicapSelectPlayerSize = new(96f, 96f);
-    [SerializeField, Min(0.01f)] private float handicapSelectPlayerFrameSeconds = 0.22f;
     [SerializeField] private Vector2 handicapSelectMountOffset = new(-304f, 0f);
     [SerializeField] private Vector2 handicapSelectOptionStartOffset = new(-190f, 0f);
     [SerializeField] private Vector2 handicapSelectOptionSpacing = new(80f, 0f);
@@ -492,6 +491,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private int currentTeamPlayerIndex;
     private int selectedTeamIndex;
     private float teamPreviewTimer;
+    private float handicapPreviewTimer;
     private bool teamSelectionReturnedToSkinSelect;
     private RectTransform ruleConfigRoot;
     private RectTransform ruleCursorRt;
@@ -672,7 +672,10 @@ public sealed class BattleModeMenu : MonoBehaviour
         else if (state == MenuState.LouieSelect)
             UpdateLouieSelectVisuals();
         else if (state == MenuState.HandicapSelect)
+        {
+            handicapPreviewTimer += Time.unscaledDeltaTime;
             UpdateHandicapSelectVisuals();
+        }
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -4909,6 +4912,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         state = MenuState.HandicapSelect;
         handicapSelectCursorConfirmTimer = 0f;
+        handicapPreviewTimer = 0f;
         playerModes = SaveSystem.GetBattleModePlayerControlModes();
         selectedHandicapRow = Mathf.Clamp(selectedHandicapRow, 0, GameSession.MaxPlayerId - 1);
         selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow, 1);
@@ -5185,7 +5189,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             return;
 
         EnsureWorkingBattleHandicap();
-        teamPreviewTimer += Time.unscaledDeltaTime;
         handicapSelectRoot.anchoredPosition = handicapSelectRootOffset;
         handicapSelectRoot.localScale = Vector3.one * currentUiScale;
 
@@ -5308,7 +5311,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (skinSelectMenu == null)
             return null;
 
-        int previewFrame = Mathf.FloorToInt(teamPreviewTimer / Mathf.Max(0.01f, handicapSelectPlayerFrameSeconds));
+        int previewFrame = Mathf.FloorToInt(handicapPreviewTimer / skinSelectMenu.GetPreviewMovementFrameSeconds());
         return skinSelectMenu.GetBattleModeTeamPreviewSprite(playerId, previewFrame);
     }
 
@@ -5576,6 +5579,9 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private Vector2 GetHandicapPlayerSize()
     {
+        if (skinSelectMenu != null)
+            return skinSelectMenu.GetPreviewSkinDisplaySize() / Mathf.Max(0.01f, currentUiScale);
+
         return handicapSelectPlayerSize == Vector2.zero
             ? teamMemberSize
             : handicapSelectPlayerSize;

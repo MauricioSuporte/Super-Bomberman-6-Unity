@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -466,12 +466,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
-  enableSurgicalLogs: 0
-  logHintSpacingEveryUpdate: 0
   forceRootPanelStretchToParent: 0
   forceBackgroundStretchToRootPanel: 0
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562754}
+  leftPanel: {fileID: 0}
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
   fadeOutOnConfirmDuration: 1
@@ -484,6 +483,7 @@ MonoBehaviour:
   columns: 5
   cellSize: {x: 56, y: 56}
   spacing: {x: 12, y: 12}
+  skinSpriteScaleMultiplier: 2
   lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   selectedTint: {r: 1, g: 1, b: 1, a: 1}
@@ -498,8 +498,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
   - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
   - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
-  logCursorPositionDebug: 0
-  cursorPositionDebugFrames: 8
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
   cursorYOffset: 7
@@ -512,10 +510,10 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 878884cd17e7c3648951f8120973589e, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
-  spritesResourcesPath: Sprites/Bomberman/Generated/Bomberman
   idleFrameIndex: 2
   downFrameTime: 0.1
   endStageFrameTime: 0.1
+  ladyBomberEndStageSpeedMultiplier: 1.5
   downFrames: 0100000000000000010000000200000003000000040000000300000002000000
   endStageFrames: 69000000680000006a00000068000000690000006a000000
   endStageYOffset: 2
@@ -570,12 +568,19 @@ MonoBehaviour:
   selectedSkinsListBaseAnchoredPos: {x: 0, y: 85}
   selectedSkinEntryBaseSpacing: 12
   selectedSkinEntryCompactSpacing: -20
-  selectedSkinSpriteYOffset: -20
   selectedSkinsListSafeFrameWidthRatio: 0.96
   selectedSkinCurrentCursorAlpha: 0.45
   selectedSkinPendingCursorAlpha: 0.25
   selectedSkinPreviewAlpha: 0.55
   selectedSkinConfirmAnimationSeconds: 0.85
+  footerHintText: {fileID: 0}
+  footerHintFontAsset: {fileID: 0}
+  footerHintFontMaterialPreset: {fileID: 0}
+  footerHintBaseAnchoredPos: {x: 0, y: -300}
+  footerHintBaseSize: {x: 900, y: 120}
+  footerHintFontSize: 24
+  footerHintLineSpacing: 18
+  selectableCharacters: 000000000100000002000000
   selectableSkins: 0100000003000000040000000b000000080000000d0000000f0000000e0000000200000010000000110000000c00000005000000090000000a00000014000000060000001500000013000000000000001200000016000000170000001800000019000000
 --- !u!1 &336813434
 GameObject:
@@ -935,17 +940,9 @@ MonoBehaviour:
   directionalRepeatInterval: 0.12
   playerModeRepeatInitialDelay: 0.4
   playerModeRepeatInterval: 0.3
+  valueRepeatInitialDelay: 0.5
+  valueRepeatInterval: 0.08
   promptTitleText: {fileID: 0}
-  matchModePrompt: BATTLE MODE
-  playerSelectPrompt: PLAYER SELECT
-  skinSelectPrompt: CHARACTER SELECT
-  teamSelectPrompt: TEAM MEMBERS
-  ruleSelectPrompt: RULE CONFIG
-  stageSelectPrompt: STAGE SELECT
-  specificSettingsPrompt: SPECIFIC SETTINGS
-  musicSelectPrompt: SELECT MUSIC
-  itemSelectPrompt: SELECT ITEMS
-  handicapSelectPrompt: SELECT HANDICAP
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -1117,7 +1114,6 @@ MonoBehaviour:
   stageNameSize: {x: 620, y: 42}
   stageLockedHintOffset: {x: 0, y: -324}
   stageLockedHintSize: {x: 800, y: 84}
-  stageLockedHintMessage: WIN STAGE 10 IN BATTLE MODE
   stageLockedHintHex: '#FF3B30'
   stageLockedHintShowSeconds: 5
   stageSelectFontSize: 32
@@ -1171,6 +1167,7 @@ MonoBehaviour:
   itemSelectHintSize: {x: 900, y: 120}
   itemSelectHintFontSize: 24
   itemSelectHintLineSpacing: 18
+  logItemSelectHintStyle: 1
   itemSelectMaxAmount: 99
   louieSelectRootOffset: {x: 0, y: 0}
   louieSelectGridOffset: {x: 0, y: 8}
@@ -1208,9 +1205,8 @@ MonoBehaviour:
   handicapSelectRowsOffset: {x: 0, y: 2}
   handicapSelectRowSize: {x: 900, y: 96}
   handicapSelectRowSpacing: 4
-  handicapSelectPlayerOffset: {x: -410, y: -10}
+  handicapSelectPlayerOffset: {x: -410, y: 10}
   handicapSelectPlayerSize: {x: 96, y: 96}
-  handicapSelectPlayerFrameSeconds: 0.4
   handicapSelectMountOffset: {x: -310, y: 8}
   handicapSelectOptionStartOffset: {x: -230, y: 0}
   handicapSelectOptionSpacing: {x: 70, y: 0}
