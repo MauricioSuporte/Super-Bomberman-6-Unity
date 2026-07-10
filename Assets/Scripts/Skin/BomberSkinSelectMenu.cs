@@ -7,19 +7,20 @@ using UnityEngine.UI;
 
 public class BomberSkinSelectMenu : MonoBehaviour
 {
-    const string LOG = "[BomberSkinSelectMenu]";
     static readonly Vector2 FooterHintItemSelectAnchoredPos = new(0f, -300f);
     static readonly Vector2 FooterHintItemSelectSize = new(900f, 120f);
     const int FooterHintItemSelectFontSize = 24;
     const float FooterHintItemSelectLineSpacing = 18f;
     const float NormalGameFooterHintYOffset = 20f;
 
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = false;
-    [SerializeField] bool logHintSpacingEveryUpdate = false;
-    [SerializeField] bool logSelectedSkinsListSpacing = false;
-    [SerializeField] bool logSelectedSkinsListPositions = false;
-    [SerializeField] bool logBattleModeBackFlow = false;
+    [Header("Performance Diagnostics")]
+    [Tooltip("Logs one timing summary whenever the skin-select screen is opened. Disable after profiling.")]
+
+    [SerializeField, HideInInspector] bool logHintSpacingEveryUpdate;
+    [SerializeField, HideInInspector] bool logSelectedSkinsListSpacing;
+    [SerializeField, HideInInspector] bool logSelectedSkinsListPositions;
+    [SerializeField, HideInInspector] bool logBattleModeBackFlow;
+    [SerializeField, HideInInspector] bool enableSurgicalLogs;
 
     [Header("Auto Fix Layout")]
     [SerializeField] bool forceRootPanelStretchToParent = false;
@@ -202,7 +203,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] TextMeshProUGUI footerHintText;
     [SerializeField] TMP_FontAsset footerHintFontAsset;
     [SerializeField] Material footerHintFontMaterialPreset;
-    [SerializeField] bool logFooterHintStyle = true;
     [SerializeField] Vector2 footerHintBaseAnchoredPos = new(0f, -300f);
     [SerializeField] Vector2 footerHintBaseSize = new(900f, 120f);
     [SerializeField] int footerHintFontSize = 24;
@@ -222,7 +222,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     float _baseCursorYOffset;
     float _baseEndStageYOffset;
     bool _baseValuesCaptured;
-    bool footerHintStyleLogged;
 
     Coroutine fadeInCoroutine;
     public bool ReturnToTitleRequested { get; private set; }
@@ -249,8 +248,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField]
     List<BomberSkin> selectableSkins = new(BomberSkinResourceCatalog.BombermanSkins);
 
+    // Sprite sheets are loaded only when a character/skin becomes visible.
+    // This keeps opening time independent from the total number of registered skins.
     readonly Dictionary<string, Sprite> idleCache = new();
     readonly Dictionary<string, Dictionary<int, Sprite>> sheetFrameCache = new();
+    int spriteSheetsLoadedThisOpen;
+    float spriteSheetLoadSecondsThisOpen;
 
     readonly List<RectTransform> slotRoots = new();
     readonly List<Image> slotImages = new();
@@ -431,9 +434,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public IEnumerator SelectSkinRoutine()
     {
+        float loadStartedAt = Time.realtimeSinceStartup;
+        float gridAndLayoutSeconds = 0f;
+        float cursorUiSeconds = 0f;
+        float finalLayoutSeconds = 0f;
+        float inputReleaseWaitSeconds = 0f;
+        spriteSheetsLoadedThisOpen = 0;
+        spriteSheetLoadSecondsThisOpen = 0f;
         bool resumeFromSavedSkins = ResumeBattleModeSelectionFromSavedSkins;
         ResumeBattleModeSelectionFromSavedSkins = false;
-        footerHintStyleLogged = false;
 
         CanvasGroup temporaryHiddenCanvasGroup = null;
         float previousCanvasGroupAlpha = 1f;
@@ -519,13 +528,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyDynamicScaleIfNeeded(true);
 
         Canvas.ForceUpdateCanvases();
+        gridAndLayoutSeconds = Time.realtimeSinceStartup - loadStartedAt;
         if (gridRoot is RectTransform gridRtBefore)
             LayoutRebuilder.ForceRebuildLayoutImmediate(gridRtBefore);
         Canvas.ForceUpdateCanvases();
 
         BuildPlayerCursors(configuredPlayerIds);
         RebuildSelectedSkinsListVisuals();
+        cursorUiSeconds = Time.realtimeSinceStartup - loadStartedAt - gridAndLayoutSeconds;
 
+        float inputReleaseWaitStartedAt = Time.realtimeSinceStartup;
         if (!resumeFromSavedSkins)
         {
             for (int i = 0; i < configuredPlayerIds.Count; i++)
@@ -545,7 +557,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
         }
 
-        PreloadIdleSprites();
+        inputReleaseWaitSeconds = Time.realtimeSinceStartup - inputReleaseWaitStartedAt;
+
+        float finalLayoutStartedAt = Time.realtimeSinceStartup;
 
         for (int i = 0; i < players.Count; i++)
             InitializeCursorSelection(players[i]);
@@ -572,6 +586,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CycleOverlappedCursors();
 
         Canvas.ForceUpdateCanvases();
+        finalLayoutSeconds = Time.realtimeSinceStartup - finalLayoutStartedAt;
 
         if (shouldRestoreCanvasGroupAlpha && temporaryHiddenCanvasGroup != null)
             temporaryHiddenCanvasGroup.alpha = previousCanvasGroupAlpha;
@@ -579,8 +594,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         menuActive = true;
         UpdateFooterHintVisual();
         ResetDirectionalRepeatState();
-
-        DumpHintSpacing("SelectSkinRoutine.BeforeFadeIn");
 
         if (useFadeTransitions && fadeInCoroutine != null)
             StopCoroutine(fadeInCoroutine);
@@ -1427,7 +1440,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 cursor.endStageFrameIdx = next;
             }
         }
-
         foreach (var kv in endStageBySlot)
         {
             var st = kv.Value;
@@ -2510,7 +2522,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (!menuActive)
             return;
 
-        LogFooterHintStyle("UpdateFooterHintVisual.AfterFinalStyle");
     }
 
     float GetFooterHintScale()
@@ -2651,40 +2662,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         TrySetFloat(mat, "_UnderlaySoftness", 0f);
         TrySetFloat(mat, "_UnderlayOffsetX", 0.25f);
         TrySetFloat(mat, "_UnderlayOffsetY", -0.25f);
-    }
-
-    void LogFooterHintStyle(string context)
-    {
-        if (!logFooterHintStyle || footerHintStyleLogged || footerHintText == null)
-            return;
-
-        footerHintStyleLogged = true;
-
-        string fontName = footerHintText.font != null ? footerHintText.font.name : "NULL";
-        string materialName = footerHintText.fontMaterial != null ? footerHintText.fontMaterial.name : "NULL";
-        string sharedMaterialName = footerHintText.fontSharedMaterial != null ? footerHintText.fontSharedMaterial.name : "NULL";
-        string leftPanelName = leftPanel != null ? leftPanel.name : "NULL";
-        string leftPanelFontName = leftPanel != null && leftPanel.OptionFontAsset != null ? leftPanel.OptionFontAsset.name : "NULL";
-        string leftPanelMaterialName = leftPanel != null && leftPanel.OptionFontMaterialPreset != null ? leftPanel.OptionFontMaterialPreset.name : "NULL";
-        string flowSource = useBattleModeComAssignment ? "BattleModeSkinSelect" : "NormalGameSkinSelect";
-        RectTransform rt = footerHintText.rectTransform;
-        float hintScale = GetFooterHintScale();
-
-        Debug.Log(
-            $"[BomberSkinSelectMenu][FooterHintStyle] {context} " +
-            $"flowSource={flowSource} useBattleModeComAssignment={useBattleModeComAssignment} " +
-            $"leftPanel={leftPanelName} leftPanelFont={leftPanelFontName} leftPanelMaterial={leftPanelMaterialName} " +
-            $"font={fontName} fontMaterial={materialName} sharedMaterial={sharedMaterialName} " +
-            $"fontSize={footerHintText.fontSize:0.###} lineSpacing={footerHintText.lineSpacing:0.###} " +
-            $"fontStyle={footerHintText.fontStyle} alignment={footerHintText.alignment} " +
-            $"color={footerHintText.color} faceColor={footerHintText.faceColor} outlineColor={footerHintText.outlineColor} " +
-            $"outlineWidth={footerHintText.outlineWidth:0.###} extraPadding={footerHintText.extraPadding} " +
-            $"wrapping={footerHintText.textWrappingMode} overflow={footerHintText.overflowMode} " +
-            $"uiScale={_currentUiScale:0.###} footerHintScale={hintScale:0.###} baseScaleInt={_currentBaseScaleInt} " +
-            $"anchorMin={(rt != null ? rt.anchorMin.ToString() : "NULL")} anchorMax={(rt != null ? rt.anchorMax.ToString() : "NULL")} " +
-            $"pivot={(rt != null ? rt.pivot.ToString() : "NULL")} anchoredPosition={(rt != null ? rt.anchoredPosition.ToString() : "NULL")} " +
-            $"sizeDelta={(rt != null ? rt.sizeDelta.ToString() : "NULL")} localScale={(rt != null ? rt.localScale.ToString() : "NULL")}",
-            this);
     }
 
     void UpdateAllCursorsToSelected()
@@ -2893,6 +2870,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         string spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
         string sheetName = BomberSkinResourceCatalog.GetSheetName(character, skin);
         string sheetPath = $"{spritesResourcesPath}/{sheetName}";
+        float loadStartedAt = Time.realtimeSinceStartup;
         var sprites = Resources.LoadAll<Sprite>(sheetPath);
 
         map = new Dictionary<int, Sprite>();
@@ -2919,6 +2897,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
         }
 
+        spriteSheetsLoadedThisOpen++;
+        spriteSheetLoadSecondsThisOpen += Time.realtimeSinceStartup - loadStartedAt;
         sheetFrameCache[cacheKey] = map;
         return map;
     }
@@ -2931,16 +2911,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         var c = fadeImage.color;
         c.a = a;
         fadeImage.color = c;
-    }
-
-    void PreloadIdleSprites()
-    {
-        for (int c = 0; c < SelectableSlotCount; c++)
-        {
-            BomberCharacter character = GetCharacterAtSlot(c);
-            for (int i = 0; i < selectableSkins.Count; i++)
-                GetIdleSprite(character, selectableSkins[i]);
-        }
     }
 
     void OnValidate()
@@ -3727,12 +3697,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
             mat.SetColor(prop, value);
     }
 
+    [System.Diagnostics.Conditional("BOMBER_SKIN_SELECT_LEGACY_LOGS")]
     void SLog(string message)
     {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}", this);
     }
 
     string DescribeCursor(PlayerCursorState ps)
