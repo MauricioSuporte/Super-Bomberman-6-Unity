@@ -16,12 +16,12 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     const float TableWidth = 192f;
     const float TableTop = 180f;
     const float RowHeight = 24f;
-    const float PortraitSize = 16f;
+    const float PortraitSize = 28f;
     const float TrophyWidth = 26f;
     const float TrophyHeight = 23f;
     const float TrophyStep = 26f;
     const float RowSpriteYOffset = 3f;
-    const float PortraitExtraYOffset = 1f;
+    const float PortraitExtraYOffset = 8f;
     const float TrophyExtraYOffset = 2f;
     const float ScoreboardWidth = 158f;
     const float ScoreboardHeight = 16f;
@@ -601,10 +601,13 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     Sprite GetPortraitSprite(int playerId)
     {
         PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
+        int expressionIndex = IsWinningPlayerRow(playerId)
+            ? HudCharacterPortraitCatalog.VictoryExpression
+            : HudCharacterPortraitCatalog.TimeUpExpression;
         Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(
             stats.Character,
             stats.Skin,
-            HudCharacterPortraitCatalog.LiveExpression);
+            expressionIndex);
         if (generatedPortrait != null)
             return generatedPortrait;
 
