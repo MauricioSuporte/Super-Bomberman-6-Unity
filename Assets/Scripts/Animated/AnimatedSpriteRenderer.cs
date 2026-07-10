@@ -26,6 +26,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     [Header("Loop / Idle")]
     public bool loop = true;
+    [Min(0)] public int loopStartFrame;
     public bool idle = true;
 
     [Header("Frame Offsets")]
@@ -277,7 +278,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         {
             animationFrame++;
 
-            if (loop && animationFrame >= animationSprite.Length) animationFrame = 0;
+            if (loop && animationFrame >= animationSprite.Length)
+                animationFrame = Mathf.Clamp(loopStartFrame, 0, animationSprite.Length - 1);
             else if (!loop && animationFrame >= animationSprite.Length) animationFrame = animationSprite.Length - 1;
         }
         else

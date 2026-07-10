@@ -23,6 +23,9 @@ public class PlayerBomberSkinController : MonoBehaviour
         126, 127, 128, 127, 128, 127, 128, 127
     };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
+    static readonly int[] BombermanCorneredFrames = { 99, 100, 101, 102, 103, 102, 101, 102, 103 };
+    static readonly int[] LadyBomberCorneredFrames = { 96, 97, 98, 99, 100, 99, 98, 100, 99, 98, 100 };
+    const int CorneredLoopStartFrame = 5;
     static readonly int[] BombermanDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(108));
     static readonly int[] LadyBomberDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(102));
     static readonly int[] DeathJumpTileHeights = { 0, 0, 1, 2, 3, 2, 1, 0 };
@@ -174,6 +177,18 @@ public class PlayerBomberSkinController : MonoBehaviour
             DismountedAfk2Frames,
             targetMap,
             skin
+        );
+
+        int[] corneredFrames = GetCorneredFrames(character);
+        ApplyFrameSequence(
+            FindAnimatedRenderer("Cornered"),
+            "Cornered",
+            corneredFrames[0],
+            corneredFrames,
+            targetMap,
+            skin,
+            loop: true,
+            loopStartFrame: CorneredLoopStartFrame
         );
 
         int[] deathFrames = GetDeathFrames(character);
@@ -349,6 +364,13 @@ public class PlayerBomberSkinController : MonoBehaviour
             : BombermanDeathFrames;
     }
 
+    static int[] GetCorneredFrames(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber
+            ? LadyBomberCorneredFrames
+            : BombermanCorneredFrames;
+    }
+
     static int[] BuildDeathFrames(int firstFrame)
     {
         const int distinctFrameCount = 16;
@@ -510,7 +532,8 @@ public class PlayerBomberSkinController : MonoBehaviour
         float speedMultiplier = 1f,
         float sequenceDuration = 0f,
         Vector2[] frameOffsets = null,
-        float[] frameDurations = null)
+        float[] frameDurations = null,
+        int loopStartFrame = 0)
     {
         if (renderer == null)
         {
@@ -540,6 +563,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         renderer.idleSprite = idleSprite;
         renderer.animationSprite = animation;
         renderer.loop = loop;
+        renderer.loopStartFrame = Mathf.Clamp(loopStartFrame, 0, frames.Length - 1);
         renderer.pingPong = false;
 
         if (sequenceDuration > 0f)
