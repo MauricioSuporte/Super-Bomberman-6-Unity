@@ -23,6 +23,13 @@ public class PlayerBomberSkinController : MonoBehaviour
         126, 127, 128, 127, 128, 127, 128, 127
     };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
+    static readonly int[] BombermanDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(108));
+    static readonly int[] LadyBomberDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(102));
+    static readonly int[] DeathJumpTileHeights = { 0, 0, 1, 2, 3, 2, 1, 0 };
+    const float DeathSequenceDuration = 1f;
+    const float DeathJumpTileWorldSize = 0.8f;
+    const int OriginalDeathFrameCount = 26;
+    const int OriginalDeathJumpFrameCount = 8;
     static readonly int[] BombermanEndStageFrames = { 105, 104, 106, 104, 105, 106 };
     static readonly int[] TinyBomberEndStageFrames = { 104, 105, 106, 129, 130, 132, 133, 134, 135, 136 };
     static readonly int[] LadyBomberEndStageFrames =
@@ -153,6 +160,20 @@ public class PlayerBomberSkinController : MonoBehaviour
             skin
         );
 
+        int[] deathFrames = GetDeathFrames(character);
+        ApplyFrameSequence(
+            FindAnimatedRenderer("Death"),
+            "Death",
+            deathFrames[0],
+            deathFrames,
+            targetMap,
+            skin,
+            loop: false,
+            sequenceDuration: DeathSequenceDuration,
+            frameOffsets: BuildDeathFrameOffsets(deathFrames.Length),
+            frameDurations: BuildDeathFrameDurations(deathFrames.Length)
+        );
+
         int[] endStageFrames = GetEndStageFrames(character);
         ApplyFrameSequence(
             FindAnimatedRenderer("EndStage"),
@@ -273,6 +294,105 @@ public class PlayerBomberSkinController : MonoBehaviour
         };
     }
 
+    static int[] GetDeathFrames(BomberCharacter character)
+    {
+        return character == BomberCharacter.LadyBomber
+            ? LadyBomberDeathFrames
+            : BombermanDeathFrames;
+    }
+
+    static int[] BuildDeathFrames(int firstFrame)
+    {
+        const int distinctFrameCount = 16;
+        const int alternatingCycles = 3;
+        const int finalFrameHoldCount = 6;
+
+        int penultimateFrame = firstFrame + distinctFrameCount - 2;
+        int finalFrame = firstFrame + distinctFrameCount - 1;
+        int leadingFrameCount = distinctFrameCount - 2;
+        int[] frames = new int[
+            leadingFrameCount + alternatingCycles * 2 + finalFrameHoldCount];
+
+        int index = 0;
+        for (int frame = firstFrame; frame < penultimateFrame; frame++)
+            frames[index++] = frame;
+
+        for (int cycle = 0; cycle < alternatingCycles; cycle++)
+        {
+            frames[index++] = penultimateFrame;
+            frames[index++] = finalFrame;
+        }
+
+        for (int hold = 0; hold < finalFrameHoldCount; hold++)
+            frames[index++] = finalFrame;
+
+        return frames;
+    }
+
+    static int[] BuildSmoothedDeathFrames(int[] sourceFrames)
+    {
+        int jumpFrameCount = Mathf.Min(OriginalDeathJumpFrameCount, sourceFrames.Length);
+        int smoothedJumpFrameCount = Mathf.Max(1, jumpFrameCount * 2 - 1);
+        int[] frames = new int[smoothedJumpFrameCount + sourceFrames.Length - jumpFrameCount];
+        int index = 0;
+
+        for (int i = 0; i < jumpFrameCount - 1; i++)
+        {
+            frames[index++] = sourceFrames[i];
+            frames[index++] = sourceFrames[i];
+        }
+
+        frames[index++] = sourceFrames[jumpFrameCount - 1];
+
+        for (int i = jumpFrameCount; i < sourceFrames.Length; i++)
+            frames[index++] = sourceFrames[i];
+
+        return frames;
+    }
+
+    static Vector2[] BuildDeathFrameOffsets(int frameCount)
+    {
+        Vector2[] offsets = new Vector2[frameCount];
+        int originalJumpFrameCount = DeathJumpTileHeights.Length;
+        int index = 0;
+
+        for (int i = 0; i < originalJumpFrameCount - 1 && index < frameCount; i++)
+        {
+            float currentHeight = DeathJumpTileHeights[i];
+            float nextHeight = DeathJumpTileHeights[i + 1];
+            offsets[index++] = Vector2.up * (currentHeight * DeathJumpTileWorldSize);
+
+            if (index < frameCount)
+            {
+                float intermediateHeight = (currentHeight + nextHeight) * 0.5f;
+                offsets[index++] = Vector2.up * (intermediateHeight * DeathJumpTileWorldSize);
+            }
+        }
+
+        if (index < frameCount)
+            offsets[index] = Vector2.up * (DeathJumpTileHeights[^1] * DeathJumpTileWorldSize);
+
+        return offsets;
+    }
+
+    static float[] BuildDeathFrameDurations(int frameCount)
+    {
+        float originalFrameDuration = DeathSequenceDuration / OriginalDeathFrameCount;
+        float jumpDuration = originalFrameDuration * OriginalDeathJumpFrameCount;
+        int smoothedJumpFrameCount = OriginalDeathJumpFrameCount * 2 - 1;
+        float smoothedJumpFrameDuration = jumpDuration / smoothedJumpFrameCount;
+        float[] durations = new float[frameCount];
+
+        for (int i = 0; i < frameCount; i++)
+        {
+            durations[i] = i < smoothedJumpFrameCount
+                ? smoothedJumpFrameDuration
+                : originalFrameDuration;
+        }
+
+        return durations;
+    }
+
     static bool ShouldLoopEndStage(BomberCharacter character)
     {
         return character == BomberCharacter.LadyBomber;
@@ -339,7 +459,10 @@ public class PlayerBomberSkinController : MonoBehaviour
         Dictionary<int, Sprite> targetMap,
         BomberSkin skin,
         bool loop = true,
-        float speedMultiplier = 1f)
+        float speedMultiplier = 1f,
+        float sequenceDuration = 0f,
+        Vector2[] frameOffsets = null,
+        float[] frameDurations = null)
     {
         if (renderer == null)
         {
@@ -370,7 +493,23 @@ public class PlayerBomberSkinController : MonoBehaviour
         renderer.animationSprite = animation;
         renderer.loop = loop;
         renderer.pingPong = false;
-        ApplyAnimationSpeed(renderer, speedMultiplier);
+
+        if (sequenceDuration > 0f)
+        {
+            renderer.useSequenceDuration = true;
+            renderer.sequenceDuration = sequenceDuration;
+            renderer.animationTime = sequenceDuration / Mathf.Max(1, frames.Length);
+        }
+        else
+        {
+            ApplyAnimationSpeed(renderer, speedMultiplier);
+        }
+
+        if (frameOffsets != null)
+            renderer.frameOffsets = frameOffsets;
+
+        renderer.frameDurations = frameDurations;
+
         renderer.RefreshFrame();
 
         if (renderer.TryGetComponent<SpriteRenderer>(out var spriteRenderer) && spriteRenderer != null)

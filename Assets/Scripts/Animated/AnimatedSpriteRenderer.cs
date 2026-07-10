@@ -19,6 +19,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public float animationTime = 0.25f;
     public bool useSequenceDuration = false;
     public float sequenceDuration = 0.5f;
+    public float[] frameDurations;
 
     [SerializeField] private bool useUnscaledTime = true;
     [SerializeField] private bool respectGamePause = true;
@@ -192,19 +193,34 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         frameTimer += dt;
 
-        float step = Mathf.Max(0.0001f, animationTime);
+        float step = GetCurrentFrameDuration();
 
         while (frameTimer >= step)
         {
             frameTimer -= step;
             NextFrameInternal();
+            step = GetCurrentFrameDuration();
         }
+    }
+
+    float GetCurrentFrameDuration()
+    {
+        if (frameDurations != null &&
+            frameDurations.Length == animationSprite?.Length &&
+            animationFrame >= 0 &&
+            animationFrame < frameDurations.Length)
+        {
+            return Mathf.Max(0.0001f, frameDurations[animationFrame]);
+        }
+
+        return Mathf.Max(0.0001f, animationTime);
     }
 
     void SetupTiming()
     {
         if (animationSprite == null || animationSprite.Length == 0) return;
         if (!useSequenceDuration) return;
+        if (frameDurations != null && frameDurations.Length == animationSprite.Length) return;
 
         sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
 
@@ -428,7 +444,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
                 {
                     CurrentFrame = i;
                     RefreshFrame();
-                    yield return new WaitForSecondsRealtime(animationTime);
+                    yield return new WaitForSecondsRealtime(GetCurrentFrameDuration());
                 }
             }
             else
@@ -442,7 +458,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
                 {
                     CurrentFrame = frame;
                     RefreshFrame();
-                    yield return new WaitForSecondsRealtime(animationTime);
+                    yield return new WaitForSecondsRealtime(GetCurrentFrameDuration());
 
                     frame += dir;
 
