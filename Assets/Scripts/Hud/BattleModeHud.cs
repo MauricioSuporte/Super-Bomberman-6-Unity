@@ -60,12 +60,12 @@ public sealed class BattleModeHud : MonoBehaviour
     const float PortraitY = 2f;
     const float OuterHudEdgePadding = 1f;
     const float PortraitToPowerupGap = 2f;
-    const float FirstPlayerPortraitExtraOffset = 1f;
-    const float SubsequentPlayerPortraitOffsetX = -1f;
+    const float FirstPlayerPortraitExtraOffset = -7f;
+    const float SubsequentPlayerPortraitOffsetX = -9f;
     const float NonLastPlayerItemsOffsetX = 1f;
     const float VictoryCounterWidth = 7f;
     const float VictoryCounterHeight = 8f;
-    const float VictoryCounterOffsetX = 9f;
+    const float VictoryCounterOffsetX = 16f;
     const float VictoryCounterOffsetY = 0f;
     const float TimerDigitSize = 7f;
     const float TimerColonWidth = 3f;

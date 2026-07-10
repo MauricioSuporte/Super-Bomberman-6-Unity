@@ -3458,7 +3458,7 @@ RectTransform:
   - {fileID: 2821841067781863753}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.87946427}
+  m_AnchorMin: {x: 0, y: 0.8973214}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
@@ -3753,16 +3753,16 @@ MonoBehaviour:
   - {fileID: 1071621713, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
   - {fileID: 543590862, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
   victoryDigitSprites:
-  - {fileID: 905470350162025073, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: -3743038799579813963, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: 1086375910367542935, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: -227961198541667165, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: 1945113751715194296, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: 7600658637578893265, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: -70024331835716748, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: 8075173621944378038, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: -7116784667258112182, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
-  - {fileID: -765247112, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
+  - {fileID: -8652899147728300589, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: 6581091322175909878, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: -7754542780609007002, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: 5957575524465282751, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: -9089893658094098430, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: -965636633154390984, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: -7482423612663435854, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: 676753200865040183, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: -8681144324262485238, guid: 6863243eb6407614c951597dd666bae4, type: 3}
+  - {fileID: 8693823800116302817, guid: 6863243eb6407614c951597dd666bae4, type: 3}
   timerBackgroundSprite: {fileID: 21300000, guid: 1605c6035671b5343b4e0af50c20de87, type: 3}
   timerDigitSprites:
   - {fileID: 1010, guid: a2dd0a60b2ab4f8682c6a1ac50138c67, type: 3}
