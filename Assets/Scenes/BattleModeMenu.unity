@@ -502,7 +502,7 @@ MonoBehaviour:
   cursorPositionDebugFrames: 8
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
-  cursorYOffset: 10
+  cursorYOffset: 7
   cursorBlinkWhileNotConfirmed: 1
   cursorBlinkSpeed: 5.5
   cursorBlinkMinAlpha: 0.25
@@ -514,11 +514,11 @@ MonoBehaviour:
   backgroundSwapLoop: 1
   spritesResourcesPath: Sprites/Bomberman/Generated/Bomberman
   idleFrameIndex: 2
-  downFrameTime: 0.22
+  downFrameTime: 0.1
   endStageFrameTime: 0.1
   downFrames: 0100000000000000010000000200000003000000040000000300000002000000
   endStageFrames: 69000000680000006a00000068000000690000006a000000
-  endStageYOffset: 10
+  endStageYOffset: 2
   endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: 41467db587cc70f42af59ac5abd81be3, type: 3}
   selectMusicLoop: {fileID: 8300000, guid: 6a0bcd3577b8b13489cf8bcf2275467b, type: 3}
@@ -566,6 +566,16 @@ MonoBehaviour:
   unlockHintUnderlayOffsetX: 0.25
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
+  selectedSkinsListRoot: {fileID: 0}
+  selectedSkinsListBaseAnchoredPos: {x: 0, y: 85}
+  selectedSkinEntryBaseSpacing: 12
+  selectedSkinEntryCompactSpacing: -20
+  selectedSkinSpriteYOffset: -20
+  selectedSkinsListSafeFrameWidthRatio: 0.96
+  selectedSkinCurrentCursorAlpha: 0.45
+  selectedSkinPendingCursorAlpha: 0.25
+  selectedSkinPreviewAlpha: 0.55
+  selectedSkinConfirmAnimationSeconds: 0.85
   selectableSkins: 0100000003000000040000000b000000080000000d0000000f0000000e0000000200000010000000110000000c00000005000000090000000a00000014000000060000001500000013000000000000001200000016000000170000001800000019000000
 --- !u!1 &336813434
 GameObject:

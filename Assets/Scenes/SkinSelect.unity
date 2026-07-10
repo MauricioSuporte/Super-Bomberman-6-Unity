@@ -1115,7 +1115,9 @@ MonoBehaviour:
   selectedSkinsListRoot: {fileID: 0}
   selectedSkinsListBaseAnchoredPos: {x: 0, y: 85}
   selectedSkinEntryBaseSpacing: 12
-  selectedSkinSpriteYOffset: -8
+  selectedSkinEntryCompactSpacing: 2
+  selectedSkinSpriteYOffset: -20
+  selectedSkinsListSafeFrameWidthRatio: 0.96
   selectedSkinCurrentCursorAlpha: 0.45
   selectedSkinPendingCursorAlpha: 0.25
   selectedSkinPreviewAlpha: 0.55
