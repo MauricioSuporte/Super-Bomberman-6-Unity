@@ -78,6 +78,22 @@ public class PlayerBomberSkinController : MonoBehaviour
         new("PunchUp", new[] { 91, 92 })
     };
 
+    static readonly FrameSequenceDefinition[] PowerGlovePickupDefinitions =
+    {
+        new("PickBombDown", new[] { 7, 6, 5 }),
+        new("PickBombRight", new[] { 31, 30, 29, 28 }),
+        new("PickBombLeft", new[] { 54, 53, 52, 51 }),
+        new("PickBombUp", new[] { 78, 77, 76, 75 })
+    };
+
+    static readonly FrameSequenceDefinition[] PowerGloveCarryDefinitions =
+    {
+        new("CarryBombDown", new[] { 8, 5, 9, 5 }),
+        new("CarryBombRight", new[] { 32, 28, 33, 28 }),
+        new("CarryBombLeft", new[] { 55, 51, 56, 51 }),
+        new("CarryBombUp", new[] { 79, 75, 80, 75 })
+    };
+
     public void ApplyFromIdentity()
     {
         var id = GetComponentInParent<PlayerIdentity>(true);
@@ -197,6 +213,38 @@ public class PlayerBomberSkinController : MonoBehaviour
                 targetMap,
                 skin,
                 loop: false
+            );
+        }
+
+        ApplyFrameSequenceDefinitions(PowerGlovePickupDefinitions, targetMap, skin, loop: false);
+        ApplyFrameSequenceDefinitions(
+            PowerGloveCarryDefinitions,
+            targetMap,
+            skin,
+            loop: true,
+            idleFrameIndex: 1
+        );
+    }
+
+    void ApplyFrameSequenceDefinitions(
+        FrameSequenceDefinition[] definitions,
+        Dictionary<int, Sprite> targetMap,
+        BomberSkin skin,
+        bool loop,
+        int idleFrameIndex = 0)
+    {
+        for (int i = 0; i < definitions.Length; i++)
+        {
+            FrameSequenceDefinition definition = definitions[i];
+            int idleIndex = Mathf.Clamp(idleFrameIndex, 0, definition.Frames.Length - 1);
+            ApplyFrameSequence(
+                FindAnimatedRenderer(definition.RendererName),
+                definition.RendererName,
+                definition.Frames[idleIndex],
+                definition.Frames,
+                targetMap,
+                skin,
+                loop: loop
             );
         }
     }

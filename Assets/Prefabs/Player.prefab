@@ -118,6 +118,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -266,6 +267,7 @@ MonoBehaviour:
   animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -301,7 +303,7 @@ Transform:
   m_GameObject: {fileID: 548987656250073282}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.42, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -388,6 +390,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -423,7 +426,7 @@ Transform:
   m_GameObject: {fileID: 549150929986574176}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.42, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -509,6 +512,7 @@ MonoBehaviour:
   animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -628,6 +632,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -747,6 +752,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -867,6 +873,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -989,6 +996,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -1111,6 +1119,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -1146,7 +1155,7 @@ Transform:
   m_GameObject: {fileID: 1794679654625741451}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.06, y: 0.43, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1233,6 +1242,7 @@ MonoBehaviour:
   animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -1352,6 +1362,7 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -1472,6 +1483,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -1591,6 +1603,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -1710,6 +1723,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -1836,6 +1850,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -1871,7 +1886,7 @@ Transform:
   m_GameObject: {fileID: 2555127276573635417}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.38, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1958,6 +1973,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2077,6 +2093,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -2203,6 +2220,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2329,6 +2347,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2448,6 +2467,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2567,6 +2587,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2602,7 +2623,7 @@ Transform:
   m_GameObject: {fileID: 3806937013374402781}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.39, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2689,6 +2710,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2808,6 +2830,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -2927,6 +2950,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -3046,6 +3070,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -3172,6 +3197,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -3292,6 +3318,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -3327,7 +3354,7 @@ Transform:
   m_GameObject: {fileID: 4590589861454301310}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.06, y: 0.46, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3414,6 +3441,7 @@ MonoBehaviour:
   animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -3533,6 +3561,7 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -3656,6 +3685,7 @@ MonoBehaviour:
   animationTime: 0.1375
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -3775,6 +3805,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -4656,6 +4687,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -4775,6 +4807,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -4894,6 +4927,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -5013,6 +5047,7 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -5143,6 +5178,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -5262,6 +5298,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -5382,6 +5419,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -5502,6 +5540,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -5621,6 +5660,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -5656,7 +5696,7 @@ Transform:
   m_GameObject: {fileID: 7053433055746874994}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5743,6 +5783,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -5862,6 +5903,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -5986,6 +6028,7 @@ MonoBehaviour:
   animationTime: 0.09090909
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -6105,6 +6148,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -6224,6 +6268,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -6344,6 +6389,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -6379,7 +6425,7 @@ Transform:
   m_GameObject: {fileID: 8024946940868953893}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6466,6 +6512,7 @@ MonoBehaviour:
   animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -6588,6 +6635,7 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -6708,6 +6756,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -6828,6 +6877,7 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -6947,6 +6997,7 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
@@ -7067,6 +7118,7 @@ MonoBehaviour:
   animationTime: 0.5
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
@@ -7186,6 +7238,7 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
