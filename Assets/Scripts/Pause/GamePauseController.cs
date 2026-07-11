@@ -523,8 +523,8 @@ public class GamePauseController : MonoBehaviour
             PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
         }
 
-        if (resetSessionForTitle && !string.IsNullOrEmpty(sceneName))
-            TitleScreenSkip.SkipNextIntro = true;
+        if (!string.IsNullOrEmpty(sceneName) && sceneName == titleSceneName)
+            TitleScreenBootstrap.SkipNextIntroSequence();
 
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
