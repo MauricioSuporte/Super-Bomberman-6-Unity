@@ -100,6 +100,23 @@ public class PlayerBomberSkinController : MonoBehaviour
         new("CarryBombUp", new[] { 79, 75, 80, 75 })
     };
 
+    // Battle Mode 11 rope: preparation is Descend + 1; dash alternates preparation + 1/+2.
+    static readonly FrameSequenceDefinition[] BattleMode11PreparingDefinitions =
+    {
+        new("PreparingDown", new[] { 18 }),
+        new("PreparingRight", new[] { 41 }),
+        new("PreparingLeft", new[] { 64 }),
+        new("PreparingUp", new[] { 88 })
+    };
+
+    static readonly FrameSequenceDefinition[] BattleMode11DashDefinitions =
+    {
+        new("DashDown", new[] { 19, 20 }),
+        new("DashRight", new[] { 42, 43 }),
+        new("DashLeft", new[] { 65, 66 }),
+        new("DashUp", new[] { 89, 90 })
+    };
+
     public void ApplyFromIdentity()
     {
         var id = GetComponentInParent<PlayerIdentity>(true);
@@ -259,6 +276,8 @@ public class PlayerBomberSkinController : MonoBehaviour
         }
 
         ApplyFrameSequenceDefinitions(PowerGlovePickupDefinitions, targetMap, skin, loop: false);
+        ApplyFrameSequenceDefinitions(BattleMode11PreparingDefinitions, targetMap, skin, loop: true);
+        ApplyFrameSequenceDefinitions(BattleMode11DashDefinitions, targetMap, skin, loop: true);
         ApplyFrameSequenceDefinitions(
             PowerGloveCarryDefinitions,
             targetMap,
