@@ -82,17 +82,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] float endStageFrameTime = 0.1f;
     [SerializeField, Min(0.01f)] float ladyBomberEndStageSpeedMultiplier = 1.5f;
     [SerializeField] int[] downFrames = new[] { 1, 0, 1, 2, 3, 4, 3, 2 };
-    [SerializeField] int[] endStageFrames = new[] { 105, 104, 106, 104, 105, 106 };
-
-    static readonly int[] LadyBomberEndStageFrames =
-    {
-        124, 125, 126, 127, 128, 129, 130, 131, 132,
-        133, 134, 135, 136, 137, 138, 139, 140
-    };
-    static readonly int[] TinyBomberEndStageFrames =
-    {
-        104, 105, 106, 129, 130, 132, 133, 134, 135, 136
-    };
 
     [Header("EndStage Offset + Stop")]
     [SerializeField] float endStageYOffset = 10f;
@@ -802,12 +791,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     int[] GetEndStageFrames(BomberCharacter character)
     {
-        return character switch
-        {
-            BomberCharacter.LadyBomber => LadyBomberEndStageFrames,
-            BomberCharacter.TinyBomber => TinyBomberEndStageFrames,
-            _ => endStageFrames
-        };
+        return PlayerBomberSkinController.GetEndStageFrames(character);
     }
 
     static bool ShouldLoopEndStage(BomberCharacter character)

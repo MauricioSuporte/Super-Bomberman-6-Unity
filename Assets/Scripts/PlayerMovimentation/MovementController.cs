@@ -4595,6 +4595,30 @@ public class MovementController : MonoBehaviour, IKillable
         SetVisualOverrideActive(false);
     }
 
+    public void SetExternalArcVisual(Vector2 direction, bool descending)
+    {
+        string phase = descending ? "MountDescend" : "MountAscend";
+        Vector2 face = NormalizeCardinal(direction);
+        string suffix = face == Vector2.up ? "Up" : face == Vector2.down ? "Down" : face == Vector2.left ? "Left" : "Right";
+        AnimatedSpriteRenderer[] renderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        AnimatedSpriteRenderer target = null;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null && renderers[i].gameObject.name == phase + suffix)
+                target = renderers[i];
+        }
+
+        if (target != null)
+        {
+            SetAllSpritesVisible(false);
+            SetAnimEnabled(target, true);
+            target.idle = false;
+            target.loop = true;
+            target.CurrentFrame = 0;
+            target.RefreshFrame();
+        }
+    }
+
     private AnimatedSpriteRenderer PickSpringLauncherLookUpRenderer(Vector2 dir)
     {
         Vector2 face = NormalizeCardinal(dir);

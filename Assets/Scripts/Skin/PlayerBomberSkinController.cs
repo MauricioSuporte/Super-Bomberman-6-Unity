@@ -15,31 +15,34 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     const float LadyBomberEndStageSpeedMultiplier = 1.5f;
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
-    static readonly int[] BombermanAfkFrames = { 126, 125, 124, 125, 126, 127, 128, 127 };
-    static readonly int[] LadyBomberAfkFrames = { 122, 121, 120, 119, 118, 121 };
+    // Sprite-sheet animation indices. Update this block when the shared bomber template changes.
+    static readonly int[] BombermanAfkFrames = { 130, 129, 128, 129, 130, 131, 132, 131 };
+    static readonly int[] LadyBomberAfkFrames = { 126, 125, 124, 123, 122, 125 };
     static readonly int[] TinyBomberAfkFrames =
     {
-        126, 125, 124, 125, 124, 125, 124, 125,
-        126, 127, 128, 127, 128, 127, 128, 127
+        130, 129, 128, 129, 128, 129, 128, 129,
+        130, 131, 132, 131, 132, 131, 132, 131
     };
+    static readonly int[] MinerBomberAfkFrames = { 128, 129, 130, 131, 132, 132, 131, 130, 129 };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
-    static readonly int[] BombermanCorneredFrames = { 99, 100, 101, 102, 103, 102, 101, 102, 103 };
-    static readonly int[] LadyBomberCorneredFrames = { 96, 97, 98, 99, 100, 99, 98, 100, 99, 98, 100 };
+    static readonly int[] BombermanCorneredFrames = { 103, 104, 105, 106, 107, 105, 106, 107 };
+    static readonly int[] LadyBomberCorneredFrames = { 100, 101, 102, 103, 104, 102, 103, 104 };
     const int CorneredLoopStartFrame = 5;
-    static readonly int[] BombermanDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(108));
-    static readonly int[] LadyBomberDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(102));
+    static readonly int[] BombermanDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(112));
+    static readonly int[] LadyBomberDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(106));
     static readonly int[] DeathJumpTileHeights = { 0, 0, 1, 2, 3, 2, 1, 0 };
     const float DeathSequenceDuration = 1f;
     const float DeathJumpTileWorldSize = 0.8f;
     const int OriginalDeathFrameCount = 26;
     const int OriginalDeathJumpFrameCount = 8;
-    static readonly int[] BombermanEndStageFrames = { 105, 104, 106, 104, 105, 106 };
-    static readonly int[] TinyBomberEndStageFrames = { 104, 105, 106, 129, 130, 132, 133, 134, 135, 136 };
+    static readonly int[] BombermanEndStageFrames = { 108, 109, 108, 110, 108, 109, 108, 110 };
+    static readonly int[] TinyBomberEndStageFrames = { 108, 109, 110, 133, 134, 136, 137, 138, 139, 140 };
     static readonly int[] LadyBomberEndStageFrames =
     {
-        124, 125, 126, 127, 128, 129, 130, 131, 132,
-        133, 134, 135, 136, 137, 138, 139, 140
+        128, 129, 130, 131, 132, 133, 134, 135, 136,
+        137, 138, 139, 140, 141, 142, 143, 144
     };
+    static readonly int[] MinerBomberEndStageFrames = { 2, 108, 109, 110, 133 };
 
     readonly struct WalkDefinition
     {
@@ -179,6 +182,20 @@ public class PlayerBomberSkinController : MonoBehaviour
             skin
         );
 
+        int[] stunFrames = character == BomberCharacter.LadyBomber
+            ? new[] { 96, 97, 98, 99 }
+            : new[] { 99, 100, 101, 102 };
+        ApplyFrameSequence(FindAnimatedRenderer("Stun"), "Stun", stunFrames[0], stunFrames, targetMap, skin, loop: true);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyDown"), "HeadOnlyDown", GetLastFrame(targetMap, 0), targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyLeft"), "HeadOnlyLeft", GetLastFrame(targetMap, 1), targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyRight"), "HeadOnlyRight", GetLastFrame(targetMap, 2), targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyUp"), "HeadOnlyUp", GetLastFrame(targetMap, 3), targetMap, skin);
+
+        ApplyDirectionFrames("MountAscend", new[] { 16, 39, 62, 86 }, targetMap, skin);
+        ApplyDirectionFrames("MountDescend", new[] { 17, 40, 63, 87 }, targetMap, skin);
+        ApplyDirectionFrames("Mounted", new[] { 14, 37, 60, 84 }, targetMap, skin);
+        ApplyDirectionFrames("SpringLookUp", new[] { 15, 38, 61, 85 }, targetMap, skin);
+
         int[] corneredFrames = GetCorneredFrames(character);
         ApplyFrameSequence(
             FindAnimatedRenderer("Cornered"),
@@ -239,6 +256,28 @@ public class PlayerBomberSkinController : MonoBehaviour
             loop: true,
             idleFrameIndex: 1
         );
+    }
+
+    static int GetLastFrame(Dictionary<int, Sprite> frames, int directionOffset)
+    {
+        int max = -1;
+        foreach (int frame in frames.Keys)
+            if (frame > max) max = frame;
+
+        return max - 3 + directionOffset;
+    }
+
+    void ApplyDirectionFrames(string rendererPrefix, int[] downRightLeftUp, Dictionary<int, Sprite> targetMap, BomberSkin skin)
+    {
+        ApplySingleFrame(FindAnimatedRenderer(rendererPrefix + "Down"), rendererPrefix + "Down", downRightLeftUp[0], targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer(rendererPrefix + "Right"), rendererPrefix + "Right", downRightLeftUp[1], targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer(rendererPrefix + "Left"), rendererPrefix + "Left", downRightLeftUp[2], targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer(rendererPrefix + "Up"), rendererPrefix + "Up", downRightLeftUp[3], targetMap, skin);
+    }
+
+    void ApplySingleFrame(AnimatedSpriteRenderer renderer, string rendererName, int frame, Dictionary<int, Sprite> targetMap, BomberSkin skin)
+    {
+        ApplyFrameSequence(renderer, rendererName, frame, new[] { frame }, targetMap, skin);
     }
 
     void ApplyFrameSequenceDefinitions(
@@ -337,8 +376,10 @@ public class PlayerBomberSkinController : MonoBehaviour
                actualName == expectedName.Replace("Right", "Rigth");
     }
 
-    static int[] GetEndStageFrames(BomberCharacter character)
+    public static int[] GetEndStageFrames(BomberCharacter character)
     {
+        if (BomberSkinResourceCatalog.GetCharacterFolderName(character) == "MinerBomber")
+            return MinerBomberEndStageFrames;
         return character switch
         {
             BomberCharacter.LadyBomber => LadyBomberEndStageFrames,
@@ -349,6 +390,8 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     static int[] GetAfkFrames(BomberCharacter character)
     {
+        if (BomberSkinResourceCatalog.GetCharacterFolderName(character) == "MinerBomber")
+            return MinerBomberAfkFrames;
         return character switch
         {
             BomberCharacter.LadyBomber => LadyBomberAfkFrames,

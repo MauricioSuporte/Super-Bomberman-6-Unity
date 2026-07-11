@@ -333,7 +333,7 @@ public sealed class CannonLauncher : MonoBehaviour
         }
 
         if (useBallVisual)
-            ShowBallOnly(mover, ball);
+            mover.SetExternalArcVisual(dir, descending: false);
 
         float duration = Mathf.Max(0.05f, flightSeconds);
         float elapsed = 0f;
@@ -351,6 +351,8 @@ public sealed class CannonLauncher : MonoBehaviour
 
             if (useMountJumpVisual && mountVisual != null)
                 mountVisual.SetJumpPhase(descendingNow);
+            else if (useBallVisual)
+                mover.SetExternalArcVisual(dir, descendingNow);
 
             Vector2 flat = Vector2.Lerp(start, end, t);
             float parabola = 4f * t * (1f - t);
