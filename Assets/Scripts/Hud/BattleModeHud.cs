@@ -166,6 +166,11 @@ public sealed class BattleModeHud : MonoBehaviour
     readonly Image[] partitionImages = new Image[MaxPlayers - 1];
     readonly bool[] portraitTintActive = new bool[MaxPlayers];
     readonly Color[] portraitTintColors = new Color[MaxPlayers];
+    readonly bool[] portraitCacheValid = new bool[MaxPlayers];
+    readonly BomberCharacter[] portraitCacheCharacters = new BomberCharacter[MaxPlayers];
+    readonly BomberSkin[] portraitCacheSkins = new BomberSkin[MaxPlayers];
+    readonly int[] portraitCacheExpressions = new int[MaxPlayers];
+    readonly Sprite[] portraitCacheSprites = new Sprite[MaxPlayers];
 
     RectTransform rootRect;
     RectTransform runtimeRoot;
@@ -180,6 +185,7 @@ public sealed class BattleModeHud : MonoBehaviour
     Image timerColonImage;
     bool portraitsLoaded;
     bool legacyHudSuppressed;
+    int layoutSignature = int.MinValue;
 
     sealed class SlotUi
     {
@@ -213,8 +219,14 @@ public sealed class BattleModeHud : MonoBehaviour
         PopulateActivePlayerIds(activePlayerIdsBuffer);
 
         int visiblePlayerCount = GetVisiblePlayerCount();
-        UpdateRootImages(visiblePlayerCount);
-        UpdateLayout(visiblePlayerCount);
+        int currentLayoutSignature = CalculateLayoutSignature(visiblePlayerCount);
+        if (currentLayoutSignature != layoutSignature)
+        {
+            layoutSignature = currentLayoutSignature;
+            UpdateRootImages(visiblePlayerCount);
+            UpdateLayout(visiblePlayerCount);
+        }
+
         UpdateContent(visiblePlayerCount);
         UpdateTimer();
     }
@@ -278,12 +290,19 @@ public sealed class BattleModeHud : MonoBehaviour
         if (rootRect == null)
             return;
 
-        rootRect.anchorMin = new Vector2(0f, (ReferenceScreenHeight - HudHeight) / ReferenceScreenHeight);
-        rootRect.anchorMax = Vector2.one;
-        rootRect.offsetMin = Vector2.zero;
-        rootRect.offsetMax = Vector2.zero;
-        rootRect.pivot = new Vector2(0.5f, 0.5f);
-        rootRect.localScale = Vector3.one;
+        Vector2 anchorMin = new Vector2(0f, (ReferenceScreenHeight - HudHeight) / ReferenceScreenHeight);
+        if (rootRect.anchorMin != anchorMin)
+            rootRect.anchorMin = anchorMin;
+        if (rootRect.anchorMax != Vector2.one)
+            rootRect.anchorMax = Vector2.one;
+        if (rootRect.offsetMin != Vector2.zero)
+            rootRect.offsetMin = Vector2.zero;
+        if (rootRect.offsetMax != Vector2.zero)
+            rootRect.offsetMax = Vector2.zero;
+        if (rootRect.pivot != new Vector2(0.5f, 0.5f))
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+        if (rootRect.localScale != Vector3.one)
+            rootRect.localScale = Vector3.one;
     }
 
     void OnDisable()
@@ -463,6 +482,8 @@ public sealed class BattleModeHud : MonoBehaviour
 
         for (int i = 0; i < abilitySlotCount; i++)
             slot.AbilityIcons[i] = GetOrCreateImage(slot.Root, "Ability" + (i + 1));
+
+        ConfigurePushStart(slot.PushStart, false);
     }
 
     void UpdateRootImages(int visiblePlayerCount)
@@ -656,7 +677,7 @@ public sealed class BattleModeHud : MonoBehaviour
                 HudWidth,
                 HudHeight);
 
-            timerMinuteDigitImage.color = Color.white;
+            SetImageColor(timerMinuteDigitImage, Color.white);
             return;
         }
 
@@ -704,10 +725,10 @@ public sealed class BattleModeHud : MonoBehaviour
             HudWidth,
             HudHeight);
 
-        timerMinuteDigitImage.color = Color.white;
-        timerSecondTensDigitImage.color = Color.white;
-        timerSecondOnesDigitImage.color = Color.white;
-        timerColonImage.color = GetBlinkingTimerColonColor(totalSeconds);
+        SetImageColor(timerMinuteDigitImage, Color.white);
+        SetImageColor(timerSecondTensDigitImage, Color.white);
+        SetImageColor(timerSecondOnesDigitImage, Color.white);
+        SetImageColor(timerColonImage, GetBlinkingTimerColonColor(totalSeconds));
     }
 
     void HideSlot(SlotUi slot)
@@ -741,13 +762,13 @@ public sealed class BattleModeHud : MonoBehaviour
             ? new Color(1f, 0.55f, 0.55f, 1f)
             : Color.white;
 
-        slot.Portrait.color = GetPortraitColor(playerId);
-        slot.TeamBackground.color = Color.white;
-        slot.PlayerNumber.color = victoryCounterColor;
-        slot.StatsPanel.color = Color.white;
-        slot.BombNumber.color = Color.white;
-        slot.FireNumber.color = Color.white;
-        slot.SpeedNumber.color = Color.white;
+        SetImageColor(slot.Portrait, GetPortraitColor(playerId));
+        SetImageColor(slot.TeamBackground, Color.white);
+        SetImageColor(slot.PlayerNumber, victoryCounterColor);
+        SetImageColor(slot.StatsPanel, Color.white);
+        SetImageColor(slot.BombNumber, Color.white);
+        SetImageColor(slot.FireNumber, Color.white);
+        SetImageColor(slot.SpeedNumber, Color.white);
 
         PopulateActivePowerups(state);
 
@@ -755,11 +776,23 @@ public sealed class BattleModeHud : MonoBehaviour
         {
             Sprite sprite = i < activePowerupBuffer.Count ? activePowerupBuffer[i] : null;
             SetImageSprite(slot.AbilityIcons[i], sprite, false);
-            slot.AbilityIcons[i].color = overlayColor;
+            SetImageColor(slot.AbilityIcons[i], overlayColor);
         }
 
         UpdateLifeDisplay(slot, currentLife, overlayColor);
-        ConfigurePushStart(slot.PushStart, false);
+    }
+
+    int CalculateLayoutSignature(int visiblePlayerCount)
+    {
+        int signature = visiblePlayerCount;
+        for (int i = 0; i < visiblePlayerCount; i++)
+        {
+            int playerId = GetVisiblePlayerIdAtVisualIndex(i);
+            signature = (signature * 31) + playerId;
+            signature = (signature * 31) + GetHudTeamSortKey(playerId);
+        }
+
+        return signature;
     }
 
     Color GetPortraitColor(int playerId)
@@ -947,12 +980,12 @@ public sealed class BattleModeHud : MonoBehaviour
     {
         bool showLifeIcon = currentLife > 1;
         SetImageSprite(slot.LifeIcon, showLifeIcon ? extraLifeSprite : null, false);
-        slot.LifeIcon.color = overlayColor;
+        SetImageColor(slot.LifeIcon, overlayColor);
 
         if (currentLife > 2)
         {
             SetImageSprite(slot.LifeNumber, GetDigitSprite(currentLife - 1), false);
-            slot.LifeNumber.color = Color.white;
+            SetImageColor(slot.LifeNumber, Color.white);
             return;
         }
 
@@ -1013,21 +1046,38 @@ public sealed class BattleModeHud : MonoBehaviour
     {
         PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
         int expressionIndex = GetPortraitExpressionIndex(playerId, useDeadPortrait);
+        int index = playerId - 1;
+
+        if (index >= 0 && index < MaxPlayers &&
+            portraitCacheValid[index] &&
+            portraitCacheCharacters[index] == stats.Character &&
+            portraitCacheSkins[index] == stats.Skin &&
+            portraitCacheExpressions[index] == expressionIndex)
+        {
+            return portraitCacheSprites[index];
+        }
+
         Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
-        if (generatedPortrait != null)
-            return generatedPortrait;
+        Sprite portrait = generatedPortrait;
+        if (portrait == null)
+        {
+            int portraitIndex = GetPortraitIndex(stats.Skin);
+            Dictionary<int, Sprite> source = expressionIndex == HudCharacterPortraitCatalog.DeadExpression
+                ? deadPortraits
+                : livePortraits;
+            source.TryGetValue(portraitIndex, out portrait);
+        }
 
-        BomberSkin skin = stats.Skin;
-        int portraitIndex = GetPortraitIndex(skin);
+        if (index >= 0 && index < MaxPlayers)
+        {
+            portraitCacheValid[index] = true;
+            portraitCacheCharacters[index] = stats.Character;
+            portraitCacheSkins[index] = stats.Skin;
+            portraitCacheExpressions[index] = expressionIndex;
+            portraitCacheSprites[index] = portrait;
+        }
 
-        Dictionary<int, Sprite> source = expressionIndex == HudCharacterPortraitCatalog.DeadExpression
-            ? deadPortraits
-            : livePortraits;
-        Sprite sprite;
-        if (source.TryGetValue(portraitIndex, out sprite))
-            return sprite;
-
-        return null;
+        return portrait;
     }
 
     int GetPortraitExpressionIndex(int playerId, bool useDeadPortrait)
@@ -1242,11 +1292,23 @@ public sealed class BattleModeHud : MonoBehaviour
         if (image == null)
             return;
 
-        image.sprite = sprite;
-        image.enabled = sprite != null;
-        image.preserveAspect = preserveAspect;
-        image.raycastTarget = false;
-        image.type = Image.Type.Simple;
+        bool enabled = sprite != null;
+        if (image.sprite != sprite)
+            image.sprite = sprite;
+        if (image.enabled != enabled)
+            image.enabled = enabled;
+        if (image.preserveAspect != preserveAspect)
+            image.preserveAspect = preserveAspect;
+        if (image.raycastTarget)
+            image.raycastTarget = false;
+        if (image.type != Image.Type.Simple)
+            image.type = Image.Type.Simple;
+    }
+
+    static void SetImageColor(Image image, Color color)
+    {
+        if (image != null && image.color != color)
+            image.color = color;
     }
 
     void ConfigurePushStart(TextMeshProUGUI text, bool visible)
@@ -1472,11 +1534,18 @@ public sealed class BattleModeHud : MonoBehaviour
         if (rect == null || logicalParentWidth <= 0f || logicalParentHeight <= 0f)
             return;
 
-        rect.anchorMin = new Vector2(left / logicalParentWidth, bottom / logicalParentHeight);
-        rect.anchorMax = new Vector2((left + width) / logicalParentWidth, (bottom + height) / logicalParentHeight);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        rect.localScale = Vector3.one;
+        Vector2 anchorMin = new Vector2(left / logicalParentWidth, bottom / logicalParentHeight);
+        Vector2 anchorMax = new Vector2((left + width) / logicalParentWidth, (bottom + height) / logicalParentHeight);
+        if (rect.anchorMin != anchorMin)
+            rect.anchorMin = anchorMin;
+        if (rect.anchorMax != anchorMax)
+            rect.anchorMax = anchorMax;
+        if (rect.offsetMin != Vector2.zero)
+            rect.offsetMin = Vector2.zero;
+        if (rect.offsetMax != Vector2.zero)
+            rect.offsetMax = Vector2.zero;
+        if (rect.localScale != Vector3.one)
+            rect.localScale = Vector3.one;
     }
 
     static RectTransform GetOrCreateRect(Transform parent, string childName)
@@ -1579,6 +1648,13 @@ public sealed class BattleModeHud : MonoBehaviour
         for (int i = 0; i < playerHealthCache.Length; i++)
             playerHealthCache[i] = null;
 
+        for (int i = 0; i < portraitCacheValid.Length; i++)
+        {
+            portraitCacheValid[i] = false;
+            portraitCacheSprites[i] = null;
+        }
+
         legacyHudSuppressed = false;
+        layoutSignature = int.MinValue;
     }
 }

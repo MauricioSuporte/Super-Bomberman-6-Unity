@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -1057,6 +1058,8 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ComUpdate.Auto();
+
         CacheReferences();
 
         if (!IsReadyToThink())
@@ -1398,6 +1401,8 @@ public sealed class BattleModeComController : MonoBehaviour
         float currentDangerSeconds,
         bool inDanger)
     {
+        using var performanceSample = BattleModePerformanceMarkers.ComThink.Auto();
+
         candidates.Clear();
         rejectedActions.Clear();
         currentInputDescription = "none";

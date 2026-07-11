@@ -123,6 +123,8 @@ public static class BattleModePerformanceMarkers
     public const string PlayerStateAnimationUpdateName = "SB6.BattlePerf.PlayerStateAnimation.Update";
     public const string InactivityAnimationUpdateName = "SB6.BattlePerf.InactivityAnimation.Update";
     public const string CorneredAnimationUpdateName = "SB6.BattlePerf.CorneredAnimation.Update";
+    public const string ComUpdateName = "SB6.BattlePerf.COM.Update";
+    public const string ComThinkName = "SB6.BattlePerf.COM.Think";
 
     public static readonly ProfilerMarker PlayerUpdate = new(PlayerUpdateName);
     public static readonly ProfilerMarker PlayerFixedUpdate = new(PlayerFixedUpdateName);
@@ -138,6 +140,8 @@ public static class BattleModePerformanceMarkers
     public static readonly ProfilerMarker PlayerStateAnimationUpdate = new(PlayerStateAnimationUpdateName);
     public static readonly ProfilerMarker InactivityAnimationUpdate = new(InactivityAnimationUpdateName);
     public static readonly ProfilerMarker CorneredAnimationUpdate = new(CorneredAnimationUpdateName);
+    public static readonly ProfilerMarker ComUpdate = new(ComUpdateName);
+    public static readonly ProfilerMarker ComThink = new(ComThinkName);
 
     public static void EnsureInitialized()
     {
@@ -170,6 +174,8 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
     ProfilerRecorder playerStateAnimationRecorder;
     ProfilerRecorder inactivityAnimationRecorder;
     ProfilerRecorder corneredAnimationRecorder;
+    ProfilerRecorder comUpdateRecorder;
+    ProfilerRecorder comThinkRecorder;
 
     bool isCapturing;
     int sampledFrames;
@@ -195,6 +201,8 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
     double totalPlayerStateAnimationMilliseconds;
     double totalInactivityAnimationMilliseconds;
     double totalCorneredAnimationMilliseconds;
+    double totalComUpdateMilliseconds;
+    double totalComThinkMilliseconds;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Bootstrap()
@@ -280,6 +288,8 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         playerStateAnimationRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.PlayerStateAnimationUpdate);
         inactivityAnimationRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.InactivityAnimationUpdate);
         corneredAnimationRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.CorneredAnimationUpdate);
+        comUpdateRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.ComUpdate);
+        comThinkRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.ComThink);
 
         ResetWindow();
         isCapturing = true;
@@ -330,6 +340,8 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         totalPlayerStateAnimationMilliseconds += RecorderMilliseconds(playerStateAnimationRecorder);
         totalInactivityAnimationMilliseconds += RecorderMilliseconds(inactivityAnimationRecorder);
         totalCorneredAnimationMilliseconds += RecorderMilliseconds(corneredAnimationRecorder);
+        totalComUpdateMilliseconds += RecorderMilliseconds(comUpdateRecorder);
+        totalComThinkMilliseconds += RecorderMilliseconds(comThinkRecorder);
     }
 
     void LogReport()
@@ -365,6 +377,7 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
 
         int bombs = Bomb.ActiveBombs.Count;
         int explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude).Length;
+        int comPlayers = FindObjectsByType<BattleModeComController>(FindObjectsInactive.Exclude).Length;
         AnimatedSpriteRenderer[] animators = FindObjectsByType<AnimatedSpriteRenderer>(FindObjectsInactive.Exclude);
         int runningAnimators = 0;
         for (int i = 0; i < animators.Length; i++)
@@ -388,8 +401,9 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
             $"aux={Average(totalPlayerAuxMilliseconds):0.000}ms egg={Average(totalEggQueueMilliseconds):0.000}ms " +
             $"mount={Average(totalMountCompanionMilliseconds):0.000}ms stateAnim={Average(totalPlayerStateAnimationMilliseconds):0.000}ms " +
             $"idleAnim={Average(totalInactivityAnimationMilliseconds):0.000}ms cornered={Average(totalCorneredAnimationMilliseconds):0.000}ms " +
+            $"comU={Average(totalComUpdateMilliseconds):0.000}ms comThink={Average(totalComThinkMilliseconds):0.000}ms " +
             $"| entities bombs={bombs} explosions={explosions} mounted={mountedPlayers} eggs={queuedEggs} " +
-            $"animators={runningAnimators}/{animators.Length}");
+            $"animators={runningAnimators}/{animators.Length} com={comPlayers}");
 
         ResetWindow();
     }
@@ -419,6 +433,8 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         totalPlayerStateAnimationMilliseconds = 0d;
         totalInactivityAnimationMilliseconds = 0d;
         totalCorneredAnimationMilliseconds = 0d;
+        totalComUpdateMilliseconds = 0d;
+        totalComThinkMilliseconds = 0d;
     }
 
     void DisposeRecorders()
@@ -441,6 +457,8 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         playerStateAnimationRecorder.Dispose();
         inactivityAnimationRecorder.Dispose();
         corneredAnimationRecorder.Dispose();
+        comUpdateRecorder.Dispose();
+        comThinkRecorder.Dispose();
     }
 
     static ProfilerRecorder CreateMarkerRecorder(ProfilerMarker marker)
