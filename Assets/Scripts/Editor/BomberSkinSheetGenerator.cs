@@ -88,7 +88,113 @@ public static class BomberSkinSheetGenerator
         if (generatedAny)
             AssetDatabase.Refresh();
 
+        UpdatePlayerPrefabWhiteBomberReferences();
+
         BomberHudPortraitGenerator.GenerateAll();
+    }
+
+    static void UpdatePlayerPrefabWhiteBomberReferences()
+    {
+        const string prefabPath = "Assets/Prefabs/Player.prefab";
+        const string sheetPath = "Assets/Resources/Sprites/Bombers/Bomberman/Generated/Bomberman/WhiteBomber.png";
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(sheetPath);
+        Dictionary<int, Sprite> whiteFrames = new();
+        for (int i = 0; i < assets.Length; i++)
+            if (assets[i] is Sprite sprite && TryGetFrameIndex(sprite.name, out int frame)) whiteFrames[frame] = sprite;
+
+        if (whiteFrames.Count == 0)
+            return;
+
+        GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
+        bool changed = false;
+        bool needsSkinApply = false;
+
+        foreach (AnimatedSpriteRenderer renderer in root.GetComponentsInChildren<AnimatedSpriteRenderer>(true))
+        {
+            if (RendererNeedsWhiteBomberRefresh(renderer, whiteFrames))
+            {
+                needsSkinApply = true;
+                break;
+            }
+        }
+
+        if (needsSkinApply)
+        {
+            foreach (PlayerBomberSkinController skinController in root.GetComponentsInChildren<PlayerBomberSkinController>(true))
+            {
+                if (skinController == null)
+                    continue;
+
+                skinController.Apply(BomberCharacter.Bomberman, BomberSkin.White);
+            }
+
+            changed = true;
+        }
+
+        foreach (AnimatedSpriteRenderer renderer in root.GetComponentsInChildren<AnimatedSpriteRenderer>(true))
+        {
+            Sprite[] frames = renderer.animationSprite;
+            if (frames == null)
+                continue;
+
+            for (int i = 0; i < frames.Length; i++)
+            {
+                if (frames[i] != null &&
+                    TryGetFrameIndex(frames[i].name, out int frame) &&
+                    whiteFrames.TryGetValue(frame, out Sprite replacement) &&
+                    frames[i] != replacement)
+                {
+                    frames[i] = replacement;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        PrefabUtility.UnloadPrefabContents(root);
+    }
+
+    static bool RendererNeedsWhiteBomberRefresh(AnimatedSpriteRenderer renderer, Dictionary<int, Sprite> whiteFrames)
+    {
+        if (renderer == null)
+            return false;
+
+        if (renderer.idleSprite == null)
+            return true;
+
+        if (TryGetFrameIndex(renderer.idleSprite.name, out int idleFrame) &&
+            whiteFrames.TryGetValue(idleFrame, out Sprite whiteIdle) &&
+            renderer.idleSprite != whiteIdle)
+        {
+            return true;
+        }
+
+        Sprite[] frames = renderer.animationSprite;
+        if (frames == null || frames.Length == 0)
+            return true;
+
+        for (int i = 0; i < frames.Length; i++)
+        {
+            Sprite frameSprite = frames[i];
+            if (frameSprite == null)
+                return true;
+
+            if (TryGetFrameIndex(frameSprite.name, out int frame) &&
+                whiteFrames.TryGetValue(frame, out Sprite whiteFrame) &&
+                frameSprite != whiteFrame)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool TryGetFrameIndex(string name, out int frame)
+    {
+        frame = -1;
+        int separator = name.LastIndexOf('_');
+        return separator >= 0 && int.TryParse(name.Substring(separator + 1), out frame);
     }
 
     static bool GenerateMissingSheets(CharacterSkinSheetSource sheetSource)
