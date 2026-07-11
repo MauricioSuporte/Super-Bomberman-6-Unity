@@ -1,8 +1,8 @@
 public static class BomberSkinResourceCatalog
 {
-    public const string BombermanGeneratedResourcesPath = "Sprites/Bomberman/Generated/Bomberman";
-    public const string LadyBomberGeneratedResourcesPath = "Sprites/LadyBomber/Generated/LadyBomber";
-    public const string TinyBomberGeneratedResourcesPath = "Sprites/TinyBomber/Generated/TinyBomber";
+    public const string BombermanGeneratedResourcesPath = "Sprites/Bombers/Bomberman/Generated/Bomberman";
+    public const string LadyBomberGeneratedResourcesPath = "Sprites/Bombers/LadyBomber/Generated/LadyBomber";
+    public const string TinyBomberGeneratedResourcesPath = "Sprites/Bombers/TinyBomber/Generated/TinyBomber";
 
     public static readonly BomberSkin[] BombermanSkins =
     {
@@ -46,15 +46,28 @@ public static class BomberSkinResourceCatalog
 
     public static string GetSheetName(BomberCharacter character, BomberSkin skin)
     {
-        string characterSuffix = character switch
+        return GetSheetName(GetCharacterFolderName(character), skin);
+    }
+
+    public static string GetSheetName(string characterFolderName, BomberSkin skin)
+    {
+        string characterSuffix = characterFolderName switch
         {
-            BomberCharacter.Bomberman => "Bomber",
-            BomberCharacter.LadyBomber => "LadyBomber",
-            BomberCharacter.TinyBomber => "TinyBomber",
-            _ => "Bomber"
+            "Bomberman" => "Bomber",
+            _ => characterFolderName
         };
 
         return skin + characterSuffix;
+    }
+
+    public static string GetCharacterFolderName(BomberCharacter character)
+    {
+        return character switch
+        {
+            BomberCharacter.LadyBomber => "LadyBomber",
+            BomberCharacter.TinyBomber => "TinyBomber",
+            _ => "Bomberman"
+        };
     }
 
     public static bool IsGeneratedSkin(BomberCharacter character, BomberSkin skin)

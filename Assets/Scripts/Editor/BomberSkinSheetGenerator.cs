@@ -1,50 +1,37 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public static class BomberSkinSheetGenerator
 {
+    const string BombersRootAssetPath = "Assets/Resources/Sprites/Bombers";
+
     readonly struct CharacterSkinSheetSource
     {
         public CharacterSkinSheetSource(
-            BomberCharacter character,
+            string characterFolderName,
             string sourceSheetAssetPath,
             string paletteAssetPath,
             string outputFolderAssetPath)
         {
-            Character = character;
+            CharacterFolderName = characterFolderName;
             SourceSheetAssetPath = sourceSheetAssetPath;
             PaletteAssetPath = paletteAssetPath;
             OutputFolderAssetPath = outputFolderAssetPath;
         }
 
-        public BomberCharacter Character { get; }
+        public string CharacterFolderName { get; }
         public string SourceSheetAssetPath { get; }
         public string PaletteAssetPath { get; }
         public string OutputFolderAssetPath { get; }
     }
-
-    static readonly CharacterSkinSheetSource[] CharacterSources =
-    {
-        new CharacterSkinSheetSource(
-            BomberCharacter.Bomberman,
-            "Assets/Resources/Sprites/Bomberman/Bomberman.png",
-            "Assets/Resources/Sprites/Bomberman/BombermanPallete.png",
-            "Assets/Resources/Sprites/Bomberman/Generated/Bomberman"),
-        new CharacterSkinSheetSource(
-            BomberCharacter.LadyBomber,
-            "Assets/Resources/Sprites/LadyBomber/LadyBomber.png",
-            "Assets/Resources/Sprites/LadyBomber/BombermanPallete.png",
-            "Assets/Resources/Sprites/LadyBomber/Generated/LadyBomber"),
-        new CharacterSkinSheetSource(
-            BomberCharacter.TinyBomber,
-            "Assets/Resources/Sprites/TinyBomber/TinyBomber.png",
-            "Assets/Resources/Sprites/TinyBomber/BombermanPallete.png",
-            "Assets/Resources/Sprites/TinyBomber/Generated/TinyBomber")
-    };
 
     static readonly BomberSkin[] BombermanSkins =
     {
@@ -92,9 +79,9 @@ public static class BomberSkinSheetGenerator
 
         bool generatedAny = false;
 
-        for (int i = 0; i < CharacterSources.Length; i++)
+        foreach (CharacterSkinSheetSource source in FindCharacterSources())
         {
-            if (GenerateMissingSheets(CharacterSources[i]))
+            if (GenerateMissingSheets(source))
                 generatedAny = true;
         }
 
@@ -124,7 +111,7 @@ public static class BomberSkinSheetGenerator
         {
             BomberSkin skin = BombermanSkins[i];
             int paletteColumn = i + 1;
-            string sheetName = BomberSkinResourceCatalog.GetSheetName(sheetSource.Character, skin);
+            string sheetName = BomberSkinResourceCatalog.GetSheetName(sheetSource.CharacterFolderName, skin);
             string outputPath = $"{sheetSource.OutputFolderAssetPath}/{sheetName}.png";
 
             if (File.Exists(outputPath))
@@ -143,6 +130,65 @@ public static class BomberSkinSheetGenerator
         Object.DestroyImmediate(palette);
 
         return generatedAny;
+    }
+
+    static IEnumerable<CharacterSkinSheetSource> FindCharacterSources()
+    {
+        if (!Directory.Exists(BombersRootAssetPath))
+            yield break;
+
+        string[] characterFolders = Directory.GetDirectories(BombersRootAssetPath, "*", SearchOption.TopDirectoryOnly);
+        Array.Sort(characterFolders, StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < characterFolders.Length; i++)
+        {
+            string characterFolder = characterFolders[i].Replace('\\', '/');
+            string characterFolderName = Path.GetFileName(characterFolder);
+            string palettePath = FindPalettePath(characterFolder);
+            string sourceSheetPath = FindSourceSheetPath(characterFolder);
+
+            if (palettePath == null || sourceSheetPath == null)
+            {
+                Debug.LogWarning($"[BomberSkinSheetGenerator] '{characterFolderName}' needs one source sprite sheet and one palette PNG.");
+                continue;
+            }
+
+            yield return new CharacterSkinSheetSource(
+                characterFolderName,
+                sourceSheetPath,
+                palettePath,
+                $"{characterFolder}/Generated/{characterFolderName}");
+        }
+    }
+
+    static string FindPalettePath(string characterFolder)
+    {
+        string[] pngPaths = Directory.GetFiles(characterFolder, "*.png", SearchOption.TopDirectoryOnly);
+        Array.Sort(pngPaths, StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < pngPaths.Length; i++)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(pngPaths[i]);
+            if (fileName.IndexOf("palette", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                fileName.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) >= 0)
+                return pngPaths[i].Replace('\\', '/');
+        }
+
+        return null;
+    }
+
+    static string FindSourceSheetPath(string characterFolder)
+    {
+        string[] pngPaths = Directory.GetFiles(characterFolder, "*.png", SearchOption.TopDirectoryOnly);
+        Array.Sort(pngPaths, StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < pngPaths.Length; i++)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(pngPaths[i]);
+            if (fileName.IndexOf("palette", StringComparison.OrdinalIgnoreCase) < 0 &&
+                fileName.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) < 0)
+                return pngPaths[i].Replace('\\', '/');
+        }
+
+        return null;
     }
 
     static Texture2D LoadTexture(string assetPath)
@@ -226,6 +272,16 @@ public static class BomberSkinSheetGenerator
 
             current = next;
         }
+    }
+}
+
+sealed class BomberSkinSheetBuildPreprocessor : IPreprocessBuildWithReport
+{
+    public int callbackOrder => 0;
+
+    public void OnPreprocessBuild(BuildReport report)
+    {
+        BomberSkinSheetGenerator.GenerateMissingBombermanSheets();
     }
 }
 #endif

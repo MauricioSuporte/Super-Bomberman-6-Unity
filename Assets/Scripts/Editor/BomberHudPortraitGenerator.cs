@@ -7,29 +7,12 @@ using UnityEngine;
 
 public static class BomberHudPortraitGenerator
 {
+    const string GeneratedSheetsRootAssetPath = "Assets/Resources/Sprites/Bombers";
+    const string PortraitsRootAssetPath = "Assets/Resources/Sprites/Portraits";
     const int PortraitSize = 32;
     const int BorderSize = 1;
     const int BorderedSize = PortraitSize + (BorderSize * 2);
     const int PortraitCount = 6;
-
-    readonly struct SourceFolder
-    {
-        public SourceFolder(string input, string output)
-        {
-            Input = input;
-            Output = output;
-        }
-
-        public string Input { get; }
-        public string Output { get; }
-    }
-
-    static readonly SourceFolder[] SourceFolders =
-    {
-        new("Assets/Resources/Sprites/Bomberman/Generated/Bomberman", "Assets/Resources/Sprites/Portraits/Bomberman"),
-        new("Assets/Resources/Sprites/LadyBomber/Generated/LadyBomber", "Assets/Resources/Sprites/Portraits/LadyBomber"),
-        new("Assets/Resources/Sprites/TinyBomber/Generated/TinyBomber", "Assets/Resources/Sprites/Portraits/TinyBomber")
-    };
 
     [MenuItem("Tools/Bomberman/Generate HUD Portraits")]
     public static void GenerateAll()
@@ -37,8 +20,8 @@ public static class BomberHudPortraitGenerator
         int generatedCount = 0;
         List<string> errors = new();
 
-        for (int i = 0; i < SourceFolders.Length; i++)
-            GenerateFolder(SourceFolders[i], ref generatedCount, errors);
+        foreach ((string input, string output) in FindSourceFolders())
+            GenerateFolder(input, output, ref generatedCount, errors);
 
         AssetDatabase.Refresh();
 
@@ -48,22 +31,35 @@ public static class BomberHudPortraitGenerator
             Debug.Log($"[BomberHudPortraitGenerator] Generated or updated {generatedCount} portraits.");
     }
 
-    static void GenerateFolder(SourceFolder folder, ref int generatedCount, List<string> errors)
+    static IEnumerable<(string input, string output)> FindSourceFolders()
     {
-        if (!Directory.Exists(folder.Input))
-        {
-            errors.Add($"Source folder not found: {folder.Input}");
-            return;
-        }
+        if (!Directory.Exists(GeneratedSheetsRootAssetPath))
+            yield break;
 
-        string[] sourcePaths = Directory.GetFiles(folder.Input, "*.png", SearchOption.TopDirectoryOnly);
+        string[] characterFolders = Directory.GetDirectories(GeneratedSheetsRootAssetPath, "*", SearchOption.TopDirectoryOnly);
+        Array.Sort(characterFolders, StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < characterFolders.Length; i++)
+        {
+            string characterFolder = characterFolders[i].Replace('\\', '/');
+            string characterName = Path.GetFileName(characterFolder);
+            yield return ($"{characterFolder}/Generated/{characterName}", $"{PortraitsRootAssetPath}/{characterName}");
+        }
+    }
+
+    static void GenerateFolder(string inputFolder, string outputRootFolder, ref int generatedCount, List<string> errors)
+    {
+        if (!Directory.Exists(inputFolder))
+            return;
+
+        string[] sourcePaths = Directory.GetFiles(inputFolder, "*.png", SearchOption.TopDirectoryOnly);
         Array.Sort(sourcePaths, StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < sourcePaths.Length; i++)
         {
             string sourcePath = sourcePaths[i].Replace('\\', '/');
             string sheetName = Path.GetFileNameWithoutExtension(sourcePath);
-            string outputFolder = $"{folder.Output}/{sheetName}";
+            string outputFolder = $"{outputRootFolder}/{sheetName}";
 
             if (!NeedsGeneration(sourcePath, outputFolder, sheetName))
                 continue;

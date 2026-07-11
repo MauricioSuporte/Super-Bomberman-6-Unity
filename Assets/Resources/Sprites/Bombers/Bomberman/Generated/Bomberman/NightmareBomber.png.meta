@@ -1,0 +1,3640 @@
+fileFormatVersion: 2
+guid: 2f75e5417d2fcdc4483ed1cd4d566683
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8937289766202042846
+    second: NightmareBomber_0
+  - first:
+      213: -3796326902545664000
+    second: NightmareBomber_1
+  - first:
+      213: 2947305419519432261
+    second: NightmareBomber_2
+  - first:
+      213: 789793629958995965
+    second: NightmareBomber_3
+  - first:
+      213: 5434917374073116229
+    second: NightmareBomber_4
+  - first:
+      213: -2081188849723866817
+    second: NightmareBomber_5
+  - first:
+      213: 3397691012192378339
+    second: NightmareBomber_6
+  - first:
+      213: 1532868411214721167
+    second: NightmareBomber_7
+  - first:
+      213: -4206370602079230978
+    second: NightmareBomber_8
+  - first:
+      213: 677911606863283117
+    second: NightmareBomber_9
+  - first:
+      213: -4205259934154195521
+    second: NightmareBomber_10
+  - first:
+      213: 8358745278374302542
+    second: NightmareBomber_11
+  - first:
+      213: -542999254178053806
+    second: NightmareBomber_12
+  - first:
+      213: 5149781884948067656
+    second: NightmareBomber_13
+  - first:
+      213: 8757632248242277778
+    second: NightmareBomber_14
+  - first:
+      213: 1727086436179205456
+    second: NightmareBomber_15
+  - first:
+      213: 2824510088341940957
+    second: NightmareBomber_16
+  - first:
+      213: -6391470257200420165
+    second: NightmareBomber_17
+  - first:
+      213: 2012395956096669901
+    second: NightmareBomber_18
+  - first:
+      213: 5025749901805348522
+    second: NightmareBomber_19
+  - first:
+      213: 4625419312842386666
+    second: NightmareBomber_20
+  - first:
+      213: 7709057029215199465
+    second: NightmareBomber_21
+  - first:
+      213: -7039136813013527105
+    second: NightmareBomber_22
+  - first:
+      213: 7501796978786052612
+    second: NightmareBomber_23
+  - first:
+      213: -277994658006459298
+    second: NightmareBomber_24
+  - first:
+      213: 1912790259587461814
+    second: NightmareBomber_25
+  - first:
+      213: 3276289993662993630
+    second: NightmareBomber_26
+  - first:
+      213: -3464574856755692790
+    second: NightmareBomber_27
+  - first:
+      213: -765391333039315159
+    second: NightmareBomber_28
+  - first:
+      213: 6036645348815742018
+    second: NightmareBomber_29
+  - first:
+      213: 58656388858356694
+    second: NightmareBomber_30
+  - first:
+      213: -2286385910331345715
+    second: NightmareBomber_31
+  - first:
+      213: -620549104393956144
+    second: NightmareBomber_32
+  - first:
+      213: -4960348588671721754
+    second: NightmareBomber_33
+  - first:
+      213: 2613772121138086374
+    second: NightmareBomber_34
+  - first:
+      213: -8092457048245095048
+    second: NightmareBomber_35
+  - first:
+      213: 3676140185189419850
+    second: NightmareBomber_36
+  - first:
+      213: 8826599731627233986
+    second: NightmareBomber_37
+  - first:
+      213: 7007746947703996231
+    second: NightmareBomber_38
+  - first:
+      213: 8703486434730351318
+    second: NightmareBomber_39
+  - first:
+      213: 6106632469148929143
+    second: NightmareBomber_40
+  - first:
+      213: 6848713668530879735
+    second: NightmareBomber_41
+  - first:
+      213: 4102416299397973610
+    second: NightmareBomber_42
+  - first:
+      213: -6825765764043200183
+    second: NightmareBomber_43
+  - first:
+      213: -8799987425752558643
+    second: NightmareBomber_44
+  - first:
+      213: -2498509792677876152
+    second: NightmareBomber_45
+  - first:
+      213: 5169770096219602473
+    second: NightmareBomber_46
+  - first:
+      213: -7016003387598119747
+    second: NightmareBomber_47
+  - first:
+      213: -8935743441815670119
+    second: NightmareBomber_48
+  - first:
+      213: -1246360864040609945
+    second: NightmareBomber_49
+  - first:
+      213: -1737366351660392898
+    second: NightmareBomber_50
+  - first:
+      213: -6494306141331885369
+    second: NightmareBomber_51
+  - first:
+      213: -3510277318673974692
+    second: NightmareBomber_52
+  - first:
+      213: 5998428824600191545
+    second: NightmareBomber_53
+  - first:
+      213: -1453526378146200630
+    second: NightmareBomber_54
+  - first:
+      213: 2678288495972443194
+    second: NightmareBomber_55
+  - first:
+      213: -7243008414209845907
+    second: NightmareBomber_56
+  - first:
+      213: -2617753818444489973
+    second: NightmareBomber_57
+  - first:
+      213: 2703482637856493556
+    second: NightmareBomber_58
+  - first:
+      213: -3247007764917309868
+    second: NightmareBomber_59
+  - first:
+      213: -1676974492879538155
+    second: NightmareBomber_60
+  - first:
+      213: -1909702772064500401
+    second: NightmareBomber_61
+  - first:
+      213: -6049456656519574879
+    second: NightmareBomber_62
+  - first:
+      213: -3298733609241743531
+    second: NightmareBomber_63
+  - first:
+      213: 1775635847293516396
+    second: NightmareBomber_64
+  - first:
+      213: -3948575121684623972
+    second: NightmareBomber_65
+  - first:
+      213: -2588368053020757422
+    second: NightmareBomber_66
+  - first:
+      213: 3106523974937055205
+    second: NightmareBomber_67
+  - first:
+      213: -4360669528290711617
+    second: NightmareBomber_68
+  - first:
+      213: -6759077934252256307
+    second: NightmareBomber_69
+  - first:
+      213: 8566432157219473793
+    second: NightmareBomber_70
+  - first:
+      213: -4376637183306232748
+    second: NightmareBomber_71
+  - first:
+      213: 6910869073038720869
+    second: NightmareBomber_72
+  - first:
+      213: 5998225599802375465
+    second: NightmareBomber_73
+  - first:
+      213: 7298671013086640705
+    second: NightmareBomber_74
+  - first:
+      213: 498912020040196137
+    second: NightmareBomber_75
+  - first:
+      213: -7080488155759055549
+    second: NightmareBomber_76
+  - first:
+      213: -1583124545926371553
+    second: NightmareBomber_77
+  - first:
+      213: -5399383891207581808
+    second: NightmareBomber_78
+  - first:
+      213: 8547322056025831093
+    second: NightmareBomber_79
+  - first:
+      213: -1142103855453910591
+    second: NightmareBomber_80
+  - first:
+      213: 797740126224694973
+    second: NightmareBomber_81
+  - first:
+      213: -76729583546755173
+    second: NightmareBomber_82
+  - first:
+      213: 7739174023217753731
+    second: NightmareBomber_83
+  - first:
+      213: -7392373788384009163
+    second: NightmareBomber_84
+  - first:
+      213: 4695291731654222172
+    second: NightmareBomber_85
+  - first:
+      213: 4962170499452202342
+    second: NightmareBomber_86
+  - first:
+      213: -371263229283002692
+    second: NightmareBomber_87
+  - first:
+      213: -8747819810556454621
+    second: NightmareBomber_88
+  - first:
+      213: 4407947677256710731
+    second: NightmareBomber_89
+  - first:
+      213: -244905318772950440
+    second: NightmareBomber_90
+  - first:
+      213: 1026787317579299053
+    second: NightmareBomber_91
+  - first:
+      213: 773946541847379957
+    second: NightmareBomber_92
+  - first:
+      213: -6666469478216962163
+    second: NightmareBomber_93
+  - first:
+      213: 6899650588439094603
+    second: NightmareBomber_94
+  - first:
+      213: -2691626946598842646
+    second: NightmareBomber_95
+  - first:
+      213: 2707624614701566560
+    second: NightmareBomber_96
+  - first:
+      213: 5800830722903888016
+    second: NightmareBomber_97
+  - first:
+      213: 262188580843024512
+    second: NightmareBomber_98
+  - first:
+      213: 3268559873708449559
+    second: NightmareBomber_99
+  - first:
+      213: 524635405753673996
+    second: NightmareBomber_100
+  - first:
+      213: 4037990951601528308
+    second: NightmareBomber_101
+  - first:
+      213: -3508483371974732003
+    second: NightmareBomber_102
+  - first:
+      213: -6926756782191489582
+    second: NightmareBomber_103
+  - first:
+      213: 8600950210194900248
+    second: NightmareBomber_104
+  - first:
+      213: -7700094928915961521
+    second: NightmareBomber_105
+  - first:
+      213: -3682213374468973138
+    second: NightmareBomber_106
+  - first:
+      213: -5938581197125422139
+    second: NightmareBomber_107
+  - first:
+      213: -2130688626302862311
+    second: NightmareBomber_108
+  - first:
+      213: -8302219237682144149
+    second: NightmareBomber_109
+  - first:
+      213: -6111882071293178468
+    second: NightmareBomber_110
+  - first:
+      213: 5955435282686209626
+    second: NightmareBomber_111
+  - first:
+      213: 7246405095633600724
+    second: NightmareBomber_112
+  - first:
+      213: 6833837705302206061
+    second: NightmareBomber_113
+  - first:
+      213: -6669548015101658417
+    second: NightmareBomber_114
+  - first:
+      213: 1591310169071996839
+    second: NightmareBomber_115
+  - first:
+      213: -6442807625024149886
+    second: NightmareBomber_116
+  - first:
+      213: 9143307387655621095
+    second: NightmareBomber_117
+  - first:
+      213: 7039672732762798786
+    second: NightmareBomber_118
+  - first:
+      213: 5654432736175007448
+    second: NightmareBomber_119
+  - first:
+      213: -2782654047478153672
+    second: NightmareBomber_120
+  - first:
+      213: 2713691386295701684
+    second: NightmareBomber_121
+  - first:
+      213: -4852786793033952402
+    second: NightmareBomber_122
+  - first:
+      213: 7586150160875090492
+    second: NightmareBomber_123
+  - first:
+      213: 3367919828032727757
+    second: NightmareBomber_124
+  - first:
+      213: 3816104093619616277
+    second: NightmareBomber_125
+  - first:
+      213: -4059283826537621918
+    second: NightmareBomber_126
+  - first:
+      213: 6953490237447758762
+    second: NightmareBomber_127
+  - first:
+      213: -2508650714699719877
+    second: NightmareBomber_128
+  - first:
+      213: -305145529364391850
+    second: NightmareBomber_129
+  - first:
+      213: 8572236311592931846
+    second: NightmareBomber_130
+  - first:
+      213: 2024307262972273104
+    second: NightmareBomber_131
+  - first:
+      213: 6637255850507207819
+    second: NightmareBomber_132
+  - first:
+      213: 4636949538117322194
+    second: NightmareBomber_133
+  - first:
+      213: -8807057301072831058
+    second: NightmareBomber_134
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: NightmareBomber_0
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2261bc63f4e58f380800000000000000
+      internalID: -8937289766202042846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_1
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 008b182cbccb05bc0800000000000000
+      internalID: -3796326902545664000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_2
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5461a0fd9aee6e820800000000000000
+      internalID: 2947305419519432261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_3
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dff72973f19e5fa00800000000000000
+      internalID: 789793629958995965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_4
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5461a396e84bc6b40800000000000000
+      internalID: 5434917374073116229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_5
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 465
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3184bd84c12e13e0800000000000000
+      internalID: -2081188849723866817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_6
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 465
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ed934e49f5072f20800000000000000
+      internalID: 3397691012192378339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_7
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 465
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f80fed1d2b7d54510800000000000000
+      internalID: 1532868411214721167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_8
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 465
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef3eb654938ff95c0800000000000000
+      internalID: -4206370602079230978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_9
+      rect:
+        serializedVersion: 2
+        x: 599
+        y: 464
+        width: 18
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da34334c30d686900800000000000000
+      internalID: 677911606863283117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_10
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 471
+        width: 18
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbd7e8cce5ae3a5c0800000000000000
+      internalID: -4205259934154195521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_11
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 469
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e43597d4b8a300470800000000000000
+      internalID: 8358745278374302542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_12
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 468
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2514a652e01e678f0800000000000000
+      internalID: -542999254178053806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_13
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 468
+        width: 17
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8453213f653b77740800000000000000
+      internalID: 5149781884948067656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_14
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 470
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29d8cfd312c598970800000000000000
+      internalID: 8757632248242277778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_15
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 466
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05d5bd496f7d7f710800000000000000
+      internalID: 1727086436179205456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_16
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 468
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddae020e5fca23720800000000000000
+      internalID: 2824510088341940957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_17
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 468
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bba281f1aafec47a0800000000000000
+      internalID: -6391470257200420165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_18
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 464
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc8139eb5777deb10800000000000000
+      internalID: 2012395956096669901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_19
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 464
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa6ef0b78ec0fb540800000000000000
+      internalID: 5025749901805348522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_20
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 464
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aeca337cb5ac03040800000000000000
+      internalID: 4625419312842386666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_21
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e0a99316821cfa60800000000000000
+      internalID: 7709057029215199465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_22
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 467
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb514fe0d56ff4e90800000000000000
+      internalID: -7039136813013527105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_23
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 403
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40a24a12b9cbb1860800000000000000
+      internalID: 7501796978786052612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_24
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 403
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5c9118d45d542cf0800000000000000
+      internalID: -277994658006459298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_25
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 403
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b2b9805b989b8a10800000000000000
+      internalID: 1912790259587461814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_26
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 403
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed413750468b77d20800000000000000
+      internalID: 3276289993662993630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_27
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 403
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0bb35d168b5befc0800000000000000
+      internalID: -3464574856755692790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_28
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 401
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 927670843a8c065f0800000000000000
+      internalID: -765391333039315159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_29
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 401
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2442d2316f876c350800000000000000
+      internalID: 6036645348815742018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_30
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 401
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d3a5b5cca360d000800000000000000
+      internalID: 58656388858356694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_31
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 401
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc4fd3bd0202540e0800000000000000
+      internalID: -2286385910331345715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_32
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 401
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d459ea90ed5367f0800000000000000
+      internalID: -620549104393956144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_33
+      rect:
+        serializedVersion: 2
+        x: 663
+        y: 401
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ee9c1a5d3d492bb0800000000000000
+      internalID: -4960348588671721754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_34
+      rect:
+        serializedVersion: 2
+        x: 727
+        y: 405
+        width: 18
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e1414455ebf54420800000000000000
+      internalID: 2613772121138086374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_35
+      rect:
+        serializedVersion: 2
+        x: 791
+        y: 404
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 875be37b031d1bf80800000000000000
+      internalID: -8092457048245095048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_36
+      rect:
+        serializedVersion: 2
+        x: 854
+        y: 402
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4b01ca7506440330800000000000000
+      internalID: 3676140185189419850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_37
+      rect:
+        serializedVersion: 2
+        x: 919
+        y: 406
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c2133ac0b16e7a70800000000000000
+      internalID: 8826599731627233986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_38
+      rect:
+        serializedVersion: 2
+        x: 983
+        y: 402
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74f79b568b4804160800000000000000
+      internalID: 7007746947703996231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_39
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 403
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6da9881accef8c870800000000000000
+      internalID: 8703486434730351318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_40
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 404
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77c0d7950ed1fb450800000000000000
+      internalID: 6106632469148929143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_41
+      rect:
+        serializedVersion: 2
+        x: 1175
+        y: 401
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fc3525abc48b0f50800000000000000
+      internalID: 6848713668530879735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_42
+      rect:
+        serializedVersion: 2
+        x: 1239
+        y: 401
+        width: 18
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a66836683e5bee830800000000000000
+      internalID: 4102416299397973610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_43
+      rect:
+        serializedVersion: 2
+        x: 1303
+        y: 401
+        width: 18
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 949ae2ab3320641a0800000000000000
+      internalID: -6825765764043200183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_44
+      rect:
+        serializedVersion: 2
+        x: 1367
+        y: 403
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc35d148f0a20e580800000000000000
+      internalID: -8799987425752558643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_45
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 404
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84ea99bc492835dd0800000000000000
+      internalID: -2498509792677876152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_46
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 339
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92e3b9b0386beb740800000000000000
+      internalID: 5169770096219602473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_47
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 339
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbcd643671622ae90800000000000000
+      internalID: -7016003387598119747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_48
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 339
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 992fc8aeeacddf380800000000000000
+      internalID: -8935743441815670119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_49
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 339
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76719ecc56904bee0800000000000000
+      internalID: -1246360864040609945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_50
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 339
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3ed0941282a3e7e0800000000000000
+      internalID: -1737366351660392898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_51
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 337
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c2764709f69fd5a0800000000000000
+      internalID: -6494306141331885369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_52
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 337
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5ab35d706df84fc0800000000000000
+      internalID: -3510277318673974692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_53
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 337
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93222c42c33be3350800000000000000
+      internalID: 5998428824600191545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_54
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 337
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac38feec57904dbe0800000000000000
+      internalID: -1453526378146200630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_55
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 337
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a34e37862313b2520800000000000000
+      internalID: 2678288495972443194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_56
+      rect:
+        serializedVersion: 2
+        x: 663
+        y: 337
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d655bdde83aab7b90800000000000000
+      internalID: -7243008414209845907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_57
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 341
+        width: 18
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0b913685cedbabd0800000000000000
+      internalID: -2617753818444489973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_58
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 340
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ff4fdda223b48520800000000000000
+      internalID: 2703482637856493556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_59
+      rect:
+        serializedVersion: 2
+        x: 857
+        y: 338
+        width: 19
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45e2b2524af40f2d0800000000000000
+      internalID: -3247007764917309868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_60
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 342
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 518368e65903ab8e0800000000000000
+      internalID: -1676974492879538155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_61
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 338
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f454484627f5f75e0800000000000000
+      internalID: -1909702772064500401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_62
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 339
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1aa4708e8330c0ca0800000000000000
+      internalID: -6049456656519574879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_63
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 340
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55fe084824b8832d0800000000000000
+      internalID: -3298733609241743531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_64
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 337
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6a3168356354a810800000000000000
+      internalID: 1775635847293516396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_65
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 337
+        width: 18
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9d0b07e8d7d339c0800000000000000
+      internalID: -3948575121684623972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_66
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 337
+        width: 18
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2527ab338f4441cd0800000000000000
+      internalID: -2588368053020757422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_67
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 339
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ef8b5c98179c1b20800000000000000
+      internalID: 3106523974937055205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_68
+      rect:
+        serializedVersion: 2
+        x: 1431
+        y: 340
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb7ac57fa2acb73c0800000000000000
+      internalID: -4360669528290711617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_69
+      rect:
+        serializedVersion: 2
+        x: 1471
+        y: 184
+        width: 36
+        height: 201
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc396bf0e6ee232a0800000000000000
+      internalID: -6759077934252256307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_70
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 274
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 189cc8bf8a412e670800000000000000
+      internalID: 8566432157219473793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_71
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 274
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45c04429baf0343c0800000000000000
+      internalID: -4376637183306232748
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_72
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 275
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56fb4bb7ec658ef50800000000000000
+      internalID: 6910869073038720869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_73
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 274
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92dffde276afd3350800000000000000
+      internalID: 5998225599802375465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_74
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 274
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14a387bcd961a4560800000000000000
+      internalID: 7298671013086640705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_75
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 272
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9202ba0c6dd7ce600800000000000000
+      internalID: 498912020040196137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_76
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 272
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34dee9f498d0dbd90800000000000000
+      internalID: -7080488155759055549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_77
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 272
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f176bdcfc9c970ae0800000000000000
+      internalID: -1583124545926371553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_78
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 273
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09f0b9645f88115b0800000000000000
+      internalID: -5399383891207581808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_79
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 272
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b6f742df103e9670800000000000000
+      internalID: 8547322056025831093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_80
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 272
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c9c017389e6620f0800000000000000
+      internalID: -1142103855453910591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_81
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 280
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbeb2be0b64221b00800000000000000
+      internalID: 797740126224694973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_82
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 278
+        width: 17
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b979eeca9d66feef0800000000000000
+      internalID: -76729583546755173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_83
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 276
+        width: 18
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38e23dc25c1176b60800000000000000
+      internalID: 7739174023217753731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_84
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 279
+        width: 17
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5346678b433096990800000000000000
+      internalID: -7392373788384009163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_85
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 274
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c51241604f6092140800000000000000
+      internalID: 4695291731654222172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_86
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 277
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66d65ce47cb2dd440800000000000000
+      internalID: 4962170499452202342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_87
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 277
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb61c6c5f0209daf0800000000000000
+      internalID: -371263229283002692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_88
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 273
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32958a0fa30899680800000000000000
+      internalID: -8747819810556454621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_89
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 272
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4af463ee0d2c2d30800000000000000
+      internalID: 4407947677256710731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_90
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 272
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85a3feef8ebe99cf0800000000000000
+      internalID: -244905318772950440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_91
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 274
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de8b03c00a1ef3e00800000000000000
+      internalID: 1026787317579299053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_92
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 274
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ff74fd774c9dba00800000000000000
+      internalID: 773946541847379957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_93
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 211
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8fe4ec7451fb73a0800000000000000
+      internalID: -6666469478216962163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_94
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 211
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b452a3e77ab70cf50800000000000000
+      internalID: 6899650588439094603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_95
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 211
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aee4b1c8d8b65aad0800000000000000
+      internalID: -2691626946598842646
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_96
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 211
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06a0460dd3a639520800000000000000
+      internalID: 2707624614701566560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_97
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 211
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 090dbd0fec0b08050800000000000000
+      internalID: 5800830722903888016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_98
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 209
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 080ff49002b73a300800000000000000
+      internalID: 262188580843024512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_99
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 209
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71fdc7733e14c5d20800000000000000
+      internalID: 3268559873708449559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_100
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 208
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c096a843f11e74700800000000000000
+      internalID: 524635405753673996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_101
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 209
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fd53745063d90830800000000000000
+      internalID: 4037990951601528308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_102
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 210
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d17d41146fc5f4fc0800000000000000
+      internalID: -3508483371974732003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_103
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 210
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ddc2f7f7673fdf90800000000000000
+      internalID: -6926756782191489582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_104
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 210
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8150d7975a6bc5770800000000000000
+      internalID: 8600950210194900248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_105
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 210
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f496d218574c32590800000000000000
+      internalID: -7700094928915961521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_106
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 210
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ead9593f17626ecc0800000000000000
+      internalID: -3682213374468973138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_107
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 209
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c3768b7ddbe59da0800000000000000
+      internalID: -5938581197125422139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_108
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 209
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91cb046bbf54e62e0800000000000000
+      internalID: -2130688626302862311
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_109
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 209
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6c9a82279798cc80800000000000000
+      internalID: -8302219237682144149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_110
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 147
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9dcd7763ab3e2ba0800000000000000
+      internalID: -6111882071293178468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_111
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 147
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5ee65b16d4f5a250800000000000000
+      internalID: 5955435282686209626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_112
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 148
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d042d79a07609460800000000000000
+      internalID: 7246405095633600724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_113
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 148
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d66653d8f2ba6de50800000000000000
+      internalID: 6833837705302206061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_114
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 146
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fca3473ca610173a0800000000000000
+      internalID: -6669548015101658417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_115
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7afc00bea28751610800000000000000
+      internalID: 1591310169071996839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_116
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 286e14ab99c8696a0800000000000000
+      internalID: -6442807625024149886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_117
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e90b6130ad83ee70800000000000000
+      internalID: 9143307387655621095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_118
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ca745b7d01f1b160800000000000000
+      internalID: 7039672732762798786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_119
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d62d067d94987e40800000000000000
+      internalID: 5654432736175007448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_120
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83ef24f03e60269d0800000000000000
+      internalID: -2782654047478153672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_121
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b0513620f7f8a520800000000000000
+      internalID: 2713691386295701684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_122
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 147
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6311867f1077acb0800000000000000
+      internalID: -4852786793033952402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_123
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 147
+        width: 17
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c327bbfc06b674960800000000000000
+      internalID: 7586150160875090492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_124
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 147
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcaa2e55d314dbe20800000000000000
+      internalID: 3367919828032727757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_125
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 147
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51a7c1e547685f430800000000000000
+      internalID: 3816104093619616277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_126
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 147
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2669cb4edd68aa7c0800000000000000
+      internalID: -4059283826537621918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_127
+      rect:
+        serializedVersion: 2
+        x: 1111
+        y: 147
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa36830a782cf7060800000000000000
+      internalID: 6953490237447758762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_128
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 147
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3b1bc4677b7f2dd0800000000000000
+      internalID: -2508650714699719877
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_129
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 147
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 658df6df1c7e3cbf0800000000000000
+      internalID: -305145529364391850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_130
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 147
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 602933bf183b6f670800000000000000
+      internalID: 8572236311592931846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_131
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 79
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d1a4bdfab8c71c10800000000000000
+      internalID: 2024307262972273104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_132
+      rect:
+        serializedVersion: 2
+        x: 1496
+        y: 79
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b848dd4c7054c1c50800000000000000
+      internalID: 6637255850507207819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_133
+      rect:
+        serializedVersion: 2
+        x: 1431
+        y: 15
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d505ec8901c95040800000000000000
+      internalID: 4636949538117322194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NightmareBomber_134
+      rect:
+        serializedVersion: 2
+        x: 1496
+        y: 15
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ead1b05eb0c07c580800000000000000
+      internalID: -8807057301072831058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      NightmareBomber_0: -8937289766202042846
+      NightmareBomber_1: -3796326902545664000
+      NightmareBomber_10: -4205259934154195521
+      NightmareBomber_100: 524635405753673996
+      NightmareBomber_101: 4037990951601528308
+      NightmareBomber_102: -3508483371974732003
+      NightmareBomber_103: -6926756782191489582
+      NightmareBomber_104: 8600950210194900248
+      NightmareBomber_105: -7700094928915961521
+      NightmareBomber_106: -3682213374468973138
+      NightmareBomber_107: -5938581197125422139
+      NightmareBomber_108: -2130688626302862311
+      NightmareBomber_109: -8302219237682144149
+      NightmareBomber_11: 8358745278374302542
+      NightmareBomber_110: -6111882071293178468
+      NightmareBomber_111: 5955435282686209626
+      NightmareBomber_112: 7246405095633600724
+      NightmareBomber_113: 6833837705302206061
+      NightmareBomber_114: -6669548015101658417
+      NightmareBomber_115: 1591310169071996839
+      NightmareBomber_116: -6442807625024149886
+      NightmareBomber_117: 9143307387655621095
+      NightmareBomber_118: 7039672732762798786
+      NightmareBomber_119: 5654432736175007448
+      NightmareBomber_12: -542999254178053806
+      NightmareBomber_120: -2782654047478153672
+      NightmareBomber_121: 2713691386295701684
+      NightmareBomber_122: -4852786793033952402
+      NightmareBomber_123: 7586150160875090492
+      NightmareBomber_124: 3367919828032727757
+      NightmareBomber_125: 3816104093619616277
+      NightmareBomber_126: -4059283826537621918
+      NightmareBomber_127: 6953490237447758762
+      NightmareBomber_128: -2508650714699719877
+      NightmareBomber_129: -305145529364391850
+      NightmareBomber_13: 5149781884948067656
+      NightmareBomber_130: 8572236311592931846
+      NightmareBomber_131: 2024307262972273104
+      NightmareBomber_132: 6637255850507207819
+      NightmareBomber_133: 4636949538117322194
+      NightmareBomber_134: -8807057301072831058
+      NightmareBomber_14: 8757632248242277778
+      NightmareBomber_15: 1727086436179205456
+      NightmareBomber_16: 2824510088341940957
+      NightmareBomber_17: -6391470257200420165
+      NightmareBomber_18: 2012395956096669901
+      NightmareBomber_19: 5025749901805348522
+      NightmareBomber_2: 2947305419519432261
+      NightmareBomber_20: 4625419312842386666
+      NightmareBomber_21: 7709057029215199465
+      NightmareBomber_22: -7039136813013527105
+      NightmareBomber_23: 7501796978786052612
+      NightmareBomber_24: -277994658006459298
+      NightmareBomber_25: 1912790259587461814
+      NightmareBomber_26: 3276289993662993630
+      NightmareBomber_27: -3464574856755692790
+      NightmareBomber_28: -765391333039315159
+      NightmareBomber_29: 6036645348815742018
+      NightmareBomber_3: 789793629958995965
+      NightmareBomber_30: 58656388858356694
+      NightmareBomber_31: -2286385910331345715
+      NightmareBomber_32: -620549104393956144
+      NightmareBomber_33: -4960348588671721754
+      NightmareBomber_34: 2613772121138086374
+      NightmareBomber_35: -8092457048245095048
+      NightmareBomber_36: 3676140185189419850
+      NightmareBomber_37: 8826599731627233986
+      NightmareBomber_38: 7007746947703996231
+      NightmareBomber_39: 8703486434730351318
+      NightmareBomber_4: 5434917374073116229
+      NightmareBomber_40: 6106632469148929143
+      NightmareBomber_41: 6848713668530879735
+      NightmareBomber_42: 4102416299397973610
+      NightmareBomber_43: -6825765764043200183
+      NightmareBomber_44: -8799987425752558643
+      NightmareBomber_45: -2498509792677876152
+      NightmareBomber_46: 5169770096219602473
+      NightmareBomber_47: -7016003387598119747
+      NightmareBomber_48: -8935743441815670119
+      NightmareBomber_49: -1246360864040609945
+      NightmareBomber_5: -2081188849723866817
+      NightmareBomber_50: -1737366351660392898
+      NightmareBomber_51: -6494306141331885369
+      NightmareBomber_52: -3510277318673974692
+      NightmareBomber_53: 5998428824600191545
+      NightmareBomber_54: -1453526378146200630
+      NightmareBomber_55: 2678288495972443194
+      NightmareBomber_56: -7243008414209845907
+      NightmareBomber_57: -2617753818444489973
+      NightmareBomber_58: 2703482637856493556
+      NightmareBomber_59: -3247007764917309868
+      NightmareBomber_6: 3397691012192378339
+      NightmareBomber_60: -1676974492879538155
+      NightmareBomber_61: -1909702772064500401
+      NightmareBomber_62: -6049456656519574879
+      NightmareBomber_63: -3298733609241743531
+      NightmareBomber_64: 1775635847293516396
+      NightmareBomber_65: -3948575121684623972
+      NightmareBomber_66: -2588368053020757422
+      NightmareBomber_67: 3106523974937055205
+      NightmareBomber_68: -4360669528290711617
+      NightmareBomber_69: -6759077934252256307
+      NightmareBomber_7: 1532868411214721167
+      NightmareBomber_70: 8566432157219473793
+      NightmareBomber_71: -4376637183306232748
+      NightmareBomber_72: 6910869073038720869
+      NightmareBomber_73: 5998225599802375465
+      NightmareBomber_74: 7298671013086640705
+      NightmareBomber_75: 498912020040196137
+      NightmareBomber_76: -7080488155759055549
+      NightmareBomber_77: -1583124545926371553
+      NightmareBomber_78: -5399383891207581808
+      NightmareBomber_79: 8547322056025831093
+      NightmareBomber_8: -4206370602079230978
+      NightmareBomber_80: -1142103855453910591
+      NightmareBomber_81: 797740126224694973
+      NightmareBomber_82: -76729583546755173
+      NightmareBomber_83: 7739174023217753731
+      NightmareBomber_84: -7392373788384009163
+      NightmareBomber_85: 4695291731654222172
+      NightmareBomber_86: 4962170499452202342
+      NightmareBomber_87: -371263229283002692
+      NightmareBomber_88: -8747819810556454621
+      NightmareBomber_89: 4407947677256710731
+      NightmareBomber_9: 677911606863283117
+      NightmareBomber_90: -244905318772950440
+      NightmareBomber_91: 1026787317579299053
+      NightmareBomber_92: 773946541847379957
+      NightmareBomber_93: -6666469478216962163
+      NightmareBomber_94: 6899650588439094603
+      NightmareBomber_95: -2691626946598842646
+      NightmareBomber_96: 2707624614701566560
+      NightmareBomber_97: 5800830722903888016
+      NightmareBomber_98: 262188580843024512
+      NightmareBomber_99: 3268559873708449559
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

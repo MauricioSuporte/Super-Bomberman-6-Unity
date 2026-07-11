@@ -15,18 +15,8 @@ public static class HudCharacterPortraitCatalog
     {
         BomberSkin normalizedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin);
         string sheetName = BomberSkinResourceCatalog.GetSheetName(character, normalizedSkin);
-        string characterFolder = GetCharacterFolder(character);
+        string characterFolder = BomberSkinResourceCatalog.GetCharacterFolderName(character);
         string path = $"Sprites/Portraits/{characterFolder}/{sheetName}/{sheetName}_Portrait_{expressionIndex}";
         return Resources.Load<Sprite>(path);
-    }
-
-    static string GetCharacterFolder(BomberCharacter character)
-    {
-        return character switch
-        {
-            BomberCharacter.LadyBomber => "LadyBomber",
-            BomberCharacter.TinyBomber => "TinyBomber",
-            _ => "Bomberman"
-        };
     }
 }
