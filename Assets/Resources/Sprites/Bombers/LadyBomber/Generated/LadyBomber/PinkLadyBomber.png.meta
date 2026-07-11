@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a4a6b80548af20d49b3a15014751d437
+guid: 626e3929bdcc30d4fa89598cfe2bb892
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -3775,8 +3775,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8023714ee75e8404a9d9a8f78feca087
-      internalID: -1100960180
+      spriteID: ec549a3b200dbf143bd4279ba543984a
+      internalID: -389003087
       vertices: []
       indices: 
       edges: []
@@ -3797,8 +3797,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6aa9ed90a1369a544af5eb54a834015c
-      internalID: 410938570
+      spriteID: 8f5d659aed68ad84a8f9200cf723217c
+      internalID: 745544779
       vertices: []
       indices: 
       edges: []
@@ -3819,8 +3819,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d9692672f8f975c4e8ed8384f07930c4
-      internalID: -1944819137
+      spriteID: 3e7632b7031acec45b633f44027db154
+      internalID: -915828282
       vertices: []
       indices: 
       edges: []
@@ -3829,7 +3829,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 97e20055c48570448b926888e3567e02
+    spriteID: 864bb1986e7acfb4e81c68ca78395efc
     internalID: 0
     vertices: []
     indices: 
@@ -3894,9 +3894,9 @@ TextureImporter:
       PinkLadyBomber_143: -1809572704375304981
       PinkLadyBomber_144: 2540157538313348764
       PinkLadyBomber_145: -2716413278646258514
-      PinkLadyBomber_146: -1100960180
-      PinkLadyBomber_147: 410938570
-      PinkLadyBomber_148: -1944819137
+      PinkLadyBomber_146: -389003087
+      PinkLadyBomber_147: 745544779
+      PinkLadyBomber_148: -915828282
       PinkLadyBomber_15: -6478997567270596932
       PinkLadyBomber_16: -176805284491116770
       PinkLadyBomber_17: -2928879260159101480

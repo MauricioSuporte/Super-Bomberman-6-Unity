@@ -1768,6 +1768,15 @@ public class GameManager : MonoBehaviour
         StartCoroutine(BattleDrawSequenceRoutine(showTimeUp));
     }
 
+    public void DebugTriggerBattleTimeUp()
+    {
+        if (!Application.isPlaying || !IsBattleModeScene())
+            return;
+
+        battleTimeRemainingSeconds = 0f;
+        TriggerBattleDrawSequence(showTimeUp: true);
+    }
+
     IEnumerator BattleDrawSequenceRoutine(bool showTimeUp)
     {
         BattleRevengeSystem.BlockAndRemoveAllActiveCartsForRoundEnd();

@@ -230,6 +230,7 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
     void Update()
     {
         HandleShortcut();
+        HandleBattleTimeUpShortcut();
 
         if (!isCapturing || !IsBattleModeScene())
             return;
@@ -262,6 +263,48 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
             StopCapture();
         else
             StartCapture();
+    }
+
+    void HandleBattleTimeUpShortcut()
+    {
+        if (!isCapturing || !IsBattleModeScene())
+            return;
+
+        if (!AnyPlayerPressedActionLAndR())
+            return;
+
+        GameManager manager = GameManager.Instance != null
+            ? GameManager.Instance
+            : FindAnyObjectByType<GameManager>();
+
+        if (manager == null)
+            return;
+
+        Debug.Log("[BattlePerf] DEBUG TIME UP acionado por L+R");
+        manager.DebugTriggerBattleTimeUp();
+    }
+
+    static bool AnyPlayerPressedActionLAndR()
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input == null)
+            return false;
+
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
+        {
+            if (GameSession.Instance != null && !GameSession.Instance.IsPlayerActive(playerId))
+                continue;
+
+            bool lHeld = input.Get(playerId, PlayerAction.ActionL);
+            bool rHeld = input.Get(playerId, PlayerAction.ActionR);
+            bool lDown = input.GetDown(playerId, PlayerAction.ActionL);
+            bool rDown = input.GetDown(playerId, PlayerAction.ActionR);
+
+            if ((lHeld && rDown) || (rHeld && lDown))
+                return true;
+        }
+
+        return false;
     }
 
     void StartCapture()

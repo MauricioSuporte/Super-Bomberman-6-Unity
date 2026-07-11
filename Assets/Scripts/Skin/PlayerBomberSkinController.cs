@@ -25,6 +25,9 @@ public class PlayerBomberSkinController : MonoBehaviour
     };
     static readonly int[] MinerBomberAfkFrames = { 128, 129, 130, 131, 132, 132, 131, 130, 129 };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
+    static readonly int[] BombermanTimeOverFrames = { 98, 97, 96, 95, 94 };
+    static readonly int[] TinyBomberTimeOverFrames = { 98, 97, 96, 95, 94 };
+    static readonly int[] LadyBomberTimeOverFrames = { 94, 95 };
     static readonly int[] BombermanCorneredFrames = { 103, 104, 105, 106, 107, 105, 106, 107 };
     static readonly int[] LadyBomberCorneredFrames = { 100, 101, 102, 103, 104, 102, 103, 104 };
     const int CorneredLoopStartFrame = 5;
@@ -197,6 +200,23 @@ public class PlayerBomberSkinController : MonoBehaviour
             DismountedAfk2Frames,
             targetMap,
             skin
+        );
+
+        int[] timeOverFrames = GetTimeOverFrames(character);
+        bool timeOverPingPong = ShouldPingPongTimeOver(character);
+        Debug.Log(
+            $"{LogPrefix} TimeOver config | character={character} skin={skin} " +
+            $"frames={string.Join(",", timeOverFrames)} pingPong={timeOverPingPong}",
+            this);
+        ApplyFrameSequence(
+            FindAnimatedRenderer("TimeOver"),
+            "TimeOver",
+            timeOverFrames[0],
+            timeOverFrames,
+            targetMap,
+            skin,
+            loop: true,
+            pingPong: timeOverPingPong
         );
 
         int[] stunFrames = character == BomberCharacter.LadyBomber
@@ -430,6 +450,21 @@ public class PlayerBomberSkinController : MonoBehaviour
         };
     }
 
+    static int[] GetTimeOverFrames(BomberCharacter character)
+    {
+        return character switch
+        {
+            BomberCharacter.LadyBomber => LadyBomberTimeOverFrames,
+            BomberCharacter.TinyBomber => TinyBomberTimeOverFrames,
+            _ => BombermanTimeOverFrames
+        };
+    }
+
+    static bool ShouldPingPongTimeOver(BomberCharacter character)
+    {
+        return character != BomberCharacter.TinyBomber;
+    }
+
     static int[] GetDeathFrames(BomberCharacter character)
     {
         return character == BomberCharacter.LadyBomber
@@ -606,7 +641,8 @@ public class PlayerBomberSkinController : MonoBehaviour
         float sequenceDuration = 0f,
         Vector2[] frameOffsets = null,
         float[] frameDurations = null,
-        int loopStartFrame = 0)
+        int loopStartFrame = 0,
+        bool pingPong = false)
     {
         if (renderer == null)
         {
@@ -637,7 +673,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         renderer.animationSprite = animation;
         renderer.loop = loop;
         renderer.loopStartFrame = Mathf.Clamp(loopStartFrame, 0, frames.Length - 1);
-        renderer.pingPong = false;
+        renderer.pingPong = pingPong;
 
         if (sequenceDuration > 0f)
         {

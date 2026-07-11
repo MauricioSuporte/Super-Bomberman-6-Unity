@@ -88,6 +88,7 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteRendererCheering;
     public AnimatedSpriteRenderer spriteRendererFall;
     public AnimatedSpriteRenderer spriteRendererCornered;
+    public AnimatedSpriteRenderer spriteRendererTimeOver;
     public AnimatedSpriteRenderer spriteRendererBall;
 
     [Header("Mounted On Louie")]
@@ -535,7 +536,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         SetMany(visible,
             spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight,
-            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall, spriteRendererCornered, spriteRendererBall,
+            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall, spriteRendererCornered, spriteRendererTimeOver, spriteRendererBall,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
             headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
 
@@ -3874,10 +3875,95 @@ public class MovementController : MonoBehaviour, IKillable
 
         direction = Vector2.zero;
         hasInput = false;
-        ForceIdleFacing(Vector2.down, "PlayBattleTimeUpSequence");
 
         if (TryGetComponent<InactivityAnimation>(out var inactivity) && inactivity != null)
-            inactivity.PlayBattleTimeUpPose(isMounted);
+            inactivity.CancelForExternalOverride();
+
+        SetSuppressInactivityAnimation(true);
+        PlayBattleTimeUpDefeatVisual();
+    }
+
+    private void PlayBattleTimeUpDefeatVisual()
+    {
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        SetAnimEnabled(spriteRendererDeath, false);
+        SetAnimEnabled(spriteRendererDeathByExplosion, false);
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
+        SetAnimEnabled(spriteRendererFall, false);
+        SetAnimEnabled(spriteRendererBall, false);
+        SetAnimEnabled(spriteRendererCornered, false);
+        SetAnimEnabled(spriteRendererTimeOver, false);
+
+        SetFacingDirection(Vector2.down, "PlayBattleTimeUpDefeatVisual");
+
+        if (isMounted)
+        {
+            var r = PickMountedRenderer(Vector2.down);
+            if (r == null)
+                r = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
+
+            if (r != null)
+            {
+                SetAnimEnabled(r, true);
+                r.idle = true;
+                r.loop = false;
+                r.pingPong = false;
+                r.RefreshFrame();
+                activeSpriteRenderer = r;
+            }
+
+            var mountVisual = GetComponentInChildren<MountVisualController>(true);
+            if (mountVisual != null)
+                mountVisual.SetCornered(true);
+
+            return;
+        }
+
+        AnimatedSpriteRenderer defeatRenderer = ResolveTimeOverRenderer();
+        if (defeatRenderer == null)
+            defeatRenderer = spriteRendererDown;
+
+        if (defeatRenderer == null)
+            return;
+
+        SetAnimEnabled(defeatRenderer, true);
+        bool hasTimeOverAnimation =
+            defeatRenderer.animationSprite != null &&
+            defeatRenderer.animationSprite.Length > 0;
+
+        defeatRenderer.idle = !hasTimeOverAnimation;
+        defeatRenderer.loop = true;
+        defeatRenderer.CurrentFrame = 0;
+        defeatRenderer.RefreshFrame();
+        activeSpriteRenderer = defeatRenderer;
+
+        Debug.Log(
+            $"[BattleTimeOver][P{playerId}] renderer={defeatRenderer.name} " +
+            $"frames={GetAnimationFrameCount(defeatRenderer)} idle={defeatRenderer.idle} " +
+            $"loop={defeatRenderer.loop} pingPong={defeatRenderer.pingPong}",
+            this);
+    }
+
+    private AnimatedSpriteRenderer ResolveTimeOverRenderer()
+    {
+        if (spriteRendererTimeOver != null)
+            return spriteRendererTimeOver;
+
+        AnimatedSpriteRenderer[] renderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            AnimatedSpriteRenderer renderer = renderers[i];
+            if (renderer != null && renderer.gameObject.name == "TimeOver")
+            {
+                spriteRendererTimeOver = renderer;
+                return spriteRendererTimeOver;
+            }
+        }
+
+        return null;
     }
 
     public void SetSuppressInactivityAnimation(bool suppress)

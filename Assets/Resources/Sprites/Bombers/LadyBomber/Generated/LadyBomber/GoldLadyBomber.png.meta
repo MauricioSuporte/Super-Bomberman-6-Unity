@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 328ed480e2d1574478a5247586d321d3
+guid: 11180f78cd6cf3d4a952fe8be1504b1a
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -3775,8 +3775,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8023714ee75e8404a9d9a8f78feca087
-      internalID: -1100960180
+      spriteID: ec549a3b200dbf143bd4279ba543984a
+      internalID: -389003087
       vertices: []
       indices: 
       edges: []
@@ -3797,8 +3797,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6aa9ed90a1369a544af5eb54a834015c
-      internalID: 410938570
+      spriteID: 8f5d659aed68ad84a8f9200cf723217c
+      internalID: 745544779
       vertices: []
       indices: 
       edges: []
@@ -3819,8 +3819,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d9692672f8f975c4e8ed8384f07930c4
-      internalID: -1944819137
+      spriteID: 3e7632b7031acec45b633f44027db154
+      internalID: -915828282
       vertices: []
       indices: 
       edges: []
@@ -3829,7 +3829,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 97e20055c48570448b926888e3567e02
+    spriteID: 864bb1986e7acfb4e81c68ca78395efc
     internalID: 0
     vertices: []
     indices: 
@@ -3894,9 +3894,9 @@ TextureImporter:
       GoldLadyBomber_143: -1809572704375304981
       GoldLadyBomber_144: 2540157538313348764
       GoldLadyBomber_145: -2716413278646258514
-      GoldLadyBomber_146: -1100960180
-      GoldLadyBomber_147: 410938570
-      GoldLadyBomber_148: -1944819137
+      GoldLadyBomber_146: -389003087
+      GoldLadyBomber_147: 745544779
+      GoldLadyBomber_148: -915828282
       GoldLadyBomber_15: -6478997567270596932
       GoldLadyBomber_16: -176805284491116770
       GoldLadyBomber_17: -2928879260159101480
