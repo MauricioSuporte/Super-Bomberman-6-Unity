@@ -293,6 +293,7 @@ public sealed class CannonLauncher : MonoBehaviour
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
+
         float tileSize = Mathf.Max(0.0001f, mover.tileSize);
 
         Rigidbody2D rb = mover.Rigidbody;
@@ -319,6 +320,7 @@ public sealed class CannonLauncher : MonoBehaviour
         float arcWorld = arcHeightTiles * tileSize;
 
         bool useBallVisual = !mover.IsMounted && ball != null;
+
 
         MountVisualController mountVisual = null;
         bool useMountJumpVisual = false;
@@ -377,6 +379,7 @@ public sealed class CannonLauncher : MonoBehaviour
         rb.position = finalPos;
         rb.linearVelocity = Vector2.zero;
 
+
         if (playerCol != null)
             playerCol.enabled = prevColliderEnabled;
 
@@ -387,6 +390,7 @@ public sealed class CannonLauncher : MonoBehaviour
         {
             mover.SetVisualOverrideActive(false);
             mover.EnableExclusiveFromState();
+            mover.ClearExternalArcVisual();
         }
 
         if (useMountJumpVisual && mountVisual != null)

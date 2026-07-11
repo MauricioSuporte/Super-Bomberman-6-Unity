@@ -108,6 +108,11 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private AnimatedSpriteRenderer springLookUpLeft;
     [SerializeField] private AnimatedSpriteRenderer springLookUpRight;
 
+    public AnimatedSpriteRenderer SpringLookUpUp => springLookUpUp;
+    public AnimatedSpriteRenderer SpringLookUpDown => springLookUpDown;
+    public AnimatedSpriteRenderer SpringLookUpLeft => springLookUpLeft;
+    public AnimatedSpriteRenderer SpringLookUpRight => springLookUpRight;
+
     [Header("Mounted On Louie - Use HeadOnly When Mounted (default)")]
     [SerializeField] private bool useHeadOnlyWhenMountedDefault = false;
 
@@ -4604,6 +4609,11 @@ public class MovementController : MonoBehaviour, IKillable
         AnimatedSpriteRenderer target = null;
         for (int i = 0; i < renderers.Length; i++)
         {
+            if (renderers[i] != null &&
+                (renderers[i].gameObject.name.StartsWith("MountAscend") ||
+                 renderers[i].gameObject.name.StartsWith("MountDescend")))
+                SetAnimEnabled(renderers[i], false);
+
             if (renderers[i] != null && renderers[i].gameObject.name == phase + suffix)
                 target = renderers[i];
         }
@@ -4617,6 +4627,20 @@ public class MovementController : MonoBehaviour, IKillable
             target.CurrentFrame = 0;
             target.RefreshFrame();
         }
+
+    }
+
+    public void ClearExternalArcVisual()
+    {
+        AnimatedSpriteRenderer[] renderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            AnimatedSpriteRenderer renderer = renderers[i];
+            if (renderer != null &&
+                (renderer.gameObject.name.StartsWith("MountAscend") || renderer.gameObject.name.StartsWith("MountDescend")))
+                SetAnimEnabled(renderer, false);
+        }
+
     }
 
     private AnimatedSpriteRenderer PickSpringLauncherLookUpRenderer(Vector2 dir)
