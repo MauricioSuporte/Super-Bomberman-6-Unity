@@ -718,12 +718,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void EnsureSelectableCharacters()
     {
-        selectableCharacters ??= new List<BomberCharacter>(3);
+        selectableCharacters ??= new List<BomberCharacter>();
 
         selectableCharacters.Clear();
-        selectableCharacters.Add(BomberCharacter.Bomberman);
-        selectableCharacters.Add(BomberCharacter.LadyBomber);
-        selectableCharacters.Add(BomberCharacter.TinyBomber);
+        selectableCharacters.AddRange(BomberSkinResourceCatalog.GetAvailableCharacters());
 
         if (selectableSkins == null || selectableSkins.Count == 0)
             selectableSkins = new List<BomberSkin>(BomberSkinResourceCatalog.BombermanSkins);

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 12bb85f44ae831742a44a1dd372a5497
+guid: 212f51ae0d789c442ae4331f7c54488b
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -518,12 +518,12 @@ TextureImporter:
       name: PinkBomber_0
       rect:
         serializedVersion: 2
-        x: 24
-        y: 467
-        width: 17
-        height: 26
+        x: 0
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -540,12 +540,12 @@ TextureImporter:
       name: PinkBomber_1
       rect:
         serializedVersion: 2
-        x: 88
-        y: 467
-        width: 17
-        height: 26
+        x: 64
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -562,12 +562,12 @@ TextureImporter:
       name: PinkBomber_2
       rect:
         serializedVersion: 2
-        x: 152
-        y: 467
-        width: 17
-        height: 26
+        x: 128
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -584,12 +584,12 @@ TextureImporter:
       name: PinkBomber_3
       rect:
         serializedVersion: 2
-        x: 216
-        y: 467
-        width: 17
-        height: 26
+        x: 192
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -606,12 +606,12 @@ TextureImporter:
       name: PinkBomber_4
       rect:
         serializedVersion: 2
-        x: 280
-        y: 467
-        width: 17
-        height: 26
+        x: 256
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -628,12 +628,12 @@ TextureImporter:
       name: PinkBomber_5
       rect:
         serializedVersion: 2
-        x: 344
-        y: 465
-        width: 17
-        height: 28
+        x: 320
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -650,12 +650,12 @@ TextureImporter:
       name: PinkBomber_6
       rect:
         serializedVersion: 2
-        x: 408
-        y: 465
-        width: 17
-        height: 28
+        x: 384
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -672,12 +672,12 @@ TextureImporter:
       name: PinkBomber_7
       rect:
         serializedVersion: 2
-        x: 472
-        y: 465
-        width: 17
-        height: 29
+        x: 448
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -694,12 +694,12 @@ TextureImporter:
       name: PinkBomber_8
       rect:
         serializedVersion: 2
-        x: 536
-        y: 465
-        width: 18
-        height: 28
+        x: 512
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -716,12 +716,12 @@ TextureImporter:
       name: PinkBomber_9
       rect:
         serializedVersion: 2
-        x: 599
-        y: 464
-        width: 18
-        height: 29
+        x: 576
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -738,12 +738,12 @@ TextureImporter:
       name: PinkBomber_10
       rect:
         serializedVersion: 2
-        x: 664
-        y: 471
-        width: 18
-        height: 22
+        x: 640
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -760,12 +760,12 @@ TextureImporter:
       name: PinkBomber_11
       rect:
         serializedVersion: 2
-        x: 728
-        y: 469
-        width: 17
-        height: 24
+        x: 704
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -782,12 +782,12 @@ TextureImporter:
       name: PinkBomber_12
       rect:
         serializedVersion: 2
-        x: 792
-        y: 468
-        width: 17
-        height: 26
+        x: 768
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -804,12 +804,12 @@ TextureImporter:
       name: PinkBomber_13
       rect:
         serializedVersion: 2
-        x: 856
-        y: 468
-        width: 17
-        height: 23
+        x: 832
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -826,12 +826,12 @@ TextureImporter:
       name: PinkBomber_14
       rect:
         serializedVersion: 2
-        x: 920
-        y: 470
-        width: 17
-        height: 24
+        x: 896
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -848,12 +848,12 @@ TextureImporter:
       name: PinkBomber_15
       rect:
         serializedVersion: 2
-        x: 984
-        y: 466
-        width: 17
-        height: 27
+        x: 960
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -870,12 +870,12 @@ TextureImporter:
       name: PinkBomber_16
       rect:
         serializedVersion: 2
-        x: 1048
-        y: 468
-        width: 17
-        height: 25
+        x: 1024
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -892,12 +892,12 @@ TextureImporter:
       name: PinkBomber_17
       rect:
         serializedVersion: 2
-        x: 1112
-        y: 468
-        width: 17
-        height: 27
+        x: 1088
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -914,12 +914,12 @@ TextureImporter:
       name: PinkBomber_18
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 464
-        width: 17
-        height: 29
+        x: 1152
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -936,12 +936,12 @@ TextureImporter:
       name: PinkBomber_19
       rect:
         serializedVersion: 2
-        x: 1240
-        y: 464
-        width: 17
-        height: 31
+        x: 1216
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -958,12 +958,12 @@ TextureImporter:
       name: PinkBomber_20
       rect:
         serializedVersion: 2
-        x: 1304
-        y: 464
-        width: 17
-        height: 31
+        x: 1280
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -980,12 +980,12 @@ TextureImporter:
       name: PinkBomber_21
       rect:
         serializedVersion: 2
-        x: 1368
-        y: 467
-        width: 17
-        height: 26
+        x: 1344
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1002,12 +1002,12 @@ TextureImporter:
       name: PinkBomber_22
       rect:
         serializedVersion: 2
-        x: 1432
-        y: 467
-        width: 17
-        height: 26
+        x: 1408
+        y: 448
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1024,12 +1024,12 @@ TextureImporter:
       name: PinkBomber_23
       rect:
         serializedVersion: 2
-        x: 23
-        y: 403
-        width: 18
-        height: 24
+        x: 0
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1046,12 +1046,12 @@ TextureImporter:
       name: PinkBomber_24
       rect:
         serializedVersion: 2
-        x: 86
-        y: 403
-        width: 18
-        height: 24
+        x: 64
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1068,12 +1068,12 @@ TextureImporter:
       name: PinkBomber_25
       rect:
         serializedVersion: 2
-        x: 151
-        y: 403
-        width: 18
-        height: 26
+        x: 128
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1090,12 +1090,12 @@ TextureImporter:
       name: PinkBomber_26
       rect:
         serializedVersion: 2
-        x: 215
-        y: 403
-        width: 18
-        height: 26
+        x: 192
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1112,12 +1112,12 @@ TextureImporter:
       name: PinkBomber_27
       rect:
         serializedVersion: 2
-        x: 279
-        y: 403
-        width: 18
-        height: 25
+        x: 256
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1134,12 +1134,12 @@ TextureImporter:
       name: PinkBomber_28
       rect:
         serializedVersion: 2
-        x: 343
-        y: 401
-        width: 18
-        height: 28
+        x: 320
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1156,12 +1156,12 @@ TextureImporter:
       name: PinkBomber_29
       rect:
         serializedVersion: 2
-        x: 407
-        y: 401
-        width: 18
-        height: 28
+        x: 384
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1178,12 +1178,12 @@ TextureImporter:
       name: PinkBomber_30
       rect:
         serializedVersion: 2
-        x: 472
-        y: 401
-        width: 17
-        height: 28
+        x: 448
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1200,12 +1200,12 @@ TextureImporter:
       name: PinkBomber_31
       rect:
         serializedVersion: 2
-        x: 536
-        y: 401
-        width: 17
-        height: 27
+        x: 512
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1222,12 +1222,12 @@ TextureImporter:
       name: PinkBomber_32
       rect:
         serializedVersion: 2
-        x: 600
-        y: 401
-        width: 18
-        height: 27
+        x: 576
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1244,12 +1244,12 @@ TextureImporter:
       name: PinkBomber_33
       rect:
         serializedVersion: 2
-        x: 663
-        y: 401
-        width: 18
-        height: 26
+        x: 640
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1266,12 +1266,12 @@ TextureImporter:
       name: PinkBomber_34
       rect:
         serializedVersion: 2
-        x: 727
-        y: 405
-        width: 18
-        height: 23
+        x: 704
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1288,12 +1288,12 @@ TextureImporter:
       name: PinkBomber_35
       rect:
         serializedVersion: 2
-        x: 791
-        y: 404
-        width: 18
-        height: 26
+        x: 768
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1310,12 +1310,12 @@ TextureImporter:
       name: PinkBomber_36
       rect:
         serializedVersion: 2
-        x: 854
-        y: 402
-        width: 18
-        height: 26
+        x: 832
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1332,12 +1332,12 @@ TextureImporter:
       name: PinkBomber_37
       rect:
         serializedVersion: 2
-        x: 919
-        y: 406
-        width: 18
-        height: 24
+        x: 896
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1354,12 +1354,12 @@ TextureImporter:
       name: PinkBomber_38
       rect:
         serializedVersion: 2
-        x: 983
-        y: 402
-        width: 18
-        height: 25
+        x: 960
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1376,12 +1376,12 @@ TextureImporter:
       name: PinkBomber_39
       rect:
         serializedVersion: 2
-        x: 1047
-        y: 403
-        width: 18
-        height: 26
+        x: 1024
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1398,12 +1398,12 @@ TextureImporter:
       name: PinkBomber_40
       rect:
         serializedVersion: 2
-        x: 1112
-        y: 404
-        width: 17
-        height: 26
+        x: 1088
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1420,12 +1420,12 @@ TextureImporter:
       name: PinkBomber_41
       rect:
         serializedVersion: 2
-        x: 1175
-        y: 401
-        width: 18
-        height: 28
+        x: 1152
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1442,12 +1442,12 @@ TextureImporter:
       name: PinkBomber_42
       rect:
         serializedVersion: 2
-        x: 1239
-        y: 401
-        width: 18
-        height: 29
+        x: 1216
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1464,12 +1464,12 @@ TextureImporter:
       name: PinkBomber_43
       rect:
         serializedVersion: 2
-        x: 1303
-        y: 401
-        width: 18
-        height: 29
+        x: 1280
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1486,12 +1486,12 @@ TextureImporter:
       name: PinkBomber_44
       rect:
         serializedVersion: 2
-        x: 1367
-        y: 403
-        width: 18
-        height: 26
+        x: 1344
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1508,12 +1508,12 @@ TextureImporter:
       name: PinkBomber_45
       rect:
         serializedVersion: 2
-        x: 1432
-        y: 404
-        width: 18
-        height: 25
+        x: 1408
+        y: 384
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1530,12 +1530,12 @@ TextureImporter:
       name: PinkBomber_46
       rect:
         serializedVersion: 2
-        x: 24
-        y: 339
-        width: 18
-        height: 24
+        x: 0
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1552,12 +1552,12 @@ TextureImporter:
       name: PinkBomber_47
       rect:
         serializedVersion: 2
-        x: 89
-        y: 339
-        width: 18
-        height: 24
+        x: 64
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1574,12 +1574,12 @@ TextureImporter:
       name: PinkBomber_48
       rect:
         serializedVersion: 2
-        x: 152
-        y: 339
-        width: 18
-        height: 26
+        x: 128
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1596,12 +1596,12 @@ TextureImporter:
       name: PinkBomber_49
       rect:
         serializedVersion: 2
-        x: 216
-        y: 339
-        width: 17
-        height: 26
+        x: 192
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1618,12 +1618,12 @@ TextureImporter:
       name: PinkBomber_50
       rect:
         serializedVersion: 2
-        x: 280
-        y: 339
-        width: 17
-        height: 25
+        x: 256
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1640,12 +1640,12 @@ TextureImporter:
       name: PinkBomber_51
       rect:
         serializedVersion: 2
-        x: 344
-        y: 337
-        width: 18
-        height: 28
+        x: 320
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1662,12 +1662,12 @@ TextureImporter:
       name: PinkBomber_52
       rect:
         serializedVersion: 2
-        x: 408
-        y: 337
-        width: 18
-        height: 28
+        x: 384
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1684,12 +1684,12 @@ TextureImporter:
       name: PinkBomber_53
       rect:
         serializedVersion: 2
-        x: 472
-        y: 337
-        width: 17
-        height: 28
+        x: 448
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1706,12 +1706,12 @@ TextureImporter:
       name: PinkBomber_54
       rect:
         serializedVersion: 2
-        x: 536
-        y: 337
-        width: 17
-        height: 27
+        x: 512
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1728,12 +1728,12 @@ TextureImporter:
       name: PinkBomber_55
       rect:
         serializedVersion: 2
-        x: 600
-        y: 337
-        width: 18
-        height: 26
+        x: 576
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1750,12 +1750,12 @@ TextureImporter:
       name: PinkBomber_56
       rect:
         serializedVersion: 2
-        x: 663
-        y: 337
-        width: 18
-        height: 27
+        x: 640
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1772,12 +1772,12 @@ TextureImporter:
       name: PinkBomber_57
       rect:
         serializedVersion: 2
-        x: 729
-        y: 341
-        width: 18
-        height: 23
+        x: 704
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1794,12 +1794,12 @@ TextureImporter:
       name: PinkBomber_58
       rect:
         serializedVersion: 2
-        x: 793
-        y: 340
-        width: 18
-        height: 26
+        x: 768
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1816,12 +1816,12 @@ TextureImporter:
       name: PinkBomber_59
       rect:
         serializedVersion: 2
-        x: 857
-        y: 338
-        width: 19
-        height: 25
+        x: 832
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1838,12 +1838,12 @@ TextureImporter:
       name: PinkBomber_60
       rect:
         serializedVersion: 2
-        x: 920
-        y: 342
-        width: 18
-        height: 24
+        x: 896
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1860,12 +1860,12 @@ TextureImporter:
       name: PinkBomber_61
       rect:
         serializedVersion: 2
-        x: 984
-        y: 338
-        width: 18
-        height: 25
+        x: 960
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1882,12 +1882,12 @@ TextureImporter:
       name: PinkBomber_62
       rect:
         serializedVersion: 2
-        x: 1048
-        y: 339
-        width: 18
-        height: 26
+        x: 1024
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1904,12 +1904,12 @@ TextureImporter:
       name: PinkBomber_63
       rect:
         serializedVersion: 2
-        x: 1112
-        y: 340
-        width: 17
-        height: 26
+        x: 1088
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1926,12 +1926,12 @@ TextureImporter:
       name: PinkBomber_64
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 337
-        width: 18
-        height: 28
+        x: 1152
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1948,12 +1948,12 @@ TextureImporter:
       name: PinkBomber_65
       rect:
         serializedVersion: 2
-        x: 1240
-        y: 337
-        width: 18
-        height: 29
+        x: 1216
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1970,12 +1970,12 @@ TextureImporter:
       name: PinkBomber_66
       rect:
         serializedVersion: 2
-        x: 1304
-        y: 337
-        width: 18
-        height: 29
+        x: 1280
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1992,12 +1992,12 @@ TextureImporter:
       name: PinkBomber_67
       rect:
         serializedVersion: 2
-        x: 1368
-        y: 339
-        width: 18
-        height: 26
+        x: 1344
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2014,12 +2014,12 @@ TextureImporter:
       name: PinkBomber_68
       rect:
         serializedVersion: 2
-        x: 1431
-        y: 340
-        width: 18
-        height: 25
+        x: 1408
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2036,12 +2036,12 @@ TextureImporter:
       name: PinkBomber_69
       rect:
         serializedVersion: 2
-        x: 1471
-        y: 184
-        width: 36
-        height: 201
+        x: 1472
+        y: 320
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2058,12 +2058,12 @@ TextureImporter:
       name: PinkBomber_70
       rect:
         serializedVersion: 2
-        x: 24
-        y: 274
-        width: 17
-        height: 25
+        x: 0
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2080,12 +2080,12 @@ TextureImporter:
       name: PinkBomber_71
       rect:
         serializedVersion: 2
-        x: 88
-        y: 274
-        width: 17
-        height: 25
+        x: 64
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2102,12 +2102,12 @@ TextureImporter:
       name: PinkBomber_72
       rect:
         serializedVersion: 2
-        x: 152
-        y: 275
-        width: 17
-        height: 24
+        x: 128
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2124,12 +2124,12 @@ TextureImporter:
       name: PinkBomber_73
       rect:
         serializedVersion: 2
-        x: 216
-        y: 274
-        width: 17
-        height: 25
+        x: 192
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2146,12 +2146,12 @@ TextureImporter:
       name: PinkBomber_74
       rect:
         serializedVersion: 2
-        x: 280
-        y: 274
-        width: 17
-        height: 25
+        x: 256
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2168,12 +2168,12 @@ TextureImporter:
       name: PinkBomber_75
       rect:
         serializedVersion: 2
-        x: 344
-        y: 272
-        width: 17
-        height: 27
+        x: 320
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2190,12 +2190,12 @@ TextureImporter:
       name: PinkBomber_76
       rect:
         serializedVersion: 2
-        x: 408
-        y: 272
-        width: 17
-        height: 27
+        x: 384
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2212,12 +2212,12 @@ TextureImporter:
       name: PinkBomber_77
       rect:
         serializedVersion: 2
-        x: 472
-        y: 272
-        width: 17
-        height: 26
+        x: 448
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2234,12 +2234,12 @@ TextureImporter:
       name: PinkBomber_78
       rect:
         serializedVersion: 2
-        x: 536
-        y: 273
-        width: 17
-        height: 25
+        x: 512
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2256,12 +2256,12 @@ TextureImporter:
       name: PinkBomber_79
       rect:
         serializedVersion: 2
-        x: 600
-        y: 272
-        width: 17
-        height: 27
+        x: 576
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2278,12 +2278,12 @@ TextureImporter:
       name: PinkBomber_80
       rect:
         serializedVersion: 2
-        x: 664
-        y: 272
-        width: 17
-        height: 27
+        x: 640
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2300,12 +2300,12 @@ TextureImporter:
       name: PinkBomber_81
       rect:
         serializedVersion: 2
-        x: 728
-        y: 280
-        width: 17
-        height: 19
+        x: 704
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2322,12 +2322,12 @@ TextureImporter:
       name: PinkBomber_82
       rect:
         serializedVersion: 2
-        x: 792
-        y: 278
-        width: 17
-        height: 21
+        x: 768
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2344,12 +2344,12 @@ TextureImporter:
       name: PinkBomber_83
       rect:
         serializedVersion: 2
-        x: 856
-        y: 276
-        width: 18
-        height: 23
+        x: 832
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2366,12 +2366,12 @@ TextureImporter:
       name: PinkBomber_84
       rect:
         serializedVersion: 2
-        x: 920
-        y: 279
-        width: 17
-        height: 20
+        x: 896
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2388,12 +2388,12 @@ TextureImporter:
       name: PinkBomber_85
       rect:
         serializedVersion: 2
-        x: 984
-        y: 274
-        width: 17
-        height: 25
+        x: 960
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2410,12 +2410,12 @@ TextureImporter:
       name: PinkBomber_86
       rect:
         serializedVersion: 2
-        x: 1048
-        y: 277
-        width: 17
-        height: 22
+        x: 1024
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2432,12 +2432,12 @@ TextureImporter:
       name: PinkBomber_87
       rect:
         serializedVersion: 2
-        x: 1112
-        y: 277
-        width: 17
-        height: 22
+        x: 1088
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2454,12 +2454,12 @@ TextureImporter:
       name: PinkBomber_88
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 273
-        width: 17
-        height: 26
+        x: 1152
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2476,12 +2476,12 @@ TextureImporter:
       name: PinkBomber_89
       rect:
         serializedVersion: 2
-        x: 1240
-        y: 272
-        width: 17
-        height: 27
+        x: 1216
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2498,12 +2498,12 @@ TextureImporter:
       name: PinkBomber_90
       rect:
         serializedVersion: 2
-        x: 1304
-        y: 272
-        width: 17
-        height: 27
+        x: 1280
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2520,12 +2520,12 @@ TextureImporter:
       name: PinkBomber_91
       rect:
         serializedVersion: 2
-        x: 1368
-        y: 274
-        width: 17
-        height: 25
+        x: 1344
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2542,12 +2542,12 @@ TextureImporter:
       name: PinkBomber_92
       rect:
         serializedVersion: 2
-        x: 1432
-        y: 274
-        width: 17
-        height: 27
+        x: 1408
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2564,12 +2564,12 @@ TextureImporter:
       name: PinkBomber_93
       rect:
         serializedVersion: 2
-        x: 24
-        y: 211
-        width: 17
-        height: 28
+        x: 1472
+        y: 256
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2586,12 +2586,12 @@ TextureImporter:
       name: PinkBomber_94
       rect:
         serializedVersion: 2
-        x: 88
-        y: 211
-        width: 17
-        height: 27
+        x: 0
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2608,12 +2608,12 @@ TextureImporter:
       name: PinkBomber_95
       rect:
         serializedVersion: 2
-        x: 152
-        y: 211
-        width: 17
-        height: 26
+        x: 64
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2630,12 +2630,12 @@ TextureImporter:
       name: PinkBomber_96
       rect:
         serializedVersion: 2
-        x: 216
-        y: 211
-        width: 17
-        height: 27
+        x: 128
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2652,12 +2652,12 @@ TextureImporter:
       name: PinkBomber_97
       rect:
         serializedVersion: 2
-        x: 280
-        y: 211
-        width: 17
-        height: 28
+        x: 192
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2674,12 +2674,12 @@ TextureImporter:
       name: PinkBomber_98
       rect:
         serializedVersion: 2
-        x: 344
-        y: 209
-        width: 17
-        height: 28
+        x: 256
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2696,12 +2696,12 @@ TextureImporter:
       name: PinkBomber_99
       rect:
         serializedVersion: 2
-        x: 407
-        y: 209
-        width: 18
-        height: 28
+        x: 320
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2718,12 +2718,12 @@ TextureImporter:
       name: PinkBomber_100
       rect:
         serializedVersion: 2
-        x: 472
-        y: 208
-        width: 17
-        height: 27
+        x: 384
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2740,12 +2740,12 @@ TextureImporter:
       name: PinkBomber_101
       rect:
         serializedVersion: 2
-        x: 536
-        y: 209
-        width: 18
-        height: 28
+        x: 448
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2762,12 +2762,12 @@ TextureImporter:
       name: PinkBomber_102
       rect:
         serializedVersion: 2
-        x: 984
-        y: 210
-        width: 17
-        height: 26
+        x: 512
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2784,12 +2784,12 @@ TextureImporter:
       name: PinkBomber_103
       rect:
         serializedVersion: 2
-        x: 1048
-        y: 210
-        width: 17
-        height: 26
+        x: 960
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2806,12 +2806,12 @@ TextureImporter:
       name: PinkBomber_104
       rect:
         serializedVersion: 2
-        x: 1112
-        y: 210
-        width: 17
-        height: 26
+        x: 1024
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2828,12 +2828,12 @@ TextureImporter:
       name: PinkBomber_105
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 210
-        width: 17
-        height: 26
+        x: 1088
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2850,12 +2850,12 @@ TextureImporter:
       name: PinkBomber_106
       rect:
         serializedVersion: 2
-        x: 1240
-        y: 210
-        width: 17
-        height: 26
+        x: 1152
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2872,12 +2872,12 @@ TextureImporter:
       name: PinkBomber_107
       rect:
         serializedVersion: 2
-        x: 1304
-        y: 209
-        width: 17
-        height: 28
+        x: 1216
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2894,12 +2894,12 @@ TextureImporter:
       name: PinkBomber_108
       rect:
         serializedVersion: 2
-        x: 1368
-        y: 209
-        width: 18
-        height: 27
+        x: 1280
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2916,12 +2916,12 @@ TextureImporter:
       name: PinkBomber_109
       rect:
         serializedVersion: 2
-        x: 1432
-        y: 209
-        width: 17
-        height: 29
+        x: 1344
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2938,12 +2938,12 @@ TextureImporter:
       name: PinkBomber_110
       rect:
         serializedVersion: 2
-        x: 24
-        y: 147
-        width: 17
-        height: 26
+        x: 1408
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2960,12 +2960,12 @@ TextureImporter:
       name: PinkBomber_111
       rect:
         serializedVersion: 2
-        x: 88
-        y: 147
-        width: 17
-        height: 26
+        x: 1472
+        y: 192
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -2982,12 +2982,12 @@ TextureImporter:
       name: PinkBomber_112
       rect:
         serializedVersion: 2
-        x: 152
-        y: 148
-        width: 17
-        height: 25
+        x: 0
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3004,12 +3004,12 @@ TextureImporter:
       name: PinkBomber_113
       rect:
         serializedVersion: 2
-        x: 216
-        y: 148
-        width: 17
-        height: 26
+        x: 64
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3026,12 +3026,12 @@ TextureImporter:
       name: PinkBomber_114
       rect:
         serializedVersion: 2
-        x: 280
-        y: 146
-        width: 17
-        height: 25
+        x: 128
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3048,12 +3048,12 @@ TextureImporter:
       name: PinkBomber_115
       rect:
         serializedVersion: 2
-        x: 344
-        y: 147
-        width: 17
-        height: 24
+        x: 192
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3070,12 +3070,12 @@ TextureImporter:
       name: PinkBomber_116
       rect:
         serializedVersion: 2
-        x: 408
-        y: 147
-        width: 17
-        height: 24
+        x: 256
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3092,12 +3092,12 @@ TextureImporter:
       name: PinkBomber_117
       rect:
         serializedVersion: 2
-        x: 472
-        y: 147
-        width: 17
-        height: 24
+        x: 320
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3114,12 +3114,12 @@ TextureImporter:
       name: PinkBomber_118
       rect:
         serializedVersion: 2
-        x: 536
-        y: 147
-        width: 17
-        height: 24
+        x: 384
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3136,12 +3136,12 @@ TextureImporter:
       name: PinkBomber_119
       rect:
         serializedVersion: 2
-        x: 600
-        y: 147
-        width: 17
-        height: 24
+        x: 448
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3158,12 +3158,12 @@ TextureImporter:
       name: PinkBomber_120
       rect:
         serializedVersion: 2
-        x: 664
-        y: 147
-        width: 17
-        height: 24
+        x: 512
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3180,12 +3180,12 @@ TextureImporter:
       name: PinkBomber_121
       rect:
         serializedVersion: 2
-        x: 728
-        y: 147
-        width: 17
-        height: 24
+        x: 576
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3202,12 +3202,12 @@ TextureImporter:
       name: PinkBomber_122
       rect:
         serializedVersion: 2
-        x: 792
-        y: 147
-        width: 17
-        height: 24
+        x: 640
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3224,12 +3224,12 @@ TextureImporter:
       name: PinkBomber_123
       rect:
         serializedVersion: 2
-        x: 856
-        y: 147
-        width: 17
-        height: 23
+        x: 704
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3246,12 +3246,12 @@ TextureImporter:
       name: PinkBomber_124
       rect:
         serializedVersion: 2
-        x: 920
-        y: 147
-        width: 17
-        height: 22
+        x: 768
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3268,12 +3268,12 @@ TextureImporter:
       name: PinkBomber_125
       rect:
         serializedVersion: 2
-        x: 984
-        y: 147
-        width: 17
-        height: 22
+        x: 832
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3290,12 +3290,12 @@ TextureImporter:
       name: PinkBomber_126
       rect:
         serializedVersion: 2
-        x: 1047
-        y: 147
-        width: 18
-        height: 28
+        x: 896
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3312,12 +3312,12 @@ TextureImporter:
       name: PinkBomber_127
       rect:
         serializedVersion: 2
-        x: 1111
-        y: 147
-        width: 18
-        height: 27
+        x: 960
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3334,12 +3334,12 @@ TextureImporter:
       name: PinkBomber_128
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 147
-        width: 17
-        height: 26
+        x: 1024
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3356,12 +3356,12 @@ TextureImporter:
       name: PinkBomber_129
       rect:
         serializedVersion: 2
-        x: 1240
-        y: 147
-        width: 18
-        height: 27
+        x: 1088
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3378,12 +3378,12 @@ TextureImporter:
       name: PinkBomber_130
       rect:
         serializedVersion: 2
-        x: 1304
-        y: 147
-        width: 18
-        height: 28
+        x: 1152
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3400,12 +3400,12 @@ TextureImporter:
       name: PinkBomber_131
       rect:
         serializedVersion: 2
-        x: 1432
-        y: 79
-        width: 17
-        height: 16
+        x: 1216
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3422,12 +3422,12 @@ TextureImporter:
       name: PinkBomber_132
       rect:
         serializedVersion: 2
-        x: 1496
-        y: 79
-        width: 18
-        height: 16
+        x: 1280
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3444,12 +3444,12 @@ TextureImporter:
       name: PinkBomber_133
       rect:
         serializedVersion: 2
-        x: 1431
-        y: 15
-        width: 18
-        height: 16
+        x: 1472
+        y: 128
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3466,12 +3466,12 @@ TextureImporter:
       name: PinkBomber_134
       rect:
         serializedVersion: 2
-        x: 1496
-        y: 15
-        width: 17
-        height: 14
+        x: 1408
+        y: 64
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -3484,11 +3484,77 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: PinkBomber_135
+      rect:
+        serializedVersion: 2
+        x: 1472
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fd7cccaaba2ab844daa4d6501ff8c3e1
+      internalID: -1391604416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkBomber_136
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 0
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1eead0a373cebb243bc7c3bfab16a18f
+      internalID: 452258839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkBomber_137
+      rect:
+        serializedVersion: 2
+        x: 1472
+        y: 0
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ceebf24099790f40a64b75c25262ad4
+      internalID: 239045322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: bbec4456dd3c92c4bb47f3e68a4fa1d1
     internalID: 0
     vertices: []
     indices: 
@@ -3496,7 +3562,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       PinkBomber_0: -8937289766202042846
       PinkBomber_1: -3796326902545664000
@@ -3539,6 +3607,9 @@ TextureImporter:
       PinkBomber_132: 6637255850507207819
       PinkBomber_133: 4636949538117322194
       PinkBomber_134: -8807057301072831058
+      PinkBomber_135: -1391604416
+      PinkBomber_136: 452258839
+      PinkBomber_137: 239045322
       PinkBomber_14: 8757632248242277778
       PinkBomber_15: 1727086436179205456
       PinkBomber_16: 2824510088341940957

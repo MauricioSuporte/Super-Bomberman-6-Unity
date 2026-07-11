@@ -938,28 +938,35 @@ public static class SaveSystem
         if (d.unlockedSkins.Contains(BomberSkin.Purple.ToString()))
             d.hardcoreUnlocked = true;
 
+        NormalizeSelectedCharacter(ref d.player1SelectedCharacter);
+        NormalizeSelectedCharacter(ref d.player2SelectedCharacter);
+        NormalizeSelectedCharacter(ref d.player3SelectedCharacter);
+        NormalizeSelectedCharacter(ref d.player4SelectedCharacter);
+        NormalizeSelectedCharacter(ref d.player5SelectedCharacter);
+        NormalizeSelectedCharacter(ref d.player6SelectedCharacter);
+
         if (!Enum.IsDefined(typeof(BomberSkin), d.player1SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player1SelectedSkin))
+            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player1SelectedCharacter, (BomberSkin)d.player1SelectedSkin))
             d.player1SelectedSkin = (int)BomberSkin.White;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player2SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player2SelectedSkin))
+            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player2SelectedCharacter, (BomberSkin)d.player2SelectedSkin))
             d.player2SelectedSkin = (int)BomberSkin.Black;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player3SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player3SelectedSkin))
+            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player3SelectedCharacter, (BomberSkin)d.player3SelectedSkin))
             d.player3SelectedSkin = (int)BomberSkin.Blue;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player4SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player4SelectedSkin))
+            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player4SelectedCharacter, (BomberSkin)d.player4SelectedSkin))
             d.player4SelectedSkin = (int)BomberSkin.Red;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player5SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player5SelectedSkin))
+            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player5SelectedCharacter, (BomberSkin)d.player5SelectedSkin))
             d.player5SelectedSkin = (int)BomberSkin.Green;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player6SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin(BomberCharacter.Bomberman, (BomberSkin)d.player6SelectedSkin))
+            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player6SelectedCharacter, (BomberSkin)d.player6SelectedSkin))
             d.player6SelectedSkin = (int)BomberSkin.Yellow;
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
@@ -999,6 +1006,12 @@ public static class SaveSystem
         return Enum.IsDefined(typeof(GameLanguage), language)
             ? (GameLanguage)language
             : GameLanguage.English;
+    }
+
+    private static void NormalizeSelectedCharacter(ref int character)
+    {
+        if (!BomberSkinResourceCatalog.IsAvailableCharacter((BomberCharacter)character))
+            character = (int)BomberCharacter.Bomberman;
     }
 
     private static void NormalizeBattleModeStageUnlocks(SaveData d)

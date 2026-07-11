@@ -105,7 +105,9 @@ public static class PlayerPersistentStats
 
         var s = Get(playerId);
         s.Character = NormalizeCharacter(s.Character);
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
+        s.Skin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(
+            s.Character,
+            UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId)));
 
         switch (playerId)
         {
@@ -147,9 +149,7 @@ public static class PlayerPersistentStats
             _ => (int)BomberCharacter.Bomberman
         };
 
-        s.Character = System.Enum.IsDefined(typeof(BomberCharacter), raw)
-            ? NormalizeCharacter((BomberCharacter)raw)
-            : BomberCharacter.Bomberman;
+        s.Character = NormalizeCharacter((BomberCharacter)raw);
     }
 
     static void LoadSelectedSkinInternal(int playerId)
@@ -173,14 +173,18 @@ public static class PlayerPersistentStats
             raw = (int)GetDefaultSkinForPlayer(playerId);
 
         s.Skin = (BomberSkin)raw;
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
+        s.Skin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(
+            s.Character,
+            UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId)));
     }
 
     public static void ClampSelectedSkinIfLocked(int playerId)
     {
         playerId = Mathf.Clamp(playerId, 1, 6);
         var s = Get(playerId);
-        BomberSkin clamped = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
+        BomberSkin clamped = BomberSkinResourceCatalog.NormalizeGeneratedSkin(
+            s.Character,
+            UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId)));
 
         if (s.Skin != clamped)
         {
@@ -1030,7 +1034,7 @@ public static class PlayerPersistentStats
 
     static BomberCharacter NormalizeCharacter(BomberCharacter character)
     {
-        return System.Enum.IsDefined(typeof(BomberCharacter), character)
+        return BomberSkinResourceCatalog.IsAvailableCharacter(character)
             ? character
             : BomberCharacter.Bomberman;
     }

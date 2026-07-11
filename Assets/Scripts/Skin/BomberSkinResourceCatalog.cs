@@ -1,8 +1,25 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
 public static class BomberSkinResourceCatalog
 {
+    const string BombersResourcesPath = "Sprites/Bombers";
+    const int DynamicCharacterIdOffset = 1000;
+
     public const string BombermanGeneratedResourcesPath = "Sprites/Bombers/Bomberman/Generated/Bomberman";
     public const string LadyBomberGeneratedResourcesPath = "Sprites/Bombers/LadyBomber/Generated/LadyBomber";
     public const string TinyBomberGeneratedResourcesPath = "Sprites/Bombers/TinyBomber/Generated/TinyBomber";
+
+    static readonly BomberCharacter[] BuiltInCharacters =
+    {
+        BomberCharacter.Bomberman,
+        BomberCharacter.LadyBomber,
+        BomberCharacter.TinyBomber
+    };
+
+    static readonly Dictionary<BomberCharacter, string> characterFolders = new();
+    static BomberCharacter[] availableCharacters;
 
     public static readonly BomberSkin[] BombermanSkins =
     {
@@ -33,15 +50,38 @@ public static class BomberSkinResourceCatalog
         BomberSkin.Alternative4
     };
 
+    public static BomberCharacter[] GetAvailableCharacters()
+    {
+        EnsureCharacterCatalog();
+        return availableCharacters;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetCharacterCatalog()
+    {
+        availableCharacters = null;
+        characterFolders.Clear();
+    }
+
+    public static bool IsAvailableCharacter(BomberCharacter character)
+    {
+        EnsureCharacterCatalog();
+        return characterFolders.ContainsKey(character);
+    }
+
     public static string GetGeneratedResourcesPath(BomberCharacter character)
     {
-        return character switch
-        {
-            BomberCharacter.Bomberman => BombermanGeneratedResourcesPath,
-            BomberCharacter.LadyBomber => LadyBomberGeneratedResourcesPath,
-            BomberCharacter.TinyBomber => TinyBomberGeneratedResourcesPath,
-            _ => BombermanGeneratedResourcesPath
-        };
+        if (character == BomberCharacter.Bomberman)
+            return BombermanGeneratedResourcesPath;
+
+        if (character == BomberCharacter.LadyBomber)
+            return LadyBomberGeneratedResourcesPath;
+
+        if (character == BomberCharacter.TinyBomber)
+            return TinyBomberGeneratedResourcesPath;
+
+        string folderName = GetCharacterFolderName(character);
+        return $"{BombersResourcesPath}/{folderName}/Generated/{folderName}";
     }
 
     public static string GetSheetName(BomberCharacter character, BomberSkin skin)
@@ -51,44 +91,129 @@ public static class BomberSkinResourceCatalog
 
     public static string GetSheetName(string characterFolderName, BomberSkin skin)
     {
-        string characterSuffix = characterFolderName switch
-        {
-            "Bomberman" => "Bomber",
-            _ => characterFolderName
-        };
-
+        string characterSuffix = characterFolderName == "Bomberman" ? "Bomber" : characterFolderName;
         return skin + characterSuffix;
     }
 
     public static string GetCharacterFolderName(BomberCharacter character)
     {
-        return character switch
-        {
-            BomberCharacter.LadyBomber => "LadyBomber",
-            BomberCharacter.TinyBomber => "TinyBomber",
-            _ => "Bomberman"
-        };
+        EnsureCharacterCatalog();
+        return characterFolders.TryGetValue(character, out string folderName)
+            ? folderName
+            : "Bomberman";
     }
 
     public static bool IsGeneratedSkin(BomberCharacter character, BomberSkin skin)
     {
-        BomberSkin[] skins = character switch
-        {
-            BomberCharacter.Bomberman => BombermanSkins,
-            _ => BombermanSkins
-        };
+        if (!IsAvailableCharacter(character))
+            return false;
 
-        for (int i = 0; i < skins.Length; i++)
+        string sheetPath = $"{GetGeneratedResourcesPath(character)}/{GetSheetName(character, skin)}";
+        return Resources.LoadAll<Sprite>(sheetPath).Length > 0;
+    }
+
+    public static BomberSkin NormalizeGeneratedSkin(BomberCharacter character, BomberSkin skin)
+    {
+        if (IsGeneratedSkin(character, skin))
+            return skin;
+
+        for (int i = 0; i < BombermanSkins.Length; i++)
         {
-            if (skins[i] == skin)
+            if (IsGeneratedSkin(character, BombermanSkins[i]))
+                return BombermanSkins[i];
+        }
+
+        return BomberSkin.White;
+    }
+
+    static void EnsureCharacterCatalog()
+    {
+        if (availableCharacters != null)
+            return;
+
+        characterFolders.Clear();
+        AddCharacter(BomberCharacter.Bomberman, "Bomberman");
+        AddCharacter(BomberCharacter.LadyBomber, "LadyBomber");
+        AddCharacter(BomberCharacter.TinyBomber, "TinyBomber");
+
+        Texture2D[] textures = Resources.LoadAll<Texture2D>(BombersResourcesPath);
+        List<string> dynamicFolderNames = new();
+
+        for (int i = 0; i < textures.Length; i++)
+        {
+            Texture2D texture = textures[i];
+            if (texture == null || IsPalette(texture.name) || IsGeneratedSheet(texture.name))
+                continue;
+
+            if (string.Equals(texture.name, "Bomberman", StringComparison.Ordinal) ||
+                string.Equals(texture.name, "LadyBomber", StringComparison.Ordinal) ||
+                string.Equals(texture.name, "TinyBomber", StringComparison.Ordinal) ||
+                dynamicFolderNames.Contains(texture.name))
+                continue;
+
+            dynamicFolderNames.Add(texture.name);
+        }
+
+        dynamicFolderNames.Sort(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < dynamicFolderNames.Count; i++)
+        {
+            string folderName = dynamicFolderNames[i];
+            BomberCharacter character = (BomberCharacter)ComputeDynamicCharacterId(folderName);
+
+            if (characterFolders.ContainsKey(character))
+            {
+                Debug.LogWarning($"[BomberSkinResourceCatalog] Character id collision for '{folderName}'. Rename the folder to make its id unique.");
+                continue;
+            }
+
+            AddCharacter(character, folderName);
+        }
+
+        List<BomberCharacter> characters = new(BuiltInCharacters);
+        for (int i = 0; i < dynamicFolderNames.Count; i++)
+        {
+            BomberCharacter character = (BomberCharacter)ComputeDynamicCharacterId(dynamicFolderNames[i]);
+            if (characterFolders.ContainsKey(character))
+                characters.Add(character);
+        }
+
+        availableCharacters = characters.ToArray();
+    }
+
+    static void AddCharacter(BomberCharacter character, string folderName)
+    {
+        characterFolders[character] = folderName;
+    }
+
+    static bool IsPalette(string assetName)
+    {
+        return assetName.IndexOf("palette", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               assetName.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    static bool IsGeneratedSheet(string assetName)
+    {
+        for (int i = 0; i < BombermanSkins.Length; i++)
+        {
+            if (assetName.StartsWith(BombermanSkins[i].ToString(), StringComparison.Ordinal))
                 return true;
         }
 
         return false;
     }
 
-    public static BomberSkin NormalizeGeneratedSkin(BomberCharacter character, BomberSkin skin)
+    static int ComputeDynamicCharacterId(string folderName)
     {
-        return IsGeneratedSkin(character, skin) ? skin : BomberSkin.White;
+        unchecked
+        {
+            uint hash = 2166136261;
+            for (int i = 0; i < folderName.Length; i++)
+            {
+                hash ^= char.ToUpperInvariant(folderName[i]);
+                hash *= 16777619;
+            }
+
+            return DynamicCharacterIdOffset + (int)(hash & 0x3fffffff);
+        }
     }
 }
