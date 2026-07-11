@@ -144,7 +144,7 @@ public static class BomberSkinSheetGenerator
         {
             string characterFolder = characterFolders[i].Replace('\\', '/');
             string characterFolderName = Path.GetFileName(characterFolder);
-            string palettePath = FindPalettePath(characterFolder);
+            string palettePath = FindPalettePath(characterFolder, characterFolderName);
             string sourceSheetPath = FindSourceSheetPath(characterFolder);
 
             if (palettePath == null || sourceSheetPath == null)
@@ -161,15 +161,26 @@ public static class BomberSkinSheetGenerator
         }
     }
 
-    static string FindPalettePath(string characterFolder)
+    static string FindPalettePath(string characterFolder, string characterFolderName)
     {
         string[] pngPaths = Directory.GetFiles(characterFolder, "*.png", SearchOption.TopDirectoryOnly);
         Array.Sort(pngPaths, StringComparer.OrdinalIgnoreCase);
+
+        string expectedPaletteName = characterFolderName + "Palette";
+        string legacyPaletteName = characterFolderName + "Pallete";
+
         for (int i = 0; i < pngPaths.Length; i++)
         {
             string fileName = Path.GetFileNameWithoutExtension(pngPaths[i]);
-            if (fileName.IndexOf("palette", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                fileName.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (string.Equals(fileName, expectedPaletteName, StringComparison.OrdinalIgnoreCase))
+                return pngPaths[i].Replace('\\', '/');
+        }
+
+        // Compatibility for the existing source files named "Pallete".
+        for (int i = 0; i < pngPaths.Length; i++)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(pngPaths[i]);
+            if (string.Equals(fileName, legacyPaletteName, StringComparison.OrdinalIgnoreCase))
                 return pngPaths[i].Replace('\\', '/');
         }
 

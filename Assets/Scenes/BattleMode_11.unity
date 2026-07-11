@@ -287,6 +287,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &124024470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -467,6 +481,7 @@ MonoBehaviour:
   destructiblePassAmount: 1
   invincibleSuitAmount: 0
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 3
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -4340,6 +4355,10 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0

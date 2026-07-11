@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 85a034cb62d85df4f87931cf5e5b0988
+guid: f23fbe5aa45623343af1e2a5561a0d3e
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -3525,8 +3525,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1d9da3e550fe82049ae7c01a4e9ba1df
-      internalID: -1198698439
+      spriteID: 249fbe2e334c369458851bd2ef03b50e
+      internalID: 1952277998
       vertices: []
       indices: 
       edges: []
@@ -3547,8 +3547,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 60af69e8d19db3a49ba111aa883de4d3
-      internalID: 412952126
+      spriteID: 8a7ee4cc0b49294439d7c81bc53b6a28
+      internalID: 1135066899
       vertices: []
       indices: 
       edges: []
@@ -3569,8 +3569,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 75e3f67f6dd7dd64ebfb4d90d50d5c50
-      internalID: 1538514982
+      spriteID: 684443bfbcd655f4a9267baa1cd92945
+      internalID: -756163106
       vertices: []
       indices: 
       edges: []
@@ -3579,7 +3579,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 29b692152bb81fa45bca0da48827f397
+    spriteID: e87b01074be28794b9c937e4737d7df9
     internalID: 0
     vertices: []
     indices: 
@@ -3633,9 +3633,9 @@ TextureImporter:
       DarkGreenMinerBomber_133: -6175650037912746904
       DarkGreenMinerBomber_134: -6411896478516314497
       DarkGreenMinerBomber_135: -494147907890392341
-      DarkGreenMinerBomber_136: -1198698439
-      DarkGreenMinerBomber_137: 412952126
-      DarkGreenMinerBomber_138: 1538514982
+      DarkGreenMinerBomber_136: 1952277998
+      DarkGreenMinerBomber_137: 1135066899
+      DarkGreenMinerBomber_138: -756163106
       DarkGreenMinerBomber_14: -5716889592488833256
       DarkGreenMinerBomber_15: -7489527098071735559
       DarkGreenMinerBomber_16: 7066769396173626157

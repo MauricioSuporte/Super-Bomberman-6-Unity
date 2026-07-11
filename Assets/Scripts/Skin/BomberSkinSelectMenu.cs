@@ -224,6 +224,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField]
     List<BomberSkin> selectableSkins = new(BomberSkinResourceCatalog.BombermanSkins);
 
+    [SerializeField] AudioClip changePaletteSfx;
+    [SerializeField, Range(0f, 1f)] float changePaletteSfxVolume = 1f;
+
     // Sprite sheets are loaded only when a character/skin becomes visible.
     // This keeps opening time independent from the total number of registered skins.
     readonly Dictionary<string, Sprite> idleCache = new();
@@ -303,6 +306,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void Awake()
     {
+        if (changePaletteSfx == null)
+            changePaletteSfx = Resources.Load<AudioClip>("Sounds/Skin/change");
+
         if (root == null)
             root = gameObject;
 
@@ -622,7 +628,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             {
                 if (CyclePalette(ps, rDown ? 1 : -1))
                 {
-                    PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                    PlaySfx(changePaletteSfx, changePaletteSfxVolume);
                     UpdateSlotVisuals();
                     UpdateSelectedSkinsListVisuals();
                     UpdateUnlockHint();
@@ -1760,14 +1766,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (cursor == null)
             return;
 
-        int idx;
-        if (staggerCursorStartByPlayer)
-            idx = (cursor.playerId - 1) % Mathf.Max(1, SelectableSlotCount);
-        else
-        {
-            idx = selectableCharacters.IndexOf(PlayerPersistentStats.Get(cursor.playerId).Character);
-            if (idx < 0) idx = 0;
-        }
+        int idx = selectableCharacters.IndexOf(PlayerPersistentStats.Get(cursor.playerId).Character);
+        if (idx < 0)
+            idx = 0;
 
         cursor.index = idx;
         cursor.selectedCharacter = GetCharacterAtSlot(idx);
