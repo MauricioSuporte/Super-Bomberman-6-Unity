@@ -35,7 +35,7 @@ public static class BomberSkinResourceCatalog
         BomberSkin.Purple,
         BomberSkin.Brown,
         BomberSkin.Gray,
-        BomberSkin.LightBlue,
+        BomberSkin.NeonGreen,
         BomberSkin.Magenta,
         BomberSkin.DarkBlue,
         BomberSkin.Cyan,
@@ -46,9 +46,8 @@ public static class BomberSkinResourceCatalog
         BomberSkin.Alternative2,
         BomberSkin.Alternative3,
         BomberSkin.Alternative4,
-        BomberSkin.Olive,
-        BomberSkin.Golden,
-        BomberSkin.Gold
+        BomberSkin.Gold,
+        BomberSkin.Golden
     };
 
     public static BomberCharacter[] GetAvailableCharacters()

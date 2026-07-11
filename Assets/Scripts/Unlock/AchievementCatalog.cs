@@ -43,7 +43,6 @@ public static class AchievementCatalog
             Skin(BomberSkin.Gray, "GRAY"),
             Skin(BomberSkin.Orange, "ORANGE"),
             Skin(BomberSkin.Purple, "PURPLE"),
-            Skin(BomberSkin.Olive, "OLIVE"),
             Skin(BomberSkin.Cyan, "CYAN"),
             Skin(BomberSkin.Brown, "BROWN"),
             Skin(BomberSkin.DarkGreen, "DARK GREEN"),

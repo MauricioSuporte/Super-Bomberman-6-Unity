@@ -3939,12 +3939,6 @@ public class MovementController : MonoBehaviour, IKillable
         defeatRenderer.CurrentFrame = 0;
         defeatRenderer.RefreshFrame();
         activeSpriteRenderer = defeatRenderer;
-
-        Debug.Log(
-            $"[BattleTimeOver][P{playerId}] renderer={defeatRenderer.name} " +
-            $"frames={GetAnimationFrameCount(defeatRenderer)} idle={defeatRenderer.idle} " +
-            $"loop={defeatRenderer.loop} pingPong={defeatRenderer.pingPong}",
-            this);
     }
 
     private AnimatedSpriteRenderer ResolveTimeOverRenderer()

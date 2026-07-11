@@ -378,7 +378,7 @@ public static class BossRushSession
     {
         return difficulty switch
         {
-            BossRushDifficulty.EASY => (BomberSkin?)BomberSkin.Olive,
+            BossRushDifficulty.EASY => (BomberSkin?)BomberSkin.NeonGreen,
             BossRushDifficulty.NORMAL => (BomberSkin?)BomberSkin.Cyan,
             BossRushDifficulty.HARD => (BomberSkin?)BomberSkin.Brown,
             BossRushDifficulty.NIGHTMARE => (BomberSkin?)BomberSkin.Nightmare,

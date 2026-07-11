@@ -52,7 +52,7 @@ public static class BomberSkinSheetGenerator
         BomberSkin.Aqua,
         BomberSkin.DarkPurple,
         BomberSkin.Yellow,
-        BomberSkin.LightBlue,
+        BomberSkin.NeonGreen,
         BomberSkin.Gold,
         BomberSkin.Golden,
         BomberSkin.Nightmare,

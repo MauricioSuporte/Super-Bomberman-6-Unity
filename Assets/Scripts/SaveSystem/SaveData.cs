@@ -48,8 +48,8 @@ public sealed class SaveData
 
     public int player1SelectedSkin = (int)BomberSkin.White;
     public int player2SelectedSkin = (int)BomberSkin.Black;
-    public int player3SelectedSkin = (int)BomberSkin.Blue;
-    public int player4SelectedSkin = (int)BomberSkin.Red;
+    public int player3SelectedSkin = (int)BomberSkin.Red;
+    public int player4SelectedSkin = (int)BomberSkin.Blue;
     public int player5SelectedSkin = (int)BomberSkin.Green;
     public int player6SelectedSkin = (int)BomberSkin.Yellow;
     public int player1SelectedCharacter = (int)BomberCharacter.Bomberman;

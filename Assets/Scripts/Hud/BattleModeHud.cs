@@ -1112,7 +1112,7 @@ public sealed class BattleModeHud : MonoBehaviour
             case BomberSkin.Orange: return 8;
             case BomberSkin.Purple: return 9;
             case BomberSkin.Gray: return 10;
-            case BomberSkin.Olive: return 11;
+            case BomberSkin.NeonGreen: return 11;
             case BomberSkin.DarkGreen: return 12;
             case BomberSkin.Cyan: return 13;
             case BomberSkin.DarkBlue: return 14;

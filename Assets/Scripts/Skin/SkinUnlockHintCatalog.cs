@@ -15,7 +15,7 @@
             case BomberSkin.Purple:
                 return text.HintClearNormalHard;
 
-            case BomberSkin.Olive:
+            case BomberSkin.NeonGreen:
                 return text.HintClearBossRushEasy;
 
             case BomberSkin.Cyan:

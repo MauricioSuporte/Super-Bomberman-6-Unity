@@ -204,10 +204,7 @@ public class PlayerBomberSkinController : MonoBehaviour
 
         int[] timeOverFrames = GetTimeOverFrames(character);
         bool timeOverPingPong = ShouldPingPongTimeOver(character);
-        Debug.Log(
-            $"{LogPrefix} TimeOver config | character={character} skin={skin} " +
-            $"frames={string.Join(",", timeOverFrames)} pingPong={timeOverPingPong}",
-            this);
+
         ApplyFrameSequence(
             FindAnimatedRenderer("TimeOver"),
             "TimeOver",

@@ -945,29 +945,12 @@ public static class SaveSystem
         NormalizeSelectedCharacter(ref d.player5SelectedCharacter);
         NormalizeSelectedCharacter(ref d.player6SelectedCharacter);
 
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player1SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player1SelectedCharacter, (BomberSkin)d.player1SelectedSkin))
-            d.player1SelectedSkin = (int)BomberSkin.White;
-
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player2SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player2SelectedCharacter, (BomberSkin)d.player2SelectedSkin))
-            d.player2SelectedSkin = (int)BomberSkin.Black;
-
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player3SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player3SelectedCharacter, (BomberSkin)d.player3SelectedSkin))
-            d.player3SelectedSkin = (int)BomberSkin.Blue;
-
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player4SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player4SelectedCharacter, (BomberSkin)d.player4SelectedSkin))
-            d.player4SelectedSkin = (int)BomberSkin.Red;
-
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player5SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player5SelectedCharacter, (BomberSkin)d.player5SelectedSkin))
-            d.player5SelectedSkin = (int)BomberSkin.Green;
-
-        if (!Enum.IsDefined(typeof(BomberSkin), d.player6SelectedSkin) ||
-            !BomberSkinResourceCatalog.IsGeneratedSkin((BomberCharacter)d.player6SelectedCharacter, (BomberSkin)d.player6SelectedSkin))
-            d.player6SelectedSkin = (int)BomberSkin.Yellow;
+        NormalizeSelectedSkin(ref d.player1SelectedSkin, d.player1SelectedCharacter, BomberSkin.White);
+        NormalizeSelectedSkin(ref d.player2SelectedSkin, d.player2SelectedCharacter, BomberSkin.Black);
+        NormalizeSelectedSkin(ref d.player3SelectedSkin, d.player3SelectedCharacter, BomberSkin.Red);
+        NormalizeSelectedSkin(ref d.player4SelectedSkin, d.player4SelectedCharacter, BomberSkin.Blue);
+        NormalizeSelectedSkin(ref d.player5SelectedSkin, d.player5SelectedCharacter, BomberSkin.Green);
+        NormalizeSelectedSkin(ref d.player6SelectedSkin, d.player6SelectedCharacter, BomberSkin.Yellow);
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
             d.activeSlotIndex = -1;
@@ -1012,6 +995,18 @@ public static class SaveSystem
     {
         if (!BomberSkinResourceCatalog.IsAvailableCharacter((BomberCharacter)character))
             character = (int)BomberCharacter.Bomberman;
+    }
+
+    private static void NormalizeSelectedSkin(ref int skin, int character, BomberSkin defaultSkin)
+    {
+        BomberCharacter selectedCharacter = (BomberCharacter)character;
+
+        if (!Enum.IsDefined(typeof(BomberSkin), skin))
+            skin = (int)defaultSkin;
+
+        skin = (int)BomberSkinResourceCatalog.NormalizeGeneratedSkin(
+            selectedCharacter,
+            (BomberSkin)skin);
     }
 
     private static void NormalizeBattleModeStageUnlocks(SaveData d)

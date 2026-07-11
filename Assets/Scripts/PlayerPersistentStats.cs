@@ -240,8 +240,8 @@ public static class PlayerPersistentStats
         {
             1 => BomberSkin.White,
             2 => BomberSkin.Black,
-            3 => BomberSkin.Blue,
-            4 => BomberSkin.Red,
+            3 => BomberSkin.Red,
+            4 => BomberSkin.Blue,
             5 => BomberSkin.Green,
             6 => BomberSkin.Yellow,
             _ => BomberSkin.White

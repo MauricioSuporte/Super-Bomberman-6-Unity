@@ -45,11 +45,11 @@ public static class UnlockToastCatalog
                     "UI/Unlocks/Icons/PurpleBomber"
                 );
 
-            case BomberSkin.Olive:
+            case BomberSkin.NeonGreen:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
-                    "UI/Unlocks/Icons/OliveBomber"
+                    "UI/Unlocks/Icons/NeonGreenBomber"
                 );
 
             case BomberSkin.Cyan:
@@ -126,7 +126,7 @@ public static class UnlockToastCatalog
                 BomberSkin.Gray => "グレー",
                 BomberSkin.Orange => "オレンジ",
                 BomberSkin.Purple => "パープル",
-                BomberSkin.Olive => "オリーブ",
+                BomberSkin.NeonGreen => "ネオングリーン",
                 BomberSkin.Cyan => "シアン",
                 BomberSkin.Brown => "ブラウン",
                 BomberSkin.DarkGreen => "ダークグリーン",
@@ -142,7 +142,7 @@ public static class UnlockToastCatalog
                 BomberSkin.Gray => "Gris",
                 BomberSkin.Orange => "Naranja",
                 BomberSkin.Purple => "Morado",
-                BomberSkin.Olive => "Oliva",
+                BomberSkin.NeonGreen => "Verde Neón",
                 BomberSkin.Cyan => "Cian",
                 BomberSkin.Brown => "Marrón",
                 BomberSkin.DarkGreen => "Verde Oscuro",
@@ -158,7 +158,7 @@ public static class UnlockToastCatalog
                 BomberSkin.Gray => "Cinza",
                 BomberSkin.Orange => "Laranja",
                 BomberSkin.Purple => "Roxo",
-                BomberSkin.Olive => "Oliva",
+                BomberSkin.NeonGreen => "Verde Neon",
                 BomberSkin.Cyan => "Ciano",
                 BomberSkin.Brown => "Marrom",
                 BomberSkin.DarkGreen => "Verde Escuro",
@@ -171,6 +171,7 @@ public static class UnlockToastCatalog
             },
             _ => skin switch
             {
+                BomberSkin.NeonGreen => "Neon Green",
                 BomberSkin.DarkGreen => "Dark Green",
                 BomberSkin.DarkBlue => "Dark Blue",
                 _ => skin.ToString()

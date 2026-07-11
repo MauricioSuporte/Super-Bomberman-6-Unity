@@ -1763,19 +1763,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void InitializeCursorSelection(PlayerCursorState cursor)
     {
-        if (cursor == null)
-            return;
-
-        int idx = selectableCharacters.IndexOf(PlayerPersistentStats.Get(cursor.playerId).Character);
-        if (idx < 0)
-            idx = 0;
-
-        cursor.index = idx;
-        cursor.selectedCharacter = GetCharacterAtSlot(idx);
-        cursor.selected = PlayerPersistentStats.Get(cursor.playerId).Skin;
-        cursor.selectedPaletteIndex = GetPaletteIndex(cursor.selected, cursor.playerId);
-        cursor.confirmed = false;
-        cursor.selectedIndex = -1;
+        ApplySavedSkinToCursor(cursor);
     }
 
     void PreconfirmBattleModeSelectionFromSavedSkins()
@@ -1851,15 +1839,22 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return;
 
         var state = PlayerPersistentStats.Get(cursor.playerId);
-        BomberSkin savedSkin = state.Skin;
         BomberCharacter savedCharacter = state.Character;
         int index = selectableCharacters.IndexOf(savedCharacter);
 
         if (index < 0)
-            index = Mathf.Clamp(cursor.playerId - 1, 0, SelectableSlotCount - 1);
+        {
+            savedCharacter = BomberCharacter.Bomberman;
+            index = selectableCharacters.IndexOf(savedCharacter);
+        }
+
+        if (index < 0)
+            index = 0;
+
+        BomberSkin savedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(savedCharacter, state.Skin);
 
         cursor.index = index;
-        cursor.selectedCharacter = GetCharacterAtSlot(index);
+        cursor.selectedCharacter = savedCharacter;
         cursor.selected = savedSkin;
         cursor.selectedPaletteIndex = GetPaletteIndex(savedSkin, cursor.playerId);
         cursor.selectedIndex = -1;
