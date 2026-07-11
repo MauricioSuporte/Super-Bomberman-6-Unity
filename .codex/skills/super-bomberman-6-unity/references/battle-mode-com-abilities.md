@@ -1,234 +1,121 @@
-# Battle Mode COM Ability Implementation Pattern
+# Battle Mode COM Abilities
 
-Use this reference when creating or changing Battle Mode computer-player
-abilities under `Assets/Scripts/BattleMode/COM/`.
+Use this reference when changing computer-player decisions under
+`Assets/Scripts/BattleMode/COM/`. Read `battle-mode.md` for the surrounding
+menu, arena, rules, round, and unlock flow.
 
-## Files To Inspect
+## Contents
 
-- `Assets/Scripts/BattleMode/COM/IBattleModeComAbility.cs`
-- `Assets/Scripts/BattleMode/COM/BattleModeComAbilityDecision.cs`
-- `Assets/Scripts/BattleMode/COM/BattleModeComActionType.cs`
-- `Assets/Scripts/BattleMode/COM/BattleModeComDifficultySettings.cs`
-- `Assets/Scripts/BattleMode/COM/BattleModeComController.cs`
-- Existing examples:
-  `BattleModeComKickBombAbility.cs`,
-  `BattleModeComPunchBombAbility.cs`,
-  `BattleModeComHazardAwarenessAbility.cs`
+- [Files to inspect](#files-to-inspect)
+- [Choose the extension shape](#choose-the-extension-shape)
+- [Controller contract](#controller-contract)
+- [Decision fields](#decision-fields)
+- [Wiring and safety](#wiring-and-safety)
+- [Validation](#validation)
 
-## Controller Contract
+## Files to inspect
 
-- `BattleModeComController.RefreshComAbilities()` calls
-  `EnsureKnownComAbilityScripts()` and then collects every `MonoBehaviour` on
-  the player that implements `IBattleModeComAbility`.
-- In danger, `TryBuildAbilityEmergencyCandidate()` asks abilities in component
-  order. The first available ability returning `true` wins before normal escape.
-- Outside danger, `TryBuildAbilityCandidate()` asks all available abilities,
-  keeps the highest positive-weight ability decision, and adds it to the normal
-  candidate pool between combat and patrol.
-- If the COM has its own unresolved bomb/explosion, the controller tries chain
-  bombs first, then ability candidates, then holds a safe tile.
-- The controller executes ability decisions via synthetic inputs:
-  `TapBomb` -> `ActionA`, `TapActionR` -> `ActionR`,
+- Core contract: `IBattleModeComAbility.cs`,
+  `BattleModeComAbilityDecision.cs`, `BattleModeComActionType.cs`, and
+  `BattleModeComDifficultySettings.cs`.
+- Orchestration: `BattleModeComController.cs` and
+  `BattleModeComDiagnostics.cs`.
+- Arena integration: `IBattleModeComStageAbility.cs` and
+  `BattleModeComStageAbilityLoader.cs`.
+- Optional providers: `IBattleModeComDangerProvider.cs`,
+  `IBattleModeComPlannedBombDangerProvider.cs`, and
+  `IBattleModeComKickTrajectoryProvider.cs`.
+- Shared obstacle handling: `BattleModeComPickupObstacleUtility.cs`.
+- Choose the closest example by role:
+  `BattleModeComHazardAwarenessAbility`, `BattleModeComKickBombAbility`,
+  `BattleModeComPowerGloveAbility`, or a matching
+  `BattleModeComStage*Ability`.
+
+## Choose the extension shape
+
+- Implement `IBattleModeComAbility` for a general item, mount, awareness, or
+  action decision.
+- Implement `IBattleModeComStageAbility` for an arena gimmick and register it
+  in `BattleModeComStageAbilityLoader.EnsureForActiveStage()`.
+- Implement `IBattleModeComDangerProvider` when the mechanic contributes a
+  time-to-danger value for arbitrary tiles.
+- Implement `IBattleModeComPlannedBombDangerProvider` when a planned plant must
+  add future danger tiles before the bomb exists.
+- Implement `IBattleModeComKickTrajectoryProvider` when an arena redirects or
+  retunes offensive kick planning.
+- Extend the shared pickup-obstacle utility or the nearest provider before
+  copying another private pathfinding helper.
+
+## Controller contract
+
+- `RefreshComAbilities()` calls `EnsureKnownComAbilityScripts()`, lets the
+  stage loader attach the active arena ability, and collects live
+  `IBattleModeComAbility` components from the player.
+- `EnsureKnownComAbilityScripts()` synchronizes persistent stats,
+  `AbilitySystem`, always-on awareness, item abilities, mount abilities, and
+  Man/COM state. Add and remove both sides of any new gated component.
+- Arena emergency decisions have a dedicated phase before the general
+  emergency fallback. The controller also has special priority routes for
+  mechanics such as tank shooting, minecart behavior, and Power Glove; inspect
+  the current Think flow before assuming component order decides globally.
+- Within the general non-emergency ability phase, the highest positive weight
+  wins and competes with the controller's normal candidate pool.
+- Set `LastDecisionTrace` on success and every meaningful rejection. The
+  controller includes it in diagnostics and rejected-action summaries.
+
+## Decision fields
+
+- Reuse an existing `Action` unless new controller-level safety or diagnostics
+  truly require another `BattleModeComActionType`.
+- Set a positive `Weight`; compare with nearby abilities and difficulty
+  weights rather than inventing a separate scale.
+- Set `TargetTile` and `HasTarget` together. Return a cardinal `FirstMove` or
+  `Vector2.zero`.
+- Keep `Reason` short and human-readable. Make `InputDescription` match the
+  actual taps, holds, and movement.
+- Input mapping is:
+  `TapBomb` and `TapActionA` -> `ActionA`,
+  `HoldActionA` -> held `ActionA`,
+  `TapActionB` -> `ActionB`,
+  `TapActionR` -> `ActionR`, and
   `TapActionC` -> `ActionC`.
-- Ability methods should set `LastDecisionTrace` for both success and failure;
-  the controller copies those strings into rejected action diagnostics.
+- Treat tap flags as edge inputs and let the controller own cooldowns. Clear
+  held input and internal state on disable, death, timeout, or cancellation.
+- Set `UsesEscapeAbilityChance` only for emergency escape decisions that should
+  use Easy/Normal/Hard escape chances. Keep it false for an already committed
+  offensive or multi-step sequence that must continue under danger.
+- Use `Action = KickBomb` only when the mechanic genuinely needs the kick
+  movement safety exception.
 
-## Decision Rules
+## Wiring and safety
 
-- `Action`: use an existing `BattleModeComActionType` unless the controller
-  truly needs new action-specific safety or diagnostic behavior.
-- `Weight`: must be positive to compete. Use nearby existing weights as scale:
-  patrol is usually low, combat is mid, urgent defensive ability decisions are
-  high.
-- `TargetTile` and `HasTarget`: set both when movement is aimed at a tile or
-  when diagnostics need a specific target.
-- `FirstMove`: return a cardinal `Vector2` or `Vector2.zero`; the controller
-  turns this into held movement.
-- `Reason`: short human-readable decision reason for logs.
-- `InputDescription`: match the movement/taps, for example
-  `ActionA+MoveLeft` or `ActionC`.
-- Tap flags are edge inputs. Let the controller apply cooldowns.
-- Set `UsesEscapeAbilityChance = true` for emergency decisions whose purpose is
-  escaping a trap with an ability. The controller applies the difficulty chance:
-  Easy 25%, Normal 50%, Hard 100%. Leave it false for ongoing offensive
-  sequences that must keep progressing under danger.
-- Treat `Action = KickBomb` carefully: the controller allows KickBomb movement
-  through its safety gate because kick sequences sometimes need to step toward a
-  bomb. Use it only for mechanics that truly need that exception.
-
-## Ability Shape
-
-Use this structure unless the existing closest ability has a stronger local
-pattern:
-
-```csharp
-using UnityEngine;
-
-[DisallowMultipleComponent]
-[RequireComponent(typeof(PlayerIdentity))]
-[RequireComponent(typeof(MovementController))]
-[RequireComponent(typeof(BombController))]
-public sealed class BattleModeComExampleAbility : MonoBehaviour, IBattleModeComAbility
-{
-    private PlayerIdentity identity;
-    private MovementController movement;
-    private BombController bombController;
-    private float tileSize = 1f;
-    private string lastDecisionTrace = "not evaluated";
-
-    public string DiagnosticName => "Example";
-    public string LastDecisionTrace => lastDecisionTrace;
-
-    public bool IsAvailable
-    {
-        get
-        {
-            CacheReferences();
-            return identity != null && movement != null && bombController != null && !movement.isDead;
-        }
-    }
-
-    private void Awake() => CacheReferences();
-    private void OnEnable() => CacheReferences();
-
-    private void CacheReferences()
-    {
-        if (identity == null)
-            TryGetComponent(out identity);
-
-        if (movement == null)
-            TryGetComponent(out movement);
-
-        if (bombController == null)
-            TryGetComponent(out bombController);
-
-        if (movement != null)
-            tileSize = Mathf.Max(0.01f, movement.tileSize);
-    }
-
-    public bool TryBuildEmergencyDecision(
-        BattleModeComDifficultySettings settings,
-        BattleModeComController controller,
-        Vector2Int myTile,
-        float currentDangerSeconds,
-        out BattleModeComAbilityDecision decision)
-    {
-        decision = default;
-        lastDecisionTrace = "emergency start";
-
-        if (!IsAvailable)
-        {
-            lastDecisionTrace = "emergency unavailable";
-            return false;
-        }
-
-        lastDecisionTrace = $"emergency no option danger:{FormatDanger(currentDangerSeconds)}";
-        return false;
-    }
-
-    public bool TryBuildCandidateDecision(
-        BattleModeComDifficultySettings settings,
-        BattleModeComController controller,
-        Vector2Int myTile,
-        out BattleModeComAbilityDecision decision)
-    {
-        decision = default;
-        lastDecisionTrace = "candidate start";
-
-        if (!IsAvailable)
-        {
-            lastDecisionTrace = "candidate unavailable";
-            return false;
-        }
-
-        lastDecisionTrace = "candidate no applicable target";
-        return false;
-    }
-
-    private Vector2Int WorldToTile(Vector3 world)
-    {
-        float size = Mathf.Max(0.01f, tileSize);
-        return new Vector2Int(
-            Mathf.RoundToInt(world.x / size),
-            Mathf.RoundToInt(world.y / size));
-    }
-
-    private Vector3 TileToWorld(Vector2Int tile)
-    {
-        float size = Mathf.Max(0.01f, tileSize);
-        return new Vector3(tile.x * size, tile.y * size, 0f);
-    }
-
-    private static string FirstMoveDescription(Vector2 move)
-    {
-        if (move == Vector2.zero)
-            return "none";
-
-        if (move.x > 0.5f)
-            return "MoveRight";
-
-        if (move.x < -0.5f)
-            return "MoveLeft";
-
-        if (move.y > 0.5f)
-            return "MoveUp";
-
-        return "MoveDown";
-    }
-
-    private static string FormatDanger(float seconds)
-    {
-        if (float.IsInfinity(seconds))
-            return "safe";
-
-        if (seconds <= 0f)
-            return "now";
-
-        return $"{seconds:F2}";
-    }
-}
-```
-
-## Wiring Patterns
-
-- Passive COM ability:
-  add the component in `EnsureKnownComAbilityScripts()` guarded by `isCom`.
-- AbilitySystem-gated behavior:
-  mirror Kick/Punch. Read `PlayerPersistentStats.GetRuntime(playerId)`,
-  ensure an `AbilitySystem`, enable the matching ability id, then add the COM
-  ability component when `abilitySystem.IsEnabled(...)`.
-- Existing prefab/scene component:
-  no controller auto-add is needed, but verify the component is present on the
-  Battle Mode player prefab or relevant scene object.
-- New player power-up:
-  check `AbilitySystem.cs`, `AbilityRegistry.cs`, item pickup/database wiring,
-  save runtime state, Resources paths, and prefabs.
-
-## Safety Checklist
-
-- Check walkability against ground, destructible, indestructible, bombs, and
-  obstacle masks. Existing ability scripts duplicate small tile helpers because
-  most controller helpers are private.
-- Check danger timing with `settings.dangerReactionSeconds`,
-  `settings.safeTileMinimumSeconds`, and estimated traversal time.
-- For bomb-moving abilities, handle solid/non-solid timing, fuse windows,
-  chain reactions, and post-action escape.
-- For multi-step behavior, use an internal state machine with clear reset paths:
-  ability unavailable, target missing, bomb exploded, timeout, blocked movement,
-  or command already sent.
-- Cache random/chance rolls within one Think cycle when repeat calls could
-  inflate the effective chance.
-- Keep diagnostics throttled and filterable by player id when adding logs.
+- Add a passive awareness component in `EnsureKnownComAbilityScripts()` only
+  for COM players.
+- For an item-gated component, mirror persistent runtime state into
+  `AbilitySystem`, enable the matching ability id, and add/remove the COM
+  component as availability changes.
+- For an arena component, update the stage loader instead of hard-coding scene
+  behavior into the main controller.
+- Check ground, destructible, indestructible, bombs, pickups, mounts, moving
+  stage props, obstacle masks, danger timing, fuse/chain timing, and
+  post-action escape.
+- Use an internal state machine for multi-step actions with explicit reset paths
+  for lost targets, exploded bombs, blocked movement, completed commands,
+  timeout, ability removal, death, and round end.
+- Cache random rolls within one Think cycle when repeated evaluation could
+  inflate a configured chance. Keep logs throttled and filterable by player id.
 
 ## Validation
 
-- Do not trigger Unity builds or script compilation unless the user explicitly
-  asks for it.
-- Test in a `BattleMode_*` scene with the relevant player set to COM when
-  practical.
-- Test Easy, Normal, and Hard if the ability uses difficulty weights/chances.
-- Test at least one multiplayer setup when practical because Battle Mode has
-  several player ids and synthetic inputs are player-specific.
-- For bomb/explosion behavior, inspect water, holes, destructibles,
-  indestructibles, active explosions, chain bombs, and sudden death when they
-  could affect the mechanic.
+- Inspect and extend
+  `Assets/Tests/EditMode/BattleModeComEditModeTests.cs` when changing synthetic
+  input, explosion-line helpers, plant/escape checks, or diagnostics.
+- Test the relevant `BattleMode_*` arena with a COM player on Easy, Normal, and
+  Hard when difficulty weights or chances participate.
+- Test multiple player ids and any Man/COM/Off transition that can add or remove
+  the component.
+- Test interactions with active and planned explosions, chain bombs, water,
+  holes, tile handlers, pickups, mounts, Revenge Bomber, and Sudden Death as
+  applicable.
+- Do not claim tests, compilation, or scene validation unless they were run.
+  Do not trigger Unity compilation or builds unless the user explicitly asks.

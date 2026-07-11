@@ -13,7 +13,7 @@ This file gives repository-specific guidance for AI coding agents working on
 
 ## Project baseline
 
-- Engine: Unity `6000.4.2f1`
+- Engine: Unity `6000.4.5f1`
 - Language: C#
 - Game type: 2D Bomberman-style action game
 - Important packages already present:
@@ -34,8 +34,10 @@ This file gives repository-specific guidance for AI coding agents working on
 
 - The primary local run flow starts from `Assets/Scenes/TitleScreen.unity`.
 - Other important scenes include:
-  `SaveFileMenu`, `SkinSelect`, `ControlsMenu`, `WorldMap`, `BossRush`,
-  `BattleMode_1`, and the `Stage_*` scenes.
+  `Achievements`, `SaveFileMenu`, `SkinSelect`, `ControlsMenu`, `WorldMap`,
+  `BossRush`, `BattleModeMenu`, `BattleMode_1` through `BattleMode_15`, and the
+  `Stage_*` scenes. Read `ProjectSettings/EditorBuildSettings.asset` for the
+  live enabled list and ordering.
 - Scene routing and mode transitions are important parts of gameplay changes.
   Do not assume a code-only change is enough if a feature depends on scene or
   prefab wiring.
@@ -46,34 +48,51 @@ This file gives repository-specific guidance for AI coding agents working on
   Stage orchestration, hidden objects, tilemap resolution, portal and round
   flow, enemy tracking
 - `Assets/Scripts/GameSession.cs`
-  Cross-scene session state
+  Cross-scene state for active player ids 1-6, Battle Mode wins, and shared
+  life/elimination sessions
 - `Assets/Scripts/PlayerPersistentStats.cs`
-  Session bootstrap and persistent runtime player state
+  Session bootstrap, runtime loadouts, selected character/skin, and stage
+  commit/rollback state
 - `Assets/Scripts/PlayersSpawner.cs`
-  Player spawning and player-count-aware setup
+  Player spawning, skin application, player-count-aware setup, and Battle Mode
+  Man/COM/Off configuration
+- `Assets/Scripts/Controls/PlayerInputManager.cs`
+  Shared keyboard, controller, mobile, and synthetic input path
 
 ### Domain placement
 
 - `Assets/Scripts/Abilities/`
   Player and mount ability components and the ability registry
 - `Assets/Scripts/Itens/`
-  Item ids, pickup behavior, and item prefab loading
+  Item ids and pickup behavior; the root-level `AutoItemDatabase.cs` loads item
+  prefabs from `Resources/Items`
 - `Assets/Scripts/Bomb/` and `Assets/Scripts/Explosions/`
   Bomb placement, fuse timing, active bomb state, explosion behavior
 - `Assets/Scripts/Enemies/`
   Enemy movement and enemy-specific reactions
-- `Assets/Scripts/Bosses/`
-  Boss-specific behavior, projectiles, intros, and sequences
+- `Assets/Scripts/Bosses/`, `Bombers/`, `StageIntro/`, `EndStage/`,
+  `EndScreen/`
+  Boss/Bomber behavior, projectiles, intros, outros, Game Over, and ending flow
 - `Assets/Scripts/Mounts/`
-  Louies, mounts, egg queue logic, and mount animation helpers
+  Louies, Mole/Tank mounts, world pickups, egg queue, dismount, and animation
+  helpers
 - `Assets/Scripts/Destructible/`, `Ground/`, `Indestructible/`,
-  `StageAssets/`
-  Tile interactions and stage gimmicks
+  `StageAssets/`, `Interface/`
+  Tile interactions, stage gimmicks, and extension contracts
+- `Assets/Scripts/BattleMode/`, `BattleModeMenu/`, `BattleRevenge/`,
+  `SuddenDeath/`
+  Battle rules, arenas, COM AI, pre-match configuration, Revenge Bomber, and
+  Sudden Death
 - `Assets/Scripts/SaveSystem/`, `Unlock/`, `BossRush/`, `WorldMap/`
   Persistence, unlocks, progression, boss rush flow, and world progression
-- `Assets/Scripts/TitleScreen/`, `SaveFileMenu/`, `Skin/`, `Controls/`,
-  `Hud/`, `Mobile/`
-  Menus, HUD, screen bootstraps, shared input, and mobile-specific flow
+- `Assets/Scripts/Skin/`, `Editor/`, `Hud/`
+  Character/skin selection, generated sprite sheets, runtime animation, and
+  HUD portraits
+- `Assets/Scripts/Localization/`, `Sound/`, `Achievements/`, `Pause/`,
+  `Discord/`
+  Localized UI, global audio settings, achievements, pause, and Rich Presence
+- `Assets/Scripts/TitleScreen/`, `SaveFileMenu/`, `Controls/`, `Mobile/`
+  Menus, screen bootstraps, shared input, and mobile-specific flow
 
 ## Working rules
 
@@ -92,17 +111,36 @@ This file gives repository-specific guidance for AI coding agents working on
 - When adding an ability, check both `AbilitySystem.cs` and
   `AbilityRegistry.cs`.
 - When adding or changing an item, check `ItemType.cs`, `ItemPickup.cs`, and
-  `AutoItemDatabase.cs`. Item prefabs are loaded from `Resources/Items`.
+  the root-level `AutoItemDatabase.cs`. Item prefabs are loaded from
+  `Resources/Items`. Also check `PlayerPersistentStats` and Battle Mode
+  positional item arrays when the effect persists or is configurable.
 - When changing bomb or explosion behavior, verify interactions with water,
   holes, destructible tiles, ground effects, indestructible effects, and chain
   reactions.
 - When changing mounts or Louies, verify egg queue flow, mount ownership,
-  animation helpers, and interactions with bombs, enemies, and stage tiles.
+  world pickup/dismount, animation helpers, COM behavior, and interactions with
+  bombs, enemies, and stage tiles.
 - When changing save or unlock behavior, route persistence through
-  `SaveSystem` and player-facing unlock behavior through `UnlockProgress` when
-  applicable.
+  `SaveSystem`; use `StageUnlockProgress` for campaign stages and
+  `UnlockProgress` for global/player-facing unlocks. Inspect each public
+  `SaveSystem` setter's persistence contract; many configuration setters save
+  internally, but direct `SaveSystem.Data` changes and non-saving setters
+  require an explicit `SaveSystem.Save()`. Audio volume and voices are the
+  intentional exception and use `GameAudioSettings`/`PlayerPrefs`.
 - When changing menus or game flow, check return paths across `TitleScreen`,
-  `SaveFileMenu`, `SkinSelect`, `WorldMap`, and `BossRush`.
+  `SaveFileMenu`, `SkinSelect`, `WorldMap`, `BossRush`, `BattleModeMenu`,
+  `Achievements`, Game Over, and Ending.
+- When changing Battle Mode, inspect `BattleModeRules`, `BattleModeMenu`, the
+  shared `BattleModeSystems.prefab`, `GameManager`, save/unlocks, HUD overlays,
+  arena COM integration, and pause/return behavior.
+- When changing characters or skins, keep resource catalogs, Editor generators,
+  selection, P1-P6 persistence, runtime animation, Boss Rush/Battle Mode, and
+  HUD portraits aligned.
+- When adding UI copy, update all four languages in `GameTextDatabase` and
+  apply Japanese font fallback where needed.
+- Before adding a persistent singleton, search existing
+  `RuntimeInitializeOnLoadMethod`, `DontDestroyOnLoad`, `*AutoLoader`, and
+  `*Bootstrap` flows.
 - If a change is player-facing, consider whether it also needs updates to scene
   references, prefabs, `Resources.Load(...)` paths, audio hooks, animations,
   or serialized defaults.
@@ -116,9 +154,10 @@ This file gives repository-specific guidance for AI coding agents working on
   behavior when practical.
 - If input flow changes, consider keyboard, controller, and mobile code paths.
 - If persistence changes, consider both fresh saves and existing saves.
-- The Unity Test Framework package is installed, but there is no obvious
-  first-party test suite under `Assets/` yet. Do not claim automated coverage
-  unless you actually added or ran it.
+- Existing first-party Edit Mode coverage lives in
+  `Assets/Tests/EditMode/BattleModeComEditModeTests.cs`. Inspect or extend it
+  for covered COM/input helpers, but do not claim automated coverage unless the
+  relevant tests were actually run.
 
 ## Safe defaults for agents
 
