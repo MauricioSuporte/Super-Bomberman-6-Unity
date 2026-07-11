@@ -144,6 +144,7 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private AnimationCurve holeDeathSinkCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     private Coroutine _holeDeathVisualRoutine;
+    private bool holeDeathRequestedByPusher;
 
     [Header("End Stage Animation")]
     public float endStageTotalTime = 1f;
@@ -3280,6 +3281,12 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
+    public void KillByHoleFromPusher()
+    {
+        holeDeathRequestedByPusher = true;
+        KillByHole();
+    }
+
     private void BeginArenaRemovalCommon(bool notifyGameManagerDeath, bool resetStagePowerups)
     {
         isDead = true;
@@ -3555,6 +3562,8 @@ public class MovementController : MonoBehaviour, IKillable
         NotifyHudPortraitDeathIfPlayer();
 
         holeDeathInProgress = true;
+        bool usePusherHoleDeathVisual = holeDeathRequestedByPusher;
+        holeDeathRequestedByPusher = false;
 
         BeginDeathCommon();
 
@@ -3569,7 +3578,7 @@ public class MovementController : MonoBehaviour, IKillable
         SetAnimEnabled(spriteRendererDeathByExplosion, false);
         SetAnimEnabled(spriteRendererFall, false);
 
-        var r = PickRendererForHoleDeathVisual();
+        var r = PickRendererForHoleDeathVisual(usePusherHoleDeathVisual);
         activeSpriteRenderer = r;
 
         if (useHoleDeathSinkVisual && r != null)
@@ -3604,8 +3613,11 @@ public class MovementController : MonoBehaviour, IKillable
         GameAudioSettings.PlaySfxClip(audioSource, holeDeathSfx, holeDeathSfxVolume);
     }
 
-    private AnimatedSpriteRenderer PickRendererForHoleDeathVisual()
+    private AnimatedSpriteRenderer PickRendererForHoleDeathVisual(bool preferPusherHoleDeathVisual)
     {
+        if (preferPusherHoleDeathVisual && spriteRendererFall != null)
+            return spriteRendererFall;
+
         if (spriteRendererFall != null)
             return spriteRendererFall;
 
@@ -4578,13 +4590,71 @@ public class MovementController : MonoBehaviour, IKillable
 
         SetAnimEnabled(target, true);
         target.idle = false;
-        target.loop = true;
+        target.loop = false;
+        target.pingPong = false;
+        target.CurrentFrame = GetSpringLauncherLookUpFrame(target);
+        target.RefreshFrame();
+
+        activeSpriteRenderer = target;
+        ApplyFlipForHorizontal(faceDir);
+    }
+
+    public bool ShowPusherBounceVisual(Vector2 faceDir)
+    {
+        if (isDead || isEndingStage || IsRidingPlaying() || isMounted)
+            return false;
+
+        faceDir = NormalizeCardinal(faceDir);
+        if (faceDir == Vector2.zero)
+            faceDir = facingDirection != Vector2.zero ? facingDirection : Vector2.down;
+
+        SetFacingDirection(faceDir, "ShowPusherBounceVisual");
+        SetVisualOverrideActive(true);
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        SetAnimEnabled(spriteRendererDeath, false);
+        SetAnimEnabled(spriteRendererDeathByExplosion, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererFall, false);
+
+        SetAnimEnabled(springLookUpUp, false);
+        SetAnimEnabled(springLookUpDown, false);
+        SetAnimEnabled(springLookUpLeft, false);
+        SetAnimEnabled(springLookUpRight, false);
+
+        AnimatedSpriteRenderer target = PickSpringLauncherLookUpRenderer(faceDir);
+        if (target == null || target.animationSprite == null || target.animationSprite.Length == 0)
+        {
+            SetVisualOverrideActive(false);
+            return false;
+        }
+
+        SetAnimEnabled(target, true);
+        target.idle = false;
+        target.loop = false;
         target.pingPong = false;
         target.CurrentFrame = 0;
         target.RefreshFrame();
 
         activeSpriteRenderer = target;
         ApplyFlipForHorizontal(faceDir);
+        return true;
+    }
+
+    public void ClearPusherBounceVisual()
+    {
+        SetAnimEnabled(springLookUpUp, false);
+        SetAnimEnabled(springLookUpDown, false);
+        SetAnimEnabled(springLookUpLeft, false);
+        SetAnimEnabled(springLookUpRight, false);
+
+        if (isDead || isEndingStage || IsRidingPlaying())
+            return;
+
+        SetVisualOverrideActive(false);
     }
 
     public void ClearSpringLauncherLookUp()
@@ -4662,6 +4732,14 @@ public class MovementController : MonoBehaviour, IKillable
             return springLookUpRight;
 
         return springLookUpUp;
+    }
+
+    private static int GetSpringLauncherLookUpFrame(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null || renderer.animationSprite == null || renderer.animationSprite.Length == 0)
+            return 0;
+
+        return renderer.animationSprite.Length - 1;
     }
 
     private Vector2 GetBlockProbeSize(Vector2 dirForSize)

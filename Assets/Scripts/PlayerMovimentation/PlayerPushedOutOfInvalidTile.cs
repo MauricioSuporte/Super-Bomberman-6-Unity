@@ -45,6 +45,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private SpriteRenderer _bouncingLeftSpriteRenderer;
     private bool _bouncingLeftOriginalFlipX;
     private bool _usingMountBounceVisual;
+    private bool _usingPusherBounceVisual;
     private bool _stageBoundsReady;
     private BoundsInt _stageCellBounds;
 
@@ -129,7 +130,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
         if (IsOnHole(pos))
         {
-            _move.KillByHole();
+            _move.KillByHoleFromPusher();
             _resolveRoutine = null;
             yield break;
         }
@@ -169,7 +170,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             {
                 ClearActiveBounceVisual(Vector2.zero);
                 _col.enabled = prevColliderEnabled;
-                _move.KillByHole();
+                _move.KillByHoleFromPusher();
                 _resolveRoutine = null;
                 yield break;
             }
@@ -203,7 +204,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
                 yield return MoveOneTile(cur, next, travelTime, pushDir, tileSize);
                 ClearActiveBounceVisual(pushDir);
                 _col.enabled = prevColliderEnabled;
-                _move.KillByHole();
+                _move.KillByHoleFromPusher();
                 _resolveRoutine = null;
                 yield break;
             }
@@ -263,13 +264,35 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             return;
 
         SetMountBounceRenderer(false, direction);
+
+        if (_move != null && _move.ShowPusherBounceVisual(direction))
+        {
+            SetBounceRenderer(null, Vector2.zero);
+            _usingPusherBounceVisual = true;
+            return;
+        }
+
+        ClearPusherBounceVisual();
         SetBounceRenderer(PickBounceRenderer(direction), direction);
     }
 
     private void ClearActiveBounceVisual(Vector2 direction)
     {
         SetBounceRenderer(null, Vector2.zero);
+        ClearPusherBounceVisual();
         SetMountBounceRenderer(false, direction);
+    }
+
+    private void ClearPusherBounceVisual()
+    {
+        if (!_usingPusherBounceVisual || _move == null)
+        {
+            _usingPusherBounceVisual = false;
+            return;
+        }
+
+        _move.ClearPusherBounceVisual();
+        _usingPusherBounceVisual = false;
     }
 
     private bool TryUseMountedBounceVisual(Vector2 direction)

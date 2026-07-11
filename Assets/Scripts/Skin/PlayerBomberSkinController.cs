@@ -217,10 +217,11 @@ public class PlayerBomberSkinController : MonoBehaviour
             ApplySingleFrame(movement.mountedSpriteRight, "MountedRight", 37, targetMap, skin);
             ApplySingleFrame(movement.mountedSpriteLeft, "MountedLeft", 60, targetMap, skin);
             ApplySingleFrame(movement.mountedSpriteUp, "MountedUp", 84, targetMap, skin);
-            ApplySingleFrame(movement.SpringLookUpDown, "SpringLookUpDown", 15, targetMap, skin);
-            ApplySingleFrame(movement.SpringLookUpRight, "SpringLookUpRight", 38, targetMap, skin);
-            ApplySingleFrame(movement.SpringLookUpLeft, "SpringLookUpLeft", 61, targetMap, skin);
-            ApplySingleFrame(movement.SpringLookUpUp, "SpringLookUpUp", 85, targetMap, skin);
+            ApplySingleFrame(movement.spriteRendererFall, "Fall", 10, targetMap, skin);
+            ApplyFrameSequence(movement.SpringLookUpDown, "SpringLookUpDown", 15, new[] { 12, 15 }, targetMap, skin, loop: false);
+            ApplyFrameSequence(movement.SpringLookUpRight, "SpringLookUpRight", 38, new[] { 35, 38 }, targetMap, skin, loop: false);
+            ApplyFrameSequence(movement.SpringLookUpLeft, "SpringLookUpLeft", 61, new[] { 58, 61 }, targetMap, skin, loop: false);
+            ApplyFrameSequence(movement.SpringLookUpUp, "SpringLookUpUp", 85, new[] { 82, 85 }, targetMap, skin, loop: false);
         }
 
         int[] corneredFrames = GetCorneredFrames(character);
