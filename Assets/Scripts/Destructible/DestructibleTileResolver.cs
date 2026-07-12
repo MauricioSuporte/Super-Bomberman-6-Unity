@@ -17,6 +17,8 @@ public sealed class DestructibleTileResolver : MonoBehaviour
 
     readonly Dictionary<TileBase, IDestructibleTileHandler> _map = new();
     readonly HashSet<TileBase> _registeredTiles = new();
+    readonly Dictionary<string, IDestructibleTileHandler> _nameMap = new(StringComparer.OrdinalIgnoreCase);
+    readonly HashSet<string> _registeredTileNames = new(StringComparer.OrdinalIgnoreCase);
 
     void Awake()
     {
@@ -35,6 +37,8 @@ public sealed class DestructibleTileResolver : MonoBehaviour
     {
         _map.Clear();
         _registeredTiles.Clear();
+        _nameMap.Clear();
+        _registeredTileNames.Clear();
 
         if (groups == null)
             return;
@@ -42,19 +46,33 @@ public sealed class DestructibleTileResolver : MonoBehaviour
         for (int i = 0; i < groups.Count; i++)
         {
             var g = groups[i];
-            if (g == null || g.tiles == null || g.tiles.Length == 0)
+            if (g == null)
                 continue;
 
-            for (int t = 0; t < g.tiles.Length; t++)
-            {
-                var tile = g.tiles[t];
-                if (tile == null)
-                    continue;
+            if (!string.IsNullOrWhiteSpace(g.id))
+                _registeredTileNames.Add(g.id);
 
-                _registeredTiles.Add(tile);
+            if (g.tiles != null)
+            {
+                for (int t = 0; t < g.tiles.Length; t++)
+                {
+                    var tile = g.tiles[t];
+                    if (tile == null)
+                        continue;
+
+                    _registeredTiles.Add(tile);
+                    if (!string.IsNullOrWhiteSpace(tile.name))
+                        _registeredTileNames.Add(tile.name);
+                }
             }
 
             if (g.handler is not IDestructibleTileHandler h)
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(g.id))
+                _nameMap[g.id] = h;
+
+            if (g.tiles == null)
                 continue;
 
             for (int t = 0; t < g.tiles.Length; t++)
@@ -76,7 +94,14 @@ public sealed class DestructibleTileResolver : MonoBehaviour
             return false;
         }
 
-        return _map.TryGetValue(tile, out handler) && handler != null;
+        if (_map.TryGetValue(tile, out handler) && handler != null)
+            return true;
+
+        if (TryGetHandlerByTileName(tile.name, out handler))
+            return true;
+
+        handler = null;
+        return false;
     }
 
     public bool IsRegisteredDestructibleTile(TileBase tile)
@@ -84,6 +109,55 @@ public sealed class DestructibleTileResolver : MonoBehaviour
         if (tile == null)
             return false;
 
-        return _registeredTiles.Contains(tile);
+        return _registeredTiles.Contains(tile) || IsRegisteredTileName(tile.name);
+    }
+
+    bool TryGetHandlerByTileName(string tileName, out IDestructibleTileHandler handler)
+    {
+        handler = null;
+
+        if (string.IsNullOrWhiteSpace(tileName))
+            return false;
+
+        if (_nameMap.TryGetValue(tileName, out handler) && handler != null)
+            return true;
+
+        foreach (KeyValuePair<string, IDestructibleTileHandler> pair in _nameMap)
+        {
+            if (pair.Value != null && IsTileNameMatch(tileName, pair.Key))
+            {
+                handler = pair.Value;
+                return true;
+            }
+        }
+
+        handler = null;
+        return false;
+    }
+
+    bool IsRegisteredTileName(string tileName)
+    {
+        if (string.IsNullOrWhiteSpace(tileName))
+            return false;
+
+        if (_registeredTileNames.Contains(tileName))
+            return true;
+
+        foreach (string registeredName in _registeredTileNames)
+        {
+            if (IsTileNameMatch(tileName, registeredName))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool IsTileNameMatch(string tileName, string registeredName)
+    {
+        if (string.IsNullOrWhiteSpace(tileName) || string.IsNullOrWhiteSpace(registeredName))
+            return false;
+
+        return string.Equals(tileName, registeredName, StringComparison.OrdinalIgnoreCase) ||
+               tileName.StartsWith(registeredName + "_", StringComparison.OrdinalIgnoreCase);
     }
 }

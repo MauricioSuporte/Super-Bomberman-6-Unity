@@ -438,7 +438,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &285353615
 Transform:
   m_ObjectHideFlags: 0
@@ -1505,17 +1505,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2367064353294770056, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
   m_PrefabInstance: {fileID: 311948040}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &381374855 stripped
+--- !u!114 &381374856 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2751961180514227184, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3627800146579448321, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
   m_PrefabInstance: {fileID: 7794392015855008759}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c9734369420646999d523e932aefb723, type: 3}
+  m_Script: {fileID: 11500000, guid: fc665bd279bf42b793c784bde0e64f8c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CoreMechanismsDestructible
+  m_EditorClassIdentifier: Assembly-CSharp::CoreMechanismsTileHandler
 --- !u!1 &672307152
 GameObject:
   m_ObjectHideFlags: 0
@@ -4414,7 +4414,11 @@ MonoBehaviour:
   groups:
   - id: CoreMechanisms
     tiles: []
-    handler: {fileID: 381374855}
+    handler: {fileID: 381374856}
+  - id: Destructible
+    tiles:
+    - {fileID: 11400000, guid: a514a5f9cc7172c4eacfc16d29c40a72, type: 2}
+    handler: {fileID: 0}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0
@@ -6504,7 +6508,6 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: 65077d8910bbe19479dcd616851eb665, type: 3}
   defaultMusicLoop: {fileID: 8300000, guid: d80b29ee2a1d05247ba36b1dfae2e046, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  logStageStartAudioDiagnostics: 1
   defaultMusicVolume: 0.6
   defaultMusicLoopVolume: 0.6
 --- !u!82 &1560934952
@@ -6638,7 +6641,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 765618197}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
-  logStageStartAudioDiagnostics: 1
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 124024469}
   world: 3
@@ -6786,7 +6788,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3941917705409293893, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7116500855017394752, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
       propertyPath: disableOffsetsIfStandaloneRoot

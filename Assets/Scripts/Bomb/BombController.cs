@@ -819,12 +819,16 @@ public partial class BombController : MonoBehaviour
         tile = null;
 
         if (destructibleTiles == null)
+        {
             return false;
+        }
 
         cell = destructibleTiles.WorldToCell(worldPos);
         tile = destructibleTiles.GetTile(cell);
         if (tile == null)
+        {
             return false;
+        }
 
         ResolveDestructibleTileResolver();
         if (destructibleTileResolver != null &&
@@ -860,7 +864,33 @@ public partial class BombController : MonoBehaviour
         if (hit == null)
             return false;
 
-        return hit.GetComponent<Destructible>() != null;
+        Destructible destructible = hit.GetComponent<Destructible>();
+        return destructible != null;
+    }
+
+    private bool TryHandleActiveDestructibleHitByExplosion(Vector2 worldPos)
+    {
+        int mask = LayerMask.GetMask("Stage");
+
+        Collider2D hit = Physics2D.OverlapBox(
+            worldPos,
+            Vector2.one * 0.6f,
+            0f,
+            mask
+        );
+
+        if (hit == null)
+            return false;
+
+        CoreMechanismsDestructible coreMechanisms = hit.GetComponent<CoreMechanismsDestructible>();
+        if (coreMechanisms == null)
+            coreMechanisms = hit.GetComponentInParent<CoreMechanismsDestructible>();
+
+        if (coreMechanisms == null)
+            return false;
+
+        coreMechanisms.PlayDeath();
+        return true;
     }
 
     public bool CanSpawnTileEffectAt(Vector2 worldPos)
@@ -1676,7 +1706,9 @@ public partial class BombController : MonoBehaviour
                 SpawnExplosionDamageHitbox(position, origin, sourceBomb);
                 result.Reach = Mathf.Max(result.Reach, i + 1);
 
-                if (!TryHandleDestructibleTileEffect(position, cell, tile))
+                bool handled = TryHandleDestructibleTileEffect(position, cell, tile);
+
+                if (!handled)
                     ClearDestructibleForEffect(position);
 
                 if (!pierce)
@@ -1687,6 +1719,7 @@ public partial class BombController : MonoBehaviour
 
             if (HasDestroyingDestructibleAt(position))
             {
+                TryHandleActiveDestructibleHitByExplosion(position);
                 SpawnExplosionDamageHitbox(position, origin, sourceBomb);
                 result.Reach = Mathf.Max(result.Reach, i + 1);
 
@@ -1959,6 +1992,7 @@ public partial class BombController : MonoBehaviour
 
             if (HasDestroyingDestructibleAt(position))
             {
+                TryHandleActiveDestructibleHitByExplosion(position);
                 SpawnExplosionDamageHitbox(position, origin);
 
                 if (!pierce)
@@ -2549,6 +2583,7 @@ public partial class BombController : MonoBehaviour
 
         if (HasDestroyingDestructibleAt(position))
         {
+            TryHandleActiveDestructibleHitByExplosion(position);
             SpawnExplosionDamageHitbox(position, origin);
             return;
         }
