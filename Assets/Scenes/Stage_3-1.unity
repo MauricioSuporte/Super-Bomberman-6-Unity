@@ -6501,11 +6501,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: c131ab4fb06970548916a11261810d40, type: 3}
-  defaultMusicLoop: {fileID: 8300000, guid: 9de712755d2ffeb429a7800b2e3bb38a, type: 3}
+  defaultMusic: {fileID: 8300000, guid: 65077d8910bbe19479dcd616851eb665, type: 3}
+  defaultMusicLoop: {fileID: 8300000, guid: d80b29ee2a1d05247ba36b1dfae2e046, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 0.8
-  defaultMusicLoopVolume: 0.8
+  defaultMusicVolume: 0.6
+  defaultMusicLoopVolume: 0.6
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0
