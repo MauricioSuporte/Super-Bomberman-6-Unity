@@ -576,7 +576,7 @@ MonoBehaviour:
   footerHintText: {fileID: 0}
   footerHintFontAsset: {fileID: 0}
   footerHintFontMaterialPreset: {fileID: 0}
-  footerHintBaseAnchoredPos: {x: 0, y: -300}
+  footerHintBaseAnchoredPos: {x: 0, y: -295}
   footerHintBaseSize: {x: 900, y: 120}
   footerHintFontSize: 24
   footerHintLineSpacing: 18

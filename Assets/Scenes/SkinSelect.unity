@@ -1126,7 +1126,7 @@ MonoBehaviour:
   footerHintFontAsset: {fileID: 0}
   footerHintFontMaterialPreset: {fileID: 0}
   logFooterHintStyle: 1
-  footerHintBaseAnchoredPos: {x: 0, y: -60}
+  footerHintBaseAnchoredPos: {x: 0, y: -55}
   footerHintBaseSize: {x: 900, y: 48}
   footerHintFontSize: 22
   footerHintLineSpacing: 12

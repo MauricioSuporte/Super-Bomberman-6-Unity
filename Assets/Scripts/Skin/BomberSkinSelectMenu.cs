@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class BomberSkinSelectMenu : MonoBehaviour
 {
-    static readonly Vector2 FooterHintItemSelectAnchoredPos = new(0f, -300f);
+    static readonly Vector2 FooterHintItemSelectAnchoredPos = new(0f, -295f);
     static readonly Vector2 FooterHintItemSelectSize = new(900f, 120f);
     const int FooterHintItemSelectFontSize = 24;
     const float FooterHintItemSelectLineSpacing = 18f;
@@ -182,7 +182,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] TextMeshProUGUI footerHintText;
     [SerializeField] TMP_FontAsset footerHintFontAsset;
     [SerializeField] Material footerHintFontMaterialPreset;
-    [SerializeField] Vector2 footerHintBaseAnchoredPos = new(0f, -300f);
+    [SerializeField] Vector2 footerHintBaseAnchoredPos = new(0f, -295f);
     [SerializeField] Vector2 footerHintBaseSize = new(900f, 120f);
     [SerializeField] int footerHintFontSize = 24;
     [SerializeField] float footerHintLineSpacing = 18f;
@@ -232,6 +232,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     readonly Dictionary<string, Sprite> idleCache = new();
     readonly Dictionary<string, Dictionary<int, Sprite>> sheetFrameCache = new();
     readonly Dictionary<string, bool> generatedSkinAvailabilityCache = new();
+    readonly Dictionary<BomberCharacter, List<int>> randomSkinCandidateIndexCache = new();
+    readonly HashSet<BomberCharacter> warmedRandomSkinCandidateCharacters = new();
 
     readonly List<RectTransform> slotRoots = new();
     readonly List<Image> slotImages = new();
@@ -300,6 +302,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     readonly bool[] battleBackReleaseRequired = new bool[GameSession.MaxPlayerId + 1];
     readonly Dictionary<int, List<PlayerCursorState>> battleConfirmedByInput = new();
     int nextBattleComQueueIndex;
+    Coroutine randomCandidateWarmupCoroutine;
 
     bool menuActive;
     int SelectableSlotCount => selectableCharacters != null ? selectableCharacters.Count : 0;
@@ -317,6 +320,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyAutoFixesIfEnabled();
         ResolveLeftPanel();
         EnsureSelectableCharacters();
+        ResetRandomSkinCandidateCache();
+        StartRandomSkinCandidateWarmup();
 
         ApplyCurrentBackgroundSprite();
 
@@ -371,6 +376,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
     public void Hide()
     {
         menuActive = false;
+
+        if (randomCandidateWarmupCoroutine != null)
+        {
+            StopCoroutine(randomCandidateWarmupCoroutine);
+            randomCandidateWarmupCoroutine = null;
+        }
 
         HideUnlockHintImmediate();
 
@@ -453,6 +464,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyCurrentBackgroundSprite();
 
         EnsureSelectableCharacters();
+        StartRandomSkinCandidateWarmup();
 
         if (slotImages.Count != SelectableSlotCount)
             BuildGrid();
@@ -473,6 +485,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         selectedBySlot = new int[SelectableSlotCount];
         for (int i = 0; i < selectedBySlot.Length; i++)
             selectedBySlot[i] = 0;
+
+        StartRandomSkinCandidateWarmup();
 
         if (manageSelectMusic)
             StartSelectMusic();
@@ -595,6 +609,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             bool leftDown = DirectionalPressed(input, pid, PlayerAction.MoveLeft);
             bool rightDown = DirectionalPressed(input, pid, PlayerAction.MoveRight);
             bool aDown = input != null && input.GetDown(pid, PlayerAction.ActionA);
+            bool cDown = input != null && input.GetDown(pid, PlayerAction.ActionC);
             bool bDown = useBattleModeComAssignment
                 ? BattleModeBackPressed(input, pid)
                 : input != null && input.GetDown(pid, PlayerAction.ActionB);
@@ -611,6 +626,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             else if (downDown) { nextIndex = MoveDownWrap(ps.index); moved = true; }
 
             bool confirmPressed = startDown || aDown;
+            bool randomConfirmPressed = cDown;
             bool backPressed = bDown;
 
             if (moved)
@@ -647,6 +663,19 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 }
 
                 anyReturnToTitle = true;
+            }
+            else if (randomConfirmPressed)
+            {
+                TryConfirmRandom(ps);
+                UpdateSlotVisuals();
+                UpdateSelectedSkinsListVisuals();
+                UpdateUnlockHint();
+
+                if (AllPlayersConfirmed())
+                {
+                    fadeDuration = fadeOutOnConfirmDuration;
+                    done = true;
+                }
             }
             else if (confirmPressed)
             {
@@ -722,6 +751,93 @@ public class BomberSkinSelectMenu : MonoBehaviour
         selectableSkins ??= new List<BomberSkin>();
         selectableSkins.Clear();
         selectableSkins.AddRange(BomberSkinResourceCatalog.BombermanSkins);
+    }
+
+    void ResetRandomSkinCandidateCache()
+    {
+        randomSkinCandidateIndexCache.Clear();
+        warmedRandomSkinCandidateCharacters.Clear();
+
+        if (randomCandidateWarmupCoroutine != null)
+        {
+            StopCoroutine(randomCandidateWarmupCoroutine);
+            randomCandidateWarmupCoroutine = null;
+        }
+    }
+
+    void StartRandomSkinCandidateWarmup()
+    {
+        if (!isActiveAndEnabled || selectableCharacters == null || selectableCharacters.Count <= 0)
+            return;
+
+        if (randomCandidateWarmupCoroutine != null)
+            StopCoroutine(randomCandidateWarmupCoroutine);
+
+        randomCandidateWarmupCoroutine = StartCoroutine(WarmRandomSkinCandidateCacheRoutine());
+    }
+
+    IEnumerator WarmRandomSkinCandidateCacheRoutine()
+    {
+        const float frameBudgetSeconds = 0.004f;
+        float frameStartTime = Time.realtimeSinceStartup;
+
+        for (int c = 0; c < selectableCharacters.Count; c++)
+        {
+            BomberCharacter character = selectableCharacters[c];
+            if (!IsSelectableCharacterUnlocked(character) ||
+                warmedRandomSkinCandidateCharacters.Contains(character))
+            {
+                continue;
+            }
+
+            List<int> indices = GetOrCreateRandomCandidateList(character);
+            indices.Clear();
+
+            if (selectableSkins != null)
+            {
+                for (int s = 0; s < selectableSkins.Count; s++)
+                {
+                    BomberSkin skin = selectableSkins[s];
+                    if (IsSelectableSkinUnlocked(character, skin))
+                        indices.Add(s);
+
+                    if (Time.realtimeSinceStartup - frameStartTime >= frameBudgetSeconds)
+                    {
+                        yield return null;
+                        frameStartTime = Time.realtimeSinceStartup;
+                    }
+                }
+            }
+
+            warmedRandomSkinCandidateCharacters.Add(character);
+            yield return null;
+            frameStartTime = Time.realtimeSinceStartup;
+        }
+
+        randomCandidateWarmupCoroutine = null;
+    }
+
+    List<int> GetOrCreateRandomCandidateList(BomberCharacter character)
+    {
+        if (!randomSkinCandidateIndexCache.TryGetValue(character, out List<int> indices) || indices == null)
+        {
+            indices = new List<int>();
+            randomSkinCandidateIndexCache[character] = indices;
+        }
+
+        return indices;
+    }
+
+    List<int> GetRandomCandidateIndices(BomberCharacter character)
+    {
+        if (warmedRandomSkinCandidateCharacters.Contains(character) &&
+            randomSkinCandidateIndexCache.TryGetValue(character, out List<int> warmedIndices) &&
+            warmedIndices != null)
+        {
+            return warmedIndices;
+        }
+
+        return null;
     }
 
     BomberCharacter GetCharacterAtSlot(int slot)
@@ -811,6 +927,39 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         return isGenerated;
+    }
+
+    bool IsSelectableCharacterUnlocked(BomberCharacter character)
+    {
+        return BomberSkinResourceCatalog.IsAvailableCharacter(character);
+    }
+
+    bool IsSelectableSkinUnlocked(BomberCharacter character, BomberSkin skin)
+    {
+        return IsSelectableCharacterUnlocked(character) &&
+               UnlockProgress.IsUnlocked(skin) &&
+               IsGeneratedSkinCached(character, skin);
+    }
+
+    bool IsSelectionAlreadyTaken(BomberCharacter character, BomberSkin skin, PlayerCursorState exceptCursor = null)
+    {
+        for (int i = 0; i < players.Count; i++)
+        {
+            PlayerCursorState cursor = players[i];
+            if (cursor == null || !cursor.confirmed || ReferenceEquals(cursor, exceptCursor))
+                continue;
+
+            if (cursor.selectedCharacter == character && cursor.selected == skin)
+                return true;
+        }
+
+        return false;
+    }
+
+    bool IsSelectionAvailable(BomberCharacter character, BomberSkin skin, PlayerCursorState exceptCursor = null)
+    {
+        return IsSelectableSkinUnlocked(character, skin) &&
+               !IsSelectionAlreadyTaken(character, skin, exceptCursor);
     }
 
     BomberSkin GetPreviewSkinForSlot(int slot)
@@ -954,7 +1103,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         BomberCharacter selectedCharacter = GetCharacterAtSlot(slot);
         BomberSkin skin = GetCursorPalette(ps);
 
-        if (!UnlockProgress.IsUnlocked(skin))
+        if (!IsSelectionAvailable(selectedCharacter, skin, ps))
         {
             PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
             return;
@@ -984,6 +1133,102 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         PlaySfx(confirmSfx, confirmSfxVolume);
+    }
+
+    void TryConfirmRandom(PlayerCursorState ps)
+    {
+        if (ps == null)
+            return;
+
+        if (!TryChooseRandomAvailableSelection(ps, out int slot, out BomberCharacter character, out BomberSkin skin, out int paletteIndex))
+        {
+            PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
+            return;
+        }
+
+        ps.index = slot;
+        ps.selectedCharacter = character;
+        ps.selectedPaletteIndex = paletteIndex;
+        ps.selected = skin;
+
+        TryConfirm(ps);
+    }
+
+    bool TryChooseRandomAvailableSelection(
+        PlayerCursorState ps,
+        out int slot,
+        out BomberCharacter character,
+        out BomberSkin skin,
+        out int paletteIndex)
+    {
+        slot = -1;
+        character = BomberCharacter.Bomberman;
+        skin = BomberSkin.Palette1;
+        paletteIndex = 0;
+
+        if (selectableCharacters == null || selectableCharacters.Count <= 0 ||
+            selectableSkins == null || selectableSkins.Count <= 0)
+        {
+            return false;
+        }
+
+        int availableCharacterCount = 0;
+        List<int> characterSlots = new();
+        for (int i = 0; i < selectableCharacters.Count; i++)
+        {
+            BomberCharacter candidateCharacter = selectableCharacters[i];
+            if (!IsSelectableCharacterUnlocked(candidateCharacter))
+                continue;
+
+            availableCharacterCount++;
+            characterSlots.Add(i);
+        }
+
+        if (characterSlots.Count <= 0)
+        {
+            return false;
+        }
+
+        List<int> skinIndices = new();
+        while (characterSlots.Count > 0)
+        {
+            int characterCandidateIndex = Random.Range(0, characterSlots.Count);
+            slot = characterSlots[characterCandidateIndex];
+            character = selectableCharacters[slot];
+
+            skinIndices.Clear();
+            List<int> cachedSkinIndices = GetRandomCandidateIndices(character);
+            if (cachedSkinIndices == null)
+            {
+                characterSlots.RemoveAt(characterCandidateIndex);
+                continue;
+            }
+
+            for (int i = 0; i < cachedSkinIndices.Count; i++)
+            {
+                int candidateSkinIndex = cachedSkinIndices[i];
+                if (candidateSkinIndex < 0 || candidateSkinIndex >= selectableSkins.Count)
+                    continue;
+
+                BomberSkin candidateSkin = selectableSkins[candidateSkinIndex];
+                if (!IsSelectionAlreadyTaken(character, candidateSkin, ps))
+                    skinIndices.Add(candidateSkinIndex);
+            }
+
+            if (skinIndices.Count > 0)
+                break;
+
+            characterSlots.RemoveAt(characterCandidateIndex);
+        }
+
+        if (skinIndices.Count <= 0)
+        {
+            return false;
+        }
+
+        paletteIndex = skinIndices[Random.Range(0, skinIndices.Count)];
+        skin = selectableSkins[paletteIndex];
+        return true;
     }
 
     void DeselectPlayer(int playerId)
