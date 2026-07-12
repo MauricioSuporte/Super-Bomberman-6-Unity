@@ -27,8 +27,8 @@ public class PlayerBomberSkinController : MonoBehaviour
     static readonly int[] MinerBomberAfkFrames = { 128, 129, 130, 131, 132, 132, 131, 130, 129 };
     static readonly int[] KamikazeBomberAfkFrames =
     {
-        128, 129, 130, 131, 128, 129, 130, 132,
-        136, 137, 138, 136, 137, 138, 139, 140
+        131, 132, 133, 134, 135, 136, 137, 138,
+        139, 140, 141, 142, 143, 144, 145, 146, 147
     };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
     static readonly int[] BombermanTimeOverFrames = { 98, 97, 96, 95, 94 };
@@ -52,7 +52,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         137, 138, 139, 140, 141, 142, 143, 144
     };
     static readonly int[] MinerBomberEndStageFrames = { 2, 108, 109, 110, 133 };
-    static readonly int[] KamikazeBomberEndStageFrames = { 108, 109, 110, 133, 134 };
+    static readonly int[] KamikazeBomberEndStageFrames = { 108, 109, 110, 128, 129 };
 
     readonly struct WalkDefinition
     {

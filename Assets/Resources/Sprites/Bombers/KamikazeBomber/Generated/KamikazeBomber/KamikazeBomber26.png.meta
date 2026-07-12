@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 303b1d8180b5464ebd1ef51ee2278b80
+guid: 84e7cbc856843ec4e9e3942e8c3bc5df
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -428,6 +428,27 @@ TextureImporter:
   - first:
       213: 6531884232907665838
     second: KamikazeBomber26_141
+  - first:
+      213: -6906279880651972636
+    second: KamikazeBomber26_142
+  - first:
+      213: 4243538641778931450
+    second: KamikazeBomber26_143
+  - first:
+      213: 3645396523105783589
+    second: KamikazeBomber26_144
+  - first:
+      213: 1010666896865156080
+    second: KamikazeBomber26_145
+  - first:
+      213: -4162284845282520757
+    second: KamikazeBomber26_146
+  - first:
+      213: -4355545361894848244
+    second: KamikazeBomber26_147
+  - first:
+      213: -4104548760395741818
+    second: KamikazeBomber26_148
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -3355,7 +3376,7 @@ TextureImporter:
       name: KamikazeBomber26_128
       rect:
         serializedVersion: 2
-        x: 1024
+        x: 1344
         y: 128
         width: 64
         height: 64
@@ -3377,7 +3398,7 @@ TextureImporter:
       name: KamikazeBomber26_129
       rect:
         serializedVersion: 2
-        x: 1088
+        x: 1408
         y: 128
         width: 64
         height: 64
@@ -3399,7 +3420,7 @@ TextureImporter:
       name: KamikazeBomber26_130
       rect:
         serializedVersion: 2
-        x: 1152
+        x: 1472
         y: 128
         width: 64
         height: 64
@@ -3421,8 +3442,8 @@ TextureImporter:
       name: KamikazeBomber26_131
       rect:
         serializedVersion: 2
-        x: 1216
-        y: 128
+        x: 0
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3443,8 +3464,8 @@ TextureImporter:
       name: KamikazeBomber26_132
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 128
+        x: 64
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3465,8 +3486,8 @@ TextureImporter:
       name: KamikazeBomber26_133
       rect:
         serializedVersion: 2
-        x: 1344
-        y: 128
+        x: 128
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3487,8 +3508,8 @@ TextureImporter:
       name: KamikazeBomber26_134
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 128
+        x: 192
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3509,8 +3530,8 @@ TextureImporter:
       name: KamikazeBomber26_135
       rect:
         serializedVersion: 2
-        x: 1472
-        y: 128
+        x: 256
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3531,7 +3552,7 @@ TextureImporter:
       name: KamikazeBomber26_136
       rect:
         serializedVersion: 2
-        x: 1024
+        x: 320
         y: 64
         width: 64
         height: 64
@@ -3553,7 +3574,7 @@ TextureImporter:
       name: KamikazeBomber26_137
       rect:
         serializedVersion: 2
-        x: 1088
+        x: 384
         y: 64
         width: 64
         height: 64
@@ -3575,7 +3596,7 @@ TextureImporter:
       name: KamikazeBomber26_138
       rect:
         serializedVersion: 2
-        x: 1152
+        x: 448
         y: 64
         width: 64
         height: 64
@@ -3597,7 +3618,7 @@ TextureImporter:
       name: KamikazeBomber26_139
       rect:
         serializedVersion: 2
-        x: 1216
+        x: 512
         y: 64
         width: 64
         height: 64
@@ -3619,7 +3640,7 @@ TextureImporter:
       name: KamikazeBomber26_140
       rect:
         serializedVersion: 2
-        x: 1280
+        x: 576
         y: 64
         width: 64
         height: 64
@@ -3641,7 +3662,7 @@ TextureImporter:
       name: KamikazeBomber26_141
       rect:
         serializedVersion: 2
-        x: 1408
+        x: 640
         y: 64
         width: 64
         height: 64
@@ -3663,6 +3684,160 @@ TextureImporter:
       name: KamikazeBomber26_142
       rect:
         serializedVersion: 2
+        x: 704
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4efdf422a07f720a0800000000000000
+      internalID: -6906279880651972636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_143
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af670e559e314ea30800000000000000
+      internalID: 4243538641778931450
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_144
+      rect:
+        serializedVersion: 2
+        x: 832
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52f0a29d2dc079230800000000000000
+      internalID: 3645396523105783589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_145
+      rect:
+        serializedVersion: 2
+        x: 896
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fbd4ed103c960e00800000000000000
+      internalID: 1010666896865156080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_146
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4191f66cf79c36c0800000000000000
+      internalID: -4162284845282520757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_147
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c09482de19efd83c0800000000000000
+      internalID: -4355545361894848244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_148
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 685875536a6b907c0800000000000000
+      internalID: -4104548760395741818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KamikazeBomber26_149
+      rect:
+        serializedVersion: 2
         x: 1472
         y: 64
         width: 64
@@ -3675,14 +3850,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 40c0828d4a8662d47a1f4b8ded8c49f7
-      internalID: -2045065259
+      spriteID: dc0f08926d4894844a8c87e81e4b2a3f
+      internalID: -1160889014
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: KamikazeBomber26_143
+      name: KamikazeBomber26_150
       rect:
         serializedVersion: 2
         x: 1408
@@ -3697,14 +3872,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2ca051b80a24ebd48b05299bf99a1cbc
-      internalID: -1021279587
+      spriteID: 07a700cc9a7e24b4094408b3b6673ffd
+      internalID: 1151763386
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: KamikazeBomber26_144
+      name: KamikazeBomber26_151
       rect:
         serializedVersion: 2
         x: 1472
@@ -3719,8 +3894,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 89cfae291ad52cd4eb0d05596009b7dd
-      internalID: -605411655
+      spriteID: 5cc1971499529c9418c2158dfa454dea
+      internalID: -1687752886
       vertices: []
       indices: 
       edges: []
@@ -3729,7 +3904,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 51fa0af7c49078e4298caa879617cf1b
+    spriteID: 9f465785d35d6834683c1c99266dba35
     internalID: 0
     vertices: []
     indices: 
@@ -3790,10 +3965,17 @@ TextureImporter:
       KamikazeBomber26_14: -1761179609088867211
       KamikazeBomber26_140: 5174879208891876199
       KamikazeBomber26_141: 6531884232907665838
-      KamikazeBomber26_142: -2045065259
-      KamikazeBomber26_143: -1021279587
-      KamikazeBomber26_144: -605411655
+      KamikazeBomber26_142: -6906279880651972636
+      KamikazeBomber26_143: 4243538641778931450
+      KamikazeBomber26_144: 3645396523105783589
+      KamikazeBomber26_145: 1010666896865156080
+      KamikazeBomber26_146: -4162284845282520757
+      KamikazeBomber26_147: -4355545361894848244
+      KamikazeBomber26_148: -4104548760395741818
+      KamikazeBomber26_149: -1160889014
       KamikazeBomber26_15: -1762000746883554198
+      KamikazeBomber26_150: 1151763386
+      KamikazeBomber26_151: -1687752886
       KamikazeBomber26_16: 6256945612713048577
       KamikazeBomber26_17: 863033749994723402
       KamikazeBomber26_18: -2083037299584655361
