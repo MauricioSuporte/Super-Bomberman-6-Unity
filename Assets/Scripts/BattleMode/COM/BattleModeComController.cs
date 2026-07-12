@@ -183,6 +183,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private readonly Dictionary<Vector2Int, PathNode> visited = new(128);
     private readonly Queue<Vector2Int> open = new(128);
     private readonly Collider2D[] obstacleHits = new Collider2D[16];
+    private readonly Collider2D[] explosionHits = new Collider2D[32];
     private readonly List<Vector2Int> reachableTiles = new(128);
 
     private PlayerIdentity identity;
@@ -1323,14 +1324,15 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             Bounds bounds = ownCollider.bounds;
-            Collider2D[] hits = Physics2D.OverlapBoxAll(
+            int hitCount = Physics2D.OverlapBoxNonAlloc(
                 bounds.center,
                 bounds.size,
                 0f,
+                explosionHits,
                 explosionMask);
-            for (int hitIndex = 0; hitIndex < hits.Length; hitIndex++)
+            for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
             {
-                Collider2D hit = hits[hitIndex];
+                Collider2D hit = explosionHits[hitIndex];
                 if (hit == null || !Physics2D.Distance(hit, ownCollider).isOverlapped)
                     continue;
 

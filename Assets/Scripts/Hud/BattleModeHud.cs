@@ -184,6 +184,7 @@ public sealed class BattleModeHud : MonoBehaviour
     Image timerSecondOnesDigitImage;
     Image timerColonImage;
     bool portraitsLoaded;
+    bool hudSpritesLoaded;
     bool legacyHudSuppressed;
     int layoutSignature = int.MinValue;
 
@@ -266,11 +267,15 @@ public sealed class BattleModeHud : MonoBehaviour
 
     void LoadHudSpritesIfNeeded()
     {
+        if (hudSpritesLoaded)
+            return;
+
         backgroundSprite = LoadPreferredResourceSprite(backgroundSprite, DefaultBackgroundResourcesPath);
         borderSprite = LoadPreferredResourceSprite(borderSprite, FrameResourcesPath);
         partitionSprite = LoadPreferredResourceSprite(partitionSprite, PartitionResourcesPath);
         bombBlastSpeedSprite = LoadPreferredResourceSprite(bombBlastSpeedSprite, BombBlastSpeedResourcesPath);
         LoadVictorySpritesIfNeeded();
+        hudSpritesLoaded = true;
     }
 
     static Sprite LoadPreferredResourceSprite(Sprite current, string resourcePath)
@@ -1632,6 +1637,7 @@ public sealed class BattleModeHud : MonoBehaviour
         }
 
         legacyHudSuppressed = false;
+        hudSpritesLoaded = false;
         layoutSignature = int.MinValue;
     }
 }
