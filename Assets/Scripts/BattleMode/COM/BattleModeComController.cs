@@ -185,6 +185,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private readonly Collider2D[] obstacleHits = new Collider2D[16];
     private readonly Collider2D[] explosionHits = new Collider2D[32];
     private readonly List<Vector2Int> reachableTiles = new(128);
+    private ContactFilter2D explosionFilter;
 
     private PlayerIdentity identity;
     private MovementController movement;
@@ -1324,12 +1325,13 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             Bounds bounds = ownCollider.bounds;
-            int hitCount = Physics2D.OverlapBoxNonAlloc(
+            EnsureExplosionFilter();
+            int hitCount = Physics2D.OverlapBox(
                 bounds.center,
                 bounds.size,
                 0f,
-                explosionHits,
-                explosionMask);
+                explosionFilter,
+                explosionHits);
             for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
             {
                 Collider2D hit = explosionHits[hitIndex];
@@ -1342,6 +1344,19 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void EnsureExplosionFilter()
+    {
+        if (explosionFilter.useLayerMask && explosionFilter.layerMask == explosionMask)
+            return;
+
+        explosionFilter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            useTriggers = true,
+            layerMask = explosionMask
+        };
     }
 
     private static void ApplyHardAggressionSettings(

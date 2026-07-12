@@ -9,8 +9,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 {
     static readonly Vector2 FooterHintItemSelectAnchoredPos = new(0f, -295f);
     static readonly Vector2 FooterHintItemSelectSize = new(900f, 120f);
-    const int FooterHintItemSelectFontSize = 24;
-    const float FooterHintItemSelectLineSpacing = 18f;
     const float NormalGameFooterHintYOffset = 20f;
 
     [Header("Auto Fix Layout")]
@@ -2135,6 +2133,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (index < 0)
             index = 0;
 
+        if (!staggerCursorStartByPlayer)
+        {
+            index = 0;
+            savedCharacter = GetCharacterAtSlot(index);
+        }
+
         BomberSkin savedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(
             savedCharacter,
             UnlockProgress.ClampToUnlocked(requestedSkin, PlayerPersistentStats.GetDefaultSkinForPlayer(cursor.playerId)));
@@ -2583,8 +2587,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         footerHintText.color = GetHintTextColor();
         footerHintText.text = GameTextDatabase.BattleModeMenu.SkinSelectHints;
         ApplyFooterHintTextStyle();
-        footerHintText.fontSize = FooterHintItemSelectFontSize;
-        footerHintText.lineSpacing = FooterHintItemSelectLineSpacing;
+        footerHintText.fontSize = footerHintFontSize;
+        footerHintText.lineSpacing = footerHintLineSpacing;
         footerHintText.alignment = TextAlignmentOptions.Center;
         footerHintText.gameObject.SetActive(menuActive);
         if (!menuActive)
