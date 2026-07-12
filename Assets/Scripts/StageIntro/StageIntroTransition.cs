@@ -7,6 +7,7 @@ public class StageIntroTransition : MonoBehaviour
 {
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtimeStartDelay = new(0.5f);
+    private const float AudioPreloadTimeoutSeconds = 3f;
 
     public static StageIntroTransition Instance;
 
@@ -208,20 +209,29 @@ public class StageIntroTransition : MonoBehaviour
     IEnumerator PreloadIntroAudio()
     {
         EnsureStartClipLoaded();
-        if (s_startSfxClip != null)
-            s_startSfxClip.LoadAudioData();
+        RequestAudioDataLoad(s_startSfxClip);
 
         yield return null;
 
         var gmc = GameMusicController.Instance;
         if (gmc != null)
         {
-            if (gmc.defaultMusic != null)
-                gmc.defaultMusic.LoadAudioData();
+            RequestAudioDataLoad(gmc.defaultMusic);
+            RequestAudioDataLoad(gmc.defaultMusicLoop);
         }
 
-        if (introMusic != null)
-            introMusic.LoadAudioData();
+        RequestAudioDataLoad(introMusic);
+
+        float timeoutAt = Time.realtimeSinceStartup + AudioPreloadTimeoutSeconds;
+        while (!IsClipReady(s_startSfxClip) ||
+               !IsClipReady(introMusic) ||
+               (gmc != null && (!IsClipReady(gmc.defaultMusic) || !IsClipReady(gmc.defaultMusicLoop))))
+        {
+            if (Time.realtimeSinceStartup >= timeoutAt)
+                break;
+
+            yield return null;
+        }
 
         yield return null;
     }
@@ -675,6 +685,22 @@ public class StageIntroTransition : MonoBehaviour
             return;
 
         GameMusicController.Instance.PlaySfx(introMusic, 1f);
+    }
+
+    private static void RequestAudioDataLoad(AudioClip clip)
+    {
+        if (clip == null)
+            return;
+
+        if (clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
+    }
+
+    private static bool IsClipReady(AudioClip clip)
+    {
+        return clip == null ||
+               clip.loadState == AudioDataLoadState.Loaded ||
+               clip.loadState == AudioDataLoadState.Failed;
     }
 
     bool ShouldFaceUpOnIntro()

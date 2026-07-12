@@ -4609,7 +4609,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -6504,6 +6504,7 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: 65077d8910bbe19479dcd616851eb665, type: 3}
   defaultMusicLoop: {fileID: 8300000, guid: d80b29ee2a1d05247ba36b1dfae2e046, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
+  logStageStartAudioDiagnostics: 1
   defaultMusicVolume: 0.6
   defaultMusicLoopVolume: 0.6
 --- !u!82 &1560934952
@@ -6637,6 +6638,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 765618197}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
+  logStageStartAudioDiagnostics: 1
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 124024469}
   world: 3
