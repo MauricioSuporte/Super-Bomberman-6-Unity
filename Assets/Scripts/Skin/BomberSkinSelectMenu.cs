@@ -231,6 +231,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     // This keeps opening time independent from the total number of registered skins.
     readonly Dictionary<string, Sprite> idleCache = new();
     readonly Dictionary<string, Dictionary<int, Sprite>> sheetFrameCache = new();
+    readonly Dictionary<string, bool> generatedSkinAvailabilityCache = new();
 
     readonly List<RectTransform> slotRoots = new();
     readonly List<Image> slotImages = new();
@@ -718,8 +719,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         selectableCharacters.Clear();
         selectableCharacters.AddRange(BomberSkinResourceCatalog.GetAvailableCharacters());
 
-        if (selectableSkins == null || selectableSkins.Count == 0)
-            selectableSkins = new List<BomberSkin>(BomberSkinResourceCatalog.BombermanSkins);
+        selectableSkins ??= new List<BomberSkin>();
+        selectableSkins.Clear();
+        selectableSkins.AddRange(BomberSkinResourceCatalog.BombermanSkins);
     }
 
     BomberCharacter GetCharacterAtSlot(int slot)
@@ -739,6 +741,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return BomberSkin.White;
 
         cursor.selectedPaletteIndex = Mathf.Clamp(cursor.selectedPaletteIndex, 0, selectableSkins.Count - 1);
+        cursor.selectedPaletteIndex = FindAvailablePaletteIndex(GetCharacterAtSlot(cursor.index), cursor.selectedPaletteIndex, 1);
         cursor.selected = selectableSkins[cursor.selectedPaletteIndex];
         return cursor.selected;
     }
@@ -763,9 +766,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return false;
 
         int count = selectableSkins.Count;
-        int next = (cursor.selectedPaletteIndex + direction) % count;
-        if (next < 0)
-            next += count;
+        int next = FindAvailablePaletteIndex(GetCharacterAtSlot(cursor.index), cursor.selectedPaletteIndex + direction, direction);
 
         if (next == cursor.selectedPaletteIndex)
             return false;
@@ -773,6 +774,43 @@ public class BomberSkinSelectMenu : MonoBehaviour
         cursor.selectedPaletteIndex = next;
         cursor.selected = selectableSkins[next];
         return true;
+    }
+
+    int FindAvailablePaletteIndex(BomberCharacter character, int startIndex, int direction)
+    {
+        if (selectableSkins == null || selectableSkins.Count == 0)
+            return 0;
+
+        int count = selectableSkins.Count;
+        int step = direction < 0 ? -1 : 1;
+        int index = startIndex % count;
+        if (index < 0)
+            index += count;
+
+        for (int attempts = 0; attempts < count; attempts++)
+        {
+            BomberSkin candidate = selectableSkins[index];
+            if (IsGeneratedSkinCached(character, candidate))
+                return index;
+
+            index = (index + step) % count;
+            if (index < 0)
+                index += count;
+        }
+
+        return 0;
+    }
+
+    bool IsGeneratedSkinCached(BomberCharacter character, BomberSkin skin)
+    {
+        string key = GetSheetCacheKey(character, skin);
+        if (!generatedSkinAvailabilityCache.TryGetValue(key, out bool isGenerated))
+        {
+            isGenerated = BomberSkinResourceCatalog.IsGeneratedSkin(character, skin);
+            generatedSkinAvailabilityCache[key] = isGenerated;
+        }
+
+        return isGenerated;
     }
 
     BomberSkin GetPreviewSkinForSlot(int slot)

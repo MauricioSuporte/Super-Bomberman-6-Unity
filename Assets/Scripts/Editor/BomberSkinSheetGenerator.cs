@@ -33,34 +33,7 @@ public static class BomberSkinSheetGenerator
         public string OutputFolderAssetPath { get; }
     }
 
-    static readonly BomberSkin[] BombermanSkins =
-    {
-        BomberSkin.White,
-        BomberSkin.Black,
-        BomberSkin.Red,
-        BomberSkin.Blue,
-        BomberSkin.Green,
-        BomberSkin.Purple,
-        BomberSkin.Pink,
-        BomberSkin.Magenta,
-        BomberSkin.Gray,
-        BomberSkin.Brown,
-        BomberSkin.DarkGreen,
-        BomberSkin.DarkBlue,
-        BomberSkin.Orange,
-        BomberSkin.Cyan,
-        BomberSkin.Aqua,
-        BomberSkin.DarkPurple,
-        BomberSkin.Yellow,
-        BomberSkin.NeonGreen,
-        BomberSkin.Gold,
-        BomberSkin.Golden,
-        BomberSkin.Nightmare,
-        BomberSkin.Alternative1,
-        BomberSkin.Alternative2,
-        BomberSkin.Alternative3,
-        BomberSkin.Alternative4
-    };
+    static readonly BomberSkin[] BombermanSkins = BomberSkinResourceCatalog.BombermanSkins;
 
     [InitializeOnLoadMethod]
     static void GenerateOnEditorLoad()

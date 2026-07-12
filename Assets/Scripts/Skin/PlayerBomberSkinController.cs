@@ -14,6 +14,7 @@ public class PlayerBomberSkinController : MonoBehaviour
     readonly Dictionary<AnimatedSpriteRenderer, float> baseAnimationTimes = new();
 
     const float LadyBomberEndStageSpeedMultiplier = 1.5f;
+    const float KamikazeBomberAfkSpeedMultiplier = 1.25f;
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
     // Sprite-sheet animation indices. Update this block when the shared bomber template changes.
     static readonly int[] BombermanAfkFrames = { 130, 129, 128, 129, 130, 131, 132, 131 };
@@ -24,6 +25,11 @@ public class PlayerBomberSkinController : MonoBehaviour
         130, 131, 132, 131, 132, 131, 132, 131
     };
     static readonly int[] MinerBomberAfkFrames = { 128, 129, 130, 131, 132, 132, 131, 130, 129 };
+    static readonly int[] KamikazeBomberAfkFrames =
+    {
+        128, 129, 130, 131, 128, 129, 130, 131, 132,
+        136, 137, 138, 136, 137, 138, 139, 140
+    };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
     static readonly int[] BombermanTimeOverFrames = { 98, 97, 96, 95, 94 };
     static readonly int[] TinyBomberTimeOverFrames = { 98, 97, 96, 95, 94 };
@@ -46,6 +52,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         137, 138, 139, 140, 141, 142, 143, 144
     };
     static readonly int[] MinerBomberEndStageFrames = { 2, 108, 109, 110, 133 };
+    static readonly int[] KamikazeBomberEndStageFrames = { 108, 109, 110, 133, 134 };
 
     readonly struct WalkDefinition
     {
@@ -184,13 +191,15 @@ public class PlayerBomberSkinController : MonoBehaviour
         }
 
         int[] afkFrames = GetAfkFrames(character);
+        float afkSpeedMultiplier = GetAfkSpeedMultiplier(character);
         ApplyFrameSequence(
             FindAnimatedRenderer("Afk"),
             "Afk",
             afkFrames[0],
             afkFrames,
             targetMap,
-            skin
+            skin,
+            speedMultiplier: afkSpeedMultiplier
         );
 
         ApplyFrameSequence(
@@ -425,8 +434,13 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     public static int[] GetEndStageFrames(BomberCharacter character)
     {
-        if (BomberSkinResourceCatalog.GetCharacterFolderName(character) == "MinerBomber")
+        string folderName = BomberSkinResourceCatalog.GetCharacterFolderName(character);
+        if (folderName == "MinerBomber")
             return MinerBomberEndStageFrames;
+
+        if (folderName == "KamikazeBomber")
+            return KamikazeBomberEndStageFrames;
+
         return character switch
         {
             BomberCharacter.LadyBomber => LadyBomberEndStageFrames,
@@ -437,14 +451,26 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     static int[] GetAfkFrames(BomberCharacter character)
     {
-        if (BomberSkinResourceCatalog.GetCharacterFolderName(character) == "MinerBomber")
+        string folderName = BomberSkinResourceCatalog.GetCharacterFolderName(character);
+        if (folderName == "MinerBomber")
             return MinerBomberAfkFrames;
+
+        if (folderName == "KamikazeBomber")
+            return KamikazeBomberAfkFrames;
+
         return character switch
         {
             BomberCharacter.LadyBomber => LadyBomberAfkFrames,
             BomberCharacter.TinyBomber => TinyBomberAfkFrames,
             _ => BombermanAfkFrames
         };
+    }
+
+    static float GetAfkSpeedMultiplier(BomberCharacter character)
+    {
+        return BomberSkinResourceCatalog.GetCharacterFolderName(character) == "KamikazeBomber"
+            ? KamikazeBomberAfkSpeedMultiplier
+            : 1f;
     }
 
     static int[] GetTimeOverFrames(BomberCharacter character)
