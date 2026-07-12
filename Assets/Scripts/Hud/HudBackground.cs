@@ -11,15 +11,23 @@ public sealed class HudBackground : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.HudBackgroundLateUpdate.Auto();
+
         if (_rt == null)
             _rt = (RectTransform)transform;
 
         float yMin = (alturaTotal - alturaHud) / alturaTotal;
+        Vector2 anchorMin = new(0f, yMin);
 
-        _rt.anchorMin = new Vector2(0f, yMin);
-        _rt.anchorMax = new Vector2(1f, 1f);
-        _rt.anchoredPosition = Vector2.zero;
-        _rt.sizeDelta = Vector2.zero;
-        _rt.localScale = Vector3.one;
+        if (_rt.anchorMin != anchorMin)
+            _rt.anchorMin = anchorMin;
+        if (_rt.anchorMax != Vector2.one)
+            _rt.anchorMax = Vector2.one;
+        if (_rt.anchoredPosition != Vector2.zero)
+            _rt.anchoredPosition = Vector2.zero;
+        if (_rt.sizeDelta != Vector2.zero)
+            _rt.sizeDelta = Vector2.zero;
+        if (_rt.localScale != Vector3.one)
+            _rt.localScale = Vector3.one;
     }
 }

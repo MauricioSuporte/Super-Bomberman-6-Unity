@@ -31,6 +31,8 @@ public sealed class HudGridLayout : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.HudGridLateUpdate.Auto();
+
         if (_rt == null)
             _rt = (RectTransform)transform;
 
@@ -113,11 +115,19 @@ public sealed class HudGridLayout : MonoBehaviour
         if (g == null)
             return;
 
-        g.anchorMin = new Vector2(minX, minY);
-        g.anchorMax = new Vector2(maxX, maxY);
-        g.offsetMin = Vector2.zero;
-        g.offsetMax = Vector2.zero;
-        g.localScale = Vector3.one;
+        Vector2 anchorMin = new(minX, minY);
+        Vector2 anchorMax = new(maxX, maxY);
+
+        if (g.anchorMin != anchorMin)
+            g.anchorMin = anchorMin;
+        if (g.anchorMax != anchorMax)
+            g.anchorMax = anchorMax;
+        if (g.offsetMin != Vector2.zero)
+            g.offsetMin = Vector2.zero;
+        if (g.offsetMax != Vector2.zero)
+            g.offsetMax = Vector2.zero;
+        if (g.localScale != Vector3.one)
+            g.localScale = Vector3.one;
     }
 
     void DefinirVisibilidade(RectTransform g, bool visible)

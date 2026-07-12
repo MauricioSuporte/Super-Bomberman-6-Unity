@@ -37,6 +37,8 @@ public sealed class HudLifePreviewLayout : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.HudLifePreviewLateUpdate.Auto();
+
         Refresh();
     }
 
@@ -74,11 +76,19 @@ public sealed class HudLifePreviewLayout : MonoBehaviour
         float top = frameSize.y - hudHeight + overlapHudPixels;
         float bottom = top - counterFrameSize.y;
 
-        rectTransform.anchorMin = new Vector2(left / frameSize.x, bottom / frameSize.y);
-        rectTransform.anchorMax = new Vector2(right / frameSize.x, top / frameSize.y);
-        rectTransform.offsetMin = Vector2.zero;
-        rectTransform.offsetMax = Vector2.zero;
-        rectTransform.localScale = Vector3.one;
+        Vector2 anchorMin = new(left / frameSize.x, bottom / frameSize.y);
+        Vector2 anchorMax = new(right / frameSize.x, top / frameSize.y);
+
+        if (rectTransform.anchorMin != anchorMin)
+            rectTransform.anchorMin = anchorMin;
+        if (rectTransform.anchorMax != anchorMax)
+            rectTransform.anchorMax = anchorMax;
+        if (rectTransform.offsetMin != Vector2.zero)
+            rectTransform.offsetMin = Vector2.zero;
+        if (rectTransform.offsetMax != Vector2.zero)
+            rectTransform.offsetMax = Vector2.zero;
+        if (rectTransform.localScale != Vector3.one)
+            rectTransform.localScale = Vector3.one;
     }
 
     void ApplyIconLayout()
@@ -90,13 +100,21 @@ public sealed class HudLifePreviewLayout : MonoBehaviour
         float left = (counterFrameSize.x - counterIconSize.x) * 0.5f;
         float bottom = (counterFrameSize.y - counterIconSize.y) * 0.5f;
 
-        iconRect.anchorMin = new Vector2(left / counterFrameSize.x, bottom / counterFrameSize.y);
-        iconRect.anchorMax = new Vector2(
+        Vector2 anchorMin = new(left / counterFrameSize.x, bottom / counterFrameSize.y);
+        Vector2 anchorMax = new(
             (left + counterIconSize.x) / counterFrameSize.x,
             (bottom + counterIconSize.y) / counterFrameSize.y);
-        iconRect.offsetMin = Vector2.zero;
-        iconRect.offsetMax = Vector2.zero;
-        iconRect.localScale = Vector3.one;
+
+        if (iconRect.anchorMin != anchorMin)
+            iconRect.anchorMin = anchorMin;
+        if (iconRect.anchorMax != anchorMax)
+            iconRect.anchorMax = anchorMax;
+        if (iconRect.offsetMin != Vector2.zero)
+            iconRect.offsetMin = Vector2.zero;
+        if (iconRect.offsetMax != Vector2.zero)
+            iconRect.offsetMax = Vector2.zero;
+        if (iconRect.localScale != Vector3.one)
+            iconRect.localScale = Vector3.one;
     }
 
     void ApplyVisualState()

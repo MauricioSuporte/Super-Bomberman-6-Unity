@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public static class HudCharacterPortraitCatalog
 {
@@ -11,12 +12,20 @@ public static class HudCharacterPortraitCatalog
 
     public const int LiveExpression = DefaultExpression;
 
+    static readonly Dictionary<string, Sprite> cache = new();
+
     public static Sprite Load(BomberCharacter character, BomberSkin skin, int expressionIndex)
     {
         BomberSkin normalizedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin);
         string sheetName = BomberSkinResourceCatalog.GetSheetName(character, normalizedSkin);
         string characterFolder = BomberSkinResourceCatalog.GetCharacterFolderName(character);
         string path = $"Sprites/Portraits/{characterFolder}/{sheetName}/{sheetName}_Portrait_{expressionIndex}";
-        return Resources.Load<Sprite>(path);
+
+        if (cache.TryGetValue(path, out Sprite cached))
+            return cached;
+
+        Sprite sprite = Resources.Load<Sprite>(path);
+        cache[path] = sprite;
+        return sprite;
     }
 }

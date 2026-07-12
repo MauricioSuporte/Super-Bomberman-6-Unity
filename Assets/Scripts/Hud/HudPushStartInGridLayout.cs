@@ -55,6 +55,8 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.HudPushStartLateUpdate.Auto();
+
         UpdateBlink();
         UpdateImages();
         UpdateLayout();
@@ -141,11 +143,19 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
             float minY = bottom / logicalGridHeight;
             float maxY = top / logicalGridHeight;
 
-            imageRect.anchorMin = new Vector2(minX, minY);
-            imageRect.anchorMax = new Vector2(maxX, maxY);
-            imageRect.offsetMin = Vector2.zero;
-            imageRect.offsetMax = Vector2.zero;
-            imageRect.localScale = Vector3.one;
+            Vector2 anchorMin = new(minX, minY);
+            Vector2 anchorMax = new(maxX, maxY);
+
+            if (imageRect.anchorMin != anchorMin)
+                imageRect.anchorMin = anchorMin;
+            if (imageRect.anchorMax != anchorMax)
+                imageRect.anchorMax = anchorMax;
+            if (imageRect.offsetMin != Vector2.zero)
+                imageRect.offsetMin = Vector2.zero;
+            if (imageRect.offsetMax != Vector2.zero)
+                imageRect.offsetMax = Vector2.zero;
+            if (imageRect.localScale != Vector3.one)
+                imageRect.localScale = Vector3.one;
         }
     }
 

@@ -114,6 +114,12 @@ public static class BattleModePerformanceMarkers
     public const string BombControllerUpdateName = "SB6.BattlePerf.BombController.Update";
     public const string AnimatedSpriteUpdateName = "SB6.BattlePerf.AnimatedSprite.Update";
     public const string BattleHudLateUpdateName = "SB6.BattlePerf.Hud.LateUpdate";
+    public const string HudBackgroundLateUpdateName = "SB6.BattlePerf.Hud.Background";
+    public const string HudGridLateUpdateName = "SB6.BattlePerf.Hud.Grid";
+    public const string HudPortraitLateUpdateName = "SB6.BattlePerf.Hud.Portrait";
+    public const string HudStatsLateUpdateName = "SB6.BattlePerf.Hud.Stats";
+    public const string HudPushStartLateUpdateName = "SB6.BattlePerf.Hud.PushStart";
+    public const string HudLifePreviewLateUpdateName = "SB6.BattlePerf.Hud.LifePreview";
     public const string ArenaUpdateName = "SB6.BattlePerf.Arena.Update";
     public const string InputUpdateName = "SB6.BattlePerf.Input.Update";
     public const string AbilityUpdateName = "SB6.BattlePerf.Ability.Update";
@@ -131,6 +137,12 @@ public static class BattleModePerformanceMarkers
     public static readonly ProfilerMarker BombControllerUpdate = new(BombControllerUpdateName);
     public static readonly ProfilerMarker AnimatedSpriteUpdate = new(AnimatedSpriteUpdateName);
     public static readonly ProfilerMarker BattleHudLateUpdate = new(BattleHudLateUpdateName);
+    public static readonly ProfilerMarker HudBackgroundLateUpdate = new(HudBackgroundLateUpdateName);
+    public static readonly ProfilerMarker HudGridLateUpdate = new(HudGridLateUpdateName);
+    public static readonly ProfilerMarker HudPortraitLateUpdate = new(HudPortraitLateUpdateName);
+    public static readonly ProfilerMarker HudStatsLateUpdate = new(HudStatsLateUpdateName);
+    public static readonly ProfilerMarker HudPushStartLateUpdate = new(HudPushStartLateUpdateName);
+    public static readonly ProfilerMarker HudLifePreviewLateUpdate = new(HudLifePreviewLateUpdateName);
     public static readonly ProfilerMarker ArenaUpdate = new(ArenaUpdateName);
     public static readonly ProfilerMarker InputUpdate = new(InputUpdateName);
     public static readonly ProfilerMarker AbilityUpdate = new(AbilityUpdateName);
@@ -165,6 +177,12 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
     ProfilerRecorder bombControllerRecorder;
     ProfilerRecorder animatedSpriteRecorder;
     ProfilerRecorder hudRecorder;
+    ProfilerRecorder hudBackgroundRecorder;
+    ProfilerRecorder hudGridRecorder;
+    ProfilerRecorder hudPortraitRecorder;
+    ProfilerRecorder hudStatsRecorder;
+    ProfilerRecorder hudPushStartRecorder;
+    ProfilerRecorder hudLifePreviewRecorder;
     ProfilerRecorder arenaRecorder;
     ProfilerRecorder inputRecorder;
     ProfilerRecorder abilityRecorder;
@@ -192,6 +210,12 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
     double totalBombControllerMilliseconds;
     double totalAnimatedSpriteMilliseconds;
     double totalHudMilliseconds;
+    double totalHudBackgroundMilliseconds;
+    double totalHudGridMilliseconds;
+    double totalHudPortraitMilliseconds;
+    double totalHudStatsMilliseconds;
+    double totalHudPushStartMilliseconds;
+    double totalHudLifePreviewMilliseconds;
     double totalArenaMilliseconds;
     double totalInputMilliseconds;
     double totalAbilityMilliseconds;
@@ -232,7 +256,7 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         HandleShortcut();
         HandleBattleTimeUpShortcut();
 
-        if (!isCapturing || !IsBattleModeScene())
+        if (!isCapturing)
             return;
 
         CollectFrameSample();
@@ -322,6 +346,12 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         bombControllerRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.BombControllerUpdate);
         animatedSpriteRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.AnimatedSpriteUpdate);
         hudRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.BattleHudLateUpdate);
+        hudBackgroundRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.HudBackgroundLateUpdate);
+        hudGridRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.HudGridLateUpdate);
+        hudPortraitRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.HudPortraitLateUpdate);
+        hudStatsRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.HudStatsLateUpdate);
+        hudPushStartRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.HudPushStartLateUpdate);
+        hudLifePreviewRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.HudLifePreviewLateUpdate);
         arenaRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.ArenaUpdate);
         inputRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.InputUpdate);
         abilityRecorder = CreateMarkerRecorder(BattleModePerformanceMarkers.AbilityUpdate);
@@ -340,7 +370,7 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
 
         Debug.Log(
             $"[BattlePerf] CAPTURA INICIADA | scene={SceneManager.GetActiveScene().name} " +
-            "| use uma partida de 6 jogadores por alguns segundos | desligar: Ctrl+Shift+F");
+            "| jogue por alguns segundos | desligar: Ctrl+Shift+F");
     }
 
     void StopCapture()
@@ -374,6 +404,12 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         totalBombControllerMilliseconds += RecorderMilliseconds(bombControllerRecorder);
         totalAnimatedSpriteMilliseconds += RecorderMilliseconds(animatedSpriteRecorder);
         totalHudMilliseconds += RecorderMilliseconds(hudRecorder);
+        totalHudBackgroundMilliseconds += RecorderMilliseconds(hudBackgroundRecorder);
+        totalHudGridMilliseconds += RecorderMilliseconds(hudGridRecorder);
+        totalHudPortraitMilliseconds += RecorderMilliseconds(hudPortraitRecorder);
+        totalHudStatsMilliseconds += RecorderMilliseconds(hudStatsRecorder);
+        totalHudPushStartMilliseconds += RecorderMilliseconds(hudPushStartRecorder);
+        totalHudLifePreviewMilliseconds += RecorderMilliseconds(hudLifePreviewRecorder);
         totalArenaMilliseconds += RecorderMilliseconds(arenaRecorder);
         totalInputMilliseconds += RecorderMilliseconds(inputRecorder);
         totalAbilityMilliseconds += RecorderMilliseconds(abilityRecorder);
@@ -433,6 +469,7 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
             $"[BattlePerf] scene={SceneManager.GetActiveScene().name} players={players} " +
             $"| fpsAvg={averageFps:0.0} frameAvg={averageFrameMilliseconds:0.00}ms worst={worstFrameMilliseconds:0.00}ms " +
             $"slow>={SlowFrameThresholdMilliseconds:0}ms={slowFrames}/{sampledFrames} " +
+            $"vSync={QualitySettings.vSyncCount} targetFps={Application.targetFrameRate} " +
             $"| main={mainThreadMilliseconds:0.00}ms gc={gcKilobytesPerFrame:0.00}KB/f " +
             $"draw={Average(totalDrawCalls):0.0}/f batches={Average(totalBatches):0.0}/f " +
             $"| scripts playerU={Average(totalPlayerUpdateMilliseconds):0.000}ms " +
@@ -445,6 +482,9 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
             $"mount={Average(totalMountCompanionMilliseconds):0.000}ms stateAnim={Average(totalPlayerStateAnimationMilliseconds):0.000}ms " +
             $"idleAnim={Average(totalInactivityAnimationMilliseconds):0.000}ms cornered={Average(totalCorneredAnimationMilliseconds):0.000}ms " +
             $"comU={Average(totalComUpdateMilliseconds):0.000}ms comThink={Average(totalComThinkMilliseconds):0.000}ms " +
+            $"| hudParts bg={Average(totalHudBackgroundMilliseconds):0.000}ms grid={Average(totalHudGridMilliseconds):0.000}ms " +
+            $"portrait={Average(totalHudPortraitMilliseconds):0.000}ms stats={Average(totalHudStatsMilliseconds):0.000}ms " +
+            $"push={Average(totalHudPushStartMilliseconds):0.000}ms life={Average(totalHudLifePreviewMilliseconds):0.000}ms " +
             $"| entities bombs={bombs} explosions={explosions} mounted={mountedPlayers} eggs={queuedEggs} " +
             $"animators={runningAnimators}/{animators.Length} com={comPlayers}");
 
@@ -467,6 +507,12 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         totalBombControllerMilliseconds = 0d;
         totalAnimatedSpriteMilliseconds = 0d;
         totalHudMilliseconds = 0d;
+        totalHudBackgroundMilliseconds = 0d;
+        totalHudGridMilliseconds = 0d;
+        totalHudPortraitMilliseconds = 0d;
+        totalHudStatsMilliseconds = 0d;
+        totalHudPushStartMilliseconds = 0d;
+        totalHudLifePreviewMilliseconds = 0d;
         totalArenaMilliseconds = 0d;
         totalInputMilliseconds = 0d;
         totalAbilityMilliseconds = 0d;
@@ -491,6 +537,12 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         bombControllerRecorder.Dispose();
         animatedSpriteRecorder.Dispose();
         hudRecorder.Dispose();
+        hudBackgroundRecorder.Dispose();
+        hudGridRecorder.Dispose();
+        hudPortraitRecorder.Dispose();
+        hudStatsRecorder.Dispose();
+        hudPushStartRecorder.Dispose();
+        hudLifePreviewRecorder.Dispose();
         arenaRecorder.Dispose();
         inputRecorder.Dispose();
         abilityRecorder.Dispose();
@@ -533,8 +585,20 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
         return sampledFrames > 0 ? (float)total / sampledFrames : 0f;
     }
 
+    static bool IsGameplayDiagnosticsScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return IsBattleModeScene(sceneName) ||
+               sceneName.StartsWith("Stage_", StringComparison.OrdinalIgnoreCase);
+    }
+
     static bool IsBattleModeScene()
     {
-        return SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+        return IsBattleModeScene(SceneManager.GetActiveScene().name);
+    }
+
+    static bool IsBattleModeScene(string sceneName)
+    {
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
     }
 }

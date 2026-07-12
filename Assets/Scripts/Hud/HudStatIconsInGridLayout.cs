@@ -127,11 +127,22 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Sprite fullFirePowerupSprite;
 
     private CharacterHealth[] playerHealthCache = new CharacterHealth[4];
+    bool runtimeSiblingOrderApplied;
+
+    void OnEnable()
+    {
+        runtimeSiblingOrderApplied = false;
+    }
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.HudStatsLateUpdate.Auto();
+
         UpdateSprites();
         UpdateLayout();
+
+        if (Application.isPlaying)
+            runtimeSiblingOrderApplied = true;
     }
 
     void UpdateSprites()
@@ -237,13 +248,21 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         float minY = bottom / logicalGridHeight;
         float maxY = top / logicalGridHeight;
 
-        rect.anchorMin = new Vector2(minX, minY);
-        rect.anchorMax = new Vector2(maxX, maxY);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        rect.localScale = Vector3.one;
+        Vector2 anchorMin = new(minX, minY);
+        Vector2 anchorMax = new(maxX, maxY);
 
-        if (bringToFront)
+        if (rect.anchorMin != anchorMin)
+            rect.anchorMin = anchorMin;
+        if (rect.anchorMax != anchorMax)
+            rect.anchorMax = anchorMax;
+        if (rect.offsetMin != Vector2.zero)
+            rect.offsetMin = Vector2.zero;
+        if (rect.offsetMax != Vector2.zero)
+            rect.offsetMax = Vector2.zero;
+        if (rect.localScale != Vector3.one)
+            rect.localScale = Vector3.one;
+
+        if (bringToFront && (!Application.isPlaying || !runtimeSiblingOrderApplied))
             rect.SetAsLastSibling();
     }
 
@@ -381,6 +400,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 #if UNITY_EDITOR
     void OnValidate()
     {
+        runtimeSiblingOrderApplied = false;
         EnsureArraySizes();
         EnsureDigitArraySize();
     }

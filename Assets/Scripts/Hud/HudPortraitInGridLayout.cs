@@ -11,6 +11,9 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     [Header("Resources")]
     [SerializeField] private string portraitsResourcesPath = "HUD/PortraitBombersLive";
 
+    const string LivePortraitsResourcesPath = "HUD/PortraitBombersLive";
+    const string DeadPortraitsResourcesPath = "HUD/PortraitBombersDead";
+
     [Header("Portrait Logical Size (SNES pixels)")]
     [SerializeField] private float portraitWidth = 32f;
     [SerializeField] private float portraitHeight = 32f;
@@ -42,6 +45,8 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     };
 
     readonly Dictionary<int, Sprite> portraitByIndex = new();
+    readonly Dictionary<int, Sprite> livePortraitsByIndex = new();
+    readonly Dictionary<int, Sprite> deadPortraitsByIndex = new();
     private bool[] playerDead = new bool[4];
     private bool[] playerCornered = new bool[4];
     private bool[] playerInactive = new bool[4];
@@ -51,13 +56,33 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     private bool[] portraitOriginalColorCaptured = new bool[4];
     private Color[] portraitTintColors = new Color[4];
     private Color[] portraitOriginalColors = new Color[4];
+    readonly bool[] portraitCacheValid = new bool[4];
+    readonly BomberCharacter[] portraitCacheCharacters = new BomberCharacter[4];
+    readonly BomberSkin[] portraitCacheSkins = new BomberSkin[4];
+    readonly int[] portraitCacheExpressions = new int[4];
+    readonly int[] portraitCacheLegacyIndices = new int[4];
+    readonly Sprite[] portraitCacheSprites = new Sprite[4];
+    readonly bool[] portraitCacheEnabled = new bool[4];
     bool loaded;
+    bool runtimeLayoutApplied;
+
+    void OnEnable()
+    {
+        runtimeLayoutApplied = false;
+    }
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.HudPortraitLateUpdate.Auto();
+
         EnsureSpritesLoaded();
         UpdatePortraitSprites();
-        UpdatePortraitLayout();
+        if (!Application.isPlaying || !runtimeLayoutApplied)
+        {
+            UpdatePortraitLayout();
+            if (Application.isPlaying)
+                runtimeLayoutApplied = true;
+        }
     }
 
     void EnsureSpritesLoaded()
@@ -67,7 +92,21 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
         portraitByIndex.Clear();
 
-        Sprite[] sprites = Resources.LoadAll<Sprite>(portraitsResourcesPath);
+        LoadPortraitDictionary(portraitsResourcesPath, portraitByIndex);
+        LoadPortraitDictionary(LivePortraitsResourcesPath, livePortraitsByIndex);
+        LoadPortraitDictionary(DeadPortraitsResourcesPath, deadPortraitsByIndex);
+
+        loaded = true;
+    }
+
+    static void LoadPortraitDictionary(string resourcePath, Dictionary<int, Sprite> dictionary)
+    {
+        if (dictionary == null)
+            return;
+
+        dictionary.Clear();
+
+        Sprite[] sprites = Resources.LoadAll<Sprite>(resourcePath);
         if (sprites == null || sprites.Length == 0)
             return;
 
@@ -83,14 +122,12 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             if (underscoreIndex < 0 || underscoreIndex >= spriteName.Length - 1)
                 continue;
 
-            if (int.TryParse(spriteName.Substring(underscoreIndex + 1), out int index))
+            if (int.TryParse(spriteName.Substring(underscoreIndex + 1), out int index) &&
+                !dictionary.ContainsKey(index))
             {
-                if (!portraitByIndex.ContainsKey(index))
-                    portraitByIndex.Add(index, sprite);
+                dictionary.Add(index, sprite);
             }
         }
-
-        loaded = true;
     }
 
     void UpdatePortraitSprites()
@@ -114,7 +151,7 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
             int expressionIndex = GetExpressionIndex(i);
 
-            TrySetPortrait(portraitImage, playerId, portraitIndex, expressionIndex);
+            TrySetPortrait(portraitImage, i, playerId, portraitIndex, expressionIndex);
             ApplyPortraitTint(i);
         }
     }
@@ -152,12 +189,22 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             float minY = bottom / logicalGridHeight;
             float maxY = top / logicalGridHeight;
 
-            portraitRect.anchorMin = new Vector2(minX, minY);
-            portraitRect.anchorMax = new Vector2(maxX, maxY);
-            portraitRect.offsetMin = Vector2.zero;
-            portraitRect.offsetMax = Vector2.zero;
-            portraitRect.localScale = Vector3.one;
+            SetRect(portraitRect, new Vector2(minX, minY), new Vector2(maxX, maxY));
         }
+    }
+
+    static void SetRect(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        if (rect.anchorMin != anchorMin)
+            rect.anchorMin = anchorMin;
+        if (rect.anchorMax != anchorMax)
+            rect.anchorMax = anchorMax;
+        if (rect.offsetMin != Vector2.zero)
+            rect.offsetMin = Vector2.zero;
+        if (rect.offsetMax != Vector2.zero)
+            rect.offsetMax = Vector2.zero;
+        if (rect.localScale != Vector3.one)
+            rect.localScale = Vector3.one;
     }
 
     float GetGridWidth(int index)
@@ -193,6 +240,8 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     void OnValidate()
     {
         loaded = false;
+        InvalidatePortraitCache();
+        runtimeLayoutApplied = false;
         EnsureArraySizes();
     }
 #endif
@@ -270,56 +319,65 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
         return HudCharacterPortraitCatalog.DefaultExpression;
     }
 
-    void TrySetPortrait(Image portraitImage, int playerId, int legacyIndex, int expressionIndex)
+    void TrySetPortrait(Image portraitImage, int slotIndex, int playerId, int legacyIndex, int expressionIndex)
     {
         PlayerPersistentStats.PlayerState stats = PlayerPersistentStats.Get(playerId);
-        Sprite generatedPortrait = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
-
-        if (generatedPortrait != null)
+        if (slotIndex >= 0 &&
+            slotIndex < portraitCacheValid.Length &&
+            portraitCacheValid[slotIndex] &&
+            portraitCacheCharacters[slotIndex] == stats.Character &&
+            portraitCacheSkins[slotIndex] == stats.Skin &&
+            portraitCacheExpressions[slotIndex] == expressionIndex &&
+            portraitCacheLegacyIndices[slotIndex] == legacyIndex)
         {
-            portraitImage.sprite = generatedPortrait;
-            portraitImage.enabled = true;
+            ApplyCachedPortrait(portraitImage, portraitCacheSprites[slotIndex], portraitCacheEnabled[slotIndex]);
+            return;
+        }
+
+        Sprite sprite = HudCharacterPortraitCatalog.Load(stats.Character, stats.Skin, expressionIndex);
+        bool enabled = sprite != null;
+
+        if (sprite == null)
+        {
+            Dictionary<int, Sprite> legacyPortraits = expressionIndex == HudCharacterPortraitCatalog.DeadExpression
+                ? deadPortraitsByIndex
+                : livePortraitsByIndex;
+
+            enabled = legacyPortraits.TryGetValue(legacyIndex, out sprite) && sprite != null;
+        }
+
+        if (slotIndex >= 0 && slotIndex < portraitCacheValid.Length)
+        {
+            portraitCacheValid[slotIndex] = true;
+            portraitCacheCharacters[slotIndex] = stats.Character;
+            portraitCacheSkins[slotIndex] = stats.Skin;
+            portraitCacheExpressions[slotIndex] = expressionIndex;
+            portraitCacheLegacyIndices[slotIndex] = legacyIndex;
+            portraitCacheSprites[slotIndex] = sprite;
+            portraitCacheEnabled[slotIndex] = enabled;
+        }
+
+        ApplyCachedPortrait(portraitImage, sprite, enabled);
+    }
+
+    static void ApplyCachedPortrait(Image portraitImage, Sprite sprite, bool enabled)
+    {
+        if (portraitImage.sprite != sprite)
+            portraitImage.sprite = sprite;
+        if (portraitImage.enabled != enabled)
+            portraitImage.enabled = enabled;
+        if (portraitImage.preserveAspect)
             portraitImage.preserveAspect = false;
-            return;
-        }
+    }
 
-        string path = expressionIndex == HudCharacterPortraitCatalog.DeadExpression
-            ? "HUD/PortraitBombersDead"
-            : "HUD/PortraitBombersLive";
-
-        Sprite[] sprites = Resources.LoadAll<Sprite>(path);
-
-        if (sprites == null || sprites.Length == 0)
+    void InvalidatePortraitCache()
+    {
+        for (int i = 0; i < portraitCacheValid.Length; i++)
         {
-            portraitImage.enabled = false;
-            return;
+            portraitCacheValid[i] = false;
+            portraitCacheSprites[i] = null;
+            portraitCacheEnabled[i] = false;
         }
-
-        for (int i = 0; i < sprites.Length; i++)
-        {
-            var sprite = sprites[i];
-            if (sprite == null)
-                continue;
-
-            string name = sprite.name;
-            int underscore = name.LastIndexOf('_');
-
-            if (underscore < 0)
-                continue;
-
-            if (int.TryParse(name[(underscore + 1)..], out int idx))
-            {
-                if (idx == legacyIndex)
-                {
-                    portraitImage.sprite = sprite;
-                    portraitImage.enabled = true;
-                    portraitImage.preserveAspect = false;
-                    return;
-                }
-            }
-        }
-
-        portraitImage.enabled = false;
     }
 
     public void OnPlayerDied(int playerId)
@@ -329,6 +387,7 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             return;
 
         playerDead[index] = true;
+        portraitCacheValid[index] = false;
     }
 
     public void OnPlayerRespawn(int playerId)
@@ -342,6 +401,7 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
         playerInactive[index] = false;
         playerTimeUp[index] = false;
         playerVictory[index] = false;
+        portraitCacheValid[index] = false;
     }
 
     public void SetPlayerPortraitState(int playerId, HudPortraitState state, bool active)
@@ -357,6 +417,8 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             case HudPortraitState.TimeUp: playerTimeUp[index] = active; break;
             case HudPortraitState.Victory: playerVictory[index] = active; break;
         }
+
+        portraitCacheValid[index] = false;
     }
 
     public void SetPlayerPortraitTint(int playerId, Color color)
