@@ -22,7 +22,7 @@ public static class PlayerPersistentStats
     {
         public int Life = 9;
         public int BombAmount = 9;
-        public int ExplosionRadius = 9;
+        public int ExplosionRadius = 3;
         public int SpeedInternal = BaseSpeedNormal + (SpeedStep * 9);
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
@@ -34,7 +34,7 @@ public static class PlayerPersistentStats
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasMagnetBomb = false;
-        public bool HasFullFire = true;
+        public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
         public BomberCharacter Character = BomberCharacter.Bomberman;

@@ -1609,7 +1609,7 @@ public partial class BombController : MonoBehaviour
             Vector2 nextPosition = position + direction;
             nextPosition = SnapToTileCenter(snapTm, nextPosition);
 
-            if (HasStartExplosionAt(nextPosition))
+            if (HasBlockingExplosionPartAt(nextPosition))
                 break;
 
             position = nextPosition;
@@ -1704,13 +1704,6 @@ public partial class BombController : MonoBehaviour
 
                 if (otherBombGo != null)
                 {
-                    BombExplosion.ExplosionPart bombHitPart =
-                        isMaxRangeTile
-                            ? BombExplosion.ExplosionPart.End
-                            : BombExplosion.ExplosionPart.Middle;
-
-                    result.Explosions.Add((position, bombHitPart));
-                    result.Reach = Mathf.Max(result.Reach, i + 1);
                     LogBombChainRuntime(
                         "HIT",
                         otherBombGo,
@@ -1889,8 +1882,13 @@ public partial class BombController : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            position += direction;
-            position = SnapToTileCenter(snapTm, position);
+            Vector2 nextPosition = position + direction;
+            nextPosition = SnapToTileCenter(snapTm, nextPosition);
+
+            if (HasBlockingExplosionPartAt(nextPosition))
+                break;
+
+            position = nextPosition;
 
             bool isMaxRangeTile = i == length - 1;
 
@@ -1977,12 +1975,6 @@ public partial class BombController : MonoBehaviour
 
                 if (otherBombGo != null)
                 {
-                    BombExplosion.ExplosionPart part =
-                        isMaxRangeTile
-                            ? BombExplosion.ExplosionPart.End
-                            : BombExplosion.ExplosionPart.Middle;
-
-                    explosionsToSpawn.Add((position, part));
                     LogBombChainRuntime(
                         "HIT",
                         otherBombGo,
@@ -1997,7 +1989,7 @@ public partial class BombController : MonoBehaviour
                     _removedBombs.Remove(otherBombGo);
                 }
 
-                continue;
+                break;
             }
 
             BombExplosion.ExplosionPart defaultPart =
@@ -3347,7 +3339,7 @@ public partial class BombController : MonoBehaviour
         _activeSpotlightIds.Clear();
     }
 
-    private bool HasStartExplosionAt(Vector2 worldPos)
+    private bool HasBlockingExplosionPartAt(Vector2 worldPos)
     {
         EnsureQueryCaches();
 
@@ -3376,7 +3368,9 @@ public partial class BombController : MonoBehaviour
                 hit.GetComponentInParent<BombExplosion>() ??
                 hit.GetComponentInChildren<BombExplosion>();
 
-            if (explosion != null && explosion.CurrentPart == BombExplosion.ExplosionPart.Start)
+            if (explosion != null &&
+                (explosion.CurrentPart == BombExplosion.ExplosionPart.Start ||
+                 explosion.CurrentPart == BombExplosion.ExplosionPart.End))
                 return true;
         }
 
