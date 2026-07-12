@@ -1505,17 +1505,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2367064353294770056, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
   m_PrefabInstance: {fileID: 311948040}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &381374855 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2751961180514227184, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-  m_PrefabInstance: {fileID: 7794392015855008759}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c9734369420646999d523e932aefb723, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CoreMechanismsDestructible
 --- !u!1 &672307152
 GameObject:
   m_ObjectHideFlags: 0
@@ -2891,7 +2880,6 @@ GameObject:
   m_Component:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
-  - component: {fileID: 732032082}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -2930,22 +2918,6 @@ Transform:
   - {fileID: 92127697}
   m_Father: {fileID: 679601671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &732032082
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 732032079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a20d7c632bb9f841917e2548dd9e7dc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DestructibleTileResolver
-  groups:
-  - id: CoreMechanisms
-    tiles: []
-    handler: {fileID: 381374855}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0
