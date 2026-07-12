@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -1099,30 +1099,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
     int GetPortraitIndex(BomberSkin skin)
     {
-        switch (skin)
-        {
-            case BomberSkin.White: return 0;
-            case BomberSkin.Black: return 1;
-            case BomberSkin.Red: return 2;
-            case BomberSkin.Blue: return 3;
-            case BomberSkin.Green: return 4;
-            case BomberSkin.Yellow: return 5;
-            case BomberSkin.Pink: return 6;
-            case BomberSkin.Aqua: return 7;
-            case BomberSkin.Orange: return 8;
-            case BomberSkin.Purple: return 9;
-            case BomberSkin.Gray: return 10;
-            case BomberSkin.NeonGreen: return 11;
-            case BomberSkin.DarkGreen: return 12;
-            case BomberSkin.Cyan: return 13;
-            case BomberSkin.DarkBlue: return 14;
-            case BomberSkin.Brown: return 15;
-            case BomberSkin.Magenta: return 16;
-            case BomberSkin.Nightmare: return 17;
-            case BomberSkin.Gold: return 18;
-            case BomberSkin.Golden: return 19;
-            default: return 0;
-        }
+        return Mathf.Max(0, BomberSkinResourceCatalog.GetPaletteNumber(skin) - 1);
     }
 
     Sprite GetDigitSprite(int value)

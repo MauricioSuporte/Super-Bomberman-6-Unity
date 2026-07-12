@@ -378,10 +378,10 @@ public static class BossRushSession
     {
         return difficulty switch
         {
-            BossRushDifficulty.EASY => (BomberSkin?)BomberSkin.NeonGreen,
-            BossRushDifficulty.NORMAL => (BomberSkin?)BomberSkin.Cyan,
-            BossRushDifficulty.HARD => (BomberSkin?)BomberSkin.Brown,
-            BossRushDifficulty.NIGHTMARE => (BomberSkin?)BomberSkin.Nightmare,
+            BossRushDifficulty.EASY => (BomberSkin?)BomberSkin.Palette18,
+            BossRushDifficulty.NORMAL => (BomberSkin?)BomberSkin.Palette14,
+            BossRushDifficulty.HARD => (BomberSkin?)BomberSkin.Palette10,
+            BossRushDifficulty.NIGHTMARE => (BomberSkin?)BomberSkin.Palette21,
             _ => null,
         };
     }
@@ -391,13 +391,13 @@ public static class BossRushSession
         switch (difficulty)
         {
             case BossRushDifficulty.EASY:
-                return BomberSkin.DarkGreen;
+                return BomberSkin.Palette11;
 
             case BossRushDifficulty.NORMAL:
-                return BomberSkin.DarkBlue;
+                return BomberSkin.Palette12;
 
             case BossRushDifficulty.HARD:
-                return BomberSkin.Magenta;
+                return BomberSkin.Palette8;
 
             default:
                 return null;

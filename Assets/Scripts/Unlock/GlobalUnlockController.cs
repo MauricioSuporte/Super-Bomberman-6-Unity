@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class GlobalUnlockController : MonoBehaviour
 {
@@ -58,7 +58,7 @@ public class GlobalUnlockController : MonoBehaviour
 
         UnlockProgress.ReloadFromDisk();
 
-        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Gray)} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Orange)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Purple)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()}");
+        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Palette9)} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Palette13)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Palette6)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()}");
 
         UnlockToastPresenter.EnsureInScene();
     }
@@ -95,7 +95,7 @@ public class GlobalUnlockController : MonoBehaviour
 
     private void Update()
     {
-        if (UnlockProgress.IsUnlocked(BomberSkin.Gray))
+        if (UnlockProgress.IsUnlocked(BomberSkin.Palette9))
         {
             if (konamiStep != 0)
             {
@@ -137,7 +137,7 @@ public class GlobalUnlockController : MonoBehaviour
         {
             SLog("Konami sequence completed | attempting Gray Bomber unlock");
 
-            bool unlockedGray = UnlockProgress.Unlock(BomberSkin.Gray);
+            bool unlockedGray = UnlockProgress.Unlock(BomberSkin.Palette9);
 
             SLog($"Gray unlock result | Gray={unlockedGray}");
 

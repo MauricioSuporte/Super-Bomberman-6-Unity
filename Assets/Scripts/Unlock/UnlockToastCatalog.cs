@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public static class UnlockToastCatalog
 {
@@ -24,84 +24,84 @@ public static class UnlockToastCatalog
 
         switch (skin)
         {
-            case BomberSkin.Gray:
+            case BomberSkin.Palette9:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/GrayBomber"
                 );
 
-            case BomberSkin.Orange:
+            case BomberSkin.Palette13:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/OrangeBomber"
                 );
 
-            case BomberSkin.Purple:
+            case BomberSkin.Palette6:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/PurpleBomber"
                 );
 
-            case BomberSkin.NeonGreen:
+            case BomberSkin.Palette18:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/NeonGreenBomber"
                 );
 
-            case BomberSkin.Cyan:
+            case BomberSkin.Palette14:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/CyanBomber"
                 );
 
-            case BomberSkin.Brown:
+            case BomberSkin.Palette10:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/BrownBomber"
                 );
 
-            case BomberSkin.DarkGreen:
+            case BomberSkin.Palette11:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/DarkGreenBomber"
                 );
 
-            case BomberSkin.DarkBlue:
+            case BomberSkin.Palette12:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/DarkBlueBomber"
                 );
 
-            case BomberSkin.Magenta:
+            case BomberSkin.Palette8:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/MagentaBomber"
                 );
 
-            case BomberSkin.Nightmare:
+            case BomberSkin.Palette21:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/NightmareBomber"
                 );
 
-            case BomberSkin.Gold:
+            case BomberSkin.Palette19:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
                     "UI/Unlocks/Icons/GoldBomber"
                 );
 
-            case BomberSkin.Golden:
+            case BomberSkin.Palette20:
                 return new ToastInfo(
                     text.ToastNewCharacter,
                     string.Format(text.ToastSkinUnlocked, GetSkinDisplayName(skin)),
@@ -119,64 +119,7 @@ public static class UnlockToastCatalog
 
     private static string GetSkinDisplayName(BomberSkin skin)
     {
-        return SaveSystem.GetLanguage() switch
-        {
-            GameLanguage.Japanese => skin switch
-            {
-                BomberSkin.Gray => "グレー",
-                BomberSkin.Orange => "オレンジ",
-                BomberSkin.Purple => "パープル",
-                BomberSkin.NeonGreen => "ネオングリーン",
-                BomberSkin.Cyan => "シアン",
-                BomberSkin.Brown => "ブラウン",
-                BomberSkin.DarkGreen => "ダークグリーン",
-                BomberSkin.DarkBlue => "ダークブルー",
-                BomberSkin.Magenta => "マゼンタ",
-                BomberSkin.Nightmare => "ナイトメア",
-                BomberSkin.Gold => "ゴールド",
-                BomberSkin.Golden => "ゴールデン",
-                _ => skin.ToString()
-            },
-            GameLanguage.Spanish => skin switch
-            {
-                BomberSkin.Gray => "Gris",
-                BomberSkin.Orange => "Naranja",
-                BomberSkin.Purple => "Morado",
-                BomberSkin.NeonGreen => "Verde Neón",
-                BomberSkin.Cyan => "Cian",
-                BomberSkin.Brown => "Marrón",
-                BomberSkin.DarkGreen => "Verde Oscuro",
-                BomberSkin.DarkBlue => "Azul Oscuro",
-                BomberSkin.Magenta => "Magenta",
-                BomberSkin.Nightmare => "Pesadilla",
-                BomberSkin.Gold => "Dorado",
-                BomberSkin.Golden => "Áureo",
-                _ => skin.ToString()
-            },
-            GameLanguage.PortugueseBr => skin switch
-            {
-                BomberSkin.Gray => "Cinza",
-                BomberSkin.Orange => "Laranja",
-                BomberSkin.Purple => "Roxo",
-                BomberSkin.NeonGreen => "Verde Neon",
-                BomberSkin.Cyan => "Ciano",
-                BomberSkin.Brown => "Marrom",
-                BomberSkin.DarkGreen => "Verde Escuro",
-                BomberSkin.DarkBlue => "Azul Escuro",
-                BomberSkin.Magenta => "Magenta",
-                BomberSkin.Nightmare => "Pesadelo",
-                BomberSkin.Gold => "Dourado",
-                BomberSkin.Golden => "Áureo",
-                _ => skin.ToString()
-            },
-            _ => skin switch
-            {
-                BomberSkin.NeonGreen => "Neon Green",
-                BomberSkin.DarkGreen => "Dark Green",
-                BomberSkin.DarkBlue => "Dark Blue",
-                _ => skin.ToString()
-            }
-        };
+        return $"Palette {BomberSkinResourceCatalog.GetPaletteNumber(skin)}";
     }
 
     public static ToastInfo GetBossRush()

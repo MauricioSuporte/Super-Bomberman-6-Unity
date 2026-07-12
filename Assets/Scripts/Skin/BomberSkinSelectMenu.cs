@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -735,10 +735,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     BomberSkin GetCursorPalette(PlayerCursorState cursor)
     {
         if (cursor == null)
-            return BomberSkin.White;
+            return BomberSkin.Palette1;
 
         if (selectableSkins == null || selectableSkins.Count == 0)
-            return BomberSkin.White;
+            return BomberSkin.Palette1;
 
         cursor.selectedPaletteIndex = Mathf.Clamp(cursor.selectedPaletteIndex, 0, selectableSkins.Count - 1);
         cursor.selectedPaletteIndex = FindAvailablePaletteIndex(GetCharacterAtSlot(cursor.index), cursor.selectedPaletteIndex, 1);
@@ -825,7 +825,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         return selectableSkins != null && selectableSkins.Count > 0
             ? selectableSkins[0]
-            : BomberSkin.White;
+            : BomberSkin.Palette1;
     }
 
     static string GetSheetCacheKey(BomberCharacter character, BomberSkin skin)

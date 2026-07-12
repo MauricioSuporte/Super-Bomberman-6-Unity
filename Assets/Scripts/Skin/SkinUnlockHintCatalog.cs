@@ -1,4 +1,4 @@
-﻿public static class SkinUnlockHintCatalog
+public static class SkinUnlockHintCatalog
 {
     public static string GetHint(BomberSkin skin)
     {
@@ -6,40 +6,40 @@
 
         switch (skin)
         {
-            case BomberSkin.Gray:
+            case BomberSkin.Palette9:
                 return text.HintCheatKode;
 
-            case BomberSkin.Orange:
+            case BomberSkin.Palette13:
                 return text.HintClearNormalNormal;
 
-            case BomberSkin.Purple:
+            case BomberSkin.Palette6:
                 return text.HintClearNormalHard;
 
-            case BomberSkin.NeonGreen:
+            case BomberSkin.Palette18:
                 return text.HintClearBossRushEasy;
 
-            case BomberSkin.Cyan:
+            case BomberSkin.Palette14:
                 return text.HintClearBossRushNormal;
 
-            case BomberSkin.Brown:
+            case BomberSkin.Palette10:
                 return text.HintClearBossRushHard;
 
-            case BomberSkin.DarkGreen:
+            case BomberSkin.Palette11:
                 return text.HintClearBossRushEasyUnder4;
 
-            case BomberSkin.DarkBlue:
+            case BomberSkin.Palette12:
                 return text.HintClearBossRushNormalUnder4;
 
-            case BomberSkin.Magenta:
+            case BomberSkin.Palette8:
                 return text.HintClearBossRushHardUnder5;
 
-            case BomberSkin.Nightmare:
+            case BomberSkin.Palette21:
                 return text.HintClearBossRushNightmare;
 
-            case BomberSkin.Gold:
+            case BomberSkin.Palette19:
                 return text.HintClearNormalHardcore;
 
-            case BomberSkin.Golden:
+            case BomberSkin.Palette20:
                 return text.HintUnlockAllOtherAchievements;
 
             default:

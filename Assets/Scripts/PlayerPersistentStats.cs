@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -38,7 +38,7 @@ public static class PlayerPersistentStats
 
         public MountedType MountedLouie = MountedType.None;
         public BomberCharacter Character = BomberCharacter.Bomberman;
-        public BomberSkin Skin = BomberSkin.Alternative4;
+        public BomberSkin Skin = BomberSkin.Palette25;
 
         public readonly List<ItemType> QueuedEggs = new(8);
 
@@ -238,13 +238,13 @@ public static class PlayerPersistentStats
 
         return playerId switch
         {
-            1 => BomberSkin.White,
-            2 => BomberSkin.Black,
-            3 => BomberSkin.Red,
-            4 => BomberSkin.Blue,
-            5 => BomberSkin.Green,
-            6 => BomberSkin.Yellow,
-            _ => BomberSkin.White
+            1 => BomberSkin.Palette1,
+            2 => BomberSkin.Palette2,
+            3 => BomberSkin.Palette3,
+            4 => BomberSkin.Palette4,
+            5 => BomberSkin.Palette5,
+            6 => BomberSkin.Palette17,
+            _ => BomberSkin.Palette1
         };
     }
 

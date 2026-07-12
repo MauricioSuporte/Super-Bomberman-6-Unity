@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.SaveSystem;
+using Assets.Scripts.SaveSystem;
 using System;
 using System.Collections.Generic;
 
@@ -46,12 +46,12 @@ public sealed class SaveData
     };
     public bool[] battleModeManStageWins = new bool[15];
 
-    public int player1SelectedSkin = (int)BomberSkin.White;
-    public int player2SelectedSkin = (int)BomberSkin.Black;
-    public int player3SelectedSkin = (int)BomberSkin.Red;
-    public int player4SelectedSkin = (int)BomberSkin.Blue;
-    public int player5SelectedSkin = (int)BomberSkin.Green;
-    public int player6SelectedSkin = (int)BomberSkin.Yellow;
+    public int player1SelectedSkin = (int)BomberSkin.Palette1;
+    public int player2SelectedSkin = (int)BomberSkin.Palette2;
+    public int player3SelectedSkin = (int)BomberSkin.Palette3;
+    public int player4SelectedSkin = (int)BomberSkin.Palette4;
+    public int player5SelectedSkin = (int)BomberSkin.Palette5;
+    public int player6SelectedSkin = (int)BomberSkin.Palette17;
     public int player1SelectedCharacter = (int)BomberCharacter.Bomberman;
     public int player2SelectedCharacter = (int)BomberCharacter.Bomberman;
     public int player3SelectedCharacter = (int)BomberCharacter.Bomberman;

@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.SaveSystem;
+using Assets.Scripts.SaveSystem;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -884,6 +884,9 @@ public static class SaveSystem
         if (d.unlockedSkins == null)
             d.unlockedSkins = new List<string>();
 
+        bool migrateLegacySkinIds = HasLegacySkinNames(d.unlockedSkins);
+        MigrateLegacySkinNames(d.unlockedSkins);
+
         if (d.slots == null)
             d.slots = new List<StageSlot>();
 
@@ -935,7 +938,7 @@ public static class SaveSystem
                 d.unlockedSkins.Add(skinName);
         }
 
-        if (d.unlockedSkins.Contains(BomberSkin.Purple.ToString()))
+        if (d.unlockedSkins.Contains(BomberSkin.Palette6.ToString()))
             d.hardcoreUnlocked = true;
 
         NormalizeSelectedCharacter(ref d.player1SelectedCharacter);
@@ -945,12 +948,22 @@ public static class SaveSystem
         NormalizeSelectedCharacter(ref d.player5SelectedCharacter);
         NormalizeSelectedCharacter(ref d.player6SelectedCharacter);
 
-        NormalizeSelectedSkin(ref d.player1SelectedSkin, d.player1SelectedCharacter, BomberSkin.White);
-        NormalizeSelectedSkin(ref d.player2SelectedSkin, d.player2SelectedCharacter, BomberSkin.Black);
-        NormalizeSelectedSkin(ref d.player3SelectedSkin, d.player3SelectedCharacter, BomberSkin.Red);
-        NormalizeSelectedSkin(ref d.player4SelectedSkin, d.player4SelectedCharacter, BomberSkin.Blue);
-        NormalizeSelectedSkin(ref d.player5SelectedSkin, d.player5SelectedCharacter, BomberSkin.Green);
-        NormalizeSelectedSkin(ref d.player6SelectedSkin, d.player6SelectedCharacter, BomberSkin.Yellow);
+        if (migrateLegacySkinIds)
+        {
+            MigrateLegacySelectedSkinId(ref d.player1SelectedSkin);
+            MigrateLegacySelectedSkinId(ref d.player2SelectedSkin);
+            MigrateLegacySelectedSkinId(ref d.player3SelectedSkin);
+            MigrateLegacySelectedSkinId(ref d.player4SelectedSkin);
+            MigrateLegacySelectedSkinId(ref d.player5SelectedSkin);
+            MigrateLegacySelectedSkinId(ref d.player6SelectedSkin);
+        }
+
+        NormalizeSelectedSkin(ref d.player1SelectedSkin, d.player1SelectedCharacter, BomberSkin.Palette1);
+        NormalizeSelectedSkin(ref d.player2SelectedSkin, d.player2SelectedCharacter, BomberSkin.Palette2);
+        NormalizeSelectedSkin(ref d.player3SelectedSkin, d.player3SelectedCharacter, BomberSkin.Palette3);
+        NormalizeSelectedSkin(ref d.player4SelectedSkin, d.player4SelectedCharacter, BomberSkin.Palette4);
+        NormalizeSelectedSkin(ref d.player5SelectedSkin, d.player5SelectedCharacter, BomberSkin.Palette5);
+        NormalizeSelectedSkin(ref d.player6SelectedSkin, d.player6SelectedCharacter, BomberSkin.Palette17);
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
             d.activeSlotIndex = -1;
@@ -1007,6 +1020,107 @@ public static class SaveSystem
         skin = (int)BomberSkinResourceCatalog.NormalizeGeneratedSkin(
             selectedCharacter,
             (BomberSkin)skin);
+    }
+
+    private static void MigrateLegacySkinNames(List<string> skins)
+    {
+        if (skins == null)
+            return;
+
+        for (int i = 0; i < skins.Count; i++)
+        {
+            if (TryGetPaletteNameForLegacySkin(skins[i], out string paletteName))
+                skins[i] = paletteName;
+        }
+    }
+
+    private static bool HasLegacySkinNames(List<string> skins)
+    {
+        if (skins == null)
+            return false;
+
+        for (int i = 0; i < skins.Count; i++)
+        {
+            if (TryGetPaletteNameForLegacySkin(skins[i], out _))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static void MigrateLegacySelectedSkinId(ref int skin)
+    {
+        skin = skin switch
+        {
+            0 => (int)BomberSkin.Palette20,
+            1 => (int)BomberSkin.Palette1,
+            2 => (int)BomberSkin.Palette9,
+            3 => (int)BomberSkin.Palette2,
+            4 => (int)BomberSkin.Palette3,
+            5 => (int)BomberSkin.Palette13,
+            6 => (int)BomberSkin.Palette17,
+            8 => (int)BomberSkin.Palette5,
+            9 => (int)BomberSkin.Palette14,
+            10 => (int)BomberSkin.Palette15,
+            11 => (int)BomberSkin.Palette4,
+            12 => (int)BomberSkin.Palette12,
+            13 => (int)BomberSkin.Palette6,
+            14 => (int)BomberSkin.Palette8,
+            15 => (int)BomberSkin.Palette7,
+            16 => (int)BomberSkin.Palette10,
+            17 => (int)BomberSkin.Palette11,
+            18 => (int)BomberSkin.Palette21,
+            19 => (int)BomberSkin.Palette19,
+            20 => (int)BomberSkin.Palette16,
+            21 => (int)BomberSkin.Palette18,
+            22 => (int)BomberSkin.Palette22,
+            23 => (int)BomberSkin.Palette23,
+            24 => (int)BomberSkin.Palette24,
+            25 => (int)BomberSkin.Palette25,
+            _ => skin
+        };
+    }
+
+    private static bool TryGetPaletteNameForLegacySkin(string legacyName, out string paletteName)
+    {
+        BomberSkin skin = legacyName switch
+        {
+            "White" => BomberSkin.Palette1,
+            "Black" => BomberSkin.Palette2,
+            "Red" => BomberSkin.Palette3,
+            "Blue" => BomberSkin.Palette4,
+            "Green" => BomberSkin.Palette5,
+            "Purple" => BomberSkin.Palette6,
+            "Pink" => BomberSkin.Palette7,
+            "Magenta" => BomberSkin.Palette8,
+            "Gray" => BomberSkin.Palette9,
+            "Brown" => BomberSkin.Palette10,
+            "DarkGreen" => BomberSkin.Palette11,
+            "DarkBlue" => BomberSkin.Palette12,
+            "Orange" => BomberSkin.Palette13,
+            "Cyan" => BomberSkin.Palette14,
+            "Aqua" => BomberSkin.Palette15,
+            "DarkPurple" => BomberSkin.Palette16,
+            "Yellow" => BomberSkin.Palette17,
+            "NeonGreen" => BomberSkin.Palette18,
+            "Gold" => BomberSkin.Palette19,
+            "Golden" => BomberSkin.Palette20,
+            "Nightmare" => BomberSkin.Palette21,
+            "Alternative1" => BomberSkin.Palette22,
+            "Alternative2" => BomberSkin.Palette23,
+            "Alternative3" => BomberSkin.Palette24,
+            "Alternative4" => BomberSkin.Palette25,
+            _ => default
+        };
+
+        if (skin == default)
+        {
+            paletteName = null;
+            return false;
+        }
+
+        paletteName = skin.ToString();
+        return true;
     }
 
     private static void NormalizeBattleModeStageUnlocks(SaveData d)

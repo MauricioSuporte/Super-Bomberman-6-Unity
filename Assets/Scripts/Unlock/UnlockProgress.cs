@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public static class UnlockProgress
@@ -182,7 +182,7 @@ public static class UnlockProgress
         return TryUnlockGoldenBomberIfEligible(raiseEvent: true);
     }
 
-    public static BomberSkin GetFallbackUnlockedSkin(BomberSkin preferredFallback = BomberSkin.White)
+    public static BomberSkin GetFallbackUnlockedSkin(BomberSkin preferredFallback = BomberSkin.Palette1)
     {
         if (IsUnlocked(preferredFallback))
             return preferredFallback;
@@ -193,10 +193,10 @@ public static class UnlockProgress
                 return skin;
         }
 
-        return BomberSkin.White;
+        return BomberSkin.Palette1;
     }
 
-    public static BomberSkin ClampToUnlocked(BomberSkin skin, BomberSkin preferredFallback = BomberSkin.White)
+    public static BomberSkin ClampToUnlocked(BomberSkin skin, BomberSkin preferredFallback = BomberSkin.Palette1)
     {
         return IsUnlocked(skin) ? skin : GetFallbackUnlockedSkin(preferredFallback);
     }
@@ -208,7 +208,7 @@ public static class UnlockProgress
 
     private static bool TryUnlockGoldenBomberIfEligible(bool raiseEvent)
     {
-        if (IsUnlocked(BomberSkin.Golden))
+        if (IsUnlocked(BomberSkin.Palette20))
         {
             SLog("TryUnlockGoldenBomberIfEligible | Golden already unlocked");
             return false;
@@ -220,14 +220,14 @@ public static class UnlockProgress
             return false;
         }
 
-        string goldenName = BomberSkin.Golden.ToString();
+        string goldenName = BomberSkin.Palette20.ToString();
         SaveSystem.Data.unlockedSkins.Add(goldenName);
         SaveSystem.Save();
 
         SLog($"TryUnlockGoldenBomberIfEligible | Golden unlocked | raiseEvent={raiseEvent}");
 
         if (raiseEvent)
-            OnSkinUnlocked?.Invoke(BomberSkin.Golden);
+            OnSkinUnlocked?.Invoke(BomberSkin.Palette20);
 
         return true;
     }

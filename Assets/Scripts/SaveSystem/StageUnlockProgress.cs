@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 public static class StageUnlockProgress
 {
@@ -306,9 +306,9 @@ public static class StageUnlockProgress
             Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty = SaveSystem.GetActiveNormalGameDifficulty();
             BomberSkin skinReward = difficulty switch
             {
-                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => BomberSkin.Purple,
-                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => BomberSkin.Gold,
-                _ => BomberSkin.Orange
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => BomberSkin.Palette6,
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => BomberSkin.Palette19,
+                _ => BomberSkin.Palette13
             };
 
             if (UnlockProgress.Unlock(skinReward))

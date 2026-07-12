@@ -40,16 +40,16 @@ public static class AchievementCatalog
 
         return new[]
         {
-            Skin(BomberSkin.Gray, "GRAY"),
-            Skin(BomberSkin.Orange, "ORANGE"),
-            Skin(BomberSkin.Purple, "PURPLE"),
-            Skin(BomberSkin.Cyan, "CYAN"),
-            Skin(BomberSkin.Brown, "BROWN"),
-            Skin(BomberSkin.DarkGreen, "DARK GREEN"),
-            Skin(BomberSkin.DarkBlue, "DARK BLUE"),
-            Skin(BomberSkin.Magenta, "MAGENTA"),
-            Skin(BomberSkin.Nightmare, "NIGHTMARE"),
-            Skin(BomberSkin.Gold, "GOLD"),
+            Skin(BomberSkin.Palette9, "PALETTE 9"),
+            Skin(BomberSkin.Palette13, "PALETTE 13"),
+            Skin(BomberSkin.Palette6, "PALETTE 6"),
+            Skin(BomberSkin.Palette14, "PALETTE 14"),
+            Skin(BomberSkin.Palette10, "PALETTE 10"),
+            Skin(BomberSkin.Palette11, "PALETTE 11"),
+            Skin(BomberSkin.Palette12, "PALETTE 12"),
+            Skin(BomberSkin.Palette8, "PALETTE 8"),
+            Skin(BomberSkin.Palette21, "PALETTE 21"),
+            Skin(BomberSkin.Palette19, "PALETTE 19"),
             new(
                 "BossRush",
                 text.AchievementBossRush,
@@ -79,7 +79,7 @@ public static class AchievementCatalog
             BattleStage(13, text.HintWinAnyBattleStage, UnlockProgress.IsBattleModeStage13Unlocked),
             BattleStage(14, text.HintWin7BattleStages, UnlockProgress.IsBattleModeStage14Unlocked),
             BattleStage(15, text.HintWinAllOtherBattleStages, UnlockProgress.IsBattleModeStage15Unlocked),
-            Skin(BomberSkin.Golden, text.AchievementGolden, requiredForGolden: false)
+            Skin(BomberSkin.Palette20, "PALETTE 20", requiredForGolden: false)
         };
     }
 

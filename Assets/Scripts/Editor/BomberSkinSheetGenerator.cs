@@ -61,21 +61,21 @@ public static class BomberSkinSheetGenerator
         if (generatedAny)
             AssetDatabase.Refresh();
 
-        UpdatePlayerPrefabWhiteBomberReferences();
+        UpdatePlayerPrefabPalette1References();
 
         BomberHudPortraitGenerator.GenerateAll();
     }
 
-    static void UpdatePlayerPrefabWhiteBomberReferences()
+    static void UpdatePlayerPrefabPalette1References()
     {
         const string prefabPath = "Assets/Prefabs/Player.prefab";
-        const string sheetPath = "Assets/Resources/Sprites/Bombers/Bomberman/Generated/Bomberman/WhiteBomber.png";
+        const string sheetPath = "Assets/Resources/Sprites/Bombers/Bomberman/Generated/Bomberman/Bomberman1.png";
         Object[] assets = AssetDatabase.LoadAllAssetsAtPath(sheetPath);
-        Dictionary<int, Sprite> whiteFrames = new();
+        Dictionary<int, Sprite> palette1Frames = new();
         for (int i = 0; i < assets.Length; i++)
-            if (assets[i] is Sprite sprite && TryGetFrameIndex(sprite.name, out int frame)) whiteFrames[frame] = sprite;
+            if (assets[i] is Sprite sprite && TryGetFrameIndex(sprite.name, out int frame)) palette1Frames[frame] = sprite;
 
-        if (whiteFrames.Count == 0)
+        if (palette1Frames.Count == 0)
             return;
 
         GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
@@ -84,7 +84,7 @@ public static class BomberSkinSheetGenerator
 
         foreach (AnimatedSpriteRenderer renderer in root.GetComponentsInChildren<AnimatedSpriteRenderer>(true))
         {
-            if (RendererNeedsWhiteBomberRefresh(renderer, whiteFrames))
+            if (RendererNeedsPalette1Refresh(renderer, palette1Frames))
             {
                 needsSkinApply = true;
                 break;
@@ -98,7 +98,7 @@ public static class BomberSkinSheetGenerator
                 if (skinController == null)
                     continue;
 
-                skinController.Apply(BomberCharacter.Bomberman, BomberSkin.White);
+                skinController.Apply(BomberCharacter.Bomberman, BomberSkin.Palette1);
             }
 
             changed = true;
@@ -114,7 +114,7 @@ public static class BomberSkinSheetGenerator
             {
                 if (frames[i] != null &&
                     TryGetFrameIndex(frames[i].name, out int frame) &&
-                    whiteFrames.TryGetValue(frame, out Sprite replacement) &&
+                    palette1Frames.TryGetValue(frame, out Sprite replacement) &&
                     frames[i] != replacement)
                 {
                     frames[i] = replacement;
@@ -127,7 +127,7 @@ public static class BomberSkinSheetGenerator
         PrefabUtility.UnloadPrefabContents(root);
     }
 
-    static bool RendererNeedsWhiteBomberRefresh(AnimatedSpriteRenderer renderer, Dictionary<int, Sprite> whiteFrames)
+    static bool RendererNeedsPalette1Refresh(AnimatedSpriteRenderer renderer, Dictionary<int, Sprite> palette1Frames)
     {
         if (renderer == null)
             return false;
@@ -136,8 +136,8 @@ public static class BomberSkinSheetGenerator
             return true;
 
         if (TryGetFrameIndex(renderer.idleSprite.name, out int idleFrame) &&
-            whiteFrames.TryGetValue(idleFrame, out Sprite whiteIdle) &&
-            renderer.idleSprite != whiteIdle)
+            palette1Frames.TryGetValue(idleFrame, out Sprite palette1Idle) &&
+            renderer.idleSprite != palette1Idle)
         {
             return true;
         }
@@ -153,8 +153,8 @@ public static class BomberSkinSheetGenerator
                 return true;
 
             if (TryGetFrameIndex(frameSprite.name, out int frame) &&
-                whiteFrames.TryGetValue(frame, out Sprite whiteFrame) &&
-                frameSprite != whiteFrame)
+                palette1Frames.TryGetValue(frame, out Sprite palette1Frame) &&
+                frameSprite != palette1Frame)
             {
                 return true;
             }

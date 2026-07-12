@@ -23,31 +23,31 @@ public static class BomberSkinResourceCatalog
 
     public static readonly BomberSkin[] BombermanSkins =
     {
-        BomberSkin.White,
-        BomberSkin.Black,
-        BomberSkin.Red,
-        BomberSkin.Blue,
-        BomberSkin.Green,
-        BomberSkin.Purple,
-        BomberSkin.Pink,
-        BomberSkin.Magenta,
-        BomberSkin.Gray,
-        BomberSkin.Brown,
-        BomberSkin.DarkGreen,
-        BomberSkin.DarkBlue,
-        BomberSkin.Orange,
-        BomberSkin.Cyan,
-        BomberSkin.Aqua,
-        BomberSkin.DarkPurple,
-        BomberSkin.Yellow,
-        BomberSkin.NeonGreen,
-        BomberSkin.Gold,
-        BomberSkin.Golden,
-        BomberSkin.Nightmare,
-        BomberSkin.Alternative1,
-        BomberSkin.Alternative2,
-        BomberSkin.Alternative3,
-        BomberSkin.Alternative4,
+        BomberSkin.Palette1,
+        BomberSkin.Palette2,
+        BomberSkin.Palette3,
+        BomberSkin.Palette4,
+        BomberSkin.Palette5,
+        BomberSkin.Palette6,
+        BomberSkin.Palette7,
+        BomberSkin.Palette8,
+        BomberSkin.Palette9,
+        BomberSkin.Palette10,
+        BomberSkin.Palette11,
+        BomberSkin.Palette12,
+        BomberSkin.Palette13,
+        BomberSkin.Palette14,
+        BomberSkin.Palette15,
+        BomberSkin.Palette16,
+        BomberSkin.Palette17,
+        BomberSkin.Palette18,
+        BomberSkin.Palette19,
+        BomberSkin.Palette20,
+        BomberSkin.Palette21,
+        BomberSkin.Palette22,
+        BomberSkin.Palette23,
+        BomberSkin.Palette24,
+        BomberSkin.Palette25,
         BomberSkin.Palette26,
         BomberSkin.Palette27,
         BomberSkin.Palette28,
@@ -109,8 +109,13 @@ public static class BomberSkinResourceCatalog
 
     public static string GetSheetName(string characterFolderName, BomberSkin skin)
     {
-        string characterSuffix = characterFolderName == "Bomberman" ? "Bomber" : characterFolderName;
-        return skin + characterSuffix;
+        return characterFolderName + GetPaletteNumber(skin);
+    }
+
+    public static int GetPaletteNumber(BomberSkin skin)
+    {
+        int value = (int)skin;
+        return value >= 1 ? value : 1;
     }
 
     public static string GetCharacterFolderName(BomberCharacter character)
@@ -141,7 +146,7 @@ public static class BomberSkinResourceCatalog
                 return BombermanSkins[i];
         }
 
-        return BomberSkin.White;
+        return BomberSkin.Palette1;
     }
 
     static void EnsureCharacterCatalog()
@@ -211,13 +216,17 @@ public static class BomberSkinResourceCatalog
 
     static bool IsGeneratedSheet(string assetName)
     {
-        for (int i = 0; i < BombermanSkins.Length; i++)
-        {
-            if (assetName.StartsWith(BombermanSkins[i].ToString(), StringComparison.Ordinal))
-                return true;
-        }
+        if (string.IsNullOrWhiteSpace(assetName))
+            return false;
 
-        return false;
+        int i = assetName.Length - 1;
+        if (i < 0 || !char.IsDigit(assetName[i]))
+            return false;
+
+        while (i >= 0 && char.IsDigit(assetName[i]))
+            i--;
+
+        return i >= 0;
     }
 
     static int ComputeDynamicCharacterId(string folderName)

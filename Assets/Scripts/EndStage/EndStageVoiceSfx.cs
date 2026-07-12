@@ -213,7 +213,7 @@ public static class EndStageVoiceSfx
         if (state == null)
             state = PlayerPersistentStats.Get(playerId);
 
-        return state != null && state.Skin == BomberSkin.Nightmare;
+        return state != null && state.Skin == BomberSkin.Palette21;
     }
 
     static string DescribePlayer(MovementController movement)
