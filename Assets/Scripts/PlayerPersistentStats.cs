@@ -232,6 +232,38 @@ public static class PlayerPersistentStats
         SaveSelectedSkin(playerId);
     }
 
+    static void ResetGameplayDefaultsPreservingSelection(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        var s = Get(playerId);
+        BomberCharacter selectedCharacter = s.Character;
+        BomberSkin selectedSkin = s.Skin;
+
+        s.BombAmount = 1;
+        s.ExplosionRadius = 1;
+        s.SpeedInternal = BaseSpeedNormal;
+
+        s.Life = 1;
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedType.None;
+        s.QueuedEggs.Clear();
+
+        s.Character = selectedCharacter;
+        s.Skin = selectedSkin;
+    }
+
     public static BomberSkin GetDefaultSkinForPlayer(int playerId)
     {
         playerId = Mathf.Clamp(playerId, 1, 6);
@@ -1463,7 +1495,13 @@ public static class PlayerPersistentStats
 
     public static void ResetSessionForReturnToTitle()
     {
-        ResetToDefaultsAll();
+        EnsureSessionBooted();
+
+        for (int i = 1; i <= 6; i++)
+            ResetGameplayDefaultsPreservingSelection(i);
+
+        stageActive = false;
+        sessionBooted = true;
         BootSession();
     }
 

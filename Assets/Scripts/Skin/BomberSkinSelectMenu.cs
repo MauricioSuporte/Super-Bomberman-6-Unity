@@ -1878,6 +1878,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         var state = PlayerPersistentStats.Get(cursor.playerId);
         BomberCharacter savedCharacter = state.Character;
+        BomberSkin requestedSkin = state.Skin;
         int index = selectableCharacters.IndexOf(savedCharacter);
 
         if (index < 0)
@@ -1889,12 +1890,18 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (index < 0)
             index = 0;
 
-        BomberSkin savedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(savedCharacter, state.Skin);
+        BomberSkin savedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(
+            savedCharacter,
+            UnlockProgress.ClampToUnlocked(requestedSkin, PlayerPersistentStats.GetDefaultSkinForPlayer(cursor.playerId)));
 
         cursor.index = index;
         cursor.selectedCharacter = savedCharacter;
         cursor.selected = savedSkin;
         cursor.selectedPaletteIndex = GetPaletteIndex(savedSkin, cursor.playerId);
+        cursor.selectedPaletteIndex = FindAvailablePaletteIndex(savedCharacter, cursor.selectedPaletteIndex, 1);
+        cursor.selected = selectableSkins != null && selectableSkins.Count > 0
+            ? selectableSkins[cursor.selectedPaletteIndex]
+            : savedSkin;
         cursor.selectedIndex = -1;
         cursor.confirmed = false;
     }
