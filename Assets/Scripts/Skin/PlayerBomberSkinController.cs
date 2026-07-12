@@ -27,7 +27,7 @@ public class PlayerBomberSkinController : MonoBehaviour
     static readonly int[] MinerBomberAfkFrames = { 128, 129, 130, 131, 132, 132, 131, 130, 129 };
     static readonly int[] KamikazeBomberAfkFrames =
     {
-        128, 129, 130, 131, 128, 129, 130, 131, 132,
+        128, 129, 130, 131, 128, 129, 130, 132,
         136, 137, 138, 136, 137, 138, 139, 140
     };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };

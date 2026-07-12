@@ -24,4 +24,4 @@ MonoBehaviour:
   m_AnimationStartTime: 0
   UseSpecifiedTime: 0
   SpecifiedTime: 0.25
-  m_TileColliderType: 1
+  m_TileColliderType: 0
