@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: AnimatedWoodWater
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: -1324352047642890534, guid: 9e12dfd5abb84e549ae77242b5f1fec4, type: 3}
+  - {fileID: 1542130574, guid: 9e12dfd5abb84e549ae77242b5f1fec4, type: 3}
+  - {fileID: 1379510897, guid: 9e12dfd5abb84e549ae77242b5f1fec4, type: 3}
+  - {fileID: 702426797, guid: 9e12dfd5abb84e549ae77242b5f1fec4, type: 3}
+  - {fileID: 2123565875, guid: 9e12dfd5abb84e549ae77242b5f1fec4, type: 3}
+  - {fileID: -96703367, guid: 9e12dfd5abb84e549ae77242b5f1fec4, type: 3}
+  m_MinSpeed: 8
+  m_MaxSpeed: 8
+  m_AnimationStartTime: 0
+  UseSpecifiedTime: 0
+  SpecifiedTime: 0.25
+  m_TileColliderType: 0
