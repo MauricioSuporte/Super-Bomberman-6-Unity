@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 83a8db70a80c6cd43bc6f356de73517b
+guid: f2e544451e0dff74db9ff6a88bed42d1
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -3850,8 +3850,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: dc0f08926d4894844a8c87e81e4b2a3f
-      internalID: -1160889014
+      spriteID: 2a3575046be3f7e4ea49c4fadc64e28c
+      internalID: -265435193
       vertices: []
       indices: 
       edges: []
@@ -3872,8 +3872,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 07a700cc9a7e24b4094408b3b6673ffd
-      internalID: 1151763386
+      spriteID: 5d1898ba307a9dd41afd07e8685017f2
+      internalID: 1810924041
       vertices: []
       indices: 
       edges: []
@@ -3894,8 +3894,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5cc1971499529c9418c2158dfa454dea
-      internalID: -1687752886
+      spriteID: 09d9782852d61e74fa72dd56b753e329
+      internalID: -417099715
       vertices: []
       indices: 
       edges: []
@@ -3904,7 +3904,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 9f465785d35d6834683c1c99266dba35
+    spriteID: b768f39f654dbc948943081644c93ffd
     internalID: 0
     vertices: []
     indices: 
@@ -3972,10 +3972,10 @@ TextureImporter:
       KamikazeBomber17_146: -4162284845282520757
       KamikazeBomber17_147: -4355545361894848244
       KamikazeBomber17_148: -4104548760395741818
-      KamikazeBomber17_149: -1160889014
+      KamikazeBomber17_149: -265435193
       KamikazeBomber17_15: -1762000746883554198
-      KamikazeBomber17_150: 1151763386
-      KamikazeBomber17_151: -1687752886
+      KamikazeBomber17_150: 1810924041
+      KamikazeBomber17_151: -417099715
       KamikazeBomber17_16: 6256945612713048577
       KamikazeBomber17_17: 863033749994723402
       KamikazeBomber17_18: -2083037299584655361
