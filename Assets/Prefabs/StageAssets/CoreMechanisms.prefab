@@ -223,6 +223,8 @@ MonoBehaviour:
   deathRenderer: {fileID: 4348542348863554639}
   deathDurationSeconds: 0.5
   playDeathOnStart: 0
+  allDestroyedSfx: {fileID: 8300000, guid: 0b1a5277894748f4b9be37811976bcbf, type: 3}
+  allDestroyedSfxVolume: 3
 --- !u!114 &3627800146579448321
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,6 +239,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoreMechanismsTileHandler
   deathPrefab: {fileID: 2751961180514227184}
   spawnOffset: {x: 0, y: 0, z: 0}
+  allDestroyedSfx: {fileID: 8300000, guid: 0b1a5277894748f4b9be37811976bcbf, type: 3}
+  allDestroyedSfxVolume: 3
 --- !u!1 &4193804359411325140
 GameObject:
   m_ObjectHideFlags: 0

@@ -54,8 +54,7 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
     private void RefreshPlayers()
     {
         cachedPlayers = FindObjectsByType<MovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
+            FindObjectsInactive.Exclude);
     }
 
     private void ApplyPlayerSorting()
