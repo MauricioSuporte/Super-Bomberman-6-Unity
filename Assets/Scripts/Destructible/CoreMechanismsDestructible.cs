@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public sealed class CoreMechanismsDestructible : Destructible
 {
+    public static event Action AllCoreMechanismsDestroyed;
+
     [SerializeField] private AnimatedSpriteRenderer animationRenderer;
     [SerializeField] private AnimatedSpriteRenderer deathRenderer;
     [SerializeField, Min(0.01f)] private float deathDurationSeconds = 0.5f;
@@ -18,6 +21,7 @@ public sealed class CoreMechanismsDestructible : Destructible
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStaticStateOnSubsystemRegistration()
     {
+        AllCoreMechanismsDestroyed = null;
         allDestroyedSfxPlayed = false;
         sceneHandleRaw = ulong.MaxValue;
     }
@@ -51,7 +55,10 @@ public sealed class CoreMechanismsDestructible : Destructible
 
         bool allDestroyed = !HasRemainingAliveCoreMechanisms();
         if (allDestroyed)
+        {
             PlayAllDestroyedSfx();
+            AllCoreMechanismsDestroyed?.Invoke();
+        }
 
         StartCoroutine(DeathRoutine());
     }

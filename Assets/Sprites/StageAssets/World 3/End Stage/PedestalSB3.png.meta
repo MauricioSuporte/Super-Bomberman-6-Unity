@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3c0d73b5f2402554d9c2bafced2dd323
+guid: 721992bfb07600f4b818f756dfbd3221
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8489610400520284380
-    second: EndStageSB3_0
+      213: 8832108435107651538
+    second: PedestalSB3_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: EndStageSB3_0
+      name: PedestalSB3_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,14 +128,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cd8297ceda721d570800000000000000
-      internalID: 8489610400520284380
+      spriteID: 2df9254c3d3f19a70800000000000000
+      internalID: 8832108435107651538
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_1
+      name: PedestalSB3_1
       rect:
         serializedVersion: 2
         x: 16
@@ -150,14 +150,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a564aba460046b141a43fe89bbe9abab
-      internalID: -420290086
+      spriteID: d3af1ad25237313449bc5f132aee4541
+      internalID: -1290306406
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_2
+      name: PedestalSB3_2
       rect:
         serializedVersion: 2
         x: 32
@@ -172,14 +172,80 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3245998fdf5726043b810a99017d79ed
-      internalID: -1856815779
+      spriteID: bf53f46b08f63aa44a4008aea85651a6
+      internalID: 594909857
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_3
+      name: PedestalSB3_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 821e1f7225f8b0b47b75df174798a16d
+      internalID: -379869163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 801ba7b02e68dda479f8084a3247a2d2
+      internalID: 2122903858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_5
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dee2e1e7b7b78ee41a01a7c799f48348
+      internalID: -1247159562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_6
       rect:
         serializedVersion: 2
         x: 0
@@ -194,14 +260,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 10e49844707bf9346b6896dbb98dee2f
-      internalID: -1256865857
+      spriteID: aca64a3853690f24388843504965406c
+      internalID: 2101327868
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_4
+      name: PedestalSB3_7
       rect:
         serializedVersion: 2
         x: 16
@@ -216,14 +282,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 69565728d67fb7846a4388702e374798
-      internalID: -219094305
+      spriteID: 4a1a679eba4c1284c9510ec7c9cd0cde
+      internalID: -972182209
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_5
+      name: PedestalSB3_8
       rect:
         serializedVersion: 2
         x: 32
@@ -238,14 +304,80 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 55df99a2f52fe1e4aa568570be6dd5aa
-      internalID: 358550023
+      spriteID: 3a4c8d45120d1be45849252d6bb19572
+      internalID: 743999769
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_6
+      name: PedestalSB3_9
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5586935213197be46b1a8a8ae758e8a4
+      internalID: -2018860384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_10
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 79575ba3abf01dc44bc841c0ce47cfff
+      internalID: 1336565305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_11
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82dbb172e7984c24cba3862e462c7806
+      internalID: -2023442882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_12
       rect:
         serializedVersion: 2
         x: 0
@@ -260,14 +392,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a7979ba3130398d4782c30053b7b55f6
-      internalID: 796367379
+      spriteID: afcada884d3103140978f56dfacc6daa
+      internalID: -1781165303
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_7
+      name: PedestalSB3_13
       rect:
         serializedVersion: 2
         x: 16
@@ -282,14 +414,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c2e910f76f9df994d8d16f65b2910b54
-      internalID: -1526787288
+      spriteID: 592d47cc37609434b8a9360561addcc8
+      internalID: 750714155
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: EndStageSB3_8
+      name: PedestalSB3_14
       rect:
         serializedVersion: 2
         x: 32
@@ -304,8 +436,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: dd1fd90fec7fd274199444702e241ee0
-      internalID: -2051298384
+      spriteID: 9b9b438156658c24fab556953a0a2e77
+      internalID: 484377664
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_15
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b420e3fc45640a459531e686f242a09
+      internalID: -866741681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_16
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a71d3dd695d3dde43aab999459c9de73
+      internalID: 337156937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PedestalSB3_17
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7885a323cd498354396e62bc627eccab
+      internalID: 1680626958
       vertices: []
       indices: 
       edges: []
@@ -314,7 +512,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e00f7ca5bcd01c43a357146cee086ff
+    spriteID: a8abdb09b79d3934b84f45aab3d0b6d2
     internalID: 0
     vertices: []
     indices: 
@@ -326,15 +524,24 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      EndStageSB3_0: 8489610400520284380
-      EndStageSB3_1: -420290086
-      EndStageSB3_2: -1856815779
-      EndStageSB3_3: -1256865857
-      EndStageSB3_4: -219094305
-      EndStageSB3_5: 358550023
-      EndStageSB3_6: 796367379
-      EndStageSB3_7: -1526787288
-      EndStageSB3_8: -2051298384
+      PedestalSB3_0: 8832108435107651538
+      PedestalSB3_1: -1290306406
+      PedestalSB3_10: 1336565305
+      PedestalSB3_11: -2023442882
+      PedestalSB3_12: -1781165303
+      PedestalSB3_13: 750714155
+      PedestalSB3_14: 484377664
+      PedestalSB3_15: -866741681
+      PedestalSB3_16: 337156937
+      PedestalSB3_17: 1680626958
+      PedestalSB3_2: 594909857
+      PedestalSB3_3: -379869163
+      PedestalSB3_4: 2122903858
+      PedestalSB3_5: -1247159562
+      PedestalSB3_6: 2101327868
+      PedestalSB3_7: -972182209
+      PedestalSB3_8: 743999769
+      PedestalSB3_9: -2018860384
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
