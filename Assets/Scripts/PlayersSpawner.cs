@@ -168,6 +168,9 @@ public sealed class PlayersSpawner : MonoBehaviour
 
             var go = Instantiate(playerPrefab, spawnPos, Quaternion.identity, playersParent);
 
+            if (IsWorld3WaterStage() && go.GetComponent<PlayerWaterSubmersionEffect>() == null)
+                go.AddComponent<PlayerWaterSubmersionEffect>();
+
             if (!go.TryGetComponent<PlayerIdentity>(out var id))
                 id = go.AddComponent<PlayerIdentity>();
 
@@ -310,5 +313,13 @@ public sealed class PlayersSpawner : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static bool IsWorld3WaterStage()
+    {
+        return string.Equals(
+            SceneManager.GetActiveScene().name,
+            "Stage_3-1",
+            StringComparison.OrdinalIgnoreCase);
     }
 }
