@@ -12,6 +12,7 @@ public sealed class EndStagePortal : EndStage
     [SerializeField] private bool enableLoopWhenUnlocked = true;
 
     private Collider2D col;
+    private bool forceHiddenVisuals;
 
     private void Awake()
     {
@@ -27,6 +28,12 @@ public sealed class EndStagePortal : EndStage
     {
         if (portalRenderer != null)
         {
+            if (forceHiddenVisuals)
+            {
+                HideVisuals();
+                return;
+            }
+
             portalRenderer.enabled = true;
 
             portalRenderer.idle = true;
@@ -42,6 +49,12 @@ public sealed class EndStagePortal : EndStage
     {
         if (portalRenderer != null)
         {
+            if (forceHiddenVisuals)
+            {
+                HideVisuals();
+                return;
+            }
+
             portalRenderer.enabled = true;
 
             portalRenderer.idle = false;
@@ -50,6 +63,30 @@ public sealed class EndStagePortal : EndStage
 
             portalRenderer.CurrentFrame = 0;
             portalRenderer.RefreshFrame();
+        }
+    }
+
+    public void SetForceHiddenVisuals(bool value)
+    {
+        forceHiddenVisuals = value;
+        if (forceHiddenVisuals)
+            HideVisuals();
+    }
+
+    private void HideVisuals()
+    {
+        SpriteRenderer[] spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            if (spriteRenderers[i] != null)
+                spriteRenderers[i].enabled = false;
+        }
+
+        AnimatedSpriteRenderer[] animatedRenderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < animatedRenderers.Length; i++)
+        {
+            if (animatedRenderers[i] != null)
+                animatedRenderers[i].enabled = false;
         }
     }
 }

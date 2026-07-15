@@ -119,6 +119,63 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &56179437
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_Name
+      value: RedRobot (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 4.990546
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.7650526
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a8ad655126f70524182569d5f875127c, type: 3}
 --- !u!1 &59654199
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,6 +462,63 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
   m_PrefabInstance: {fileID: 161471102}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &192296849
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_Name
+      value: RedRobot (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -6.923668
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -5.9236093
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a8ad655126f70524182569d5f875127c, type: 3}
 --- !u!1 &268450098
 GameObject:
   m_ObjectHideFlags: 0
@@ -7549,6 +7663,63 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1001 &1898017870
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_Name
+      value: RedRobot
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 4.969765
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -5.860643
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a8ad655126f70524182569d5f875127c, type: 3}
 --- !u!1 &2033100001
 GameObject:
   m_ObjectHideFlags: 0
@@ -7612,14 +7783,22 @@ MonoBehaviour:
   bubbleCrashBounceCount: 3
   bubbleCrashBlinkOutDuration: 0.25
   bubbleCrashPixelsPerUnit: 16
+  chipBlinkOutDuration: 1
+  chipBlinkOutInterval: 0.1
   indestructibleTilemap: {fileID: 818279435}
   tileSwaps:
   - sourceTile: {fileID: 11400000, guid: 04454246cd2007f4fbc91a4077ce2c0e, type: 2}
     targetTile: {fileID: 11400000, guid: 3ae2b8c104d8fc5488a5d423d93529cd, type: 2}
+    spawnInvisibleEndStagePortal: 1
   - sourceTile: {fileID: 11400000, guid: a480175ae2603c24aa201d13d926f9a7, type: 2}
     targetTile: {fileID: 11400000, guid: 92740608efbee704d832bb6e93536c49, type: 2}
+    spawnInvisibleEndStagePortal: 0
   - sourceTile: {fileID: 11400000, guid: fec4ff8329784244abe942980b861cb5, type: 2}
     targetTile: {fileID: 11400000, guid: 3932bbd11170148479b5771c7d765795, type: 2}
+    spawnInvisibleEndStagePortal: 0
+  endStagePortalPrefab: {fileID: 0}
+  endStagePortalResourcesPath: Portal/EndStagePortal
+  endStagePortalOffset: {x: 0, y: 0, z: 0}
   objectsToDisableOnSequence: []
   fallbackObjectNamesToDisable:
   - Bubble
@@ -7706,3 +7885,6 @@ SceneRoots:
   - {fileID: 1334625510}
   - {fileID: 1064587303}
   - {fileID: 2033100002}
+  - {fileID: 1898017870}
+  - {fileID: 192296849}
+  - {fileID: 56179437}

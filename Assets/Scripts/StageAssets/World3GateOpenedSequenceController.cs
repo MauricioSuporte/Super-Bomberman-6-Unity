@@ -12,6 +12,7 @@ namespace StageAssets
         {
             public TileBase sourceTile;
             public TileBase targetTile;
+            public bool spawnInvisibleEndStagePortal;
         }
 
         [SerializeField, Min(0f)] private float delayAfterGateOpenedSeconds = 1f;
@@ -33,12 +34,19 @@ namespace StageAssets
         [SerializeField, Min(1)] private int bubbleCrashBounceCount = 3;
         [SerializeField, Min(0f)] private float bubbleCrashBlinkOutDuration = 0.25f;
         [SerializeField, Min(1f)] private float bubbleCrashPixelsPerUnit = 16f;
+        [SerializeField, Min(0f)] private float chipBlinkOutDuration = 1f;
+        [SerializeField, Min(0.01f)] private float chipBlinkOutInterval = 0.1f;
         [SerializeField] private Tilemap indestructibleTilemap;
         [SerializeField] private IndestructibleTileSwap[] tileSwaps;
+        [SerializeField] private EndStagePortal endStagePortalPrefab;
+        [SerializeField] private string endStagePortalResourcesPath = "Portal/EndStagePortal";
+        [SerializeField] private Vector3 endStagePortalOffset = Vector3.zero;
         [SerializeField] private GameObject[] objectsToDisableOnSequence;
         [SerializeField] private string[] fallbackObjectNamesToDisable = { "Bubble" };
 
         private bool sequenceStarted;
+        private bool endStagePortalSpawned;
+        private bool chipBlinkOutStarted;
         private readonly List<GameObject> bubbleCrashPhase1Pieces = new();
 
         private void OnEnable()
@@ -302,9 +310,45 @@ namespace StageAssets
                     if (GameManager.Instance != null)
                         GameManager.Instance.OnIndestructiblePlaced(cell);
 
+                    if (tileSwaps[i].spawnInvisibleEndStagePortal)
+                        TrySpawnInvisibleEndStagePortal(cell);
+
                     break;
                 }
             }
+        }
+
+        private void TrySpawnInvisibleEndStagePortal(Vector3Int cell)
+        {
+            if (endStagePortalSpawned || indestructibleTilemap == null)
+                return;
+
+            EndStagePortal prefab = ResolveEndStagePortalPrefab();
+            if (prefab == null)
+                return;
+
+            Vector3 world = indestructibleTilemap.GetCellCenterWorld(cell) + endStagePortalOffset;
+            EndStagePortal portal = Instantiate(prefab, world, Quaternion.identity, transform);
+            portal.name = "World3InvisibleEndStagePortal";
+            portal.SetForceHiddenVisuals(true);
+            portal.ForceUnlock();
+
+            if (!portal.TryGetComponent<World3EndStagePortalEnemyCleanup>(out _))
+                portal.gameObject.AddComponent<World3EndStagePortalEnemyCleanup>();
+
+            endStagePortalSpawned = true;
+        }
+
+        private EndStagePortal ResolveEndStagePortalPrefab()
+        {
+            if (endStagePortalPrefab != null)
+                return endStagePortalPrefab;
+
+            if (string.IsNullOrWhiteSpace(endStagePortalResourcesPath))
+                return null;
+
+            endStagePortalPrefab = Resources.Load<EndStagePortal>(endStagePortalResourcesPath);
+            return endStagePortalPrefab;
         }
 
         private static float GetBoostedSfxVolume(float volume)
@@ -338,6 +382,49 @@ namespace StageAssets
 
                 candidate.gameObject.SetActive(false);
             }
+        }
+
+        public void BeginChipBlinkOut()
+        {
+            if (chipBlinkOutStarted)
+                return;
+
+            chipBlinkOutStarted = true;
+            StartCoroutine(BlinkAndDisableChipRoutine());
+        }
+
+        private IEnumerator BlinkAndDisableChipRoutine()
+        {
+            Transform chip = FindBubbleChipChild("Chip");
+            if (chip == null)
+                yield break;
+
+            AnimatedSpriteRenderer animatedRenderer = chip.GetComponent<AnimatedSpriteRenderer>();
+            if (animatedRenderer != null)
+                animatedRenderer.enabled = false;
+
+            SpriteRenderer spriteRenderer = chip.GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null)
+            {
+                chip.gameObject.SetActive(false);
+                yield break;
+            }
+
+            float duration = Mathf.Max(0f, chipBlinkOutDuration);
+            float interval = Mathf.Max(0.01f, chipBlinkOutInterval);
+            float elapsed = 0f;
+            bool visible = true;
+
+            while (elapsed < duration)
+            {
+                visible = !visible;
+                spriteRenderer.enabled = visible;
+
+                yield return new WaitForSeconds(interval);
+                elapsed += interval;
+            }
+
+            chip.gameObject.SetActive(false);
         }
 
         private static Transform FindBubbleChipChild(string childName)
