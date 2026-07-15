@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -6,8 +7,6 @@ namespace StageAssets
 {
     public sealed class World3GateOpenedSequenceController : MonoBehaviour
     {
-        private const string BubbleCrashLogPrefix = "[World3BubbleCrash]";
-
         [System.Serializable]
         public struct IndestructibleTileSwap
         {
@@ -23,12 +22,24 @@ namespace StageAssets
         [SerializeField, Min(0)] private int bubbleCrashSpriteCount = 6;
         [SerializeField, Min(0f)] private float bubbleCrashRadius = 0.45f;
         [SerializeField] private Vector2 bubbleCrashCenterOffset = Vector2.zero;
+        [SerializeField, Min(0f)] private float bubbleCrashPhase2Delay = 1f;
+        [SerializeField, Min(1)] private int bubbleCrashThrownSpriteCount = 8;
+        [SerializeField, Min(0f)] private float bubbleCrashFirstFlightDuration = 1f;
+        [SerializeField, Min(0f)] private float bubbleCrashFirstFlightDistanceTiles = 2f;
+        [SerializeField, Min(0f)] private float bubbleCrashFirstFlightHeightTiles = 4f;
+        [SerializeField, Min(0f)] private float bubbleCrashBounceDuration = 1f;
+        [SerializeField, Min(0f)] private float bubbleCrashBounceDistanceTiles = 2f;
+        [SerializeField, Min(0f)] private float bubbleCrashBounceHeightTiles = 1f;
+        [SerializeField, Min(1)] private int bubbleCrashBounceCount = 3;
+        [SerializeField, Min(0f)] private float bubbleCrashBlinkOutDuration = 0.25f;
+        [SerializeField, Min(1f)] private float bubbleCrashPixelsPerUnit = 16f;
         [SerializeField] private Tilemap indestructibleTilemap;
         [SerializeField] private IndestructibleTileSwap[] tileSwaps;
         [SerializeField] private GameObject[] objectsToDisableOnSequence;
         [SerializeField] private string[] fallbackObjectNamesToDisable = { "Bubble" };
 
         private bool sequenceStarted;
+        private readonly List<GameObject> bubbleCrashPhase1Pieces = new();
 
         private void OnEnable()
         {
@@ -55,7 +66,6 @@ namespace StageAssets
             if (delayAfterGateOpenedSeconds > 0f)
                 yield return new WaitForSeconds(delayAfterGateOpenedSeconds);
 
-            PlayBubbleCrashSfx();
             SpawnBubbleCrashSprites();
             ApplyTileSwaps();
             DisableSequenceObjects();
@@ -80,18 +90,10 @@ namespace StageAssets
             ResolveBubbleCrashSpriteIfNeeded();
 
             if (bubbleCrashSprite == null)
-            {
-                Debug.LogWarning($"{BubbleCrashLogPrefix} Spawn skipped: bubbleCrashSprite is NULL. " +
-                                 $"Editor fallback path='{bubbleCrashSpriteEditorPath}'. " +
-                                 "Assign the sprite on the Stage_3-1 controller if this is running outside the Unity Editor.", this);
                 return;
-            }
 
             if (bubbleCrashSpriteCount <= 0)
-            {
-                Debug.LogWarning($"{BubbleCrashLogPrefix} Spawn skipped: bubbleCrashSpriteCount is {bubbleCrashSpriteCount}.", this);
                 return;
-            }
 
             Transform chip = FindBubbleChipChild("Chip");
             Vector3 center = chip != null ? chip.position : transform.position;
@@ -99,21 +101,17 @@ namespace StageAssets
 
             Transform parent = transform;
             int sortingLayerId = 0;
-            string sortingLayerName = "Default";
             int backSortingOrder = 8;
             int frontSortingOrder = 11;
 
             if (chip != null && chip.TryGetComponent(out SpriteRenderer chipRenderer))
             {
                 sortingLayerId = chipRenderer.sortingLayerID;
-                sortingLayerName = chipRenderer.sortingLayerName;
                 backSortingOrder = chipRenderer.sortingOrder - 1;
                 frontSortingOrder = chipRenderer.sortingOrder + 2;
             }
 
-            int createdCount = 0;
-            int flippedCount = 0;
-            int behindChipCount = 0;
+            bubbleCrashPhase1Pieces.Clear();
             for (int i = 0; i < bubbleCrashSpriteCount; i++)
             {
                 float angle = Mathf.PI * 2f * i / bubbleCrashSpriteCount;
@@ -128,18 +126,137 @@ namespace StageAssets
                 renderer.sortingLayerID = sortingLayerId;
                 renderer.sortingOrder = behindChip ? backSortingOrder : frontSortingOrder;
                 renderer.flipX = offset.x < -0.001f;
-                createdCount++;
-                if (renderer.flipX)
-                    flippedCount++;
-                if (behindChip)
-                    behindChipCount++;
+                bubbleCrashPhase1Pieces.Add(piece);
             }
 
-            Debug.Log($"{BubbleCrashLogPrefix} Spawned {createdCount}/{bubbleCrashSpriteCount}. " +
-                      $"chip={(chip != null ? GetHierarchyPath(chip) : "NOT FOUND")}, " +
-                      $"parent={GetHierarchyPath(parent)}, center={center}, radius={bubbleCrashRadius}, " +
-                      $"flipX={flippedCount}, behindChip={behindChipCount}, " +
-                      $"sortingLayer='{sortingLayerName}'({sortingLayerId}), backOrder={backSortingOrder}, frontOrder={frontSortingOrder}.", this);
+            StartCoroutine(BubbleCrashPhase2Routine(center, sortingLayerId, frontSortingOrder));
+        }
+
+        private IEnumerator BubbleCrashPhase2Routine(
+            Vector3 origin,
+            int sortingLayerId,
+            int sortingOrder)
+        {
+            if (bubbleCrashPhase2Delay > 0f)
+                yield return new WaitForSeconds(bubbleCrashPhase2Delay);
+
+            DestroyBubbleCrashPhase1Pieces();
+            PlayBubbleCrashSfx();
+
+            int count = Mathf.Max(1, bubbleCrashThrownSpriteCount);
+            for (int i = 0; i < count; i++)
+            {
+                float angle = Mathf.PI * 2f * i / count;
+                Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
+                GameObject piece = CreateBubbleCrashPiece(
+                    $"BubbleCrashThrown_{i + 1:00}",
+                    origin,
+                    sortingLayerId,
+                    sortingOrder,
+                    direction.x < -0.001f);
+
+                StartCoroutine(AnimateThrownBubbleCrashPiece(piece, direction));
+            }
+        }
+
+        private void DestroyBubbleCrashPhase1Pieces()
+        {
+            for (int i = 0; i < bubbleCrashPhase1Pieces.Count; i++)
+            {
+                if (bubbleCrashPhase1Pieces[i] == null)
+                    continue;
+
+                Destroy(bubbleCrashPhase1Pieces[i]);
+            }
+
+            bubbleCrashPhase1Pieces.Clear();
+        }
+
+        private GameObject CreateBubbleCrashPiece(
+            string objectName,
+            Vector3 position,
+            int sortingLayerId,
+            int sortingOrder,
+            bool flipX)
+        {
+            GameObject piece = new(objectName);
+            piece.transform.SetParent(transform, true);
+            piece.transform.position = SnapPixelPerfect(position);
+
+            SpriteRenderer renderer = piece.AddComponent<SpriteRenderer>();
+            renderer.sprite = bubbleCrashSprite;
+            renderer.sortingLayerID = sortingLayerId;
+            renderer.sortingOrder = sortingOrder;
+            renderer.flipX = flipX;
+            return piece;
+        }
+
+        private IEnumerator AnimateThrownBubbleCrashPiece(GameObject piece, Vector2 direction)
+        {
+            if (piece == null)
+                yield break;
+
+            Vector3 origin = piece.transform.position;
+            float firstDuration = Mathf.Max(0.01f, bubbleCrashFirstFlightDuration);
+            float elapsed = 0f;
+            while (elapsed < firstDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / firstDuration);
+                Vector3 horizontal = (Vector3)(direction * (bubbleCrashFirstFlightDistanceTiles * t));
+                Vector3 arc = Vector3.up * (Mathf.Sin(t * Mathf.PI) * bubbleCrashFirstFlightHeightTiles);
+                piece.transform.position = SnapPixelPerfect(origin + horizontal + arc);
+                yield return null;
+            }
+
+            Vector3 bounceOrigin = origin + (Vector3)(direction * bubbleCrashFirstFlightDistanceTiles);
+            piece.transform.position = SnapPixelPerfect(bounceOrigin);
+
+            float bounceDuration = Mathf.Max(0.01f, bubbleCrashBounceDuration);
+            elapsed = 0f;
+            while (elapsed < bounceDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / bounceDuration);
+                float bouncePhase = Mathf.Sin(t * Mathf.PI * Mathf.Max(1, bubbleCrashBounceCount));
+                float height = Mathf.Max(0f, bouncePhase) * Mathf.Lerp(bubbleCrashBounceHeightTiles, 0f, t);
+                Vector3 horizontal = (Vector3)(direction * (bubbleCrashBounceDistanceTiles * t));
+                piece.transform.position = SnapPixelPerfect(bounceOrigin + horizontal + Vector3.up * height);
+                yield return null;
+            }
+
+            Vector3 finalPosition = bounceOrigin + (Vector3)(direction * bubbleCrashBounceDistanceTiles);
+            piece.transform.position = SnapPixelPerfect(finalPosition);
+
+            yield return BlinkOutAndDestroy(piece);
+        }
+
+        private IEnumerator BlinkOutAndDestroy(GameObject piece)
+        {
+            if (piece == null)
+                yield break;
+
+            SpriteRenderer renderer = piece.GetComponent<SpriteRenderer>();
+            float duration = Mathf.Max(0.01f, bubbleCrashBlinkOutDuration);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                if (renderer != null)
+                    renderer.enabled = Mathf.FloorToInt(elapsed / 0.04f) % 2 == 0;
+
+                yield return null;
+            }
+
+            Destroy(piece);
+        }
+
+        private Vector3 SnapPixelPerfect(Vector3 position)
+        {
+            float ppu = Mathf.Max(1f, bubbleCrashPixelsPerUnit);
+            position.x = Mathf.Round(position.x * ppu) / ppu;
+            position.y = Mathf.Round(position.y * ppu) / ppu;
+            return position;
         }
 
         private void ResolveBubbleCrashSpriteIfNeeded()
@@ -149,16 +266,11 @@ namespace StageAssets
 
 #if UNITY_EDITOR
             if (string.IsNullOrWhiteSpace(bubbleCrashSpriteEditorPath))
-            {
-                Debug.LogWarning($"{BubbleCrashLogPrefix} Sprite resolve skipped: editor path is empty.", this);
                 return;
-            }
 
             bubbleCrashSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(bubbleCrashSpriteEditorPath);
             if (bubbleCrashSprite != null)
                 return;
-
-            Debug.LogWarning($"{BubbleCrashLogPrefix} Could not resolve BubbleCrash sprite at editor path '{bubbleCrashSpriteEditorPath}'.", this);
 #endif
         }
 

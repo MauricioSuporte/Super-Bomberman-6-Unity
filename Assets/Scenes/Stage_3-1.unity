@@ -450,7 +450,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   portalResourcesPath: Portal/EndStagePortal
-  portalAmount: 1
+  portalAmount: 0
   extraBombAmount: 1
   blastRadiusAmount: 1
   speedIncreaseAmount: 1
@@ -481,7 +481,7 @@ MonoBehaviour:
   randomEggsMax: 0
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: Stage_1-2
+  nextStageSceneName: Stage_3-2
   destructiblePrefab: {fileID: 3440613785117735154, guid: 2abf9fd732693c34f88ed247b56f7cf6, type: 3}
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: bd8d46a3b077610499368866158b8c9a, type: 2}
@@ -7601,12 +7601,25 @@ MonoBehaviour:
   bubbleCrashSpriteCount: 6
   bubbleCrashRadius: 0.35
   bubbleCrashCenterOffset: {x: 0, y: -0.1}
+  bubbleCrashPhase2Delay: 1
+  bubbleCrashThrownSpriteCount: 8
+  bubbleCrashFirstFlightDuration: 1
+  bubbleCrashFirstFlightDistanceTiles: 2
+  bubbleCrashFirstFlightHeightTiles: 4
+  bubbleCrashBounceDuration: 1
+  bubbleCrashBounceDistanceTiles: 2
+  bubbleCrashBounceHeightTiles: 1
+  bubbleCrashBounceCount: 3
+  bubbleCrashBlinkOutDuration: 0.25
+  bubbleCrashPixelsPerUnit: 16
   indestructibleTilemap: {fileID: 818279435}
   tileSwaps:
   - sourceTile: {fileID: 11400000, guid: 04454246cd2007f4fbc91a4077ce2c0e, type: 2}
     targetTile: {fileID: 11400000, guid: 3ae2b8c104d8fc5488a5d423d93529cd, type: 2}
   - sourceTile: {fileID: 11400000, guid: a480175ae2603c24aa201d13d926f9a7, type: 2}
     targetTile: {fileID: 11400000, guid: 92740608efbee704d832bb6e93536c49, type: 2}
+  - sourceTile: {fileID: 11400000, guid: fec4ff8329784244abe942980b861cb5, type: 2}
+    targetTile: {fileID: 11400000, guid: 3932bbd11170148479b5771c7d765795, type: 2}
   objectsToDisableOnSequence: []
   fallbackObjectNamesToDisable:
   - Bubble
