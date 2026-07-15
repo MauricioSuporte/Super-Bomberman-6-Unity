@@ -7591,11 +7591,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f7de5a7ebd84a3489c21a0e5be2f6ab, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3GateOpenedSequenceController
   delayAfterGateOpenedSeconds: 1
   bubbleCrashSfx: {fileID: 8300000, guid: 5f832c868f57eca4c9264450d64479be, type: 3}
   bubbleCrashSfxVolume: 3
+  bubbleCrashSprite: {fileID: 1416563470912771058, guid: 1d7ea1de4b556d847a1d178f9f84a0a2, type: 3}
+  bubbleCrashSpriteEditorPath: Assets/Sprites/StageAssets/World 3/End Stage/BubbleCrash.png
+  bubbleCrashSpriteCount: 6
+  bubbleCrashRadius: 0.35
+  bubbleCrashCenterOffset: {x: 0, y: -0.1}
   indestructibleTilemap: {fileID: 818279435}
   tileSwaps:
   - sourceTile: {fileID: 11400000, guid: 04454246cd2007f4fbc91a4077ce2c0e, type: 2}
