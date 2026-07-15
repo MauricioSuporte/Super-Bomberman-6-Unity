@@ -266,9 +266,6 @@ public class GamePauseController : MonoBehaviour
     {
         Time.timeScale = 0f;
 
-        if (GameMusicController.Instance != null)
-            GameMusicController.Instance.PauseMusic();
-
         menuIndex = 0;
         confirmReturn = false;
         confirmIndex = 0;
@@ -283,9 +280,6 @@ public class GamePauseController : MonoBehaviour
     void ResumeGame()
     {
         Time.timeScale = 1f;
-
-        if (GameMusicController.Instance != null)
-            GameMusicController.Instance.ResumeMusic();
 
         if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
         {

@@ -145,7 +145,6 @@ public class GameMusicController : MonoBehaviour
             musicSource.time = 0f;
 
         musicSource.Play();
-        ApplyMusicPauseStateIfNeeded();
     }
 
     public void PlayMusicIntroThenLoop(
@@ -182,7 +181,6 @@ public class GameMusicController : MonoBehaviour
             musicSource.time = 0f;
 
         musicSource.Play();
-        ApplyMusicPauseStateIfNeeded();
         musicTransitionRoutine = StartCoroutine(PlayLoopAfterIntroRoutine(introClip, loopClip, loopVolume, pitch));
     }
 
@@ -356,9 +354,8 @@ public class GameMusicController : MonoBehaviour
 
         while (musicSource != null && musicSource.clip == introClip)
         {
-            if (GamePauseController.IsPaused || musicPausedForGamePause)
+            if (musicPausedForGamePause)
             {
-                ApplyMusicPauseStateIfNeeded();
                 yield return null;
                 continue;
             }
@@ -460,9 +457,6 @@ public class GameMusicController : MonoBehaviour
             yield return null;
         }
 
-        while (GamePauseController.IsPaused)
-            yield return null;
-
         preloadAndPlayRoutine = null;
         PlayDefaultMusic(true);
     }
@@ -472,10 +466,8 @@ public class GameMusicController : MonoBehaviour
         if (musicSource == null)
             return;
 
-        if (!GamePauseController.IsPaused && !musicPausedForGamePause)
+        if (!musicPausedForGamePause)
             return;
-
-        musicPausedForGamePause = true;
 
         if (musicSource.isPlaying)
             musicSource.Pause();
