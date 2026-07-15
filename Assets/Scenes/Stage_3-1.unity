@@ -7767,7 +7767,7 @@ MonoBehaviour:
   delayAfterGateOpenedSeconds: 1
   bubbleCrashSfx: {fileID: 8300000, guid: 5f832c868f57eca4c9264450d64479be, type: 3}
   bubbleCrashSfxVolume: 3
-  bubbleCrashSprite: {fileID: 1416563470912771058, guid: 1d7ea1de4b556d847a1d178f9f84a0a2, type: 3}
+  bubbleCrashSprite: {fileID: 21300000, guid: 1d7ea1de4b556d847a1d178f9f84a0a2, type: 3}
   bubbleCrashSpriteEditorPath: Assets/Sprites/StageAssets/World 3/End Stage/BubbleCrash.png
   bubbleCrashSpriteCount: 6
   bubbleCrashRadius: 0.35
