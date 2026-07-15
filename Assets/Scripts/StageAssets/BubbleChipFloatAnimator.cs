@@ -5,15 +5,7 @@ namespace StageAssets
     public class BubbleChipFloatAnimator : MonoBehaviour
     {
         [SerializeField] private AnimatedSpriteRenderer[] renderers;
-        [SerializeField] private Vector2[] frameOffsets =
-        {
-            Vector2.zero,
-            new Vector2(0f, 0.1f),
-            new Vector2(0f, 0.2f),
-            new Vector2(0f, 0.1f),
-        };
 
-        private Vector3 baseLocalPosition;
         private Vector3[] rendererBaseLocalPositions;
         private float frameTimer;
         private int frame;
@@ -37,9 +29,6 @@ namespace StageAssets
 
         void OnDisable()
         {
-            if (capturedBaseLocalPosition)
-                transform.localPosition = baseLocalPosition;
-
             RestoreRendererBaseLocalPositions();
             SetManualAnimation(false);
         }
@@ -99,7 +88,6 @@ namespace StageAssets
             if (capturedBaseLocalPosition)
                 return;
 
-            baseLocalPosition = transform.localPosition;
             CaptureRendererBaseLocalPositions();
             capturedBaseLocalPosition = true;
         }
@@ -168,8 +156,6 @@ namespace StageAssets
                 return;
 
             CaptureBaseLocalPosition();
-            Vector2 sharedOffset = GetSharedOffset(frame);
-            transform.localPosition = baseLocalPosition;
 
             for (int i = 0; i < renderers.Length; i++)
             {
@@ -183,39 +169,7 @@ namespace StageAssets
 
                 renderer.CurrentFrame = frame % count;
                 renderer.RefreshFrame();
-                ApplySharedRendererOffset(i, sharedOffset);
             }
-        }
-
-        private Vector2 GetSharedOffset(int frameIndex)
-        {
-            if (frameOffsets == null || frameOffsets.Length == 0)
-                return Vector2.zero;
-
-            int offsetIndex = Mathf.Clamp(frameIndex, 0, frameOffsets.Length - 1);
-            return frameOffsets[offsetIndex];
-        }
-
-        private void ApplySharedRendererOffset(int rendererIndex, Vector2 sharedOffset)
-        {
-            if (rendererBaseLocalPositions == null ||
-                rendererIndex < 0 ||
-                rendererIndex >= rendererBaseLocalPositions.Length ||
-                renderers == null ||
-                rendererIndex >= renderers.Length)
-            {
-                return;
-            }
-
-            AnimatedSpriteRenderer renderer = renderers[rendererIndex];
-            if (renderer == null)
-                return;
-
-            Vector3 basePosition = rendererBaseLocalPositions[rendererIndex];
-            renderer.transform.localPosition = new Vector3(
-                basePosition.x + sharedOffset.x,
-                basePosition.y + sharedOffset.y,
-                basePosition.z);
         }
 
         private void RestoreRendererBaseLocalPositions()

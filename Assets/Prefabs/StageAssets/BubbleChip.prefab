@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1000000000000000002}
   - component: {fileID: 1000000000000000011}
+  - component: {fileID: 1000000000000000012}
   m_Layer: 0
   m_Name: BubbleChip
   m_TagString: Untagged
@@ -44,16 +45,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 743cf6b5e4c44c369fa3e166eb3111a4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.BubbleChipFloatAnimator
   renderers:
   - {fileID: 1000000000000000004}
   - {fileID: 1000000000000000010}
-  frameOffsets:
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.1}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.1}
+--- !u!114 &1000000000000000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b08cf4c2998946f1a36f70289c8d7789, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.BubbleChipFloatBobber
+  pixelsPerUnit: 16
+  amplitudePixels: 2
+  cycleDuration: 1.6
+  phaseOffset: 0
+  useUnscaledTime: 0
+  respectGamePause: 1
 --- !u!1 &1000000000000000003
 GameObject:
   m_ObjectHideFlags: 0
