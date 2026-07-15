@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Collider2D))]
@@ -33,6 +34,15 @@ public sealed class MountWorldPickup : MonoBehaviour
         _col = GetComponent<Collider2D>();
         if (_col != null)
             _col.enabled = true;
+
+        if (string.Equals(
+                SceneManager.GetActiveScene().name,
+                "Stage_3-1",
+                System.StringComparison.OrdinalIgnoreCase) &&
+            !TryGetComponent<PlayerWaterSubmersionEffect>(out _))
+        {
+            gameObject.AddComponent<PlayerWaterSubmersionEffect>();
+        }
     }
 
     static bool TryGetHeldPowerGlove(GameObject player, out PowerGloveAbility glove)

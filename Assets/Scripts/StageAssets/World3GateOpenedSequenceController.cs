@@ -47,6 +47,7 @@ namespace StageAssets
         private bool sequenceStarted;
         private bool endStagePortalSpawned;
         private bool chipBlinkOutStarted;
+        private bool tileSwapsApplied;
         private readonly List<GameObject> bubbleCrashPhase1Pieces = new();
 
         private void OnEnable()
@@ -58,6 +59,22 @@ namespace StageAssets
         private void OnDisable()
         {
             CoreMechanismsDestructible.AllCoreMechanismsDestroyed -= HandleAllCoreMechanismsDestroyed;
+        }
+
+        private void Update()
+        {
+            if (!tileSwapsApplied || indestructibleTilemap == null)
+                return;
+
+            PlayerWaterSubmersionEffect[] playerEffects =
+                FindObjectsByType<PlayerWaterSubmersionEffect>(FindObjectsInactive.Exclude);
+
+            for (int i = 0; i < playerEffects.Length; i++)
+            {
+                PlayerWaterSubmersionEffect effect = playerEffects[i];
+                if (effect != null)
+                    effect.SetEffectSuppressed(IsOnTargetTile(effect.transform.position));
+            }
         }
 
         private void HandleAllCoreMechanismsDestroyed()
@@ -316,6 +333,24 @@ namespace StageAssets
                     break;
                 }
             }
+
+            tileSwapsApplied = true;
+        }
+
+        private bool IsOnTargetTile(Vector3 worldPosition)
+        {
+            Vector3Int cell = indestructibleTilemap.WorldToCell(worldPosition);
+            TileBase currentTile = indestructibleTilemap.GetTile(cell);
+            if (currentTile == null)
+                return false;
+
+            for (int i = 0; i < tileSwaps.Length; i++)
+            {
+                if (tileSwaps[i].targetTile == currentTile)
+                    return true;
+            }
+
+            return false;
         }
 
         private void TrySpawnInvisibleEndStagePortal(Vector3Int cell)

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(CharacterHealth))]
@@ -304,6 +305,7 @@ public class PlayerMountCompanion : MonoBehaviour
         mountedType = type;
 
         currentLouie = Instantiate(prefab, transform);
+        EnsureWorld3WaterSubmersionEffect(currentLouie);
         SetupLouieAsChildMounted(currentLouie);
 
         CacheMountedLouieHealth(currentLouie);
@@ -342,6 +344,7 @@ public class PlayerMountCompanion : MonoBehaviour
         mountedType = type;
 
         currentLouie = Instantiate(prefab, transform);
+        EnsureWorld3WaterSubmersionEffect(currentLouie);
         SetupLouieAsChildMounted(currentLouie);
 
         CacheMountedLouieHealth(currentLouie);
@@ -2000,6 +2003,21 @@ public class PlayerMountCompanion : MonoBehaviour
     GameObject GetPrefab(MountedType type)
     {
         return prefabByType.TryGetValue(type, out var p) ? p : null;
+    }
+
+    static void EnsureWorld3WaterSubmersionEffect(GameObject mount)
+    {
+        if (mount == null ||
+            !string.Equals(
+                SceneManager.GetActiveScene().name,
+                "Stage_3-1",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (!mount.TryGetComponent<PlayerWaterSubmersionEffect>(out _))
+            mount.AddComponent<PlayerWaterSubmersionEffect>();
     }
 
     #endregion

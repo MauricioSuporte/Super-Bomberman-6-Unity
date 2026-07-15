@@ -21,6 +21,21 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private MaterialPropertyBlock propertyBlock;
 
     private Material waterMaterial;
+    private bool targetTileSuppressed;
+    private bool mountedPlayerSuppressed;
+
+    /// <summary>
+    /// Temporarily restores the original player materials, for example while
+    /// walking over a World 3 gate tile that is no longer underwater.
+    /// </summary>
+    public void SetEffectSuppressed(bool suppressed)
+    {
+        if (targetTileSuppressed == suppressed)
+            return;
+
+        targetTileSuppressed = suppressed;
+        ApplyMaterial();
+    }
 
     private void Awake()
     {
@@ -44,6 +59,16 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private void LateUpdate()
     {
         propertyBlock ??= new MaterialPropertyBlock();
+
+        bool shouldSuppressPlayerVisual =
+            TryGetComponent(out PlayerMountCompanion companion) &&
+            companion.HasMountedLouie();
+
+        if (mountedPlayerSuppressed != shouldSuppressPlayerVisual)
+        {
+            mountedPlayerSuppressed = shouldSuppressPlayerVisual;
+            ApplyMaterial();
+        }
 
         float waterSurfaceY = transform.position.y;
 
@@ -109,8 +134,15 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     {
         for (int i = 0; i < bodyRenderers.Count; i++)
         {
-            if (bodyRenderers[i] != null)
-                bodyRenderers[i].sharedMaterial = waterMaterial;
+            SpriteRenderer renderer = bodyRenderers[i];
+            if (renderer == null)
+                continue;
+
+            if ((targetTileSuppressed || mountedPlayerSuppressed) &&
+                originalMaterials.TryGetValue(renderer, out Material originalMaterial))
+                renderer.sharedMaterial = originalMaterial;
+            else
+                renderer.sharedMaterial = waterMaterial;
         }
     }
 }
