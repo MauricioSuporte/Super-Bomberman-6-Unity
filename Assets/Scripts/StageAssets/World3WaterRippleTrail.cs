@@ -46,7 +46,7 @@ namespace StageAssets
                 return;
 
             if (IsWaterCell(previousCell))
-                SpawnRipple(previousCell);
+                SpawnRipple(previousCell, currentCell);
 
             previousCell = currentCell;
         }
@@ -74,7 +74,7 @@ namespace StageAssets
                 }
             }
 
-            gateSequence ??= FindFirstObjectByType<World3GateOpenedSequenceController>();
+            gateSequence ??= FindAnyObjectByType<World3GateOpenedSequenceController>();
         }
 
         private void CaptureCurrentCell()
@@ -104,41 +104,69 @@ namespace StageAssets
                 return false;
             }
 
-            return gateSequence == null ||
-                   !gateSequence.IsTargetTileAtWorldPosition(worldPosition);
+            if (gateSequence != null && gateSequence.IsTargetTileAtWorldPosition(worldPosition))
+                return false;
+
+            return true;
         }
 
-        private void SpawnRipple(Vector3Int cell)
+        private void SpawnRipple(Vector3Int cell, Vector3Int nextCell)
+        {
+            Vector2 movement = new(nextCell.x - cell.x, nextCell.y - cell.y);
+            if (movement.sqrMagnitude <= 0.0001f)
+                return;
+
+            movement.Normalize();
+            Vector3 center = groundTilemap.GetCellCenterWorld(cell);
+
+            // The rounded end stays closest to where the player just was;
+            // the open end faces behind the player's movement, like a boat wake.
+            SpawnWake(center, -movement);
+        }
+
+        private void SpawnWake(Vector3 position, Vector2 openDirection)
         {
             GameObject rippleObject = new("World3WaterRipple");
-            rippleObject.transform.position = groundTilemap.GetCellCenterWorld(cell);
+            rippleObject.transform.position = position;
 
             SpriteRenderer renderer = rippleObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = World3WaterRippleVisual.RippleSprite;
+            renderer.sprite = World3WaterRippleVisual.TrailSprite;
             renderer.sortingLayerID = groundTilemap.GetComponent<TilemapRenderer>().sortingLayerID;
-            renderer.sortingOrder = 2;
+            renderer.sortingOrder = 4;
 
             World3WaterRippleVisual visual = rippleObject.AddComponent<World3WaterRippleVisual>();
-            visual.Initialize(renderer, RippleLifetime);
+            visual.Initialize(
+                renderer,
+                RippleLifetime,
+                openDirection);
         }
     }
 
     public sealed class World3WaterRippleVisual : MonoBehaviour
     {
-        private static Sprite rippleSprite;
+        private static Sprite trailSprite;
 
         private SpriteRenderer spriteRenderer;
         private float lifetime;
         private float elapsed;
 
-        public static Sprite RippleSprite => rippleSprite ??= CreateRippleSprite();
+        public static Sprite TrailSprite => trailSprite ??= CreateTrailSprite();
 
-        public void Initialize(SpriteRenderer renderer, float duration)
+        public void Initialize(
+            SpriteRenderer renderer,
+            float duration,
+            Vector2 openDirection)
         {
             spriteRenderer = renderer;
             lifetime = Mathf.Max(0.01f, duration);
             elapsed = 0f;
-            transform.localScale = new Vector3(0.55f, 0.55f, 1f);
+
+            if (openDirection.sqrMagnitude <= 0.0001f)
+                openDirection = Vector2.right;
+
+            float angle = Mathf.Atan2(openDirection.y, openDirection.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0f, 0f, angle);
+            transform.localScale = new Vector3(0.72f, 0.72f, 1f);
         }
 
         private void Update()
@@ -146,34 +174,41 @@ namespace StageAssets
             elapsed += Time.deltaTime;
             float progress = Mathf.Clamp01(elapsed / lifetime);
 
-            transform.localScale = Vector3.one * Mathf.Lerp(0.55f, 1.15f, progress);
+            transform.localScale = new Vector3(
+                Mathf.Lerp(0.72f, 1.12f, progress),
+                Mathf.Lerp(0.72f, 1.12f, progress),
+                1f);
             if (spriteRenderer != null)
-                spriteRenderer.color = new Color(0.7f, 0.92f, 1f, (1f - progress) * 0.8f);
+                spriteRenderer.color = new Color(0.76f, 0.96f, 1f, (1f - progress) * 0.95f);
 
             if (progress >= 1f)
                 Destroy(gameObject);
         }
 
-        private static Sprite CreateRippleSprite()
+        private static Sprite CreateTrailSprite()
         {
             const int width = 16;
-            const int height = 8;
+            const int height = 12;
             Texture2D texture = new(width, height, TextureFormat.RGBA32, mipChain: false)
             {
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
-                name = "World3WaterRipple_Runtime"
+                name = "World3WaterTrail_Runtime"
             };
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    float horizontal = (x - (width - 1) * 0.5f) / ((width - 1) * 0.5f);
-                    float vertical = (y - (height - 1) * 0.5f) / ((height - 1) * 0.5f);
-                    float distance = Mathf.Sqrt(horizontal * horizontal + vertical * vertical);
-                    bool isRing = Mathf.Abs(distance - 0.72f) <= 0.13f;
-                    texture.SetPixel(x, y, isRing ? Color.white : Color.clear);
+                    float progress = x / (float)(width - 1);
+                    float halfWidth = Mathf.Lerp(1.2f, 4.5f, progress * progress);
+                    float distanceFromCenter = Mathf.Abs(y - (height - 1) * 0.5f);
+
+                    // Local +X is the open end. The two arms curve outward from
+                    // a rounded closed end, producing a pixel-art U-shaped wake.
+                    bool isArm = x > 1 && Mathf.Abs(distanceFromCenter - halfWidth) <= 0.8f;
+                    bool isRoundedEnd = x <= 2 && distanceFromCenter <= halfWidth + 0.5f;
+                    texture.SetPixel(x, y, isArm || isRoundedEnd ? Color.white : Color.clear);
                 }
             }
 
