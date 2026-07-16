@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
@@ -13,6 +14,11 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
     private SpriteRenderer[] adjustedPlayerRenderers = new SpriteRenderer[0];
     private int[] adjustedPlayerSortingLayerIds = new int[0];
     private int[] adjustedPlayerSortingOrders = new int[0];
+    private SpriteRenderer[] adjustedBombRenderers = new SpriteRenderer[0];
+    private int[] adjustedBombSortingLayerIds = new int[0];
+    private int[] adjustedBombSortingOrders = new int[0];
+    private readonly HashSet<Bomb> loggedSortedBombs = new();
+    private readonly HashSet<Bomb> loggedBombsWithoutRenderer = new();
 
     private void Awake()
     {
@@ -29,13 +35,16 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
     private void OnDisable()
     {
         RestoreAdjustedPlayers();
+        RestoreAdjustedBombs();
     }
 
     private void LateUpdate()
     {
         ApplyOriginalSorting();
         RestoreAdjustedPlayers();
+        RestoreAdjustedBombs();
         ApplyPlayerSorting();
+        ApplyBombSorting();
     }
 
     private void CacheRenderers()
@@ -89,6 +98,29 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
         }
     }
 
+    private void ApplyBombSorting()
+    {
+        Vector3 position = transform.position;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector3 bombPosition = bomb.transform.position;
+            float dx = Mathf.Abs(bombPosition.x - position.x);
+            float dy = Mathf.Abs(bombPosition.y - position.y);
+            if (dx > horizontalRange || dy > verticalRange || bombPosition.y <= position.y)
+                continue;
+
+            SpriteRenderer bombRenderer = GetBombSpriteRenderer(bomb);
+
+            StoreAdjustedBomb(bombRenderer);
+            bombRenderer.sortingLayerID = GetHighestOriginalSortingLayerId();
+            bombRenderer.sortingOrder = GetLowestOriginalSortingOrder() - playerBehindOrderOffset;
+        }
+    }
+
     private static SpriteRenderer GetActiveSpriteRenderer(MovementController player)
     {
         AnimatedSpriteRenderer active = player != null ? player.ActiveSpriteRenderer : null;
@@ -96,6 +128,14 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
             return spriteRenderer;
 
         return player != null ? player.GetComponentInChildren<SpriteRenderer>() : null;
+    }
+
+    private static SpriteRenderer GetBombSpriteRenderer(Bomb bomb)
+    {
+        if (bomb != null && bomb.TryGetComponent(out SpriteRenderer spriteRenderer))
+            return spriteRenderer;
+
+        return bomb != null ? bomb.GetComponentInChildren<SpriteRenderer>() : null;
     }
 
     private int GetHighestOriginalSortingLayerId()
@@ -168,5 +208,43 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
         adjustedPlayerRenderers = new SpriteRenderer[0];
         adjustedPlayerSortingLayerIds = new int[0];
         adjustedPlayerSortingOrders = new int[0];
+    }
+
+    private void StoreAdjustedBomb(SpriteRenderer bombRenderer)
+    {
+        for (int i = 0; i < adjustedBombRenderers.Length; i++)
+        {
+            if (adjustedBombRenderers[i] == bombRenderer)
+                return;
+        }
+
+        int index = adjustedBombRenderers.Length;
+        System.Array.Resize(ref adjustedBombRenderers, index + 1);
+        System.Array.Resize(ref adjustedBombSortingLayerIds, index + 1);
+        System.Array.Resize(ref adjustedBombSortingOrders, index + 1);
+
+        adjustedBombRenderers[index] = bombRenderer;
+        adjustedBombSortingLayerIds[index] = bombRenderer.sortingLayerID;
+        adjustedBombSortingOrders[index] = bombRenderer.sortingOrder;
+    }
+
+    private void RestoreAdjustedBombs()
+    {
+        for (int i = 0; i < adjustedBombRenderers.Length; i++)
+        {
+            SpriteRenderer bombRenderer = adjustedBombRenderers[i];
+            if (bombRenderer == null)
+                continue;
+
+            bombRenderer.sortingLayerID = adjustedBombSortingLayerIds[i];
+            bombRenderer.sortingOrder = adjustedBombSortingOrders[i];
+        }
+
+        if (adjustedBombRenderers.Length == 0)
+            return;
+
+        adjustedBombRenderers = new SpriteRenderer[0];
+        adjustedBombSortingLayerIds = new int[0];
+        adjustedBombSortingOrders = new int[0];
     }
 }
