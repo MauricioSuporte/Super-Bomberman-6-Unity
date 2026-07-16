@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
 /// Applies the World 3 water treatment to the player's animated body sprites.
@@ -23,6 +24,9 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private Material waterMaterial;
     private bool targetTileSuppressed;
     private bool mountedPlayerSuppressed;
+    private bool terrainOrBombSuppressed;
+    private Tilemap destructibleTilemap;
+    private int bombLayerMask;
 
     /// <summary>
     /// Temporarily restores the original player materials, for example while
@@ -39,6 +43,9 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
     private void Awake()
     {
+        bombLayerMask = LayerMask.GetMask("Bomb");
+        ResolveDestructibleTilemap();
+
         Shader shader = Shader.Find(ShaderName);
         if (shader == null)
         {
@@ -67,6 +74,13 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
         if (mountedPlayerSuppressed != shouldSuppressPlayerVisual)
         {
             mountedPlayerSuppressed = shouldSuppressPlayerVisual;
+            ApplyMaterial();
+        }
+
+        bool shouldSuppressForTerrainOrBomb = IsOnDestructibleOrBomb();
+        if (terrainOrBombSuppressed != shouldSuppressForTerrainOrBomb)
+        {
+            terrainOrBombSuppressed = shouldSuppressForTerrainOrBomb;
             ApplyMaterial();
         }
 
@@ -130,6 +144,35 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
         }
     }
 
+    private bool IsOnDestructibleOrBomb()
+    {
+        Vector3 worldPosition = GetWaterInteractionPosition();
+
+        if (destructibleTilemap == null)
+            ResolveDestructibleTilemap();
+
+        if (destructibleTilemap != null &&
+            destructibleTilemap.GetTile(destructibleTilemap.WorldToCell(worldPosition)) != null)
+        {
+            return true;
+        }
+
+        return bombLayerMask != 0 &&
+               Physics2D.OverlapCircle(worldPosition, 0.2f, bombLayerMask) != null;
+    }
+
+    private Vector3 GetWaterInteractionPosition()
+    {
+        PlayerMountCompanion parentCompanion = GetComponentInParent<PlayerMountCompanion>();
+        return parentCompanion != null ? parentCompanion.transform.position : transform.position;
+    }
+
+    private void ResolveDestructibleTilemap()
+    {
+        if (GameManager.Instance != null)
+            destructibleTilemap = GameManager.Instance.destructibleTilemap;
+    }
+
     private void ApplyMaterial()
     {
         for (int i = 0; i < bodyRenderers.Count; i++)
@@ -138,7 +181,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             if (renderer == null)
                 continue;
 
-            if ((targetTileSuppressed || mountedPlayerSuppressed) &&
+            if ((targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed) &&
                 originalMaterials.TryGetValue(renderer, out Material originalMaterial))
                 renderer.sharedMaterial = originalMaterial;
             else

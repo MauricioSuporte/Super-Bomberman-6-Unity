@@ -27,7 +27,7 @@ public static class PlayerPersistentStats
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = false;
-        public bool CanPassBombs = false;
+        public bool CanPassBombs = true;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = true;
         public bool HasControlBombs = false;
@@ -36,7 +36,7 @@ public static class PlayerPersistentStats
         public bool HasMagnetBomb = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.Green;
+        public MountedType MountedLouie = MountedType.None;
         public BomberCharacter Character = BomberCharacter.Bomberman;
         public BomberSkin Skin = BomberSkin.Palette25;
 

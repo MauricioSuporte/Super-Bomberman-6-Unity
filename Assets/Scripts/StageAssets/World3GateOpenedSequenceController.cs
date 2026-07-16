@@ -73,7 +73,7 @@ namespace StageAssets
             {
                 PlayerWaterSubmersionEffect effect = playerEffects[i];
                 if (effect != null)
-                    effect.SetEffectSuppressed(IsOnTargetTile(effect.transform.position));
+                    effect.SetEffectSuppressed(IsTargetTileAtWorldPosition(effect.transform.position));
             }
         }
 
@@ -337,7 +337,7 @@ namespace StageAssets
             tileSwapsApplied = true;
         }
 
-        private bool IsOnTargetTile(Vector3 worldPosition)
+        public bool IsTargetTileAtWorldPosition(Vector3 worldPosition)
         {
             Vector3Int cell = indestructibleTilemap.WorldToCell(worldPosition);
             TileBase currentTile = indestructibleTilemap.GetTile(cell);

@@ -171,6 +171,9 @@ public sealed class PlayersSpawner : MonoBehaviour
             if (IsWorld3WaterStage() && go.GetComponent<PlayerWaterSubmersionEffect>() == null)
                 go.AddComponent<PlayerWaterSubmersionEffect>();
 
+            if (IsWorld3WaterStage() && go.GetComponent<StageAssets.World3WaterRippleTrail>() == null)
+                go.AddComponent<StageAssets.World3WaterRippleTrail>();
+
             if (!go.TryGetComponent<PlayerIdentity>(out var id))
                 id = go.AddComponent<PlayerIdentity>();
 
