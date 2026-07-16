@@ -19,7 +19,6 @@ namespace StageAssets
         [SerializeField] private AudioClip bubbleCrashSfx;
         [SerializeField, Min(0f)] private float bubbleCrashSfxVolume = 3f;
         [SerializeField] private Sprite bubbleCrashSprite;
-        [SerializeField] private string bubbleCrashSpriteEditorPath = "Assets/Sprites/StageAssets/World 3/End Stage/BubbleCrash.png";
         [SerializeField, Min(0)] private int bubbleCrashSpriteCount = 6;
         [SerializeField, Min(0f)] private float bubbleCrashRadius = 0.45f;
         [SerializeField] private Vector2 bubbleCrashCenterOffset = Vector2.zero;
@@ -52,7 +51,6 @@ namespace StageAssets
 
         private void OnEnable()
         {
-            ResolveBubbleCrashSpriteIfNeeded();
             CoreMechanismsDestructible.AllCoreMechanismsDestroyed += HandleAllCoreMechanismsDestroyed;
         }
 
@@ -112,8 +110,6 @@ namespace StageAssets
 
         private void SpawnBubbleCrashSprites()
         {
-            ResolveBubbleCrashSpriteIfNeeded();
-
             if (bubbleCrashSprite == null)
                 return;
 
@@ -284,21 +280,6 @@ namespace StageAssets
             return position;
         }
 
-        private void ResolveBubbleCrashSpriteIfNeeded()
-        {
-            if (bubbleCrashSprite != null)
-                return;
-
-#if UNITY_EDITOR
-            if (string.IsNullOrWhiteSpace(bubbleCrashSpriteEditorPath))
-                return;
-
-            bubbleCrashSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(bubbleCrashSpriteEditorPath);
-            if (bubbleCrashSprite != null)
-                return;
-#endif
-        }
-
         private void ApplyTileSwaps()
         {
             if (indestructibleTilemap == null || tileSwaps == null)
@@ -426,6 +407,12 @@ namespace StageAssets
 
             chipBlinkOutStarted = true;
             StartCoroutine(BlinkAndDisableChipRoutine());
+        }
+
+        public Vector3 GetChipCenterWorld()
+        {
+            Transform chip = FindBubbleChipChild("Chip");
+            return chip != null ? chip.position : transform.position;
         }
 
         private IEnumerator BlinkAndDisableChipRoutine()

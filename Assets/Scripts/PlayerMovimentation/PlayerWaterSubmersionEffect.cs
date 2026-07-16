@@ -14,6 +14,9 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
     private const float DefaultSurfaceLineHeight = 0.125f;
 
+    [Header("Water Surface")]
+    private readonly float waterSurfaceYOffset = -0.2f;
+
     private static readonly int WaterSurfaceY = Shader.PropertyToID("_WaterSurfaceY");
     private static readonly int SurfaceLineHeight = Shader.PropertyToID("_SurfaceLineHeight");
 
@@ -84,7 +87,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             ApplyMaterial();
         }
 
-        float waterSurfaceY = transform.position.y;
+        float waterSurfaceY = transform.position.y + waterSurfaceYOffset;
 
         for (int i = bodyRenderers.Count - 1; i >= 0; i--)
         {

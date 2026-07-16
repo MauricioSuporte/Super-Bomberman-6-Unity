@@ -139,6 +139,7 @@ GameObject:
   - component: {fileID: 2751961180514227184}
   - component: {fileID: 3627800146579448321}
   - component: {fileID: 6684315790638421179}
+  - component: {fileID: 6684315790638421180}
   m_Layer: 6
   m_Name: CoreMechanisms
   m_TagString: Untagged
@@ -260,6 +261,19 @@ MonoBehaviour:
   verticalRange: 1.05
   playerBehindOrderOffset: 1
   debugBombSorting: 1
+--- !u!114 &6684315790638421180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3941917705409293893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5f809bce0e74747932d28491c9fbb51, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWaterSubmersionEffect
+  waterSurfaceYOffset: -0.125
 --- !u!1 &4193804359411325140
 GameObject:
   m_ObjectHideFlags: 0

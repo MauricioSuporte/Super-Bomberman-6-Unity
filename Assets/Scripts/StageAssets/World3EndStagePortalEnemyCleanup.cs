@@ -17,6 +17,9 @@ namespace StageAssets
             if (sequence != null)
                 sequence.BeginChipBlinkOut();
 
+            World3EndStageCelebrationEffect.Play(
+                sequence != null ? sequence.GetChipCenterWorld() : other.transform.position,
+                other.transform);
             KillActiveEnemies();
         }
 
