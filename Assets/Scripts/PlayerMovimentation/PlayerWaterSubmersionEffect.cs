@@ -12,10 +12,11 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 {
     private const string ShaderName = "SuperBomberman/PlayerWaterSubmersion";
 
-    private const float DefaultSurfaceLineHeight = 0.125f;
+    private const float DefaultSurfaceLineHeight = 0.15f;
 
-    [Header("Water Surface")]
-    private readonly float waterSurfaceYOffset = -0.2f;
+    [Header("CoreMechanisms Water Surface")]
+    [Tooltip("World-space offset applied only when this effect is attached to a CoreMechanisms destructible. More negative values lower the waterline.")]
+    private readonly float coreMechanismsWaterSurfaceYOffset = -0.125f;
 
     private static readonly int WaterSurfaceY = Shader.PropertyToID("_WaterSurfaceY");
     private static readonly int SurfaceLineHeight = Shader.PropertyToID("_SurfaceLineHeight");
@@ -30,6 +31,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private bool terrainOrBombSuppressed;
     private Tilemap destructibleTilemap;
     private int bombLayerMask;
+    private CoreMechanismsDestructible coreMechanisms;
 
     /// <summary>
     /// Temporarily restores the original player materials, for example while
@@ -47,6 +49,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private void Awake()
     {
         bombLayerMask = LayerMask.GetMask("Bomb");
+        TryGetComponent(out coreMechanisms);
         ResolveDestructibleTilemap();
 
         Shader shader = Shader.Find(ShaderName);
@@ -87,7 +90,8 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             ApplyMaterial();
         }
 
-        float waterSurfaceY = transform.position.y + waterSurfaceYOffset;
+        float waterSurfaceY = transform.position.y +
+                              (coreMechanisms != null ? coreMechanismsWaterSurfaceYOffset : 0f);
 
         for (int i = bodyRenderers.Count - 1; i >= 0; i--)
         {
@@ -149,6 +153,9 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
     private bool IsOnDestructibleOrBomb()
     {
+        if (GetComponentInParent<PlayerMountCompanion>() == null)
+            return false;
+
         Vector3 worldPosition = GetWaterInteractionPosition();
 
         if (destructibleTilemap == null)

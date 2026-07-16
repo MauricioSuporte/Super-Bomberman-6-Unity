@@ -273,7 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5f809bce0e74747932d28491c9fbb51, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWaterSubmersionEffect
-  waterSurfaceYOffset: -0.125
+  coreMechanismsWaterSurfaceYOffset: -0.125
 --- !u!1 &4193804359411325140
 GameObject:
   m_ObjectHideFlags: 0
