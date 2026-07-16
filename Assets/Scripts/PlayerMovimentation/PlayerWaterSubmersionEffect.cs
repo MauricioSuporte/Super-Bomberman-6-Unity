@@ -10,13 +10,17 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 {
-    private const string ShaderName = "SuperBomberman/PlayerWaterSubmersion";
+    private const string WaterMaterialResourcePath = "Materials/PlayerWaterSubmersion";
 
     private const float DefaultSurfaceLineHeight = 0.15f;
 
     [Header("CoreMechanisms Water Surface")]
     [Tooltip("World-space offset applied only when this effect is attached to a CoreMechanisms destructible. More negative values lower the waterline.")]
     private readonly float coreMechanismsWaterSurfaceYOffset = -0.125f;
+
+    [Header("Diagnostics")]
+    [Tooltip("Writes concise initialization and state-change diagnostics to the player log. Disable after investigating a build.")]
+    [SerializeField] private bool diagnosticLogs = true;
 
     private static readonly int WaterSurfaceY = Shader.PropertyToID("_WaterSurfaceY");
     private static readonly int SurfaceLineHeight = Shader.PropertyToID("_SurfaceLineHeight");
@@ -32,6 +36,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private Tilemap destructibleTilemap;
     private int bombLayerMask;
     private CoreMechanismsDestructible coreMechanisms;
+    private bool initialStateLogged;
 
     /// <summary>
     /// Temporarily restores the original player materials, for example while
@@ -43,6 +48,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             return;
 
         targetTileSuppressed = suppressed;
+        LogDiagnostic($"Target-tile suppression changed to {suppressed}.");
         ApplyMaterial();
     }
 
@@ -52,21 +58,22 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
         TryGetComponent(out coreMechanisms);
         ResolveDestructibleTilemap();
 
-        Shader shader = Shader.Find(ShaderName);
-        if (shader == null)
+        Material waterMaterialTemplate = Resources.Load<Material>(WaterMaterialResourcePath);
+        if (waterMaterialTemplate == null)
         {
-            Debug.LogWarning($"Player water effect shader '{ShaderName}' was not found.", this);
+            Debug.LogWarning($"[WaterSubmerge] Material Resources/{WaterMaterialResourcePath}.mat was not found; effect disabled on '{name}'.", this);
             enabled = false;
             return;
         }
 
-        waterMaterial = new Material(shader)
+        waterMaterial = new Material(waterMaterialTemplate)
         {
             name = "Player Water Submersion (Runtime)"
         };
 
         CacheBodyRenderers();
         ApplyMaterial();
+        LogDiagnostic($"Initialized. coreMechanisms={coreMechanisms != null}, renderers={bodyRenderers.Count}, material='{waterMaterialTemplate.name}', shader='{waterMaterial.shader.name}'.");
     }
 
     private void LateUpdate()
@@ -93,6 +100,12 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
         float waterSurfaceY = transform.position.y +
                               (coreMechanisms != null ? coreMechanismsWaterSurfaceYOffset : 0f);
 
+        if (!initialStateLogged)
+        {
+            initialStateLogged = true;
+            LogDiagnostic($"First update. waterSurfaceY={waterSurfaceY:F3}, lineHeight={DefaultSurfaceLineHeight:F3}, active={!IsSuppressed()}.");
+        }
+
         for (int i = bodyRenderers.Count - 1; i >= 0; i--)
         {
             SpriteRenderer renderer = bodyRenderers[i];
@@ -116,6 +129,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
         CacheBodyRenderers();
         ApplyMaterial();
+        LogDiagnostic($"Child hierarchy changed; renderers recached={bodyRenderers.Count}.");
     }
 
     private void OnDestroy()
@@ -149,6 +163,9 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
             bodyRenderers.Add(spriteRenderer);
         }
+
+        if (bodyRenderers.Count == 0)
+            Debug.LogWarning($"[WaterSubmerge] No direct-child AnimatedSpriteRenderer/SpriteRenderer was found on '{name}'.", this);
     }
 
     private bool IsOnDestructibleOrBomb()
@@ -185,17 +202,32 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
     private void ApplyMaterial()
     {
+        bool suppressed = IsSuppressed();
+
         for (int i = 0; i < bodyRenderers.Count; i++)
         {
             SpriteRenderer renderer = bodyRenderers[i];
             if (renderer == null)
                 continue;
 
-            if ((targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed) &&
+            if (suppressed &&
                 originalMaterials.TryGetValue(renderer, out Material originalMaterial))
                 renderer.sharedMaterial = originalMaterial;
             else
                 renderer.sharedMaterial = waterMaterial;
         }
+
+        LogDiagnostic($"Material applied. renderers={bodyRenderers.Count}, suppressed={suppressed} (target={targetTileSuppressed}, mounted={mountedPlayerSuppressed}, terrainOrBomb={terrainOrBombSuppressed}).");
+    }
+
+    private bool IsSuppressed()
+    {
+        return targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed;
+    }
+
+    private void LogDiagnostic(string message)
+    {
+        if (diagnosticLogs)
+            Debug.Log($"[WaterSubmerge] {message}", this);
     }
 }
