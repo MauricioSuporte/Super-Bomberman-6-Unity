@@ -126,27 +126,6 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
         base.Die();
     }
 
-    protected override float GetDeathAnimationDuration()
-    {
-        if (spriteDeath == null || spriteDeath.animationSprite == null || spriteDeath.animationSprite.Length == 0)
-            return base.GetDeathAnimationDuration();
-
-        if (spriteDeath.useSequenceDuration)
-            return Mathf.Max(0.01f, spriteDeath.sequenceDuration);
-
-        float[] frameDurations = spriteDeath.frameDurations;
-        if (frameDurations != null && frameDurations.Length == spriteDeath.animationSprite.Length)
-        {
-            float duration = 0f;
-            for (int i = 0; i < frameDurations.Length; i++)
-                duration += Mathf.Max(0.0001f, frameDurations[i]);
-
-            return duration;
-        }
-
-        return Mathf.Max(0.01f, spriteDeath.animationSprite.Length * spriteDeath.animationTime);
-    }
-
     private void UpdateLandingIdle()
     {
         stateTimer -= Time.fixedDeltaTime;

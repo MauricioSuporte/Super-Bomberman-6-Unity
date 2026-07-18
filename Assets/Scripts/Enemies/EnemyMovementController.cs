@@ -25,6 +25,10 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteDeath;
     public AnimatedSpriteRenderer spriteDamaged;
 
+    [Header("Death")]
+    [Tooltip("Waits for every Death animation frame before destroying this enemy.")]
+    public bool waitForFullDeathAnimation;
+
     [Header("Layers")]
     public LayerMask obstacleMask;
     public LayerMask bombLayerMask;
@@ -300,7 +304,28 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual float GetDeathAnimationDuration()
     {
-        return 0.7f;
+        if (!waitForFullDeathAnimation ||
+            spriteDeath == null ||
+            spriteDeath.animationSprite == null ||
+            spriteDeath.animationSprite.Length == 0)
+        {
+            return 0.7f;
+        }
+
+        if (spriteDeath.useSequenceDuration)
+            return Mathf.Max(0.01f, spriteDeath.sequenceDuration);
+
+        float[] frameDurations = spriteDeath.frameDurations;
+        if (frameDurations != null && frameDurations.Length == spriteDeath.animationSprite.Length)
+        {
+            float duration = 0f;
+            for (int i = 0; i < frameDurations.Length; i++)
+                duration += Mathf.Max(0.0001f, frameDurations[i]);
+
+            return duration;
+        }
+
+        return Mathf.Max(0.01f, spriteDeath.animationSprite.Length * spriteDeath.animationTime);
     }
 
     void DisableAllDirectionalSprites()
