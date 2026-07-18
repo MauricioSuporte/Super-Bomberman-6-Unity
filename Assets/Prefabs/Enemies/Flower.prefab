@@ -140,7 +140,6 @@ MonoBehaviour:
   openSprite: {fileID: 1228606389785476324}
   closedSprite: {fileID: 3743645062860832159}
   transitionSprite: {fileID: 1165273326066559278}
-  logVisualDiagnostics: 1
 --- !u!114 &8638696913730581265
 MonoBehaviour:
   m_ObjectHideFlags: 0

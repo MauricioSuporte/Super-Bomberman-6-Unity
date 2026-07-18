@@ -11,26 +11,8 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
     [SerializeField] private AnimatedSpriteRenderer closedSprite;
     [SerializeField] private AnimatedSpriteRenderer transitionSprite;
 
-    [Header("Diagnostics")]
-    [SerializeField] private bool logVisualDiagnostics;
-
     private Coroutine stateCycle;
     private bool isOpen = true;
-    private VisualSnapshot openSnapshot;
-    private VisualSnapshot closedSnapshot;
-    private VisualSnapshot transitionSnapshot;
-
-    private struct VisualSnapshot
-    {
-        public bool captured;
-        public bool enabled;
-        public Sprite sprite;
-        public bool flipX;
-        public bool flipY;
-        public Vector3 localPosition;
-        public Vector3 localScale;
-        public Quaternion localRotation;
-    }
 
     protected override void Awake()
     {
@@ -81,16 +63,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
         base.OnDestroy();
     }
 
-    private void LateUpdate()
-    {
-        if (!logVisualDiagnostics)
-            return;
-
-        DetectExternalVisualChange(openSprite, ref openSnapshot, "Open");
-        DetectExternalVisualChange(closedSprite, ref closedSnapshot, "Closed");
-        DetectExternalVisualChange(transitionSprite, ref transitionSnapshot, "Transition");
-    }
-
     private IEnumerator StateCycle()
     {
         while (!isDead)
@@ -133,7 +105,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
         transitionSprite.SetManualAnimationUpdate(true);
         activeSprite = transitionSprite;
         SetFlipX(transitionSprite, false);
-        CaptureAllVisualStates("transition setup");
 
         int lastFrame = transitionSprite.animationSprite.Length - 1;
 
@@ -142,13 +113,11 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
             int frame = reverse ? lastFrame - frameOffset : frameOffset;
             transitionSprite.CurrentFrame = frame;
             transitionSprite.RefreshFrame();
-            CaptureVisualState(transitionSprite, "Transition", $"frame {frame} ({(reverse ? "reverse" : "forward")})");
             yield return WaitForAnimationSeconds(GetConfiguredFrameDuration(transitionSprite, frame));
         }
 
         transitionSprite.SetManualAnimationUpdate(false);
         DisableVisual(transitionSprite);
-        CaptureAllVisualStates("transition finished");
     }
 
     private void ShowStaticSprite(AnimatedSpriteRenderer sprite)
@@ -163,7 +132,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
         sprite.RefreshFrame();
         activeSprite = sprite;
         SetFlipX(sprite, false);
-        CaptureAllVisualStates("static " + GetVisualName(sprite));
     }
 
     private void DisableFlowerVisuals()
@@ -199,7 +167,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
                 int frame = reverse ? lastFrame - frameOffset : frameOffset;
                 sprite.CurrentFrame = frame;
                 sprite.RefreshFrame();
-                CaptureVisualState(sprite, GetVisualName(sprite), $"cycle {cycle + 1}/{cycles}, frame {frame}");
                 yield return WaitForAnimationSeconds(GetConfiguredFrameDuration(sprite, frame));
             }
         }
@@ -208,7 +175,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
         sprite.idle = true;
         sprite.CurrentFrame = 0;
         sprite.RefreshFrame();
-        CaptureVisualState(sprite, GetVisualName(sprite), "returned to idle");
     }
 
     private static IEnumerator WaitForAnimationSeconds(float seconds)
@@ -250,98 +216,4 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
             renderer.flipX = flipX;
     }
 
-    private void CaptureAllVisualStates(string reason)
-    {
-        CaptureVisualState(openSprite, "Open", reason);
-        CaptureVisualState(closedSprite, "Closed", reason);
-        CaptureVisualState(transitionSprite, "Transition", reason);
-    }
-
-    private void CaptureVisualState(AnimatedSpriteRenderer visual, string label, string reason)
-    {
-        if (!logVisualDiagnostics || visual == null)
-            return;
-
-        ref VisualSnapshot snapshot = ref GetSnapshot(visual);
-        snapshot = ReadSnapshot(visual);
-        Debug.Log($"[Flower Visual] {label}: {reason}; {DescribeVisual(visual, snapshot)}", this);
-    }
-
-    private void DetectExternalVisualChange(AnimatedSpriteRenderer visual, ref VisualSnapshot snapshot, string label)
-    {
-        if (visual == null)
-            return;
-
-        VisualSnapshot current = ReadSnapshot(visual);
-        if (!snapshot.captured)
-        {
-            snapshot = current;
-            return;
-        }
-
-        if (VisualStatesMatch(snapshot, current))
-            return;
-
-        Debug.LogWarning($"[Flower Visual] {label}: alteração externa detectada; antes [{DescribeSnapshot(snapshot)}], agora [{DescribeVisual(visual, current)}].", this);
-        snapshot = current;
-    }
-
-    private ref VisualSnapshot GetSnapshot(AnimatedSpriteRenderer visual)
-    {
-        if (visual == openSprite)
-            return ref openSnapshot;
-
-        if (visual == closedSprite)
-            return ref closedSnapshot;
-
-        return ref transitionSnapshot;
-    }
-
-    private static VisualSnapshot ReadSnapshot(AnimatedSpriteRenderer visual)
-    {
-        SpriteRenderer renderer = visual.GetComponent<SpriteRenderer>();
-        Transform transform = visual.transform;
-        return new VisualSnapshot
-        {
-            captured = true,
-            enabled = visual.enabled && (renderer == null || renderer.enabled),
-            sprite = renderer != null ? renderer.sprite : null,
-            flipX = renderer != null && renderer.flipX,
-            flipY = renderer != null && renderer.flipY,
-            localPosition = transform.localPosition,
-            localScale = transform.localScale,
-            localRotation = transform.localRotation
-        };
-    }
-
-    private static bool VisualStatesMatch(VisualSnapshot a, VisualSnapshot b)
-    {
-        return a.enabled == b.enabled &&
-               a.sprite == b.sprite &&
-               a.flipX == b.flipX &&
-               a.flipY == b.flipY &&
-               a.localPosition == b.localPosition &&
-               a.localScale == b.localScale &&
-               a.localRotation == b.localRotation;
-    }
-
-    private static string GetVisualName(AnimatedSpriteRenderer visual)
-    {
-        return visual != null ? visual.gameObject.name : "Unknown";
-    }
-
-    private static string DescribeVisual(AnimatedSpriteRenderer visual, VisualSnapshot snapshot)
-    {
-        if (snapshot.sprite == null)
-            return DescribeSnapshot(snapshot);
-
-        Rect rect = snapshot.sprite.rect;
-        Vector2 size = snapshot.sprite.bounds.size;
-        return $"{DescribeSnapshot(snapshot)}, sprite={snapshot.sprite.name}, rect={rect.width}x{rect.height}@({rect.x},{rect.y}), bounds={size.x:F4}x{size.y:F4}, ppu={snapshot.sprite.pixelsPerUnit:F2}";
-    }
-
-    private static string DescribeSnapshot(VisualSnapshot snapshot)
-    {
-        return $"enabled={snapshot.enabled}, sprite={(snapshot.sprite != null ? snapshot.sprite.name : "null")}, flip=({snapshot.flipX},{snapshot.flipY}), localPos={snapshot.localPosition}, localScale={snapshot.localScale}, localRotation={snapshot.localRotation.eulerAngles}";
-    }
 }
