@@ -4,9 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FlowerMovementController : JunctionTurningEnemyMovementController
 {
-    private const float StateDurationSeconds = 1f;
-    private const float TransitionDurationSeconds = 0.5f;
-    private const float FlipIntervalSeconds = 1f / 6f;
+    private const int StateAnimationCycles = 3;
 
     [Header("Flower Visuals")]
     [SerializeField] private AnimatedSpriteRenderer openSprite;
@@ -15,8 +13,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
     private Coroutine stateCycle;
     private bool isOpen = true;
-    private bool isFlipped;
-    private float flipTimer;
 
     protected override void Awake()
     {
@@ -37,20 +33,6 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
         if (!isDead)
             stateCycle = StartCoroutine(StateCycle());
-    }
-
-    private void Update()
-    {
-        if (isDead)
-            return;
-
-        flipTimer += Time.deltaTime;
-        while (flipTimer >= FlipIntervalSeconds)
-        {
-            flipTimer -= FlipIntervalSeconds;
-            isFlipped = !isFlipped;
-            ApplyFlip(activeSprite);
-        }
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
@@ -85,8 +67,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
     {
         while (!isDead)
         {
-            // Open and Closed each remain visible for a full second before changing.
-            yield return new WaitForSeconds(StateDurationSeconds);
+            yield return PlayStateAnimation(isOpen ? openSprite : closedSprite);
 
             if (isDead)
                 yield break;
@@ -98,8 +79,15 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
                 yield break;
 
             isOpen = !isOpen;
-            ShowStaticSprite(isOpen ? openSprite : closedSprite);
         }
+    }
+
+    private IEnumerator PlayStateAnimation(AnimatedSpriteRenderer sprite)
+    {
+        ShowStaticSprite(sprite);
+
+        if (sprite != null && sprite.animationSprite != null && sprite.animationSprite.Length > 0)
+            yield return sprite.PlayCycles(StateAnimationCycles);
     }
 
     private IEnumerator PlayTransition(bool reverse)
@@ -109,30 +97,23 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
         if (transitionSprite == null || transitionSprite.animationSprite == null ||
             transitionSprite.animationSprite.Length == 0)
-        {
-            yield return new WaitForSeconds(TransitionDurationSeconds);
             yield break;
-        }
 
         transitionSprite.enabled = true;
         transitionSprite.idle = false;
         transitionSprite.loop = false;
         transitionSprite.SetManualAnimationUpdate(true);
         activeSprite = transitionSprite;
+        SetFlipX(transitionSprite, false);
 
         int lastFrame = transitionSprite.animationSprite.Length - 1;
-        float elapsed = 0f;
 
-        while (elapsed < TransitionDurationSeconds && !isDead)
+        for (int frameOffset = 0; frameOffset <= lastFrame && !isDead; frameOffset++)
         {
-            float normalized = Mathf.Clamp01(elapsed / TransitionDurationSeconds);
-            int frame = Mathf.Min(lastFrame, Mathf.FloorToInt(normalized * (lastFrame + 1)));
-            transitionSprite.CurrentFrame = reverse ? lastFrame - frame : frame;
+            int frame = reverse ? lastFrame - frameOffset : frameOffset;
+            transitionSprite.CurrentFrame = frame;
             transitionSprite.RefreshFrame();
-            ApplyFlip(transitionSprite);
-
-            elapsed += Time.deltaTime;
-            yield return null;
+            yield return new WaitForSecondsRealtime(GetConfiguredFrameDuration(transitionSprite, frame));
         }
 
         transitionSprite.SetManualAnimationUpdate(false);
@@ -150,7 +131,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
         sprite.idle = true;
         sprite.RefreshFrame();
         activeSprite = sprite;
-        ApplyFlip(sprite);
+        SetFlipX(sprite, false);
     }
 
     private void DisableFlowerVisuals()
@@ -171,9 +152,29 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
             sprite.enabled = false;
     }
 
-    private void ApplyFlip(AnimatedSpriteRenderer sprite)
+    private static float GetConfiguredFrameDuration(AnimatedSpriteRenderer sprite, int frame)
+    {
+        if (sprite.frameDurations != null &&
+            sprite.frameDurations.Length == sprite.animationSprite.Length)
+        {
+            return Mathf.Max(0.0001f, sprite.frameDurations[frame]);
+        }
+
+        if (sprite.useSequenceDuration)
+        {
+            int framesPerCycle = sprite.pingPong && sprite.animationSprite.Length > 1
+                ? sprite.animationSprite.Length * 2 - 2
+                : sprite.animationSprite.Length;
+
+            return Mathf.Max(0.0001f, sprite.sequenceDuration / framesPerCycle);
+        }
+
+        return Mathf.Max(0.0001f, sprite.animationTime);
+    }
+
+    private static void SetFlipX(AnimatedSpriteRenderer sprite, bool flipX)
     {
         if (sprite != null && sprite.TryGetComponent(out SpriteRenderer renderer))
-            renderer.flipX = isFlipped;
+            renderer.flipX = flipX;
     }
 }

@@ -18,6 +18,8 @@ namespace StageAssets
 
         private bool openingStarted;
 
+        public bool IsExitOpen => openingStarted && blockingCollider != null && !blockingCollider.enabled;
+
         private void Awake()
         {
             if (blockingCollider == null)
