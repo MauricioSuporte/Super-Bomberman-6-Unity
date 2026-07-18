@@ -12,6 +12,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
     private const float JumpHeightInTiles = 2f;
     private const int JumpDistanceInTiles = 2;
     private const int JumpsPerJoke = 3;
+    private const int JokeRippleFrame = 2;
 
     private enum FrogState
     {
@@ -24,6 +25,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
     [SerializeField] private AnimatedSpriteRenderer idleSprite;
     [SerializeField] private AnimatedSpriteRenderer jumpSprite;
     [SerializeField] private AnimatedSpriteRenderer jokeSprite;
+    [SerializeField, Range(0.1f, 1f)] private float jokeRippleScale = 0.5f;
 
     [Header("Landing Tilemaps")]
     [SerializeField] private Tilemap groundTilemap;
@@ -43,6 +45,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
     private PlayerWaterSubmersionEffect waterSubmersion;
     private GameObject jumpShadow;
     private Sprite jumpShadowSprite;
+    private bool wasOnJokeRippleFrame;
 
     protected override void Awake()
     {
@@ -137,6 +140,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
             jokePending = false;
             state = FrogState.Joking;
             stateTimer = JokeDuration;
+            wasOnJokeRippleFrame = false;
             ShowVisual(jokeSprite);
             return;
         }
@@ -201,8 +205,11 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
     private void UpdateJoke()
     {
         stateTimer -= Time.fixedDeltaTime;
+        TrySpawnJokeRipple();
+
         if (stateTimer <= 0f)
         {
+            wasOnJokeRippleFrame = false;
             state = FrogState.LandingIdle;
             stateTimer = 0f;
             ShowVisual(idleSprite);
@@ -535,5 +542,31 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
 
         FrogWaterJumpEffect effect = effectObject.AddComponent<FrogWaterJumpEffect>();
         effect.Initialize(effectType, sortingLayerId, sortingOrder: 4);
+    }
+
+    private void TrySpawnJokeRipple()
+    {
+        if (jokeSprite == null || !jokeSprite.enabled)
+        {
+            wasOnJokeRippleFrame = false;
+            return;
+        }
+
+        bool isOnRippleFrame = jokeSprite.CurrentFrame == JokeRippleFrame;
+        if (isOnRippleFrame && !wasOnJokeRippleFrame)
+        {
+            GameObject effectObject = new("FrogJokeRipple");
+            effectObject.transform.position = new Vector3(rb.position.x, rb.position.y, 0f);
+            effectObject.transform.localScale = Vector3.one * jokeRippleScale;
+
+            int sortingLayerId = 0;
+            if (groundTilemap != null && groundTilemap.TryGetComponent(out TilemapRenderer groundRenderer))
+                sortingLayerId = groundRenderer.sortingLayerID;
+
+            FrogWaterJumpEffect effect = effectObject.AddComponent<FrogWaterJumpEffect>();
+            effect.Initialize(FrogWaterJumpEffect.EffectType.ExitRipple, sortingLayerId, sortingOrder: 4);
+        }
+
+        wasOnJokeRippleFrame = isOnRippleFrame;
     }
 }
