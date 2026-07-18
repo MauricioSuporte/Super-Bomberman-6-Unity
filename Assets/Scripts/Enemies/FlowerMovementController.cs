@@ -87,7 +87,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
         ShowStaticSprite(sprite);
 
         if (sprite != null && sprite.animationSprite != null && sprite.animationSprite.Length > 0)
-            yield return sprite.PlayCycles(StateAnimationCycles);
+            yield return PlayConfiguredAnimation(sprite, StateAnimationCycles, reverse: false);
     }
 
     private IEnumerator PlayTransition(bool reverse)
@@ -113,7 +113,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
             int frame = reverse ? lastFrame - frameOffset : frameOffset;
             transitionSprite.CurrentFrame = frame;
             transitionSprite.RefreshFrame();
-            yield return new WaitForSecondsRealtime(GetConfiguredFrameDuration(transitionSprite, frame));
+            yield return WaitForAnimationSeconds(GetConfiguredFrameDuration(transitionSprite, frame));
         }
 
         transitionSprite.SetManualAnimationUpdate(false);
@@ -150,6 +150,44 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
     {
         if (sprite != null)
             sprite.enabled = false;
+    }
+
+    private IEnumerator PlayConfiguredAnimation(AnimatedSpriteRenderer sprite, int cycles, bool reverse)
+    {
+        sprite.idle = false;
+        sprite.loop = false;
+        sprite.SetManualAnimationUpdate(true);
+
+        int lastFrame = sprite.animationSprite.Length - 1;
+
+        for (int cycle = 0; cycle < cycles && !isDead; cycle++)
+        {
+            for (int frameOffset = 0; frameOffset <= lastFrame && !isDead; frameOffset++)
+            {
+                int frame = reverse ? lastFrame - frameOffset : frameOffset;
+                sprite.CurrentFrame = frame;
+                sprite.RefreshFrame();
+                yield return WaitForAnimationSeconds(GetConfiguredFrameDuration(sprite, frame));
+            }
+        }
+
+        sprite.SetManualAnimationUpdate(false);
+        sprite.idle = true;
+        sprite.CurrentFrame = 0;
+        sprite.RefreshFrame();
+    }
+
+    private static IEnumerator WaitForAnimationSeconds(float seconds)
+    {
+        float remaining = Mathf.Max(0.0001f, seconds);
+
+        while (remaining > 0f)
+        {
+            if (!GamePauseController.IsPaused)
+                remaining -= Time.unscaledDeltaTime;
+
+            yield return null;
+        }
     }
 
     private static float GetConfiguredFrameDuration(AnimatedSpriteRenderer sprite, int frame)

@@ -1775,10 +1775,10 @@ PrefabInstance:
     - target: {fileID: 202508950050250889, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c592a8fe57d69c14e8f9ac5cc8fbf6f2, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 202508950050250889, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 770640549414759375, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -1995,10 +1995,10 @@ PrefabInstance:
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -2043,10 +2043,10 @@ PrefabInstance:
     - target: {fileID: 8838027982064869938, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 8838027982064869938, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9299,9 +9299,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3RoomTwoTransition
   exitBlocker: {fileID: 698957489}
   fadeImage: {fileID: 765618197}
-  fadeOutSeconds: 1
-  blackScreenSeconds: 1
-  fadeInSeconds: 1
+  fadeOutSeconds: 0.35
+  blackScreenSeconds: 0.35
+  fadeInSeconds: 0.35
   roomOneCamera: {fileID: 1520869091}
   roomTwoCamera: {fileID: 410079257}
   playerDestinations:
