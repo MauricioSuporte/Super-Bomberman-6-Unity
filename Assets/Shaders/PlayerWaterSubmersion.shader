@@ -11,6 +11,8 @@ Shader "SuperBomberman/PlayerWaterSubmersion"
         _UnderwaterOpacity ("Underwater Opacity", Range(0,1)) = 0.72
         _SurfaceTint ("Surface Line Tint", Color) = (0.18,0.72,1,1)
         _SurfaceOpacity ("Surface Line Opacity", Range(0,1)) = 0.72
+        _UseSurfaceLine ("Use Surface Line", Float) = 1
+        _PremultiplyUnderwaterOpacity ("Premultiply Underwater Opacity", Float) = 0
     }
 
     SubShader
@@ -61,6 +63,8 @@ Shader "SuperBomberman/PlayerWaterSubmersion"
             float _UnderwaterOpacity;
             fixed4 _SurfaceTint;
             float _SurfaceOpacity;
+            float _UseSurfaceLine;
+            float _PremultiplyUnderwaterOpacity;
 
             v2f vert(appdata_t input)
             {
@@ -91,14 +95,17 @@ Shader "SuperBomberman/PlayerWaterSubmersion"
                 // Only pixels below the surface receive the blue tint and
                 // transparency. The final two pixels form the waterline.
                 float lineHeight = max(_SurfaceLineHeight, 0.0001);
-                float surfaceLine = smoothstep(_WaterSurfaceY - lineHeight, _WaterSurfaceY, input.worldY);
+                float surfaceLine = _UseSurfaceLine > 0.5
+                    ? smoothstep(_WaterSurfaceY - lineHeight, _WaterSurfaceY, input.worldY)
+                    : 0.0;
 
                 float tintStrength = lerp(_UnderwaterStrength, 1.0, surfaceLine);
                 fixed3 targetTint = lerp(_UnderwaterTint.rgb, _SurfaceTint.rgb, surfaceLine);
                 fixed3 rgb = lerp(source.rgb, targetTint, tintStrength);
                 float opacity = lerp(_UnderwaterOpacity, _SurfaceOpacity, surfaceLine);
 
-                source.rgb = rgb * alpha;
+                float rgbOpacity = lerp(1.0, opacity, saturate(_PremultiplyUnderwaterOpacity));
+                source.rgb = rgb * alpha * rgbOpacity;
                 source.a = alpha * opacity;
                 return source;
             }

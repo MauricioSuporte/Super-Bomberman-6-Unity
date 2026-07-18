@@ -18,8 +18,18 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     [Tooltip("World-space offset applied only when this effect is attached to a CoreMechanisms destructible. More negative values lower the waterline.")]
     private readonly float coreMechanismsWaterSurfaceYOffset = -0.125f;
 
+    [Header("Water Appearance")]
+    [Tooltip("World-space offset from this object's pivot to the water surface.")]
+    [SerializeField] private float waterSurfaceYOffset;
+    [Tooltip("Keeps the brighter blue line at the water surface.")]
+    [SerializeField] private bool showSurfaceLine = true;
+    [Tooltip("Makes the underwater tint fade with its alpha instead of remaining fully bright.")]
+    [SerializeField] private bool premultiplyUnderwaterOpacity;
+
     private static readonly int WaterSurfaceY = Shader.PropertyToID("_WaterSurfaceY");
     private static readonly int SurfaceLineHeight = Shader.PropertyToID("_SurfaceLineHeight");
+    private static readonly int UseSurfaceLine = Shader.PropertyToID("_UseSurfaceLine");
+    private static readonly int PremultiplyUnderwaterOpacity = Shader.PropertyToID("_PremultiplyUnderwaterOpacity");
 
     private readonly List<SpriteRenderer> bodyRenderers = new();
     private readonly Dictionary<SpriteRenderer, Material> originalMaterials = new();
@@ -90,7 +100,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             ApplyMaterial();
         }
 
-        float waterSurfaceY = transform.position.y +
+        float waterSurfaceY = transform.position.y + waterSurfaceYOffset +
                               (coreMechanisms != null ? coreMechanismsWaterSurfaceYOffset : 0f);
 
         for (int i = bodyRenderers.Count - 1; i >= 0; i--)
@@ -105,6 +115,8 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             renderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetFloat(WaterSurfaceY, waterSurfaceY);
             propertyBlock.SetFloat(SurfaceLineHeight, DefaultSurfaceLineHeight);
+            propertyBlock.SetFloat(UseSurfaceLine, showSurfaceLine ? 1f : 0f);
+            propertyBlock.SetFloat(PremultiplyUnderwaterOpacity, premultiplyUnderwaterOpacity ? 1f : 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
     }
