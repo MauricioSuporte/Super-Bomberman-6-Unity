@@ -362,12 +362,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -607179606, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  m_Sprite: {fileID: -6098675972806692813, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.0625, y: 1.0625}
+  m_Size: {x: 1.1875, y: 1.125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -384,12 +384,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -607179606, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  idleSprite: {fileID: -6098675972806692813, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   animationSprite:
-  - {fileID: -607179606, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: 1807467518, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: -607179606, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: -1287715520, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: -6098675972806692813, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: 8318620416127688153, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: -6098675972806692813, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: -722312468994564668, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -486,12 +486,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  m_Sprite: {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.0625, y: 1.0625}
+  m_Size: {x: 1.1875, y: 1.125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -508,13 +508,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  idleSprite: {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   animationSprite:
-  - {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: 1789313633, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: 1162151868812139111, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -622,7 +622,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.03, y: 0.17}
+  m_Size: {x: 0.19, y: 0.16}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -642,7 +642,7 @@ MonoBehaviour:
   idleSprite: {fileID: 6581866111006463381, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   animationSprite:
   - {fileID: 6581866111006463381, guid: b6e77a5085689154291019e3f727ccde, type: 3}
-  - {fileID: 1627967362, guid: b6e77a5085689154291019e3f727ccde, type: 3}
+  - {fileID: -2018457221746656894, guid: b6e77a5085689154291019e3f727ccde, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -744,7 +744,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.17, y: 0.15}
+  m_Size: {x: 0.17, y: 0.16}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
