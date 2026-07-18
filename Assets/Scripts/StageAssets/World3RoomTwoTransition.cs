@@ -56,7 +56,17 @@ namespace StageAssets
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (transitionStarted || exitBlocker == null || !exitBlocker.IsExitOpen)
+            TryStartTransition(other);
+        }
+
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            TryStartTransition(other);
+        }
+
+        private void TryStartTransition(Collider2D other)
+        {
+            if (transitionStarted || exitBlocker == null || !exitBlocker.IsOpeningStarted)
                 return;
 
             MovementController player = other.GetComponent<MovementController>();
