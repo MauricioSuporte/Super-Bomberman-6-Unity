@@ -140,6 +140,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void Awake()
     {
+        EnsureWorld3WaterSubmersion();
+
         bombCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<AnimatedSpriteRenderer>();
@@ -186,6 +188,15 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         ResolveIndestructibleTilemapIfNeeded();
         ResolveStageBoundsTilemapIfNeeded();
+    }
+
+    private void EnsureWorld3WaterSubmersion()
+    {
+        if (!string.Equals(SceneManager.GetActiveScene().name, "Stage_3-1", System.StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (!TryGetComponent<PlayerWaterSubmersionEffect>(out _))
+            gameObject.AddComponent<PlayerWaterSubmersionEffect>();
     }
 
     private void OnEnable()

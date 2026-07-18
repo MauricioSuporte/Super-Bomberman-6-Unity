@@ -295,7 +295,12 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (gameManager != null)
             gameManager.NotifyEnemyDied();
 
-        Invoke(nameof(OnDeathAnimationEnded), 0.7f);
+        Invoke(nameof(OnDeathAnimationEnded), GetDeathAnimationDuration());
+    }
+
+    protected virtual float GetDeathAnimationDuration()
+    {
+        return 0.7f;
     }
 
     void DisableAllDirectionalSprites()
