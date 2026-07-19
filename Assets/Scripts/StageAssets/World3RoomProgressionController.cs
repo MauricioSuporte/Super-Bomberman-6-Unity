@@ -28,7 +28,6 @@ namespace StageAssets
 
         [SerializeField] private Tilemap coreTilemap;
         [SerializeField] private Room[] rooms;
-        [SerializeField] private bool debugLogs = true;
 
         private readonly Dictionary<EnemyMovementController, bool> enemyOriginalStates = new();
 
@@ -41,12 +40,14 @@ namespace StageAssets
 
         private void OnEnable()
         {
+            CoreMechanismsDestructible.SuppressLegacyAllDestroyedSfx = true;
             CoreMechanismsTileHandler.CoreMechanismDestroyed += HandleCoreDestroyed;
             CoreMechanismsDestructible.CoreMechanismDestroyed += HandleSceneCoreDestroyed;
         }
 
         private void OnDisable()
         {
+            CoreMechanismsDestructible.SuppressLegacyAllDestroyedSfx = false;
             CoreMechanismsTileHandler.CoreMechanismDestroyed -= HandleCoreDestroyed;
             CoreMechanismsDestructible.CoreMechanismDestroyed -= HandleSceneCoreDestroyed;
         }
@@ -56,10 +57,7 @@ namespace StageAssets
         private void ScanRoomCores()
         {
             if (coreTilemap == null || rooms == null)
-            {
-                LogWarning("Scan skipped: Core Tilemap or Rooms is not configured.");
                 return;
-            }
 
             BoundsInt bounds = coreTilemap.cellBounds;
             foreach (Room room in rooms)
@@ -78,7 +76,6 @@ namespace StageAssets
                     room.remainingCores.Add(cell);
                 }
 
-                Log($"'{room.name}' detected {room.remainingCores.Count} CoreMechanisms inside '{room.roomBounds.name}'.");
             }
 
             CoreMechanismsDestructible[] sceneCores = FindObjectsByType<CoreMechanismsDestructible>(FindObjectsInactive.Include);
@@ -95,33 +92,21 @@ namespace StageAssets
                 }
             }
 
-            foreach (Room room in rooms)
-                if (room != null && room.roomBounds != null)
-                    Log($"'{room.name}' detected {room.remainingSceneCores.Count} scene CoreMechanisms inside '{room.roomBounds.name}'.");
         }
 
         private void HandleCoreDestroyed(Tilemap tilemap, Vector3Int cell)
         {
             if (tilemap != coreTilemap || rooms == null)
-            {
-                LogWarning($"Ignored core destruction at {cell}: event tilemap does not match Core Tilemap.");
                 return;
-            }
 
-            bool matchedRoom = false;
             foreach (Room room in rooms)
             {
                 if (room == null || room.released || !room.remainingCores.Remove(cell))
                     continue;
 
-                matchedRoom = true;
-                Log($"'{room.name}' core destroyed at {cell}. Remaining: {room.remainingCores.Count}.");
                 if (room.remainingCores.Count == 0 && room.remainingSceneCores.Count == 0)
                     Release(room);
             }
-
-            if (!matchedRoom)
-                LogWarning($"Core destroyed at {cell}, but it is not inside any configured Room Bounds. Resize or reposition the bounds.");
         }
 
         private void HandleSceneCoreDestroyed(CoreMechanismsDestructible core)
@@ -129,26 +114,19 @@ namespace StageAssets
             if (core == null || rooms == null)
                 return;
 
-            bool matchedRoom = false;
             foreach (Room room in rooms)
             {
                 if (room == null || room.released || !room.remainingSceneCores.Remove(core))
                     continue;
 
-                matchedRoom = true;
-                Log($"'{room.name}' scene core destroyed at {core.transform.position}. Remaining scene cores: {room.remainingSceneCores.Count}.");
                 if (room.remainingSceneCores.Count == 0 && room.remainingCores.Count == 0)
                     Release(room, core);
             }
-
-            if (!matchedRoom)
-                Log($"Ignored unregistered scene core destruction from '{core.name}'.");
         }
 
         private void Release(Room room, CoreMechanismsDestructible completionCore = null)
         {
             room.released = true;
-            Log($"'{room.name}' complete. Releasing configured passage.");
             completionCore?.PlayRoomCompletionSfx();
             room.bambooToOpen?.BeginOpening();
             room.bubbleChipToRelease?.BeginSequence();
@@ -232,16 +210,5 @@ namespace StageAssets
                    tile.name.IndexOf("CoreMechanism", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private void Log(string message)
-        {
-            if (debugLogs)
-                Debug.Log($"[World3RoomProgression] {message}", this);
-        }
-
-        private void LogWarning(string message)
-        {
-            if (debugLogs)
-                Debug.LogWarning($"[World3RoomProgression] {message}", this);
-        }
     }
 }

@@ -26,11 +26,11 @@ namespace StageAssets
         [SerializeField, Min(0f)] private float blackScreenSeconds = 1f;
         [SerializeField, Min(0.01f)] private float fadeInSeconds = 1f;
 
-        [Header("Cameras")]
-        [SerializeField] private Camera roomOneCamera;
-        [SerializeField] private Camera roomTwoCamera;
+        [Header("Room Cameras")]
+        [SerializeField] private Camera sourceRoomCamera;
+        [SerializeField] private Camera destinationRoomCamera;
 
-        [Header("Room 2 Player Destinations")]
+        [Header("Destination Player Positions")]
         [SerializeField] private PlayerDestination[] playerDestinations =
         {
             new PlayerDestination { playerId = 1, position = new Vector2(15f, 4f) },
@@ -91,9 +91,9 @@ namespace StageAssets
             if (blackScreenSeconds > 0f)
                 yield return new WaitForSecondsRealtime(blackScreenSeconds);
 
-            MoveLivingPlayersToRoomTwo();
-            SetCameraActive(roomOneCamera, false);
-            SetCameraActive(roomTwoCamera, true);
+            MoveLivingPlayersToDestination();
+            SetCameraActive(sourceRoomCamera, false);
+            SetCameraActive(destinationRoomCamera, true);
             yield return null;
 
             yield return FadeTo(0f, fadeInSeconds);
@@ -143,7 +143,7 @@ namespace StageAssets
             }
         }
 
-        private void MoveLivingPlayersToRoomTwo()
+        private void MoveLivingPlayersToDestination()
         {
             for (int i = 0; i < players.Count; i++)
             {

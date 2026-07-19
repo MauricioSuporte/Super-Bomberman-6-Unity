@@ -7,6 +7,7 @@ public sealed class CoreMechanismsDestructible : Destructible
 {
     public static event Action AllCoreMechanismsDestroyed;
     public static event Action<CoreMechanismsDestructible> CoreMechanismDestroyed;
+    public static bool SuppressLegacyAllDestroyedSfx { get; set; }
 
     [SerializeField] private AnimatedSpriteRenderer animationRenderer;
     [SerializeField] private AnimatedSpriteRenderer deathRenderer;
@@ -24,6 +25,7 @@ public sealed class CoreMechanismsDestructible : Destructible
     {
         AllCoreMechanismsDestroyed = null;
         CoreMechanismDestroyed = null;
+        SuppressLegacyAllDestroyedSfx = false;
         allDestroyedSfxPlayed = false;
         sceneHandleRaw = ulong.MaxValue;
     }
@@ -59,7 +61,8 @@ public sealed class CoreMechanismsDestructible : Destructible
         bool allDestroyed = !HasRemainingAliveCoreMechanisms();
         if (allDestroyed)
         {
-            PlayAllDestroyedSfx();
+            if (!SuppressLegacyAllDestroyedSfx)
+                PlayAllDestroyedSfx();
             AllCoreMechanismsDestroyed?.Invoke();
         }
 
