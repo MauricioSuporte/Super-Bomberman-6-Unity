@@ -169,6 +169,7 @@ public class PlayerMountCompanion : MonoBehaviour
     public MountedType GetMountedLouieType() => currentLouie == null ? MountedType.None : mountedType;
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
     public bool HasMountedLouie() => currentLouie != null;
+    public GameObject GetMountedLouieObject() => currentLouie;
 
     public void ClearMountedStateForForcedArenaRemoval()
     {

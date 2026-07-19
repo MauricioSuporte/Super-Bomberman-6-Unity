@@ -115,35 +115,58 @@ namespace StageAssets
 
         private void AnimatePlayerBodySprites(Transform player, bool isOnCenterTile)
         {
+            GameObject mountedLouie = null;
+            if (player.TryGetComponent(out PlayerMountCompanion mountCompanion))
+                mountedLouie = mountCompanion.GetMountedLouieObject();
+
             AnimatedSpriteRenderer[] animatedSprites = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
             for (int i = 0; i < animatedSprites.Length; i++)
             {
                 AnimatedSpriteRenderer animatedSprite = animatedSprites[i];
-                if (animatedSprite == null || animatedSprite.transform.parent != player)
+                if (animatedSprite == null ||
+                    animatedSprite.transform.parent != player ||
+                    (mountedLouie != null &&
+                     (animatedSprite.transform == mountedLouie.transform ||
+                      animatedSprite.transform.IsChildOf(mountedLouie.transform))))
                     continue;
 
-                bool hasCachedOffset = playerSpriteOffsets.TryGetValue(animatedSprite, out float cachedOffset);
-                if (!isOnCenterTile && !hasCachedOffset)
-                    continue;
+                AnimateSpriteOffset(animatedSprite, isOnCenterTile);
+            }
 
-                float currentOffset = hasCachedOffset ? cachedOffset : 0f;
-                float targetOffset = isOnCenterTile ? -centerPlayerSpriteDropY : 0f;
-                float nextOffset = Mathf.MoveTowards(
-                    currentOffset,
-                    targetOffset,
-                    transitionSpeed * Time.deltaTime);
+            if (mountedLouie == null)
+                return;
 
-                if (Mathf.Abs(nextOffset) <= 0.0001f && !isOnCenterTile)
-                {
-                    if (Mathf.Abs(currentOffset) > 0.0001f)
-                        animatedSprite.ClearExternalBase();
-                    playerSpriteOffsets[animatedSprite] = 0f;
-                }
-                else
-                {
-                    animatedSprite.SetExternalBaseOffsetFromInitial(Vector3.up * nextOffset);
-                    playerSpriteOffsets[animatedSprite] = nextOffset;
-                }
+            AnimatedSpriteRenderer[] mountSprites = mountedLouie.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int i = 0; i < mountSprites.Length; i++)
+            {
+                if (mountSprites[i] != null)
+                    AnimateSpriteOffset(mountSprites[i], isOnCenterTile);
+            }
+        }
+
+        private void AnimateSpriteOffset(AnimatedSpriteRenderer animatedSprite, bool isOnCenterTile)
+        {
+            bool hasCachedOffset = playerSpriteOffsets.TryGetValue(animatedSprite, out float cachedOffset);
+            if (!isOnCenterTile && !hasCachedOffset)
+                return;
+
+            float currentOffset = hasCachedOffset ? cachedOffset : 0f;
+            float targetOffset = isOnCenterTile ? -centerPlayerSpriteDropY : 0f;
+            float nextOffset = Mathf.MoveTowards(
+                currentOffset,
+                targetOffset,
+                transitionSpeed * Time.deltaTime);
+
+            if (Mathf.Abs(nextOffset) <= 0.0001f && !isOnCenterTile)
+            {
+                if (Mathf.Abs(currentOffset) > 0.0001f)
+                    animatedSprite.ClearExternalBase();
+                playerSpriteOffsets[animatedSprite] = 0f;
+            }
+            else
+            {
+                animatedSprite.SetExternalBaseOffsetFromInitial(Vector3.up * nextOffset);
+                playerSpriteOffsets[animatedSprite] = nextOffset;
             }
         }
 
