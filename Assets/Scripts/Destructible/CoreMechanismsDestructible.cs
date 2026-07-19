@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public sealed class CoreMechanismsDestructible : Destructible
 {
     public static event Action AllCoreMechanismsDestroyed;
+    public static event Action<CoreMechanismsDestructible> CoreMechanismDestroyed;
 
     [SerializeField] private AnimatedSpriteRenderer animationRenderer;
     [SerializeField] private AnimatedSpriteRenderer deathRenderer;
@@ -22,6 +23,7 @@ public sealed class CoreMechanismsDestructible : Destructible
     static void ResetStaticStateOnSubsystemRegistration()
     {
         AllCoreMechanismsDestroyed = null;
+        CoreMechanismDestroyed = null;
         allDestroyedSfxPlayed = false;
         sceneHandleRaw = ulong.MaxValue;
     }
@@ -52,6 +54,7 @@ public sealed class CoreMechanismsDestructible : Destructible
             return;
 
         dying = true;
+        CoreMechanismDestroyed?.Invoke(this);
 
         bool allDestroyed = !HasRemainingAliveCoreMechanisms();
         if (allDestroyed)
@@ -61,6 +64,20 @@ public sealed class CoreMechanismsDestructible : Destructible
         }
 
         StartCoroutine(DeathRoutine());
+    }
+
+    public void PlayRoomCompletionSfx()
+    {
+        if (allDestroyedSfx == null)
+            return;
+
+        GameObject temp = new("CoreMechanisms_RoomCompletedSfx");
+        AudioSource source = temp.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.loop = false;
+        source.spatialBlend = 0f;
+        PlayBoostedSfx(source, allDestroyedSfx, allDestroyedSfxVolume);
+        Destroy(temp, Mathf.Max(0.1f, allDestroyedSfx.length + 0.1f));
     }
 
     private IEnumerator DeathRoutine()

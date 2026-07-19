@@ -42,6 +42,7 @@ namespace StageAssets
         [SerializeField] private Vector3 endStagePortalOffset = Vector3.zero;
         [SerializeField] private GameObject[] objectsToDisableOnSequence;
         [SerializeField] private string[] fallbackObjectNamesToDisable = { "Bubble" };
+        [SerializeField] private bool openFromLegacyAllCoresEvent;
 
         private bool sequenceStarted;
         private bool endStagePortalSpawned;
@@ -49,14 +50,18 @@ namespace StageAssets
         private bool tileSwapsApplied;
         private readonly List<GameObject> bubbleCrashPhase1Pieces = new();
 
+        public void BeginSequence() => HandleAllCoreMechanismsDestroyed();
+
         private void OnEnable()
         {
-            CoreMechanismsDestructible.AllCoreMechanismsDestroyed += HandleAllCoreMechanismsDestroyed;
+            if (openFromLegacyAllCoresEvent)
+                CoreMechanismsDestructible.AllCoreMechanismsDestroyed += HandleAllCoreMechanismsDestroyed;
         }
 
         private void OnDisable()
         {
-            CoreMechanismsDestructible.AllCoreMechanismsDestroyed -= HandleAllCoreMechanismsDestroyed;
+            if (openFromLegacyAllCoresEvent)
+                CoreMechanismsDestructible.AllCoreMechanismsDestroyed -= HandleAllCoreMechanismsDestroyed;
         }
 
         private void Update()

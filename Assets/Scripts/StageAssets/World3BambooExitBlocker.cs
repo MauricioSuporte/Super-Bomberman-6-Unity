@@ -15,11 +15,14 @@ namespace StageAssets
         [Header("Blocking")]
         [SerializeField] private BoxCollider2D blockingCollider;
         [SerializeField] private Vector2 blockingColliderSize = Vector2.one;
+        [SerializeField] private bool openFromLegacyAllCoresEvent;
 
         private bool openingStarted;
 
         public bool IsOpeningStarted => openingStarted;
         public bool IsExitOpen => openingStarted && blockingCollider != null && !blockingCollider.enabled;
+
+        public void BeginOpening() => OpenExit();
 
         private void Awake()
         {
@@ -33,12 +36,14 @@ namespace StageAssets
 
         private void OnEnable()
         {
-            CoreMechanismsDestructible.AllCoreMechanismsDestroyed += OpenExit;
+            if (openFromLegacyAllCoresEvent)
+                CoreMechanismsDestructible.AllCoreMechanismsDestroyed += OpenExit;
         }
 
         private void OnDisable()
         {
-            CoreMechanismsDestructible.AllCoreMechanismsDestroyed -= OpenExit;
+            if (openFromLegacyAllCoresEvent)
+                CoreMechanismsDestructible.AllCoreMechanismsDestroyed -= OpenExit;
         }
 
         private void OpenExit()

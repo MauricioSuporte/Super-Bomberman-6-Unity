@@ -4,6 +4,7 @@ using UnityEngine.Tilemaps;
 
 public sealed class CoreMechanismsTileHandler : MonoBehaviour, IDestructibleTileHandler
 {
+    public static event System.Action<Tilemap, Vector3Int> CoreMechanismDestroyed;
     [SerializeField] private CoreMechanismsDestructible deathPrefab;
     [SerializeField] private Vector3 spawnOffset = Vector3.zero;
     [SerializeField] private AudioClip allDestroyedSfx;
@@ -54,6 +55,7 @@ public sealed class CoreMechanismsTileHandler : MonoBehaviour, IDestructibleTile
         Transform parent = destructibleTiles != null ? destructibleTiles.transform : null;
 
         source.ClearDestructibleForEffect(worldPos, spawnDestructiblePrefab: false, spawnHiddenObject: true);
+        CoreMechanismDestroyed?.Invoke(destructibleTiles, cell);
         bool allDestroyed = !HasRemainingCoreMechanismsTiles(destructibleTiles, coreMechanismsTile);
 
         if (deathPrefab != null)
