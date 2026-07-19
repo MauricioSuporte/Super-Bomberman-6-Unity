@@ -88,6 +88,9 @@ namespace StageAssets
 
         private bool IsWaterCell(Vector3Int cell)
         {
+            if (World3BridgeWaterTiles.IsBridgeCell(cell))
+                return false;
+
             if (groundTilemap.GetTile(cell) == null)
                 return false;
 

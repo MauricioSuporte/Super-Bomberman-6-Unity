@@ -39,6 +39,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private bool targetTileSuppressed;
     private bool mountedPlayerSuppressed;
     private bool terrainOrBombSuppressed;
+    private bool bridgeSuppressed;
     private Tilemap destructibleTilemap;
     private int bombLayerMask;
     private CoreMechanismsDestructible coreMechanisms;
@@ -97,6 +98,14 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
         if (terrainOrBombSuppressed != shouldSuppressForTerrainOrBomb)
         {
             terrainOrBombSuppressed = shouldSuppressForTerrainOrBomb;
+            ApplyMaterial();
+        }
+
+        bool shouldSuppressForBridge = StageAssets.World3BridgeWaterTiles.IsBridgeAtWorldPosition(
+            GetWaterInteractionPosition());
+        if (bridgeSuppressed != shouldSuppressForBridge)
+        {
+            bridgeSuppressed = shouldSuppressForBridge;
             ApplyMaterial();
         }
 
@@ -220,7 +229,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
     private bool IsSuppressed()
     {
-        return targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed;
+        return targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed || bridgeSuppressed;
     }
 
 }
