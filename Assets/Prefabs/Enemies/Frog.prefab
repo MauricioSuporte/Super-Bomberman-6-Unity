@@ -486,12 +486,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  m_Sprite: {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.18, y: 0.16}
+  m_Size: {x: 1.25, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -508,13 +508,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  idleSprite: {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
   animationSprite:
-  - {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
-  - {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
-  - {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
-  - {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
-  - {fileID: 5987630775561802436, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  - {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  - {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  - {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  - {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
+  - {fileID: -3970644508504664309, guid: c61c70dbbd785d94592dca0567161b5d, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -874,7 +874,7 @@ SpriteRenderer:
   m_Size: {x: 0.18, y: 0.16}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!114 &4105314894438240047
 MonoBehaviour:
