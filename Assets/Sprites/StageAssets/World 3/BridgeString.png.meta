@@ -120,7 +120,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 16
+        y: 17
         width: 16
         height: 16
       alignment: 0
@@ -142,7 +142,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 16
-        y: 16
+        y: 17
         width: 16
         height: 16
       alignment: 0
@@ -164,7 +164,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 32
-        y: 16
+        y: 17
         width: 16
         height: 16
       alignment: 0
@@ -175,8 +175,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 84530bd52a48e4b4192b57031f327425
-      internalID: 917281158
+      spriteID: 75f1936ba7e3b0743b2f50f7345db887
+      internalID: -162010411
       vertices: []
       indices: 
       edges: []
@@ -197,8 +197,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 22a51ca4a0e42aa4ba3959149e955764
-      internalID: 830678518
+      spriteID: d2a8200e1af7ad54e88681f7354f3d53
+      internalID: -1822727075
       vertices: []
       indices: 
       edges: []
@@ -219,8 +219,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b7ff71d02c4cdc146839358d9932413f
-      internalID: 1629021130
+      spriteID: 78b9fb1012fc7ba4bbc6c112d5cf1beb
+      internalID: -107774936
       vertices: []
       indices: 
       edges: []
@@ -241,8 +241,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: af9532e206895ed45a7bc5a2660b0704
-      internalID: 17883429
+      spriteID: fd890d0f683366840b07368f3acad05f
+      internalID: -1559276594
       vertices: []
       indices: 
       edges: []
@@ -251,7 +251,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 875f4b5e9d25ace47ae8f37a635c97e5
+    spriteID: 9ac564891b74a074e930af10e782420e
     internalID: 0
     vertices: []
     indices: 
@@ -265,10 +265,10 @@ TextureImporter:
     nameFileIdTable:
       BridgeString_0: 8250646656963030659
       BridgeString_1: 8376455721307323646
-      BridgeString_2: 917281158
-      BridgeString_3: 830678518
-      BridgeString_4: 1629021130
-      BridgeString_5: 17883429
+      BridgeString_2: -162010411
+      BridgeString_3: -1822727075
+      BridgeString_4: -107774936
+      BridgeString_5: -1559276594
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
