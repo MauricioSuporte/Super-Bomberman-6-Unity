@@ -1,13 +1,19 @@
 fileFormatVersion: 2
-guid: b9b72cff16289024199e50c179c7808c
+guid: d16b2aef3ba17864886cee8525be7500
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8250646656963030659
-    second: BridgeString_0
+      213: -4767577177567020973
+    second: BridgePillar_0
   - first:
-      213: 8376455721307323646
-    second: BridgeString_1
+      213: -1683094282389598637
+    second: BridgePillar_1
+  - first:
+      213: 5919075430414445616
+    second: BridgePillar_2
+  - first:
+      213: -4527726454194537182
+    second: BridgePillar_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,133 +122,45 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: BridgeString_0
+      name: BridgePillar_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 17
-        width: 16
-        height: 16
+        y: 21
+        width: 48
+        height: 12
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 38eab83bb6f208270800000000000000
-      internalID: 8250646656963030659
+      spriteID: 358bbd311d926ddb0800000000000000
+      internalID: -4767577177567020973
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: BridgeString_1
-      rect:
-        serializedVersion: 2
-        x: 16
-        y: 17
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: efcbf4129162f3470800000000000000
-      internalID: 8376455721307323646
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: BridgeString_2
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 17
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ba8ca0904133335439a8ca47212bdfe1
-      internalID: 526144238
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: BridgeString_3
+      name: BridgePillar_1
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 16
+        width: 48
         height: 16
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f821ed01ce9aeb7498d1e8f8d3061b99
-      internalID: 219573087
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: BridgeString_4
-      rect:
-        serializedVersion: 2
-        x: 16
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 753be02f84d13e748b02ec441419fe8a
-      internalID: 183591346
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: BridgeString_5
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 988653f4063b93b4aa9746af4017a851
-      internalID: 1646230651
+      spriteID: fc2ed51c90d75e94fbd70bccec27b243
+      internalID: -368423849
       vertices: []
       indices: 
       edges: []
@@ -251,7 +169,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c1054ba876bb8a44a96f9a7eb03aa605
+    spriteID: a2da41b453660cb44b3d2401c9629218
     internalID: 0
     vertices: []
     indices: 
@@ -261,14 +179,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      BridgeString_0: 8250646656963030659
-      BridgeString_1: 8376455721307323646
-      BridgeString_2: 526144238
-      BridgeString_3: 219573087
-      BridgeString_4: 183591346
-      BridgeString_5: 1646230651
+      BridgePillar_0: -4767577177567020973
+      BridgePillar_1: -368423849
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

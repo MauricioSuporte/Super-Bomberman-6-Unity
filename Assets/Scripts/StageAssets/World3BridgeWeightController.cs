@@ -50,7 +50,9 @@ namespace StageAssets
             for (int i = 0; i < sprites.Length; i++)
             {
                 SpriteRenderer sprite = sprites[i];
-                if (sprite == null || sprite.transform == transform)
+                if (sprite == null ||
+                    sprite.transform == transform ||
+                    sprite.gameObject.name.StartsWith("Bridge Pillar"))
                     continue;
 
                 if (!boardBasePositions.ContainsKey(sprite.transform))
