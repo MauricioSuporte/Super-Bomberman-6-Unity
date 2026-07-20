@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: WaterFallStartPass
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: -1533496365154520674, guid: 757804206028b284fa6fbc5d8d28fb5a, type: 3}
+  - {fileID: -1692466372, guid: 757804206028b284fa6fbc5d8d28fb5a, type: 3}
+  - {fileID: 1743410694, guid: 757804206028b284fa6fbc5d8d28fb5a, type: 3}
+  - {fileID: 336315676, guid: 757804206028b284fa6fbc5d8d28fb5a, type: 3}
+  - {fileID: -184233315, guid: 757804206028b284fa6fbc5d8d28fb5a, type: 3}
+  - {fileID: -569370465, guid: 757804206028b284fa6fbc5d8d28fb5a, type: 3}
+  m_MinSpeed: 8
+  m_MaxSpeed: 8
+  m_AnimationStartTime: 0
+  UseSpecifiedTime: 0
+  SpecifiedTime: 0.25
+  m_TileColliderType: 0
