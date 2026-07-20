@@ -29,12 +29,12 @@ public static class PlayerPersistentStats
         public bool HasPowerGlove = false;
         public bool CanPassBombs = true;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = false;
+        public bool HasPierceBombs = true;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasMagnetBomb = false;
-        public bool HasFullFire = false;
+        public bool HasFullFire = true;
 
         public MountedType MountedLouie = MountedType.None;
         public BomberCharacter Character = BomberCharacter.LadyBomber;

@@ -8,6 +8,25 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
+    [Serializable]
+    public sealed class HiddenObjectItemAmount
+    {
+        public ItemType itemType = ItemType.ExtraBomb;
+        [Min(0)] public int amount;
+    }
+
+    [Serializable]
+    public sealed class HiddenObjectsRoom
+    {
+        public string name = "Room";
+        [Tooltip("Only destructible blocks whose cell center is inside this collider can receive this room's hidden objects.")]
+        public Collider2D roomBounds;
+        [Tooltip("Normal Game only. Each egg randomly becomes one of the seven SB5 Louies.")]
+        [InspectorName("Random SB5 Louie Egg")]
+        [Min(0)] public int randomSb5EggAmount;
+        public HiddenObjectItemAmount[] itemAmounts;
+    }
+
     public enum BattleModeHiddenDropEntryKind
     {
         Item,
@@ -123,10 +142,17 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int redLouieEggAmount = 0;
     [Min(0)] public int clockAmount = 0;
     [Min(0)] public int skullAmount = 0;
+    [Tooltip("Normal Game only. Each egg randomly becomes one of the seven SB5 Louies.")]
+    [InspectorName("Random SB5 Louie Egg")]
+    [Min(0)] public int randomSb5EggAmount = 0;
 
-    [Header("Random Eggs")]
+    [Header("Random Eggs (Battle Mode only)")]
     [Min(0)] public int randomEggsMin = 0;
     [Min(0)] public int randomEggsMax = 0;
+
+    [Header("Hidden Objects by Room (optional)")]
+    [Tooltip("When at least one room has bounds, its items are distributed only among destructibles inside those bounds. Leave empty for the legacy stage-wide distribution.")]
+    [SerializeField] private HiddenObjectsRoom[] hiddenObjectRooms;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -158,7 +184,7 @@ public class GameManager : MonoBehaviour
     private int totalDestructibleBlocks;
     private int destroyedDestructibleBlocks;
 
-    private readonly Dictionary<int, GameObject> orderToSpawn = new();
+    private readonly Dictionary<Vector3Int, GameObject> hiddenObjectSpawnsByCell = new();
     private readonly Dictionary<GameObject, MountedType> hiddenMountPrefabTypes = new();
     private readonly Dictionary<Vector3Int, TileBase> pendingIndestructibleShadowCells = new();
     private readonly Dictionary<Vector3Int, TileBase> shadowedDestructibleOriginalTiles = new();
@@ -543,7 +569,7 @@ public class GameManager : MonoBehaviour
     {
         destroyedDestructibleBlocks = 0;
         totalDestructibleBlocks = 0;
-        orderToSpawn.Clear();
+        hiddenObjectSpawnsByCell.Clear();
         hiddenMountPrefabTypes.Clear();
 
         if (destructibleTilemap == null)
@@ -552,84 +578,143 @@ public class GameManager : MonoBehaviour
         AutoItemDatabase.BuildIfNeeded();
 
         BoundsInt bounds = destructibleTilemap.cellBounds;
+        List<Vector3Int> destructibleCells = new();
 
         foreach (Vector3Int pos in bounds.allPositionsWithin)
         {
             if (destructibleTilemap.GetTile(pos) != null)
+            {
                 totalDestructibleBlocks++;
+                destructibleCells.Add(pos);
+            }
         }
 
         if (totalDestructibleBlocks <= 0)
             return;
 
-        List<int> indices = new(totalDestructibleBlocks);
-        for (int i = 1; i <= totalDestructibleBlocks; i++)
-            indices.Add(i);
-
-        for (int i = indices.Count - 1; i > 0; i--)
+        if (HasConfiguredHiddenObjectRooms())
         {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (indices[j], indices[i]) = (indices[i], indices[j]);
+            ConfigureRoomHiddenObjects(destructibleCells);
+            return;
         }
 
+        ConfigureLegacyHiddenObjects(destructibleCells);
+    }
+
+    bool HasConfiguredHiddenObjectRooms()
+    {
+        if (hiddenObjectRooms == null)
+            return false;
+
+        for (int i = 0; i < hiddenObjectRooms.Length; i++)
+            if (hiddenObjectRooms[i] != null && hiddenObjectRooms[i].roomBounds != null)
+                return true;
+
+        return false;
+    }
+
+    void ConfigureRoomHiddenObjects(List<Vector3Int> destructibleCells)
+    {
+        for (int roomIndex = 0; roomIndex < hiddenObjectRooms.Length; roomIndex++)
+        {
+            HiddenObjectsRoom room = hiddenObjectRooms[roomIndex];
+            if (room == null || room.roomBounds == null)
+                continue;
+
+            List<Vector3Int> roomCells = new();
+            for (int cellIndex = 0; cellIndex < destructibleCells.Count; cellIndex++)
+            {
+                Vector3Int cell = destructibleCells[cellIndex];
+                if (room.roomBounds.OverlapPoint(destructibleTilemap.GetCellCenterWorld(cell)))
+                    roomCells.Add(cell);
+            }
+
+            Shuffle(roomCells);
+            int cursor = 0;
+            TryAssignRandomSb5Eggs(roomCells, ref cursor, room.randomSb5EggAmount);
+
+            if (room.itemAmounts == null)
+                continue;
+
+            for (int itemIndex = 0; itemIndex < room.itemAmounts.Length; itemIndex++)
+            {
+                HiddenObjectItemAmount item = room.itemAmounts[itemIndex];
+                if (item == null)
+                    continue;
+
+                if (item.itemType == ItemType.OneUp &&
+                    SaveSystem.GetActiveNormalGameDifficulty() != NormalGameDifficulty.Hard)
+                {
+                    continue;
+                }
+
+                TryAssignItem(roomCells, ref cursor, item.itemType, item.amount);
+            }
+        }
+    }
+
+    void ConfigureLegacyHiddenObjects(List<Vector3Int> destructibleCells)
+    {
+        Shuffle(destructibleCells);
         int cursor = 0;
 
-        void TryAssignPortal(int amount)
+        TryAssignPrefab(destructibleCells, ref cursor, portalPrefab != null ? portalPrefab.gameObject : null, portalAmount);
+        if (IsBattleModeScene())
+            TryAssignRandomEggs(destructibleCells, ref cursor, randomEggsMin, randomEggsMax);
+        else
+            TryAssignRandomSb5Eggs(destructibleCells, ref cursor, randomSb5EggAmount);
+
+        TryAssignItem(destructibleCells, ref cursor, ItemType.ExtraBomb, extraBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.BlastRadius, blastRadiusAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.SpeedIncrese, speedIncreaseAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.BombKick, kickBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.BombPunch, punchBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.PierceBomb, pierceBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.ControlBomb, controlBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.PowerBomb, powerBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.RubberBomb, rubberBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.MagnetBomb, magnetBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.FullFire, fullFireAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.BombPass, bombPassAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.DestructiblePass, destructiblePassAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.InvincibleSuit, invincibleSuitAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.Heart, heartAmount);
+        if (SaveSystem.GetActiveNormalGameDifficulty() == NormalGameDifficulty.Hard)
+            TryAssignItem(destructibleCells, ref cursor, ItemType.OneUp, oneUpAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.PowerGlove, powerGloveAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.BlueLouieEgg, blueLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.BlackLouieEgg, blackLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.PurpleLouieEgg, purpleLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.GreenLouieEgg, greenLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.YellowLouieEgg, yellowLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.PinkLouieEgg, pinkLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.RedLouieEgg, redLouieEggAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.Clock, clockAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.Skull, skullAmount);
+    }
+
+    void TryAssignItem(List<Vector3Int> cells, ref int cursor, ItemType type, int amount)
+    {
+        ItemPickup prefab = amount > 0 ? AutoItemDatabase.Get(type) : null;
+        TryAssignPrefab(cells, ref cursor, prefab != null ? prefab.gameObject : null, amount);
+    }
+
+    void TryAssignPrefab(List<Vector3Int> cells, ref int cursor, GameObject prefab, int amount)
+    {
+        if (prefab == null || amount <= 0)
+            return;
+
+        for (int i = 0; i < amount && cursor < cells.Count; i++)
+            hiddenObjectSpawnsByCell[cells[cursor++]] = prefab;
+    }
+
+    static void Shuffle<T>(List<T> values)
+    {
+        for (int i = values.Count - 1; i > 0; i--)
         {
-            if (portalPrefab == null || amount <= 0)
-                return;
-
-            for (int i = 0; i < amount && cursor < indices.Count; i++)
-                orderToSpawn[indices[cursor++]] = portalPrefab.gameObject;
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (values[j], values[i]) = (values[i], values[j]);
         }
-
-        void TryAssignItem(ItemType type, int amount)
-        {
-            if (amount <= 0)
-                return;
-
-            ItemPickup prefab = AutoItemDatabase.Get(type);
-            if (prefab == null)
-                return;
-
-            for (int i = 0; i < amount && cursor < indices.Count; i++)
-                orderToSpawn[indices[cursor++]] = prefab.gameObject;
-        }
-
-        TryAssignPortal(portalAmount);
-
-        TryAssignRandomEggs(indices, ref cursor);
-
-        TryAssignItem(ItemType.ExtraBomb, extraBombAmount);
-        TryAssignItem(ItemType.BlastRadius, blastRadiusAmount);
-        TryAssignItem(ItemType.SpeedIncrese, speedIncreaseAmount);
-        TryAssignItem(ItemType.BombKick, kickBombAmount);
-        TryAssignItem(ItemType.BombPunch, punchBombAmount);
-        TryAssignItem(ItemType.PierceBomb, pierceBombAmount);
-        TryAssignItem(ItemType.ControlBomb, controlBombAmount);
-        TryAssignItem(ItemType.PowerBomb, powerBombAmount);
-        TryAssignItem(ItemType.RubberBomb, rubberBombAmount);
-        TryAssignItem(ItemType.MagnetBomb, magnetBombAmount);
-        TryAssignItem(ItemType.FullFire, fullFireAmount);
-        TryAssignItem(ItemType.BombPass, bombPassAmount);
-        TryAssignItem(ItemType.DestructiblePass, destructiblePassAmount);
-        TryAssignItem(ItemType.InvincibleSuit, invincibleSuitAmount);
-        TryAssignItem(ItemType.Heart, heartAmount);
-        NormalGameDifficulty normalGameDifficulty = SaveSystem.GetActiveNormalGameDifficulty();
-        if (normalGameDifficulty == NormalGameDifficulty.Hard)
-            TryAssignItem(ItemType.OneUp, oneUpAmount);
-        TryAssignItem(ItemType.PowerGlove, powerGloveAmount);
-
-        TryAssignItem(ItemType.BlueLouieEgg, blueLouieEggAmount);
-        TryAssignItem(ItemType.BlackLouieEgg, blackLouieEggAmount);
-        TryAssignItem(ItemType.PurpleLouieEgg, purpleLouieEggAmount);
-        TryAssignItem(ItemType.GreenLouieEgg, greenLouieEggAmount);
-        TryAssignItem(ItemType.YellowLouieEgg, yellowLouieEggAmount);
-        TryAssignItem(ItemType.PinkLouieEgg, pinkLouieEggAmount);
-        TryAssignItem(ItemType.RedLouieEgg, redLouieEggAmount);
-
-        TryAssignItem(ItemType.Clock, clockAmount);
-        TryAssignItem(ItemType.Skull, skullAmount);
     }
 
     public static int[] GetDefaultBattleModeHiddenItemAmounts()
@@ -773,9 +858,7 @@ public class GameManager : MonoBehaviour
             return null;
 
         destroyedDestructibleBlocks++;
-        int order = destroyedDestructibleBlocks;
-
-        if (!orderToSpawn.TryGetValue(order, out var prefabGo))
+        if (!hiddenObjectSpawnsByCell.TryGetValue(cell, out var prefabGo))
             return null;
 
         if (!TryReservePendingHiddenItemCell(cell))
@@ -1986,30 +2069,51 @@ public class GameManager : MonoBehaviour
         ItemType.RedLouieEgg
     };
 
-    void TryAssignRandomEggs(List<int> indices, ref int cursor)
+    void TryAssignRandomEggs(List<Vector3Int> cells, ref int cursor, int minimum, int maximum)
     {
-        if (randomEggsMax <= 0)
+        if (maximum <= 0)
             return;
 
-        int amount = UnityEngine.Random.Range(randomEggsMin, randomEggsMax + 1);
+        int amount = UnityEngine.Random.Range(Mathf.Clamp(minimum, 0, maximum), maximum + 1);
         List<GameObject> configuredEggPrefabs = BuildConfiguredEggPrefabPool();
         if (configuredEggPrefabs.Count <= 0)
             return;
 
-        for (int i = configuredEggPrefabs.Count - 1; i > 0; i--)
-        {
-            int swapIndex = UnityEngine.Random.Range(0, i + 1);
-            (configuredEggPrefabs[i], configuredEggPrefabs[swapIndex]) =
-                (configuredEggPrefabs[swapIndex], configuredEggPrefabs[i]);
-        }
+        Shuffle(configuredEggPrefabs);
 
         int spawnAmount = Mathf.Min(amount, configuredEggPrefabs.Count);
-        for (int i = 0; i < spawnAmount && cursor < indices.Count; i++)
+        for (int i = 0; i < spawnAmount && cursor < cells.Count; i++)
+            if (configuredEggPrefabs[i] != null)
+                hiddenObjectSpawnsByCell[cells[cursor++]] = configuredEggPrefabs[i];
+    }
+
+    void TryAssignRandomSb5Eggs(List<Vector3Int> cells, ref int cursor, int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        List<GameObject> eggPrefabs = BuildSb5LouieEggPrefabPool();
+        if (eggPrefabs.Count == 0)
+            return;
+
+        for (int i = 0; i < amount && cursor < cells.Count; i++)
         {
-            GameObject prefab = configuredEggPrefabs[i];
-            if (prefab != null)
-                orderToSpawn[indices[cursor++]] = prefab;
+            GameObject prefab = eggPrefabs[UnityEngine.Random.Range(0, eggPrefabs.Count)];
+            hiddenObjectSpawnsByCell[cells[cursor++]] = prefab;
         }
+    }
+
+    List<GameObject> BuildSb5LouieEggPrefabPool()
+    {
+        List<GameObject> results = new(louieEggTypes.Length);
+        for (int i = 0; i < louieEggTypes.Length; i++)
+        {
+            ItemPickup prefab = AutoItemDatabase.Get(louieEggTypes[i]);
+            if (prefab != null)
+                results.Add(prefab.gameObject);
+        }
+
+        return results;
     }
 
     List<GameObject> BuildConfiguredEggPrefabPool()
