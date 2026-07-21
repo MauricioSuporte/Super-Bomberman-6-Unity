@@ -21,7 +21,9 @@ public class PlayerInputProfile
     [Tooltip("Invert DPad Y axis if your controller reports Up as -1.")]
     public bool invertDpadY;
 
-    public Dictionary<PlayerAction, Binding> bindings = new();
+    // Bindings are persisted explicitly through PlayerPrefs and SaveSystem's
+    // SavedPlayerControls list; Unity does not serialize dictionaries.
+    [NonSerialized] public Dictionary<PlayerAction, Binding> bindings = new();
 
     readonly Dictionary<PlayerAction, Binding> defaultBindings = new();
 

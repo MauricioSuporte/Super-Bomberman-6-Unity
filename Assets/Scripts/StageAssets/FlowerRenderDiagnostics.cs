@@ -26,7 +26,7 @@ public sealed class FlowerRenderDiagnostics : MonoBehaviour
             return;
 
         Camera camera = Camera.current;
-        if (camera == null || !loggedCameraIds.Add(camera.GetInstanceID()))
+        if (camera == null || !loggedCameraIds.Add(camera.GetEntityId().GetHashCode()))
             return;
 
         LogRenderState(camera);
