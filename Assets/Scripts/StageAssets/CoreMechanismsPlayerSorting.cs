@@ -1,19 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
 {
     [SerializeField, Min(0.1f)] private float horizontalRange = 0.7f;
     [SerializeField, Min(0.1f)] private float verticalRange = 1.05f;
-    [SerializeField, Min(1)] private int playerBehindOrderOffset = 1;
+    [FormerlySerializedAs("playerBehindOrderOffset")]
+    [SerializeField, Min(1)] private int sortingOrderOffset = 1;
 
     private SpriteRenderer[] renderers;
     private int[] originalSortingLayerIds;
     private int[] originalSortingOrders;
     private MovementController[] cachedPlayers;
-    private SpriteRenderer[] adjustedPlayerRenderers = new SpriteRenderer[0];
-    private int[] adjustedPlayerSortingLayerIds = new int[0];
-    private int[] adjustedPlayerSortingOrders = new int[0];
     private SpriteRenderer[] adjustedBombRenderers = new SpriteRenderer[0];
     private int[] adjustedBombSortingLayerIds = new int[0];
     private int[] adjustedBombSortingOrders = new int[0];
@@ -34,14 +33,12 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
 
     private void OnDisable()
     {
-        RestoreAdjustedPlayers();
         RestoreAdjustedBombs();
     }
 
     private void LateUpdate()
     {
         ApplyOriginalSorting();
-        RestoreAdjustedPlayers();
         RestoreAdjustedBombs();
         ApplyPlayerSorting();
         ApplyBombSorting();
@@ -92,9 +89,9 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
             if (playerRenderer == null)
                 continue;
 
-            StoreAdjustedPlayer(playerRenderer);
-            playerRenderer.sortingLayerID = GetHighestOriginalSortingLayerId();
-            playerRenderer.sortingOrder = GetLowestOriginalSortingOrder() - playerBehindOrderOffset;
+            int targetSortingLayerId = playerRenderer.sortingLayerID;
+            int targetSortingOrder = playerRenderer.sortingOrder + sortingOrderOffset;
+            ApplyCoreSortingInFrontOf(playerRenderer, targetSortingLayerId, targetSortingOrder);
         }
     }
 
@@ -117,7 +114,7 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
 
             StoreAdjustedBomb(bombRenderer);
             bombRenderer.sortingLayerID = GetHighestOriginalSortingLayerId();
-            bombRenderer.sortingOrder = GetLowestOriginalSortingOrder() - playerBehindOrderOffset;
+            bombRenderer.sortingOrder = GetLowestOriginalSortingOrder() - sortingOrderOffset;
         }
     }
 
@@ -172,42 +169,23 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
         }
     }
 
-    private void StoreAdjustedPlayer(SpriteRenderer playerRenderer)
+    private void ApplyCoreSortingInFrontOf(
+        SpriteRenderer playerRenderer,
+        int targetSortingLayerId,
+        int targetSortingOrder)
     {
-        for (int i = 0; i < adjustedPlayerRenderers.Length; i++)
-        {
-            if (adjustedPlayerRenderers[i] == playerRenderer)
-                return;
-        }
-
-        int index = adjustedPlayerRenderers.Length;
-        System.Array.Resize(ref adjustedPlayerRenderers, index + 1);
-        System.Array.Resize(ref adjustedPlayerSortingLayerIds, index + 1);
-        System.Array.Resize(ref adjustedPlayerSortingOrders, index + 1);
-
-        adjustedPlayerRenderers[index] = playerRenderer;
-        adjustedPlayerSortingLayerIds[index] = playerRenderer.sortingLayerID;
-        adjustedPlayerSortingOrders[index] = playerRenderer.sortingOrder;
-    }
-
-    private void RestoreAdjustedPlayers()
-    {
-        for (int i = 0; i < adjustedPlayerRenderers.Length; i++)
-        {
-            SpriteRenderer playerRenderer = adjustedPlayerRenderers[i];
-            if (playerRenderer == null)
-                continue;
-
-            playerRenderer.sortingLayerID = adjustedPlayerSortingLayerIds[i];
-            playerRenderer.sortingOrder = adjustedPlayerSortingOrders[i];
-        }
-
-        if (adjustedPlayerRenderers.Length == 0)
+        if (playerRenderer == null || renderers == null)
             return;
 
-        adjustedPlayerRenderers = new SpriteRenderer[0];
-        adjustedPlayerSortingLayerIds = new int[0];
-        adjustedPlayerSortingOrders = new int[0];
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer coreRenderer = renderers[i];
+            if (coreRenderer == null)
+                continue;
+
+            coreRenderer.sortingLayerID = targetSortingLayerId;
+            coreRenderer.sortingOrder = Mathf.Max(coreRenderer.sortingOrder, targetSortingOrder);
+        }
     }
 
     private void StoreAdjustedBomb(SpriteRenderer bombRenderer)

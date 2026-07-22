@@ -259,7 +259,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoreMechanismsPlayerSorting
   horizontalRange: 0.7
   verticalRange: 1.05
-  playerBehindOrderOffset: 1
+  sortingOrderOffset: 1
   debugBombSorting: 1
 --- !u!114 &6684315790638421180
 MonoBehaviour:
