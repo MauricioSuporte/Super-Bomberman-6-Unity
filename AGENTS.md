@@ -19,7 +19,28 @@ This file gives repository-specific guidance for AI coding agents working on
 - Important packages already present:
   `com.unity.inputsystem`, `com.unity.2d.tilemap`,
   `com.unity.2d.pixel-perfect`, `com.unity.ugui`,
-  `com.unity.test-framework`
+  `com.unity.test-framework`, `com.unity.render-pipelines.universal`
+
+## Rendering pipeline and pixel-perfect output
+
+- This project uses URP with the 2D renderer. Do not restore, assign, or add
+  Built-in Render Pipeline assets/settings; Unity Hub reports that pipeline as
+  deprecated and it is not compatible with the project baseline.
+- The active pipeline assets are
+  `Assets/Settings/SuperBombermanURP.asset` and
+  `Assets/Settings/SuperBombermanRenderer2D.asset`. Keep Graphics and Quality
+  settings pointing to the URP pipeline asset.
+- New or migrated shaders must be URP-compatible HLSL shaders. Do not add
+  Built-in-only `CGPROGRAM`/`UnityCG.cginc` shaders without an explicit,
+  reviewed compatibility plan.
+- The installed legacy `PixelPerfectCamera` package does not render its
+  Built-in pipeline path correctly under URP. Preserve
+  `Assets/Scripts/Camera/UrpPixelPerfectCameraFallback.cs`; it applies the
+  SNES pixel-perfect viewport to gameplay cameras and draws the black bars.
+- Safe-frame UI must use `PixelPerfectViewport` and the
+  `UICameraViewportFitter` components. Do not use `Camera.rect` alone to infer
+  the final output rectangle. The current scene baseline is PPU 16 with a
+  256x224 reference resolution and integer scaling.
 
 ## Source of truth
 
