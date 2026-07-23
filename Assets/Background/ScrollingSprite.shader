@@ -4,67 +4,69 @@ Shader "Sprites/ScrollingSprite"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
+        _ScrollUv ("Scroll UV (Scale XY, Offset ZW)", Vector) = (1,1,0,0)
     }
 
     SubShader
     {
-        Tags
-        {
-            "Queue"="Transparent"
-            "IgnoreProjector"="True"
-            "RenderType"="Transparent"
-            "PreviewType"="Plane"
-            "CanUseSpriteAtlas"="True"
-        }
-
+        Tags { "Queue"="Transparent" "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" "CanUseSpriteAtlas"="True" }
         Cull Off
-        Lighting Off
         ZWrite Off
         Blend One OneMinusSrcAlpha
 
         Pass
         {
-            CGPROGRAM
+            Tags { "LightMode"="Universal2D" }
+
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #pragma multi_compile_instancing
 
-            struct appdata_t
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
             {
-                float4 vertex   : POSITION;
-                float4 color    : COLOR;
-                float2 texcoord : TEXCOORD0;
+                float3 positionOS : POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            struct v2f
+            struct Varyings
             {
-                float4 vertex : SV_POSITION;
-                fixed4 color  : COLOR;
-                float2 uv     : TEXCOORD0;
+                float4 positionCS : SV_POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
-            fixed4 _Color;
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
 
-            v2f vert(appdata_t IN)
+            CBUFFER_START(UnityPerMaterial)
+                half4 _Color;
+                float4 _ScrollUv;
+            CBUFFER_END
+
+            Varyings vert(Attributes input)
             {
-                v2f OUT;
-                OUT.vertex = UnityObjectToClipPos(IN.vertex);
-                OUT.color = IN.color * _Color;
-
-                OUT.uv = TRANSFORM_TEX(IN.texcoord, _MainTex);
-
-                return OUT;
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS);
+                output.color = input.color * _Color;
+                output.uv = input.uv * _ScrollUv.xy + _ScrollUv.zw;
+                return output;
             }
 
-            fixed4 frag(v2f IN) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                fixed4 c = tex2D(_MainTex, IN.uv) * IN.color;
-                c.rgb *= c.a;
-                return c;
+                half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * input.color;
+                color.rgb *= color.a;
+                return color;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }

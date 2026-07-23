@@ -4,6 +4,8 @@
 [RequireComponent(typeof(SpriteRenderer))]
 public sealed class InfiniteBackgroundScroll : MonoBehaviour
 {
+    static readonly int ScrollUvId = Shader.PropertyToID("_ScrollUv");
+
     [Header("Scroll")]
     [SerializeField, Min(0f)] private float scrollSpeed = 0.5f;
 
@@ -42,7 +44,7 @@ public sealed class InfiniteBackgroundScroll : MonoBehaviour
         if (_mat == null) return;
 
         _offsetX += scrollSpeed * Time.deltaTime;
-        _mat.mainTextureOffset = new Vector2(_offsetX, 0f);
+        ApplyScrollUv();
     }
 
     private void RefreshTiling()
@@ -61,6 +63,17 @@ public sealed class InfiniteBackgroundScroll : MonoBehaviour
         Vector2 tiling = new(tileX, tileY);
         tiling = new Vector2(tiling.x * tilingMultiplier.x, tiling.y * tilingMultiplier.y);
 
-        _mat.mainTextureScale = tiling;
+        _mat.SetVector(ScrollUvId, new Vector4(tiling.x, tiling.y, _offsetX, 0f));
+    }
+
+    private void ApplyScrollUv()
+    {
+        Vector4 scrollUv = _mat.GetVector(ScrollUvId);
+        if (scrollUv.x == 0f || scrollUv.y == 0f)
+            scrollUv = new Vector4(1f, 1f, 0f, 0f);
+
+        scrollUv.z = _offsetX;
+        scrollUv.w = 0f;
+        _mat.SetVector(ScrollUvId, scrollUv);
     }
 }

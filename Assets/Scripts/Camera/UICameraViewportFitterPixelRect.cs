@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
 [ExecuteAlways]
+[DefaultExecutionOrder(-1000)]
 public class UICameraViewportFitterPixelRect : MonoBehaviour
 {
     [SerializeField] Camera targetCamera;
@@ -37,7 +38,7 @@ public class UICameraViewportFitterPixelRect : MonoBehaviour
         if (!targetCamera)
             return;
 
-        Rect pixelRect = targetCamera.pixelRect;
+        Rect pixelRect = PixelPerfectViewport.ResolveFinalPixelRect(targetCamera);
         if (pixelRect.width <= 0f || pixelRect.height <= 0f)
             return;
 

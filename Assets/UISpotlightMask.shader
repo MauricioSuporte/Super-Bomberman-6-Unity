@@ -13,117 +13,106 @@ Shader "UI/SpotlightMask"
 
     SubShader
     {
-        Tags
-        {
-            "Queue"="Transparent"
-            "IgnoreProjector"="True"
-            "RenderType"="Transparent"
-            "PreviewType"="Plane"
-            "CanUseSpriteAtlas"="True"
-        }
-
+        Tags { "Queue"="Transparent" "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" "CanUseSpriteAtlas"="True" }
         Cull Off
-        Lighting Off
         ZWrite Off
         ZTest [unity_GUIZTestMode]
         Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
         {
-            CGPROGRAM
+            Tags { "LightMode"="Universal2D" }
+
+            HLSLPROGRAM
             #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #pragma multi_compile_instancing
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             #define MAX_SPOTLIGHTS 36
 
-            struct appdata_t
+            struct Attributes
             {
-                float4 vertex   : POSITION;
-                float4 color    : COLOR;
-                float2 texcoord : TEXCOORD0;
+                float3 positionOS : POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            struct v2f
+            struct Varyings
             {
-                float4 vertex   : SV_POSITION;
-                fixed4 color    : COLOR;
-                float2 uv       : TEXCOORD0;
+                float4 positionCS : SV_POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
 
-            fixed4 _Color;
-            float4 _Center;
-            float _Radius;
-            float _Softness;
-            float _EllipseX;
-            float _EllipseY;
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                float4 _Center;
+                float _Radius;
+                float _Softness;
+                float _EllipseX;
+                float _EllipseY;
+                int _SpotlightCount;
+                float4 _SpotlightCenters[MAX_SPOTLIGHTS];
+                float4 _SpotlightHalfSize[MAX_SPOTLIGHTS];
+                float _SpotlightSoftness[MAX_SPOTLIGHTS];
+                float _SpotlightIntensity[MAX_SPOTLIGHTS];
+            CBUFFER_END
 
-            int _SpotlightCount;
-            float4 _SpotlightCenters[MAX_SPOTLIGHTS];
-            float4 _SpotlightHalfSize[MAX_SPOTLIGHTS];
-            float _SpotlightSoftness[MAX_SPOTLIGHTS];
-            float _SpotlightIntensity[MAX_SPOTLIGHTS];
-
-            v2f vert(appdata_t v)
+            Varyings vert(Attributes input)
             {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-                o.color = v.color;
-                return o;
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                output.color = input.color;
+                return output;
             }
 
             float ComputeCircularHole(float2 uv, float2 center, float radius, float softness, float ellipseX, float ellipseY)
             {
                 float2 d = uv - center;
-                float ex = max(ellipseX, 1e-5);
-                float ey = max(ellipseY, 1e-5);
-                d.x *= ex;
-                d.y *= ey;
-                float dist = length(d);
+                d.x *= max(ellipseX, 1e-5);
+                d.y *= max(ellipseY, 1e-5);
                 float outer = radius + max(softness, 1e-5);
-                return 1.0 - smoothstep(radius, outer, dist);
+                return 1.0 - smoothstep(radius, outer, length(d));
             }
 
             float ComputeBoxHole(float2 uv, float2 center, float2 halfSize, float softness)
             {
                 float2 q = abs(uv - center) - halfSize;
                 float outside = length(max(q, 0.0));
-                float inside  = min(max(q.x, q.y), 0.0);
-                float dist = outside + inside;
-                return 1.0 - smoothstep(0.0, max(softness, 1e-5), dist);
+                float inside = min(max(q.x, q.y), 0.0);
+                return 1.0 - smoothstep(0.0, max(softness, 1e-5), outside + inside);
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                fixed4 baseCol = tex2D(_MainTex, i.uv) * i.color;
-
-                float hole = ComputeCircularHole(
-                    i.uv, _Center.xy, _Radius, _Softness, _EllipseX, _EllipseY);
-
+                half4 baseColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * input.color;
+                float hole = ComputeCircularHole(input.uv, _Center.xy, _Radius, _Softness, _EllipseX, _EllipseY);
                 int count = min(_SpotlightCount, MAX_SPOTLIGHTS);
-                for (int idx = 0; idx < count; idx++)
-                {
-                    float boxHole = ComputeBoxHole(
-                        i.uv,
-                        _SpotlightCenters[idx].xy,
-                        _SpotlightHalfSize[idx].xy,
-                        _SpotlightSoftness[idx]);
 
-                    boxHole *= saturate(_SpotlightIntensity[idx]);
-                    hole = max(hole, boxHole);
+                for (int index = 0; index < count; index++)
+                {
+                    float boxHole = ComputeBoxHole(input.uv, _SpotlightCenters[index].xy,
+                        _SpotlightHalfSize[index].xy, _SpotlightSoftness[index]);
+                    hole = max(hole, boxHole * saturate(_SpotlightIntensity[index]));
                 }
 
-                fixed4 col = _Color;
-                col.a *= (1.0 - hole);
-                col.a *= baseCol.a;
-                return col;
+                half4 color = _Color;
+                color.a *= (1.0 - hole) * baseColor.a;
+                return color;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }

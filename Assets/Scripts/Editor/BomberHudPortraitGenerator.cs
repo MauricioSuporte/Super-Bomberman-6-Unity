@@ -27,8 +27,6 @@ public static class BomberHudPortraitGenerator
 
         if (errors.Count > 0)
             Debug.LogWarning($"[BomberHudPortraitGenerator] Generated {generatedCount} portraits with {errors.Count} errors:\n{string.Join("\n", errors)}");
-        else
-            Debug.Log($"[BomberHudPortraitGenerator] Generated or updated {generatedCount} portraits.");
     }
 
     static IEnumerable<(string input, string output)> FindSourceFolders()

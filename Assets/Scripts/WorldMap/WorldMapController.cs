@@ -188,6 +188,12 @@ public class WorldMapController : MonoBehaviour
         Time.timeScale = 1f;
         GamePauseController.ClearPauseFlag();
 
+        // The SafeFrame is driven by the Pixel Perfect Camera. Apply it before
+        // this controller captures/scales the authored map coordinates.
+        UICameraViewportFitter safeFrameFitter = GetComponentInParent<UICameraViewportFitter>();
+        if (safeFrameFitter != null)
+            safeFrameFitter.ForceApplyNow();
+
         if (cursorMovementArea == null)
             cursorMovementArea = transform as RectTransform;
 
@@ -232,6 +238,10 @@ public class WorldMapController : MonoBehaviour
 
     void LateUpdate()
     {
+        // UICameraViewportFitter runs earlier in LateUpdate. Checking here makes
+        // this react in the same frame when the Game view becomes available or
+        // the Pixel Perfect output rectangle changes.
+        CheckResolutionOrScaleChanges();
         ApplyCursorVisualTransform();
     }
 
