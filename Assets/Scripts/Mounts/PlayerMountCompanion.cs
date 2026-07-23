@@ -306,7 +306,7 @@ public class PlayerMountCompanion : MonoBehaviour
         mountedType = type;
 
         currentLouie = Instantiate(prefab, transform);
-        EnsureWorld3WaterSubmersionEffect(currentLouie);
+        EnsureWorld3WaterSubmersionEffect(currentLouie, type);
         SetupLouieAsChildMounted(currentLouie);
 
         CacheMountedLouieHealth(currentLouie);
@@ -345,7 +345,7 @@ public class PlayerMountCompanion : MonoBehaviour
         mountedType = type;
 
         currentLouie = Instantiate(prefab, transform);
-        EnsureWorld3WaterSubmersionEffect(currentLouie);
+        EnsureWorld3WaterSubmersionEffect(currentLouie, type);
         SetupLouieAsChildMounted(currentLouie);
 
         CacheMountedLouieHealth(currentLouie);
@@ -2006,7 +2006,7 @@ public class PlayerMountCompanion : MonoBehaviour
         return prefabByType.TryGetValue(type, out var p) ? p : null;
     }
 
-    static void EnsureWorld3WaterSubmersionEffect(GameObject mount)
+    static void EnsureWorld3WaterSubmersionEffect(GameObject mount, MountedType type)
     {
         if (mount == null ||
             !string.Equals(
@@ -2017,8 +2017,11 @@ public class PlayerMountCompanion : MonoBehaviour
             return;
         }
 
-        if (!mount.TryGetComponent<PlayerWaterSubmersionEffect>(out _))
-            mount.AddComponent<PlayerWaterSubmersionEffect>();
+        if (!mount.TryGetComponent(out PlayerWaterSubmersionEffect waterEffect))
+            waterEffect = mount.AddComponent<PlayerWaterSubmersionEffect>();
+
+        if (type >= MountedType.Blue && type <= MountedType.Red)
+            waterEffect.SetWaterSurfaceYOffset(0.125f);
     }
 
     #endregion

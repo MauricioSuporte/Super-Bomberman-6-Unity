@@ -10,10 +10,10 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
     public AnimatedSpriteRenderer dashRight;
 
     [Header("Dash Afterimage")]
-    [SerializeField, Min(0.01f)] private float afterimageInterval = 0.06f;
-    [SerializeField, Min(0.01f)] private float afterimageDuration = 0.22f;
-    [SerializeField, Range(0f, 1f)] private float afterimageInitialAlpha = 0.45f;
-    [SerializeField] private Color afterimageTint = new(0.65f, 0.65f, 0.75f, 1f);
+    [SerializeField, Min(0.01f)] private float afterimageInterval = 0.045f;
+    [SerializeField, Min(0.01f)] private float afterimageDuration = 0.30f;
+    [SerializeField, Range(0f, 1f)] private float afterimageInitialAlpha = 0.70f;
+    [SerializeField] private Color afterimageTint = new(0.78f, 0.78f, 0.95f, 1f);
 
     AnimatedSpriteRenderer activeDash;
     MountVisualController riderVisual;
@@ -188,8 +188,9 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
 
     void SpawnAfterimage()
     {
+        SpriteRenderer source = null;
         if (activeDash == null || !activeDash.enabled ||
-            !activeDash.TryGetComponent(out SpriteRenderer source) ||
+            !activeDash.TryGetComponent(out source) ||
             source == null || !source.enabled || source.sprite == null)
             return;
 
@@ -206,7 +207,8 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         ghostRenderer.sortingOrder = source.sortingOrder - 1;
         ghostRenderer.maskInteraction = source.maskInteraction;
         ghostRenderer.spriteSortPoint = source.spriteSortPoint;
-        ghostRenderer.sharedMaterial = source.sharedMaterial;
+        Material afterimageMaterial = LouieDashAfterimage.ResolveMaterial(source.sharedMaterial);
+        ghostRenderer.sharedMaterial = afterimageMaterial;
 
         Color color = source.color * afterimageTint;
         color.a = source.color.a * afterimageTint.a * Mathf.Clamp01(afterimageInitialAlpha);

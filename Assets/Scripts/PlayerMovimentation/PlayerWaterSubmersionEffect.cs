@@ -57,6 +57,14 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
         ApplyMaterial();
     }
 
+    /// <summary>
+    /// Sets the local vertical position of the water surface for this body.
+    /// </summary>
+    public void SetWaterSurfaceYOffset(float offset)
+    {
+        waterSurfaceYOffset = offset;
+    }
+
     private void Awake()
     {
         bombLayerMask = LayerMask.GetMask("Bomb");

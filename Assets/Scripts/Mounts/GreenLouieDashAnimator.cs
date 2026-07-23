@@ -9,9 +9,9 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
     public AnimatedSpriteRenderer rollRight;
 
     [Header("Dash Afterimage")]
-    [SerializeField, Min(0.01f)] private float afterimageInterval = 0.06f;
-    [SerializeField, Min(0.01f)] private float afterimageDuration = 0.22f;
-    [SerializeField, Range(0f, 1f)] private float afterimageInitialAlpha = 0.45f;
+    [SerializeField, Min(0.01f)] private float afterimageInterval = 0.05f;
+    [SerializeField, Min(0.01f)] private float afterimageDuration = 0.28f;
+    [SerializeField, Range(0f, 1f)] private float afterimageInitialAlpha = 0.60f;
     [SerializeField] private Color afterimageTint = new(0.65f, 1f, 0.65f, 1f);
 
     AnimatedSpriteRenderer active;
@@ -48,6 +48,7 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
             active.loop = true;
             active.RefreshFrame();
         }
+
     }
 
     public void Stop()
@@ -112,9 +113,10 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
 
     void SpawnAfterimage()
     {
+        SpriteRenderer source = null;
         if (active == null || !active.enabled ||
-            !active.TryGetComponent(out SpriteRenderer source) ||
-            source == null || source.sprite == null)
+            !active.TryGetComponent(out source) ||
+            source == null || !source.enabled || source.sprite == null)
             return;
 
         GameObject ghost = new($"{name}_DashAfterimage");
@@ -130,7 +132,8 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         ghostRenderer.sortingOrder = source.sortingOrder - 1;
         ghostRenderer.maskInteraction = source.maskInteraction;
         ghostRenderer.spriteSortPoint = source.spriteSortPoint;
-        ghostRenderer.sharedMaterial = source.sharedMaterial;
+        Material afterimageMaterial = LouieDashAfterimage.ResolveMaterial(source.sharedMaterial);
+        ghostRenderer.sharedMaterial = afterimageMaterial;
 
         Color color = source.color * afterimageTint;
         color.a = source.color.a * afterimageTint.a * Mathf.Clamp01(afterimageInitialAlpha);
@@ -204,6 +207,10 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
 
 sealed class LouieDashAfterimage : MonoBehaviour
 {
+    const string WaterSubmersionShaderName = "SuperBomberman/PlayerWaterSubmersion";
+    const string UrpSpriteUnlitShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
+
+    static Material urpSpriteUnlitMaterial;
     SpriteRenderer spriteRenderer;
     float duration;
     float elapsed;
@@ -214,6 +221,35 @@ sealed class LouieDashAfterimage : MonoBehaviour
         spriteRenderer = renderer;
         duration = Mathf.Max(0.01f, lifetime);
         initialAlpha = spriteRenderer != null ? spriteRenderer.color.a : 0f;
+    }
+
+    public static Material ResolveMaterial(Material sourceMaterial)
+    {
+        // This runtime material contains the moving Louie's water-surface
+        // state. A frozen afterimage must not inherit it, or it can be clipped
+        // or tinted according to a different world position.
+        if (sourceMaterial != null && sourceMaterial.shader != null &&
+            sourceMaterial.shader.name == WaterSubmersionShaderName)
+            return GetUrpSpriteUnlitMaterial();
+
+        return sourceMaterial;
+    }
+
+    static Material GetUrpSpriteUnlitMaterial()
+    {
+        if (urpSpriteUnlitMaterial != null)
+            return urpSpriteUnlitMaterial;
+
+        Shader shader = Shader.Find(UrpSpriteUnlitShaderName);
+        if (shader == null)
+            return null;
+
+        urpSpriteUnlitMaterial = new Material(shader)
+        {
+            name = "Louie Dash Afterimage URP Unlit",
+            hideFlags = HideFlags.DontSave
+        };
+        return urpSpriteUnlitMaterial;
     }
 
     void Update()
