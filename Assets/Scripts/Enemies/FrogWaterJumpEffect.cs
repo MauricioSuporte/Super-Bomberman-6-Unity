@@ -110,6 +110,7 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
             return ringSprite;
 
         const int size = 32;
+        const int pixelSize = 2;
         Texture2D texture = new(size, size, TextureFormat.RGBA32, false)
         {
             filterMode = FilterMode.Point,
@@ -117,14 +118,51 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
             name = "FrogWaterRipple"
         };
 
-        Vector2 center = new(15.5f, 15.5f);
-        for (int y = 0; y < size; y++)
+        // Draw on a 16 x 16 grid, then expand each grid cell to 2 x 2 texture
+        // pixels. This preserves the world size of the old 32 px sprite while
+        // giving the ripple a deliberate, stepped pixel-art outline.
+        bool[,] pixels = new bool[16, 16];
+        int[,] rowRanges =
         {
-            for (int x = 0; x < size; x++)
+            { 6, 9, -1, -1 },
+            { 4, 5, 10, 11 },
+            { 3, 3, 12, 12 },
+            { 2, 2, 13, 13 },
+            { 1, 1, 14, 14 },
+            { 1, 1, 14, 14 },
+            { 1, 1, 14, 14 },
+            { 1, 1, 14, 14 },
+            { 2, 2, 13, 13 },
+            { 3, 3, 12, 12 },
+            { 4, 5, 10, 11 },
+            { 6, 9, -1, -1 },
+        };
+
+        for (int y = 2; y <= 13; y++)
+        {
+            int row = y - 2;
+            for (int range = 0; range < 4; range += 2)
             {
-                Vector2 point = new((x - center.x) / 15.5f, (y - center.y) / 15.5f);
-                float distance = point.magnitude;
-                texture.SetPixel(x, y, distance >= 0.72f && distance <= 0.9f ? Color.white : Color.clear);
+                int start = rowRanges[row, range];
+                int end = rowRanges[row, range + 1];
+                if (start < 0)
+                    continue;
+
+                for (int x = start; x <= end; x++)
+                    pixels[x, y] = true;
+            }
+        }
+
+        for (int y = 0; y < 16; y++)
+        {
+            for (int x = 0; x < 16; x++)
+            {
+                Color color = pixels[x, y] ? Color.white : Color.clear;
+                for (int py = 0; py < pixelSize; py++)
+                {
+                    for (int px = 0; px < pixelSize; px++)
+                        texture.SetPixel(x * pixelSize + px, y * pixelSize + py, color);
+                }
             }
         }
 
