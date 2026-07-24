@@ -25,6 +25,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] byte explosionRadius = 2;
         [SyncVar] int speedInternal;
         [SyncVar] byte skin;
+        [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
 
         NetworkPlayerSetup setup;
         CharacterHealth health;
@@ -72,8 +73,29 @@ namespace Assets.Scripts.Netcode
                 if (move.SpeedInternal != speedInternal) speedInternal = move.SpeedInternal;
             }
 
-            byte sk = (byte)PlayerPersistentStats.Get(setup != null ? setup.PlayerId : GameSession.MinPlayerId).Skin;
+            int pid = setup != null ? setup.PlayerId : GameSession.MinPlayerId;
+
+            byte sk = (byte)PlayerPersistentStats.Get(pid).Skin;
             if (sk != skin) skin = sk;
+
+            // Flags de powerup (fonte viva no host = runtime state, que o HUD lê).
+            var rt = PlayerPersistentStats.GetRuntime(pid);
+            int flags = 0;
+            if (rt != null)
+            {
+                if (rt.CanKickBombs)        flags |= 1 << 0;
+                if (rt.CanPunchBombs)       flags |= 1 << 1;
+                if (rt.HasPowerGlove)       flags |= 1 << 2;
+                if (rt.CanPassBombs)        flags |= 1 << 3;
+                if (rt.CanPassDestructibles) flags |= 1 << 4;
+                if (rt.HasPierceBombs)      flags |= 1 << 5;
+                if (rt.HasControlBombs)     flags |= 1 << 6;
+                if (rt.HasPowerBomb)        flags |= 1 << 7;
+                if (rt.HasRubberBombs)      flags |= 1 << 8;
+                if (rt.HasMagnetBomb)       flags |= 1 << 9;
+                if (rt.HasFullFire)         flags |= 1 << 10;
+            }
+            if (flags != abilityFlags) abilityFlags = flags;
         }
 
         void ClientApply()
@@ -93,6 +115,18 @@ namespace Assets.Scripts.Netcode
                 rt.ExplosionRadius = explosionRadius;
                 rt.SpeedInternal = speedInternal;
                 rt.Skin = (BomberSkin)skin;
+
+                rt.CanKickBombs        = (abilityFlags & (1 << 0)) != 0;
+                rt.CanPunchBombs       = (abilityFlags & (1 << 1)) != 0;
+                rt.HasPowerGlove       = (abilityFlags & (1 << 2)) != 0;
+                rt.CanPassBombs        = (abilityFlags & (1 << 3)) != 0;
+                rt.CanPassDestructibles = (abilityFlags & (1 << 4)) != 0;
+                rt.HasPierceBombs      = (abilityFlags & (1 << 5)) != 0;
+                rt.HasControlBombs     = (abilityFlags & (1 << 6)) != 0;
+                rt.HasPowerBomb        = (abilityFlags & (1 << 7)) != 0;
+                rt.HasRubberBombs      = (abilityFlags & (1 << 8)) != 0;
+                rt.HasMagnetBomb       = (abilityFlags & (1 << 9)) != 0;
+                rt.HasFullFire         = (abilityFlags & (1 << 10)) != 0;
             }
 
             // Skin: aplica só quando muda (Apply carrega sprites; tem cache).
