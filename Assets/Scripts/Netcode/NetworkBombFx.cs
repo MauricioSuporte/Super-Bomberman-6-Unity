@@ -1,5 +1,6 @@
 using Mirror;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace Assets.Scripts.Netcode
 {
@@ -48,6 +49,35 @@ namespace Assets.Scripts.Netcode
 
             for (int i = 0; i < parts.Length; i++)
                 bomb.PlayNetworkExplosionVisual(parts[i].pos, parts[i].part, parts[i].dir, origin, duration, pierce);
+        }
+
+        // F3a — destruição de blocos destrutíveis. O host coleta as células
+        // destruídas na explosão e replica; o Tilemap não é networkável, então
+        // sincronizamos por evento de célula.
+        [Server]
+        public void ServerEmitDestroyed(Vector3Int[] cells)
+        {
+            if (cells == null || cells.Length == 0)
+                return;
+            RpcClearDestructibles(cells);
+        }
+
+        [ClientRpc]
+        void RpcClearDestructibles(Vector3Int[] cells)
+        {
+            if (isServer)
+                return;
+
+            var gm = GameManager.Instance;
+            if (gm == null || gm.destructibleTilemap == null)
+                return;
+
+            Tilemap tm = gm.destructibleTilemap;
+            for (int i = 0; i < cells.Length; i++)
+            {
+                tm.SetTile(cells[i], null);
+                gm.OnDestructibleDestroyed(cells[i]);
+            }
         }
     }
 }

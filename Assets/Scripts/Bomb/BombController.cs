@@ -545,6 +545,8 @@ public partial class BombController : MonoBehaviour
     // Online (host): quando não-nulo, SpawnExplosionVisual coleta as células
     // visuais da explosão em curso para replicar aos clientes via ClientRpc.
     private System.Collections.Generic.List<Assets.Scripts.Netcode.ExplosionFx> _netFxCollector;
+    // Online (host): células destrutíveis destruídas nesta explosão, para replicar.
+    private System.Collections.Generic.List<Vector3Int> _netDestroyedCells;
 
     private BombExplosion SpawnExplosionVisual(
         Vector2 position,
@@ -1556,6 +1558,9 @@ public partial class BombController : MonoBehaviour
         _netFxCollector = Assets.Scripts.Netcode.NetSync.IsServer
             ? new System.Collections.Generic.List<Assets.Scripts.Netcode.ExplosionFx>(32)
             : null;
+        _netDestroyedCells = Assets.Scripts.Netcode.NetSync.IsServer
+            ? new System.Collections.Generic.List<Vector3Int>(16)
+            : null;
 
         SpawnExplosionVisual(
             snapped,
@@ -1592,11 +1597,20 @@ public partial class BombController : MonoBehaviour
             destroyDelay = explosionAudio.clip.length;
         }
 
-        // Online (host): envia o visual coletado para os clientes recriarem.
-        if (_netFxCollector != null && _netFxCollector.Count > 0 &&
-            TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx))
-            fx.ServerEmit(snapped, _netFxCollector.ToArray(), pierce, explosionDuration);
+        // Online (host): envia o visual coletado + as células destruídas.
+        if ((_netFxCollector != null && _netFxCollector.Count > 0) ||
+            (_netDestroyedCells != null && _netDestroyedCells.Count > 0))
+        {
+            if (TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx))
+            {
+                if (_netFxCollector != null && _netFxCollector.Count > 0)
+                    fx.ServerEmit(snapped, _netFxCollector.ToArray(), pierce, explosionDuration);
+                if (_netDestroyedCells != null && _netDestroyedCells.Count > 0)
+                    fx.ServerEmitDestroyed(_netDestroyedCells.ToArray());
+            }
+        }
         _netFxCollector = null;
+        _netDestroyedCells = null;
 
         // Online: HideBombVisuals já ocultou a bomba; despawn imediato replica
         // o sumiço. Offline mantém o delay para o SFX tocar da própria bomba.
@@ -2148,6 +2162,9 @@ public partial class BombController : MonoBehaviour
         }
 
         destructibleTiles.SetTile(cell, null);
+
+        if (_netDestroyedCells != null)
+            _netDestroyedCells.Add(cell);
 
         if (_gm != null)
             _gm.OnDestructibleDestroyed(cell);
