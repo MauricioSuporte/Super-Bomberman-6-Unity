@@ -75,6 +75,8 @@ namespace Assets.Scripts.Netcode
             Tilemap tm = gm.destructibleTilemap;
             for (int i = 0; i < cells.Length; i++)
             {
+                if (bomb != null)
+                    bomb.PlayNetworkDestructibleBreak(cells[i]);  // animação de quebra
                 tm.SetTile(cells[i], null);
                 gm.OnDestructibleDestroyed(cells[i]);
             }

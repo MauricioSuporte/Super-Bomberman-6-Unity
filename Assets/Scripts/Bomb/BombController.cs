@@ -581,6 +581,27 @@ public partial class BombController : MonoBehaviour
         explosion.SetCollisionEnabled(false);
     }
 
+    // Chamado no CLIENTE (via NetworkBombFx) para recriar a animação de quebra
+    // do bloco destrutível numa célula (visual; o estado do tile vem no RPC).
+    public void PlayNetworkDestructibleBreak(Vector3Int cell)
+    {
+        Destructible prefab = destructiblePrefab;
+        if (prefab == null && _gm != null)
+            prefab = _gm.destructiblePrefab;
+        if (prefab == null)
+            return;
+
+        Tilemap tm = destructibleTiles;
+        if (tm == null && _gm != null)
+            tm = _gm.destructibleTilemap;
+        if (tm == null && GameManager.Instance != null)
+            tm = GameManager.Instance.destructibleTilemap;
+        if (tm == null)
+            return;
+
+        Instantiate(prefab, tm.GetCellCenterWorld(cell), Quaternion.identity, tm.transform);
+    }
+
     private BombExplosion SpawnExplosionDamageHitbox(
         Vector2 position,
         Vector2 origin,
