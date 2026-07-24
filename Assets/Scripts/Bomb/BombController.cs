@@ -2220,6 +2220,9 @@ public partial class BombController : MonoBehaviour
             : Instantiate(prefab, spawnWorldPosition, Quaternion.identity);
 
         _gm.PrepareSpawnedHiddenObject(spawned, prefab, spawnWorldPosition);
+
+        // Online (host): replica o item revelado para os clientes.
+        Assets.Scripts.Netcode.NetSpawn.Server(spawned);
     }
 
     private float GetDestructibleDestroyTime()
