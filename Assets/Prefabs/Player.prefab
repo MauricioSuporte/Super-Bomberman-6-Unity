@@ -4113,6 +4113,7 @@ GameObject:
   - component: {fileID: 2215458873446258120}
   - component: {fileID: 8619747570867755544}
   - component: {fileID: 7380407877753544396}
+  - component: {fileID: 3757263839910658759}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -4960,6 +4961,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9d3a1e339782534aee879dfbfe5821, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.NetworkPlayerState
+  syncMethod: 0
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+--- !u!114 &3757263839910658759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f76f3c75003702eea189e2535bf2275, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.NetworkBombFx
   syncMethod: 0
   syncDirection: 0
   syncMode: 0

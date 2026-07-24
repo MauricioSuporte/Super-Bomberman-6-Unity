@@ -74,6 +74,11 @@ public class CharacterHealth : MonoBehaviour
 
     public void TakeDamage(int amount, bool fromExplosion)
     {
+        // Online host-autoritativo: dano/morte só são decididos no host; no
+        // cliente puro a vida chega replicada (NetworkPlayerState).
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (isDead || isInvulnerable || externalInvulnerability)
             return;
 

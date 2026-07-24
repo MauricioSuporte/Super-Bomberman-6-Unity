@@ -542,6 +542,10 @@ public partial class BombController : MonoBehaviour
         explosion.SetSource(ownerController, sourcePlayerId, isRevengeBomb);
     }
 
+    // Online (host): quando não-nulo, SpawnExplosionVisual coleta as células
+    // visuais da explosão em curso para replicar aos clientes via ClientRpc.
+    private System.Collections.Generic.List<Assets.Scripts.Netcode.ExplosionFx> _netFxCollector;
+
     private BombExplosion SpawnExplosionVisual(
         Vector2 position,
         BombExplosion.ExplosionPart part,
@@ -552,7 +556,27 @@ public partial class BombController : MonoBehaviour
         BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
         ApplyExplosionSource(explosion, sourceBomb);
         explosion.Play(part, direction, 0f, explosionDuration, origin, sourceBomb != null && sourceBomb.IsPierceBomb);
+
+        if (_netFxCollector != null)
+            _netFxCollector.Add(new Assets.Scripts.Netcode.ExplosionFx { pos = position, part = (byte)part, dir = direction });
+
         return explosion;
+    }
+
+    // Chamado no CLIENTE (via NetworkBombFx) para recriar o visual da explosão
+    // sem dano (o dano é resolvido só no host).
+    public void PlayNetworkExplosionVisual(Vector2 position, byte part, Vector2 direction, Vector2 origin, float duration, bool pierce)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
+        BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
+        if (explosion == null)
+            return;
+
+        explosion.Play((BombExplosion.ExplosionPart)part, direction, 0f, duration, origin, pierce);
+        explosion.SetCollisionEnabled(false);
     }
 
     private BombExplosion SpawnExplosionDamageHitbox(
@@ -1528,6 +1552,11 @@ public partial class BombController : MonoBehaviour
 
         int bombSpotlightId = AllocateSpotlightBaseId();
 
+        // Online (host): coletar as células visuais desta explosão para replicar.
+        _netFxCollector = Assets.Scripts.Netcode.NetSync.IsServer
+            ? new System.Collections.Generic.List<Assets.Scripts.Netcode.ExplosionFx>(32)
+            : null;
+
         SpawnExplosionVisual(
             snapped,
             BombExplosion.ExplosionPart.Start,
@@ -1562,6 +1591,12 @@ public partial class BombController : MonoBehaviour
         {
             destroyDelay = explosionAudio.clip.length;
         }
+
+        // Online (host): envia o visual coletado para os clientes recriarem.
+        if (_netFxCollector != null && _netFxCollector.Count > 0 &&
+            TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx))
+            fx.ServerEmit(snapped, _netFxCollector.ToArray(), pierce, explosionDuration);
+        _netFxCollector = null;
 
         // Online: HideBombVisuals já ocultou a bomba; despawn imediato replica
         // o sumiço. Offline mantém o delay para o SFX tocar da própria bomba.
