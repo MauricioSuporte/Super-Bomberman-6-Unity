@@ -105,6 +105,10 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void Update()
     {
+        // Online: cliente puro não simula animação (a saída vem replicada).
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.CorneredAnimationUpdate.Auto();
 
         if (movement == null)

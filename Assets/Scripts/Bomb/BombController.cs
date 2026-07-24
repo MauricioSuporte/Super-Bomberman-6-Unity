@@ -308,6 +308,10 @@ public partial class BombController : MonoBehaviour
 
     private void Update()
     {
+        // Online host-autoritativo: só o servidor decide colocar/detonar bombas.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.BombControllerUpdate.Auto();
 
         if (ClownMaskBoss.BossIntroRunning)
@@ -1079,6 +1083,9 @@ public partial class BombController : MonoBehaviour
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
 
+        // Online (host): replica a bomba para os clientes. No-op offline.
+        Assets.Scripts.Netcode.NetSpawn.Server(bomb);
+
         if (controlEnabled)
             RegisterBomb(bomb);
 
@@ -1511,7 +1518,10 @@ public partial class BombController : MonoBehaviour
         ResolveExplosionPrefab();
         if (explosionPrefab == null)
         {
-            Destroy(bomb);
+            if (Assets.Scripts.Netcode.NetSync.IsOnline)
+                Assets.Scripts.Netcode.NetSpawn.Despawn(bomb);
+            else
+                Destroy(bomb);
             bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
             return;
         }
@@ -1553,7 +1563,12 @@ public partial class BombController : MonoBehaviour
             destroyDelay = explosionAudio.clip.length;
         }
 
-        Destroy(bomb, destroyDelay);
+        // Online: HideBombVisuals já ocultou a bomba; despawn imediato replica
+        // o sumiço. Offline mantém o delay para o SFX tocar da própria bomba.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            Assets.Scripts.Netcode.NetSpawn.Despawn(bomb);
+        else
+            Destroy(bomb, destroyDelay);
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 

@@ -573,6 +573,11 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        // Online host-autoritativo: clientes puros não simulam; a posição
+        // e a animação chegam replicadas do servidor (ver NetSync).
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
 
         if (inputLocked || GamePauseController.IsPaused || isDead)
@@ -1768,6 +1773,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        // Cliente puro não roda física do player (NetworkTransform posiciona).
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.PlayerFixedUpdate.Auto();
 
         if (UpdateBombReentryCentering())

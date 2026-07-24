@@ -78,6 +78,10 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     public void SpawnNow()
     {
+        // Online: quem spawna os players é o BombermanNetworkManager.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            return;
+
         if (spawned)
             return;
 
