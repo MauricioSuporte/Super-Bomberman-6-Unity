@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 147425199346742613}
   - component: {fileID: 2484313177524847551}
   - component: {fileID: 4491695425928016186}
+  - component: {fileID: 8375862362406129284}
   m_Layer: 7
   m_Name: RubberBomb
   m_TagString: Untagged
@@ -39,7 +40,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &147425199346742611
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -96,6 +97,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &147425199346742612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,9 +120,11 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
+  loopStartFrame: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -205,14 +209,22 @@ MonoBehaviour:
   punchSfxVolume: 1
   bounceSfx: {fileID: 8300000, guid: 691a993233a939b4d8601560e159cf0a, type: 3}
   bounceSfxVolume: 1
+  loseItemSfxVolume: 1
   magnetPullSfxVolume: 1
   kickSpeed: 9
   punchDuration: 0.22
   punchArcHeight: 0.9
+  punchMinSegmentDuration: 0.28
+  punchSecondsPerTile: 0.055
+  punchLandingBounceSpeedMultiplier: 2
+  punchPixelsPerUnit: 16
   chainStepDelay: 0.1
   FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
+  indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0
@@ -310,3 +322,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &8375862362406129284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147425199346742615}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
