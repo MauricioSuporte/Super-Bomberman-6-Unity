@@ -37,6 +37,10 @@ namespace Assets.Scripts.Netcode
             PlayerAction.ActionC,   // bit 6
         };
 
+        // Índices (em SyncedActions) dos botões de ação (edge-triggered / GetDown):
+        // ActionA(4)=colocar bomba, ActionB(5)=detonar/kick, ActionC(6).
+        static readonly int[] TapActionIndices = { 4, 5, 6 };
+
         // Esquema de controle local usado por quem está nesta máquina.
         const int LocalInputSlot = 1;
 
@@ -52,10 +56,43 @@ namespace Assets.Scripts.Netcode
         void Update()
         {
             if (isLocalPlayer && !isServer)
+            {
                 SampleAndSendLocalInput();
+                SampleAndSendTaps();
+            }
 
             if (isServer)
                 ApplyServerHeldMask();
+        }
+
+        // Botões de ação são lidos por GetDown (borda). Derivar a borda no host
+        // a partir do held mask é frágil (depende da ordem de Update). Então
+        // detectamos o GetDown aqui no cliente (hardware confiável) e mandamos
+        // um tap explícito -> TapSynthetic no host (imune à ordem, usa frame).
+        void SampleAndSendTaps()
+        {
+            var input = PlayerInputManager.Instance;
+            if (input == null)
+                return;
+
+            for (int i = 0; i < TapActionIndices.Length; i++)
+            {
+                int idx = TapActionIndices[i];
+                if (input.GetDown(LocalInputSlot, SyncedActions[idx]))
+                    CmdTap(idx);
+            }
+        }
+
+        [Command]
+        void CmdTap(int actionIndex)
+        {
+            var input = PlayerInputManager.Instance;
+            if (input == null || setup == null)
+                return;
+            if (actionIndex < 0 || actionIndex >= SyncedActions.Length)
+                return;
+
+            input.TapSynthetic(setup.PlayerId, SyncedActions[actionIndex]);
         }
 
         void SampleAndSendLocalInput()
