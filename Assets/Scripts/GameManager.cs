@@ -1908,7 +1908,39 @@ public class GameManager : MonoBehaviour
 
         restartingRound = true;
         endStageTriggered = true;
+
+        // O host é a autoridade: congela o gameplay durante o placar (sem
+        // timeScale=0, que não barra a colocação de bomba feita no Update).
+        // No cliente os controllers já não simulam (gate do NetSync).
+        if (Assets.Scripts.Netcode.NetSync.IsServer)
+            FreezeAllPlayersForOnlineRoundEnd();
+
         onlineRoundOverRoutine = StartCoroutine(OnlineRoundOverRoutine(winnerId, kind));
+    }
+
+    // F5a — congela todos os players no fim de round online: remove bombas
+    // plantadas e desabilita MovementController/BombController para não aceitarem
+    // mais input enquanto o placar está na tela.
+    void FreezeAllPlayersForOnlineRoundEnd()
+    {
+        MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < players.Length; i++)
+        {
+            MovementController player = players[i];
+            if (player == null || !player.CompareTag("Player"))
+                continue;
+
+            if (player.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+                glove.DestroyHeldBombIfHolding();
+
+            if (player.TryGetComponent<BombController>(out var bomb) && bomb != null)
+            {
+                bomb.ClearPlantedBombsOnStageEnd(false);
+                bomb.enabled = false;
+            }
+
+            player.enabled = false;
+        }
     }
 
     IEnumerator OnlineRoundOverRoutine(int winnerId, byte kind)
