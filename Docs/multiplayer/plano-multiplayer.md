@@ -59,8 +59,9 @@ Tudo commitado; padrão validado com testes host+cliente lado a lado.
 |---|---|---|
 | Setup | Mirror embutido (`Packages/com.mirrornetworking.mirror`), `BombermanNetworkManager`, conexão host/cliente, spawn por conexão, `NetSync`/`NetSpawn` | ✅ |
 | **F1** | Animação por replicação-de-saída (`NetworkPlayerAnimation`) + gate dos drivers locais de animação | ✅ testado |
-| **F0** (fatia 1) | Estado por-player no HUD (`NetworkPlayerState`: vida/bombas/raio/velocidade/skin) | ✅ (falta fatia 2: flags de powerup/mounts) |
+| **F0** | Estado por-player no HUD (`NetworkPlayerState`: vida/bombas/raio/velocidade/skin + bitmask de 11 flags de powerup) | ✅ testado |
 | **F2** | Bombas em rede (spawn/despawn) + explosão visual por `ClientRpc` (`NetworkBombFx`) + input dos dois lados (tap explícito) + dano host-only (`CharacterHealth.TakeDamage` gateado) | ✅ testado |
+| **F3** | Destruição de blocos por evento de célula (`RpcClearDestructibles`) + animação de quebra no cliente + item revelado spawnado por `NetSpawn.Server` (alinhado ao grid nos 2 lados) + pickup host-only | ✅ testado |
 
 `Player.prefab`: 7 componentes de rede. Scripts novos em `Assets/Scripts/Netcode/`. Guards de 3 linhas em 8 arquivos core. Nenhuma lógica de gameplay reescrita.
 
@@ -93,6 +94,8 @@ Enquanto o multiplayer é construído, o time deve evitar reintroduzir bloqueios
 - **Novos `MonoBehaviour` de simulação** (inimigo, ability, gimmick): já nasça com o gate `if (!NetSync.ShouldSimulateLocally) return;` nos loops, e replique a saída visível.
 - **Troca de cena de gameplay**: quando online, tem que ser `ServerChangeScene` (não `SceneManager.LoadScene`).
 - **Dano/morte**: só no host; o cliente recebe vida/estado replicado.
+- **Objeto com `NetworkIdentity` NÃO pode ficar colocado em cena** de gameplay sem processamento (Mirror exige `sceneId`; um prefab-instância largado na cena quebra o build/spawn). Se um prefab networked também for usado colocado manualmente numa cena (ex.: LandMine), NÃO ponha `NetworkIdentity` nele — trate a versão de cena como local. Regra: `NetworkIdentity` é para o que o host **spawna em runtime**, não para o que já está na cena.
+- **Objeto spawnado pelo Mirror deve nascer na RAIZ** (sem parent). No `SpawnMessage` o Mirror replica `transform.localPosition` (não a world) — se o objeto for filho de algo com offset (ex.: o Tilemap), ele aparece deslocado no cliente. Instancie na raiz quando online (ou reparente pra bater a `localPosition`). Cuidado extra com `AnimatedSpriteRenderer` na raiz: ele captura a base de offset no `Awake` conforme o parent daquele momento — reparentar **depois** do `Awake` deixa a base velha e desloca o host. Nasça já na raiz.
 
 ---
 
