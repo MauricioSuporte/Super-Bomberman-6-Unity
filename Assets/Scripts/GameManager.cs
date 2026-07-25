@@ -196,6 +196,7 @@ public class GameManager : MonoBehaviour
     private float battleTimeRemainingSeconds = Mathf.Infinity;
     private float battleTimerExpiredElapsedSeconds;
     private bool hasBattleTimeLimit;
+    private int lastBroadcastTimerSecond = -1; // F5a
 
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
@@ -1836,9 +1837,10 @@ public class GameManager : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
-        // F5a — o host é dono do relógio; o cliente puro não conta nem dispara
-        // time-up (o timer replicado chega pela rede — F5a-2).
-        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
+        // F5a — em cena de rede só o servidor conta o tempo, e só depois de
+        // hospedar (antes disso IsServer é falso). O cliente recebe o valor
+        // replicado; offline puro conta normalmente.
+        if (Assets.Scripts.Netcode.NetSync.IsNetworkedScene && !Assets.Scripts.Netcode.NetSync.IsServer)
             return;
 
         if (!IsBattleModeScene() || !hasBattleTimeLimit)
@@ -1857,9 +1859,12 @@ public class GameManager : MonoBehaviour
             if (battleTimeRemainingSeconds > 0f)
             {
                 battleTimerExpiredElapsedSeconds = 0f;
+                BroadcastBattleTimerIfNeeded();
                 return;
             }
         }
+
+        BroadcastBattleTimerIfNeeded();
 
         battleTimerExpiredElapsedSeconds += Time.unscaledDeltaTime;
 
@@ -1867,6 +1872,29 @@ public class GameManager : MonoBehaviour
             return;
 
         TriggerBattleDrawSequence(showTimeUp: true);
+    }
+
+    // F5a — host replica o relógio aos clientes quando o segundo inteiro muda
+    // (o HUD mostra segundos, então ~1 msg/s basta).
+    void BroadcastBattleTimerIfNeeded()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
+        int sec = Mathf.CeilToInt(BattleTimeRemainingSeconds);
+        if (sec == lastBroadcastTimerSecond)
+            return;
+
+        lastBroadcastTimerSecond = sec;
+        Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastTimer(
+            battleTimeRemainingSeconds, hasBattleTimeLimit);
+    }
+
+    // F5a — cliente aplica o relógio replicado pelo host (o HUD lê daqui).
+    public void ApplyNetworkTimer(float remaining, bool hasLimit)
+    {
+        hasBattleTimeLimit = hasLimit;
+        battleTimeRemainingSeconds = remaining;
     }
 
     void TriggerBattleDrawSequence(bool showTimeUp)

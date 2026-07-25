@@ -37,6 +37,14 @@ namespace Assets.Scripts.Netcode
         /// <summary>Este processo tem autoridade de servidor (host).</summary>
         public static bool IsServer => Mode == NetMode.Host;
 
+        /// <summary>
+        /// A cena atual tem um NetworkManager (é destinada a rede), mesmo que
+        /// ainda não se tenha clicado Host/Client. Usado para não rodar gameplay
+        /// (ex.: o relógio de round) antes da partida online começar. O
+        /// BombermanNetworkManager seta isto conforme existe na cena.
+        /// </summary>
+        public static bool IsNetworkedScene { get; set; }
+
         public static void Reset() => Mode = NetMode.Offline;
     }
 }

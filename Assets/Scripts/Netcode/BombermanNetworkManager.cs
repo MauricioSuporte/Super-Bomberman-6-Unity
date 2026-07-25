@@ -14,6 +14,13 @@ namespace Assets.Scripts.Netcode
         public byte kind;
     }
 
+    /// <summary>F5a — relógio de round replicado (host → clientes).</summary>
+    public struct RoundTimerMessage : NetworkMessage
+    {
+        public float remaining;
+        public bool hasLimit;
+    }
+
     /// <summary>
     /// NetworkManager da POC de Battle Mode online (host-autoritativo).
     ///
@@ -33,6 +40,19 @@ namespace Assets.Scripts.Netcode
         readonly Dictionary<int, int> playerIdByConnection = new();
 
         // ---- Ciclo de vida / modo ----------------------------------------
+
+        public override void Awake()
+        {
+            base.Awake();
+            // A cena tem um NetworkManager → é destinada a rede. Impede o gameplay
+            // (ex.: relógio de round) de rodar antes de clicar Host/Client.
+            NetSync.IsNetworkedScene = true;
+        }
+
+        void OnDestroy()
+        {
+            NetSync.IsNetworkedScene = false;
+        }
 
         public override void OnStartHost()
         {
@@ -55,8 +75,9 @@ namespace Assets.Scripts.Netcode
             {
                 NetSync.Mode = NetSync.NetMode.Client;
                 DestroyPreExistingLocalPlayers();
-                // F5a — cliente puro escuta o anúncio de fim de round do host.
+                // F5a — cliente puro escuta os anúncios do host.
                 NetworkClient.RegisterHandler<RoundOverMessage>(OnRoundOverMessage);
+                NetworkClient.RegisterHandler<RoundTimerMessage>(OnRoundTimerMessage);
             }
         }
 
@@ -64,6 +85,27 @@ namespace Assets.Scripts.Netcode
         {
             if (GameManager.Instance != null)
                 GameManager.Instance.PlayOnlineRoundOver(msg.winnerId, msg.kind);
+        }
+
+        static void OnRoundTimerMessage(RoundTimerMessage msg)
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.ApplyNetworkTimer(msg.remaining, msg.hasLimit);
+        }
+
+        // F5a — host replica o relógio de round aos clientes remotos.
+        public static void ServerBroadcastTimer(float remaining, bool hasLimit)
+        {
+            if (!NetworkServer.active)
+                return;
+
+            var msg = new RoundTimerMessage { remaining = remaining, hasLimit = hasLimit };
+            foreach (var conn in NetworkServer.connections.Values)
+            {
+                if (conn == null || conn == NetworkServer.localConnection)
+                    continue;
+                conn.Send(msg);
+            }
         }
 
         // F5a — host anuncia o fim de round APENAS aos clientes remotos (o host
