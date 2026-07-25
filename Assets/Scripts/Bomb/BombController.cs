@@ -2215,18 +2215,18 @@ public partial class BombController : MonoBehaviour
         if (!_gm.TryReserveItemSpawnCell(cell))
             yield break;
 
-        GameObject spawned = parent != null
-            ? Instantiate(prefab, spawnWorldPosition, Quaternion.identity, parent)
+        // Online: cria o item na RAIZ (sem o parent do Tilemap). Assim o Awake
+        // do AnimatedSpriteRenderer o trata como "standalone root" (offsets
+        // desligados) e ele permanece na world position; como está na raiz,
+        // a localPosition que o Mirror replica no spawn == world, então o item
+        // fica alinhado ao grid tanto no host quanto no cliente. (Offline mantém
+        // o parent do Tilemap, comportamento inalterado.)
+        Transform spawnParent = Assets.Scripts.Netcode.NetSync.IsOnline ? null : parent;
+        GameObject spawned = spawnParent != null
+            ? Instantiate(prefab, spawnWorldPosition, Quaternion.identity, spawnParent)
             : Instantiate(prefab, spawnWorldPosition, Quaternion.identity);
 
         _gm.PrepareSpawnedHiddenObject(spawned, prefab, spawnWorldPosition);
-
-        // Online (host): o Mirror replica transform.localPosition no spawn.
-        // Como o item nasce filho do Tilemap, desparentamos (mantendo a world
-        // position) para que localPosition == world — senão o item fica
-        // deslocado no cliente pelo offset do Tilemap.
-        if (Assets.Scripts.Netcode.NetSync.IsOnline)
-            spawned.transform.SetParent(null, true);
 
         // Online (host): replica o item revelado para os clientes.
         Assets.Scripts.Netcode.NetSpawn.Server(spawned);
