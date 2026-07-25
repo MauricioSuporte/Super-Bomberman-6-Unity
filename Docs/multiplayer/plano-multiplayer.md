@@ -62,6 +62,7 @@ Tudo commitado; padrão validado com testes host+cliente lado a lado.
 | **F0** | Estado por-player no HUD (`NetworkPlayerState`: vida/bombas/raio/velocidade/skin + bitmask de 11 flags de powerup) | ✅ testado |
 | **F2** | Bombas em rede (spawn/despawn) + explosão visual por `ClientRpc` (`NetworkBombFx`) + input dos dois lados (tap explícito) + dano host-only (`CharacterHealth.TakeDamage` gateado) | ✅ testado |
 | **F3** | Destruição de blocos por evento de célula (`RpcClearDestructibles`) + animação de quebra no cliente + item revelado spawnado por `NetSpawn.Server` (alinhado ao grid nos 2 lados) + pickup host-only | ✅ testado |
+| **F4** | Efeitos temporários: **gameplay já era host-autoritativo** (pickup/RNG/dano host-only); só faltava o **visual** — `NetworkPlayerState.tempFx` replica o blink de skull/invencibilidade | ✅ testado |
 
 `Player.prefab`: 7 componentes de rede. Scripts novos em `Assets/Scripts/Netcode/`. Guards de 3 linhas em 8 arquivos core. Nenhuma lógica de gameplay reescrita.
 
