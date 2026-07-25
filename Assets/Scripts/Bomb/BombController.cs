@@ -2221,6 +2221,13 @@ public partial class BombController : MonoBehaviour
 
         _gm.PrepareSpawnedHiddenObject(spawned, prefab, spawnWorldPosition);
 
+        // Online (host): o Mirror replica transform.localPosition no spawn.
+        // Como o item nasce filho do Tilemap, desparentamos (mantendo a world
+        // position) para que localPosition == world — senão o item fica
+        // deslocado no cliente pelo offset do Tilemap.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            spawned.transform.SetParent(null, true);
+
         // Online (host): replica o item revelado para os clientes.
         Assets.Scripts.Netcode.NetSpawn.Server(spawned);
     }
