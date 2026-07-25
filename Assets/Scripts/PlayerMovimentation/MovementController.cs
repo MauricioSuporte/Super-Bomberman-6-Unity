@@ -3443,6 +3443,17 @@ public class MovementController : MonoBehaviour, IKillable
 
         BattleRevengeSystem.Instance?.HandlePlayerDeathCompleted(this);
         Died?.Invoke(this);
+
+        // F5a — online: replica a eliminação para o cliente desativar o clone
+        // (o Mirror não sincroniza SetActive). Só na morte "real" (o retorno
+        // antecipado do revenge-swap acima não passa por aqui).
+        if (Assets.Scripts.Netcode.NetSync.IsServer &&
+            TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerState>(out var netState) &&
+            netState != null)
+        {
+            netState.ServerMarkEliminated();
+        }
+
         gameObject.SetActive(false);
 
         if (CompareTag("BossBomber"))

@@ -1425,6 +1425,11 @@ public class GameManager : MonoBehaviour
 
     void EvaluatePlayerWinState()
     {
+        // F5a — a decisão de fim de round é host-autoritativa. O cliente puro
+        // nunca avalia; o host decide e replica o resultado.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
         if (IsBattleModeScene() &&
             BattleRevengeSystem.Instance != null &&
             BattleRevengeSystem.Instance.HasRespawnSwapInProgress)
@@ -1808,6 +1813,11 @@ public class GameManager : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
+        // F5a — o host é dono do relógio; o cliente puro não conta nem dispara
+        // time-up (o timer replicado chega pela rede — F5a-2).
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
         if (!IsBattleModeScene() || !hasBattleTimeLimit)
             return;
 
@@ -1893,7 +1903,10 @@ public class GameManager : MonoBehaviour
         StagePreIntroPlayersWalk.SkipOnNextLoad();
 
         Scene current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
+        // F5b (online): a troca de cena será coordenada via ServerChangeScene.
+        // Por enquanto o host segura no resultado (não recarrega local).
+        if (!Assets.Scripts.Netcode.NetSync.IsOnline)
+            SceneManager.LoadScene(current.buildIndex);
     }
 
     static void PrepareActivePlayersForBattleTimeUp()
@@ -1997,7 +2010,9 @@ public class GameManager : MonoBehaviour
             StagePreIntroPlayersWalk.SkipOnNextLoad();
 
             BattleModeMenu.OpenDirectlyAtStageSelect = true;
-            SceneManager.LoadScene(BattleModeMenuSceneName);
+            // F5b/F5c (online): retorno ao lobby será coordenado pela rede.
+            if (!Assets.Scripts.Netcode.NetSync.IsOnline)
+                SceneManager.LoadScene(BattleModeMenuSceneName);
 
             yield break;
         }
@@ -2014,7 +2029,10 @@ public class GameManager : MonoBehaviour
         StagePreIntroPlayersWalk.SkipOnNextLoad();
 
         Scene current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
+        // F5b (online): próximo round via ServerChangeScene coordenado. Por
+        // enquanto o host segura no scoreboard (não recarrega local).
+        if (!Assets.Scripts.Netcode.NetSync.IsOnline)
+            SceneManager.LoadScene(current.buildIndex);
     }
 
     static void PlayBattleVictorySfx(MovementController survivingPlayer, bool hasNightmareBomberWinner)

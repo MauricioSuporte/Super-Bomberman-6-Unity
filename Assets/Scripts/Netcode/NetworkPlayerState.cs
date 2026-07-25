@@ -27,6 +27,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] byte skin;
         [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
         [SyncVar] byte tempFx;        // F4: bit0 = skull ativo, bit1 = invencível
+        [SyncVar(hook = nameof(OnEliminatedChanged))] bool eliminated; // F5a
 
         const int FxSkull = 1 << 0;
         const int FxInvuln = 1 << 1;
@@ -48,6 +49,30 @@ namespace Assets.Scripts.Netcode
             move = GetComponent<MovementController>();
             skinController = GetComponentInChildren<PlayerBomberSkinController>(true);
             PlayerPersistentStats.EnsureSessionBooted();
+        }
+
+        // F5a — replicação da eliminação. Ao fim da sequência de morte o host
+        // desativa o GameObject do player; o Mirror NÃO sincroniza SetActive,
+        // então marcamos via SyncVar e o cliente desativa o seu clone. SyncVar
+        // (e não RPC) para cobrir também quem conecta depois (late-join).
+        [Server]
+        public void ServerMarkEliminated()
+        {
+            if (!eliminated)
+                eliminated = true;
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (eliminated && !isServer && gameObject.activeSelf)
+                gameObject.SetActive(false);
+        }
+
+        void OnEliminatedChanged(bool _, bool now)
+        {
+            if (now && !isServer && gameObject.activeSelf)
+                gameObject.SetActive(false);
         }
 
         void LateUpdate()
