@@ -200,6 +200,7 @@ public class GameManager : MonoBehaviour
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
     private Coroutine battleVictoryCheckRoutine;
+    private Coroutine onlineRoundOverRoutine; // F5a
     private readonly List<MovementController> winningBattleSurvivorsBuffer = new();
     private readonly List<ItemType> battleDroppedItemsBuffer = new();
     private readonly List<Vector3Int> battleDropCellsBuffer = new();
@@ -1609,6 +1610,28 @@ public class GameManager : MonoBehaviour
         if (survivingPlayer == null)
             return;
 
+        // F5a — online: a sequência single-player faz fade-pra-preto/timeScale e
+        // termina recarregando a cena; sem o reload (que só vem no F5b) ela deixa
+        // a tela preta e trava. Usamos um round-end dedicado: só o placar, sem
+        // fade/timeScale/reload, replicado aos clientes. (F5b coordena o próximo
+        // round via ServerChangeScene.)
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+        {
+            restartingRound = true;
+            endStageTriggered = true;
+
+            BattleSuddenDeathController sd = FindAnyObjectByType<BattleSuddenDeathController>();
+            if (sd != null)
+                sd.StopSuddenDeathAndClearVisuals();
+
+            RegisterBattleVictory(survivingPlayer); // placar no host (replicação = F5a-3)
+
+            int winnerId = survivingPlayer.PlayerId;
+            Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastRoundOver(winnerId, 0);
+            PlayOnlineRoundOver(winnerId, 0);
+            return;
+        }
+
         restartingRound = true;
         endStageTriggered = true;
 
@@ -1858,7 +1881,53 @@ public class GameManager : MonoBehaviour
         if (showTimeUp)
             battleTimeRemainingSeconds = 0f;
 
+        // F5a — online: round-end dedicado (sem fade/timeScale/reload), replicado.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+        {
+            BattleSuddenDeathController sd = FindAnyObjectByType<BattleSuddenDeathController>();
+            if (sd != null)
+                sd.StopSuddenDeathAndClearVisuals();
+
+            byte kind = showTimeUp ? (byte)2 : (byte)1;
+            Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastRoundOver(-1, kind);
+            PlayOnlineRoundOver(-1, kind);
+            return;
+        }
+
         StartCoroutine(BattleDrawSequenceRoutine(showTimeUp));
+    }
+
+    // F5a — apresentação de fim de round online (host e cliente). Só UI: mostra o
+    // placar/empate e SEGURA (sem fade-pra-preto, sem timeScale, sem reload). O
+    // próximo round/lobby será coordenado via ServerChangeScene (F5b). Os overlays
+    // usam espera em tempo real, então independem do timeScale.
+    public void PlayOnlineRoundOver(int winnerId, byte kind)
+    {
+        if (onlineRoundOverRoutine != null)
+            return;
+
+        restartingRound = true;
+        endStageTriggered = true;
+        onlineRoundOverRoutine = StartCoroutine(OnlineRoundOverRoutine(winnerId, kind));
+    }
+
+    IEnumerator OnlineRoundOverRoutine(int winnerId, byte kind)
+    {
+        if (kind == 0)
+        {
+            BattleModeHud.CaptureDisplayedVictorySnapshot();
+            yield return BattleRoundWinScoreboardOverlay.PlayRoutine(winnerId);
+            BattleModeHud.ReleaseDisplayedVictorySnapshot();
+        }
+        else
+        {
+            if (kind == 2)
+                yield return BattleTimeUpOverlay.PlayRoutine();
+            yield return BattleDrawOverlay.PlayRoutine();
+        }
+
+        onlineRoundOverRoutine = null;
+        // Segura aqui até o F5b (ServerChangeScene coordenado).
     }
 
     public void DebugTriggerBattleTimeUp()

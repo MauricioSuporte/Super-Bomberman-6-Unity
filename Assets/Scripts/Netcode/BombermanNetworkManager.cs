@@ -5,6 +5,16 @@ using UnityEngine;
 namespace Assets.Scripts.Netcode
 {
     /// <summary>
+    /// F5a — anúncio de fim de round (host → clientes). kind: 0=vitória,
+    /// 1=empate, 2=empate por tempo. winnerId válido só quando kind==0.
+    /// </summary>
+    public struct RoundOverMessage : NetworkMessage
+    {
+        public int winnerId;
+        public byte kind;
+    }
+
+    /// <summary>
     /// NetworkManager da POC de Battle Mode online (host-autoritativo).
     ///
     /// Responsabilidades:
@@ -45,6 +55,31 @@ namespace Assets.Scripts.Netcode
             {
                 NetSync.Mode = NetSync.NetMode.Client;
                 DestroyPreExistingLocalPlayers();
+                // F5a — cliente puro escuta o anúncio de fim de round do host.
+                NetworkClient.RegisterHandler<RoundOverMessage>(OnRoundOverMessage);
+            }
+        }
+
+        static void OnRoundOverMessage(RoundOverMessage msg)
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.PlayOnlineRoundOver(msg.winnerId, msg.kind);
+        }
+
+        // F5a — host anuncia o fim de round APENAS aos clientes remotos (o host
+        // já toca a apresentação localmente). Custom message evita depender de um
+        // objeto de cena com NetworkIdentity.
+        public static void ServerBroadcastRoundOver(int winnerId, byte kind)
+        {
+            if (!NetworkServer.active)
+                return;
+
+            var msg = new RoundOverMessage { winnerId = winnerId, kind = kind };
+            foreach (var conn in NetworkServer.connections.Values)
+            {
+                if (conn == null || conn == NetworkServer.localConnection)
+                    continue;
+                conn.Send(msg);
             }
         }
 
