@@ -26,6 +26,10 @@ namespace Assets.Scripts.Netcode
         [SyncVar] int speedInternal;
         [SyncVar] byte skin;
         [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
+        [SyncVar] byte tempFx;        // F4: bit0 = skull ativo, bit1 = invencível
+
+        const int FxSkull = 1 << 0;
+        const int FxInvuln = 1 << 1;
 
         NetworkPlayerSetup setup;
         CharacterHealth health;
@@ -34,6 +38,7 @@ namespace Assets.Scripts.Netcode
         PlayerBomberSkinController skinController;
 
         int appliedSkin = -1;
+        int appliedTempFx = 0;
 
         void Awake()
         {
@@ -96,6 +101,17 @@ namespace Assets.Scripts.Netcode
                 if (rt.HasFullFire)         flags |= 1 << 10;
             }
             if (flags != abilityFlags) abilityFlags = flags;
+
+            // F4 — efeitos temporários (só o VISUAL precisa replicar; o gameplay
+            // já é host-autoritativo). Skull ativo e (in)vulnerabilidade — inclui
+            // a invencibilidade do InvincibleSuit, o blink pós-dano e o de spawn.
+            int fx = 0;
+            if (TryGetComponent<SkullDebuffController>(out var skull) && skull.HasActiveEffect)
+                fx |= FxSkull;
+            if (health != null && health.IsInvulnerable)
+                fx |= FxInvuln;
+            byte fxb = (byte)fx;
+            if (fxb != tempFx) tempFx = fxb;
         }
 
         void ClientApply()
@@ -135,6 +151,27 @@ namespace Assets.Scripts.Netcode
                 skinController.Apply((BomberSkin)skin);
                 appliedSkin = skin;
             }
+
+            // F4 — reproduz o VISUAL dos efeitos temporários (pisca-pisca) só nas
+            // transições. Os blinks mexem em cor/alpha do sprite (ortogonal ao
+            // sprite/frame que o NetworkPlayerAnimation replica). Duração longa: o
+            // host controla início/fim pelas transições da SyncVar tempFx.
+            bool skullNow  = (tempFx & FxSkull) != 0;
+            bool invulnNow = (tempFx & FxInvuln) != 0;
+            bool skullWas  = (appliedTempFx & FxSkull) != 0;
+            bool invulnWas = (appliedTempFx & FxInvuln) != 0;
+
+            if (skullNow != skullWas && move != null)
+            {
+                if (skullNow) move.ApplyTemporarySkullVisual(3600f);
+                else          move.ClearTemporarySkullVisual();
+            }
+            if (invulnNow != invulnWas && health != null)
+            {
+                if (invulnNow) health.StartTemporaryInvulnerability(3600f, true);
+                else           health.StopInvulnerability();
+            }
+            appliedTempFx = tempFx;
         }
     }
 }
