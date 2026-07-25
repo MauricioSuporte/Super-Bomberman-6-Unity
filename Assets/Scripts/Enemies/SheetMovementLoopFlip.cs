@@ -28,7 +28,7 @@ public sealed class SheetMovementLoopFlip : MonoBehaviour
     {
         if (animatedSprite == null || spriteRenderer == null ||
             animatedSprite.idle || !animatedSprite.loop ||
-            animatedSprite.animationSprite == null || animatedSprite.animationSprite.Length < 3)
+            animatedSprite.animationSprite == null || animatedSprite.animationSprite.Length < 2)
             return;
 
         if (spriteRenderer.flipX != appliedFlipX)
