@@ -12,6 +12,8 @@ namespace Assets.Scripts.Netcode
     {
         public int winnerId;
         public byte kind;
+        public int[] activePlayerIds; // F5a-3: players na partida (linhas do placar)
+        public int[] wins;            // F5a-3: vitórias por player (paralelo ao acima)
     }
 
     /// <summary>F5a — relógio de round replicado (host → clientes).</summary>
@@ -83,6 +85,19 @@ namespace Assets.Scripts.Netcode
 
         static void OnRoundOverMessage(RoundOverMessage msg)
         {
+            // F5a-3 — aplica players ativos + placar replicados antes do scoreboard
+            // (o presenter lê do GameSession; o cliente não tinha esses dados).
+            if (GameSession.Instance != null && msg.activePlayerIds != null)
+            {
+                GameSession.Instance.SetActivePlayerIds(new List<int>(msg.activePlayerIds));
+                if (msg.wins != null)
+                {
+                    int n = Mathf.Min(msg.activePlayerIds.Length, msg.wins.Length);
+                    for (int i = 0; i < n; i++)
+                        GameSession.Instance.SetBattleMatchWins(msg.activePlayerIds[i], msg.wins[i]);
+                }
+            }
+
             if (GameManager.Instance != null)
                 GameManager.Instance.PlayOnlineRoundOver(msg.winnerId, msg.kind);
         }
@@ -116,7 +131,25 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active)
                 return;
 
-            var msg = new RoundOverMessage { winnerId = winnerId, kind = kind };
+            // F5a-3 — snapshot do placar do host (já pós-vitória) para o cliente.
+            var idList = new List<int>();
+            if (GameSession.Instance != null)
+                GameSession.Instance.GetActivePlayerIds(idList);
+
+            int[] activeIds = idList.ToArray();
+            int[] wins = new int[activeIds.Length];
+            if (GameSession.Instance != null)
+                for (int i = 0; i < activeIds.Length; i++)
+                    wins[i] = GameSession.Instance.GetBattleMatchWins(activeIds[i]);
+
+            var msg = new RoundOverMessage
+            {
+                winnerId = winnerId,
+                kind = kind,
+                activePlayerIds = activeIds,
+                wins = wins,
+            };
+
             foreach (var conn in NetworkServer.connections.Values)
             {
                 if (conn == null || conn == NetworkServer.localConnection)
