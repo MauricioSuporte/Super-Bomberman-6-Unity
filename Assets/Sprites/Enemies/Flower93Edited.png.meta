@@ -1,19 +1,19 @@
 fileFormatVersion: 2
-guid: a6436f441feb95245a06c38cb5ce99ad
+guid: 34a63dd93c1e3404bb79bf504b48306e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2745612543510888742
-    second: Flower93_0
+      213: 4546804186259393632
+    second: Flower93Edited_0
   - first:
-      213: -779035005120000697
-    second: Flower93_1
+      213: -4855070331611184580
+    second: Flower93Edited_1
   - first:
-      213: 4794662872024834645
-    second: Flower93_2
+      213: 2102055477124969383
+    second: Flower93Edited_2
   - first:
-      213: -1052635284601926508
-    second: Flower93_3
+      213: -8438155632473203760
+    second: Flower93Edited_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -122,13 +122,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Flower93_0
+      name: Flower93Edited_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 1
         width: 16
-        height: 16
+        height: 19
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,20 +137,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ade3d2540ff95e9d0800000000000000
-      internalID: -2745612543510888742
+      spriteID: 06c0041415e791f30800000000000000
+      internalID: 4546804186259393632
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Flower93_1
+      name: Flower93Edited_1
       rect:
         serializedVersion: 2
         x: 18
         y: 0
         width: 16
-        height: 16
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,20 +159,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 74d4a345acf4035f0800000000000000
-      internalID: -779035005120000697
+      spriteID: c3207c4b1435f9cb0800000000000000
+      internalID: -4855070331611184580
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Flower93_2
+      name: Flower93Edited_2
       rect:
         serializedVersion: 2
         x: 36
         y: 0
         width: 16
-        height: 16
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,20 +181,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5526bc89a701a8240800000000000000
-      internalID: 4794662872024834645
+      spriteID: 7a3b23cb1500c2d10800000000000000
+      internalID: 2102055477124969383
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Flower93_3
+      name: Flower93Edited_3
       rect:
         serializedVersion: 2
         x: 54
         y: 0
-        width: 15
-        height: 16
+        width: 16
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -203,8 +203,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 49c824729c94461f0800000000000000
-      internalID: -1052635284601926508
+      spriteID: 0db19f6d826a5ea80800000000000000
+      internalID: -8438155632473203760
       vertices: []
       indices: 
       edges: []
@@ -213,7 +213,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 58263608f4f67b241a9560f8e3b1b476
+    spriteID: dd49f44790b712e4682880b995aabc16
     internalID: 0
     vertices: []
     indices: 
@@ -223,10 +223,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Flower93_0: -2745612543510888742
-      Flower93_1: -779035005120000697
-      Flower93_2: 4794662872024834645
-      Flower93_3: -1052635284601926508
+      Flower93Edited_0: 4546804186259393632
+      Flower93Edited_1: -4855070331611184580
+      Flower93Edited_2: 2102055477124969383
+      Flower93Edited_3: -8438155632473203760
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
