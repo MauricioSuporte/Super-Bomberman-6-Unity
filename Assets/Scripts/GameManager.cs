@@ -202,6 +202,7 @@ public class GameManager : MonoBehaviour
     private Coroutine enemyCheckRoutine;
     private Coroutine battleVictoryCheckRoutine;
     private Coroutine onlineRoundOverRoutine; // F5a
+    private bool onlineHostMatchComplete;     // F5b (host): a partida terminou?
     private readonly List<MovementController> winningBattleSurvivorsBuffer = new();
     private readonly List<ItemType> battleDroppedItemsBuffer = new();
     private readonly List<Vector3Int> battleDropCellsBuffer = new();
@@ -1625,7 +1626,8 @@ public class GameManager : MonoBehaviour
             if (sd != null)
                 sd.StopSuddenDeathAndClearVisuals();
 
-            RegisterBattleVictory(survivingPlayer); // placar no host (replicação = F5a-3)
+            // placar no host (replicação = F5a-3); retorno = partida terminou (F5b)
+            onlineHostMatchComplete = RegisterBattleVictory(survivingPlayer);
 
             int winnerId = survivingPlayer.PlayerId;
             Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastRoundOver(winnerId, 0);
@@ -1916,6 +1918,8 @@ public class GameManager : MonoBehaviour
             if (sd != null)
                 sd.StopSuddenDeathAndClearVisuals();
 
+            onlineHostMatchComplete = false; // empate não fecha a partida (F5b)
+
             byte kind = showTimeUp ? (byte)2 : (byte)1;
             Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastRoundOver(-1, kind);
             PlayOnlineRoundOver(-1, kind);
@@ -1987,7 +1991,23 @@ public class GameManager : MonoBehaviour
         }
 
         onlineRoundOverRoutine = null;
-        // Segura aqui até o F5b (ServerChangeScene coordenado).
+
+        // F5b — só o host decide o que vem depois do placar.
+        if (!Assets.Scripts.Netcode.NetSync.IsServer)
+            yield break;
+
+        if (onlineHostMatchComplete)
+        {
+            // Partida terminada: segura no placar final. Voltar ao lobby/menu de
+            // forma coordenada é o F5c (lobby networked).
+            yield break;
+        }
+
+        // Próximo round: pequena pausa pra leitura do placar e então recarrega a
+        // cena de forma coordenada (o Mirror re-spawna os players — ver
+        // BombermanNetworkManager.ServerStartNextRound).
+        yield return new WaitForSecondsRealtime(1.25f);
+        Assets.Scripts.Netcode.BombermanNetworkManager.ServerStartNextRound();
     }
 
     public void DebugTriggerBattleTimeUp()

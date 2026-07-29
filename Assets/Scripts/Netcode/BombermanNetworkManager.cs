@@ -53,7 +53,24 @@ namespace Assets.Scripts.Netcode
 
         void OnDestroy()
         {
-            NetSync.IsNetworkedScene = false;
+            // Só o singleton real limpa a flag. Ao recarregar a cena para o próximo
+            // round (F5b), o Mirror cria um clone do NetworkManager (objeto de cena)
+            // e o destrói via singleton; esse clone NÃO pode limpar a flag.
+            if (NetworkManager.singleton == null || NetworkManager.singleton == this)
+                NetSync.IsNetworkedScene = false;
+        }
+
+        // F5b — inicia o próximo round: recarrega a cena atual de forma coordenada
+        // (o Mirror leva os clientes junto e, com autoCreatePlayer, re-spawna os
+        // players das conexões existentes — AllocatePlayerId devolve o mesmo id
+        // porque playerIdByConnection sobrevive ao reload, NM é dontDestroyOnLoad).
+        public static void ServerStartNextRound()
+        {
+            if (!NetworkServer.active || singleton == null)
+                return;
+
+            string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            singleton.ServerChangeScene(scene);
         }
 
         public override void OnStartHost()
