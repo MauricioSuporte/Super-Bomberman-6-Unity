@@ -60,6 +60,26 @@ namespace Assets.Scripts.Netcode
                 NetSync.IsNetworkedScene = false;
         }
 
+        // F5c — host inicia a partida a partir do lobby (troca coordenada de cena).
+        public static void ServerStartMatch(string battleSceneName)
+        {
+            if (!NetworkServer.active || singleton == null)
+                return;
+            if (string.IsNullOrWhiteSpace(battleSceneName))
+                return;
+
+            singleton.ServerChangeScene(battleSceneName);
+        }
+
+        // F5c — fim de partida: volta todos ao lobby (a sessão continua ativa).
+        public static void ServerReturnToLobby()
+        {
+            if (!NetworkServer.active || singleton == null)
+                return;
+
+            singleton.ServerChangeScene(NetworkLobby.SceneName);
+        }
+
         // F5b — inicia o próximo round: recarrega a cena atual de forma coordenada
         // (o Mirror leva os clientes junto e, com autoCreatePlayer, re-spawna os
         // players das conexões existentes — AllocatePlayerId devolve o mesmo id
@@ -217,6 +237,16 @@ namespace Assets.Scripts.Netcode
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
             int playerId = AllocatePlayerId(conn);
+
+            // F5c — no lobby não spawnamos player (só registramos a conexão/id). O
+            // player nasce quando a partida começa: o ServerChangeScene para a cena
+            // de batalha deixa localPlayer == null e o Mirror re-chama OnServerAddPlayer
+            // (autoCreatePlayer) já na cena certa.
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName)
+            {
+                SyncActivePlayersToSession();
+                return;
+            }
 
             Vector3 spawnPos = ResolveSpawnPosition(playerId);
             GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);

@@ -1998,8 +1998,10 @@ public class GameManager : MonoBehaviour
 
         if (onlineHostMatchComplete)
         {
-            // Partida terminada: segura no placar final. Voltar ao lobby/menu de
-            // forma coordenada é o F5c (lobby networked).
+            // F5c — partida terminada: pausa pra leitura do placar final e volta
+            // todos ao lobby (a sessão continua ativa; o host pode iniciar outra).
+            yield return new WaitForSecondsRealtime(2.5f);
+            Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
             yield break;
         }
 
