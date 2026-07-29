@@ -2001,6 +2001,13 @@ public class GameManager : MonoBehaviour
             // F5c — partida terminada: pausa pra leitura do placar final e volta
             // todos ao lobby (a sessão continua ativa; o host pode iniciar outra).
             yield return new WaitForSecondsRealtime(2.5f);
+
+            // Encerra a partida no host para a PRÓXIMA começar 0-0 (BeginBattleMatch
+            // faz early-return na mesma cena enquanto a partida segue "em progresso").
+            // O cliente é corrigido pelo RoundOverMessage (placar absoluto) no 1º round.
+            if (GameSession.Instance != null)
+                GameSession.Instance.EndBattleMatch();
+
             Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
             yield break;
         }
