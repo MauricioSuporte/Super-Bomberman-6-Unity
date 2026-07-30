@@ -124,4 +124,4 @@ Enquanto o multiplayer é construído, o time deve evitar reintroduzir bloqueios
 **Ainda em aberto:**
 - **Cena dedicada** `BattleMode_1` online vs generalizar o suporte para todas as `BattleMode_*` (naturalmente resolvido pelo lobby completo, que precisa carregar qualquer stage escolhido).
 - **Servidor dedicado** no futuro (build headless) — a arquitetura host-autoritativa já deixa isso incremental.
-- **Qual transporte de internet** exatamente (Steam exige Steamworks + AppID; relay exige serviço/conta).
+- **Qual transporte de internet** exatamente. **Decidido até aqui:** Steam descartada (ToS/AppID/IP); relay LRM descartado (arquivado). Modelo atual = **servidor dedicado + KCP** (validado, F5d). Alternativa futura documentada em [`eos-requirements.md`](eos-requirements.md) (EOS relay grátis, sem Steam — só se um dia quisermos "qualquer um hospeda de casa").
