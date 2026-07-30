@@ -64,7 +64,9 @@ Tudo commitado; padrão validado com testes host+cliente lado a lado.
 | **F3** | Destruição de blocos por evento de célula (`RpcClearDestructibles`) + animação de quebra no cliente + item revelado spawnado por `NetSpawn.Server` (alinhado ao grid nos 2 lados) + pickup host-only | ✅ testado |
 | **F4** | Efeitos temporários: **gameplay já era host-autoritativo** (pickup/RNG/dano host-only); só faltava o **visual** — `NetworkPlayerState.tempFx` replica o blink de skull/invencibilidade | ✅ testado |
 | **F5a** | Fim de round host-autoritativo: eliminação replicada (`NetworkPlayerState.eliminated`), round-end online dedicado (sem fade/reload) + freeze de input, timer replicado (`RoundTimerMessage` + `NetSync.IsNetworkedScene`), placar/troféu replicado (`RoundOverMessage` com wins) | ✅ testado |
-| **F5b** | Próximo round coordenado: `ServerStartNextRound` → `ServerChangeScene` recarrega a cena; re-spawn automático (NM `dontDestroyOnLoad`+`autoCreatePlayer`, mesmo playerId); estado de round reseta por-cena, placar persiste (GameSession DDOL); fim de partida segura no placar (menu = F5c) | ✅ testado |
+| **F5b** | Próximo round coordenado: `ServerStartNextRound` → `ServerChangeScene` recarrega a cena; re-spawn automático (NM `dontDestroyOnLoad`+`autoCreatePlayer`, mesmo playerId); estado de round reseta por-cena, placar persiste (GameSession DDOL) | ✅ testado |
+| **F5c** (mínimo) | Cena de bootstrap `OnlineLobby` dona do NetworkManager (fora das cenas de batalha → sem warning de NM duplicado); menu Host/Join (IP) + Start match (`ServerChangeScene`); fim de partida volta ao lobby (`ServerReturnToLobby`); `EndBattleMatch` reseta placar entre partidas | ✅ testado |
+| **Fix** | Bombas em movimento (arremesso da luva / chute / magnet) replicam via `NetworkTransform` (World, Server→Client) | ✅ testado |
 
 `Player.prefab`: 7 componentes de rede. Scripts novos em `Assets/Scripts/Netcode/`. Guards de 3 linhas em 8 arquivos core. Nenhuma lógica de gameplay reescrita.
 
