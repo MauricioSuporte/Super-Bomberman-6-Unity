@@ -30,16 +30,26 @@ namespace Assets.Scripts.Netcode
         // para rodar o host numa máquina remota e conectar clientes de fora.
         void Start()
         {
-            if (!HasArg("-autohost"))
-                return;
-
             var nm = NetworkManager.singleton;
             if (nm == null || NetworkServer.active || NetworkClient.active)
                 return;
 
-            Debug.Log("[Net] -autohost: iniciando host + partida (" + battleSceneName + ")");
-            nm.StartHost();
-            Invoke(nameof(AutoStartMatch), 1.5f);
+            // Servidor DEDICADO (sem jogador local): fica no lobby e o
+            // BombermanNetworkManager auto-inicia a partida quando há jogadores.
+            if (HasArg("-server"))
+            {
+                Debug.Log("[Net] -server: iniciando servidor dedicado (aguardando jogadores)");
+                nm.StartServer();
+                return;
+            }
+
+            // Host de teste headless: hospeda e já entra na partida.
+            if (HasArg("-autohost"))
+            {
+                Debug.Log("[Net] -autohost: iniciando host + partida (" + battleSceneName + ")");
+                nm.StartHost();
+                Invoke(nameof(AutoStartMatch), 1.5f);
+            }
         }
 
         void AutoStartMatch()

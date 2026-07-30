@@ -41,6 +41,11 @@ namespace Assets.Scripts.Netcode
         // Conexão -> playerId atribuído (lado servidor).
         readonly Dictionary<int, int> playerIdByConnection = new();
 
+        [Header("Servidor dedicado (F5d)")]
+        [SerializeField] string dedicatedBattleScene = "BattleMode_1";
+        [SerializeField] int minPlayersToAutoStart = 2;
+        bool dedicatedServer;
+
         // ---- Ciclo de vida / modo ----------------------------------------
 
         public override void Awake()
@@ -49,6 +54,16 @@ namespace Assets.Scripts.Netcode
             // A cena tem um NetworkManager → é destinada a rede. Impede o gameplay
             // (ex.: relógio de round) de rodar antes de clicar Host/Client.
             NetSync.IsNetworkedScene = true;
+            dedicatedServer = HasArg("-server");
+        }
+
+        static bool HasArg(string arg)
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
+                if (string.Equals(args[i], arg, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
         }
 
         public override void OnDestroy()
@@ -80,6 +95,36 @@ namespace Assets.Scripts.Netcode
                 return;
 
             singleton.ServerChangeScene(NetworkLobby.SceneName);
+        }
+
+        // F5d — servidor dedicado: sem GUI pra clicar "Start", então iniciamos a
+        // partida sozinhos quando há jogadores suficientes no lobby. Deferido
+        // (Invoke) para não trocar de cena de dentro do OnServerAddPlayer.
+        void TryDedicatedAutoStart()
+        {
+            if (!dedicatedServer || !InLobbyScene())
+                return;
+            if (NetworkServer.connections.Count < minPlayersToAutoStart)
+                return;
+
+            CancelInvoke(nameof(DedicatedStartMatch));
+            Invoke(nameof(DedicatedStartMatch), 1f);
+        }
+
+        void DedicatedStartMatch()
+        {
+            if (dedicatedServer && InLobbyScene() &&
+                NetworkServer.connections.Count >= minPlayersToAutoStart)
+            {
+                Debug.Log("[Net] servidor dedicado: " + NetworkServer.connections.Count +
+                          " jogadores — iniciando partida (" + dedicatedBattleScene + ")");
+                ServerStartMatch(dedicatedBattleScene);
+            }
+        }
+
+        static bool InLobbyScene()
+        {
+            return UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
         }
 
         // F5b — inicia o próximo round: recarrega a cena atual de forma coordenada
@@ -207,6 +252,10 @@ namespace Assets.Scripts.Netcode
         public override void OnStartServer()
         {
             base.OnStartServer();
+            // Servidor é a autoridade de simulação. Em host, OnStartHost também
+            // seta isto; no servidor DEDICADO (StartServer, sem cliente local)
+            // é AQUI que definimos o modo — senão o servidor não simularia.
+            NetSync.Mode = NetSync.NetMode.Host;
             playerIdByConnection.Clear();
             DestroyPreExistingLocalPlayers();
         }
@@ -247,6 +296,7 @@ namespace Assets.Scripts.Netcode
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName)
             {
                 SyncActivePlayersToSession();
+                TryDedicatedAutoStart();
                 return;
             }
 
