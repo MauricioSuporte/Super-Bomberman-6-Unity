@@ -51,13 +51,15 @@ namespace Assets.Scripts.Netcode
             NetSync.IsNetworkedScene = true;
         }
 
-        void OnDestroy()
+        public override void OnDestroy()
         {
             // Só o singleton real limpa a flag. Ao recarregar a cena para o próximo
             // round (F5b), o Mirror cria um clone do NetworkManager (objeto de cena)
             // e o destrói via singleton; esse clone NÃO pode limpar a flag.
             if (NetworkManager.singleton == null || NetworkManager.singleton == this)
                 NetSync.IsNetworkedScene = false;
+
+            base.OnDestroy(); // cleanup do Mirror (singleton/estáticos)
         }
 
         // F5c — host inicia a partida a partir do lobby (troca coordenada de cena).

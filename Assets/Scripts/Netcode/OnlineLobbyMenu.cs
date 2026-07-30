@@ -25,6 +25,37 @@ namespace Assets.Scripts.Netcode
         [SerializeField] string battleSceneName = "BattleMode_1";
         [SerializeField] string address = "localhost";
 
+        // F5d — teste de internet: permite subir um host sem GUI (servidor headless)
+        // via linha de comando: "-autohost" (hospeda e já entra na partida). Útil
+        // para rodar o host numa máquina remota e conectar clientes de fora.
+        void Start()
+        {
+            if (!HasArg("-autohost"))
+                return;
+
+            var nm = NetworkManager.singleton;
+            if (nm == null || NetworkServer.active || NetworkClient.active)
+                return;
+
+            Debug.Log("[Net] -autohost: iniciando host + partida (" + battleSceneName + ")");
+            nm.StartHost();
+            Invoke(nameof(AutoStartMatch), 1.5f);
+        }
+
+        void AutoStartMatch()
+        {
+            BombermanNetworkManager.ServerStartMatch(battleSceneName);
+        }
+
+        static bool HasArg(string arg)
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
+                if (string.Equals(args[i], arg, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
+
         void OnGUI()
         {
             NetworkManager nm = NetworkManager.singleton;
