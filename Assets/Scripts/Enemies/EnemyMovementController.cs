@@ -379,6 +379,15 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (isInDamagedLoop)
             return;
 
+        // Some junction-turning enemies, such as Funya, use one animated
+        // renderer for every direction. Keep that renderer's authored
+        // orientation when changing direction instead of treating right as a
+        // mirrored version of left.
+        bool usesSingleDirectionalSprite =
+            spriteUp != null &&
+            spriteUp == spriteDown &&
+            spriteDown == spriteLeft;
+
         if (activeSprite != null)
         {
             bool sameDirSprite =
@@ -390,7 +399,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             {
                 activeSprite.idle = false;
 
-                if (activeSprite.TryGetComponent<SpriteRenderer>(out var srSame))
+                if (!usesSingleDirectionalSprite &&
+                    activeSprite.TryGetComponent<SpriteRenderer>(out var srSame))
                     srSame.flipX = (dir == Vector2.right);
 
                 return;
@@ -446,7 +456,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         activeSprite.enabled = true;
         activeSprite.idle = false;
 
-        if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
+        if (!usesSingleDirectionalSprite &&
+            activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
             sr.flipX = (dir == Vector2.right);
     }
 
