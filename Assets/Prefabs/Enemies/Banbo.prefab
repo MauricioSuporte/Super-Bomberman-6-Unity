@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 3148160967286809831}
   - component: {fileID: 5225966485873822359}
   - component: {fileID: 6128986794665450631}
+  - component: {fileID: 4554358021429057816}
   m_Layer: 10
   m_Name: Banbo
   m_TagString: Untagged
@@ -38,7 +39,6 @@ Transform:
   m_Children:
   - {fileID: 1228606390294117670}
   - {fileID: 1228606389785476331}
-  - {fileID: 1228606390696233726}
   - {fileID: 8694595120618040570}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -261,7 +261,7 @@ MonoBehaviour:
   tileSize: 1
   spriteUp: {fileID: 1228606390294117671}
   spriteDown: {fileID: 1228606389785476324}
-  spriteLeft: {fileID: 1228606390696233727}
+  spriteLeft: {fileID: 1228606389785476324}
   spriteDeath: {fileID: 8046272123695044462}
   spriteDamaged: {fileID: 0}
   waitForFullDeathAnimation: 1
@@ -303,6 +303,19 @@ MonoBehaviour:
   waterSurfaceYOffset: -0.2
   showSurfaceLine: 1
   premultiplyUnderwaterOpacity: 0
+--- !u!114 &4554358021429057816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1228606389669354652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da52b7d4f64b46d4b3d23a2a8e409f65, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BanboWaterSubmersionFrameController
+  downSprite: {fileID: 1228606389785476324}
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0
@@ -330,7 +343,7 @@ Transform:
   m_GameObject: {fileID: 1228606389785476330}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalPosition: {x: 0, y: 0.45, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -455,7 +468,7 @@ Transform:
   m_GameObject: {fileID: 1228606390294117669}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalPosition: {x: 0, y: 0.45, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -553,131 +566,6 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
---- !u!1 &1228606390696233725
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1228606390696233726}
-  - component: {fileID: 1228606390696233720}
-  - component: {fileID: 1228606390696233727}
-  m_Layer: 10
-  m_Name: Left
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1228606390696233726
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228606390696233725}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1228606389669354653}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &1228606390696233720
-SpriteRenderer:
-  serializedVersion: 3
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228606390696233725}
-  m_Enabled: 0
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 5
-  m_MaskInteraction: 0
-  m_Sprite: {fileID: 6214009239320854489, guid: 36e7bf5bcb3aee749adcee899121b601, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 0.18, y: 0.23}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
-  m_BlendShapeWeights: []
---- !u!114 &1228606390696233727
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228606390696233725}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  idleSprite: {fileID: 6214009239320854489, guid: 36e7bf5bcb3aee749adcee899121b601, type: 3}
-  animationSprite:
-  - {fileID: 6214009239320854489, guid: 36e7bf5bcb3aee749adcee899121b601, type: 3}
-  - {fileID: -4333014228687698200, guid: 36e7bf5bcb3aee749adcee899121b601, type: 3}
-  - {fileID: -4373530224557572136, guid: 36e7bf5bcb3aee749adcee899121b601, type: 3}
-  - {fileID: -4333014228687698200, guid: 36e7bf5bcb3aee749adcee899121b601, type: 3}
-  allowFlipX: 0
-  animationTime: 0.15
-  useSequenceDuration: 0
-  sequenceDuration: 0.4
-  frameDurations: []
-  useUnscaledTime: 1
-  respectGamePause: 1
-  loop: 1
-  loopStartFrame: 0
-  idle: 0
-  frameOffsets: []
-  pingPong: 0
-  disableOffsetsIfThisObjectHasRigidbody2D: 1
-  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &4482280887473272058
 GameObject:
   m_ObjectHideFlags: 0
@@ -705,7 +593,7 @@ Transform:
   m_GameObject: {fileID: 4482280887473272058}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.27, z: 0}
+  m_LocalPosition: {x: 0, y: 0.45, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

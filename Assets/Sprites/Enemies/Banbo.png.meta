@@ -23,6 +23,15 @@ TextureImporter:
   - first:
       213: -1532808896035134383
     second: Banbo_6
+  - first:
+      213: 3508449869583638348
+    second: Banbo_7
+  - first:
+      213: 8805129723521631911
+    second: Banbo_8
+  - first:
+      213: 7015318722240282129
+    second: Banbo_9
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -134,10 +143,10 @@ TextureImporter:
       name: Banbo_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 4
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -156,10 +165,10 @@ TextureImporter:
       name: Banbo_1
       rect:
         serializedVersion: 2
-        x: 34
+        x: 38
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -178,10 +187,10 @@ TextureImporter:
       name: Banbo_2
       rect:
         serializedVersion: 2
-        x: 68
+        x: 72
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,10 +209,10 @@ TextureImporter:
       name: Banbo_3
       rect:
         serializedVersion: 2
-        x: 102
+        x: 106
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -222,10 +231,10 @@ TextureImporter:
       name: Banbo_4
       rect:
         serializedVersion: 2
-        x: 136
+        x: 140
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -244,10 +253,10 @@ TextureImporter:
       name: Banbo_5
       rect:
         serializedVersion: 2
-        x: 170
+        x: 174
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -266,10 +275,10 @@ TextureImporter:
       name: Banbo_6
       rect:
         serializedVersion: 2
-        x: 204
+        x: 208
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -288,7 +297,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 9997b039d59570d449d095d95300df63
     internalID: 0
     vertices: []
     indices: 
@@ -296,7 +305,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":24.0,"y":36.0},"gridSpriteOffset":{"x":4.0,"y":0.0},"gridSpritePadding":{"x":10.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Banbo_0: 6214009239320854489
       Banbo_1: -4333014228687698200

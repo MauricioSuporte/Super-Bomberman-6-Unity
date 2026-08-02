@@ -379,14 +379,20 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (isInDamagedLoop)
             return;
 
-        // Some junction-turning enemies, such as Funya, use one animated
-        // renderer for every direction. Keep that renderer's authored
-        // orientation when changing direction instead of treating right as a
+        // Some junction-turning enemies use one animated renderer for every
+        // direction, while others (such as Banbo) intentionally share their
+        // Down renderer for both horizontal directions. Keep shared renderers
+        // in their authored orientation instead of treating right as a
         // mirrored version of left.
         bool usesSingleDirectionalSprite =
             spriteUp != null &&
             spriteUp == spriteDown &&
             spriteDown == spriteLeft;
+        bool usesDownSpriteForHorizontalDirections =
+            spriteDown != null &&
+            spriteDown == spriteLeft;
+        bool preservesAuthoredHorizontalOrientation =
+            usesSingleDirectionalSprite || usesDownSpriteForHorizontalDirections;
 
         if (activeSprite != null)
         {
@@ -399,9 +405,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             {
                 activeSprite.idle = false;
 
-                if (!usesSingleDirectionalSprite &&
-                    activeSprite.TryGetComponent<SpriteRenderer>(out var srSame))
-                    srSame.flipX = (dir == Vector2.right);
+                if (activeSprite.TryGetComponent<SpriteRenderer>(out var srSame))
+                    srSame.flipX = preservesAuthoredHorizontalOrientation ? false : dir == Vector2.right;
 
                 return;
             }
@@ -456,9 +461,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         activeSprite.enabled = true;
         activeSprite.idle = false;
 
-        if (!usesSingleDirectionalSprite &&
-            activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
-            sr.flipX = (dir == Vector2.right);
+        if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.flipX = preservesAuthoredHorizontalOrientation ? false : dir == Vector2.right;
     }
 
     protected virtual void DecideNextTile()

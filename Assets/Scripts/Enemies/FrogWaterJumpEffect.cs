@@ -32,6 +32,11 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
             for (int i = 0; i < droplets.Length; i++)
                 droplets[i] = CreateRenderer($"Droplet_{i}", GetDropletSprite(), sortingLayerId, sortingOrder + 1);
         }
+
+        // Effects created in LateUpdate do not receive Update until the next
+        // rendered frame. Set frame zero now to avoid SpriteRenderer's opaque
+        // white, unit-scale default being visible for one frame.
+        ApplyVisual(0f);
     }
 
     private void Update()
@@ -39,13 +44,18 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
         elapsed += Time.deltaTime;
         float progress = Mathf.Clamp01(elapsed / Lifetime);
 
+        ApplyVisual(progress);
+
+        if (progress >= 1f)
+            Destroy(gameObject);
+    }
+
+    private void ApplyVisual(float progress)
+    {
         if (effectType == EffectType.ExitRipple)
             UpdateExitRipple(progress);
         else
             UpdateEntrySplash(progress);
-
-        if (progress >= 1f)
-            Destroy(gameObject);
     }
 
     private void UpdateExitRipple(float progress)
