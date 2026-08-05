@@ -49,6 +49,9 @@ namespace Assets.Scripts.Netcode
 
             for (int i = 0; i < parts.Length; i++)
                 bomb.PlayNetworkExplosionVisual(parts[i].pos, parts[i].part, parts[i].dir, origin, duration, pierce);
+
+            // Som da explosão (o VFX acima é mudo; o áudio era host-only).
+            bomb.PlayExplosionSfxNetworked(pierce);
         }
 
         // F3a — destruição de blocos destrutíveis. O host coleta as células

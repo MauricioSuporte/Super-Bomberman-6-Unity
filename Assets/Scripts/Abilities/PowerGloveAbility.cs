@@ -83,6 +83,18 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private bool prevMovementLocked;
     private bool movementLockCaptured;
 
+    // Rede (client-auth): visual-only da luva no DONO (cliente). O gameplay da
+    // luva (pegar/carregar/arremessar a bomba networked) é host-autoritativo;
+    // aqui o dono apenas REPRODUZ a pose (carregar + arremesso) para que o
+    // NetworkPlayerAnimation a replique aos demais. Não toca no heldBomb — a
+    // bomba carregada já replica pela sua própria NetworkTransform.
+    private bool netVisualCarrying;
+    private AnimatedSpriteRenderer netActiveCarry;
+    private Coroutine netThrowRoutine;
+
+    // Estado host-autoritativo que o NetworkPlayerState replica ao cliente.
+    public bool IsHoldingForNet => enabledAbility && holding && isHoldingBomb;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
     public bool CanPickupBombNow(Bomb bomb)
@@ -837,6 +849,153 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             p.y = movement.tileSize;
             heldBomb.transform.localPosition = p;
         }
+    }
+
+    // ---- Rede: visual-only da luva no DONO (cliente) ---------------------------
+    // Chamado pelo NetworkPlayerState (só no dono) quando o estado replicado de
+    // "segurando bomba" muda. Não mexe na bomba nem em colisão/física.
+
+    public void NetVisualSetCarrying(bool carrying)
+    {
+        if (carrying == netVisualCarrying)
+            return;
+
+        if (carrying)
+        {
+            if (netThrowRoutine != null) { StopCoroutine(netThrowRoutine); netThrowRoutine = null; }
+            netVisualCarrying = true;
+
+            if (movement != null)
+            {
+                movement.SetExternalVisualSuppressed(true);
+                SetMoveSprites(false);
+            }
+            SetAllPickupSprites(false);
+            SetAllCarrySprites(false);
+            netActiveCarry = null;
+
+            NetVisualTickCarry(); // liga o carry no mesmo frame
+        }
+        else
+        {
+            netVisualCarrying = false;
+
+            // Arremesso: pose de pickup em REVERSO (mesma sensação do single-player),
+            // curta, na direção atual do dono. Se estiver morrendo, não toca.
+            if (isActiveAndEnabled && netThrowRoutine == null &&
+                movement != null && !movement.isDead)
+                netThrowRoutine = StartCoroutine(NetVisualThrowRoutine(GetCurrentFacingDirection()));
+            else
+                NetVisualRestore();
+        }
+    }
+
+    // Chamado a cada frame (pelo net layer) enquanto carrega, para seguir o facing.
+    public void NetVisualTickCarry()
+    {
+        if (!netVisualCarrying || movement == null)
+            return;
+
+        Vector2 face = movement.Direction != Vector2.zero ? movement.Direction : movement.FacingDirection;
+        face = NormalizeCardinalOrDown(face);
+        bool isIdle = (movement.Direction == Vector2.zero);
+
+        SetAllPickupSprites(false);
+
+        var desired = GetCarrySprite(face);
+        if (desired == null)
+            return;
+
+        if (netActiveCarry != desired)
+        {
+            if (netActiveCarry != null) netActiveCarry.enabled = false;
+            SetAllCarrySprites(false);
+
+            desired.enabled = true;
+            desired.loop = true;
+            desired.pingPong = false;
+            if (!desired.idle) desired.CurrentFrame = 0;
+            desired.idle = isIdle;
+            desired.RefreshFrame();
+
+            netActiveCarry = desired;
+        }
+        else
+        {
+            netActiveCarry.idle = isIdle;
+            netActiveCarry.loop = true;
+            netActiveCarry.pingPong = false;
+            netActiveCarry.RefreshFrame();
+        }
+    }
+
+    private IEnumerator NetVisualThrowRoutine(Vector2 dir)
+    {
+        dir = NormalizeCardinalOrDown(dir);
+        SetAllCarrySprites(false);
+        netActiveCarry = null;
+
+        var pick = GetPickupSprite(dir);
+        if (pick != null)
+        {
+            pick.enabled = true;
+            pick.idle = false;
+            pick.loop = false;
+            pick.pingPong = false;
+            int frames = GetAnimFrames(pick);
+            pick.CurrentFrame = ClampFrame(pick, Mathf.Max(0, frames - 1));
+            pick.RefreshFrame();
+        }
+
+        float t = 0f;
+        float dur = Mathf.Max(0.01f, releaseLockTime);
+        while (t < dur)
+        {
+            if (movement == null || movement.isDead)
+                break;
+
+            t += Time.deltaTime;
+            if (pick != null)
+            {
+                int frames = GetAnimFrames(pick);
+                if (frames > 1)
+                {
+                    float a = Mathf.Clamp01(t / dur);
+                    int frame = Mathf.RoundToInt(Mathf.Lerp(frames - 1, 0, a));
+                    pick.CurrentFrame = ClampFrame(pick, frame);
+                    pick.RefreshFrame();
+                }
+            }
+            yield return null;
+        }
+
+        if (pick != null) pick.enabled = false;
+        netThrowRoutine = null;
+        NetVisualRestore();
+    }
+
+    private void NetVisualRestore()
+    {
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
+        netActiveCarry = null;
+
+        if (movement != null && !movement.isDead)
+        {
+            movement.SetExternalVisualSuppressed(false);
+            movement.EnableExclusiveFromState();
+        }
+    }
+
+    // Parada dura (morte): some com a pose SEM tocar o arremesso e SEM restaurar
+    // os sprites de movimento — a animação de morte assume o visual.
+    public void NetVisualHardStop()
+    {
+        if (netThrowRoutine != null) { StopCoroutine(netThrowRoutine); netThrowRoutine = null; }
+        netVisualCarrying = false;
+        netActiveCarry = null;
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
     }
 
     private IEnumerator WatchBombLandingThenResume(Bomb bomb)

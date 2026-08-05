@@ -237,6 +237,9 @@ public class MovementController : MonoBehaviour, IKillable
     public bool IsMounted => isMounted;
 
     protected bool deathRequestedByExplosion;
+    // Rede (client-auth): o host expõe se a morte foi por explosão para o
+    // cliente escolher o mesmo renderer de morte ao tocar a animação localmente.
+    public bool DeathWasByExplosion => deathRequestedByExplosion;
     public bool isDead;
     protected bool inputLocked;
     public bool InputLocked => inputLocked;
@@ -3446,6 +3449,45 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);
+    }
+
+    // Rede (client-auth): o DONO toca a PRÓPRIA animação de morte localmente ao
+    // saber que morreu (life==0 replicado pelo host). Só o VISUAL — o gameplay
+    // da morte (teardown, GameManager, eliminação/desativação) segue host-
+    // autoritativo. O renderer ligado aqui auto-avança no dono e o
+    // NetworkPlayerAnimation o amostra e replica aos demais clientes.
+    // Rede: som da morte no cliente (era host-only no DeathSequence). Tocado por
+    // TODOS os clientes na transição life==0, para todos ouvirem a eliminação.
+    public void PlayDeathSfxLocal()
+    {
+        if (audioSource != null && deathSfx != null)
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
+    }
+
+    public void PlayDeathVisualLocal(bool byExplosion)
+    {
+        // Desliga TODOS os renderers (incl. movimento/cornered/timeOver/montaria)
+        // para que só o de morte fique habilitado — o NetworkPlayerAnimation
+        // amostra o primeiro renderer ligado, então não pode sobrar outro.
+        SetAllSpritesVisible(false);
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        AnimatedSpriteRenderer deathRendererToUse =
+            byExplosion && spriteRendererDeathByExplosion != null
+                ? spriteRendererDeathByExplosion
+                : spriteRendererDeath;
+
+        if (deathRendererToUse != null)
+        {
+            SetAnimEnabled(deathRendererToUse, true);
+            deathRendererToUse.idle = false;
+            deathRendererToUse.loop = false;
+            deathRendererToUse.pingPong = false;
+            deathRendererToUse.CurrentFrame = 0;
+            activeSpriteRenderer = deathRendererToUse;
+            deathRendererToUse.RefreshFrame();
+        }
     }
 
     protected virtual void OnDeathSequenceEnded()

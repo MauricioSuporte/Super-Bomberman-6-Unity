@@ -233,8 +233,9 @@ MonoBehaviour:
   - {fileID: 2727780941473249226, guid: ad2a35249bf7eda4fa2a93c776faa62c, type: 3}
   - {fileID: 4209327807185772333, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
   - {fileID: 2727780941473249226, guid: a6fd0930a192f1b4591a1d5e377a1575, type: 3}
+  - {fileID: 4238104617994113025, guid: 4e2d079b3d9cc45409d4403b68e4f121, type: 3}
   snapshotSettings:
-    bufferTimeMultiplier: 2
+    bufferTimeMultiplier: 1.5
     bufferLimit: 32
     catchupNegativeThreshold: -1
     catchupPositiveThreshold: 1
@@ -247,6 +248,8 @@ MonoBehaviour:
   evaluationMethod: 0
   evaluationInterval: 3
   timeInterpolationGui: 0
+  dedicatedBattleScene: BattleMode_1
+  minPlayersToAutoStart: 2
 --- !u!4 &1121810760
 Transform:
   m_ObjectHideFlags: 0

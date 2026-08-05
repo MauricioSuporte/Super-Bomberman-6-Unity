@@ -4,28 +4,30 @@ using UnityEngine;
 namespace Assets.Scripts.Netcode
 {
     /// <summary>
-    /// F1 — Replicação da SAÍDA de animação do player (host-autoritativo).
+    /// F6 (Passo B) — Replicação da SAÍDA de animação da MONTARIA (Louie/Mole/
+    /// Tank...), no mesmo modelo client-autoritativo do <see cref="NetworkPlayerAnimation"/>.
     ///
-    /// O host sincroniza o resultado visual que produz:
-    ///   - índice do AnimatedSpriteRenderer visível (o jogo mantém só 1 ligado),
-    ///   - flag idle, flipX do sprite, e o FRAME atual da animação.
+    /// A montaria é instanciada em RUNTIME (no host pelo caminho real de mount; no
+    /// cliente por PlayerMountCompanion.ShowMountVisualClient a partir da SyncVar
+    /// mountType). Por isso o array de renderers NÃO pode ser cacheado no Awake:
+    /// é re-derivado sempre que a montaria muda. Como os dois lados instanciam o
+    /// MESMO prefab (mountType seleciona o prefab), a ordem de
+    /// GetComponentsInChildren fica idêntica → índices alinhados.
     ///
-    /// O cliente liga o renderer indicado (desligando o resto), coloca-o em
-    /// modo MANUAL (para não auto-animar) e espelha exatamente o frame do host.
-    /// Espelhar o frame é o que cobre animações não-loopadas re-disparadas pelo
-    /// host (AFK/emote, cornered, morte) — que, deixadas em auto-advance no
-    /// cliente, tocariam uma vez e congelariam.
+    /// DONO: a montaria dele já anima corretamente (o MountVisualController lê o
+    /// facing/direção do MovementController do player, que o dono simula
+    /// localmente) — então apenas AMOSTRAMOS o renderer ligado e sincronizamos.
     ///
-    /// Amostramos o renderer realmente HABILITADO (não move.ActiveSpriteRenderer)
-    /// para capturar qualquer sistema que ligue um renderer diretamente
-    /// (InactivityAnimation, CorneredAnimation, StunReceiver, etc.).
+    /// Cliente remoto (não-dono): o MovementController do clone não é simulado, então
+    /// o MountVisualController congelaria em idle-down. Desligamos esse controller e
+    /// aplicamos o renderer replicado em modo manual (frame a frame), igual ao player.
     ///
-    /// A ordem de <see cref="renderers"/> vem de GetComponentsInChildren, idêntica
-    /// entre host e cliente por ser o MESMO prefab.
+    /// No host (para o player de um cliente) o mount real já anima; deixamos o host
+    /// usar a própria animação (não mexemos) — só clientes puros precisam do apply.
     /// </summary>
     [RequireComponent(typeof(NetworkIdentity))]
-    [RequireComponent(typeof(MovementController))]
-    public class NetworkPlayerAnimation : NetworkBehaviour
+    [RequireComponent(typeof(PlayerMountCompanion))]
+    public class NetworkMountAnimation : NetworkBehaviour
     {
         const byte NoRenderer = 255;
 
@@ -34,55 +36,79 @@ namespace Assets.Scripts.Netcode
         [SyncVar] bool activeFlip;
         [SyncVar] byte activeFrame;
 
+        PlayerMountCompanion companion;
+
+        GameObject trackedMount;
         AnimatedSpriteRenderer[] renderers;
+        MountVisualController visualController;
 
         int appliedIndex = -2;
         bool appliedIdle;
         bool appliedFlip;
         int appliedFrame = -1;
 
-        MovementController move;
-
         void Awake()
         {
-            renderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-            move = GetComponent<MovementController>();
-            // Sincroniza frames com frequência suficiente para animação fluida.
+            companion = GetComponent<PlayerMountCompanion>();
             syncInterval = 0.03f;
-            // Client-auth: o DONO amostra a própria animação e escreve as SyncVars.
-            // Garante em CÓDIGO (não só no prefab) que o sentido é ClientToServer —
-            // se o prefab resetar, as animações dos remotos não param silenciosamente.
+            // Client-auth (igual ao NetworkPlayerAnimation): garante em código que o
+            // sentido é ClientToServer, sem depender só do prefab.
             syncDirection = SyncDirection.ClientToServer;
         }
 
         void LateUpdate()
         {
-            // Client-autoritativo: o DONO (host ou cliente) amostra a própria animação
-            // (simulada localmente) e sincroniza (SyncVars ClientToServer); os players
-            // remotos aplicam a saída replicada (modo manual).
+            GameObject mount = companion != null ? companion.GetMountedLouieObject() : null;
+            if (mount != trackedMount)
+                RebindMount(mount);
+
+            if (renderers == null)
+                return;
+
             if (isOwned)
             {
                 SampleOwned();
                 return;
             }
 
-            ClientApply();
+            // No host (isServer) o mount real anima sozinho; só clientes puros aplicam.
+            if (!isServer)
+                ClientApply();
+        }
+
+        void RebindMount(GameObject mount)
+        {
+            trackedMount = mount;
+            appliedIndex = -2;
+            appliedFrame = -1;
+
+            if (mount == null)
+            {
+                renderers = null;
+                visualController = null;
+                return;
+            }
+
+            renderers = mount.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            visualController = mount.GetComponentInChildren<MountVisualController>(true);
+
+            // Cliente remoto puro: desliga o driver de animação do mount (leria um
+            // facing não-simulado e congelaria); nós dirigimos os frames replicados.
+            if (!isOwned && !isServer && visualController != null)
+                visualController.enabled = false;
         }
 
         void SampleOwned()
         {
             AnimatedSpriteRenderer active = null;
             byte idx = NoRenderer;
-            if (renderers != null)
+            for (int i = 0; i < renderers.Length && i < NoRenderer; i++)
             {
-                for (int i = 0; i < renderers.Length && i < NoRenderer; i++)
+                if (renderers[i] != null && renderers[i].enabled)
                 {
-                    if (renderers[i] != null && renderers[i].enabled)
-                    {
-                        active = renderers[i];
-                        idx = (byte)i;
-                        break;
-                    }
+                    active = renderers[i];
+                    idx = (byte)i;
+                    break;
                 }
             }
 
@@ -105,11 +131,6 @@ namespace Assets.Scripts.Netcode
 
         void ClientApply()
         {
-            if (renderers == null)
-                return;
-
-            // Troca de renderer visível: desliga todos, liga o indicado em modo
-            // manual (nós dirigimos o frame; sem auto-advance para não brigar).
             if (activeIndex != appliedIndex)
             {
                 for (int i = 0; i < renderers.Length; i++)
@@ -156,7 +177,6 @@ namespace Assets.Scripts.Netcode
                 dirty = true;
             }
 
-            // Aplica o frame/idle atual (idle mostra idleSprite; senão o frame).
             if (dirty)
                 active.RefreshFrame();
         }

@@ -2301,6 +2301,15 @@ public partial class BombController : MonoBehaviour
         GameAudioSettings.PlaySfx(currentExplosionAudio, clip, explosionSfxVolume);
     }
 
+    // Rede: toca o SOM da explosão no CLIENTE (o VFX já vem replicado pelo
+    // NetworkBombFx.RpcPlay). Uma vez por explosão, usando o raio atual do player
+    // (replicado por NetworkPlayerState) e o AudioSource do player.
+    public void PlayExplosionSfxNetworked(bool pierce)
+    {
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        PlayExplosionSfxExclusive(src, explosionRadius, pierce);
+    }
+
     private void PlayPlaceBombSfx()
     {
         if (placeBombSfx == null)

@@ -171,5 +171,38 @@ namespace Assets.Scripts.Netcode
                 input.SetSyntheticHeld(playerId, SyncedActions[i], held);
             }
         }
+
+        // ---- Chute de bomba (client-auth) --------------------------------------
+        // No cliente-dono o movimento roda localmente e o BombKickAbility detecta o
+        // chute, mas o host não simula esse movimento → o dono PEDE ao host pra
+        // executar o StartKick autoritativo na bomba networkada. O deslize volta
+        // replicado pela NetworkTransform da bomba.
+        public bool TryClientKickBomb(Bomb bomb, Vector2 dir, float tileSize, int obstacleMask)
+        {
+            if (bomb == null || !isLocalPlayer || isServer)
+                return false;
+
+            var id = bomb.GetComponent<NetworkIdentity>();
+            if (id == null)
+                return false;
+
+            CmdKickBomb(id.netId, dir, tileSize, obstacleMask);
+            return true;
+        }
+
+        [Command]
+        void CmdKickBomb(uint bombNetId, Vector2 dir, float tileSize, int obstacleMask)
+        {
+            if (!NetworkServer.spawned.TryGetValue(bombNetId, out var id) || id == null)
+                return;
+
+            var bomb = id.GetComponent<Bomb>();
+            if (bomb == null)
+                return;
+
+            var kick = GetComponent<BombKickAbility>();
+            if (kick != null)
+                kick.ServerExecuteKick(bomb, dir, tileSize, obstacleMask);
+        }
     }
 }
