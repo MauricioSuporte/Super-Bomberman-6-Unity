@@ -27,6 +27,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] byte skin;
         [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
         [SyncVar] byte tempFx;        // F4: bit0 = skull ativo, bit1 = invencível
+        [SyncVar] byte mountType;     // F6: MountedType do Louie montado (0=None)
         [SyncVar(hook = nameof(OnEliminatedChanged))] bool eliminated; // F5a
 
         const int FxSkull = 1 << 0;
@@ -37,9 +38,11 @@ namespace Assets.Scripts.Netcode
         BombController bomb;
         MovementController move;
         PlayerBomberSkinController skinController;
+        PlayerMountCompanion mountCompanion;
 
         int appliedSkin = -1;
         int appliedTempFx = 0;
+        int appliedMountType = -1;
 
         void Awake()
         {
@@ -48,6 +51,7 @@ namespace Assets.Scripts.Netcode
             bomb = GetComponent<BombController>();
             move = GetComponent<MovementController>();
             skinController = GetComponentInChildren<PlayerBomberSkinController>(true);
+            mountCompanion = GetComponent<PlayerMountCompanion>();
             PlayerPersistentStats.EnsureSessionBooted();
         }
 
@@ -137,6 +141,10 @@ namespace Assets.Scripts.Netcode
                 fx |= FxInvuln;
             byte fxb = (byte)fx;
             if (fxb != tempFx) tempFx = fxb;
+
+            // F6 — tipo de montaria (Louie) para o cliente mostrar o visual.
+            byte mt = (byte)(mountCompanion != null ? (int)mountCompanion.GetMountedLouieType() : 0);
+            if (mt != mountType) mountType = mt;
         }
 
         void ClientApply()
@@ -197,6 +205,15 @@ namespace Assets.Scripts.Netcode
                 else           health.StopInvulnerability();
             }
             appliedTempFx = tempFx;
+
+            // F6 — mostra/esconde o visual do Louie conforme o tipo replicado.
+            // (Passo A: o Louie aparece; a animação/facing dele é o Passo B.)
+            if (mountType != appliedMountType && mountCompanion != null)
+            {
+                if (mountType == 0) mountCompanion.HideMountVisualClient();
+                else                mountCompanion.ShowMountVisualClient((MountedType)mountType);
+                appliedMountType = mountType;
+            }
         }
     }
 }
