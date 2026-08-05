@@ -67,7 +67,7 @@ Tudo commitado; padrão validado com testes host+cliente lado a lado.
 | **F5b** | Próximo round coordenado: `ServerStartNextRound` → `ServerChangeScene` recarrega a cena; re-spawn automático (NM `dontDestroyOnLoad`+`autoCreatePlayer`, mesmo playerId); estado de round reseta por-cena, placar persiste (GameSession DDOL) | ✅ testado |
 | **F5c** (mínimo) | Cena de bootstrap `OnlineLobby` dona do NetworkManager (fora das cenas de batalha → sem warning de NM duplicado); menu Host/Join (IP) + Start match (`ServerChangeScene`); fim de partida volta ao lobby (`ServerReturnToLobby`); `EndBattleMatch` reseta placar entre partidas | ✅ testado |
 | **Fix** | Bombas em movimento (arremesso da luva / chute / magnet) replicam via `NetworkTransform` (World, Server→Client) | ✅ testado |
-| **F5d** (internet) | Modelo **servidor dedicado** (`-server`, sem jogador local; auto-start com N jogadores). LRM/relay descartado (projetos arquivados). **Validado pela internet** num VPS Linux headless (Xvfb, KCP UDP 7777) | ✅ testado |
+| **F5d** (internet) | Modelo **servidor dedicado** (`-server`, sem jogador local; auto-start com N jogadores). LRM/relay descartado (projetos arquivados). **Build de Dedicated Server headless de verdade** (subtarget Server, sem Xvfb/gráficos; `HeadlessBootstrap` faz o auto-start pois o IMGUI é removido). **Deployado numa VPS como serviço systemd permanente** e **validado pela internet com jogadores reais** (cliente Linux/Windows via menu de build). KCP UDP 7777 | ✅ jogado online |
 
 `Player.prefab`: 7 componentes de rede. Scripts novos em `Assets/Scripts/Netcode/`. Guards de 3 linhas em 8 arquivos core. Nenhuma lógica de gameplay reescrita.
 
