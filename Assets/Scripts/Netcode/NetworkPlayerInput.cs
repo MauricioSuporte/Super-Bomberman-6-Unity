@@ -45,12 +45,24 @@ namespace Assets.Scripts.Netcode
         const int LocalInputSlot = 1;
 
         NetworkPlayerSetup setup;
+        MovementController move;
         int lastSentMask = -1;
         int serverHeldMask;
 
         void Awake()
         {
             setup = GetComponent<NetworkPlayerSetup>();
+            move = GetComponent<MovementController>();
+        }
+
+        // Client-autoritativo: o DONO deste player (host OU cliente puro) simula-o
+        // localmente e é a autoridade da própria posição. Roda no spawn, ANTES do 1º
+        // Update — o flag já está pronto quando os gates do MovementController rodam.
+        public override void OnStartLocalPlayer()
+        {
+            base.OnStartLocalPlayer();
+            if (move != null)
+                move.SetPredictLocally(true);
         }
 
         void Update()
@@ -59,10 +71,35 @@ namespace Assets.Scripts.Netcode
             {
                 SampleAndSendLocalInput();
                 SampleAndSendTaps();
+                InjectLocalMovementSynthetic();
             }
 
             if (isServer)
                 ApplyServerHeldMask();
+        }
+
+        // Predição de cliente (Etapa 1): além de mandar o input pro host, injeta o
+        // input de MOVIMENTO (bits 0-3) localmente como sintético no próprio playerId,
+        // para o MovementController local (que lê Get(playerId,...)) enxergar o teclado
+        // imediatamente. Só movimento — bomba/dano seguem host-autoritativos.
+        void InjectLocalMovementSynthetic()
+        {
+            if (move == null || !move.PredictLocally || setup == null)
+                return;
+
+            int playerId = setup.PlayerId;
+            // Se o playerId do dono JÁ é o slot de hardware local (1), o
+            // MovementController lê o teclado direto por Get(playerId); injetar
+            // aqui causaria latch (synthetic = synthetic||hardware). Só injeta quando difere.
+            if (playerId == LocalInputSlot)
+                return;
+
+            var input = PlayerInputManager.Instance;
+            if (input == null)
+                return;
+
+            for (int i = 0; i < 4; i++) // MoveUp/Down/Left/Right
+                input.SetSyntheticHeld(playerId, SyncedActions[i], input.Get(LocalInputSlot, SyncedActions[i]));
         }
 
         // Botões de ação são lidos por GetDown (borda). Derivar a borda no host

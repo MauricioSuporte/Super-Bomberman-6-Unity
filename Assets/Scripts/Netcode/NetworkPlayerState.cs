@@ -75,6 +75,16 @@ namespace Assets.Scripts.Netcode
 
         void OnEliminatedChanged(bool _, bool now)
         {
+            if (now && !isServer)
+            {
+                // Predição (Etapa 1): segurança extra — garante que a predição para
+                // e o input sintético é limpo ao eliminar.
+                if (move != null)
+                    move.SetPredictLocally(false);
+                PlayerInputManager.Instance?.ClearSyntheticPlayer(
+                    setup != null ? setup.PlayerId : GameSession.MinPlayerId);
+            }
+
             if (now && !isServer && gameObject.activeSelf)
                 gameObject.SetActive(false);
         }
@@ -154,6 +164,15 @@ namespace Assets.Scripts.Netcode
             // CharacterHealth local: o HUD lê a vida daqui.
             if (health != null)
                 health.life = life;
+
+            // Predição (Etapa 1): ao morrer (host decide), desliga a predição do
+            // player local — o corpo para de andar e a posição/animação de morte
+            // voltam a vir do host; limpa o input sintético pra não sobrar movimento.
+            if (!isServer && move != null && move.PredictLocally && life == 0)
+            {
+                move.SetPredictLocally(false);
+                PlayerInputManager.Instance?.ClearSyntheticPlayer(playerId);
+            }
 
             // Runtime state local: o HUD lê bombas/fogo/velocidade daqui.
             var rt = PlayerPersistentStats.GetRuntime(playerId);

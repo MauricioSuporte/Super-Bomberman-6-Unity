@@ -41,23 +41,31 @@ namespace Assets.Scripts.Netcode
         bool appliedFlip;
         int appliedFrame = -1;
 
+        MovementController move;
+
         void Awake()
         {
             renderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            move = GetComponent<MovementController>();
             // Sincroniza frames com frequência suficiente para animação fluida.
             syncInterval = 0.03f;
         }
 
         void LateUpdate()
         {
-            if (isServer)
-                ServerSample();
-            else
-                ClientApply();
+            // Client-autoritativo: o DONO (host ou cliente) amostra a própria animação
+            // (simulada localmente) e sincroniza (SyncVars ClientToServer); os players
+            // remotos aplicam a saída replicada (modo manual).
+            if (isOwned)
+            {
+                SampleOwned();
+                return;
+            }
+
+            ClientApply();
         }
 
-        [Server]
-        void ServerSample()
+        void SampleOwned()
         {
             AnimatedSpriteRenderer active = null;
             byte idx = NoRenderer;

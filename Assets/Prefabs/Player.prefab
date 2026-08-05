@@ -4879,9 +4879,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
   syncMethod: 0
-  syncDirection: 0
+  syncDirection: 1
   syncMode: 0
-  syncInterval: 0.05
+  syncInterval: 0.02
   target: {fileID: 3797169763190965992}
   updateMethod: 0
   syncPosition: 1
@@ -4946,7 +4946,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.NetworkPlayerAnimation
   syncMethod: 0
-  syncDirection: 0
+  syncDirection: 1
   syncMode: 0
   syncInterval: 0
 --- !u!114 &7380407877753544396

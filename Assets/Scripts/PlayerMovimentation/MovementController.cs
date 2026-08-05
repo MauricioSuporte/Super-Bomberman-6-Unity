@@ -210,6 +210,26 @@ public class MovementController : MonoBehaviour, IKillable
     public Rigidbody2D Rigidbody { get; private set; }
     public Vector2 Direction => direction;
 
+    // Predição de cliente (Etapa 1): quando true, este MovementController — o player
+    // LOCAL de um cliente puro — SIMULA localmente (prediz) em vez de só renderizar o
+    // estado replicado. Ligado por NetworkPlayerInput.OnStartLocalPlayer; desligado na
+    // morte (NetworkPlayerState). É por-instância (não global): remotos ficam false.
+    private bool predictLocally;
+    public bool PredictLocally => predictLocally;
+    public void SetPredictLocally(bool value) => predictLocally = value;
+
+    // Gate de INPUT (Update): host/offline OU o dono deste player. O host lê input
+    // dos remotos (via sintético) para saber a DIREÇÃO deles (bomba/kick continuam
+    // host-autoritativos), mas NÃO move a física deles (ver ShouldMovePhysicsLocally).
+    private bool ShouldSimulateLocallyOrPredict =>
+        Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || predictLocally;
+
+    // Client-autoritativo: só o DONO move a física do seu player (offline move tudo).
+    // O host NÃO move mais os players remotos — a posição deles chega pela rede
+    // (NetworkTransform ClientToServer). Elimina a dupla-simulação e o rubber-band.
+    private bool ShouldMovePhysicsLocally =>
+        !Assets.Scripts.Netcode.NetSync.IsOnline || predictLocally;
+
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;
 
@@ -574,8 +594,9 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void Update()
     {
         // Online host-autoritativo: clientes puros não simulam; a posição
-        // e a animação chegam replicadas do servidor (ver NetSync).
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        // e a animação chegam replicadas do servidor (ver NetSync). Exceção: o
+        // player LOCAL predito (Etapa 1) simula localmente.
+        if (!ShouldSimulateLocallyOrPredict)
             return;
 
         using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
@@ -1773,8 +1794,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
-        // Cliente puro não roda física do player (NetworkTransform posiciona).
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        // Client-autoritativo: só o DONO move a física do seu player. Os players
+        // remotos (inclusive no host) são posicionados pela rede (NetworkTransform).
+        if (!ShouldMovePhysicsLocally)
             return;
 
         using var performanceSample = BattleModePerformanceMarkers.PlayerFixedUpdate.Auto();
