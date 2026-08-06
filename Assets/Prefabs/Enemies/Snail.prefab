@@ -403,10 +403,11 @@ MonoBehaviour:
   - {fileID: 585679349008182817, guid: 92da1004c395f3948a3360649470782a, type: 3}
   - {fileID: -7574233937097828409, guid: 92da1004c395f3948a3360649470782a, type: 3}
   - {fileID: -1243129457217457053, guid: 92da1004c395f3948a3360649470782a, type: 3}
+  - {fileID: -7574233937097828409, guid: 92da1004c395f3948a3360649470782a, type: 3}
   allowFlipX: 0
   animationTime: 0.4
   useSequenceDuration: 1
-  sequenceDuration: 1.2
+  sequenceDuration: 1.6
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
@@ -527,10 +528,11 @@ MonoBehaviour:
   - {fileID: 6676388930511815911, guid: 92da1004c395f3948a3360649470782a, type: 3}
   - {fileID: 8235424701834794411, guid: 92da1004c395f3948a3360649470782a, type: 3}
   - {fileID: 3553853051162751769, guid: 92da1004c395f3948a3360649470782a, type: 3}
+  - {fileID: 8235424701834794411, guid: 92da1004c395f3948a3360649470782a, type: 3}
   allowFlipX: 0
   animationTime: 0.4
   useSequenceDuration: 1
-  sequenceDuration: 1.2
+  sequenceDuration: 1.6
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
@@ -651,10 +653,11 @@ MonoBehaviour:
   - {fileID: -3019759867490809809, guid: 92da1004c395f3948a3360649470782a, type: 3}
   - {fileID: 432182886547539005, guid: 92da1004c395f3948a3360649470782a, type: 3}
   - {fileID: 2520986035431675150, guid: 92da1004c395f3948a3360649470782a, type: 3}
+  - {fileID: 432182886547539005, guid: 92da1004c395f3948a3360649470782a, type: 3}
   allowFlipX: 0
   animationTime: 0.4
   useSequenceDuration: 1
-  sequenceDuration: 1.2
+  sequenceDuration: 1.6
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
