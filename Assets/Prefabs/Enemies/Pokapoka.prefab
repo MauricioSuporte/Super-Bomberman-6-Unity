@@ -41,6 +41,7 @@ Transform:
   - {fileID: 1228606390696233726}
   - {fileID: 1228606391467010644}
   - {fileID: 1840647308694154720}
+  - {fileID: 6295122968805398199}
   - {fileID: 8432600776244995149}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -281,6 +282,7 @@ MonoBehaviour:
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
   abilitySprite: {fileID: 3696166195594400118}
+  uppercutSprite: {fileID: 2657009338391057448}
   jumpSprite: {fileID: 8095277812865794125}
   visionDistance: 10
   playerLayerMask:
@@ -808,6 +810,142 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+--- !u!1 &3829671429258635200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6295122968805398199}
+  - component: {fileID: 3314625720958175888}
+  - component: {fileID: 2657009338391057448}
+  m_Layer: 10
+  m_Name: Uppercut
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6295122968805398199
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3829671429258635200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1228606389669354653}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &3314625720958175888
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3829671429258635200}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1.25, y: 2}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
+--- !u!114 &2657009338391057448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3829671429258635200}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleSprite: {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  animationSprite:
+  - {fileID: 21300000, guid: 7aee8679304dd1c4faa1e4e3e3fc8b86, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
+  allowFlipX: 0
+  animationTime: 0.1
+  useSequenceDuration: 0
+  sequenceDuration: 2
+  frameDurations: []
+  useUnscaledTime: 1
+  respectGamePause: 1
+  loop: 1
+  loopStartFrame: 0
+  idle: 0
+  frameOffsets:
+  - {x: 0, y: 0}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  pingPong: 1
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &8091640721392691856
 GameObject:
   m_ObjectHideFlags: 0
@@ -917,7 +1055,7 @@ MonoBehaviour:
   animationSprite:
   - {fileID: 21300000, guid: 28d6dcf2faf9d6f41a7b6afe7b6e4ae0, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 1
   useSequenceDuration: 0
   sequenceDuration: 2
   frameDurations: []
@@ -1037,7 +1175,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
   animationSprite:
-  - {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
   - {fileID: 21300000, guid: 3570bde7c685d354cbb9f3018db0915e, type: 3}
   - {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
   - {fileID: 21300000, guid: 3570bde7c685d354cbb9f3018db0915e, type: 3}
@@ -1047,12 +1184,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 3570bde7c685d354cbb9f3018db0915e, type: 3}
   - {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
   - {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
-  - {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
-  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
-  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
-  - {fileID: 21300000, guid: becabaa8480b5b74a85496ef44b59597, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 2
   frameDurations: []

@@ -116,9 +116,9 @@ TextureImporter:
       name: IRK_branco_andandinho_de_frente19_0
       rect:
         serializedVersion: 2
-        x: 1
+        x: 3
         y: 0
-        width: 19
+        width: 17
         height: 31
       alignment: 0
       pivot: {x: 0, y: 0}
