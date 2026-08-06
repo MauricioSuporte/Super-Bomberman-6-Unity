@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 0144111ae1f3e154d8fb33e80f7e080f
+guid: becabaa8480b5b74a85496ef44b59597
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4127290819779581282
-    second: IRK_branco_andandinho_de_frente18_0
+      213: -7238690306505160505
+    second: IRK_branco_andandinho_de_frente22_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,12 +113,12 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: IRK_branco_andandinho_de_frente18_0
+      name: IRK_branco_andandinho_de_frente22_0
       rect:
         serializedVersion: 2
-        x: 3
+        x: 1
         y: 0
-        width: 17
+        width: 19
         height: 31
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e9aae42eddae8b6c0800000000000000
-      internalID: -4127290819779581282
+      spriteID: 7c842b9b4810b8b90800000000000000
+      internalID: -7238690306505160505
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      IRK_branco_andandinho_de_frente18_0: -4127290819779581282
+      IRK_branco_andandinho_de_frente22_0: -7238690306505160505
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

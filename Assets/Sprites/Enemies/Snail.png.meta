@@ -145,8 +145,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -165,10 +165,10 @@ TextureImporter:
       name: Snail_1
       rect:
         serializedVersion: 2
-        x: 30
+        x: 28
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -187,10 +187,10 @@ TextureImporter:
       name: Snail_2
       rect:
         serializedVersion: 2
-        x: 60
+        x: 56
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -209,10 +209,10 @@ TextureImporter:
       name: Snail_3
       rect:
         serializedVersion: 2
-        x: 91
+        x: 84
         y: 0
-        width: 44
-        height: 38
+        width: 36
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -231,10 +231,10 @@ TextureImporter:
       name: Snail_4
       rect:
         serializedVersion: 2
-        x: 136
+        x: 121
         y: 0
-        width: 44
-        height: 38
+        width: 36
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -253,10 +253,10 @@ TextureImporter:
       name: Snail_5
       rect:
         serializedVersion: 2
-        x: 180
+        x: 158
         y: 0
-        width: 44
-        height: 38
+        width: 36
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -275,10 +275,10 @@ TextureImporter:
       name: Snail_6
       rect:
         serializedVersion: 2
-        x: 224
+        x: 193
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -297,10 +297,10 @@ TextureImporter:
       name: Snail_7
       rect:
         serializedVersion: 2
-        x: 255
+        x: 221
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -319,10 +319,10 @@ TextureImporter:
       name: Snail_8
       rect:
         serializedVersion: 2
-        x: 285
+        x: 249
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -341,10 +341,10 @@ TextureImporter:
       name: Snail_9
       rect:
         serializedVersion: 2
-        x: 315
+        x: 277
         y: 0
-        width: 30
-        height: 38
+        width: 28
+        height: 36
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -363,7 +363,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: b87bdc19142e91442aae8f8c03fb99b3
+    spriteID: f21ed1f24c08c58459c085c3dd0bd088
     internalID: 0
     vertices: []
     indices: 
@@ -371,7 +371,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":28.0,"y":36.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Snail_0: 585679349008182817
       Snail_1: -7574233937097828409
