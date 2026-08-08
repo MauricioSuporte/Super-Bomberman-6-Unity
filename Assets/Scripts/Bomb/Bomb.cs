@@ -1026,10 +1026,20 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private bool TryStepWithWrap(Vector2 from, out Vector2 next, out bool didWrap)
     {
+        didWrap = false;
+
+        if (StageAssets.Stage32Room1VerticalWrap.TryWrapBombStep(
+                from,
+                kickDirection,
+                out next))
+        {
+            didWrap = true;
+            return true;
+        }
+
         EnsureStageBounds();
 
         Vector2 raw = from + kickDirection * kickTileSize;
-        didWrap = false;
 
         if (!stageBoundsReady)
         {
@@ -1399,7 +1409,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded || !isKicked)
                 break;
 
-            Vector2 next = currentTileCenter + kickDirection * kickTileSize;
+            bool crossedRoom1Seam = StageAssets.Stage32Room1VerticalWrap.TryWrapBombStep(
+                currentTileCenter,
+                kickDirection,
+                out Vector2 next);
+
+            if (!crossedRoom1Seam)
+                next = currentTileCenter + kickDirection * kickTileSize;
 
             if (TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
             {
@@ -1477,6 +1493,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 }
 
                 break;
+            }
+
+            if (crossedRoom1Seam)
+            {
+                TeleportTo(next);
+                DestroyPickupsAtWorld(next);
+                continue;
             }
 
             TryAttachKickPushedSkullAtWorld(next, kickDirection, currentTileCenter);

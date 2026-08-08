@@ -1636,8 +1636,15 @@ public partial class BombController : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            Vector2 nextPosition = position + direction;
-            nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            Vector2 nextPosition;
+            if (!StageAssets.Stage32Room1VerticalWrap.TryWrapExplosionStep(
+                    position,
+                    direction,
+                    out nextPosition))
+            {
+                nextPosition = position + direction;
+                nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            }
 
             if (HasBlockingExplosionPartAt(nextPosition))
                 break;
@@ -1915,8 +1922,15 @@ public partial class BombController : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            Vector2 nextPosition = position + direction;
-            nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            Vector2 nextPosition;
+            if (!StageAssets.Stage32Room1VerticalWrap.TryWrapExplosionStep(
+                    position,
+                    direction,
+                    out nextPosition))
+            {
+                nextPosition = position + direction;
+                nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            }
 
             if (HasBlockingExplosionPartAt(nextPosition))
                 break;

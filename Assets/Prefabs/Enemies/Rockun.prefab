@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 8638696913730581265}
   - component: {fileID: 1351269766690977818}
   - component: {fileID: 4939096247585281341}
-  - component: {fileID: 6570354590812038261}
   - component: {fileID: 6545429138602191258}
   m_Layer: 10
   m_Name: Rockun
@@ -248,21 +247,6 @@ MonoBehaviour:
   shakeAmplitude: 0.03
   shakeFrequency: 22
   freezeAnimatedSprites: 1
---- !u!114 &6570354590812038261
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228606389669354652}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5f809bce0e74747932d28491c9fbb51, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  waterSurfaceYOffset: -0.2
-  showSurfaceLine: 1
-  premultiplyUnderwaterOpacity: 0
 --- !u!114 &6545429138602191258
 MonoBehaviour:
   m_ObjectHideFlags: 0
