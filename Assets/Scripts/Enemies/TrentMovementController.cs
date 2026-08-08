@@ -10,6 +10,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
 
     [Header("Wake Up")]
     [SerializeField] private AnimatedSpriteRenderer wakeUpSprite;
+    [SerializeField, Min(0)] private int wakeUpFlipFrameCount = 7;
     [SerializeField, Min(0.1f)] private float detectionDistanceTiles = 3f;
     [SerializeField] private LayerMask playerLayerMask;
 
@@ -18,6 +19,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
     private bool isWakingUp;
     private bool wakeUpFlipX;
     private float wakeUpFlipTimer;
+    private float wakeUpElapsedSeconds;
     private PlayerWaterSubmersionEffect waterSubmersion;
 
     protected override void Awake()
@@ -45,6 +47,15 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
     {
         if (!isWakingUp || isDead)
             return;
+
+        wakeUpElapsedSeconds += Time.deltaTime;
+        if (wakeUpElapsedSeconds >= GetWakeUpFlipDurationSeconds())
+        {
+            wakeUpFlipTimer = 0f;
+            wakeUpFlipX = false;
+            ApplyWakeUpFlip();
+            return;
+        }
 
         wakeUpFlipTimer += Time.deltaTime;
         while (wakeUpFlipTimer >= WakeUpFlipIntervalSeconds)
@@ -145,6 +156,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
         isWakingUp = true;
         wakeUpFlipX = false;
         wakeUpFlipTimer = 0f;
+        wakeUpElapsedSeconds = 0f;
         SetWaterSubmersionSuppressed(false);
 
         DisableMovementSprites();
@@ -234,6 +246,18 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
     {
         if (wakeUpSprite != null && wakeUpSprite.TryGetComponent(out SpriteRenderer renderer))
             renderer.flipX = wakeUpFlipX;
+    }
+
+    private float GetWakeUpFlipDurationSeconds()
+    {
+        int frameCount = wakeUpSprite != null && wakeUpSprite.animationSprite != null
+            ? wakeUpSprite.animationSprite.Length
+            : 0;
+
+        if (frameCount == 0)
+            return 0f;
+
+        return WakeUpDurationSeconds * Mathf.Clamp(wakeUpFlipFrameCount, 0, frameCount) / frameCount;
     }
 
     private void SetWaterSubmersionSuppressed(bool suppressed)
