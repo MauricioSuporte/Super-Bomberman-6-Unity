@@ -39,7 +39,7 @@ namespace StageAssets
         public static Collider2D FindRoomBoundsContaining(Vector2 worldPosition)
         {
             World3RoomProgressionController controller =
-                UnityEngine.Object.FindFirstObjectByType<World3RoomProgressionController>();
+                FindAnyObjectByType<World3RoomProgressionController>();
 
             if (controller == null || controller.rooms == null)
                 return null;
