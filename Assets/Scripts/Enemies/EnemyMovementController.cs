@@ -144,6 +144,20 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         DecideNextTile();
     }
 
+    /// <summary>
+    /// Rebuilds this enemy's immediate navigation target after an external
+    /// position change, such as a stage-wrap teleport.
+    /// </summary>
+    public void RefreshPathAfterExternalTeleport()
+    {
+        if (isDead || rb == null)
+            return;
+
+        isStuck = false;
+        stuckTimer = 0f;
+        targetTile = rb.position + direction * tileSize;
+    }
+
     protected virtual void FixedUpdate()
     {
         if (isDead)

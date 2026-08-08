@@ -64,6 +64,12 @@ namespace StageAssets
 
             for (int i = 0; i < players.Length; i++)
                 WrapPlayerIfNeeded(players[i]);
+
+            EnemyMovementController[] enemies =
+                FindObjectsByType<EnemyMovementController>(FindObjectsInactive.Exclude);
+
+            for (int i = 0; i < enemies.Length; i++)
+                WrapEnemyIfNeeded(enemies[i]);
         }
 
         private void WrapPlayerIfNeeded(MovementController player)
@@ -78,26 +84,44 @@ namespace StageAssets
             if (body == null)
                 return;
 
+            WrapBodyIfNeeded(body);
+        }
+
+        private void WrapEnemyIfNeeded(EnemyMovementController enemy)
+        {
+            if (enemy == null || !enemy.isActiveAndEnabled ||
+                !enemy.TryGetComponent(out Rigidbody2D body))
+            {
+                return;
+            }
+
+            if (WrapBodyIfNeeded(body))
+                enemy.RefreshPathAfterExternalTeleport();
+        }
+
+        private bool WrapBodyIfNeeded(Rigidbody2D body)
+        {
             Vector2 position = body.position;
             if (Mathf.Abs(position.x - topOpeningCell.x) > openingWidth * 0.5f)
-                return;
+                return false;
 
             float topBoundary = topOpeningCell.y + 0.5f;
             float bottomBoundary = bottomOpeningCell.y - 0.5f;
             float span = topBoundary - bottomBoundary;
             if (span <= 0f)
-                return;
+                return false;
 
             if (position.y > topBoundary)
                 position.y -= span;
             else if (position.y < bottomBoundary)
                 position.y += span;
             else
-                return;
+                return false;
 
             // Assigning the Rigidbody position keeps the collider and rendered
-            // character synchronized immediately after crossing the seam.
+            // object synchronized immediately after crossing the seam.
             body.position = position;
+            return true;
         }
 
         private bool TryWrapExplosionStepInternal(
