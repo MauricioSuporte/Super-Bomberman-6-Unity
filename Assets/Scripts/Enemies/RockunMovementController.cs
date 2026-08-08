@@ -17,7 +17,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     [Min(0.1f)] public float walkSecondsBeforeAbility = 5f;
     [Min(0.1f)] public float abilityInvulnerabilitySeconds = 2f;
 
-    CharacterHealth health;
+    CharacterHealth rockunHealth;
     bool isUsingAbility;
     bool isExitingAbility;
     float walkTimer;
@@ -31,15 +31,15 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     {
         base.Awake();
 
-        health = GetComponent<CharacterHealth>();
+        rockunHealth = GetComponent<CharacterHealth>();
         DisableAbilitySprites();
         ApplyMovementSprite(direction);
     }
 
     protected override void OnDestroy()
     {
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (rockunHealth != null)
+            rockunHealth.SetExternalInvulnerability(false);
 
         base.OnDestroy();
     }
@@ -102,7 +102,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         targetTile = abilityTile;
         rb.linearVelocity = Vector2.zero;
 
-        health?.SetExternalInvulnerability(true);
+        rockunHealth?.SetExternalInvulnerability(true);
 
         DisableMovementSprites();
         AnimatedSpriteRenderer ability = ChooseAbilitySprite(direction);
@@ -137,7 +137,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         isExitingAbility = false;
         abilityTimer = 0f;
         abilityFrameTimer = 0f;
-        health?.SetExternalInvulnerability(false);
+        rockunHealth?.SetExternalInvulnerability(false);
 
         if (activeAbilitySprite != null)
             activeAbilitySprite.SetManualAnimationUpdate(false);
@@ -157,7 +157,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         isExitingAbility = false;
         abilityTimer = 0f;
         abilityFrameTimer = 0f;
-        health?.SetExternalInvulnerability(false);
+        rockunHealth?.SetExternalInvulnerability(false);
 
         if (activeAbilitySprite != null)
             activeAbilitySprite.SetManualAnimationUpdate(false);
@@ -192,7 +192,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
 
     void BeginAbilityExit()
     {
-        health?.SetExternalInvulnerability(false);
+        rockunHealth?.SetExternalInvulnerability(false);
         isExitingAbility = true;
         abilityFrameTimer = 0f;
 
