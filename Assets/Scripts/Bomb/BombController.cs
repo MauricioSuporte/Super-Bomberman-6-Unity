@@ -2451,6 +2451,36 @@ public partial class BombController : MonoBehaviour
         plantedBombs.Clear();
     }
 
+    /// <summary>
+    /// Removes every still-armed bomb during an in-stage room transition.
+    /// Each owned bomb is removed through its owner so the player's available
+    /// bomb count is restored instead of being lost with the GameObject.
+    /// </summary>
+    public static void ClearAllArmedBombsForRoomTransition()
+    {
+        _activeBombSnapshot.Clear();
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb != null)
+                _activeBombSnapshot.Add(bomb);
+        }
+
+        for (int i = 0; i < _activeBombSnapshot.Count; i++)
+        {
+            Bomb bomb = _activeBombSnapshot[i];
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            BombController owner = bomb.Owner;
+            if (owner != null)
+                owner.DestroyBombExternally(bomb.gameObject, refund: true);
+            else
+                Object.Destroy(bomb.gameObject);
+        }
+
+        _activeBombSnapshot.Clear();
+    }
+
     public static void ExplodeAllControlBombsInStage()
     {
         if (Bomb.ActiveBombs.Count == 0)

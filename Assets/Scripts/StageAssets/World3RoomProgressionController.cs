@@ -31,6 +31,32 @@ namespace StageAssets
 
         private readonly Dictionary<EnemyMovementController, bool> enemyOriginalStates = new();
 
+        /// <summary>
+        /// Returns the authored room bounds that contain the supplied position.
+        /// This is used by airborne bombs so their bounce wrap cannot escape to
+        /// a neighboring World 3 room.
+        /// </summary>
+        public static Collider2D FindRoomBoundsContaining(Vector2 worldPosition)
+        {
+            World3RoomProgressionController controller =
+                UnityEngine.Object.FindFirstObjectByType<World3RoomProgressionController>();
+
+            if (controller == null || controller.rooms == null)
+                return null;
+
+            for (int i = 0; i < controller.rooms.Length; i++)
+            {
+                Collider2D bounds = controller.rooms[i] != null
+                    ? controller.rooms[i].roomBounds
+                    : null;
+
+                if (bounds != null && bounds.OverlapPoint(worldPosition))
+                    return bounds;
+            }
+
+            return null;
+        }
+
         private void Awake()
         {
             ScanRoomCores();

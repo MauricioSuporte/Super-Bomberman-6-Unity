@@ -93,6 +93,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private bool stageBoundsReady;
     private BoundsInt stageCellBounds;
+    private Collider2D punchRoomBounds;
 
     private bool isKicked;
     private bool isBeingMovedByYellowLouie;
@@ -695,6 +696,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         Vector2 logicalOrigin = logicalOriginOverride ?? (Vector2)transform.position;
         logicalOrigin = SnapToGrid(logicalOrigin, tileSize);
 
+        punchRoomBounds = StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(logicalOrigin);
+
         currentTileCenter = logicalOrigin;
         lastPos = logicalOrigin;
 
@@ -1041,6 +1044,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         Vector2 raw = from + kickDirection * kickTileSize;
 
+        if (TryWrapToPunchRoomBounds(raw, out next))
+        {
+            didWrap = true;
+            return true;
+        }
+
         if (!stageBoundsReady)
         {
             next = raw;
@@ -1079,6 +1088,38 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             next = new Vector2(cell.x * kickTileSize, cell.y * kickTileSize);
         }
 
+        return true;
+    }
+
+    private bool TryWrapToPunchRoomBounds(Vector2 raw, out Vector2 next)
+    {
+        next = default;
+
+        if (punchRoomBounds == null || stageBoundsTilemap == null)
+            return false;
+
+        Bounds bounds = punchRoomBounds.bounds;
+        const float edgeInset = 0.001f;
+
+        Vector3Int minCell = stageBoundsTilemap.WorldToCell(
+            new Vector3(bounds.min.x + edgeInset, bounds.min.y + edgeInset, 0f));
+        Vector3Int maxCell = stageBoundsTilemap.WorldToCell(
+            new Vector3(bounds.max.x - edgeInset, bounds.max.y - edgeInset, 0f));
+        Vector3Int rawCell = stageBoundsTilemap.WorldToCell(raw);
+
+        bool wrapped = false;
+        if (rawCell.x < minCell.x) { rawCell.x = maxCell.x; wrapped = true; }
+        else if (rawCell.x > maxCell.x) { rawCell.x = minCell.x; wrapped = true; }
+
+        if (rawCell.y < minCell.y) { rawCell.y = maxCell.y; wrapped = true; }
+        else if (rawCell.y > maxCell.y) { rawCell.y = minCell.y; wrapped = true; }
+
+        if (!wrapped)
+            return false;
+
+        Vector3 center = stageBoundsTilemap.GetCellCenterWorld(rawCell);
+        center.z = transform.position.z;
+        next = center;
         return true;
     }
 
