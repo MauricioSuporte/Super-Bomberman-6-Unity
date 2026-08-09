@@ -1,0 +1,2 @@
+C:\Users\mauri\source\repos\Super-Bomberman-6-Unity\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Users\mauri\source\repos\Super-Bomberman-6-Unity\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\FramePacing\CMakeLists.txt
