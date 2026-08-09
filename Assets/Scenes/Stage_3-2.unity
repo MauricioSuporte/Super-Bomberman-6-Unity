@@ -16963,6 +16963,131 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+--- !u!1 &2033200011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2033200012}
+  - component: {fileID: 2033200013}
+  m_Layer: 0
+  m_Name: Stage32Room2Minecart
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2033200012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033200011}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 16, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2033200013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033200011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0244ea4da9984ac7b7277a08259e2eaf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BattleMode9MinecartController
+  stationCell: {x: 16, y: 0}
+  exitCellOffset: {x: 0, y: 0}
+  railSegments: []
+  useStage32Room1Shuttle: 0
+  stage32StationA: {x: 16, y: 0}
+  stage32StationB: {x: 17, y: -4}
+  stage32JumpSeconds: 0.5
+  stage32JumpHeightTiles: 2
+  stage32HorizontalSprite: {fileID: 21300000, guid: 3830a22c428663542b29c3a2f9db6909, type: 3}
+  stage32VerticalSprite: {fileID: 21300000, guid: 50a616ba224d27e45a6e37c09c7fad3f, type: 3}
+  useStage32Room2Shuttle: 1
+  stage32Room2ForwardWaypoints:
+  - {x: 16, y: 0}
+  - {x: 19, y: 0}
+  - {x: 19, y: 2}
+  - {x: 23, y: 2}
+  - {x: 23, y: 0}
+  - {x: 25, y: 0}
+  - {x: 25, y: -2}
+  - {x: 23, y: -2}
+  - {x: 23, y: -4}
+  - {x: 19, y: -4}
+  - {x: 19, y: -2}
+  - {x: 15, y: -2}
+  - {x: 15, y: -4}
+  - {x: 17, y: -4}
+  battleMode12Routes: []
+  teleportSeconds: 0.5
+  portalSinkSeconds: 0.1
+  spawnTeleportStars: 1
+  teleportStarSprites: []
+  teleportStarCount: 32
+  teleportStarLifetime: 0.5
+  teleportStarScaleRange: {x: 0.24, y: 0.42}
+  teleportStarDriftRange: {x: 0.16, y: 0.42}
+  teleportStarSpinRange: {x: -220, y: 220}
+  teleportStarPathJitter: 0.22
+  teleportStarAnimationFrameTime: 0.1
+  teleportStarSortingOrder: 90
+  tilesPerSecond: 10
+  stage9TravelSeconds: 1.5
+  portalRouteLegSeconds: 0.5
+  enterAnimationSeconds: 0.2
+  enterHopHeightTiles: 2
+  exitAnimationSeconds: 0.45
+  exitHopHeightTiles: 3
+  retriggerGraceSeconds: 0.08
+  pixelsPerUnit: 16
+  useIntegerPixelSteps: 1
+  minecartPrefab: {fileID: 6455273011777866316, guid: 80779e99407b93b48a314fe36483306c, type: 3}
+  down: {fileID: 0}
+  up: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  hideCartWhenIdleAtStation: 0
+  cartSortingOrder: 3
+  headOnlyUpName: HeadOnlyUp
+  headOnlyDownName: HeadOnlyDown
+  headOnlyLeftName: HeadOnlyLeft
+  headOnlyRightName: HeadOnlyRight
+  headOnlyUpOffset: {x: 0, y: 0.8}
+  headOnlyDownOffset: {x: 0, y: 0.7}
+  headOnlyLeftOffset: {x: 0, y: 1}
+  headOnlyRightOffset: {x: 0, y: 1}
+  mountHeadOnlyUpOffset: {x: 0, y: 0.8}
+  mountHeadOnlyDownOffset: {x: 0, y: 0.3}
+  mountHeadOnlyLeftOffset: {x: -0.4, y: 0.6}
+  mountHeadOnlyRightOffset: {x: 0.4, y: 0.6}
+  hitboxSize: {x: 0.8, y: 0.8}
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 0
+  damage: 1
+  spawnDestructibleBreakPrefab: 1
+  spawnHiddenObjectFromDestroyedBlock: 1
+  enterSfx: {fileID: 8300000, guid: 3a73e8e7c5b8f2948bb12b0de90a4538, type: 3}
+  portalEnterSfx: {fileID: 0}
+  exitSfx: {fileID: 8300000, guid: a96445640ca1ab0458cb9a2e1f0d231c, type: 3}
+  rideLoopSfx: {fileID: 8300000, guid: 32399c2281947be40885f5194b7ed696, type: 3}
+  sfxVolume: 0.7
+  portalEnterSfxVolume: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -16979,3 +17104,4 @@ SceneRoots:
   - {fileID: 1334625510}
   - {fileID: 1465697803}
   - {fileID: 2033200002}
+  - {fileID: 2033200012}

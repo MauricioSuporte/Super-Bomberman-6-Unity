@@ -53,6 +53,11 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     [SerializeField] private Sprite stage32HorizontalSprite;
     [SerializeField] private Sprite stage32VerticalSprite;
 
+    [Header("Stage 3-2 Room 2 Shuttle")]
+    [Tooltip("Enables the Room 2 minecart shuttle when this controller is authored in Stage_3-2.")]
+    [SerializeField] private bool useStage32Room2Shuttle;
+    [SerializeField] private Vector2Int[] stage32Room2ForwardWaypoints;
+
     [Header("Battle Mode 12 Portal Routes")]
     [SerializeField]
     private PortalRailRoute[] battleMode12Routes =
@@ -402,7 +407,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         rideExitAnimationActive = false;
 
         bool battleMode12 = IsBattleMode12Active();
-        bool stage32Shuttle = IsStage32Room1ShuttleActive();
+        bool stage32Shuttle = IsStage32ShuttleActive();
         int startRouteIndex = GetValidBattleMode12RouteIndex(battleMode12CurrentRouteIndex);
         int destinationRouteIndex = startRouteIndex;
         Vector3Int station = battleMode12
@@ -416,7 +421,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         Vector2 exitWorld = GetCellCenter(exitCell);
         Vector2 startFacing = battleMode12
             ? GetRouteStartDirection(startRouteIndex)
-            : stage32Shuttle ? Vector2.left : Vector2.right;
+            : stage32Shuttle ? GetIdleDirection() : Vector2.right;
         Vector2 exitFacing = battleMode12 ? startFacing : Cardinalize(exitWorld - stationWorld);
         if (exitFacing == Vector2.zero)
             exitFacing = Vector2.right;
@@ -488,7 +493,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             }
             else if (stage32Shuttle)
             {
-                yield return MoveCartThroughStage32Room1Shuttle(mover, state, stage32AtDestinationStation);
+                yield return MoveCartThroughStage32Shuttle(mover, state, stage32AtDestinationStation);
                 Vector3Int arrivalCell = stage32AtDestinationStation
                     ? ToCell(stage32StationA)
                     : ToCell(stage32StationB);
@@ -749,6 +754,38 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 new Vector2Int(3, -2),
                 stage32StationA);
         }
+    }
+
+    IEnumerator MoveCartThroughStage32Shuttle(
+        MovementController mover,
+        RideState state,
+        bool reverse)
+    {
+        if (IsStage32Room2ShuttleActive())
+        {
+            Vector2Int[] waypoints = GetStage32Room2Waypoints(reverse);
+            if (waypoints.Length >= 2)
+                yield return MoveCartAlongStage32Waypoints(mover, state, waypoints);
+
+            yield break;
+        }
+
+        yield return MoveCartThroughStage32Room1Shuttle(mover, state, reverse);
+    }
+
+    Vector2Int[] GetStage32Room2Waypoints(bool reverse)
+    {
+        if (stage32Room2ForwardWaypoints == null || stage32Room2ForwardWaypoints.Length == 0)
+            return System.Array.Empty<Vector2Int>();
+
+        Vector2Int[] waypoints = new Vector2Int[stage32Room2ForwardWaypoints.Length];
+        for (int i = 0; i < waypoints.Length; i++)
+        {
+            int sourceIndex = reverse ? waypoints.Length - 1 - i : i;
+            waypoints[i] = stage32Room2ForwardWaypoints[sourceIndex];
+        }
+
+        return waypoints;
     }
 
     IEnumerator MoveCartAlongStage32Waypoints(
@@ -2540,7 +2577,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     Vector3Int GetActiveStationCell()
     {
-        if (IsStage32Room1ShuttleActive())
+        if (IsStage32ShuttleActive())
             return ToCell(stage32AtDestinationStation ? stage32StationB : stage32StationA);
 
         if (IsBattleMode12Active() && HasUsableBattleMode12Routes())
@@ -2551,8 +2588,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     Vector2 GetIdleDirection()
     {
-        if (IsStage32Room1ShuttleActive())
-            return Vector2.left;
+        if (IsStage32ShuttleActive())
+            return IsStage32Room2ShuttleActive() && !stage32AtDestinationStation
+                ? Vector2.right
+                : Vector2.left;
 
         if (IsBattleMode12Active() && HasUsableBattleMode12Routes())
             return GetRouteStartDirection(GetValidBattleMode12RouteIndex(battleMode12CurrentRouteIndex));
@@ -2652,7 +2691,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void ApplyStage32CartSprites()
     {
-        if (!IsStage32Room1ShuttleActive())
+        if (!IsStage32ShuttleActive())
             return;
 
         ApplyCartSprite(left, stage32HorizontalSprite);
@@ -3169,6 +3208,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     bool IsStage32Room1ShuttleActive()
         => useStage32Room1Shuttle &&
            string.Equals(SceneManager.GetActiveScene().name, Stage32SceneName, System.StringComparison.Ordinal);
+
+    bool IsStage32Room2ShuttleActive()
+        => useStage32Room2Shuttle &&
+           string.Equals(SceneManager.GetActiveScene().name, Stage32SceneName, System.StringComparison.Ordinal);
+
+    bool IsStage32ShuttleActive()
+        => IsStage32Room1ShuttleActive() || IsStage32Room2ShuttleActive();
 
     static bool IsSupportedSceneActive()
         => IsSupportedScene(SceneManager.GetActiveScene().name);
