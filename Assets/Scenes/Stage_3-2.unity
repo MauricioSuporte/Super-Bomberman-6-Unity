@@ -2424,6 +2424,8 @@ Transform:
   - {fileID: 1606421723}
   - {fileID: 1726096134}
   - {fileID: 2003304118}
+  - {fileID: 2035000001}
+  - {fileID: 2035000011}
   m_Father: {fileID: 732032081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &355527352
@@ -2441,6 +2443,127 @@ MonoBehaviour:
   bottomOpeningCell: {x: 5, y: -7}
   topOpeningCell: {x: 5, y: 5}
   openingWidth: 1
+--- !u!1 &2035000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000001}
+  - component: {fileID: 2035000002}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 355527351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: -3.5, y: -2.5}
+  destinationTile: {x: -1.5, y: -0.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  trailDelaySeconds: 0.1
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100007}
+--- !u!1 &2035000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000011}
+  - component: {fileID: 2035000012}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap Vertical
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 355527351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: 4.5, y: -0.5}
+  destinationTile: {x: 4.5, y: -2.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100007}
 --- !u!114 &381374856 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3627800146579448321, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
@@ -14283,8 +14406,130 @@ Transform:
   - {fileID: 1736289055}
   - {fileID: 1812628662}
   - {fileID: 1259744894}
+  - {fileID: 2035000021}
+  - {fileID: 2035000031}
   m_Father: {fileID: 732032081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2035000020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000021}
+  - component: {fileID: 2035000022}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap Room 2 Left
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 977957625}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: 20.5, y: -4.5}
+  destinationTile: {x: 18.5, y: -2.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100010}
+--- !u!1 &2035000030
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000031}
+  - component: {fileID: 2035000032}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap Room 2 Right
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000030}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 977957625}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: 24.5, y: -0.5}
+  destinationTile: {x: 26.5, y: 1.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100010}
 --- !u!1001 &1064587303
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14815,6 +15060,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1932000001}
   - {fileID: 124024472}
   - {fileID: 311948041}
   m_Father: {fileID: 1866114541}
@@ -16107,6 +16353,95 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &1932000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1932000001}
+  - component: {fileID: 1932000002}
+  - component: {fileID: 1932000003}
+  - component: {fileID: 1932000004}
+  m_Layer: 5
+  m_Name: VolcanoHeatHaze
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1932000001
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1932000000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1412161667}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1932000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1932000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 51a283c284694d8fa687600fbdcef4b2, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1932000003
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1932000000}
+  m_CullTransparentMesh: 1
+--- !u!114 &1932000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1932000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cd1c12f99df4a9d87e3ca90bf5d327e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageHeatHazeAnimator
+  heatHazeImage: {fileID: 1932000002}
 --- !u!1001 &2003304117
 PrefabInstance:
   m_ObjectHideFlags: 0

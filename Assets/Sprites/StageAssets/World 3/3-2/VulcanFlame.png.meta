@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 4ecad4d392e1e5441bad37d60ee595ea
+guid: 514304fad8147b849a78fc5a32702967
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7265813586516431896
-    second: Bridge_0
+      213: 8344806389523784359
+    second: VulcanFlame_0
+  - first:
+      213: 8367842679640983759
+    second: VulcanFlame_1
+  - first:
+      213: 4350570814009905353
+    second: VulcanFlame_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +119,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Bridge_0
+      name: VulcanFlame_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 16
-        width: 16
-        height: 16
+        y: 0
+        width: 12
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,118 +134,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 814d48406fa55d460800000000000000
-      internalID: 7265813586516431896
+      spriteID: 7a2a9f6d235bec370800000000000000
+      internalID: 8344806389523784359
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bridge_1
+      name: VulcanFlame_1
       rect:
         serializedVersion: 2
-        x: 16
-        y: 16
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 5313999c412d52f4b9a800e5c98affbb
-      internalID: 754774830
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bridge_2
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 16
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6098f0d3f25b3774cacad8309a5527c9
-      internalID: 1868608996
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bridge_3
-      rect:
-        serializedVersion: 2
-        x: 0
+        x: 12
         y: 0
-        width: 16
-        height: 16
+        width: 12
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: ee7c4be35c68ffe45b67f0ab7b100b7f
-      internalID: 1771928877
+      spriteID: fc88a58159c802470800000000000000
+      internalID: 8367842679640983759
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bridge_4
+      name: VulcanFlame_2
       rect:
         serializedVersion: 2
-        x: 16
+        x: 24
         y: 0
-        width: 16
-        height: 16
+        width: 12
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: a1f3b1723475ed1469bb67e3b59a13f8
-      internalID: 1589725844
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bridge_5
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ad4db49054df0654caffa624392ef02a
-      internalID: -79621496
+      spriteID: 9c01e33ea15506c30800000000000000
+      internalID: 4350570814009905353
       vertices: []
       indices: 
       edges: []
@@ -248,7 +188,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a775148edfd3fb34a8a7c0979aafa82c
+    spriteID: 7bf16f0e92e4b64498a2d26416b1b409
     internalID: 0
     vertices: []
     indices: 
@@ -258,14 +198,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":12.0,"y":12.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Bridge_0: 7265813586516431896
-      Bridge_1: 754774830
-      Bridge_2: 1868608996
-      Bridge_3: 1771928877
-      Bridge_4: 1589725844
-      Bridge_5: -79621496
+      VulcanFlame_0: 8344806389523784359
+      VulcanFlame_1: 8367842679640983759
+      VulcanFlame_2: 4350570814009905353
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

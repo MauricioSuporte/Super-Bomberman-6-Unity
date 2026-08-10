@@ -185,7 +185,7 @@ namespace StageAssets
                 if (bounds == null)
                     continue;
 
-                bool roomHasPlayer = HasLivingPlayer(bounds);
+                bool roomHasPlayer = IsRoomOccupied(bounds);
                 foreach (EnemyMovementController enemy in GetRoomEnemies(room, bounds))
                 {
                     if (enemy == null || !enemyOriginalStates.TryGetValue(enemy, out bool originallyEnabled))
@@ -218,7 +218,8 @@ namespace StageAssets
                     yield return enemy;
         }
 
-        private static bool HasLivingPlayer(Collider2D area)
+        /// <summary>Returns whether a living player is inside an authored room bound.</summary>
+        public static bool IsRoomOccupied(Collider2D area)
         {
             MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
             for (int i = 0; i < players.Length; i++)
