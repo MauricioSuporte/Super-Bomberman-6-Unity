@@ -17308,6 +17308,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2033200012}
   - component: {fileID: 2033200013}
+  - component: {fileID: 2033200014}
   m_Layer: 0
   m_Name: Stage32Room2Minecart
   m_TagString: Untagged
@@ -17423,6 +17424,34 @@ MonoBehaviour:
   rideLoopSfx: {fileID: 8300000, guid: 32399c2281947be40885f5194b7ed696, type: 3}
   sfxVolume: 0.7
   portalEnterSfxVolume: 1
+--- !u!82 &2033200014
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033200011}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
