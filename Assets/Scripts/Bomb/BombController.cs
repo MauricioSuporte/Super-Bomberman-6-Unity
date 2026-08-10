@@ -2585,6 +2585,54 @@ public partial class BombController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Applies the normal explosion interactions to only the origin tile, while
+    /// leaving its visual presentation to the caller.
+    /// </summary>
+    public void SpawnSingleTileExplosionDamageForEffect(Vector2 origin, float damageDuration)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
+        if (!TryGetAreaExplosionSkipReason(p, out _))
+            return;
+
+        Vector2 direction = Vector2.zero;
+        Collider2D itemHit = Physics2D.OverlapBox(p, Vector2.one * 0.5f, 0f, itemLayerMask);
+        if (itemHit != null)
+            TryHandleItemHitByExplosion(itemHit, direction);
+
+        if (TryGetDestructibleTileAt(p, out Vector3Int destructibleCell, out TileBase tile))
+        {
+            SpawnExplosionDamageHitbox(p, p)?.PlayDamageOnly(damageDuration, p);
+            if (!TryHandleDestructibleTileEffect(p, destructibleCell, tile))
+                ClearDestructibleForEffect(p);
+            return;
+        }
+
+        if (HasDestroyingDestructibleAt(p))
+        {
+            TryHandleActiveDestructibleHitByExplosion(p);
+            SpawnExplosionDamageHitbox(p, p)?.PlayDamageOnly(damageDuration, p);
+            return;
+        }
+
+        if (TryGetAnyBombColliderAt(p, 0.6f, out Collider2D bombHit))
+        {
+            GameObject bombObject = bombHit.attachedRigidbody != null
+                ? bombHit.attachedRigidbody.gameObject
+                : bombHit.gameObject;
+            if (bombObject != null)
+                ExplodeBombChained(bombObject, p);
+        }
+
+        TryHandleGroundExplosionHit(p);
+        SpawnExplosionDamageHitbox(p, p)?.PlayDamageOnly(damageDuration, p);
+    }
+
     private void SpawnExplosionAreaTileForEffect(
         Tilemap snapTm,
         Vector3Int originCell,

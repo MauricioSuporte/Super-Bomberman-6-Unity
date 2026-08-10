@@ -2443,127 +2443,6 @@ MonoBehaviour:
   bottomOpeningCell: {x: 5, y: -7}
   topOpeningCell: {x: 5, y: 5}
   openingWidth: 1
---- !u!1 &2035000000
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2035000001}
-  - component: {fileID: 2035000002}
-  m_Layer: 6
-  m_Name: Vulcan Flame Leap
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2035000001
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000000}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 355527351}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2035000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
-  sourceTile: {x: -3.5, y: -2.5}
-  destinationTile: {x: -1.5, y: -0.5}
-  arcHeightTiles: 3.5
-  minimumRepeatSeconds: 2
-  maximumRepeatSeconds: 10
-  burstDurationSeconds: 1.5
-  trailDelaySeconds: 0.1
-  animationFramesPerSecond: 10
-  reverseDirectionChance: 0.5
-  vulcanFlameSprites:
-  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  sortingLayerName: Default
-  sortingOrder: 4
-  pixelsPerUnit: 16
-  roomBounds: {fileID: 2033100007}
---- !u!1 &2035000010
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2035000011}
-  - component: {fileID: 2035000012}
-  m_Layer: 6
-  m_Name: Vulcan Flame Leap Vertical
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2035000011
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000010}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 355527351}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2035000012
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
-  sourceTile: {x: 4.5, y: -0.5}
-  destinationTile: {x: 4.5, y: -2.5}
-  arcHeightTiles: 3.5
-  minimumRepeatSeconds: 2
-  maximumRepeatSeconds: 10
-  burstDurationSeconds: 1.5
-  animationFramesPerSecond: 10
-  reverseDirectionChance: 0.5
-  vulcanFlameSprites:
-  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  sortingLayerName: Default
-  sortingOrder: 4
-  pixelsPerUnit: 16
-  roomBounds: {fileID: 2033100007}
 --- !u!114 &381374856 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3627800146579448321, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
@@ -14408,128 +14287,9 @@ Transform:
   - {fileID: 1259744894}
   - {fileID: 2035000021}
   - {fileID: 2035000031}
+  - {fileID: 2035000041}
   m_Father: {fileID: 732032081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2035000020
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2035000021}
-  - component: {fileID: 2035000022}
-  m_Layer: 6
-  m_Name: Vulcan Flame Leap Room 2 Left
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2035000021
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000020}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 977957625}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2035000022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
-  sourceTile: {x: 20.5, y: -4.5}
-  destinationTile: {x: 18.5, y: -2.5}
-  arcHeightTiles: 3.5
-  minimumRepeatSeconds: 2
-  maximumRepeatSeconds: 10
-  burstDurationSeconds: 1.5
-  animationFramesPerSecond: 10
-  reverseDirectionChance: 0.5
-  vulcanFlameSprites:
-  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  sortingLayerName: Default
-  sortingOrder: 4
-  pixelsPerUnit: 16
-  roomBounds: {fileID: 2033100010}
---- !u!1 &2035000030
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2035000031}
-  - component: {fileID: 2035000032}
-  m_Layer: 6
-  m_Name: Vulcan Flame Leap Room 2 Right
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2035000031
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000030}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 977957625}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2035000032
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2035000030}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
-  sourceTile: {x: 24.5, y: -0.5}
-  destinationTile: {x: 26.5, y: 1.5}
-  arcHeightTiles: 3.5
-  minimumRepeatSeconds: 2
-  maximumRepeatSeconds: 10
-  burstDurationSeconds: 1.5
-  animationFramesPerSecond: 10
-  reverseDirectionChance: 0.5
-  vulcanFlameSprites:
-  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
-  sortingLayerName: Default
-  sortingOrder: 4
-  pixelsPerUnit: 16
-  roomBounds: {fileID: 2033100010}
 --- !u!1001 &1064587303
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16401,7 +16161,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 2100000, guid: 51a283c284694d8fa687600fbdcef4b2, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16439,7 +16199,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8cd1c12f99df4a9d87e3ca90bf5d327e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageHeatHazeAnimator
   heatHazeImage: {fileID: 1932000002}
 --- !u!1001 &2003304117
@@ -17060,6 +16820,8 @@ MonoBehaviour:
   stage32JumpHeightTiles: 2
   stage32HorizontalSprite: {fileID: 21300000, guid: 3830a22c428663542b29c3a2f9db6909, type: 3}
   stage32VerticalSprite: {fileID: 21300000, guid: 50a616ba224d27e45a6e37c09c7fad3f, type: 3}
+  useStage32Room2Shuttle: 0
+  stage32Room2ForwardWaypoints: []
   battleMode12Routes:
   - startCell: {x: -5, y: 1}
     cornerCell: {x: -5, y: -2}
@@ -17224,80 +16986,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!4 &2126030310 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1228606389669354653, guid: a6178f0be4e34bd47959a5d3df2b911d, type: 3}
-  m_PrefabInstance: {fileID: 1799590858}
-  m_PrefabAsset: {fileID: 0}
---- !u!1001 &7794392015855008759
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 355527351}
-    m_Modifications:
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -6.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3941917705409293893, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_Name
-      value: CoreMechanisms
-      objectReference: {fileID: 0}
-    - target: {fileID: 3941917705409293893, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7116500855017394752, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: disableOffsetsIfStandaloneRoot
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7116500855017394752, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
-      propertyPath: disableOffsetsIfThisObjectHasRigidbody2D
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
 --- !u!1 &2033200011
 GameObject:
   m_ObjectHideFlags: 0
@@ -17341,7 +17029,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0244ea4da9984ac7b7277a08259e2eaf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleMode9MinecartController
   stationCell: {x: 16, y: 0}
   exitCellOffset: {x: 0, y: 0}
@@ -17452,6 +17140,518 @@ AudioSource:
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!1 &2035000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000001}
+  - component: {fileID: 2035000002}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 355527351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: -3.5, y: -2.5}
+  destinationTile: {x: -1.5, y: -0.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100007}
+--- !u!1 &2035000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000011}
+  - component: {fileID: 2035000012}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap Vertical
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 355527351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: 4.5, y: -0.5}
+  destinationTile: {x: 4.5, y: -2.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100007}
+--- !u!1 &2035000020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000021}
+  - component: {fileID: 2035000022}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap Room 2 Left
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 977957625}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: 20.5, y: -4.5}
+  destinationTile: {x: 18.5, y: -2.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100010}
+--- !u!1 &2035000030
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000031}
+  - component: {fileID: 2035000032}
+  m_Layer: 6
+  m_Name: Vulcan Flame Leap Room 2 Right
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000030}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 977957625}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035000032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6e9f1cb5d564941a4e6fbfd3fd61e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VulcanFlameLeap
+  sourceTile: {x: 24.5, y: -0.5}
+  destinationTile: {x: 26.5, y: 1.5}
+  arcHeightTiles: 3.5
+  minimumRepeatSeconds: 2
+  maximumRepeatSeconds: 10
+  burstDurationSeconds: 1.5
+  animationFramesPerSecond: 10
+  reverseDirectionChance: 0.5
+  vulcanFlameSprites:
+  - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  - {fileID: 4350570814009905353, guid: 514304fad8147b849a78fc5a32702967, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  pixelsPerUnit: 16
+  roomBounds: {fileID: 2033100010}
+--- !u!1 &2035000040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035000041}
+  - component: {fileID: 2035000042}
+  - component: {fileID: 2035000043}
+  m_Layer: 6
+  m_Name: Vulcano Eyes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035000041
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000040}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 21.5, y: -2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 977957625}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &2035000042
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000040}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 4
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 645123456789012345, guid: 195e9c38fd474688a062510068d574b4, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 2, y: 0.75}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
+--- !u!114 &2035000043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035000040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0b34978c6a84f978c1140177e561304, type: 3}
+  m_Name: VolcanoEyesAnimator
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32VolcanoEyesAnimator
+  minimumRepeatSeconds: 8
+  maximumRepeatSeconds: 10
+  animationDurationSeconds: 1.8
+  eyeSprites:
+  - {fileID: 645123456789012345, guid: 195e9c38fd474688a062510068d574b4, type: 3}
+  - {fileID: 645123456789012346, guid: 195e9c38fd474688a062510068d574b4, type: 3}
+  - {fileID: 645123456789012347, guid: 195e9c38fd474688a062510068d574b4, type: 3}
+  eruptionOrigin: {x: 21, y: -2}
+  eruptionArcHeightTiles: 20
+  eruptionSprites:
+  - {fileID: 301001, guid: a1e0a754c6c7434e90096b27e5879626, type: 3}
+  - {fileID: 301002, guid: a1e0a754c6c7434e90096b27e5879626, type: 3}
+  - {fileID: 301003, guid: a1e0a754c6c7434e90096b27e5879626, type: 3}
+  - {fileID: 301004, guid: a1e0a754c6c7434e90096b27e5879626, type: 3}
+  - {fileID: 301005, guid: a1e0a754c6c7434e90096b27e5879626, type: 3}
+  eruptionTargetSprites:
+  - {fileID: 302001, guid: 924f0e8fe5144510bf97a40ab3b994fb, type: 3}
+  - {fileID: 302002, guid: 924f0e8fe5144510bf97a40ab3b994fb, type: 3}
+  eruptionStartSfx: {fileID: 8300000, guid: 3e5256cdc8b548928d82478bc4404ab2, type: 3}
+  eruptionInTheAirSfx: {fileID: 8300000, guid: 1f9ea8c3c3e14e528a6723ea83b6408b, type: 3}
+  eruptionFallSfx: {fileID: 8300000, guid: 46296ba5150e4331a1845e9784c10c27, type: 3}
+  sortingLayerName: Default
+  sortingOrder: 4
+  roomBounds: {fileID: 2033100010}
+--- !u!4 &2126030310 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1228606389669354653, guid: a6178f0be4e34bd47959a5d3df2b911d, type: 3}
+  m_PrefabInstance: {fileID: 1799590858}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7794392015855008759
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 355527351}
+    m_Modifications:
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -6.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3941917705409293893, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_Name
+      value: CoreMechanisms
+      objectReference: {fileID: 0}
+    - target: {fileID: 3941917705409293893, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7116500855017394752, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: disableOffsetsIfStandaloneRoot
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7116500855017394752, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
+      propertyPath: disableOffsetsIfThisObjectHasRigidbody2D
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
