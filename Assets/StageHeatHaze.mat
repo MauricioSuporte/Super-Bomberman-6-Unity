@@ -25,10 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BandScale: 12
-    - _Intensity: 0.9
+    - _DistortionPixels: 0.75
     - _Speed: 1.8
-    m_Colors:
-    - _Color: {r: 1, g: 0.72, b: 0.26, a: 0.5}
+    - _UnscaledTime: 59.436314
+    - _WaveScale: 11
+    m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1
