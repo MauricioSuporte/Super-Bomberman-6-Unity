@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 8f1ee12e51591b44c90647e64f739371
+guid: 5c72d28421d0d4040b08ecd28448af29
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4356397026773415374
-    second: IndestructibleVulcano_0
+      213: 994433505018890470
+    second: IndestructibleShadow_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: IndestructibleVulcano_0
+      name: IndestructibleShadow_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,14 +128,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 23a4a9e3cf7fa83c0800000000000000
-      internalID: -4356397026773415374
+      spriteID: 6e8c56b0100fccd00800000000000000
+      internalID: 994433505018890470
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: IndestructibleVulcano_1
+      name: IndestructibleShadow_1
       rect:
         serializedVersion: 2
         x: 16
@@ -150,30 +150,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 20017178cffc6a549adda81f96fbced7
-      internalID: 767790258
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: IndestructibleVulcano_2
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 33f056b16b318234b854596f205745ce
-      internalID: 600855788
+      spriteID: d136b9e179b55e847b206e4f47d8bac7
+      internalID: -1901892007
       vertices: []
       indices: 
       edges: []
@@ -182,7 +160,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 73eb8852e67145e47ab5e92c47e166b6
+    spriteID: 6b17e378ad84de741a83f80138d3982c
     internalID: 0
     vertices: []
     indices: 
@@ -194,9 +172,8 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      IndestructibleVulcano_0: -4356397026773415374
-      IndestructibleVulcano_1: 767790258
-      IndestructibleVulcano_2: 600855788
+      IndestructibleShadow_0: 994433505018890470
+      IndestructibleShadow_1: -1901892007
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
