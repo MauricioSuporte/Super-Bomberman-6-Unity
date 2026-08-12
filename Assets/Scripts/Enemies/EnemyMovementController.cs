@@ -22,6 +22,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteUp;
     public AnimatedSpriteRenderer spriteDown;
     public AnimatedSpriteRenderer spriteLeft;
+    [Tooltip("Optional. When assigned, this animation is used while the enemy moves right instead of mirroring Sprite Left.")]
+    public AnimatedSpriteRenderer spriteRight;
     public AnimatedSpriteRenderer spriteDeath;
     public AnimatedSpriteRenderer spriteDamaged;
 
@@ -347,6 +349,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (spriteUp != null) spriteUp.enabled = false;
         if (spriteDown != null) spriteDown.enabled = false;
         if (spriteLeft != null) spriteLeft.enabled = false;
+        if (spriteRight != null) spriteRight.enabled = false;
 
         if (spriteDamaged != null) spriteDamaged.enabled = false;
 
@@ -413,14 +416,15 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             bool sameDirSprite =
                 (dir == Vector2.up && activeSprite == spriteUp) ||
                 (dir == Vector2.down && activeSprite == spriteDown) ||
-                ((dir == Vector2.left || dir == Vector2.right) && activeSprite == spriteLeft);
+                (dir == Vector2.left && activeSprite == spriteLeft) ||
+                (dir == Vector2.right && activeSprite == (spriteRight != null ? spriteRight : spriteLeft));
 
             if (sameDirSprite && activeSprite.enabled)
             {
                 activeSprite.idle = false;
 
                 if (activeSprite.TryGetComponent<SpriteRenderer>(out var srSame))
-                    srSame.flipX = preservesAuthoredHorizontalOrientation ? false : dir == Vector2.right;
+                    srSame.flipX = ShouldFlipHorizontalSprite(dir, preservesAuthoredHorizontalOrientation);
 
                 return;
             }
@@ -431,6 +435,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (spriteUp != null) spriteUp.enabled = false;
         if (spriteDown != null) spriteDown.enabled = false;
         if (spriteLeft != null) spriteLeft.enabled = false;
+        if (spriteRight != null) spriteRight.enabled = false;
 
         if (spriteDamaged != null)
             spriteDamaged.enabled = false;
@@ -442,8 +447,10 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             activeSprite = spriteUp;
         else if (dir == Vector2.down)
             activeSprite = spriteDown;
-        else if (dir == Vector2.left || dir == Vector2.right)
+        else if (dir == Vector2.left)
             activeSprite = spriteLeft;
+        else if (dir == Vector2.right)
+            activeSprite = spriteRight != null ? spriteRight : spriteLeft;
 
         if (activeSprite == null)
             activeSprite = spriteDown != null ? spriteDown :
@@ -476,7 +483,14 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         activeSprite.idle = false;
 
         if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
-            sr.flipX = preservesAuthoredHorizontalOrientation ? false : dir == Vector2.right;
+            sr.flipX = ShouldFlipHorizontalSprite(dir, preservesAuthoredHorizontalOrientation);
+    }
+
+    bool ShouldFlipHorizontalSprite(Vector2 dir, bool preservesAuthoredHorizontalOrientation)
+    {
+        return dir == Vector2.right &&
+               spriteRight == null &&
+               !preservesAuthoredHorizontalOrientation;
     }
 
     protected virtual void DecideNextTile()

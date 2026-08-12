@@ -29,7 +29,7 @@ Material:
     - _BandScrollSpeed: 16
     - _BandsPerDirection: 5
     - _LogicalPixelScale: 4
-    - _UnscaledTime: 203.40715
+    - _UnscaledTime: 86.43765
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1
