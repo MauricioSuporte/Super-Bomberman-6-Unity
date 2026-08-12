@@ -168,6 +168,8 @@ public class GameManager : MonoBehaviour
     public Tilemap groundTilemap;
     public TileBase groundTile;
     public TileBase groundShadowTile;
+    [Tooltip("Sombra no Ground sob o mesmo tile que possui um destrutivel. Opcional; use junto de Ground Shadow Tile para sprites de duas partes.")]
+    public TileBase destructibleGroundShadowTile;
     public TileBase indestructibleGroundShadowTile;
     public TileBase shadowDestructibleTile;
     public TileBase[] groundShadowIgnoredTiles;
@@ -1232,6 +1234,7 @@ public class GameManager : MonoBehaviour
         return
             tile == groundTile ||
             tile == groundShadowTile ||
+            tile == destructibleGroundShadowTile ||
             tile == indestructibleGroundShadowTile;
     }
 
@@ -1239,6 +1242,7 @@ public class GameManager : MonoBehaviour
     {
         return
             groundShadowTile != null ||
+            destructibleGroundShadowTile != null ||
             indestructibleGroundShadowTile != null;
     }
 
@@ -1310,6 +1314,12 @@ public class GameManager : MonoBehaviour
 
     TileBase GetGroundShadowTileForCasterAbove(Vector3Int groundCell)
     {
+        TileBase destructibleAtCell = destructibleTilemap != null
+            ? destructibleTilemap.GetTile(groundCell)
+            : null;
+        if (destructibleAtCell != null && !IsGroundShadowIgnoredTile(destructibleAtCell))
+            return destructibleGroundShadowTile;
+
         Vector3Int above = new(groundCell.x, groundCell.y + 1, groundCell.z);
 
         if (HasIndestructibleGroundShadowCasterAt(above))
