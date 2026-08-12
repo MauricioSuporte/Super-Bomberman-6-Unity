@@ -1127,7 +1127,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 ResetCartPixelAccumulator();
             }
 
-            if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir, "segment-start"))
+            if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir))
                 yield break;
 
             currentCartDirection = dir;
@@ -1148,7 +1148,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                     continue;
                 }
 
-                if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir, "segment-moving"))
+                if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir))
                     yield break;
 
                 float moveWorld = GetQuantizedCartMoveWorld(speed * Time.fixedDeltaTime);
@@ -1686,15 +1686,18 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         RideState state,
         Vector3Int blockedCell,
         Vector2 exitWorld,
-        Vector2 exitFacing,
-        string reason)
+        Vector2 exitFacing)
     {
-        // The Room 3 cart deliberately jumps and rides across its authored rail cells.
-        // Treating those indestructible cells as blockers ends the ride at the jump.
-        if (IsStage32Room3ShuttleActive())
+        if (!HasIndestructibleAt(blockedCell))
             return false;
 
-        if (state == null || !HasIndestructibleAt(blockedCell))
+        // The Stage 3-2 shuttles deliberately travel across their authored rail and
+        // jump cells. Those cells may use indestructible tiles for collision, but
+        // they are not sudden-death blockers and must not end the ride.
+        if (IsStage32ShuttleActive())
+            return false;
+
+        if (state == null)
             return false;
 
         Vector2 facing = Cardinalize(exitFacing);
