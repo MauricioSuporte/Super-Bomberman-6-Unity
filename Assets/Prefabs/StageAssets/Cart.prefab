@@ -487,7 +487,7 @@ GameObject:
   - component: {fileID: 6765667424912982891}
   - component: {fileID: 8601423555624154429}
   m_Layer: 0
-  m_Name: Minecart 1
+  m_Name: Cart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

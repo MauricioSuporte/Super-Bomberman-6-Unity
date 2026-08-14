@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: Vulcano1x2
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: -1316129542, guid: 5809a71b69e4bb7448ba6a0cfb42d3a7, type: 3}
+  - {fileID: 969521775, guid: 5809a71b69e4bb7448ba6a0cfb42d3a7, type: 3}
+  - {fileID: 1403586484, guid: 5809a71b69e4bb7448ba6a0cfb42d3a7, type: 3}
+  - {fileID: -1716123390, guid: 5809a71b69e4bb7448ba6a0cfb42d3a7, type: 3}
+  - {fileID: 1403586484, guid: 5809a71b69e4bb7448ba6a0cfb42d3a7, type: 3}
+  - {fileID: 969521775, guid: 5809a71b69e4bb7448ba6a0cfb42d3a7, type: 3}
+  m_MinSpeed: 5
+  m_MaxSpeed: 5
+  m_AnimationStartTime: 0
+  UseSpecifiedTime: 0
+  SpecifiedTime: 0.25
+  m_TileColliderType: 1

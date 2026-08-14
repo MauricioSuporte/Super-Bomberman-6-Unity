@@ -17,7 +17,7 @@ namespace StageAssets
         private const float EruptionImpactSeconds = 0.5f;
         private const float EruptionInAirSfxDelaySeconds = 0.5f;
         private const float FallingVisualYOffset = 0.5f;
-        private static readonly int[] EyeFrameSequence = { 0, 0, 1, 2, 0, 1, 2, 1, 0, 0 };
+        private static readonly int[] EyeFrameSequence = { 0, 0, 1, 2, 3, 0, 1, 2, 3, 2, 1, 0, 0 };
 
         private sealed class ActiveEruption
         {
@@ -369,8 +369,8 @@ namespace StageAssets
             Mathf.Max(minimumRepeatSeconds, maximumRepeatSeconds));
 
         private bool HasValidConfiguration() =>
-            eyeRenderer != null && eyeSprites != null && eyeSprites.Length >= 3 &&
-            eyeSprites[0] != null && eyeSprites[1] != null && eyeSprites[2] != null &&
+            eyeRenderer != null && eyeSprites != null && eyeSprites.Length >= 4 &&
+            eyeSprites[0] != null && eyeSprites[1] != null && eyeSprites[2] != null && eyeSprites[3] != null &&
             eruptionSprites != null && eruptionSprites.Length >= 5 &&
             eruptionTargetSprites != null && eruptionTargetSprites.Length >= 2;
 
