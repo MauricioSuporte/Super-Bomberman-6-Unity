@@ -17,7 +17,7 @@ namespace StageAssets
         private const float EruptionImpactSeconds = 0.5f;
         private const float EruptionInAirSfxDelaySeconds = 0.5f;
         private const float FallingVisualYOffset = 0.5f;
-        private static readonly int[] EyeFrameSequence = { 0, 0, 1, 2, 3, 0, 1, 2, 3, 2, 1, 0, 0 };
+        private static readonly int[] EyeFrameSequence = { 0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1, 0 };
 
         private sealed class ActiveEruption
         {
