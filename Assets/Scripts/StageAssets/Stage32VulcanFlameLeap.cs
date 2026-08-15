@@ -25,6 +25,10 @@ namespace StageAssets
         [SerializeField, Min(1f)] private float animationFramesPerSecond = 10f;
         [SerializeField, Range(0f, 1f)] private float reverseDirectionChance = 0.5f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip leapStartSfx;
+        [SerializeField, Range(0f, 1f)] private float leapStartSfxVolume = 1f;
+
         [Header("Visual")]
         [SerializeField] private Sprite[] vulcanFlameSprites;
         [SerializeField] private string sortingLayerName = "Default";
@@ -35,6 +39,7 @@ namespace StageAssets
         [SerializeField] private Collider2D roomBounds;
 
         private SpriteRenderer[] trailRenderers;
+        private AudioSource audioSource;
         private float nextBurstAt;
         private float burstStartedAt;
         private bool burstActive;
@@ -42,6 +47,14 @@ namespace StageAssets
 
         private void Awake()
         {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+                audioSource = gameObject.AddComponent<AudioSource>();
+
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+
             CreateTrailRenderers();
             HideAll();
         }
@@ -77,6 +90,7 @@ namespace StageAssets
             burstActive = true;
             burstStartedAt = now;
             reverseDirection = Random.value < Mathf.Clamp01(reverseDirectionChance);
+            GameAudioSettings.PlaySfx(audioSource, leapStartSfx, leapStartSfxVolume);
             nextBurstAt = now + Random.Range(
                 Mathf.Min(minimumRepeatSeconds, maximumRepeatSeconds),
                 Mathf.Max(minimumRepeatSeconds, maximumRepeatSeconds));

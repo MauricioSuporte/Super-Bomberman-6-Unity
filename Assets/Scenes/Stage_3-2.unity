@@ -20537,6 +20537,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
@@ -20597,6 +20599,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
@@ -20657,6 +20661,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
@@ -20717,6 +20723,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
@@ -21037,6 +21045,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
@@ -21097,6 +21107,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
@@ -21157,6 +21169,8 @@ MonoBehaviour:
   burstDurationSeconds: 1.5
   animationFramesPerSecond: 10
   reverseDirectionChance: 0.5
+  leapStartSfx: {fileID: 8300000, guid: 3a82de4ec3d44f1aa74ee2b2262cbccb, type: 3}
+  leapStartSfxVolume: 1
   vulcanFlameSprites:
   - {fileID: 8344806389523784359, guid: 514304fad8147b849a78fc5a32702967, type: 3}
   - {fileID: 8367842679640983759, guid: 514304fad8147b849a78fc5a32702967, type: 3}
