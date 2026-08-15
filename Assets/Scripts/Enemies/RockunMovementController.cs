@@ -6,6 +6,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     [Header("Rockun Movement Sprites")]
     public AnimatedSpriteRenderer moveDown;
     public AnimatedSpriteRenderer moveLeft;
+    public AnimatedSpriteRenderer moveRight;
     public AnimatedSpriteRenderer moveUp;
 
     [Header("Rockun Ability Sprites")]
@@ -255,6 +256,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         AnimatedSpriteRenderer chosen = ChooseMovementSprite(dir);
         if (moveDown != null) moveDown.enabled = chosen == moveDown;
         if (moveLeft != null) moveLeft.enabled = chosen == moveLeft;
+        if (moveRight != null) moveRight.enabled = chosen == moveRight;
         if (moveUp != null) moveUp.enabled = chosen == moveUp;
 
         if (chosen == null)
@@ -276,7 +278,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
             return moveLeft != null ? moveLeft : moveDown;
 
         if (dir == Vector2.right)
-            return moveLeft != null ? moveLeft : moveDown;
+            return moveRight != null ? moveRight : moveLeft != null ? moveLeft : moveDown;
 
         if (dir == Vector2.up)
             return moveUp != null ? moveUp : moveDown;
@@ -302,6 +304,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     {
         if (moveDown != null) moveDown.enabled = false;
         if (moveLeft != null) moveLeft.enabled = false;
+        if (moveRight != null) moveRight.enabled = false;
         if (moveUp != null) moveUp.enabled = false;
     }
 
@@ -316,4 +319,5 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     {
         return TryGetComponent(out StunReceiver stun) && stun != null && stun.IsStunned;
     }
+
 }

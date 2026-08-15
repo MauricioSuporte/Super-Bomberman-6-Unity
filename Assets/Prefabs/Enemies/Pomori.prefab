@@ -246,6 +246,7 @@ MonoBehaviour:
   spriteUp: {fileID: 7284077499348125280}
   spriteDown: {fileID: 1228606389785476324}
   spriteLeft: {fileID: 1070967664220884432}
+  spriteRight: {fileID: 0}
   spriteDeath: {fileID: 1228606391467010645}
   spriteDamaged: {fileID: 0}
   waitForFullDeathAnimation: 1
