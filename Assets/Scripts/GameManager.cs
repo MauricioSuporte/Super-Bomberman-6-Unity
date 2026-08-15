@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Assets.Scripts.SaveSystem;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
@@ -164,14 +165,39 @@ public class GameManager : MonoBehaviour
     [Header("Stage Prefabs (Optional on Boss Stages)")]
     public Destructible destructiblePrefab;
 
-    [Header("Ground")]
-    public Tilemap groundTilemap;
-    public TileBase groundTile;
-    public TileBase groundShadowTile;
-    [Tooltip("Sombra no Ground sob o mesmo tile que possui um destrutivel. Opcional; use junto de Ground Shadow Tile para sprites de duas partes.")]
-    public TileBase destructibleGroundShadowTile;
-    public TileBase indestructibleGroundShadowTile;
-    public TileBase shadowDestructibleTile;
+    [Header("Chão")]
+    [FormerlySerializedAs("floorTilemap")]
+    [FormerlySerializedAs("groundTilemap")]
+    [Tooltip("Tilemap da camada do chão, contendo os tiles sobre os quais jogadores e objetos se movem.")]
+    public Tilemap tilemapDoChao;
+    [FormerlySerializedAs("baseFloorTile")]
+    [FormerlySerializedAs("groundTile")]
+    [Tooltip("Tile normal do chão, usado quando não existe sombra nesta célula.")]
+    public TileBase tileChaoNormal;
+    [FormerlySerializedAs("shadowBelowDestructibleFloorTile")]
+    [FormerlySerializedAs("groundShadowTile")]
+    [Tooltip("Tile de sombra mostrado no chão uma célula abaixo de um bloco destrutível.")]
+    public TileBase tileSombraChaoAbaixoDoDestrutivel;
+    [FormerlySerializedAs("shadowUnderDestructibleFloorTile")]
+    [FormerlySerializedAs("destructibleGroundShadowTile")]
+    [Tooltip("Tile de sombra mostrado no chão na mesma célula de um bloco destrutível. Opcional, para sombras em duas partes.")]
+    public TileBase tileSombraChaoSobDestrutivel;
+    [FormerlySerializedAs("shadowBelowIndestructibleFloorTile")]
+    [FormerlySerializedAs("indestructibleGroundShadowTile")]
+    [Tooltip("Tile de sombra mostrado no chão uma célula abaixo de um bloco indestrutível. Se vazio, usa a sombra abaixo do destrutível.")]
+    public TileBase tileSombraChaoAbaixoDoIndestrutivel;
+    [FormerlySerializedAs("destructibleTileShadowedByIndestructible")]
+    [FormerlySerializedAs("shadowDestructibleTile")]
+    [Tooltip("Variante sombreada do bloco destrutível, usada quando existe um bloco indestrutível logo acima dele.")]
+    public TileBase tileDestrutivelComSombraDoIndestrutivel;
+
+    // Legacy API aliases keep existing gameplay code and external scene scripts compatible.
+    public Tilemap groundTilemap { get => tilemapDoChao; set => tilemapDoChao = value; }
+    public TileBase groundTile { get => tileChaoNormal; set => tileChaoNormal = value; }
+    public TileBase groundShadowTile { get => tileSombraChaoAbaixoDoDestrutivel; set => tileSombraChaoAbaixoDoDestrutivel = value; }
+    public TileBase destructibleGroundShadowTile { get => tileSombraChaoSobDestrutivel; set => tileSombraChaoSobDestrutivel = value; }
+    public TileBase indestructibleGroundShadowTile { get => tileSombraChaoAbaixoDoIndestrutivel; set => tileSombraChaoAbaixoDoIndestrutivel = value; }
+    public TileBase shadowDestructibleTile { get => tileDestrutivelComSombraDoIndestrutivel; set => tileDestrutivelComSombraDoIndestrutivel = value; }
     public TileBase[] groundShadowIgnoredTiles;
     [Tooltip("Tiles indestrutiveis que aplicam sombra no Ground em Y-1. Se vazio, qualquer tile indestrutivel aplica sombra como antes.")]
     public TileBase[] indestructibleGroundShadowCasterTiles;
