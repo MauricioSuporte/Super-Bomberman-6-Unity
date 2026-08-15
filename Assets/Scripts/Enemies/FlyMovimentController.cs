@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public sealed class FlyMovimentController : JunctionTurningGhostEnemyMovementController
+public class FlyMovimentController : JunctionTurningGhostEnemyMovementController
 {
     private static Sprite shadowSprite;
 
