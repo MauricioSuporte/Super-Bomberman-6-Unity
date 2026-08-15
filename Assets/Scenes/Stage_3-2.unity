@@ -14838,7 +14838,7 @@ Tilemap:
       - {fileID: 1937127128, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: -1050368332, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: 1062529203, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 58, y: -6, z: 0}
@@ -15036,7 +15036,7 @@ Tilemap:
       - {fileID: 2045525187, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: -728803573, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: 280889395, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 52, y: -3, z: 0}
@@ -15694,7 +15694,7 @@ Tilemap:
       - {fileID: 2045525187, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: -728803573, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: 280889395, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 56, y: 3, z: 0}
@@ -15733,7 +15733,7 @@ Tilemap:
       - {fileID: 2045525187, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: -728803573, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: 280889395, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 60, y: 3, z: 0}
@@ -15980,7 +15980,7 @@ Tilemap:
       - {fileID: 1013630379, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: 1768674299, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
       - {fileID: -1817924477, guid: 171c251b4a1ec91498cf9f5a54c7870f, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 58, y: 5, z: 0}
@@ -17353,6 +17353,7 @@ Transform:
   m_Children:
   - {fileID: 1976846283}
   - {fileID: 266380837}
+  - {fileID: 1442924183}
   - {fileID: 1675045132}
   - {fileID: 301407892}
   - {fileID: 1382143588}
@@ -17363,7 +17364,6 @@ Transform:
   - {fileID: 2035000081}
   - {fileID: 2033200102}
   - {fileID: 2033200202}
-  - {fileID: 1442924183}
   m_Father: {fileID: 732032081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1334625508
@@ -19028,7 +19028,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6187569867862401879, guid: b37faeaab47bf6142bffb804ed528a23, type: 3}
       propertyPath: m_Name
-      value: PomoriSB3
+      value: Hawk Man
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

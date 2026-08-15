@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 5578265377158723680}
   - component: {fileID: 5979241080753447569}
   m_Layer: 10
-  m_Name: PomoriSB3
+  m_Name: Hawk Man
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
