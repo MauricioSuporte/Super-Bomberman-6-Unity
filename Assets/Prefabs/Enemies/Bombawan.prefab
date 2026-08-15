@@ -529,7 +529,7 @@ MonoBehaviour:
   preferTurnAtJunction: 0
   fuseAnimation: {fileID: 8674704387830408021}
   flipOnVerticalWalkCycle: 1
-  explosionDelay: 1
+  explosionDelay: 0.5
   explosionRadius: 5
   pierceExplosion: 0
 --- !u!1 &5502290927456629634
