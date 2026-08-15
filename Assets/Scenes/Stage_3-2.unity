@@ -9018,6 +9018,7 @@ GameObject:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
   - component: {fileID: 732032082}
+  - component: {fileID: 732032083}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -9078,6 +9079,25 @@ MonoBehaviour:
     tiles:
     - {fileID: 11400000, guid: a514a5f9cc7172c4eacfc16d29c40a72, type: 2}
     handler: {fileID: 0}
+--- !u!114 &732032083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ce4a1b9dd604093a50daae0b896d33b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage32RailDestructibleShadow
+  groundTilemap: {fileID: 672307155}
+  destructibleTilemap: {fileID: 285353618}
+  trailDarker18: {fileID: 11400000, guid: 12738b817d163fb48b489afac28acc9a, type: 2}
+  trailDarker13: {fileID: 11400000, guid: 03b29075de8c02c40a464009e17c41cf, type: 2}
+  trailDarker24: {fileID: 11400000, guid: 866aef1cbaec93b4eafd317bf7707c45, type: 2}
+  trailDarker29: {fileID: 11400000, guid: 027ce12b48fc4a446a13f958daaed5b2, type: 2}
+  trailDarker14: {fileID: 11400000, guid: 9df9bc4eee7829b4dba29144d89244f6, type: 2}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0
