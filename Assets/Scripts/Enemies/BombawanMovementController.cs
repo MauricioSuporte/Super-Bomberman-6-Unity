@@ -117,7 +117,7 @@ public sealed class BombawanMovementController : JunctionTurningEnemyMovementCon
         if (cachedBombController != null)
             return;
 
-        BombController[] controllers = FindObjectsByType<BombController>(FindObjectsSortMode.None);
+        BombController[] controllers = FindObjectsByType<BombController>();
         for (int i = 0; i < controllers.Length; i++)
         {
             BombController controller = controllers[i];
