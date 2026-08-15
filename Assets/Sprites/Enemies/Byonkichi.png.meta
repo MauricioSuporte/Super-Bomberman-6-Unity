@@ -1,0 +1,490 @@
+fileFormatVersion: 2
+guid: 4233bc97b85a4644b9e474bd015e1896
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1427950867620803496
+    second: Byonkichi_0
+  - first:
+      213: 3051194595193865235
+    second: Byonkichi_1
+  - first:
+      213: -8033570813729756509
+    second: Byonkichi_2
+  - first:
+      213: -3774441161300902005
+    second: Byonkichi_3
+  - first:
+      213: -5308495651094440419
+    second: Byonkichi_4
+  - first:
+      213: 8591171238311590167
+    second: Byonkichi_5
+  - first:
+      213: 1038382990223201983
+    second: Byonkichi_6
+  - first:
+      213: 6677866238701582145
+    second: Byonkichi_7
+  - first:
+      213: -8983255828581696910
+    second: Byonkichi_8
+  - first:
+      213: 3925808821863556180
+    second: Byonkichi_9
+  - first:
+      213: -7688372152099822899
+    second: Byonkichi_10
+  - first:
+      213: 7553715408095669345
+    second: Byonkichi_11
+  - first:
+      213: -8590328932803946694
+    second: Byonkichi_Up_0
+  - first:
+      213: 8009341235247315364
+    second: Byonkichi_Up_1
+  - first:
+      213: -4593919336070854424
+    second: Byonkichi_Up_2
+  - first:
+      213: 2129864361607123625
+    second: Byonkichi_Left_0
+  - first:
+      213: -7053659163015151668
+    second: Byonkichi_Left_1
+  - first:
+      213: -8994276553578554725
+    second: Byonkichi_Left_2
+  - first:
+      213: 1190141765143991507
+    second: Byonkichi_Left_3
+  - first:
+      213: 3880921615694627668
+    second: Byonkichi_Left_4
+  - first:
+      213: 5135312079122432395
+    second: Byonkichi_Down_0
+  - first:
+      213: 6847815024818111331
+    second: Byonkichi_Down_1
+  - first:
+      213: -7871990824075915348
+    second: Byonkichi_Down_2
+  - first:
+      213: 2670832449768333751
+    second: Byonkichi_Death_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Byonkichi_Up_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 38
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a37d570695509c880800000000000000
+      internalID: -8590328932803946694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Up_1
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 38
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a9fdcb0b65e62f60800000000000000
+      internalID: 8009341235247315364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Up_2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 38
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e8c2b614be1f30c0800000000000000
+      internalID: -4593919336070854424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Left_0
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 38
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a25b553a5cce8d10800000000000000
+      internalID: 2129864361607123625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Left_1
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 38
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccf7dc5fc5e5c1e90800000000000000
+      internalID: -7053659163015151668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Left_2
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 38
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9a5354d029ed2380800000000000000
+      internalID: -8994276553578554725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Left_3
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 38
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d493c731ab348010800000000000000
+      internalID: 1190141765143991507
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Left_4
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 38
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4530d90c5adcbd530800000000000000
+      internalID: 3880921615694627668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Down_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 4
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b818ddeb02b444740800000000000000
+      internalID: 5135312079122432395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Down_1
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 4
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 363cdd9db73580f50800000000000000
+      internalID: 6847815024818111331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Down_2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 4
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: caf02d79d0211c290800000000000000
+      internalID: -7871990824075915348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Byonkichi_Death_0
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 4
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b1270f56f3b01520800000000000000
+      internalID: 2670832449768333751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Byonkichi_0: 1427950867620803496
+      Byonkichi_1: 3051194595193865235
+      Byonkichi_10: -7688372152099822899
+      Byonkichi_11: 7553715408095669345
+      Byonkichi_2: -8033570813729756509
+      Byonkichi_3: -3774441161300902005
+      Byonkichi_4: -5308495651094440419
+      Byonkichi_5: 8591171238311590167
+      Byonkichi_6: 1038382990223201983
+      Byonkichi_7: 6677866238701582145
+      Byonkichi_8: -8983255828581696910
+      Byonkichi_9: 3925808821863556180
+      Byonkichi_Death_0: 2670832449768333751
+      Byonkichi_Down_0: 5135312079122432395
+      Byonkichi_Down_1: 6847815024818111331
+      Byonkichi_Down_2: -7871990824075915348
+      Byonkichi_Left_0: 2129864361607123625
+      Byonkichi_Left_1: -7053659163015151668
+      Byonkichi_Left_2: -8994276553578554725
+      Byonkichi_Left_3: 1190141765143991507
+      Byonkichi_Left_4: 3880921615694627668
+      Byonkichi_Up_0: -8590328932803946694
+      Byonkichi_Up_1: 8009341235247315364
+      Byonkichi_Up_2: -4593919336070854424
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
