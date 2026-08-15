@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _DistortionPixels: 0.75
     - _Speed: 1.8
-    - _UnscaledTime: 38.240055
+    - _UnscaledTime: 86.57873
     - _WaveScale: 11
     m_Colors: []
   m_BuildTextureStacks: []
