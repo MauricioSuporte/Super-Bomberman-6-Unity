@@ -14,7 +14,7 @@ Use `Assets/Prefabs/Enemies/<EnemyName>.prefab` as the source of truth. Do not l
 3. Create or update `Assets/Prefabs/Enemies/<EnemyName>.prefab` as an independent regular prefab, then place a prefab instance in the requested room. Do not duplicate an enemy hierarchy directly into the scene. A comparable enemy may be used only as a temporary authoring reference: do not save the new enemy as a prefab variant or retain a prefab-source reference to that enemy.
 4. Attach exactly one intended movement controller and a `CharacterHealth` component. Never attach a second movement controller, including a derived controller; they would issue competing movement commands to the same `Rigidbody2D`. Configure requested health on the prefab so every instance inherits it.
 5. Wire `AnimatedSpriteRenderer` children to the movement controller and keep sprite references local to the prefab. For every such child, assign its `SpriteRenderer.sprite` to exactly the same sprite as `AnimatedSpriteRenderer.idleSprite`.
-6. Set the initial visual state so exactly one directional child is enabled: use `Down` when the prefab has separate Up/Down/Left directional children; when it has one shared directional child, enable only that child. Keep all other directional children and the Death child disabled in the authored prefab.
+6. Set the initial visual state so exactly one directional child is enabled: use `Down` when the prefab has separate Up/Down/Left directional children; when it has one shared directional child, enable only that child. Keep all other directional children disabled. On the active Death child, disable both `AnimatedSpriteRenderer` and `SpriteRenderer` so it is invisible until the death flow enables it.
 
 ## Walk Animation Sequence
 
@@ -39,4 +39,5 @@ Before saving, inspect both the prefab and its scene instance to confirm `sprite
 - For every three-frame directional walk, confirm the configured loop is `1-2-3-2`.
 - For every child with `AnimatedSpriteRenderer`, confirm `SpriteRenderer.sprite` equals its `idleSprite`.
 - Confirm exactly one directional `AnimatedSpriteRenderer` is enabled in the prefab: Down for separate directions, or the sole shared directional child.
+- Confirm the Death child's `AnimatedSpriteRenderer` and `SpriteRenderer` are both disabled initially.
 - Check the Unity console for errors introduced by the new asset. Do not claim Play Mode or build validation unless run.

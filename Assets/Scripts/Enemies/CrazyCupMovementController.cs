@@ -6,11 +6,16 @@ public class CrazyCupMovementController : EnemyMovementController
 {
     private Collider2D selfCollider;
 
+    protected virtual bool PassesThroughDestructibles => true;
+
     protected override void Awake()
     {
         base.Awake();
 
         selfCollider = GetComponent<Collider2D>();
+
+        if (!PassesThroughDestructibles)
+            return;
 
         GameObject destructibles = GameObject.FindGameObjectWithTag("Destructibles");
         if (destructibles != null)
@@ -62,7 +67,7 @@ public class CrazyCupMovementController : EnemyMovementController
             if (hit.gameObject == gameObject)
                 continue;
 
-            if (hit.CompareTag("Destructibles"))
+            if (PassesThroughDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
             return true;
