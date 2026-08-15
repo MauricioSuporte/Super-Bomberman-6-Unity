@@ -30,6 +30,27 @@ Interpret direction by world movement, not by how the character appears in the s
 
 Before saving, inspect both the prefab and its scene instance to confirm `spriteUp` and `spriteDown` have not been swapped and only one movement controller is present.
 
+## World 3 (`3-N`) Death Animations
+
+For World 3 enemies, configure the death renderer and the parent
+`EnemyMovementController` (or its derived controller) as follows:
+
+- Set `waitForFullDeathAnimation = true`.
+- Use `animationTime = 0.1f` for every death frame and keep `loop = false`.
+- Start the sequence with the enemy-specific death frames from its sprite
+  sheet. When the sheet provides five such frames, they must occupy the first
+  five positions in the sequence.
+- Append the appropriate shared finish:
+  - Small enemy: the seven final death sprites used by `Funya`.
+  - Large enemy: the eight final death sprites used by `LizardMan`.
+  - Non-standard enemy: the CoreMechanisms destruction sprites, following the
+    same pattern as `Banbo`.
+- Keep the Death `AnimatedSpriteRenderer` and `SpriteRenderer` disabled until
+  the controller's death flow starts it.
+
+Example: `Kamestone` is a large enemy, so its five sheet-specific death frames
+are followed by the eight-frame `LizardMan` finish.
+
 ## Verification
 
 - Confirm the prefab exists under `Assets/Prefabs/Enemies/` and the scene object is linked to it.
