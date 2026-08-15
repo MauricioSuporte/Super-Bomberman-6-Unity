@@ -521,7 +521,7 @@ MonoBehaviour:
   spriteRight: {fileID: 0}
   spriteDeath: {fileID: 8567499557352946329}
   spriteDamaged: {fileID: 0}
-  waitForFullDeathAnimation: 0
+  waitForFullDeathAnimation: 1
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1216

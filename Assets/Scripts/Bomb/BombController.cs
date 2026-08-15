@@ -2877,6 +2877,39 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.right, effectiveRadius, effectivePierce);
     }
 
+    /// <summary>
+    /// Spawns a single bomb-equivalent explosion line. This shares the same
+    /// propagation and tile-effect handling as a normal bomb, without adding
+    /// the three perpendicular branches of an explosion cross.
+    /// </summary>
+    public void SpawnExplosionLineForEffectWithTileEffects(
+        Vector2 origin,
+        Vector2 direction,
+        int length,
+        bool pierce,
+        AudioSource sfxSource = null)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null || length <= 0)
+            return;
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
+
+        int effectiveLength = Mathf.Max(0, length);
+        bool effectivePierce = pierce;
+        TryApplyGroundExplosionModifiers(p, ref effectiveLength, ref effectivePierce);
+
+        if (sfxSource != null)
+            PlayExplosionSfxExclusive(sfxSource, effectiveLength, effectivePierce);
+
+        Vector2 cardinalDirection = Mathf.Abs(direction.x) >= Mathf.Abs(direction.y)
+            ? (direction.x >= 0f ? Vector2.right : Vector2.left)
+            : (direction.y >= 0f ? Vector2.up : Vector2.down);
+
+        Explode(p, cardinalDirection, effectiveLength, effectivePierce);
+    }
+
     public bool LaunchRevengeBomb(Vector2 launchWorldPos, Vector2 direction, int distanceTiles, int forcedRadius)
     {
         ResolveTilemaps();
