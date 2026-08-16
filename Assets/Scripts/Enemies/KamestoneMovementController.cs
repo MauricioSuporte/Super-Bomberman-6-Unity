@@ -10,7 +10,7 @@ public sealed class KamestoneMovementController : JunctionTurningEnemyMovementCo
     [SerializeField, Min(0.01f)] private float invulnerabilitySeconds = 5f;
     [SerializeField, Range(0f, 1f)] private float invulnerableAlpha = 0.5f;
 
-    private CharacterHealth health;
+    private CharacterHealth kamestoneHealth;
     private SpriteRenderer[] spriteRenderers;
     private Color[] originalColors;
     private Coroutine abilityRoutine;
@@ -20,7 +20,7 @@ public sealed class KamestoneMovementController : JunctionTurningEnemyMovementCo
     {
         base.Awake();
 
-        health = GetComponent<CharacterHealth>();
+        kamestoneHealth = GetComponent<CharacterHealth>();
         spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         originalColors = new Color[spriteRenderers.Length];
 
@@ -83,8 +83,8 @@ public sealed class KamestoneMovementController : JunctionTurningEnemyMovementCo
 
         isInvulnerableAbilityActive = true;
 
-        if (health != null)
-            health.SetExternalInvulnerability(true);
+        if (kamestoneHealth != null)
+            kamestoneHealth.SetExternalInvulnerability(true);
 
         ApplyAlpha(Mathf.Clamp01(invulnerableAlpha));
     }
@@ -96,8 +96,8 @@ public sealed class KamestoneMovementController : JunctionTurningEnemyMovementCo
 
         isInvulnerableAbilityActive = false;
 
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (kamestoneHealth != null)
+            kamestoneHealth.SetExternalInvulnerability(false);
 
         RestoreColors();
     }
