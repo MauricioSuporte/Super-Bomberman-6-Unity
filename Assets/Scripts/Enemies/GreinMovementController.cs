@@ -253,7 +253,7 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
 
     private static Tilemap FindTilemap(string tilemapName)
     {
-        foreach (Tilemap tilemap in FindObjectsByType<Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (Tilemap tilemap in FindObjectsByType<Tilemap>(FindObjectsInactive.Include))
             if (tilemap.name == tilemapName)
                 return tilemap;
 
