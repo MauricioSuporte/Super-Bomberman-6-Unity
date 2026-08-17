@@ -1,0 +1,640 @@
+fileFormatVersion: 2
+guid: 8d8f51405f977bc4da006d3a4777bec9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5124824626337981053
+    second: Furama_0
+  - first:
+      213: -3873087839342513236
+    second: Furama_1
+  - first:
+      213: 6960212559723108956
+    second: Furama_2
+  - first:
+      213: -5580611313768729608
+    second: Furama_3
+  - first:
+      213: -1954112239885994195
+    second: Furama_4
+  - first:
+      213: -3544044965765767145
+    second: Furama_5
+  - first:
+      213: 837574295468994161
+    second: Furama_6
+  - first:
+      213: 5517531821827552080
+    second: Furama_7
+  - first:
+      213: 1036493911730465143
+    second: Furama_8
+  - first:
+      213: 5070962304775108241
+    second: Furama_9
+  - first:
+      213: 5785171053262998009
+    second: Furama_10
+  - first:
+      213: 2303417833145307972
+    second: Furama_11
+  - first:
+      213: -2549660344231982090
+    second: Furama_12
+  - first:
+      213: 8528941004653049479
+    second: Furama_13
+  - first:
+      213: 835054742742094394
+    second: Furama_14
+  - first:
+      213: 5525528100685606211
+    second: Furama_15
+  - first:
+      213: -6452348374296239278
+    second: Furama_16
+  - first:
+      213: 1347337492814565144
+    second: Furama_Down_1
+  - first:
+      213: -4248019030629117108
+    second: Furama_Down_2
+  - first:
+      213: -1673779007365888696
+    second: Furama_Down_3
+  - first:
+      213: -3079314672000727459
+    second: Furama_Down_4
+  - first:
+      213: 5817919823168351440
+    second: Furama_Up_1
+  - first:
+      213: -5273141016486576704
+    second: Furama_Up_2
+  - first:
+      213: 7393819929768174858
+    second: Furama_Up_3
+  - first:
+      213: -6220047491783188183
+    second: Furama_Up_4
+  - first:
+      213: -7491821688104172498
+    second: Furama_Death_1
+  - first:
+      213: -4570209612358469977
+    second: Furama_Death_2
+  - first:
+      213: 6848084154535004689
+    second: Furama_Death_3
+  - first:
+      213: -6826488452297247404
+    second: Furama_Death_4
+  - first:
+      213: 7385515650554694439
+    second: Furama_Attack
+  - first:
+      213: 2628870733060646152
+    second: Furama_Flame_1
+  - first:
+      213: 6333547610243251531
+    second: Furama_Flame_2
+  - first:
+      213: 4107755920807312778
+    second: Furama_Flame_3
+  - first:
+      213: -110565932328678787
+    second: Furama_Flame_4
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Furama_Down_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81f07cbaf44b2b210800000000000000
+      internalID: 1347337492814565144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Down_2
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c439048d2310c05c0800000000000000
+      internalID: -4248019030629117108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Down_3
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84543716cda85c8e0800000000000000
+      internalID: -1673779007365888696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Down_4
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d568fb7ee931445d0800000000000000
+      internalID: -3079314672000727459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Up_1
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dc27a721476db050800000000000000
+      internalID: 5817919823168351440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Up_2
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cd76cd0f2a02d6b0800000000000000
+      internalID: -5273141016486576704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Up_3
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a05290f4d002c9660800000000000000
+      internalID: 7393819929768174858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Up_4
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 33
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 921243ee2c3fda9a0800000000000000
+      internalID: -6220047491783188183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Death_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e24cbf73ed3b70890800000000000000
+      internalID: -7491821688104172498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Death_2
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a63c42529a5390c0800000000000000
+      internalID: -4570209612358469977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Death_3
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11a4a0f7148490f50800000000000000
+      internalID: 6848084154535004689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Death_4
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4553481cbe07341a0800000000000000
+      internalID: -6826488452297247404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Attack
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72b8662aa5f9e7660800000000000000
+      internalID: 7385515650554694439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Flame_1
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 805208cd000ab7420800000000000000
+      internalID: 2628870733060646152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Flame_2
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4db294bef745e750800000000000000
+      internalID: 6333547610243251531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Flame_3
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8d3ab30f3ea10930800000000000000
+      internalID: 4107755920807312778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Furama_Flame_4
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7a0a4fced0377ef0800000000000000
+      internalID: -110565932328678787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: bc02ff693bd05ba49956523adc598f75
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Furama_0: -5124824626337981053
+      Furama_1: -3873087839342513236
+      Furama_10: 5785171053262998009
+      Furama_11: 2303417833145307972
+      Furama_12: -2549660344231982090
+      Furama_13: 8528941004653049479
+      Furama_14: 835054742742094394
+      Furama_15: 5525528100685606211
+      Furama_16: -6452348374296239278
+      Furama_2: 6960212559723108956
+      Furama_3: -5580611313768729608
+      Furama_4: -1954112239885994195
+      Furama_5: -3544044965765767145
+      Furama_6: 837574295468994161
+      Furama_7: 5517531821827552080
+      Furama_8: 1036493911730465143
+      Furama_9: 5070962304775108241
+      Furama_Attack: 7385515650554694439
+      Furama_Death_1: -7491821688104172498
+      Furama_Death_2: -4570209612358469977
+      Furama_Death_3: 6848084154535004689
+      Furama_Death_4: -6826488452297247404
+      Furama_Down_1: 1347337492814565144
+      Furama_Down_2: -4248019030629117108
+      Furama_Down_3: -1673779007365888696
+      Furama_Down_4: -3079314672000727459
+      Furama_Flame_1: 2628870733060646152
+      Furama_Flame_2: 6333547610243251531
+      Furama_Flame_3: 4107755920807312778
+      Furama_Flame_4: -110565932328678787
+      Furama_Up_1: 5817919823168351440
+      Furama_Up_2: -5273141016486576704
+      Furama_Up_3: 7393819929768174858
+      Furama_Up_4: -6220047491783188183
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

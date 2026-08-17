@@ -1741,8 +1741,15 @@ public partial class BombController : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            Vector2 nextPosition = position + direction;
-            nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            Vector2 nextPosition;
+            if (!StageAssets.Stage32Room1VerticalWrap.TryWrapExplosionStep(
+                    position,
+                    direction,
+                    out nextPosition))
+            {
+                nextPosition = position + direction;
+                nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            }
 
             if (HasBlockingExplosionPartAt(nextPosition))
                 break;
@@ -2020,8 +2027,15 @@ public partial class BombController : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            Vector2 nextPosition = position + direction;
-            nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            Vector2 nextPosition;
+            if (!StageAssets.Stage32Room1VerticalWrap.TryWrapExplosionStep(
+                    position,
+                    direction,
+                    out nextPosition))
+            {
+                nextPosition = position + direction;
+                nextPosition = SnapToTileCenter(snapTm, nextPosition);
+            }
 
             if (HasBlockingExplosionPartAt(nextPosition))
                 break;
@@ -2564,6 +2578,36 @@ public partial class BombController : MonoBehaviour
         plantedBombs.Clear();
     }
 
+    /// <summary>
+    /// Removes every still-armed bomb during an in-stage room transition.
+    /// Each owned bomb is removed through its owner so the player's available
+    /// bomb count is restored instead of being lost with the GameObject.
+    /// </summary>
+    public static void ClearAllArmedBombsForRoomTransition()
+    {
+        _activeBombSnapshot.Clear();
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb != null)
+                _activeBombSnapshot.Add(bomb);
+        }
+
+        for (int i = 0; i < _activeBombSnapshot.Count; i++)
+        {
+            Bomb bomb = _activeBombSnapshot[i];
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            BombController owner = bomb.Owner;
+            if (owner != null)
+                owner.DestroyBombExternally(bomb.gameObject, refund: true);
+            else
+                Object.Destroy(bomb.gameObject);
+        }
+
+        _activeBombSnapshot.Clear();
+    }
+
     public static void ExplodeAllControlBombsInStage()
     {
         if (Bomb.ActiveBombs.Count == 0)
@@ -2666,6 +2710,54 @@ public partial class BombController : MonoBehaviour
                     pierce);
             }
         }
+    }
+
+    /// <summary>
+    /// Applies the normal explosion interactions to only the origin tile, while
+    /// leaving its visual presentation to the caller.
+    /// </summary>
+    public void SpawnSingleTileExplosionDamageForEffect(Vector2 origin, float damageDuration)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
+        if (!TryGetAreaExplosionSkipReason(p, out _))
+            return;
+
+        Vector2 direction = Vector2.zero;
+        Collider2D itemHit = Physics2D.OverlapBox(p, Vector2.one * 0.5f, 0f, itemLayerMask);
+        if (itemHit != null)
+            TryHandleItemHitByExplosion(itemHit, direction);
+
+        if (TryGetDestructibleTileAt(p, out Vector3Int destructibleCell, out TileBase tile))
+        {
+            SpawnExplosionDamageHitbox(p, p)?.PlayDamageOnly(damageDuration, p);
+            if (!TryHandleDestructibleTileEffect(p, destructibleCell, tile))
+                ClearDestructibleForEffect(p);
+            return;
+        }
+
+        if (HasDestroyingDestructibleAt(p))
+        {
+            TryHandleActiveDestructibleHitByExplosion(p);
+            SpawnExplosionDamageHitbox(p, p)?.PlayDamageOnly(damageDuration, p);
+            return;
+        }
+
+        if (TryGetAnyBombColliderAt(p, 0.6f, out Collider2D bombHit))
+        {
+            GameObject bombObject = bombHit.attachedRigidbody != null
+                ? bombHit.attachedRigidbody.gameObject
+                : bombHit.gameObject;
+            if (bombObject != null)
+                ExplodeBombChained(bombObject, p);
+        }
+
+        TryHandleGroundExplosionHit(p);
+        SpawnExplosionDamageHitbox(p, p)?.PlayDamageOnly(damageDuration, p);
     }
 
     private void SpawnExplosionAreaTileForEffect(
@@ -2910,6 +3002,39 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.down, effectiveRadius, effectivePierce);
         Explode(p, Vector2.left, effectiveRadius, effectivePierce);
         Explode(p, Vector2.right, effectiveRadius, effectivePierce);
+    }
+
+    /// <summary>
+    /// Spawns a single bomb-equivalent explosion line. This shares the same
+    /// propagation and tile-effect handling as a normal bomb, without adding
+    /// the three perpendicular branches of an explosion cross.
+    /// </summary>
+    public void SpawnExplosionLineForEffectWithTileEffects(
+        Vector2 origin,
+        Vector2 direction,
+        int length,
+        bool pierce,
+        AudioSource sfxSource = null)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null || length <= 0)
+            return;
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
+
+        int effectiveLength = Mathf.Max(0, length);
+        bool effectivePierce = pierce;
+        TryApplyGroundExplosionModifiers(p, ref effectiveLength, ref effectivePierce);
+
+        if (sfxSource != null)
+            PlayExplosionSfxExclusive(sfxSource, effectiveLength, effectivePierce);
+
+        Vector2 cardinalDirection = Mathf.Abs(direction.x) >= Mathf.Abs(direction.y)
+            ? (direction.x >= 0f ? Vector2.right : Vector2.left)
+            : (direction.y >= 0f ? Vector2.up : Vector2.down);
+
+        Explode(p, cardinalDirection, effectiveLength, effectivePierce);
     }
 
     public bool LaunchRevengeBomb(Vector2 launchWorldPos, Vector2 direction, int distanceTiles, int forcedRadius)

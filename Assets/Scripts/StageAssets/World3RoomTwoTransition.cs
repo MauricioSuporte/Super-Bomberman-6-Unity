@@ -86,6 +86,11 @@ namespace StageAssets
             timeScaleBeforeTransition = Time.timeScale;
             Time.timeScale = 0f;
             yield return FadeTo(1f, fadeOutSeconds);
+
+            // The screen is now black, so clean up the previous room without
+            // letting a remaining fuse or explosion be heard during the move.
+            BombController.ClearAllArmedBombsForRoomTransition();
+
             FaceLivingPlayersDown();
 
             if (blackScreenSeconds > 0f)

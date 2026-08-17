@@ -6,6 +6,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     [Header("Rockun Movement Sprites")]
     public AnimatedSpriteRenderer moveDown;
     public AnimatedSpriteRenderer moveLeft;
+    public AnimatedSpriteRenderer moveRight;
     public AnimatedSpriteRenderer moveUp;
 
     [Header("Rockun Ability Sprites")]
@@ -17,7 +18,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     [Min(0.1f)] public float walkSecondsBeforeAbility = 5f;
     [Min(0.1f)] public float abilityInvulnerabilitySeconds = 2f;
 
-    CharacterHealth health;
+    CharacterHealth rockunHealth;
     bool isUsingAbility;
     bool isExitingAbility;
     float walkTimer;
@@ -31,15 +32,15 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     {
         base.Awake();
 
-        health = GetComponent<CharacterHealth>();
+        rockunHealth = GetComponent<CharacterHealth>();
         DisableAbilitySprites();
         ApplyMovementSprite(direction);
     }
 
     protected override void OnDestroy()
     {
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (rockunHealth != null)
+            rockunHealth.SetExternalInvulnerability(false);
 
         base.OnDestroy();
     }
@@ -102,7 +103,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         targetTile = abilityTile;
         rb.linearVelocity = Vector2.zero;
 
-        health?.SetExternalInvulnerability(true);
+        rockunHealth?.SetExternalInvulnerability(true);
 
         DisableMovementSprites();
         AnimatedSpriteRenderer ability = ChooseAbilitySprite(direction);
@@ -137,7 +138,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         isExitingAbility = false;
         abilityTimer = 0f;
         abilityFrameTimer = 0f;
-        health?.SetExternalInvulnerability(false);
+        rockunHealth?.SetExternalInvulnerability(false);
 
         if (activeAbilitySprite != null)
             activeAbilitySprite.SetManualAnimationUpdate(false);
@@ -157,7 +158,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         isExitingAbility = false;
         abilityTimer = 0f;
         abilityFrameTimer = 0f;
-        health?.SetExternalInvulnerability(false);
+        rockunHealth?.SetExternalInvulnerability(false);
 
         if (activeAbilitySprite != null)
             activeAbilitySprite.SetManualAnimationUpdate(false);
@@ -192,7 +193,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
 
     void BeginAbilityExit()
     {
-        health?.SetExternalInvulnerability(false);
+        rockunHealth?.SetExternalInvulnerability(false);
         isExitingAbility = true;
         abilityFrameTimer = 0f;
 
@@ -255,6 +256,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
         AnimatedSpriteRenderer chosen = ChooseMovementSprite(dir);
         if (moveDown != null) moveDown.enabled = chosen == moveDown;
         if (moveLeft != null) moveLeft.enabled = chosen == moveLeft;
+        if (moveRight != null) moveRight.enabled = chosen == moveRight;
         if (moveUp != null) moveUp.enabled = chosen == moveUp;
 
         if (chosen == null)
@@ -276,7 +278,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
             return moveLeft != null ? moveLeft : moveDown;
 
         if (dir == Vector2.right)
-            return moveLeft != null ? moveLeft : moveDown;
+            return moveRight != null ? moveRight : moveLeft != null ? moveLeft : moveDown;
 
         if (dir == Vector2.up)
             return moveUp != null ? moveUp : moveDown;
@@ -302,6 +304,7 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     {
         if (moveDown != null) moveDown.enabled = false;
         if (moveLeft != null) moveLeft.enabled = false;
+        if (moveRight != null) moveRight.enabled = false;
         if (moveUp != null) moveUp.enabled = false;
     }
 
@@ -316,4 +319,5 @@ public sealed class RockunMovementController : JunctionTurningEnemyMovementContr
     {
         return TryGetComponent(out StunReceiver stun) && stun != null && stun.IsStunned;
     }
+
 }

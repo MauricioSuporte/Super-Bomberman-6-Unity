@@ -166,7 +166,7 @@ namespace StageAssets
             if (bubbleCrashPhase2Delay > 0f)
                 yield return new WaitForSeconds(bubbleCrashPhase2Delay);
 
-            DestroyBubbleCrashPhase1Pieces();
+            yield return BlinkOutAndDestroyBubbleCrashPhase1Pieces();
             PlayBubbleCrashSfx();
 
             int count = Mathf.Max(1, bubbleCrashThrownSpriteCount);
@@ -185,8 +185,26 @@ namespace StageAssets
             }
         }
 
-        private void DestroyBubbleCrashPhase1Pieces()
+        private IEnumerator BlinkOutAndDestroyBubbleCrashPhase1Pieces()
         {
+            float duration = Mathf.Max(0.01f, bubbleCrashBlinkOutDuration);
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                bool visible = Mathf.FloorToInt(elapsed / 0.04f) % 2 == 0;
+
+                for (int i = 0; i < bubbleCrashPhase1Pieces.Count; i++)
+                {
+                    GameObject piece = bubbleCrashPhase1Pieces[i];
+                    if (piece != null && piece.TryGetComponent(out SpriteRenderer renderer))
+                        renderer.enabled = visible;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
             for (int i = 0; i < bubbleCrashPhase1Pieces.Count; i++)
             {
                 if (bubbleCrashPhase1Pieces[i] == null)

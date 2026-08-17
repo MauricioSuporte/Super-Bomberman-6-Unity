@@ -31,6 +31,32 @@ namespace StageAssets
 
         private readonly Dictionary<EnemyMovementController, bool> enemyOriginalStates = new();
 
+        /// <summary>
+        /// Returns the authored room bounds that contain the supplied position.
+        /// This is used by airborne bombs so their bounce wrap cannot escape to
+        /// a neighboring World 3 room.
+        /// </summary>
+        public static Collider2D FindRoomBoundsContaining(Vector2 worldPosition)
+        {
+            World3RoomProgressionController controller =
+                FindAnyObjectByType<World3RoomProgressionController>();
+
+            if (controller == null || controller.rooms == null)
+                return null;
+
+            for (int i = 0; i < controller.rooms.Length; i++)
+            {
+                Collider2D bounds = controller.rooms[i] != null
+                    ? controller.rooms[i].roomBounds
+                    : null;
+
+                if (bounds != null && bounds.OverlapPoint(worldPosition))
+                    return bounds;
+            }
+
+            return null;
+        }
+
         private void Awake()
         {
             ScanRoomCores();
@@ -159,7 +185,7 @@ namespace StageAssets
                 if (bounds == null)
                     continue;
 
-                bool roomHasPlayer = HasLivingPlayer(bounds);
+                bool roomHasPlayer = IsRoomOccupied(bounds);
                 foreach (EnemyMovementController enemy in GetRoomEnemies(room, bounds))
                 {
                     if (enemy == null || !enemyOriginalStates.TryGetValue(enemy, out bool originallyEnabled))
@@ -192,7 +218,8 @@ namespace StageAssets
                     yield return enemy;
         }
 
-        private static bool HasLivingPlayer(Collider2D area)
+        /// <summary>Returns whether a living player is inside an authored room bound.</summary>
+        public static bool IsRoomOccupied(Collider2D area)
         {
             MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
             for (int i = 0; i < players.Length; i++)

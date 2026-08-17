@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 /// <summary>
@@ -17,6 +18,11 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     [Header("CoreMechanisms Water Surface")]
     [Tooltip("World-space offset applied only when this effect is attached to a CoreMechanisms destructible. More negative values lower the waterline.")]
     private readonly float coreMechanismsWaterSurfaceYOffset = -0.125f;
+
+    [Header("CoreMechanisms Scene Restriction")]
+    [Tooltip("When this effect is attached to a CoreMechanisms destructible, it only runs in this scene. Other uses of the effect are unaffected.")]
+    [SerializeField] private bool limitCoreMechanismsToScene = true;
+    [SerializeField] private string coreMechanismsSceneName = "Stage_3-1";
 
     [Header("Water Appearance")]
     [Tooltip("World-space offset from this object's pivot to the water surface.")]
@@ -69,6 +75,18 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     {
         bombLayerMask = LayerMask.GetMask("Bomb");
         TryGetComponent(out coreMechanisms);
+
+        if (coreMechanisms != null &&
+            limitCoreMechanismsToScene &&
+            !string.Equals(
+                SceneManager.GetActiveScene().name,
+                coreMechanismsSceneName,
+                System.StringComparison.OrdinalIgnoreCase))
+        {
+            enabled = false;
+            return;
+        }
+
         ResolveDestructibleTilemap();
 
         Material waterMaterialTemplate = Resources.Load<Material>(WaterMaterialResourcePath);

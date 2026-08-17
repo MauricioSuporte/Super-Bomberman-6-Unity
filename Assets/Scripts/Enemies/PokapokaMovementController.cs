@@ -2,11 +2,17 @@ using UnityEngine;
 
 public sealed class PokapokaMovementController : JunctionTurningEnemyMovementController
 {
-    private const float JumpDuration = 0.25f;
+    private const float AbilityDuration = 1.5f;
+    private const float UppercutDuration = 1f;
+    private const float JumpPhaseDuration = 2f;
+    private const float JumpPauseDuration = 0.15f;
     private const int JumpsPerAbilityLoop = 3;
+    private const float PixelsPerUnit = 16f;
+    private const float JumpDuration = (JumpPhaseDuration - JumpsPerAbilityLoop * JumpPauseDuration) / JumpsPerAbilityLoop;
 
     [Header("Ability")]
     [SerializeField] private AnimatedSpriteRenderer abilitySprite;
+    [SerializeField] private AnimatedSpriteRenderer uppercutSprite;
     [SerializeField] private AnimatedSpriteRenderer jumpSprite;
 
     [Header("Player Detection")]
@@ -16,11 +22,19 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
     private StunReceiver stunReceiver;
     private bool abilityActive;
     private bool jumping;
-    private int previousAbilityFrame;
     private int jumpsRemaining;
-    private float jumpTimer;
+    private float phaseTimer;
+    private AbilityPhase abilityPhase;
     private GameObject jumpShadow;
     private Sprite jumpShadowSprite;
+
+    private enum AbilityPhase
+    {
+        Ability,
+        Uppercut,
+        Jump,
+        JumpPause
+    }
 
     protected override void Awake()
     {
@@ -28,6 +42,9 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
 
         if (abilitySprite != null)
             abilitySprite.enabled = false;
+
+        if (uppercutSprite != null)
+            uppercutSprite.enabled = false;
 
         if (jumpSprite != null)
             jumpSprite.enabled = false;
@@ -57,12 +74,6 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
             return;
         }
 
-        if (jumping)
-        {
-            UpdateJump();
-            return;
-        }
-
         if (TrySeePlayer(out Vector2 seenDirection))
         {
             direction = seenDirection;
@@ -71,7 +82,7 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
             if (rb != null)
                 rb.linearVelocity = Vector2.zero;
 
-            UpdateAbilityLoop();
+            UpdateAbilitySequence();
             return;
         }
 
@@ -115,22 +126,61 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
 
         activeSprite = abilitySprite;
         abilityActive = true;
-        previousAbilityFrame = abilitySprite.CurrentFrame;
+        abilityPhase = AbilityPhase.Ability;
+        phaseTimer = 0f;
     }
 
-    private void UpdateAbilityLoop()
+    private void UpdateAbilitySequence()
     {
-        if (!abilityActive || abilitySprite == null || abilitySprite.animationSprite == null || abilitySprite.animationSprite.Length < 2)
+        if (!abilityActive)
             return;
 
-        int currentFrame = abilitySprite.CurrentFrame;
-        if (currentFrame < previousAbilityFrame)
+        phaseTimer += Time.fixedDeltaTime;
+
+        switch (abilityPhase)
+        {
+            case AbilityPhase.Ability when phaseTimer >= AbilityDuration:
+                StartUppercut();
+                break;
+
+            case AbilityPhase.Uppercut when phaseTimer >= UppercutDuration:
+                jumpsRemaining = JumpsPerAbilityLoop;
+                StartJump();
+                break;
+
+            case AbilityPhase.Jump:
+                UpdateJump();
+                break;
+
+            case AbilityPhase.JumpPause when phaseTimer >= JumpPauseDuration:
+                if (jumpsRemaining > 0)
+                    StartJump();
+                else
+                    StartAbilityCycle();
+                break;
+        }
+    }
+
+    private void StartUppercut()
+    {
+        if (uppercutSprite == null)
         {
             jumpsRemaining = JumpsPerAbilityLoop;
             StartJump();
+            return;
         }
 
-        previousAbilityFrame = currentFrame;
+        if (abilitySprite != null)
+            abilitySprite.enabled = false;
+
+        uppercutSprite.enabled = true;
+        uppercutSprite.loop = true;
+        uppercutSprite.idle = false;
+        uppercutSprite.RestartAnimation();
+
+        activeSprite = uppercutSprite;
+        abilityPhase = AbilityPhase.Uppercut;
+        phaseTimer = 0f;
     }
 
     private void StartJump()
@@ -139,9 +189,12 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
             return;
 
         jumping = true;
-        jumpTimer = 0f;
+        abilityPhase = AbilityPhase.Jump;
+        phaseTimer = 0f;
 
         abilitySprite.enabled = false;
+        if (uppercutSprite != null)
+            uppercutSprite.enabled = false;
         jumpSprite.enabled = true;
         jumpSprite.loop = true;
         jumpSprite.idle = false;
@@ -160,9 +213,9 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
 
-        jumpTimer += Time.fixedDeltaTime;
-        float progress = Mathf.Clamp01(jumpTimer / JumpDuration);
+        float progress = Mathf.Clamp01(phaseTimer / JumpDuration);
         float height = Mathf.Sin(progress * Mathf.PI) * (tileSize * 0.5f);
+        height = Mathf.Round(height * PixelsPerUnit) / PixelsPerUnit;
 
         if (jumpSprite != null)
             jumpSprite.SetExternalBaseOffsetFromInitial(Vector3.up * height);
@@ -170,6 +223,12 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
         if (progress < 1f)
             return;
 
+        jumpsRemaining--;
+        StartJumpPause();
+    }
+
+    private void StartJumpPause()
+    {
         jumping = false;
         if (jumpSprite != null)
         {
@@ -182,22 +241,30 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
         if (rb != null)
             SpawnWaterEffect(rb.position, FrogWaterJumpEffect.EffectType.EntrySplash);
 
-        jumpsRemaining--;
-        if (jumpsRemaining > 0)
-        {
-            StartJump();
-            return;
-        }
-
         if (abilitySprite != null)
         {
             abilitySprite.enabled = true;
-            abilitySprite.loop = true;
-            abilitySprite.idle = false;
+            abilitySprite.idle = true;
             abilitySprite.RestartAnimation();
             activeSprite = abilitySprite;
-            previousAbilityFrame = abilitySprite.CurrentFrame;
         }
+
+        abilityPhase = AbilityPhase.JumpPause;
+        phaseTimer = 0f;
+    }
+
+    private void StartAbilityCycle()
+    {
+        if (abilitySprite == null)
+            return;
+
+        abilitySprite.enabled = true;
+        abilitySprite.loop = true;
+        abilitySprite.idle = false;
+        abilitySprite.RestartAnimation();
+        activeSprite = abilitySprite;
+        abilityPhase = AbilityPhase.Ability;
+        phaseTimer = 0f;
     }
 
     private void StopAbility()
@@ -208,9 +275,13 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
         abilityActive = false;
         jumping = false;
         jumpsRemaining = 0;
+        phaseTimer = 0f;
 
         if (abilitySprite != null)
             abilitySprite.enabled = false;
+
+        if (uppercutSprite != null)
+            uppercutSprite.enabled = false;
 
         if (jumpSprite != null)
         {

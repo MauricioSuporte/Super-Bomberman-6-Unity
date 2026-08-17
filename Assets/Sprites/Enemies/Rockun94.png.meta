@@ -1,0 +1,714 @@
+fileFormatVersion: 2
+guid: c75e8c2899616db408243e6cbe299612
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3400966241040100069
+    second: Rockun94_0
+  - first:
+      213: 8923590092547261371
+    second: Rockun94_1
+  - first:
+      213: 5578155609828696330
+    second: Rockun94_2
+  - first:
+      213: -7388700546973896154
+    second: Rockun94_3
+  - first:
+      213: -1262770583413523209
+    second: Rockun94_4
+  - first:
+      213: -3074637621270168460
+    second: Rockun94_5
+  - first:
+      213: -8210251898295406486
+    second: Rockun94_6
+  - first:
+      213: 3331461739905587621
+    second: Rockun94_7
+  - first:
+      213: -7513124715580365289
+    second: Rockun94_8
+  - first:
+      213: 6270122843647343589
+    second: Rockun94_9
+  - first:
+      213: -1815452301632218024
+    second: Rockun94_10
+  - first:
+      213: -5247490970578121536
+    second: Rockun94_11
+  - first:
+      213: 76931152844019362
+    second: Rockun94_12
+  - first:
+      213: -5942504055439480256
+    second: Rockun94_13
+  - first:
+      213: 2329231728746114237
+    second: Rockun94_14
+  - first:
+      213: 2216271841351254078
+    second: Rockun94_15
+  - first:
+      213: -7640557155662183555
+    second: Rockun94_Frame_0
+  - first:
+      213: -8558017012096094506
+    second: Rockun94_Frame_1
+  - first:
+      213: 1811047209480544330
+    second: Rockun94_Frame_2
+  - first:
+      213: 4900444266453034402
+    second: Rockun94_Frame_3
+  - first:
+      213: -5031693969604982935
+    second: Rockun94_Frame_4
+  - first:
+      213: 5886677505678651185
+    second: Rockun94_Frame_5
+  - first:
+      213: -2721886123008163241
+    second: Rockun94_Frame_6
+  - first:
+      213: 6334567036393591068
+    second: Rockun94_Frame_7
+  - first:
+      213: -1104588720474283682
+    second: Rockun94_Frame_8
+  - first:
+      213: 1046342090167966690
+    second: Rockun94_Frame_9
+  - first:
+      213: -577573958400099725
+    second: Rockun94_Frame_10
+  - first:
+      213: -6948154251675005277
+    second: Rockun94_Frame_11
+  - first:
+      213: -1192505012869421113
+    second: Rockun94_Frame_12
+  - first:
+      213: 5994644929540035518
+    second: Rockun94_Frame_13
+  - first:
+      213: -303539586047066350
+    second: Rockun94_Frame_14
+  - first:
+      213: 7152691471251985429
+    second: Rockun94_Frame_15
+  - first:
+      213: -3815683114559937394
+    second: Rockun94_Frame_16
+  - first:
+      213: -1846420240508087910
+    second: Rockun94_Frame_17
+  - first:
+      213: -6516745835589918720
+    second: Rockun94_Frame_18
+  - first:
+      213: -3690938269757979062
+    second: Rockun94_Frame_19
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Rockun94_Frame_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d73cfa29fb947f590800000000000000
+      internalID: -7640557155662183555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6de234caed0db3980800000000000000
+      internalID: -8558017012096094506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a40ec8877d1222910800000000000000
+      internalID: 1811047209480544330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a5688fb810e10440800000000000000
+      internalID: 4900444266453034402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96748336ef4db2ab0800000000000000
+      internalID: -5031693969604982935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_5
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13f2241a00ea1b150800000000000000
+      internalID: 5886677505678651185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_6
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75288070efae93ad0800000000000000
+      internalID: -2721886123008163241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_7
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c11932a5827e8e750800000000000000
+      internalID: 6334567036393591068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_8
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e512a3d3966bba0f0800000000000000
+      internalID: -1104588720474283682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_9
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2eb5006569a558e00800000000000000
+      internalID: 1046342090167966690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_10
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37abb028b8b0cf7f0800000000000000
+      internalID: -577573958400099725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_11
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ae8a406582339f90800000000000000
+      internalID: -6948154251675005277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_12
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c7ab0b420f537fe0800000000000000
+      internalID: -1192505012869421113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_13
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb394db6dc1413350800000000000000
+      internalID: 5994644929540035518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_14
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21f356eca5c99cbf0800000000000000
+      internalID: -303539586047066350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_15
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 514d0fb1ff6734360800000000000000
+      internalID: 7152691471251985429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_16
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e84e2357c68fb0bc0800000000000000
+      internalID: -3815683114559937394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_17
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a919c62f2923066e0800000000000000
+      internalID: -1846420240508087910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_18
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0002822903edf85a0800000000000000
+      internalID: -6516745835589918720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rockun94_Frame_19
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a464e27f23727ccc0800000000000000
+      internalID: -3690938269757979062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Rockun94_0: 3400966241040100069
+      Rockun94_1: 8923590092547261371
+      Rockun94_10: -1815452301632218024
+      Rockun94_11: -5247490970578121536
+      Rockun94_12: 76931152844019362
+      Rockun94_13: -5942504055439480256
+      Rockun94_14: 2329231728746114237
+      Rockun94_15: 2216271841351254078
+      Rockun94_2: 5578155609828696330
+      Rockun94_3: -7388700546973896154
+      Rockun94_4: -1262770583413523209
+      Rockun94_5: -3074637621270168460
+      Rockun94_6: -8210251898295406486
+      Rockun94_7: 3331461739905587621
+      Rockun94_8: -7513124715580365289
+      Rockun94_9: 6270122843647343589
+      Rockun94_Frame_0: -7640557155662183555
+      Rockun94_Frame_1: -8558017012096094506
+      Rockun94_Frame_10: -577573958400099725
+      Rockun94_Frame_11: -6948154251675005277
+      Rockun94_Frame_12: -1192505012869421113
+      Rockun94_Frame_13: 5994644929540035518
+      Rockun94_Frame_14: -303539586047066350
+      Rockun94_Frame_15: 7152691471251985429
+      Rockun94_Frame_16: -3815683114559937394
+      Rockun94_Frame_17: -1846420240508087910
+      Rockun94_Frame_18: -6516745835589918720
+      Rockun94_Frame_19: -3690938269757979062
+      Rockun94_Frame_2: 1811047209480544330
+      Rockun94_Frame_3: 4900444266453034402
+      Rockun94_Frame_4: -5031693969604982935
+      Rockun94_Frame_5: 5886677505678651185
+      Rockun94_Frame_6: -2721886123008163241
+      Rockun94_Frame_7: 6334567036393591068
+      Rockun94_Frame_8: -1104588720474283682
+      Rockun94_Frame_9: 1046342090167966690
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

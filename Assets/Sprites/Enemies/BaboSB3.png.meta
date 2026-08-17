@@ -1,0 +1,336 @@
+fileFormatVersion: 2
+guid: 2e5e6f19d3ee061499382108776aee26
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2360051531600929363
+    second: BaboSB3_0
+  - first:
+      213: 4579645667203884582
+    second: BaboSB3_1
+  - first:
+      213: -3700459989701662924
+    second: BaboSB3_2
+  - first:
+      213: -412036554020973111
+    second: BaboSB3_3
+  - first:
+      213: -797569043673910005
+    second: BaboSB3_4
+  - first:
+      213: -37541543996032808
+    second: BaboSB3_5
+  - first:
+      213: 1285691560958512096
+    second: BaboSB3_6
+  - first:
+      213: -6879974998594208878
+    second: BaboSB3_Horizontal_1
+  - first:
+      213: -4515534741111947072
+    second: BaboSB3_Horizontal_2
+  - first:
+      213: -4972911870792660840
+    second: BaboSB3_Horizontal_3
+  - first:
+      213: -2101491960004425504
+    second: BaboSB3_Vertical_1
+  - first:
+      213: -7124385097402033661
+    second: BaboSB3_Vertical_2
+  - first:
+      213: 5413996457046498807
+    second: BaboSB3_Vertical_3
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BaboSB3_Horizontal_1
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 50
+        width: 32
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29b3931c03b6580a0800000000000000
+      internalID: -6879974998594208878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BaboSB3_Horizontal_2
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 50
+        width: 32
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c04619c3199551c0800000000000000
+      internalID: -4515534741111947072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BaboSB3_Horizontal_3
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 50
+        width: 32
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 898841a400bacfab0800000000000000
+      internalID: -4972911870792660840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BaboSB3_Vertical_1
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 5
+        width: 18
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e8c891523006d2e0800000000000000
+      internalID: -2101491960004425504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BaboSB3_Vertical_2
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 5
+        width: 18
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30ad3422089112d90800000000000000
+      internalID: -7124385097402033661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BaboSB3_Vertical_3
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 5
+        width: 18
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fdda75d711622b40800000000000000
+      internalID: 5413996457046498807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BaboSB3_0
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 4
+        width: 32
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 07753dcc297ccbd458a1db9eca0ea650
+      internalID: 2360051531600929363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: c2214e8646d8ed1419e7c7f16a47324b
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      BaboSB3_0: 2360051531600929363
+      BaboSB3_1: 4579645667203884582
+      BaboSB3_2: -3700459989701662924
+      BaboSB3_3: -412036554020973111
+      BaboSB3_4: -797569043673910005
+      BaboSB3_5: -37541543996032808
+      BaboSB3_6: 1285691560958512096
+      BaboSB3_Horizontal_1: -6879974998594208878
+      BaboSB3_Horizontal_2: -4515534741111947072
+      BaboSB3_Horizontal_3: -4972911870792660840
+      BaboSB3_Vertical_1: -2101491960004425504
+      BaboSB3_Vertical_2: -7124385097402033661
+      BaboSB3_Vertical_3: 5413996457046498807
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

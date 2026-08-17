@@ -11,6 +11,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 {
     const string BattleMode9SceneName = "BattleMode_9";
     const string BattleMode12SceneName = "BattleMode_12";
+    const string Stage32SceneName = "Stage_3-2";
     const string DefaultEnterSfxResourcesPath = "Sounds/start";
     const string DefaultExitSfxResourcesPath = "Sounds/start";
 
@@ -41,6 +42,31 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         new() { startCell = new Vector2Int(-5, 1), endCell = new Vector2Int(-5, -4) },
         new() { startCell = new Vector2Int(-4, -4), endCell = new Vector2Int(-1, -4) },
     };
+
+    [Header("Stage 3-2 Room 1 Shuttle")]
+    [Tooltip("Enables the Room 1 minecart shuttle when this controller is authored in Stage_3-2.")]
+    [SerializeField] private bool useStage32Room1Shuttle;
+    [SerializeField] private Vector2Int stage32StationA = new(4, -2);
+    [SerializeField] private Vector2Int stage32StationB = new(2, -6);
+    [SerializeField, Min(0.01f)] private float stage32JumpSeconds = 0.5f;
+    [SerializeField, Min(0f)] private float stage32JumpHeightTiles = 1f;
+    [SerializeField] private Sprite stage32HorizontalSprite;
+    [SerializeField] private Sprite stage32VerticalSprite;
+
+    [Header("Stage 3-2 Room 2 Shuttle")]
+    [Tooltip("Enables the Room 2 minecart shuttle when this controller is authored in Stage_3-2.")]
+    [SerializeField] private bool useStage32Room2Shuttle;
+    [SerializeField] private Vector2Int[] stage32Room2ForwardWaypoints;
+
+    [Header("Stage 3-2 Room 3 Shuttle")]
+    [Tooltip("Enables the Room 3 minecart shuttle when this controller is authored in Stage_3-2.")]
+    [SerializeField] private bool useStage32Room3Shuttle;
+    [SerializeField] private Vector2Int[] stage32Room3ForwardWaypoints;
+    [SerializeField] private Vector2Int stage32Room3JumpStart;
+    [SerializeField] private Vector2Int stage32Room3JumpEnd;
+    [SerializeField] private Vector2Int stage32Room3ReverseJumpStart;
+    [SerializeField] private Vector2Int stage32Room3ReverseJumpEnd;
+    [SerializeField] private AudioClip stage32JumpSfx;
 
     [Header("Battle Mode 12 Portal Routes")]
     [SerializeField]
@@ -124,6 +150,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     Tilemap destructibleTilemap;
     Tilemap indestructibleTilemap;
     AudioSource audioSource;
+    AudioSource oneShotAudioSource;
     BombController destructibleClearer;
     BattleSuddenDeathController suddenDeathController;
 
@@ -144,6 +171,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     float cartMovePixelAccumulator;
     Vector2 lastCartMoveDirection;
     bool rideLoopPausedForGamePause;
+    bool rideLoopPausedForJump;
     bool cartDestroyedBySuddenDeath;
     int battleMode12CurrentRouteIndex;
     int currentRailTargetIndex = -1;
@@ -152,6 +180,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     bool rideExitAnimationActive;
     float rideExitAnimationStartedTime;
     Vector3Int currentRideExitCell;
+    bool stage32AtDestinationStation;
 
     public bool RideActive => currentRider != null;
     public bool CartAvailable => !cartDestroyedBySuddenDeath && currentRider == null;
@@ -257,7 +286,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             return;
 
         Scene activeScene = SceneManager.GetActiveScene();
-        if (!IsSupportedScene(activeScene.name))
+        if (!IsAutoBootstrapScene(activeScene.name))
             return;
 
         if (FindAnyObjectByType<BattleMode9MinecartController>() != null)
@@ -277,6 +306,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         ResolveReferences();
         EnsureAudioSource();
+        EnsureOneShotAudioSource();
         LoadDefaultSfxIfNeeded();
         EnsureCartVisuals();
         ConfigureForActiveScene();
@@ -388,14 +418,21 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         rideExitAnimationActive = false;
 
         bool battleMode12 = IsBattleMode12Active();
+        bool stage32Shuttle = IsStage32ShuttleActive();
         int startRouteIndex = GetValidBattleMode12RouteIndex(battleMode12CurrentRouteIndex);
         int destinationRouteIndex = startRouteIndex;
-        Vector3Int station = battleMode12 ? ToCell(battleMode12Routes[startRouteIndex].startCell) : ToCell(stationCell);
+        Vector3Int station = battleMode12
+            ? ToCell(battleMode12Routes[startRouteIndex].startCell)
+            : GetActiveStationCell();
         Vector2 stationWorld = GetCellCenter(station);
-        Vector3Int exitCell = battleMode12 ? station : station + new Vector3Int(exitCellOffset.x, exitCellOffset.y, 0);
+        Vector3Int exitCell = battleMode12 || stage32Shuttle
+            ? station
+            : station + new Vector3Int(exitCellOffset.x, exitCellOffset.y, 0);
         currentRideExitCell = exitCell;
         Vector2 exitWorld = GetCellCenter(exitCell);
-        Vector2 startFacing = battleMode12 ? GetRouteStartDirection(startRouteIndex) : Vector2.right;
+        Vector2 startFacing = battleMode12
+            ? GetRouteStartDirection(startRouteIndex)
+            : stage32Shuttle ? GetIdleDirection() : Vector2.right;
         Vector2 exitFacing = battleMode12 ? startFacing : Cardinalize(exitWorld - stationWorld);
         if (exitFacing == Vector2.zero)
             exitFacing = Vector2.right;
@@ -465,6 +502,21 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 currentRideExitCell = exitCell;
                 exitWorld = GetCellCenter(exitCell);
             }
+            else if (stage32Shuttle)
+            {
+                yield return MoveCartThroughStage32Shuttle(mover, state, stage32AtDestinationStation);
+                if (!TryGetStage32Room3Exit(stage32AtDestinationStation, out exitCell, out exitFacing))
+                {
+                    exitFacing = Cardinalize(currentCartDirection);
+                    if (exitFacing == Vector2.zero)
+                        exitFacing = Vector2.right;
+
+                    Vector3Int cartCell = WorldToCell(transform.position);
+                    exitCell = cartCell + ToCellOffset(exitFacing);
+                }
+                currentRideExitCell = exitCell;
+                exitWorld = GetCellCenter(exitCell);
+            }
             else
             {
                 yield return MoveCartAroundRail(mover, state);
@@ -475,7 +527,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
             Vector2 actualExitWorld = state.forcedExit ? state.forcedExitWorld : exitWorld;
             Vector2 actualExitFacing = state.forcedExit ? state.forcedExitFacing : exitFacing;
-            Vector2 exitStartWorld = (state.forcedExit || battleMode12) && mover != null && mover.Rigidbody != null
+            Vector2 exitStartWorld = (state.forcedExit || battleMode12 || stage32Shuttle) && mover != null && mover.Rigidbody != null
                 ? mover.Rigidbody.position
                 : stationWorld;
 
@@ -499,7 +551,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             if (mover != null && !mover.IsEndingStage)
             {
                 mover.SnapToWorldPoint(actualExitWorld, roundToGrid: false);
-                TryResolvePlayerBounceAfterExit(mover, actualExitFacing, actualExitWorld);
+                if (!IsStage32Room3ShuttleActive())
+                    TryResolvePlayerBounceAfterExit(mover, actualExitFacing, actualExitWorld);
             }
 
             if (state.eggQueue != null)
@@ -531,6 +584,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                     Vector2 idleDirection = GetRouteStartDirection(battleMode12CurrentRouteIndex);
                     SetCartWorldPosition(idlePosition);
                     UpdateCartVisual(idleDirection, moving: false);
+                }
+                else if (stage32Shuttle)
+                {
+                    stage32AtDestinationStation = !stage32AtDestinationStation;
+                    Vector2 idlePosition = GetCellCenter(GetActiveStationCell());
+                    SetCartWorldPosition(idlePosition);
+                    UpdateCartVisual(GetIdleDirection(), moving: false);
                 }
                 else
                 {
@@ -629,6 +689,353 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         yield return MoveCartAlongPath(mover, state, railPath, stage9TravelSeconds);
     }
 
+    IEnumerator MoveCartThroughStage32Room1Shuttle(
+        MovementController mover,
+        RideState state,
+        bool reverse)
+    {
+        if (!reverse)
+        {
+            yield return MoveCartAlongStage32Waypoints(
+                mover,
+                state,
+                stage32StationA,
+                new Vector2Int(3, -2),
+                new Vector2Int(3, -4),
+                new Vector2Int(5, -4),
+                new Vector2Int(5, -7));
+
+            TeleportStage32CartAcrossVerticalWrap(mover, state, new Vector2Int(5, 5), Vector2.down);
+
+            yield return MoveCartAlongStage32Waypoints(
+                mover,
+                state,
+                new Vector2Int(5, 5),
+                new Vector2Int(5, 4),
+                new Vector2Int(-7, 4),
+                new Vector2Int(-7, -6),
+                new Vector2Int(-4, -6));
+
+            yield return MoveCartStage32Jump(
+                mover,
+                state,
+                new Vector2Int(-4, -6),
+                new Vector2Int(1, -6),
+                Vector2.right);
+
+            yield return MoveCartAlongStage32Waypoints(
+                mover,
+                state,
+                new Vector2Int(1, -6),
+                stage32StationB);
+        }
+        else
+        {
+            yield return MoveCartAlongStage32Waypoints(
+                mover,
+                state,
+                stage32StationB,
+                new Vector2Int(1, -6));
+
+            yield return MoveCartStage32Jump(
+                mover,
+                state,
+                new Vector2Int(1, -6),
+                new Vector2Int(-4, -6),
+                Vector2.left);
+
+            yield return MoveCartAlongStage32Waypoints(
+                mover,
+                state,
+                new Vector2Int(-4, -6),
+                new Vector2Int(-7, -6),
+                new Vector2Int(-7, 4),
+                new Vector2Int(5, 4),
+                new Vector2Int(5, 5));
+
+            TeleportStage32CartAcrossVerticalWrap(mover, state, new Vector2Int(5, -7), Vector2.up);
+
+            yield return MoveCartAlongStage32Waypoints(
+                mover,
+                state,
+                new Vector2Int(5, -7),
+                new Vector2Int(5, -4),
+                new Vector2Int(3, -4),
+                new Vector2Int(3, -2),
+                stage32StationA);
+        }
+    }
+
+    IEnumerator MoveCartThroughStage32Shuttle(
+        MovementController mover,
+        RideState state,
+        bool reverse)
+    {
+        if (IsStage32Room3ShuttleActive())
+        {
+            yield return MoveCartThroughStage32Room3Shuttle(mover, state, reverse);
+            yield break;
+        }
+
+        if (IsStage32Room2ShuttleActive())
+        {
+            Vector2Int[] waypoints = GetStage32Room2Waypoints(reverse);
+            if (waypoints.Length >= 2)
+                yield return MoveCartAlongStage32Waypoints(mover, state, waypoints);
+
+            yield break;
+        }
+
+        yield return MoveCartThroughStage32Room1Shuttle(mover, state, reverse);
+    }
+
+    Vector2Int[] GetStage32Room2Waypoints(bool reverse)
+    {
+        if (stage32Room2ForwardWaypoints == null || stage32Room2ForwardWaypoints.Length == 0)
+            return System.Array.Empty<Vector2Int>();
+
+        Vector2Int[] waypoints = new Vector2Int[stage32Room2ForwardWaypoints.Length];
+        for (int i = 0; i < waypoints.Length; i++)
+        {
+            int sourceIndex = reverse ? waypoints.Length - 1 - i : i;
+            waypoints[i] = stage32Room2ForwardWaypoints[sourceIndex];
+        }
+
+        return waypoints;
+    }
+
+    Vector2Int[] GetStage32Room3Waypoints(bool reverse)
+    {
+        if (stage32Room3ForwardWaypoints == null || stage32Room3ForwardWaypoints.Length == 0)
+            return System.Array.Empty<Vector2Int>();
+
+        Vector2Int[] waypoints = new Vector2Int[stage32Room3ForwardWaypoints.Length];
+        for (int i = 0; i < waypoints.Length; i++)
+        {
+            int sourceIndex = reverse ? waypoints.Length - 1 - i : i;
+            waypoints[i] = stage32Room3ForwardWaypoints[sourceIndex];
+        }
+
+        if (reverse && stage32Room3ReverseJumpStart != stage32Room3ReverseJumpEnd)
+        {
+            for (int i = 0; i < waypoints.Length - 1; i++)
+            {
+                if (waypoints[i] != stage32Room3JumpEnd ||
+                    waypoints[i + 1] != stage32Room3JumpStart)
+                {
+                    continue;
+                }
+
+                waypoints[i] = stage32Room3ReverseJumpStart;
+                waypoints[i + 1] = stage32Room3ReverseJumpEnd;
+                break;
+            }
+        }
+
+        return waypoints;
+    }
+
+    bool TryGetStage32Room3Exit(bool reverse, out Vector3Int exitCell, out Vector2 exitFacing)
+    {
+        exitCell = default;
+        exitFacing = Vector2.zero;
+        if (!IsStage32Room3ShuttleActive())
+            return false;
+
+        Vector2Int[] waypoints = GetStage32Room3Waypoints(reverse);
+        if (waypoints.Length < 2)
+            return false;
+
+        Vector2Int previous = waypoints[waypoints.Length - 2];
+        Vector2Int final = waypoints[waypoints.Length - 1];
+        exitFacing = Cardinalize(new Vector2(final.x - previous.x, final.y - previous.y));
+        if (exitFacing == Vector2.zero)
+            return false;
+
+        exitCell = ToCell(final) + ToCellOffset(exitFacing);
+        return true;
+    }
+
+    IEnumerator MoveCartThroughStage32Room3Shuttle(
+        MovementController mover,
+        RideState state,
+        bool reverse)
+    {
+        Vector2Int[] waypoints = GetStage32Room3Waypoints(reverse);
+        if (waypoints.Length < 2)
+            yield break;
+
+        int jumpSegmentIndex = FindStage32Room3JumpSegment(waypoints);
+        if (jumpSegmentIndex < 0)
+        {
+            yield return MoveCartAlongStage32Waypoints(mover, state, waypoints);
+            yield break;
+        }
+
+        var beforeJump = new List<Vector2Int>(jumpSegmentIndex + 1);
+        for (int i = 0; i <= jumpSegmentIndex; i++)
+            beforeJump.Add(waypoints[i]);
+        yield return MoveCartAlongStage32Waypoints(mover, state, beforeJump.ToArray());
+
+        if (mover == null || mover.IsEndingStage)
+            yield break;
+
+        Vector2Int jumpStart = waypoints[jumpSegmentIndex];
+        Vector2Int jumpEnd = waypoints[jumpSegmentIndex + 1];
+        Vector2 jumpFacing = Cardinalize(new Vector2(jumpEnd.x - jumpStart.x, jumpEnd.y - jumpStart.y));
+        yield return MoveCartStage32Jump(mover, state, jumpStart, jumpEnd, jumpFacing);
+
+        if (mover == null || mover.IsEndingStage || jumpSegmentIndex + 2 >= waypoints.Length)
+            yield break;
+
+        var afterJump = new List<Vector2Int>(waypoints.Length - jumpSegmentIndex - 1);
+        for (int i = jumpSegmentIndex + 1; i < waypoints.Length; i++)
+            afterJump.Add(waypoints[i]);
+        yield return MoveCartAlongStage32Waypoints(mover, state, afterJump.ToArray());
+
+        if (mover == null || mover.IsEndingStage ||
+            (state != null && state.cartDestroyedBySuddenDeath))
+            yield break;
+
+        Vector2 finalPosition = GetCellCenter(ToCell(waypoints[waypoints.Length - 1]));
+        ApplyCartRidePosition(mover, state, finalPosition, currentCartDirection);
+    }
+
+    int FindStage32Room3JumpSegment(Vector2Int[] waypoints)
+    {
+        if (waypoints == null || waypoints.Length < 2)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < waypoints.Length - 1; i++)
+        {
+            bool forward = stage32Room3JumpStart != stage32Room3JumpEnd &&
+                           waypoints[i] == stage32Room3JumpStart &&
+                           waypoints[i + 1] == stage32Room3JumpEnd;
+            bool reverse = stage32Room3ReverseJumpStart != stage32Room3ReverseJumpEnd &&
+                           waypoints[i] == stage32Room3ReverseJumpStart &&
+                           waypoints[i + 1] == stage32Room3ReverseJumpEnd;
+            if (forward || reverse)
+                return i;
+        }
+
+        return -1;
+    }
+
+    IEnumerator MoveCartAlongStage32Waypoints(
+        MovementController mover,
+        RideState state,
+        params Vector2Int[] waypoints)
+    {
+        List<Vector3Int> path = BuildPathFromWaypoints(waypoints);
+        SetActiveDangerRailPath(path);
+
+        float tileSize = Mathf.Max(0.0001f, mover != null ? mover.tileSize : 1f);
+        float pathLength = 0f;
+        for (int i = 1; i < path.Count; i++)
+            pathLength += Vector2.Distance(GetCellCenter(path[i - 1]), GetCellCenter(path[i]));
+
+        float travelSeconds = Mathf.Max(0.01f, pathLength / tileSize / Mathf.Max(0.05f, tilesPerSecond));
+        yield return MoveCartAlongPath(mover, state, path, travelSeconds);
+    }
+
+    void TeleportStage32CartAcrossVerticalWrap(
+        MovementController mover,
+        RideState state,
+        Vector2Int destinationCell,
+        Vector2 facing)
+    {
+        Vector2 destination = GetCellCenter(ToCell(destinationCell));
+        currentCartDirection = facing;
+        SetCartWorldPosition(destination);
+        ApplyCartRidePosition(mover, state, destination, facing);
+        UpdateCartVisual(facing, moving: true);
+        ShowRiderHeadOnly(state, facing);
+    }
+
+    IEnumerator MoveCartStage32Jump(
+        MovementController mover,
+        RideState state,
+        Vector2Int startCell,
+        Vector2Int endCell,
+        Vector2 facing)
+    {
+        Vector2 start = QuantizeToPixelGrid(GetCellCenter(ToCell(startCell)));
+        Vector2 end = QuantizeToPixelGrid(GetCellCenter(ToCell(endCell)));
+        float duration = Mathf.Max(0.01f, stage32JumpSeconds);
+        float height = Mathf.Max(0f, stage32JumpHeightTiles) *
+                       Mathf.Max(0.0001f, mover != null ? mover.tileSize : 1f);
+        Vector3 baseVisualLocal = cartVisualRoot != null ? cartVisualRoot.localPosition : Vector3.zero;
+        float elapsed = 0f;
+        var fixedWait = new WaitForFixedUpdate();
+
+        currentCartDirection = facing;
+        UpdateCartVisual(facing, moving: true);
+        ShowRiderHeadOnly(state, facing);
+        PauseRideLoopSfxForJump();
+        PlayOneShot(stage32JumpSfx);
+
+        while (elapsed < duration)
+        {
+            if (mover == null || mover.IsEndingStage)
+                yield break;
+
+            if (GamePauseController.IsPaused)
+            {
+                yield return fixedWait;
+                continue;
+            }
+
+            elapsed = Mathf.Min(duration, elapsed + Time.fixedDeltaTime);
+            float t = Mathf.Clamp01(elapsed / duration);
+            Vector2 ground = QuantizeToPixelGrid(Vector2.Lerp(start, end, t));
+            float arcHeight = QuantizeWorldToPixelStep(4f * height * t * (1f - t));
+
+            ApplyCartRidePosition(mover, state, ground, facing);
+            if (cartVisualRoot != null)
+                cartVisualRoot.localPosition = baseVisualLocal + Vector3.up * arcHeight;
+
+            MoveRiderWithCart(mover, ground + Vector2.up * arcHeight);
+            yield return fixedWait;
+        }
+
+        if (cartVisualRoot != null)
+            cartVisualRoot.localPosition = baseVisualLocal;
+
+        ApplyCartRidePosition(mover, state, end, facing);
+        UpdateCartVisual(facing, moving: false);
+        ResumeRideLoopSfxAfterJump();
+    }
+
+    List<Vector3Int> BuildPathFromWaypoints(params Vector2Int[] waypoints)
+    {
+        var path = new List<Vector3Int>();
+        if (waypoints == null || waypoints.Length == 0)
+            return path;
+
+        Vector3Int current = ToCell(waypoints[0]);
+        path.Add(current);
+
+        for (int i = 1; i < waypoints.Length; i++)
+        {
+            Vector3Int target = ToCell(waypoints[i]);
+            Vector3Int delta = target - current;
+            Vector3Int step = Mathf.Abs(delta.x) >= Mathf.Abs(delta.y)
+                ? new Vector3Int(System.Math.Sign(delta.x), 0, 0)
+                : new Vector3Int(0, System.Math.Sign(delta.y), 0);
+
+            int guard = 0;
+            while (current != target && guard++ < 128)
+            {
+                current += step;
+                path.Add(current);
+            }
+        }
+
+        return path;
+    }
+
     IEnumerator MoveCartThroughBattleMode12Route(
         MovementController mover,
         RideState state,
@@ -720,7 +1127,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 ResetCartPixelAccumulator();
             }
 
-            if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir, "segment-start"))
+            if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir))
                 yield break;
 
             currentCartDirection = dir;
@@ -741,7 +1148,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                     continue;
                 }
 
-                if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir, "segment-moving"))
+                if (TryForceExitBeforeIndestructibleRailCell(state, path[i], end, dir))
                     yield break;
 
                 float moveWorld = GetQuantizedCartMoveWorld(speed * Time.fixedDeltaTime);
@@ -1279,10 +1686,18 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         RideState state,
         Vector3Int blockedCell,
         Vector2 exitWorld,
-        Vector2 exitFacing,
-        string reason)
+        Vector2 exitFacing)
     {
-        if (state == null || !HasIndestructibleAt(blockedCell))
+        if (!HasIndestructibleAt(blockedCell))
+            return false;
+
+        // The Stage 3-2 shuttles deliberately travel across their authored rail and
+        // jump cells. Those cells may use indestructible tiles for collision, but
+        // they are not sudden-death blockers and must not end the ride.
+        if (IsStage32ShuttleActive())
+            return false;
+
+        if (state == null)
             return false;
 
         Vector2 facing = Cardinalize(exitFacing);
@@ -1652,7 +2067,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 continue;
 
             TryDamagePlayer(hit);
+            TryDamageEnemy(hit);
             TryDamageWorldMount(hit);
+            TryDestroyCoreMechanism(hit);
             TryDestroyItem(hit, direction);
             TryExplodeBomb(hit, position);
         }
@@ -1706,6 +2123,35 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             return;
 
         health.TakeDamage(damage, fromExplosion: false);
+    }
+
+    void TryDamageEnemy(Collider2D hit)
+    {
+        EnemyMovementController enemy =
+            hit.GetComponent<EnemyMovementController>() ??
+            hit.GetComponentInParent<EnemyMovementController>();
+
+        if (enemy == null)
+            return;
+
+        CharacterHealth health =
+            enemy.GetComponent<CharacterHealth>() ??
+            enemy.GetComponentInParent<CharacterHealth>();
+
+        if (health == null || health.IsInvulnerable)
+            return;
+
+        health.TakeDamage(damage, fromExplosion: false);
+    }
+
+    void TryDestroyCoreMechanism(Collider2D hit)
+    {
+        CoreMechanismsDestructible core =
+            hit.GetComponent<CoreMechanismsDestructible>() ??
+            hit.GetComponentInParent<CoreMechanismsDestructible>();
+
+        if (core != null)
+            core.PlayDeath();
     }
 
     void TryDestroyItem(Collider2D hit, Vector2 direction)
@@ -2275,6 +2721,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     Vector3Int GetActiveStationCell()
     {
+        if (IsStage32ShuttleActive())
+            return ToCell(stage32AtDestinationStation ? stage32StationB : stage32StationA);
+
         if (IsBattleMode12Active() && HasUsableBattleMode12Routes())
             return ToCell(battleMode12Routes[GetValidBattleMode12RouteIndex(battleMode12CurrentRouteIndex)].startCell);
 
@@ -2283,6 +2732,14 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     Vector2 GetIdleDirection()
     {
+        if (IsStage32Room3ShuttleActive())
+            return Vector2.right;
+
+        if (IsStage32ShuttleActive())
+            return IsStage32Room2ShuttleActive() && !stage32AtDestinationStation
+                ? Vector2.right
+                : Vector2.left;
+
         if (IsBattleMode12Active() && HasUsableBattleMode12Routes())
             return GetRouteStartDirection(GetValidBattleMode12RouteIndex(battleMode12CurrentRouteIndex));
 
@@ -2375,6 +2832,41 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         if (!HasCartVisualReferences() && cartVisualRoot != transform)
             ResolveCartVisualReferences(transform);
+
+        ApplyStage32CartSprites();
+    }
+
+    void ApplyStage32CartSprites()
+    {
+        if (!IsStage32ShuttleActive())
+            return;
+
+        ApplyCartSprite(left, stage32HorizontalSprite);
+        ApplyCartSprite(right, stage32HorizontalSprite);
+        ApplyCartSprite(up, stage32VerticalSprite);
+        ApplyCartSprite(down, stage32VerticalSprite);
+    }
+
+    void ApplyCartSprite(AnimatedSpriteRenderer renderer, Sprite sprite)
+    {
+        if (renderer == null)
+            return;
+
+        if (sprite == null)
+            return;
+
+        if (renderer.idleSprite == sprite &&
+            renderer.animationSprite != null &&
+            renderer.animationSprite.Length == 1 &&
+            renderer.animationSprite[0] == sprite)
+        {
+            return;
+        }
+
+        renderer.idleSprite = sprite;
+        renderer.animationSprite = new[] { sprite };
+        renderer.CurrentFrame = 0;
+        renderer.RefreshFrame();
     }
 
     bool HasCartVisualReferences()
@@ -2517,6 +3009,27 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         audioSource.loop = false;
     }
 
+    void EnsureOneShotAudioSource()
+    {
+        if (oneShotAudioSource != null)
+            return;
+
+        EnsureAudioSource();
+        oneShotAudioSource = gameObject.AddComponent<AudioSource>();
+        oneShotAudioSource.playOnAwake = false;
+        oneShotAudioSource.loop = false;
+
+        if (audioSource == null)
+            return;
+
+        oneShotAudioSource.outputAudioMixerGroup = audioSource.outputAudioMixerGroup;
+        oneShotAudioSource.spatialBlend = audioSource.spatialBlend;
+        oneShotAudioSource.dopplerLevel = audioSource.dopplerLevel;
+        oneShotAudioSource.rolloffMode = audioSource.rolloffMode;
+        oneShotAudioSource.minDistance = audioSource.minDistance;
+        oneShotAudioSource.maxDistance = audioSource.maxDistance;
+    }
+
     void LoadDefaultSfxIfNeeded()
     {
         if (enterSfx == null)
@@ -2534,9 +3047,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void PlayOneShot(AudioClip clip, float volume)
     {
-        EnsureAudioSource();
-        if (clip != null && audioSource != null)
-            GameAudioSettings.PlaySfx(audioSource, clip, Mathf.Clamp01(volume));
+        EnsureOneShotAudioSource();
+        if (clip != null && oneShotAudioSource != null)
+            GameAudioSettings.PlaySfx(oneShotAudioSource, clip, Mathf.Clamp01(volume));
     }
 
     void PlayRideLoopSfx()
@@ -2564,6 +3077,29 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         rideLoopPausedForGamePause = false;
+        rideLoopPausedForJump = false;
+    }
+
+    void PauseRideLoopSfxForJump()
+    {
+        if (audioSource == null || !audioSource.loop || !audioSource.isPlaying)
+            return;
+
+        audioSource.Pause();
+        rideLoopPausedForJump = true;
+    }
+
+    void ResumeRideLoopSfxAfterJump()
+    {
+        if (!rideLoopPausedForJump)
+            return;
+
+        if (audioSource != null && audioSource.loop && audioSource.clip == rideLoopSfx)
+            audioSource.UnPause();
+        else
+            PlayRideLoopSfx();
+
+        rideLoopPausedForJump = false;
     }
 
     void SyncRideLoopSfxWithPause()
@@ -2839,10 +3375,30 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     static bool IsBattleMode12Active()
         => string.Equals(SceneManager.GetActiveScene().name, BattleMode12SceneName, System.StringComparison.Ordinal);
 
+    bool IsStage32Room1ShuttleActive()
+        => useStage32Room1Shuttle &&
+           string.Equals(SceneManager.GetActiveScene().name, Stage32SceneName, System.StringComparison.Ordinal);
+
+    bool IsStage32Room2ShuttleActive()
+        => useStage32Room2Shuttle &&
+           string.Equals(SceneManager.GetActiveScene().name, Stage32SceneName, System.StringComparison.Ordinal);
+
+    bool IsStage32Room3ShuttleActive()
+        => useStage32Room3Shuttle &&
+           string.Equals(SceneManager.GetActiveScene().name, Stage32SceneName, System.StringComparison.Ordinal);
+
+    bool IsStage32ShuttleActive()
+        => IsStage32Room1ShuttleActive() || IsStage32Room2ShuttleActive() || IsStage32Room3ShuttleActive();
+
     static bool IsSupportedSceneActive()
         => IsSupportedScene(SceneManager.GetActiveScene().name);
 
-    static bool IsSupportedScene(string sceneName)
+    static bool IsAutoBootstrapScene(string sceneName)
         => string.Equals(sceneName, BattleMode9SceneName, System.StringComparison.Ordinal) ||
            string.Equals(sceneName, BattleMode12SceneName, System.StringComparison.Ordinal);
+
+    static bool IsSupportedScene(string sceneName)
+        => string.Equals(sceneName, BattleMode9SceneName, System.StringComparison.Ordinal) ||
+           string.Equals(sceneName, BattleMode12SceneName, System.StringComparison.Ordinal) ||
+           string.Equals(sceneName, Stage32SceneName, System.StringComparison.Ordinal);
 }

@@ -104,6 +104,30 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
            !bomb.IsBeingMagnetPulled &&
            Time.time - bomb.PlacedTime >= MinimumBombAgeForPickupSeconds;
 
+    public bool CanPickupBombAtCurrentPosition()
+    {
+        if (!enabledAbility || animLocking || holding || isHoldingBomb || movement == null)
+            return false;
+
+        if (movement.IsMounted || movement.IsRidingPlaying() || movement.InputLocked)
+            return false;
+
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        Vector2 origin = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position;
+        origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
+        origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
+
+        Collider2D hit = Physics2D.OverlapBox(origin, Vector2.one * (movement.tileSize * 0.6f), 0f, 1 << bombLayer);
+        return hit != null &&
+               hit.GetComponent<BoilerCapturedBomb>() == null &&
+               hit.TryGetComponent<Bomb>(out var bomb) &&
+               CanPickupBombNow(bomb) &&
+               bomb.GetComponent<BoilerCapturedBomb>() == null;
+    }
+
     private const int CarryOrderInLayer = 6;
     private const int GroundOrderInLayer = 3;
 

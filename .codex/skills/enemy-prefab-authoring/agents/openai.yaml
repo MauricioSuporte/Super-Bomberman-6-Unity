@@ -1,0 +1,4 @@
+interface:
+  display_name: "Enemy Prefab Authoring"
+  short_description: "Reusable Unity enemy prefab setup"
+  default_prompt: "Use $enemy-prefab-authoring to create or update an enemy prefab in this Unity project."
