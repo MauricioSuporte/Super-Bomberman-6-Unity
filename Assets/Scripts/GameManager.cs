@@ -258,6 +258,13 @@ public class GameManager : MonoBehaviour
         ResolveDestructibleTileResolver();
     }
 
+    // Rede: instante (realtime) a partir do qual o win-check pode CONCLUIR um round
+    // online. Setado no Start da cena de batalha — janela de graça para os players
+    // spawnarem na troca de cena (lobby→batalha), evitando round-over prematuro
+    // quando o host é lento. Não afeta o offline.
+    float onlineBattleWinEvalReadyTime;
+    const float OnlineBattleWinGraceSeconds = 4f;
+
     void Start()
     {
         endStageTriggered = false;
@@ -280,6 +287,13 @@ public class GameManager : MonoBehaviour
         {
             PlayerPersistentStats.ResetBattleModeLoadouts(BattleModeRules.Instance);
             ApplySavedBattleModeHiddenItemAmounts();
+
+            // Rede: começa a graça do win-check (os players ainda estão entrando/
+            // spawnando após o ServerChangeScene; um evento espúrio nessa janela
+            // não pode concluir o round). Só online.
+            onlineBattleWinEvalReadyTime = Assets.Scripts.Netcode.NetSync.IsOnline
+                ? Time.realtimeSinceStartup + OnlineBattleWinGraceSeconds
+                : 0f;
         }
 
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
@@ -1467,6 +1481,13 @@ public class GameManager : MonoBehaviour
         // F5a — a decisão de fim de round é host-autoritativa. O cliente puro
         // nunca avalia; o host decide e replica o resultado.
         if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
+        // Rede: janela de graça no início do round — não conclui enquanto os players
+        // ainda estão entrando/spawnando após o ServerChangeScene (evita round-over
+        // prematuro por evento espúrio na troca de cena; host lento). Ver Start().
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && IsBattleModeScene() &&
+            Time.realtimeSinceStartup < onlineBattleWinEvalReadyTime)
             return;
 
         if (IsBattleModeScene() &&

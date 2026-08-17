@@ -96,6 +96,34 @@ namespace Assets.Scripts.Netcode
             else    abilitySystem.Disable(id);
         }
 
+        // F6 — "hop" de montar no DONO (client-auth). O host toca o arco de montar
+        // (PlayerRidingController), mas ele MOVE a posição do player — e no client-auth
+        // o host não é dono da posição do cliente, então esse arco é sobrescrito e o
+        // cliente dá "snap". Aqui o próprio dono reproduz o hop (arco NO LUGAR:
+        // start==target, altura é offset de renderer), e o NetworkPlayerAnimation
+        // replica a subida aos demais. Callbacks só-visuais: mostra o Louie (onStart)
+        // e entra no rider (onComplete). Retorna false → o chamador dá snap (fallback).
+        bool TryPlayOwnerMountHop(MountedType type)
+        {
+            if (move == null || mountCompanion == null)
+                return false;
+
+            var rider = move.GetComponent<PlayerRidingController>();
+            if (rider == null)
+                return false;
+
+            Vector2 facing = move.FacingDirection != Vector2.zero ? move.FacingDirection : Vector2.down;
+            return rider.TryPlayMount(
+                facing,
+                onComplete: () =>
+                {
+                    if (mountCompanion.GetMountedLouieObject() == null)
+                        mountCompanion.ShowMountVisualClient(type);
+                    move.SetMountedOnLouie(true);
+                },
+                onStart: () => mountCompanion.ShowMountVisualClient(type));
+        }
+
         // F5a — replicação da eliminação. Ao fim da sequência de morte o host
         // desativa o GameObject do player; o Mirror NÃO sincroniza SetActive,
         // então marcamos via SyncVar e o cliente desativa o seu clone. SyncVar
@@ -294,15 +322,26 @@ namespace Assets.Scripts.Netcode
             // (Passo A: o Louie aparece; a animação/facing dele é o Passo B.)
             if (mountType != appliedMountType && mountCompanion != null)
             {
-                if (mountType == 0) mountCompanion.HideMountVisualClient();
-                else                mountCompanion.ShowMountVisualClient((MountedType)mountType);
+                // "Montando agora" = de nenhuma montaria (0/desconhecido) para X. Nesse
+                // caso o DONO reproduz o hop de montar localmente (o NetworkPlayerAnimation
+                // replica); nos demais casos (remoto, dismount, remount X→Y) vai direto.
+                bool mountingNow = mountType != 0 && appliedMountType <= 0 && isOwned && move != null && life > 0;
 
-                // O DONO troca o PRÓPRIO corpo para o visual "montado" (rider) para
-                // não sobrepor o Louie; os remotos recebem isso pelo
-                // NetworkPlayerAnimation (client-auth). Só enquanto vivo — a animação
-                // de morte tem prioridade sobre o visual de montaria.
-                if (isOwned && move != null && life > 0)
-                    move.SetMountedOnLouie(mountType != 0);
+                if (mountingNow && TryPlayOwnerMountHop((MountedType)mountType))
+                {
+                    // o hop cuida do ShowMountVisualClient (onStart) + SetMountedOnLouie (onComplete)
+                }
+                else
+                {
+                    if (mountType == 0) mountCompanion.HideMountVisualClient();
+                    else                mountCompanion.ShowMountVisualClient((MountedType)mountType);
+
+                    // O DONO troca o PRÓPRIO corpo para o visual "montado" (rider) para
+                    // não sobrepor o Louie; os remotos recebem via NetworkPlayerAnimation.
+                    // Só enquanto vivo — a animação de morte tem prioridade.
+                    if (isOwned && move != null && life > 0)
+                        move.SetMountedOnLouie(mountType != 0);
+                }
 
                 appliedMountType = mountType;
             }
