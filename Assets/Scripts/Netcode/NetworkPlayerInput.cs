@@ -46,6 +46,7 @@ namespace Assets.Scripts.Netcode
 
         NetworkPlayerSetup setup;
         MovementController move;
+        BombController bomb;
         int lastSentMask = -1;
         int serverHeldMask;
 
@@ -53,6 +54,7 @@ namespace Assets.Scripts.Netcode
         {
             setup = GetComponent<NetworkPlayerSetup>();
             move = GetComponent<MovementController>();
+            bomb = GetComponent<BombController>();
         }
 
         // Client-autoritativo: o DONO deste player (host OU cliente puro) simula-o
@@ -115,7 +117,14 @@ namespace Assets.Scripts.Netcode
             for (int i = 0; i < TapActionIndices.Length; i++)
             {
                 int idx = TapActionIndices[i];
-                if (input.GetDown(LocalInputSlot, SyncedActions[idx]))
+                if (!input.GetDown(LocalInputSlot, SyncedActions[idx]))
+                    continue;
+
+                // ActionA (colocar bomba): reporta a posição do dono para o host
+                // colocar a bomba no tile CERTO (a transform do host está atrasada).
+                if (SyncedActions[idx] == PlayerAction.ActionA)
+                    CmdBombTap((Vector2)transform.position);
+                else
                     CmdTap(idx);
             }
         }
@@ -130,6 +139,22 @@ namespace Assets.Scripts.Netcode
                 return;
 
             input.TapSynthetic(setup.PlayerId, SyncedActions[actionIndex]);
+        }
+
+        // Tap de ActionA com a posição do dono (client-auth): o host aplica a
+        // posição-reportada no BombController e dispara o tap. A colocação usa esse
+        // tile; o pickup da luva (mesmo GetDown) segue usando a posição da bomba.
+        [Command]
+        void CmdBombTap(Vector2 ownerPos)
+        {
+            var input = PlayerInputManager.Instance;
+            if (input == null || setup == null)
+                return;
+
+            if (bomb != null)
+                bomb.SetNetworkedPlacementOverride(ownerPos);
+
+            input.TapSynthetic(setup.PlayerId, PlayerAction.ActionA);
         }
 
         void SampleAndSendLocalInput()

@@ -1019,6 +1019,21 @@ public partial class BombController : MonoBehaviour
         return skullExplosionRadiusOverride;
     }
 
+    // Rede (client-auth): a colocação de bomba é host-autoritativa, mas o movimento
+    // é client-auth → a transform do host para um player-cliente está ATRASADA
+    // (NetworkTransform + buffer). Sem isto a bomba nasce um tile ATRÁS de onde o
+    // dono está (perigoso em canto de mapa). O dono reporta a própria posição no
+    // Command de bomba (NetworkPlayerInput.CmdBombTap) e o host coloca nesse tile.
+    // Só afeta a COLOCAÇÃO; o pickup da luva usa a posição da bomba (inalterado).
+    private Vector2 _netPlacementOverridePos;
+    private int _netPlacementOverrideFrame = -1000;
+
+    public void SetNetworkedPlacementOverride(Vector2 worldPos)
+    {
+        _netPlacementOverridePos = worldPos;
+        _netPlacementOverrideFrame = Time.frameCount;
+    }
+
     private void PlaceBomb()
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -1045,7 +1060,12 @@ public partial class BombController : MonoBehaviour
         ResolveTilemaps();
 
         Tilemap snapTm = GetSnapTilemapForGround();
-        Vector2 position = SnapToTileCenter(snapTm, (Vector2)transform.position, out _, out _);
+        // Rede: usa a posição reportada pelo dono (client-auth) se fresca; senão a
+        // transform local (host/offline, ou player do próprio host — sem atraso).
+        Vector2 basePos = (Time.frameCount - _netPlacementOverrideFrame) <= 2
+            ? _netPlacementOverridePos
+            : (Vector2)transform.position;
+        Vector2 position = SnapToTileCenter(snapTm, basePos, out _, out _);
 
         if (!CanPlaceBombAt(position))
             return;
