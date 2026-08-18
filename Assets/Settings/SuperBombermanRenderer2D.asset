@@ -83,5 +83,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageHeatDistortionRendererFeature
   heatDistortionMaterial: {fileID: 2100000, guid: 51a283c284694d8fa687600fbdcef4b2, type: 2}
   stage33DistortionMaterial: {fileID: 2100000, guid: 43475b24d81044b7a4452b450eee0102, type: 2}
-  logStage33BandProgress: 1
   injectionPoint: 500
