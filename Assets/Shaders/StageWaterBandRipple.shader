@@ -65,10 +65,14 @@ Shader "Hidden/Stage Water Band Ripple"
                     : directionCycle - cyclePosition;
 
                 // Sample left by the accumulated offset so the completed row is
-                // visibly shifted right. This affects the whole row atomically;
-                // there is no interpolation or gradual deformation.
-                screenPixel.x = clamp(screenPixel.x - accumulatedOffset * logicalPixelScale, 0.0,
-                                      _BlitTexture_TexelSize.z - 1.0);
+                // visibly shifted right. A post-process texture has no pixels
+                // outside the camera's left edge. Clamping a negative source X to
+                // zero made that first source column stretch across the exposed
+                // area. Preserve the already visible target columns there instead;
+                // this avoids inventing a repeated edge pixel until an overscan
+                // camera render is available.
+                float shiftedSourceX = screenPixel.x - accumulatedOffset * logicalPixelScale;
+                screenPixel.x = shiftedSourceX >= 0.0 ? shiftedSourceX : screenPixel.x;
 
                 // Re-sample every physical row of this logical SNES row from the
                 // same source row. At 5x, for example, all five physical rows are
