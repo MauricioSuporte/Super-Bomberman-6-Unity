@@ -13,7 +13,6 @@ using LegacyPixelPerfectCamera = UnityEngine.U2D.PixelPerfectCamera;
 public sealed class StageHeatDistortionRendererFeature : ScriptableRendererFeature
 {
     private const string Stage33SceneName = "Stage_3-3";
-    private static readonly int BandsPerDirectionId = Shader.PropertyToID("_BandsPerDirection");
     private static readonly int LogicalPixelScaleId = Shader.PropertyToID("_LogicalPixelScale");
     private static readonly int LogicalPixelOriginYId = Shader.PropertyToID("_LogicalPixelOriginY");
 
@@ -25,8 +24,10 @@ public sealed class StageHeatDistortionRendererFeature : ScriptableRendererFeatu
 
     public override void Create()
     {
-        pass = new StageHeatDistortionPass();
-        pass.renderPassEvent = injectionPoint;
+        pass = new StageHeatDistortionPass
+        {
+            renderPassEvent = injectionPoint
+        };
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -86,7 +87,7 @@ public sealed class StageHeatDistortionRendererFeature : ScriptableRendererFeatu
             destinationDescriptor.clearBuffer = false;
             TextureHandle destination = renderGraph.CreateTexture(destinationDescriptor);
 
-            LogStage33LeftEdgeCorrection(cameraData.camera, destinationDescriptor);
+            LogStage33LeftEdgeCorrection(cameraData.camera);
 
             // Time.time is scaled by Time.timeScale, so the water freezes together
             // with gameplay while GamePauseController pauses the game.
@@ -100,7 +101,7 @@ public sealed class StageHeatDistortionRendererFeature : ScriptableRendererFeatu
             resourceData.cameraColor = destination;
         }
 
-        private void LogStage33LeftEdgeCorrection(Camera camera, TextureDesc sourceDescriptor)
+        private void LogStage33LeftEdgeCorrection(Camera camera)
         {
             if (!isStage33Ripple || camera == null)
                 return;
@@ -112,19 +113,6 @@ public sealed class StageHeatDistortionRendererFeature : ScriptableRendererFeatu
 
             lastLoggedCameraId = cameraId;
             lastLoggedMaterialId = materialId;
-
-            int logicalPixelScale = StageHeatDistortionRendererFeature.ResolveLogicalPixelScale(camera);
-            int maximumOffsetLogicalPixels = Mathf.Max(1, Mathf.RoundToInt(
-                material.GetFloat(BandsPerDirectionId)));
-            int protectedPhysicalPixels = maximumOffsetLogicalPixels * logicalPixelScale;
-
-            Debug.Log(
-                $"[StageWaterBandRipple] Correcao da borda esquerda ativa na camera " +
-                $"'{camera.name}': origem {sourceDescriptor.width}x{sourceDescriptor.height}, " +
-                $"escala logica {logicalPixelScale}x. Nos deslocamentos para a direita, " +
-                $"as primeiras ate {maximumOffsetLogicalPixels} colunas logicas " +
-                $"({protectedPhysicalPixels}px fisicos) preservam o pixel visivel original; " +
-                $"a borda nao usa mais clamp/repeticao da coluna x=0.");
         }
 
         private static bool ShouldRunFor(Camera camera)
