@@ -12,6 +12,7 @@ public sealed class BlueCameraEdgeOverlay : MonoBehaviour
     const string OverlayName = "BlueCameraEdgeOverlay";
     const float EdgeCoverage = 0.34f;
     const float EdgeOpacity = 0.48f;
+    const float PulseHalfCycleSeconds = 3f;
     const float ReferenceScreenHeight = 224f;
     const float NormalGameHudHeight = 23f;
     const float BattleModeHudHeight = 27f;
@@ -19,6 +20,7 @@ public sealed class BlueCameraEdgeOverlay : MonoBehaviour
     static BlueCameraEdgeOverlay instance;
 
     Canvas canvas;
+    CanvasGroup canvasGroup;
     RectTransform safeFrame;
     RectTransform topGradient;
 
@@ -67,6 +69,7 @@ public sealed class BlueCameraEdgeOverlay : MonoBehaviour
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.overrideSorting = true;
         canvas.sortingOrder = -1000;
+        canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         GameObject frame = new GameObject("PixelPerfectViewport", typeof(RectTransform), typeof(UICameraViewportFitter));
         safeFrame = frame.GetComponent<RectTransform>();
@@ -74,6 +77,16 @@ public sealed class BlueCameraEdgeOverlay : MonoBehaviour
 
         topGradient = CreateGradient("Top", true);
         CreateGradient("Bottom", false);
+    }
+
+    void Update()
+    {
+        if (canvasGroup == null || canvas == null || !canvas.enabled)
+            return;
+
+        // Begin fully visible, then smoothly fade out and back in over six seconds.
+        float pulse = Mathf.PingPong(Time.unscaledTime / PulseHalfCycleSeconds + 1f, 1f);
+        canvasGroup.alpha = Mathf.SmoothStep(0f, 1f, pulse);
     }
 
     RectTransform CreateGradient(string name, bool top)
