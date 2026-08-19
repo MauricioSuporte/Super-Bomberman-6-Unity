@@ -29,6 +29,23 @@ public sealed class SpringLauncher : MonoBehaviour
 
     private readonly HashSet<MovementController> active = new();
 
+    public void Configure(
+        AnimatedSpriteRenderer visual,
+        AudioClip sfx,
+        int launchDistanceTiles,
+        float prepareSeconds = 0.5f,
+        float flightDurationSeconds = 0.75f,
+        float launchArcHeightTiles = 3f)
+    {
+        springAnim = visual;
+        jumpSfx = sfx;
+        channelSeconds = Mathf.Max(0f, prepareSeconds);
+        jumpSeconds = Mathf.Max(0.05f, flightDurationSeconds);
+        arcHeightTiles = Mathf.Max(0f, launchArcHeightTiles);
+        horizontalJumpTiles = Mathf.Max(0, launchDistanceTiles);
+        verticalJumpTiles = Mathf.Max(0, launchDistanceTiles);
+    }
+
     private void Reset()
     {
         if (TryGetComponent<Collider2D>(out var col))
