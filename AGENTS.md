@@ -185,6 +185,9 @@ This file gives repository-specific guidance for AI coding agents working on
 - Avoid editing generated files under `Library/` or `Temp/`.
 - Avoid moving or renaming assets casually, because Unity `.meta` pairing
   matters.
+- Unity 6000.5 deprecates `UnityEngine.Object.GetInstanceID()`: use
+  `GetEntityId()` instead. When an `int` key is required, use
+  `GetEntityId().GetHashCode()` (the established project convention).
 - Do not clean unrelated untracked files or recovery scenes unless asked.
 - If a task touches both code and Unity content, mention any scene or prefab
   follow-up that could not be validated from the terminal alone.
