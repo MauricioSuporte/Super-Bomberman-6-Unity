@@ -17225,7 +17225,7 @@ MonoBehaviour:
   initialPushSpeed: 12
   brakeDeceleration: 14
   withCurrentBrakeDeceleration: 36
-  pushSfx: {fileID: 8300000, guid: c4ba9c82bc0b714479b88cf10f53b834, type: 3}
+  pushSfx: {fileID: 8300000, guid: 21e6fa7152f9488b945a35f1c1fe0c58, type: 3}
   pushSfxVolume: 1
 --- !u!1 &1334625508
 GameObject:
