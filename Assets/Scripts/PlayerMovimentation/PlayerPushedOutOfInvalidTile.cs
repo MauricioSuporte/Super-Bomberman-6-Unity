@@ -38,6 +38,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private MovementController _move;
     private AbilitySystem _abilitySystem;
     private AudioSource _audio;
+    private float _audioBaseVolume = 1f;
     private MountVisualController _mountVisual;
     private BattleSuddenDeathController _suddenDeathController;
 
@@ -58,6 +59,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         _move = GetComponent<MovementController>();
         _abilitySystem = GetComponent<AbilitySystem>();
         _audio = GetComponent<AudioSource>();
+        if (_audio != null)
+            _audioBaseVolume = _audio.volume;
         _mountVisual = GetComponentInChildren<MountVisualController>(true);
 
         if (holeLayerMask.value == 0)
@@ -413,12 +416,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
     {
-        return IsBlockedAtPosition(targetPosition, dirForSize, out _);
-    }
-
-    private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize, out string reason)
-    {
-        reason = "none";
         float tileSize = Mathf.Max(0.0001f, _move.tileSize);
 
         Vector2 size =
@@ -455,7 +452,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
                 if (canPassBombs)
                     continue;
 
-                reason = $"bomb:{hit.name} trigger:{hit.isTrigger} layer:{LayerMask.LayerToName(hit.gameObject.layer)} pos:{FormatVec(hit.transform.position)}";
                 return true;
             }
 
@@ -464,7 +460,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
-            reason = $"hit:{hit.name} tag:{hit.tag} layer:{LayerMask.LayerToName(hit.gameObject.layer)} pos:{FormatVec(hit.transform.position)}";
             return true;
         }
 
@@ -670,14 +665,9 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         if (_audio == null || bounceSfx == null)
             return;
 
-        if (_audio.isPlaying && _audio.clip == bounceSfx)
-            _audio.Stop();
-
-        GameAudioSettings.PlaySfxClip(_audio, bounceSfx, bounceSfxVolume);
-    }
-
-    private static string FormatVec(Vector2 value)
-    {
-        return $"({value.x:F2},{value.y:F2})";
+        // Bomb placement and voice lines share this AudioSource. PlaySfxClip
+        // permanently changes its volume, which made all later player SFX quiet.
+        _audio.volume = _audioBaseVolume;
+        GameAudioSettings.PlaySfx(_audio, bounceSfx, bounceSfxVolume);
     }
 }

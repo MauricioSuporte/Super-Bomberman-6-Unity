@@ -202,6 +202,8 @@ public sealed class SpringLauncher : MonoBehaviour
 
                 Vector2 start = rb.position;
                 Vector2 end = start;
+                Collider2D launchRoomBounds =
+                    StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(start);
 
                 bool isIdleBounce = (heldDir == Vector2.zero);
 
@@ -235,7 +237,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             start,
                             idleJumpUpTiles * tileSize,
                             duration,
-                            visualDir);
+                            visualDir,
+                            launchRoomBounds,
+                            tileSize);
                     }
                     else
                     {
@@ -247,7 +251,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             end,
                             arcHeightTiles * tileSize,
                             duration,
-                            visualDir);
+                            visualDir,
+                            launchRoomBounds,
+                            tileSize);
                     }
 
                     mover.SetVisualOverrideActive(false);
@@ -288,7 +294,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             start,
                             idleJumpUpTiles * tileSize,
                             duration,
-                            jumpFaceDir);
+                            jumpFaceDir,
+                            launchRoomBounds,
+                            tileSize);
                     }
                     else
                     {
@@ -302,7 +310,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             end,
                             arcHeightTiles * tileSize,
                             duration,
-                            jumpFaceDir);
+                            jumpFaceDir,
+                            launchRoomBounds,
+                            tileSize);
                     }
 
                     if (pinkShadow != null)
@@ -313,6 +323,21 @@ public sealed class SpringLauncher : MonoBehaviour
                 }
 
                 rb.linearVelocity = Vector2.zero;
+
+                Vector2 wrappedLanding = WrapFlightPosition(end, launchRoomBounds, tileSize);
+                bool wrapApplied = Vector2.SqrMagnitude(wrappedLanding - end) > 0.0001f;
+
+                if (wrapApplied)
+                {
+                    // The arc runs from Update while the player normally
+                    // moves in FixedUpdate. Keep control locked through one
+                    // physics tick, then reassert the wrapped landing point
+                    // before collision and player movement resume.
+                    yield return new WaitForFixedUpdate();
+
+                    SetFlightPosition(rb, wrappedLanding);
+                    QueueInvalidWrappedLandingBounce(mover, heldDir);
+                }
 
                 if (playerCol != null)
                     playerCol.enabled = prevColliderEnabled;
@@ -386,7 +411,9 @@ public sealed class SpringLauncher : MonoBehaviour
         Vector2 end,
         float arcWorld,
         float duration,
-        Vector2 fixedFaceDir)
+        Vector2 fixedFaceDir,
+        Collider2D launchRoomBounds,
+        float tileSize)
     {
         if (mover != null)
         {
@@ -402,18 +429,21 @@ public sealed class SpringLauncher : MonoBehaviour
         {
             float t = elapsed / duration;
 
-            Vector2 flat = Vector2.Lerp(start, end, t);
+            Vector2 flat = WrapFlightPosition(
+                Vector2.Lerp(start, end, t), launchRoomBounds, tileSize);
             float parabola = 4f * t * (1f - t);
+            float arcY = ClampArcHeightToRoom(
+                flat.y, arcWorld * parabola, launchRoomBounds, tileSize);
 
-            Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
+            Vector2 pos = flat + Vector2.up * arcY;
 
-            rb.position = pos;
+            SetFlightPosition(rb, pos);
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        rb.position = end;
+        SetFlightPosition(rb, WrapFlightPosition(end, launchRoomBounds, tileSize));
     }
 
     private IEnumerator JumpArcMountedWithJumpSprites(
@@ -426,7 +456,9 @@ public sealed class SpringLauncher : MonoBehaviour
         Vector2 end,
         float arcWorld,
         float duration,
-        Vector2 fixedFaceDir)
+        Vector2 fixedFaceDir,
+        Collider2D launchRoomBounds,
+        float tileSize)
     {
         if (mover != null)
         {
@@ -446,24 +478,28 @@ public sealed class SpringLauncher : MonoBehaviour
             if (useMountJumpVisual && mountVisual != null)
                 mountVisual.SetJumpPhase(descendingNow);
 
-            Vector2 flat = Vector2.Lerp(start, end, t);
+            Vector2 flat = WrapFlightPosition(
+                Vector2.Lerp(start, end, t), launchRoomBounds, tileSize);
 
             if (pinkShadow != null)
                 pinkShadow.SetJumpGroundPosition(flat);
 
             float parabola = 4f * t * (1f - t);
-            Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
+            float arcY = ClampArcHeightToRoom(
+                flat.y, arcWorld * parabola, launchRoomBounds, tileSize);
+            Vector2 pos = flat + Vector2.up * arcY;
 
-            rb.position = pos;
+            SetFlightPosition(rb, pos);
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        rb.position = end;
+        SetFlightPosition(rb, WrapFlightPosition(end, launchRoomBounds, tileSize));
 
         if (pinkShadow != null)
-            pinkShadow.SetJumpGroundPosition(end);
+            pinkShadow.SetJumpGroundPosition(
+                WrapFlightPosition(end, launchRoomBounds, tileSize));
     }
 
     private IEnumerator JumpArcUnmountedWithMountSprites(
@@ -474,14 +510,25 @@ public sealed class SpringLauncher : MonoBehaviour
         Vector2 end,
         float arcWorld,
         float duration,
-        Vector2 fixedFaceDir)
+        Vector2 fixedFaceDir,
+        Collider2D launchRoomBounds,
+        float tileSize)
     {
         if (mover == null || rb == null)
             yield break;
 
         if (riding == null)
         {
-            yield return JumpArcWithFixedIdleFacing(mover, rb, start, end, arcWorld, duration, fixedFaceDir);
+            yield return JumpArcWithFixedIdleFacing(
+                mover,
+                rb,
+                start,
+                end,
+                arcWorld,
+                duration,
+                fixedFaceDir,
+                launchRoomBounds,
+                tileSize);
             yield break;
         }
 
@@ -494,9 +541,11 @@ public sealed class SpringLauncher : MonoBehaviour
         {
             float t = Mathf.Clamp01(elapsed / duration);
 
-            Vector2 flat = Vector2.Lerp(start, end, t);
+            Vector2 flat = WrapFlightPosition(
+                Vector2.Lerp(start, end, t), launchRoomBounds, tileSize);
             float parabola = 4f * t * (1f - t);
-            float arcY = arcWorld * parabola;
+            float arcY = ClampArcHeightToRoom(
+                flat.y, arcWorld * parabola, launchRoomBounds, tileSize);
 
             AnimatedSpriteRenderer activeRenderer = PickUnmountedSpringArcRenderer(
                 riding,
@@ -506,13 +555,13 @@ public sealed class SpringLauncher : MonoBehaviour
             ApplyExclusiveUnmountedSpringArcRenderer(riding, activeRenderer);
             ApplyUnmountedSpringArcOffset(riding, activeRenderer, arcY);
 
-            rb.position = flat;
+            SetFlightPosition(rb, flat);
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        rb.position = end;
+        SetFlightPosition(rb, WrapFlightPosition(end, launchRoomBounds, tileSize));
 
         DisableAllUnmountedSpringArcSprites(riding);
         ClearAllUnmountedSpringArcOffsets(riding);
@@ -662,6 +711,106 @@ public sealed class SpringLauncher : MonoBehaviour
             Mathf.Round(p.x / tileSize) * tileSize,
             Mathf.Round(p.y / tileSize) * tileSize
         );
+    }
+
+    /// <summary>
+    /// Keeps a geyser flight in the room it started from. World 3 rooms are
+    /// tile-aligned, so wrapping the horizontal path this way preserves both
+    /// the launch direction and any sub-tile overshoot at the camera edge.
+    /// A null bound leaves every other spring-launcher scene unchanged.
+    /// </summary>
+    private static Vector2 WrapFlightPosition(
+        Vector2 position,
+        Collider2D roomBounds,
+        float tileSize)
+    {
+        if (roomBounds == null)
+            return position;
+
+        Bounds bounds = roomBounds.bounds;
+
+        // The flight position is continuous, unlike a bomb's discrete tile
+        // center. Wrap only after crossing the actual collider edge so the
+        // player does not jump early to a point outside the opposite edge.
+        float minX = bounds.min.x;
+        float maxX = bounds.max.x;
+        float minY = bounds.min.y;
+        float maxY = bounds.max.y;
+
+        float width = bounds.size.x;
+        float safeTileSize = Mathf.Max(0.0001f, tileSize);
+
+        if (width > 0f)
+        {
+            while (position.x < minX)
+                position.x += width;
+            while (position.x > maxX)
+                position.x -= width;
+        }
+
+        if (bounds.size.y > safeTileSize)
+        {
+            // The room collider includes the top and bottom indestructible
+            // wall tiles. A vertical wrap must land one tile inside those
+            // walls, not on the wall tile itself.
+            float bottomLandingY = Mathf.Ceil((minY + safeTileSize) / safeTileSize) * safeTileSize;
+            float topLandingY = Mathf.Floor((maxY - safeTileSize) / safeTileSize) * safeTileSize;
+
+            if (position.y < minY)
+                position.y = topLandingY;
+            else if (position.y > maxY)
+                position.y = bottomLandingY;
+        }
+
+        return position;
+    }
+
+    private static void SetFlightPosition(Rigidbody2D body, Vector2 position)
+    {
+        if (body == null)
+            return;
+
+        body.position = position;
+
+        Vector3 transformPosition = body.transform.position;
+        transformPosition.x = position.x;
+        transformPosition.y = position.y;
+        body.transform.position = transformPosition;
+    }
+
+    private static float ClampArcHeightToRoom(
+        float groundY,
+        float requestedArcY,
+        Collider2D roomBounds,
+        float tileSize)
+    {
+        if (roomBounds == null)
+            return requestedArcY;
+
+        Bounds bounds = roomBounds.bounds;
+        float safeTileSize = Mathf.Max(0.0001f, tileSize);
+        float minVisibleY = bounds.min.y + safeTileSize;
+        float maxVisibleY = bounds.max.y - safeTileSize;
+        float clampedY = Mathf.Clamp(groundY + requestedArcY, minVisibleY, maxVisibleY);
+        return clampedY - groundY;
+    }
+
+    private void QueueInvalidWrappedLandingBounce(
+        MovementController mover,
+        Vector2 launchDirection)
+    {
+        launchDirection = launchDirection.sqrMagnitude > 0.01f
+            ? launchDirection.normalized
+            : mover.FacingDirection;
+
+        if (launchDirection == Vector2.zero ||
+            !mover.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) ||
+            resolver == null)
+        {
+            return;
+        }
+
+        resolver.NotifyExternalPushed(launchDirection);
     }
 
     private Vector2 ReadHeldCardinal(MovementController mover)

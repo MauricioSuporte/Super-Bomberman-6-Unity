@@ -1100,11 +1100,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         Bounds bounds = punchRoomBounds.bounds;
         const float edgeInset = 0.001f;
+        float safeTileSize = Mathf.Max(0.0001f, kickTileSize);
+        float halfTile = safeTileSize * 0.5f;
 
         Vector3Int minCell = stageBoundsTilemap.WorldToCell(
-            new Vector3(bounds.min.x + edgeInset, bounds.min.y + edgeInset, 0f));
+            new Vector3(
+                bounds.min.x + edgeInset,
+                bounds.min.y + safeTileSize + edgeInset,
+                0f));
         Vector3Int maxCell = stageBoundsTilemap.WorldToCell(
-            new Vector3(bounds.max.x - edgeInset, bounds.max.y - edgeInset, 0f));
+            new Vector3(
+                bounds.max.x - halfTile - edgeInset,
+                bounds.max.y - halfTile - safeTileSize - edgeInset,
+                0f));
         Vector3Int rawCell = stageBoundsTilemap.WorldToCell(raw);
 
         bool wrapped = false;
