@@ -35,7 +35,7 @@ namespace StageAssets
 
         [Header("Timing")]
         [SerializeField] private bool useFixedTestInterval = true;
-        [SerializeField, Min(0.01f)] private float testIntervalSeconds = 5f;
+        [SerializeField, Min(0.01f)] private float testIntervalSeconds = 20f;
         [SerializeField, Min(0.01f)] private float intervalMinSeconds = 20f;
         [SerializeField, Min(0.01f)] private float intervalMaxSeconds = 30f;
         [SerializeField, Min(0.01f)] private float swimDurationSeconds = 1.25f;

@@ -16547,7 +16547,7 @@ MonoBehaviour:
   fishPerSchool: 6
   sortingOrder: 8
   useFixedTestInterval: 1
-  testIntervalSeconds: 5
+  testIntervalSeconds: 20
   intervalMinSeconds: 20
   intervalMaxSeconds: 30
   swimDurationSeconds: 1.25
