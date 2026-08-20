@@ -28,9 +28,9 @@ Material:
     - _BandHeightPixels: 16
     - _BandScrollSpeed: 24
     - _BandsPerDirection: 4
-    - _LogicalPixelOriginY: 92
-    - _LogicalPixelScale: 4
-    - _UnscaledTime: 83.59157
+    - _LogicalPixelOriginY: 72
+    - _LogicalPixelScale: 9
+    - _UnscaledTime: 36.195385
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1
