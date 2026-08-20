@@ -91,6 +91,13 @@ public sealed class WaterCycleCurrent : MonoBehaviour
             float step = Mathf.Min(speed * Time.fixedDeltaTime, remainingDistance);
             Vector2 next = QuantizeToPixelGrid(current + currentDirection * step);
 
+            if (TryGetPassableBombStopPosition(current, next, currentDirection, size, player.gameObject, out Vector2 bombStopPosition))
+            {
+                MovePlayer(player, bombStopPosition);
+                current = bombStopPosition;
+                break;
+            }
+
             if (IsBlockedAhead(next, currentDirection, size, player.gameObject))
                 break;
 
@@ -137,11 +144,59 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         for (int i = 0; i < hits.Length; i++)
         {
             Collider2D hit = hits[i];
+            if (hit == null || hit.isTrigger)
+                continue;
+
             if (hit != null && hit.gameObject != playerObject && !hit.transform.IsChildOf(playerObject.transform))
                 return true;
         }
 
         return false;
+    }
+
+    bool TryGetPassableBombStopPosition(
+        Vector2 current,
+        Vector2 next,
+        Vector2 currentDirection,
+        float size,
+        GameObject playerObject,
+        out Vector2 stopPosition)
+    {
+        stopPosition = default;
+        float stepDistance = Vector2.Dot(next - current, currentDirection);
+        if (stepDistance <= 0.0001f)
+            return false;
+
+        Bomb[] bombs = FindObjectsByType<Bomb>();
+        float nearestStopDistance = float.PositiveInfinity;
+        Vector2 lateralDirection = new(-currentDirection.y, currentDirection.x);
+
+        foreach (Bomb bomb in bombs)
+        {
+            if (bomb == null || bomb.IsSolid || bomb.gameObject == playerObject || bomb.transform.IsChildOf(playerObject.transform))
+                continue;
+
+            Collider2D bombCollider = bomb.GetComponent<Collider2D>();
+            if (bombCollider == null || !bombCollider.isTrigger)
+                continue;
+
+            Vector2 bombTile = SnapToGrid(bombCollider.bounds.center, size);
+            Vector2 offset = bombTile - current;
+            float forwardDistance = Vector2.Dot(offset, currentDirection);
+            float lateralDistance = Mathf.Abs(Vector2.Dot(offset, lateralDirection));
+            float safeStopDistance = forwardDistance - size;
+
+            if (lateralDistance > size * 0.25f || safeStopDistance < -0.001f || safeStopDistance > stepDistance + 0.001f)
+                continue;
+
+            if (safeStopDistance < nearestStopDistance)
+            {
+                nearestStopDistance = safeStopDistance;
+                stopPosition = QuantizeToPixelGrid(current + currentDirection * Mathf.Max(0f, safeStopDistance));
+            }
+        }
+
+        return !float.IsPositiveInfinity(nearestStopDistance);
     }
 
     static bool HasTileAt(Tilemap tilemap, Vector2 worldPosition)
