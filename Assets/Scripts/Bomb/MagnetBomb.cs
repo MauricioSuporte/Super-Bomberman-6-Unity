@@ -91,6 +91,9 @@ public sealed class MagnetBomb : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (GamePauseController.IsPaused)
             return;
 

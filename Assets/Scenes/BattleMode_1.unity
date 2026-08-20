@@ -444,8 +444,10 @@ MonoBehaviour:
   redLouieEggAmount: 0
   clockAmount: 0
   skullAmount: 2
+  randomSb5EggAmount: 0
   randomEggsMin: 4
   randomEggsMax: 8
+  hiddenObjectRooms: []
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
@@ -4840,8 +4842,8 @@ RectTransform:
   - {fileID: 2011670928}
   m_Father: {fileID: 1866114541}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.30906388, y: 0.15432099}
+  m_AnchorMax: {x: 0.6894502, y: 0.845679}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

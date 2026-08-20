@@ -80,6 +80,22 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
+        // Battle Mode online (Mirror): se a cena tem um NetworkManager, pular a
+        // intro local por completo. A intro pausa o tempo (timeScale=0), tranca
+        // input, esconde sprites e spawna players/bots locais — tudo isso
+        // congela e conflita com os players spawnados pela rede. Com a intro
+        // pulada, o BombermanNetworkManager é o único a spawnar players, já
+        // controláveis.
+        if (FindAnyObjectByType<Assets.Scripts.Netcode.BombermanNetworkManager>() != null)
+        {
+            IntroRunning = false;
+            EndingRunning = false;
+            Time.timeScale = 1f;
+            if (gameplayRoot != null)
+                gameplayRoot.SetActive(true);
+            return;
+        }
+
         PlayerPersistentStats.EnsureSessionBooted();
 
         if (GameMusicController.Instance != null)

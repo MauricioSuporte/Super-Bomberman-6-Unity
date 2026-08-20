@@ -308,6 +308,10 @@ public partial class BombController : MonoBehaviour
 
     private void Update()
     {
+        // Online host-autoritativo: só o servidor decide colocar/detonar bombas.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.BombControllerUpdate.Auto();
 
         if (ClownMaskBoss.BossIntroRunning)
@@ -538,6 +542,12 @@ public partial class BombController : MonoBehaviour
         explosion.SetSource(ownerController, sourcePlayerId, isRevengeBomb);
     }
 
+    // Online (host): quando não-nulo, SpawnExplosionVisual coleta as células
+    // visuais da explosão em curso para replicar aos clientes via ClientRpc.
+    private System.Collections.Generic.List<Assets.Scripts.Netcode.ExplosionFx> _netFxCollector;
+    // Online (host): células destrutíveis destruídas nesta explosão, para replicar.
+    private System.Collections.Generic.List<Vector3Int> _netDestroyedCells;
+
     private BombExplosion SpawnExplosionVisual(
         Vector2 position,
         BombExplosion.ExplosionPart part,
@@ -548,7 +558,48 @@ public partial class BombController : MonoBehaviour
         BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
         ApplyExplosionSource(explosion, sourceBomb);
         explosion.Play(part, direction, 0f, explosionDuration, origin, sourceBomb != null && sourceBomb.IsPierceBomb);
+
+        if (_netFxCollector != null)
+            _netFxCollector.Add(new Assets.Scripts.Netcode.ExplosionFx { pos = position, part = (byte)part, dir = direction });
+
         return explosion;
+    }
+
+    // Chamado no CLIENTE (via NetworkBombFx) para recriar o visual da explosão
+    // sem dano (o dano é resolvido só no host).
+    public void PlayNetworkExplosionVisual(Vector2 position, byte part, Vector2 direction, Vector2 origin, float duration, bool pierce)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
+        BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
+        if (explosion == null)
+            return;
+
+        explosion.Play((BombExplosion.ExplosionPart)part, direction, 0f, duration, origin, pierce);
+        explosion.SetCollisionEnabled(false);
+    }
+
+    // Chamado no CLIENTE (via NetworkBombFx) para recriar a animação de quebra
+    // do bloco destrutível numa célula (visual; o estado do tile vem no RPC).
+    public void PlayNetworkDestructibleBreak(Vector3Int cell)
+    {
+        Destructible prefab = destructiblePrefab;
+        if (prefab == null && _gm != null)
+            prefab = _gm.destructiblePrefab;
+        if (prefab == null)
+            return;
+
+        Tilemap tm = destructibleTiles;
+        if (tm == null && _gm != null)
+            tm = _gm.destructibleTilemap;
+        if (tm == null && GameManager.Instance != null)
+            tm = GameManager.Instance.destructibleTilemap;
+        if (tm == null)
+            return;
+
+        Instantiate(prefab, tm.GetCellCenterWorld(cell), Quaternion.identity, tm.transform);
     }
 
     private BombExplosion SpawnExplosionDamageHitbox(
@@ -968,6 +1019,21 @@ public partial class BombController : MonoBehaviour
         return skullExplosionRadiusOverride;
     }
 
+    // Rede (client-auth): a colocação de bomba é host-autoritativa, mas o movimento
+    // é client-auth → a transform do host para um player-cliente está ATRASADA
+    // (NetworkTransform + buffer). Sem isto a bomba nasce um tile ATRÁS de onde o
+    // dono está (perigoso em canto de mapa). O dono reporta a própria posição no
+    // Command de bomba (NetworkPlayerInput.CmdBombTap) e o host coloca nesse tile.
+    // Só afeta a COLOCAÇÃO; o pickup da luva usa a posição da bomba (inalterado).
+    private Vector2 _netPlacementOverridePos;
+    private int _netPlacementOverrideFrame = -1000;
+
+    public void SetNetworkedPlacementOverride(Vector2 worldPos)
+    {
+        _netPlacementOverridePos = worldPos;
+        _netPlacementOverrideFrame = Time.frameCount;
+    }
+
     private void PlaceBomb()
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -994,7 +1060,12 @@ public partial class BombController : MonoBehaviour
         ResolveTilemaps();
 
         Tilemap snapTm = GetSnapTilemapForGround();
-        Vector2 position = SnapToTileCenter(snapTm, (Vector2)transform.position, out _, out _);
+        // Rede: usa a posição reportada pelo dono (client-auth) se fresca; senão a
+        // transform local (host/offline, ou player do próprio host — sem atraso).
+        Vector2 basePos = (Time.frameCount - _netPlacementOverrideFrame) <= 2
+            ? _netPlacementOverridePos
+            : (Vector2)transform.position;
+        Vector2 position = SnapToTileCenter(snapTm, basePos, out _, out _);
 
         if (!CanPlaceBombAt(position))
             return;
@@ -1078,6 +1149,9 @@ public partial class BombController : MonoBehaviour
 
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
+
+        // Online (host): replica a bomba para os clientes. No-op offline.
+        Assets.Scripts.Netcode.NetSpawn.Server(bomb);
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -1511,12 +1585,23 @@ public partial class BombController : MonoBehaviour
         ResolveExplosionPrefab();
         if (explosionPrefab == null)
         {
-            Destroy(bomb);
+            if (Assets.Scripts.Netcode.NetSync.IsOnline)
+                Assets.Scripts.Netcode.NetSpawn.Despawn(bomb);
+            else
+                Destroy(bomb);
             bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
             return;
         }
 
         int bombSpotlightId = AllocateSpotlightBaseId();
+
+        // Online (host): coletar as células visuais desta explosão para replicar.
+        _netFxCollector = Assets.Scripts.Netcode.NetSync.IsServer
+            ? new System.Collections.Generic.List<Assets.Scripts.Netcode.ExplosionFx>(32)
+            : null;
+        _netDestroyedCells = Assets.Scripts.Netcode.NetSync.IsServer
+            ? new System.Collections.Generic.List<Vector3Int>(16)
+            : null;
 
         SpawnExplosionVisual(
             snapped,
@@ -1553,7 +1638,27 @@ public partial class BombController : MonoBehaviour
             destroyDelay = explosionAudio.clip.length;
         }
 
-        Destroy(bomb, destroyDelay);
+        // Online (host): envia o visual coletado + as células destruídas.
+        if ((_netFxCollector != null && _netFxCollector.Count > 0) ||
+            (_netDestroyedCells != null && _netDestroyedCells.Count > 0))
+        {
+            if (TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx))
+            {
+                if (_netFxCollector != null && _netFxCollector.Count > 0)
+                    fx.ServerEmit(snapped, _netFxCollector.ToArray(), pierce, explosionDuration);
+                if (_netDestroyedCells != null && _netDestroyedCells.Count > 0)
+                    fx.ServerEmitDestroyed(_netDestroyedCells.ToArray());
+            }
+        }
+        _netFxCollector = null;
+        _netDestroyedCells = null;
+
+        // Online: HideBombVisuals já ocultou a bomba; despawn imediato replica
+        // o sumiço. Offline mantém o delay para o SFX tocar da própria bomba.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            Assets.Scripts.Netcode.NetSpawn.Despawn(bomb);
+        else
+            Destroy(bomb, destroyDelay);
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 
@@ -2113,6 +2218,9 @@ public partial class BombController : MonoBehaviour
 
         destructibleTiles.SetTile(cell, null);
 
+        if (_netDestroyedCells != null)
+            _netDestroyedCells.Add(cell);
+
         if (_gm != null)
             _gm.OnDestructibleDestroyed(cell);
     }
@@ -2141,11 +2249,21 @@ public partial class BombController : MonoBehaviour
         if (!_gm.TryReserveItemSpawnCell(cell))
             yield break;
 
-        GameObject spawned = parent != null
-            ? Instantiate(prefab, spawnWorldPosition, Quaternion.identity, parent)
+        // Online: cria o item na RAIZ (sem o parent do Tilemap). Assim o Awake
+        // do AnimatedSpriteRenderer o trata como "standalone root" (offsets
+        // desligados) e ele permanece na world position; como está na raiz,
+        // a localPosition que o Mirror replica no spawn == world, então o item
+        // fica alinhado ao grid tanto no host quanto no cliente. (Offline mantém
+        // o parent do Tilemap, comportamento inalterado.)
+        Transform spawnParent = Assets.Scripts.Netcode.NetSync.IsOnline ? null : parent;
+        GameObject spawned = spawnParent != null
+            ? Instantiate(prefab, spawnWorldPosition, Quaternion.identity, spawnParent)
             : Instantiate(prefab, spawnWorldPosition, Quaternion.identity);
 
         _gm.PrepareSpawnedHiddenObject(spawned, prefab, spawnWorldPosition);
+
+        // Online (host): replica o item revelado para os clientes.
+        Assets.Scripts.Netcode.NetSpawn.Server(spawned);
     }
 
     private float GetDestructibleDestroyTime()
@@ -2215,6 +2333,15 @@ public partial class BombController : MonoBehaviour
 
         currentExplosionAudio = source;
         GameAudioSettings.PlaySfx(currentExplosionAudio, clip, explosionSfxVolume);
+    }
+
+    // Rede: toca o SOM da explosão no CLIENTE (o VFX já vem replicado pelo
+    // NetworkBombFx.RpcPlay). Uma vez por explosão, usando o raio atual do player
+    // (replicado por NetworkPlayerState) e o AudioSource do player.
+    public void PlayExplosionSfxNetworked(bool pierce)
+    {
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        PlayExplosionSfxExclusive(src, explosionRadius, pierce);
     }
 
     private void PlayPlaceBombSfx()

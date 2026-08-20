@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2727780941473249228}
   - component: {fileID: 3750686511081856235}
   - component: {fileID: 683260249802283009}
+  - component: {fileID: 2560552327958174355}
   m_Layer: 9
   m_Name: Heart
   m_TagString: Untagged
@@ -38,7 +39,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2727780941473249229
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -95,6 +96,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!61 &2727780941473249228
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -165,9 +167,11 @@ MonoBehaviour:
   animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
+  loopStartFrame: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -198,6 +202,24 @@ MonoBehaviour:
   damageIgnoresInvulnerability: 0
   behavior: {fileID: 0}
   type: 12
+  debugSkullBounce: 0
+--- !u!114 &2560552327958174355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2727780941473249226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
 --- !u!1 &6777853137903352683
 GameObject:
   m_ObjectHideFlags: 0
@@ -233,7 +255,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5919430103598892765
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -290,6 +312,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &4647420896281376823
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -316,9 +339,11 @@ MonoBehaviour:
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
+  loopStartFrame: 0
   idle: 0
   frameOffsets: []
   pingPong: 0

@@ -392,6 +392,8 @@ public class ItemPickup : MonoBehaviour
 
         if (playDestroyAnim)
             DestroyWithAnimation();
+        else if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
         else
             Destroy(gameObject);
     }
@@ -649,6 +651,11 @@ public class ItemPickup : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        // Online: host-authoritative. Only the host resolves item pickup/hit;
+        // the client just renders the replicated item.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (isBeingDestroyed || other == null)
             return;
 
@@ -1630,9 +1637,9 @@ public class ItemPickup : MonoBehaviour
         transform.position = p;
 
         // IMPORTANTE:
-        // O AnimatedSpriteRenderer está no mesmo GameObject do item.
+        // O AnimatedSpriteRenderer estï¿½ no mesmo GameObject do item.
         // Se ele usar frameOffsets, ele pode restaurar o localPosition antigo.
-        // Então atualizamos a base visual para a posição local atual.
+        // Entï¿½o atualizamos a base visual para a posiï¿½ï¿½o local atual.
         SyncSkullAnimatedRendererBasePosition();
 
         if (syncPhysics)

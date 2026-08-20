@@ -68,6 +68,14 @@ public static class BomberSkinSheetGenerator
 
     static void UpdatePlayerPrefabPalette1References()
     {
+        // Online (Mirror): NÃO recarregar o Player.prefab via LoadPrefabContents
+        // durante o BUILD. O Player tem NetworkIdentity, e o OnValidate do Mirror
+        // dispara AssignSceneID (que lança exceção quando BuildPipeline.isBuildingPlayer),
+        // quebrando o build. As referências de paleta já são atualizadas no Editor
+        // (delayCall / menu), então pular no build é seguro.
+        if (UnityEditor.BuildPipeline.isBuildingPlayer)
+            return;
+
         const string prefabPath = "Assets/Prefabs/Player.prefab";
         const string sheetPath = "Assets/Resources/Sprites/Bombers/Bomberman/Generated/Bomberman/Bomberman1.png";
         Object[] assets = AssetDatabase.LoadAllAssetsAtPath(sheetPath);

@@ -224,10 +224,13 @@ public class GameManager : MonoBehaviour
     private float battleTimeRemainingSeconds = Mathf.Infinity;
     private float battleTimerExpiredElapsedSeconds;
     private bool hasBattleTimeLimit;
+    private int lastBroadcastTimerSecond = -1; // F5a
 
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
     private Coroutine battleVictoryCheckRoutine;
+    private Coroutine onlineRoundOverRoutine; // F5a
+    private bool onlineHostMatchComplete;     // F5b (host): a partida terminou?
     private readonly List<MovementController> winningBattleSurvivorsBuffer = new();
     private readonly List<ItemType> battleDroppedItemsBuffer = new();
     private readonly List<Vector3Int> battleDropCellsBuffer = new();
@@ -255,6 +258,13 @@ public class GameManager : MonoBehaviour
         ResolveDestructibleTileResolver();
     }
 
+    // Rede: instante (realtime) a partir do qual o win-check pode CONCLUIR um round
+    // online. Setado no Start da cena de batalha — janela de graça para os players
+    // spawnarem na troca de cena (lobby→batalha), evitando round-over prematuro
+    // quando o host é lento. Não afeta o offline.
+    float onlineBattleWinEvalReadyTime;
+    const float OnlineBattleWinGraceSeconds = 4f;
+
     void Start()
     {
         endStageTriggered = false;
@@ -277,6 +287,13 @@ public class GameManager : MonoBehaviour
         {
             PlayerPersistentStats.ResetBattleModeLoadouts(BattleModeRules.Instance);
             ApplySavedBattleModeHiddenItemAmounts();
+
+            // Rede: começa a graça do win-check (os players ainda estão entrando/
+            // spawnando após o ServerChangeScene; um evento espúrio nessa janela
+            // não pode concluir o round). Só online.
+            onlineBattleWinEvalReadyTime = Assets.Scripts.Netcode.NetSync.IsOnline
+                ? Time.realtimeSinceStartup + OnlineBattleWinGraceSeconds
+                : 0f;
         }
 
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
@@ -1461,6 +1478,18 @@ public class GameManager : MonoBehaviour
 
     void EvaluatePlayerWinState()
     {
+        // F5a — a decisão de fim de round é host-autoritativa. O cliente puro
+        // nunca avalia; o host decide e replica o resultado.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
+        // Rede: janela de graça no início do round — não conclui enquanto os players
+        // ainda estão entrando/spawnando após o ServerChangeScene (evita round-over
+        // prematuro por evento espúrio na troca de cena; host lento). Ver Start().
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && IsBattleModeScene() &&
+            Time.realtimeSinceStartup < onlineBattleWinEvalReadyTime)
+            return;
+
         if (IsBattleModeScene() &&
             BattleRevengeSystem.Instance != null &&
             BattleRevengeSystem.Instance.HasRespawnSwapInProgress)
@@ -1639,6 +1668,29 @@ public class GameManager : MonoBehaviour
     {
         if (survivingPlayer == null)
             return;
+
+        // F5a — online: a sequência single-player faz fade-pra-preto/timeScale e
+        // termina recarregando a cena; sem o reload (que só vem no F5b) ela deixa
+        // a tela preta e trava. Usamos um round-end dedicado: só o placar, sem
+        // fade/timeScale/reload, replicado aos clientes. (F5b coordena o próximo
+        // round via ServerChangeScene.)
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+        {
+            restartingRound = true;
+            endStageTriggered = true;
+
+            BattleSuddenDeathController sd = FindAnyObjectByType<BattleSuddenDeathController>();
+            if (sd != null)
+                sd.StopSuddenDeathAndClearVisuals();
+
+            // placar no host (replicação = F5a-3); retorno = partida terminou (F5b)
+            onlineHostMatchComplete = RegisterBattleVictory(survivingPlayer);
+
+            int winnerId = survivingPlayer.PlayerId;
+            Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastRoundOver(winnerId, 0);
+            PlayOnlineRoundOver(winnerId, 0);
+            return;
+        }
 
         restartingRound = true;
         endStageTriggered = true;
@@ -1844,6 +1896,12 @@ public class GameManager : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
+        // F5a — em cena de rede só o servidor conta o tempo, e só depois de
+        // hospedar (antes disso IsServer é falso). O cliente recebe o valor
+        // replicado; offline puro conta normalmente.
+        if (Assets.Scripts.Netcode.NetSync.IsNetworkedScene && !Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
         if (!IsBattleModeScene() || !hasBattleTimeLimit)
             return;
 
@@ -1860,9 +1918,12 @@ public class GameManager : MonoBehaviour
             if (battleTimeRemainingSeconds > 0f)
             {
                 battleTimerExpiredElapsedSeconds = 0f;
+                BroadcastBattleTimerIfNeeded();
                 return;
             }
         }
+
+        BroadcastBattleTimerIfNeeded();
 
         battleTimerExpiredElapsedSeconds += Time.unscaledDeltaTime;
 
@@ -1870,6 +1931,29 @@ public class GameManager : MonoBehaviour
             return;
 
         TriggerBattleDrawSequence(showTimeUp: true);
+    }
+
+    // F5a — host replica o relógio aos clientes quando o segundo inteiro muda
+    // (o HUD mostra segundos, então ~1 msg/s basta).
+    void BroadcastBattleTimerIfNeeded()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
+        int sec = Mathf.CeilToInt(BattleTimeRemainingSeconds);
+        if (sec == lastBroadcastTimerSecond)
+            return;
+
+        lastBroadcastTimerSecond = sec;
+        Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastTimer(
+            battleTimeRemainingSeconds, hasBattleTimeLimit);
+    }
+
+    // F5a — cliente aplica o relógio replicado pelo host (o HUD lê daqui).
+    public void ApplyNetworkTimer(float remaining, bool hasLimit)
+    {
+        hasBattleTimeLimit = hasLimit;
+        battleTimeRemainingSeconds = remaining;
     }
 
     void TriggerBattleDrawSequence(bool showTimeUp)
@@ -1884,7 +1968,112 @@ public class GameManager : MonoBehaviour
         if (showTimeUp)
             battleTimeRemainingSeconds = 0f;
 
+        // F5a — online: round-end dedicado (sem fade/timeScale/reload), replicado.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+        {
+            BattleSuddenDeathController sd = FindAnyObjectByType<BattleSuddenDeathController>();
+            if (sd != null)
+                sd.StopSuddenDeathAndClearVisuals();
+
+            onlineHostMatchComplete = false; // empate não fecha a partida (F5b)
+
+            byte kind = showTimeUp ? (byte)2 : (byte)1;
+            Assets.Scripts.Netcode.BombermanNetworkManager.ServerBroadcastRoundOver(-1, kind);
+            PlayOnlineRoundOver(-1, kind);
+            return;
+        }
+
         StartCoroutine(BattleDrawSequenceRoutine(showTimeUp));
+    }
+
+    // F5a — apresentação de fim de round online (host e cliente). Só UI: mostra o
+    // placar/empate e SEGURA (sem fade-pra-preto, sem timeScale, sem reload). O
+    // próximo round/lobby será coordenado via ServerChangeScene (F5b). Os overlays
+    // usam espera em tempo real, então independem do timeScale.
+    public void PlayOnlineRoundOver(int winnerId, byte kind)
+    {
+        if (onlineRoundOverRoutine != null)
+            return;
+
+        restartingRound = true;
+        endStageTriggered = true;
+
+        // O host é a autoridade: congela o gameplay durante o placar (sem
+        // timeScale=0, que não barra a colocação de bomba feita no Update).
+        // No cliente os controllers já não simulam (gate do NetSync).
+        if (Assets.Scripts.Netcode.NetSync.IsServer)
+            FreezeAllPlayersForOnlineRoundEnd();
+
+        onlineRoundOverRoutine = StartCoroutine(OnlineRoundOverRoutine(winnerId, kind));
+    }
+
+    // F5a — congela todos os players no fim de round online: remove bombas
+    // plantadas e desabilita MovementController/BombController para não aceitarem
+    // mais input enquanto o placar está na tela.
+    void FreezeAllPlayersForOnlineRoundEnd()
+    {
+        MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < players.Length; i++)
+        {
+            MovementController player = players[i];
+            if (player == null || !player.CompareTag("Player"))
+                continue;
+
+            if (player.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+                glove.DestroyHeldBombIfHolding();
+
+            if (player.TryGetComponent<BombController>(out var bomb) && bomb != null)
+            {
+                bomb.ClearPlantedBombsOnStageEnd(false);
+                bomb.enabled = false;
+            }
+
+            player.enabled = false;
+        }
+    }
+
+    IEnumerator OnlineRoundOverRoutine(int winnerId, byte kind)
+    {
+        if (kind == 0)
+        {
+            BattleModeHud.CaptureDisplayedVictorySnapshot();
+            yield return BattleRoundWinScoreboardOverlay.PlayRoutine(winnerId);
+            BattleModeHud.ReleaseDisplayedVictorySnapshot();
+        }
+        else
+        {
+            if (kind == 2)
+                yield return BattleTimeUpOverlay.PlayRoutine();
+            yield return BattleDrawOverlay.PlayRoutine();
+        }
+
+        onlineRoundOverRoutine = null;
+
+        // F5b — só o host decide o que vem depois do placar.
+        if (!Assets.Scripts.Netcode.NetSync.IsServer)
+            yield break;
+
+        if (onlineHostMatchComplete)
+        {
+            // F5c — partida terminada: pausa pra leitura do placar final e volta
+            // todos ao lobby (a sessão continua ativa; o host pode iniciar outra).
+            yield return new WaitForSecondsRealtime(2.5f);
+
+            // Encerra a partida no host para a PRÓXIMA começar 0-0 (BeginBattleMatch
+            // faz early-return na mesma cena enquanto a partida segue "em progresso").
+            // O cliente é corrigido pelo RoundOverMessage (placar absoluto) no 1º round.
+            if (GameSession.Instance != null)
+                GameSession.Instance.EndBattleMatch();
+
+            Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
+            yield break;
+        }
+
+        // Próximo round: pequena pausa pra leitura do placar e então recarrega a
+        // cena de forma coordenada (o Mirror re-spawna os players — ver
+        // BombermanNetworkManager.ServerStartNextRound).
+        yield return new WaitForSecondsRealtime(1.25f);
+        Assets.Scripts.Netcode.BombermanNetworkManager.ServerStartNextRound();
     }
 
     public void DebugTriggerBattleTimeUp()
@@ -1929,7 +2118,10 @@ public class GameManager : MonoBehaviour
         StagePreIntroPlayersWalk.SkipOnNextLoad();
 
         Scene current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
+        // F5b (online): a troca de cena será coordenada via ServerChangeScene.
+        // Por enquanto o host segura no resultado (não recarrega local).
+        if (!Assets.Scripts.Netcode.NetSync.IsOnline)
+            SceneManager.LoadScene(current.buildIndex);
     }
 
     static void PrepareActivePlayersForBattleTimeUp()
@@ -2033,7 +2225,9 @@ public class GameManager : MonoBehaviour
             StagePreIntroPlayersWalk.SkipOnNextLoad();
 
             BattleModeMenu.OpenDirectlyAtStageSelect = true;
-            SceneManager.LoadScene(BattleModeMenuSceneName);
+            // F5b/F5c (online): retorno ao lobby será coordenado pela rede.
+            if (!Assets.Scripts.Netcode.NetSync.IsOnline)
+                SceneManager.LoadScene(BattleModeMenuSceneName);
 
             yield break;
         }
@@ -2050,7 +2244,10 @@ public class GameManager : MonoBehaviour
         StagePreIntroPlayersWalk.SkipOnNextLoad();
 
         Scene current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
+        // F5b (online): próximo round via ServerChangeScene coordenado. Por
+        // enquanto o host segura no scoreboard (não recarrega local).
+        if (!Assets.Scripts.Netcode.NetSync.IsOnline)
+            SceneManager.LoadScene(current.buildIndex);
     }
 
     static void PlayBattleVictorySfx(MovementController survivingPlayer, bool hasNightmareBomberWinner)

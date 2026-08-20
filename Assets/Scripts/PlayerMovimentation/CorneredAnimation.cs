@@ -105,6 +105,12 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void Update()
     {
+        // Online: cliente puro não simula animação (a saída vem replicada).
+        // Exceção (Etapa 1): o player local predito dirige a própria animação.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally &&
+            !(movement != null && movement.PredictLocally))
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.CorneredAnimationUpdate.Auto();
 
         if (movement == null)

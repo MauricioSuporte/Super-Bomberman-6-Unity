@@ -210,6 +210,26 @@ public class MovementController : MonoBehaviour, IKillable
     public Rigidbody2D Rigidbody { get; private set; }
     public Vector2 Direction => direction;
 
+    // Predição de cliente (Etapa 1): quando true, este MovementController — o player
+    // LOCAL de um cliente puro — SIMULA localmente (prediz) em vez de só renderizar o
+    // estado replicado. Ligado por NetworkPlayerInput.OnStartLocalPlayer; desligado na
+    // morte (NetworkPlayerState). É por-instância (não global): remotos ficam false.
+    private bool predictLocally;
+    public bool PredictLocally => predictLocally;
+    public void SetPredictLocally(bool value) => predictLocally = value;
+
+    // Gate de INPUT (Update): host/offline OU o dono deste player. O host lê input
+    // dos remotos (via sintético) para saber a DIREÇÃO deles (bomba/kick continuam
+    // host-autoritativos), mas NÃO move a física deles (ver ShouldMovePhysicsLocally).
+    private bool ShouldSimulateLocallyOrPredict =>
+        Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || predictLocally;
+
+    // Client-autoritativo: só o DONO move a física do seu player (offline move tudo).
+    // O host NÃO move mais os players remotos — a posição deles chega pela rede
+    // (NetworkTransform ClientToServer). Elimina a dupla-simulação e o rubber-band.
+    private bool ShouldMovePhysicsLocally =>
+        !Assets.Scripts.Netcode.NetSync.IsOnline || predictLocally;
+
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;
 
@@ -217,6 +237,9 @@ public class MovementController : MonoBehaviour, IKillable
     public bool IsMounted => isMounted;
 
     protected bool deathRequestedByExplosion;
+    // Rede (client-auth): o host expõe se a morte foi por explosão para o
+    // cliente escolher o mesmo renderer de morte ao tocar a animação localmente.
+    public bool DeathWasByExplosion => deathRequestedByExplosion;
     public bool isDead;
     protected bool inputLocked;
     public bool InputLocked => inputLocked;
@@ -573,6 +596,12 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        // Online host-autoritativo: clientes puros não simulam; a posição
+        // e a animação chegam replicadas do servidor (ver NetSync). Exceção: o
+        // player LOCAL predito (Etapa 1) simula localmente.
+        if (!ShouldSimulateLocallyOrPredict)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
 
         if (inputLocked || GamePauseController.IsPaused || isDead)
@@ -1768,6 +1797,11 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        // Client-autoritativo: só o DONO move a física do seu player. Os players
+        // remotos (inclusive no host) são posicionados pela rede (NetworkTransform).
+        if (!ShouldMovePhysicsLocally)
+            return;
+
         using var performanceSample = BattleModePerformanceMarkers.PlayerFixedUpdate.Auto();
 
         if (UpdateBombReentryCentering())
@@ -3417,6 +3451,45 @@ public class MovementController : MonoBehaviour, IKillable
         Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);
     }
 
+    // Rede (client-auth): o DONO toca a PRÓPRIA animação de morte localmente ao
+    // saber que morreu (life==0 replicado pelo host). Só o VISUAL — o gameplay
+    // da morte (teardown, GameManager, eliminação/desativação) segue host-
+    // autoritativo. O renderer ligado aqui auto-avança no dono e o
+    // NetworkPlayerAnimation o amostra e replica aos demais clientes.
+    // Rede: som da morte no cliente (era host-only no DeathSequence). Tocado por
+    // TODOS os clientes na transição life==0, para todos ouvirem a eliminação.
+    public void PlayDeathSfxLocal()
+    {
+        if (audioSource != null && deathSfx != null)
+            GameAudioSettings.PlaySfx(audioSource, deathSfx);
+    }
+
+    public void PlayDeathVisualLocal(bool byExplosion)
+    {
+        // Desliga TODOS os renderers (incl. movimento/cornered/timeOver/montaria)
+        // para que só o de morte fique habilitado — o NetworkPlayerAnimation
+        // amostra o primeiro renderer ligado, então não pode sobrar outro.
+        SetAllSpritesVisible(false);
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        AnimatedSpriteRenderer deathRendererToUse =
+            byExplosion && spriteRendererDeathByExplosion != null
+                ? spriteRendererDeathByExplosion
+                : spriteRendererDeath;
+
+        if (deathRendererToUse != null)
+        {
+            SetAnimEnabled(deathRendererToUse, true);
+            deathRendererToUse.idle = false;
+            deathRendererToUse.loop = false;
+            deathRendererToUse.pingPong = false;
+            deathRendererToUse.CurrentFrame = 0;
+            activeSpriteRenderer = deathRendererToUse;
+            deathRendererToUse.RefreshFrame();
+        }
+    }
+
     protected virtual void OnDeathSequenceEnded()
     {
         deathRequestedByExplosion = false;
@@ -3434,6 +3507,17 @@ public class MovementController : MonoBehaviour, IKillable
 
         BattleRevengeSystem.Instance?.HandlePlayerDeathCompleted(this);
         Died?.Invoke(this);
+
+        // F5a — online: replica a eliminação para o cliente desativar o clone
+        // (o Mirror não sincroniza SetActive). Só na morte "real" (o retorno
+        // antecipado do revenge-swap acima não passa por aqui).
+        if (Assets.Scripts.Netcode.NetSync.IsServer &&
+            TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerState>(out var netState) &&
+            netState != null)
+        {
+            netState.ServerMarkEliminated();
+        }
+
         gameObject.SetActive(false);
 
         if (CompareTag("BossBomber"))

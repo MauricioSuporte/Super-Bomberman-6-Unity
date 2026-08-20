@@ -217,6 +217,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void FixedUpdate()
     {
+        // Online: cliente puro não simula a bomba (host-autoritativo).
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         // Kick movement includes kick bounces, while punch movement includes
         // thrown/rubber-bomb bounces. Neither may coexist with magnet movement.
         if (magnetRoutine != null && HasMagnetIncompatibleMovement)
@@ -1755,6 +1759,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // Online: só o host resolve colisões/chain reaction da bomba.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (HasExploded)
             return;
 
@@ -1799,6 +1807,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void OnTriggerExit2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (HasExploded || isKicked || isPunched)
             return;
 

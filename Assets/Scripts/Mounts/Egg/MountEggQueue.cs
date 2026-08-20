@@ -1414,7 +1414,12 @@ public sealed class MountEggQueue : MonoBehaviour
     {
         for (int i = 0; i < _eggs.Count; i++)
             if (_eggs[i].rootTr != null)
-                Destroy(_eggs[i].rootTr.gameObject);
+            {
+                if (Assets.Scripts.Netcode.NetworkEggFollower.ReplicationEnabled)
+                    Assets.Scripts.Netcode.NetSpawn.Despawn(_eggs[i].rootTr.gameObject); // F6(B2): despawn replicado
+                else
+                    Destroy(_eggs[i].rootTr.gameObject);
+            }
 
         _eggs.Clear();
     }
@@ -1468,6 +1473,14 @@ public sealed class MountEggQueue : MonoBehaviour
 
             if (directional != null)
                 directional.ForceIdleFacing(Vector2.down);
+
+            // F6 (B2) online: replica o seguidor aos clientes (no-op offline; o
+            // host mantém seu objeto local, que a fila dirige, e a NetworkTransform
+            // replica a posição). A MountEggQueue só roda no host/offline.
+            // Gateado: por ora a replicação está DESLIGADA (bug de follow) — ovos
+            // ficam host-only/invisíveis no cliente, como antes do B2.
+            if (Assets.Scripts.Netcode.NetworkEggFollower.ReplicationEnabled)
+                Assets.Scripts.Netcode.NetSpawn.Server(rootGo);
         }
         else
         {
@@ -1661,6 +1674,12 @@ public sealed class MountEggQueue : MonoBehaviour
             }
         }
 
+        // F6 (B2) online: aciona a MESMA VFX nos clientes antes de despawnar.
+        if (Assets.Scripts.Netcode.NetworkEggFollower.ReplicationEnabled &&
+            Assets.Scripts.Netcode.NetSync.IsServer &&
+            tr.TryGetComponent<Assets.Scripts.Netcode.NetworkEggFollower>(out var nef) && nef != null)
+            nef.ServerBeginDestroyVisual(byExplosion);
+
         if (!tr.TryGetComponent<Collider2D>(out var col))
             col = tr.GetComponentInChildren<Collider2D>(true);
 
@@ -1670,7 +1689,12 @@ public sealed class MountEggQueue : MonoBehaviour
         yield return new WaitForSeconds(seconds);
 
         if (tr != null)
-            Destroy(tr.gameObject);
+        {
+            if (Assets.Scripts.Netcode.NetworkEggFollower.ReplicationEnabled)
+                Assets.Scripts.Netcode.NetSpawn.Despawn(tr.gameObject);
+            else
+                Destroy(tr.gameObject);
+        }
     }
 
     public bool RequestConsumeEggForMountCollision(Transform anyTransformOnEgg, GameObject consumerPlayer)
