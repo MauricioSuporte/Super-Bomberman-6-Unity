@@ -7963,7 +7963,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 9a6a2dfbf4efe6f4d97a95ad121cb7ac, type: 3}
+  m_Sprite: {fileID: -8820715720815460284, guid: e79c409b9d61efb4383219413b6ed2f0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -8049,7 +8049,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3BambooExitBlocker
   riseDistanceTiles: 2
   riseDurationSeconds: 1
+  openingDirection: {x: 0, y: -1}
   pixelsPerUnit: 16
+  sinkIntoGround: 1
+  sinkDistanceTiles: 0.5
   gateRenderer: {fileID: 0}
   gateSpriteSheet: {fileID: 0}
   gatePixelsPerUnit: 16
@@ -14313,7 +14316,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3BambooExitBlocker
   riseDistanceTiles: 2
   riseDurationSeconds: 1
+  openingDirection: {x: 0, y: -1}
   pixelsPerUnit: 16
+  sinkIntoGround: 1
+  sinkDistanceTiles: 0.5
   gateRenderer: {fileID: 0}
   gateSpriteSheet: {fileID: 0}
   gatePixelsPerUnit: 16
@@ -14416,7 +14422,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 9a6a2dfbf4efe6f4d97a95ad121cb7ac, type: 3}
+  m_Sprite: {fileID: -8820715720815460284, guid: e79c409b9d61efb4383219413b6ed2f0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
