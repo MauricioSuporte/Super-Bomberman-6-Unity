@@ -7908,7 +7908,7 @@ GameObject:
   - component: {fileID: 698957488}
   - component: {fileID: 698957489}
   m_Layer: 6
-  m_Name: Bamboo1
+  m_Name: Ship1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7983,7 +7983,7 @@ Transform:
   m_GameObject: {fileID: 698957485}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -18.3, y: 5.9, z: 0}
+  m_LocalPosition: {x: -18, y: 5.9, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8053,6 +8053,8 @@ MonoBehaviour:
   pixelsPerUnit: 16
   sinkIntoGround: 1
   sinkDistanceTiles: 0.5
+  sinkHorizontalShakeTiles: 0.125
+  sinkHorizontalShakeCycles: 4
   gateRenderer: {fileID: 0}
   gateSpriteSheet: {fileID: 0}
   gatePixelsPerUnit: 16
@@ -10252,7 +10254,7 @@ Tilemap:
   - first: {x: 42, y: -3, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 108
+      m_TileIndex: 109
       m_TileSpriteIndex: 59
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
@@ -10262,7 +10264,7 @@ Tilemap:
   - first: {x: 44, y: -3, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 109
+      m_TileIndex: 108
       m_TileSpriteIndex: 59
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
@@ -12865,10 +12867,10 @@ Tilemap:
       serializedVersion: 2
       m_AnimatedSprites:
       - {fileID: -922855616, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      - {fileID: -2139467825, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      - {fileID: -968933721, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      - {fileID: 1686707430, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       - {fileID: 1398966097, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
+      - {fileID: 1686707430, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
+      - {fileID: -968933721, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
+      - {fileID: -2139467825, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
@@ -12877,10 +12879,10 @@ Tilemap:
       serializedVersion: 2
       m_AnimatedSprites:
       - {fileID: -922855616, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      - {fileID: 1398966097, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      - {fileID: 1686707430, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      - {fileID: -968933721, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       - {fileID: -2139467825, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
+      - {fileID: -968933721, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
+      - {fileID: 1686707430, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
+      - {fileID: 1398966097, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
@@ -14296,7 +14298,7 @@ GameObject:
   - component: {fileID: 1097302365}
   - component: {fileID: 1097302364}
   m_Layer: 6
-  m_Name: Bamboo2
+  m_Name: Ship2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14320,6 +14322,8 @@ MonoBehaviour:
   pixelsPerUnit: 16
   sinkIntoGround: 1
   sinkDistanceTiles: 0.5
+  sinkHorizontalShakeTiles: 0.125
+  sinkHorizontalShakeCycles: 4
   gateRenderer: {fileID: 0}
   gateSpriteSheet: {fileID: 0}
   gatePixelsPerUnit: 16
@@ -14442,7 +14446,7 @@ Transform:
   m_GameObject: {fileID: 1097302363}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 5.01, y: 5.85, z: 0}
+  m_LocalPosition: {x: 5, y: 5.85, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
