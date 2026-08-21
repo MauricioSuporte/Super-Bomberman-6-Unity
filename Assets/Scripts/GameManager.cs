@@ -9,6 +9,7 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
+    public event System.Action<Vector3Int> DestructibleDestroyed;
     [Serializable]
     public sealed class HiddenObjectItemAmount
     {
@@ -1076,6 +1077,7 @@ public class GameManager : MonoBehaviour
         shadowedDestructibleOriginalTiles.Remove(cell);
         RefreshGroundShadowAt(cell);
         RefreshGroundShadowAt(below);
+        DestructibleDestroyed?.Invoke(cell);
     }
 
     public void OnIndestructiblePlaced(Vector3Int cell)
