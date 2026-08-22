@@ -15,6 +15,7 @@ Use `Assets/Prefabs/Enemies/<EnemyName>.prefab` as the source of truth. Do not l
 4. Attach exactly one intended movement controller and a `CharacterHealth` component. Never attach a second movement controller, including a derived controller; they would issue competing movement commands to the same `Rigidbody2D`. Configure requested health on the prefab so every instance inherits it.
 5. Wire `AnimatedSpriteRenderer` children to the movement controller and keep sprite references local to the prefab. For every such child, assign its `SpriteRenderer.sprite` to exactly the same sprite as `AnimatedSpriteRenderer.idleSprite`.
 6. Set the initial visual state so exactly one directional child is enabled: use `Down` when the prefab has separate Up/Down/Left directional children; when it has one shared directional child, enable only that child. Keep all other directional children disabled. On the active Death child, disable both `AnimatedSpriteRenderer` and `SpriteRenderer` so it is invisible until the death flow enables it.
+7. For enemies placed in Stage 3-3, do not attach `PlayerWaterSubmersionEffect`. This stage's enemies must not show the water-submersion visual; preserve that rule for future Stage 3-3 enemy authoring.
 
 ## Walk Animation Sequence
 
@@ -40,6 +41,8 @@ For World 3 enemies, configure the death renderer and the parent
 - Start the sequence with the enemy-specific death frames from its sprite
   sheet. When the sheet provides five such frames, they must occupy the first
   five positions in the sequence.
+- When the sheet provides only one enemy-specific death sprite, repeat that
+  sprite in each of the first five positions before the shared finish.
 - Append the appropriate shared finish:
   - Small enemy: the seven final death sprites used by `Funya`.
   - Large enemy: the eight final death sprites used by `LizardMan`.
@@ -61,4 +64,7 @@ are followed by the eight-frame `LizardMan` finish.
 - For every child with `AnimatedSpriteRenderer`, confirm `SpriteRenderer.sprite` equals its `idleSprite`.
 - Confirm exactly one directional `AnimatedSpriteRenderer` is enabled in the prefab: Down for separate directions, or the sole shared directional child.
 - Confirm the Death child's `AnimatedSpriteRenderer` and `SpriteRenderer` are both disabled initially.
+- For World 3 death animations, confirm the first five frames use the required
+  enemy-specific death sprites before the shared finish begins.
+- For Stage 3-3 enemies, confirm `PlayerWaterSubmersionEffect` is absent.
 - Check the Unity console for errors introduced by the new asset. Do not claim Play Mode or build validation unless run.
