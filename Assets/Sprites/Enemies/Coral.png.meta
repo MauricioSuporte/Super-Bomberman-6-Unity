@@ -1,0 +1,72 @@
+fileFormatVersion: 2
+guid: 13c49ab6f078431fa51b6e183547dec3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4767285382951200903
+    second: Coral_1
+  - first:
+      213: 6898878927837707429
+    second: Coral_2
+  - first:
+      213: -137827356275885869
+    second: Coral_3
+  - first:
+      213: -514414813453285905
+    second: Coral_4_Death
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  spriteMode: 2
+  spritePixelsToUnits: 16
+  alphaIsTransparency: 1
+  textureType: 8
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Coral_1
+      rect: {serializedVersion: 2, x: 0, y: 0, width: 32, height: 16}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      spriteID: 8b55e23b80cb4d2d0800000000000000
+      internalID: 4767285382951200903
+    - serializedVersion: 2
+      name: Coral_2
+      rect: {serializedVersion: 2, x: 32, y: 0, width: 32, height: 16}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      spriteID: 9b55e23b80cb4d2d0800000000000000
+      internalID: 6898878927837707429
+    - serializedVersion: 2
+      name: Coral_3
+      rect: {serializedVersion: 2, x: 64, y: 0, width: 32, height: 16}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      spriteID: ab55e23b80cb4d2d0800000000000000
+      internalID: -137827356275885869
+    - serializedVersion: 2
+      name: Coral_4_Death
+      rect: {serializedVersion: 2, x: 96, y: 0, width: 32, height: 16}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      spriteID: bb55e23b80cb4d2d0800000000000000
+      internalID: -514414813453285905
+    nameFileIdTable:
+      Coral_1: 4767285382951200903
+      Coral_2: 6898878927837707429
+      Coral_3: -137827356275885869
+      Coral_4_Death: -514414813453285905
