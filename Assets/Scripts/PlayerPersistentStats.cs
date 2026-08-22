@@ -31,9 +31,9 @@ public static class PlayerPersistentStats
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
-        public bool HasPowerBomb = true;
+        public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
-        public bool HasMagnetBomb = false;
+        public bool HasMagnetBomb = true;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;

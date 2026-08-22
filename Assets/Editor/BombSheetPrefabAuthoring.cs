@@ -11,6 +11,8 @@ public static class BombSheetPrefabAuthoring
     private const string PierceBombPrefabPath = "Assets/Prefabs/Bombs/PierceBomb.prefab";
     private const string RubberBombPrefabPath = "Assets/Prefabs/Bombs/RubberBomb.prefab";
     private const string PowerBombPrefabPath = "Assets/Prefabs/Bombs/PowerBomb.prefab";
+    private const string ControlBombPrefabPath = "Assets/Prefabs/Bombs/ControlBomb.prefab";
+    private const string MagnetBombPrefabPath = "Assets/Prefabs/Bombs/MagnetBomb.prefab";
     private const string ExplosionPrefabPath = "Assets/Resources/Explosions/BombExplosion.prefab";
     private const int CellSize = 16;
 
@@ -22,6 +24,8 @@ public static class BombSheetPrefabAuthoring
         ApplyPierceBombSprites();
         ApplyRubberBombSprites();
         ApplyPowerBombSprites();
+        ApplyControlBombSprites();
+        ApplyMagnetBombSprites();
 
         Debug.Log("[BombSheetPrefabAuthoring] All configured bomb and explosion sprites were applied from Itens.png.");
     }
@@ -204,6 +208,86 @@ public static class BombSheetPrefabAuthoring
         Debug.Log("[BombSheetPrefabAuthoring] PowerBomb.prefab now uses Itens.png cells (20,2), (19,2), (20,2), (21,2).");
     }
 
+    public static void ApplyControlBombSprites()
+    {
+        ConfigureSheet();
+
+        Sprite[] frames =
+        {
+            LoadSprite("ControlBombFrame1"),
+            LoadSprite("ControlBombFrame2"),
+            LoadSprite("ControlBombFrame3"),
+            LoadSprite("ControlBombFrame4")
+        };
+
+        if (frames.Any(sprite => sprite == null))
+            throw new InvalidOperationException("Control bomb sprite cells could not be loaded from Itens.png.");
+
+        GameObject prefabRoot = PrefabUtility.LoadPrefabContents(ControlBombPrefabPath);
+        try
+        {
+            AnimatedSpriteRenderer renderer = prefabRoot.GetComponent<AnimatedSpriteRenderer>();
+            if (renderer == null)
+                throw new InvalidOperationException("ControlBomb.prefab is missing AnimatedSpriteRenderer.");
+
+            renderer.idleSprite = frames[0];
+            renderer.animationSprite = frames;
+            renderer.idle = false;
+            renderer.loop = true;
+
+            SpriteRenderer spriteRenderer = prefabRoot.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+                spriteRenderer.sprite = frames[0];
+
+            PrefabUtility.SaveAsPrefabAsset(prefabRoot, ControlBombPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabRoot);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[BombSheetPrefabAuthoring] ControlBomb.prefab now uses Itens.png frames (22,2), (23,2), (24,2), (25,2).");
+    }
+
+    public static void ApplyMagnetBombSprites()
+    {
+        ConfigureSheet();
+
+        Sprite large = LoadSprite("MagnetBombLarge");
+        Sprite medium = LoadSprite("MagnetBombMedium");
+        Sprite small = LoadSprite("MagnetBombSmall");
+
+        if (large == null || medium == null || small == null)
+            throw new InvalidOperationException("Magnet bomb sprite cells could not be loaded from Itens.png.");
+
+        GameObject prefabRoot = PrefabUtility.LoadPrefabContents(MagnetBombPrefabPath);
+        try
+        {
+            AnimatedSpriteRenderer renderer = prefabRoot.GetComponent<AnimatedSpriteRenderer>();
+            if (renderer == null)
+                throw new InvalidOperationException("MagnetBomb.prefab is missing AnimatedSpriteRenderer.");
+
+            renderer.idleSprite = medium;
+            renderer.animationSprite = new[] { medium, large, medium, small };
+            renderer.idle = false;
+            renderer.loop = true;
+
+            SpriteRenderer spriteRenderer = prefabRoot.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+                spriteRenderer.sprite = medium;
+
+            PrefabUtility.SaveAsPrefabAsset(prefabRoot, MagnetBombPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabRoot);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[BombSheetPrefabAuthoring] MagnetBomb.prefab now uses Itens.png cells (26,4), (25,4), (26,4), (27,4).");
+    }
+
     private static void ConfigureSheet()
     {
         TextureImporter importer = AssetImporter.GetAtPath(SheetPath) as TextureImporter;
@@ -238,6 +322,13 @@ public static class BombSheetPrefabAuthoring
             CreateSpriteRect("PowerBombLarge", 19, 2, existingSpriteRects),
             CreateSpriteRect("PowerBombMedium", 20, 2, existingSpriteRects),
             CreateSpriteRect("PowerBombSmall", 21, 2, existingSpriteRects),
+            CreateSpriteRect("ControlBombFrame1", 22, 2, existingSpriteRects),
+            CreateSpriteRect("ControlBombFrame2", 23, 2, existingSpriteRects),
+            CreateSpriteRect("ControlBombFrame3", 24, 2, existingSpriteRects),
+            CreateSpriteRect("ControlBombFrame4", 25, 2, existingSpriteRects),
+            CreateSpriteRect("MagnetBombLarge", 25, 4, existingSpriteRects),
+            CreateSpriteRect("MagnetBombMedium", 26, 4, existingSpriteRects),
+            CreateSpriteRect("MagnetBombSmall", 27, 4, existingSpriteRects),
             CreateSpriteRect("ExplosionStartWeak", 2, 17, existingSpriteRects),
             CreateSpriteRect("ExplosionStartMedium", 2, 12, existingSpriteRects),
             CreateSpriteRect("ExplosionStartStrong", 2, 7, existingSpriteRects),
