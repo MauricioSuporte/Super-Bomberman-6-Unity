@@ -31,8 +31,8 @@ public static class PlayerPersistentStats
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
-        public bool HasPowerBomb = false;
-        public bool HasRubberBombs = true;
+        public bool HasPowerBomb = true;
+        public bool HasRubberBombs = false;
         public bool HasMagnetBomb = false;
         public bool HasFullFire = false;
 
