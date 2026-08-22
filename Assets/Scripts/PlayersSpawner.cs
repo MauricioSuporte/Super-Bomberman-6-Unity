@@ -322,7 +322,7 @@ public sealed class PlayersSpawner : MonoBehaviour
     {
         return string.Equals(
             SceneManager.GetActiveScene().name,
-            "Stage_3-3",
+            "Stage_3-1",
             StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -899,6 +899,7 @@ GameObject:
   - component: {fileID: 268450099}
   - component: {fileID: 268450100}
   - component: {fileID: 268450101}
+  - component: {fileID: 268450102}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -1023,6 +1024,26 @@ MonoBehaviour:
   maximumBubbleCount: 8
   sortingLayerName: Default
   sortingOrder: 6
+--- !u!114 &268450102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268450098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6198b8c2c3b46428a0de3b88ac4bb4d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage33AmbientBubbleEffect
+  maximumActiveBubbles: 15
+  animationFramesPerSecond: 6
+  upwardSpeed: 1.1
+  horizontalDriftSpeed: 0.24
+  horizontalWobble: 0.09
+  spawnEdgeMargin: 0.35
+  sortingLayerName: Default
+  sortingOrder: 50
 --- !u!1001 &271524343
 PrefabInstance:
   m_ObjectHideFlags: 0

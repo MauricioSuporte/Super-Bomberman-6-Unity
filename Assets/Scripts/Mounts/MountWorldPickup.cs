@@ -37,7 +37,7 @@ public sealed class MountWorldPickup : MonoBehaviour
 
         if (string.Equals(
                 SceneManager.GetActiveScene().name,
-                "Stage_3-3",
+                "Stage_3-1",
                 System.StringComparison.OrdinalIgnoreCase) &&
             !TryGetComponent<PlayerWaterSubmersionEffect>(out _))
         {

@@ -25,10 +25,10 @@ namespace StageAssets
         [Header("Burst")]
         [SerializeField, Min(1)] private int minimumBubbleCount = 3;
         [SerializeField, Min(1)] private int maximumBubbleCount = 8;
-        [SerializeField, Min(0f)] private float throwSpeedMin = 2.2f;
-        [SerializeField, Min(0f)] private float throwSpeedMax = 3.2f;
+        [SerializeField, Min(0f)] private float throwSpeedMin = 3.3f;
+        [SerializeField, Min(0f)] private float throwSpeedMax = 4.8f;
         [SerializeField, Range(1f, 89f)] private float throwAngleFromVertical = 40f;
-        [SerializeField, Min(0f)] private float gravity = 1.8f;
+        [SerializeField, Min(0f)] private float gravity = 1.2f;
         [SerializeField] private string sortingLayerName = "Default";
         [SerializeField] private int sortingOrder = 6;
 
@@ -192,12 +192,33 @@ namespace StageAssets
                 bubble.animationFrame++;
 
                 if (bubble.animationFrame >= bubble.animationSprites.Length)
+                {
+                    SetOpacity(bubble, 0f);
                     return true;
+                }
 
                 bubble.renderer.sprite = bubble.animationSprites[bubble.animationFrame];
+                UpdateOpacity(bubble);
             }
 
             return false;
+        }
+
+        private static void UpdateOpacity(Bubble bubble)
+        {
+            int fadeStartFrame = bubble.animationSprites.Length / 2;
+            float fadeProgress = Mathf.Clamp01(
+                (bubble.animationFrame - fadeStartFrame) /
+                (float)(bubble.animationSprites.Length - fadeStartFrame));
+
+            SetOpacity(bubble, 1f - fadeProgress);
+        }
+
+        private static void SetOpacity(Bubble bubble, float opacity)
+        {
+            Color color = bubble.renderer.color;
+            color.a = opacity;
+            bubble.renderer.color = color;
         }
 
         private void ClearBubbles()
