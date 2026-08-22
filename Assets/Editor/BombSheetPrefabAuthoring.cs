@@ -13,6 +13,7 @@ public static class BombSheetPrefabAuthoring
     private const string PowerBombPrefabPath = "Assets/Prefabs/Bombs/PowerBomb.prefab";
     private const string ControlBombPrefabPath = "Assets/Prefabs/Bombs/ControlBomb.prefab";
     private const string MagnetBombPrefabPath = "Assets/Prefabs/Bombs/MagnetBomb.prefab";
+    private const string RevengeBombPrefabPath = "Assets/Prefabs/Bombs/MadBomberBomb.prefab";
     private const string ExplosionPrefabPath = "Assets/Resources/Explosions/BombExplosion.prefab";
     private const int CellSize = 16;
 
@@ -26,6 +27,7 @@ public static class BombSheetPrefabAuthoring
         ApplyPowerBombSprites();
         ApplyControlBombSprites();
         ApplyMagnetBombSprites();
+        ApplyRevengeBombSprites();
 
         Debug.Log("[BombSheetPrefabAuthoring] All configured bomb and explosion sprites were applied from Itens.png.");
     }
@@ -288,6 +290,44 @@ public static class BombSheetPrefabAuthoring
         Debug.Log("[BombSheetPrefabAuthoring] MagnetBomb.prefab now uses Itens.png cells (26,4), (25,4), (26,4), (27,4).");
     }
 
+    public static void ApplyRevengeBombSprites()
+    {
+        ConfigureSheet();
+
+        Sprite large = LoadSprite("RevengeBombLarge");
+        Sprite medium = LoadSprite("RevengeBombMedium");
+        Sprite small = LoadSprite("RevengeBombSmall");
+
+        if (large == null || medium == null || small == null)
+            throw new InvalidOperationException("Revenge bomb sprite cells could not be loaded from Itens.png.");
+
+        GameObject prefabRoot = PrefabUtility.LoadPrefabContents(RevengeBombPrefabPath);
+        try
+        {
+            AnimatedSpriteRenderer renderer = prefabRoot.GetComponent<AnimatedSpriteRenderer>();
+            if (renderer == null)
+                throw new InvalidOperationException("MadBomberBomb.prefab is missing AnimatedSpriteRenderer.");
+
+            renderer.idleSprite = medium;
+            renderer.animationSprite = new[] { medium, large, medium, small };
+            renderer.idle = false;
+            renderer.loop = true;
+
+            SpriteRenderer spriteRenderer = prefabRoot.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+                spriteRenderer.sprite = medium;
+
+            PrefabUtility.SaveAsPrefabAsset(prefabRoot, RevengeBombPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabRoot);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[BombSheetPrefabAuthoring] MadBomberBomb.prefab now uses Itens.png cells (28,11), (27,11), (28,11), (29,11).");
+    }
+
     private static void ConfigureSheet()
     {
         TextureImporter importer = AssetImporter.GetAtPath(SheetPath) as TextureImporter;
@@ -329,6 +369,9 @@ public static class BombSheetPrefabAuthoring
             CreateSpriteRect("MagnetBombLarge", 25, 4, existingSpriteRects),
             CreateSpriteRect("MagnetBombMedium", 26, 4, existingSpriteRects),
             CreateSpriteRect("MagnetBombSmall", 27, 4, existingSpriteRects),
+            CreateSpriteRect("RevengeBombLarge", 27, 11, existingSpriteRects),
+            CreateSpriteRect("RevengeBombMedium", 28, 11, existingSpriteRects),
+            CreateSpriteRect("RevengeBombSmall", 29, 11, existingSpriteRects),
             CreateSpriteRect("ExplosionStartWeak", 2, 17, existingSpriteRects),
             CreateSpriteRect("ExplosionStartMedium", 2, 12, existingSpriteRects),
             CreateSpriteRect("ExplosionStartStrong", 2, 7, existingSpriteRects),
