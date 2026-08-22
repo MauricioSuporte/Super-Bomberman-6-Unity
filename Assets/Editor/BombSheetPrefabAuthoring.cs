@@ -9,6 +9,7 @@ public static class BombSheetPrefabAuthoring
     private const string SheetPath = "Assets/Resources/Sprites/BombItems/Itens.png";
     private const string BombPrefabPath = "Assets/Prefabs/Bombs/Bomb.prefab";
     private const string PierceBombPrefabPath = "Assets/Prefabs/Bombs/PierceBomb.prefab";
+    private const string RubberBombPrefabPath = "Assets/Prefabs/Bombs/RubberBomb.prefab";
     private const string ExplosionPrefabPath = "Assets/Resources/Explosions/BombExplosion.prefab";
     private const int CellSize = 16;
 
@@ -18,6 +19,7 @@ public static class BombSheetPrefabAuthoring
         ApplyNormalBombSprites();
         ApplyBombExplosionSprites();
         ApplyPierceBombSprites();
+        ApplyRubberBombSprites();
 
         Debug.Log("[BombSheetPrefabAuthoring] All configured bomb and explosion sprites were applied from Itens.png.");
     }
@@ -124,6 +126,44 @@ public static class BombSheetPrefabAuthoring
         Debug.Log("[BombSheetPrefabAuthoring] PierceBomb.prefab now uses Itens.png cells (20,1), (19,1), (20,1), (21,1).");
     }
 
+    public static void ApplyRubberBombSprites()
+    {
+        ConfigureSheet();
+
+        Sprite large = LoadSprite("RubberBombLarge");
+        Sprite medium = LoadSprite("RubberBombMedium");
+        Sprite small = LoadSprite("RubberBombSmall");
+
+        if (large == null || medium == null || small == null)
+            throw new InvalidOperationException("Rubber bomb sprite cells could not be loaded from Itens.png.");
+
+        GameObject prefabRoot = PrefabUtility.LoadPrefabContents(RubberBombPrefabPath);
+        try
+        {
+            AnimatedSpriteRenderer renderer = prefabRoot.GetComponent<AnimatedSpriteRenderer>();
+            if (renderer == null)
+                throw new InvalidOperationException("RubberBomb.prefab is missing AnimatedSpriteRenderer.");
+
+            renderer.idleSprite = medium;
+            renderer.animationSprite = new[] { medium, large, medium, small };
+            renderer.idle = false;
+            renderer.loop = true;
+
+            SpriteRenderer spriteRenderer = prefabRoot.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+                spriteRenderer.sprite = medium;
+
+            PrefabUtility.SaveAsPrefabAsset(prefabRoot, RubberBombPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabRoot);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[BombSheetPrefabAuthoring] RubberBomb.prefab now uses Itens.png cells (24,0), (23,0), (24,0), (25,0).");
+    }
+
     private static void ConfigureSheet()
     {
         TextureImporter importer = AssetImporter.GetAtPath(SheetPath) as TextureImporter;
@@ -152,6 +192,9 @@ public static class BombSheetPrefabAuthoring
             CreateSpriteRect("PierceBombLarge", 19, 1, existingSpriteRects),
             CreateSpriteRect("PierceBombMedium", 20, 1, existingSpriteRects),
             CreateSpriteRect("PierceBombSmall", 21, 1, existingSpriteRects),
+            CreateSpriteRect("RubberBombLarge", 23, 0, existingSpriteRects),
+            CreateSpriteRect("RubberBombMedium", 24, 0, existingSpriteRects),
+            CreateSpriteRect("RubberBombSmall", 25, 0, existingSpriteRects),
             CreateSpriteRect("ExplosionStartWeak", 2, 17, existingSpriteRects),
             CreateSpriteRect("ExplosionStartMedium", 2, 12, existingSpriteRects),
             CreateSpriteRect("ExplosionStartStrong", 2, 7, existingSpriteRects),
