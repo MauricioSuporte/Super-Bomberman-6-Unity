@@ -1,67 +1,40 @@
 fileFormatVersion: 2
-guid: 9213465b7b027f8429a86db3920b0f0d
+guid: a6a2e85752b9455c980d365c0ab2df20
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1677110350530284033
-    second: GreenWing_0
+      213: 4767285382951200903
+    second: Crab_1
   - first:
-      213: -5384210776714537635
-    second: GreenWing_1
+      213: 6898878927837707429
+    second: Crab_2
   - first:
-      213: 5249726951504917766
-    second: GreenWing_2
+      213: -137827356275885869
+    second: Crab_3
   - first:
-      213: 5772832374340906470
-    second: GreenWing_3
+      213: -514414813453285905
+    second: Crab_4
   - first:
-      213: 4581473634075611308
-    second: GreenWing_4
+      213: 7041946958881747458
+    second: Crab_5
   - first:
-      213: -6201121507825568406
-    second: GreenWing_5
+      213: 6413562045795734497
+    second: Crab_6
   - first:
-      213: -5017520679307074523
-    second: GreenWing_6
+      213: -6613534191623763668
+    second: Crab_7
   - first:
-      213: 5200749213631005345
-    second: GreenWing_7
+      213: -1444103464983880012
+    second: Crab_8
   - first:
-      213: -3389471315668891331
-    second: GreenWing_8
+      213: 567330000000000009
+    second: Crab_9
   - first:
-      213: -2901462861153677344
-    second: GreenWing_9
+      213: 567330000000000010
+    second: Crab_10
   - first:
-      213: 84326457633993957
-    second: GreenWing_00
-  - first:
-      213: 4919810223254859326
-    second: GreenWing_01
-  - first:
-      213: -1010412871992403430
-    second: GreenWing_02
-  - first:
-      213: 8117683486973225685
-    second: GreenWing_03
-  - first:
-      213: 217012392488225667
-    second: GreenWing_04
-  - first:
-      213: 7721360528388489190
-    second: GreenWing_05
-  - first:
-      213: -2661221845380839886
-    second: GreenWing_06
-  - first:
-      213: -644403009848397897
-    second: GreenWing_07
-  - first:
-      213: 731410306192362393
-    second: GreenWing_08
-  - first:
-      213: -3946221945008816229
-    second: GreenWing_09
+      213: 567330000000000011
+    second: Crab_11_Death
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -170,13 +143,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GreenWing_00
+      name: Crab_1
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -185,20 +158,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5e4f07867769b2100800000000000000
-      internalID: 84326457633993957
+      spriteID: 1a10c0a5e5bb4d8a0800000000000000
+      internalID: 4767285382951200903
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_01
+      name: Crab_2
       rect:
         serializedVersion: 2
-        x: 18
+        x: 32
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -207,20 +180,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e3ee07fe45da64440800000000000000
-      internalID: 4919810223254859326
+      spriteID: 2a10c0a5e5bb4d8a0800000000000000
+      internalID: 6898878927837707429
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_02
+      name: Crab_3
       rect:
         serializedVersion: 2
-        x: 36
+        x: 64
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -229,20 +202,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a1a1968a8da4af1f0800000000000000
-      internalID: -1010412871992403430
+      spriteID: 3a10c0a5e5bb4d8a0800000000000000
+      internalID: -137827356275885869
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_03
+      name: Crab_4
       rect:
         serializedVersion: 2
-        x: 54
+        x: 96
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -251,20 +224,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5dae7104f1ec7a070800000000000000
-      internalID: 8117683486973225685
+      spriteID: 4a10c0a5e5bb4d8a0800000000000000
+      internalID: -514414813453285905
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_04
+      name: Crab_5
       rect:
         serializedVersion: 2
-        x: 72
+        x: 128
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -273,20 +246,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 38b4e160f9bf20300800000000000000
-      internalID: 217012392488225667
+      spriteID: 5a10c0a5e5bb4d8a0800000000000000
+      internalID: 7041946958881747458
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_05
+      name: Crab_6
       rect:
         serializedVersion: 2
-        x: 90
+        x: 160
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -295,20 +268,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6ef7155bd78c72b60800000000000000
-      internalID: 7721360528388489190
+      spriteID: 6a10c0a5e5bb4d8a0800000000000000
+      internalID: 6413562045795734497
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_06
+      name: Crab_7
       rect:
         serializedVersion: 2
-        x: 108
+        x: 192
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -317,20 +290,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 236c095d4d0711bd0800000000000000
-      internalID: -2661221845380839886
+      spriteID: 7a10c0a5e5bb4d8a0800000000000000
+      internalID: -6613534191623763668
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_07
+      name: Crab_8
       rect:
         serializedVersion: 2
-        x: 126
+        x: 224
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -339,20 +312,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7bf2bc170ee9e07f0800000000000000
-      internalID: -644403009848397897
+      spriteID: 8a10c0a5e5bb4d8a0800000000000000
+      internalID: -1444103464983880012
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_08
+      name: Crab_9
       rect:
         serializedVersion: 2
-        x: 144
+        x: 256
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -361,20 +334,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 99bc7ad5ccd762a00800000000000000
-      internalID: 731410306192362393
+      spriteID: 9a10c0a5e5bb4d8a0800000000000000
+      internalID: 567330000000000009
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GreenWing_09
+      name: Crab_10
       rect:
         serializedVersion: 2
-        x: 162
+        x: 288
         y: 0
-        width: 16
-        height: 16
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -383,8 +356,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b9ff5ea8c043c39c0800000000000000
-      internalID: -3946221945008816229
+      spriteID: aa10c0a5e5bb4d8a0800000000000000
+      internalID: 567330000000000010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Crab_11_Death
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba10c0a5e5bb4d8a0800000000000000
+      internalID: 567330000000000011
       vertices: []
       indices: 
       edges: []
@@ -403,26 +398,17 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      GreenWing_0: 1677110350530284033
-      GreenWing_00: 84326457633993957
-      GreenWing_01: 4919810223254859326
-      GreenWing_02: -1010412871992403430
-      GreenWing_03: 8117683486973225685
-      GreenWing_04: 217012392488225667
-      GreenWing_05: 7721360528388489190
-      GreenWing_06: -2661221845380839886
-      GreenWing_07: -644403009848397897
-      GreenWing_08: 731410306192362393
-      GreenWing_09: -3946221945008816229
-      GreenWing_1: -5384210776714537635
-      GreenWing_2: 5249726951504917766
-      GreenWing_3: 5772832374340906470
-      GreenWing_4: 4581473634075611308
-      GreenWing_5: -6201121507825568406
-      GreenWing_6: -5017520679307074523
-      GreenWing_7: 5200749213631005345
-      GreenWing_8: -3389471315668891331
-      GreenWing_9: -2901462861153677344
+      Crab_1: 4767285382951200903
+      Crab_10: 567330000000000010
+      Crab_11_Death: 567330000000000011
+      Crab_2: 6898878927837707429
+      Crab_3: -137827356275885869
+      Crab_4: -514414813453285905
+      Crab_5: 7041946958881747458
+      Crab_6: 6413562045795734497
+      Crab_7: -6613534191623763668
+      Crab_8: -1444103464983880012
+      Crab_9: 567330000000000009
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
