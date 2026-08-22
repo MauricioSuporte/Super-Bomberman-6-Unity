@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
 
-public static class BombSheetPrefabAuthoring
+public static class ItemSheetPrefabAuthoring
 {
     private const string SheetPath = "Assets/Resources/Sprites/BombItems/Itens.png";
     private const string BombPrefabPath = "Assets/Prefabs/Bombs/Bomb.prefab";
@@ -16,26 +17,167 @@ public static class BombSheetPrefabAuthoring
     private const string RevengeBombPrefabPath = "Assets/Prefabs/Bombs/MadBomberBomb.prefab";
     private const string ExplosionPrefabPath = "Assets/Resources/Explosions/BombExplosion.prefab";
     private const int CellSize = 16;
+    private const int ItemIconSize = 14;
+    private const float ItemBorderFrameSeconds = 0.025f;
+    private static Dictionary<string, Sprite> spritesByName;
+    private static readonly string[] ConfiguredSpriteNames =
+    {
+        "BombLarge", "BombMedium", "BombSmall",
+        "PierceBombLarge", "PierceBombMedium", "PierceBombSmall",
+        "RubberBombLarge", "RubberBombMedium", "RubberBombSmall",
+        "PowerBombLarge", "PowerBombMedium", "PowerBombSmall",
+        "ControlBombFrame1", "ControlBombFrame2", "ControlBombFrame3", "ControlBombFrame4",
+        "MagnetBombLarge", "MagnetBombMedium", "MagnetBombSmall",
+        "RevengeBombLarge", "RevengeBombMedium", "RevengeBombSmall",
+        "ExtraBombIcon", "BlastRadiusIcon", "SpeedUpIcon", "OneUpIcon", "BombKickIcon", "BombPassIcon",
+        "BombPunchIcon", "ControlBombIcon", "DestructiblePassIcon", "FullFireIcon", "HeartIcon",
+        "InvincibleSuitIcon", "MagnetBombIcon", "PierceBombIcon", "PowerBombIcon", "PowerGloveIcon",
+        "RubberBombIcon", "SkullIcon", "ClockIcon",
+        "ItemBorder1", "ItemBorder2", "ItemBorder3", "ItemBorder4", "ItemBorder5", "ItemBorder6",
+        "ExplosionStartWeak", "ExplosionStartMedium", "ExplosionStartStrong", "ExplosionStartMaximum",
+        "ExplosionMiddleWeak", "ExplosionMiddleMedium", "ExplosionMiddleStrong", "ExplosionMiddleMaximum",
+        "ExplosionEndWeak", "ExplosionEndMedium", "ExplosionEndStrong", "ExplosionEndMaximum",
+        "PierceExplosionStartWeak", "PierceExplosionStartMedium", "PierceExplosionStartStrong", "PierceExplosionStartMaximum",
+        "PierceExplosionMiddleWeak", "PierceExplosionMiddleMedium", "PierceExplosionMiddleStrong", "PierceExplosionMiddleMaximum",
+        "PierceExplosionEndWeak", "PierceExplosionEndMedium", "PierceExplosionEndStrong", "PierceExplosionEndMaximum"
+    };
+    private static readonly ItemIconDefinition[] ItemIcons =
+    {
+        new("Assets/Resources/Items/ExtraBomb.prefab", "ExtraBomb", "ExtraBomb", 32, 0),
+        new("Assets/Resources/Items/BlastRadius.prefab", "BlastRadius", "BlastRadius", 33, 0),
+        new("Assets/Resources/Items/SpeedIncrese.prefab", "SpeedUp", "SpeedUp", 34, 0),
+        new("Assets/Resources/Items/1-Up.prefab", "OneUp", "1-Up", 33, 5),
+        new("Assets/Resources/Items/BombKick.prefab", "BombKick", "BombKick", 38, 3),
+        new("Assets/Resources/Items/BombPass.prefab", "BombPass", "BombPass", 41, 0),
+        new("Assets/Resources/Items/BombPunch.prefab", "BombPunch", "BombPunch", 40, 3),
+        new("Assets/Resources/Items/ControlBomb.prefab", "ControlBomb", "ControlBomb", 37, 1),
+        new("Assets/Resources/Items/DestructiblePass.prefab", "DestructiblePass", "DestructiblePass", 32, 1),
+        new("Assets/Resources/Items/FullFire.prefab", "FullFire", "FullFire", 32, 5),
+        new("Assets/Resources/Items/Heart.prefab", "Heart", "Heart", 33, 1),
+        new("Assets/Resources/Items/InvincibleSuit.prefab", "InvincibleSuit", "InvincibleSuit", 36, 1),
+        new("Assets/Resources/Items/MagnetBomb.prefab", "MagnetBomb", "MagnetBomb", 38, 2),
+        new("Assets/Resources/Items/PierceBomb.prefab", "PierceBomb", "PierceBomb", 38, 1),
+        new("Assets/Resources/Items/PowerBomb.prefab", "PowerBomb", "PowerBomb", 40, 1),
+        new("Assets/Resources/Items/PowerGlove.prefab", "PowerGlove", "PowerGlove", 41, 3),
+        new("Assets/Resources/Items/RubberBomb.prefab", "RubberBomb", "RubberBomb", 39, 1),
+        new("Assets/Resources/Items/Skull.prefab", "Skull", "Skull", 34, 1),
+        new("Assets/Resources/Items/Clock.prefab", "Clock", "Clock", 40, 6)
+    };
 
     [MenuItem("Tools/Super Bomberman 6/Apply new Sheet Sprites")]
-    public static void ApplyAllBombAndExplosionSheetSprites()
+    public static void ApplyNewSheetSprites()
     {
-        ApplyNormalBombSprites();
-        ApplyBombExplosionSprites();
-        ApplyPierceBombSprites();
-        ApplyRubberBombSprites();
-        ApplyPowerBombSprites();
-        ApplyControlBombSprites();
-        ApplyMagnetBombSprites();
-        ApplyRevengeBombSprites();
+        spritesByName = null;
+        bool changed = EnsureSheetConfigured();
 
-        Debug.Log("[BombSheetPrefabAuthoring] All configured bomb and explosion sprites were applied from Itens.png.");
+        changed |= ApplyNormalBombSpritesIfNeeded();
+        changed |= ApplyBombExplosionSpritesIfNeeded();
+        changed |= ApplyPierceBombSpritesIfNeeded();
+        changed |= ApplyRubberBombSpritesIfNeeded();
+        changed |= ApplyPowerBombSpritesIfNeeded();
+        changed |= ApplyControlBombSpritesIfNeeded();
+        changed |= ApplyMagnetBombSpritesIfNeeded();
+        changed |= ApplyRevengeBombSpritesIfNeeded();
+        foreach (ItemIconDefinition item in ItemIcons)
+            changed |= ApplyItemIconIfNeeded(item);
+
+        if (changed)
+        {
+            AssetDatabase.SaveAssets();
+            Debug.Log("[ItemSheetPrefabAuthoring] Applied the missing sheet sprite migrations from Itens.png.");
+        }
+        else
+        {
+            Debug.Log("[ItemSheetPrefabAuthoring] Every configured prefab already uses the new sheet sprites.");
+        }
     }
 
-    public static void ApplyNormalBombSprites()
+    private static bool ApplyItemIconIfNeeded(ItemIconDefinition item)
     {
-        ConfigureSheet();
+        Sprite icon = LoadSprite($"{item.spriteName}Icon");
+        Sprite[] borderFrames = Enumerable.Range(32, 6)
+            .Select(borderColumn => LoadSprite($"ItemBorder{borderColumn - 31}"))
+            .ToArray();
 
+        if (icon == null || borderFrames.Any(sprite => sprite == null))
+            throw new InvalidOperationException($"{item.displayName} icon or border sprite cells could not be loaded from Itens.png.");
+
+        if (IsItemIconConfigured(item.prefabPath, icon, borderFrames))
+            return false;
+
+        GameObject prefabRoot = PrefabUtility.LoadPrefabContents(item.prefabPath);
+        try
+        {
+            AnimatedSpriteRenderer iconRenderer = prefabRoot.GetComponent<AnimatedSpriteRenderer>();
+            SpriteRenderer iconSpriteRenderer = prefabRoot.GetComponent<SpriteRenderer>();
+            if (iconRenderer == null || iconSpriteRenderer == null)
+                throw new InvalidOperationException($"{item.displayName}.prefab is missing its icon renderer.");
+
+            iconRenderer.idleSprite = icon;
+            iconRenderer.animationSprite = new[] { icon };
+            iconRenderer.idle = true;
+            iconRenderer.loop = true;
+            iconSpriteRenderer.sprite = icon;
+
+            Transform borderTransform = prefabRoot.transform.Find("BorderAnimation");
+            GameObject borderObject;
+            if (borderTransform == null)
+            {
+                borderObject = new GameObject("BorderAnimation");
+                borderObject.transform.SetParent(prefabRoot.transform, false);
+            }
+            else
+            {
+                borderObject = borderTransform.gameObject;
+            }
+
+            borderObject.layer = prefabRoot.layer;
+            borderObject.transform.localPosition = Vector3.zero;
+            borderObject.transform.localRotation = Quaternion.identity;
+            borderObject.transform.localScale = Vector3.one;
+
+            SpriteRenderer borderSpriteRenderer = borderObject.GetComponent<SpriteRenderer>();
+            if (borderSpriteRenderer == null)
+                borderSpriteRenderer = borderObject.AddComponent<SpriteRenderer>();
+
+            borderSpriteRenderer.sprite = borderFrames[0];
+            borderSpriteRenderer.sortingLayerID = iconSpriteRenderer.sortingLayerID;
+            borderSpriteRenderer.sortingOrder = iconSpriteRenderer.sortingOrder - 1;
+
+            AnimatedSpriteRenderer borderRenderer = borderObject.GetComponent<AnimatedSpriteRenderer>();
+            if (borderRenderer == null)
+                borderRenderer = borderObject.AddComponent<AnimatedSpriteRenderer>();
+
+            borderRenderer.idleSprite = borderFrames[0];
+            borderRenderer.animationSprite = borderFrames;
+            borderRenderer.animationTime = ItemBorderFrameSeconds;
+            borderRenderer.useSequenceDuration = false;
+            borderRenderer.loop = true;
+            borderRenderer.idle = false;
+            borderRenderer.pingPong = false;
+
+            PrefabUtility.SaveAsPrefabAsset(prefabRoot, item.prefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabRoot);
+        }
+
+        Debug.Log($"[ItemSheetPrefabAuthoring] {item.displayName}.prefab now uses the centered 14x14 icon at ({item.column},{item.row}) and six border frames at (32-37,8).");
+        return true;
+    }
+
+    private static bool ApplyNormalBombSpritesIfNeeded()
+    {
+        if (IsAnimatedSpritePrefabConfigured(BombPrefabPath, false, "BombMedium", "BombLarge", "BombMedium", "BombSmall"))
+            return false;
+
+        ApplyNormalBombSprites();
+        return true;
+    }
+
+    private static void ApplyNormalBombSprites()
+    {
         Sprite large = LoadSprite("BombLarge");
         Sprite medium = LoadSprite("BombMedium");
         Sprite small = LoadSprite("BombSmall");
@@ -66,14 +208,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] Bomb.prefab now uses Itens.png cells (20,0), (19,0), (20,0), (21,0).");
+        Debug.Log("[ItemSheetPrefabAuthoring] Bomb.prefab now uses Itens.png cells (20,0), (19,0), (20,0), (21,0).");
     }
 
-    public static void ApplyBombExplosionSprites()
+    private static bool ApplyBombExplosionSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsExplosionPrefabConfigured())
+            return false;
 
+        ApplyBombExplosionSprites();
+        return true;
+    }
+
+    private static void ApplyBombExplosionSprites()
+    {
         GameObject prefabRoot = PrefabUtility.LoadPrefabContents(ExplosionPrefabPath);
         try
         {
@@ -92,14 +240,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] BombExplosion.prefab now uses the 8-frame sheet animations.");
+        Debug.Log("[ItemSheetPrefabAuthoring] BombExplosion.prefab now uses the 8-frame sheet animations.");
     }
 
-    public static void ApplyPierceBombSprites()
+    private static bool ApplyPierceBombSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsAnimatedSpritePrefabConfigured(PierceBombPrefabPath, false, "PierceBombMedium", "PierceBombLarge", "PierceBombMedium", "PierceBombSmall"))
+            return false;
 
+        ApplyPierceBombSprites();
+        return true;
+    }
+
+    private static void ApplyPierceBombSprites()
+    {
         Sprite large = LoadSprite("PierceBombLarge");
         Sprite medium = LoadSprite("PierceBombMedium");
         Sprite small = LoadSprite("PierceBombSmall");
@@ -130,14 +284,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] PierceBomb.prefab now uses Itens.png cells (20,1), (19,1), (20,1), (21,1).");
+        Debug.Log("[ItemSheetPrefabAuthoring] PierceBomb.prefab now uses Itens.png cells (20,1), (19,1), (20,1), (21,1).");
     }
 
-    public static void ApplyRubberBombSprites()
+    private static bool ApplyRubberBombSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsAnimatedSpritePrefabConfigured(RubberBombPrefabPath, false, "RubberBombMedium", "RubberBombLarge", "RubberBombMedium", "RubberBombSmall"))
+            return false;
 
+        ApplyRubberBombSprites();
+        return true;
+    }
+
+    private static void ApplyRubberBombSprites()
+    {
         Sprite large = LoadSprite("RubberBombLarge");
         Sprite medium = LoadSprite("RubberBombMedium");
         Sprite small = LoadSprite("RubberBombSmall");
@@ -168,14 +328,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] RubberBomb.prefab now uses Itens.png cells (24,0), (23,0), (24,0), (25,0).");
+        Debug.Log("[ItemSheetPrefabAuthoring] RubberBomb.prefab now uses Itens.png cells (24,0), (23,0), (24,0), (25,0).");
     }
 
-    public static void ApplyPowerBombSprites()
+    private static bool ApplyPowerBombSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsAnimatedSpritePrefabConfigured(PowerBombPrefabPath, false, "PowerBombMedium", "PowerBombLarge", "PowerBombMedium", "PowerBombSmall"))
+            return false;
 
+        ApplyPowerBombSprites();
+        return true;
+    }
+
+    private static void ApplyPowerBombSprites()
+    {
         Sprite large = LoadSprite("PowerBombLarge");
         Sprite medium = LoadSprite("PowerBombMedium");
         Sprite small = LoadSprite("PowerBombSmall");
@@ -206,14 +372,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] PowerBomb.prefab now uses Itens.png cells (20,2), (19,2), (20,2), (21,2).");
+        Debug.Log("[ItemSheetPrefabAuthoring] PowerBomb.prefab now uses Itens.png cells (20,2), (19,2), (20,2), (21,2).");
     }
 
-    public static void ApplyControlBombSprites()
+    private static bool ApplyControlBombSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsAnimatedSpritePrefabConfigured(ControlBombPrefabPath, false, "ControlBombFrame1", "ControlBombFrame2", "ControlBombFrame3", "ControlBombFrame4"))
+            return false;
 
+        ApplyControlBombSprites();
+        return true;
+    }
+
+    private static void ApplyControlBombSprites()
+    {
         Sprite[] frames =
         {
             LoadSprite("ControlBombFrame1"),
@@ -248,14 +420,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] ControlBomb.prefab now uses Itens.png frames (22,2), (23,2), (24,2), (25,2).");
+        Debug.Log("[ItemSheetPrefabAuthoring] ControlBomb.prefab now uses Itens.png frames (22,2), (23,2), (24,2), (25,2).");
     }
 
-    public static void ApplyMagnetBombSprites()
+    private static bool ApplyMagnetBombSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsAnimatedSpritePrefabConfigured(MagnetBombPrefabPath, false, "MagnetBombMedium", "MagnetBombLarge", "MagnetBombMedium", "MagnetBombSmall"))
+            return false;
 
+        ApplyMagnetBombSprites();
+        return true;
+    }
+
+    private static void ApplyMagnetBombSprites()
+    {
         Sprite large = LoadSprite("MagnetBombLarge");
         Sprite medium = LoadSprite("MagnetBombMedium");
         Sprite small = LoadSprite("MagnetBombSmall");
@@ -286,14 +464,20 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] MagnetBomb.prefab now uses Itens.png cells (26,4), (25,4), (26,4), (27,4).");
+        Debug.Log("[ItemSheetPrefabAuthoring] MagnetBomb.prefab now uses Itens.png cells (26,4), (25,4), (26,4), (27,4).");
     }
 
-    public static void ApplyRevengeBombSprites()
+    private static bool ApplyRevengeBombSpritesIfNeeded()
     {
-        ConfigureSheet();
+        if (IsAnimatedSpritePrefabConfigured(RevengeBombPrefabPath, false, "RevengeBombMedium", "RevengeBombLarge", "RevengeBombMedium", "RevengeBombSmall"))
+            return false;
 
+        ApplyRevengeBombSprites();
+        return true;
+    }
+
+    private static void ApplyRevengeBombSprites()
+    {
         Sprite large = LoadSprite("RevengeBombLarge");
         Sprite medium = LoadSprite("RevengeBombMedium");
         Sprite small = LoadSprite("RevengeBombSmall");
@@ -324,8 +508,120 @@ public static class BombSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log("[BombSheetPrefabAuthoring] MadBomberBomb.prefab now uses Itens.png cells (28,11), (27,11), (28,11), (29,11).");
+        Debug.Log("[ItemSheetPrefabAuthoring] MadBomberBomb.prefab now uses Itens.png cells (28,11), (27,11), (28,11), (29,11).");
+    }
+
+    private static bool EnsureSheetConfigured()
+    {
+        if (ConfiguredSpriteNames.All(name => LoadSprite(name) != null))
+            return false;
+
+        ConfigureSheet();
+        spritesByName = null;
+        return true;
+    }
+
+    private static bool IsAnimatedSpritePrefabConfigured(string prefabPath, bool idle, params string[] frameNames)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        AnimatedSpriteRenderer renderer = prefab != null ? prefab.GetComponent<AnimatedSpriteRenderer>() : null;
+        if (renderer == null)
+            return false;
+
+        Sprite[] expectedFrames = frameNames.Select(LoadSprite).ToArray();
+        return expectedFrames.All(sprite => sprite != null) &&
+               renderer.idle == idle &&
+               renderer.loop &&
+               renderer.idleSprite == expectedFrames[0] &&
+               HasMatchingFrames(renderer.animationSprite, expectedFrames);
+    }
+
+    private static bool IsExplosionPrefabConfigured()
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ExplosionPrefabPath);
+        BombExplosion explosion = prefab != null ? prefab.GetComponent<BombExplosion>() : null;
+        return explosion != null &&
+               IsExplosionRendererConfigured(explosion.start, "ExplosionStart") &&
+               IsExplosionRendererConfigured(explosion.middle, "ExplosionMiddle") &&
+               IsExplosionRendererConfigured(explosion.end, "ExplosionEnd");
+    }
+
+    private static bool IsExplosionRendererConfigured(AnimatedSpriteRenderer renderer, string spritePrefix)
+    {
+        if (renderer == null)
+            return false;
+
+        Sprite[] baseFrames = Enumerable.Range(0, 4)
+            .Select(index => LoadSprite($"{spritePrefix}{GetStrengthName(index)}"))
+            .ToArray();
+        Sprite[] expectedFrames =
+        {
+            baseFrames[0], baseFrames[1], baseFrames[2], baseFrames[3],
+            baseFrames[3], baseFrames[2], baseFrames[1], baseFrames[0]
+        };
+
+        return baseFrames.All(sprite => sprite != null) &&
+               !renderer.idle &&
+               renderer.loop &&
+               renderer.idleSprite == baseFrames[0] &&
+               HasMatchingFrames(renderer.animationSprite, expectedFrames);
+    }
+
+    private static bool IsItemIconConfigured(string prefabPath, Sprite icon, Sprite[] borderFrames)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null)
+            return false;
+
+        AnimatedSpriteRenderer iconRenderer = prefab.GetComponent<AnimatedSpriteRenderer>();
+        SpriteRenderer iconSpriteRenderer = prefab.GetComponent<SpriteRenderer>();
+        Transform borderTransform = prefab.transform.Find("BorderAnimation");
+        if (iconRenderer == null || iconSpriteRenderer == null || borderTransform == null)
+            return false;
+
+        AnimatedSpriteRenderer borderRenderer = borderTransform.GetComponent<AnimatedSpriteRenderer>();
+        SpriteRenderer borderSpriteRenderer = borderTransform.GetComponent<SpriteRenderer>();
+        return iconRenderer.idle &&
+               iconRenderer.loop &&
+               iconRenderer.idleSprite == icon &&
+               HasMatchingFrames(iconRenderer.animationSprite, new[] { icon }) &&
+               iconSpriteRenderer.sprite == icon &&
+               borderRenderer != null &&
+               borderSpriteRenderer != null &&
+               !borderRenderer.idle &&
+               borderRenderer.loop &&
+               !borderRenderer.pingPong &&
+               Mathf.Approximately(borderRenderer.animationTime, ItemBorderFrameSeconds) &&
+               borderRenderer.idleSprite == borderFrames[0] &&
+               HasMatchingFrames(borderRenderer.animationSprite, borderFrames) &&
+               borderSpriteRenderer.sprite == borderFrames[0] &&
+               borderSpriteRenderer.sortingLayerID == iconSpriteRenderer.sortingLayerID &&
+               borderSpriteRenderer.sortingOrder == iconSpriteRenderer.sortingOrder - 1;
+    }
+
+    private static bool HasMatchingFrames(Sprite[] actualFrames, Sprite[] expectedFrames)
+    {
+        return actualFrames != null &&
+               actualFrames.Length == expectedFrames.Length &&
+               actualFrames.SequenceEqual(expectedFrames);
+    }
+
+    private readonly struct ItemIconDefinition
+    {
+        public readonly string prefabPath;
+        public readonly string spriteName;
+        public readonly string displayName;
+        public readonly int column;
+        public readonly int row;
+
+        public ItemIconDefinition(string prefabPath, string spriteName, string displayName, int column, int row)
+        {
+            this.prefabPath = prefabPath;
+            this.spriteName = spriteName;
+            this.displayName = displayName;
+            this.column = column;
+            this.row = row;
+        }
     }
 
     private static void ConfigureSheet()
@@ -372,6 +668,31 @@ public static class BombSheetPrefabAuthoring
             CreateSpriteRect("RevengeBombLarge", 27, 11, existingSpriteRects),
             CreateSpriteRect("RevengeBombMedium", 28, 11, existingSpriteRects),
             CreateSpriteRect("RevengeBombSmall", 29, 11, existingSpriteRects),
+            CreateSpriteRect("ExtraBombIcon", 32, 0, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("BlastRadiusIcon", 33, 0, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("SpeedUpIcon", 34, 0, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("OneUpIcon", 33, 5, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("BombKickIcon", 38, 3, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("BombPassIcon", 41, 0, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("BombPunchIcon", 40, 3, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("ControlBombIcon", 37, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("DestructiblePassIcon", 32, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("FullFireIcon", 32, 5, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("HeartIcon", 33, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("InvincibleSuitIcon", 36, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("MagnetBombIcon", 38, 2, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("PierceBombIcon", 38, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("PowerBombIcon", 40, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("PowerGloveIcon", 41, 3, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("RubberBombIcon", 39, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("SkullIcon", 34, 1, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("ClockIcon", 40, 6, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("ItemBorder1", 32, 8, existingSpriteRects),
+            CreateSpriteRect("ItemBorder2", 33, 8, existingSpriteRects),
+            CreateSpriteRect("ItemBorder3", 34, 8, existingSpriteRects),
+            CreateSpriteRect("ItemBorder4", 35, 8, existingSpriteRects),
+            CreateSpriteRect("ItemBorder5", 36, 8, existingSpriteRects),
+            CreateSpriteRect("ItemBorder6", 37, 8, existingSpriteRects),
             CreateSpriteRect("ExplosionStartWeak", 2, 17, existingSpriteRects),
             CreateSpriteRect("ExplosionStartMedium", 2, 12, existingSpriteRects),
             CreateSpriteRect("ExplosionStartStrong", 2, 7, existingSpriteRects),
@@ -448,14 +769,24 @@ public static class BombSheetPrefabAuthoring
         };
     }
 
-    private static SpriteRect CreateSpriteRect(string name, int column, int row, SpriteRect[] existingSpriteRects)
+    private static SpriteRect CreateSpriteRect(
+        string name,
+        int column,
+        int row,
+        SpriteRect[] existingSpriteRects,
+        int size = CellSize,
+        int inset = 0)
     {
         SpriteRect existing = existingSpriteRects.FirstOrDefault(spriteRect => spriteRect.name == name);
 
         return new SpriteRect
         {
             name = name,
-            rect = new Rect(column * CellSize, 320 - ((row + 1) * CellSize), CellSize, CellSize),
+            rect = new Rect(
+                (column * CellSize) + inset,
+                320 - ((row + 1) * CellSize) + inset,
+                size,
+                size),
             alignment = SpriteAlignment.Center,
             pivot = new Vector2(0.5f, 0.5f),
             spriteID = existing != null ? existing.spriteID : GUID.Generate()
@@ -464,8 +795,14 @@ public static class BombSheetPrefabAuthoring
 
     private static Sprite LoadSprite(string name)
     {
-        return AssetDatabase.LoadAllAssetsAtPath(SheetPath)
-            .OfType<Sprite>()
-            .FirstOrDefault(sprite => sprite.name == name);
+        if (spritesByName == null)
+        {
+            spritesByName = AssetDatabase.LoadAllAssetsAtPath(SheetPath)
+                .OfType<Sprite>()
+                .GroupBy(sprite => sprite.name)
+                .ToDictionary(group => group.Key, group => group.First());
+        }
+
+        return spritesByName.TryGetValue(name, out Sprite sprite) ? sprite : null;
     }
 }

@@ -347,6 +347,9 @@ TextureImporter:
   - first:
       213: 7315210391867609556
     second: Itens_114
+  - first:
+      213: -7902612550326690526
+    second: Itens_115
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -470,8 +473,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 47a86a60dae9d0747b8878f150278569
-      internalID: -1524620385
+      spriteID: 8140a7592c0b3af4ab17a9197dd85f9d
+      internalID: 2101914815
       vertices: []
       indices: 
       edges: []
@@ -492,8 +495,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 435ee2337841b944495c0a97c884591a
-      internalID: 655260091
+      spriteID: 4261105295eefb5439e78cd463de7671
+      internalID: -929908284
       vertices: []
       indices: 
       edges: []
@@ -514,272 +517,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3f51e44576997764286a4e3cc1ee473f
-      internalID: -1189457706
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionStartWeak
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 32
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 362be1aa855dad04e9e7985a0a522edc
-      internalID: 496970185
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionStartMedium
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 112
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 7686e561ce0572c4eb44d19b3fe58d03
-      internalID: -382318046
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionStartStrong
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 192
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3b04d44480f50e54bae291c53ddd6e67
-      internalID: 866347275
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionStartMaximum
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 272
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1383d27a1de76024bbb50b6c58fcfc09
-      internalID: -2088865570
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionMiddleWeak
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 32
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ac83241816d8c1c478fed2505cd41d82
-      internalID: 1890672389
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionMiddleMedium
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 112
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0218bf66faadc1949b5d47f305d87c30
-      internalID: 1404003554
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionMiddleStrong
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 192
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d18df56b5f97cbb43930a99ba9c00870
-      internalID: -989088807
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionMiddleMaximum
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 272
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 5e787b786705f4e4db14110522cd02df
-      internalID: 570024572
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionEndWeak
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 48
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: dd9000b7942941e43a337239f48e2874
-      internalID: -1536701000
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionEndMedium
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 128
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0153468db12f8bd45b708d058298bc5c
-      internalID: -803837414
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionEndStrong
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 208
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8b59451056a78bd41bd13dcebd84f713
-      internalID: 319175123
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ExplosionEndMaximum
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 288
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c954e017ec8a5af49a77025b76630de6
-      internalID: 603302928
+      spriteID: a342ec1a14bd1e7468c4652d7b649537
+      internalID: 1579002858
       vertices: []
       indices: 
       edges: []
@@ -800,8 +539,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 158d3949526c08f4082f3b86e826ffa9
-      internalID: 912768630
+      spriteID: 5db00ac6b35aeab448a3cdd988544fdd
+      internalID: 1394828070
       vertices: []
       indices: 
       edges: []
@@ -822,8 +561,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6f008ef485ecaed47ae388f814d50012
-      internalID: 1110919540
+      spriteID: 9f47c2b946bd2ee49ad77fca25199ebd
+      internalID: 1862666822
       vertices: []
       indices: 
       edges: []
@@ -844,272 +583,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 291120ea7a0bd704db3d153a6eb305fa
-      internalID: -998931806
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionStartWeak
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 32
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 49f3ba30289cdc548b9017a96af41101
-      internalID: -879120424
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionStartMedium
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 112
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ba8945c3e82fc75409e4944be4b2696d
-      internalID: -274395177
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionStartStrong
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 192
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 72e8f5795e4b4e443809d535531d1404
-      internalID: -622128012
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionStartMaximum
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 272
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 4bbc0e92a267b0248987775e410c7a95
-      internalID: -1425899454
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionMiddleWeak
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 32
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3941c28c71c18a242a0b35fa30ddea41
-      internalID: 475435993
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionMiddleMedium
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 112
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ae87d6562d3aa114ca6321f9377e98cc
-      internalID: -220412577
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionMiddleStrong
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 192
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: fba05e6ef87abcc44b00cf57d55e01a8
-      internalID: -1696213115
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionMiddleMaximum
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 272
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d48feb5eaab4504459d4c8fc6bbb3365
-      internalID: -1261460996
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionEndWeak
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 48
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 810d6e1ab78f9c54ca69c60ab4d67fa0
-      internalID: 313159428
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionEndMedium
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 128
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: aab4124a92abe164ab572d4aeaf19ecb
-      internalID: 752934815
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionEndStrong
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 208
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: b9c3305d58afc9843bdc2d836c958b2b
-      internalID: -54371477
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PierceExplosionEndMaximum
-      rect:
-        serializedVersion: 2
-        x: 144
-        y: 288
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e94981d384c9c4f42bd7b90588b7b342
-      internalID: -1488681220
+      spriteID: abcaeb276fed37f43be8232c05c6877b
+      internalID: -197378421
       vertices: []
       indices: 
       edges: []
@@ -1130,8 +605,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f70035b092334324abae0ed725a5dd6b
-      internalID: 569021914
+      spriteID: 153da9dabbb6a2340afa23c1495a4a4b
+      internalID: -632940702
       vertices: []
       indices: 
       edges: []
@@ -1152,8 +627,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 18e4d4e439314644f85d3f88ec410347
-      internalID: -1136306245
+      spriteID: dabd1a5da4916994691fbd1edfa951c6
+      internalID: -1609948160
       vertices: []
       indices: 
       edges: []
@@ -1174,8 +649,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: bbea0f84f17d6f6498300a6a12fe2aa9
-      internalID: -963187084
+      spriteID: aefe68c979b6cc74988e8b738cc44ede
+      internalID: 1634386768
       vertices: []
       indices: 
       edges: []
@@ -1196,8 +671,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5c1455086ee108c4a8a8d6e6350d649a
-      internalID: 1834970286
+      spriteID: fa412b41c65774d45a4658d37fe25e92
+      internalID: 1712045913
       vertices: []
       indices: 
       edges: []
@@ -1218,8 +693,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b936a0da380581643a785f970bd612c7
-      internalID: -786782861
+      spriteID: 4a93852100074d243baf28a7d8bde17d
+      internalID: 1621949830
       vertices: []
       indices: 
       edges: []
@@ -1240,8 +715,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 528e35c4b3316e040b97039715bc5dd1
-      internalID: -241558549
+      spriteID: 3958ff7a13f8cc84fb2cbaa6424e62e8
+      internalID: -514927015
       vertices: []
       indices: 
       edges: []
@@ -1262,8 +737,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4e1764a2d865fa64eb59939b60586e3c
-      internalID: 1536219321
+      spriteID: 0f32683ccce7d5a4da00557ed340aef7
+      internalID: -1256491696
       vertices: []
       indices: 
       edges: []
@@ -1284,8 +759,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e038c3f99ecb7db479129b40ada6de1b
-      internalID: -1285958866
+      spriteID: 15be27c6827cf6c4daae0d413b95f5c4
+      internalID: 2007150047
       vertices: []
       indices: 
       edges: []
@@ -1306,8 +781,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: bd9247ebb5f9d6e47b18f162081b3ad1
-      internalID: 817583975
+      spriteID: 7097d6ecc9c5f9841bdb70737e79d6f1
+      internalID: -243726267
       vertices: []
       indices: 
       edges: []
@@ -1328,8 +803,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4cc10624bcbfb3f43bb327422e0887e0
-      internalID: -1906330910
+      spriteID: 55ff49ef5bfd50047980ce748122be90
+      internalID: -1287225025
       vertices: []
       indices: 
       edges: []
@@ -1350,8 +825,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 29b82fd0b4581094fb29e6c1809f73bc
-      internalID: -581150110
+      spriteID: 775f930acb4df2e4c9504e4cc133e04b
+      internalID: 1818349431
       vertices: []
       indices: 
       edges: []
@@ -1372,8 +847,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 64e23bc86ff6b9d4991b43430e916ad3
-      internalID: 1252051949
+      spriteID: d51accecc79338f4ca864e92d4088726
+      internalID: -1469081852
       vertices: []
       indices: 
       edges: []
@@ -1394,8 +869,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fa3fcf330bb31cd49abe68e496b242d3
-      internalID: -1471459473
+      spriteID: 1ce3c284b33d9c047b8aba79eb1ebfe0
+      internalID: -2019956597
       vertices: []
       indices: 
       edges: []
@@ -1416,8 +891,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d6abfb4c94d8f804ca78373e69c71019
-      internalID: -1928247446
+      spriteID: aa52513a86770ea45887bc315b2eff7d
+      internalID: 754924078
       vertices: []
       indices: 
       edges: []
@@ -1438,8 +913,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 164e3baba4eff114a86bc73fd53ad61a
-      internalID: -1933111072
+      spriteID: 25c7c95a9ffb5fd4a8213cb9dad76f9a
+      internalID: 1661532084
       vertices: []
       indices: 
       edges: []
@@ -1460,8 +935,1086 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ed56609e6a484ff4293720c1e591c922
-      internalID: 78613268
+      spriteID: cb6da5e5834c6134ca12f0a3de1d3c5e
+      internalID: 774137349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExtraBombIcon
+      rect:
+        serializedVersion: 2
+        x: 513
+        y: 305
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1716e2110d922914aa04bbac496e19ea
+      internalID: 1797615827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlastRadiusIcon
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 305
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 09c4a82f45ef0994d89fa2576d17bfd2
+      internalID: -39094989
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SpeedUpIcon
+      rect:
+        serializedVersion: 2
+        x: 545
+        y: 305
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c427ad02401552e4493ccb47dfb255d9
+      internalID: 957024641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: OneUpIcon
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 225
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d49f4b2b9fabfec42bfe20f0f40b424a
+      internalID: -1121671115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombKickIcon
+      rect:
+        serializedVersion: 2
+        x: 609
+        y: 257
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d54a537a4a2a5549a1f1b7e8be47a95
+      internalID: -1544517094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombPassIcon
+      rect:
+        serializedVersion: 2
+        x: 657
+        y: 305
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 876d8272f7efe314e8b5bc22171dc303
+      internalID: 2039161152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombPunchIcon
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 257
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e4cd833b5a50a854bb547e942b28f3a1
+      internalID: 45406254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ControlBombIcon
+      rect:
+        serializedVersion: 2
+        x: 593
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83d13287b2190944ea77214212c91ac8
+      internalID: -1073025916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DestructiblePassIcon
+      rect:
+        serializedVersion: 2
+        x: 513
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f1ef26fba6aabf14d8e1f6faf6791260
+      internalID: 2089014375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FullFireIcon
+      rect:
+        serializedVersion: 2
+        x: 513
+        y: 225
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64c6e391f200e794f9d7dbefb8531d1a
+      internalID: 1118628865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HeartIcon
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eedb11b096e38d647ab8cbaf5bd4f72e
+      internalID: -454867727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InvincibleSuitIcon
+      rect:
+        serializedVersion: 2
+        x: 577
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a86a0f22c4a87204e911ac5862e3f7bb
+      internalID: -845075858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagnetBombIcon
+      rect:
+        serializedVersion: 2
+        x: 609
+        y: 273
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02b44693d52411e4797962383970ec9f
+      internalID: -1182779419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceBombIcon
+      rect:
+        serializedVersion: 2
+        x: 609
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53e43b71e64db584094ec65c28ba5364
+      internalID: 1871652581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PowerBombIcon
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4870f6a920156804ea82e2fe9a993083
+      internalID: -1642440967
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PowerGloveIcon
+      rect:
+        serializedVersion: 2
+        x: 657
+        y: 257
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: faecd9ad5464f1b43a2e493e43a95c9e
+      internalID: 487965789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RubberBombIcon
+      rect:
+        serializedVersion: 2
+        x: 625
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3195000424823af4dbdf70f7100c3720
+      internalID: 1416932893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SkullIcon
+      rect:
+        serializedVersion: 2
+        x: 545
+        y: 289
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da3aee8e74a30a242808446c00cb9abe
+      internalID: 1417055908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClockIcon
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 209
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: acc9906606f55cf488b9b0a544cc91f6
+      internalID: 405301966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ItemBorder1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43f6e566756bdf84195c102c4807a6ad
+      internalID: 1957365770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ItemBorder2
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 19258e25688ea5e4eb5ed5503f8b9a53
+      internalID: -909456546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ItemBorder3
+      rect:
+        serializedVersion: 2
+        x: 544
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 77f556f04af09ba41accbd128c485d29
+      internalID: -2015112558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ItemBorder4
+      rect:
+        serializedVersion: 2
+        x: 560
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e129e73f519b984f9a27e9e1fc39630
+      internalID: 167369933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ItemBorder5
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f3af2d047e2a26148841f10bc243a1d9
+      internalID: -2043633808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ItemBorder6
+      rect:
+        serializedVersion: 2
+        x: 592
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 08ff81d81a23e524abc3e060aee92a89
+      internalID: -705704255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartWeak
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aa360cffad2eeb4448da1fe3e692a828
+      internalID: 1095793026
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartMedium
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b392fc4b0f5df2c49b581e96475e21a7
+      internalID: -1655809722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartStrong
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e83e36310d1791438a5aca16b587b19
+      internalID: 1194396886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartMaximum
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b71941e2dcd01946894a7f92e590404
+      internalID: 406239087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleWeak
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b474cc8a0540cdd40a4e5be96f4e8d02
+      internalID: 2014761057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleMedium
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b97594470986bf349a22457bc182dc5f
+      internalID: 1709740478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleStrong
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ead6ea7921d30e84ca0d72493cc666cb
+      internalID: 673993403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleMaximum
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1159dddffe752c24388d4d0a1f19fe8f
+      internalID: -5325436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndWeak
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa2736e191cde9b439eac0b7dd229b6b
+      internalID: -70472848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndMedium
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 44ddee1e9742fb9479ad2477422c8818
+      internalID: -78398334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndStrong
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 208
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dab346e2f72c6e640b1f2b43ee5ed27b
+      internalID: 318332760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndMaximum
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96ce9197fbe87c84e956f4deed1a0082
+      internalID: -2086321646
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartWeak
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53f310a2756cd1a4c9aa0094039f9991
+      internalID: -382955974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartMedium
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efc6b83c7592c1a499c2e5e2fff3fc2a
+      internalID: 1803248747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartStrong
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f82bdba5c3f954b47821ee0bf27b6ff3
+      internalID: 443170891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartMaximum
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa3020de4c1a9c34c84a363b25cd5dbe
+      internalID: -1985056295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleWeak
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 735ea7cdb1c676440a033d68f1d2f4b0
+      internalID: -1049043985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleMedium
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b1d306e9cdb41140a12c6bac8f61c0d
+      internalID: -538162153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleStrong
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: baf3618ab25d7034796179289265ed9b
+      internalID: 1082045422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleMaximum
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bee13221d64c2c1408b9cb9c59635a7f
+      internalID: 1409201735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndWeak
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d59ef14fe9e8854da3d490a33771f0f
+      internalID: -308639959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndMedium
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2d3835a61a8044e4fa293b3cd45bbe0d
+      internalID: 951481965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndStrong
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 208
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25374af0fbb899541aaf58ab945f6d85
+      internalID: 467064761
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndMaximum
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7155f84331ac75846b5147d38a5eb484
+      internalID: -293393730
       vertices: []
       indices: 
       edges: []
@@ -1470,7 +2023,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a8dd4a3f30962034bacd548fa7dcd659
+    spriteID: a74ca42fc58a66946b5fbc8757656b6b
     internalID: 0
     vertices: []
     indices: 
@@ -1480,52 +2033,77 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      BombLarge: -1524620385
-      BombMedium: 655260091
-      BombSmall: -1189457706
-      ControlBombFrame1: 1536219321
-      ControlBombFrame2: -1285958866
-      ControlBombFrame3: 817583975
-      ControlBombFrame4: -1906330910
-      ExplosionEndMaximum: 603302928
-      ExplosionEndMedium: -803837414
-      ExplosionEndStrong: 319175123
-      ExplosionEndWeak: -1536701000
-      ExplosionMiddleMaximum: 570024572
-      ExplosionMiddleMedium: 1404003554
-      ExplosionMiddleStrong: -989088807
-      ExplosionMiddleWeak: 1890672389
-      ExplosionStartMaximum: -2088865570
-      ExplosionStartMedium: -382318046
-      ExplosionStartStrong: 866347275
-      ExplosionStartWeak: 496970185
-      MagnetBombLarge: -581150110
-      MagnetBombMedium: 1252051949
-      MagnetBombSmall: -1471459473
-      PierceBombLarge: 912768630
-      PierceBombMedium: 1110919540
-      PierceBombSmall: -998931806
-      PierceExplosionEndMaximum: -1488681220
-      PierceExplosionEndMedium: 752934815
-      PierceExplosionEndStrong: -54371477
-      PierceExplosionEndWeak: 313159428
-      PierceExplosionMiddleMaximum: -1261460996
-      PierceExplosionMiddleMedium: -220412577
-      PierceExplosionMiddleStrong: -1696213115
-      PierceExplosionMiddleWeak: 475435993
-      PierceExplosionStartMaximum: -1425899454
-      PierceExplosionStartMedium: -274395177
-      PierceExplosionStartStrong: -622128012
-      PierceExplosionStartWeak: -879120424
-      PowerBombLarge: 1834970286
-      PowerBombMedium: -786782861
-      PowerBombSmall: -241558549
-      RevengeBombLarge: -1928247446
-      RevengeBombMedium: -1933111072
-      RevengeBombSmall: 78613268
-      RubberBombLarge: 569021914
-      RubberBombMedium: -1136306245
-      RubberBombSmall: -963187084
+      BlastRadiusIcon: -39094989
+      BombKickIcon: -1544517094
+      BombLarge: 2101914815
+      BombMedium: -929908284
+      BombPassIcon: 2039161152
+      BombPunchIcon: 45406254
+      BombSmall: 1579002858
+      ClockIcon: 405301966
+      ControlBombFrame1: -1256491696
+      ControlBombFrame2: 2007150047
+      ControlBombFrame3: -243726267
+      ControlBombFrame4: -1287225025
+      ControlBombIcon: -1073025916
+      DestructiblePassIcon: 2089014375
+      ExplosionEndMaximum: -2086321646
+      ExplosionEndMedium: -78398334
+      ExplosionEndStrong: 318332760
+      ExplosionEndWeak: -70472848
+      ExplosionMiddleMaximum: -5325436
+      ExplosionMiddleMedium: 1709740478
+      ExplosionMiddleStrong: 673993403
+      ExplosionMiddleWeak: 2014761057
+      ExplosionStartMaximum: 406239087
+      ExplosionStartMedium: -1655809722
+      ExplosionStartStrong: 1194396886
+      ExplosionStartWeak: 1095793026
+      ExtraBombIcon: 1797615827
+      FullFireIcon: 1118628865
+      HeartIcon: -454867727
+      InvincibleSuitIcon: -845075858
+      ItemBorder1: 1957365770
+      ItemBorder2: -909456546
+      ItemBorder3: -2015112558
+      ItemBorder4: 167369933
+      ItemBorder5: -2043633808
+      ItemBorder6: -705704255
+      MagnetBombIcon: -1182779419
+      MagnetBombLarge: 1818349431
+      MagnetBombMedium: -1469081852
+      MagnetBombSmall: -2019956597
+      OneUpIcon: -1121671115
+      PierceBombIcon: 1871652581
+      PierceBombLarge: 1394828070
+      PierceBombMedium: 1862666822
+      PierceBombSmall: -197378421
+      PierceExplosionEndMaximum: -293393730
+      PierceExplosionEndMedium: 951481965
+      PierceExplosionEndStrong: 467064761
+      PierceExplosionEndWeak: -308639959
+      PierceExplosionMiddleMaximum: 1409201735
+      PierceExplosionMiddleMedium: -538162153
+      PierceExplosionMiddleStrong: 1082045422
+      PierceExplosionMiddleWeak: -1049043985
+      PierceExplosionStartMaximum: -1985056295
+      PierceExplosionStartMedium: 1803248747
+      PierceExplosionStartStrong: 443170891
+      PierceExplosionStartWeak: -382955974
+      PowerBombIcon: -1642440967
+      PowerBombLarge: 1712045913
+      PowerBombMedium: 1621949830
+      PowerBombSmall: -514927015
+      PowerGloveIcon: 487965789
+      RevengeBombLarge: 754924078
+      RevengeBombMedium: 1661532084
+      RevengeBombSmall: 774137349
+      RubberBombIcon: 1416932893
+      RubberBombLarge: -632940702
+      RubberBombMedium: -1609948160
+      RubberBombSmall: 1634386768
+      SkullIcon: 1417055908
+      SpeedUpIcon: 957024641
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
