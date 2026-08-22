@@ -39,7 +39,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &147425199346742611
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -86,7 +86,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  m_Sprite: {fileID: 1110919540, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -96,6 +96,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!50 &147425199346742610
 Rigidbody2D:
   serializedVersion: 5
@@ -171,17 +172,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  idleSprite: {fileID: 1110919540, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   animationSprite:
-  - {fileID: -174751868630856966, guid: aaeb7740db057114f9b159291607444b, type: 3}
-  - {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
-  - {fileID: 8214835993290027888, guid: aaeb7740db057114f9b159291607444b, type: 3}
-  - {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  - {fileID: 1110919540, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 912768630, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 1110919540, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: -998931806, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   allowFlipX: 1
   animationTime: 0.25
   useSequenceDuration: 0
   sequenceDuration: 0
+  frameDurations: []
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
+  loopStartFrame: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -203,14 +208,22 @@ MonoBehaviour:
   punchSfxVolume: 1
   bounceSfx: {fileID: 8300000, guid: 691a993233a939b4d8601560e159cf0a, type: 3}
   bounceSfxVolume: 1
+  loseItemSfxVolume: 1
   magnetPullSfxVolume: 1
   kickSpeed: 9
   punchDuration: 0.22
   punchArcHeight: 0.9
+  punchMinSegmentDuration: 0.28
+  punchSecondsPerTile: 0.055
+  punchLandingBounceSpeedMultiplier: 2
+  punchPixelsPerUnit: 16
   chainStepDelay: 0.1
   FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
+  indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0

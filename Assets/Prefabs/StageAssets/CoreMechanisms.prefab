@@ -275,7 +275,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWaterSubmersionEffect
   coreMechanismsWaterSurfaceYOffset: -0.125
   limitCoreMechanismsToScene: 1
-  coreMechanismsSceneName: Stage_3-1
+  coreMechanismsSceneName: Stage_3-3
 --- !u!1 &4193804359411325140
 GameObject:
   m_ObjectHideFlags: 0

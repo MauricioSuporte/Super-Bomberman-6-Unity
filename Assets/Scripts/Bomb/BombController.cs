@@ -1036,6 +1036,9 @@ public partial class BombController : MonoBehaviour
         lastPlacedBomb = bomb;
         bombsRemaining--;
 
+        if (prefabToUse == bombPrefab)
+            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
+
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
 
@@ -2930,6 +2933,9 @@ public partial class BombController : MonoBehaviour
         if (bomb == null)
             return false;
 
+        if (prefabToUse == bombPrefab)
+            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
+
         lastPlacedBomb = bomb;
 
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
@@ -3062,6 +3068,9 @@ public partial class BombController : MonoBehaviour
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         placedBomb = bomb;
         lastPlacedBomb = bomb;
+
+        if (prefabToUse == bombPrefab)
+            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
 
         if (consumeBomb)
             bombsRemaining--;

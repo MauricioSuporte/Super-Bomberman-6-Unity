@@ -6,7 +6,7 @@ using UnityEngine;
 public class BombExplosion : MonoBehaviour
 {
     private static readonly Dictionary<BombExplosion, Stack<BombExplosion>> Pools = new();
-    private const string PierceExplosionSpritesPath = "Sprites/BombExplosions/PierceExplosion";
+    private const string SharedSheetSpritesPath = "Sprites/BombItems/Itens";
     private const int DefaultSortingOrder = 3;
     private static Sprite[] pierceStartSprites;
     private static Sprite[] pierceMiddleSprites;
@@ -342,12 +342,36 @@ public class BombExplosion : MonoBehaviour
 
     private static Sprite[] LoadPierceSprites(string partName)
     {
-        Sprite[] sprites = Resources.LoadAll<Sprite>($"{PierceExplosionSpritesPath}{partName}");
-        if (sprites == null || sprites.Length == 0)
+        Sprite[] allSprites = Resources.LoadAll<Sprite>(SharedSheetSpritesPath);
+        if (allSprites == null || allSprites.Length == 0)
             return null;
 
-        Array.Sort(sprites, (a, b) => string.CompareOrdinal(a != null ? a.name : string.Empty, b != null ? b.name : string.Empty));
-        return sprites;
+        Sprite[] strengths = new Sprite[4];
+        for (int i = 0; i < strengths.Length; i++)
+        {
+            string spriteName = $"PierceExplosion{partName}{GetExplosionStrengthName(i)}";
+            strengths[i] = Array.Find(allSprites, sprite => sprite != null && sprite.name == spriteName);
+            if (strengths[i] == null)
+                return null;
+        }
+
+        return new[]
+        {
+            strengths[0], strengths[1], strengths[2], strengths[3],
+            strengths[3], strengths[2], strengths[1], strengths[0]
+        };
+    }
+
+    private static string GetExplosionStrengthName(int index)
+    {
+        return index switch
+        {
+            0 => "Weak",
+            1 => "Medium",
+            2 => "Strong",
+            3 => "Maximum",
+            _ => string.Empty
+        };
     }
 
     IEnumerator PlayRoutine(ExplosionPart part, float delay, float duration)

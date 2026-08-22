@@ -1,0 +1,1165 @@
+fileFormatVersion: 2
+guid: 508037450cc8f7947a3eb47e7ada206c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2980712377497353079
+    second: Itens_0
+  - first:
+      213: -9144960104466704823
+    second: Itens_1
+  - first:
+      213: -4996090503011306354
+    second: Itens_2
+  - first:
+      213: 4749367379176292346
+    second: Itens_3
+  - first:
+      213: 3247288509954160731
+    second: Itens_4
+  - first:
+      213: -6577593654236450936
+    second: Itens_5
+  - first:
+      213: 2409810756578143877
+    second: Itens_6
+  - first:
+      213: -537459264968920275
+    second: Itens_7
+  - first:
+      213: -5246625346339106664
+    second: Itens_8
+  - first:
+      213: 1569706432141056365
+    second: Itens_9
+  - first:
+      213: 4416895190114099216
+    second: Itens_10
+  - first:
+      213: 7917956384366658669
+    second: Itens_11
+  - first:
+      213: 3877867701733562072
+    second: Itens_12
+  - first:
+      213: 2900804962775901857
+    second: Itens_13
+  - first:
+      213: -2804422678760828670
+    second: Itens_14
+  - first:
+      213: 4160602952601969893
+    second: Itens_15
+  - first:
+      213: -2897661736662728029
+    second: Itens_16
+  - first:
+      213: -8394715018962023426
+    second: Itens_17
+  - first:
+      213: 8334342981289152746
+    second: Itens_18
+  - first:
+      213: 7514949575715966355
+    second: Itens_19
+  - first:
+      213: -5319949591577724491
+    second: Itens_20
+  - first:
+      213: -8195260259868240940
+    second: Itens_21
+  - first:
+      213: 8507280136164011001
+    second: Itens_22
+  - first:
+      213: 1556606102912054865
+    second: Itens_23
+  - first:
+      213: -3937844134082950047
+    second: Itens_24
+  - first:
+      213: -8898558895348142177
+    second: Itens_25
+  - first:
+      213: -2018035794688598330
+    second: Itens_26
+  - first:
+      213: 4169407049569290445
+    second: Itens_27
+  - first:
+      213: -8796407522300913264
+    second: Itens_28
+  - first:
+      213: -3595666510534537166
+    second: Itens_29
+  - first:
+      213: -5925312486835263532
+    second: Itens_30
+  - first:
+      213: -8785164316394549290
+    second: Itens_31
+  - first:
+      213: -2007144851317092392
+    second: Itens_32
+  - first:
+      213: -2989707661667835200
+    second: Itens_33
+  - first:
+      213: -5063507186217450411
+    second: Itens_34
+  - first:
+      213: -1640387151752336976
+    second: Itens_35
+  - first:
+      213: -1639852616989914902
+    second: Itens_36
+  - first:
+      213: 6375785075359287006
+    second: Itens_37
+  - first:
+      213: 7678256251094442165
+    second: Itens_38
+  - first:
+      213: -1594371848330421064
+    second: Itens_39
+  - first:
+      213: 3780858088032107027
+    second: Itens_40
+  - first:
+      213: 923102940658222444
+    second: Itens_41
+  - first:
+      213: 7806910438462998124
+    second: Itens_42
+  - first:
+      213: -3595523821276832913
+    second: Itens_43
+  - first:
+      213: -6306971230116932092
+    second: Itens_44
+  - first:
+      213: -5183063410142590171
+    second: Itens_45
+  - first:
+      213: -966569665008449652
+    second: Itens_46
+  - first:
+      213: 8135400686135360357
+    second: Itens_47
+  - first:
+      213: 4236582220119345800
+    second: Itens_48
+  - first:
+      213: 8941119276686418049
+    second: Itens_49
+  - first:
+      213: -2732890495740458043
+    second: Itens_50
+  - first:
+      213: 5716406614998528010
+    second: Itens_51
+  - first:
+      213: -8257314498286658049
+    second: Itens_52
+  - first:
+      213: -6685092653169902361
+    second: Itens_53
+  - first:
+      213: -5152840617059839544
+    second: Itens_54
+  - first:
+      213: 6631711340493767873
+    second: Itens_55
+  - first:
+      213: -1857189474341734926
+    second: Itens_56
+  - first:
+      213: -5431208861756707218
+    second: Itens_57
+  - first:
+      213: -706772550256518877
+    second: Itens_58
+  - first:
+      213: -4098456289308764220
+    second: Itens_59
+  - first:
+      213: 3056984797943945697
+    second: Itens_60
+  - first:
+      213: 661344044619144648
+    second: Itens_61
+  - first:
+      213: 1809613110848507452
+    second: Itens_62
+  - first:
+      213: 4509674041798703215
+    second: Itens_63
+  - first:
+      213: -8591686698645946726
+    second: Itens_64
+  - first:
+      213: -2179784712807064528
+    second: Itens_65
+  - first:
+      213: 6923647243611431052
+    second: Itens_66
+  - first:
+      213: 7542655283616722980
+    second: Itens_67
+  - first:
+      213: -2044086202048536505
+    second: Itens_68
+  - first:
+      213: 991694554075778438
+    second: Itens_69
+  - first:
+      213: 368857775701494643
+    second: Itens_70
+  - first:
+      213: 5182651840863558097
+    second: Itens_71
+  - first:
+      213: -6353846844405325557
+    second: Itens_72
+  - first:
+      213: -2341834461134651433
+    second: Itens_73
+  - first:
+      213: -8341686187451527162
+    second: Itens_74
+  - first:
+      213: -8565940121266252541
+    second: Itens_75
+  - first:
+      213: -224241378623344696
+    second: Itens_76
+  - first:
+      213: 3617089994460502108
+    second: Itens_77
+  - first:
+      213: 3961958148269009315
+    second: Itens_78
+  - first:
+      213: -7030134903634001038
+    second: Itens_79
+  - first:
+      213: 589571058955162948
+    second: Itens_80
+  - first:
+      213: -3571822026559931018
+    second: Itens_81
+  - first:
+      213: 5783447637893059012
+    second: Itens_82
+  - first:
+      213: -7449140052174756739
+    second: Itens_83
+  - first:
+      213: 8389710926286182944
+    second: Itens_84
+  - first:
+      213: -3489314616633455375
+    second: Itens_85
+  - first:
+      213: 7697109759428765195
+    second: Itens_86
+  - first:
+      213: 1441878484360904075
+    second: Itens_87
+  - first:
+      213: -2985729896805187698
+    second: Itens_88
+  - first:
+      213: 3313638875946026635
+    second: Itens_89
+  - first:
+      213: 6863592512037604812
+    second: Itens_90
+  - first:
+      213: 124299194163399877
+    second: Itens_91
+  - first:
+      213: 7834114998724769507
+    second: Itens_92
+  - first:
+      213: -7879417310519984096
+    second: Itens_93
+  - first:
+      213: -2067044742046348352
+    second: Itens_94
+  - first:
+      213: 2198532929305801390
+    second: Itens_95
+  - first:
+      213: -1636106846005526883
+    second: Itens_96
+  - first:
+      213: -2010218814595901407
+    second: Itens_97
+  - first:
+      213: -7251944643038601626
+    second: Itens_98
+  - first:
+      213: 3455461184653435998
+    second: Itens_99
+  - first:
+      213: 6303564288819373412
+    second: Itens_100
+  - first:
+      213: -209943844267803703
+    second: Itens_101
+  - first:
+      213: -2243133568440805373
+    second: Itens_102
+  - first:
+      213: -816579584320852260
+    second: Itens_103
+  - first:
+      213: 3420454287862962951
+    second: Itens_104
+  - first:
+      213: -4741704068657313967
+    second: Itens_105
+  - first:
+      213: 8723248122204399169
+    second: Itens_106
+  - first:
+      213: -7219191725323660002
+    second: Itens_107
+  - first:
+      213: 330656340709327786
+    second: Itens_108
+  - first:
+      213: -5473243384667820128
+    second: Itens_109
+  - first:
+      213: 862508060903822594
+    second: Itens_110
+  - first:
+      213: -5009951399970757668
+    second: Itens_111
+  - first:
+      213: -963065179390447001
+    second: Itens_112
+  - first:
+      213: 4650586561076592382
+    second: Itens_113
+  - first:
+      213: 7315210391867609556
+    second: Itens_114
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BombLarge
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 304
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47a86a60dae9d0747b8878f150278569
+      internalID: -1524620385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombMedium
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 304
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 435ee2337841b944495c0a97c884591a
+      internalID: 655260091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombSmall
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 304
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f51e44576997764286a4e3cc1ee473f
+      internalID: -1189457706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartWeak
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 362be1aa855dad04e9e7985a0a522edc
+      internalID: 496970185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartMedium
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7686e561ce0572c4eb44d19b3fe58d03
+      internalID: -382318046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartStrong
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b04d44480f50e54bae291c53ddd6e67
+      internalID: 866347275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionStartMaximum
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1383d27a1de76024bbb50b6c58fcfc09
+      internalID: -2088865570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleWeak
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac83241816d8c1c478fed2505cd41d82
+      internalID: 1890672389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleMedium
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0218bf66faadc1949b5d47f305d87c30
+      internalID: 1404003554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleStrong
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d18df56b5f97cbb43930a99ba9c00870
+      internalID: -989088807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionMiddleMaximum
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5e787b786705f4e4db14110522cd02df
+      internalID: 570024572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndWeak
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd9000b7942941e43a337239f48e2874
+      internalID: -1536701000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndMedium
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0153468db12f8bd45b708d058298bc5c
+      internalID: -803837414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndStrong
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 208
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8b59451056a78bd41bd13dcebd84f713
+      internalID: 319175123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExplosionEndMaximum
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c954e017ec8a5af49a77025b76630de6
+      internalID: 603302928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceBombLarge
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 158d3949526c08f4082f3b86e826ffa9
+      internalID: 912768630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceBombMedium
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f008ef485ecaed47ae388f814d50012
+      internalID: 1110919540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceBombSmall
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 291120ea7a0bd704db3d153a6eb305fa
+      internalID: -998931806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartWeak
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 49f3ba30289cdc548b9017a96af41101
+      internalID: -879120424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartMedium
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba8945c3e82fc75409e4944be4b2696d
+      internalID: -274395177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartStrong
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 72e8f5795e4b4e443809d535531d1404
+      internalID: -622128012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionStartMaximum
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4bbc0e92a267b0248987775e410c7a95
+      internalID: -1425899454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleWeak
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3941c28c71c18a242a0b35fa30ddea41
+      internalID: 475435993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleMedium
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae87d6562d3aa114ca6321f9377e98cc
+      internalID: -220412577
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleStrong
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fba05e6ef87abcc44b00cf57d55e01a8
+      internalID: -1696213115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionMiddleMaximum
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 272
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d48feb5eaab4504459d4c8fc6bbb3365
+      internalID: -1261460996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndWeak
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 810d6e1ab78f9c54ca69c60ab4d67fa0
+      internalID: 313159428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndMedium
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aab4124a92abe164ab572d4aeaf19ecb
+      internalID: 752934815
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndStrong
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 208
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b9c3305d58afc9843bdc2d836c958b2b
+      internalID: -54371477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PierceExplosionEndMaximum
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 288
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e94981d384c9c4f42bd7b90588b7b342
+      internalID: -1488681220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a8dd4a3f30962034bacd548fa7dcd659
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      BombLarge: -1524620385
+      BombMedium: 655260091
+      BombSmall: -1189457706
+      ExplosionEndMaximum: 603302928
+      ExplosionEndMedium: -803837414
+      ExplosionEndStrong: 319175123
+      ExplosionEndWeak: -1536701000
+      ExplosionMiddleMaximum: 570024572
+      ExplosionMiddleMedium: 1404003554
+      ExplosionMiddleStrong: -989088807
+      ExplosionMiddleWeak: 1890672389
+      ExplosionStartMaximum: -2088865570
+      ExplosionStartMedium: -382318046
+      ExplosionStartStrong: 866347275
+      ExplosionStartWeak: 496970185
+      PierceBombLarge: 912768630
+      PierceBombMedium: 1110919540
+      PierceBombSmall: -998931806
+      PierceExplosionEndMaximum: -1488681220
+      PierceExplosionEndMedium: 752934815
+      PierceExplosionEndStrong: -54371477
+      PierceExplosionEndWeak: 313159428
+      PierceExplosionMiddleMaximum: -1261460996
+      PierceExplosionMiddleMedium: -220412577
+      PierceExplosionMiddleStrong: -1696213115
+      PierceExplosionMiddleWeak: 475435993
+      PierceExplosionStartMaximum: -1425899454
+      PierceExplosionStartMedium: -274395177
+      PierceExplosionStartStrong: -622128012
+      PierceExplosionStartWeak: -879120424
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

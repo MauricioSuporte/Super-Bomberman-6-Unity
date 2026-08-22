@@ -22,7 +22,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     [Header("CoreMechanisms Scene Restriction")]
     [Tooltip("When this effect is attached to a CoreMechanisms destructible, it only runs in this scene. Other uses of the effect are unaffected.")]
     [SerializeField] private bool limitCoreMechanismsToScene = true;
-    [SerializeField] private string coreMechanismsSceneName = "Stage_3-1";
+    [SerializeField] private string coreMechanismsSceneName = "Stage_3-3";
 
     [Header("Water Appearance")]
     [Tooltip("World-space offset from this object's pivot to the water surface.")]

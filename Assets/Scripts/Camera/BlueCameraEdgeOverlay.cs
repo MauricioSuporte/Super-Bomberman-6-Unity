@@ -3,13 +3,14 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Draws a blue atmospheric fade at the top and bottom of gameplay cameras.
+/// Draws a blue atmospheric fade at the top and bottom of the Stage 3-3 camera.
 /// The overlay is fitted to the same final pixel-perfect viewport as the
 /// gameplay camera, leaving letterbox bars and HUD elements untouched.
 /// </summary>
 public sealed class BlueCameraEdgeOverlay : MonoBehaviour
 {
     const string OverlayName = "BlueCameraEdgeOverlay";
+    const string UnderwaterStageSceneName = "Stage_3-3";
     const float EdgeCoverage = 0.34f;
     const float EdgeOpacity = 0.48f;
     const float PulseHalfCycleSeconds = 3f;
@@ -107,12 +108,13 @@ public sealed class BlueCameraEdgeOverlay : MonoBehaviour
 
     void RefreshVisibility(Scene scene)
     {
-        bool isBattleModeScene = scene.name.StartsWith("BattleMode_");
-        bool isGameplayScene = scene.name.StartsWith("Stage_") || isBattleModeScene;
         if (canvas != null)
-            canvas.enabled = isGameplayScene;
+            canvas.enabled = string.Equals(
+                scene.name,
+                UnderwaterStageSceneName,
+                System.StringComparison.OrdinalIgnoreCase);
 
-        ApplyTopGradientLayout(isBattleModeScene);
+        ApplyTopGradientLayout(isBattleModeScene: false);
     }
 
     void ApplyTopGradientLayout(bool isBattleModeScene)

@@ -193,7 +193,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void EnsureWorld3WaterSubmersion()
     {
-        if (!string.Equals(SceneManager.GetActiveScene().name, "Stage_3-1", System.StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(SceneManager.GetActiveScene().name, "Stage_3-3", System.StringComparison.OrdinalIgnoreCase))
             return;
 
         if (!TryGetComponent<PlayerWaterSubmersionEffect>(out _))

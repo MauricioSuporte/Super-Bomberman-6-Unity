@@ -2011,7 +2011,7 @@ public class PlayerMountCompanion : MonoBehaviour
         if (mount == null ||
             !string.Equals(
                 SceneManager.GetActiveScene().name,
-                "Stage_3-1",
+                "Stage_3-3",
                 StringComparison.OrdinalIgnoreCase))
         {
             return;
