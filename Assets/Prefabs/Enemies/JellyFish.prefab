@@ -15,8 +15,9 @@ GameObject:
   - component: {fileID: 8638696913730581265}
   - component: {fileID: 1351269766690977818}
   - component: {fileID: 4939096247585281341}
+  - component: {fileID: 2617764539722819911}
   m_Layer: 10
-  m_Name: Coral
+  m_Name: JellyFish
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -114,7 +115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da26a4e67e5d5c4b92dd153022700c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JunctionTurningEnemyMovementController
-  speed: 1.75
+  speed: 1.5
   tileSize: 1
   spriteUp: {fileID: 1228606389785476324}
   spriteDown: {fileID: 1228606389785476324}
@@ -148,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
-  life: 1
+  life: 2
   hitInvulnerableDuration: 3
   hitBlinkInterval: 0.1
   tempSlowdownStartNormalized: 0.7
@@ -276,6 +277,34 @@ MonoBehaviour:
   shakeAmplitude: 0.03
   shakeFrequency: 22
   freezeAnimatedSprites: 1
+--- !u!114 &2617764539722819911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1228606389669354652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 549f786b4d7b4e94a6d20c7e6c4a2a91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JellyFishAttackController
+  projectilePrefab: {fileID: 705861790115427001, guid: 03f9571c24ae42eebd56b31f4d6df077, type: 3}
+  cooldownSeconds: 10
+  scanIntervalSeconds: 0.15
+  visionTiles: 8
+  tileSize: 1
+  scanBoxSizePercent: 0.7
+  playerLayerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  bombLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 1216
+  projectileLocalOffset: {x: 0, y: 0}
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0
@@ -303,7 +332,7 @@ Transform:
   m_GameObject: {fileID: 1228606389785476330}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -358,7 +387,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6898878927837707429, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
+  m_Sprite: {fileID: 225789594419950302, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -381,12 +410,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 4767285382951200903, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
+  idleSprite: {fileID: 2300492064203892750, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
   animationSprite:
-  - {fileID: 6898878927837707429, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: 4767285382951200903, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: 6898878927837707429, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: -137827356275885869, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
+  - {fileID: 2300492064203892750, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: 7261015319150231739, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: 225789594419950302, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: 225789594419950302, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: 7261015319150231739, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
   allowFlipX: 0
   animationTime: 0.15
   useSequenceDuration: 0
@@ -428,7 +458,7 @@ Transform:
   m_GameObject: {fileID: 4091134401378488630}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -483,7 +513,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
+  m_Sprite: {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -506,13 +536,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
+  idleSprite: {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
   animationSprite:
-  - {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
-  - {fileID: -514414813453285905, guid: 13c49ab6f078431fa51b6e183547dec3, type: 3}
+  - {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
+  - {fileID: -5296773955423717907, guid: 2c0cc4cc1b4d4d2ea7d0b57129c3a362, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
