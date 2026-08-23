@@ -1,0 +1,508 @@
+fileFormatVersion: 2
+guid: f2302081e0bd6b54387445d422cb2ded
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7422067350895198591
+    second: ClownFishEnemy_0
+  - first:
+      213: -51860143101986160
+    second: ClownFishEnemy_1
+  - first:
+      213: -8632106451442969255
+    second: ClownFishEnemy_2
+  - first:
+      213: 7252669329283537660
+    second: ClownFishEnemy_3
+  - first:
+      213: 1714308529854187630
+    second: ClownFishEnemy_4
+  - first:
+      213: -4709426499498052758
+    second: ClownFishEnemy_5
+  - first:
+      213: 1718156790024198848
+    second: ClownFishEnemy_6
+  - first:
+      213: -9075772129408070903
+    second: ClownFishEnemy_7
+  - first:
+      213: -6672468918105967374
+    second: ClownFishEnemy_8
+  - first:
+      213: 9149321336259566495
+    second: ClownFishEnemy_9
+  - first:
+      213: 438314254753632228
+    second: ClownFishEnemy_Left_1
+  - first:
+      213: -5634802028025203292
+    second: ClownFishEnemy_Left_2
+  - first:
+      213: -8795241382751783019
+    second: ClownFishEnemy_Left_3
+  - first:
+      213: 6186218977101503693
+    second: ClownFishEnemy_Up_1
+  - first:
+      213: 3412304905545731573
+    second: ClownFishEnemy_Up_2
+  - first:
+      213: 7782153642129787641
+    second: ClownFishEnemy_Up_3
+  - first:
+      213: -2207820363603589205
+    second: ClownFishEnemy_Down_1
+  - first:
+      213: 7791070869354398034
+    second: ClownFishEnemy_Down_2
+  - first:
+      213: 1487572113047936122
+    second: ClownFishEnemy_Down_3
+  - first:
+      213: -720775303095100490
+    second: ClownFishEnemy_Death_1
+  - first:
+      213: 4453461394562983454
+    second: ClownFishEnemy_Death_2
+  - first:
+      213: -4821541113650715604
+    second: ClownFishEnemy_Death_3
+  - first:
+      213: -6360292497240597956
+    second: ClownFishEnemy_Death_4
+  - first:
+      213: -5819832476780771674
+    second: ClownFishEnemy_Death_5
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ClownFishEnemy_Left_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ef849e0e74351600800000000000000
+      internalID: 438314254753632228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Left_2
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a538e3f8692dc1b0800000000000000
+      internalID: -5634802028025203292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Left_3
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 597b343cf8601f580800000000000000
+      internalID: -8795241382751783019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Up_1
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcc5ae8326dd9d550800000000000000
+      internalID: 6186218977101503693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Up_2
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fd40608b31fa5f20800000000000000
+      internalID: 3412304905545731573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Up_3
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fa88a28183cffb60800000000000000
+      internalID: 7782153642129787641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Down_1
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba7c88ba31f3c51e0800000000000000
+      internalID: -2207820363603589205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Down_2
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25143c34da17f1c60800000000000000
+      internalID: 7791070869354398034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Down_3
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7cdfff84fae4a410800000000000000
+      internalID: 1487572113047936122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Death_1
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bb54204eaa4ff5f0800000000000000
+      internalID: -720775303095100490
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Death_2
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e16a7dbfa8fddcd30800000000000000
+      internalID: 4453461394562983454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Death_3
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2468ea17e1761db0800000000000000
+      internalID: -4821541113650715604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Death_4
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3a546a0ca3bbb7a0800000000000000
+      internalID: -6360292497240597956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClownFishEnemy_Death_5
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a64339723dcb3fa0800000000000000
+      internalID: -5819832476780771674
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ClownFishEnemy_0: -7422067350895198591
+      ClownFishEnemy_1: -51860143101986160
+      ClownFishEnemy_2: -8632106451442969255
+      ClownFishEnemy_3: 7252669329283537660
+      ClownFishEnemy_4: 1714308529854187630
+      ClownFishEnemy_5: -4709426499498052758
+      ClownFishEnemy_6: 1718156790024198848
+      ClownFishEnemy_7: -9075772129408070903
+      ClownFishEnemy_8: -6672468918105967374
+      ClownFishEnemy_9: 9149321336259566495
+      ClownFishEnemy_Death_1: -720775303095100490
+      ClownFishEnemy_Death_2: 4453461394562983454
+      ClownFishEnemy_Death_3: -4821541113650715604
+      ClownFishEnemy_Death_4: -6360292497240597956
+      ClownFishEnemy_Death_5: -5819832476780771674
+      ClownFishEnemy_Down_1: -2207820363603589205
+      ClownFishEnemy_Down_2: 7791070869354398034
+      ClownFishEnemy_Down_3: 1487572113047936122
+      ClownFishEnemy_Left_1: 438314254753632228
+      ClownFishEnemy_Left_2: -5634802028025203292
+      ClownFishEnemy_Left_3: -8795241382751783019
+      ClownFishEnemy_Up_1: 6186218977101503693
+      ClownFishEnemy_Up_2: 3412304905545731573
+      ClownFishEnemy_Up_3: 7782153642129787641
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
