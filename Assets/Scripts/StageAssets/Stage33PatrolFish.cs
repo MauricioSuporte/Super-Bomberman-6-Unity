@@ -44,20 +44,14 @@ namespace StageAssets
 
         private void Update()
         {
-            if (GamePauseController.IsPaused)
-            {
-                LogDebug($"paused | local={transform.localPosition} | target={target}");
-                return;
-            }
-
             Vector2 current = transform.localPosition;
-            Vector2 next = Vector2.MoveTowards(current, target, speed * Time.deltaTime);
+            Vector2 next = Vector2.MoveTowards(current, target, speed * Time.unscaledDeltaTime);
             transform.localPosition = new Vector3(next.x, next.y, transform.localPosition.z);
             lastAppliedLocalPosition = transform.localPosition;
             hasAppliedPosition = true;
 
             LogDebug($"moving | before={current} | after={next} | target={target} | " +
-                $"distance={Vector2.Distance(next, target):F3} | dt={Time.deltaTime:F4}");
+                $"distance={Vector2.Distance(next, target):F3} | dt={Time.unscaledDeltaTime:F4}");
 
             if ((next - target).sqrMagnitude <= 0.000001f)
             {
