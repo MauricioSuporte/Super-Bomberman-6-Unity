@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace StageAssets
@@ -7,6 +8,17 @@ namespace StageAssets
     [DisallowMultipleComponent]
     public sealed class World3BambooExitBlocker : MonoBehaviour
     {
+        private sealed class OpeningBubble
+        {
+            public GameObject gameObject;
+            public SpriteRenderer renderer;
+            public Sprite[] animationSprites;
+            public Vector2 position;
+            public Vector2 velocity;
+            public float animationTimer;
+            public int animationFrame;
+        }
+
         [Header("Opening Movement")]
         [SerializeField, Min(0f)] private float riseDistanceTiles = 3f;
         [SerializeField, Min(0.01f)] private float riseDurationSeconds = 1f;
@@ -31,10 +43,23 @@ namespace StageAssets
         [SerializeField] private Vector2 blockingColliderSize = Vector2.one;
         [SerializeField] private bool openFromLegacyAllCoresEvent;
 
+        [Header("Opening Bubble Effect")]
+        [SerializeField] private bool spawnBubblesWhileOpening;
+        [SerializeField, Min(1)] private int openingBubbleCount = 20;
+        [SerializeField, Min(0.01f)] private float openingBubbleFramesPerSecond = 10f;
+        [SerializeField, Min(0f)] private float openingBubbleUpwardSpeed = 0.75f;
+        [SerializeField, Min(0f)] private float openingBubbleHorizontalSpeed = 0.2f;
+        [SerializeField] private string openingBubbleSortingLayerName = "Default";
+        [SerializeField] private int openingBubbleSortingOrder = 50;
+
         private bool openingStarted;
         private Sprite[] runtimeGateSprites;
         private SpriteRenderer blockerRenderer;
         private SpriteMask sinkMask;
+        private Vector2 openingBubbleSpawnLeft;
+        private Vector2 openingBubbleSpawnRight;
+        private readonly List<OpeningBubble> activeOpeningBubbles = new();
+        private Stage33BubbleAnimationCatalog bubbleAnimationCatalog;
 
         public bool IsOpeningStarted => openingStarted;
         public bool IsExitOpen => openingStarted && blockingCollider != null && !blockingCollider.enabled;
@@ -47,6 +72,8 @@ namespace StageAssets
                 blockingCollider = GetComponent<BoxCollider2D>();
 
             blockerRenderer = GetComponent<SpriteRenderer>();
+            if (spawnBubblesWhileOpening)
+                bubbleAnimationCatalog = Resources.Load<Stage33BubbleAnimationCatalog>("StageAssets/Stage33BubbleAnimations");
 
             blockingCollider.isTrigger = false;
             blockingCollider.size = blockingColliderSize;
@@ -66,6 +93,13 @@ namespace StageAssets
         {
             if (openFromLegacyAllCoresEvent)
                 CoreMechanismsDestructible.AllCoreMechanismsDestroyed -= OpenExit;
+
+            ClearOpeningBubbles();
+        }
+
+        private void Update()
+        {
+            UpdateOpeningBubbles();
         }
 
         private void OpenExit()
@@ -145,14 +179,27 @@ namespace StageAssets
             Vector3 endPosition = startPosition + (Vector3)direction * distance;
             float duration = Mathf.Max(0.01f, riseDurationSeconds);
             float elapsed = 0f;
+            int spawnedBubbleCount = 0;
+            CaptureOpeningBubbleSpawnArea();
 
             if (sinkIntoGround)
                 CreateSinkMask();
 
+            SpawnOpeningBubble();
+            spawnedBubbleCount++;
+
             while (elapsed < duration)
             {
-                elapsed += Time.deltaTime;
+                float deltaTime = Time.deltaTime;
+                elapsed += deltaTime;
                 float progress = Mathf.Clamp01(elapsed / duration);
+                int targetBubbleCount = Mathf.FloorToInt(progress * openingBubbleCount);
+                while (spawnedBubbleCount < targetBubbleCount)
+                {
+                    SpawnOpeningBubble();
+                    spawnedBubbleCount++;
+                }
+
                 Vector3 position = Vector3.Lerp(startPosition, endPosition, progress);
                 if (sinkIntoGround)
                     position.x += GetSinkHorizontalShake(progress);
@@ -170,6 +217,146 @@ namespace StageAssets
                 sinkMask.gameObject.SetActive(false);
 
             blockingCollider.enabled = false;
+        }
+
+        private void SpawnOpeningBubble()
+        {
+            if (!spawnBubblesWhileOpening || bubbleAnimationCatalog == null)
+                return;
+
+            Sprite[] sprites = GetRandomBubbleAnimation();
+            if (sprites == null || sprites.Length == 0 || sprites[0] == null)
+                return;
+
+            Vector2 position = new(
+                Random.Range(openingBubbleSpawnLeft.x, openingBubbleSpawnRight.x),
+                openingBubbleSpawnLeft.y);
+            GameObject bubbleObject = new("Ship Opening Bubble");
+            bubbleObject.transform.position = SnapPixelPerfect(position);
+            bubbleObject.transform.localScale = Vector3.one;
+
+            SpriteRenderer renderer = bubbleObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprites[0];
+            renderer.sortingLayerName = openingBubbleSortingLayerName;
+            renderer.sortingOrder = openingBubbleSortingOrder;
+
+            activeOpeningBubbles.Add(new OpeningBubble
+            {
+                gameObject = bubbleObject,
+                renderer = renderer,
+                animationSprites = sprites,
+                position = position,
+                velocity = new Vector2(
+                    Random.Range(-openingBubbleHorizontalSpeed, openingBubbleHorizontalSpeed),
+                    openingBubbleUpwardSpeed)
+            });
+        }
+
+        private void CaptureOpeningBubbleSpawnArea()
+        {
+            if (blockerRenderer == null)
+            {
+                openingBubbleSpawnLeft = transform.position;
+                openingBubbleSpawnRight = transform.position;
+                return;
+            }
+
+            Bounds bounds = blockerRenderer.bounds;
+            openingBubbleSpawnLeft = new Vector2(bounds.min.x, bounds.min.y);
+            openingBubbleSpawnRight = new Vector2(bounds.max.x, bounds.min.y);
+        }
+
+        private Sprite[] GetRandomBubbleAnimation()
+        {
+            Stage33BubbleAnimation[] animations = bubbleAnimationCatalog.animations;
+            int validAnimationCount = 0;
+            for (int i = 0; animations != null && i < animations.Length; i++)
+            {
+                if (animations[i]?.sprites?.Length > 0 && animations[i].sprites[0] != null)
+                    validAnimationCount++;
+            }
+
+            if (validAnimationCount == 0)
+                return null;
+
+            int selection = Random.Range(0, validAnimationCount);
+            for (int i = 0; i < animations.Length; i++)
+            {
+                Sprite[] sprites = animations[i]?.sprites;
+                if (sprites == null || sprites.Length == 0 || sprites[0] == null)
+                    continue;
+
+                if (selection-- == 0)
+                    return sprites;
+            }
+
+            return null;
+        }
+
+        private void UpdateOpeningBubbles()
+        {
+            float deltaTime = Time.unscaledDeltaTime;
+            for (int i = activeOpeningBubbles.Count - 1; i >= 0; i--)
+            {
+                OpeningBubble bubble = activeOpeningBubbles[i];
+                if (bubble.gameObject == null)
+                {
+                    activeOpeningBubbles.RemoveAt(i);
+                    continue;
+                }
+
+                bubble.position += bubble.velocity * deltaTime;
+                bubble.gameObject.transform.position = SnapPixelPerfect(bubble.position);
+
+                if (!AdvanceOpeningBubbleAnimation(bubble, deltaTime))
+                    continue;
+
+                Destroy(bubble.gameObject);
+                activeOpeningBubbles.RemoveAt(i);
+            }
+        }
+
+        private bool AdvanceOpeningBubbleAnimation(OpeningBubble bubble, float deltaTime)
+        {
+            bubble.animationTimer += deltaTime;
+            float frameDuration = 1f / Mathf.Max(0.01f, openingBubbleFramesPerSecond);
+            while (bubble.animationTimer >= frameDuration)
+            {
+                bubble.animationTimer -= frameDuration;
+                bubble.animationFrame++;
+                if (bubble.animationFrame >= bubble.animationSprites.Length)
+                {
+                    SetOpeningBubbleOpacity(bubble, 0f);
+                    return true;
+                }
+
+                bubble.renderer.sprite = bubble.animationSprites[bubble.animationFrame];
+                int fadeStartFrame = bubble.animationSprites.Length / 2;
+                float fadeProgress = Mathf.Clamp01(
+                    (bubble.animationFrame - fadeStartFrame) /
+                    (float)(bubble.animationSprites.Length - fadeStartFrame));
+                SetOpeningBubbleOpacity(bubble, 1f - fadeProgress);
+            }
+
+            return false;
+        }
+
+        private static void SetOpeningBubbleOpacity(OpeningBubble bubble, float opacity)
+        {
+            Color color = bubble.renderer.color;
+            color.a = opacity;
+            bubble.renderer.color = color;
+        }
+
+        private void ClearOpeningBubbles()
+        {
+            for (int i = 0; i < activeOpeningBubbles.Count; i++)
+            {
+                if (activeOpeningBubbles[i].gameObject != null)
+                    Destroy(activeOpeningBubbles[i].gameObject);
+            }
+
+            activeOpeningBubbles.Clear();
         }
 
         private void CreateSinkMask()

@@ -7972,6 +7972,7 @@ MonoBehaviour:
   blockingCollider: {fileID: 698957488}
   blockingColliderSize: {x: 1, y: 1}
   openFromLegacyAllCoresEvent: 0
+  spawnBubblesWhileOpening: 1
 --- !u!1 &698957490
 GameObject:
   m_ObjectHideFlags: 0
@@ -13852,6 +13853,7 @@ MonoBehaviour:
   blockingCollider: {fileID: 1097302365}
   blockingColliderSize: {x: 1, y: 1}
   openFromLegacyAllCoresEvent: 0
+  spawnBubblesWhileOpening: 1
 --- !u!61 &1097302365
 BoxCollider2D:
   m_ObjectHideFlags: 0
