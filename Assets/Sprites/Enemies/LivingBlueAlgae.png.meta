@@ -125,10 +125,10 @@ TextureImporter:
       name: LivingBlueAlgae_1
       rect:
         serializedVersion: 2
-        x: 0
+        x: 2
         y: 0
-        width: 16
-        height: 24
+        width: 18
+        height: 26
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -147,10 +147,10 @@ TextureImporter:
       name: LivingBlueAlgae_2
       rect:
         serializedVersion: 2
-        x: 18
+        x: 20
         y: 0
-        width: 16
-        height: 24
+        width: 18
+        height: 26
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -169,10 +169,10 @@ TextureImporter:
       name: LivingBlueAlgae_3
       rect:
         serializedVersion: 2
-        x: 36
+        x: 38
         y: 0
-        width: 16
-        height: 24
+        width: 18
+        height: 26
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -191,10 +191,10 @@ TextureImporter:
       name: LivingBlueAlgae_4_Death
       rect:
         serializedVersion: 2
-        x: 54
+        x: 56
         y: 0
-        width: 16
-        height: 24
+        width: 18
+        height: 26
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -213,7 +213,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: d8b4a964aa4392b47a3da393b30f8395
     internalID: 0
     vertices: []
     indices: 
