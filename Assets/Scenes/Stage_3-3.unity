@@ -887,6 +887,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: b4ebcad7f6cd439b93a43739711d2ad7, type: 3}
   m_PrefabInstance: {fileID: 214300001}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &214300101
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 23.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+--- !u!4 &214300102 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1228606389669354653, guid: e2df3e4cd65f4ac69a84ad57cc3db4b5, type: 3}
+  m_PrefabInstance: {fileID: 214300101}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &221003300
 GameObject:
   m_ObjectHideFlags: 0
@@ -13719,6 +13765,7 @@ Transform:
   - {fileID: 2135684172}
   - {fileID: 210330002}
   - {fileID: 214300002}
+  - {fileID: 214300102}
   - {fileID: 1677548527}
   - {fileID: 1736289055}
   - {fileID: 1812628662}
