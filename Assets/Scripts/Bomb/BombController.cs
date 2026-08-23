@@ -2076,6 +2076,32 @@ public partial class BombController : MonoBehaviour
         return handler.HandleHit(this, worldPos, cell);
     }
 
+    /// <summary>
+    /// Applies the normal destructible-tile destruction flow without spawning
+    /// an explosion visual, hitbox, or explosion sound.
+    /// </summary>
+    public bool TriggerDestructibleTileEffectWithoutExplosion(Vector2 worldPos)
+    {
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 position = SnapToTileCenter(snapTm, worldPos, out _, out _);
+
+        if (TryGetDestructibleTileAt(position, out var cell, out var tile))
+        {
+            if (!TryHandleDestructibleTileEffect(position, cell, tile))
+                ClearDestructibleForEffect(position);
+
+            return true;
+        }
+
+        if (HasDestroyingDestructibleAt(position))
+        {
+            TryHandleActiveDestructibleHitByExplosion(position);
+            return true;
+        }
+
+        return false;
+    }
+
     public void ClearDestructibleForEffect(
         Vector2 position,
         bool spawnDestructiblePrefab = true,
