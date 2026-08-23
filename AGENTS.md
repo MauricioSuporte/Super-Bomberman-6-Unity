@@ -183,7 +183,9 @@ This file gives repository-specific guidance for AI coding agents working on
 ## Safe defaults for agents
 
 - For every newly imported raster image, set the Unity Texture Importer's
-  Compression setting to `None` before finalizing the asset.
+  **Default** platform Compression setting to `None`, with platform overrides
+  disabled, before finalizing the asset. Match this setting to existing enemy
+  sprite sheets; do not force per-platform compression overrides.
 - Avoid editing generated files under `Library/` or `Temp/`.
 - Avoid moving or renaming assets casually, because Unity `.meta` pairing
   matters.
