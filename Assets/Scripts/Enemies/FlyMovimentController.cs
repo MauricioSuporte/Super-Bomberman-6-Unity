@@ -12,6 +12,7 @@ public class FlyMovimentController : JunctionTurningGhostEnemyMovementController
     [Header("Flight Shadow")]
     [SerializeField] private Color shadowColor = new(0f, 0f, 0f, 0.45f);
     [SerializeField] private Vector2 shadowScale = new(0.9f, 0.9f);
+    [SerializeField] private Vector2 shadowOffset = Vector2.zero;
 
     private GameObject shadow;
 
@@ -100,7 +101,7 @@ public class FlyMovimentController : JunctionTurningGhostEnemyMovementController
         if (shadow == null)
             return;
 
-        Vector3 position = transform.position;
+        Vector3 position = transform.position + (Vector3)shadowOffset;
         shadow.transform.position = new Vector3(position.x, position.y, 0f);
     }
 

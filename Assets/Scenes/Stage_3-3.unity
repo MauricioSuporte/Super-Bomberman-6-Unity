@@ -795,6 +795,52 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1001 &210330001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_Name
+      value: MoonFish
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 17.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+--- !u!4 &210330002 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1228606389669354653, guid: e5d97d63f93d4d47ae7c4e1ced46680b, type: 3}
+  m_PrefabInstance: {fileID: 210330001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &221003300
 GameObject:
   m_ObjectHideFlags: 0
@@ -7973,6 +8019,12 @@ MonoBehaviour:
   blockingColliderSize: {x: 1, y: 1}
   openFromLegacyAllCoresEvent: 0
   spawnBubblesWhileOpening: 1
+  openingBubbleCount: 20
+  openingBubbleFramesPerSecond: 10
+  openingBubbleUpwardSpeed: 0.75
+  openingBubbleHorizontalSpeed: 0.2
+  openingBubbleSortingLayerName: Default
+  openingBubbleSortingOrder: 50
 --- !u!1 &698957490
 GameObject:
   m_ObjectHideFlags: 0
@@ -13618,6 +13670,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 210330002}
   - {fileID: 1677548527}
   - {fileID: 1736289055}
   - {fileID: 1812628662}
@@ -13854,6 +13907,12 @@ MonoBehaviour:
   blockingColliderSize: {x: 1, y: 1}
   openFromLegacyAllCoresEvent: 0
   spawnBubblesWhileOpening: 1
+  openingBubbleCount: 20
+  openingBubbleFramesPerSecond: 10
+  openingBubbleUpwardSpeed: 0.75
+  openingBubbleHorizontalSpeed: 0.2
+  openingBubbleSortingLayerName: Default
+  openingBubbleSortingOrder: 50
 --- !u!61 &1097302365
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -1,0 +1,332 @@
+fileFormatVersion: 2
+guid: 4bd36245d9ec4a25a7a10a01aaab0303
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2100001
+    second: MoonFish_Up_0
+  - first:
+      213: 2100002
+    second: MoonFish_Up_1
+  - first:
+      213: 2100003
+    second: MoonFish_Up_2
+  - first:
+      213: 2100004
+    second: MoonFish_Down_0
+  - first:
+      213: 2100005
+    second: MoonFish_Down_1
+  - first:
+      213: 2100006
+    second: MoonFish_Down_2
+  - first:
+      213: 2100007
+    second: MoonFish_Left_0
+  - first:
+      213: 2100008
+    second: MoonFish_Left_1
+  - first:
+      213: 2100009
+    second: MoonFish_Left_2
+  - first:
+      213: 2100010
+    second: MoonFish_Left_3
+  - first:
+      213: 2100011
+    second: MoonFish_Death_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+  isReadable: 0
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  textureFormat: 1
+  spriteMode: 2
+  spritePixelsToUnits: 16
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  textureType: 8
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MoonFish_Up_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 26
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11111111111111111111111111111111
+      internalID: 2100001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Up_1
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 0
+        width: 26
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22222222222222222222222222222222
+      internalID: 2100002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Up_2
+      rect:
+        serializedVersion: 2
+        x: 54
+        y: 0
+        width: 26
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33333333333333333333333333333333
+      internalID: 2100003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Down_0
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44444444444444444444444444444444
+      internalID: 2100004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Down_1
+      rect:
+        serializedVersion: 2
+        x: 114
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55555555555555555555555555555555
+      internalID: 2100005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Down_2
+      rect:
+        serializedVersion: 2
+        x: 147
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66666666666666666666666666666666
+      internalID: 2100006
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Left_0
+      rect:
+        serializedVersion: 2
+        x: 180
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77777777777777777777777777777777
+      internalID: 2100007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Left_1
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88888888888888888888888888888888
+      internalID: 2100008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Left_2
+      rect:
+        serializedVersion: 2
+        x: 246
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99999999999999999999999999999999
+      internalID: 2100009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Left_3
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      internalID: 2100010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MoonFish_Death_0
+      rect:
+        serializedVersion: 2
+        x: 312
+        y: 0
+        width: 31
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      internalID: 2100011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    nameFileIdTable:
+      MoonFish_Up_0: 2100001
+      MoonFish_Up_1: 2100002
+      MoonFish_Up_2: 2100003
+      MoonFish_Down_0: 2100004
+      MoonFish_Down_1: 2100005
+      MoonFish_Down_2: 2100006
+      MoonFish_Left_0: 2100007
+      MoonFish_Left_1: 2100008
+      MoonFish_Left_2: 2100009
+      MoonFish_Left_3: 2100010
+      MoonFish_Death_0: 2100011
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+
