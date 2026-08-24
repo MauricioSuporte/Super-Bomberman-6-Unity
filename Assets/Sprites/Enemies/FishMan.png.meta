@@ -212,7 +212,7 @@ TextureImporter:
       name: FishMan_Left_1
       rect:
         serializedVersion: 2
-        x: 0
+        x: 23
         y: 54
         width: 16
         height: 24
@@ -234,7 +234,7 @@ TextureImporter:
       name: FishMan_Left_2
       rect:
         serializedVersion: 2
-        x: 16
+        x: 41
         y: 54
         width: 16
         height: 24
@@ -256,7 +256,7 @@ TextureImporter:
       name: FishMan_Left_3
       rect:
         serializedVersion: 2
-        x: 32
+        x: 60
         y: 54
         width: 16
         height: 24
@@ -278,7 +278,7 @@ TextureImporter:
       name: FishMan_Throw_Left
       rect:
         serializedVersion: 2
-        x: 48
+        x: 82
         y: 54
         width: 16
         height: 24
@@ -300,10 +300,10 @@ TextureImporter:
       name: FishMan_Spear_Left
       rect:
         serializedVersion: 2
-        x: 80
+        x: 103
         y: 54
-        width: 16
-        height: 24
+        width: 22
+        height: 14
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -322,7 +322,7 @@ TextureImporter:
       name: FishMan_Death
       rect:
         serializedVersion: 2
-        x: 0
+        x: 4
         y: 27
         width: 16
         height: 24
@@ -344,7 +344,7 @@ TextureImporter:
       name: FishMan_Down_1
       rect:
         serializedVersion: 2
-        x: 16
+        x: 23
         y: 27
         width: 16
         height: 24
@@ -366,7 +366,7 @@ TextureImporter:
       name: FishMan_Down_2
       rect:
         serializedVersion: 2
-        x: 32
+        x: 43
         y: 27
         width: 16
         height: 24
@@ -388,7 +388,7 @@ TextureImporter:
       name: FishMan_Down_3
       rect:
         serializedVersion: 2
-        x: 48
+        x: 61
         y: 27
         width: 16
         height: 24
@@ -410,7 +410,7 @@ TextureImporter:
       name: FishMan_Throw_Down
       rect:
         serializedVersion: 2
-        x: 64
+        x: 82
         y: 27
         width: 16
         height: 24
@@ -432,10 +432,10 @@ TextureImporter:
       name: FishMan_Spear_Down
       rect:
         serializedVersion: 2
-        x: 96
-        y: 27
-        width: 16
-        height: 24
+        x: 103
+        y: 24
+        width: 8
+        height: 28
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -454,10 +454,10 @@ TextureImporter:
       name: FishMan_Spear_Up
       rect:
         serializedVersion: 2
-        x: 112
-        y: 27
-        width: 13
-        height: 24
+        x: 115
+        y: 24
+        width: 8
+        height: 28
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -476,7 +476,7 @@ TextureImporter:
       name: FishMan_Up_1
       rect:
         serializedVersion: 2
-        x: 0
+        x: 24
         y: 0
         width: 16
         height: 24
@@ -498,7 +498,7 @@ TextureImporter:
       name: FishMan_Up_2
       rect:
         serializedVersion: 2
-        x: 16
+        x: 42
         y: 0
         width: 16
         height: 24
@@ -520,7 +520,7 @@ TextureImporter:
       name: FishMan_Up_3
       rect:
         serializedVersion: 2
-        x: 32
+        x: 62
         y: 0
         width: 16
         height: 24
@@ -542,7 +542,7 @@ TextureImporter:
       name: FishMan_Throw_Up
       rect:
         serializedVersion: 2
-        x: 48
+        x: 83
         y: 0
         width: 16
         height: 24
@@ -560,11 +560,33 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: FishMan_Spear_Lef
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 5
+        width: 22
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 903698e2957a7294cae619e864c8fcd9
+      internalID: -493807722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 76e3094aba0a6f746b1516a115091f6e
     internalID: 0
     vertices: []
     indices: 
@@ -574,7 +596,6 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      FishMan_0: 2670603022267615987
       FishMan_1: -5974909915462678470
       FishMan_10: 4429387851039150058
       FishMan_11: 3739862692495641380
@@ -599,6 +620,7 @@ TextureImporter:
       FishMan_Left_2: 2828583244989750552
       FishMan_Left_3: 7075217325256414708
       FishMan_Spear_Down: -7107021230712706741
+      FishMan_Spear_Lef: -493807722
       FishMan_Spear_Left: 834852337307175915
       FishMan_Spear_Up: 1263747398133459701
       FishMan_Throw_Down: 6928737582737480310
@@ -607,6 +629,7 @@ TextureImporter:
       FishMan_Up_1: 4708574031955419625
       FishMan_Up_2: -7964286846355976016
       FishMan_Up_3: 5671584889655018391
+      t: 2670603022267615987
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

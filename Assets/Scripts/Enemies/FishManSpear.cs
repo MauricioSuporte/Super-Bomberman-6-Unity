@@ -11,6 +11,8 @@ public sealed class FishManSpear : MonoBehaviour
     [SerializeField] private Sprite spearUp;
     [SerializeField] private Sprite spearDown;
     [SerializeField] private Sprite spearLeft;
+    [SerializeField, Min(0.01f)] private float impactBlinkDuration = 0.45f;
+    [SerializeField, Min(0.01f)] private float impactBlinkInterval = 0.075f;
 
     private Rigidbody2D body;
     private Collider2D hitCollider;
@@ -62,7 +64,8 @@ public sealed class FishManSpear : MonoBehaviour
         if (player != null && player.TryGetComponent(out CharacterHealth targetHealth))
             targetHealth.TakeDamage(damage);
 
-        Destroy(gameObject);
+        CancelInvoke(nameof(Expire));
+        StartCoroutine(BlinkAtImpactAndDestroy());
     }
 
     private void ApplyDirectionSprite()
@@ -78,5 +81,26 @@ public sealed class FishManSpear : MonoBehaviour
     {
         if (!impacted)
             Destroy(gameObject);
+    }
+
+    private System.Collections.IEnumerator BlinkAtImpactAndDestroy()
+    {
+        if (body != null)
+            body.linearVelocity = Vector2.zero;
+
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, impactBlinkDuration);
+        float blinkInterval = Mathf.Max(0.01f, impactBlinkInterval);
+        while (elapsed < duration)
+        {
+            if (spriteRenderer != null)
+                spriteRenderer.enabled = !spriteRenderer.enabled;
+
+            float interval = Mathf.Min(blinkInterval, duration - elapsed);
+            yield return new WaitForSeconds(interval);
+            elapsed += interval;
+        }
+
+        Destroy(gameObject);
     }
 }

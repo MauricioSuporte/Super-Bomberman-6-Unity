@@ -17,6 +17,35 @@ Use `Assets/Prefabs/Enemies/<EnemyName>.prefab` as the source of truth. Do not l
 6. Set the initial visual state so exactly one directional child is enabled: use `Down` when the prefab has separate Up/Down/Left directional children; when it has one shared directional child, enable only that child. Keep all other directional children disabled. On the active Death child, disable both `AnimatedSpriteRenderer` and `SpriteRenderer` so it is invisible until the death flow enables it.
 7. For enemies placed in Stage 3-3, do not attach `PlayerWaterSubmersionEffect`. This stage's enemies must not show the water-submersion visual; preserve that rule for future Stage 3-3 enemy authoring.
 
+## Prefab Persistence
+
+- Author or repair prefab hierarchies through Unity's prefab APIs or the
+  Editor. Do not hand-serialize a new prefab YAML hierarchy: incomplete
+  Transform parent/child references can make Unity restore null parents and
+  lose renderer children during import.
+- After saving, load the prefab and confirm every expected visual child has
+  both `SpriteRenderer` and `AnimatedSpriteRenderer` components.
+
+## Custom Attack and Projectile Visuals
+
+Apply these rules when an enemy has additional attack-renderer children or a
+projectile that persists after impact:
+
+- During an attack, disable both the `AnimatedSpriteRenderer` and
+  `SpriteRenderer` of every walking-direction child. A one-frame attack still
+  needs `loop = false`; after its timed attack window, disable both components
+  of the attack child before restoring movement.
+- If a derived movement controller overrides death, disable every custom
+  attack visual (both components) before calling the base death flow, so only
+  the Death renderer can become visible.
+- Do not redeclare a serialized field name used by `EnemyMovementController`
+  (for example `health`). Reuse protected base state where available, or use
+  a distinct name only when a separate reference is truly needed.
+- A projectile that remains as an impact effect must set its impact state and
+  disable its collider before applying damage or starting any blink/fade
+  routine. It must not move or damage again while it blinks, and should destroy
+  itself only after that visual routine finishes.
+
 ## Walk Animation Sequence
 
 When a movement direction provides exactly three walking frames (`1`, `2`, and `3`), configure its looping `animationSprite` sequence as `1-2-3-2`, rather than `1-2-3`. This gives the walk cycle a return stroke. Apply the rule independently to every authored direction; do not apply it to death animations unless that animation explicitly calls for it.
