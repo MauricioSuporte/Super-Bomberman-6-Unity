@@ -1,0 +1,520 @@
+fileFormatVersion: 2
+guid: 5a5a4843d88164a4ab72f42ad6715149
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8743604237810346412
+    second: Biiron_0
+  - first:
+      213: -727110813869124818
+    second: Biiron_1
+  - first:
+      213: -284616329101839995
+    second: Biiron_2
+  - first:
+      213: -1288002482272003756
+    second: Biiron_3
+  - first:
+      213: 7169501650880902800
+    second: Biiron_4
+  - first:
+      213: 4944053596194763008
+    second: Biiron_5
+  - first:
+      213: -1400849149079644953
+    second: Biiron_6
+  - first:
+      213: 2628518098188137356
+    second: Biiron_7
+  - first:
+      213: 775093920715387530
+    second: Biiron_8
+  - first:
+      213: -6681354137012070867
+    second: Biiron_9
+  - first:
+      213: 9073405578548209372
+    second: Biiron_10
+  - first:
+      213: -1385576190713964436
+    second: Biiron_11
+  - first:
+      213: 8829031542090564828
+    second: Biiron_12
+  - first:
+      213: 7435221156844619521
+    second: Biiron_JumpUp_1
+  - first:
+      213: 2111145506048472166
+    second: Biiron_JumpUp_2
+  - first:
+      213: -8671337179561994112
+    second: Biiron_JumpDown_1
+  - first:
+      213: 4321827575050873086
+    second: Biiron_JumpDown_2
+  - first:
+      213: -8200123241583636776
+    second: Biiron_JumpLeft_1
+  - first:
+      213: 3141800868255118135
+    second: Biiron_JumpLeft_2
+  - first:
+      213: -2392542744217403513
+    second: Biiron_JumpRight_1
+  - first:
+      213: 5894148874462582648
+    second: Biiron_JumpRight_2
+  - first:
+      213: 2730787065958019743
+    second: Biiron_Walk_1
+  - first:
+      213: 9006300344517330768
+    second: Biiron_Walk_2
+  - first:
+      213: -3810716205759378181
+    second: Biiron_Walk_3
+  - first:
+      213: 2435727079892246906
+    second: Biiron_Walk_4
+  - first:
+      213: 4715014454871569350
+    second: Biiron_Death
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Biiron_JumpUp_1
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 52
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1074138af363f2760800000000000000
+      internalID: 7435221156844619521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpUp_2
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 52
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6647e2507ab4c4d10800000000000000
+      internalID: 2111145506048472166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpDown_1
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 52
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 088d19427c839a780800000000000000
+      internalID: -8671337179561994112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpDown_2
+      rect:
+        serializedVersion: 2
+        x: 59
+        y: 52
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef8256f08473afb30800000000000000
+      internalID: 4321827575050873086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpLeft_1
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 27
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8de8bfe9b5f433e80800000000000000
+      internalID: -8200123241583636776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpLeft_2
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 26
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7333c536e3be99b20800000000000000
+      internalID: 3141800868255118135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpRight_1
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 26
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78fbbf4ec0bfbced0800000000000000
+      internalID: -2392542744217403513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_JumpRight_2
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 26
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8775c9b3c293cc150800000000000000
+      internalID: 5894148874462582648
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_Walk_1
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f92b8af3e54b5e520800000000000000
+      internalID: 2730787065958019743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_Walk_2
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0570f67227eccfc70800000000000000
+      internalID: 9006300344517330768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_Walk_3
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfc43e70dcd9d1bc0800000000000000
+      internalID: -3810716205759378181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_Walk_4
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a71e6c6cfd07dc120800000000000000
+      internalID: 2435727079892246906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Biiron_Death
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c3b37d5aa81f6140800000000000000
+      internalID: 4715014454871569350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6f76717b756b9994f9e0246d55a1e984
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Biiron_0: 8743604237810346412
+      Biiron_1: -727110813869124818
+      Biiron_10: 9073405578548209372
+      Biiron_11: -1385576190713964436
+      Biiron_12: 8829031542090564828
+      Biiron_2: -284616329101839995
+      Biiron_3: -1288002482272003756
+      Biiron_4: 7169501650880902800
+      Biiron_5: 4944053596194763008
+      Biiron_6: -1400849149079644953
+      Biiron_7: 2628518098188137356
+      Biiron_8: 775093920715387530
+      Biiron_9: -6681354137012070867
+      Biiron_Death: 4715014454871569350
+      Biiron_JumpDown_1: -8671337179561994112
+      Biiron_JumpDown_2: 4321827575050873086
+      Biiron_JumpLeft_1: -8200123241583636776
+      Biiron_JumpLeft_2: 3141800868255118135
+      Biiron_JumpRight_1: -2392542744217403513
+      Biiron_JumpRight_2: 5894148874462582648
+      Biiron_JumpUp_1: 7435221156844619521
+      Biiron_JumpUp_2: 2111145506048472166
+      Biiron_Walk_1: 2730787065958019743
+      Biiron_Walk_2: 9006300344517330768
+      Biiron_Walk_3: -3810716205759378181
+      Biiron_Walk_4: 2435727079892246906
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
