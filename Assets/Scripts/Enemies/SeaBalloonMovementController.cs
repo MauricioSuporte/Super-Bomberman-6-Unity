@@ -48,12 +48,13 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
     private Coroutine surfaceWalkRoutine;
     private Coroutine surfaceInkRoutine;
     private Coroutine returnToSubmergedRoutine;
-    private Coroutine blackoutRoutine;
     private bool looking;
     private bool emerging;
     private bool throwingInk;
     private bool surfaceWalking;
     private bool inkAnimationCompleted;
+    private bool hasExternalInvulnerabilityState;
+    private bool externalInvulnerabilityState;
     private int currentSurfaceWalkFrame;
     private float movementElapsed;
     private float surfaceWalkElapsed;
@@ -377,23 +378,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     private void StartOrRenewInkBlackout()
     {
-        if (StageBlackout.Instance == null)
-            return;
-
-        if (blackoutRoutine != null)
-            StopCoroutine(blackoutRoutine);
-        blackoutRoutine = StartCoroutine(InkBlackoutRoutine());
-    }
-
-    private IEnumerator InkBlackoutRoutine()
-    {
-        StageBlackout.Instance.SetBlackoutActive(true);
-        yield return new WaitForSeconds(inkBlackoutDuration);
-
-        if (StageBlackout.Instance != null)
-            StageBlackout.Instance.SetBlackoutActive(false);
-
-        blackoutRoutine = null;
+        StageBlackout.Instance?.StartOrRenewTimedBlackout(inkBlackoutDuration);
     }
 
     private void BeginSurfaceWalk()
@@ -663,8 +648,15 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     private void SetSubmergedInvulnerability(bool value)
     {
-        if (seaBalloonHealth != null)
-            seaBalloonHealth.SetExternalInvulnerability(value);
+        if (seaBalloonHealth == null)
+            return;
+
+        if (hasExternalInvulnerabilityState && externalInvulnerabilityState == value)
+            return;
+
+        seaBalloonHealth.SetExternalInvulnerability(value);
+        externalInvulnerabilityState = value;
+        hasExternalInvulnerabilityState = true;
     }
 
     private static void SetVisualEnabled(AnimatedSpriteRenderer animation, bool enabled)

@@ -70,6 +70,7 @@ public sealed class StageBlackout : MonoBehaviour
     Camera _worldCamera;
 
     bool _spotlightsDirty;
+    Coroutine _timedBlackoutRoutine;
 
     void Awake()
     {
@@ -210,6 +211,22 @@ public sealed class StageBlackout : MonoBehaviour
 
         blackoutImage.material = null;
         blackoutImage.gameObject.SetActive(false);
+    }
+
+    public void StartOrRenewTimedBlackout(float durationSeconds)
+    {
+        if (_timedBlackoutRoutine != null)
+            StopCoroutine(_timedBlackoutRoutine);
+
+        _timedBlackoutRoutine = StartCoroutine(TimedBlackoutRoutine(Mathf.Max(0.01f, durationSeconds)));
+    }
+
+    private System.Collections.IEnumerator TimedBlackoutRoutine(float durationSeconds)
+    {
+        SetBlackoutActive(true);
+        yield return new WaitForSeconds(durationSeconds);
+        SetBlackoutActive(false);
+        _timedBlackoutRoutine = null;
     }
 
     public void RegisterExplosionSpotlight(int id, Vector2 worldPosition, Vector2 halfSizeInTiles)
