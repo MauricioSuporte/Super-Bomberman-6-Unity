@@ -48,7 +48,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
     private float walkTimer;
     private GameObject shadow;
     private Sprite shadowSprite;
-    private AudioSource audioSource;
+    private AudioSource bubbleAudioSource;
     private readonly List<GameObject> activeBubbleParticles = new();
     private readonly HashSet<MovementController> pushedPlayers = new();
 
@@ -56,7 +56,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
     {
         ConfigureRenderers();
         bubbleAnimationCatalog ??= Resources.Load<Stage33BubbleAnimationCatalog>("StageAssets/Stage33BubbleAnimations");
-        audioSource = GetComponent<AudioSource>();
+        bubbleAudioSource = GetComponent<AudioSource>();
         base.Awake();
     }
 
@@ -121,8 +121,8 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
 
         direction = GetNearestPlayerDirection();
         ShowAttackVisual(direction);
-        if (audioSource != null && bubbleAttackSfx != null)
-            GameAudioSettings.PlaySfx(audioSource, bubbleAttackSfx, bubbleAttackSfxVolume);
+        if (bubbleAudioSource != null && bubbleAttackSfx != null)
+            GameAudioSettings.PlaySfx(bubbleAudioSource, bubbleAttackSfx, bubbleAttackSfxVolume);
 
         float elapsed = 0f;
         while (!isDead && elapsed < AttackDuration)

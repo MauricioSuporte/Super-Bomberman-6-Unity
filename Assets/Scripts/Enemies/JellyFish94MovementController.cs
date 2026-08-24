@@ -29,7 +29,7 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
     [SerializeField] private Vector2 shadowOffset = Vector2.zero;
 
     private GameObject shadow;
-    private CharacterHealth health;
+    private CharacterHealth jellyFishHealth;
     private Coroutine shockRoutine;
     private AnimatedSpriteRenderer movementSprite;
     private bool usingShock;
@@ -39,7 +39,7 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
     protected override void Start()
     {
         base.Start();
-        health = GetComponent<CharacterHealth>();
+        jellyFishHealth = GetComponent<CharacterHealth>();
         movementSprite = activeSprite;
         lastMovementFrame = activeSprite != null ? activeSprite.CurrentFrame : -1;
         DisableAttackAnimations();
@@ -124,8 +124,8 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
             targetTile = rb.position;
         }
 
-        if (health != null)
-            health.SetExternalInvulnerability(true);
+        if (jellyFishHealth != null)
+            jellyFishHealth.SetExternalInvulnerability(true);
 
         movementSprite = activeSprite != null ? activeSprite : movementSprite;
         if (movementSprite != null)
@@ -188,8 +188,8 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
 
     private void FinishShock()
     {
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (jellyFishHealth != null)
+            jellyFishHealth.SetExternalInvulnerability(false);
 
         DisableAttackAnimations();
         activeSprite = movementSprite != null ? movementSprite : spriteDown;
@@ -213,8 +213,8 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
 
         shockRoutine = null;
 
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (jellyFishHealth != null)
+            jellyFishHealth.SetExternalInvulnerability(false);
 
         DisableAttackAnimations();
 

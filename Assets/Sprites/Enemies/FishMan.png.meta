@@ -1,0 +1,614 @@
+fileFormatVersion: 2
+guid: 529f7119cb535fc418f8b99082cbf2b8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2670603022267615987
+    second: FishMan_0
+  - first:
+      213: -5974909915462678470
+    second: FishMan_1
+  - first:
+      213: -7637507358076662127
+    second: FishMan_2
+  - first:
+      213: -2554957929120540583
+    second: FishMan_3
+  - first:
+      213: -5670813554000914256
+    second: FishMan_4
+  - first:
+      213: -8527350816404752855
+    second: FishMan_5
+  - first:
+      213: 4368776901616100761
+    second: FishMan_6
+  - first:
+      213: 4014648765292068312
+    second: FishMan_7
+  - first:
+      213: 8701136587577754040
+    second: FishMan_8
+  - first:
+      213: -6165009100039056668
+    second: FishMan_9
+  - first:
+      213: 4429387851039150058
+    second: FishMan_10
+  - first:
+      213: 3739862692495641380
+    second: FishMan_11
+  - first:
+      213: 5634477291255172123
+    second: FishMan_12
+  - first:
+      213: -3242429400240760356
+    second: FishMan_13
+  - first:
+      213: -6971465395736989451
+    second: FishMan_14
+  - first:
+      213: -6755688553265909087
+    second: FishMan_15
+  - first:
+      213: 1602307714098445950
+    second: FishMan_16
+  - first:
+      213: -4226690392496587355
+    second: FishMan_Left_1
+  - first:
+      213: 2828583244989750552
+    second: FishMan_Left_2
+  - first:
+      213: 7075217325256414708
+    second: FishMan_Left_3
+  - first:
+      213: -4371321617329919286
+    second: FishMan_Throw_Left
+  - first:
+      213: 834852337307175915
+    second: FishMan_Spear_Left
+  - first:
+      213: -3565621777798136974
+    second: FishMan_Death
+  - first:
+      213: -655574602575434666
+    second: FishMan_Down_1
+  - first:
+      213: 4214987303754331680
+    second: FishMan_Down_2
+  - first:
+      213: -8137197309949625702
+    second: FishMan_Down_3
+  - first:
+      213: 6928737582737480310
+    second: FishMan_Throw_Down
+  - first:
+      213: -7107021230712706741
+    second: FishMan_Spear_Down
+  - first:
+      213: 4708574031955419625
+    second: FishMan_Up_1
+  - first:
+      213: -7964286846355976016
+    second: FishMan_Up_2
+  - first:
+      213: 5671584889655018391
+    second: FishMan_Up_3
+  - first:
+      213: 583459343677324135
+    second: FishMan_Throw_Up
+  - first:
+      213: 1263747398133459701
+    second: FishMan_Spear_Up
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: FishMan_Left_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 54
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ad3fa36b77c755c0800000000000000
+      internalID: -4226690392496587355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Left_2
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 54
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81d5c3f8975214720800000000000000
+      internalID: 2828583244989750552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Left_3
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 54
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f51994dba8303260800000000000000
+      internalID: 7075217325256414708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Throw_Left
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 54
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aca60183622f553c0800000000000000
+      internalID: -4371321617329919286
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Spear_Left
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 54
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: beb491d07cdf59b00800000000000000
+      internalID: 834852337307175915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Death
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 27
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27bf1f272ed548ec0800000000000000
+      internalID: -3565621777798136974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Down_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 27
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65c29b15f5ee6e6f0800000000000000
+      internalID: -655574602575434666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Down_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 27
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 026fe0dee94ae7a30800000000000000
+      internalID: 4214987303754331680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Down_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 27
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9a3039c82ed21f80800000000000000
+      internalID: -8137197309949625702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Throw_Down
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 27
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67a57f81f12d72060800000000000000
+      internalID: 6928737582737480310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Spear_Down
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 27
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b49a53468d9ce5d90800000000000000
+      internalID: -7107021230712706741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Spear_Up
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 27
+        width: 13
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5faa19f109bb98110800000000000000
+      internalID: 1263747398133459701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Up_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e1e45d8227385140800000000000000
+      internalID: 4708574031955419625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Up_2
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b0d2a15f4b297190800000000000000
+      internalID: -7964286846355976016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Up_3
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7934c55686485be40800000000000000
+      internalID: 5671584889655018391
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FishMan_Throw_Up
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76bf4c88e2dd81800800000000000000
+      internalID: 583459343677324135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      FishMan_0: 2670603022267615987
+      FishMan_1: -5974909915462678470
+      FishMan_10: 4429387851039150058
+      FishMan_11: 3739862692495641380
+      FishMan_12: 5634477291255172123
+      FishMan_13: -3242429400240760356
+      FishMan_14: -6971465395736989451
+      FishMan_15: -6755688553265909087
+      FishMan_16: 1602307714098445950
+      FishMan_2: -7637507358076662127
+      FishMan_3: -2554957929120540583
+      FishMan_4: -5670813554000914256
+      FishMan_5: -8527350816404752855
+      FishMan_6: 4368776901616100761
+      FishMan_7: 4014648765292068312
+      FishMan_8: 8701136587577754040
+      FishMan_9: -6165009100039056668
+      FishMan_Death: -3565621777798136974
+      FishMan_Down_1: -655574602575434666
+      FishMan_Down_2: 4214987303754331680
+      FishMan_Down_3: -8137197309949625702
+      FishMan_Left_1: -4226690392496587355
+      FishMan_Left_2: 2828583244989750552
+      FishMan_Left_3: 7075217325256414708
+      FishMan_Spear_Down: -7107021230712706741
+      FishMan_Spear_Left: 834852337307175915
+      FishMan_Spear_Up: 1263747398133459701
+      FishMan_Throw_Down: 6928737582737480310
+      FishMan_Throw_Left: -4371321617329919286
+      FishMan_Throw_Up: 583459343677324135
+      FishMan_Up_1: 4708574031955419625
+      FishMan_Up_2: -7964286846355976016
+      FishMan_Up_3: 5671584889655018391
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

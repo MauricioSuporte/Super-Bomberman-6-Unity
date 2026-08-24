@@ -44,7 +44,7 @@ public sealed class SubmarineMovementController : JunctionTurningEnemyMovementCo
     private Sprite[] submergedUp;
     private Sprite[] submergedLeft;
 
-    private CharacterHealth health;
+    private CharacterHealth submarineHealth;
     private AnimatedSpriteRenderer visual;
     private GameObject shadow;
     private Sprite shadowSprite;
@@ -54,7 +54,7 @@ public sealed class SubmarineMovementController : JunctionTurningEnemyMovementCo
     protected override void Awake()
     {
         ConfigureRenderers();
-        health = GetComponent<CharacterHealth>();
+        submarineHealth = GetComponent<CharacterHealth>();
         base.Awake();
     }
 
@@ -338,8 +338,8 @@ public sealed class SubmarineMovementController : JunctionTurningEnemyMovementCo
 
     private void SetSubmergedInvulnerability(bool value)
     {
-        if (health != null)
-            health.SetExternalInvulnerability(value);
+        if (submarineHealth != null)
+            submarineHealth.SetExternalInvulnerability(value);
     }
 
     private void CreateShadow()
