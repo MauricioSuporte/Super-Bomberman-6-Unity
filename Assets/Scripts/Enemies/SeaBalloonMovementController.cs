@@ -13,6 +13,8 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
     [SerializeField] private AnimatedSpriteRenderer movementAnimation;
     [SerializeField] private AnimatedSpriteRenderer lookAnimation;
     [SerializeField] private AnimatedSpriteRenderer emergeAnimation;
+    [SerializeField] private AnimatedSpriteRenderer inkEmergeAnimation;
+    [SerializeField] private AnimatedSpriteRenderer inkThrowAnimation;
     [SerializeField] private AnimatedSpriteRenderer surfaceWalkAnimation;
     [SerializeField] private SpriteRenderer shadowRenderer;
 
@@ -23,6 +25,8 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
     [Header("Emergence")]
     [SerializeField, Range(0f, 1f)] private float emergeChance = 0.5f;
     [SerializeField, Min(0.01f)] private float emergeDuration = 2f;
+    [SerializeField, Min(0.01f)] private float inkThrowDuration = 0.5f;
+    [SerializeField, Min(0.01f)] private float inkBlackoutDuration = 12f;
     [SerializeField, Min(0.01f)] private float surfaceWalkFrameDuration = 0.125f;
     [SerializeField, Min(0.01f)] private float surfaceRiseOrFallDuration = 0.25f;
     [SerializeField, Min(0f)] private float surfaceHoverHeight = 1f;
@@ -42,10 +46,14 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
     private Tilemap indestructiblesTilemap;
     private Coroutine lookRoutine;
     private Coroutine surfaceWalkRoutine;
+    private Coroutine surfaceInkRoutine;
     private Coroutine returnToSubmergedRoutine;
+    private Coroutine blackoutRoutine;
     private bool looking;
     private bool emerging;
+    private bool throwingInk;
     private bool surfaceWalking;
+    private bool inkAnimationCompleted;
     private int currentSurfaceWalkFrame;
     private float movementElapsed;
     private float surfaceWalkElapsed;
@@ -69,16 +77,18 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
         SetVisualEnabled(movementAnimation, true);
         SetVisualEnabled(lookAnimation, false);
         SetVisualEnabled(emergeAnimation, false);
+        SetVisualEnabled(inkEmergeAnimation, false);
+        SetVisualEnabled(inkThrowAnimation, false);
         SetVisualEnabled(surfaceWalkAnimation, false);
         SetShadowVisible(false);
     }
 
     protected override void FixedUpdate()
     {
-        if (!isDead && (looking || (!emerging && !surfaceWalking)))
-            SetSubmergedInvulnerability(true);
+        if (!isDead)
+            SetSubmergedInvulnerability(looking || (!emerging && !throwingInk && !surfaceWalking));
 
-        if (looking || emerging)
+        if (looking || emerging || throwingInk)
         {
             if (rb != null)
                 rb.linearVelocity = Vector2.zero;
@@ -91,7 +101,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     protected override void UpdateSpriteDirection(Vector2 dir)
     {
-        if (looking || emerging || surfaceWalking)
+        if (looking || emerging || throwingInk || surfaceWalking)
             return;
 
         base.UpdateSpriteDirection(dir);
@@ -99,7 +109,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     private void LateUpdate()
     {
-        if (isDead || isInDamagedLoop || looking || emerging)
+        if (isDead || isInDamagedLoop || looking || emerging || throwingInk)
             return;
 
         if (surfaceWalking)
@@ -107,10 +117,18 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
             surfaceWalkElapsed += Time.deltaTime;
             if (surfaceWalkElapsed >= surfaceWalkBeforeSubmergeSeconds &&
                 currentSurfaceWalkFrame != 2 &&
-                returnToSubmergedRoutine == null)
+                returnToSubmergedRoutine == null &&
+                surfaceInkRoutine == null)
             {
-                SetSubmergedInvulnerability(true);
-                returnToSubmergedRoutine = StartCoroutine(ReturnToSubmergedRoutine());
+                if (Random.value < 0.5f)
+                {
+                    SetSubmergedInvulnerability(true);
+                    returnToSubmergedRoutine = StartCoroutine(ReturnToSubmergedRoutine());
+                }
+                else
+                {
+                    surfaceInkRoutine = StartCoroutine(SurfaceInkRoutine());
+                }
             }
 
             return;
@@ -125,6 +143,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
     {
         StopLook();
         StopSurfaceWalk();
+        StopSurfaceInk();
         StopReturnToSubmerged();
         SetSubmergedInvulnerability(false);
         base.Die();
@@ -134,6 +153,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
     {
         StopLook();
         StopSurfaceWalk();
+        StopSurfaceInk();
         StopReturnToSubmerged();
         base.OnDestroy();
     }
@@ -245,6 +265,8 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
         SetVisualEnabled(movementAnimation, false);
         SetVisualEnabled(lookAnimation, false);
         SetVisualEnabled(surfaceWalkAnimation, false);
+        SetVisualEnabled(inkEmergeAnimation, false);
+        SetVisualEnabled(inkThrowAnimation, false);
         SetShadowVisible(false);
 
         if (emergeAnimation != null)
@@ -279,7 +301,99 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
         }
 
         if (!isDead)
+            yield return ThrowEmergeInkRoutine();
+
+        if (!isDead)
             BeginSurfaceWalk();
+    }
+
+    private IEnumerator ThrowEmergeInkRoutine()
+    {
+        yield return PlayInkAnimation(inkEmergeAnimation);
+        if (inkAnimationCompleted)
+            StartOrRenewInkBlackout();
+    }
+
+    private IEnumerator SurfaceInkRoutine()
+    {
+        StopSurfaceWalk();
+        yield return PlayInkAnimation(inkThrowAnimation);
+        if (inkAnimationCompleted)
+            StartOrRenewInkBlackout();
+
+        surfaceInkRoutine = null;
+        if (!isDead)
+            BeginSurfaceWalk();
+    }
+
+    private IEnumerator PlayInkAnimation(AnimatedSpriteRenderer animation)
+    {
+        throwingInk = true;
+        inkAnimationCompleted = false;
+        SetSubmergedInvulnerability(false);
+        SetVisualEnabled(emergeAnimation, false);
+        SetVisualEnabled(lookAnimation, false);
+        SetVisualEnabled(movementAnimation, false);
+        SetVisualEnabled(surfaceWalkAnimation, false);
+        SetVisualEnabled(inkEmergeAnimation, false);
+        SetVisualEnabled(inkThrowAnimation, false);
+        SetShadowVisible(false);
+
+        if (animation != null)
+        {
+            activeSprite = animation;
+            animation.SetManualAnimationUpdate(true);
+            animation.idle = false;
+            animation.loop = false;
+
+            Sprite[] frames = animation.animationSprite;
+            if (frames != null && frames.Length > 0)
+            {
+                SetVisualEnabled(animation, true);
+                float frameDuration = inkThrowDuration / frames.Length;
+                for (int frame = 0; frame < frames.Length; frame++)
+                {
+                    animation.CurrentFrame = frame;
+                    animation.RefreshFrame();
+                    yield return new WaitForSeconds(frameDuration);
+                }
+            }
+            else
+            {
+                yield return new WaitForSeconds(inkThrowDuration);
+            }
+
+            animation.SetManualAnimationUpdate(false);
+            SetVisualEnabled(animation, false);
+        }
+        else
+        {
+            yield return new WaitForSeconds(inkThrowDuration);
+        }
+
+        inkAnimationCompleted = !isDead;
+        throwingInk = false;
+    }
+
+    private void StartOrRenewInkBlackout()
+    {
+        if (StageBlackout.Instance == null)
+            return;
+
+        if (blackoutRoutine != null)
+            StopCoroutine(blackoutRoutine);
+        blackoutRoutine = StartCoroutine(InkBlackoutRoutine());
+    }
+
+    private IEnumerator InkBlackoutRoutine()
+    {
+        StageBlackout.Instance.SetBlackoutActive(true);
+        yield return new WaitForSeconds(inkBlackoutDuration);
+
+        if (StageBlackout.Instance != null)
+            StageBlackout.Instance.SetBlackoutActive(false);
+
+        blackoutRoutine = null;
     }
 
     private void BeginSurfaceWalk()
@@ -290,6 +404,8 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
         SetSubmergedInvulnerability(false);
         SetCollisionEnabled(true);
         SetVisualEnabled(emergeAnimation, false);
+        SetVisualEnabled(inkEmergeAnimation, false);
+        SetVisualEnabled(inkThrowAnimation, false);
         SetVisualEnabled(movementAnimation, false);
         SetVisualEnabled(lookAnimation, false);
         SetVisualEnabled(surfaceWalkAnimation, true);
@@ -368,8 +484,11 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
         lookRoutine = null;
         looking = false;
         emerging = false;
+        throwingInk = false;
         SetVisualEnabled(lookAnimation, false);
         SetVisualEnabled(emergeAnimation, false);
+        SetVisualEnabled(inkEmergeAnimation, false);
+        SetVisualEnabled(inkThrowAnimation, false);
         SetShadowVisible(false);
     }
 
@@ -384,6 +503,18 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
             surfaceWalkAnimation.ClearExternalBase();
         SetVisualEnabled(surfaceWalkAnimation, false);
         SetShadowVisible(false);
+    }
+
+    private void StopSurfaceInk()
+    {
+        if (surfaceInkRoutine != null)
+            StopCoroutine(surfaceInkRoutine);
+
+        surfaceInkRoutine = null;
+        throwingInk = false;
+        inkAnimationCompleted = false;
+        SetVisualEnabled(inkThrowAnimation, false);
+        SetVisualEnabled(inkEmergeAnimation, false);
     }
 
     private IEnumerator ReturnToSubmergedRoutine()

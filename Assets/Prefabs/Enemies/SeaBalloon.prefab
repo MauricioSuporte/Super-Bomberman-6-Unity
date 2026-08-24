@@ -424,12 +424,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 550601987, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  m_Sprite: {fileID: 8340333596343545816, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.5, y: 2}
+  m_Size: {x: 1, y: 2}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -447,19 +447,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 550601987, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  idleSprite: {fileID: 8340333596343545816, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
   animationSprite:
-  - {fileID: 550601987, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -1805704311, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: 550601987, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -1805704311, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: 550601987, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -1777997308, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -724122316, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: 500580703, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -1777997308, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -724122316, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: 500580703, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 8340333596343545816, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -2786464039644976385, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 8340333596343545816, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -2786464039644976385, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 8340333596343545816, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 8732119177686910195, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -749140067062018694, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -157638586722020777, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 8732119177686910195, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -749140067062018694, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -157638586722020777, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
   allowFlipX: 0
   animationTime: 0.4
   useSequenceDuration: 0
@@ -516,6 +516,8 @@ Transform:
   - {fileID: 3109683355064557463}
   - {fileID: 1381538010289565738}
   - {fileID: 8870187499461403012}
+  - {fileID: 4849532210157034801}
+  - {fileID: 1363612114392961730}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &5414151452218751586
@@ -758,12 +760,16 @@ MonoBehaviour:
   movementAnimation: {fileID: 2098510991821872426}
   lookAnimation: {fileID: 1889208218532553934}
   emergeAnimation: {fileID: 6478182058129535246}
+  inkEmergeAnimation: {fileID: 863302253012159148}
+  inkThrowAnimation: {fileID: 3454017967390127059}
   surfaceWalkAnimation: {fileID: 392978848512182154}
   shadowRenderer: {fileID: 7903875795785737661}
   movementBeforeLookSeconds: 10
   lookDuration: 0.5
   emergeChance: 0.5
   emergeDuration: 2
+  inkThrowDuration: 0.5
+  inkBlackoutDuration: 12
   surfaceWalkFrameDuration: 0.125
   surfaceRiseOrFallDuration: 0.25
   surfaceHoverHeight: 0.5
@@ -876,12 +882,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -957918384, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  m_Sprite: {fileID: -9103273458986292081, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.5, y: 2}
+  m_Size: {x: 1.5, y: 1.125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -899,13 +905,139 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -2030120524, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  idleSprite: {fileID: -9103273458986292081, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
   animationSprite:
-  - {fileID: -2030120524, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -957918384, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
-  - {fileID: -1156495110, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -5469660359179627992, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -9103273458986292081, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -2200318331126475143, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
   allowFlipX: 0
   animationTime: 0.125
+  useSequenceDuration: 0
+  sequenceDuration: 0.5
+  frameDurations: []
+  useUnscaledTime: 1
+  respectGamePause: 1
+  loop: 0
+  loopStartFrame: 0
+  idle: 0
+  frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
+--- !u!1 &4807016271530619020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1363612114392961730}
+  - component: {fileID: 2596786417385257441}
+  - component: {fileID: 863302253012159148}
+  m_Layer: 10
+  m_Name: InkEmerge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1363612114392961730
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4807016271530619020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.75, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3607322679889876779}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &2596786417385257441
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4807016271530619020}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: -51737267, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1.25, y: 4.375}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
+--- !u!114 &863302253012159148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4807016271530619020}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
+  idleSprite: {fileID: 900808632839750856, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  animationSprite:
+  - {fileID: -51737267, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 1250477831, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -2107105132, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -357699410, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 1896524634, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  allowFlipX: 0
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -1038,6 +1170,133 @@ MonoBehaviour:
   - {fileID: -4153106669072032382, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   allowFlipX: 0
   animationTime: 0.1
+  useSequenceDuration: 0
+  sequenceDuration: 0.5
+  frameDurations: []
+  useUnscaledTime: 1
+  respectGamePause: 1
+  loop: 0
+  loopStartFrame: 0
+  idle: 0
+  frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
+--- !u!1 &8686517449211121294
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4849532210157034801}
+  - component: {fileID: 8396070879539865499}
+  - component: {fileID: 3454017967390127059}
+  m_Layer: 10
+  m_Name: InkThrow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4849532210157034801
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8686517449211121294}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.25, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3607322679889876779}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &8396070879539865499
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8686517449211121294}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 900808632839750856, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1.25, y: 4.375}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
+--- !u!114 &3454017967390127059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8686517449211121294}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
+  idleSprite: {fileID: 900808632839750856, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  animationSprite:
+  - {fileID: 900808632839750856, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -2736814158079661564, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 7277191839602361935, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: 6354157869926610368, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -8296443882385361393, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  - {fileID: -1064534278897003623, guid: 5829f59e915af1d4ab37b80b66c53d60, type: 3}
+  allowFlipX: 0
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []

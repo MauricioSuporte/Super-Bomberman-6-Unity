@@ -16,6 +16,7 @@ public sealed class StageBlackout : MonoBehaviour
     [SerializeField] private bool onlyForWorldStage = true;
     [SerializeField] private int targetWorld = 2;
     [SerializeField] private int targetStage = 5;
+    [SerializeField] private bool startActive = true;
 
     [Header("Blackout")]
     [Range(0f, 1f)]
@@ -27,6 +28,7 @@ public sealed class StageBlackout : MonoBehaviour
     [SerializeField, Min(0f)] private float explosionSpotlightSoftness = 0.01f;
     [SerializeField, Min(0f)] private float extraTilesAroundExplosion = 0.1f;
     [SerializeField, Min(1)] private int maxExplosionSpotlights = 36;
+    [SerializeField] private bool enableExplosionSpotlights = true;
 
     private static readonly int IdEllipseX = Shader.PropertyToID("_EllipseX");
     private static readonly int IdEllipseY = Shader.PropertyToID("_EllipseY");
@@ -121,6 +123,12 @@ public sealed class StageBlackout : MonoBehaviour
 
     void Start()
     {
+        if (!startActive)
+        {
+            SetBlackoutActive(false);
+            return;
+        }
+
         if (onlyForWorldStage && !IsTargetStage())
         {
             if (blackoutImage != null) blackoutImage.gameObject.SetActive(false);
@@ -211,7 +219,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition, Vector2 halfSizeInTiles)
     {
-        if (!_active || _matInstance == null) return;
+        if (!enableExplosionSpotlights || !_active || _matInstance == null) return;
 
         _activeExplosionSpotlights[id] = new ExplosionSpotlightData
         {

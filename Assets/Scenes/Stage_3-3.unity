@@ -119,6 +119,62 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &5091310
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5091312}
+  - component: {fileID: 5091311}
+  m_Layer: 0
+  m_Name: SeaBalloonBlackout
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &5091311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5091310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49428698e13823048aa4eaa022118a54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageBlackout
+  blackoutImage: {fileID: 246019905}
+  onlyForWorldStage: 0
+  targetWorld: 2
+  targetStage: 5
+  startActive: 0
+  blackoutAlpha: 0.425
+  fadeInSeconds: 0
+  tileWorldSize: 1
+  explosionSpotlightSoftness: 0.02
+  extraTilesAroundExplosion: 0.4
+  maxExplosionSpotlights: 36
+  enableExplosionSpotlights: 0
+--- !u!4 &5091312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5091310}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &20333001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1077,6 +1133,81 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GeyserLauncherBootstrap
   geyserSprite: {fileID: 21300000, guid: 52f41d847e3f43cc88e6e8221300a3a7, type: 3}
   geyserSfx: {fileID: 8300000, guid: b5d208f738e04b91980ad9e4a159d506, type: 3}
+--- !u!1 &246019904
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 246019907}
+  - component: {fileID: 246019906}
+  - component: {fileID: 246019905}
+  m_Layer: 0
+  m_Name: SeaBalloonBlackoutOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &246019905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 246019904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 6855d4d19190ac84895df2ad4f2f309d, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &246019906
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 246019904}
+  m_CullTransparentMesh: 1
+--- !u!224 &246019907
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 246019904}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1866114541}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &268450098
 GameObject:
   m_ObjectHideFlags: 0
@@ -2474,11 +2605,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3607322679889876779, guid: 2c7bd740da4980345bb0c8def0c46bc2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 37.5
+      value: 49.5
       objectReference: {fileID: 0}
     - target: {fileID: 3607322679889876779, guid: 2c7bd740da4980345bb0c8def0c46bc2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.5
+      value: -1.5
       objectReference: {fileID: 0}
     - target: {fileID: 3607322679889876779, guid: 2c7bd740da4980345bb0c8def0c46bc2, type: 3}
       propertyPath: m_LocalPosition.z
@@ -14573,6 +14704,7 @@ Transform:
   - {fileID: 900300021}
   - {fileID: 1762808198}
   - {fileID: 1637107872}
+  - {fileID: 301696025}
   - {fileID: 1678571337}
   - {fileID: 1675045132}
   - {fileID: 1382143588}
@@ -14582,7 +14714,6 @@ Transform:
   - {fileID: 241099560}
   - {fileID: 1715044620}
   - {fileID: 1385848896}
-  - {fileID: 301696025}
   m_Father: {fileID: 732032081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1321069436
@@ -16459,6 +16590,7 @@ RectTransform:
   m_Children:
   - {fileID: 765618199}
   - {fileID: 1412161667}
+  - {fileID: 246019907}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -17388,3 +17520,4 @@ SceneRoots:
   - {fileID: 1334625510}
   - {fileID: 1465697803}
   - {fileID: 221003301}
+  - {fileID: 5091312}

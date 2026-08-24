@@ -230,6 +230,24 @@ TextureImporter:
   - first:
       213: 516296563266197474
     second: Look_4
+  - first:
+      213: 900808632839750856
+    second: InkThrow_1
+  - first:
+      213: -2736814158079661564
+    second: InkThrow_2
+  - first:
+      213: 7277191839602361935
+    second: InkThrow_3
+  - first:
+      213: 6354157869926610368
+    second: InkThrow_4
+  - first:
+      213: -8296443882385361393
+    second: InkThrow_5
+  - first:
+      213: -1064534278897003623
+    second: InkThrow_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -522,15 +540,15 @@ TextureImporter:
         width: 16
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f94a195e2e473ef40b8b44e1aa66548f
-      internalID: 550601987
+      spriteID: 8df20568731deb370800000000000000
+      internalID: 8340333596343545816
       vertices: []
       indices: 
       edges: []
@@ -544,15 +562,15 @@ TextureImporter:
         width: 16
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 23995d41f98e0c149b39aea1188af309
-      internalID: -1805704311
+      spriteID: ffaaf8128bd7459d0800000000000000
+      internalID: -2786464039644976385
       vertices: []
       indices: 
       edges: []
@@ -566,15 +584,15 @@ TextureImporter:
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: b085acee0c05d9241a6a249ce313efd4
-      internalID: -1777997308
+      spriteID: 3f4876a9028be2970800000000000000
+      internalID: 8732119177686910195
       vertices: []
       indices: 
       edges: []
@@ -588,15 +606,15 @@ TextureImporter:
         width: 20
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 8f88c1dd80447184dad4dc6ed6329029
-      internalID: -724122316
+      spriteID: a7d81cff3158a95f0800000000000000
+      internalID: -749140067062018694
       vertices: []
       indices: 
       edges: []
@@ -610,15 +628,15 @@ TextureImporter:
         width: 20
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 575eab2b866490e4087b16ace59fb532
-      internalID: 500580703
+      spriteID: 7521a836a84ffcdf0800000000000000
+      internalID: -157638586722020777
       vertices: []
       indices: 
       edges: []
@@ -632,15 +650,15 @@ TextureImporter:
         width: 24
         height: 18
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 5b5e60a35d7306d49b06a06191a586b3
-      internalID: -957918384
+      spriteID: f8c61ef250daaa180800000000000000
+      internalID: -9103273458986292081
       vertices: []
       indices: 
       edges: []
@@ -654,15 +672,15 @@ TextureImporter:
         width: 24
         height: 18
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: ad0898b3a2bcf36419905d4718a850d7
-      internalID: -2030120524
+      spriteID: 822101102ecd714b0800000000000000
+      internalID: -5469660359179627992
       vertices: []
       indices: 
       edges: []
@@ -676,15 +694,257 @@ TextureImporter:
         width: 22
         height: 18
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9761d68b226e671e0800000000000000
+      internalID: -2200318331126475143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkThrow_1
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 108
+        width: 20
+        height: 70
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c4c40bcda0508c00800000000000000
+      internalID: 900808632839750856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkThrow_2
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 109
+        width: 20
+        height: 70
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40ae6630602e40ad0800000000000000
+      internalID: -2736814158079661564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkThrow_3
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 109
+        width: 20
+        height: 70
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f46ced10c67cdf460800000000000000
+      internalID: 7277191839602361935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkThrow_4
+      rect:
+        serializedVersion: 2
+        x: 185
+        y: 109
+        width: 20
+        height: 70
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c57abbbae08e2850800000000000000
+      internalID: 6354157869926610368
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkThrow_5
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 109
+        width: 24
+        height: 70
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f063573de3c1ddc80800000000000000
+      internalID: -8296443882385361393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkThrow_6
+      rect:
+        serializedVersion: 2
+        x: 238
+        y: 110
+        width: 28
+        height: 70
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9931e17a6b30a31f0800000000000000
+      internalID: -1064534278897003623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ink_Emerge_5
+      rect:
+        serializedVersion: 2
+        x: 226
+        y: 34
+        width: 24
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 121941b3bbec6194ea7aabe8a87f7ce7
-      internalID: -1156495110
+      spriteID: 073d3c562e80f054a949c8c3aa8149a2
+      internalID: 1896524634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ink_Emerge_4
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 34
+        width: 24
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ebd174bd9d3744488ef364493dff10c
+      internalID: -357699410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ink_Emerge_3
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 34
+        width: 24
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5ee69edcf7cb6ec4b81ca38cdfe00a4a
+      internalID: -2107105132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ink_Emerge_2
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 34
+        width: 24
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ea585d8476d175a4f875a006d4abccab
+      internalID: 1250477831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ink_Emerge_1
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 34
+        width: 24
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9823692ba008a2441a419c147688fe9d
+      internalID: -51737267
       vertices: []
       indices: 
       edges: []
@@ -708,6 +968,17 @@ TextureImporter:
       Emerge_3: 8732119177686910195
       Emerge_4: -749140067062018694
       Emerge_5: -157638586722020777
+      InkThrow_1: 900808632839750856
+      InkThrow_2: -2736814158079661564
+      InkThrow_3: 7277191839602361935
+      InkThrow_4: 6354157869926610368
+      InkThrow_5: -8296443882385361393
+      InkThrow_6: -1064534278897003623
+      Ink_Emerge_1: -51737267
+      Ink_Emerge_2: 1250477831
+      Ink_Emerge_3: -2107105132
+      Ink_Emerge_4: -357699410
+      Ink_Emerge_5: 1896524634
       Look_1: -9038639520729514689
       Look_2: 7835288982210579283
       Look_3: 6183662995311706435
