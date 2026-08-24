@@ -118,8 +118,16 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         {
             player.SetExternalMovementAllowsHazardDamage(false);
             player.SetExternalMovementOverride(false);
-            player.SetInputLocked(false, forceIdle: false);
-            player.ApplyDirectionFromVector(Vector2.zero);
+
+            // A lethal hit can end the push loop on the same frame that the
+            // death sequence selects its renderer. Do not restore the idle
+            // movement visual in that case, otherwise it replaces the death
+            // animation before it can be shown.
+            if (!player.isDead)
+            {
+                player.SetInputLocked(false, forceIdle: false);
+                player.ApplyDirectionFromVector(Vector2.zero);
+            }
         }
     }
 
