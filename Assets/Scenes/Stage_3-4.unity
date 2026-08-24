@@ -558,6 +558,83 @@ MonoBehaviour:
   boardDropY: 0.0625
   transitionSpeed: 1.5
   centerPlayerSpriteDropY: 0.15
+--- !u!1 &228359636
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 228359638}
+  - component: {fileID: 228359637}
+  m_Layer: 0
+  m_Name: Stage34Room1Portals
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &228359637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 228359636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dd6d5fd832f4bb49bb70c0b4f3c80d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleMode7PortalController
+  portalCells:
+  - {x: 3, y: 2}
+  - {x: -7, y: -6}
+  teleportSeconds: 0.5
+  retriggerGraceSeconds: 0.05
+  snapToDestinationCenter: 1
+  usePortalSinkVisual: 1
+  portalSinkSeconds: 0.1
+  invertPortalEntryVisual: 1
+  useFixedPortalMaskVisual: 1
+  portalEntrySeconds: 0.5
+  portalTravelSeconds: 0.5
+  portalExitSeconds: 0.5
+  portalMaskHorizontalPadding: 0.25
+  portalMaskVerticalOffsetTiles: 2
+  logPortalSinkVisual: 1
+  spawnTeleportStars: 1
+  teleportStarSprites:
+  - {fileID: 695743192020375121, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
+  - {fileID: 1637399009915619187, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
+  teleportStarCount: 32
+  teleportStarLifetime: 0.2
+  teleportStarScaleRange: {x: 0.24, y: 0.42}
+  teleportStarDriftRange: {x: 0.16, y: 0.42}
+  teleportStarSpinRange: {x: -220, y: 220}
+  teleportStarPathJitter: 0.22
+  teleportStarAnimationFrameTime: 0.1
+  teleportStarSortingOrder: 90
+  enterSfx: {fileID: 8300000, guid: fa55395d7cad4ae4bba6f4116f540087, type: 3}
+  enterSfxVolume: 1
+  portalEnterSfx: {fileID: 8300000, guid: 0260e7d7d29147ccbd62c2e7140d692c, type: 3}
+  portalExitSfx: {fileID: 8300000, guid: 19546b0c4fce49bfabbcda35e4110a20, type: 3}
+  portalSfxVolume: 1
+--- !u!4 &228359638
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 228359636}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &268450098
 GameObject:
   m_ObjectHideFlags: 0
@@ -658,7 +735,7 @@ MonoBehaviour:
       amount: 1
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: Stage_3-2
+  nextStageSceneName: Stage_3-5
   destructiblePrefab: {fileID: 3440613785117735154, guid: 2abf9fd732693c34f88ed247b56f7cf6, type: 3}
   tilemapDoChao: {fileID: 672307155}
   tileChaoNormal: {fileID: 11400000, guid: bd8d46a3b077610499368866158b8c9a, type: 2}
@@ -2532,7 +2609,7 @@ Tilemap:
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
-      m_AllTileFlags: 1073741825
+      m_AllTileFlags: 1
   - first: {x: -6, y: -6, z: 0}
     second:
       serializedVersion: 2
@@ -17750,7 +17827,7 @@ MonoBehaviour:
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 124024469}
   world: 3
-  stageNumber: 1
+  stageNumber: 4
   gameplayRoot: {fileID: 0}
   stage17SceneName: Stage_1-7
   skipPreIntroWalkNextRound_Inspector: 0
@@ -18932,3 +19009,4 @@ SceneRoots:
   - {fileID: 1334625510}
   - {fileID: 1465697803}
   - {fileID: 212159669}
+  - {fileID: 228359638}
