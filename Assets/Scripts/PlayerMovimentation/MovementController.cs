@@ -2579,6 +2579,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize, bool allowMovementAbilities = true)
     {
+        if (WaterCycleCurrent.BlocksPlayerForwardMovement(this, targetPosition))
+            return true;
+
         Vector2 size = GetBlockProbeSize(dirForSize);
 
         int hitCount = GetObstacleHitCount(targetPosition, size);

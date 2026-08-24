@@ -25,8 +25,23 @@ public sealed class WaterCycleCurrent : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float pushSfxVolume = 1f;
 
     readonly HashSet<MovementController> pushedPlayers = new();
+    static readonly Dictionary<MovementController, ObstacleBarrier> obstacleBarriers = new();
     Tilemap destructibleTilemap;
     Tilemap indestructibleTilemap;
+
+    readonly struct ObstacleBarrier
+    {
+        public readonly Vector2 safePosition;
+        public readonly Vector2 direction;
+        public readonly float tileSize;
+
+        public ObstacleBarrier(Vector2 safePosition, Vector2 direction, float tileSize)
+        {
+            this.safePosition = safePosition;
+            this.direction = direction;
+            this.tileSize = tileSize;
+        }
+    }
 
     void Awake()
     {
@@ -59,14 +74,18 @@ public sealed class WaterCycleCurrent : MonoBehaviour
     IEnumerator PushPlayerRoutine(MovementController player, bool enteredWithCurrent)
     {
         float size = GetTileSize(player.tileSize);
-        Vector2 current = SnapToGrid(GetPlayerPosition(player), size);
+        // Keep the player's actual tile-relative position. Rounding to the
+        // global tile grid can move an entering player across a cell boundary
+        // before the first obstacle probe, skipping the safe tile between the
+        // cycle and a destructible block.
+        Vector2 current = QuantizeToPixelGrid(GetPlayerPosition(player));
         Vector2 currentDirection = ToVector(direction);
         float remainingDistance = enteredWithCurrent
             ? float.PositiveInfinity
             : Mathf.Max(1, againstCurrentDistanceTiles) * size;
         float speed = initialPushSpeed;
 
-        if (IsBlockedAhead(current, currentDirection, size, player.gameObject))
+        if (IsBlockedAhead(current, currentDirection, size, player.gameObject, out _, out _))
             yield break;
 
         player.SetInputLocked(true, forceIdle: true, idleFacing: currentDirection);
@@ -98,8 +117,23 @@ public sealed class WaterCycleCurrent : MonoBehaviour
                 break;
             }
 
-            if (IsBlockedAhead(next, currentDirection, size, player.gameObject))
+            if (IsBlockedAhead(
+                    next,
+                    currentDirection,
+                    size,
+                    player.gameObject,
+                    out Vector2 safeTileCenter,
+                    out bool hasSafeTileCenter))
+            {
+                if (hasSafeTileCenter)
+                {
+                    MovePlayer(player, safeTileCenter);
+                    current = safeTileCenter;
+                    RegisterObstacleBarrier(player, current, currentDirection, size);
+                }
+
                 break;
+            }
 
             MovePlayer(player, next);
             current = next;
@@ -141,12 +175,44 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         return Vector2.Dot(fromCycleCenter, currentDirection) < 0f;
     }
 
-    bool IsBlockedAhead(Vector2 position, Vector2 currentDirection, float size, GameObject playerObject)
+    bool IsBlockedAhead(
+        Vector2 position,
+        Vector2 currentDirection,
+        float size,
+        GameObject playerObject,
+        out Vector2 safeTileCenter,
+        out bool hasSafeTileCenter)
     {
+        safeTileCenter = default;
+        hasSafeTileCenter = false;
+
         ResolveReferences();
         Vector2 probe = position + currentDirection * (size * 0.5f);
-        if (HasTileAt(destructibleTilemap, probe) || HasTileAt(indestructibleTilemap, probe))
+        bool hasDestructible = HasTileAhead(
+            destructibleTilemap,
+            position,
+            probe,
+            out Vector3Int destructiblePositionCell,
+            out _);
+        bool hasIndestructible = HasTileAhead(
+            indestructibleTilemap,
+            position,
+            probe,
+            out Vector3Int indestructiblePositionCell,
+            out _);
+
+        if (hasDestructible || hasIndestructible)
+        {
+            Tilemap blockingTilemap = hasDestructible ? destructibleTilemap : indestructibleTilemap;
+            Vector3Int safeCell = hasDestructible ? destructiblePositionCell : indestructiblePositionCell;
+            if (blockingTilemap != null)
+            {
+                safeTileCenter = QuantizeToPixelGrid(blockingTilemap.GetCellCenterWorld(safeCell));
+                hasSafeTileCenter = true;
+            }
+
             return true;
+        }
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(probe, Vector2.one * (size * 0.55f), 0f, LayerMask.GetMask("Bomb"));
         for (int i = 0; i < hits.Length; i++)
@@ -207,8 +273,34 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         return !float.IsPositiveInfinity(nearestStopDistance);
     }
 
-    static bool HasTileAt(Tilemap tilemap, Vector2 worldPosition)
-        => tilemap != null && tilemap.HasTile(tilemap.WorldToCell(worldPosition));
+    static bool HasTileAhead(
+        Tilemap tilemap,
+        Vector2 position,
+        Vector2 probe,
+        out Vector3Int positionCell,
+        out Vector3Int probeCell)
+    {
+        positionCell = default;
+        probeCell = default;
+
+        if (tilemap == null)
+            return false;
+
+        positionCell = tilemap.WorldToCell(position);
+        probeCell = tilemap.WorldToCell(probe);
+
+        if (!tilemap.HasTile(probeCell))
+            return false;
+
+        // The player can enter a cycle directly after destroying a block.
+        // With Unity's floor-based cell conversion, the half-tile probe can
+        // still resolve to that tile. It is behind/under the player, not an
+        // obstacle ahead, so it must not cancel the current.
+        if (positionCell == probeCell)
+            return false;
+
+        return true;
+    }
 
     static bool IsOpposingDirectionHeld(int playerId, Vector2 currentDirection)
     {
@@ -220,6 +312,40 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         if (currentDirection == Vector2.down) return input.Get(playerId, PlayerAction.MoveUp);
         if (currentDirection == Vector2.left) return input.Get(playerId, PlayerAction.MoveRight);
         return input.Get(playerId, PlayerAction.MoveLeft);
+    }
+
+    static void RegisterObstacleBarrier(MovementController player, Vector2 safePosition, Vector2 currentDirection, float size)
+    {
+        if (player == null)
+            return;
+
+        obstacleBarriers[player] = new ObstacleBarrier(safePosition, currentDirection, size);
+    }
+
+    /// <summary>
+    /// Keeps a player from immediately walking through the blocked exit of a
+    /// water cycle after control has been restored. Backtracking and lateral
+    /// movement remain available; moving far enough back clears the barrier.
+    /// </summary>
+    public static bool BlocksPlayerForwardMovement(MovementController player, Vector2 targetPosition)
+    {
+        if (player == null || !obstacleBarriers.TryGetValue(player, out ObstacleBarrier barrier))
+            return false;
+
+        Vector2 offset = targetPosition - barrier.safePosition;
+        float forwardDistance = Vector2.Dot(offset, barrier.direction);
+
+        if (forwardDistance < -barrier.tileSize * 0.25f)
+        {
+            obstacleBarriers.Remove(player);
+            return false;
+        }
+
+        if (forwardDistance <= 0.0001f)
+            return false;
+
+        Vector2 lateral = offset - barrier.direction * forwardDistance;
+        return lateral.magnitude <= barrier.tileSize * 0.45f;
     }
 
     void ResolveReferences()
@@ -272,4 +398,5 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         if (source != null && pushSfx != null)
             GameAudioSettings.PlaySfx(source, pushSfx, pushSfxVolume);
     }
+
 }
