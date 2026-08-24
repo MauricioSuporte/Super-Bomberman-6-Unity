@@ -1,0 +1,786 @@
+fileFormatVersion: 2
+guid: 5829f59e915af1d4ab37b80b66c53d60
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8340333596343545816
+    second: SeaBalloon_0
+  - first:
+      213: -2786464039644976385
+    second: SeaBalloon_1
+  - first:
+      213: 8732119177686910195
+    second: SeaBalloon_2
+  - first:
+      213: -749140067062018694
+    second: SeaBalloon_3
+  - first:
+      213: -157638586722020777
+    second: SeaBalloon_4
+  - first:
+      213: -9103273458986292081
+    second: SeaBalloon_5
+  - first:
+      213: -5469660359179627992
+    second: SeaBalloon_6
+  - first:
+      213: -2200318331126475143
+    second: SeaBalloon_7
+  - first:
+      213: -206721966252143758
+    second: SeaBalloon_8
+  - first:
+      213: -1199423635239899343
+    second: SeaBalloon_9
+  - first:
+      213: 1989929324866161607
+    second: SeaBalloon_10
+  - first:
+      213: 4809331489094040563
+    second: SeaBalloon_11
+  - first:
+      213: -4326505092361799769
+    second: SeaBalloon_12
+  - first:
+      213: -869581654258488247
+    second: SeaBalloon_13
+  - first:
+      213: 7913183993417475730
+    second: SeaBalloon_14
+  - first:
+      213: 5213346616134636377
+    second: SeaBalloon_15
+  - first:
+      213: 45633742498275401
+    second: SeaBalloon_16
+  - first:
+      213: -443175677876243485
+    second: SeaBalloon_17
+  - first:
+      213: 2538109203775486656
+    second: SeaBalloon_18
+  - first:
+      213: -2500144476276129794
+    second: SeaBalloon_19
+  - first:
+      213: -1743545542127402209
+    second: SeaBalloon_20
+  - first:
+      213: -2153612552559613045
+    second: SeaBalloon_21
+  - first:
+      213: -6648723742351629453
+    second: SeaBalloon_22
+  - first:
+      213: -5449879545523858246
+    second: SeaBalloon_23
+  - first:
+      213: -8618875467298109728
+    second: SeaBalloon_24
+  - first:
+      213: 5256686600615318633
+    second: SeaBalloon_25
+  - first:
+      213: 3557250247837772261
+    second: SeaBalloon_26
+  - first:
+      213: -6265139162791150002
+    second: SeaBalloon_27
+  - first:
+      213: 3353802954874554668
+    second: SeaBalloon_28
+  - first:
+      213: 8712630914542779084
+    second: SeaBalloon_29
+  - first:
+      213: 2307833325648136542
+    second: SeaBalloon_30
+  - first:
+      213: 701452678878549113
+    second: SeaBalloon_31
+  - first:
+      213: 6711277543807193437
+    second: SeaBalloon_32
+  - first:
+      213: 5436184191376946870
+    second: SeaBalloon_33
+  - first:
+      213: -3769849598472696860
+    second: SeaBalloon_34
+  - first:
+      213: -4120985346237514448
+    second: SeaBalloon_35
+  - first:
+      213: -1072589277948256478
+    second: SeaBalloon_36
+  - first:
+      213: 7982783804934639291
+    second: SeaBalloon_37
+  - first:
+      213: 9194375865717630222
+    second: SeaBalloon_38
+  - first:
+      213: 7124154103591330663
+    second: SeaBalloon_39
+  - first:
+      213: -8065112584219157794
+    second: SeaBalloon_40
+  - first:
+      213: 4052051440019907328
+    second: SeaBalloon_41
+  - first:
+      213: 5312024879586636967
+    second: SeaBalloon_42
+  - first:
+      213: -7001871437364801838
+    second: SeaBalloon_43
+  - first:
+      213: -2018313702303454267
+    second: SeaBalloon_44
+  - first:
+      213: -8894537490151254229
+    second: SeaBalloon_45
+  - first:
+      213: 5488038189553174807
+    second: SeaBalloon_46
+  - first:
+      213: 960243121447675206
+    second: SeaBalloon_47
+  - first:
+      213: -3158021837249116637
+    second: SeaBalloon_48
+  - first:
+      213: 970697947016725861
+    second: SeaBalloon_49
+  - first:
+      213: 1251842012995449812
+    second: SeaBalloon_50
+  - first:
+      213: -7135514415838234134
+    second: SeaBalloon_51
+  - first:
+      213: 3324867584511345568
+    second: SeaBalloon_52
+  - first:
+      213: 7568055773666383333
+    second: SeaBalloon_53
+  - first:
+      213: -2139656051390623030
+    second: SeaBalloon_54
+  - first:
+      213: -3401588452722560527
+    second: SeaBalloon_55
+  - first:
+      213: -3443855011815549498
+    second: SeaBalloon_56
+  - first:
+      213: -8632177260989855570
+    second: SeaBalloon_57
+  - first:
+      213: -856047841051170422
+    second: SeaBalloon_58
+  - first:
+      213: 3044897626878931090
+    second: SeaBalloon_59
+  - first:
+      213: -3765317920040301630
+    second: SeaBalloon_60
+  - first:
+      213: -8049957035879965073
+    second: SeaBalloon_61
+  - first:
+      213: -617964741777214175
+    second: SeaBalloon_62
+  - first:
+      213: -2812468111933402771
+    second: SeaBalloon_63
+  - first:
+      213: 6869977517946511874
+    second: SeaBalloon_64
+  - first:
+      213: -521896374823565532
+    second: SeaBalloon_65
+  - first:
+      213: -6460278211532398607
+    second: SeaBalloon_66
+  - first:
+      213: -776341778854606080
+    second: SeaBalloon_67
+  - first:
+      213: 8405476814967859603
+    second: Move_1
+  - first:
+      213: -5086530901905536447
+    second: Move_2
+  - first:
+      213: 1521079245874940812
+    second: Move_3
+  - first:
+      213: 4010896587680814743
+    second: Move_4
+  - first:
+      213: -9038639520729514689
+    second: Look_1
+  - first:
+      213: 7835288982210579283
+    second: Look_2
+  - first:
+      213: 6183662995311706435
+    second: Look_3
+  - first:
+      213: 516296563266197474
+    second: Look_4
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Move_1
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 67
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 399e0fb01a046a470800000000000000
+      internalID: 8405476814967859603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Move_2
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 67
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14a8fd428130969b0800000000000000
+      internalID: -5086530901905536447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Move_3
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 67
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8b489dd385fb1510800000000000000
+      internalID: 1521079245874940812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Move_4
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 67
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7969a83223199a730800000000000000
+      internalID: 4010896587680814743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Look_1
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 43
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3d3c12ae3d409280800000000000000
+      internalID: -9038639520729514689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Look_2
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 43
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35b8131f0d98cbc60800000000000000
+      internalID: 7835288982210579283
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Look_3
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 43
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34148465bb8c0d550800000000000000
+      internalID: 6183662995311706435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Look_4
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 43
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e79c342df04a2700800000000000000
+      internalID: 516296563266197474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Emerge_1
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 108
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f94a195e2e473ef40b8b44e1aa66548f
+      internalID: 550601987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Emerge_2
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 108
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23995d41f98e0c149b39aea1188af309
+      internalID: -1805704311
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Emerge_3
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 108
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b085acee0c05d9241a6a249ce313efd4
+      internalID: -1777997308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Emerge_4
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 108
+        width: 20
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8f88c1dd80447184dad4dc6ed6329029
+      internalID: -724122316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Emerge_5
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 108
+        width: 20
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 575eab2b866490e4087b16ace59fb532
+      internalID: 500580703
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Walk_1
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 2
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b5e60a35d7306d49b06a06191a586b3
+      internalID: -957918384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Walk_2
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 2
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ad0898b3a2bcf36419905d4718a850d7
+      internalID: -2030120524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Walk_3
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 2
+        width: 22
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 121941b3bbec6194ea7aabe8a87f7ce7
+      internalID: -1156495110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: f34d5066838c5d64f88d4be020187d67
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Emerge_1: 8340333596343545816
+      Emerge_2: -2786464039644976385
+      Emerge_3: 8732119177686910195
+      Emerge_4: -749140067062018694
+      Emerge_5: -157638586722020777
+      Look_1: -9038639520729514689
+      Look_2: 7835288982210579283
+      Look_3: 6183662995311706435
+      Look_4: 516296563266197474
+      Move_1: 8405476814967859603
+      Move_2: -5086530901905536447
+      Move_3: 1521079245874940812
+      Move_4: 4010896587680814743
+      SeaBalloon_10: 1989929324866161607
+      SeaBalloon_11: 4809331489094040563
+      SeaBalloon_12: -4326505092361799769
+      SeaBalloon_13: -869581654258488247
+      SeaBalloon_14: 7913183993417475730
+      SeaBalloon_15: 5213346616134636377
+      SeaBalloon_16: 45633742498275401
+      SeaBalloon_17: -443175677876243485
+      SeaBalloon_18: 2538109203775486656
+      SeaBalloon_19: -2500144476276129794
+      SeaBalloon_20: -1743545542127402209
+      SeaBalloon_21: -2153612552559613045
+      SeaBalloon_22: -6648723742351629453
+      SeaBalloon_23: -5449879545523858246
+      SeaBalloon_24: -8618875467298109728
+      SeaBalloon_25: 5256686600615318633
+      SeaBalloon_26: 3557250247837772261
+      SeaBalloon_27: -6265139162791150002
+      SeaBalloon_28: 3353802954874554668
+      SeaBalloon_29: 8712630914542779084
+      SeaBalloon_30: 2307833325648136542
+      SeaBalloon_31: 701452678878549113
+      SeaBalloon_32: 6711277543807193437
+      SeaBalloon_33: 5436184191376946870
+      SeaBalloon_34: -3769849598472696860
+      SeaBalloon_35: -4120985346237514448
+      SeaBalloon_36: -1072589277948256478
+      SeaBalloon_37: 7982783804934639291
+      SeaBalloon_38: 9194375865717630222
+      SeaBalloon_39: 7124154103591330663
+      SeaBalloon_40: -8065112584219157794
+      SeaBalloon_41: 4052051440019907328
+      SeaBalloon_42: 5312024879586636967
+      SeaBalloon_43: -7001871437364801838
+      SeaBalloon_44: -2018313702303454267
+      SeaBalloon_45: -8894537490151254229
+      SeaBalloon_46: 5488038189553174807
+      SeaBalloon_47: 960243121447675206
+      SeaBalloon_48: -3158021837249116637
+      SeaBalloon_49: 970697947016725861
+      SeaBalloon_50: 1251842012995449812
+      SeaBalloon_51: -7135514415838234134
+      SeaBalloon_52: 3324867584511345568
+      SeaBalloon_53: 7568055773666383333
+      SeaBalloon_54: -2139656051390623030
+      SeaBalloon_55: -3401588452722560527
+      SeaBalloon_56: -3443855011815549498
+      SeaBalloon_57: -8632177260989855570
+      SeaBalloon_58: -856047841051170422
+      SeaBalloon_59: 3044897626878931090
+      SeaBalloon_60: -3765317920040301630
+      SeaBalloon_61: -8049957035879965073
+      SeaBalloon_62: -617964741777214175
+      SeaBalloon_63: -2812468111933402771
+      SeaBalloon_64: 6869977517946511874
+      SeaBalloon_65: -521896374823565532
+      SeaBalloon_66: -6460278211532398607
+      SeaBalloon_67: -776341778854606080
+      SeaBalloon_8: -206721966252143758
+      SeaBalloon_9: -1199423635239899343
+      Walk_1: -9103273458986292081
+      Walk_2: -5469660359179627992
+      Walk_3: -2200318331126475143
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
