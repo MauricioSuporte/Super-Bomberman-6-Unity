@@ -41,9 +41,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     [SerializeField, Min(0f)] private float portalMaskHorizontalPadding = 0.25f;
     [Tooltip("Raises the fixed horizontal mask above the portal tile center. Used by Stage_3-4.")]
     [SerializeField] private float portalMaskVerticalOffsetTiles;
-    [Tooltip("Writes entry/exit portal visual checkpoints to the Unity Console.")]
-    [SerializeField] private bool logPortalSinkVisual;
-
     [Header("Teleport Stars")]
     [SerializeField] private bool spawnTeleportStars = true;
     [SerializeField] private Sprite[] teleportStarSprites;
@@ -158,9 +155,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         ResolveReferences();
         EnsureAudioSource();
         LoadDefaultSfxIfNeeded();
-        LogPortalVisual(
-            $"Logging enabled for scene '{SceneManager.GetActiveScene().name}'. " +
-            $"sink:{usePortalSinkVisual}, invertEntry:{invertPortalEntryVisual}, stars:{spawnTeleportStars}.");
     }
 
     void OnDisable()
@@ -516,8 +510,10 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
                     yield break;
 
-                LogPortalVisual(
-                    $"Entry sink complete. Hiding {CountEnabledRenderers(state.portalVisualRenderers)} captured player renderers for star travel.");
+                // Keep the mounted Louie active through the sink animation so
+                // its renderers are clipped by the same portal mask as the
+                // player. It is hidden only for the between-portals travel.
+                state.mountCompanion?.SetMountedLouieVisible(false);
                 SetRenderersEnabled(state.portalVisualRenderers, false);
 
                 // Match the Battle Mode 12 portal phase: while the rider is
@@ -525,8 +521,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 float travelSeconds = Mathf.Max(0.01f, portalTravelSeconds);
                 float travelElapsed = 0f;
                 int sinkSpawnedStars = 0;
-                bool loggedTravelHalfway = false;
-                LogPortalVisual($"Star travel start. duration:{travelSeconds:F3}s.");
                 if (spawnTeleportStars && teleportStarCount > 0)
                 {
                     SpawnTeleportStar(source);
@@ -550,22 +544,13 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                         destination,
                         Mathf.Clamp01(travelElapsed / travelSeconds),
                         sinkSpawnedStars);
-                    if (!loggedTravelHalfway && travelElapsed >= travelSeconds * 0.5f)
-                    {
-                        loggedTravelHalfway = true;
-                        LogPortalVisual(
-                            $"Star travel midpoint. elapsed:{travelElapsed:F3}s, spawned:{sinkSpawnedStars}.");
-                    }
                     yield return null;
                 }
 
                 SpawnTeleportStarsAlongPath(source, destination, 1f, sinkSpawnedStars);
-                LogPortalVisual(
-                    $"Star travel complete. elapsed:{travelElapsed:F3}s, spawned:{sinkSpawnedStars}.");
                 mover.Rigidbody.position = destination;
                 mover.Rigidbody.linearVelocity = Vector2.zero;
-                LogPortalVisual(
-                    $"Star travel complete. Restoring {CountEnabledRenderers(state.portalVisualRenderers, state.portalVisualRendererStates)} player renderers before exit rise.");
+                state.mountCompanion?.SetMountedLouieVisible(true);
                 RestoreRendererStates(
                     state.portalVisualRenderers,
                     state.portalVisualRendererStates);
@@ -683,8 +668,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             // only the renderer that was visible on entry so the sink effect
             // has an actual sprite to scale before star travel hides it.
             RestorePortalVisualRenderersForSink(state);
-            LogPortalVisual(
-                $"Prepared {CountEnabledRenderers(state.portalVisualRenderers)} entry renderer(s) for sink animation.");
         }
         // Keep the currently selected directional sprite visible for the
         // sink/rise effect. Calling SetAllSpritesVisible(true) would enable
@@ -703,9 +686,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
         if (state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(true);
-
-        if (state.mountCompanion != null)
-            state.mountCompanion.SetMountedLouieVisible(false);
 
         if (state.eggQueue != null)
             state.eggQueue.ForceVisible(false);
@@ -816,7 +796,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             yield break;
 
         SpriteRenderer[] renderers = mover.GetComponentsInChildren<SpriteRenderer>(true);
-        var snapshots = new List<PortalVisualSnapshot>(renderers.Length);
+        var snapshots = new List<PortalVisualSnapshot>(renderers.Length + 4);
         for (int i = 0; i < renderers.Length; i++)
         {
             SpriteRenderer renderer = renderers[i];
@@ -829,11 +809,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             ? CreateFixedPortalMasks(snapshots, portalWorld, mover.tileSize)
             : 0f;
         float elapsed = 0f;
-        bool loggedHalfway = false;
-        string phase = appearing ? "Exit rise" : "Entry sink";
-        LogPortalVisual(
-            $"{phase} start. visible renderer snapshots:{snapshots.Count}, duration:{duration:F3}s, fixedMask:{useFixedPortalMaskVisual}, maskTravel:{maskTravelDistance:F3}.");
-
         if (useFixedPortalMaskVisual && appearing)
         {
             mover.Rigidbody.position = portalWorld + Vector2.down * maskTravelDistance;
@@ -870,13 +845,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 mover.Rigidbody.position = portalWorld + Vector2.up * sinkOffset;
             }
 
-            if (!loggedHalfway &&
-                (appearing ? visibleProgress >= 0.5f : visibleProgress <= 0.5f))
-            {
-                loggedHalfway = true;
-                LogPortalVisual(
-                    $"{phase} midpoint. visibleProgress:{visibleProgress:F2}, snapshots:{snapshots.Count}.");
-            }
             mover.Rigidbody.linearVelocity = Vector2.zero;
             yield return null;
         }
@@ -889,31 +857,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             mover.Rigidbody.linearVelocity = Vector2.zero;
         }
 
-        LogPortalVisual($"{phase} complete. Restored transforms for {snapshots.Count} renderers.");
-    }
-
-    void LogPortalVisual(string message)
-    {
-        if (logPortalSinkVisual)
-            Debug.Log($"[{nameof(BattleMode7PortalController)}] {message}", this);
-    }
-
-    static int CountEnabledRenderers(SpriteRenderer[] renderers, bool[] states = null)
-    {
-        if (renderers == null)
-            return 0;
-
-        int count = 0;
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            bool enabled = states != null && i < states.Length
-                ? states[i]
-                : renderers[i] != null && renderers[i].enabled;
-            if (enabled)
-                count++;
-        }
-
-        return count;
     }
 
     static void ApplyPortalSinkVisual(
@@ -946,47 +889,71 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         float tileSize)
     {
         float travelDistance = Mathf.Max(0.01f, tileSize * 0.5f);
+        if (snapshots == null || snapshots.Count == 0)
+            return travelDistance;
 
-        for (int i = 0; snapshots != null && i < snapshots.Count; i++)
+        SpriteRenderer referenceRenderer = null;
+        float maskWidth = 0.01f;
+        float maskHeight = 0.01f;
+        int minSortingOrder = int.MaxValue;
+        int maxSortingOrder = int.MinValue;
+        for (int i = 0; i < snapshots.Count; i++)
         {
             PortalVisualSnapshot snapshot = snapshots[i];
             SpriteRenderer renderer = snapshot.renderer;
             if (renderer == null || renderer.sprite == null)
                 continue;
 
-            var maskObject = new GameObject("Stage34PortalFixedMask")
-            {
-                hideFlags = HideFlags.DontSave
-            };
-            Transform maskTransform = maskObject.transform;
-            // Unlike the ship blockers, the player sprite has transparent
-            // silhouette pixels. A copy of it as mask cuts vertically too.
-            // This solid, wide rectangle keeps the clipping boundary purely
-            // horizontal while the player moves through it.
-            float maskWidth = renderer.bounds.size.x + portalMaskHorizontalPadding * 2f;
-            float maskHeight = Mathf.Max(0.01f, renderer.bounds.size.y);
-            float maskCenterY = portalWorld.y +
-                portalMaskVerticalOffsetTiles * Mathf.Max(0.0001f, tileSize);
-            maskTransform.SetPositionAndRotation(
-                new Vector3(portalWorld.x, maskCenterY, renderer.transform.position.z),
-                Quaternion.identity);
-            maskTransform.localScale = new Vector3(maskWidth, maskHeight, 1f);
+            if (referenceRenderer == null)
+                referenceRenderer = renderer;
 
-            SpriteMask mask = maskObject.AddComponent<SpriteMask>();
-            mask.sprite = GetFixedPortalMaskSprite();
-            mask.alphaCutoff = 0.01f;
-            mask.backSortingLayerID = renderer.sortingLayerID;
-            mask.frontSortingLayerID = renderer.sortingLayerID;
-            mask.backSortingOrder = renderer.sortingOrder;
-            mask.frontSortingOrder = renderer.sortingOrder;
-
-            snapshot.mask = mask;
-            renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+            maskWidth = Mathf.Max(
+                maskWidth,
+                renderer.bounds.size.x + portalMaskHorizontalPadding * 2f);
+            maskHeight = Mathf.Max(maskHeight, renderer.bounds.size.y);
             travelDistance = Mathf.Max(travelDistance, renderer.bounds.size.y);
-            LogPortalVisual(
-                $"Created horizontal fixed mask for '{renderer.name}' at ({portalWorld.x:F3}, {maskCenterY:F3}); verticalOffsetTiles:{portalMaskVerticalOffsetTiles:F2}, size:{maskWidth:F3}x{maskHeight:F3}, travel:{travelDistance:F3}.");
+            minSortingOrder = Mathf.Min(minSortingOrder, renderer.sortingOrder);
+            maxSortingOrder = Mathf.Max(maxSortingOrder, renderer.sortingOrder);
         }
 
+        if (referenceRenderer == null)
+            return travelDistance;
+
+        var maskObject = new GameObject("Stage34PortalFixedMask")
+        {
+            hideFlags = HideFlags.DontSave
+        };
+        float maskCenterY = portalWorld.y +
+            portalMaskVerticalOffsetTiles * Mathf.Max(0.0001f, tileSize);
+        Transform maskTransform = maskObject.transform;
+        maskTransform.SetPositionAndRotation(
+            new Vector3(portalWorld.x, maskCenterY, referenceRenderer.transform.position.z),
+            Quaternion.identity);
+        maskTransform.localScale = new Vector3(maskWidth, maskHeight, 1f);
+
+        SpriteMask mask = maskObject.AddComponent<SpriteMask>();
+        mask.sprite = GetFixedPortalMaskSprite();
+        mask.alphaCutoff = 0.01f;
+        mask.backSortingLayerID = referenceRenderer.sortingLayerID;
+        mask.frontSortingLayerID = referenceRenderer.sortingLayerID;
+        // The source visual may be at order 0 while the player body is at 5.
+        // Cover the full interval so the rotating body is actually masked.
+        mask.backSortingOrder = minSortingOrder;
+        mask.frontSortingOrder = maxSortingOrder;
+
+        for (int i = 0; i < snapshots.Count; i++)
+        {
+            PortalVisualSnapshot snapshot = snapshots[i];
+            SpriteRenderer renderer = snapshot.renderer;
+            if (renderer == null)
+                continue;
+
+            renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+        }
+
+        // A single shared mask avoids intersecting four identical masks when
+        // the directional player renderers rotate during the portal effect.
+        snapshots[0].mask = mask;
         return travelDistance;
     }
 

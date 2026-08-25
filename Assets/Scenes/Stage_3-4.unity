@@ -602,7 +602,6 @@ MonoBehaviour:
   portalExitSeconds: 0.5
   portalMaskHorizontalPadding: 0.25
   portalMaskVerticalOffsetTiles: 2
-  logPortalSinkVisual: 1
   spawnTeleportStars: 1
   teleportStarSprites:
   - {fileID: 695743192020375121, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
