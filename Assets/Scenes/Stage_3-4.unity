@@ -599,6 +599,7 @@ MonoBehaviour:
   portalEntrySeconds: 0.5
   portalTravelSeconds: 0.5
   portalExitSeconds: 0.5
+  portalExitInvulnerabilitySeconds: 1
   portalMaskHorizontalPadding: 0.25
   portalMaskVerticalOffsetTiles: 2
   spawnTeleportStars: 1

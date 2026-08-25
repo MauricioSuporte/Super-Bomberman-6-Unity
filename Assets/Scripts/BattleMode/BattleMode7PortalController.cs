@@ -37,6 +37,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float portalEntrySeconds = 0.5f;
     [SerializeField, Min(0.01f)] private float portalTravelSeconds = 0.5f;
     [SerializeField, Min(0.01f)] private float portalExitSeconds = 0.5f;
+    [SerializeField, Min(0f)] private float portalExitInvulnerabilitySeconds;
     [SerializeField, Min(0f)] private float portalMaskHorizontalPadding = 0.25f;
     [Tooltip("Raises the fixed horizontal mask above the portal tile center. Used by Stage_3-4.")]
     [SerializeField] private float portalMaskVerticalOffsetTiles;
@@ -491,6 +492,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
         TeleportState state = CaptureAndApplyTeleportState(mover);
         activeStates[mover] = state;
+        bool teleportedToDestination = false;
 
         if (usePortalSinkVisual)
             PlayPortalSfx(portalEnterSfx);
@@ -559,6 +561,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                     destination,
                     appearing: true,
                     portalExitSeconds);
+                teleportedToDestination =
+                    mover != null && mover.Rigidbody != null && !mover.IsEndingStage;
                 yield break;
             }
 
@@ -604,6 +608,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
                 if (state.eggQueue != null)
                     state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+
+                teleportedToDestination = true;
             }
 
             SpawnTeleportStarsAlongPath(source, destination, 1f, spawnedStars);
@@ -612,6 +618,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         {
             RestoreTeleportState(mover, state);
             activeStates.Remove(mover);
+            if (teleportedToDestination && mover != null && !mover.IsEndingStage)
+                StartPortalExitInvulnerability(state.healths);
+
             if (comPortalAbility != null)
             {
                 comPortalAbility.LogTeleportCompleted(
@@ -1206,6 +1215,18 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         {
             if (healths[i] != null)
                 healths[i].SetExternalInvulnerability(enabled);
+        }
+    }
+
+    void StartPortalExitInvulnerability(CharacterHealth[] healths)
+    {
+        if (portalExitInvulnerabilitySeconds <= 0f || healths == null)
+            return;
+
+        for (int i = 0; i < healths.Length; i++)
+        {
+            if (healths[i] != null)
+                healths[i].StartTemporaryInvulnerability(portalExitInvulnerabilitySeconds);
         }
     }
 
