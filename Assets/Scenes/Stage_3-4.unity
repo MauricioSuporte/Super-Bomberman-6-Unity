@@ -594,7 +594,6 @@ MonoBehaviour:
   retriggerGraceSeconds: 0.05
   snapToDestinationCenter: 1
   usePortalSinkVisual: 1
-  portalSinkSeconds: 0.1
   invertPortalEntryVisual: 1
   useFixedPortalMaskVisual: 1
   portalEntrySeconds: 0.5

@@ -30,7 +30,6 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     [Header("Portal Sink / Rise")]
     [Tooltip("Uses the Battle Mode 12-style animation: the rider sinks and vanishes from bottom to top before appearing at the exit.")]
     [SerializeField] private bool usePortalSinkVisual;
-    [SerializeField, Min(0.01f)] private float portalSinkSeconds = 0.1f;
     [Tooltip("Makes entry use the inverse vertical reveal direction of the portal exit.")]
     [SerializeField] private bool invertPortalEntryVisual;
     [Tooltip("Uses a fixed SpriteMask like the Stage 3-3 ship blockers. Intended for Stage_3-4 portals.")]

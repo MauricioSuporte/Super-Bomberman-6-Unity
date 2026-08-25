@@ -196,6 +196,10 @@ This file gives repository-specific guidance for AI coding agents working on
   `FindObjectsByType<T>(FindObjectsSortMode)`: use `FindObjectsByType<T>()`,
   or `FindObjectsByType<T>(FindObjectsInactive)` only when inactive objects
   are intentionally required.
+- Before finalizing C# changes, check that every added or retained private
+  field is read by runtime code. Remove obsolete serialized fields from their
+  scene or prefab YAML at the same time, so CS0414 warnings do not conceal
+  genuinely unused configuration.
 - Do not clean unrelated untracked files or recovery scenes unless asked.
 - If a task touches both code and Unity content, mention any scene or prefab
   follow-up that could not be validated from the terminal alone.
