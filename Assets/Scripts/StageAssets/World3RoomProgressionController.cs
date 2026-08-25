@@ -57,6 +57,28 @@ namespace StageAssets
             return null;
         }
 
+        /// <summary>Returns an authored room bound by its inspector name.</summary>
+        public static Collider2D FindRoomBounds(string roomName)
+        {
+            if (string.IsNullOrWhiteSpace(roomName))
+                return null;
+
+            World3RoomProgressionController controller =
+                FindAnyObjectByType<World3RoomProgressionController>();
+
+            if (controller == null || controller.rooms == null)
+                return null;
+
+            for (int i = 0; i < controller.rooms.Length; i++)
+            {
+                Room room = controller.rooms[i];
+                if (room != null && string.Equals(room.name, roomName, StringComparison.OrdinalIgnoreCase))
+                    return room.roomBounds;
+            }
+
+            return null;
+        }
+
         private void Awake()
         {
             ScanRoomCores();
