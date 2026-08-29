@@ -15,11 +15,11 @@ namespace StageAssets
         private const string StageSceneName = "Stage_3-4";
         private const string RoomName = "Room 1";
         private const string SpriteSheetPath = "StageAssets/BigWorm";
+        private const string AttackSfxPath = "Sounds/Worm Attack";
         private const float TelegraphDuration = 1f;
         private const float AttackDuration = 0.5f;
-        private const float AttackPeriod = 2f;
+        private const float AttackPeriod = 10f;
         private const float DamageRadius = 0.3f;
-        private const int DamageMarkerTextureSize = 32;
 
         private static readonly AttackPoint[] AttackPoints =
         {
@@ -56,15 +56,14 @@ namespace StageAssets
         }
 
         private SpriteRenderer spriteRenderer;
-        private SpriteRenderer damageAreaMarker;
         private CircleCollider2D damageAreaCollider;
-        private Texture2D damageAreaTexture;
-        private Sprite damageAreaSprite;
         private Tilemap destructibleTilemap;
         private Collider2D roomBounds;
         private Sprite[] rightSprites;
         private Sprite[] downSprites;
         private Sprite[] upSprites;
+        private AudioSource audioSource;
+        private AudioClip attackSfx;
         private Coroutine attackRoutine;
         private bool activatedForRoomOne;
         private bool loggedMissingRoom;
@@ -106,7 +105,13 @@ namespace StageAssets
             spriteRenderer.sortingOrder = 5;
             spriteRenderer.enabled = false;
 
-            CreateDamageAreaMarker();
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+            attackSfx = Resources.Load<AudioClip>(AttackSfxPath);
+
+            CreateDamageAreaCollider();
 
             CreateSprites();
         }
@@ -120,15 +125,6 @@ namespace StageAssets
 
             attackRoutine = null;
             Hide();
-        }
-
-        private void OnDestroy()
-        {
-            if (damageAreaSprite != null)
-                Destroy(damageAreaSprite);
-
-            if (damageAreaTexture != null)
-                Destroy(damageAreaTexture);
         }
 
         private IEnumerator AttackLoop()
@@ -191,7 +187,7 @@ namespace StageAssets
                 yield break;
             }
 
-            ShowDamageArea(point);
+            PositionDamageArea(point);
 
             float telegraphEndsAt = Time.time + TelegraphDuration;
             int telegraphFrame = 0;
@@ -204,6 +200,9 @@ namespace StageAssets
 
             EnableDamageAreaCollider();
             DamagePlayersOnTargetTile(point);
+            // The supplied effect is longer than the strike animation. Use the
+            // source's clip playback so it can end exactly with the 0.5 s hit.
+            GameAudioSettings.PlaySfxClip(audioSource, attackSfx);
 
             int[] attackSequence = sprites.Length == 5 ? LateralAttackSequence : VerticalAttackSequence;
             float attackFrameDuration = AttackDuration / attackSequence.Length;
@@ -213,6 +212,7 @@ namespace StageAssets
                 yield return new WaitForSeconds(attackFrameDuration);
             }
 
+            audioSource.Stop();
             Hide();
         }
 
@@ -347,56 +347,25 @@ namespace StageAssets
             _ => rightSprites
         };
 
-        private void CreateDamageAreaMarker()
+        private void CreateDamageAreaCollider()
         {
-            damageAreaTexture = new Texture2D(DamageMarkerTextureSize, DamageMarkerTextureSize, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            };
-
-            for (int y = 0; y < DamageMarkerTextureSize; y++)
-            {
-                for (int x = 0; x < DamageMarkerTextureSize; x++)
-                {
-                    float normalizedX = (x + 0.5f) / DamageMarkerTextureSize * 2f - 1f;
-                    float normalizedY = (y + 0.5f) / DamageMarkerTextureSize * 2f - 1f;
-                    damageAreaTexture.SetPixel(x, y,
-                        normalizedX * normalizedX + normalizedY * normalizedY <= 1f ? Color.white : Color.clear);
-                }
-            }
-
-            damageAreaTexture.Apply();
-            damageAreaSprite = Sprite.Create(
-                damageAreaTexture,
-                new Rect(0f, 0f, DamageMarkerTextureSize, DamageMarkerTextureSize),
-                new Vector2(0.5f, 0.5f),
-                DamageMarkerTextureSize / (DamageRadius * 2f));
-
-            GameObject markerObject = new("BigWorm Damage Area Debug");
-            markerObject.transform.SetParent(transform, false);
-            markerObject.tag = "Enemy";
-            markerObject.layer = gameObject.layer;
-            damageAreaMarker = markerObject.AddComponent<SpriteRenderer>();
-            damageAreaMarker.sprite = damageAreaSprite;
-            damageAreaMarker.color = new Color(1f, 0f, 0f, 0.45f);
-            damageAreaMarker.sortingLayerID = spriteRenderer.sortingLayerID;
-            damageAreaMarker.sortingOrder = spriteRenderer.sortingOrder + 1;
-            damageAreaMarker.enabled = false;
-            damageAreaCollider = markerObject.AddComponent<CircleCollider2D>();
+            GameObject areaObject = new("BigWorm Damage Area");
+            areaObject.transform.SetParent(transform, false);
+            areaObject.tag = "Enemy";
+            areaObject.layer = gameObject.layer;
+            damageAreaCollider = areaObject.AddComponent<CircleCollider2D>();
             damageAreaCollider.radius = DamageRadius;
             damageAreaCollider.isTrigger = true;
             damageAreaCollider.enabled = false;
         }
 
-        private void ShowDamageArea(AttackPoint point)
+        private void PositionDamageArea(AttackPoint point)
         {
-            if (damageAreaMarker == null)
+            if (damageAreaCollider == null)
                 return;
 
             Vector2 target = point.TargetTilePosition;
-            damageAreaMarker.transform.position = new Vector3(target.x, target.y, 0f);
-            damageAreaMarker.enabled = true;
+            damageAreaCollider.transform.position = new Vector3(target.x, target.y, 0f);
         }
 
         private void EnableDamageAreaCollider()
@@ -473,9 +442,6 @@ namespace StageAssets
         {
             if (spriteRenderer != null)
                 spriteRenderer.enabled = false;
-
-            if (damageAreaMarker != null)
-                damageAreaMarker.enabled = false;
 
             if (damageAreaCollider != null)
                 damageAreaCollider.enabled = false;
