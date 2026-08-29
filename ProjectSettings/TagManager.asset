@@ -9,6 +9,7 @@ TagManager:
   - BossBomber
   - Water
   - Hole
+  - Enemy
   layers:
   - Default
   - TransparentFX

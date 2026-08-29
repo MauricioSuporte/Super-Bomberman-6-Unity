@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace StageAssets
 {
@@ -17,13 +18,15 @@ namespace StageAssets
         private const float TelegraphDuration = 1f;
         private const float AttackDuration = 0.5f;
         private const float AttackPeriod = 2f;
+        private const float DamageRadius = 0.3f;
+        private const int DamageMarkerTextureSize = 32;
 
         private static readonly AttackPoint[] AttackPoints =
         {
-            new(new Vector2(0.5f, 0.5f), new Vector2(-0.5f, 0.5f), Direction.Left),
-            new(new Vector2(1.5f, 1.5f), new Vector2(1.5f, 2.5f), Direction.Up),
-            new(new Vector2(2.5f, 0.5f), new Vector2(3.5f, 0.5f), Direction.Right),
-            new(new Vector2(1.5f, -0.5f), new Vector2(1.5f, -1.5f), Direction.Down)
+            new(new Vector2(0.5f, 0.5f), new Vector2(-1f, 0f), Direction.Left),
+            new(new Vector2(1.5f, 1.5f), new Vector2(1f, 2f), Direction.Up),
+            new(new Vector2(2.5f, 0.5f), new Vector2(3f, 0f), Direction.Right),
+            new(new Vector2(1.5f, -0.5f), new Vector2(1f, -2f), Direction.Down)
         };
         private static readonly int[] LateralAttackSequence = { 2, 3, 4, 3, 2 };
         private static readonly int[] VerticalAttackSequence = { 2, 3, 2 };
@@ -53,21 +56,21 @@ namespace StageAssets
         }
 
         private SpriteRenderer spriteRenderer;
+        private SpriteRenderer damageAreaMarker;
+        private CircleCollider2D damageAreaCollider;
+        private Texture2D damageAreaTexture;
+        private Sprite damageAreaSprite;
+        private Tilemap destructibleTilemap;
         private Collider2D roomBounds;
         private Sprite[] rightSprites;
         private Sprite[] downSprites;
         private Sprite[] upSprites;
         private Coroutine attackRoutine;
-        private bool roomOccupied;
         private bool activatedForRoomOne;
-        private bool hasLoggedRoomOccupancy;
         private bool loggedMissingRoom;
-        private int playerCandidatesInLastRoomCheck;
-        private Vector2 lastPlayerCandidatePosition;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            Debug.Log($"[BigWorm] Bootstrap iniciado. Cena ativa: '{SceneManager.GetActiveScene().name}'.");
             if (!sceneHooked)
             {
                 SceneManager.sceneLoaded += HandleSceneLoaded;
@@ -79,7 +82,6 @@ namespace StageAssets
 
         private static void HandleSceneLoaded(Scene scene, LoadSceneMode _)
         {
-            Debug.Log($"[BigWorm] Cena carregada: '{scene.name}'.");
             TryCreateForScene(scene);
         }
 
@@ -89,25 +91,24 @@ namespace StageAssets
                 return;
 
             if (FindAnyObjectByType<Stage34BigWormHazard>() != null)
-            {
-                Debug.Log("[BigWorm] Controlador já existe nesta cena.");
                 return;
-            }
 
             GameObject root = new("BigWorm Hazard");
             root.AddComponent<Stage34BigWormHazard>();
-            Debug.Log("[BigWorm] Controlador criado; aguardando os limites da Room 1.");
         }
 
         private void Awake()
         {
+            ConfigureAsEnemy();
+
             spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             spriteRenderer.sortingLayerName = "Default";
             spriteRenderer.sortingOrder = 5;
             spriteRenderer.enabled = false;
 
+            CreateDamageAreaMarker();
+
             CreateSprites();
-            Debug.Log($"[BigWorm] Awake. Sprites: direita={rightSprites?.Length ?? 0}, baixo={downSprites?.Length ?? 0}, cima={upSprites?.Length ?? 0}.");
         }
 
         private void OnEnable() => attackRoutine = StartCoroutine(AttackLoop());
@@ -119,6 +120,15 @@ namespace StageAssets
 
             attackRoutine = null;
             Hide();
+        }
+
+        private void OnDestroy()
+        {
+            if (damageAreaSprite != null)
+                Destroy(damageAreaSprite);
+
+            if (damageAreaTexture != null)
+                Destroy(damageAreaTexture);
         }
 
         private IEnumerator AttackLoop()
@@ -135,19 +145,11 @@ namespace StageAssets
                 }
 
                 bool isOccupied = IsRoomOccupied();
-                if (!hasLoggedRoomOccupancy || isOccupied != roomOccupied)
-                {
-                    roomOccupied = isOccupied;
-                    hasLoggedRoomOccupancy = true;
-                    Debug.Log($"[BigWorm] Room 1 {(roomOccupied ? "ocupada" : "vazia pelo detector")}. " +
-                        $"Jogadores válidos: {playerCandidatesInLastRoomCheck}; última posição: {lastPlayerCandidatePosition}.");
-                }
 
                 if (isOccupied && !activatedForRoomOne)
                 {
                     activatedForRoomOne = true;
                     nextAttackAt = Time.time + AttackPeriod;
-                    Debug.Log("[BigWorm] Primeira entrada na Room 1 confirmada; ataques permanecerão ativos nesta visita à fase.");
                 }
 
                 if (!activatedForRoomOne)
@@ -163,9 +165,12 @@ namespace StageAssets
                     continue;
                 }
 
-                AttackPoint point = AttackPoints[UnityEngine.Random.Range(0, AttackPoints.Length)];
+                if (!TryPickAttackPoint(out AttackPoint point))
+                {
+                    nextAttackAt += AttackPeriod;
+                    continue;
+                }
 
-                Debug.Log($"[BigWorm] Ataque sorteado: {point.Direction} em {point.WorldPosition}; visual em {GetVisualPosition(point)}.");
                 yield return AttackRoutine(point);
                 nextAttackAt += AttackPeriod;
                 if (nextAttackAt < Time.time)
@@ -186,6 +191,8 @@ namespace StageAssets
                 yield break;
             }
 
+            ShowDamageArea(point);
+
             float telegraphEndsAt = Time.time + TelegraphDuration;
             int telegraphFrame = 0;
             while (Time.time < telegraphEndsAt)
@@ -195,6 +202,7 @@ namespace StageAssets
                 yield return new WaitForSeconds(0.1f);
             }
 
+            EnableDamageAreaCollider();
             DamagePlayersOnTargetTile(point);
 
             int[] attackSequence = sprites.Length == 5 ? LateralAttackSequence : VerticalAttackSequence;
@@ -212,31 +220,35 @@ namespace StageAssets
         {
             Vector2 target = point.TargetTilePosition;
             MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
-            int damagedPlayers = 0;
             for (int i = 0; i < players.Length; i++)
             {
                 MovementController player = players[i];
-                if (player == null || player.isDead || !IsPlayer(player))
+                if (player == null)
+                    continue;
+
+                if (player.isDead)
+                    continue;
+
+                if (!IsPlayer(player))
                     continue;
 
                 Vector2 playerPosition = player.Rigidbody != null ? player.Rigidbody.position : player.transform.position;
-                if (Vector2.Distance(playerPosition, target) > 0.45f)
+                Vector2 offsetFromTarget = playerPosition - target;
+                const float positionTolerance = 0.01f;
+                float distanceToTarget = offsetFromTarget.magnitude;
+                if (distanceToTarget > DamageRadius + positionTolerance)
                     continue;
 
-                CharacterHealth playerHealth = player.GetComponent<CharacterHealth>();
+                CharacterHealth playerHealth = player.GetComponent<CharacterHealth>() ?? player.GetComponentInParent<CharacterHealth>();
                 if (playerHealth == null)
                     continue;
 
                 playerHealth.TakeDamage(1);
-                damagedPlayers++;
             }
-
-            Debug.Log($"[BigWorm] Golpe em {target}; jogadores atingidos: {damagedPlayers}.");
         }
 
         private bool IsRoomOccupied()
         {
-            playerCandidatesInLastRoomCheck = 0;
             MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
             for (int i = 0; i < players.Length; i++)
             {
@@ -244,9 +256,7 @@ namespace StageAssets
                 if (player == null || player.isDead || !IsPlayer(player))
                     continue;
 
-                playerCandidatesInLastRoomCheck++;
                 Vector2 position = player.Rigidbody != null ? player.Rigidbody.position : player.transform.position;
-                lastPlayerCandidatePosition = position;
                 if (roomBounds.OverlapPoint(position))
                     return true;
             }
@@ -258,6 +268,68 @@ namespace StageAssets
             controller.CompareTag("Player") ||
             controller.GetComponent<PlayerIdentity>() != null ||
             controller.GetComponentInParent<PlayerIdentity>() != null;
+
+        private bool TryPickAttackPoint(out AttackPoint selectedPoint)
+        {
+            ResolveDestructibleTilemap();
+
+            int availableCount = 0;
+            for (int i = 0; i < AttackPoints.Length; i++)
+            {
+                if (!HasDestructibleTileInDamageArea(AttackPoints[i]))
+                    availableCount++;
+            }
+
+            if (availableCount == 0)
+            {
+                selectedPoint = default;
+                return false;
+            }
+
+            int selectedAvailableIndex = UnityEngine.Random.Range(0, availableCount);
+            for (int i = 0; i < AttackPoints.Length; i++)
+            {
+                AttackPoint candidate = AttackPoints[i];
+                if (HasDestructibleTileInDamageArea(candidate))
+                    continue;
+
+                if (selectedAvailableIndex-- == 0)
+                {
+                    selectedPoint = candidate;
+                    return true;
+                }
+            }
+
+            selectedPoint = default;
+            return false;
+        }
+
+        private bool HasDestructibleTileInDamageArea(AttackPoint point)
+        {
+            if (destructibleTilemap == null)
+                return false;
+
+            Vector3Int cell = destructibleTilemap.WorldToCell(point.TargetTilePosition);
+            return destructibleTilemap.HasTile(cell);
+        }
+
+        private void ResolveDestructibleTilemap()
+        {
+            if (destructibleTilemap != null)
+                return;
+
+            GameManager manager = GameManager.Instance != null ? GameManager.Instance : FindAnyObjectByType<GameManager>();
+            destructibleTilemap = manager != null ? manager.destructibleTilemap : null;
+        }
+
+        private void ConfigureAsEnemy()
+        {
+            gameObject.tag = "Enemy";
+
+            int enemyLayer = LayerMask.NameToLayer("Enemy");
+            if (enemyLayer >= 0)
+                gameObject.layer = enemyLayer;
+        }
 
         private static Vector2 GetVisualPosition(AttackPoint point) => point.Direction switch
         {
@@ -274,6 +346,64 @@ namespace StageAssets
             Direction.Up => upSprites,
             _ => rightSprites
         };
+
+        private void CreateDamageAreaMarker()
+        {
+            damageAreaTexture = new Texture2D(DamageMarkerTextureSize, DamageMarkerTextureSize, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            for (int y = 0; y < DamageMarkerTextureSize; y++)
+            {
+                for (int x = 0; x < DamageMarkerTextureSize; x++)
+                {
+                    float normalizedX = (x + 0.5f) / DamageMarkerTextureSize * 2f - 1f;
+                    float normalizedY = (y + 0.5f) / DamageMarkerTextureSize * 2f - 1f;
+                    damageAreaTexture.SetPixel(x, y,
+                        normalizedX * normalizedX + normalizedY * normalizedY <= 1f ? Color.white : Color.clear);
+                }
+            }
+
+            damageAreaTexture.Apply();
+            damageAreaSprite = Sprite.Create(
+                damageAreaTexture,
+                new Rect(0f, 0f, DamageMarkerTextureSize, DamageMarkerTextureSize),
+                new Vector2(0.5f, 0.5f),
+                DamageMarkerTextureSize / (DamageRadius * 2f));
+
+            GameObject markerObject = new("BigWorm Damage Area Debug");
+            markerObject.transform.SetParent(transform, false);
+            markerObject.tag = "Enemy";
+            markerObject.layer = gameObject.layer;
+            damageAreaMarker = markerObject.AddComponent<SpriteRenderer>();
+            damageAreaMarker.sprite = damageAreaSprite;
+            damageAreaMarker.color = new Color(1f, 0f, 0f, 0.45f);
+            damageAreaMarker.sortingLayerID = spriteRenderer.sortingLayerID;
+            damageAreaMarker.sortingOrder = spriteRenderer.sortingOrder + 1;
+            damageAreaMarker.enabled = false;
+            damageAreaCollider = markerObject.AddComponent<CircleCollider2D>();
+            damageAreaCollider.radius = DamageRadius;
+            damageAreaCollider.isTrigger = true;
+            damageAreaCollider.enabled = false;
+        }
+
+        private void ShowDamageArea(AttackPoint point)
+        {
+            if (damageAreaMarker == null)
+                return;
+
+            Vector2 target = point.TargetTilePosition;
+            damageAreaMarker.transform.position = new Vector3(target.x, target.y, 0f);
+            damageAreaMarker.enabled = true;
+        }
+
+        private void EnableDamageAreaCollider()
+        {
+            if (damageAreaCollider != null)
+                damageAreaCollider.enabled = true;
+        }
 
         private void CreateSprites()
         {
@@ -320,7 +450,6 @@ namespace StageAssets
             }
 
             loggedMissingRoom = false;
-            Debug.Log($"[BigWorm] Room 1 encontrada em {roomBounds.transform.position}; controlador usa posições globais.");
             return true;
         }
 
@@ -344,6 +473,12 @@ namespace StageAssets
         {
             if (spriteRenderer != null)
                 spriteRenderer.enabled = false;
+
+            if (damageAreaMarker != null)
+                damageAreaMarker.enabled = false;
+
+            if (damageAreaCollider != null)
+                damageAreaCollider.enabled = false;
         }
     }
 }
