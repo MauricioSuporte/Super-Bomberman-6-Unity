@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Tilemaps;
 
 namespace StageAssets
 {
@@ -65,9 +64,6 @@ namespace StageAssets
         private bool loggedMissingRoom;
         private int playerCandidatesInLastRoomCheck;
         private Vector2 lastPlayerCandidatePosition;
-        private Tilemap destructibleTilemap;
-        private Tilemap indestructibleTilemap;
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
@@ -167,14 +163,9 @@ namespace StageAssets
                     continue;
                 }
 
-                if (!TryPickAttackPoint(out AttackPoint point))
-                {
-                    Debug.Log($"[BigWorm] Nenhuma direção livre: {DescribeBlockedTargets()}");
-                    nextAttackAt += AttackPeriod;
-                    continue;
-                }
+                AttackPoint point = AttackPoints[UnityEngine.Random.Range(0, AttackPoints.Length)];
 
-                Debug.Log($"[BigWorm] Ataque sorteado: {point.Direction} em {point.WorldPosition}.");
+                Debug.Log($"[BigWorm] Ataque sorteado: {point.Direction} em {point.WorldPosition}; visual em {GetVisualPosition(point)}.");
                 yield return AttackRoutine(point);
                 nextAttackAt += AttackPeriod;
                 if (nextAttackAt < Time.time)
@@ -184,7 +175,7 @@ namespace StageAssets
 
         private IEnumerator AttackRoutine(AttackPoint point)
         {
-            transform.position = point.WorldPosition;
+            transform.position = GetVisualPosition(point);
             spriteRenderer.flipX = point.Direction == Direction.Left;
 
             Sprite[] sprites = GetSprites(point.Direction);
@@ -268,92 +259,14 @@ namespace StageAssets
             controller.GetComponent<PlayerIdentity>() != null ||
             controller.GetComponentInParent<PlayerIdentity>() != null;
 
-        private bool TryPickAttackPoint(out AttackPoint selectedPoint)
+        private static Vector2 GetVisualPosition(AttackPoint point) => point.Direction switch
         {
-            int validAttackCount = 0;
-            for (int i = 0; i < AttackPoints.Length; i++)
-                if (!HasBlockingTile(AttackPoints[i]))
-                    validAttackCount++;
-
-            if (validAttackCount == 0)
-            {
-                selectedPoint = default;
-                return false;
-            }
-
-            int chosenValidAttack = UnityEngine.Random.Range(0, validAttackCount);
-            for (int i = 0; i < AttackPoints.Length; i++)
-            {
-                AttackPoint candidate = AttackPoints[i];
-                if (HasBlockingTile(candidate))
-                    continue;
-
-                if (chosenValidAttack-- == 0)
-                {
-                    selectedPoint = candidate;
-                    return true;
-                }
-            }
-
-            selectedPoint = default;
-            return false;
-        }
-
-        private bool HasBlockingTile(AttackPoint point)
-        {
-            ResolveBlockingTilemaps();
-            Vector2 checkPosition = GetRoundedBlockCheckPosition(point.TargetTilePosition);
-            return HasTileAt(destructibleTilemap, checkPosition) ||
-                   HasTileAt(indestructibleTilemap, checkPosition);
-        }
-
-        private void ResolveBlockingTilemaps()
-        {
-            if (destructibleTilemap != null && indestructibleTilemap != null)
-                return;
-
-            GameManager manager = GameManager.Instance != null ? GameManager.Instance : FindAnyObjectByType<GameManager>();
-            if (manager == null)
-                return;
-
-            destructibleTilemap ??= manager.destructibleTilemap;
-            indestructibleTilemap ??= manager.indestructibleTilemap;
-        }
-
-        private static bool HasTileAt(Tilemap tilemap, Vector2 worldPosition) =>
-            tilemap != null && tilemap.HasTile(tilemap.WorldToCell(worldPosition));
-
-        private static Vector2 GetRoundedBlockCheckPosition(Vector2 targetPosition) => new(
-            Mathf.RoundToInt(targetPosition.x),
-            Mathf.RoundToInt(targetPosition.y));
-
-        private string DescribeBlockedTargets()
-        {
-            ResolveBlockingTilemaps();
-            string description = string.Empty;
-            for (int i = 0; i < AttackPoints.Length; i++)
-            {
-                AttackPoint point = AttackPoints[i];
-                Vector2 checkPosition = GetRoundedBlockCheckPosition(point.TargetTilePosition);
-                string destructible = GetTileNameAt(destructibleTilemap, checkPosition);
-                string indestructible = GetTileNameAt(indestructibleTilemap, checkPosition);
-                description += $"{point.Direction} alvo {point.TargetTilePosition}, checagem {checkPosition} [D:{destructible}, I:{indestructible}]";
-                if (i < AttackPoints.Length - 1)
-                    description += "; ";
-            }
-
-            return description;
-        }
-
-        private static string GetTileNameAt(Tilemap tilemap, Vector2 worldPosition)
-        {
-            if (tilemap == null)
-                return "tilemap nulo";
-
-            Vector3Int cell = tilemap.WorldToCell(worldPosition);
-            TileBase tile = tilemap.GetTile(cell);
-            return tile == null ? $"livre célula {cell}" : $"{tile.name} célula {cell}";
-        }
+            Direction.Up => new Vector2(1f, 1.75f),
+            Direction.Down => new Vector2(1f, -1.5f),
+            Direction.Right => new Vector2(2.72f, 0.1f),
+            Direction.Left => new Vector2(-0.75f, 0.1f),
+            _ => point.WorldPosition
+        };
 
         private Sprite[] GetSprites(Direction direction) => direction switch
         {
