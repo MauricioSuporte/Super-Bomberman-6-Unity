@@ -26,54 +26,6 @@ TextureImporter:
   - first:
       213: 6116422925131291768
     second: Kamestone_7
-  - first:
-      213: 5851025043016867461
-    second: Kamestone_8
-  - first:
-      213: -4164522896476599929
-    second: Kamestone_9
-  - first:
-      213: 6596805723039966091
-    second: Kamestone_10
-  - first:
-      213: 6574436384472833363
-    second: Kamestone_11
-  - first:
-      213: -1323566126856887816
-    second: Kamestone_Down_1
-  - first:
-      213: -5944615367483789181
-    second: Kamestone_Down_2
-  - first:
-      213: -3699317067934756085
-    second: Kamestone_Down_3
-  - first:
-      213: 3273490140047596460
-    second: Kamestone_Down_4
-  - first:
-      213: -1147988350673077736
-    second: Kamestone_Up_1
-  - first:
-      213: 5064321769376112169
-    second: Kamestone_Up_2
-  - first:
-      213: -5290158290182146930
-    second: Kamestone_Up_3
-  - first:
-      213: -6871376279631653331
-    second: Kamestone_Up_4
-  - first:
-      213: -9010334938635462537
-    second: Kamestone_Death
-  - first:
-      213: 2524644413097563729
-    second: Kamestone_Left_1
-  - first:
-      213: -4513158852023273802
-    second: Kamestone_Left_2
-  - first:
-      213: -6824510667242473973
-    second: Kamestone_Left_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -182,11 +134,11 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Kamestone_Down_1
+      name: Kamestone_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 50
+        y: 24
         width: 16
         height: 24
       alignment: 0
@@ -197,18 +149,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8f1a4f3ce9fb1ade0800000000000000
-      internalID: -1323566126856887816
+      spriteID: 24b7b69f1c6fdee70800000000000000
+      internalID: 9146237731233037122
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kamestone_Down_2
+      name: Kamestone_1
       rect:
         serializedVersion: 2
-        x: 19
-        y: 50
+        x: 16
+        y: 24
         width: 16
         height: 24
       alignment: 0
@@ -219,18 +171,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 380fcc6b1db708da0800000000000000
-      internalID: -5944615367483789181
+      spriteID: b6da505b14e6e5080800000000000000
+      internalID: -9196792160554996373
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kamestone_Down_3
+      name: Kamestone_2
       rect:
         serializedVersion: 2
-        x: 38
-        y: 50
+        x: 32
+        y: 24
         width: 16
         height: 24
       alignment: 0
@@ -241,18 +193,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b03953ef9b269acc0800000000000000
-      internalID: -3699317067934756085
+      spriteID: 6ce9f621cc71cbd20800000000000000
+      internalID: 3295535192578432710
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kamestone_Down_4
+      name: Kamestone_3
       rect:
         serializedVersion: 2
-        x: 57
-        y: 50
+        x: 48
+        y: 24
         width: 16
         height: 24
       alignment: 0
@@ -263,127 +215,127 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cabd74d40f5cd6d20800000000000000
-      internalID: 3273490140047596460
+      spriteID: f26100adfa150c300800000000000000
+      internalID: 270305793360795183
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kamestone_Up_1
+      name: Kamestone_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 24
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db09fd0f37301bc90800000000000000
+      internalID: -7155934536417701699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_5
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 24
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d83abf9fc41ebc40800000000000000
+      internalID: 5529880274428115157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_6
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 24
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae025347f6b5f8220800000000000000
+      internalID: 2490309653208309994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_7
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 24
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87c91848e36e1e450800000000000000
+      internalID: 6116422925131291768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_8
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 24
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91b2f47cf30597e48a93341b81496765
+      internalID: 649467210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_9
       rect:
         serializedVersion: 2
         x: 0
-        y: 26
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 81a38d76da68110f0800000000000000
-      internalID: -1147988350673077736
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Kamestone_Up_2
-      rect:
-        serializedVersion: 2
-        x: 19
-        y: 26
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 92ed0fb31d5184640800000000000000
-      internalID: 5064321769376112169
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Kamestone_Up_3
-      rect:
-        serializedVersion: 2
-        x: 38
-        y: 26
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e84fa1440159596b0800000000000000
-      internalID: -5290158290182146930
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Kamestone_Up_4
-      rect:
-        serializedVersion: 2
-        x: 57
-        y: 26
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d2692860ea7f3a0a0800000000000000
-      internalID: -6871376279631653331
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Kamestone_Death
-      rect:
-        serializedVersion: 2
-        x: 79
-        y: 26
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7789753bc1cd4f280800000000000000
-      internalID: -9010334938635462537
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Kamestone_Left_1
-      rect:
-        serializedVersion: 2
-        x: 9
         y: 0
         width: 16
         height: 24
@@ -393,19 +345,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 156dad2b7b6590320800000000000000
-      internalID: 2524644413097563729
+      spriteID: 981053c1e6e5069438ad48a7ea49dcee
+      internalID: -2127017982
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kamestone_Left_2
+      name: Kamestone_10
       rect:
         serializedVersion: 2
-        x: 29
+        x: 16
         y: 0
         width: 16
         height: 24
@@ -415,16 +367,38 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 6b63e329fe90e51c0800000000000000
-      internalID: -4513158852023273802
+      spriteID: a75910eeef96e8c4abecece65c20bfdc
+      internalID: -463434901
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kamestone_Left_3
+      name: Kamestone_11
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5dca5d1666032a742b442846a2ef2460
+      internalID: 1003197199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_12
       rect:
         serializedVersion: 2
         x: 48
@@ -437,10 +411,98 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b06f529b4b77a41a0800000000000000
-      internalID: -6824510667242473973
+      spriteID: c0c4e22d2b9c31b45ab9da82fd7bd02f
+      internalID: -1327642104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_13
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e69c9ff2ba7c85469efa96a635e94df
+      internalID: -1303545468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_14
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f317968e034d4a946b2f0aef3e91f229
+      internalID: -1837905346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_15
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba027c63591d84c43bc2effc80ba6be6
+      internalID: 1821148229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kamestone_16
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 63aec0b895b24d746bc19aa1e0168236
+      internalID: -330273881
       vertices: []
       indices: 
       edges: []
@@ -449,7 +511,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 958063440ec12924b9c9e039ea6a950c
     internalID: 0
     vertices: []
     indices: 
@@ -457,32 +519,27 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Kamestone_0: 9146237731233037122
       Kamestone_1: -9196792160554996373
-      Kamestone_10: 6596805723039966091
-      Kamestone_11: 6574436384472833363
+      Kamestone_10: -463434901
+      Kamestone_11: 1003197199
+      Kamestone_12: -1327642104
+      Kamestone_13: -1303545468
+      Kamestone_14: -1837905346
+      Kamestone_15: 1821148229
+      Kamestone_16: -330273881
       Kamestone_2: 3295535192578432710
       Kamestone_3: 270305793360795183
       Kamestone_4: -7155934536417701699
       Kamestone_5: 5529880274428115157
       Kamestone_6: 2490309653208309994
       Kamestone_7: 6116422925131291768
-      Kamestone_8: 5851025043016867461
-      Kamestone_9: -4164522896476599929
-      Kamestone_Death: -9010334938635462537
-      Kamestone_Down_1: -1323566126856887816
-      Kamestone_Down_2: -5944615367483789181
-      Kamestone_Down_3: -3699317067934756085
-      Kamestone_Down_4: 3273490140047596460
-      Kamestone_Left_1: 2524644413097563729
-      Kamestone_Left_2: -4513158852023273802
-      Kamestone_Left_3: -6824510667242473973
-      Kamestone_Up_1: -1147988350673077736
-      Kamestone_Up_2: 5064321769376112169
-      Kamestone_Up_3: -5290158290182146930
-      Kamestone_Up_4: -6871376279631653331
+      Kamestone_8: 649467210
+      Kamestone_9: -2127017982
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
