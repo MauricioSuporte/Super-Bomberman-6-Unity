@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 4603446442011335577}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -112,7 +112,7 @@ MonoBehaviour:
   - {fileID: 3295535192578432710, guid: f78c1c31736fd324aa61f852e99700ea, type: 3}
   - {fileID: 270305793360795183, guid: f78c1c31736fd324aa61f852e99700ea, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.2
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -152,7 +152,7 @@ Transform:
   m_GameObject: {fileID: 6123040688817987954}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -568,7 +568,7 @@ Transform:
   m_GameObject: {fileID: 6830245239940665423}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -653,7 +653,7 @@ MonoBehaviour:
   - {fileID: 5529880274428115157, guid: f78c1c31736fd324aa61f852e99700ea, type: 3}
   - {fileID: 2490309653208309994, guid: f78c1c31736fd324aa61f852e99700ea, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.2
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -693,7 +693,7 @@ Transform:
   m_GameObject: {fileID: 7365276509064472174}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -778,7 +778,7 @@ MonoBehaviour:
   - {fileID: 1003197199, guid: f78c1c31736fd324aa61f852e99700ea, type: 3}
   - {fileID: -1327642104, guid: f78c1c31736fd324aa61f852e99700ea, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.2
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
