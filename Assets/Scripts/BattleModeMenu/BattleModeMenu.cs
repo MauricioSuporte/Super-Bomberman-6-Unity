@@ -97,6 +97,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         public Outline mountOutline;
         public AnimatedSpriteRenderer mountRenderer;
         public MountedType mountedType = MountedType.None;
+        public readonly List<Image> optionBorderImages = new();
+        public readonly List<AnimatedSpriteRenderer> optionBorderRenderers = new();
         public readonly List<Image> optionImages = new();
         public readonly List<TextMeshProUGUI> optionTexts = new();
     }
@@ -297,6 +299,9 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 itemSelectCellSize = new(150f, 52f);
     [SerializeField] private Vector2 itemSelectIconOffset = new(-42f, 0f);
     [SerializeField] private Vector2 itemSelectIconSize = new(40f, 40f);
+    [SerializeField] private Sprite[] itemSelectBorderSprites = new Sprite[6];
+    [SerializeField, Min(0.01f)] private float itemSelectBorderFrameSeconds = 0.025f;
+    [SerializeField, Min(0.01f)] private float itemSelectBorderSizeMultiplier = 16f / 14f;
     [SerializeField, Min(0.01f)] private float itemSelectRandomEggIconScale = 1.35f;
     [SerializeField] private Vector2 itemSelectAmountOffset = new(36f, 0f);
     [SerializeField] private Vector2 itemSelectAmountSize = new(64f, 36f);
@@ -309,7 +314,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 itemSelectHintSize = new(900f, 120f);
     [SerializeField] private int itemSelectHintFontSize = 24;
     [SerializeField, Min(0f)] private float itemSelectHintLineSpacing = 18f;
-    [SerializeField] private bool logItemSelectHintStyle = true;
     [SerializeField, Min(0)] private int itemSelectMaxAmount = 99;
     [SerializeField] private Vector2 louieSelectRootOffset = Vector2.zero;
     [SerializeField] private Vector2 louieSelectGridOffset = new(0f, 8f);
@@ -534,11 +538,12 @@ public sealed class BattleModeMenu : MonoBehaviour
     private AnimatedSpriteRenderer musicSelectCursorRenderer;
     private RectTransform itemSelectRoot;
     private readonly List<RectTransform> itemSelectCells = new();
+    private readonly List<Image> itemSelectBorderImages = new();
+    private readonly List<AnimatedSpriteRenderer> itemSelectBorderRenderers = new();
     private readonly List<Image> itemSelectIconImages = new();
     private readonly List<TextMeshProUGUI> itemSelectIconLabelTexts = new();
     private readonly List<TextMeshProUGUI> itemSelectAmountTexts = new();
     private TextMeshProUGUI itemSelectHintText;
-    private bool itemSelectHintStyleLogged;
     private RectTransform itemSelectCursorRt;
     private Image itemSelectCursorImage;
     private AnimatedSpriteRenderer itemSelectCursorRenderer;
@@ -3830,6 +3835,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         itemSelectRoot.SetAsLastSibling();
 
         itemSelectCells.Clear();
+        itemSelectBorderImages.Clear();
+        itemSelectBorderRenderers.Clear();
         itemSelectIconImages.Clear();
         itemSelectIconLabelTexts.Clear();
         itemSelectAmountTexts.Clear();
@@ -3856,6 +3863,14 @@ public sealed class BattleModeMenu : MonoBehaviour
         cell.anchorMax = new Vector2(0.5f, 0.5f);
         cell.pivot = new Vector2(0.5f, 0.5f);
         itemSelectCells.Add(cell);
+
+        GameObject borderGo = new($"ItemBorder_{index}", typeof(RectTransform), typeof(Image), typeof(AnimatedSpriteRenderer));
+        borderGo.transform.SetParent(cell, false);
+        Image borderImage = borderGo.GetComponent<Image>();
+        borderImage.preserveAspect = true;
+        borderImage.raycastTarget = false;
+        itemSelectBorderImages.Add(borderImage);
+        itemSelectBorderRenderers.Add(borderGo.GetComponent<AnimatedSpriteRenderer>());
 
         GameObject iconGo = new($"ItemIcon_{index}", typeof(RectTransform), typeof(Image), typeof(Outline));
         iconGo.transform.SetParent(cell, false);
@@ -3961,6 +3976,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             cell.sizeDelta = itemSelectCellSize;
             cell.anchoredPosition = GetItemSelectCellPosition(i, columns, rows);
 
+            UpdateItemSelectBorderVisual(i, i == selectedItemIndex);
+
             if (i < itemSelectIconImages.Count && itemSelectIconImages[i] != null)
             {
                 Image icon = itemSelectIconImages[i];
@@ -4024,7 +4041,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             itemSelectHintText.fontSize = itemSelectHintFontSize;
             itemSelectHintText.lineSpacing = itemSelectHintLineSpacing;
             itemSelectHintText.alignment = TextAlignmentOptions.Center;
-            LogItemSelectHintStyle("UpdateItemSelectVisuals.AfterFinalStyle");
         }
 
         if (itemSelectCursorRt != null)
@@ -4036,37 +4052,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             itemSelectCursorRenderer?.SetExternalBaseLocalPosition(itemSelectCursorRt.localPosition);
             UpdateItemSelectCursorAnimationState();
         }
-    }
-
-    private void LogItemSelectHintStyle(string context)
-    {
-        if (!logItemSelectHintStyle || itemSelectHintStyleLogged || itemSelectHintText == null)
-            return;
-
-        itemSelectHintStyleLogged = true;
-
-        string fontName = itemSelectHintText.font != null ? itemSelectHintText.font.name : "NULL";
-        string materialName = itemSelectHintText.fontMaterial != null ? itemSelectHintText.fontMaterial.name : "NULL";
-        string sharedMaterialName = itemSelectHintText.fontSharedMaterial != null ? itemSelectHintText.fontSharedMaterial.name : "NULL";
-        string leftPanelName = leftPanel != null ? leftPanel.name : "NULL";
-        string leftPanelFontName = leftPanel != null && leftPanel.OptionFontAsset != null ? leftPanel.OptionFontAsset.name : "NULL";
-        string leftPanelMaterialName = leftPanel != null && leftPanel.OptionFontMaterialPreset != null ? leftPanel.OptionFontMaterialPreset.name : "NULL";
-        RectTransform rt = itemSelectHintText.rectTransform;
-
-        Debug.Log(
-            $"[BattleModeMenu][ItemSelectHintStyle] {context} " +
-            $"leftPanel={leftPanelName} leftPanelFont={leftPanelFontName} leftPanelMaterial={leftPanelMaterialName} " +
-            $"font={fontName} fontMaterial={materialName} sharedMaterial={sharedMaterialName} " +
-            $"fontSize={itemSelectHintText.fontSize:0.###} lineSpacing={itemSelectHintText.lineSpacing:0.###} " +
-            $"fontStyle={itemSelectHintText.fontStyle} alignment={itemSelectHintText.alignment} " +
-            $"color={itemSelectHintText.color} faceColor={itemSelectHintText.faceColor} outlineColor={itemSelectHintText.outlineColor} " +
-            $"outlineWidth={itemSelectHintText.outlineWidth:0.###} extraPadding={itemSelectHintText.extraPadding} " +
-            $"wrapping={itemSelectHintText.textWrappingMode} overflow={itemSelectHintText.overflowMode} " +
-            $"currentUiScale={currentUiScale:0.###} rootScale={(itemSelectRoot != null ? itemSelectRoot.localScale.ToString() : "NULL")} " +
-            $"anchorMin={(rt != null ? rt.anchorMin.ToString() : "NULL")} anchorMax={(rt != null ? rt.anchorMax.ToString() : "NULL")} " +
-            $"pivot={(rt != null ? rt.pivot.ToString() : "NULL")} anchoredPosition={(rt != null ? rt.anchoredPosition.ToString() : "NULL")} " +
-            $"sizeDelta={(rt != null ? rt.sizeDelta.ToString() : "NULL")} localScale={(rt != null ? rt.localScale.ToString() : "NULL")}",
-            this);
     }
 
     private Vector2 GetItemSelectCellPosition(int itemIndex, int columns, int rows)
@@ -4083,6 +4068,85 @@ public sealed class BattleModeMenu : MonoBehaviour
         return IsRandomEggEntry(index)
             ? itemSelectIconSize * Mathf.Max(0.01f, itemSelectRandomEggIconScale)
             : itemSelectIconSize;
+    }
+
+    private void UpdateItemSelectBorderVisual(int index, bool isSelected)
+    {
+        if (index < 0 || index >= itemSelectBorderImages.Count)
+            return;
+
+        Image borderImage = itemSelectBorderImages[index];
+        if (borderImage == null)
+            return;
+
+        Sprite[] frames = GetItemSelectBorderAnimationSprites();
+        bool showBorder = CanShowItemSelectBorder(index) && frames.Length > 0;
+        borderImage.gameObject.SetActive(showBorder);
+        if (!showBorder)
+            return;
+
+        RectTransform borderRt = borderImage.rectTransform;
+        borderRt.anchorMin = new Vector2(0.5f, 0.5f);
+        borderRt.anchorMax = new Vector2(0.5f, 0.5f);
+        borderRt.pivot = new Vector2(0.5f, 0.5f);
+        borderRt.anchoredPosition = itemSelectIconOffset;
+        borderRt.sizeDelta = GetItemSelectIconSize(index) * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier);
+        borderImage.color = Color.white;
+
+        if (index >= itemSelectBorderRenderers.Count || itemSelectBorderRenderers[index] == null)
+        {
+            borderImage.sprite = frames[0];
+            return;
+        }
+
+        AnimatedSpriteRenderer borderRenderer = itemSelectBorderRenderers[index];
+        borderRenderer.idleSprite = frames[0];
+        borderRenderer.animationSprite = frames;
+        borderRenderer.animationTime = Mathf.Max(0.01f, itemSelectBorderFrameSeconds);
+        borderRenderer.useSequenceDuration = false;
+        borderRenderer.loop = true;
+        borderRenderer.pingPong = false;
+        borderRenderer.frameOffsets = null;
+        borderRenderer.SetExternalBaseLocalPosition(borderRt.localPosition);
+
+        if (isSelected)
+        {
+            if (borderRenderer.idle)
+                borderRenderer.CurrentFrame = 0;
+
+            borderRenderer.idle = false;
+            borderRenderer.SetFrozen(false);
+            borderRenderer.RefreshFrame();
+            return;
+        }
+
+        borderImage.sprite = frames[0];
+        borderRenderer.idle = true;
+        borderRenderer.SetFrozen(true);
+        borderRenderer.CurrentFrame = 0;
+        borderRenderer.RefreshFrame();
+    }
+
+    private Sprite[] GetItemSelectBorderAnimationSprites()
+    {
+        if (itemSelectBorderSprites == null || itemSelectBorderSprites.Length == 0)
+            return System.Array.Empty<Sprite>();
+
+        for (int i = 0; i < itemSelectBorderSprites.Length; i++)
+        {
+            if (itemSelectBorderSprites[i] == null)
+                return System.Array.Empty<Sprite>();
+        }
+
+        return itemSelectBorderSprites;
+    }
+
+    private bool CanShowItemSelectBorder(int index)
+    {
+        GameManager.BattleModeHiddenDropEntry entry = GetItemSelectDropEntry(index);
+        return entry.Kind == GameManager.BattleModeHiddenDropEntryKind.Item &&
+            entry.ItemType != ItemType.FullFire &&
+            !LouieEggVisualColor.IsLouieEgg(entry.ItemType);
     }
 
     private Sprite GetItemSelectCursorSprite(int index)
@@ -5080,6 +5144,9 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         for (int i = 0; i < GetHandicapOptionColumnCount(); i++)
         {
+            Image border = CreateHandicapImage(row.root, $"HandicapOptionBorder_{rowIndex}_{i}", false);
+            row.optionBorderImages.Add(border);
+            row.optionBorderRenderers.Add(border.gameObject.AddComponent<AnimatedSpriteRenderer>());
             row.optionImages.Add(CreateHandicapImage(row.root, $"HandicapOption_{rowIndex}_{i}", true));
             row.optionTexts.Add(CreateHandicapText(row.root, $"HandicapValue_{rowIndex}_{i}"));
         }
@@ -5217,7 +5284,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             row.playerImage.color = Color.white;
 
             UpdateHandicapMountVisual(row, player);
-            UpdateHandicapOptionVisuals(row, player);
+            UpdateHandicapOptionVisuals(rowIndex, row, player);
         }
 
         if (handicapSelectHintText != null)
@@ -5315,10 +5382,12 @@ public sealed class BattleModeMenu : MonoBehaviour
         return skinSelectMenu.GetBattleModeTeamPreviewSprite(playerId, previewFrame);
     }
 
-    private void UpdateHandicapOptionVisuals(HandicapRowVisual row, SaveData.BattleModeHandicapPlayerSave player)
+    private void UpdateHandicapOptionVisuals(int rowIndex, HandicapRowVisual row, SaveData.BattleModeHandicapPlayerSave player)
     {
         for (int i = 0; i < row.optionImages.Count; i++)
         {
+            UpdateHandicapOptionBorderVisual(rowIndex, row, i, rowIndex == selectedHandicapRow && selectedHandicapColumn == i + 1);
+
             Image image = row.optionImages[i];
             TextMeshProUGUI text = row.optionTexts[i];
             RectTransform imageRt = image.rectTransform;
@@ -5343,6 +5412,63 @@ public sealed class BattleModeMenu : MonoBehaviour
             text.alignment = TextAlignmentOptions.Center;
             ApplySpecificSettingsTextStyle(text);
         }
+    }
+
+    private void UpdateHandicapOptionBorderVisual(int rowIndex, HandicapRowVisual row, int optionIndex, bool isSelected)
+    {
+        if (row == null || optionIndex < 0 || optionIndex >= row.optionBorderImages.Count)
+            return;
+
+        Image borderImage = row.optionBorderImages[optionIndex];
+        if (borderImage == null)
+            return;
+
+        Sprite[] frames = GetItemSelectBorderAnimationSprites();
+        bool showBorder = optionIndex != 8 && frames.Length > 0;
+        borderImage.gameObject.SetActive(showBorder);
+        if (!showBorder)
+            return;
+
+        RectTransform borderRt = borderImage.rectTransform;
+        borderRt.anchorMin = new Vector2(0.5f, 0.5f);
+        borderRt.anchorMax = new Vector2(0.5f, 0.5f);
+        borderRt.pivot = new Vector2(0.5f, 0.5f);
+        borderRt.anchoredPosition = GetHandicapOptionPosition(optionIndex);
+        borderRt.sizeDelta = handicapSelectOptionIconSize * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier);
+        borderImage.color = Color.white;
+
+        if (optionIndex >= row.optionBorderRenderers.Count || row.optionBorderRenderers[optionIndex] == null)
+        {
+            borderImage.sprite = frames[0];
+            return;
+        }
+
+        AnimatedSpriteRenderer borderRenderer = row.optionBorderRenderers[optionIndex];
+        borderRenderer.idleSprite = frames[0];
+        borderRenderer.animationSprite = frames;
+        borderRenderer.animationTime = Mathf.Max(0.01f, itemSelectBorderFrameSeconds);
+        borderRenderer.useSequenceDuration = false;
+        borderRenderer.loop = true;
+        borderRenderer.pingPong = false;
+        borderRenderer.frameOffsets = null;
+        borderRenderer.SetExternalBaseLocalPosition(borderRt.localPosition);
+
+        if (isSelected)
+        {
+            if (borderRenderer.idle)
+                borderRenderer.CurrentFrame = 0;
+
+            borderRenderer.idle = false;
+            borderRenderer.SetFrozen(false);
+            borderRenderer.RefreshFrame();
+            return;
+        }
+
+        borderImage.sprite = frames[0];
+        borderRenderer.idle = true;
+        borderRenderer.SetFrozen(true);
+        borderRenderer.CurrentFrame = 0;
+        borderRenderer.RefreshFrame();
     }
 
     private Sprite GetHandicapOptionSprite(int optionIndex, SaveData.BattleModeHandicapPlayerSave player)
