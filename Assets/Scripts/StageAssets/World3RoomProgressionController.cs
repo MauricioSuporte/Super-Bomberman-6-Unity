@@ -12,10 +12,12 @@ namespace StageAssets
         private sealed class Room
         {
             public string name = "Room";
-            [Tooltip("This single Room Bounds collider defines both player presence and which CoreMechanisms belong to the room.")]
+            [Tooltip("Defines player presence and is the fallback for CoreMechanisms when no core roots are assigned.")]
             public Collider2D roomBounds;
             [Tooltip("Optional roots. Leave empty to automatically use every enemy inside Player Area.")]
             public GameObject[] enemyRoots;
+            [Tooltip("Optional roots that own this room's CoreMechanisms. Use these when the room bounds are only for player presence.")]
+            public GameObject[] coreRoots;
             [Header("Release after every core in this room is destroyed")]
             public World3BambooExitBlocker bambooToOpen;
             public World3GateOpenedSequenceController bubbleChipToRelease;
@@ -81,9 +83,14 @@ namespace StageAssets
 
         private void Awake()
         {
-            ScanRoomCores();
             CacheEnemies();
             RefreshEnemyRooms();
+        }
+
+        private void Start()
+        {
+            Physics2D.SyncTransforms();
+            ScanRoomCores();
         }
 
         private void OnEnable()
@@ -135,7 +142,7 @@ namespace StageAssets
 
                 foreach (Room room in rooms)
                 {
-                    if (room != null && room.roomBounds != null && room.roomBounds.OverlapPoint(core.transform.position))
+                    if (IsCoreInRoom(core, room))
                         room.remainingSceneCores.Add(core);
                 }
             }
@@ -149,7 +156,10 @@ namespace StageAssets
 
             foreach (Room room in rooms)
             {
-                if (room == null || room.released || !room.remainingCores.Remove(cell))
+                if (room == null || room.released)
+                    continue;
+
+                if (!room.remainingCores.Remove(cell))
                     continue;
 
                 if (room.remainingCores.Count == 0 && room.remainingSceneCores.Count == 0)
@@ -164,7 +174,10 @@ namespace StageAssets
 
             foreach (Room room in rooms)
             {
-                if (room == null || room.released || !room.remainingSceneCores.Remove(core))
+                if (room == null || room.released)
+                    continue;
+
+                if (!room.remainingSceneCores.Remove(core))
                     continue;
 
                 if (room.remainingSceneCores.Count == 0 && room.remainingCores.Count == 0)
@@ -257,6 +270,26 @@ namespace StageAssets
         {
             return tile != null && !string.IsNullOrWhiteSpace(tile.name) &&
                    tile.name.IndexOf("CoreMechanism", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsCoreInRoom(CoreMechanismsDestructible core, Room room)
+        {
+            if (core == null || room == null)
+                return false;
+
+            if (room.coreRoots != null && room.coreRoots.Length > 0)
+            {
+                for (int i = 0; i < room.coreRoots.Length; i++)
+                {
+                    GameObject root = room.coreRoots[i];
+                    if (root != null && core.transform.IsChildOf(root.transform))
+                        return true;
+                }
+
+                return false;
+            }
+
+            return room.roomBounds != null && room.roomBounds.OverlapPoint(core.transform.position);
         }
 
     }
