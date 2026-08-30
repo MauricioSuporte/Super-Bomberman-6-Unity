@@ -14,84 +14,6 @@ TextureImporter:
   - first:
       213: -623400199783889189
     second: RockunSB3_3
-  - first:
-      213: 7060256817127283646
-    second: RockunSB3_4
-  - first:
-      213: 2250098162508433174
-    second: RockunSB3_5
-  - first:
-      213: -3411683923841824333
-    second: RockunSB3_6
-  - first:
-      213: 1195657801572836247
-    second: RockunSB3_7
-  - first:
-      213: 7753289410945450140
-    second: RockunSB3_8
-  - first:
-      213: -1820924128106253708
-    second: RockunSB3_9
-  - first:
-      213: -5899592604334789549
-    second: RockunSB3_10
-  - first:
-      213: 7897014952554810856
-    second: RockunSB3_11
-  - first:
-      213: -2624271231743433233
-    second: RockunSB3_12
-  - first:
-      213: 9210134579292803323
-    second: RockunSB3_13
-  - first:
-      213: -8902209395798578726
-    second: RockunSB3_14
-  - first:
-      213: -6741159547442142113
-    second: RockunSB3_Ability_1
-  - first:
-      213: 5673760261171375494
-    second: RockunSB3_Ability_2
-  - first:
-      213: 2862282275038164789
-    second: RockunSB3_Ability_3
-  - first:
-      213: -8778165002043497949
-    second: RockunSB3_Ability_4
-  - first:
-      213: -4404828524592360477
-    second: RockunSB3_Ability_5
-  - first:
-      213: 1126829814242186408
-    second: RockunSB3_Down_1
-  - first:
-      213: -5648089409458826464
-    second: RockunSB3_Down_2
-  - first:
-      213: 8109988403771230702
-    second: RockunSB3_Down_3
-  - first:
-      213: 7139532121637940630
-    second: RockunSB3_Right_1
-  - first:
-      213: 2282280916328136796
-    second: RockunSB3_Right_2
-  - first:
-      213: 8351012666373671696
-    second: RockunSB3_Right_3
-  - first:
-      213: 7564029131977768252
-    second: RockunSB3_Death
-  - first:
-      213: 7653230948469647082
-    second: RockunSB3_Up_1
-  - first:
-      213: -25940564860563772
-    second: RockunSB3_Up_2
-  - first:
-      213: -7885480116840495787
-    second: RockunSB3_Up_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -200,13 +122,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: RockunSB3_Ability_1
+      name: RockunSB3_0
       rect:
         serializedVersion: 2
-        x: 1
-        y: 80
+        x: 0
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -215,20 +137,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f546a789b179272a0800000000000000
-      internalID: -6741159547442142113
+      spriteID: 34959f17a0b0e1900800000000000000
+      internalID: 656974735132416323
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Ability_2
+      name: RockunSB3_1
       rect:
         serializedVersion: 2
-        x: 20
-        y: 80
+        x: 16
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -237,20 +159,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 68de8db85ee3dbe40800000000000000
-      internalID: 5673760261171375494
+      spriteID: d9fdce2b2e075a2c0800000000000000
+      internalID: -4421003340227485795
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Ability_3
+      name: RockunSB3_2
       rect:
         serializedVersion: 2
-        x: 39
-        y: 80
+        x: 32
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -259,20 +181,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 537fb8a609ed8b720800000000000000
-      internalID: 2862282275038164789
+      spriteID: 5692b18c45bbfd4a0800000000000000
+      internalID: -6566323758874023579
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Ability_4
+      name: RockunSB3_3
       rect:
         serializedVersion: 2
-        x: 58
-        y: 80
+        x: 48
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -281,250 +203,668 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3226e697071bd2680800000000000000
-      internalID: -8778165002043497949
+      spriteID: bd649fa32dc3957f0800000000000000
+      internalID: -623400199783889189
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Ability_5
+      name: RockunSB3_4
       rect:
         serializedVersion: 2
-        x: 77
-        y: 80
+        x: 64
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 3e31a2f6bc7eed2c0800000000000000
-      internalID: -4404828524592360477
+      spriteID: aecb7a8ae8efda04abd85c9ea5e2ab9e
+      internalID: 1657725780
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Down_1
+      name: RockunSB3_5
       rect:
         serializedVersion: 2
-        x: 5
-        y: 52
+        x: 80
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8a49930febd43af00800000000000000
-      internalID: 1126829814242186408
+      spriteID: a96c7ffa6023ddb4da54f10d7bc6e176
+      internalID: -1981575838
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Down_2
+      name: RockunSB3_6
       rect:
         serializedVersion: 2
-        x: 24
-        y: 52
+        x: 96
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 0239f816b94fd91b0800000000000000
-      internalID: -5648089409458826464
+      spriteID: 10f624921ea12bf4bb6302963b9505d4
+      internalID: -678811096
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Down_3
+      name: RockunSB3_7
       rect:
         serializedVersion: 2
-        x: 43
-        y: 52
+        x: 112
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: ee942531c777c8070800000000000000
-      internalID: 8109988403771230702
+      spriteID: 232baf268252c6143b3b58b9fffb5251
+      internalID: -105878134
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Right_1
+      name: RockunSB3_8
       rect:
         serializedVersion: 2
-        x: 5
-        y: 26
+        x: 128
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 69d68b443a6b41360800000000000000
-      internalID: 7139532121637940630
+      spriteID: 032f05253e22a764cb892f191b7de138
+      internalID: -1997304066
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Right_2
+      name: RockunSB3_9
       rect:
         serializedVersion: 2
-        x: 24
-        y: 26
+        x: 144
+        y: 66
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c50446fb66a4caf10800000000000000
-      internalID: 2282280916328136796
+      spriteID: 769fad7052c08b84e9335898dce182b5
+      internalID: 1961779061
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Right_3
+      name: RockunSB3_10
       rect:
         serializedVersion: 2
-        x: 43
-        y: 26
+        x: 0
+        y: 44
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 01b8df546c1c4e370800000000000000
-      internalID: 8351012666373671696
+      spriteID: bd379d68996f25c45889fc821be3c459
+      internalID: 766918014
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Death
+      name: RockunSB3_11
       rect:
         serializedVersion: 2
-        x: 71
-        y: 26
+        x: 16
+        y: 44
         width: 16
-        height: 25
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c3dbd3a6b64d8f860800000000000000
-      internalID: 7564029131977768252
+      spriteID: 63191a0fa8a1aec4da7a413203a83a87
+      internalID: 817157317
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Up_1
+      name: RockunSB3_12
       rect:
         serializedVersion: 2
-        x: 6
+        x: 32
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7fd60bceaf1c97346a9e0d655e688aff
+      internalID: -103442886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_13
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c62587c9388e4db4d97d196533008263
+      internalID: 158526501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_14
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ca8d39612c5e27641bc1e59d5fa997c0
+      internalID: -294822498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_15
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d8ca4defb5d234446b41c2171fe2cb63
+      internalID: 1085058621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_16
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f2c87c5089229949aa41c59f94ce979
+      internalID: 1062178800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_17
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb4a9bdb6dfc4f94bbbd46ad518d3e4e
+      internalID: 328501786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_18
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df3e5ca180ce03c40821ac8be0167321
+      internalID: -1469109257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_19
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 44
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 002ffe675df2e714abbe0b490faeb996
+      internalID: -2045409633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eec42ccb830edbc4481ddc183bdb57d8
+      internalID: -1819103463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_21
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43c65c8fb51e7574a805c2cc4ab262a7
+      internalID: 637771137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_22
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38b53022047dd37499fafcdb312b0d32
+      internalID: -208015959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_23
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5bf16a8007ffaf74d923cf785ce70603
+      internalID: 924157269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_24
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b5ced7f90f527440844318b1e4a430a
+      internalID: -859835750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_25
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ed0dc3dead219524f9f8844d8218e16e
+      internalID: 490237823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_26
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1efb39a7d19685d4e82b89534f6e9eda
+      internalID: -798519214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_27
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 529d63fda0b14924cbdb2b4642c3ff13
+      internalID: -138099821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_28
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ecaed5b6d5bae0a46a15d8bd3b554fcd
+      internalID: 586992454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_29
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 22
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f6ed360fe6acf7e47b2b12aca7399a79
+      internalID: 592323132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_30
+      rect:
+        serializedVersion: 2
+        x: 0
         y: 0
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: ae62f83cffcb53a60800000000000000
-      internalID: 7653230948469647082
+      spriteID: 48e6a07e27ecaf048a1311fe662b2310
+      internalID: -1440287480
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Up_2
+      name: RockunSB3_31
       rect:
         serializedVersion: 2
-        x: 25
+        x: 16
         y: 0
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 4ce86369137d3aff0800000000000000
-      internalID: -25940564860563772
+      spriteID: ea133504d08d54a4bbee6eb420834fed
+      internalID: -50686250
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: RockunSB3_Up_3
+      name: RockunSB3_32
       rect:
         serializedVersion: 2
-        x: 44
+        x: 32
         y: 0
         width: 16
-        height: 24
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 5550150ec95219290800000000000000
-      internalID: -7885480116840495787
+      spriteID: ce272a3c75e958a48bfba57942d8925e
+      internalID: 971053583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RockunSB3_33
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43060a1891e757248b77ecd4ddd6cc31
+      internalID: -255846288
       vertices: []
       indices: 
       edges: []
@@ -533,7 +873,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: e947a822eda79a3428fdef359668f4f8
+    spriteID: adfd9a4fe31dd844585a63d1816528e4
     internalID: 0
     vertices: []
     indices: 
@@ -541,38 +881,44 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":22.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       RockunSB3_0: 656974735132416323
       RockunSB3_1: -4421003340227485795
-      RockunSB3_10: -5899592604334789549
-      RockunSB3_11: 7897014952554810856
-      RockunSB3_12: -2624271231743433233
-      RockunSB3_13: 9210134579292803323
-      RockunSB3_14: -8902209395798578726
+      RockunSB3_10: 766918014
+      RockunSB3_11: 817157317
+      RockunSB3_12: -103442886
+      RockunSB3_13: 158526501
+      RockunSB3_14: -294822498
+      RockunSB3_15: 1085058621
+      RockunSB3_16: 1062178800
+      RockunSB3_17: 328501786
+      RockunSB3_18: -1469109257
+      RockunSB3_19: -2045409633
       RockunSB3_2: -6566323758874023579
+      RockunSB3_20: -1819103463
+      RockunSB3_21: 637771137
+      RockunSB3_22: -208015959
+      RockunSB3_23: 924157269
+      RockunSB3_24: -859835750
+      RockunSB3_25: 490237823
+      RockunSB3_26: -798519214
+      RockunSB3_27: -138099821
+      RockunSB3_28: 586992454
+      RockunSB3_29: 592323132
       RockunSB3_3: -623400199783889189
-      RockunSB3_4: 7060256817127283646
-      RockunSB3_5: 2250098162508433174
-      RockunSB3_6: -3411683923841824333
-      RockunSB3_7: 1195657801572836247
-      RockunSB3_8: 7753289410945450140
-      RockunSB3_9: -1820924128106253708
-      RockunSB3_Ability_1: -6741159547442142113
-      RockunSB3_Ability_2: 5673760261171375494
-      RockunSB3_Ability_3: 2862282275038164789
-      RockunSB3_Ability_4: -8778165002043497949
-      RockunSB3_Ability_5: -4404828524592360477
-      RockunSB3_Death: 7564029131977768252
-      RockunSB3_Down_1: 1126829814242186408
-      RockunSB3_Down_2: -5648089409458826464
-      RockunSB3_Down_3: 8109988403771230702
-      RockunSB3_Right_1: 7139532121637940630
-      RockunSB3_Right_2: 2282280916328136796
-      RockunSB3_Right_3: 8351012666373671696
-      RockunSB3_Up_1: 7653230948469647082
-      RockunSB3_Up_2: -25940564860563772
-      RockunSB3_Up_3: -7885480116840495787
+      RockunSB3_30: -1440287480
+      RockunSB3_31: -50686250
+      RockunSB3_32: 971053583
+      RockunSB3_33: -255846288
+      RockunSB3_4: 1657725780
+      RockunSB3_5: -1981575838
+      RockunSB3_6: -678811096
+      RockunSB3_7: -105878134
+      RockunSB3_8: -1997304066
+      RockunSB3_9: 1961779061
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
