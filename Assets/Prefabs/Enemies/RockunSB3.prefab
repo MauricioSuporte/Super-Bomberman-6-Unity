@@ -383,7 +383,7 @@ MonoBehaviour:
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 1
-  sequenceDuration: 0.4
+  sequenceDuration: 0.8
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
@@ -512,7 +512,7 @@ MonoBehaviour:
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 1
-  sequenceDuration: 0.4
+  sequenceDuration: 0.8
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
@@ -929,7 +929,7 @@ MonoBehaviour:
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 1
-  sequenceDuration: 0.4
+  sequenceDuration: 0.8
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
