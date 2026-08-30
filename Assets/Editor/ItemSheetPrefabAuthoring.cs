@@ -52,7 +52,7 @@ public static class ItemSheetPrefabAuthoring
         new("Assets/Resources/Items/BombPunch.prefab", "BombPunch", "BombPunch", 40, 3),
         new("Assets/Resources/Items/ControlBomb.prefab", "ControlBomb", "ControlBomb", 37, 1),
         new("Assets/Resources/Items/DestructiblePass.prefab", "DestructiblePass", "DestructiblePass", 32, 1),
-        new("Assets/Resources/Items/FullFire.prefab", "FullFire", "FullFire", 32, 5),
+        new("Assets/Resources/Items/FullFire.prefab", "FullFire", "FullFire", 32, 5, false),
         new("Assets/Resources/Items/Heart.prefab", "Heart", "Heart", 33, 1),
         new("Assets/Resources/Items/InvincibleSuit.prefab", "InvincibleSuit", "InvincibleSuit", 36, 1),
         new("Assets/Resources/Items/MagnetBomb.prefab", "MagnetBomb", "MagnetBomb", 38, 2),
@@ -95,14 +95,16 @@ public static class ItemSheetPrefabAuthoring
     private static bool ApplyItemIconIfNeeded(ItemIconDefinition item)
     {
         Sprite icon = LoadSprite($"{item.spriteName}Icon");
-        Sprite[] borderFrames = Enumerable.Range(32, 6)
-            .Select(borderColumn => LoadSprite($"ItemBorder{borderColumn - 31}"))
-            .ToArray();
+        Sprite[] borderFrames = item.usesAnimatedBorder
+            ? Enumerable.Range(32, 6)
+                .Select(borderColumn => LoadSprite($"ItemBorder{borderColumn - 31}"))
+                .ToArray()
+            : null;
 
-        if (icon == null || borderFrames.Any(sprite => sprite == null))
+        if (icon == null || (item.usesAnimatedBorder && borderFrames.Any(sprite => sprite == null)))
             throw new InvalidOperationException($"{item.displayName} icon or border sprite cells could not be loaded from Itens.png.");
 
-        if (IsItemIconConfigured(item.prefabPath, icon, borderFrames))
+        if (IsItemIconConfigured(item, icon, borderFrames))
             return false;
 
         GameObject prefabRoot = PrefabUtility.LoadPrefabContents(item.prefabPath);
@@ -120,41 +122,49 @@ public static class ItemSheetPrefabAuthoring
             iconSpriteRenderer.sprite = icon;
 
             Transform borderTransform = prefabRoot.transform.Find("BorderAnimation");
-            GameObject borderObject;
-            if (borderTransform == null)
+            if (!item.usesAnimatedBorder)
             {
-                borderObject = new GameObject("BorderAnimation");
-                borderObject.transform.SetParent(prefabRoot.transform, false);
+                if (borderTransform != null)
+                    UnityEngine.Object.DestroyImmediate(borderTransform.gameObject);
             }
             else
             {
-                borderObject = borderTransform.gameObject;
+                GameObject borderObject;
+                if (borderTransform == null)
+                {
+                    borderObject = new GameObject("BorderAnimation");
+                    borderObject.transform.SetParent(prefabRoot.transform, false);
+                }
+                else
+                {
+                    borderObject = borderTransform.gameObject;
+                }
+
+                borderObject.layer = prefabRoot.layer;
+                borderObject.transform.localPosition = Vector3.zero;
+                borderObject.transform.localRotation = Quaternion.identity;
+                borderObject.transform.localScale = Vector3.one;
+
+                SpriteRenderer borderSpriteRenderer = borderObject.GetComponent<SpriteRenderer>();
+                if (borderSpriteRenderer == null)
+                    borderSpriteRenderer = borderObject.AddComponent<SpriteRenderer>();
+
+                borderSpriteRenderer.sprite = borderFrames[0];
+                borderSpriteRenderer.sortingLayerID = iconSpriteRenderer.sortingLayerID;
+                borderSpriteRenderer.sortingOrder = iconSpriteRenderer.sortingOrder - 1;
+
+                AnimatedSpriteRenderer borderRenderer = borderObject.GetComponent<AnimatedSpriteRenderer>();
+                if (borderRenderer == null)
+                    borderRenderer = borderObject.AddComponent<AnimatedSpriteRenderer>();
+
+                borderRenderer.idleSprite = borderFrames[0];
+                borderRenderer.animationSprite = borderFrames;
+                borderRenderer.animationTime = ItemBorderFrameSeconds;
+                borderRenderer.useSequenceDuration = false;
+                borderRenderer.loop = true;
+                borderRenderer.idle = false;
+                borderRenderer.pingPong = false;
             }
-
-            borderObject.layer = prefabRoot.layer;
-            borderObject.transform.localPosition = Vector3.zero;
-            borderObject.transform.localRotation = Quaternion.identity;
-            borderObject.transform.localScale = Vector3.one;
-
-            SpriteRenderer borderSpriteRenderer = borderObject.GetComponent<SpriteRenderer>();
-            if (borderSpriteRenderer == null)
-                borderSpriteRenderer = borderObject.AddComponent<SpriteRenderer>();
-
-            borderSpriteRenderer.sprite = borderFrames[0];
-            borderSpriteRenderer.sortingLayerID = iconSpriteRenderer.sortingLayerID;
-            borderSpriteRenderer.sortingOrder = iconSpriteRenderer.sortingOrder - 1;
-
-            AnimatedSpriteRenderer borderRenderer = borderObject.GetComponent<AnimatedSpriteRenderer>();
-            if (borderRenderer == null)
-                borderRenderer = borderObject.AddComponent<AnimatedSpriteRenderer>();
-
-            borderRenderer.idleSprite = borderFrames[0];
-            borderRenderer.animationSprite = borderFrames;
-            borderRenderer.animationTime = ItemBorderFrameSeconds;
-            borderRenderer.useSequenceDuration = false;
-            borderRenderer.loop = true;
-            borderRenderer.idle = false;
-            borderRenderer.pingPong = false;
 
             PrefabUtility.SaveAsPrefabAsset(prefabRoot, item.prefabPath);
         }
@@ -163,7 +173,10 @@ public static class ItemSheetPrefabAuthoring
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        Debug.Log($"[ItemSheetPrefabAuthoring] {item.displayName}.prefab now uses the centered 14x14 icon at ({item.column},{item.row}) and six border frames at (32-37,8).");
+        string borderDescription = item.usesAnimatedBorder
+            ? " and six border frames at (32-37,8)"
+            : " without an animated border";
+        Debug.Log($"[ItemSheetPrefabAuthoring] {item.displayName}.prefab now uses the centered 14x14 icon at ({item.column},{item.row}){borderDescription}.");
         return true;
     }
 
@@ -567,26 +580,35 @@ public static class ItemSheetPrefabAuthoring
                HasMatchingFrames(renderer.animationSprite, expectedFrames);
     }
 
-    private static bool IsItemIconConfigured(string prefabPath, Sprite icon, Sprite[] borderFrames)
+    private static bool IsItemIconConfigured(ItemIconDefinition item, Sprite icon, Sprite[] borderFrames)
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(item.prefabPath);
         if (prefab == null)
             return false;
 
         AnimatedSpriteRenderer iconRenderer = prefab.GetComponent<AnimatedSpriteRenderer>();
         SpriteRenderer iconSpriteRenderer = prefab.GetComponent<SpriteRenderer>();
         Transform borderTransform = prefab.transform.Find("BorderAnimation");
-        if (iconRenderer == null || iconSpriteRenderer == null || borderTransform == null)
+        if (iconRenderer == null || iconSpriteRenderer == null)
+            return false;
+
+        bool isIconConfigured = iconRenderer.idle &&
+                                iconRenderer.loop &&
+                                iconRenderer.idleSprite == icon &&
+                                HasMatchingFrames(iconRenderer.animationSprite, new[] { icon }) &&
+                                iconSpriteRenderer.sprite == icon;
+        if (!isIconConfigured)
+            return false;
+
+        if (!item.usesAnimatedBorder)
+            return borderTransform == null;
+
+        if (borderTransform == null)
             return false;
 
         AnimatedSpriteRenderer borderRenderer = borderTransform.GetComponent<AnimatedSpriteRenderer>();
         SpriteRenderer borderSpriteRenderer = borderTransform.GetComponent<SpriteRenderer>();
-        return iconRenderer.idle &&
-               iconRenderer.loop &&
-               iconRenderer.idleSprite == icon &&
-               HasMatchingFrames(iconRenderer.animationSprite, new[] { icon }) &&
-               iconSpriteRenderer.sprite == icon &&
-               borderRenderer != null &&
+        return borderRenderer != null &&
                borderSpriteRenderer != null &&
                !borderRenderer.idle &&
                borderRenderer.loop &&
@@ -613,14 +635,16 @@ public static class ItemSheetPrefabAuthoring
         public readonly string displayName;
         public readonly int column;
         public readonly int row;
+        public readonly bool usesAnimatedBorder;
 
-        public ItemIconDefinition(string prefabPath, string spriteName, string displayName, int column, int row)
+        public ItemIconDefinition(string prefabPath, string spriteName, string displayName, int column, int row, bool usesAnimatedBorder = true)
         {
             this.prefabPath = prefabPath;
             this.spriteName = spriteName;
             this.displayName = displayName;
             this.column = column;
             this.row = row;
+            this.usesAnimatedBorder = usesAnimatedBorder;
         }
     }
 
