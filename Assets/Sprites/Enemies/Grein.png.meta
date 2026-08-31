@@ -29,45 +29,6 @@ TextureImporter:
   - first:
       213: -9091299713877703368
     second: Grein_8
-  - first:
-      213: 1786243749837350929
-    second: Grein_9
-  - first:
-      213: -1817098493833256286
-    second: Grein_10
-  - first:
-      213: 6751613841686954754
-    second: Grein_Walk_1
-  - first:
-      213: 5194209636924426330
-    second: Grein_Walk_2
-  - first:
-      213: -4040372167455054897
-    second: Grein_Walk_3
-  - first:
-      213: -8559081929612304569
-    second: Grein_Walk_4
-  - first:
-      213: -8987081383843517840
-    second: Grein_Death
-  - first:
-      213: 8625180337223591018
-    second: Grein_Fire_1
-  - first:
-      213: -8743679886065165411
-    second: Grein_Fire_2
-  - first:
-      213: -1877682381834256383
-    second: Grein_Fire_3
-  - first:
-      213: 2440697746983432388
-    second: Grein_Fire_4
-  - first:
-      213: -7331977676424671746
-    second: Grein_Fire_5
-  - first:
-      213: 7250037194234792423
-    second: Grein_Fire_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -176,123 +137,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Grein_Walk_1
-      rect:
-        serializedVersion: 2
-        x: 4
-        y: 23
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 2038c56740d82bd50800000000000000
-      internalID: 6751613841686954754
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Grein_Walk_2
-      rect:
-        serializedVersion: 2
-        x: 23
-        y: 23
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a588ac9052a851840800000000000000
-      internalID: 5194209636924426330
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Grein_Walk_3
-      rect:
-        serializedVersion: 2
-        x: 42
-        y: 23
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fc36776abe6bde7c0800000000000000
-      internalID: -4040372167455054897
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Grein_Walk_4
-      rect:
-        serializedVersion: 2
-        x: 61
-        y: 23
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 74f5efd3558083980800000000000000
-      internalID: -8559081929612304569
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Grein_Death
-      rect:
-        serializedVersion: 2
-        x: 80
-        y: 23
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 07a2b74d819774380800000000000000
-      internalID: -8987081383843517840
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Grein_Fire_1
+      name: Grein_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 1
-        width: 12
-        height: 16
+        y: 48
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -301,20 +152,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a6465eb81dbc2b770800000000000000
-      internalID: 8625180337223591018
+      spriteID: 6cd866af35bb68540800000000000000
+      internalID: 5009897604853960134
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Grein_Fire_2
+      name: Grein_1
       rect:
         serializedVersion: 2
-        x: 11
-        y: 1
-        width: 16
-        height: 16
+        x: 24
+        y: 48
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -323,20 +174,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d9b9b59387538a680800000000000000
-      internalID: -8743679886065165411
+      spriteID: 91164acff6994a0b0800000000000000
+      internalID: -5718276920594636519
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Grein_Fire_3
+      name: Grein_2
       rect:
         serializedVersion: 2
-        x: 28
-        y: 1
-        width: 16
-        height: 16
+        x: 48
+        y: 48
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -345,20 +196,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 10082c572d121f5e0800000000000000
-      internalID: -1877682381834256383
+      spriteID: ef1704ecd5c7c1920800000000000000
+      internalID: 2962379397237076478
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Grein_Fire_4
+      name: Grein_3
       rect:
         serializedVersion: 2
-        x: 45
-        y: 1
-        width: 16
-        height: 16
+        x: 72
+        y: 48
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -367,20 +218,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4c03b056ba91fd120800000000000000
-      internalID: 2440697746983432388
+      spriteID: 43804353ce2646210800000000000000
+      internalID: 1325292956998174772
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Grein_Fire_5
+      name: Grein_4
       rect:
         serializedVersion: 2
-        x: 64
-        y: 1
-        width: 16
-        height: 16
+        x: 96
+        y: 48
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -389,20 +240,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: efd0d9756259f3a90800000000000000
-      internalID: -7331977676424671746
+      spriteID: 1f2a8d683f72f0860800000000000000
+      internalID: 7498255831488045809
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Grein_Fire_6
+      name: Grein_5
       rect:
         serializedVersion: 2
-        x: 83
-        y: 1
-        width: 16
-        height: 16
+        x: 0
+        y: 24
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -411,8 +262,118 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7e90cb27a6e4d9460800000000000000
-      internalID: 7250037194234792423
+      spriteID: 85dd7a3d6db221500800000000000000
+      internalID: 365402721444420952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Grein_6
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 24
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3637589354b9d9a0800000000000000
+      internalID: -6207732340222380486
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Grein_7
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 24
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77438d387b3df61b0800000000000000
+      internalID: -5661073421436963721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Grein_8
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 24
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83585b7f31735d180800000000000000
+      internalID: -9091299713877703368
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Grein_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98efbd737cf53284f94743e4f4c21e8d
+      internalID: 1022269534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Grein_10
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b0286d14291893c4ba0931df2ee785ec
+      internalID: -1028196280
       vertices: []
       indices: 
       edges: []
@@ -421,7 +382,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: d05ef3c7d15d76d4fbc6f1ed23eaf372
+    spriteID: 63eec7400f192bd4d8e7d08b2843aa12
     internalID: 0
     vertices: []
     indices: 
@@ -429,11 +390,13 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":24.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Grein_0: 5009897604853960134
       Grein_1: -5718276920594636519
-      Grein_10: -1817098493833256286
+      Grein_10: -1028196280
       Grein_2: 2962379397237076478
       Grein_3: 1325292956998174772
       Grein_4: 7498255831488045809
@@ -441,18 +404,7 @@ TextureImporter:
       Grein_6: -6207732340222380486
       Grein_7: -5661073421436963721
       Grein_8: -9091299713877703368
-      Grein_9: 1786243749837350929
-      Grein_Death: -8987081383843517840
-      Grein_Fire_1: 8625180337223591018
-      Grein_Fire_2: -8743679886065165411
-      Grein_Fire_3: -1877682381834256383
-      Grein_Fire_4: 2440697746983432388
-      Grein_Fire_5: -7331977676424671746
-      Grein_Fire_6: 7250037194234792423
-      Grein_Walk_1: 6751613841686954754
-      Grein_Walk_2: 5194209636924426330
-      Grein_Walk_3: -4040372167455054897
-      Grein_Walk_4: -8559081929612304569
+      Grein_9: 1022269534
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

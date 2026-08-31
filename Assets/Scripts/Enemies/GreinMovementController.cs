@@ -11,6 +11,7 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
     [SerializeField, Min(0.01f)] private float fireDuration = 2f;
     [SerializeField, Min(0f)] private float distanceStartDelay = 0.25f;
     [SerializeField, Min(1)] private int fireRangeTiles = 2;
+    [SerializeField] private float fireSpriteYOffset;
     [SerializeField] private Sprite[] fireSprites;
 
     private readonly List<GameObject> activeFireTiles = new();
@@ -195,7 +196,12 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
         fire.layer = LayerMask.NameToLayer("Explosion");
         fire.transform.position = position;
 
-        var renderer = fire.AddComponent<SpriteRenderer>();
+        var fireVisual = new GameObject("Visual");
+        fireVisual.layer = fire.layer;
+        fireVisual.transform.SetParent(fire.transform, false);
+        fireVisual.transform.localPosition = Vector3.up * fireSpriteYOffset;
+
+        var renderer = fireVisual.AddComponent<SpriteRenderer>();
         renderer.sprite = fireSprites[0];
         renderer.sortingOrder = 6;
 
