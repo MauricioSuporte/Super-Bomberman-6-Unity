@@ -3,53 +3,77 @@ guid: 42a78d7cfbe842b9b598fca3ac3d1f9e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1001
-    second: Goga_Down_0
+      213: -2483879571939261485
+    second: Goga_0
   - first:
-      213: 1002
-    second: Goga_Down_1
+      213: -3862903234946604011
+    second: Goga_1
   - first:
-      213: 1003
-    second: Goga_Down_2
+      213: 6810550894336034989
+    second: Goga_2
   - first:
-      213: 1004
-    second: Goga_Up_0
+      213: 5112981689433803630
+    second: Goga_3
   - first:
-      213: 1005
-    second: Goga_Up_1
+      213: 157952693646978416
+    second: Goga_4
   - first:
-      213: 1006
-    second: Goga_Up_2
+      213: 2674439957128697943
+    second: Goga_5
   - first:
-      213: 1007
-    second: Goga_Left_0
+      213: -3634010351358988659
+    second: Goga_6
   - first:
-      213: 1008
-    second: Goga_Left_1
+      213: 7363634212650086340
+    second: Goga_7
   - first:
-      213: 1009
-    second: Goga_Left_2
+      213: -2919391087269212414
+    second: Goga_8
   - first:
-      213: 1010
-    second: Goga_Death
+      213: 4576602027627446841
+    second: Goga_9
   - first:
-      213: 1011
-    second: Goga_Submerge_0
+      213: 4174849880721096977
+    second: Goga_10
   - first:
-      213: 1012
-    second: Goga_Submerge_1
+      213: -4096870156435187741
+    second: Goga_11
   - first:
-      213: 1013
-    second: Goga_Submerge_2
+      213: 8902999481952704891
+    second: Goga_12
   - first:
-      213: 1014
-    second: Goga_Submerge_3
+      213: 5736088781187998359
+    second: Goga_13
   - first:
-      213: 1015
-    second: Goga_Submerge_4
+      213: -6158832208584000227
+    second: Goga_14
   - first:
-      213: 1016
-    second: Goga_Submerge_5
+      213: -6561992596787388313
+    second: Goga_15
+  - first:
+      213: 7084973643860229919
+    second: Goga_16
+  - first:
+      213: -1676713849352812422
+    second: Goga_17
+  - first:
+      213: 2544694084838474127
+    second: Goga_18
+  - first:
+      213: -4446137394984742724
+    second: Goga_19
+  - first:
+      213: 4001638997435689445
+    second: Goga_20
+  - first:
+      213: 3442215638160397778
+    second: Goga_21
+  - first:
+      213: -35713314861947747
+    second: Goga_22
+  - first:
+      213: -4790362901083317077
+    second: Goga_23
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -69,7 +93,7 @@ TextureImporter:
     heightScale: 0.25
     normalMapFilter: 0
     flipGreenChannel: 0
-  isReadable: 1
+  isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
@@ -133,7 +157,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -146,7 +170,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -158,13 +182,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Goga_Down_0
+      name: Goga_0
       rect:
         serializedVersion: 2
-        x: 4
-        y: 65
-        width: 16
-        height: 16
+        x: 0
+        y: 36
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -173,86 +197,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000000
-      internalID: 1001
+      spriteID: 3d306b180bc778dd0800000000000000
+      internalID: -2483879571939261485
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Down_1
-      rect:
-        serializedVersion: 2
-        x: 23
-        y: 65
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b2680000001
-      internalID: 1002
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Down_2
-      rect:
-        serializedVersion: 2
-        x: 42
-        y: 65
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b2680000002
-      internalID: 1003
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Up_0
-      rect:
-        serializedVersion: 2
-        x: 5
-        y: 45
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b2680000003
-      internalID: 1004
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Up_1
+      name: Goga_1
       rect:
         serializedVersion: 2
         x: 24
-        y: 45
-        width: 16
-        height: 16
+        y: 36
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -261,20 +219,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000004
-      internalID: 1005
+      spriteID: 514ec4f69f5346ac0800000000000000
+      internalID: -3862903234946604011
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Up_2
+      name: Goga_2
       rect:
         serializedVersion: 2
-        x: 43
-        y: 45
-        width: 16
-        height: 16
+        x: 48
+        y: 36
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -283,20 +241,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000005
-      internalID: 1006
+      spriteID: da84e9d54ffe38e50800000000000000
+      internalID: 6810550894336034989
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Left_0
+      name: Goga_3
       rect:
         serializedVersion: 2
-        x: 5
-        y: 24
-        width: 16
-        height: 16
+        x: 72
+        y: 36
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -305,20 +263,218 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000006
-      internalID: 1007
+      spriteID: e6b47cdb1c5f4f640800000000000000
+      internalID: 5112981689433803630
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Left_1
+      name: Goga_4
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07de4245329213200800000000000000
+      internalID: 157952693646978416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_5
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75854c1a8f48d1520800000000000000
+      internalID: 2674439957128697943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_6
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8ea729d6d6619dc0800000000000000
+      internalID: -3634010351358988659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_7
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cfebec5d42e03660800000000000000
+      internalID: 7363634212650086340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_8
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20f80e2164d3c77d0800000000000000
+      internalID: -2919391087269212414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_9
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9320117db4b538f30800000000000000
+      internalID: 4576602027627446841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_10
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11186f2e8db00f930800000000000000
+      internalID: 4174849880721096977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_11
+      rect:
+        serializedVersion: 2
+        x: 264
+        y: 36
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e718c28c4ef427c0800000000000000
+      internalID: -4096870156435187741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b791745dbdecd8b70800000000000000
+      internalID: 8902999481952704891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_13
       rect:
         serializedVersion: 2
         x: 24
-        y: 24
-        width: 16
-        height: 16
+        y: 18
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -327,20 +483,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000007
-      internalID: 1008
+      spriteID: 79260dafa5eaa9f40800000000000000
+      internalID: 5736088781187998359
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Left_2
+      name: Goga_14
       rect:
         serializedVersion: 2
-        x: 43
-        y: 24
-        width: 16
-        height: 16
+        x: 48
+        y: 18
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -349,20 +505,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000008
-      internalID: 1009
+      spriteID: d1dbd18bcbe678aa0800000000000000
+      internalID: -6158832208584000227
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Death
+      name: Goga_15
       rect:
         serializedVersion: 2
-        x: 71
-        y: 43
-        width: 16
-        height: 16
+        x: 72
+        y: 18
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -371,140 +527,206 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0000007e37be2022c0914b2680000009
-      internalID: 1010
+      spriteID: 760aeb9008e1fe4a0800000000000000
+      internalID: -6561992596787388313
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Goga_Submerge_0
+      name: Goga_16
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1f3b45cdf1e25260800000000000000
+      internalID: 7084973643860229919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_17
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a78095b33ad1bb8e0800000000000000
+      internalID: -1676713849352812422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_18
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f81c5dca9c1905320800000000000000
+      internalID: 2544694084838474127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_19
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb09a5d88952c42c0800000000000000
+      internalID: -4446137394984742724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_20
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e92181777da88730800000000000000
+      internalID: 4001638997435689445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_21
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d558d0a2e435cf20800000000000000
+      internalID: 3442215638160397778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_22
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d94e6e9edee118ff0800000000000000
+      internalID: -35713314861947747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_23
+      rect:
+        serializedVersion: 2
+        x: 264
+        y: 18
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bac18b76256358db0800000000000000
+      internalID: -4790362901083317077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goga_24
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 16
-        height: 16
+        width: 24
+        height: 18
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 0000007e37be2022c0914b268000000a
-      internalID: 1011
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Submerge_1
-      rect:
-        serializedVersion: 2
-        x: 19
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b268000000b
-      internalID: 1012
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Submerge_2
-      rect:
-        serializedVersion: 2
-        x: 38
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b268000000c
-      internalID: 1013
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Submerge_3
-      rect:
-        serializedVersion: 2
-        x: 55
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b268000000d
-      internalID: 1014
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Submerge_4
-      rect:
-        serializedVersion: 2
-        x: 72
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b268000000e
-      internalID: 1015
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Goga_Submerge_5
-      rect:
-        serializedVersion: 2
-        x: 87
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0000007e37be2022c0914b268000000f
-      internalID: 1016
+      spriteID: 081357d30619a724b964a9faa18665cb
+      internalID: -1821735899
       vertices: []
       indices: 
       edges: []
@@ -513,7 +735,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 54a29a63954bd02468c1d41777fa142b
+    spriteID: 24849b22ad66b6f4d9092b08e051eefe
     internalID: 0
     vertices: []
     indices: 
@@ -521,24 +743,35 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":24.0,"y":18.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Goga_Death: 1010
-      Goga_Down_0: 1001
-      Goga_Down_1: 1002
-      Goga_Down_2: 1003
-      Goga_Left_0: 1007
-      Goga_Left_1: 1008
-      Goga_Left_2: 1009
-      Goga_Submerge_0: 1011
-      Goga_Submerge_1: 1012
-      Goga_Submerge_2: 1013
-      Goga_Submerge_3: 1014
-      Goga_Submerge_4: 1015
-      Goga_Submerge_5: 1016
-      Goga_Up_0: 1004
-      Goga_Up_1: 1005
-      Goga_Up_2: 1006
+      Goga_0: -2483879571939261485
+      Goga_1: -3862903234946604011
+      Goga_10: 4174849880721096977
+      Goga_11: -4096870156435187741
+      Goga_12: 8902999481952704891
+      Goga_13: 5736088781187998359
+      Goga_14: -6158832208584000227
+      Goga_15: -6561992596787388313
+      Goga_16: 7084973643860229919
+      Goga_17: -1676713849352812422
+      Goga_18: 2544694084838474127
+      Goga_19: -4446137394984742724
+      Goga_2: 6810550894336034989
+      Goga_20: 4001638997435689445
+      Goga_21: 3442215638160397778
+      Goga_22: -35713314861947747
+      Goga_23: -4790362901083317077
+      Goga_24: -1821735899
+      Goga_3: 5112981689433803630
+      Goga_4: 157952693646978416
+      Goga_5: 2674439957128697943
+      Goga_6: -3634010351358988659
+      Goga_7: 7363634212650086340
+      Goga_8: -2919391087269212414
+      Goga_9: 4576602027627446841
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
