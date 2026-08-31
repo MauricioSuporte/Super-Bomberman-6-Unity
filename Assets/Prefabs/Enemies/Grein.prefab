@@ -112,7 +112,7 @@ MonoBehaviour:
   - {fileID: 2962379397237076478, guid: e52b15a67e109eb479c68b87bc9b426f, type: 3}
   - {fileID: 1325292956998174772, guid: e52b15a67e109eb479c68b87bc9b426f, type: 3}
   allowFlipX: 0
-  animationTime: 0.15
+  animationTime: 0.2
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -535,7 +535,7 @@ MonoBehaviour:
   preferTurnAtJunction: 0
   abilityMinCooldown: 5
   abilityMaxCooldown: 10
-  fireDuration: 2
+  fireDuration: 2.5
   distanceStartDelay: 0.25
   fireRangeTiles: 2
   fireSpriteYOffset: 0.3
