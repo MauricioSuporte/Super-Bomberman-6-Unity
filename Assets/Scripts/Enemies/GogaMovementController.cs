@@ -3,13 +3,18 @@ using UnityEngine;
 
 public sealed class GogaMovementController : JunctionTurningEnemyMovementController
 {
-    private const float SurfaceDuration = 8f, SubmergedDuration = 8f, FrameDuration = .12f;
+    private const float SubmergedDuration = 8f, FrameDuration = .12f;
+    [Header("Submerge Ability")]
+    [SerializeField, Min(0.1f)] private float bombVisionDistance = 10f;
+    [SerializeField, Min(0f)] private float reemergeAbilityCooldown = 10f;
+
     private enum State { Surface, Entering, Submerged, Exiting }
     private AnimatedSpriteRenderer downVisual, upVisual, leftVisual, submergeVisual, underwaterVisual, deathVisual;
     private CharacterHealth gogaHealth;
     private Sprite[] downFrames, upFrames, leftFrames, submergeFrames, underwaterFrames;
     private State state;
     private float stateTimer;
+    private float abilityCooldownTimer;
 
     protected override void Awake()
     {
@@ -30,14 +35,27 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
         base.Awake();
     }
 
-    protected override void Start() { base.Start(); state = State.Surface; stateTimer = SurfaceDuration; UpdateSpriteDirection(direction); }
+    protected override void Start() { base.Start(); state = State.Surface; UpdateSpriteDirection(direction); }
     protected override void FixedUpdate()
     {
         if (isDead) return;
-        if (state == State.Surface || state == State.Submerged)
+
+        if (state == State.Surface)
         {
-            base.FixedUpdate(); stateTimer -= Time.fixedDeltaTime;
-            if (stateTimer <= 0f) StartCoroutine(state == State.Surface ? EnterSubmersion() : ExitSubmersion());
+            abilityCooldownTimer = Mathf.Max(0f, abilityCooldownTimer - Time.fixedDeltaTime);
+            if (abilityCooldownTimer <= 0f && TrySeeBomb())
+            {
+                StartCoroutine(EnterSubmersion());
+                return;
+            }
+
+            base.FixedUpdate();
+        }
+        else if (state == State.Submerged)
+        {
+            base.FixedUpdate();
+            stateTimer -= Time.fixedDeltaTime;
+            if (stateTimer <= 0f) StartCoroutine(ExitSubmersion());
         }
         else if (rb != null) rb.linearVelocity = Vector2.zero;
     }
@@ -71,8 +89,28 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
 
         if (gogaHealth != null) gogaHealth.SetExternalInvulnerability(false);
         state = State.Surface;
-        stateTimer = SurfaceDuration;
+        abilityCooldownTimer = reemergeAbilityCooldown;
         UpdateSpriteDirection(direction);
+    }
+
+    private bool TrySeeBomb()
+    {
+        if (rb == null || bombLayerMask.value == 0)
+            return false;
+
+        int collisionMask = obstacleMask | bombLayerMask;
+        Vector2[] directions = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector2 scanDirection = directions[i];
+            Vector2 origin = rb.position + scanDirection * (tileSize * 0.5f);
+            RaycastHit2D hit = Physics2D.Raycast(origin, scanDirection, bombVisionDistance, collisionMask);
+
+            if (hit.collider != null && ((1 << hit.collider.gameObject.layer) & bombLayerMask) != 0)
+                return true;
+        }
+
+        return false;
     }
     private IEnumerator PlayOnce(bool forward)
     {

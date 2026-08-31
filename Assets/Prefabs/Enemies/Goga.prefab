@@ -640,6 +640,8 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.15
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  bombVisionDistance: 10
+  reemergeAbilityCooldown: 10
 --- !u!114 &8638696913730581265
 MonoBehaviour:
   m_ObjectHideFlags: 0
