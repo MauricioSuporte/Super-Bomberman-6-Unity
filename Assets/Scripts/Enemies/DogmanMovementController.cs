@@ -12,7 +12,7 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
     [SerializeField, Range(0f, 1f)] private float chanceToUseAbilityAtJunction = 0.2f;
     [SerializeField, Min(0f)] private float abilityCooldownSeconds = 3f;
 
-    private CharacterHealth health;
+    private CharacterHealth dogmanHealth;
     private Coroutine abilityRoutine;
     private float abilityCooldownRemaining;
 
@@ -20,7 +20,7 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
     {
         base.Awake();
 
-        health = GetComponent<CharacterHealth>();
+        dogmanHealth = GetComponent<CharacterHealth>();
         SetAbilityVisualEnabled(false);
     }
 
@@ -86,8 +86,8 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
             targetTile = rb.position;
         }
 
-        if (health != null)
-            health.SetExternalInvulnerability(true);
+        if (dogmanHealth != null)
+            dogmanHealth.SetExternalInvulnerability(true);
 
         SetAbilityVisualEnabled(true);
 
@@ -96,8 +96,8 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
 
         abilityRoutine = null;
 
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (dogmanHealth != null)
+            dogmanHealth.SetExternalInvulnerability(false);
 
         if (isDead)
             yield break;
@@ -134,8 +134,8 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
             abilityRoutine = null;
         }
 
-        if (health != null)
-            health.SetExternalInvulnerability(false);
+        if (dogmanHealth != null)
+            dogmanHealth.SetExternalInvulnerability(false);
 
         SetAbilityVisualEnabled(false);
     }
