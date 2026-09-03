@@ -1777,6 +1777,7 @@ GameObject:
   - component: {fileID: 410079256}
   - component: {fileID: 410079255}
   - component: {fileID: 410079259}
+  - component: {fileID: 410079260}
   m_Layer: 0
   m_Name: 'Room 2 Camera '
   m_TagString: MainCamera
@@ -1922,6 +1923,26 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &410079260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410079254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76189a1af81d3fa4faa37300e3ca1ec4, type: 3}
+  m_Name: Room2CameraFollow
+  m_EditorClassIdentifier: Assembly-CSharp::CameraFollowClamp2D
+  followAllPlayers: 1
+  boundsCollider: {fileID: 2033100010}
+  followOffset: {x: 0, y: 0}
+  useTrackedPlayersSpeed: 1
+  speedInternal: 224
+  pixelsPerUnit: 16
+  useIntegerPixelSteps: 1
+  refreshPlayersEverySeconds: 0.1
 --- !u!1001 &572775421
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16636,8 +16657,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 4
-  activePlayerMask: 15
+  activePlayerCount: 1
+  activePlayerMask: 1
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
@@ -17991,7 +18012,7 @@ Transform:
   m_GameObject: {fileID: 2033100009}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 7.5, y: -5, z: 0}
+  m_LocalPosition: {x: 15.6, y: -5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18058,7 +18079,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 16, y: 14}
+  m_Size: {x: 32, y: 14}
   m_EdgeRadius: 0
 --- !u!1001 &2133092693
 PrefabInstance:
