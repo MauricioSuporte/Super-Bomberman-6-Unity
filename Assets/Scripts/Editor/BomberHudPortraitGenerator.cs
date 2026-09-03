@@ -14,7 +14,7 @@ public static class BomberHudPortraitGenerator
     const int BorderedSize = PortraitSize + (BorderSize * 2);
     const int PortraitCount = 6;
 
-    [MenuItem("Tools/Bomberman/Generate HUD Portraits")]
+    [MenuItem("Tools/Sprites/Generate HUD Portraits")]
     public static void GenerateAll()
     {
         int generatedCount = 0;

@@ -20,27 +20,6 @@ public static class ItemSheetPrefabAuthoring
     private const int ItemIconSize = 14;
     private const float ItemBorderFrameSeconds = 0.025f;
     private static Dictionary<string, Sprite> spritesByName;
-    private static readonly string[] ConfiguredSpriteNames =
-    {
-        "BombLarge", "BombMedium", "BombSmall",
-        "PierceBombLarge", "PierceBombMedium", "PierceBombSmall",
-        "RubberBombLarge", "RubberBombMedium", "RubberBombSmall",
-        "PowerBombLarge", "PowerBombMedium", "PowerBombSmall",
-        "ControlBombFrame1", "ControlBombFrame2", "ControlBombFrame3", "ControlBombFrame4",
-        "MagnetBombLarge", "MagnetBombMedium", "MagnetBombSmall",
-        "RevengeBombLarge", "RevengeBombMedium", "RevengeBombSmall",
-        "ExtraBombIcon", "BlastRadiusIcon", "SpeedUpIcon", "OneUpIcon", "BombKickIcon", "BombPassIcon",
-        "BombPunchIcon", "ControlBombIcon", "DestructiblePassIcon", "FullFireIcon", "HeartIcon",
-        "InvincibleSuitIcon", "MagnetBombIcon", "PierceBombIcon", "PowerBombIcon", "PowerGloveIcon",
-        "RubberBombIcon", "SkullIcon", "ClockIcon",
-        "ItemBorder1", "ItemBorder2", "ItemBorder3", "ItemBorder4", "ItemBorder5", "ItemBorder6",
-        "ExplosionStartWeak", "ExplosionStartMedium", "ExplosionStartStrong", "ExplosionStartMaximum",
-        "ExplosionMiddleWeak", "ExplosionMiddleMedium", "ExplosionMiddleStrong", "ExplosionMiddleMaximum",
-        "ExplosionEndWeak", "ExplosionEndMedium", "ExplosionEndStrong", "ExplosionEndMaximum",
-        "PierceExplosionStartWeak", "PierceExplosionStartMedium", "PierceExplosionStartStrong", "PierceExplosionStartMaximum",
-        "PierceExplosionMiddleWeak", "PierceExplosionMiddleMedium", "PierceExplosionMiddleStrong", "PierceExplosionMiddleMaximum",
-        "PierceExplosionEndWeak", "PierceExplosionEndMedium", "PierceExplosionEndStrong", "PierceExplosionEndMaximum"
-    };
     private static readonly ItemIconDefinition[] ItemIcons =
     {
         new("Assets/Resources/Items/ExtraBomb.prefab", "ExtraBomb", "ExtraBomb", 32, 0),
@@ -64,32 +43,29 @@ public static class ItemSheetPrefabAuthoring
         new("Assets/Resources/Items/Clock.prefab", "Clock", "Clock", 40, 6)
     };
 
-    [MenuItem("Tools/Super Bomberman 6/Apply new Sheet Sprites")]
+    [MenuItem("Tools/Sprites/Apply new Sheet Sprites")]
     public static void ApplyNewSheetSprites()
     {
         spritesByName = null;
-        bool changed = EnsureSheetConfigured();
+        ConfigureSheet();
+        spritesByName = null;
+        bool prefabsChanged = false;
 
-        changed |= ApplyNormalBombSpritesIfNeeded();
-        changed |= ApplyBombExplosionSpritesIfNeeded();
-        changed |= ApplyPierceBombSpritesIfNeeded();
-        changed |= ApplyRubberBombSpritesIfNeeded();
-        changed |= ApplyPowerBombSpritesIfNeeded();
-        changed |= ApplyControlBombSpritesIfNeeded();
-        changed |= ApplyMagnetBombSpritesIfNeeded();
-        changed |= ApplyRevengeBombSpritesIfNeeded();
+        prefabsChanged |= ApplyNormalBombSpritesIfNeeded();
+        prefabsChanged |= ApplyBombExplosionSpritesIfNeeded();
+        prefabsChanged |= ApplyPierceBombSpritesIfNeeded();
+        prefabsChanged |= ApplyRubberBombSpritesIfNeeded();
+        prefabsChanged |= ApplyPowerBombSpritesIfNeeded();
+        prefabsChanged |= ApplyControlBombSpritesIfNeeded();
+        prefabsChanged |= ApplyMagnetBombSpritesIfNeeded();
+        prefabsChanged |= ApplyRevengeBombSpritesIfNeeded();
         foreach (ItemIconDefinition item in ItemIcons)
-            changed |= ApplyItemIconIfNeeded(item);
+            prefabsChanged |= ApplyItemIconIfNeeded(item);
 
-        if (changed)
-        {
-            AssetDatabase.SaveAssets();
-            Debug.Log("[ItemSheetPrefabAuthoring] Applied the missing sheet sprite migrations from Itens.png.");
-        }
-        else
-        {
-            Debug.Log("[ItemSheetPrefabAuthoring] Every configured prefab already uses the new sheet sprites.");
-        }
+        AssetDatabase.SaveAssets();
+        Debug.Log(prefabsChanged
+            ? "[ItemSheetPrefabAuthoring] Configured Itens.png and updated the affected prefabs."
+            : "[ItemSheetPrefabAuthoring] Configured Itens.png; every prefab already referenced its sheet sprites.");
     }
 
     private static bool ApplyItemIconIfNeeded(ItemIconDefinition item)
@@ -524,16 +500,6 @@ public static class ItemSheetPrefabAuthoring
         Debug.Log("[ItemSheetPrefabAuthoring] MadBomberBomb.prefab now uses Itens.png cells (28,11), (27,11), (28,11), (29,11).");
     }
 
-    private static bool EnsureSheetConfigured()
-    {
-        if (ConfiguredSpriteNames.All(name => LoadSprite(name) != null))
-            return false;
-
-        ConfigureSheet();
-        spritesByName = null;
-        return true;
-    }
-
     private static bool IsAnimatedSpritePrefabConfigured(string prefabPath, bool idle, params string[] frameNames)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
@@ -801,6 +767,10 @@ public static class ItemSheetPrefabAuthoring
         int size = CellSize,
         int inset = 0)
     {
+        Texture2D sheet = AssetDatabase.LoadAssetAtPath<Texture2D>(SheetPath);
+        if (sheet == null)
+            throw new InvalidOperationException($"Sprite sheet not available at {SheetPath}.");
+
         SpriteRect existing = existingSpriteRects.FirstOrDefault(spriteRect => spriteRect.name == name);
 
         return new SpriteRect
@@ -808,7 +778,7 @@ public static class ItemSheetPrefabAuthoring
             name = name,
             rect = new Rect(
                 (column * CellSize) + inset,
-                320 - ((row + 1) * CellSize) + inset,
+                sheet.height - ((row + 1) * CellSize) + inset,
                 size,
                 size),
             alignment = SpriteAlignment.Center,

@@ -41,7 +41,7 @@ public static class BomberSkinSheetGenerator
         EditorApplication.delayCall += GenerateMissingBombermanSheets;
     }
 
-    [MenuItem("Tools/Bomberman/Generate Missing Bomber Skin Sheets")]
+    [MenuItem("Tools/Sprites/Generate Missing Bomber Skin Sheets")]
     public static void GenerateMissingBombermanSheets()
     {
         if (EditorApplication.isCompiling)
