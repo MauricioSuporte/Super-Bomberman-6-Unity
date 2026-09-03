@@ -7,6 +7,13 @@ using UnityEngine.UI;
 
 public sealed class BattleModeMenu : MonoBehaviour
 {
+    private const string ItemSheetResourcesPath = "Sprites/BombItems/Itens";
+    private static readonly string[] ItemBorderSpriteNames =
+    {
+        "ItemBorder1", "ItemBorder2", "ItemBorder3",
+        "ItemBorder4", "ItemBorder5", "ItemBorder6"
+    };
+
     public static bool OpenDirectlyAtStageSelect { get; set; }
 
     private enum MenuState
@@ -299,7 +306,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 itemSelectCellSize = new(150f, 52f);
     [SerializeField] private Vector2 itemSelectIconOffset = new(-42f, 0f);
     [SerializeField] private Vector2 itemSelectIconSize = new(40f, 40f);
-    [SerializeField] private Sprite[] itemSelectBorderSprites = new Sprite[6];
+    private Sprite[] itemSelectBorderSprites;
     [SerializeField, Min(0.01f)] private float itemSelectBorderFrameSeconds = 0.025f;
     [SerializeField, Min(0.01f)] private float itemSelectBorderSizeMultiplier = 16f / 14f;
     [SerializeField, Min(0.01f)] private float itemSelectRandomEggIconScale = 1.35f;
@@ -3976,7 +3983,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             cell.sizeDelta = itemSelectCellSize;
             cell.anchoredPosition = GetItemSelectCellPosition(i, columns, rows);
 
-            UpdateItemSelectBorderVisual(i, i == selectedItemIndex);
+            bool isEnabled = GetWorkingBattleItemAmount(i) > 0;
+            UpdateItemSelectBorderVisual(i, i == selectedItemIndex, isEnabled);
 
             if (i < itemSelectIconImages.Count && itemSelectIconImages[i] != null)
             {
@@ -3989,7 +3997,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 iconRt.sizeDelta = GetItemSelectIconSize(i);
                 icon.sprite = GetItemSelectIconSprite(i);
                 icon.enabled = icon.sprite != null;
-                icon.color = Color.white;
+                icon.color = isEnabled ? Color.white : louieSelectDisabledTint;
             }
 
             if (i < itemSelectIconLabelTexts.Count && itemSelectIconLabelTexts[i] != null)
@@ -4003,7 +4011,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 labelRt.sizeDelta = GetItemSelectIconSize(i);
                 iconLabel.text = GetItemSelectIconLabel(i);
                 iconLabel.enabled = !string.IsNullOrEmpty(iconLabel.text);
-                iconLabel.color = Color.white;
+                iconLabel.color = isEnabled ? Color.white : louieSelectDisabledTint;
                 ApplySpecificSettingsTextStyle(iconLabel);
                 iconLabel.fontSize = Mathf.Max(8, Mathf.RoundToInt(itemSelectAmountFontSize * 0.55f));
                 iconLabel.alignment = TextAlignmentOptions.Center;
@@ -4019,7 +4027,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 amountRt.anchoredPosition = itemSelectAmountOffset;
                 amountRt.sizeDelta = itemSelectAmountSize;
                 amountText.text = GetWorkingBattleItemAmount(i).ToString();
-                amountText.color = i == selectedItemIndex ? GetMusicSelectTextColor(true) : GetMusicSelectTextColor(false);
+                amountText.color = GetMusicSelectTextColor(isEnabled && i == selectedItemIndex);
                 ApplySpecificSettingsTextStyle(amountText);
                 amountText.fontSize = itemSelectAmountFontSize;
                 amountText.alignment = TextAlignmentOptions.MidlineRight;
@@ -4070,7 +4078,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             : itemSelectIconSize;
     }
 
-    private void UpdateItemSelectBorderVisual(int index, bool isSelected)
+    private void UpdateItemSelectBorderVisual(int index, bool isSelected, bool isEnabled)
     {
         if (index < 0 || index >= itemSelectBorderImages.Count)
             return;
@@ -4091,7 +4099,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         borderRt.pivot = new Vector2(0.5f, 0.5f);
         borderRt.anchoredPosition = itemSelectIconOffset;
         borderRt.sizeDelta = GetItemSelectIconSize(index) * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier);
-        borderImage.color = Color.white;
+        borderImage.color = isEnabled ? Color.white : louieSelectDisabledTint;
 
         if (index >= itemSelectBorderRenderers.Count || itemSelectBorderRenderers[index] == null)
         {
@@ -4129,15 +4137,40 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private Sprite[] GetItemSelectBorderAnimationSprites()
     {
-        if (itemSelectBorderSprites == null || itemSelectBorderSprites.Length == 0)
-            return System.Array.Empty<Sprite>();
-
-        for (int i = 0; i < itemSelectBorderSprites.Length; i++)
+        if (itemSelectBorderSprites != null &&
+            itemSelectBorderSprites.Length == ItemBorderSpriteNames.Length)
         {
-            if (itemSelectBorderSprites[i] == null)
+            bool hasEveryBorder = true;
+            for (int i = 0; i < itemSelectBorderSprites.Length; i++)
+            {
+                if (itemSelectBorderSprites[i] == null)
+                {
+                    hasEveryBorder = false;
+                    break;
+                }
+            }
+
+            if (hasEveryBorder)
+                return itemSelectBorderSprites;
+        }
+
+        Sprite[] sheetSprites = Resources.LoadAll<Sprite>(ItemSheetResourcesPath);
+        Dictionary<string, Sprite> spritesByName = new();
+        for (int i = 0; i < sheetSprites.Length; i++)
+        {
+            Sprite sprite = sheetSprites[i];
+            if (sprite != null)
+                spritesByName[sprite.name] = sprite;
+        }
+
+        Sprite[] borderSprites = new Sprite[ItemBorderSpriteNames.Length];
+        for (int i = 0; i < ItemBorderSpriteNames.Length; i++)
+        {
+            if (!spritesByName.TryGetValue(ItemBorderSpriteNames[i], out borderSprites[i]))
                 return System.Array.Empty<Sprite>();
         }
 
+        itemSelectBorderSprites = borderSprites;
         return itemSelectBorderSprites;
     }
 
@@ -5386,7 +5419,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         for (int i = 0; i < row.optionImages.Count; i++)
         {
-            UpdateHandicapOptionBorderVisual(rowIndex, row, i, rowIndex == selectedHandicapRow && selectedHandicapColumn == i + 1);
+            bool isEnabled = IsHandicapOptionEnabled(i, player);
+            UpdateHandicapOptionBorderVisual(rowIndex, row, i, rowIndex == selectedHandicapRow && selectedHandicapColumn == i + 1, isEnabled);
 
             Image image = row.optionImages[i];
             TextMeshProUGUI text = row.optionTexts[i];
@@ -5397,7 +5431,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             imageRt.anchoredPosition = GetHandicapOptionPosition(i);
             imageRt.sizeDelta = handicapSelectOptionIconSize;
             image.sprite = GetHandicapOptionSprite(i, player);
-            image.color = IsHandicapOptionEnabled(i, player) ? Color.white : louieSelectDisabledTint;
+            image.color = isEnabled ? Color.white : louieSelectDisabledTint;
             image.enabled = image.sprite != null;
 
             RectTransform textRt = text.rectTransform;
@@ -5407,14 +5441,14 @@ public sealed class BattleModeMenu : MonoBehaviour
             textRt.anchoredPosition = GetHandicapOptionPosition(i) + handicapSelectOptionNumberOffset;
             textRt.sizeDelta = handicapSelectOptionTextSize;
             text.text = GetHandicapOptionText(i, player);
-            text.color = GetMusicSelectTextColor(IsHandicapOptionEnabled(i, player));
+            text.color = GetMusicSelectTextColor(isEnabled);
             text.fontSize = handicapSelectOptionFontSize;
             text.alignment = TextAlignmentOptions.Center;
             ApplySpecificSettingsTextStyle(text);
         }
     }
 
-    private void UpdateHandicapOptionBorderVisual(int rowIndex, HandicapRowVisual row, int optionIndex, bool isSelected)
+    private void UpdateHandicapOptionBorderVisual(int rowIndex, HandicapRowVisual row, int optionIndex, bool isSelected, bool isEnabled)
     {
         if (row == null || optionIndex < 0 || optionIndex >= row.optionBorderImages.Count)
             return;
@@ -5435,7 +5469,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         borderRt.pivot = new Vector2(0.5f, 0.5f);
         borderRt.anchoredPosition = GetHandicapOptionPosition(optionIndex);
         borderRt.sizeDelta = handicapSelectOptionIconSize * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier);
-        borderImage.color = Color.white;
+        borderImage.color = isEnabled ? Color.white : louieSelectDisabledTint;
 
         if (optionIndex >= row.optionBorderRenderers.Count || row.optionBorderRenderers[optionIndex] == null)
         {
