@@ -34,6 +34,10 @@ namespace StageAssets
 
         [Header("Optional Gate Sprite Sequence")]
         [SerializeField] private SpriteRenderer gateRenderer;
+        [Tooltip("Optional authored frames. When assigned, they take precedence over the legacy sprite sheet.")]
+        [SerializeField] private Sprite[] gateOpeningSprites;
+        [Tooltip("How long each authored gate frame remains visible while opening.")]
+        [SerializeField, Min(0.01f)] private float gateFrameDurationSeconds = 0.5f;
         [SerializeField] private Texture2D gateSpriteSheet;
         [SerializeField, Min(1)] private int gatePixelsPerUnit = 16;
         [SerializeField, Min(0.01f)] private float gateOpeningSeconds = 0.5f;
@@ -114,35 +118,73 @@ namespace StageAssets
         private bool UsesGateSpriteSequence()
         {
             return gateRenderer != null &&
-                   gateSpriteSheet != null &&
-                   gateSpriteSheet.width >= 4 &&
-                   gateSpriteSheet.height > 0;
+                   (HasAuthoredGateSprites() ||
+                    (gateSpriteSheet != null &&
+                     gateSpriteSheet.width >= 4 &&
+                     gateSpriteSheet.height > 0));
         }
 
         private IEnumerator GateOpeningRoutine()
         {
-            float frameDuration = Mathf.Max(0.01f, gateOpeningSeconds) / 3f;
+            int frameCount = GetGateFrameCount();
+            if (frameCount == 0)
+            {
+                yield return OpenRoutine();
+                yield break;
+            }
 
-            SetGateSprite(1);
-            yield return new WaitForSeconds(frameDuration);
+            float frameDuration = HasAuthoredGateSprites()
+                ? Mathf.Max(0.01f, gateFrameDurationSeconds)
+                : Mathf.Max(0.01f, gateOpeningSeconds) / Mathf.Max(1, frameCount - 1);
 
-            SetGateSprite(2);
-            yield return new WaitForSeconds(frameDuration);
+            for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
+            {
+                SetGateSprite(frameIndex);
+                if (frameIndex < frameCount - 1)
+                    yield return new WaitForSeconds(frameDuration);
+            }
 
-            SetGateSprite(3);
-            yield return new WaitForSeconds(frameDuration);
-
+            // The final frame is the permanently open gate; only its collider
+            // changes state after the opening sequence completes.
             blockingCollider.enabled = false;
         }
 
         private void SetGateSprite(int frameIndex)
         {
-            if (gateRenderer == null || frameIndex < 0 || frameIndex >= 4)
+            if (gateRenderer == null || frameIndex < 0)
                 return;
+
+            if (HasAuthoredGateSprites())
+            {
+                if (frameIndex < gateOpeningSprites.Length)
+                    gateRenderer.sprite = gateOpeningSprites[frameIndex];
+                return;
+            }
 
             EnsureGateSprites();
             if (runtimeGateSprites != null && frameIndex < runtimeGateSprites.Length)
                 gateRenderer.sprite = runtimeGateSprites[frameIndex];
+        }
+
+        private bool HasAuthoredGateSprites()
+        {
+            if (gateOpeningSprites == null || gateOpeningSprites.Length == 0)
+                return false;
+
+            for (int i = 0; i < gateOpeningSprites.Length; i++)
+                if (gateOpeningSprites[i] == null)
+                    return false;
+
+            return true;
+        }
+
+        private int GetGateFrameCount()
+        {
+            if (HasAuthoredGateSprites())
+                return gateOpeningSprites.Length;
+
+            EnsureGateSprites();
+            return runtimeGateSprites?.Length ?? 0;
         }
 
         private void EnsureGateSprites()
