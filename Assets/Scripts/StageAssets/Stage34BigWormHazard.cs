@@ -65,7 +65,6 @@ namespace StageAssets
         private AudioSource audioSource;
         private AudioClip attackSfx;
         private Coroutine attackRoutine;
-        private bool activatedForRoomOne;
         private bool loggedMissingRoom;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -140,17 +139,10 @@ namespace StageAssets
                     continue;
                 }
 
-                bool isOccupied = IsRoomOccupied();
-
-                if (isOccupied && !activatedForRoomOne)
-                {
-                    activatedForRoomOne = true;
-                    nextAttackAt = Time.time + AttackPeriod;
-                }
-
-                if (!activatedForRoomOne)
+                if (!IsRoomOccupied())
                 {
                     Hide();
+                    nextAttackAt = Time.time + AttackPeriod;
                     yield return null;
                     continue;
                 }
@@ -193,9 +185,21 @@ namespace StageAssets
             int telegraphFrame = 0;
             while (Time.time < telegraphEndsAt)
             {
+                if (!IsRoomOccupied())
+                {
+                    Hide();
+                    yield break;
+                }
+
                 Show(sprites[telegraphFrame % 2]);
                 telegraphFrame++;
                 yield return new WaitForSeconds(0.1f);
+            }
+
+            if (!IsRoomOccupied())
+            {
+                Hide();
+                yield break;
             }
 
             EnableDamageAreaCollider();
@@ -208,6 +212,13 @@ namespace StageAssets
             float attackFrameDuration = AttackDuration / attackSequence.Length;
             for (int i = 0; i < attackSequence.Length; i++)
             {
+                if (!IsRoomOccupied())
+                {
+                    audioSource.Stop();
+                    Hide();
+                    yield break;
+                }
+
                 Show(sprites[attackSequence[i]]);
                 yield return new WaitForSeconds(attackFrameDuration);
             }

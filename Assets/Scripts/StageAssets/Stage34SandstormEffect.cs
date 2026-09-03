@@ -11,6 +11,8 @@ namespace StageAssets
     [DisallowMultipleComponent]
     public sealed class Stage34SandstormEffect : MonoBehaviour
     {
+        private const string RoomOneName = "Room 1";
+        private const string RoomThreeName = "Room 3";
         private const int GrainCount = 200;
         private const int GridColumns = 20;
         private const int GridRows = 10;
@@ -37,6 +39,9 @@ namespace StageAssets
         private int viewportWidthPixels;
         private int viewportHeightPixels;
         private bool initialized;
+        private bool grainsVisible;
+        private Collider2D roomOneBounds;
+        private Collider2D roomThreeBounds;
 
         private void Start()
         {
@@ -46,14 +51,19 @@ namespace StageAssets
 
         private void LateUpdate()
         {
+            RefreshTargetCamera();
+
+            bool shouldShow = IsAllowedRoomOccupied();
             if (!initialized)
             {
-                if (targetCamera == null)
-                    targetCamera = Camera.main;
-
-                InitializeIfPossible();
+                if (shouldShow)
+                    InitializeIfPossible();
                 return;
             }
+
+            SetGrainsVisible(shouldShow);
+            if (!shouldShow)
+                return;
 
             if (!TryResolveViewport(out int width, out int height))
                 return;
@@ -103,6 +113,49 @@ namespace StageAssets
                 Destroy(grainTexture);
 
             initialized = false;
+            grainsVisible = false;
+        }
+
+        private void RefreshTargetCamera()
+        {
+            Camera activeCamera = Camera.main;
+            if (activeCamera == null || activeCamera == targetCamera)
+                return;
+
+            targetCamera = activeCamera;
+            for (int i = 0; i < grains.Length; i++)
+            {
+                if (grains[i]?.transform != null)
+                    grains[i].transform.SetParent(targetCamera.transform, false);
+            }
+
+            if (initialized)
+                PlaceAllGrains();
+        }
+
+        private bool IsAllowedRoomOccupied()
+        {
+            if (roomOneBounds == null)
+                roomOneBounds = World3RoomProgressionController.FindRoomBounds(RoomOneName);
+
+            if (roomThreeBounds == null)
+                roomThreeBounds = World3RoomProgressionController.FindRoomBounds(RoomThreeName);
+
+            return (roomOneBounds != null && World3RoomProgressionController.IsRoomOccupied(roomOneBounds)) ||
+                   (roomThreeBounds != null && World3RoomProgressionController.IsRoomOccupied(roomThreeBounds));
+        }
+
+        private void SetGrainsVisible(bool visible)
+        {
+            if (grainsVisible == visible)
+                return;
+
+            grainsVisible = visible;
+            for (int i = 0; i < grains.Length; i++)
+            {
+                if (grains[i]?.transform != null)
+                    grains[i].transform.gameObject.SetActive(visible);
+            }
         }
 
         private void InitializeIfPossible()
@@ -129,6 +182,7 @@ namespace StageAssets
             }
 
             initialized = true;
+            SetGrainsVisible(true);
             PlaceAllGrains();
         }
 
