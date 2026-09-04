@@ -868,7 +868,9 @@ public partial class BombController : MonoBehaviour
         return destructible != null;
     }
 
-    private bool TryHandleActiveDestructibleHitByExplosion(Vector2 worldPos)
+    private bool TryHandleActiveDestructibleHitByExplosion(
+        Vector2 worldPos,
+        BombExplosion.ExplosionPart explosionPart = BombExplosion.ExplosionPart.Middle)
     {
         int mask = LayerMask.GetMask("Stage");
 
@@ -887,7 +889,13 @@ public partial class BombController : MonoBehaviour
             coreMechanisms = hit.GetComponentInParent<CoreMechanismsDestructible>();
 
         if (coreMechanisms == null)
-            return false;
+        {
+            IExplosionDestructible explosionDestructible = hit.GetComponent<IExplosionDestructible>();
+            if (explosionDestructible == null)
+                explosionDestructible = hit.GetComponentInParent<IExplosionDestructible>();
+
+            return explosionDestructible != null && explosionDestructible.TryDestroyByExplosion(explosionPart);
+        }
 
         coreMechanisms.PlayDeath();
         return true;
@@ -1527,6 +1535,7 @@ public partial class BombController : MonoBehaviour
             Vector2.zero,
             snapped,
             bombComp);
+        TryHandleActiveDestructibleHitByExplosion(snapped, BombExplosion.ExplosionPart.Start);
 
         ExplosionLineResult up = ExplodeAndCollect(snapped, Vector2.up, effectiveRadius, pierce, bombComp);
         ExplosionLineResult down = ExplodeAndCollect(snapped, Vector2.down, effectiveRadius, pierce, bombComp);
