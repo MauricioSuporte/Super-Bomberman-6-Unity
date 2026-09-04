@@ -2121,13 +2121,16 @@ public partial class BombController : MonoBehaviour
 
         Transform parent = destructibleTiles != null ? destructibleTiles.transform : null;
         Vector3 spawnWorldPosition = destructibleTiles.GetCellCenterWorld(cell);
+        Destructible destructionPrefab = _gm != null
+            ? _gm.GetDestructiblePrefab(tile)
+            : destructiblePrefab;
 
-        if (spawnDestructiblePrefab && destructiblePrefab != null)
+        if (spawnDestructiblePrefab && destructionPrefab != null)
         {
             if (parent != null)
-                Instantiate(destructiblePrefab, spawnWorldPosition, Quaternion.identity, parent);
+                Instantiate(destructionPrefab, spawnWorldPosition, Quaternion.identity, parent);
             else
-                Instantiate(destructiblePrefab, spawnWorldPosition, Quaternion.identity);
+                Instantiate(destructionPrefab, spawnWorldPosition, Quaternion.identity);
         }
 
         if (spawnHiddenObject && _gm != null)
@@ -2135,7 +2138,7 @@ public partial class BombController : MonoBehaviour
             GameObject spawnPrefab = _gm.GetSpawnForDestroyedBlock(cell);
             if (spawnPrefab != null)
             {
-                float delay = GetDestructibleDestroyTime();
+                float delay = GetDestructibleDestroyTime(destructionPrefab);
                 StartSafeCoroutine(SpawnHiddenObjectAfterDelay(spawnPrefab, cell, parent, delay));
             }
         }
@@ -2177,10 +2180,10 @@ public partial class BombController : MonoBehaviour
         _gm.PrepareSpawnedHiddenObject(spawned, prefab, spawnWorldPosition);
     }
 
-    private float GetDestructibleDestroyTime()
+    private float GetDestructibleDestroyTime(Destructible destructionPrefab)
     {
-        if (destructiblePrefab != null)
-            return Mathf.Max(0f, destructiblePrefab.destructionTime);
+        if (destructionPrefab != null)
+            return Mathf.Max(0f, destructionPrefab.destructionTime);
 
         return 0.5f;
     }

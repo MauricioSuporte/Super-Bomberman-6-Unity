@@ -2619,7 +2619,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             ? active.tilemap.transform
             : null;
 
-        Destructible prefab = source != null ? source.destructiblePrefab : null;
+        GameManager gm = GameManager.Instance != null
+            ? GameManager.Instance
+            : FindAnyObjectByType<GameManager>();
+        Destructible prefab = source != null
+            ? (gm != null ? gm.GetDestructiblePrefab(active.tile) : source.destructiblePrefab)
+            : null;
         if (prefab != null)
         {
             if (parent != null)
@@ -2628,9 +2633,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 Instantiate(prefab, destroyWorld, Quaternion.identity);
         }
 
-        GameManager gm = GameManager.Instance != null
-            ? GameManager.Instance
-            : FindAnyObjectByType<GameManager>();
         if (gm != null && active != null)
             gm.OnDestructibleDestroyed(active.cell);
     }

@@ -29,6 +29,14 @@ public class GameManager : MonoBehaviour
         public HiddenObjectItemAmount[] itemAmounts;
     }
 
+    [Serializable]
+    public sealed class DestructiblePrefabOverride
+    {
+        [Tooltip("The destructible tile that should use a different break-animation prefab.")]
+        public TileBase tile;
+        public Destructible prefab;
+    }
+
     public enum BattleModeHiddenDropEntryKind
     {
         Item,
@@ -165,6 +173,8 @@ public class GameManager : MonoBehaviour
 
     [Header("Stage Prefabs (Optional on Boss Stages)")]
     public Destructible destructiblePrefab;
+    [Tooltip("Optional tile-specific break-animation prefabs. Tiles without an entry use Destructible Prefab.")]
+    [SerializeField] private DestructiblePrefabOverride[] destructiblePrefabOverrides;
 
     [Header("Chão")]
     [FormerlySerializedAs("floorTilemap")]
@@ -202,6 +212,21 @@ public class GameManager : MonoBehaviour
     public TileBase[] groundShadowIgnoredTiles;
     [Tooltip("Tiles indestrutiveis que aplicam sombra no Ground em Y-1. Se vazio, qualquer tile indestrutivel aplica sombra como antes.")]
     public TileBase[] indestructibleGroundShadowCasterTiles;
+
+    public Destructible GetDestructiblePrefab(TileBase tile)
+    {
+        if (tile != null && destructiblePrefabOverrides != null)
+        {
+            for (int i = 0; i < destructiblePrefabOverrides.Length; i++)
+            {
+                DestructiblePrefabOverride entry = destructiblePrefabOverrides[i];
+                if (entry != null && entry.tile == tile && entry.prefab != null)
+                    return entry.prefab;
+            }
+        }
+
+        return destructiblePrefab;
+    }
 
     [Header("Auto Resolve (Stage Tilemaps)")]
     [SerializeField] private bool autoResolveStageTilemaps = true;
