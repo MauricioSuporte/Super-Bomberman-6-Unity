@@ -28,6 +28,10 @@ namespace StageAssets
         [SerializeField, Min(0.01f)] private float damageHalfWidth = 1.25f;
         [SerializeField, Min(0.01f)] private float damageHalfHeight = 0.75f;
 
+        [Header("Player Crush")]
+        [SerializeField, Min(0.01f)] private float playerStunSeconds = 2f;
+        private readonly HashSet<MovementController> crushedPlayers = new();
+
         private readonly HashSet<BarrelPillarTrapPillar> destroyedPillars = new();
         private SpriteRenderer barrelRenderer;
         private Sprite fallingBaseSprite;
@@ -170,6 +174,19 @@ namespace StageAssets
                 Vector2 position = movement.Rigidbody != null ? movement.Rigidbody.position : movement.transform.position;
                 if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
                     continue;
+
+                if (movement.CompareTag("Player"))
+                {
+                    if (crushedPlayers.Contains(movement))
+                        continue;
+
+                    StunReceiver stun = movement.GetComponent<StunReceiver>();
+                    if (stun == null)
+                        stun = movement.gameObject.AddComponent<StunReceiver>();
+                    if (stun.TryCrushStun(playerStunSeconds))
+                        crushedPlayers.Add(movement);
+                    continue;
+                }
 
                 CharacterHealth health = movement.GetComponent<CharacterHealth>() ?? movement.GetComponentInParent<CharacterHealth>();
                 if (health == null)

@@ -4,7 +4,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public class StunReceiver : MonoBehaviour
+public partial class StunReceiver : MonoBehaviour
 {
     private const string StunClipResourcesPrefix = "Sounds/stun";
     private const int StunClipCount = 4;
@@ -193,6 +193,7 @@ public class StunReceiver : MonoBehaviour
 
     public void CancelStun(bool restoreVisuals)
     {
+        RestoreCrushedVisuals();
         if (deferredVisualRestoreRoutine != null)
         {
             StopCoroutine(deferredVisualRestoreRoutine);
@@ -243,6 +244,7 @@ public class StunReceiver : MonoBehaviour
 
     public void CancelStunForDeath()
     {
+        RestoreCrushedVisuals();
         if (deferredVisualRestoreRoutine != null)
         {
             StopCoroutine(deferredVisualRestoreRoutine);
@@ -1019,6 +1021,7 @@ public class StunReceiver : MonoBehaviour
 
     void OnDisable()
     {
+        RestoreCrushedVisuals();
         if (deferredVisualRestoreRoutine != null)
         {
             StopCoroutine(deferredVisualRestoreRoutine);

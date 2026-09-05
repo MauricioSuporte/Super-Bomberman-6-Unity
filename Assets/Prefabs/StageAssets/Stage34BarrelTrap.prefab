@@ -56,6 +56,7 @@ MonoBehaviour:
   fallingSpriteFrameSeconds: 0.1
   damageHalfWidth: 1.25
   damageHalfHeight: 0.75
+  playerStunSeconds: 2
 --- !u!212 &21200000
 SpriteRenderer:
   serializedVersion: 3
