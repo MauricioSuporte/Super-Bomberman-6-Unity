@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3573587855631166792}
   - component: {fileID: 168705711939353351}
   - component: {fileID: 8394900030580477959}
+  - component: {fileID: 2033400103}
   m_Layer: 6
   m_Name: Animation
   m_TagString: Untagged
@@ -27,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 1041439322062744271}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -35,7 +36,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &168705711939353351
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -82,7 +83,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 15d7429122d357744ae307e8e2868ca3, type: 3}
+  m_Sprite: {fileID: -6313207985902432220, guid: d2923521a5093bf42adad41817676fcc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -92,6 +93,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &8394900030580477959
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104,14 +106,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300000, guid: 15d7429122d357744ae307e8e2868ca3, type: 3}
+  idleSprite: {fileID: -6313207985902432220, guid: d2923521a5093bf42adad41817676fcc, type: 3}
   animationSprite:
-  - {fileID: 21300000, guid: 15d7429122d357744ae307e8e2868ca3, type: 3}
-  - {fileID: 21300000, guid: bd28984740c91594eb87aa769740a7d7, type: 3}
-  - {fileID: 21300000, guid: ec9de6c5b86b7094385afc01d9d1758c, type: 3}
-  - {fileID: 21300000, guid: 107fb9acdd05b0549b985689cfac8355, type: 3}
-  - {fileID: 21300000, guid: 4b07ff76d42735d43a23fd52cfd28165, type: 3}
-  - {fileID: 21300000, guid: 4fff897438e132444abdca01c7d1cc37, type: 3}
+  - {fileID: -6313207985902432220, guid: d2923521a5093bf42adad41817676fcc, type: 3}
+  - {fileID: 1537563681, guid: d2923521a5093bf42adad41817676fcc, type: 3}
+  - {fileID: 1894626585, guid: d2923521a5093bf42adad41817676fcc, type: 3}
+  - {fileID: -830036238, guid: d2923521a5093bf42adad41817676fcc, type: 3}
+  - {fileID: 9965069, guid: d2923521a5093bf42adad41817676fcc, type: 3}
+  - {fileID: -713213564, guid: d2923521a5093bf42adad41817676fcc, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -126,6 +128,29 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+--- !u!114 &2033400103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1041439322062744271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f73ad71f6e48e18c71a8ecda779a40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlackoutVisibleParts
+  maskMaterial: {fileID: 2100000, guid: d2aa593467d646c799107c41bca617fb, type: 2}
+  parts:
+  - source: {fileID: 168705711939353351}
+    region:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    palette: {fileID: 2033400104}
+  logDiagnostics: 1
 --- !u!1 &3941917705409293893
 GameObject:
   m_ObjectHideFlags: 0
@@ -140,6 +165,7 @@ GameObject:
   - component: {fileID: 3627800146579448321}
   - component: {fileID: 6684315790638421179}
   - component: {fileID: 6684315790638421180}
+  - component: {fileID: 2033400104}
   m_Layer: 6
   m_Name: CoreMechanisms
   m_TagString: Untagged
@@ -147,6 +173,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2033400104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3941917705409293893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc70610b73af40e19b4fe65be80d850a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BlackoutColorPalette
+  visibleColors:
+  - {r: 0.972549, g: 0.972549, b: 0, a: 1}
+  - {r: 0.972549, g: 0.47058824, b: 0, a: 1}
+  - {r: 0.972549, g: 0, b: 0, a: 1}
+  - {r: 0.972549, g: 0.972549, b: 0.972549, a: 1}
+  colorTolerance: 0.001
 --- !u!4 &2436852266683041271
 Transform:
   m_ObjectHideFlags: 0
@@ -255,12 +299,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a83d9b39244436492439ba3618ebf4d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoreMechanismsPlayerSorting
   horizontalRange: 0.7
   verticalRange: 1.05
   sortingOrderOffset: 1
-  debugBombSorting: 1
 --- !u!114 &6684315790638421180
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -271,11 +314,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5f809bce0e74747932d28491c9fbb51, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWaterSubmersionEffect
-  coreMechanismsWaterSurfaceYOffset: -0.125
   limitCoreMechanismsToScene: 1
   coreMechanismsSceneName: Stage_3-1
+  waterSurfaceYOffset: 0
+  showSurfaceLine: 1
+  premultiplyUnderwaterOpacity: 0
 --- !u!1 &4193804359411325140
 GameObject:
   m_ObjectHideFlags: 0
@@ -303,7 +348,7 @@ Transform:
   m_GameObject: {fileID: 4193804359411325140}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -311,7 +356,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6444124640499299996
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -368,6 +413,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &4348542348863554639
 MonoBehaviour:
   m_ObjectHideFlags: 0

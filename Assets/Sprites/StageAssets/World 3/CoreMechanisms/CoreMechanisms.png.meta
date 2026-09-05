@@ -5,12 +5,6 @@ TextureImporter:
   - first:
       213: -6313207985902432220
     second: CoreMechanisms_0
-  - first:
-      213: 7367340666163160628
-    second: CoreMechanisms_1
-  - first:
-      213: -5459891884622895157
-    second: CoreMechanisms_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -124,10 +118,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 18
+        width: 16
         height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -144,20 +138,20 @@ TextureImporter:
       name: CoreMechanisms_1
       rect:
         serializedVersion: 2
-        x: 18
+        x: 16
         y: 0
-        width: 18
+        width: 16
         height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 436e1f15d4d0e3660800000000000000
-      internalID: 7367340666163160628
+      spriteID: 4f4623a4298e97d41862c20a258678e8
+      internalID: 1537563681
       vertices: []
       indices: 
       edges: []
@@ -166,20 +160,86 @@ TextureImporter:
       name: CoreMechanisms_2
       rect:
         serializedVersion: 2
-        x: 36
+        x: 32
         y: 0
-        width: 18
+        width: 16
         height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: bc7a30932419a34b0800000000000000
-      internalID: -5459891884622895157
+      spriteID: 0dbeb2fdc015c5442918f9d7f76e7034
+      internalID: 1894626585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoreMechanisms_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10629923c0045ad42b79aaec1c21a8da
+      internalID: -830036238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoreMechanisms_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e1d94bd3f671d6e49ac181a51c9808e7
+      internalID: 9965069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoreMechanisms_5
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c900b2d31284614db9482ee6813d86d
+      internalID: -713213564
       vertices: []
       indices: 
       edges: []
@@ -188,7 +248,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 0ff1706197896c6448969b1a0084b05b
     internalID: 0
     vertices: []
     indices: 
@@ -196,11 +256,16 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       CoreMechanisms_0: -6313207985902432220
-      CoreMechanisms_1: 7367340666163160628
-      CoreMechanisms_2: -5459891884622895157
+      CoreMechanisms_1: 1537563681
+      CoreMechanisms_2: 1894626585
+      CoreMechanisms_3: -830036238
+      CoreMechanisms_4: 9965069
+      CoreMechanisms_5: -713213564
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

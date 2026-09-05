@@ -16781,6 +16781,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 977957625}
+  - component: {fileID: 2033400101}
+  - component: {fileID: 2033400102}
   m_Layer: 6
   m_Name: Room 2
   m_TagString: Untagged
@@ -18942,3 +18944,47 @@ SceneRoots:
   - {fileID: 1334625510}
   - {fileID: 1465697803}
   - {fileID: 214000301}
+
+--- !u!114 &2033400101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977957624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49428698e13823048aa4eaa022118a54, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StageBlackout
+  blackoutImage: {fileID: 0}
+  worldOverlay: {fileID: 2033400102}
+  onlyForWorldStage: 1
+  targetWorld: 3
+  targetStage: 4
+  startActive: 1
+  blackoutAlpha: 0.92
+  fadeInSeconds: 0
+  tileWorldSize: 1
+  explosionSpotlightSoftness: 0.12
+  extraTilesAroundExplosion: 0.1
+  maxExplosionSpotlights: 36
+  enableExplosionSpotlights: 1
+--- !u!114 &2033400102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977957624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd2cfb3a17ff4c4fb5bdd42c639ca789, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldBlackoutRenderer
+  sourceMaterial: {fileID: 2100000, guid: ebc979cba7974a77a5decfe533afa845, type: 2}
+  roomBounds: {fileID: 2033100010}
+  sortingLayerName: Default
+  sortingOrder: 100
+  playerRadius: 1.5
+  playerSoftness: 0.35

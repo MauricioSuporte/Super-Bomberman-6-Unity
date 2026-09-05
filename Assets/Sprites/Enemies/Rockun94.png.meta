@@ -50,66 +50,6 @@ TextureImporter:
   - first:
       213: 2216271841351254078
     second: Rockun94_15
-  - first:
-      213: -7640557155662183555
-    second: Rockun94_Frame_0
-  - first:
-      213: -8558017012096094506
-    second: Rockun94_Frame_1
-  - first:
-      213: 1811047209480544330
-    second: Rockun94_Frame_2
-  - first:
-      213: 4900444266453034402
-    second: Rockun94_Frame_3
-  - first:
-      213: -5031693969604982935
-    second: Rockun94_Frame_4
-  - first:
-      213: 5886677505678651185
-    second: Rockun94_Frame_5
-  - first:
-      213: -2721886123008163241
-    second: Rockun94_Frame_6
-  - first:
-      213: 6334567036393591068
-    second: Rockun94_Frame_7
-  - first:
-      213: -1104588720474283682
-    second: Rockun94_Frame_8
-  - first:
-      213: 1046342090167966690
-    second: Rockun94_Frame_9
-  - first:
-      213: -577573958400099725
-    second: Rockun94_Frame_10
-  - first:
-      213: -6948154251675005277
-    second: Rockun94_Frame_11
-  - first:
-      213: -1192505012869421113
-    second: Rockun94_Frame_12
-  - first:
-      213: 5994644929540035518
-    second: Rockun94_Frame_13
-  - first:
-      213: -303539586047066350
-    second: Rockun94_Frame_14
-  - first:
-      213: 7152691471251985429
-    second: Rockun94_Frame_15
-  - first:
-      213: -3815683114559937394
-    second: Rockun94_Frame_16
-  - first:
-      213: -1846420240508087910
-    second: Rockun94_Frame_17
-  - first:
-      213: -6516745835589918720
-    second: Rockun94_Frame_18
-  - first:
-      213: -3690938269757979062
-    second: Rockun94_Frame_19
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -218,7 +158,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Rockun94_Frame_0
+      name: Rockun94_0
       rect:
         serializedVersion: 2
         x: 0
@@ -233,14 +173,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d73cfa29fb947f590800000000000000
-      internalID: -7640557155662183555
+      spriteID: 5ea6a42f6c8a23f20800000000000000
+      internalID: 3400966241040100069
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_1
+      name: Rockun94_1
       rect:
         serializedVersion: 2
         x: 16
@@ -255,14 +195,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6de234caed0db3980800000000000000
-      internalID: -8558017012096094506
+      spriteID: bb38973f8e5f6db70800000000000000
+      internalID: 8923590092547261371
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_2
+      name: Rockun94_2
       rect:
         serializedVersion: 2
         x: 32
@@ -277,14 +217,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a40ec8877d1222910800000000000000
-      internalID: 1811047209480544330
+      spriteID: a0121b909f6996d40800000000000000
+      internalID: 5578155609828696330
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_3
+      name: Rockun94_3
       rect:
         serializedVersion: 2
         x: 48
@@ -299,14 +239,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2a5688fb810e10440800000000000000
-      internalID: 4900444266453034402
+      spriteID: 622f2e1efff067990800000000000000
+      internalID: -7388700546973896154
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_4
+      name: Rockun94_4
       rect:
         serializedVersion: 2
         x: 64
@@ -321,14 +261,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 96748336ef4db2ab0800000000000000
-      internalID: -5031693969604982935
+      spriteID: 7fcf2d648dcb97ee0800000000000000
+      internalID: -1262770583413523209
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_5
+      name: Rockun94_5
       rect:
         serializedVersion: 2
         x: 80
@@ -343,14 +283,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 13f2241a00ea1b150800000000000000
-      internalID: 5886677505678651185
+      spriteID: 47cb323af51b455d0800000000000000
+      internalID: -3074637621270168460
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_6
+      name: Rockun94_6
       rect:
         serializedVersion: 2
         x: 96
@@ -365,14 +305,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 75288070efae93ad0800000000000000
-      internalID: -2721886123008163241
+      spriteID: a6030a5f5635f0e80800000000000000
+      internalID: -8210251898295406486
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_7
+      name: Rockun94_7
       rect:
         serializedVersion: 2
         x: 112
@@ -387,14 +327,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c11932a5827e8e750800000000000000
-      internalID: 6334567036393591068
+      spriteID: 5a990e53dcabb3e20800000000000000
+      internalID: 3331461739905587621
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_8
+      name: Rockun94_8
       rect:
         serializedVersion: 2
         x: 128
@@ -409,14 +349,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e512a3d3966bba0f0800000000000000
-      internalID: -1104588720474283682
+      spriteID: 716ef9e90e40cb790800000000000000
+      internalID: -7513124715580365289
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_9
+      name: Rockun94_9
       rect:
         serializedVersion: 2
         x: 144
@@ -431,14 +371,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2eb5006569a558e00800000000000000
-      internalID: 1046342090167966690
+      spriteID: 5eb79a97183f30750800000000000000
+      internalID: 6270122843647343589
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_10
+      name: Rockun94_10
       rect:
         serializedVersion: 2
         x: 160
@@ -453,14 +393,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 37abb028b8b0cf7f0800000000000000
-      internalID: -577573958400099725
+      spriteID: 85cdb8610c73ec6e0800000000000000
+      internalID: -1815452301632218024
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_11
+      name: Rockun94_11
       rect:
         serializedVersion: 2
         x: 176
@@ -475,14 +415,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3ae8a406582339f90800000000000000
-      internalID: -6948154251675005277
+      spriteID: 0cc0f90c3ca2d27b0800000000000000
+      internalID: -5247490970578121536
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_12
+      name: Rockun94_12
       rect:
         serializedVersion: 2
         x: 192
@@ -497,14 +437,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7c7ab0b420f537fe0800000000000000
-      internalID: -1192505012869421113
+      spriteID: 2a6dd65d970511100800000000000000
+      internalID: 76931152844019362
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_13
+      name: Rockun94_13
       rect:
         serializedVersion: 2
         x: 208
@@ -519,14 +459,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: eb394db6dc1413350800000000000000
-      internalID: 5994644929540035518
+      spriteID: 04a263bdb0cf78da0800000000000000
+      internalID: -5942504055439480256
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_14
+      name: Rockun94_14
       rect:
         serializedVersion: 2
         x: 224
@@ -541,14 +481,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 21f356eca5c99cbf0800000000000000
-      internalID: -303539586047066350
+      spriteID: dbc2b7f9ae7135020800000000000000
+      internalID: 2329231728746114237
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_15
+      name: Rockun94_15
       rect:
         serializedVersion: 2
         x: 240
@@ -563,14 +503,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 514d0fb1ff6734360800000000000000
-      internalID: 7152691471251985429
+      spriteID: e3041755f77c1ce10800000000000000
+      internalID: 2216271841351254078
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_16
+      name: Rockun94_16
       rect:
         serializedVersion: 2
         x: 256
@@ -583,16 +523,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e84e2357c68fb0bc0800000000000000
-      internalID: -3815683114559937394
+      spriteID: 62b68cb257fcd3c45b16eb6b1d4cc16f
+      internalID: -969270989
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rockun94_Frame_17
+      name: Rockun94_17
       rect:
         serializedVersion: 2
         x: 272
@@ -605,54 +545,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a919c62f2923066e0800000000000000
-      internalID: -1846420240508087910
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Rockun94_Frame_18
-      rect:
-        serializedVersion: 2
-        x: 288
-        y: 0
-        width: 16
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0002822903edf85a0800000000000000
-      internalID: -6516745835589918720
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Rockun94_Frame_19
-      rect:
-        serializedVersion: 2
-        x: 304
-        y: 0
-        width: 16
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a464e27f23727ccc0800000000000000
-      internalID: -3690938269757979062
+      spriteID: 43c77be8bd80b024199db6dc49c832b7
+      internalID: -601229202
       vertices: []
       indices: 
       edges: []
@@ -661,7 +557,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: f69fd5224107c7047bd19ed4bbc9e075
     internalID: 0
     vertices: []
     indices: 
@@ -669,7 +565,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Rockun94_0: 3400966241040100069
       Rockun94_1: 8923590092547261371
@@ -679,6 +577,8 @@ TextureImporter:
       Rockun94_13: -5942504055439480256
       Rockun94_14: 2329231728746114237
       Rockun94_15: 2216271841351254078
+      Rockun94_16: -969270989
+      Rockun94_17: -601229202
       Rockun94_2: 5578155609828696330
       Rockun94_3: -7388700546973896154
       Rockun94_4: -1262770583413523209
@@ -687,26 +587,6 @@ TextureImporter:
       Rockun94_7: 3331461739905587621
       Rockun94_8: -7513124715580365289
       Rockun94_9: 6270122843647343589
-      Rockun94_Frame_0: -7640557155662183555
-      Rockun94_Frame_1: -8558017012096094506
-      Rockun94_Frame_10: -577573958400099725
-      Rockun94_Frame_11: -6948154251675005277
-      Rockun94_Frame_12: -1192505012869421113
-      Rockun94_Frame_13: 5994644929540035518
-      Rockun94_Frame_14: -303539586047066350
-      Rockun94_Frame_15: 7152691471251985429
-      Rockun94_Frame_16: -3815683114559937394
-      Rockun94_Frame_17: -1846420240508087910
-      Rockun94_Frame_18: -6516745835589918720
-      Rockun94_Frame_19: -3690938269757979062
-      Rockun94_Frame_2: 1811047209480544330
-      Rockun94_Frame_3: 4900444266453034402
-      Rockun94_Frame_4: -5031693969604982935
-      Rockun94_Frame_5: 5886677505678651185
-      Rockun94_Frame_6: -2721886123008163241
-      Rockun94_Frame_7: 6334567036393591068
-      Rockun94_Frame_8: -1104588720474283682
-      Rockun94_Frame_9: 1046342090167966690
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: StageHeatHaze
-  m_Shader: {fileID: 4800000, guid: a4f5c08e50e24f5a8e8dc56dc8e56872, type: 3}
+  m_Name: WorldBlackout
+  m_Shader: {fileID: 4800000, guid: b195b97cee104b78b4d5d82542abd237, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -19,16 +19,11 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats:
-    - _DistortionPixels: 0.75
-    - _Speed: 1.8
-    - _UnscaledTime: 28.287882
-    - _WaveScale: 11
+    m_Floats: []
     m_Colors: []
   m_BuildTextureStacks: []
-  m_AllowLocking: 1
