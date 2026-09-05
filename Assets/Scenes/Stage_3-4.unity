@@ -570,8 +570,10 @@ MonoBehaviour:
   invertPortalEntryVisual: 1
   useFixedPortalMaskVisual: 1
   portalEntrySeconds: 0.5
-  portalTravelSeconds: 0.5
-  portalExitSeconds: 0.5
+  portalTravelEntryOverlapSeconds: 0.25
+  portalTravelSeconds: 0.25
+  portalExitSeconds: 0.25
+  portalExitStartProgress: 0.5
   portalExitInvulnerabilitySeconds: 1
   portalMaskHorizontalPadding: 0.25
   portalMaskVerticalOffsetTiles: 2

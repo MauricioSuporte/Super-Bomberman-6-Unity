@@ -260,7 +260,8 @@ namespace StageAssets
             for (int i = 0; i < players.Length; i++)
             {
                 MovementController player = players[i];
-                if (player != null && !player.isDead && player.CompareTag("Player") && area.OverlapPoint(player.transform.position))
+                if (player != null && !player.isDead && player.CompareTag("Player") &&
+                    area.OverlapPoint(BattleMode7PortalController.GetRoomPresencePosition(player)))
                     return true;
             }
             return false;

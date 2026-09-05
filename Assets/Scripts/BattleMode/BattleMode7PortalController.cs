@@ -35,8 +35,10 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     [Tooltip("Uses a fixed SpriteMask like the Stage 3-3 ship blockers. Intended for Stage_3-4 portals.")]
     [SerializeField] private bool useFixedPortalMaskVisual;
     [SerializeField, Min(0.01f)] private float portalEntrySeconds = 0.5f;
+    [SerializeField, Min(0f)] private float portalTravelEntryOverlapSeconds;
     [SerializeField, Min(0.01f)] private float portalTravelSeconds = 0.5f;
     [SerializeField, Min(0.01f)] private float portalExitSeconds = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float portalExitStartProgress;
     [SerializeField, Min(0f)] private float portalExitInvulnerabilitySeconds;
     [SerializeField, Min(0f)] private float portalMaskHorizontalPadding = 0.25f;
     [Tooltip("Raises the fixed horizontal mask above the portal tile center. Used by Stage_3-4.")]
@@ -74,6 +76,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     sealed class TeleportState
     {
+        public Vector2 roomPresencePosition;
         public bool prevInputLocked;
         public bool prevPlayerExplosionInvulnerable;
         public bool prevMountExplosionInvulnerable;
@@ -468,6 +471,15 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                pinkJump.JumpActive;
     }
 
+    public static Vector2 GetRoomPresencePosition(MovementController mover)
+    {
+        foreach (var controller in FindObjectsByType<BattleMode7PortalController>())
+            if (controller.activeStates.TryGetValue(mover, out TeleportState state))
+                return state.roomPresencePosition;
+
+        return mover.transform.position;
+    }
+
     IEnumerator TeleportRoutine(MovementController mover, int sourceIndex, int destinationIndex)
     {
         if (mover == null || mover.Rigidbody == null)
@@ -491,6 +503,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         CancelActiveMountMovementAbilities(mover);
 
         TeleportState state = CaptureAndApplyTeleportState(mover);
+        state.roomPresencePosition = source;
         activeStates[mover] = state;
         bool teleportedToDestination = false;
 
@@ -503,11 +516,24 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         {
             if (usePortalSinkVisual)
             {
+                float travelSeconds = Mathf.Max(0.01f, portalTravelSeconds);
+                float travelElapsed = 0f;
+                int sinkSpawnedStars = 0;
+                float travelStart = Mathf.Max(0f, portalEntrySeconds - portalTravelEntryOverlapSeconds);
                 yield return AnimatePortalSinkRise(
                     mover,
                     source,
                     appearing: false,
-                    portalEntrySeconds);
+                    portalEntrySeconds,
+                    entryElapsed =>
+                    {
+                        if (portalTravelEntryOverlapSeconds <= 0f || entryElapsed < travelStart)
+                            return;
+
+                        travelElapsed = Mathf.Min(travelSeconds, entryElapsed - travelStart);
+                        sinkSpawnedStars = SpawnTeleportStarsAlongPath(
+                            source, destination, travelElapsed / travelSeconds, sinkSpawnedStars);
+                    });
                 if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
                     yield break;
 
@@ -519,10 +545,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
                 // Match the Battle Mode 12 portal phase: while the rider is
                 // below the portal, stars travel from the entry to the exit.
-                float travelSeconds = Mathf.Max(0.01f, portalTravelSeconds);
-                float travelElapsed = 0f;
-                int sinkSpawnedStars = 0;
-                if (spawnTeleportStars && teleportStarCount > 0)
+                if (spawnTeleportStars && teleportStarCount > 0 && sinkSpawnedStars == 0)
                 {
                     SpawnTeleportStar(source);
                     sinkSpawnedStars = 1;
@@ -560,7 +583,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                     mover,
                     destination,
                     appearing: true,
-                    portalExitSeconds);
+                    portalExitSeconds,
+                    startProgress: portalExitStartProgress);
                 teleportedToDestination =
                     mover != null && mover.Rigidbody != null && !mover.IsEndingStage;
                 yield break;
@@ -798,7 +822,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         MovementController mover,
         Vector2 portalWorld,
         bool appearing,
-        float phaseSeconds)
+        float phaseSeconds,
+        System.Action<float> onProgress = null,
+        float startProgress = 0f)
     {
         if (mover == null || mover.Rigidbody == null)
             yield break;
@@ -813,13 +839,15 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         }
 
         float duration = Mathf.Max(0.01f, phaseSeconds);
+        startProgress = Mathf.Clamp01(startProgress);
         float maskTravelDistance = useFixedPortalMaskVisual
             ? CreateFixedPortalMasks(snapshots, portalWorld, mover.tileSize)
             : 0f;
         float elapsed = 0f;
         if (useFixedPortalMaskVisual && appearing)
         {
-            mover.Rigidbody.position = portalWorld + Vector2.down * maskTravelDistance;
+            mover.Rigidbody.position = portalWorld + Vector2.down *
+                (maskTravelDistance * (1f - startProgress));
             mover.Rigidbody.linearVelocity = Vector2.zero;
         }
 
@@ -835,7 +863,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             }
 
             elapsed = Mathf.Min(duration, elapsed + Time.deltaTime);
-            float t = Mathf.Clamp01(elapsed / duration);
+            onProgress?.Invoke(elapsed);
+            float t = Mathf.Lerp(startProgress, 1f, Mathf.Clamp01(elapsed / duration));
             float visibleProgress = appearing ? t : 1f - t;
             if (useFixedPortalMaskVisual)
             {
