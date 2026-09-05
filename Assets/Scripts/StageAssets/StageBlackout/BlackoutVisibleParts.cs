@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 /// <summary>Redraws selected sprite pixels above a world blackout, following animation and flips.</summary>
@@ -23,8 +21,6 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
         [Range(0f, 0.25f)] public float colorTolerance = 0.01f;
         [NonSerialized] public SpriteRenderer overlay;
         [NonSerialized] public Material material;
-        [NonSerialized] public string lastDiagnosticState;
-        [NonSerialized] public HashSet<Sprite> loggedSprites;
         public bool IsFullSprite => source != null && source.sprite != null &&
             fullyVisibleSprites != null && Array.IndexOf(fullyVisibleSprites, source.sprite) >= 0;
         public bool CanReveal => IsFullSprite || palette == null || palette.CanReveal;
@@ -35,23 +31,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
 
     [SerializeField] private Material maskMaterial;
     [SerializeField] private Part[] parts = Array.Empty<Part>();
-    [Header("Diagnostics")]
-    [SerializeField] private bool logDiagnostics;
     private readonly Vector4[] colorBuffer = new Vector4[8];
-
-    private void OnEnable()
-    {
-        if (!logDiagnostics) return;
-        foreach (Part part in parts)
-        {
-            if (part == null) continue;
-            part.lastDiagnosticState = null;
-            part.loggedSprites?.Clear();
-        }
-        Debug.Log($"[BlackoutVisibleParts] ENABLE {transform.root.name}/{name}: parts={parts.Length}, " +
-            $"maskMaterial={maskMaterial}, colorSpace={QualitySettings.activeColorSpace}. " +
-            "Logs report CPU setup, not confirmation that the GPU rendered matching pixels.", this);
-    }
 
     private void LateUpdate()
     {
@@ -66,7 +46,6 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
                 part.region.width > 0f && part.region.height > 0f &&
                 part.CanReveal &&
                 source.bounds.Intersects(darkness.RoomWorldBounds);
-            if (logDiagnostics) LogState(part, darkness);
             if (!show || maskMaterial == null)
             {
                 if (part.overlay != null) part.overlay.enabled = false;
@@ -109,66 +88,11 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             part.material.SetInt("_VisibleColorCount", colorCount);
             part.material.SetVectorArray("_VisibleColors", colorBuffer);
             part.material.SetFloat("_ColorTolerance", part.EffectiveTolerance);
-            if (logDiagnostics) LogSprite(part, darkness, colorCount);
         }
-    }
-
-    private void LogState(Part part, WorldBlackoutRenderer darkness)
-    {
-        SpriteRenderer source = part.source;
-        string state = StageBlackout.Instance == null ? "BLOCKED: StageBlackout.Instance missing" :
-            darkness == null ? "BLOCKED: world blackout inactive/missing" :
-            !darkness.IsVisible ? "BLOCKED: world overlay not visible" :
-            source == null ? "BLOCKED: source renderer missing" :
-            !source.gameObject.activeInHierarchy ? "BLOCKED: source GameObject inactive" :
-            !source.enabled ? "BLOCKED: source renderer disabled" :
-            source.sprite == null ? "BLOCKED: source sprite missing" :
-            !source.bounds.Intersects(darkness.RoomWorldBounds) ? "BLOCKED: source outside room bounds" :
-            part.region.width <= 0f || part.region.height <= 0f ? "BLOCKED: empty region; shader would discard all pixels. Check the serialized Rect width/height" :
-            !part.CanReveal ? "BLOCKED: prefab palette disabled or empty" :
-            maskMaterial == null ? "BLOCKED: mask material missing" : "READY: submitting selected pixels above blackout";
-        if (state == part.lastDiagnosticState) return;
-        part.lastDiagnosticState = state;
-        Debug.Log($"[BlackoutVisibleParts] {transform.root.name}/{name}: {state}; " +
-            $"source={source}, region={part.region}, sourceBounds={(source != null ? source.bounds.ToString() : "missing")}, " +
-            $"roomBounds={(darkness != null ? darkness.RoomWorldBounds.ToString() : "missing")}", this);
-    }
-
-    private void LogSprite(Part part, WorldBlackoutRenderer darkness, int colorCount)
-    {
-        Sprite sprite = part.source.sprite;
-        part.loggedSprites ??= new HashSet<Sprite>();
-        if (!part.loggedSprites.Add(sprite)) return;
-        Texture2D texture = sprite.texture;
-        var message = new StringBuilder();
-        message.AppendLine($"[BlackoutVisibleParts] SPRITE {transform.root.name}/{name}: {sprite.name}");
-        message.AppendLine($"texture={texture.name}, format={texture.graphicsFormat}, filter={texture.filterMode}, " +
-            $"readable={texture.isReadable}, packed={sprite.packed}, spriteRect={sprite.rect}, region={part.region}");
-        message.AppendLine($"shaderVisibleRegion={part.material.GetVector("_VisibleRegion").ToString("F6")}, " +
-            $"shaderSpriteBounds={part.material.GetVector("_SpriteBounds").ToString("F6")}");
-        message.AppendLine($"shader={part.material.shader.name}, supported={part.material.shader.isSupported}, " +
-            $"passes={part.material.passCount}, queue={part.material.renderQueue}, " +
-            $"overlayOrder={part.overlay.sortingLayerName}/{part.overlay.sortingOrder}, blackoutOrder={darkness.SortingLayerName}/{darkness.SortingOrder}, " +
-            $"tint={part.overlay.color}, layer={part.overlay.gameObject.layer}, maskInteraction={part.overlay.maskInteraction}");
-        Camera camera = Camera.main;
-        message.AppendLine($"camera={camera}, cameraIncludesLayer={(camera != null && (camera.cullingMask & (1 << part.overlay.gameObject.layer)) != 0)}, " +
-            $"colorSpace={QualitySettings.activeColorSpace}, palette={part.palette}, fullSpriteOverride={part.IsFullSprite}, colorsUploaded={colorCount}, tolerance={part.EffectiveTolerance:F6}");
-        for (int i = 0; i < colorCount; i++)
-            message.AppendLine($"color[{i}]=#{ColorUtility.ToHtmlStringRGB(part.EffectiveColors[i])}, shaderRGB={colorBuffer[i].ToString("F6")}");
-#if UNITY_EDITOR
-        string texturePath = UnityEditor.AssetDatabase.GetAssetPath(texture);
-        var importer = UnityEditor.AssetImporter.GetAtPath(texturePath) as UnityEditor.TextureImporter;
-        if (importer != null)
-            message.AppendLine($"importer={texturePath}, sRGB={importer.sRGBTexture}, compression={importer.textureCompression}. " +
-                "Compression or an unexpected color space can prevent palette matches at this tolerance.");
-#endif
-        Debug.Log(message.ToString(), this);
     }
 
     private void OnDisable()
     {
-        if (logDiagnostics)
-            Debug.Log($"[BlackoutVisibleParts] DISABLE {transform.root.name}/{name}", this);
         foreach (Part part in parts)
             if (part?.overlay != null) part.overlay.enabled = false;
     }

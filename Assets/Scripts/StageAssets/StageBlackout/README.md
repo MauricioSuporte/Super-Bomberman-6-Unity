@@ -9,10 +9,19 @@ The Room 2 object in Stage_3-4 has both components configured:
 
 - Darkness alpha: 0.92.
 - Sorting Layer: Default; Order in Layer: 100.
-- Player vision: 1.5 world units of clear radius plus 0.35 of soft edge.
+- Player vision: 3 tiles of clear radius plus 0.35 world units of soft edge.
+- Circle center: 1.5 tiles ahead of each player's facing direction, including
+  while idle. The center is clamped to the room collider; the circle and soft
+  edge are clipped at the room boundary.
+- Facing changes move the light offset in at most 0.1 seconds (a full reversal),
+  independently for each player. The displayed center snaps to the active
+  pixel-perfect camera's source-pixel grid, with a 16 PPU fallback. Player
+  movement itself follows immediately; turning pauses with gameplay time.
 - All living active players (P1–P6) inside the room contribute circles.
 - The mesh stays in the room when the camera switches or scrolls. Its world
   coordinates require no conversion through the pixel-perfect viewport.
+  Radius and forward offset use each player's tile size, so their screen size
+  follows the stage's camera projection and safe-frame scaling, not fixed pixels.
 
 To show a whole SpriteRenderer or TilemapRenderer above darkness, use the
 same sorting layer and an order greater than 100. Account for a parent

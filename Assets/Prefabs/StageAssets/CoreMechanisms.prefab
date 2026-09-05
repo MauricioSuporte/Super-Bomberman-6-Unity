@@ -150,7 +150,6 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400104}
-  logDiagnostics: 1
 --- !u!1 &3941917705409293893
 GameObject:
   m_ObjectHideFlags: 0
@@ -476,4 +475,3 @@ MonoBehaviour:
     palette: {fileID: 0}
     colors: []
     colorTolerance: 0.001
-  logDiagnostics: 0

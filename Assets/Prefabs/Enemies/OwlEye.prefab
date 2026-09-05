@@ -417,7 +417,6 @@ MonoBehaviour:
     palette: {fileID: 2033400201}
     colors: []
     colorTolerance: 0.01
-  logDiagnostics: 0
 --- !u!50 &8493640678040593282
 Rigidbody2D:
   serializedVersion: 5

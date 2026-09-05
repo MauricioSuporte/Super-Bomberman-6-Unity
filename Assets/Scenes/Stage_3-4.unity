@@ -18901,7 +18901,9 @@ MonoBehaviour:
   roomBounds: {fileID: 2033100010}
   sortingLayerName: Default
   sortingOrder: 100
-  playerRadius: 1.5
+  playerRadius: 3
+  playerForwardOffset: 1.5
+  playerLightTurnSeconds: 0.1
   playerSoftness: 0.35
 --- !u!1001 &2133092693
 PrefabInstance:
