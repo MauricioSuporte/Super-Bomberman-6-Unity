@@ -5,7 +5,7 @@ using UnityEngine;
 namespace StageAssets
 {
     /// <summary>
-    /// Drops a barrel vertically after both supporting pillars are destroyed
+    /// Bounces a barrel downward after both supporting pillars are destroyed
     /// by BombExplosion.Start. Intended for the Room 2 barrel in Stage 3-4.
     /// </summary>
     [DisallowMultipleComponent]
@@ -13,7 +13,12 @@ namespace StageAssets
     {
         [Header("Drop")]
         [SerializeField, Min(0.01f)] private float fallDistance = 13f;
-        [SerializeField, Min(0.01f)] private float fallSpeed = 8f;
+        [SerializeField, Min(0.01f)] private float bounceIntervalSeconds = 0.7f;
+        [SerializeField, Min(0.01f)] private float bounceDropDistance = 3f;
+        [SerializeField, Min(0f)] private float bounceHeight = 0.75f;
+
+        [Header("Audio")]
+        [SerializeField] private AudioClip bounceSfx;
 
         [Header("Falling Visual")]
         [SerializeField] private Sprite fallingAlternateSprite;
@@ -23,10 +28,10 @@ namespace StageAssets
         [SerializeField, Min(0.01f)] private float damageHalfWidth = 1.25f;
         [SerializeField, Min(0.01f)] private float damageHalfHeight = 0.75f;
 
-        private readonly HashSet<CharacterHealth> damagedCharacters = new();
         private readonly HashSet<BarrelPillarTrapPillar> destroyedPillars = new();
         private SpriteRenderer barrelRenderer;
         private Sprite fallingBaseSprite;
+        private AudioSource audioSource;
         private bool fallStarted;
 
         public bool AreBothPillarsDestroyed => destroyedPillars.Count >= 2;
@@ -35,6 +40,12 @@ namespace StageAssets
         {
             barrelRenderer = GetComponent<SpriteRenderer>();
             fallingBaseSprite = barrelRenderer != null ? barrelRenderer.sprite : null;
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+                audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
             EnsurePillarReceiver("PillarBarrel1");
             EnsurePillarReceiver("PillarBarrel2");
         }
@@ -67,7 +78,6 @@ namespace StageAssets
         private IEnumerator FallRoutine()
         {
             fallStarted = true;
-            damagedCharacters.Clear();
 
             if (barrelRenderer != null)
                 barrelRenderer.sortingOrder = 10;
@@ -75,15 +85,38 @@ namespace StageAssets
             Vector3 start = transform.position;
             Vector3 end = start + Vector3.down * fallDistance;
             float fallElapsedSeconds = 0f;
-            while (transform.position.y > end.y)
+            float bounceElapsedSeconds = 0f;
+            float interval = Mathf.Max(0.01f, bounceIntervalSeconds);
+            float dropDistance = Mathf.Max(0.01f, bounceDropDistance);
+            Vector3 bounceStart = start;
+            Vector3 damagePosition = start;
+            while (bounceStart.y > end.y)
             {
-                AnimateFallingSprite(fallElapsedSeconds);
-                Vector3 previous = transform.position;
-                float nextY = Mathf.Max(end.y, previous.y - fallSpeed * Time.deltaTime);
-                transform.position = new Vector3(previous.x, nextY, previous.z);
-                DamageCharactersInSweep(previous, transform.position);
-                fallElapsedSeconds += Time.deltaTime;
-                yield return null;
+                Vector3 bounceEnd = new(start.x, Mathf.Max(end.y, bounceStart.y - dropDistance), start.z);
+                GameAudioSettings.PlaySfx(audioSource, bounceSfx);
+
+                while (true)
+                {
+                    float progress = Mathf.Clamp01(bounceElapsedSeconds / interval);
+                    Vector3 previousDamagePosition = damagePosition;
+                    damagePosition = Vector3.Lerp(bounceStart, bounceEnd, progress);
+                    transform.position = damagePosition
+                        + Vector3.up * (4f * bounceHeight * progress * (1f - progress));
+                    AnimateFallingSprite(fallElapsedSeconds);
+
+                    // Bounce height is visual only: the damage footprint stays on
+                    // the ground path and sweeps continuously, including in midair.
+                    DamageCharactersInSweep(previousDamagePosition, damagePosition);
+                    if (progress >= 1f)
+                        break;
+
+                    yield return null;
+                    bounceElapsedSeconds += Time.deltaTime;
+                    fallElapsedSeconds += Time.deltaTime;
+                }
+
+                bounceElapsedSeconds -= interval;
+                bounceStart = bounceEnd;
             }
 
             Destroy(gameObject);
@@ -115,9 +148,11 @@ namespace StageAssets
                     continue;
 
                 CharacterHealth health = movement.GetComponent<CharacterHealth>() ?? movement.GetComponentInParent<CharacterHealth>();
-                if (health == null || !damagedCharacters.Add(health))
+                if (health == null)
                     continue;
 
+                // Retry while overlapping; CharacterHealth handles invulnerability.
+                // A blocked hit must not exempt the character for the whole fall.
                 health.TakeDamage(1, fromExplosion: true);
             }
         }

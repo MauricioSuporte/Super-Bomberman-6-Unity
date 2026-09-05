@@ -48,7 +48,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.BarrelPillarTrap
   fallDistance: 13
-  fallSpeed: 8
+  bounceIntervalSeconds: 0.7
+  bounceDropDistance: 3
+  bounceHeight: 0.75
+  bounceSfx: {fileID: 8300000, guid: d6349f3726e14069a44feb8f4cc93aee, type: 3}
   fallingAlternateSprite: {fileID: 699755031, guid: dfe9d7c61e60f1643b1bf1eda22a2813, type: 3}
   fallingSpriteFrameSeconds: 0.1
   damageHalfWidth: 1.25
