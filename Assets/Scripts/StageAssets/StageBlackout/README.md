@@ -27,6 +27,12 @@ All directions can share one palette while retaining their own regions.
 An assigned empty or disabled palette reveals nothing. Without a palette,
 the existing inline color settings continue to work.
 
+`Fully Visible Sprites` on an entry bypasses the palette only for the listed
+frames. OwlEye's two eye renderers list the eight CoreMechanisms destruction
+frames, so its final effect is fully visible while its other poses keep their
+palette. The CoreMechanisms `Death` child has its own full-region mask with
+no palette; Barrel pillar effects inherit this mask when they clone that child.
+
 Add `BlackoutVisibleParts` to a prefab root or a persistent visual parent,
 assign `Assets/BlackoutVisibleParts.mat`, then add entries to `Parts`:
 

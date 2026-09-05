@@ -16,6 +16,8 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
         public Rect region = new(0f, 0f, 1f, 1f);
         [Tooltip("Optional prefab palette. When assigned, its colors and tolerance replace the inline settings below.")]
         public BlackoutColorPalette palette;
+        [Tooltip("These animation frames bypass the palette and reveal every opaque pixel inside the region.")]
+        public Sprite[] fullyVisibleSprites = Array.Empty<Sprite>();
         [Tooltip("Empty selects every color in the region. Otherwise only these colors remain visible (up to 8).")]
         public Color[] colors = Array.Empty<Color>();
         [Range(0f, 0.25f)] public float colorTolerance = 0.01f;
@@ -23,7 +25,11 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
         [NonSerialized] public Material material;
         [NonSerialized] public string lastDiagnosticState;
         [NonSerialized] public HashSet<Sprite> loggedSprites;
-        public Color[] EffectiveColors => palette != null ? palette.VisibleColors : colors;
+        public bool IsFullSprite => source != null && source.sprite != null &&
+            fullyVisibleSprites != null && Array.IndexOf(fullyVisibleSprites, source.sprite) >= 0;
+        public bool CanReveal => IsFullSprite || palette == null || palette.CanReveal;
+        public Color[] EffectiveColors => IsFullSprite ? Array.Empty<Color>() :
+            palette != null ? palette.VisibleColors : colors;
         public float EffectiveTolerance => palette != null ? palette.ColorTolerance : colorTolerance;
     }
 
@@ -58,7 +64,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             bool show = darkness != null && darkness.IsVisible && source != null &&
                 source.enabled && source.gameObject.activeInHierarchy && source.sprite != null &&
                 part.region.width > 0f && part.region.height > 0f &&
-                (part.palette == null || part.palette.CanReveal) &&
+                part.CanReveal &&
                 source.bounds.Intersects(darkness.RoomWorldBounds);
             if (logDiagnostics) LogState(part, darkness);
             if (!show || maskMaterial == null)
@@ -119,7 +125,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             source.sprite == null ? "BLOCKED: source sprite missing" :
             !source.bounds.Intersects(darkness.RoomWorldBounds) ? "BLOCKED: source outside room bounds" :
             part.region.width <= 0f || part.region.height <= 0f ? "BLOCKED: empty region; shader would discard all pixels. Check the serialized Rect width/height" :
-            part.palette != null && !part.palette.CanReveal ? "BLOCKED: prefab palette disabled or empty" :
+            !part.CanReveal ? "BLOCKED: prefab palette disabled or empty" :
             maskMaterial == null ? "BLOCKED: mask material missing" : "READY: submitting selected pixels above blackout";
         if (state == part.lastDiagnosticState) return;
         part.lastDiagnosticState = state;
@@ -146,7 +152,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             $"tint={part.overlay.color}, layer={part.overlay.gameObject.layer}, maskInteraction={part.overlay.maskInteraction}");
         Camera camera = Camera.main;
         message.AppendLine($"camera={camera}, cameraIncludesLayer={(camera != null && (camera.cullingMask & (1 << part.overlay.gameObject.layer)) != 0)}, " +
-            $"colorSpace={QualitySettings.activeColorSpace}, palette={part.palette}, colorsUploaded={colorCount}, tolerance={part.EffectiveTolerance:F6}");
+            $"colorSpace={QualitySettings.activeColorSpace}, palette={part.palette}, fullSpriteOverride={part.IsFullSprite}, colorsUploaded={colorCount}, tolerance={part.EffectiveTolerance:F6}");
         for (int i = 0; i < colorCount; i++)
             message.AppendLine($"color[{i}]=#{ColorUtility.ToHtmlStringRGB(part.EffectiveColors[i])}, shaderRGB={colorBuffer[i].ToString("F6")}");
 #if UNITY_EDITOR

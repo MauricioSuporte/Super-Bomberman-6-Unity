@@ -367,6 +367,15 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites:
+    - {fileID: 835706428027011685, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -490596993370003520, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -3251351837298874556, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -2322268683319148442, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -7027241498416450550, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: 5314401042727684088, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: 3032406776422192054, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -1430849180586043793, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
     colors: []
     colorTolerance: 0.01
   - source: {fileID: 4602493532254203962}
@@ -377,6 +386,15 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites:
+    - {fileID: 835706428027011685, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -490596993370003520, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -3251351837298874556, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -2322268683319148442, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -7027241498416450550, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: 5314401042727684088, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: 3032406776422192054, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+    - {fileID: -1430849180586043793, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
     colors: []
     colorTolerance: 0.01
   - source: {fileID: 4311451513251382735}
@@ -612,9 +630,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2639448656321639623}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0da26a4e67e5d5c4b92dd153022700c0, type: 3}
+  m_Script: {fileID: 11500000, guid: f4b31240bd844f8199311e05ad7f9e0c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JunctionTurningEnemyMovementController
+  m_EditorClassIdentifier: Assembly-CSharp::OwlEyeMovementController
   speed: 1
   tileSize: 1
   spriteUp: {fileID: 7402235040362702296}
@@ -637,6 +655,17 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  leftEye: {fileID: 5301251125148845559}
+  rightEye: {fileID: 8545541896042048359}
+  coreDestructionFrames:
+  - {fileID: 835706428027011685, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: -490596993370003520, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: -3251351837298874556, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: -2322268683319148442, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: -7027241498416450550, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: 5314401042727684088, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: 3032406776422192054, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
+  - {fileID: -1430849180586043793, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
 --- !u!1 &3865923802851965462
 GameObject:
   m_ObjectHideFlags: 0
