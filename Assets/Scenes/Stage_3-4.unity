@@ -9386,6 +9386,68 @@ MonoBehaviour:
     tiles:
     - {fileID: 11400000, guid: 1506bd9bd18f251458b5cf0531580ef8, type: 2}
     handler: {fileID: 0}
+--- !u!1001 &753614674
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 22.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639448656321639623, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+      propertyPath: m_Name
+      value: OwlEye
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+--- !u!4 &753614675 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1881957511997152001, guid: c0025d3c0a120844a9a53ff7ffb78019, type: 3}
+  m_PrefabInstance: {fileID: 753614674}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0
@@ -16804,6 +16866,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1677548527}
+  - {fileID: 753614675}
   - {fileID: 1736289055}
   - {fileID: 1812628662}
   - {fileID: 17490857}
@@ -18797,6 +18860,49 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 32, y: 14}
   m_EdgeRadius: 0
+--- !u!114 &2033400101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977957624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49428698e13823048aa4eaa022118a54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageBlackout
+  blackoutImage: {fileID: 0}
+  worldOverlay: {fileID: 2033400102}
+  onlyForWorldStage: 1
+  targetWorld: 3
+  targetStage: 4
+  startActive: 1
+  blackoutAlpha: 0.92
+  fadeInSeconds: 0
+  tileWorldSize: 1
+  explosionSpotlightSoftness: 0.12
+  extraTilesAroundExplosion: 0.1
+  maxExplosionSpotlights: 36
+  enableExplosionSpotlights: 1
+--- !u!114 &2033400102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977957624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd2cfb3a17ff4c4fb5bdd42c639ca789, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldBlackoutRenderer
+  sourceMaterial: {fileID: 2100000, guid: ebc979cba7974a77a5decfe533afa845, type: 2}
+  roomBounds: {fileID: 2033100010}
+  sortingLayerName: Default
+  sortingOrder: 100
+  playerRadius: 1.5
+  playerSoftness: 0.35
 --- !u!1001 &2133092693
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18944,47 +19050,3 @@ SceneRoots:
   - {fileID: 1334625510}
   - {fileID: 1465697803}
   - {fileID: 214000301}
-
---- !u!114 &2033400101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 977957624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49428698e13823048aa4eaa022118a54, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageBlackout
-  blackoutImage: {fileID: 0}
-  worldOverlay: {fileID: 2033400102}
-  onlyForWorldStage: 1
-  targetWorld: 3
-  targetStage: 4
-  startActive: 1
-  blackoutAlpha: 0.92
-  fadeInSeconds: 0
-  tileWorldSize: 1
-  explosionSpotlightSoftness: 0.12
-  extraTilesAroundExplosion: 0.1
-  maxExplosionSpotlights: 36
-  enableExplosionSpotlights: 1
---- !u!114 &2033400102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 977957624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd2cfb3a17ff4c4fb5bdd42c639ca789, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WorldBlackoutRenderer
-  sourceMaterial: {fileID: 2100000, guid: ebc979cba7974a77a5decfe533afa845, type: 2}
-  roomBounds: {fileID: 2033100010}
-  sortingLayerName: Default
-  sortingOrder: 100
-  playerRadius: 1.5
-  playerSoftness: 0.35
