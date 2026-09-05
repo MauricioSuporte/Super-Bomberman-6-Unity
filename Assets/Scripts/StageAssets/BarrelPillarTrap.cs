@@ -107,6 +107,7 @@ namespace StageAssets
                     // Bounce height is visual only: the damage footprint stays on
                     // the ground path and sweeps continuously, including in midair.
                     DamageCharactersInSweep(previousDamagePosition, damagePosition);
+                    DestroyCoreMechanismsInSweep(previousDamagePosition, damagePosition);
                     if (progress >= 1f)
                         break;
 
@@ -129,6 +130,29 @@ namespace StageAssets
 
             int frame = Mathf.FloorToInt(elapsedSeconds / fallingSpriteFrameSeconds);
             barrelRenderer.sprite = (frame & 1) == 0 ? fallingBaseSprite : fallingAlternateSprite;
+        }
+
+        private void DestroyCoreMechanismsInSweep(Vector3 previous, Vector3 current)
+        {
+            float minY = Mathf.Min(previous.y, current.y) - damageHalfHeight;
+            float maxY = Mathf.Max(previous.y, current.y) + damageHalfHeight;
+            CoreMechanismsDestructible[] mechanisms = FindObjectsByType<CoreMechanismsDestructible>(
+                FindObjectsInactive.Exclude);
+
+            for (int i = 0; i < mechanisms.Length; i++)
+            {
+                CoreMechanismsDestructible mechanism = mechanisms[i];
+                if (mechanism == null)
+                    continue;
+
+                Vector3 position = mechanism.transform.position;
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                // Use the normal destruction flow for animation, audio and room
+                // progression. PlayDeath ignores mechanisms already dying.
+                mechanism.PlayDeath();
+            }
         }
 
         private void DamageCharactersInSweep(Vector3 previous, Vector3 current)
