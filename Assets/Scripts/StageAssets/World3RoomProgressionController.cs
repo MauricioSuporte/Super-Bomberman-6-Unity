@@ -112,7 +112,9 @@ namespace StageAssets
         private void ScanRoomCores()
         {
             if (coreTilemap == null || rooms == null)
+            {
                 return;
+            }
 
             BoundsInt bounds = coreTilemap.cellBounds;
             foreach (Room room in rooms)
@@ -178,7 +180,9 @@ namespace StageAssets
                     continue;
 
                 if (!room.remainingSceneCores.Remove(core))
+                {
                     continue;
+                }
 
                 if (room.remainingSceneCores.Count == 0 && room.remainingCores.Count == 0)
                     Release(room, core);

@@ -63,6 +63,7 @@ namespace StageAssets
         private bool openingStarted;
         private bool openingRequested;
         private BarrelPillarTrap requiredBarrelTrap;
+        private bool barrelPrerequisiteSatisfied;
         private Sprite[] runtimeGateSprites;
         private SpriteRenderer blockerRenderer;
         private SpriteMask sinkMask;
@@ -111,7 +112,10 @@ namespace StageAssets
         {
             UpdateOpeningBubbles();
 
-            if (openingRequested && !openingStarted && HasMetOpeningPrerequisite())
+            // Observe the supports before the room requests opening: the barrel
+            // destroys itself when its roll ends, possibly before the last core.
+            bool prerequisiteSatisfied = HasMetOpeningPrerequisite();
+            if (openingRequested && !openingStarted && prerequisiteSatisfied)
                 StartOpening();
         }
 
@@ -141,9 +145,12 @@ namespace StageAssets
             if (string.IsNullOrWhiteSpace(requiredBarrelTrapName))
                 return true;
 
+            if (barrelPrerequisiteSatisfied)
+                return true;
+
             if (requiredBarrelTrap == null)
             {
-                BarrelPillarTrap[] barrelTraps = FindObjectsByType<BarrelPillarTrap>(FindObjectsInactive.Exclude);
+                BarrelPillarTrap[] barrelTraps = FindObjectsByType<BarrelPillarTrap>(FindObjectsInactive.Include);
                 for (int i = 0; i < barrelTraps.Length; i++)
                 {
                     if (barrelTraps[i] != null && barrelTraps[i].name == requiredBarrelTrapName)
@@ -154,7 +161,9 @@ namespace StageAssets
                 }
             }
 
-            return requiredBarrelTrap != null && requiredBarrelTrap.AreBothPillarsDestroyed;
+            bool satisfied = requiredBarrelTrap != null && requiredBarrelTrap.AreBothPillarsDestroyed;
+            barrelPrerequisiteSatisfied = satisfied;
+            return satisfied;
         }
 
         private bool UsesGateSpriteSequence()

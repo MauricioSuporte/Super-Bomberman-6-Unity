@@ -1693,16 +1693,6 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
-  - first: {x: 40, y: 2, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 8
-      m_TileSpriteIndex: 8
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
   - first: {x: -1, y: 4, z: 0}
     second:
       serializedVersion: 2
@@ -1750,7 +1740,7 @@ Tilemap:
     m_RefCount: 32
     m_Data: {fileID: 11400000, guid: 903562cd262643943a4e929bc292f45a, type: 2}
   - serializedVersion: 2
-    m_RefCount: 54
+    m_RefCount: 53
     m_Data: {fileID: 11400000, guid: 0b6373692338a5846b4f393c95aa9240, type: 2}
   m_TileSpriteArray:
   - serializedVersion: 2
@@ -1778,11 +1768,11 @@ Tilemap:
     m_RefCount: 32
     m_Data: {fileID: -525072142509190493, guid: bb852a2fe3e621d40b1110a3434fb690, type: 3}
   - serializedVersion: 2
-    m_RefCount: 54
+    m_RefCount: 53
     m_Data: {fileID: -5756481528261795606, guid: 449305baca81097459a9d0394a39d027, type: 3}
   m_TileMatrixArray:
   - serializedVersion: 2
-    m_RefCount: 86
+    m_RefCount: 85
     m_Data:
       e00: 1
       e01: 0
@@ -1802,7 +1792,7 @@ Tilemap:
       e33: 1
   m_TileColorArray:
   - serializedVersion: 2
-    m_RefCount: 86
+    m_RefCount: 85
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -17027,7 +17017,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3530831331696384950, guid: 21d3a95800152f245a5faccd6e72c9f6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -18400,6 +18390,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Barrel 2
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 5d58cf36a6c843d8b0d696b0f406e310, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 5d58cf36a6c843d8b0d696b0f406e310, type: 3}
       propertyPath: m_LocalPosition.x
       value: 41.5
@@ -18442,7 +18436,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 21200000, guid: 5d58cf36a6c843d8b0d696b0f406e310, type: 3}
       propertyPath: m_SortingOrder
-      value: 1
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 21200001, guid: 5d58cf36a6c843d8b0d696b0f406e310, type: 3}
+      propertyPath: m_SortingOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 21200002, guid: 5d58cf36a6c843d8b0d696b0f406e310, type: 3}
+      propertyPath: m_SortingOrder
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
