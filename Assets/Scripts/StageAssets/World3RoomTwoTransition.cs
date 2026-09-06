@@ -30,6 +30,9 @@ namespace StageAssets
         [SerializeField] private Camera sourceRoomCamera;
         [SerializeField] private Camera destinationRoomCamera;
 
+        [Header("Room 2 arrival")]
+        [SerializeField] private Stage34BatSwarmEffect roomTwoBatSwarmEffect;
+
         [Header("Destination Player Positions")]
         [SerializeField] private PlayerDestination[] playerDestinations =
         {
@@ -102,6 +105,7 @@ namespace StageAssets
             yield return null;
 
             yield return FadeTo(0f, fadeInSeconds);
+            roomTwoBatSwarmEffect?.Play(destinationRoomCamera);
             Time.timeScale = timeScaleBeforeTransition;
             UnfreezeGameplay();
         }
