@@ -255,6 +255,20 @@ namespace StageAssets
                 if (bakebake.TryBarrelCrushStun(enemyStunSeconds))
                     crushedCharacters.Add(bakebake);
             }
+
+            foreach (WheelRobotMovementController wheelRobot in FindObjectsByType<WheelRobotMovementController>())
+            {
+                if (wheelRobot == null || crushedCharacters.Contains(wheelRobot))
+                    continue;
+
+                Vector2 position = wheelRobot.TryGetComponent<Rigidbody2D>(out var body)
+                    ? body.position : (Vector2)wheelRobot.transform.position;
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                if (wheelRobot.TryBarrelCrushStun(enemyStunSeconds))
+                    crushedCharacters.Add(wheelRobot);
+            }
         }
     }
 

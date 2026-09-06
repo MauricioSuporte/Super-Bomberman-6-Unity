@@ -1,0 +1,610 @@
+fileFormatVersion: 2
+guid: a3b21783cfc179b468a159d656c156eb
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1299172233633431767
+    second: Wheel Robot_0
+  - first:
+      213: 5972527307696548246
+    second: Wheel Robot_1
+  - first:
+      213: -7417635185751726074
+    second: Wheel Robot_2
+  - first:
+      213: -6971784175760137546
+    second: Wheel Robot_3
+  - first:
+      213: -8789461617746677959
+    second: Wheel Robot_4
+  - first:
+      213: -5234363968870212171
+    second: Wheel Robot_5
+  - first:
+      213: 3398047857714156525
+    second: Wheel Robot_6
+  - first:
+      213: -779932918430732286
+    second: Wheel Robot_7
+  - first:
+      213: -6555361339673481748
+    second: Wheel Robot_8
+  - first:
+      213: 1706734252710148962
+    second: Wheel Robot_9
+  - first:
+      213: -340934778254633657
+    second: Wheel Robot_10
+  - first:
+      213: -6139212987395485694
+    second: Wheel Robot_11
+  - first:
+      213: 4577670180611697689
+    second: Wheel Robot_12
+  - first:
+      213: 8384838664525552664
+    second: Wheel Robot_13
+  - first:
+      213: 3703064135817282038
+    second: Wheel Robot_14
+  - first:
+      213: -7193149498305192997
+    second: Wheel Robot_15
+  - first:
+      213: -5729094028123628692
+    second: WheelRobot_0_0
+  - first:
+      213: -8202318757926341986
+    second: WheelRobot_0_1
+  - first:
+      213: 4768937856848082521
+    second: WheelRobot_0_2
+  - first:
+      213: -5909908538400710459
+    second: WheelRobot_0_3
+  - first:
+      213: -4345145207981055701
+    second: WheelRobot_0_4
+  - first:
+      213: 989024577391098163
+    second: WheelRobot_0_5
+  - first:
+      213: 1686432179094207066
+    second: WheelRobot_0_6
+  - first:
+      213: 1432077995717756157
+    second: WheelRobot_0_7
+  - first:
+      213: -7123555963679870363
+    second: WheelRobot_1_0
+  - first:
+      213: 3875522410404076620
+    second: WheelRobot_1_1
+  - first:
+      213: 351791424304079574
+    second: WheelRobot_1_2
+  - first:
+      213: 7866639918169842283
+    second: WheelRobot_1_3
+  - first:
+      213: -6143250847447669101
+    second: WheelRobot_1_4
+  - first:
+      213: -8650049053800024144
+    second: WheelRobot_1_5
+  - first:
+      213: -4775235557557519409
+    second: WheelRobot_1_6
+  - first:
+      213: 2838237927159874187
+    second: WheelRobot_1_7
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: WheelRobot_0_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6b11e0e55b2e70b0800000000000000
+      internalID: -5729094028123628692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_1
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e92f6432c828b2e80800000000000000
+      internalID: -8202318757926341986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_2
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 956b751c6bbae2240800000000000000
+      internalID: 4768937856848082521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c0e3911f79cbfda0800000000000000
+      internalID: -5909908538400710459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_4
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b216cc47471f2b3c0800000000000000
+      internalID: -4345145207981055701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_5
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 339f681fc98b9bd00800000000000000
+      internalID: 989024577391098163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_6
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5ab2bcb129676710800000000000000
+      internalID: 1686432179094207066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_0_7
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df409618953cfd310800000000000000
+      internalID: 1432077995717756157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 562fe3fd79b042d90800000000000000
+      internalID: -7123555963679870363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_1
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4c533f491f98c530800000000000000
+      internalID: 3875522410404076620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_2
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d26ca0cf60d1e400800000000000000
+      internalID: 351791424304079574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b62eb6a835beb2d60800000000000000
+      internalID: 7866639918169842283
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_4
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 396a3cf07e9cebaa0800000000000000
+      internalID: -6143250847447669101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_5
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b7bb8a273ad4f780800000000000000
+      internalID: -8650049053800024144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_6
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcb38f88f84fabdb0800000000000000
+      internalID: -4775235557557519409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WheelRobot_1_7
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b82c76c6b52736720800000000000000
+      internalID: 2838237927159874187
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Wheel Robot_0: 1299172233633431767
+      Wheel Robot_1: 5972527307696548246
+      Wheel Robot_10: -340934778254633657
+      Wheel Robot_11: -6139212987395485694
+      Wheel Robot_12: 4577670180611697689
+      Wheel Robot_13: 8384838664525552664
+      Wheel Robot_14: 3703064135817282038
+      Wheel Robot_15: -7193149498305192997
+      Wheel Robot_2: -7417635185751726074
+      Wheel Robot_3: -6971784175760137546
+      Wheel Robot_4: -8789461617746677959
+      Wheel Robot_5: -5234363968870212171
+      Wheel Robot_6: 3398047857714156525
+      Wheel Robot_7: -779932918430732286
+      Wheel Robot_8: -6555361339673481748
+      Wheel Robot_9: 1706734252710148962
+      WheelRobot_0_0: -5729094028123628692
+      WheelRobot_0_1: -8202318757926341986
+      WheelRobot_0_2: 4768937856848082521
+      WheelRobot_0_3: -5909908538400710459
+      WheelRobot_0_4: -4345145207981055701
+      WheelRobot_0_5: 989024577391098163
+      WheelRobot_0_6: 1686432179094207066
+      WheelRobot_0_7: 1432077995717756157
+      WheelRobot_1_0: -7123555963679870363
+      WheelRobot_1_1: 3875522410404076620
+      WheelRobot_1_2: 351791424304079574
+      WheelRobot_1_3: 7866639918169842283
+      WheelRobot_1_4: -6143250847447669101
+      WheelRobot_1_5: -8650049053800024144
+      WheelRobot_1_6: -4775235557557519409
+      WheelRobot_1_7: 2838237927159874187
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
