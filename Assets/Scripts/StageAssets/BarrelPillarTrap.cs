@@ -241,6 +241,20 @@ namespace StageAssets
                 if (owlEye.TryBarrelCrushStun(enemyStunSeconds))
                     crushedCharacters.Add(owlEye);
             }
+
+            foreach (BakebakeMovementController bakebake in FindObjectsByType<BakebakeMovementController>())
+            {
+                if (bakebake == null || crushedCharacters.Contains(bakebake))
+                    continue;
+
+                Vector2 position = bakebake.TryGetComponent<Rigidbody2D>(out var body)
+                    ? body.position : (Vector2)bakebake.transform.position;
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                if (bakebake.TryBarrelCrushStun(enemyStunSeconds))
+                    crushedCharacters.Add(bakebake);
+            }
         }
     }
 
