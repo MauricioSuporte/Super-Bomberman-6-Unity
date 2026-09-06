@@ -270,6 +270,20 @@ namespace StageAssets
                     crushedCharacters.Add(wheelRobot);
             }
 
+            foreach (HopRobotMovementController hopRobot in FindObjectsByType<HopRobotMovementController>())
+            {
+                if (hopRobot == null || crushedCharacters.Contains(hopRobot))
+                    continue;
+
+                Vector2 position = hopRobot.TryGetComponent<Rigidbody2D>(out var body)
+                    ? body.position : (Vector2)hopRobot.transform.position;
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                if (hopRobot.TryBarrelCrushStun(enemyStunSeconds))
+                    crushedCharacters.Add(hopRobot);
+            }
+
             foreach (BatMovementController bat in FindObjectsByType<BatMovementController>())
             {
                 if (bat == null || crushedCharacters.Contains(bat))
