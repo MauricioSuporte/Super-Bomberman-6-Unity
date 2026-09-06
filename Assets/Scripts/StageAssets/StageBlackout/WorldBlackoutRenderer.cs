@@ -18,6 +18,10 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
     [SerializeField, Min(0.01f)] private float playerLightTurnSeconds = 0.1f;
     [Tooltip("Additional soft edge in world units; clipped at the room boundary.")]
     [SerializeField, Min(0.001f)] private float playerSoftness = 0.35f;
+    [Header("Room lights (world units; one tile = one unit)")]
+    [SerializeField] private Transform[] roomLights = System.Array.Empty<Transform>();
+    [SerializeField, Min(0.01f)] private float roomLightRadius = 1f;
+    [SerializeField, Min(0.001f)] private float roomLightSoftness = 0.2f;
 
     private static readonly int PlayerCountId = Shader.PropertyToID("_PlayerCount");
     private static readonly int PlayerCirclesId = Shader.PropertyToID("_PlayerCircles");
@@ -25,6 +29,9 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
     private readonly Vector4[] playerCircles = new Vector4[6];
     private readonly PlayerIdentity[] lightOwners = new PlayerIdentity[6];
     private readonly Vector2[] lightOffsets = new Vector2[6];
+    private static readonly int RoomLightCountId = Shader.PropertyToID("_RoomLightCount");
+    private static readonly int RoomLightCirclesId = Shader.PropertyToID("_RoomLightCircles");
+    private readonly Vector4[] roomLightCircles = new Vector4[16];
     private Material runtimeMaterial;
     private Mesh mesh;
     private MeshRenderer overlayRenderer;
@@ -121,6 +128,35 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
         runtimeMaterial.SetInt(PlayerCountId, count);
         runtimeMaterial.SetVectorArray(PlayerCirclesId, playerCircles);
         runtimeMaterial.SetFloat(PlayerSoftnessId, playerSoftness);
+        UpdateRoomLights(pixelsPerUnit);
+    }
+
+    private void UpdateRoomLights(float pixelsPerUnit)
+    {
+        int count = 0;
+        foreach (Transform light in roomLights)
+        {
+            if (light == null || !light.gameObject.activeInHierarchy) continue;
+            light.TryGetComponent<BlackoutTorch>(out var torch);
+            if (torch != null && !torch.isActiveAndEnabled) continue;
+            Vector2 center = light.position;
+            if (!roomBounds.OverlapPoint(center))
+            {
+                continue;
+            }
+            if (count == roomLightCircles.Length)
+            {
+                continue;
+            }
+            center.x = Mathf.Round(center.x * pixelsPerUnit) / pixelsPerUnit;
+            center.y = Mathf.Round(center.y * pixelsPerUnit) / pixelsPerUnit;
+            center = ClampToRoom(center);
+            roomLightCircles[count++] = new Vector4(center.x, center.y,
+                torch != null ? torch.LightRadius : roomLightRadius,
+                torch != null ? torch.LightSoftness : roomLightSoftness);
+        }
+        runtimeMaterial.SetInt(RoomLightCountId, count);
+        runtimeMaterial.SetVectorArray(RoomLightCirclesId, roomLightCircles);
     }
 
     private void UpdateGeometry()

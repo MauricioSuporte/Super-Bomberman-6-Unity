@@ -16865,6 +16865,10 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1334709489}
+  - {fileID: 1369170319}
+  - {fileID: 1675148191}
+  - {fileID: 1356899530}
   - {fileID: 1677548527}
   - {fileID: 753614675}
   - {fileID: 1736289055}
@@ -17383,6 +17387,123 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2033400401
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_Name
+      value: Torch1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 33.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+--- !u!1 &1334709488 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400401}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1334709489 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400401}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2033400404
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_Name
+      value: Torch4
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 43.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+--- !u!1 &1356899529 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400404}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1356899530 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400404}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2033400402
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_Name
+      value: Torch2
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 39.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+--- !u!1 &1369170318 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400402}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1369170319 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400402}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1382143588 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1000000000000000002, guid: 13caf34a8dcc455ea89c01d4c4d0cc6d, type: 3}
@@ -17856,6 +17977,45 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 2436852266683041271, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
   m_PrefabInstance: {fileID: 1675045131}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2033400403
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 977957625}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_Name
+      value: Torch3
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 29.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+--- !u!1 &1675148190 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400403}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1675148191 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
+  m_PrefabInstance: {fileID: 2033400403}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1677548526
 PrefabInstance:
@@ -18878,7 +19038,7 @@ MonoBehaviour:
   targetWorld: 3
   targetStage: 4
   startActive: 1
-  blackoutAlpha: 0.92
+  blackoutAlpha: 1
   fadeInSeconds: 0
   tileWorldSize: 1
   explosionSpotlightSoftness: 0.12
@@ -18905,6 +19065,13 @@ MonoBehaviour:
   playerForwardOffset: 1.5
   playerLightTurnSeconds: 0.1
   playerSoftness: 0.35
+  roomLights:
+  - {fileID: 1334709489}
+  - {fileID: 1369170319}
+  - {fileID: 1675148191}
+  - {fileID: 1356899530}
+  roomLightRadius: 1
+  roomLightSoftness: 0.2
 --- !u!1001 &2133092693
 PrefabInstance:
   m_ObjectHideFlags: 0

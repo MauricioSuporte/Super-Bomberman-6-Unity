@@ -7,7 +7,7 @@ BombController spotlight path, including explosion reach and intensity timing.
 
 The Room 2 object in Stage_3-4 has both components configured:
 
-- Darkness alpha: 0.92.
+- Darkness alpha: 1 (fully black outside the illuminated regions).
 - Sorting Layer: Default; Order in Layer: 100.
 - Player vision: 3 tiles of clear radius plus 0.35 world units of soft edge.
 - Circle center: 1.5 tiles ahead of each player's facing direction, including
@@ -27,7 +27,14 @@ To show a whole SpriteRenderer or TilemapRenderer above darkness, use the
 same sorting layer and an order greater than 100. Account for a parent
 SortingGroup if the object has one.
 
-## Selected pixels only
+## Room torches
+
+`Assets/Prefabs/StageAssets/BlackoutTorch.prefab` is instantiated as Torch1–4
+in Room 2. The root owns `BlackoutTorch` (radius 2, soft edge 0.2); its `Flame`
+child owns the SpriteRenderer and looping AnimatedSpriteRenderer (three frames,
+0.1 seconds per frame, idle disabled). The room light list references the roots.
+
+## Selected pixel configuration
 
 For a reusable prefab palette, add `BlackoutColorPalette` to the prefab root
 and edit `Visible Colors` (up to eight colors) and `Color Tolerance`.

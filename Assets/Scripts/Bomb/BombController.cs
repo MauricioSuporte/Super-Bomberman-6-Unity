@@ -165,6 +165,7 @@ public partial class BombController : MonoBehaviour
     private struct ExplosionLineResult
     {
         public int Reach;
+        public int IndestructibleStopDistance;
         public List<(Vector2 position, BombExplosion.ExplosionPart part)> Explosions;
     }
 
@@ -1545,10 +1546,10 @@ public partial class BombController : MonoBehaviour
         RegisterBlackoutSpotlightsForExplosion(
             bombSpotlightId,
             snapped,
-            up.Reach,
-            down.Reach,
-            left.Reach,
-            right.Reach);
+            up,
+            down,
+            left,
+            right);
 
         float spotlightDuration = Mathf.Max(0.01f, explosionDuration);
         StartSafeCoroutine(AnimateBlackoutSpotlights(bombSpotlightId, spotlightDuration));
@@ -1687,6 +1688,7 @@ public partial class BombController : MonoBehaviour
                     continue;
                 }
 
+                result.IndestructibleStopDistance = i + 1;
                 break;
             }
 
@@ -3415,13 +3417,18 @@ public partial class BombController : MonoBehaviour
     private void RegisterBlackoutSpotlightsForExplosion(
         int baseSpotlightId,
         Vector2 center,
-        int upReach,
-        int downReach,
-        int leftReach,
-        int rightReach)
+        ExplosionLineResult up,
+        ExplosionLineResult down,
+        ExplosionLineResult left,
+        ExplosionLineResult right)
     {
         if (StageBlackout.Instance == null)
             return;
+
+        float upReach = StageBlackout.Instance.GetExplosionLightReach(up.Reach, up.IndestructibleStopDistance);
+        float downReach = StageBlackout.Instance.GetExplosionLightReach(down.Reach, down.IndestructibleStopDistance);
+        float leftReach = StageBlackout.Instance.GetExplosionLightReach(left.Reach, left.IndestructibleStopDistance);
+        float rightReach = StageBlackout.Instance.GetExplosionLightReach(right.Reach, right.IndestructibleStopDistance);
 
         int centerId = GetSpotlightSubId(baseSpotlightId, 0);
         StageBlackout.Instance.RegisterExplosionSpotlight(centerId, center, new Vector2(0.5f, 0.5f));

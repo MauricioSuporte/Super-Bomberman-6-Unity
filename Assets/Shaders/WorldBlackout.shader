@@ -30,6 +30,8 @@ Shader "SuperBomberman/World Blackout"
                 int _PlayerCount;
                 float4 _PlayerCircles[6];
                 float _PlayerSoftness;
+                int _RoomLightCount;
+                float4 _RoomLightCircles[16];
             CBUFFER_END
 
             struct Attributes { float3 positionOS : POSITION; };
@@ -52,6 +54,13 @@ Shader "SuperBomberman/World Blackout"
                     float distanceToPlayer = distance(input.worldPosition, _PlayerCircles[p].xy);
                     float radius = _PlayerCircles[p].z;
                     light = max(light, 1 - smoothstep(radius, radius + max(_PlayerSoftness, 0.001), distanceToPlayer));
+                }
+                for (int r = 0; r < _RoomLightCount; r++)
+                {
+                    float distanceToLight = distance(input.worldPosition, _RoomLightCircles[r].xy);
+                    float radius = _RoomLightCircles[r].z;
+                    float softness = max(_RoomLightCircles[r].w, 0.001);
+                    light = max(light, 1 - smoothstep(radius, radius + softness, distanceToLight));
                 }
                 for (int i = 0; i < _SpotlightCount; i++)
                 {

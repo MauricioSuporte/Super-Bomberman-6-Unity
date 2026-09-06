@@ -232,6 +232,21 @@ public sealed class StageBlackout : MonoBehaviour
         _timedBlackoutRoutine = null;
     }
 
+    public float GetExplosionLightReach(int reach, int indestructibleStopDistance)
+    {
+        // Preserve the legacy UI mask. This changes only light geometry, never
+        // explosion propagation, damage, chain reactions or tile handlers.
+        if (worldOverlay == null) return reach;
+        if (indestructibleStopDistance > 0)
+        {
+            // Let the outer soft edge extend two source pixels into the blocking tile.
+            // The shader adds both padding and softness after this reach.
+            return Mathf.Max(0.01f, indestructibleStopDistance -
+                extraTilesAroundExplosion - Mathf.Max(0.001f, explosionSpotlightSoftness));
+        }
+        return reach > 0 ? reach + 0.5f : 0f;
+    }
+
     public void RegisterExplosionSpotlight(int id, Vector2 worldPosition, Vector2 halfSizeInTiles)
     {
         RegisterExplosionSpotlight(id, null, worldPosition, halfSizeInTiles);
