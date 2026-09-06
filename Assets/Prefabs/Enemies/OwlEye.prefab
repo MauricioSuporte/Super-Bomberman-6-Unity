@@ -337,6 +337,7 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites: []
     colors: []
     colorTolerance: 0.01
   - source: {fileID: 2158549355937432196}
@@ -347,6 +348,7 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites: []
     colors: []
     colorTolerance: 0.01
   - source: {fileID: 2283094369003245714}
@@ -357,6 +359,7 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites: []
     colors: []
     colorTolerance: 0.01
   - source: {fileID: 6722563237916706039}
@@ -405,6 +408,7 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites: []
     colors: []
     colorTolerance: 0.01
   - source: {fileID: 698816082662970777}
@@ -415,6 +419,7 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400201}
+    fullyVisibleSprites: []
     colors: []
     colorTolerance: 0.01
 --- !u!50 &8493640678040593282

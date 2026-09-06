@@ -30,7 +30,8 @@ namespace StageAssets
 
         [Header("Player Crush")]
         [SerializeField, Min(0.01f)] private float playerStunSeconds = 2f;
-        private readonly HashSet<MovementController> crushedPlayers = new();
+        [SerializeField, Min(0.01f)] private float enemyStunSeconds = 5f;
+        private readonly HashSet<MonoBehaviour> crushedCharacters = new();
 
         private readonly HashSet<BarrelPillarTrapPillar> destroyedPillars = new();
         private SpriteRenderer barrelRenderer;
@@ -177,14 +178,14 @@ namespace StageAssets
 
                 if (movement.CompareTag("Player"))
                 {
-                    if (crushedPlayers.Contains(movement))
+                    if (crushedCharacters.Contains(movement))
                         continue;
 
                     StunReceiver stun = movement.GetComponent<StunReceiver>();
                     if (stun == null)
                         stun = movement.gameObject.AddComponent<StunReceiver>();
                     if (stun.TryCrushStun(playerStunSeconds))
-                        crushedPlayers.Add(movement);
+                        crushedCharacters.Add(movement);
                     continue;
                 }
 
@@ -195,6 +196,22 @@ namespace StageAssets
                 // Retry while overlapping; CharacterHealth handles invulnerability.
                 // A blocked hit must not exempt the character for the whole fall.
                 health.TakeDamage(1, fromExplosion: true);
+            }
+
+            // Enemies use a separate movement hierarchy from players.
+            OwlEyeMovementController[] owlEyes = FindObjectsByType<OwlEyeMovementController>();
+            foreach (OwlEyeMovementController owlEye in owlEyes)
+            {
+                if (owlEye == null || crushedCharacters.Contains(owlEye))
+                    continue;
+
+                Vector2 position = owlEye.TryGetComponent<Rigidbody2D>(out var body)
+                    ? body.position : (Vector2)owlEye.transform.position;
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                if (owlEye.TryBarrelCrushStun(enemyStunSeconds))
+                    crushedCharacters.Add(owlEye);
             }
         }
     }

@@ -11,8 +11,11 @@ public partial class StunReceiver
     private bool crushSavedBombEnabled;
     private bool crushSavedDismountEnabled;
     private bool crushSavedSuppressInactivity;
+    private SpriteRenderer activeCrushedPose;
+    private bool crushedPoseWasEnabled;
+    private Color crushedPoseOriginalColor;
 
-    public bool TryCrushStun(float seconds)
+    public bool TryCrushStun(float seconds, SpriteRenderer crushedPose = null)
     {
         if (!isActiveAndEnabled || !CanReceiveStun || isStunned || stunRoutine != null ||
             (cachedMovement != null && cachedMovement.isDead))
@@ -26,14 +29,27 @@ public partial class StunReceiver
         stunEndTime = Time.time + Mathf.Max(0.01f, seconds);
 
         SpriteRenderer[] sources = GetComponentsInChildren<SpriteRenderer>(true);
-        crushedVisualRoot = new GameObject("CrushedPlayerVisual");
+        crushedVisualRoot = new GameObject("CrushedCharacterVisual");
         crushedVisualRoot.transform.SetParent(transform, false);
 
         foreach (SpriteRenderer source in sources)
         {
             crushedSources.Add((source, source.forceRenderingOff));
-            if (source.enabled && source.gameObject.activeInHierarchy &&
-                !source.forceRenderingOff && source.sprite != null)
+            if (crushedPose != null && source == crushedPose)
+            {
+                // Keep authored poses on their original renderer so blackout palette
+                // bindings follow the pose and its recovery blinking automatically.
+                activeCrushedPose = source;
+                crushedPoseWasEnabled = source.enabled;
+                crushedPoseOriginalColor = source.color;
+                source.enabled = true;
+                source.forceRenderingOff = false;
+                crushedSprites.Add((source, source.color));
+                continue;
+            }
+            bool useSource = crushedPose == null && source.enabled &&
+                source.gameObject.activeInHierarchy && !source.forceRenderingOff;
+            if (useSource && source.sprite != null)
             {
                 // Snapshot only rendering components: physics and gameplay keep their size.
                 var visual = new GameObject(source.name + "_Crushed");
@@ -68,8 +84,10 @@ public partial class StunReceiver
             source.forceRenderingOff = true;
         }
 
-        // Compress the entire mounted pose around the player's ground position.
-        crushedVisualRoot.transform.localScale = new Vector3(1.35f, 0.3f, 1f);
+        // Authored crushed poses already have the intended proportions.
+        // Otherwise compress the entire mounted pose around the ground position.
+        crushedVisualRoot.transform.localScale = crushedPose != null
+            ? Vector3.one : new Vector3(1.35f, 0.3f, 1f);
         if (cachedMovement != null)
         {
             crushSavedSuppressInactivity = cachedMovement.SuppressInactivityAnimation;
@@ -122,6 +140,12 @@ public partial class StunReceiver
             return;
 
         crushedVisualActive = false;
+        if (activeCrushedPose != null)
+        {
+            activeCrushedPose.color = crushedPoseOriginalColor;
+            activeCrushedPose.enabled = crushedPoseWasEnabled;
+            activeCrushedPose = null;
+        }
         foreach (var source in crushedSources)
             if (source.renderer != null)
                 source.renderer.forceRenderingOff = source.hidden;

@@ -37,12 +37,15 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
     {
         WorldBlackoutRenderer darkness = StageBlackout.Instance != null
             ? StageBlackout.Instance.ActiveWorldOverlay : null;
+        var barrels = darkness != null && darkness.IsVisible
+            ? FindObjectsByType<StageAssets.BarrelPillarTrap>()
+            : Array.Empty<StageAssets.BarrelPillarTrap>();
         foreach (Part part in parts)
         {
             if (part == null) continue;
             SpriteRenderer source = part.source;
             bool show = darkness != null && darkness.IsVisible && source != null &&
-                source.enabled && source.gameObject.activeInHierarchy && source.sprite != null &&
+                source.enabled && !source.forceRenderingOff && source.gameObject.activeInHierarchy && source.sprite != null &&
                 part.region.width > 0f && part.region.height > 0f &&
                 part.CanReveal &&
                 source.bounds.Intersects(darkness.RoomWorldBounds);
@@ -88,7 +91,42 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             part.material.SetInt("_VisibleColorCount", colorCount);
             part.material.SetVectorArray("_VisibleColors", colorBuffer);
             part.material.SetFloat("_ColorTolerance", part.EffectiveTolerance);
+            ApplyBarrelOcclusion(part.material, source, barrels);
         }
+    }
+
+    private static void ApplyBarrelOcclusion(Material material, SpriteRenderer source,
+        StageAssets.BarrelPillarTrap[] barrels)
+    {
+        SpriteRenderer occluder = null;
+        foreach (var barrel in barrels)
+        {
+            if (!barrel.TryGetComponent<SpriteRenderer>(out var renderer) ||
+                !renderer.enabled || renderer.forceRenderingOff || renderer.sprite == null ||
+                !renderer.bounds.Intersects(source.bounds))
+                continue;
+
+            int layer = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
+            int sourceLayer = SortingLayer.GetLayerValueFromID(source.sortingLayerID);
+            if (layer < sourceLayer || (layer == sourceLayer && renderer.sortingOrder <= source.sortingOrder))
+                continue;
+
+            if (occluder == null || layer > SortingLayer.GetLayerValueFromID(occluder.sortingLayerID) ||
+                (renderer.sortingLayerID == occluder.sortingLayerID && renderer.sortingOrder > occluder.sortingOrder))
+                occluder = renderer;
+        }
+
+        material.SetFloat("_BarrelOcclusion", occluder != null ? 1f : 0f);
+        if (occluder == null) return;
+
+        Sprite sprite = occluder.sprite;
+        Bounds bounds = sprite.bounds;
+        material.SetTexture("_BarrelTex", sprite.texture);
+        material.SetMatrix("_BarrelWorldToLocal", occluder.transform.worldToLocalMatrix);
+        material.SetVector("_BarrelBounds", new Vector4(bounds.min.x, bounds.min.y, bounds.size.x, bounds.size.y));
+        material.SetVector("_BarrelUV", UnityEngine.Sprites.DataUtility.GetOuterUV(sprite));
+        material.SetVector("_BarrelFlip", new Vector4(occluder.flipX ? -1f : 1f, occluder.flipY ? -1f : 1f, 0f, 0f));
+        material.SetFloat("_BarrelAlpha", occluder.color.a);
     }
 
     private void OnDisable()

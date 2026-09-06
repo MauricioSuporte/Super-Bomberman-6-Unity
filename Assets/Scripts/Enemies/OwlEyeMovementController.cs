@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class OwlEyeMovementController : JunctionTurningEnemyMovementController
@@ -17,10 +18,83 @@ public sealed class OwlEyeMovementController : JunctionTurningEnemyMovementContr
     [SerializeField] private Sprite[] coreDestructionFrames;
 
     private Vector3 deathOrigin;
+    private readonly List<(GameObject visual, bool wasActive)> barrelHiddenMovementVisuals = new();
+    private StunReceiver barrelStun;
+
+    public bool TryBarrelCrushStun(float seconds)
+    {
+        if (isDead || !TryGetComponent<StunReceiver>(out var stun))
+            return false;
+
+        Transform squished = transform.Find("Squished");
+        SpriteRenderer pose = squished != null ? squished.GetComponent<SpriteRenderer>() : null;
+        if (!stun.TryCrushStun(seconds, pose))
+            return false;
+
+        barrelStun = stun;
+        HideMovementVisualForBarrel(spriteUp);
+        HideMovementVisualForBarrel(spriteDown);
+        HideMovementVisualForBarrel(spriteLeft);
+        HideMovementVisualForBarrel(spriteRight);
+        return true;
+    }
+
+    private void HideMovementVisualForBarrel(AnimatedSpriteRenderer animation)
+    {
+        if (animation == null || animation.gameObject == gameObject)
+            return;
+
+        GameObject visual = animation.gameObject;
+        foreach (var entry in barrelHiddenMovementVisuals)
+            if (entry.visual == visual)
+                return;
+
+        barrelHiddenMovementVisuals.Add((visual, visual.activeSelf));
+        visual.SetActive(false);
+    }
+
+    private void LateUpdate()
+    {
+        if (barrelHiddenMovementVisuals.Count == 0)
+            return;
+
+        if (isDead || barrelStun == null || !barrelStun.IsStunned)
+        {
+            RestoreBarrelMovementVisuals();
+            return;
+        }
+
+        foreach (var entry in barrelHiddenMovementVisuals)
+            if (entry.visual != null && entry.visual.activeSelf)
+                entry.visual.SetActive(false);
+    }
+
+    protected override void UpdateSpriteDirection(Vector2 dir)
+    {
+        if (!isDead && barrelStun != null && barrelStun.IsStunned)
+            return;
+
+        base.UpdateSpriteDirection(dir);
+    }
+
+    private void RestoreBarrelMovementVisuals()
+    {
+        foreach (var entry in barrelHiddenMovementVisuals)
+            if (entry.visual != null)
+                entry.visual.SetActive(entry.wasActive);
+        barrelHiddenMovementVisuals.Clear();
+        barrelStun = null;
+    }
+
+    private void OnDisable()
+    {
+        RestoreBarrelMovementVisuals();
+    }
 
     protected override void Die()
     {
         if (isDead) return;
+        RestoreBarrelMovementVisuals();
         deathOrigin = SnapToPixel(spriteDeath != null ? spriteDeath.transform.position : transform.position);
 
         // Hide custom poses as well as walking directions. The base death path

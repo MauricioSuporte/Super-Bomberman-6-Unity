@@ -4,6 +4,7 @@ Shader "SuperBomberman/Blackout Visible Parts"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         [HideInInspector] _Color ("Tint", Color) = (1,1,1,1)
+        [HideInInspector] _BarrelTex ("Barrel Occlusion Texture", 2D) = "white" {}
     }
     SubShader
     {
@@ -30,6 +31,8 @@ Shader "SuperBomberman/Blackout Visible Parts"
                 float2 worldPosition : TEXCOORD4;
             };
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/2DCommon.hlsl"
+            TEXTURE2D(_BarrelTex);
+            SAMPLER(sampler_BarrelTex);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 float4 _SpriteBounds;
@@ -38,6 +41,12 @@ Shader "SuperBomberman/Blackout Visible Parts"
                 int _VisibleColorCount;
                 float4 _VisibleColors[8];
                 float _ColorTolerance;
+                float _BarrelOcclusion;
+                float4x4 _BarrelWorldToLocal;
+                float4 _BarrelBounds;
+                float4 _BarrelUV;
+                float4 _BarrelFlip;
+                float _BarrelAlpha;
             CBUFFER_END
             Varyings Vert(Attributes input)
             {
@@ -65,6 +74,18 @@ Shader "SuperBomberman/Blackout Visible Parts"
                     matches = max(matches, step(max(delta.r, max(delta.g, delta.b)), _ColorTolerance));
                 }
                 clip(matches - 0.5);
+                if (_BarrelOcclusion > 0.5)
+                {
+                    // Suppress only the reveal overlay under opaque barrel pixels.
+                    // The original barrel remains below darkness and keeps its lighting.
+                    float2 local = mul(_BarrelWorldToLocal, float4(input.worldPosition, 0, 1)).xy * _BarrelFlip.xy;
+                    float2 position = (local - _BarrelBounds.xy) / max(_BarrelBounds.zw, 0.0001);
+                    if (all(position >= 0) && all(position <= 1))
+                    {
+                        float2 uv = lerp(_BarrelUV.xy, _BarrelUV.zw, position);
+                        raw.a *= 1 - SAMPLE_TEXTURE2D(_BarrelTex, sampler_BarrelTex, uv).a * _BarrelAlpha;
+                    }
+                }
                 return raw * input.color;
             }
             ENDHLSL
