@@ -32,6 +32,7 @@ namespace StageAssets
         [SerializeField, Min(0.01f)] private float playerStunSeconds = 2f;
         [SerializeField, Min(0.01f)] private float enemyStunSeconds = 5f;
         private readonly HashSet<MonoBehaviour> crushedCharacters = new();
+        private readonly List<Bomb> sweptBombs = new();
 
         private readonly HashSet<BarrelPillarTrapPillar> destroyedPillars = new();
         private SpriteRenderer barrelRenderer;
@@ -113,6 +114,7 @@ namespace StageAssets
                     // the ground path and sweeps continuously, including in midair.
                     DamageCharactersInSweep(previousDamagePosition, damagePosition);
                     DestroyCoreMechanismsInSweep(previousDamagePosition, damagePosition);
+                    ExplodeBombsInSweep(previousDamagePosition, damagePosition);
                     if (progress >= 1f)
                         break;
 
@@ -135,6 +137,32 @@ namespace StageAssets
 
             int frame = Mathf.FloorToInt(elapsedSeconds / fallingSpriteFrameSeconds);
             barrelRenderer.sprite = (frame & 1) == 0 ? fallingBaseSprite : fallingAlternateSprite;
+        }
+
+        private void ExplodeBombsInSweep(Vector3 previous, Vector3 current)
+        {
+            float minY = Mathf.Min(previous.y, current.y) - damageHalfHeight;
+            float maxY = Mathf.Max(previous.y, current.y) + damageHalfHeight;
+            sweptBombs.Clear();
+            foreach (Bomb bomb in Bomb.ActiveBombs)
+            {
+                if (bomb == null || !bomb.isActiveAndEnabled || bomb.HasExploded ||
+                    bomb.IsBeingHeldByPowerGlove || bomb.IsBeingPunched)
+                    continue;
+
+                Vector2 position = bomb.GetLogicalPosition();
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                sweptBombs.Add(bomb);
+            }
+
+            // Detonation can change ActiveBombs and start chain reactions.
+            // Finish collecting targets before invoking the normal explosion flow.
+            foreach (Bomb bomb in sweptBombs)
+                if (bomb != null && !bomb.HasExploded && bomb.Owner != null)
+                    bomb.Owner.ExplodeBomb(bomb.gameObject);
+            sweptBombs.Clear();
         }
 
         private void DestroyCoreMechanismsInSweep(Vector3 previous, Vector3 current)
