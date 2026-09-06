@@ -33,6 +33,20 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
     [SerializeField] private Part[] parts = Array.Empty<Part>();
     private readonly Vector4[] colorBuffer = new Vector4[8];
 
+    /// <summary>Adds a renderer created at runtime to this blackout mask.</summary>
+    public void RegisterRuntimePart(SpriteRenderer source, BlackoutColorPalette palette)
+    {
+        if (source == null)
+            return;
+
+        foreach (Part part in parts)
+            if (part != null && part.source == source)
+                return;
+
+        Array.Resize(ref parts, parts.Length + 1);
+        parts[^1] = new Part { source = source, palette = palette };
+    }
+
     private void LateUpdate()
     {
         WorldBlackoutRenderer darkness = StageBlackout.Instance != null

@@ -284,6 +284,14 @@ namespace StageAssets
                     crushedCharacters.Add(hopRobot);
             }
 
+            foreach (MagekoMovementController mageko in FindObjectsByType<MagekoMovementController>())
+            {
+                if (mageko == null || crushedCharacters.Contains(mageko)) continue;
+                Vector2 position = mageko.TryGetComponent<Rigidbody2D>(out var body) ? body.position : (Vector2)mageko.transform.position;
+                if (Mathf.Abs(position.x - current.x) <= damageHalfWidth && position.y >= minY && position.y <= maxY && mageko.TryBarrelCrushStun(enemyStunSeconds))
+                    crushedCharacters.Add(mageko);
+            }
+
             foreach (BatMovementController bat in FindObjectsByType<BatMovementController>())
             {
                 if (bat == null || crushedCharacters.Contains(bat))
