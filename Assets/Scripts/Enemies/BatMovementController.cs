@@ -1,10 +1,77 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class BatMovementController : FlyMovimentController
 {
     private const float CoreDestructionDuration = 0.5f;
 
+    [SerializeField] private SpriteRenderer squishedPose;
     [SerializeField] private AnimatedSpriteRenderer coreDestruction;
+    private readonly List<(GameObject visual, bool wasActive)> barrelHiddenMovementVisuals = new();
+    private StunReceiver barrelStun;
+
+    public bool TryBarrelCrushStun(float seconds)
+    {
+        if (isDead || !TryGetComponent(out StunReceiver stun) || !stun.TryCrushStun(seconds, squishedPose))
+            return false;
+
+        barrelStun = stun;
+        HideMovementVisualForBarrel(spriteUp);
+        HideMovementVisualForBarrel(spriteDown);
+        HideMovementVisualForBarrel(spriteLeft);
+        return true;
+    }
+
+    private void HideMovementVisualForBarrel(AnimatedSpriteRenderer animation)
+    {
+        if (animation == null || animation.gameObject == gameObject)
+            return;
+
+        GameObject visual = animation.gameObject;
+        foreach (var entry in barrelHiddenMovementVisuals)
+            if (entry.visual == visual)
+                return;
+
+        barrelHiddenMovementVisuals.Add((visual, visual.activeSelf));
+        visual.SetActive(false);
+    }
+
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+
+        if (barrelHiddenMovementVisuals.Count > 0 &&
+            (isDead || barrelStun == null || !barrelStun.IsStunned))
+            RestoreBarrelMovementVisuals();
+    }
+
+    protected override void UpdateSpriteDirection(Vector2 dir)
+    {
+        if (!isDead && barrelStun != null && barrelStun.IsStunned)
+            return;
+
+        base.UpdateSpriteDirection(dir);
+    }
+
+    private void RestoreBarrelMovementVisuals()
+    {
+        foreach (var entry in barrelHiddenMovementVisuals)
+            if (entry.visual != null)
+                entry.visual.SetActive(entry.wasActive);
+        barrelHiddenMovementVisuals.Clear();
+        barrelStun = null;
+    }
+
+    protected override void Die()
+    {
+        if (isDead)
+            return;
+
+        RestoreBarrelMovementVisuals();
+        base.Die();
+        if (squishedPose != null)
+            squishedPose.enabled = false;
+    }
 
     protected override void OnDeathAnimationEnded()
     {
@@ -48,5 +115,10 @@ public sealed class BatMovementController : FlyMovimentController
         if (coreDestruction.TryGetComponent(out SpriteRenderer renderer))
             renderer.enabled = false;
         base.OnDeathAnimationEnded();
+    }
+
+    private void OnDisable()
+    {
+        RestoreBarrelMovementVisuals();
     }
 }

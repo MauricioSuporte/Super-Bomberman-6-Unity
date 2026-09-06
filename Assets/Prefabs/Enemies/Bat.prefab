@@ -780,6 +780,7 @@ MonoBehaviour:
   shadowColor: {r: 0, g: 0, b: 0, a: 0.45}
   shadowScale: {x: 0.9, y: 0.9}
   shadowOffset: {x: 0, y: 0}
+  squishedPose: {fileID: 5056636645730747749}
   coreDestruction: {fileID: 3712418123939325388}
 --- !u!1 &3666740137074464204
 GameObject:

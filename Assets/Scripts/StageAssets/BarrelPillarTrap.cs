@@ -269,6 +269,20 @@ namespace StageAssets
                 if (wheelRobot.TryBarrelCrushStun(enemyStunSeconds))
                     crushedCharacters.Add(wheelRobot);
             }
+
+            foreach (BatMovementController bat in FindObjectsByType<BatMovementController>())
+            {
+                if (bat == null || crushedCharacters.Contains(bat))
+                    continue;
+
+                Vector2 position = bat.TryGetComponent<Rigidbody2D>(out var body)
+                    ? body.position : (Vector2)bat.transform.position;
+                if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
+                    continue;
+
+                if (bat.TryBarrelCrushStun(enemyStunSeconds))
+                    crushedCharacters.Add(bat);
+            }
         }
     }
 
