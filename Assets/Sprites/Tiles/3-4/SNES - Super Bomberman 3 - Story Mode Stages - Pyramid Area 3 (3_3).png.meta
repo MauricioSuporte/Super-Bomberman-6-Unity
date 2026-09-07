@@ -1,0 +1,4921 @@
+fileFormatVersion: 2
+guid: d3b1d000ec148dd4caff4cb04cfb83d5
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5432859402938031475
+    second: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d82ec35582b9a94b0800000000000000
+      internalID: -5432859402938031475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64d3f1f94c8b9764bb49f6013da2709d
+      internalID: -1387731850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 055af75f5416e2349a561862d35baddc
+      internalID: 1280059685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d04590b7b53382045a188e9c11b04cf1
+      internalID: 340277554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0a7095e354c2aed46ae90026515e1b38
+      internalID: 1857487566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_5
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5f487cac1ced5f548890eaaaa56db4ef
+      internalID: 1496899778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_6
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67908d991a5242b46be24bfb14ffcb19
+      internalID: -1868734112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_7
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2a0cf686092ac124b8fc11df7cd81586
+      internalID: -1828426926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_8
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 837e2deec82af33469ea02d6052339d6
+      internalID: 1003725562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_9
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a6a1b598c89dc444682e70ee2613a0a9
+      internalID: 1441475634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_10
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5db4cc84a9960b84e816bdb68760a6dd
+      internalID: -316901963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_11
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce9089af285080a43aabf66ca8cbd8d6
+      internalID: -234841845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_12
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b83521e8da13684ba147eedfb3664e5
+      internalID: -105655688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_13
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2575a8b4bf37f8343881a2f2d054e12f
+      internalID: 886642443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_14
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efc6105fc47f33745825021742476f3b
+      internalID: 1631557471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_15
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a62bd742d6355524fa016b5d83a90c3a
+      internalID: 1932842948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c445f0647e015dd4aaa53c200cf9339b
+      internalID: -1629424751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_17
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 04a6c0810366e1140969fb06d5d6b379
+      internalID: 848414461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_18
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d5d32a1ac0eacc84582e735f265cdc7c
+      internalID: -2092867770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_19
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 50d27889f0ee3c74cb99229c0a191021
+      internalID: 1523291362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_20
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0de9a4547e6cc6b41ad1942352aa5e27
+      internalID: -1842630137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_21
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0608440c2a738a94d8565e43029f6df9
+      internalID: 361335883
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_22
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 058bb763ef8d643429c3be8b6be586f9
+      internalID: 1327339266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_23
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f6f2c0b9fd787bf449b1b7bb6ef737ef
+      internalID: 53151390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_24
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0207ac2cb57050449be408b6767f31fd
+      internalID: -1644601431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_25
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3795ef40482edc24cbc2b505b706bde0
+      internalID: -804709388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_26
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 149eaa3ff1424414187f55bd9efa7c67
+      internalID: 2062342214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_27
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b801a6b085a487242b62f29f95eb50e7
+      internalID: 877149916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_28
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6cbf3ed05b5cb8c4ebf09517fa9371eb
+      internalID: -1688186270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_29
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 448f476444692574d9dd830f00e28e39
+      internalID: -725165687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_30
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15a96af3e7420cf4db116a6cbcc4c5d9
+      internalID: 758950585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_31
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 508657692645cd44fb0bbed011cf1d47
+      internalID: -98282231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_32
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91a22c78cc3adfd4184f35a3655d7646
+      internalID: 1332694706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_33
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1b665929937404842bd04269d361e813
+      internalID: -1576305101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_34
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cbed1ad7e309ec145a7a3a73f61b02a9
+      internalID: -1702976500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_35
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f4265b30cf10c04b98e0d587e1055ac
+      internalID: 1108989335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_36
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b5349419495bf4448b8c5fa209779564
+      internalID: -135518501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_37
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de16d84073d8d664f81b8d732410f2c5
+      internalID: -1888810793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_38
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aa59f52ff587d134eac2fb8b85027033
+      internalID: -990981293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_39
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3f35615efb1e094eae62d541f9fae08
+      internalID: -861438597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_40
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f4c61878679e54742aade0b484a3cbf2
+      internalID: 442433279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_41
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bcb522c2da1cc3b46bf01d6a6dd2603e
+      internalID: -487155702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_42
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ccbc6cc08fcd7c54fb91ed8cc8f1b8ab
+      internalID: -1362164765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_43
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0215a3910245af5479600d800398a023
+      internalID: 1066377371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_44
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1b1a82360ed4bf7409c5be22e48990ad
+      internalID: 463228443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_45
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f3d3fd056504a84448e4727db77640c6
+      internalID: -1916257894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_46
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 186d6d4494254fb4b98912baddbe5c30
+      internalID: -1900566402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_47
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f24f90f5ee2409945ae946743afcfef1
+      internalID: 209203903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_48
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ed1af3d5187fdb64cae38273049da9db
+      internalID: 694438923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_49
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 828b932fdcba4024c9a87f091797d24a
+      internalID: -1084746360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_50
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e1ebfb33adc23744ba06b7e0cda28c4
+      internalID: 1461320796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_51
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3bbc1271907cae34d925f2152d7db0e9
+      internalID: -2137370227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_52
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 171c6682cf5d98c4790a408fe4b99698
+      internalID: -147609252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_53
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c4cdb0b7fe27af4baf94bf7bbcad69e
+      internalID: -1543633968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_54
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 90b07b4dbe47099458761e20d77ccf6b
+      internalID: -1493522726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_55
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ebd1f9c82015bf24c9850cd0d2884a6e
+      internalID: 597588485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_56
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f86aa02a0d12fad48b16125acd6a3ca8
+      internalID: 624583135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_57
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4c627d5c860d43f449cf20fac79f82f5
+      internalID: -777105052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_58
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7cef61f0975c9c64089456565afda0e3
+      internalID: 2005615639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_59
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd3e78d96d79ac644b87d5b77f8019c0
+      internalID: 1681099514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_60
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5671edc6454d59f4694d0f8ee3e1d9c8
+      internalID: 538383237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_61
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 78d91755aeef65b41a3708afc2b44f2a
+      internalID: 467082496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_62
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 899c19e47749c4a43bfb219d8b14f97f
+      internalID: -996154552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_63
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89ec3c440b49bed4c88f5bb3fe7c735e
+      internalID: 2041898363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_64
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dad9a23fcc65add4681e865e93959392
+      internalID: 2022150562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_65
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d0543d102c62720418ca9245bab175a3
+      internalID: 1375031229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_66
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c764139ae3868b459f3379a5f1449a2
+      internalID: -138034370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_67
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cef3cd430f5aecb47b83428a22360151
+      internalID: -691449203
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_68
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f4a5b0f546ef6f4db3815f4ec4b9cc9
+      internalID: 845123730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_69
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fd6de676ef9148f4e929708871a87b61
+      internalID: 913895932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_70
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb497da87b38bcf4a9d35e982c683186
+      internalID: 1910192020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_71
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fabdab0976372784aa67ccabf3d7910a
+      internalID: 376428345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_72
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6a7bd05ead654dc4198badc19ba6b606
+      internalID: 100130568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_73
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8aa1215545f7ce2489313157123c0da9
+      internalID: -1032585467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_74
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ab2eeef0c721b2419f0704352ecd3e0
+      internalID: -339692702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_75
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4e107ba37c673904eabfdac81f8eb73e
+      internalID: 1597662516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_76
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2e393b00d4936045a6cfcce0fdf481a
+      internalID: -1144281261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_77
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9f6f8ffaf7d6f58418171c2e88d8e2f8
+      internalID: 1889383423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_78
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 899263a30d743294384ffc88c5e778dd
+      internalID: 786635923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_79
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 500e18a089df2ef4f8373a6105d9fa52
+      internalID: -824433582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_80
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 12be0217912c1a84e84469ff2c01c6fe
+      internalID: -1607453216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_81
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f02e1ca3df791d640bb51bd6e12eea70
+      internalID: 1432151808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_82
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 070372cd87db00246a78efa40c166de9
+      internalID: 1908381942
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_83
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8693b2fee0324c3468e3bd6c6123019d
+      internalID: -1065430658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_84
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7f63e8702cc2b24ca3e8d71e38bd061
+      internalID: -1232848543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_85
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fd49b5ed37a1b304cad313abd4434344
+      internalID: -1136354479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_86
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b15fc21e693b16a49867424374dc6d18
+      internalID: -938565941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_87
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e87af87530da39848ac2e6e7d821e0b3
+      internalID: -999594040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_88
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 76c9c7887536df64abdf8dfe0ff43f81
+      internalID: -1100096642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_89
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8b78a29afd2525488b287fb7eaac61b
+      internalID: 1827360547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_90
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f54b9f2f68728841919cf5268d99e00
+      internalID: 573052800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_91
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 464af13871417244882d6ea0d2bc4062
+      internalID: -372838706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_92
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 58d9a6e9ffced644c82a4c8a4f9ca185
+      internalID: 1005749718
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_93
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 42b34e7492648124089a6477f70a87ba
+      internalID: -78574086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_94
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7fe972d75e35a9e488300b24677be7ce
+      internalID: -496212368
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_95
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6cf661db8b708f0478bbc1ec9331e920
+      internalID: -1776899620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_96
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b4592886c95ab7146bc3217126589edb
+      internalID: -96738705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_97
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 623018ef525487c4985cf404505b73cb
+      internalID: -1780216181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_98
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eaf259e212249904ea4f310419bde729
+      internalID: -962919568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_99
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06d053c8b527a8f42b01209ddd54b0a1
+      internalID: -1234739532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_100
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 641e6075c56f0f64e9e66e726cc38b74
+      internalID: 357589602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_101
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33a6cb6f5dfe6fd458de0c7ef6ffe2db
+      internalID: 792615228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_102
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 73a92a7a69b9c60498a340b62a0b2e9a
+      internalID: 1235153618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_103
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df48e0f42e1f5a942b2363fb8ed7ae83
+      internalID: 1912812161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_104
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 057b103cd1f04e24f9642d05f6d5879b
+      internalID: -1233219247
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_105
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2cc2abbd54bd6db40ad9e9a694b45ab4
+      internalID: 1102533726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_106
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f448dab6d69a3c5438dc76485ff451ce
+      internalID: 1633893348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_107
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 365c090babc50c74a9d4a7262abb9519
+      internalID: 1792805381
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_108
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6be201cb8f600364abb78a5607abe24f
+      internalID: -1248500908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_109
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bfa0922cc1fd4834b9c830b03be5632c
+      internalID: -1253518945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_110
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c71032b022aa1b44586bfbdec7875ec1
+      internalID: 1890102283
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_111
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 71172551d3c783349ab3df7b1bfefd67
+      internalID: 1604294650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_112
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 77421a26efd97324a93682fc44fc1b07
+      internalID: -376936917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_113
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cca6f735a91e70a47acbebb861a73f3e
+      internalID: 1859756547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_114
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9c5709f478f93e24693c9217545d4b94
+      internalID: -917201111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_115
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dc3ce3fabbd047042b9a99e2418874d5
+      internalID: 1262881964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_116
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6eec2481e4b830345817ac763a102f1b
+      internalID: -986130046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_117
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 08e0e558c9deb654f8ef384445290150
+      internalID: -193901485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_118
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 633071127d1de294595891a2dfaf8fb3
+      internalID: 1451679165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_119
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d350a2f25ad51b84d982a8423c5a66d4
+      internalID: 1847383582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_120
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ed0bb4eaa2d6151469e3bee954d06ec5
+      internalID: -742120025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_121
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5e3251f6e680beb4f8c784cf79b1c6d0
+      internalID: -1697373941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_122
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9b1be38a02b0a3849a4b67a4cbc3ec57
+      internalID: 2076267444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_123
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 58c08922b5b086b428b1e964de9835d6
+      internalID: 1830285693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_124
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4a8f61912cb46ef43bf19f89330b4a14
+      internalID: -1438426118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_125
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: daa9e33f189c62d419f52fdc42052d2b
+      internalID: -754019135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_126
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da827d8b7f9b30c4ab7481a5d9b70bb7
+      internalID: -746567439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_127
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f35d53436b6ca448add1bcbb84bf143
+      internalID: -1216373352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_128
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1baaae1502cee14b95532412dba7e0e
+      internalID: -1883887815
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_129
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6188e2dd1098f734192737ab879d7381
+      internalID: 100398050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_130
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 28577907a2bcc83408c9fba863389270
+      internalID: 202885510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_131
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0154478e3094634499b22dc88fc228fc
+      internalID: 1668511022
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_132
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7329c79ab813b3445808882b14bd9040
+      internalID: -821959360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_133
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cfd66ff6e35a65b4ebb3f6632ff81df7
+      internalID: 1397111702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_134
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 73ba877e5650d574d9971fb8da832fc8
+      internalID: -1734722718
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_135
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1cd223aaa132dfa49bc101e9b03c9036
+      internalID: 733465377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_136
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 62cd8204bb13bca46a57598023a70eb3
+      internalID: -1057296967
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_137
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 744062d36e7a06c43b6eff6d732728f0
+      internalID: -2007449643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_138
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf0c592a993821342bbfdfc3d3a35680
+      internalID: 660833041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_139
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 75ec165e42b7f174c84943ab507e3d85
+      internalID: -6970682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_140
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9c289fa6db9c33a4e933b922bfb166e2
+      internalID: 10097541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_141
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5a54dade36566c34186da1c2f0491017
+      internalID: -1892146736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_142
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: deeaf2a4fcafe2d43be0078516337ea5
+      internalID: -1638790920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_143
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 70e0509b0b7416e4ea84fd481eb11c89
+      internalID: -2012539092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_144
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 239180ccb04a73a499816af4459200a2
+      internalID: 1602241232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_145
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ccd777d7f665c524a88288e3c9493a76
+      internalID: -605884955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_146
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 93b8eec02e77bab4daf8c8fef4c74748
+      internalID: -402837711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_147
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 586a2aef10f515642a06182315f41748
+      internalID: -1100009685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_148
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 259856b62492e354abaf8c46471edd1c
+      internalID: 1616016958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_149
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f26271d978afe1942862471b19c39e3f
+      internalID: 1938569487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_150
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d3aeecb72bc00b4b8713561a1c25ea0
+      internalID: -1359043477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_151
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35c59d403a344034a8df6f053f2abbc0
+      internalID: 1854975429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_152
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d14b00b57acc3f647bf4998526b07ea5
+      internalID: 42349151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_153
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: adc8411e1dfaacd4e862adeca75c21da
+      internalID: 526477103
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_154
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 97506ca3c5b46e944b4ac36df614db69
+      internalID: -1716980558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_155
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 952859193182baf4db6bd321a65f0bdb
+      internalID: 1546686893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_156
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf13341e4b1b2bd458c4531544232b88
+      internalID: -860783674
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_157
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ecdc6082c2791144bb8a159340a6951
+      internalID: 850736063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_158
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e19c4c32fcd11594eb1237ddd7d4204a
+      internalID: -877094670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_159
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9faa2815252befa4586f6aef97bb3f4c
+      internalID: -446722353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_160
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4ac13056232d190488648cc09613b19c
+      internalID: 341819399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_161
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 067109e752587254bac718fe897533bd
+      internalID: -93568070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_162
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f33902654d017a242b8125ec21e9bab5
+      internalID: -501219609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_163
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e681a7698e38c7a4ca9a961240930968
+      internalID: -801028282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_164
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b269ee709b235ae448c52977c952e6ff
+      internalID: -1372578994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_165
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe070688dad4b9146bd8efc9b7d9f22c
+      internalID: -2027869061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_166
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be8405586ff2891448243630965f5bcc
+      internalID: 1511486500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_167
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2927dabe3dceda46b6126f5d2a2d565
+      internalID: 267752511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_168
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c640c118a79f8894ea8ceec793c56ea2
+      internalID: -1298385319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_169
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26f2fea1a61f0f54eaa97b44ca9ce760
+      internalID: 1428956234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_170
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 366867f7e0cdda04b88a5ad015275261
+      internalID: 1182350007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_171
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8db99de28fe4e847a8b3d0c61907006
+      internalID: -55613920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_172
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 644ffa43e43fe954d9f614ad2309c86b
+      internalID: -1341181173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_173
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8e3d6cf49a8dd740bb66ba7d94dd1be
+      internalID: -2117703009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_174
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c225a3e09a6c0384eb7efefb4c99bb61
+      internalID: 1339518631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_175
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3faa8850789d18844a3c51adee6e553a
+      internalID: -1739304502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_176
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb28ced902e422d4e815be9fe25aa79c
+      internalID: -536187125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_177
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f409fa287e1ad8145a61f9aad97719a7
+      internalID: -601781792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_178
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b91100a06895db2469ba2951fdafb24b
+      internalID: 1155295912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_179
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: caec33f6630d9594fa989bd4547829cf
+      internalID: 632203276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_180
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c8c85217663cd34a8fb6801894a46ed
+      internalID: 948515787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_181
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6ccd4a1a346f1f84c9254dee7c299955
+      internalID: -2037427402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_182
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af92848883a362b49ae9eef5ee23ce96
+      internalID: -65499711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_183
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef101bc69f4ae2f4d96fea952c110615
+      internalID: -707712524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_184
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 659c32c46c68c5347b16f3108cee84a5
+      internalID: 1244584843
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_185
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1370efcdc2c7214583b205fd9dc7cb5
+      internalID: -195705680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_186
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0026601d999104b4caabc6aa29ac77f5
+      internalID: 959747527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_187
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b0275d84593a99449ce728bc6cca8ef
+      internalID: -166672163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_188
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34866cc219e71d5429935017b5777df8
+      internalID: -1273364953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_189
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3da81d721a540c44ca997fc37fa5f270
+      internalID: -45998979
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_190
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 449d16172fb4be74ea810d2d51e7cea4
+      internalID: 181887733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_191
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3beb6bd1cef8f07429aa1d3f48e8f108
+      internalID: -1590697139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_192
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d9f177dc41ce3674593d2ac2505591d6
+      internalID: 1047280873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_193
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f23d1b1d7e938549b9486e169f3250a
+      internalID: 1030202441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_194
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b9e92e48d8247d74b9f6f74bc93bac0e
+      internalID: 361114209
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_195
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 55c2185d785f7f042be299e5abc3ff64
+      internalID: 1950580294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_196
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4313c3ffe30a29d44a32936c2f83e1e2
+      internalID: 1729085964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_197
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 37b3b3b66f711fc45a22227aeafe147d
+      internalID: 426074822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_198
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3ceec94018a02c045ae1cc144da7b4d1
+      internalID: 423690203
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_199
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 431309e7d78ff7f43b85e4fecfb382bc
+      internalID: -2088410302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_200
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5a5c6658330fb30458e7346211bb8b68
+      internalID: -357208846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_201
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 811fa17ce7b41404b8a52fe4f871547f
+      internalID: -1996181170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_202
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 664b2a3b1ada35d4488307918eb71e65
+      internalID: 2059615731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_203
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fbf010211d6bb484da9648f649eab1d8
+      internalID: 1153244671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_204
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de1b1ec232ccf154c8be50d4db56cdbc
+      internalID: -1838528789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_205
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 90345165d297c5e4f9ed56b6aba5ea62
+      internalID: -2119406079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_206
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b097c73dc82055419aa646f505b9872
+      internalID: 558051723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_207
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c8687d1607068c24ebfb01ab0093cc0d
+      internalID: 1564064986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6a2444ddf2c039d48960e45fbabf3a09
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_0: -5432859402938031475
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_1: -1387731850
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_10: -316901963
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_100: 357589602
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_101: 792615228
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_102: 1235153618
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_103: 1912812161
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_104: -1233219247
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_105: 1102533726
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_106: 1633893348
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_107: 1792805381
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_108: -1248500908
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_109: -1253518945
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_11: -234841845
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_110: 1890102283
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_111: 1604294650
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_112: -376936917
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_113: 1859756547
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_114: -917201111
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_115: 1262881964
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_116: -986130046
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_117: -193901485
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_118: 1451679165
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_119: 1847383582
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_12: -105655688
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_120: -742120025
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_121: -1697373941
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_122: 2076267444
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_123: 1830285693
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_124: -1438426118
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_125: -754019135
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_126: -746567439
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_127: -1216373352
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_128: -1883887815
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_129: 100398050
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_13: 886642443
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_130: 202885510
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_131: 1668511022
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_132: -821959360
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_133: 1397111702
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_134: -1734722718
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_135: 733465377
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_136: -1057296967
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_137: -2007449643
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_138: 660833041
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_139: -6970682
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_14: 1631557471
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_140: 10097541
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_141: -1892146736
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_142: -1638790920
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_143: -2012539092
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_144: 1602241232
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_145: -605884955
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_146: -402837711
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_147: -1100009685
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_148: 1616016958
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_149: 1938569487
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_15: 1932842948
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_150: -1359043477
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_151: 1854975429
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_152: 42349151
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_153: 526477103
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_154: -1716980558
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_155: 1546686893
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_156: -860783674
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_157: 850736063
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_158: -877094670
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_159: -446722353
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_16: -1629424751
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_160: 341819399
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_161: -93568070
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_162: -501219609
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_163: -801028282
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_164: -1372578994
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_165: -2027869061
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_166: 1511486500
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_167: 267752511
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_168: -1298385319
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_169: 1428956234
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_17: 848414461
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_170: 1182350007
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_171: -55613920
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_172: -1341181173
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_173: -2117703009
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_174: 1339518631
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_175: -1739304502
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_176: -536187125
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_177: -601781792
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_178: 1155295912
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_179: 632203276
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_18: -2092867770
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_180: 948515787
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_181: -2037427402
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_182: -65499711
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_183: -707712524
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_184: 1244584843
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_185: -195705680
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_186: 959747527
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_187: -166672163
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_188: -1273364953
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_189: -45998979
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_19: 1523291362
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_190: 181887733
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_191: -1590697139
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_192: 1047280873
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_193: 1030202441
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_194: 361114209
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_195: 1950580294
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_196: 1729085964
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_197: 426074822
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_198: 423690203
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_199: -2088410302
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_2: 1280059685
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_20: -1842630137
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_200: -357208846
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_201: -1996181170
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_202: 2059615731
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_203: 1153244671
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_204: -1838528789
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_205: -2119406079
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_206: 558051723
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_207: 1564064986
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_21: 361335883
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_22: 1327339266
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_23: 53151390
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_24: -1644601431
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_25: -804709388
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_26: 2062342214
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_27: 877149916
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_28: -1688186270
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_29: -725165687
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_3: 340277554
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_30: 758950585
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_31: -98282231
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_32: 1332694706
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_33: -1576305101
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_34: -1702976500
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_35: 1108989335
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_36: -135518501
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_37: -1888810793
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_38: -990981293
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_39: -861438597
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_4: 1857487566
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_40: 442433279
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_41: -487155702
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_42: -1362164765
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_43: 1066377371
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_44: 463228443
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_45: -1916257894
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_46: -1900566402
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_47: 209203903
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_48: 694438923
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_49: -1084746360
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_5: 1496899778
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_50: 1461320796
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_51: -2137370227
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_52: -147609252
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_53: -1543633968
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_54: -1493522726
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_55: 597588485
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_56: 624583135
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_57: -777105052
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_58: 2005615639
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_59: 1681099514
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_6: -1868734112
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_60: 538383237
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_61: 467082496
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_62: -996154552
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_63: 2041898363
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_64: 2022150562
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_65: 1375031229
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_66: -138034370
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_67: -691449203
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_68: 845123730
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_69: 913895932
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_7: -1828426926
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_70: 1910192020
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_71: 376428345
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_72: 100130568
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_73: -1032585467
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_74: -339692702
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_75: 1597662516
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_76: -1144281261
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_77: 1889383423
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_78: 786635923
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_79: -824433582
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_8: 1003725562
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_80: -1607453216
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_81: 1432151808
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_82: 1908381942
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_83: -1065430658
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_84: -1232848543
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_85: -1136354479
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_86: -938565941
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_87: -999594040
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_88: -1100096642
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_89: 1827360547
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_9: 1441475634
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_90: 573052800
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_91: -372838706
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_92: 1005749718
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_93: -78574086
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_94: -496212368
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_95: -1776899620
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_96: -96738705
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_97: -1780216181
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_98: -962919568
+      SNES - Super Bomberman 3 - Story Mode Stages - Pyramid Area 3 (3_3)_99: -1234739532
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
