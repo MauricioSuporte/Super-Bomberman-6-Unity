@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
-  m_Name: QuickUp
+  m_Name: QuickSandDown
   m_EditorClassIdentifier: 
   m_AnimatedSprites:
-  - {fileID: 181609651, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-  - {fileID: 1414823366, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-  - {fileID: -246493938, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
+  - {fileID: -1353699778, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
+  - {fileID: -1951247315, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
+  - {fileID: -248224407, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
   m_MinSpeed: 5
   m_MaxSpeed: 5
   m_AnimationStartTime: 0
