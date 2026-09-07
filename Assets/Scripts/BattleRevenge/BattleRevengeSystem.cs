@@ -869,20 +869,16 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             GameSession.IsValidPlayerId(cart.OwnerPlayerId) &&
             SaveSystem.GetBattleModePlayerControlMode(cart.OwnerPlayerId) == BattleModePlayerControlMode.Com;
 
-        var com = cart.GetComponent("BattleRevengeComController") as Behaviour;
+        var com = cart.GetComponent<BattleRevengeComController>();
         if (shouldUseCom)
         {
             if (com == null)
-            {
-                Type comType = ResolveBattleRevengeComControllerType();
-                if (comType != null && typeof(Behaviour).IsAssignableFrom(comType))
-                    com = cart.gameObject.AddComponent(comType) as Behaviour;
-            }
+                com = cart.gameObject.AddComponent<BattleRevengeComController>();
 
             if (com != null)
             {
                 com.enabled = true;
-                cart.SendMessage("Initialize", cart, SendMessageOptions.DontRequireReceiver);
+                com.Initialize(cart);
             }
             return;
         }
@@ -892,23 +888,6 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
         if (PlayerInputManager.Instance != null && GameSession.IsValidPlayerId(cart.OwnerPlayerId))
             PlayerInputManager.Instance.ClearSyntheticPlayer(cart.OwnerPlayerId);
-    }
-
-    private static Type ResolveBattleRevengeComControllerType()
-    {
-        Type type = Type.GetType("BattleRevengeComController");
-        if (type != null)
-            return type;
-
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        for (int i = 0; i < assemblies.Length; i++)
-        {
-            type = assemblies[i].GetType("BattleRevengeComController");
-            if (type != null)
-                return type;
-        }
-
-        return null;
     }
 
     private void CleanupDestroyedActiveCarts()

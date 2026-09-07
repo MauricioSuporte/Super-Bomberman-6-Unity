@@ -6,7 +6,6 @@ public static class NormalGameComRecordingAssist
 {
     public const int DefaultPlayerCount = 4;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
     const string EnabledEnvironmentVariable = "SB6_NORMAL_GAME_COM_DEMO";
     const string PlayerCountEnvironmentVariable = "SB6_NORMAL_GAME_COM_PLAYERS";
     const string EnabledArgument = "-normalGameComDemo";
@@ -14,10 +13,12 @@ public static class NormalGameComRecordingAssist
 
     public static bool IsEnabled => IsNormalGameScene() && IsRequested();
 
-    public static int PlayerCount => Mathf.Clamp(
-        ReadConfiguredPlayerCount(),
-        GameSession.MinPlayerId,
-        GameSession.MaxPlayerId);
+    public static int PlayerCount => !Debug.isDebugBuild
+        ? DefaultPlayerCount
+        : Mathf.Clamp(
+            ReadConfiguredPlayerCount(),
+            GameSession.MinPlayerId,
+            GameSession.MaxPlayerId);
 
     public static bool IsComPlayer(int playerId) =>
         IsEnabled && playerId > GameSession.MinPlayerId && playerId <= PlayerCount;
@@ -30,6 +31,9 @@ public static class NormalGameComRecordingAssist
 #if UNITY_EDITOR
         return true;
 #else
+        if (!Debug.isDebugBuild)
+            return false;
+
         if (IsTruthy(Environment.GetEnvironmentVariable(EnabledEnvironmentVariable)))
             return true;
 
@@ -81,12 +85,6 @@ public static class NormalGameComRecordingAssist
                value.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
                value.Equals("on", StringComparison.OrdinalIgnoreCase);
     }
-#else
-    public static bool IsEnabled => false;
-    public static int PlayerCount => DefaultPlayerCount;
-    public static bool IsComPlayer(int playerId) => false;
-    public static bool IsRecordingPlayer(int playerId) => false;
-#endif
 
     public static bool CanRunComInCurrentScene(int playerId) =>
         IsBattleModeScene()
