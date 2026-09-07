@@ -150,6 +150,9 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 2033400104}
+    fullyVisibleSprites: []
+    colors: []
+    colorTolerance: 0.01
 --- !u!1 &3941917705409293893
 GameObject:
   m_ObjectHideFlags: 0
@@ -172,24 +175,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2033400104
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3941917705409293893}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc70610b73af40e19b4fe65be80d850a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::BlackoutColorPalette
-  visibleColors:
-  - {r: 0.972549, g: 0.972549, b: 0, a: 1}
-  - {r: 0.972549, g: 0.47058824, b: 0, a: 1}
-  - {r: 0.972549, g: 0, b: 0, a: 1}
-  - {r: 0.972549, g: 0.972549, b: 0.972549, a: 1}
-  colorTolerance: 0.001
 --- !u!4 &2436852266683041271
 Transform:
   m_ObjectHideFlags: 0
@@ -320,6 +305,24 @@ MonoBehaviour:
   waterSurfaceYOffset: 0
   showSurfaceLine: 1
   premultiplyUnderwaterOpacity: 0
+--- !u!114 &2033400104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3941917705409293893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc70610b73af40e19b4fe65be80d850a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlackoutColorPalette
+  visibleColors:
+  - {r: 0.972549, g: 0.972549, b: 0, a: 1}
+  - {r: 0.972549, g: 0.47058824, b: 0, a: 1}
+  - {r: 0.972549, g: 0, b: 0, a: 1}
+  - {r: 0.972549, g: 0.972549, b: 0.972549, a: 1}
+  colorTolerance: 0.001
 --- !u!1 &4193804359411325140
 GameObject:
   m_ObjectHideFlags: 0
@@ -348,7 +351,7 @@ Transform:
   m_GameObject: {fileID: 4193804359411325140}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.25, z: 0}
+  m_LocalPosition: {x: 0, y: 0.66, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -450,7 +453,6 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
-
 --- !u!114 &2033400301
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -461,7 +463,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77f73ad71f6e48e18c71a8ecda779a40, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlackoutVisibleParts
   maskMaterial: {fileID: 2100000, guid: d2aa593467d646c799107c41bca617fb, type: 2}
   parts:
@@ -473,5 +475,6 @@ MonoBehaviour:
       width: 1
       height: 1
     palette: {fileID: 0}
+    fullyVisibleSprites: []
     colors: []
     colorTolerance: 0.001
