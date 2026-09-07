@@ -670,7 +670,10 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         };
 
         state.powerGlove = mover.GetComponent<PowerGloveAbility>();
-        state.heldBomb = state.powerGlove != null
+        // PowerGloveAbility retains its last thrown bomb reference while it
+        // watches the landing. Only a bomb actively carried by the player may
+        // be hidden/restored as part of the player portal visual.
+        state.heldBomb = state.powerGlove != null && state.powerGlove.IsHoldingBomb
             ? state.powerGlove.HeldBombForExternalTransition
             : null;
         if (state.heldBomb != null)
