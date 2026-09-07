@@ -19695,14 +19695,12 @@ MonoBehaviour:
   playerRadius: 3
   playerForwardOffset: 1.5
   playerLightTurnSeconds: 0.1
-  playerSoftness: 0.35
   roomLights:
   - {fileID: 1334709489}
   - {fileID: 1369170319}
   - {fileID: 1675148191}
   - {fileID: 1356899530}
   roomLightRadius: 1
-  roomLightSoftness: 0.2
 --- !u!1001 &2033400401
 PrefabInstance:
   m_ObjectHideFlags: 0

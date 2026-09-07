@@ -239,10 +239,9 @@ public sealed class StageBlackout : MonoBehaviour
         if (worldOverlay == null) return reach;
         if (indestructibleStopDistance > 0)
         {
-            // Let the outer soft edge extend two source pixels into the blocking tile.
-            // The shader adds both padding and softness after this reach.
+            // The hard pixel edge reaches into the blocking tile by the authored padding.
             return Mathf.Max(0.01f, indestructibleStopDistance -
-                extraTilesAroundExplosion - Mathf.Max(0.001f, explosionSpotlightSoftness));
+                extraTilesAroundExplosion);
         }
         return reach > 0 ? reach + 0.5f : 0f;
     }
@@ -324,7 +323,6 @@ public sealed class StageBlackout : MonoBehaviour
             _matInstance.SetVectorArray(IdSpotlightCenters, _spotlightCentersCache);
             _matInstance.SetVectorArray(IdSpotlightHalfSize, _spotlightHalfSizeCache);
             _matInstance.SetFloatArray(IdSpotlightIntensity, _spotlightIntensityCache);
-            _matInstance.SetFloat("_ExplosionSoftness", Mathf.Max(0.001f, explosionSpotlightSoftness * tileWorldSize));
             return;
         }
 

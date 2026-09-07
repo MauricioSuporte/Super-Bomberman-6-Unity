@@ -16,16 +16,13 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
     [SerializeField, Min(0f)] private float playerForwardOffset = 1.5f;
     [Tooltip("Maximum time for the light to turn to the opposite direction. Movement still follows the player immediately.")]
     [SerializeField, Min(0.01f)] private float playerLightTurnSeconds = 0.1f;
-    [Tooltip("Additional soft edge in world units; clipped at the room boundary.")]
-    [SerializeField, Min(0.001f)] private float playerSoftness = 0.35f;
     [Header("Room lights (world units; one tile = one unit)")]
     [SerializeField] private Transform[] roomLights = System.Array.Empty<Transform>();
     [SerializeField, Min(0.01f)] private float roomLightRadius = 1f;
-    [SerializeField, Min(0.001f)] private float roomLightSoftness = 0.2f;
 
     private static readonly int PlayerCountId = Shader.PropertyToID("_PlayerCount");
     private static readonly int PlayerCirclesId = Shader.PropertyToID("_PlayerCircles");
-    private static readonly int PlayerSoftnessId = Shader.PropertyToID("_PlayerSoftness");
+    private static readonly int PixelsPerUnitId = Shader.PropertyToID("_PixelsPerUnit");
     private readonly Vector4[] playerCircles = new Vector4[6];
     private readonly PlayerIdentity[] lightOwners = new PlayerIdentity[6];
     private readonly Vector2[] lightOffsets = new Vector2[6];
@@ -127,7 +124,7 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
             if ((activeSlots & (1 << slot)) == 0) lightOwners[slot] = null;
         runtimeMaterial.SetInt(PlayerCountId, count);
         runtimeMaterial.SetVectorArray(PlayerCirclesId, playerCircles);
-        runtimeMaterial.SetFloat(PlayerSoftnessId, playerSoftness);
+        runtimeMaterial.SetFloat(PixelsPerUnitId, pixelsPerUnit);
         UpdateRoomLights(pixelsPerUnit);
     }
 
@@ -152,8 +149,7 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
             center.y = Mathf.Round(center.y * pixelsPerUnit) / pixelsPerUnit;
             center = ClampToRoom(center);
             roomLightCircles[count++] = new Vector4(center.x, center.y,
-                torch != null ? torch.LightRadius : roomLightRadius,
-                torch != null ? torch.LightSoftness : roomLightSoftness);
+                torch != null ? torch.LightRadius : roomLightRadius, 0f);
         }
         runtimeMaterial.SetInt(RoomLightCountId, count);
         runtimeMaterial.SetVectorArray(RoomLightCirclesId, roomLightCircles);

@@ -9,10 +9,11 @@ The Room 2 object in Stage_3-4 has both components configured:
 
 - Darkness alpha: 1 (fully black outside the illuminated regions).
 - Sorting Layer: Default; Order in Layer: 100.
-- Player vision: 3 tiles of clear radius plus 0.35 world units of soft edge.
+- Player vision: a hard-edged 3-tile circle sampled at the active pixel-perfect
+  camera's source-pixel grid (16 PPU fallback).
 - Circle center: 1.5 tiles ahead of each player's facing direction, including
-  while idle. The center is clamped to the room collider; the circle and soft
-  edge are clipped at the room boundary.
+  while idle. The center is clamped to the room collider; the circle is
+  clipped at the room boundary.
 - Facing changes move the light offset in at most 0.1 seconds (a full reversal),
   independently for each player. The displayed center snaps to the active
   pixel-perfect camera's source-pixel grid, with a 16 PPU fallback. Player
@@ -22,6 +23,8 @@ The Room 2 object in Stage_3-4 has both components configured:
   coordinates require no conversion through the pixel-perfect viewport.
   Radius and forward offset use each player's tile size, so their screen size
   follows the stage's camera projection and safe-frame scaling, not fixed pixels.
+- Explosion holes use the same source-pixel sampling and hard edge. Their
+  cross-shaped reach is unchanged, while their rounded tips are pixelated.
 
 To show a whole SpriteRenderer or TilemapRenderer above darkness, use the
 same sorting layer and an order greater than 100. Account for a parent
@@ -30,7 +33,7 @@ SortingGroup if the object has one.
 ## Room torches
 
 `Assets/Prefabs/StageAssets/BlackoutTorch.prefab` is instantiated as Torch1–4
-in Room 2. The root owns `BlackoutTorch` (radius 2, soft edge 0.2); its `Flame`
+in Room 2. The root owns `BlackoutTorch` (radius 2, hard pixel edge); its `Flame`
 child owns the SpriteRenderer and looping AnimatedSpriteRenderer (three frames,
 0.1 seconds per frame, idle disabled). The room light list references the roots.
 

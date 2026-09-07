@@ -26,10 +26,9 @@ Shader "SuperBomberman/World Blackout"
                 float4 _SpotlightCenters[36];
                 float4 _SpotlightHalfSize[36];
                 float _SpotlightIntensity[36];
-                float _ExplosionSoftness;
                 int _PlayerCount;
                 float4 _PlayerCircles[6];
-                float _PlayerSoftness;
+                float _PixelsPerUnit;
                 int _RoomLightCount;
                 float4 _RoomLightCircles[16];
             CBUFFER_END
@@ -48,25 +47,28 @@ Shader "SuperBomberman/World Blackout"
 
             half4 Frag(Varyings input) : SV_Target
             {
+                // Sample at the center of each source-pixel cell so round holes keep a
+                // stable, deliberately stepped SNES-style silhouette.
+                float pixelsPerUnit = max(_PixelsPerUnit, 1.0);
+                float2 pixelWorldPosition = (floor(input.worldPosition * pixelsPerUnit) + 0.5) / pixelsPerUnit;
                 float light = 0;
                 for (int p = 0; p < _PlayerCount; p++)
                 {
-                    float distanceToPlayer = distance(input.worldPosition, _PlayerCircles[p].xy);
+                    float distanceToPlayer = distance(pixelWorldPosition, _PlayerCircles[p].xy);
                     float radius = _PlayerCircles[p].z;
-                    light = max(light, 1 - smoothstep(radius, radius + max(_PlayerSoftness, 0.001), distanceToPlayer));
+                    light = max(light, step(distanceToPlayer, radius));
                 }
                 for (int r = 0; r < _RoomLightCount; r++)
                 {
-                    float distanceToLight = distance(input.worldPosition, _RoomLightCircles[r].xy);
+                    float distanceToLight = distance(pixelWorldPosition, _RoomLightCircles[r].xy);
                     float radius = _RoomLightCircles[r].z;
-                    float softness = max(_RoomLightCircles[r].w, 0.001);
-                    light = max(light, 1 - smoothstep(radius, radius + softness, distanceToLight));
+                    light = max(light, step(distanceToLight, radius));
                 }
                 for (int i = 0; i < _SpotlightCount; i++)
                 {
-                    float2 delta = abs(input.worldPosition - _SpotlightCenters[i].xy) - _SpotlightHalfSize[i].xy;
+                    float2 delta = abs(pixelWorldPosition - _SpotlightCenters[i].xy) - _SpotlightHalfSize[i].xy;
                     float outsideDistance = length(max(delta, 0));
-                    float hole = 1 - smoothstep(0, max(_ExplosionSoftness, 0.001), outsideDistance);
+                    float hole = step(outsideDistance, 0);
                     light = max(light, hole * _SpotlightIntensity[i]);
                 }
                 return half4(_Color.rgb, _Color.a * (1 - saturate(light)));
