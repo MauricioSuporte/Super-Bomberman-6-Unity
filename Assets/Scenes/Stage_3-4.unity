@@ -531,6 +531,61 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b309c51fe14a41bb6cd4e8b0d27f4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage34SandstormEffect
+--- !u!1 &214000400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 214000401}
+  - component: {fileID: 214000402}
+  m_Layer: 0
+  m_Name: Stage34BatSwarmEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &214000401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 214000400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &214000402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 214000400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 249af3dd28a240fb8b414f91332a6192, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage34BatSwarmEffect
+  batFrames:
+  - {fileID: 391001, guid: 70dfb06a8aca46e190f2c2b08f11a0e6, type: 3}
+  - {fileID: 391002, guid: 70dfb06a8aca46e190f2c2b08f11a0e6, type: 3}
+  swarmStartSfx: {fileID: 8300000, guid: 9090ebb854ac49608067ff0e774ff61e, type: 3}
+  swarmStartSfxVolume: 0.55
+  sortingLayerName: Default
+  sortingOrder: 100
+  batCount: 10
+  flightDurationSeconds: 3
+  frameDurationSeconds: 0.1
+  entryStaggerSeconds: 1.2
 --- !u!1 &228359636
 GameObject:
   m_ObjectHideFlags: 0
@@ -2561,37 +2616,6 @@ MonoBehaviour:
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   refreshPlayersEverySeconds: 0.1
---- !u!1 &503194100
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 503194101}
-  m_Layer: 0
-  m_Name: WheelDebug2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &503194101
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 503194100}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &572775421
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17947,37 +17971,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: d7b15c6789c243a49811a3cd10ae4cba, type: 3}
   m_PrefabInstance: {fileID: 2033400402}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1371660478
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1371660479}
-  m_Layer: 0
-  m_Name: WheelDebug3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &1371660479
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1371660478}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1382143588 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1000000000000000002, guid: 13caf34a8dcc455ea89c01d4c4d0cc6d, type: 3}
@@ -19948,61 +19941,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1747c765ccbcc954d81dbb65c24960d6, type: 3}
---- !u!1 &214000400
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 214000401}
-  - component: {fileID: 214000402}
-  m_Layer: 0
-  m_Name: Stage34BatSwarmEffect
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &214000401
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 214000400}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &214000402
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 214000400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 249af3dd28a240fb8b414f91332a6192, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage34BatSwarmEffect
-  batFrames:
-  - {fileID: 391001, guid: 70dfb06a8aca46e190f2c2b08f11a0e6, type: 3}
-  - {fileID: 391002, guid: 70dfb06a8aca46e190f2c2b08f11a0e6, type: 3}
-  swarmStartSfx: {fileID: 8300000, guid: 9090ebb854ac49608067ff0e774ff61e, type: 3}
-  swarmStartSfxVolume: 0.55
-  sortingLayerName: Default
-  sortingOrder: 100
-  batCount: 10
-  flightDurationSeconds: 3
-  frameDurationSeconds: 0.1
-  entryStaggerSeconds: 1.2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -20020,5 +19958,3 @@ SceneRoots:
   - {fileID: 1465697803}
   - {fileID: 214000301}
   - {fileID: 214000401}
-  - {fileID: 503194101}
-  - {fileID: 1371660479}
