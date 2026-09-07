@@ -108,6 +108,7 @@ public sealed class MagekoMovementController : JunctionTurningEnemyMovementContr
     private void Begin(State next)
     {
         state = next; elapsed = 0f;
+        SetDamageCollisionEnabled(next != State.Ascending && next != State.Flying && next != State.Descending);
         SetWings(next != State.Ground);
         if (next == State.Preparing)
         {
@@ -132,6 +133,16 @@ public sealed class MagekoMovementController : JunctionTurningEnemyMovementContr
             UpdateSpriteDirection(direction);
         }
     }
+
+    private void SetDamageCollisionEnabled(bool enabled)
+    {
+        // Players detect enemies through this trigger collider. Disable it
+        // only while Mageko is above the ground, so players can pass below.
+        foreach (Collider2D collider in GetComponents<Collider2D>())
+            if (collider != null && !isDead)
+                collider.enabled = enabled;
+    }
+
     private void SetSprite(Sprite sprite, bool ascending)
     {
         if (sprite == null)

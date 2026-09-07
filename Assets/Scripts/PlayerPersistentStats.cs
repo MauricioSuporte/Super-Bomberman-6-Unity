@@ -29,7 +29,7 @@ public static class PlayerPersistentStats
         public bool HasPowerGlove = true;
         public bool CanPassBombs = true;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
+        public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;

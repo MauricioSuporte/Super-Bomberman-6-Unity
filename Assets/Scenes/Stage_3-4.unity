@@ -9329,6 +9329,11 @@ MonoBehaviour:
   sourceRoomCamera: {fileID: 1520869091}
   destinationRoomCamera: {fileID: 410079257}
   roomTwoBatSwarmEffect: {fileID: 214000402}
+  destinationRoomMusicIntro: {fileID: 8300000, guid: b6f2431a9e6d4f6aa8b5c7d9e1f20345, type: 3}
+  destinationRoomMusicIntroVolume: 1
+  destinationRoomMusicLoop: {fileID: 8300000, guid: c7e3542baf7e4a7bb9c6d8e0f2a31456, type: 3}
+  destinationRoomMusicLoopVolume: 1
+  restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
     position: {x: 15, y: 2}
@@ -17565,6 +17570,12 @@ MonoBehaviour:
   fadeInSeconds: 0.35
   sourceRoomCamera: {fileID: 410079257}
   destinationRoomCamera: {fileID: 1862447266}
+  roomTwoBatSwarmEffect: {fileID: 0}
+  destinationRoomMusicIntro: {fileID: 0}
+  destinationRoomMusicIntroVolume: 0.6
+  destinationRoomMusicLoop: {fileID: 0}
+  destinationRoomMusicLoopVolume: 0.6
+  restoreDefaultMusicAfterTransition: 1
   playerDestinations:
   - playerId: 1
     position: {x: 53, y: 4}

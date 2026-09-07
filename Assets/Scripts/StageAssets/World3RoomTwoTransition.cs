@@ -33,6 +33,13 @@ namespace StageAssets
         [Header("Room 2 arrival")]
         [SerializeField] private Stage34BatSwarmEffect roomTwoBatSwarmEffect;
 
+        [Header("Room Music")]
+        [SerializeField] private AudioClip destinationRoomMusicIntro;
+        [SerializeField, Range(0f, 1f)] private float destinationRoomMusicIntroVolume = 0.6f;
+        [SerializeField] private AudioClip destinationRoomMusicLoop;
+        [SerializeField, Range(0f, 1f)] private float destinationRoomMusicLoopVolume = 0.6f;
+        [SerializeField] private bool restoreDefaultMusicAfterTransition;
+
         [Header("Destination Player Positions")]
         [SerializeField] private PlayerDestination[] playerDestinations =
         {
@@ -102,12 +109,33 @@ namespace StageAssets
             MoveLivingPlayersToDestination();
             SetCameraActive(sourceRoomCamera, false);
             SetCameraActive(destinationRoomCamera, true);
+            PlayDestinationRoomMusic();
             yield return null;
 
             yield return FadeTo(0f, fadeInSeconds);
             roomTwoBatSwarmEffect?.Play(destinationRoomCamera);
             Time.timeScale = timeScaleBeforeTransition;
             UnfreezeGameplay();
+        }
+
+        private void PlayDestinationRoomMusic()
+        {
+            GameMusicController music = GameMusicController.Instance;
+            if (music == null)
+                return;
+
+            if (destinationRoomMusicIntro != null)
+            {
+                music.PlayMusicIntroThenLoop(
+                    destinationRoomMusicIntro,
+                    destinationRoomMusicIntroVolume,
+                    destinationRoomMusicLoop,
+                    destinationRoomMusicLoopVolume);
+                return;
+            }
+
+            if (restoreDefaultMusicAfterTransition)
+                music.PlayDefaultMusic();
         }
 
         private void FreezeGameplay()
