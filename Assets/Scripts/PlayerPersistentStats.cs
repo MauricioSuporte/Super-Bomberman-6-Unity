@@ -23,7 +23,7 @@ public static class PlayerPersistentStats
         public int Life = 999;
         public int BombAmount = 9;
         public int ExplosionRadius = 9;
-        public int SpeedInternal = BaseSpeedNormal + (SpeedStep * 0);
+        public int SpeedInternal = BaseSpeedNormal + (SpeedStep * 9);
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;

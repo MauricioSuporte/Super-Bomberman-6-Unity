@@ -11,6 +11,7 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
     private enum State { Surface, Entering, Submerged, Exiting }
     private AnimatedSpriteRenderer downVisual, upVisual, leftVisual, submergeVisual, underwaterVisual, deathVisual;
     private CharacterHealth gogaHealth;
+    private Collider2D contactCollider;
     private Sprite[] downFrames, upFrames, leftFrames, submergeFrames, underwaterFrames;
     private State state;
     private float stateTimer;
@@ -18,11 +19,18 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
 
     protected override void Awake()
     {
-        downVisual = transform.Find("Down")?.GetComponent<AnimatedSpriteRenderer>();
-        upVisual = transform.Find("Up")?.GetComponent<AnimatedSpriteRenderer>();
-        leftVisual = transform.Find("Left")?.GetComponent<AnimatedSpriteRenderer>();
+        // Sandi's single surface renderer is named Movimentation, while Goga
+        // uses the conventional Down/Up/Left child names.
+        downVisual = transform.Find("Down")?.GetComponent<AnimatedSpriteRenderer>()
+            ?? transform.Find("Movimentation")?.GetComponent<AnimatedSpriteRenderer>();
+        // Goga has a renderer for each movement direction, while Sandi uses a
+        // single mirrored surface renderer for every direction.
+        upVisual = transform.Find("Up")?.GetComponent<AnimatedSpriteRenderer>() ?? downVisual;
+        leftVisual = transform.Find("Left")?.GetComponent<AnimatedSpriteRenderer>() ?? downVisual;
         submergeVisual = transform.Find("Submerge")?.GetComponent<AnimatedSpriteRenderer>();
-        underwaterVisual = transform.Find("Underwater")?.GetComponent<AnimatedSpriteRenderer>();
+        // Sandi's authored underground loop is named Undersand.
+        underwaterVisual = transform.Find("Underwater")?.GetComponent<AnimatedSpriteRenderer>()
+            ?? transform.Find("Undersand")?.GetComponent<AnimatedSpriteRenderer>();
         deathVisual = transform.Find("Death")?.GetComponent<AnimatedSpriteRenderer>();
         ApplyDownMaterialToVisualChildren();
         LoadConfiguredFrames();
@@ -32,6 +40,7 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
         spriteRight = leftVisual;
         spriteDeath = deathVisual;
         gogaHealth = GetComponent<CharacterHealth>();
+        contactCollider = GetComponent<Collider2D>();
         base.Awake();
     }
 
@@ -65,7 +74,8 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
         if (state == State.Entering || state == State.Exiting) return;
         AnimatedSpriteRenderer visual = state == State.Submerged ? underwaterVisual : dir == Vector2.up ? upVisual : dir == Vector2.down ? downVisual : leftVisual;
         SetFrames(visual, state == State.Submerged ? underwaterFrames : dir == Vector2.up ? upFrames : dir == Vector2.down ? downFrames : leftFrames, true);
-        if (visual != null && visual.TryGetComponent(out SpriteRenderer renderer)) renderer.flipX = dir == Vector2.right;
+        if (visual != null && visual.TryGetComponent(out SpriteRenderer renderer))
+            renderer.flipX = leftVisual != downVisual && dir == Vector2.right;
     }
     protected override void Die() { if (gogaHealth != null) gogaHealth.SetExternalInvulnerability(false); base.Die(); }
     private IEnumerator EnterSubmersion()
@@ -78,6 +88,7 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
         if (gogaHealth != null) gogaHealth.SetExternalInvulnerability(true);
         state = State.Submerged;
         stateTimer = SubmergedDuration;
+        SetContactDamageEnabled(false);
         SetFrames(underwaterVisual, underwaterFrames, true);
     }
 
@@ -88,6 +99,7 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
         yield return PlayOnce(false);
 
         if (gogaHealth != null) gogaHealth.SetExternalInvulnerability(false);
+        SetContactDamageEnabled(true);
         state = State.Surface;
         abilityCooldownTimer = reemergeAbilityCooldown;
         UpdateSpriteDirection(direction);
@@ -162,5 +174,11 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
             if (visual.TryGetComponent(out SpriteRenderer renderer))
                 renderer.enabled = isSelected;
         }
+    }
+
+    private void SetContactDamageEnabled(bool enabled)
+    {
+        if (contactCollider != null)
+            contactCollider.enabled = enabled;
     }
 }
