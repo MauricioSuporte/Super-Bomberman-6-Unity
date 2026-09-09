@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
 /// A junction-turning enemy that can move through destructible blocks and
@@ -17,6 +18,8 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
     [SerializeField] private int[] activeMovementSequenceFrames = { 5, 6, 7, 8, 9 };
 
     private Collider2D selfCollider;
+    private Tilemap destructibleTilemap;
+    private Tilemap indestructibleTilemap;
 
     protected override void Awake()
     {
@@ -30,6 +33,7 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
 
+        ResolveTilemaps();
         IgnoreDestructibleCollisions();
     }
 
@@ -138,12 +142,57 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
                 continue;
             }
 
+            if (HasIndestructibleInPullPath(playerBody.position, rb.position))
+                continue;
+
             Vector2 nextPosition = Vector2.MoveTowards(
                 playerBody.position,
                 rb.position,
                 pullStep);
 
+            if (IsPullDestinationBlocked(nextPosition))
+                continue;
+
             playerBody.MovePosition(nextPosition);
         }
     }
+
+    private bool HasIndestructibleInPullPath(Vector2 from, Vector2 to)
+    {
+        ResolveTilemaps();
+
+        int steps = Mathf.CeilToInt(Vector2.Distance(from, to) / tileSize);
+        for (int step = 1; step < steps; step++)
+        {
+            Vector2 checkedPosition = Vector2.Lerp(from, to, step / (float)steps);
+            if (HasTileAt(indestructibleTilemap, checkedPosition))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPullDestinationBlocked(Vector2 worldPosition)
+    {
+        ResolveTilemaps();
+
+        return HasTileAt(destructibleTilemap, worldPosition) ||
+               HasTileAt(indestructibleTilemap, worldPosition);
+    }
+
+    private void ResolveTilemaps()
+    {
+        GameManager gameManager = GameManager.Instance != null
+            ? GameManager.Instance
+            : FindAnyObjectByType<GameManager>();
+
+        if (gameManager == null)
+            return;
+
+        destructibleTilemap ??= gameManager.destructibleTilemap;
+        indestructibleTilemap ??= gameManager.indestructibleTilemap;
+    }
+
+    private static bool HasTileAt(Tilemap tilemap, Vector2 worldPosition)
+        => tilemap != null && tilemap.HasTile(tilemap.WorldToCell(worldPosition));
 }
