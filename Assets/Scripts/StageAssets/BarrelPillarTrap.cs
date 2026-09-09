@@ -139,6 +139,20 @@ namespace StageAssets
             barrelRenderer.sprite = (frame & 1) == 0 ? fallingBaseSprite : fallingAlternateSprite;
         }
 
+        /// <summary>
+        /// Stops an in-progress fall when its room is being left. The barrel is
+        /// no longer reachable, so it must not keep damaging the previous room
+        /// or leave a bounce one-shot audible over the room transition.
+        /// </summary>
+        public void CancelFallIfRunning()
+        {
+            if (!fallStarted)
+                return;
+
+            StopAllCoroutines();
+            audioSource?.Stop();
+        }
+
         private void ExplodeBombsInSweep(Vector3 previous, Vector3 current)
         {
             float minY = Mathf.Min(previous.y, current.y) - damageHalfHeight;

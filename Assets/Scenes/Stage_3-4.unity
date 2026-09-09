@@ -16761,6 +16761,7 @@ MonoBehaviour:
   sourceRoomCamera: {fileID: 410079257}
   destinationRoomCamera: {fileID: 1862447266}
   roomTwoBatSwarmEffect: {fileID: 0}
+  cancelFallingBarrelTraps: 1
   destinationRoomMusicIntro: {fileID: 0}
   destinationRoomMusicIntroVolume: 0.6
   destinationRoomMusicLoop: {fileID: 0}

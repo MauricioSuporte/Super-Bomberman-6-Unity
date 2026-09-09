@@ -33,6 +33,9 @@ namespace StageAssets
         [Header("Room 2 arrival")]
         [SerializeField] private Stage34BatSwarmEffect roomTwoBatSwarmEffect;
 
+        [Header("Room cleanup")]
+        [SerializeField] private bool cancelFallingBarrelTraps;
+
         [Header("Room Music")]
         [SerializeField] private AudioClip destinationRoomMusicIntro;
         [SerializeField, Range(0f, 1f)] private float destinationRoomMusicIntroVolume = 0.6f;
@@ -93,6 +96,8 @@ namespace StageAssets
         private IEnumerator TransitionRoutine()
         {
             FreezeGameplay();
+            if (cancelFallingBarrelTraps)
+                CancelFallingBarrelTraps();
             timeScaleBeforeTransition = Time.timeScale;
             Time.timeScale = 0f;
             yield return FadeTo(1f, fadeOutSeconds);
@@ -116,6 +121,13 @@ namespace StageAssets
             roomTwoBatSwarmEffect?.Play(destinationRoomCamera);
             Time.timeScale = timeScaleBeforeTransition;
             UnfreezeGameplay();
+        }
+
+        private static void CancelFallingBarrelTraps()
+        {
+            BarrelPillarTrap[] barrelTraps = FindObjectsByType<BarrelPillarTrap>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < barrelTraps.Length; i++)
+                barrelTraps[i]?.CancelFallIfRunning();
         }
 
         private void PlayDestinationRoomMusic()
