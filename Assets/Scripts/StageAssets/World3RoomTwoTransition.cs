@@ -60,6 +60,7 @@ namespace StageAssets
         private readonly Dictionary<Behaviour, bool> previousEnabledStates = new();
         private bool transitionStarted;
         private float timeScaleBeforeTransition;
+        private Vector2 transitionSourcePosition;
 
         private void Awake()
         {
@@ -90,6 +91,9 @@ namespace StageAssets
                 return;
 
             transitionStarted = true;
+            transitionSourcePosition = sourceRoomCamera != null
+                ? sourceRoomCamera.transform.position
+                : player.transform.position;
             StartCoroutine(TransitionRoutine());
         }
 
@@ -104,6 +108,7 @@ namespace StageAssets
 
             // The screen is now black, so clean up the previous room without
             // letting a remaining fuse or explosion be heard during the move.
+            PrepareEnemyRoomsForTransition();
             BombController.ClearAllArmedBombsForRoomTransition();
 
             FaceLivingPlayersDown();
@@ -121,6 +126,21 @@ namespace StageAssets
             roomTwoBatSwarmEffect?.Play(destinationRoomCamera);
             Time.timeScale = timeScaleBeforeTransition;
             UnfreezeGameplay();
+        }
+
+        private void PrepareEnemyRoomsForTransition()
+        {
+            for (int i = 0; i < players.Count; i++)
+            {
+                MovementController player = players[i];
+                if (player != null && !player.isDead && TryGetDestination(player, out Vector2 destination))
+                {
+                    World3RoomProgressionController.PrepareEnemyRoomsForTransition(
+                        transitionSourcePosition,
+                        destination);
+                    return;
+                }
+            }
         }
 
         private static void CancelFallingBarrelTraps()
