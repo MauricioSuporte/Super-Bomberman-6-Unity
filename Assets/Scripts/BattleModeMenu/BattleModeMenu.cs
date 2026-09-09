@@ -4073,9 +4073,20 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private Vector2 GetItemSelectIconSize(int index)
     {
-        return IsRandomEggEntry(index)
-            ? itemSelectIconSize * Mathf.Max(0.01f, itemSelectRandomEggIconScale)
-            : itemSelectIconSize;
+        float scale = IsRandomEggEntry(index)
+            ? Mathf.Max(0.01f, itemSelectRandomEggIconScale)
+            : IsFullFireEntry(index)
+                ? Mathf.Max(0.01f, itemSelectBorderSizeMultiplier)
+                : 1f;
+
+        return itemSelectIconSize * scale;
+    }
+
+    private bool IsFullFireEntry(int index)
+    {
+        GameManager.BattleModeHiddenDropEntry entry = GetItemSelectDropEntry(index);
+        return entry.Kind == GameManager.BattleModeHiddenDropEntryKind.Item &&
+            entry.ItemType == ItemType.FullFire;
     }
 
     private void UpdateItemSelectBorderVisual(int index, bool isSelected, bool isEnabled)
@@ -5429,7 +5440,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             imageRt.anchorMax = new Vector2(0.5f, 0.5f);
             imageRt.pivot = new Vector2(0.5f, 0.5f);
             imageRt.anchoredPosition = GetHandicapOptionPosition(i);
-            imageRt.sizeDelta = handicapSelectOptionIconSize;
+            imageRt.sizeDelta = GetHandicapOptionIconSize(i);
             image.sprite = GetHandicapOptionSprite(i, player);
             image.color = isEnabled ? Color.white : louieSelectDisabledTint;
             image.enabled = image.sprite != null;
@@ -6380,6 +6391,13 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         ApplyTeamLabelFont(text);
         LocalizedTmpFontFallback.Apply(text);
+    }
+
+    private Vector2 GetHandicapOptionIconSize(int optionIndex)
+    {
+        return optionIndex == 8
+            ? handicapSelectOptionIconSize * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier)
+            : handicapSelectOptionIconSize;
     }
 
     private void RefreshPlayerSelectEntries()
