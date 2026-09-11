@@ -37,10 +37,8 @@ namespace StageAssets
         [SerializeField] private bool cancelFallingBarrelTraps;
 
         [Header("Room Music")]
-        [SerializeField] private AudioClip destinationRoomMusicIntro;
-        [SerializeField, Range(0f, 1f)] private float destinationRoomMusicIntroVolume = 0.6f;
-        [SerializeField] private AudioClip destinationRoomMusicLoop;
-        [SerializeField, Range(0f, 1f)] private float destinationRoomMusicLoopVolume = 0.6f;
+        [Tooltip("Identifier configured in GameMusicController for the destination room.")]
+        [SerializeField] private string destinationRoomMusicId;
         [SerializeField] private bool restoreDefaultMusicAfterTransition;
 
         [Header("Destination Player Positions")]
@@ -156,15 +154,9 @@ namespace StageAssets
             if (music == null)
                 return;
 
-            if (destinationRoomMusicIntro != null)
-            {
-                music.PlayMusicIntroThenLoop(
-                    destinationRoomMusicIntro,
-                    destinationRoomMusicIntroVolume,
-                    destinationRoomMusicLoop,
-                    destinationRoomMusicLoopVolume);
+            if (!string.IsNullOrWhiteSpace(destinationRoomMusicId) &&
+                music.PlayRoomMusic(destinationRoomMusicId))
                 return;
-            }
 
             if (restoreDefaultMusicAfterTransition)
                 music.PlayDefaultMusic();

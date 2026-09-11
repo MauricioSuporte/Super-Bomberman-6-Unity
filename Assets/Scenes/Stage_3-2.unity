@@ -9407,10 +9407,6 @@ MonoBehaviour:
   destinationRoomCamera: {fileID: 410079257}
   roomTwoBatSwarmEffect: {fileID: 0}
   cancelFallingBarrelTraps: 0
-  destinationRoomMusicIntro: {fileID: 0}
-  destinationRoomMusicIntroVolume: 0.6
-  destinationRoomMusicLoop: {fileID: 0}
-  destinationRoomMusicLoopVolume: 0.6
   restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
@@ -17668,10 +17664,6 @@ MonoBehaviour:
   destinationRoomCamera: {fileID: 1862447266}
   roomTwoBatSwarmEffect: {fileID: 0}
   cancelFallingBarrelTraps: 0
-  destinationRoomMusicIntro: {fileID: 0}
-  destinationRoomMusicIntroVolume: 0.6
-  destinationRoomMusicLoop: {fileID: 0}
-  destinationRoomMusicLoopVolume: 0.6
   restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
@@ -18220,7 +18212,6 @@ MonoBehaviour:
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
   defaultMusicVolume: 0.6
-  defaultMusicLoopVolume: 0.6
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0

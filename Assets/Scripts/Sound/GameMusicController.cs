@@ -6,6 +6,16 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(AudioSource))]
 public class GameMusicController : MonoBehaviour
 {
+    [System.Serializable]
+    public struct RoomMusic
+    {
+        [Tooltip("Identifier used by room transitions to select this music.")]
+        public string roomId;
+        public AudioClip music;
+        public AudioClip musicLoop;
+        [Range(0f, 1f)] public float volume;
+    }
+
     const string BattleModeMusicResourcesPath = "Sounds/BattleModeMusics";
 
     static readonly BattleModeMusicConfig[] BattleModeMusicConfigs =
@@ -34,13 +44,13 @@ public class GameMusicController : MonoBehaviour
     public AudioClip defaultMusic;
     public AudioClip defaultMusicLoop;
     public AudioClip deathMusic;
+    [Tooltip("Optional room-specific music. The default room is used by PlayDefaultMusic.")]
+    public RoomMusic[] roomMusics;
+    [SerializeField] private string defaultRoomId;
     AudioClip battleCriticalMusic;
 
     [Range(0f, 1f)]
     public float defaultMusicVolume = 1f;
-
-    [Range(0f, 1f)]
-    public float defaultMusicLoopVolume = 1f;
 
     float battleCriticalMusicVolume = 1f;
 
@@ -57,6 +67,8 @@ public class GameMusicController : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        ApplyDefaultRoomMusicSettings();
 
         if (musicSource != null)
         {
@@ -115,14 +127,16 @@ public class GameMusicController : MonoBehaviour
 
         defaultMusic = sceneMusicController.defaultMusic;
         defaultMusicLoop = sceneMusicController.defaultMusicLoop;
+        roomMusics = sceneMusicController.roomMusics;
+        defaultRoomId = sceneMusicController.defaultRoomId;
         battleCriticalMusic = sceneMusicController.battleCriticalMusic;
         defaultMusicVolume = sceneMusicController.defaultMusicVolume;
-        defaultMusicLoopVolume = sceneMusicController.defaultMusicLoopVolume;
         battleCriticalMusicVolume = sceneMusicController.battleCriticalMusicVolume;
 
         if (sceneMusicController.deathMusic != null)
             deathMusic = sceneMusicController.deathMusic;
 
+        ApplyDefaultRoomMusicSettings();
         PreloadDefaultMusic();
     }
 
@@ -186,10 +200,25 @@ public class GameMusicController : MonoBehaviour
 
     public void PlayDefaultMusic(bool restart = true)
     {
+        if (TryGetRoomMusic(defaultRoomId, out RoomMusic roomMusic))
+        {
+            PlayRoomMusic(roomMusic, restart);
+            return;
+        }
+
         if (defaultMusic == null || musicSource == null)
             return;
 
-        PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicLoopVolume, 1f, restart);
+        PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicVolume, 1f, restart);
+    }
+
+    public bool PlayRoomMusic(string roomId, bool restart = true)
+    {
+        if (!TryGetRoomMusic(roomId, out RoomMusic roomMusic))
+            return false;
+
+        PlayRoomMusic(roomMusic, restart);
+        return true;
     }
 
     public bool PlayBattleModeMusicPreview(BattleModeRules.BattleMusicSelection selection, float volumeMultiplier = 1f)
@@ -234,7 +263,7 @@ public class GameMusicController : MonoBehaviour
         if (defaultMusic == null || musicSource == null)
             return;
 
-        PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicLoopVolume, pitch, restart);
+        PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicVolume, pitch, restart);
     }
 
     public bool PlayBattleCriticalMusic(bool restart = true)
@@ -419,7 +448,6 @@ public class GameMusicController : MonoBehaviour
         defaultMusic = selectedIntroClip;
         defaultMusicVolume = selectedConfig.IntroVolume;
         defaultMusicLoop = null;
-        defaultMusicLoopVolume = selectedConfig.LoopVolume;
         battleCriticalMusic = null;
         battleCriticalMusicVolume = selectedConfig.CriticalVolume;
 
@@ -491,6 +519,55 @@ public class GameMusicController : MonoBehaviour
         PreloadAudioData(defaultMusic);
         PreloadAudioData(defaultMusicLoop);
         PreloadAudioData(deathMusic);
+
+        if (roomMusics == null)
+            return;
+
+        for (int i = 0; i < roomMusics.Length; i++)
+        {
+            PreloadAudioData(roomMusics[i].music);
+            PreloadAudioData(roomMusics[i].musicLoop);
+        }
+    }
+
+    void ApplyDefaultRoomMusicSettings()
+    {
+        if (!TryGetRoomMusic(defaultRoomId, out RoomMusic roomMusic))
+            return;
+
+        defaultMusic = roomMusic.music;
+        defaultMusicLoop = roomMusic.musicLoop;
+        defaultMusicVolume = roomMusic.volume;
+    }
+
+    bool TryGetRoomMusic(string roomId, out RoomMusic roomMusic)
+    {
+        if (!string.IsNullOrWhiteSpace(roomId) && roomMusics != null)
+        {
+            for (int i = 0; i < roomMusics.Length; i++)
+            {
+                if (string.Equals(roomMusics[i].roomId, roomId, System.StringComparison.OrdinalIgnoreCase) &&
+                    roomMusics[i].music != null)
+                {
+                    roomMusic = roomMusics[i];
+                    return true;
+                }
+            }
+        }
+
+        roomMusic = default;
+        return false;
+    }
+
+    void PlayRoomMusic(RoomMusic roomMusic, bool restart)
+    {
+        PlayMusicIntroThenLoop(
+            roomMusic.music,
+            roomMusic.volume,
+            roomMusic.musicLoop,
+            roomMusic.volume,
+            1f,
+            restart);
     }
 
     static void PreloadAudioData(AudioClip clip)

@@ -8756,7 +8756,6 @@ MonoBehaviour:
   defaultMusicLoop: {fileID: 8300000, guid: 1c4d08c31d6a5fd4ea34c594233098b4, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
   defaultMusicVolume: 1
-  defaultMusicLoopVolume: 1
 --- !u!82 &988695576
 AudioSource:
   m_ObjectHideFlags: 0

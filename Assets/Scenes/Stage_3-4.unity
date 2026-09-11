@@ -7043,7 +7043,7 @@ Tilemap:
       - {fileID: 181609651, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: 1414823366, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -246493938, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 55, y: -3, z: 0}
@@ -7184,7 +7184,7 @@ Tilemap:
       - {fileID: -1353699778, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -1951247315, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -248224407, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 57, y: 0, z: 0}
@@ -8058,10 +8058,8 @@ MonoBehaviour:
   sourceRoomCamera: {fileID: 1520869091}
   destinationRoomCamera: {fileID: 410079257}
   roomTwoBatSwarmEffect: {fileID: 214000402}
-  destinationRoomMusicIntro: {fileID: 8300000, guid: b6f2431a9e6d4f6aa8b5c7d9e1f20345, type: 3}
-  destinationRoomMusicIntroVolume: 1
-  destinationRoomMusicLoop: {fileID: 8300000, guid: c7e3542baf7e4a7bb9c6d8e0f2a31456, type: 3}
-  destinationRoomMusicLoopVolume: 1
+  cancelFallingBarrelTraps: 0
+  destinationRoomMusicId: Room 2
   restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
@@ -16762,11 +16760,8 @@ MonoBehaviour:
   destinationRoomCamera: {fileID: 1862447266}
   roomTwoBatSwarmEffect: {fileID: 0}
   cancelFallingBarrelTraps: 1
-  destinationRoomMusicIntro: {fileID: 0}
-  destinationRoomMusicIntroVolume: 0.6
-  destinationRoomMusicLoop: {fileID: 0}
-  destinationRoomMusicLoopVolume: 0.6
-  restoreDefaultMusicAfterTransition: 1
+  destinationRoomMusicId: Room 3
+  restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
     position: {x: 53, y: 4}
@@ -17569,8 +17564,21 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: f78bd8affb7c8914cbe5768787a8b653, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
+  roomMusics:
+  - roomId: Room 1
+    music: {fileID: 8300000, guid: 0ef7d2a19c3b4d5e8f6a7b9c0d1e2f34, type: 3}
+    musicLoop: {fileID: 0}
+    volume: 0.7
+  - roomId: Room 2
+    music: {fileID: 8300000, guid: b6f2431a9e6d4f6aa8b5c7d9e1f20345, type: 3}
+    musicLoop: {fileID: 8300000, guid: c7e3542baf7e4a7bb9c6d8e0f2a31456, type: 3}
+    volume: 1
+  - roomId: Room 3
+    music: {fileID: 8300000, guid: f78bd8affb7c8914cbe5768787a8b653, type: 3}
+    musicLoop: {fileID: 0}
+    volume: 0.6
+  defaultRoomId: Room 1
   defaultMusicVolume: 0.6
-  defaultMusicLoopVolume: 0.6
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0
