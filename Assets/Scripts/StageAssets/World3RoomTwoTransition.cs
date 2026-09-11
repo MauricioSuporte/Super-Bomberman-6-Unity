@@ -154,9 +154,12 @@ namespace StageAssets
             if (music == null)
                 return;
 
-            if (!string.IsNullOrWhiteSpace(destinationRoomMusicId) &&
-                music.PlayRoomMusic(destinationRoomMusicId))
-                return;
+            if (!string.IsNullOrWhiteSpace(destinationRoomMusicId))
+            {
+                bool started = music.PlayRoomMusic(destinationRoomMusicId);
+                if (started)
+                    return;
+            }
 
             if (restoreDefaultMusicAfterTransition)
                 music.PlayDefaultMusic();

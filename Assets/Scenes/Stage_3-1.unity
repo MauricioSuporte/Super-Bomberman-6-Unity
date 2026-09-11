@@ -12660,6 +12660,8 @@ MonoBehaviour:
   fadeInSeconds: 0.35
   sourceRoomCamera: {fileID: 1520869091}
   destinationRoomCamera: {fileID: 410079257}
+  destinationRoomMusicId: Room 2
+  restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
     position: {x: 15, y: 4}
@@ -17511,6 +17513,8 @@ MonoBehaviour:
   fadeInSeconds: 0.35
   sourceRoomCamera: {fileID: 410079257}
   destinationRoomCamera: {fileID: 1862447266}
+  destinationRoomMusicId: Room 3
+  restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
     position: {x: 37, y: 4}
@@ -19838,10 +19842,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: 65077d8910bbe19479dcd616851eb665, type: 3}
-  defaultMusicLoop: {fileID: 8300000, guid: d80b29ee2a1d05247ba36b1dfae2e046, type: 3}
+  defaultMusic: {fileID: 0}
+  defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 0.6
+  roomMusics:
+  - roomId: Room 1
+    music: {fileID: 8300000, guid: e53c7d9f1a2b4c68d0e1f2a3b4c5d6e7, type: 3}
+    musicLoop: {fileID: 8300000, guid: f64d8e0a2b3c4d79e1f2a3b4c5d6e7f8, type: 3}
+    volume: 0.6
+  - roomId: Room 2
+    music: {fileID: 8300000, guid: c31a5b7d9e2f4a68b0c1d2e3f4a5b6c7, type: 3}
+    musicLoop: {fileID: 8300000, guid: d42b6c8e0f1a4b79c2d3e4f5a6b7c8d9, type: 3}
+    volume: 0.6
+  - roomId: Room 3
+    music: {fileID: 8300000, guid: 65077d8910bbe19479dcd616851eb665, type: 3}
+    musicLoop: {fileID: 8300000, guid: d80b29ee2a1d05247ba36b1dfae2e046, type: 3}
+    volume: 0.6
+  defaultRoomId: Room 1
+  defaultMusicVolume: 1
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0

@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections;
 using UnityEngine.SceneManagement;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [RequireComponent(typeof(AudioSource))]
 public class GameMusicController : MonoBehaviour
@@ -69,6 +72,10 @@ public class GameMusicController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         ApplyDefaultRoomMusicSettings();
+        // The first scene controller is the persistent instance, so it does
+        // not pass through ApplySceneMusicSettingsFrom. Preload here as well
+        // to keep room transitions from synchronously loading their clips.
+        PreloadDefaultMusic();
 
         if (musicSource != null)
         {
@@ -524,10 +531,7 @@ public class GameMusicController : MonoBehaviour
             return;
 
         for (int i = 0; i < roomMusics.Length; i++)
-        {
-            PreloadAudioData(roomMusics[i].music);
-            PreloadAudioData(roomMusics[i].musicLoop);
-        }
+            PreloadRoomMusic(roomMusics[i]);
     }
 
     void ApplyDefaultRoomMusicSettings()
@@ -569,6 +573,95 @@ public class GameMusicController : MonoBehaviour
             1f,
             restart);
     }
+
+    void PreloadRoomMusic(RoomMusic roomMusic)
+    {
+        PreloadAudioData(roomMusic.music);
+        PreloadAudioData(roomMusic.musicLoop);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Normalize Room Music Volumes")]
+    void NormalizeRoomMusicVolumes()
+    {
+        if (roomMusics == null || roomMusics.Length == 0)
+            return;
+
+        float[] rmsLevels = new float[roomMusics.Length];
+        float combinedOutputRms = 0f;
+        int validCount = 0;
+
+        for (int i = 0; i < roomMusics.Length; i++)
+        {
+            AudioClip referenceClip = roomMusics[i].musicLoop != null
+                ? roomMusics[i].musicLoop
+                : roomMusics[i].music;
+            float rms = CalculateRepresentativeRms(referenceClip);
+            if (rms <= 0f)
+                continue;
+
+            rmsLevels[i] = rms;
+            combinedOutputRms += rms * Mathf.Clamp01(roomMusics[i].volume);
+            validCount++;
+        }
+
+        if (validCount == 0)
+            return;
+
+        float targetOutputRms = combinedOutputRms / validCount;
+        Undo.RecordObject(this, "Normalize Room Music Volumes");
+
+        for (int i = 0; i < roomMusics.Length; i++)
+        {
+            if (rmsLevels[i] <= 0f)
+                continue;
+
+            RoomMusic roomMusic = roomMusics[i];
+            roomMusic.volume = Mathf.Clamp01(targetOutputRms / rmsLevels[i]);
+            roomMusics[i] = roomMusic;
+        }
+
+        EditorUtility.SetDirty(this);
+    }
+
+    static float CalculateRepresentativeRms(AudioClip clip)
+    {
+        if (clip == null || clip.samples <= 0 || clip.channels <= 0)
+            return 0f;
+
+        if (clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
+
+        const int windowCount = 12;
+        int framesPerWindow = Mathf.Min(clip.frequency * 2, clip.samples);
+        if (framesPerWindow <= 0)
+            return 0f;
+
+        float[] samples = new float[framesPerWindow * clip.channels];
+        double sumSquares = 0d;
+        long sampleCount = 0;
+        int maxOffset = Mathf.Max(0, clip.samples - framesPerWindow);
+
+        for (int window = 0; window < windowCount; window++)
+        {
+            int offset = windowCount == 1
+                ? 0
+                : Mathf.RoundToInt(maxOffset * (window / (float)(windowCount - 1)));
+            if (!clip.GetData(samples, offset))
+                continue;
+
+            for (int sample = 0; sample < samples.Length; sample++)
+            {
+                sumSquares += samples[sample] * samples[sample];
+                sampleCount++;
+            }
+        }
+
+        return sampleCount > 0
+            ? Mathf.Sqrt((float)(sumSquares / sampleCount))
+            : 0f;
+    }
+#endif
 
     static void PreloadAudioData(AudioClip clip)
     {
