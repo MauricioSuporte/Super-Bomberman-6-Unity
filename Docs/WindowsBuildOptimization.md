@@ -14,9 +14,12 @@ Generated 1536x512 skin sheets are among the largest, at 3 MiB each under that
 assumption. This supports investigating textures alongside audio in the Build Report.
 
 Quality 80 was approved by the user after listening tests; its Windows build measured
-342.94 MiB installed and 275.85 MiB zipped. All 247 existing audio importers now have
-a Standalone Vorbis quality 70 override, as a **candidate awaiting listening validation**.
-Use the quality 80 build as the reference for this next comparison. Default and Android settings,
+342.94 MiB installed and 275.85 MiB zipped. Quality 70 measured 313.28 MiB installed
+and 246.24 MiB zipped. Quality 50 measured 260.84 MiB installed and 193.57 MiB zipped
+and was approved by the user after listening to music and effects in the game.
+All 247 existing audio importers now have a Standalone Vorbis quality 0 override,
+as a **candidate awaiting listening validation**.
+Use the approved quality 50 build as the reference for this next comparison. Default and Android settings,
 source audio, channel count, sample rate, load type and preload settings are preserved.
 Standalone also applies to future macOS/Linux builds. No audio or graphics assets
 were removed. Existing user edits to fonts and materials were left untouched.
