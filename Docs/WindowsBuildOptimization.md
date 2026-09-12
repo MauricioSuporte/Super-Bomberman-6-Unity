@@ -13,8 +13,10 @@ The source audit found 1,335 PNGs under Resources. Their dimensions imply about
 Generated 1536x512 skin sheets are among the largest, at 3 MiB each under that
 assumption. This supports investigating textures alongside audio in the Build Report.
 
-All 247 existing audio importers now have a Standalone Vorbis quality 80 override,
-as a **candidate awaiting listening validation**. Default and Android settings,
+Quality 80 was approved by the user after listening tests; its Windows build measured
+342.94 MiB installed and 275.85 MiB zipped. All 247 existing audio importers now have
+a Standalone Vorbis quality 70 override, as a **candidate awaiting listening validation**.
+Use the quality 80 build as the reference for this next comparison. Default and Android settings,
 source audio, channel count, sample rate, load type and preload settings are preserved.
 Standalone also applies to future macOS/Linux builds. No audio or graphics assets
 were removed. Existing user edits to fonts and materials were left untouched.
