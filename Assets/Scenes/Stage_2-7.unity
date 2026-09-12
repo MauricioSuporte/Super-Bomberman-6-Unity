@@ -191,17 +191,21 @@ MonoBehaviour:
   redLouieEggAmount: 0
   clockAmount: 0
   skullAmount: 0
+  randomSb5EggAmount: 0
   randomEggsMin: 0
   randomEggsMax: 0
+  hiddenObjectRooms: []
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: 
   destructiblePrefab: {fileID: 3440613785117735154, guid: 75354832aaed18641b111a634067f982, type: 3}
-  groundTilemap: {fileID: 672307155}
-  groundTile: {fileID: 0}
-  groundShadowTile: {fileID: 0}
-  indestructibleGroundShadowTile: {fileID: 0}
-  shadowDestructibleTile: {fileID: 0}
+  destructiblePrefabOverrides: []
+  tilemapDoChao: {fileID: 672307155}
+  tileChaoNormal: {fileID: 0}
+  tileSombraChaoAbaixoDoDestrutivel: {fileID: 0}
+  tileSombraChaoSobDestrutivel: {fileID: 0}
+  tileSombraChaoAbaixoDoIndestrutivel: {fileID: 0}
+  tileDestrutivelComSombraDoIndestrutivel: {fileID: 0}
   groundShadowIgnoredTiles: []
   indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
@@ -7575,6 +7579,11 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: 92385116ec376d0429199f86cbd404ac, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
+  roomMusics: []
+  defaultRoomId: 
+  roomMusicLoudnessReference: {fileID: 8300000, guid: 0696fdf7e29eb574a8a21b9cccbee800, type: 3}
+  roomMusicLoudnessReferenceVolume: 0.4
+  stageMusicLoudnessCalibrated: 1
   defaultMusicVolume: 1
 --- !u!82 &988695576
 AudioSource:
@@ -7919,6 +7928,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &1109496014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7989,7 +8012,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -8200,9 +8223,11 @@ MonoBehaviour:
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
-  battleMatchWins: 000000000000000000000000000000000000000000000000
+  battleMatchWins: 000000000000000000000000000000000000000000000000i
   hardNormalGameRunInProgress: 0
   hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
@@ -8360,8 +8385,8 @@ RectTransform:
   - {fileID: 2115134867}
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.033333335, y: 0.014814815}
+  m_AnchorMax: {x: 0.3, y: 0.42962962}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

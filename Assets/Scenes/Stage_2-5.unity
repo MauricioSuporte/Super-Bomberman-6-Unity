@@ -514,6 +514,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 0
   heartAmount: 1
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -524,18 +525,23 @@ MonoBehaviour:
   redLouieEggAmount: 0
   clockAmount: 1
   skullAmount: 0
+  randomSb5EggAmount: 0
   randomEggsMin: 0
   randomEggsMax: 0
+  hiddenObjectRooms: []
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_2-6
   destructiblePrefab: {fileID: 3440613785117735154, guid: 75354832aaed18641b111a634067f982, type: 3}
-  groundTilemap: {fileID: 672307155}
-  groundTile: {fileID: 0}
-  groundShadowTile: {fileID: 0}
-  indestructibleGroundShadowTile: {fileID: 0}
-  shadowDestructibleTile: {fileID: 0}
+  destructiblePrefabOverrides: []
+  tilemapDoChao: {fileID: 672307155}
+  tileChaoNormal: {fileID: 0}
+  tileSombraChaoAbaixoDoDestrutivel: {fileID: 0}
+  tileSombraChaoSobDestrutivel: {fileID: 0}
+  tileSombraChaoAbaixoDoIndestrutivel: {fileID: 0}
+  tileDestrutivelComSombraDoIndestrutivel: {fileID: 0}
   groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -4879,15 +4885,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageBlackout
   blackoutImage: {fileID: 1385156977}
+  worldOverlay: {fileID: 0}
   onlyForWorldStage: 1
   targetWorld: 2
   targetStage: 5
+  startActive: 1
   blackoutAlpha: 0.85
   fadeInSeconds: 0
   tileWorldSize: 1
   explosionSpotlightSoftness: 0.02
   extraTilesAroundExplosion: 0.4
   maxExplosionSpotlights: 36
+  enableExplosionSpotlights: 1
 --- !u!114 &732032092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10468,6 +10477,11 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: d1d7cb1eb2ca9d04f91910b9f044fcbc, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
+  roomMusics: []
+  defaultRoomId: 
+  roomMusicLoudnessReference: {fileID: 8300000, guid: 0696fdf7e29eb574a8a21b9cccbee800, type: 3}
+  roomMusicLoudnessReferenceVolume: 0.4
+  stageMusicLoudnessCalibrated: 1
   defaultMusicVolume: 1
 --- !u!82 &988695576
 AudioSource:
@@ -11018,7 +11032,7 @@ BoxCollider2D:
   m_EdgeRadius: 0
 --- !u!212 &1326041602
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -11075,6 +11089,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!1001 &1364211065
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11638,9 +11653,11 @@ MonoBehaviour:
   animationTime: 0.02
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 0
+  loopStartFrame: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -11648,7 +11665,7 @@ MonoBehaviour:
   disableOffsetsIfStandaloneRoot: 1
 --- !u!212 &1472254272
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -11705,6 +11722,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!1 &1499977522
 GameObject:
   m_ObjectHideFlags: 0
@@ -11782,8 +11800,8 @@ RectTransform:
   - {fileID: 1836841966}
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.033333335, y: 0.014814815}
+  m_AnchorMax: {x: 0.3, y: 0.42962962}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -11834,7 +11852,11 @@ MonoBehaviour:
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
-  battleMatchWins: 000000000000000000000000000000000000000000000000
+  battleMatchWins: 000000000000000000000000000000000000000000000000i
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
@@ -12565,6 +12587,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &1985426668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12635,7 +12671,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 1

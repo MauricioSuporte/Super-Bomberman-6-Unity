@@ -4779,8 +4779,8 @@ RectTransform:
   - {fileID: 311948041}
   m_Father: {fileID: 1866114541}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.23333333, y: 0.085185185}
-  m_AnchorMax: {x: 0.76666665, y: 0.91481483}
+  m_AnchorMin: {x: 0.033333335, y: 0.014814815}
+  m_AnchorMax: {x: 0.3, y: 0.42962962}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4963,7 +4963,12 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: 6d8050e947719714ba0de014efdb9503, type: 3}
   defaultMusicLoop: {fileID: 8300000, guid: c4a88be7082869d4198dad9934947e48, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  defaultMusicVolume: 0.4
+  roomMusics: []
+  defaultRoomId: 
+  roomMusicLoudnessReference: {fileID: 8300000, guid: 0696fdf7e29eb574a8a21b9cccbee800, type: 3}
+  roomMusicLoudnessReferenceVolume: 0.4
+  stageMusicLoudnessCalibrated: 1
+  defaultMusicVolume: 0.55909544
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0
