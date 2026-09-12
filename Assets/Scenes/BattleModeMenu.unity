@@ -1153,7 +1153,6 @@ MonoBehaviour:
   itemSelectIconOffset: {x: -42, y: 0}
   itemSelectIconSize: {x: 64, y: 64}
   itemSelectBorderFrameSeconds: 0.025
-  itemSelectBorderSizeMultiplier: 1.1428572
   itemSelectRandomEggIconScale: 1.5
   itemSelectAmountOffset: {x: 28, y: 0}
   itemSelectAmountSize: {x: 64, y: 36}

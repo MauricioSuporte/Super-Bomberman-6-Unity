@@ -17,7 +17,9 @@ public static class ItemSheetPrefabAuthoring
     private const string RevengeBombPrefabPath = "Assets/Prefabs/Bombs/MadBomberBomb.prefab";
     private const string ExplosionPrefabPath = "Assets/Resources/Explosions/BombExplosion.prefab";
     private const int CellSize = 16;
-    private const int ItemIconSize = 14;
+    // Item icons occupy their complete 16x16 sheet cell. Their animated border
+    // is rendered one sorting order below, so transparent icon pixels reveal it.
+    private const int ItemIconSize = CellSize;
     private const float ItemBorderFrameSeconds = 0.025f;
     private static Dictionary<string, Sprite> spritesByName;
     private static readonly ItemIconDefinition[] ItemIcons =
@@ -60,7 +62,10 @@ public static class ItemSheetPrefabAuthoring
         prefabsChanged |= ApplyMagnetBombSpritesIfNeeded();
         prefabsChanged |= ApplyRevengeBombSpritesIfNeeded();
         foreach (ItemIconDefinition item in ItemIcons)
+        {
             prefabsChanged |= ApplyItemIconIfNeeded(item);
+            LogItemIconLayout(item);
+        }
 
         AssetDatabase.SaveAssets();
         Debug.Log(prefabsChanged
@@ -152,7 +157,7 @@ public static class ItemSheetPrefabAuthoring
         string borderDescription = item.usesAnimatedBorder
             ? " and six border frames at (32-37,8)"
             : " without an animated border";
-        Debug.Log($"[ItemSheetPrefabAuthoring] {item.displayName}.prefab now uses the centered 14x14 icon at ({item.column},{item.row}){borderDescription}.");
+        Debug.Log($"[ItemSheetPrefabAuthoring] {item.displayName}.prefab now uses the 16x16 icon at ({item.column},{item.row}){borderDescription}.");
         return true;
     }
 
@@ -562,7 +567,8 @@ public static class ItemSheetPrefabAuthoring
                                 iconRenderer.loop &&
                                 iconRenderer.idleSprite == icon &&
                                 HasMatchingFrames(iconRenderer.animationSprite, new[] { icon }) &&
-                                iconSpriteRenderer.sprite == icon;
+                                iconSpriteRenderer.sprite == icon &&
+                                IsSixteenBySixteen(icon);
         if (!isIconConfigured)
             return false;
 
@@ -583,8 +589,67 @@ public static class ItemSheetPrefabAuthoring
                borderRenderer.idleSprite == borderFrames[0] &&
                HasMatchingFrames(borderRenderer.animationSprite, borderFrames) &&
                borderSpriteRenderer.sprite == borderFrames[0] &&
+               borderFrames.All(IsSixteenBySixteen) &&
+               IsCenteredAtNativeScale(borderTransform) &&
                borderSpriteRenderer.sortingLayerID == iconSpriteRenderer.sortingLayerID &&
                borderSpriteRenderer.sortingOrder == iconSpriteRenderer.sortingOrder - 1;
+    }
+
+    private static void LogItemIconLayout(ItemIconDefinition item)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(item.prefabPath);
+        SpriteRenderer iconRenderer = prefab != null ? prefab.GetComponent<SpriteRenderer>() : null;
+        Transform borderTransform = prefab != null ? prefab.transform.Find("BorderAnimation") : null;
+        SpriteRenderer borderRenderer = borderTransform != null
+            ? borderTransform.GetComponent<SpriteRenderer>()
+            : null;
+
+        bool iconIsSixteenBySixteen = iconRenderer != null && IsSixteenBySixteen(iconRenderer.sprite);
+        bool borderIsSixteenBySixteen = !item.usesAnimatedBorder ||
+                                      (borderRenderer != null && IsSixteenBySixteen(borderRenderer.sprite));
+        bool borderIsBelowIcon = !item.usesAnimatedBorder ||
+                                 (borderRenderer != null &&
+                                  iconRenderer != null &&
+                                  borderRenderer.sortingLayerID == iconRenderer.sortingLayerID &&
+                                  borderRenderer.sortingOrder == iconRenderer.sortingOrder - 1);
+        bool borderIsCentered = !item.usesAnimatedBorder || IsCenteredAtNativeScale(borderTransform);
+
+        string message = $"[ItemSheetPrefabAuthoring] {item.displayName}: " +
+                         $"icon={DescribeSprite(iconRenderer != null ? iconRenderer.sprite : null)}, " +
+                         $"border={DescribeSprite(borderRenderer != null ? borderRenderer.sprite : null)}, " +
+                         $"iconOrder={(iconRenderer != null ? iconRenderer.sortingOrder : 0)}, " +
+                         $"borderOrder={(borderRenderer != null ? borderRenderer.sortingOrder : 0)}, " +
+                         $"icon16x16={iconIsSixteenBySixteen}, " +
+                         $"border16x16={borderIsSixteenBySixteen}, " +
+                         $"borderCentered={borderIsCentered}, " +
+                         $"borderBelowIcon={borderIsBelowIcon}.";
+
+        if (iconIsSixteenBySixteen && borderIsSixteenBySixteen && borderIsCentered && borderIsBelowIcon)
+            Debug.Log(message, prefab);
+        else
+            Debug.LogError(message, prefab);
+    }
+
+    private static bool IsSixteenBySixteen(Sprite sprite)
+    {
+        return sprite != null &&
+               Mathf.Approximately(sprite.rect.width, CellSize) &&
+               Mathf.Approximately(sprite.rect.height, CellSize);
+    }
+
+    private static bool IsCenteredAtNativeScale(Transform transform)
+    {
+        return transform != null &&
+               transform.localPosition == Vector3.zero &&
+               transform.localRotation == Quaternion.identity &&
+               transform.localScale == Vector3.one;
+    }
+
+    private static string DescribeSprite(Sprite sprite)
+    {
+        return sprite == null
+            ? "<missing>"
+            : $"{sprite.name} ({sprite.rect.width:0}x{sprite.rect.height:0})";
     }
 
     private static bool HasMatchingFrames(Sprite[] actualFrames, Sprite[] expectedFrames)
@@ -658,25 +723,25 @@ public static class ItemSheetPrefabAuthoring
             CreateSpriteRect("RevengeBombLarge", 27, 11, existingSpriteRects),
             CreateSpriteRect("RevengeBombMedium", 28, 11, existingSpriteRects),
             CreateSpriteRect("RevengeBombSmall", 29, 11, existingSpriteRects),
-            CreateSpriteRect("ExtraBombIcon", 32, 0, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("BlastRadiusIcon", 33, 0, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("SpeedUpIcon", 34, 0, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("OneUpIcon", 33, 5, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("BombKickIcon", 38, 3, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("BombPassIcon", 41, 0, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("BombPunchIcon", 40, 3, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("ControlBombIcon", 37, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("DestructiblePassIcon", 32, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("FullFireIcon", 32, 5, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("HeartIcon", 33, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("InvincibleSuitIcon", 36, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("MagnetBombIcon", 38, 2, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("PierceBombIcon", 38, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("PowerBombIcon", 40, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("PowerGloveIcon", 41, 3, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("RubberBombIcon", 39, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("SkullIcon", 34, 1, existingSpriteRects, ItemIconSize, 1),
-            CreateSpriteRect("ClockIcon", 40, 6, existingSpriteRects, ItemIconSize, 1),
+            CreateSpriteRect("ExtraBombIcon", 32, 0, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("BlastRadiusIcon", 33, 0, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("SpeedUpIcon", 34, 0, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("OneUpIcon", 33, 5, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("BombKickIcon", 38, 3, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("BombPassIcon", 41, 0, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("BombPunchIcon", 40, 3, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("ControlBombIcon", 37, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("DestructiblePassIcon", 32, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("FullFireIcon", 32, 5, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("HeartIcon", 33, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("InvincibleSuitIcon", 36, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("MagnetBombIcon", 38, 2, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("PierceBombIcon", 38, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("PowerBombIcon", 40, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("PowerGloveIcon", 41, 3, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("RubberBombIcon", 39, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("SkullIcon", 34, 1, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("ClockIcon", 40, 6, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("ItemBorder1", 32, 8, existingSpriteRects),
             CreateSpriteRect("ItemBorder2", 33, 8, existingSpriteRects),
             CreateSpriteRect("ItemBorder3", 34, 8, existingSpriteRects),

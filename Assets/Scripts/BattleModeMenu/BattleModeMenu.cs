@@ -308,7 +308,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 itemSelectIconSize = new(40f, 40f);
     private Sprite[] itemSelectBorderSprites;
     [SerializeField, Min(0.01f)] private float itemSelectBorderFrameSeconds = 0.025f;
-    [SerializeField, Min(0.01f)] private float itemSelectBorderSizeMultiplier = 16f / 14f;
     [SerializeField, Min(0.01f)] private float itemSelectRandomEggIconScale = 1.35f;
     [SerializeField] private Vector2 itemSelectAmountOffset = new(36f, 0f);
     [SerializeField] private Vector2 itemSelectAmountSize = new(64f, 36f);
@@ -556,6 +555,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private AnimatedSpriteRenderer itemSelectCursorRenderer;
     private Sprite[] itemSelectIconSprites;
     private Sprite itemSelectRandomEggSprite;
+    private readonly Dictionary<string, string> battleModeIconLayoutLogStates = new();
     private readonly List<ItemSelectEntryId> resolvedItemSelectEntryOrder = new();
     private int[] workingBattleItemAmounts;
     private int selectedItemIndex;
@@ -3998,6 +3998,10 @@ public sealed class BattleModeMenu : MonoBehaviour
                 icon.sprite = GetItemSelectIconSprite(i);
                 icon.enabled = icon.sprite != null;
                 icon.color = isEnabled ? Color.white : louieSelectDisabledTint;
+
+                Image border = i < itemSelectBorderImages.Count ? itemSelectBorderImages[i] : null;
+                EnsureBattleModeIconLayering(border, icon);
+                LogBattleModeIconLayout("Select Items", i, border, icon);
             }
 
             if (i < itemSelectIconLabelTexts.Count && itemSelectIconLabelTexts[i] != null)
@@ -4075,18 +4079,9 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         float scale = IsRandomEggEntry(index)
             ? Mathf.Max(0.01f, itemSelectRandomEggIconScale)
-            : IsFullFireEntry(index)
-                ? Mathf.Max(0.01f, itemSelectBorderSizeMultiplier)
-                : 1f;
+            : 1f;
 
         return itemSelectIconSize * scale;
-    }
-
-    private bool IsFullFireEntry(int index)
-    {
-        GameManager.BattleModeHiddenDropEntry entry = GetItemSelectDropEntry(index);
-        return entry.Kind == GameManager.BattleModeHiddenDropEntryKind.Item &&
-            entry.ItemType == ItemType.FullFire;
     }
 
     private void UpdateItemSelectBorderVisual(int index, bool isSelected, bool isEnabled)
@@ -4109,7 +4104,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         borderRt.anchorMax = new Vector2(0.5f, 0.5f);
         borderRt.pivot = new Vector2(0.5f, 0.5f);
         borderRt.anchoredPosition = itemSelectIconOffset;
-        borderRt.sizeDelta = GetItemSelectIconSize(index) * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier);
+        borderRt.sizeDelta = GetItemSelectIconSize(index);
         borderImage.color = isEnabled ? Color.white : louieSelectDisabledTint;
 
         if (index >= itemSelectBorderRenderers.Count || itemSelectBorderRenderers[index] == null)
@@ -4493,6 +4488,62 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         spriteRenderer = prefab.GetComponentInChildren<SpriteRenderer>(true);
         return spriteRenderer != null ? spriteRenderer.sprite : null;
+    }
+
+    private static void EnsureBattleModeIconLayering(Image border, Image icon)
+    {
+        if (border == null || icon == null || border.transform.parent != icon.transform.parent)
+            return;
+
+        border.transform.SetSiblingIndex(Mathf.Max(0, icon.transform.GetSiblingIndex() - 1));
+    }
+
+    private void LogBattleModeIconLayout(string menuName, int index, Image border, Image icon)
+    {
+        bool hasActiveBorder = border != null && border.gameObject.activeInHierarchy;
+        bool iconIsSixteenBySixteen = IsSixteenBySixteen(icon != null ? icon.sprite : null);
+        bool borderIsSixteenBySixteen = !hasActiveBorder || IsSixteenBySixteen(border.sprite);
+        bool borderIsBehindIcon = !hasActiveBorder ||
+                                  (icon != null && border.transform.parent == icon.transform.parent &&
+                                   border.transform.GetSiblingIndex() < icon.transform.GetSiblingIndex());
+        bool borderMatchesIconBounds = !hasActiveBorder ||
+                                       (icon != null &&
+                                        border.rectTransform.anchoredPosition == icon.rectTransform.anchoredPosition &&
+                                        border.rectTransform.sizeDelta == icon.rectTransform.sizeDelta);
+
+        string message = $"[BattleModeMenu] {menuName}[{index}]: " +
+                         $"icon={DescribeIconSprite(icon != null ? icon.sprite : null)}, " +
+                         $"border={DescribeIconSprite(border != null ? border.sprite : null)}, " +
+                         $"iconRect={(icon != null ? icon.rectTransform.sizeDelta.ToString() : "<missing>")}, " +
+                         $"borderRect={(border != null ? border.rectTransform.sizeDelta.ToString() : "<missing>")}, " +
+                         $"icon16x16={iconIsSixteenBySixteen}, " +
+                         $"border16x16={borderIsSixteenBySixteen}, " +
+                         $"borderBehindIcon={borderIsBehindIcon}, " +
+                         $"matchingBounds={borderMatchesIconBounds}.";
+
+        string key = $"{menuName}:{index}";
+        if (battleModeIconLayoutLogStates.TryGetValue(key, out string previousMessage) && previousMessage == message)
+            return;
+
+        battleModeIconLayoutLogStates[key] = message;
+        if (iconIsSixteenBySixteen && borderIsSixteenBySixteen && borderIsBehindIcon && borderMatchesIconBounds)
+            Debug.Log(message, icon);
+        else
+            Debug.LogError(message, icon != null ? icon : border);
+    }
+
+    private static bool IsSixteenBySixteen(Sprite sprite)
+    {
+        return sprite != null &&
+               Mathf.Approximately(sprite.rect.width, 16f) &&
+               Mathf.Approximately(sprite.rect.height, 16f);
+    }
+
+    private static string DescribeIconSprite(Sprite sprite)
+    {
+        return sprite == null
+            ? "<missing>"
+            : $"{sprite.name} ({sprite.rect.width:0}x{sprite.rect.height:0})";
     }
 
     private IEnumerator OpenLouieSelectMenu()
@@ -5445,6 +5496,10 @@ public sealed class BattleModeMenu : MonoBehaviour
             image.color = isEnabled ? Color.white : louieSelectDisabledTint;
             image.enabled = image.sprite != null;
 
+            Image border = i < row.optionBorderImages.Count ? row.optionBorderImages[i] : null;
+            EnsureBattleModeIconLayering(border, image);
+            LogBattleModeIconLayout("Select Handicap", (rowIndex * GetHandicapOptionColumnCount()) + i, border, image);
+
             RectTransform textRt = text.rectTransform;
             textRt.anchorMin = new Vector2(0.5f, 0.5f);
             textRt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -5479,7 +5534,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         borderRt.anchorMax = new Vector2(0.5f, 0.5f);
         borderRt.pivot = new Vector2(0.5f, 0.5f);
         borderRt.anchoredPosition = GetHandicapOptionPosition(optionIndex);
-        borderRt.sizeDelta = handicapSelectOptionIconSize * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier);
+        borderRt.sizeDelta = GetHandicapOptionIconSize(optionIndex);
         borderImage.color = isEnabled ? Color.white : louieSelectDisabledTint;
 
         if (optionIndex >= row.optionBorderRenderers.Count || row.optionBorderRenderers[optionIndex] == null)
@@ -6395,9 +6450,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private Vector2 GetHandicapOptionIconSize(int optionIndex)
     {
-        return optionIndex == 8
-            ? handicapSelectOptionIconSize * Mathf.Max(0.01f, itemSelectBorderSizeMultiplier)
-            : handicapSelectOptionIconSize;
+        return handicapSelectOptionIconSize;
     }
 
     private void RefreshPlayerSelectEntries()
