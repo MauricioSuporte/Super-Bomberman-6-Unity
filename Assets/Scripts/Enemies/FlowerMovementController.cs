@@ -31,8 +31,19 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
     {
         base.Start();
 
-        if (!isDead)
-            stateCycle = StartCoroutine(StateCycle());
+        EnsureStateCycleRunning();
+    }
+
+    private void OnEnable()
+    {
+        EnsureStateCycleRunning();
+    }
+
+    private void OnDisable()
+    {
+        // Unity stops coroutines on disabled behaviours. Clear the stale handle
+        // so an enemy reactivated by the World 3 room lifecycle can start again.
+        stateCycle = null;
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
@@ -80,6 +91,14 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
             isOpen = !isOpen;
         }
+    }
+
+    private void EnsureStateCycleRunning()
+    {
+        if (isDead || stateCycle != null)
+            return;
+
+        stateCycle = StartCoroutine(StateCycle());
     }
 
     private IEnumerator PlayStateAnimation(AnimatedSpriteRenderer sprite)
