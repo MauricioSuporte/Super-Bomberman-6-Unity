@@ -2850,10 +2850,10 @@ PrefabInstance:
     - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: edc331db8e8709e4a8bba6c1962ce2c5, type: 3}
     - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5241171386535993749, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -8461,7 +8461,7 @@ MonoBehaviour:
   destinationRoomCamera: {fileID: 410079257}
   roomTwoBatSwarmEffect: {fileID: 0}
   cancelFallingBarrelTraps: 0
-  destinationRoomMusicId: 
+  destinationRoomMusicId: Room2
   restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
@@ -12888,7 +12888,7 @@ Tilemap:
       - {fileID: 1686707430, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       - {fileID: -968933721, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       - {fileID: -2139467825, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 38, y: 1, z: 0}
@@ -12912,7 +12912,7 @@ Tilemap:
       - {fileID: 1686707430, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       - {fileID: -968933721, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
       - {fileID: -2139467825, guid: 58443404c5f3ea14fb392352856d023e, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   m_TileAssetArray:
@@ -14597,7 +14597,7 @@ MonoBehaviour:
   destinationRoomCamera: {fileID: 1862447266}
   roomTwoBatSwarmEffect: {fileID: 0}
   cancelFallingBarrelTraps: 0
-  destinationRoomMusicId: 
+  destinationRoomMusicId: Room3
   restoreDefaultMusicAfterTransition: 0
   playerDestinations:
   - playerId: 1
@@ -15257,8 +15257,8 @@ RectTransform:
   - {fileID: 311948041}
   m_Father: {fileID: 1866114541}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.033333335, y: 0.014814815}
-  m_AnchorMax: {x: 0.3, y: 0.42962962}
+  m_AnchorMin: {x: 0.23333333, y: 0.085185185}
+  m_AnchorMax: {x: 0.76666665, y: 0.91481483}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -15630,15 +15630,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: 1d04327bfea8db743b0239377e4d86a5, type: 3}
-  defaultMusicLoop: {fileID: 0}
+  defaultMusic: {fileID: 8300000, guid: d4751524d97e0fd4480bb29d7f2f6c35, type: 3}
+  defaultMusicLoop: {fileID: 8300000, guid: e65dd9a9cf62dfe4bb3ef87c2fbb1ac9, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  roomMusics: []
-  defaultRoomId: 
+  roomMusics:
+  - roomId: Room1
+    music: {fileID: 8300000, guid: d4751524d97e0fd4480bb29d7f2f6c35, type: 3}
+    musicLoop: {fileID: 8300000, guid: e65dd9a9cf62dfe4bb3ef87c2fbb1ac9, type: 3}
+    volume: 0.6889618
+  - roomId: Room2
+    music: {fileID: 8300000, guid: 768bc7058a58f9d4891420473bc6b40c, type: 3}
+    musicLoop: {fileID: 8300000, guid: 5a488e699c60e984988a8a028683cc4d, type: 3}
+    volume: 0.76811576
+  - roomId: Room3
+    music: {fileID: 8300000, guid: 1d04327bfea8db743b0239377e4d86a5, type: 3}
+    musicLoop: {fileID: 0}
+    volume: 0.35249737
+  defaultRoomId: Room1
   roomMusicLoudnessReference: {fileID: 8300000, guid: 0696fdf7e29eb574a8a21b9cccbee800, type: 3}
   roomMusicLoudnessReferenceVolume: 0.4
   stageMusicLoudnessCalibrated: 1
-  defaultMusicVolume: 0.35249737
+  defaultMusicVolume: 0.6889618
 --- !u!82 &1560934952
 AudioSource:
   m_ObjectHideFlags: 0
