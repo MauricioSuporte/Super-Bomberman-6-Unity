@@ -555,7 +555,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     private AnimatedSpriteRenderer itemSelectCursorRenderer;
     private Sprite[] itemSelectIconSprites;
     private Sprite itemSelectRandomEggSprite;
-    private readonly Dictionary<string, string> battleModeIconLayoutLogStates = new();
     private readonly List<ItemSelectEntryId> resolvedItemSelectEntryOrder = new();
     private int[] workingBattleItemAmounts;
     private int selectedItemIndex;
@@ -4001,7 +4000,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
                 Image border = i < itemSelectBorderImages.Count ? itemSelectBorderImages[i] : null;
                 EnsureBattleModeIconLayering(border, icon);
-                LogBattleModeIconLayout("Select Items", i, border, icon);
             }
 
             if (i < itemSelectIconLabelTexts.Count && itemSelectIconLabelTexts[i] != null)
@@ -4496,54 +4494,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             return;
 
         border.transform.SetSiblingIndex(Mathf.Max(0, icon.transform.GetSiblingIndex() - 1));
-    }
-
-    private void LogBattleModeIconLayout(string menuName, int index, Image border, Image icon)
-    {
-        bool hasActiveBorder = border != null && border.gameObject.activeInHierarchy;
-        bool iconIsSixteenBySixteen = IsSixteenBySixteen(icon != null ? icon.sprite : null);
-        bool borderIsSixteenBySixteen = !hasActiveBorder || IsSixteenBySixteen(border.sprite);
-        bool borderIsBehindIcon = !hasActiveBorder ||
-                                  (icon != null && border.transform.parent == icon.transform.parent &&
-                                   border.transform.GetSiblingIndex() < icon.transform.GetSiblingIndex());
-        bool borderMatchesIconBounds = !hasActiveBorder ||
-                                       (icon != null &&
-                                        border.rectTransform.anchoredPosition == icon.rectTransform.anchoredPosition &&
-                                        border.rectTransform.sizeDelta == icon.rectTransform.sizeDelta);
-
-        string message = $"[BattleModeMenu] {menuName}[{index}]: " +
-                         $"icon={DescribeIconSprite(icon != null ? icon.sprite : null)}, " +
-                         $"border={DescribeIconSprite(border != null ? border.sprite : null)}, " +
-                         $"iconRect={(icon != null ? icon.rectTransform.sizeDelta.ToString() : "<missing>")}, " +
-                         $"borderRect={(border != null ? border.rectTransform.sizeDelta.ToString() : "<missing>")}, " +
-                         $"icon16x16={iconIsSixteenBySixteen}, " +
-                         $"border16x16={borderIsSixteenBySixteen}, " +
-                         $"borderBehindIcon={borderIsBehindIcon}, " +
-                         $"matchingBounds={borderMatchesIconBounds}.";
-
-        string key = $"{menuName}:{index}";
-        if (battleModeIconLayoutLogStates.TryGetValue(key, out string previousMessage) && previousMessage == message)
-            return;
-
-        battleModeIconLayoutLogStates[key] = message;
-        if (iconIsSixteenBySixteen && borderIsSixteenBySixteen && borderIsBehindIcon && borderMatchesIconBounds)
-            Debug.Log(message, icon);
-        else
-            Debug.LogError(message, icon != null ? icon : border);
-    }
-
-    private static bool IsSixteenBySixteen(Sprite sprite)
-    {
-        return sprite != null &&
-               Mathf.Approximately(sprite.rect.width, 16f) &&
-               Mathf.Approximately(sprite.rect.height, 16f);
-    }
-
-    private static string DescribeIconSprite(Sprite sprite)
-    {
-        return sprite == null
-            ? "<missing>"
-            : $"{sprite.name} ({sprite.rect.width:0}x{sprite.rect.height:0})";
     }
 
     private IEnumerator OpenLouieSelectMenu()
@@ -5498,7 +5448,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             Image border = i < row.optionBorderImages.Count ? row.optionBorderImages[i] : null;
             EnsureBattleModeIconLayering(border, image);
-            LogBattleModeIconLayout("Select Handicap", (rowIndex * GetHandicapOptionColumnCount()) + i, border, image);
 
             RectTransform textRt = text.rectTransform;
             textRt.anchorMin = new Vector2(0.5f, 0.5f);
