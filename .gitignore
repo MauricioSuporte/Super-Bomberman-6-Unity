@@ -42,3 +42,7 @@ sysinfo.txt
 *.mode2
 *.db
 *.diff
+
+# Windows build measurements and distribution archives
+/output/WindowsMeasurements/
+/output/WindowsBuildReports/
