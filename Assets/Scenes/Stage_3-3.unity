@@ -8353,7 +8353,6 @@ MonoBehaviour:
   blockingCollider: {fileID: 698957488}
   blockingColliderSize: {x: 1, y: 1}
   openFromLegacyAllCoresEvent: 0
-  requiredBarrelTrapName: 
   spawnBubblesWhileOpening: 1
   openingBubbleCount: 20
   openingBubbleFramesPerSecond: 10
@@ -14368,7 +14367,6 @@ MonoBehaviour:
   blockingCollider: {fileID: 1097302365}
   blockingColliderSize: {x: 1, y: 1}
   openFromLegacyAllCoresEvent: 0
-  requiredBarrelTrapName: 
   spawnBubblesWhileOpening: 1
   openingBubbleCount: 20
   openingBubbleFramesPerSecond: 10

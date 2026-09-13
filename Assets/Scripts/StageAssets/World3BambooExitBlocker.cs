@@ -47,10 +47,6 @@ namespace StageAssets
         [SerializeField] private Vector2 blockingColliderSize = Vector2.one;
         [SerializeField] private bool openFromLegacyAllCoresEvent;
 
-        [Header("Prerequisite")]
-        [Tooltip("Optional BarrelPillarTrap name that must have both supports destroyed before this exit opens.")]
-        [SerializeField] private string requiredBarrelTrapName;
-
         [Header("Opening Bubble Effect")]
         [SerializeField] private bool spawnBubblesWhileOpening;
         [SerializeField, Min(1)] private int openingBubbleCount = 20;
@@ -61,9 +57,6 @@ namespace StageAssets
         [SerializeField] private int openingBubbleSortingOrder = 50;
 
         private bool openingStarted;
-        private bool openingRequested;
-        private BarrelPillarTrap requiredBarrelTrap;
-        private bool barrelPrerequisiteSatisfied;
         private Sprite[] runtimeGateSprites;
         private SpriteRenderer blockerRenderer;
         private SpriteMask sinkMask;
@@ -111,21 +104,11 @@ namespace StageAssets
         private void Update()
         {
             UpdateOpeningBubbles();
-
-            // Observe the supports before the room requests opening: the barrel
-            // destroys itself when its roll ends, possibly before the last core.
-            bool prerequisiteSatisfied = HasMetOpeningPrerequisite();
-            if (openingRequested && !openingStarted && prerequisiteSatisfied)
-                StartOpening();
         }
 
         private void OpenExit()
         {
             if (openingStarted)
-                return;
-
-            openingRequested = true;
-            if (!HasMetOpeningPrerequisite())
                 return;
 
             StartOpening();
@@ -138,32 +121,6 @@ namespace StageAssets
 
             openingStarted = true;
             StartCoroutine(UsesGateSpriteSequence() ? GateOpeningRoutine() : OpenRoutine());
-        }
-
-        private bool HasMetOpeningPrerequisite()
-        {
-            if (string.IsNullOrWhiteSpace(requiredBarrelTrapName))
-                return true;
-
-            if (barrelPrerequisiteSatisfied)
-                return true;
-
-            if (requiredBarrelTrap == null)
-            {
-                BarrelPillarTrap[] barrelTraps = FindObjectsByType<BarrelPillarTrap>(FindObjectsInactive.Include);
-                for (int i = 0; i < barrelTraps.Length; i++)
-                {
-                    if (barrelTraps[i] != null && barrelTraps[i].name == requiredBarrelTrapName)
-                    {
-                        requiredBarrelTrap = barrelTraps[i];
-                        break;
-                    }
-                }
-            }
-
-            bool satisfied = requiredBarrelTrap != null && requiredBarrelTrap.AreBothPillarsDestroyed;
-            barrelPrerequisiteSatisfied = satisfied;
-            return satisfied;
         }
 
         private bool UsesGateSpriteSequence()
