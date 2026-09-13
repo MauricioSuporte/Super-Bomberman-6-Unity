@@ -17,6 +17,8 @@ namespace StageAssets
         private const float EruptionImpactSeconds = 0.5f;
         private const float EruptionInAirSfxDelaySeconds = 0.5f;
         private const float FallingVisualYOffset = 0.5f;
+        private const int EruptionLoopFirstFrame = 5;
+        private const int EruptionLoopFrameCount = 2;
         private static readonly int[] EyeFrameSequence = { 0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1, 0 };
 
         private sealed class ActiveEruption
@@ -250,7 +252,7 @@ namespace StageAssets
 
                 int eruptionFrame = progress < 0.5f
                     ? Mathf.Min(Mathf.FloorToInt(age / TargetFrameSeconds), eruptionSprites.Length - 1)
-                    : 3 + Mathf.FloorToInt(age / TargetFrameSeconds) % 2;
+                    : EruptionLoopFirstFrame + Mathf.FloorToInt(age / TargetFrameSeconds) % EruptionLoopFrameCount;
                 eruption.EruptionRenderer.sprite = eruptionSprites[eruptionFrame];
 
                 bool targetVisible = age >= TargetRevealSeconds;
@@ -371,7 +373,7 @@ namespace StageAssets
         private bool HasValidConfiguration() =>
             eyeRenderer != null && eyeSprites != null && eyeSprites.Length >= 4 &&
             eyeSprites[0] != null && eyeSprites[1] != null && eyeSprites[2] != null && eyeSprites[3] != null &&
-            eruptionSprites != null && eruptionSprites.Length >= 5 &&
+            eruptionSprites != null && eruptionSprites.Length >= EruptionLoopFirstFrame + EruptionLoopFrameCount &&
             eruptionTargetSprites != null && eruptionTargetSprites.Length >= 2;
 
         private void HideEyes()

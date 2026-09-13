@@ -3,20 +3,26 @@ guid: a1e0a754c6c7434e90096b27e5879626
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 301001
+      213: -2599371591755859363
     second: Eruption_0
   - first:
-      213: 301002
+      213: -6520802778832601007
     second: Eruption_1
   - first:
-      213: 301003
+      213: -6237451116920625754
     second: Eruption_2
   - first:
-      213: 301004
+      213: -9017526177578852800
     second: Eruption_3
   - first:
-      213: 301005
+      213: -3676389816658000002
     second: Eruption_4
+  - first:
+      213: 699265290455039480
+    second: Eruption_5
+  - first:
+      213: -493875940401360653
+    second: Eruption_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -130,9 +136,9 @@ TextureImporter:
       name: Eruption_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 8
         y: 0
-        width: 32
+        width: 16
         height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -142,8 +148,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: aaaaaaaa000000000000000000000000
-      internalID: 301001
+      spriteID: d5a76223f4d2debd0800000000000000
+      internalID: -2599371591755859363
       vertices: []
       indices: 
       edges: []
@@ -152,9 +158,9 @@ TextureImporter:
       name: Eruption_1
       rect:
         serializedVersion: 2
-        x: 32
+        x: 40
         y: 0
-        width: 32
+        width: 16
         height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -164,8 +170,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bbbbbbbb000000000000000000000000
-      internalID: 301002
+      spriteID: 1508d4ddb647185a0800000000000000
+      internalID: -6520802778832601007
       vertices: []
       indices: 
       edges: []
@@ -174,9 +180,9 @@ TextureImporter:
       name: Eruption_2
       rect:
         serializedVersion: 2
-        x: 64
+        x: 72
         y: 0
-        width: 32
+        width: 16
         height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -186,8 +192,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cccccccc000000000000000000000000
-      internalID: 301003
+      spriteID: 6a52510b14f1079a0800000000000000
+      internalID: -6237451116920625754
       vertices: []
       indices: 
       edges: []
@@ -196,9 +202,9 @@ TextureImporter:
       name: Eruption_3
       rect:
         serializedVersion: 2
-        x: 96
+        x: 104
         y: 0
-        width: 32
+        width: 16
         height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -208,8 +214,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: dddddddd000000000000000000000000
-      internalID: 301004
+      spriteID: 04e50a8e7bf4bd280800000000000000
+      internalID: -9017526177578852800
       vertices: []
       indices: 
       edges: []
@@ -218,9 +224,9 @@ TextureImporter:
       name: Eruption_4
       rect:
         serializedVersion: 2
-        x: 128
+        x: 136
         y: 0
-        width: 32
+        width: 16
         height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -230,8 +236,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: eeeeeeee000000000000000000000000
-      internalID: 301005
+      spriteID: e778c3aa0f6dafcc0800000000000000
+      internalID: -3676389816658000002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eruption_5
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fd3559a31a44b900800000000000000
+      internalID: 699265290455039480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eruption_6
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 0
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f0d349e2766529f0800000000000000
+      internalID: -493875940401360653
       vertices: []
       indices: 
       edges: []
@@ -240,7 +290,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5d5e5fa0c32642244b0430459e287a6f
     internalID: 0
     vertices: []
     indices: 
@@ -248,13 +298,17 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":32.0},"gridSpriteOffset":{"x":8.0,"y":0.0},"gridSpritePadding":{"x":16.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Eruption_0: 301001
-      Eruption_1: 301002
-      Eruption_2: 301003
-      Eruption_3: 301004
-      Eruption_4: 301005
+      Eruption_0: -2599371591755859363
+      Eruption_1: -6520802778832601007
+      Eruption_2: -6237451116920625754
+      Eruption_3: -9017526177578852800
+      Eruption_4: -3676389816658000002
+      Eruption_5: 699265290455039480
+      Eruption_6: -493875940401360653
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
