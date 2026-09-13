@@ -26,6 +26,12 @@ TextureImporter:
   - first:
       213: -1444103464983880012
     second: Peggi_7
+  - first:
+      213: -4856161809839567273
+    second: Peggi_8
+  - first:
+      213: 2774874558717964668
+    second: Peggi_9
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -77,7 +83,9 @@ TextureImporter:
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
+  spriteTessellationMethod: 0
   spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
@@ -137,10 +145,10 @@ TextureImporter:
       name: Peggi_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 16
-        height: 16
+        x: 2
+        y: 46
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,10 +167,10 @@ TextureImporter:
       name: Peggi_1
       rect:
         serializedVersion: 2
-        x: 18
-        y: 0
-        width: 16
-        height: 16
+        x: 22
+        y: 46
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,10 +189,10 @@ TextureImporter:
       name: Peggi_2
       rect:
         serializedVersion: 2
-        x: 36
-        y: 0
-        width: 16
-        height: 16
+        x: 42
+        y: 46
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,35 +208,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Peggi_3
-      rect:
-        serializedVersion: 2
-        x: 54
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fe50be0e37e6cd8f0800000000000000
-      internalID: -514414813453285905
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Peggi_4
       rect:
         serializedVersion: 2
-        x: 72
-        y: 0
-        width: 16
-        height: 16
+        x: 1
+        y: 23
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -247,10 +233,10 @@ TextureImporter:
       name: Peggi_5
       rect:
         serializedVersion: 2
-        x: 90
-        y: 0
-        width: 16
-        height: 16
+        x: 22
+        y: 23
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -269,10 +255,10 @@ TextureImporter:
       name: Peggi_6
       rect:
         serializedVersion: 2
-        x: 108
-        y: 0
-        width: 16
-        height: 16
+        x: 42
+        y: 23
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -291,10 +277,10 @@ TextureImporter:
       name: Peggi_7
       rect:
         serializedVersion: 2
-        x: 126
-        y: 0
-        width: 16
-        height: 16
+        x: 67
+        y: 23
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -309,11 +295,77 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Peggi_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75ec1b020927b9cb0800000000000000
+      internalID: -4856161809839567273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Peggi_9
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 0
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7137a095b5528620800000000000000
+      internalID: 2774874558717964668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Peggi_10
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 0
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67cbb4d901c094a40b07fc3cf93efbae
+      internalID: -279687183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 88738ce7c9e4825449deee0f3f488c9e
     internalID: 0
     vertices: []
     indices: 
@@ -321,16 +373,22 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":20.0,"y":22.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Peggi_0: 4767285382951200903
       Peggi_1: 6898878927837707429
+      Peggi_10: -279687183
+      Peggi_11: -2134245970
       Peggi_2: -137827356275885869
       Peggi_3: -514414813453285905
       Peggi_4: 7041946958881747458
       Peggi_5: 6413562045795734497
       Peggi_6: -6613534191623763668
       Peggi_7: -1444103464983880012
+      Peggi_8: -4856161809839567273
+      Peggi_9: 2774874558717964668
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

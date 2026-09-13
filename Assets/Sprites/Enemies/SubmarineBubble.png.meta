@@ -20,6 +20,7 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
+    flipGreenChannel: 0
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
@@ -52,7 +53,9 @@ TextureImporter:
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
+  spriteTessellationMethod: 0
   spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
@@ -66,8 +69,34 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 3
+  - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -687,17 +716,11 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
     nameFileIdTable:
       SubmarineBubble_0: 1000000000000001001
       SubmarineBubble_1: 1000000000000001002
-      SubmarineBubble_2: 1000000000000001003
-      SubmarineBubble_3: 1000000000000001004
-      SubmarineBubble_4: 1000000000000001005
-      SubmarineBubble_5: 1000000000000001006
-      SubmarineBubble_6: 1000000000000001007
-      SubmarineBubble_7: 1000000000000001008
-      SubmarineBubble_8: 1000000000000001009
-      SubmarineBubble_9: 1000000000000001010
       SubmarineBubble_10: 1000000000000001011
       SubmarineBubble_11: 1000000000000001012
       SubmarineBubble_12: 1000000000000001013
@@ -708,6 +731,7 @@ TextureImporter:
       SubmarineBubble_17: 1000000000000001018
       SubmarineBubble_18: 1000000000000001019
       SubmarineBubble_19: 1000000000000001020
+      SubmarineBubble_2: 1000000000000001003
       SubmarineBubble_20: 1000000000000001021
       SubmarineBubble_21: 1000000000000001022
       SubmarineBubble_22: 1000000000000001023
@@ -715,9 +739,15 @@ TextureImporter:
       SubmarineBubble_24: 1000000000000001025
       SubmarineBubble_25: 1000000000000001026
       SubmarineBubble_26: 1000000000000001027
+      SubmarineBubble_3: 1000000000000001004
+      SubmarineBubble_4: 1000000000000001005
+      SubmarineBubble_5: 1000000000000001006
+      SubmarineBubble_6: 1000000000000001007
+      SubmarineBubble_7: 1000000000000001008
+      SubmarineBubble_8: 1000000000000001009
+      SubmarineBubble_9: 1000000000000001010
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-

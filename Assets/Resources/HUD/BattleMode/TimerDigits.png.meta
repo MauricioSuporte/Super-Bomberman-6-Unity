@@ -89,7 +89,9 @@ TextureImporter:
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
+  spriteTessellationMethod: 0
   spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
@@ -436,6 +438,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      TimerDigits_0: 1010
       TimerDigits_1: 1001
       TimerDigits_2: 1002
       TimerDigits_3: 1003
@@ -445,9 +448,8 @@ TextureImporter:
       TimerDigits_7: 1007
       TimerDigits_8: 1008
       TimerDigits_9: 1009
-      TimerDigits_0: 1010
-      TimerDigits_Infinity: 1011
       TimerDigits_Colon: 1012
+      TimerDigits_Infinity: 1011
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

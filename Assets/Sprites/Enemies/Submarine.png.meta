@@ -170,7 +170,28 @@ TextureImporter:
     mipMapMode: 0
     enableMipMap: 0
     sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
   isReadable: 1
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
   textureFormat: 1
   maxTextureSize: 2048
   textureSettings:
@@ -182,11 +203,33 @@ TextureImporter:
     wrapV: 1
     wrapW: 1
   nPOTScale: 0
-  textureType: 8
+  lightmap: 0
+  compressionQuality: 50
   spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
   alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
@@ -199,6 +242,33 @@ TextureImporter:
     allowsAlphaSplitting: 0
     overridden: 0
     ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
@@ -1402,17 +1472,11 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
     nameFileIdTable:
       Submarine_0: 1000000000000000001
       Submarine_1: 1000000000000000002
-      Submarine_2: 1000000000000000003
-      Submarine_3: 1000000000000000004
-      Submarine_4: 1000000000000000005
-      Submarine_5: 1000000000000000006
-      Submarine_6: 1000000000000000007
-      Submarine_7: 1000000000000000008
-      Submarine_8: 1000000000000000009
-      Submarine_9: 1000000000000000010
       Submarine_10: 1000000000000000011
       Submarine_11: 1000000000000000012
       Submarine_12: 1000000000000000013
@@ -1423,6 +1487,7 @@ TextureImporter:
       Submarine_17: 1000000000000000018
       Submarine_18: 1000000000000000019
       Submarine_19: 1000000000000000020
+      Submarine_2: 1000000000000000003
       Submarine_20: 1000000000000000021
       Submarine_21: 1000000000000000022
       Submarine_22: 1000000000000000023
@@ -1433,6 +1498,7 @@ TextureImporter:
       Submarine_27: 1000000000000000028
       Submarine_28: 1000000000000000029
       Submarine_29: 1000000000000000030
+      Submarine_3: 1000000000000000004
       Submarine_30: 1000000000000000031
       Submarine_31: 1000000000000000032
       Submarine_32: 1000000000000000033
@@ -1443,6 +1509,7 @@ TextureImporter:
       Submarine_37: 1000000000000000038
       Submarine_38: 1000000000000000039
       Submarine_39: 1000000000000000040
+      Submarine_4: 1000000000000000005
       Submarine_40: 1000000000000000041
       Submarine_41: 1000000000000000042
       Submarine_42: 1000000000000000043
@@ -1453,10 +1520,15 @@ TextureImporter:
       Submarine_47: 1000000000000000048
       Submarine_48: 1000000000000000049
       Submarine_49: 1000000000000000050
+      Submarine_5: 1000000000000000006
       Submarine_50: 1000000000000000051
       Submarine_51: 1000000000000000052
       Submarine_52: 1000000000000000053
       Submarine_53: 1000000000000000054
+      Submarine_6: 1000000000000000007
+      Submarine_7: 1000000000000000008
+      Submarine_8: 1000000000000000009
+      Submarine_9: 1000000000000000010
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
