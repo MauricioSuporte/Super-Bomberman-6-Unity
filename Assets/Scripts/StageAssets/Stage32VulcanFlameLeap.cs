@@ -78,7 +78,7 @@ namespace StageAssets
                 return;
             }
 
-            if (!burstActive && now >= nextBurstAt)
+            if (!burstActive && now >= nextBurstAt && !HasActiveLeapInRoom())
                 StartBurst(now);
 
             if (burstActive)
@@ -129,6 +129,20 @@ namespace StageAssets
             HideAll();
         }
 
+        private bool HasActiveLeapInRoom()
+        {
+            if (roomBounds == null)
+                return false;
+
+            foreach (Stage32VulcanFlameLeap leap in FindObjectsByType<Stage32VulcanFlameLeap>())
+            {
+                if (leap != this && leap.roomBounds == roomBounds && leap.burstActive)
+                    return true;
+            }
+
+            return false;
+        }
+
         private void UpdateFlame(SpriteRenderer flame, float age, float lifetime)
         {
             float normalizedAge = Mathf.Clamp01(age / lifetime);
@@ -137,8 +151,21 @@ namespace StageAssets
 
             position = SnapToPixelGrid(position);
             flame.transform.localPosition = new Vector3(position.x, position.y, -0.1f);
+            bool renderInFront = IsAscending(arcProgress);
+            flame.sortingOrder = renderInFront
+                ? sortingOrder + 2
+                : sortingOrder - 1;
             int frame = FrameSequence[Mathf.FloorToInt(age * animationFramesPerSecond) % FrameSequence.Length];
             flame.sprite = vulcanFlameSprites[frame];
+        }
+
+        private bool IsAscending(float arcProgress)
+        {
+            float verticalChangePerProgress =
+                destinationTile.y - sourceTile.y + 4f * arcHeightTiles * (1f - 2f * arcProgress);
+            return reverseDirection
+                ? verticalChangePerProgress < 0f
+                : verticalChangePerProgress > 0f;
         }
 
         private Vector2 EvaluateCanonicalArc(float progress)
