@@ -44,6 +44,21 @@ TextureImporter:
   - first:
       213: 8813107573155692297
     second: PomoriSB3_Death_3
+  - first:
+      213: 1010101010101010101
+    second: PomoriSB3_Down_2
+  - first:
+      213: 2020202020202020202
+    second: PomoriSB3_Up_2
+  - first:
+      213: 3030303030303030303
+    second: PomoriSB3_Left_2
+  - first:
+      213: 4040404040404040404
+    second: PomoriSB3_Right_2
+  - first:
+      213: 5050505050505050505
+    second: PomoriSB3_Death_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -157,10 +172,10 @@ TextureImporter:
       name: PomoriSB3_Left
       rect:
         serializedVersion: 2
-        x: 6
+        x: 0
         y: 32
-        width: 18
-        height: 22
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -179,10 +194,10 @@ TextureImporter:
       name: PomoriSB3_Down
       rect:
         serializedVersion: 2
-        x: 24
-        y: 32
-        width: 18
-        height: 22
+        x: 0
+        y: 64
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -201,10 +216,10 @@ TextureImporter:
       name: PomoriSB3_Up
       rect:
         serializedVersion: 2
-        x: 41
-        y: 30
+        x: 64
+        y: 64
         width: 32
-        height: 26
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -223,10 +238,10 @@ TextureImporter:
       name: PomoriSB3_Right
       rect:
         serializedVersion: 2
-        x: 73
-        y: 31
+        x: 64
+        y: 32
         width: 32
-        height: 26
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -245,10 +260,10 @@ TextureImporter:
       name: PomoriSB3_Death_1
       rect:
         serializedVersion: 2
-        x: 1
-        y: 1
+        x: 0
+        y: 0
         width: 32
-        height: 26
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -267,10 +282,10 @@ TextureImporter:
       name: PomoriSB3_Death_2
       rect:
         serializedVersion: 2
-        x: 33
-        y: 2
+        x: 32
+        y: 0
         width: 32
-        height: 26
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -289,10 +304,10 @@ TextureImporter:
       name: PomoriSB3_Death_3
       rect:
         serializedVersion: 2
-        x: 66
+        x: 64
         y: 0
         width: 32
-        height: 26
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -303,6 +318,116 @@ TextureImporter:
       bones: []
       spriteID: 90fff39d4a27e4a70800000000000000
       internalID: 8813107573155692297
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PomoriSB3_Down_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 64
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11111111111111110800000000000000
+      internalID: 1010101010101010101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PomoriSB3_Up_2
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 64
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22222222222222220800000000000000
+      internalID: 2020202020202020202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PomoriSB3_Left_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33333333333333330800000000000000
+      internalID: 3030303030303030303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PomoriSB3_Right_2
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44444444444444440800000000000000
+      internalID: 4040404040404040404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PomoriSB3_Death_4
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55555555555555550800000000000000
+      internalID: 5050505050505050505
       vertices: []
       indices: 
       edges: []
@@ -331,10 +456,15 @@ TextureImporter:
       PomoriSB3_Death_1: 7503737364721068261
       PomoriSB3_Death_2: -7388762953560071475
       PomoriSB3_Death_3: 8813107573155692297
+      PomoriSB3_Death_4: 5050505050505050505
       PomoriSB3_Down: 7819086707605913740
+      PomoriSB3_Down_2: 1010101010101010101
       PomoriSB3_Left: -3807338909219894488
+      PomoriSB3_Left_2: 3030303030303030303
       PomoriSB3_Right: -7659060646598807318
+      PomoriSB3_Right_2: 4040404040404040404
       PomoriSB3_Up: -3555891253810061736
+      PomoriSB3_Up_2: 2020202020202020202
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
