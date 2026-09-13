@@ -15,7 +15,8 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
     [SerializeField, Min(1)] private int visionTiles = 3;
     [SerializeField, Min(0.05f)] private float pullSpeedTilesPerSecond = 1f;
     [SerializeField] private LayerMask playerLayerMask;
-    [SerializeField] private int[] activeMovementSequenceFrames = { 5, 6, 7, 8, 9 };
+    [SerializeField] private int[] activeMovementSequenceFrames = { 12, 13 };
+    [SerializeField, Min(0.0001f)] private float rapidMovementFrameDuration = 0.1f;
 
     private Collider2D selfCollider;
     private Tilemap destructibleTilemap;
@@ -45,6 +46,36 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
             return;
 
         PullAlignedPlayers();
+    }
+
+    protected override void Start()
+    {
+        base.Start();
+        ApplyRapidMovementFrameDuration();
+    }
+
+    private void ApplyRapidMovementFrameDuration()
+    {
+        if (activeSprite == null || activeSprite.animationSprite == null)
+            return;
+
+        int frameCount = activeSprite.animationSprite.Length;
+        float[] durations = new float[frameCount];
+
+        if (activeSprite.frameDurations != null && activeSprite.frameDurations.Length == frameCount)
+        {
+            activeSprite.frameDurations.CopyTo(durations, 0);
+        }
+        else
+        {
+            for (int i = 0; i < durations.Length; i++)
+                durations[i] = activeSprite.animationTime;
+        }
+
+        for (int frame = 8; frame <= 11 && frame < durations.Length; frame++)
+            durations[frame] = rapidMovementFrameDuration;
+
+        activeSprite.frameDurations = durations;
     }
 
     protected override bool IsTileBlocked(Vector2 tileCenter)
