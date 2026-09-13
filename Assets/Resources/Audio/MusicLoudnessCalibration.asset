@@ -14,29 +14,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MusicLoudnessCalibration
   battleModeClipVolumes:
   - clipName: SB1 - Battle
-    volume: 0.9192382
+    volume: 0.9136835
   - clipName: SB2 - Battle3
     volume: 1
   - clipName: SB2 - Battle3 Loop
     volume: 1
   - clipName: SB3 - Battle
-    volume: 0.3926685
+    volume: 0.39112392
   - clipName: SB3 - Battle Loop
-    volume: 0.3767123
+    volume: 0.37415826
   - clipName: SB4 - Battle
-    volume: 0.75332755
+    volume: 0.74797726
   - clipName: SB4 - Battle Loop
-    volume: 0.746361
+    volume: 0.7409125
   - clipName: SB5 - Battle1
-    volume: 0.67356575
+    volume: 0.6679299
   - clipName: SB5 - Battle1 Critical
-    volume: 0.6105754
+    volume: 0.60550284
   - clipName: SB5 - Battle1 Loop
-    volume: 0.6417019
+    volume: 0.6363903
   - clipName: SB5 - Battle2
-    volume: 0.7618359
+    volume: 0.7556447
   - clipName: SB5 - Battle2 Critical
-    volume: 0.7615169
+    volume: 0.7560379
   - clipName: Sb2 - Battle1
     volume: 1
   - clipName: Sb2 - Battle2

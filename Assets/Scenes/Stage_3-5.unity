@@ -17092,20 +17092,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: f78bd8affb7c8914cbe5768787a8b653, type: 3}
+  defaultMusic: {fileID: 8300000, guid: f77ce323e2b7d9649bbd5db1f11194df, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
   roomMusics:
   - roomId: Room 1
-    music: {fileID: 8300000, guid: 0ef7d2a19c3b4d5e8f6a7b9c0d1e2f34, type: 3}
+    music: {fileID: 8300000, guid: 8c13b6c6475df124db5bc4329a581c4a, type: 3}
     musicLoop: {fileID: 0}
     volume: 0.8263704
   - roomId: Room 2
-    music: {fileID: 8300000, guid: b6f2431a9e6d4f6aa8b5c7d9e1f20345, type: 3}
-    musicLoop: {fileID: 8300000, guid: c7e3542baf7e4a7bb9c6d8e0f2a31456, type: 3}
+    music: {fileID: 8300000, guid: cc9cc715a3b5e794a837f047386b12f9, type: 3}
+    musicLoop: {fileID: 8300000, guid: 48d32dc8f63f6a747a81ef6404b92418, type: 3}
     volume: 0.8907332
   - roomId: Room 3
-    music: {fileID: 8300000, guid: f78bd8affb7c8914cbe5768787a8b653, type: 3}
+    music: {fileID: 8300000, guid: f77ce323e2b7d9649bbd5db1f11194df, type: 3}
     musicLoop: {fileID: 0}
     volume: 0.32346183
   defaultRoomId: Room 1
