@@ -1263,8 +1263,6 @@ public sealed class MountEggQueue : MonoBehaviour
         if (anyTransformOnEgg == null || consumerPlayer == null || _eggs.Count == 0)
             return false;
 
-            return false;
-
         if (_ownerPlayerId == -1)
             CacheOwnerIdentity();
 

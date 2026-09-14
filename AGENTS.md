@@ -168,6 +168,9 @@ This file gives repository-specific guidance for AI coding agents working on
 
 ## Validation expectations
 
+- Always fix warnings introduced by your implementation before finalizing the
+  task. Correct their cause instead of suppressing them, and review changed
+  code for potential warnings even when compilation is not requested.
 - Do not trigger Unity builds or script compilation after code edits unless the
   user explicitly asks for it.
 - Prefer targeted manual validation in the touched scene or mode.
