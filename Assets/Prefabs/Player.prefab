@@ -4668,30 +4668,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 778a78ae502f45a4dbfa2c39c37fa194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LouieEggQueue
-  maxHistory: 160
-  historyPointSpacingWorld: 0.06
   jitterIgnoreDelta: 0.0005
   eggSpacingWorld: 1
   worldOffset: {x: 0, y: -0.15}
-  minTargetSeparation: 0.06
   worldRootName: EggQueueWorldRoot
   eggGameObjectLayer: 3
   eggSortingLayerName: Default
   eggBaseSortingOrder: 2
-  maxEggsInQueue: 2
-  joinSeconds: 0.5
-  joinExtraDelayPerEgg: 0.05
-  shiftSeconds: 0.35
+  maxEggsInQueue: 10
   eggFollowerPrefab: {fileID: 4238104617994113025, guid: 4e2d079b3d9cc45409d4403b68e4f121, type: 3}
-  idleDequeueStyle: 1
-  idleDequeueSnap: 0
   idleEnterSeconds: 0.18
   movingHoldSeconds: 0.06
-  idleGraceFrames: 3
-  idleExitGraceFrames: 2
-  idleCollapseSeconds: 0.35
-  idleDisableAntiCollapseAt: 0.95
-  idleShiftDirectionalDeadZoneMul: 6
   preferRigidbodyVelocityForIdle: 1
   ownerVelocityEpsilon: 0.0001
   blueLouieMountSfxName: MountBlueLouie

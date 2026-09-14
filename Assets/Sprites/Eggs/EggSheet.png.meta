@@ -1,0 +1,1420 @@
+fileFormatVersion: 2
+guid: 8e8fa5f957ac45838d394640b98f2e57
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: EggSheet_0_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 389927eaf4a7425a903867ac1def9ac3
+      internalID: 21300000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_0
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2ace477400745c49834729e4fad60ec
+      internalID: 21300001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_0
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 150c4f6a56814cefae8792853c25bf32
+      internalID: 21300002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_0
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a98e7e9907994b76bb58492a4af7a32d
+      internalID: 21300003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_0
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 318be9726b844ae09bf860c52fae899a
+      internalID: 21300004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_0
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9395766be16646a08fb69ad94b780f37
+      internalID: 21300005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_0
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a31d031d87094d49ab3a1f6f4e9d1ed0
+      internalID: 21300006
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_0
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 228
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccbac0ef54ef4433935c8f0f70cd65ae
+      internalID: 21300007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_0_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5bd6dcc683841549f4a971d32b4ee7c
+      internalID: 21300008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_1
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41e6bf0c89194dfa876e9ee60365cacc
+      internalID: 21300009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_1
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 989b608f435c4da7b3e319738dc673c6
+      internalID: 21300010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_1
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f57bc0e61b74263bd821cecfeb64497
+      internalID: 21300011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_1
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23c5515325354fbd831d23939888c391
+      internalID: 21300012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_1
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e719307556e94f0485bf7f1be12a2bb7
+      internalID: 21300013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_1
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b01ea443bb1d4ef6b9c224feadfa49fc
+      internalID: 21300014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_1
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 190
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c56e096659cb41648cbbc63d3965689d
+      internalID: 21300015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_0_2
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2220f8b05e7d4fcd9a9e50700378fe5b
+      internalID: 21300016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_2
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65d58649568b479c9e2c188b471cc5df
+      internalID: 21300017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_2
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53432b3e568842febf89cd32a23213ec
+      internalID: 21300018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_2
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4762ebbfe6dc43039738128895039398
+      internalID: 21300019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_2
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 446855b20cac40b198e910b5734bfac2
+      internalID: 21300020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_2
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74b8c21c2dcb46ed8a104b352e326a65
+      internalID: 21300021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_2
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47003153eb8a4f10892a2c9b75b4b798
+      internalID: 21300022
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_2
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 152
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ba16345b8a946fea4890f13e4394f71
+      internalID: 21300023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_0_3
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d7acdf2d24649b9aac9c6d187b4bd16
+      internalID: 21300024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_3
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff3fcfd02c914e79bfd382ff73a8bad2
+      internalID: 21300025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_3
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 273f1dc71d7e4ff3bfdcd8ab971550bc
+      internalID: 21300026
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_3
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2745f5e1fd204dfcaa8af0ac4ec3b014
+      internalID: 21300027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_3
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d2b5e6ef1184299bb9da527410da29f
+      internalID: 21300028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_3
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a76b5a9f94f944cb9138fb652a5179e6
+      internalID: 21300029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_3
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 999e36dddddc403891f68735454b8695
+      internalID: 21300030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_3
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 114
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c15dd3f606f4dbe826f46de8463c296
+      internalID: 21300031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_0_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d87163084fe94abe8386f16793710895
+      internalID: 21300032
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_4
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 182309a66e6343a689a64759fb40575b
+      internalID: 21300033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_4
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eca5467443054442b4e3651927bc85ef
+      internalID: 21300034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_4
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e72944b94a24df4b9ed7b86cbd5b3f0
+      internalID: 21300035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_4
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97864ade1ca64804841077212de2e53e
+      internalID: 21300036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_4
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b39733731a34872ba2301df50da8571
+      internalID: 21300037
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_4
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a797e87e5d94633b328c2722f4045c5
+      internalID: 21300038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_4
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 76
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 904842429b004c4cb920b6e9a838c739
+      internalID: 21300039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_0_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ce4c45d94d941bf9a2751a15a739728
+      internalID: 21300040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_5
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7066e5a4d144a738931528b3123128a
+      internalID: 21300041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_5
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f6949d6ac6141a09c99023c0ec848c2
+      internalID: 21300042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_5
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebb0f8fa48a248f786efa0c1cb0f5f67
+      internalID: 21300043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_5
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1792fbf40b454e69baab900ee2052305
+      internalID: 21300044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_5
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d95e2d829c04a4094fb19b954bb5c53
+      internalID: 21300045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_5
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cffdd1cd72e2402ba2dcaee6b2de1496
+      internalID: 21300046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_5
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 38
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b768c0d3b80e47b39a41ea07f41ad8ec
+      internalID: 21300047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_0_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 103195e2928845f3a24a92470d5b596e
+      internalID: 21300048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_1_6
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e829a2fb2be14b74a929f3d8e4a78f55
+      internalID: 21300049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_2_6
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d23130fc1f3045f19b09713cd2619b70
+      internalID: 21300050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_3_6
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c23bad83789f46308bd0ad8268638b31
+      internalID: 21300051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_4_6
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd259136a288482192cfb35f7b632812
+      internalID: 21300052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_5_6
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8063b6575864f71aac2575fce30797a
+      internalID: 21300053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_6_6
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdd0736da2cd4402a688f87bfcfc4fc6
+      internalID: 21300054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EggSheet_7_6
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 0
+        width: 42
+        height: 38
+      alignment: 9
+      pivot: {x: 0.5, y: 0.2368421}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69e2d64a14f94a27a06ef438bffa588b
+      internalID: 21300055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: e396707947054c7095b29f71998199fd
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      EggSheet_0_0: 21300000
+      EggSheet_0_1: 21300008
+      EggSheet_0_2: 21300016
+      EggSheet_0_3: 21300024
+      EggSheet_0_4: 21300032
+      EggSheet_0_5: 21300040
+      EggSheet_0_6: 21300048
+      EggSheet_1_0: 21300001
+      EggSheet_1_1: 21300009
+      EggSheet_1_2: 21300017
+      EggSheet_1_3: 21300025
+      EggSheet_1_4: 21300033
+      EggSheet_1_5: 21300041
+      EggSheet_1_6: 21300049
+      EggSheet_2_0: 21300002
+      EggSheet_2_1: 21300010
+      EggSheet_2_2: 21300018
+      EggSheet_2_3: 21300026
+      EggSheet_2_4: 21300034
+      EggSheet_2_5: 21300042
+      EggSheet_2_6: 21300050
+      EggSheet_3_0: 21300003
+      EggSheet_3_1: 21300011
+      EggSheet_3_2: 21300019
+      EggSheet_3_3: 21300027
+      EggSheet_3_4: 21300035
+      EggSheet_3_5: 21300043
+      EggSheet_3_6: 21300051
+      EggSheet_4_0: 21300004
+      EggSheet_4_1: 21300012
+      EggSheet_4_2: 21300020
+      EggSheet_4_3: 21300028
+      EggSheet_4_4: 21300036
+      EggSheet_4_5: 21300044
+      EggSheet_4_6: 21300052
+      EggSheet_5_0: 21300005
+      EggSheet_5_1: 21300013
+      EggSheet_5_2: 21300021
+      EggSheet_5_3: 21300029
+      EggSheet_5_4: 21300037
+      EggSheet_5_5: 21300045
+      EggSheet_5_6: 21300053
+      EggSheet_6_0: 21300006
+      EggSheet_6_1: 21300014
+      EggSheet_6_2: 21300022
+      EggSheet_6_3: 21300030
+      EggSheet_6_4: 21300038
+      EggSheet_6_5: 21300046
+      EggSheet_6_6: 21300054
+      EggSheet_7_0: 21300007
+      EggSheet_7_1: 21300015
+      EggSheet_7_2: 21300023
+      EggSheet_7_3: 21300031
+      EggSheet_7_4: 21300039
+      EggSheet_7_5: 21300047
+      EggSheet_7_6: 21300055
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6797611592296160210, guid: 9d0029269009e134ab03d358fe79f9f0, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b9d88f99398541a68700b7c18119d791, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -104,14 +104,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 6797611592296160210, guid: 9d0029269009e134ab03d358fe79f9f0, type: 3}
+  idleSprite: {fileID: 21300000, guid: b9d88f99398541a68700b7c18119d791, type: 3}
   animationSprite:
-  - {fileID: 6797611592296160210, guid: 9d0029269009e134ab03d358fe79f9f0, type: 3}
-  - {fileID: 1994002947523506397, guid: 9d0029269009e134ab03d358fe79f9f0, type: 3}
-  - {fileID: 7821248823398095707, guid: 9d0029269009e134ab03d358fe79f9f0, type: 3}
-  - {fileID: -160263632419133399, guid: 9d0029269009e134ab03d358fe79f9f0, type: 3}
+  - {fileID: 21300000, guid: b9d88f99398541a68700b7c18119d791, type: 3}
+  - {fileID: 21300001, guid: b9d88f99398541a68700b7c18119d791, type: 3}
+  - {fileID: 21300002, guid: b9d88f99398541a68700b7c18119d791, type: 3}
+  - {fileID: 21300003, guid: b9d88f99398541a68700b7c18119d791, type: 3}
+  - {fileID: 21300004, guid: b9d88f99398541a68700b7c18119d791, type: 3}
+  - {fileID: 21300005, guid: b9d88f99398541a68700b7c18119d791, type: 3}
+  - {fileID: 21300006, guid: b9d88f99398541a68700b7c18119d791, type: 3}
   allowFlipX: 0
-  animationTime: 0.125
+  animationTime: 0.100000000
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -204,7 +207,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6061607482223975080, guid: 46009776c86056b40875a005c5e110e8, type: 3}
+  m_Sprite: {fileID: 21300042, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -226,14 +229,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -6061607482223975080, guid: 46009776c86056b40875a005c5e110e8, type: 3}
+  idleSprite: {fileID: 21300042, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
   animationSprite:
-  - {fileID: -6061607482223975080, guid: 46009776c86056b40875a005c5e110e8, type: 3}
-  - {fileID: -672159567179257124, guid: 46009776c86056b40875a005c5e110e8, type: 3}
-  - {fileID: 6641019540080088224, guid: 46009776c86056b40875a005c5e110e8, type: 3}
-  - {fileID: -1309376365, guid: 46009776c86056b40875a005c5e110e8, type: 3}
+  - {fileID: 21300042, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300043, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300044, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300045, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300046, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300047, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300048, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300049, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300050, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300051, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
   allowFlipX: 0
-  animationTime: 0.125
+  animationTime: 0.050000000
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -330,7 +339,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -398,59 +407,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
+  idleSprite: {fileID: 21300000, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
   animationSprite:
-  - {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -3665803642334570777, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -7578226498497253333, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -3665803642334570777, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -3665803642334570777, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -7578226498497253333, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -3665803642334570777, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -3665803642334570777, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -2044270837, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -1819392519, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -2044270837, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: 21300000, guid: 976c29a8bc011654b970a1586c3c4992, type: 3}
-  - {fileID: -241054419, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -1131300255, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: 1843361705, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -1131300255, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -241054419, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: -1131300255, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
-  - {fileID: 1843361705, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
+  - {fileID: 21300000, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300001, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300002, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300003, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300004, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300005, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300006, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300007, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300008, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300009, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300010, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300011, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300012, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300013, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300014, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300015, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300016, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300017, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300018, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
   allowFlipX: 0
-  animationTime: 0.0952381
+  animationTime: 0.084210526
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.3}
+  frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
@@ -474,7 +460,7 @@ MonoBehaviour:
   idleRenderer: {fileID: 3750686511081856235}
   destroyRenderer: {fileID: 242805132042179392}
   explosionDestroyRenderer: {fileID: 2778195540309064237}
-  destroyDelaySeconds: 0.5
+  destroyDelaySeconds: 0.7
   spawnImmunitySeconds: 0.5
   damageIgnoresInvulnerability: 0
   behavior: {fileID: 0}

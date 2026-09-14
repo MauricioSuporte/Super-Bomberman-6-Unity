@@ -5,9 +5,136 @@ using UnityEngine.Tilemaps;
 
 public sealed class MountEggQueue : MonoBehaviour
 {
-    [Header("History (Time Based)")]
-    [SerializeField, Range(10, 500)] int maxHistory = 160;
-    [SerializeField, Range(0.005f, 0.5f)] float historyPointSpacingWorld = 0.06f;
+    // Routes contain only travelled segments. Each egg owns its unread history,
+    // so neither a turn, a stop nor removing another egg can skip a waypoint.
+
+    void ResetRuntimeState()
+    {
+        _lastOwnerPos = GetOwnerWorldPos();
+        _lastOwnerPos.z = 0f;
+        _hasLastOwnerPos = true;
+        _lastOwnerMeasuredSpeed = 0f;
+        _lastMoveTime = QTime();
+        _lastRouteDirection = _ownerMove != null ? _ownerMove.FacingDirection : Vector2.zero;
+    }
+
+    void SeedHistoryNow() => ResetHistoryToCurrentOwnerPos();
+
+    void ResetHistoryToCurrentOwnerPos()
+    {
+        ResetRuntimeState();
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            e.route = new Queue<Vector3>();
+            e.routeTail = _lastOwnerPos;
+            e.groundPosition = _lastOwnerPos;
+            e.remainingDistance = 0f;
+            if (e.rootTr != null)
+                e.rootTr.position = _lastOwnerPos + (Vector3)worldOffset;
+            _eggs[i] = e;
+        }
+    }
+
+    void AppendRoutePoint(ref EggEntry egg, Vector3 point)
+    {
+        float distance = Vector3.Distance(egg.routeTail, point);
+        if (distance <= 0.000001f)
+            return;
+        egg.route.Enqueue(point);
+        egg.remainingDistance += distance;
+        egg.routeTail = point;
+    }
+
+    void AppendAxisSegment(ref EggEntry egg, Vector3 target, bool horizontal)
+    {
+        float tile = _ownerMove != null ? Mathf.Max(0.01f, _ownerMove.tileSize) : 1f;
+        float start = horizontal ? egg.routeTail.x : egg.routeTail.y;
+        float end = horizontal ? target.x : target.y;
+        float sign = Mathf.Sign(end - start);
+        float boundary = (sign > 0f ? Mathf.Floor(start / tile) + 1f : Mathf.Ceil(start / tile) - 1f) * tile;
+        while (sign * (end - boundary) > 0.000001f)
+        {
+            Vector3 point = egg.routeTail;
+            if (horizontal) point.x = boundary;
+            else point.y = boundary;
+            AppendRoutePoint(ref egg, point);
+            boundary += sign * tile;
+        }
+        AppendRoutePoint(ref egg, target);
+    }
+
+    void UpdateTileQueue()
+    {
+        if (QDelta() <= 0f)
+            return;
+        Vector3 owner = GetOwnerWorldPos();
+        owner.z = 0f;
+        if (!_hasLastOwnerPos)
+            ResetRuntimeState();
+        Vector3 delta = owner - _lastOwnerPos;
+        bool moved = delta.sqrMagnitude > jitterIgnoreDelta * jitterIgnoreDelta;
+        _lastOwnerMeasuredSpeed = delta.magnitude / Mathf.Max(QDelta(), 0.0001f);
+        bool moving = IsOwnerMoving(moved);
+        bool draining = !moving && QTime() - _lastMoveTime >= idleEnterSeconds;
+
+
+        for (int i = _eggs.Count - 1; i >= 0; i--)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null)
+                continue;
+            if (e.route == null)
+            {
+                e.route = new Queue<Vector3>();
+                e.routeTail = _lastOwnerPos;
+                e.groundPosition = _lastOwnerPos;
+            }
+            // Finish the previous travel axis before starting the next one.
+            // This retains the corner when one frame spans both movements.
+            Vector3 corner = e.routeTail;
+            bool horizontalFirst = _lastRouteDirection != Vector2.zero
+                ? Mathf.Abs(_lastRouteDirection.x) > Mathf.Abs(_lastRouteDirection.y)
+                : Mathf.Abs(delta.x) < Mathf.Abs(delta.y);
+            if (horizontalFirst) corner.x = owner.x;
+            else corner.y = owner.y;
+            AppendAxisSegment(ref e, corner, horizontalFirst);
+            AppendAxisSegment(ref e, owner, !horizontalFirst);
+
+            Vector3 before = e.rootTr.position;
+            Vector3 position = e.groundPosition;
+            float reserve = draining ? 0f : eggSpacingWorld * (_eggs.Count - i);
+            float budget = Mathf.Min(GetOwnerWorldSpeedPerSecond() * QDelta(), Mathf.Max(0f, e.remainingDistance - reserve));
+            while (e.route.Count > 0 && budget > 0f)
+            {
+                Vector3 target = e.route.Peek();
+                float distance = Vector3.Distance(position, target);
+                float step = Mathf.Min(distance, budget);
+                position = Vector3.MoveTowards(position, target, step);
+                budget -= step;
+                e.remainingDistance = Mathf.Max(0f, e.remainingDistance - step);
+                if (distance <= step + 0.000001f)
+                {
+                    e.route.Dequeue();
+                }
+                else
+                    break;
+            }
+            e.groundPosition = position;
+            float visualOffset = GetOwnerFollowWorldPos().y - owner.y;
+            Vector3 newWorld = position + (Vector3)worldOffset + Vector3.up * visualOffset;
+            e.rootTr.position = newWorld;
+            UpdateDirectional(ref e, before, newWorld);
+            _eggs[i] = e;
+        }
+        if (moved)
+        {
+            Vector2 direction = _ownerMove != null ? _ownerMove.Direction : Vector2.zero;
+            _lastRouteDirection = direction != Vector2.zero ? direction : (Vector2)delta;
+        }
+        _lastOwnerPos = owner;
+    }
+
     [SerializeField, Range(0.00001f, 0.05f)] float jitterIgnoreDelta = 0.0005f;
 
     [Header("Egg Spacing (World Units)")]
@@ -15,9 +142,6 @@ public sealed class MountEggQueue : MonoBehaviour
 
     [Header("Follow (WORLD)")]
     [SerializeField] Vector2 worldOffset = new(0f, -0.15f);
-
-    [Header("Follow - Anti Collapse")]
-    [SerializeField, Range(0.0001f, 0.5f)] float minTargetSeparation = 0.06f;
 
     [Header("World Root")]
     [SerializeField] string worldRootName = "EggQueueWorldRoot";
@@ -30,36 +154,18 @@ public sealed class MountEggQueue : MonoBehaviour
     [SerializeField] int eggBaseSortingOrder = 2;
 
     [Header("Queue")]
-    [SerializeField, Range(0, 10)] int maxEggsInQueue = 5;
+    [SerializeField, Range(0, 10)] int maxEggsInQueue = 10;
     public int MaxEggs => Mathf.Max(0, maxEggsInQueue);
     public bool IsFull => MaxEggs > 0 && _eggs.Count >= MaxEggs;
     public int Count => _eggs.Count;
 
-    [Header("Queue - Join/Shift Animation")]
-    [SerializeField, Range(0.01f, 1f)] float joinSeconds = 0.5f;
-    [SerializeField, Range(0f, 0.5f)] float joinExtraDelayPerEgg = 0.05f;
-    [SerializeField, Range(0.01f, 1f)] float shiftSeconds = 0.35f;
-
     [Header("Egg Visual (Prefab)")]
     [SerializeField] GameObject eggFollowerPrefab;
-
-    [Header("Idle - Dequeue Style Follow")]
-    [SerializeField] bool idleDequeueStyle = true;
-    [SerializeField] bool idleDequeueSnap = false;
 
     [Header("Idle - Enter Delay")]
     [SerializeField, Range(0f, 0.5f)] float idleEnterSeconds = 0.18f;
 
     [SerializeField, Range(0f, 0.25f)] float movingHoldSeconds = 0.06f;
-    [SerializeField, Range(0, 30)] int idleGraceFrames = 3;
-    [SerializeField, Range(0, 30)] int idleExitGraceFrames = 2;
-
-    [Header("Idle - Collapse To Player")]
-    [SerializeField, Range(0f, 2f)] float idleCollapseSeconds = 0.35f;
-    [SerializeField, Range(0.5f, 1f)] float idleDisableAntiCollapseAt = 0.95f;
-
-    [Header("Idle - Direction Stabilization")]
-    [SerializeField, Range(1f, 20f)] float idleShiftDirectionalDeadZoneMul = 6f;
 
     [Header("Owner Move Detection")]
     [SerializeField] bool preferRigidbodyVelocityForIdle = true;
@@ -93,19 +199,14 @@ public sealed class MountEggQueue : MonoBehaviour
         public AudioClip mountSfx;
         public float mountVolume;
 
-        public bool isAnimating;
-        public float animStartTime;
-        public float animDuration;
-        public Vector3 animFromWorld;
+        public Queue<Vector3> route;
+        public Vector3 routeTail;
+        public Vector3 groundPosition;
+        public float remainingDistance;
     }
 
     readonly List<EggEntry> _eggs = new();
 
-    Vector3[] _history;
-    int _historyHead;
-    int _historyCount;
-    float _historyTimeCarry;
-    float _historyDistanceCarry;
     int _ignoreOwnerInvulnerabilityUntilFrame = -1;
     bool _suppressedByRedBoat;
 
@@ -135,23 +236,10 @@ public sealed class MountEggQueue : MonoBehaviour
     float _lastOwnerMeasuredSpeed;
     float _ownerVisualFollowYOffset;
     bool _ownerVisualFollowWorldOverrideActive;
-    bool _ownerVisualFollowExact;
     Vector3 _ownerVisualFollowWorldOverride;
 
-    Vector3 _lastRealOwnerPos;
-    bool _hasLastRealOwnerPos;
-
-    bool _hasLastMoveDir;
-    Vector3 _lastMoveDirWorld = Vector3.down;
-
-    int _idleFrames;
-    int _movingFrames;
-
-    bool _useIdleShiftState;
-    float _idleShiftStartTime;
-
     float _lastMoveTime;
-    bool _wasMovingPrevFrame;
+    Vector2 _lastRouteDirection;
 
     bool _forcedHidden;
 
@@ -215,105 +303,12 @@ public sealed class MountEggQueue : MonoBehaviour
 
                 ResetHistoryToCurrentOwnerPos();
                 ResetRuntimeState();
-                ExitIdleShiftNow();
 
-                StopAllAnimationsNow();
                 SnapAllToOwnerNow();
             }
         }
 
-        Vector3 ownerPos = GetOwnerFollowWorldPos();
-        ownerPos.z = 0f;
-
-        bool movedByPosThisFrame = false;
-        if (_hasLastOwnerPos)
-        {
-            float j = Mathf.Max(0f, jitterIgnoreDelta);
-            Vector3 ownerFrameDelta = ownerPos - _lastOwnerPos;
-            movedByPosThisFrame = ownerFrameDelta.sqrMagnitude > (j * j);
-            _lastOwnerMeasuredSpeed = ownerFrameDelta.magnitude / Mathf.Max(QDelta(), 0.0001f);
-        }
-        else
-        {
-            _lastOwnerMeasuredSpeed = 0f;
-        }
-
-        bool isMoving = IsOwnerMoving(ownerPos, movedByPosThisFrame);
-
-        if (_wasMovingPrevFrame && !isMoving)
-            ResetHistoryToCurrentOwnerPos();
-
-        _wasMovingPrevFrame = isMoving;
-        _lastOwnerPos = ownerPos;
-        _hasLastOwnerPos = true;
-
-        if (!isMoving) { _idleFrames++; _movingFrames = 0; }
-        else { _movingFrames++; _idleFrames = 0; }
-
-        TrackOwnerPositionSpeedBased(isMoving);
-
-        float followSpeed = GetOwnerWorldSpeedPerSecond();
-        float maxStep = followSpeed * QDelta();
-
-        Vector3 behindDir = GetBehindDir();
-
-        bool eligibleIdleByTime = (QTime() - _lastMoveTime) >= Mathf.Max(0f, idleEnterSeconds);
-        bool wantIdleShift = idleDequeueStyle && _eggs.Count > 0 && !isMoving && eligibleIdleByTime;
-
-        bool prevUseIdleShift = _useIdleShiftState;
-        UpdateIdleShiftState(wantIdleShift);
-
-        bool useIdleShift = _useIdleShiftState;
-
-        if (!prevUseIdleShift && useIdleShift)
-            _idleShiftStartTime = QTime();
-        else if (prevUseIdleShift && !useIdleShift)
-            _idleShiftStartTime = 0f;
-
-        float idleCollapseT = useIdleShift ? GetIdleCollapseT() : 0f;
-        bool allowOverlapOnPlayer = useIdleShift && idleCollapseT >= idleDisableAntiCollapseAt;
-
-        float minSep = Mathf.Max(0.0001f, minTargetSeparation);
-        float minSepSqr = minSep * minSep;
-
-        Vector3 prevTarget = Vector3.positiveInfinity;
-        bool hasPrevTarget = false;
-
-        for (int i = _eggs.Count - 1; i >= 0; i--)
-        {
-            var e = _eggs[i];
-            if (e.rootTr == null)
-                continue;
-
-            int ageRank = (_eggs.Count - i);
-            float backDist = eggSpacingWorld * ageRank;
-            float effectiveBackDist = useIdleShift ? Mathf.Lerp(backDist, 0f, idleCollapseT) : backDist;
-
-            Vector3 targetWorld = SampleBackDistance(effectiveBackDist) + (Vector3)worldOffset;
-            targetWorld.z = 0f;
-
-            if (!allowOverlapOnPlayer && hasPrevTarget)
-            {
-                if ((targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
-                {
-                    targetWorld = prevTarget + behindDir * minSep;
-                    targetWorld.z = 0f;
-                }
-            }
-
-            Vector3 before = e.rootTr.position;
-            before.z = 0f;
-
-            Vector3 newWorld = ComputeNewWorldPosition(ref e, before, targetWorld, maxStep, useIdleShift);
-            e.rootTr.position = newWorld;
-
-            UpdateDirectional(ref e, before, newWorld, targetWorld, useIdleShift);
-
-            _eggs[i] = e;
-
-            prevTarget = targetWorld;
-            hasPrevTarget = true;
-        }
+        UpdateTileQueue();
     }
 
     static Transform FindDeepChildByName(Transform root, string childName)
@@ -399,28 +394,14 @@ public sealed class MountEggQueue : MonoBehaviour
 
     void ClampInspector()
     {
-        maxHistory = Mathf.Clamp(maxHistory, 10, 500);
         maxEggsInQueue = Mathf.Clamp(maxEggsInQueue, 0, 10);
 
-        historyPointSpacingWorld = Mathf.Clamp(historyPointSpacingWorld, 0.005f, 0.5f);
         jitterIgnoreDelta = Mathf.Clamp(jitterIgnoreDelta, 0.00001f, 0.05f);
         eggSpacingWorld = Mathf.Clamp(eggSpacingWorld, 0.05f, 5f);
 
-        joinSeconds = Mathf.Clamp(joinSeconds, 0.01f, 1f);
-        joinExtraDelayPerEgg = Mathf.Clamp(joinExtraDelayPerEgg, 0f, 0.5f);
-        shiftSeconds = Mathf.Clamp(shiftSeconds, 0.01f, 1f);
-
-        minTargetSeparation = Mathf.Clamp(minTargetSeparation, 0.0001f, 0.5f);
-
-        idleGraceFrames = Mathf.Clamp(idleGraceFrames, 0, 30);
-        idleExitGraceFrames = Mathf.Clamp(idleExitGraceFrames, 0, 30);
         idleEnterSeconds = Mathf.Clamp(idleEnterSeconds, 0f, 0.5f);
         movingHoldSeconds = Mathf.Clamp(movingHoldSeconds, 0f, 0.25f);
 
-        idleCollapseSeconds = Mathf.Clamp(idleCollapseSeconds, 0f, 2f);
-        idleDisableAntiCollapseAt = Mathf.Clamp(idleDisableAntiCollapseAt, 0.5f, 1f);
-
-        idleShiftDirectionalDeadZoneMul = Mathf.Clamp(idleShiftDirectionalDeadZoneMul, 1f, 20f);
         ownerVelocityEpsilon = Mathf.Clamp(ownerVelocityEpsilon, 0.000001f, 0.01f);
 
         defaultMountVolume = Mathf.Clamp01(defaultMountVolume);
@@ -434,7 +415,7 @@ public sealed class MountEggQueue : MonoBehaviour
         if (_hardFrozen)
         {
             EnsureWorldRoot();
-            EnsureHistoryBuffer();
+
             ApplyEggLayerNow();
             ApplyEggSortingNow();
             ApplyForcedVisibility();
@@ -463,9 +444,8 @@ public sealed class MountEggQueue : MonoBehaviour
         _ownerMove.TryGetComponent(out _ownerHealth);
 
         EnsureWorldRoot();
-        EnsureHistoryBuffer();
 
-        if (ownerChanged || _historyCount == 0)
+        if (ownerChanged || !_hasLastOwnerPos)
         {
             SeedHistoryNow();
             ResetRuntimeState();
@@ -485,13 +465,13 @@ public sealed class MountEggQueue : MonoBehaviour
         if (_ownerTr != null || _ownerRb != null)
         {
             EnsureWorldRoot();
-            EnsureHistoryBuffer();
+
             return;
         }
 
         BindOwnerAuto();
         EnsureWorldRoot();
-        EnsureHistoryBuffer();
+
     }
 
     void BindOwnerAuto()
@@ -533,39 +513,6 @@ public sealed class MountEggQueue : MonoBehaviour
         _worldRoot.localScale = Vector3.one;
     }
 
-    void EnsureHistoryBuffer()
-    {
-        maxHistory = Mathf.Clamp(maxHistory, 10, 500);
-
-        if (_history == null || _history.Length != maxHistory)
-        {
-            _history = new Vector3[maxHistory];
-            _historyHead = 0;
-            _historyCount = 0;
-            _historyTimeCarry = 0f;
-            _historyDistanceCarry = 0f;
-            _hasLastRealOwnerPos = false;
-        }
-    }
-
-    void ResetRuntimeState()
-    {
-        _historyTimeCarry = 0f;
-        _historyDistanceCarry = 0f;
-
-        _hasLastOwnerPos = false;
-        _hasLastRealOwnerPos = false;
-
-        _idleFrames = 0;
-        _movingFrames = 0;
-
-        _useIdleShiftState = false;
-        _idleShiftStartTime = 0f;
-
-        _lastMoveTime = QTime();
-        _wasMovingPrevFrame = false;
-    }
-
     #endregion
 
     #region Owner / History
@@ -597,7 +544,7 @@ public sealed class MountEggQueue : MonoBehaviour
         return Mathf.Max(5f, measuredSpeed);
     }
 
-    bool IsOwnerMoving(Vector3 ownerPosWorld, bool movedByPositionThisFrame)
+    bool IsOwnerMoving(bool movedByPositionThisFrame)
     {
         bool movingNow = false;
 
@@ -624,203 +571,6 @@ public sealed class MountEggQueue : MonoBehaviour
         return movingNow;
     }
 
-    Vector3 GetBehindDir()
-    {
-        Vector3 dir = Vector3.down;
-
-        if (_ownerMove != null)
-        {
-            Vector2 face = _ownerMove.FacingDirection;
-            if (face != Vector2.zero)
-                dir = new Vector3(face.x, face.y, 0f);
-        }
-
-        if (_hasLastMoveDir && _lastMoveDirWorld.sqrMagnitude > 0.000001f)
-            dir = _lastMoveDirWorld;
-
-        dir.z = 0f;
-        if (dir.sqrMagnitude < 0.000001f)
-            dir = Vector3.down;
-
-        dir.Normalize();
-        return -dir;
-    }
-
-    void SeedHistoryNow()
-    {
-        EnsureHistoryBuffer();
-
-        _historyHead = 0;
-        _historyCount = 0;
-        _historyTimeCarry = 0f;
-        _historyDistanceCarry = 0f;
-
-        Vector3 p = GetOwnerFollowWorldPos();
-        p.z = 0f;
-
-        float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
-        Vector3 behind = GetBehindDir();
-
-        for (int i = 0; i < maxHistory; i++)
-            RecordHistory(p + behind * (spacing * i));
-
-        _lastRealOwnerPos = p;
-        _hasLastRealOwnerPos = true;
-        _lastMoveTime = QTime();
-    }
-
-    void ResetHistoryToCurrentOwnerPos()
-    {
-        EnsureHistoryBuffer();
-
-        Vector3 p = GetOwnerFollowWorldPos();
-        p.z = 0f;
-
-        for (int i = 0; i < _history.Length; i++)
-            _history[i] = p;
-
-        _historyHead = 0;
-        _historyCount = _history.Length;
-        _historyTimeCarry = 0f;
-        _historyDistanceCarry = 0f;
-
-        _lastRealOwnerPos = p;
-        _hasLastRealOwnerPos = true;
-    }
-
-    void RecordHistory(Vector3 p)
-    {
-        p.z = 0f;
-
-        _history[_historyHead] = p;
-        _historyHead = (_historyHead + 1) % _history.Length;
-        _historyCount = Mathf.Min(_historyCount + 1, _history.Length);
-    }
-
-    Vector3 GetRecentHistory(int recentIndex)
-    {
-        if (_historyCount <= 0)
-            return GetOwnerFollowWorldPos();
-
-        recentIndex = Mathf.Clamp(recentIndex, 0, _historyCount - 1);
-
-        int idx = _historyHead - 1 - recentIndex;
-        while (idx < 0) idx += _history.Length;
-        idx %= _history.Length;
-
-        return _history[idx];
-    }
-
-    void TrackOwnerPositionSpeedBased(bool isMoving)
-    {
-        if (!isMoving)
-            return;
-
-        Vector3 p = GetOwnerFollowWorldPos();
-        p.z = 0f;
-
-        if (!_hasLastRealOwnerPos)
-        {
-            _lastRealOwnerPos = p;
-            _hasLastRealOwnerPos = true;
-            RecordHistory(p);
-            _historyTimeCarry = 0f;
-            _historyDistanceCarry = 0f;
-            return;
-        }
-
-        Vector3 seg = p - _lastRealOwnerPos;
-        seg.z = 0f;
-
-        float segLen = seg.magnitude;
-        if (segLen > 0.000001f)
-        {
-            Vector3 d = seg / segLen;
-            d.z = 0f;
-
-            if (d.sqrMagnitude > 0.000001f)
-            {
-                _lastMoveDirWorld = d.normalized;
-                _hasLastMoveDir = true;
-            }
-        }
-
-        _lastRealOwnerPos = p;
-
-        if (_ownerVisualFollowExact)
-        {
-            TrackOwnerPositionDistanceBased(p, seg, segLen);
-            return;
-        }
-
-        float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
-        float speed = Mathf.Max(0.000001f, GetOwnerWorldSpeedPerSecond());
-        float secondsPerPoint = Mathf.Max(0.000001f, spacing / speed);
-
-        _historyTimeCarry += QDelta();
-
-        while (_historyTimeCarry >= secondsPerPoint)
-        {
-            _historyTimeCarry -= secondsPerPoint;
-            RecordHistory(p);
-        }
-    }
-
-    void TrackOwnerPositionDistanceBased(Vector3 p, Vector3 seg, float segLen)
-    {
-        if (segLen <= 0.000001f)
-            return;
-
-        float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
-        Vector3 start = p - seg;
-        Vector3 dir = seg / segLen;
-        float distanceFromStart = spacing - _historyDistanceCarry;
-
-        while (distanceFromStart <= segLen)
-        {
-            RecordHistory(start + dir * distanceFromStart);
-            distanceFromStart += spacing;
-        }
-
-        _historyDistanceCarry = Mathf.Repeat(_historyDistanceCarry + segLen, spacing);
-    }
-
-    Vector3 SampleBackDistance(float backDistanceWorld)
-    {
-        Vector3 head = GetOwnerFollowWorldPos();
-        head.z = 0f;
-
-        if (_historyCount <= 0)
-            return head;
-
-        float remaining = Mathf.Max(0f, backDistanceWorld);
-        Vector3 prev = head;
-
-        for (int k = 0; k < _historyCount; k++)
-        {
-            Vector3 pt = GetRecentHistory(k);
-            pt.z = 0f;
-
-            float segLen = Vector3.Distance(prev, pt);
-            if (segLen <= 0.000001f)
-            {
-                prev = pt;
-                continue;
-            }
-
-            if (segLen >= remaining)
-            {
-                float t = remaining / segLen;
-                return Vector3.Lerp(prev, pt, t);
-            }
-
-            remaining -= segLen;
-            prev = pt;
-        }
-
-        return prev;
-    }
-
     #endregion
 
     #region Owner Visual Follow Offset
@@ -828,7 +578,6 @@ public sealed class MountEggQueue : MonoBehaviour
     public void SetOwnerVisualFollowYOffset(float worldYOffset)
     {
         _ownerVisualFollowWorldOverrideActive = false;
-        _ownerVisualFollowExact = false;
         _ownerVisualFollowYOffset = worldYOffset;
     }
 
@@ -836,97 +585,28 @@ public sealed class MountEggQueue : MonoBehaviour
     {
         _ownerVisualFollowYOffset = 0f;
         _ownerVisualFollowWorldOverrideActive = false;
-        _ownerVisualFollowExact = false;
     }
 
     public void SetOwnerVisualFollowWorldPosition(Vector3 worldPosition, bool exactFollow)
     {
         worldPosition.z = 0f;
-        if (!_ownerVisualFollowWorldOverrideActive)
-            _historyDistanceCarry = 0f;
-
         _ownerVisualFollowWorldOverride = worldPosition;
         _ownerVisualFollowWorldOverrideActive = true;
-        _ownerVisualFollowExact = exactFollow;
     }
 
     #endregion
 
-    #region Idle Shift
+    #region Directional Visual
 
-    void UpdateIdleShiftState(bool wantIdleShift)
-    {
-        if (!wantIdleShift)
-        {
-            _useIdleShiftState = false;
-            return;
-        }
-
-        if (!_useIdleShiftState)
-        {
-            if (_idleFrames >= Mathf.Max(0, idleGraceFrames))
-                _useIdleShiftState = true;
-
-            return;
-        }
-
-        if (_movingFrames > Mathf.Max(0, idleExitGraceFrames))
-            _useIdleShiftState = false;
-    }
-
-    float GetIdleCollapseT()
-    {
-        if (!_useIdleShiftState)
-            return 0f;
-
-        float secs = Mathf.Max(0f, idleCollapseSeconds);
-        if (secs <= 0.000001f)
-            return 1f;
-
-        return Mathf.Clamp01((QTime() - _idleShiftStartTime) / secs);
-    }
-
-    Vector3 ComputeNewWorldPosition(ref EggEntry e, Vector3 before, Vector3 targetWorld, float maxStep, bool useIdleShift)
-    {
-        if (e.isAnimating)
-        {
-            float elapsed = QTime() - e.animStartTime; float u = e.animDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.animDuration);
-            float smoothU = u * u * (3f - 2f * u);
-
-            Vector3 from = e.animFromWorld; from.z = 0f;
-            Vector3 to = targetWorld; to.z = 0f;
-
-            Vector3 newWorld = Vector3.Lerp(from, to, smoothU);
-            newWorld.z = 0f;
-
-            if (u >= 1f)
-            {
-                e.isAnimating = false;
-                e.animDuration = 0f;
-            }
-
-            return newWorld;
-        }
-
-        if (useIdleShift && idleDequeueSnap)
-            return targetWorld;
-
-        if (_ownerVisualFollowExact)
-            return targetWorld;
-
-        return Vector3.MoveTowards(before, targetWorld, maxStep);
-    }
-
-    void UpdateDirectional(ref EggEntry e, Vector3 before, Vector3 newWorld, Vector3 targetWorld, bool useIdleShift)
+    void UpdateDirectional(ref EggEntry e, Vector3 before, Vector3 newWorld)
     {
         if (e.directional == null)
             return;
 
         float dz = Mathf.Max(0.00000001f, e.directional.moveDeadZone);
-        float dzMul = useIdleShift ? idleShiftDirectionalDeadZoneMul : 1f;
-        float effectiveDzSqr = (dz * dzMul) * (dz * dzMul);
+        float effectiveDzSqr = dz * dz;
 
-        Vector3 dirSample = useIdleShift ? (targetWorld - before) : (newWorld - before);
+        Vector3 dirSample = newWorld - before;
         dirSample.z = 0f;
 
         bool wouldBeMoving = dirSample.sqrMagnitude > effectiveDzSqr;
@@ -940,8 +620,6 @@ public sealed class MountEggQueue : MonoBehaviour
     public void BeginHardFreeze()
     {
         _hardFrozen = true;
-
-        StopAllAnimationsNow();
 
         _hardFrozenEggWorld.Clear();
         _hardFrozenFacing.Clear();
@@ -986,7 +664,6 @@ public sealed class MountEggQueue : MonoBehaviour
         if (owner != null) BindOwner(owner);
         else BindOwnerAuto();
 
-        EnsureHistoryBuffer();
         SeedHistoryNow();
         ResetRuntimeState();
 
@@ -1037,61 +714,13 @@ public sealed class MountEggQueue : MonoBehaviour
                 e.directional.ForceIdleFacing(f);
             }
 
-            e.isAnimating = false;
-            e.animDuration = 0f;
-
             _eggs[i] = e;
         }
     }
 
     #endregion
 
-    #region Animations
-
-    void StartAnimateToTargetNow(int eggIndex, float duration)
-    {
-        if (eggIndex < 0 || eggIndex >= _eggs.Count)
-            return;
-
-        var e = _eggs[eggIndex];
-        if (e.rootTr == null)
-            return;
-
-        e.isAnimating = true;
-        e.animStartTime = QTime();
-        e.animDuration = Mathf.Max(0.01f, duration);
-
-        Vector3 p = e.rootTr.position;
-        p.z = 0f;
-        e.animFromWorld = p;
-
-        _eggs[eggIndex] = e;
-    }
-
-    void AnimateAllShift()
-    {
-        float dur = Mathf.Max(0.01f, shiftSeconds);
-        for (int i = 0; i < _eggs.Count; i++)
-            StartAnimateToTargetNow(i, dur);
-    }
-
-    void AnimateShiftExceptNewest()
-    {
-        float dur = Mathf.Max(0.01f, shiftSeconds);
-        for (int i = 1; i < _eggs.Count; i++)
-            StartAnimateToTargetNow(i, dur);
-    }
-
-    void StopAllAnimationsNow()
-    {
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            var e = _eggs[i];
-            e.isAnimating = false;
-            e.animDuration = 0f;
-            _eggs[i] = e;
-        }
-    }
+    #region Snap
 
     void SnapAllToOwnerNow()
     {
@@ -1107,7 +736,7 @@ public sealed class MountEggQueue : MonoBehaviour
             e.rootTr.position = p;
 
             if (e.directional != null)
-                e.directional.ApplyMoveDelta(Vector3.zero);
+                e.directional.ForceIdleFacing(e.directional.facing);
 
             _eggs[i] = e;
         }
@@ -1163,7 +792,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
     bool ShouldInvertSortingForUp()
     {
-        if (_eggs.Count != 2)
+        if (_eggs.Count < 2)
             return false;
 
         for (int i = 0; i < _eggs.Count; i++)
@@ -1184,9 +813,7 @@ public sealed class MountEggQueue : MonoBehaviour
             if (e.rootTr == null)
                 continue;
 
-            int order = (invertForUp && _eggs.Count == 2)
-                ? (i == 0 ? baseOrder + 1 : baseOrder)
-                : baseOrder + i;
+            int order = baseOrder + (invertForUp ? _eggs.Count - 1 - i : i);
 
             EnsureEggSorting(e.rootTr, order);
         }
@@ -1214,8 +841,6 @@ public sealed class MountEggQueue : MonoBehaviour
 
     void PostQueueChanged(bool animateShift)
     {
-        if (animateShift)
-            AnimateAllShift();
 
         ApplyEggLayerNow();
         ApplyEggSortingNow();
@@ -1264,8 +889,6 @@ public sealed class MountEggQueue : MonoBehaviour
 
         if (IsFull)
             return false;
-
-        ExitIdleShiftNow();
 
         EnqueueInternal(type, idleSprite, mountSfx, mountVolume, animate: true);
         PostQueueChanged(animateShift: false);
@@ -1343,7 +966,6 @@ public sealed class MountEggQueue : MonoBehaviour
         for (int i = 0; i < types.Count; i++)
             EnqueueInternal(types[i], idleSpriteFallback, mountSfx: null, mountVolume: defaultMountVolume, animate: false);
 
-        StopAllAnimationsNow();
         SnapAllToOwnerNow();
         PostQueueChanged(animateShift: false);
     }
@@ -1355,7 +977,6 @@ public sealed class MountEggQueue : MonoBehaviour
 
         BindOwnerAuto();
         EnsureWorldRoot();
-        EnsureHistoryBuffer();
 
         if (resetHistoryToOwnerNow)
             ResetHistoryToCurrentOwnerPos();
@@ -1390,9 +1011,7 @@ public sealed class MountEggQueue : MonoBehaviour
             SeedHistoryNow();
 
         ResetRuntimeState();
-        ExitIdleShiftNow();
 
-        StopAllAnimationsNow();
         SnapAllToOwnerNow();
 
         PostQueueChanged(animateShift: false);
@@ -1401,14 +1020,6 @@ public sealed class MountEggQueue : MonoBehaviour
     #endregion
 
     #region Enqueue / Clear / Internal Spawn
-
-    void ExitIdleShiftNow()
-    {
-        _idleFrames = 0;
-        _movingFrames = 0;
-        _useIdleShiftState = false;
-        _idleShiftStartTime = 0f;
-    }
 
     void ClearAllEggs()
     {
@@ -1429,8 +1040,6 @@ public sealed class MountEggQueue : MonoBehaviour
             _hardFrozenFacing.Clear();
         }
 
-        ExitIdleShiftNow();
-
         if (resetHistoryToOwner)
             ResetHistoryToCurrentOwnerPos();
 
@@ -1443,9 +1052,12 @@ public sealed class MountEggQueue : MonoBehaviour
         EnsureBound();
 
         if (IsFull)
+        {
             return;
+        }
 
-        ExitIdleShiftNow();
+        if (_eggs.Count == 0)
+            ResetRuntimeState();
 
         Vector3 spawnWorld = GetOwnerWorldPos() + (Vector3)worldOffset;
         spawnWorld.z = 0f;
@@ -1484,10 +1096,6 @@ public sealed class MountEggQueue : MonoBehaviour
             sr.enabled = true;
         }
 
-        float durJoin = animate
-            ? Mathf.Max(0.01f, joinSeconds) + Mathf.Max(0f, joinExtraDelayPerEgg) * _eggs.Count
-            : 0f;
-
         var entry = new EggEntry
         {
             type = type,
@@ -1496,19 +1104,13 @@ public sealed class MountEggQueue : MonoBehaviour
 
             mountSfx = mountSfx,
             mountVolume = Mathf.Clamp01(mountVolume),
-
-            isAnimating = animate,
-            animStartTime = QTime(),
-            animDuration = durJoin,
-            animFromWorld = spawnWorld
+            route = new Queue<Vector3>(),
+            routeTail = spawnWorld - (Vector3)worldOffset,
+            groundPosition = spawnWorld - (Vector3)worldOffset
         };
 
         _eggs.Insert(0, entry);
 
-        if (animate)
-            AnimateShiftExceptNewest();
-        else
-            StopAllAnimationsNow();
     }
 
     static void BindEggHitbox(GameObject eggRootGo, MountEggQueue queue)
@@ -1538,7 +1140,6 @@ public sealed class MountEggQueue : MonoBehaviour
         CopySettingsTo(target);
 
         target.EnsureWorldRoot();
-        target.EnsureHistoryBuffer();
 
         target._eggs.Clear();
         for (int i = 0; i < _eggs.Count; i++)
@@ -1566,13 +1167,10 @@ public sealed class MountEggQueue : MonoBehaviour
 
     void CopySettingsTo(MountEggQueue q)
     {
-        q.maxHistory = maxHistory;
-        q.historyPointSpacingWorld = historyPointSpacingWorld;
         q.jitterIgnoreDelta = jitterIgnoreDelta;
 
         q.eggSpacingWorld = eggSpacingWorld;
         q.worldOffset = worldOffset;
-        q.minTargetSeparation = minTargetSeparation;
 
         q.worldRootName = worldRootName;
 
@@ -1582,23 +1180,10 @@ public sealed class MountEggQueue : MonoBehaviour
 
         q.maxEggsInQueue = maxEggsInQueue;
 
-        q.joinSeconds = joinSeconds;
-        q.joinExtraDelayPerEgg = joinExtraDelayPerEgg;
-        q.shiftSeconds = shiftSeconds;
-
         q.eggFollowerPrefab = eggFollowerPrefab;
-
-        q.idleDequeueStyle = idleDequeueStyle;
-        q.idleDequeueSnap = idleDequeueSnap;
 
         q.idleEnterSeconds = idleEnterSeconds;
         q.movingHoldSeconds = movingHoldSeconds;
-        q.idleGraceFrames = idleGraceFrames;
-        q.idleExitGraceFrames = idleExitGraceFrames;
-
-        q.idleCollapseSeconds = idleCollapseSeconds;
-        q.idleDisableAntiCollapseAt = idleDisableAntiCollapseAt;
-        q.idleShiftDirectionalDeadZoneMul = idleShiftDirectionalDeadZoneMul;
 
         q.preferRigidbodyVelocityForIdle = preferRigidbodyVelocityForIdle;
         q.ownerVelocityEpsilon = ownerVelocityEpsilon;
@@ -1678,7 +1263,6 @@ public sealed class MountEggQueue : MonoBehaviour
         if (anyTransformOnEgg == null || consumerPlayer == null || _eggs.Count == 0)
             return false;
 
-        if (_ownerVisualFollowExact)
             return false;
 
         if (_ownerPlayerId == -1)
@@ -1978,7 +1562,7 @@ public sealed class MountEggQueue : MonoBehaviour
         }
 
         consumerQueue.EnsureWorldRoot();
-        consumerQueue.EnsureHistoryBuffer();
+
         consumerQueue.SeedHistoryNow();
         consumerQueue.ResetRuntimeState();
         consumerQueue.PostQueueChanged(animateShift: false);
@@ -2070,7 +1654,6 @@ public sealed class MountEggQueue : MonoBehaviour
     public void FreezeOwnerAtWorldPosition(Vector3 worldPos)
     {
         EnsureWorldRoot();
-        EnsureHistoryBuffer();
 
         worldPos.z = 0f;
 
@@ -2086,7 +1669,6 @@ public sealed class MountEggQueue : MonoBehaviour
         _ownerTr = _freezeAnchor;
         _ownerHealth = null;
 
-        ResetHistoryToCurrentOwnerPos();
         ResetRuntimeState();
     }
 
@@ -2115,7 +1697,7 @@ public sealed class MountEggQueue : MonoBehaviour
         worldQueue._eggs.Clear();
 
         EnsureWorldRoot();
-        EnsureHistoryBuffer();
+
         SeedHistoryNow();
         ResetRuntimeState();
         PostQueueChanged(animateShift: false);
@@ -2152,7 +1734,7 @@ public sealed class MountEggQueue : MonoBehaviour
         else if (_ownerTr != null) _ownerPlayerId = ResolvePlayerIdFrom(_ownerTr.gameObject);
         else _ownerPlayerId = ResolvePlayerIdFrom(gameObject);
 
-        if (_ownerPlayerId < 1 || _ownerPlayerId > 4)
+        if (_ownerPlayerId < 1 || _ownerPlayerId > 6)
             _ownerPlayerId = -1;
     }
 

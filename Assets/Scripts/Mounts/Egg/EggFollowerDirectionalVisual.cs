@@ -14,6 +14,12 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
     [Header("Dead Zone")]
     public float moveDeadZone = 0.00005f;
 
+    // Render frames between physics/history samples must not interrupt the walk cycle.
+    const float MovementIdleGraceSeconds = 0.12f;
+    const float FacingSampleDistance = 1f / 32f;
+    float lastMovementTime = float.NegativeInfinity;
+    Vector2 pendingFacingDelta;
+
     AnimatedSpriteRenderer active;
     bool lastIdle = true;
 
@@ -23,6 +29,8 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
 
     void OnEnable()
     {
+        lastMovementTime = float.NegativeInfinity;
+        pendingFacingDelta = Vector2.zero;
         ForceOnlyOneRendererVisibleImmediate();
         ApplyState(facing, idle: true, force: true);
     }
@@ -31,20 +39,31 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
     {
         Vector2 d = new(deltaWorld.x, deltaWorld.y);
 
-        bool isMoving = d.sqrMagnitude > moveDeadZone;
+        float deadZone = Mathf.Max(0.00000001f, moveDeadZone);
+        bool isMoving = d.sqrMagnitude > deadZone * deadZone;
 
         if (isMoving)
         {
-            Vector2 dir = NormalizeCardinal(d);
-            if (dir != Vector2.zero)
-                facing = dir;
+            lastMovementTime = Time.unscaledTime;
+            pendingFacingDelta += d;
+            if (pendingFacingDelta.sqrMagnitude >= FacingSampleDistance * FacingSampleDistance)
+            {
+                facing = NormalizeCardinal(pendingFacingDelta);
+                pendingFacingDelta = Vector2.zero;
+            }
         }
 
-        ApplyState(facing, idle: !isMoving, force: false);
+        bool idle = !isMoving && Time.unscaledTime - lastMovementTime >= MovementIdleGraceSeconds;
+        if (idle)
+            pendingFacingDelta = Vector2.zero;
+
+        ApplyState(facing, idle, force: false);
     }
 
     public void ForceIdleFacing(Vector2 face)
     {
+        lastMovementTime = float.NegativeInfinity;
+        pendingFacingDelta = Vector2.zero;
         if (face != Vector2.zero)
             facing = NormalizeCardinal(face);
 
@@ -74,24 +93,14 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
             if (active != null)
                 SetAnimEnabled(active, true);
         }
-        else
+        else if (active != null)
         {
-            if (active == null)
-            {
-                DisableAllDirectionalRenderers();
-                active = target;
-                if (active != null)
-                    SetAnimEnabled(active, true);
-            }
-            else
-            {
-                DisableAllDirectionalRenderers();
-                SetAnimEnabled(active, true);
-            }
+            SetAnimEnabled(active, true);
         }
 
         if (active != null)
         {
+            active.loop = true;
             active.idle = idle;
             active.RefreshFrame();
         }
@@ -146,7 +155,7 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
 
     static Vector2 NormalizeCardinal(Vector2 dir)
     {
-        if (dir.sqrMagnitude <= 0.000001f)
+        if (dir == Vector2.zero)
             return Vector2.zero;
 
         if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
