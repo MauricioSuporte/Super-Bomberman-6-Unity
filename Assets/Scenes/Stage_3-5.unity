@@ -7339,7 +7339,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4179329559707968163, guid: ac0f91db93d636f4f89e0e1b18e52dee, type: 3}
+  m_Sprite: {fileID: 901234567890123401, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -7431,9 +7431,14 @@ MonoBehaviour:
   sinkDistanceTiles: 0.5
   sinkHorizontalShakeTiles: 0.125
   sinkHorizontalShakeCycles: 4
-  gateRenderer: {fileID: 0}
-  gateOpeningSprites: []
-  gateFrameDurationSeconds: 0.5
+  gateRenderer: {fileID: 698957486}
+  gateOpeningSprites:
+  - {fileID: 901234567890123401, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123402, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123403, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123404, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123405, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  gateFrameDurationSeconds: 0.25
   gateSpriteSheet: {fileID: 0}
   gatePixelsPerUnit: 16
   gateOpeningSeconds: 0.5
@@ -15666,9 +15671,11 @@ MonoBehaviour:
   sinkHorizontalShakeCycles: 4
   gateRenderer: {fileID: 1097302366}
   gateOpeningSprites:
-  - {fileID: 3530831331696384950, guid: 21d3a95800152f245a5faccd6e72c9f6, type: 3}
-  - {fileID: -2122546048464509763, guid: 21d3a95800152f245a5faccd6e72c9f6, type: 3}
-  - {fileID: 107975443033415240, guid: 21d3a95800152f245a5faccd6e72c9f6, type: 3}
+  - {fileID: 901234567890123401, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123402, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123403, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123404, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
+  - {fileID: 901234567890123405, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
   gateFrameDurationSeconds: 0.25
   gateSpriteSheet: {fileID: 0}
   gatePixelsPerUnit: 16
@@ -15778,7 +15785,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 3530831331696384950, guid: 21d3a95800152f245a5faccd6e72c9f6, type: 3}
+  m_Sprite: {fileID: 901234567890123401, guid: e33910c2bcf843cdbf2d5a97d20b3c4b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
