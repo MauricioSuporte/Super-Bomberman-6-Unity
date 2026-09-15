@@ -547,7 +547,7 @@ MonoBehaviour:
   hiddenObjectRooms:
   - name: Room 1
     roomBounds: {fileID: 2033100007}
-    randomSb5EggAmount: 1
+    randomSb5EggAmount: 10
     itemAmounts:
     - itemType: 0
       amount: 1
@@ -6491,7 +6491,7 @@ Tilemap:
       - {fileID: 1829969594, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: 337661603, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: 573983593, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 57, y: -4, z: 0}
@@ -6701,7 +6701,7 @@ Tilemap:
       - {fileID: -1353699778, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -1951247315, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -248224407, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 61, y: 0, z: 0}

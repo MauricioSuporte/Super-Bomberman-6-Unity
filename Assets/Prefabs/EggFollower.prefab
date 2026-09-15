@@ -210,7 +210,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300034, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  m_Sprite: {fileID: 21300014, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -233,17 +233,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300034, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  idleSprite: {fileID: 21300014, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   animationSprite:
-  - {fileID: 21300034, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300035, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300036, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300037, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300038, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300039, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300040, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300014, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300015, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300016, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   allowFlipX: 0
-  animationTime: 0.071428575
+  animationTime: 0.125000000
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -253,7 +249,7 @@ MonoBehaviour:
   loopStartFrame: 0
   idle: 1
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &4163911906928517831
@@ -338,9 +334,9 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300027, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  m_Sprite: {fileID: 21300011, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1.5}
@@ -361,16 +357,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300027, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  idleSprite: {fileID: 21300011, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   animationSprite:
-  - {fileID: 21300027, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300028, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300029, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300030, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300031, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300032, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  allowFlipX: 1
-  animationTime: 0.083333336
+  - {fileID: 21300011, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300012, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300013, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  allowFlipX: 0
+  animationTime: 0.125000000
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -380,7 +373,7 @@ MonoBehaviour:
   loopStartFrame: 0
   idle: 1
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &4238104617994113025
@@ -619,7 +612,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300020, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  m_Sprite: {fileID: 21300017, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -642,16 +635,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300020, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  idleSprite: {fileID: 21300017, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   animationSprite:
-  - {fileID: 21300020, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300021, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300022, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300023, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300024, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300025, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300017, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300018, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300019, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   allowFlipX: 0
-  animationTime: 0.083333336
+  animationTime: 0.125000000
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -661,7 +651,7 @@ MonoBehaviour:
   loopStartFrame: 0
   idle: 1
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &7478489270409866857
@@ -877,7 +867,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300027, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  m_Sprite: {fileID: 21300008, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -900,16 +890,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300027, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  idleSprite: {fileID: 21300008, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   animationSprite:
-  - {fileID: 21300027, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300028, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300029, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300030, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300031, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
-  - {fileID: 21300032, guid: 8e8fa5f957ac45838d394640b98f2e57, type: 3}
+  - {fileID: 21300008, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300009, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300010, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   allowFlipX: 0
-  animationTime: 0.083333336
+  animationTime: 0.125000000
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -919,6 +906,6 @@ MonoBehaviour:
   loopStartFrame: 0
   idle: 1
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
