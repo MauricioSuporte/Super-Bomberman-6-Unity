@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2443065888386904545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3372402362788049079}
+  - component: {fileID: 3187905894772179751}
+  - component: {fileID: 4194557369080023744}
+  m_Layer: 0
+  m_Name: HoleIce
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &3372402362788049079
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2443065888386904545}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!212 &3187905894772179751
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2443065888386904545}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 5
+  m_Sprite: {fileID: 1439574296713711785, guid: f5d0c8f9c3730584288265ea0c7f2499, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_MaskInteraction: 0
+--- !u!114 &4194557369080023744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2443065888386904545}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
+  idleSprite: {fileID: 1439574296713711785, guid: f5d0c8f9c3730584288265ea0c7f2499, type: 3}
+  animationSprite:
+  - {fileID: 1439574296713711785, guid: f5d0c8f9c3730584288265ea0c7f2499, type: 3}
+  - {fileID: 1965384360, guid: f5d0c8f9c3730584288265ea0c7f2499, type: 3}
+  allowFlipX: 0
+  animationTime: 0.125
+  useSequenceDuration: 0
+  sequenceDuration: 0.5
+  frameDurations: []
+  useUnscaledTime: 1
+  respectGamePause: 1
+  loop: 1
+  loopStartFrame: 0
+  idle: 0
+  frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
