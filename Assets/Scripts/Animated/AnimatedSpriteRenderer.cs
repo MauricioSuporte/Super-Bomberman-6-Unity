@@ -27,6 +27,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     [Header("Loop / Idle")]
     public bool loop = true;
     [Min(0)] public int loopStartFrame;
+    [Min(0f)] public float loopRestartDelay;
     public bool idle = true;
 
     [Header("Frame Offsets")]
@@ -65,6 +66,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     bool hasSavedRuntimeLockXState;
 
     float frameTimer;
+    float loopRestartTimer;
     bool manualAnimationUpdate;
 
     public int CurrentFrame
@@ -131,6 +133,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         direction = 1;
         frameTimer = 0f;
+        loopRestartTimer = 0f;
         animationFrame = 0;
 
         SetupTiming();
@@ -192,6 +195,17 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (dt <= 0f)
             return;
 
+        if (loopRestartTimer > 0f)
+        {
+            loopRestartTimer -= dt;
+            if (loopRestartTimer > 0f)
+                return;
+
+            animationFrame = Mathf.Clamp(loopStartFrame, 0, animationSprite.Length - 1);
+            ApplyFrame();
+            return;
+        }
+
         frameTimer += dt;
 
         float step = GetCurrentFrameDuration();
@@ -241,6 +255,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         direction = 1;
         frameTimer = 0f;
+        loopRestartTimer = 0f;
         CurrentFrame = 0;
         ApplyFrame();
     }
@@ -279,7 +294,13 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             animationFrame++;
 
             if (loop && animationFrame >= animationSprite.Length)
-                animationFrame = Mathf.Clamp(loopStartFrame, 0, animationSprite.Length - 1);
+            {
+                animationFrame = animationSprite.Length - 1;
+                loopRestartTimer = Mathf.Max(0f, loopRestartDelay);
+
+                if (loopRestartTimer <= 0f)
+                    animationFrame = Mathf.Clamp(loopStartFrame, 0, animationSprite.Length - 1);
+            }
             else if (!loop && animationFrame >= animationSprite.Length) animationFrame = animationSprite.Length - 1;
         }
         else

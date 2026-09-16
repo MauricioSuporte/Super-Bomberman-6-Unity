@@ -124,6 +124,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -311,6 +312,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets:
   - {x: 0, y: 0}
@@ -469,6 +471,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -593,6 +596,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -715,6 +719,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -838,6 +843,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -961,6 +967,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1090,6 +1097,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 5
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1219,6 +1227,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1344,6 +1353,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1466,6 +1476,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets:
   - {x: 0, y: 0.5}
@@ -1589,6 +1600,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1711,6 +1723,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1834,6 +1847,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1960,6 +1974,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 1
@@ -2089,6 +2104,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -2214,6 +2230,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -2336,6 +2353,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -2465,6 +2483,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -2594,6 +2613,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -2717,6 +2737,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -2839,6 +2860,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -2964,6 +2986,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -3086,6 +3109,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -3208,6 +3232,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -3330,6 +3355,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -3459,6 +3485,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -3582,6 +3609,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -3707,6 +3735,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -3829,6 +3858,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets:
   - {x: 0.15, y: 0.5}
@@ -3952,6 +3982,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -4074,6 +4105,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -4946,6 +4978,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -5068,6 +5101,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -5190,6 +5224,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -5312,6 +5347,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets:
   - {x: 0, y: 0.5}
@@ -5435,6 +5471,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -5558,6 +5595,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -5681,6 +5719,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -5803,6 +5842,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -5928,6 +5968,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -6050,6 +6091,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -6179,6 +6221,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -6302,6 +6345,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -6424,6 +6468,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -6547,6 +6592,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -6672,6 +6718,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -6797,6 +6844,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -6920,6 +6968,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -7043,6 +7092,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -7165,6 +7215,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets:
   - {x: 0.15, y: 0.5}
@@ -7288,6 +7339,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -7410,6 +7462,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0

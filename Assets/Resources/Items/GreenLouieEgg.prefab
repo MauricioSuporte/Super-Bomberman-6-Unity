@@ -192,6 +192,7 @@ MonoBehaviour:
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
+  loopRestartDelay: 0.5
   idle: 0
   frameOffsets: []
   pingPong: 0
