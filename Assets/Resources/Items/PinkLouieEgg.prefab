@@ -422,8 +422,24 @@ MonoBehaviour:
   - {fileID: 21300005, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   - {fileID: 21300006, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   - {fileID: 21300007, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
+  - {fileID: 21300001, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   allowFlipX: 0
   animationTime: 0.133333333
+  frameDurations:
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.133333333
+  - 0.066666666
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
