@@ -2357,6 +2357,7 @@ Transform:
   - {fileID: 92127697}
   - {fileID: 161471103}
   - {fileID: 942519793}
+  - {fileID: 760185678}
   m_Father: {fileID: 732032081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &358688976
@@ -7403,7 +7404,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 2}
+    oldSize: {x: 2, y: 2}
     newSize: {x: 2, y: 2}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -7648,6 +7649,42 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3372402362788049079, guid: 4831ddc6a40e4c77b42b9f1f49901e5e, type: 3}
   m_PrefabInstance: {fileID: 1649184086}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &760185677
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 760185678}
+  m_Layer: 6
+  m_Name: Hole
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &760185678
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760185677}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2050000001}
+  - {fileID: 2050000003}
+  - {fileID: 2050000005}
+  - {fileID: 2050000007}
+  - {fileID: 2050000009}
+  m_Father: {fileID: 355527351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0
@@ -18220,6 +18257,236 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   roomLightRadius: 1
+--- !u!1001 &2050000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 760185678}
+    m_Modifications:
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_Name
+      value: FragileFloorIce Room 1 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+--- !u!4 &2050000001 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+  m_PrefabInstance: {fileID: 2050000000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2050000002
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 760185678}
+    m_Modifications:
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_Name
+      value: FragileFloorIce Room 1 (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+--- !u!4 &2050000003 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+  m_PrefabInstance: {fileID: 2050000002}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2050000004
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 760185678}
+    m_Modifications:
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_Name
+      value: FragileFloorIce Room 1 (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+--- !u!4 &2050000005 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+  m_PrefabInstance: {fileID: 2050000004}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2050000006
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 760185678}
+    m_Modifications:
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_Name
+      value: FragileFloorIce Room 1 (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+--- !u!4 &2050000007 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+  m_PrefabInstance: {fileID: 2050000006}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2050000008
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 760185678}
+    m_Modifications:
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_Name
+      value: FragileFloorIce Room 1 (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3308832641360177650, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+--- !u!4 &2050000009 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9065807926466470510, guid: 74d50da4d0fa4fc7bdcc9a4e7207d5ea, type: 3}
+  m_PrefabInstance: {fileID: 2050000008}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7794392015855008759
 PrefabInstance:
   m_ObjectHideFlags: 0

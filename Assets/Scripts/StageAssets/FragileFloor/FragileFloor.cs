@@ -16,6 +16,7 @@ public sealed class FragileFloor : MonoBehaviour
     [SerializeField, Min(1f)] private float pendingBlockClearanceMultiplier = 1.2f;
 
     private Tilemap _groundTilemap;
+    private Tilemap _destructiblesTilemap;
     private Tilemap _indestructiblesTilemap;
     private BoxCollider2D _triggerCollider;
 
@@ -66,7 +67,14 @@ public sealed class FragileFloor : MonoBehaviour
                 groundGo.TryGetComponent(out _groundTilemap);
         }
 
-        if (_groundTilemap == null || _indestructiblesTilemap == null)
+        if (_destructiblesTilemap == null)
+        {
+            var destructiblesGo = GameObject.Find("Destructibles");
+            if (destructiblesGo != null)
+                destructiblesGo.TryGetComponent(out _destructiblesTilemap);
+        }
+
+        if (_groundTilemap == null || _destructiblesTilemap == null || _indestructiblesTilemap == null)
         {
             var maps = Object.FindObjectsByType<Tilemap>();
             for (int i = 0; i < maps.Length; i++)
@@ -77,6 +85,9 @@ public sealed class FragileFloor : MonoBehaviour
                 var go = m.gameObject;
                 if (_indestructiblesTilemap == null && go.CompareTag("Indestructibles"))
                     _indestructiblesTilemap = m;
+
+                if (_destructiblesTilemap == null && string.Equals(go.name, "Destructibles", System.StringComparison.OrdinalIgnoreCase))
+                    _destructiblesTilemap = m;
 
                 if (_groundTilemap == null && string.Equals(go.name, "Ground", System.StringComparison.OrdinalIgnoreCase))
                     _groundTilemap = m;
@@ -122,13 +133,13 @@ public sealed class FragileFloor : MonoBehaviour
 
     private bool TryResolveTilemapsAndCell()
     {
-        if (_groundTilemap != null && _indestructiblesTilemap != null)
+        if (_groundTilemap != null && _destructiblesTilemap != null && _indestructiblesTilemap != null)
             return true;
 
         ResolveTilemaps();
         ResolveCell();
 
-        return _groundTilemap != null && _indestructiblesTilemap != null;
+        return _groundTilemap != null && _destructiblesTilemap != null && _indestructiblesTilemap != null;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -141,6 +152,12 @@ public sealed class FragileFloor : MonoBehaviour
 
         if (!TryResolveTilemapsAndCell())
             return;
+
+        if (HasDestructibleTileAtCell())
+        {
+            MarkBlocked();
+            return;
+        }
 
         if (_state == FragileFloorState.Normal)
         {
@@ -184,6 +201,12 @@ public sealed class FragileFloor : MonoBehaviour
         if (!TryResolveTilemapsAndCell())
             return;
 
+        if (HasDestructibleTileAtCell())
+        {
+            MarkBlocked();
+            return;
+        }
+
         _groundTilemap.SetTile(_cell, null);
         _groundTilemap.RefreshTile(_cell);
 
@@ -193,6 +216,17 @@ public sealed class FragileFloor : MonoBehaviour
             _indestructiblesTilemap.RefreshTile(_cell);
         }
 
+        MarkBlocked();
+    }
+
+    private bool HasDestructibleTileAtCell()
+    {
+        return _destructiblesTilemap != null &&
+               _destructiblesTilemap.HasTile(_cell);
+    }
+
+    private void MarkBlocked()
+    {
         _state = FragileFloorState.Blocked;
 
         if (disableTriggerAfterBlocked)
