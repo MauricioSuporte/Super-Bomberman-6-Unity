@@ -44,18 +44,11 @@ public sealed class TitleScreenCursorDeniedAnimator : MonoBehaviour
             eyeIdle.enabled = false;
 
         Sprite[] heads = { head1, head2, defaultHead, head3, head4, head3, defaultHead };
-        bool[] showEyes = { false, false, true, false, false, false, true };
         float frameDuration = duration / heads.Length;
 
         for (int i = 0; i < heads.Length; i++)
         {
-            headImage.sprite = heads[i];
-            eyesRenderer.enabled = showEyes[i];
-            if (showEyes[i])
-            {
-                eyesRenderer.idleSprite = eyeRow3_2;
-                eyesRenderer.RefreshFrame();
-            }
+            SetPose(heads[i], $"denied frame={i + 1}/{heads.Length}");
 
             yield return new WaitForSecondsRealtime(frameDuration);
         }
@@ -74,6 +67,20 @@ public sealed class TitleScreenCursorDeniedAnimator : MonoBehaviour
 
         if (eyeIdle != null && restoreEyeIdle)
             eyeIdle.enabled = true;
+    }
+
+    void SetPose(Sprite head, string reason)
+    {
+        if (eyeIdle != null)
+        {
+            eyeIdle.SetPose(head, eyeRow3_2, reason);
+            return;
+        }
+
+        headImage.sprite = head;
+        eyesRenderer.enabled = true;
+        eyesRenderer.idleSprite = eyeRow3_2;
+        eyesRenderer.RefreshFrame();
     }
 
     bool CanAnimate()

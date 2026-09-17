@@ -2,14 +2,14 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Plays the title cursor's fixed-duration confirmation pose sequence.</summary>
+/// <summary>Plays the title cursor confirmation with synchronized, offset-free layers.</summary>
 public sealed class TitleScreenCursorConfirmAnimator : MonoBehaviour
 {
     [SerializeField] AnimatedSpriteRenderer eyesRenderer;
     [SerializeField] TitleScreenCursorEyeIdle eyeIdle;
-    [SerializeField] RectTransform eyesRect;
     [SerializeField] Image headImage;
     [SerializeField] Sprite defaultHead;
+    [SerializeField] Sprite confirmEye;
     [SerializeField] Sprite[] headFrames;
     [SerializeField, Min(0.01f)] float duration = 0.5f;
 
@@ -18,14 +18,12 @@ public sealed class TitleScreenCursorConfirmAnimator : MonoBehaviour
     public void Configure(
         AnimatedSpriteRenderer configuredEyesRenderer,
         TitleScreenCursorEyeIdle configuredEyeIdle,
-        RectTransform configuredEyesRect,
         Image configuredHeadImage,
         Sprite configuredDefaultHead,
         Sprite[] configuredHeadFrames)
     {
         eyesRenderer = configuredEyesRenderer;
         eyeIdle = configuredEyeIdle;
-        eyesRect = configuredEyesRect;
         headImage = configuredHeadImage;
         defaultHead = configuredDefaultHead;
         headFrames = configuredHeadFrames;
@@ -37,9 +35,8 @@ public sealed class TitleScreenCursorConfirmAnimator : MonoBehaviour
             yield break;
 
         playing = true;
-
-        bool canAnimate = eyesRenderer != null && eyesRect != null && headImage != null &&
-                          defaultHead != null && HasAllHeadFrames();
+        bool canAnimate = eyesRenderer != null && headImage != null && defaultHead != null &&
+                          confirmEye != null && HasAllHeadFrames();
         if (!canAnimate)
         {
             yield return new WaitForSecondsRealtime(duration);
@@ -51,40 +48,37 @@ public sealed class TitleScreenCursorConfirmAnimator : MonoBehaviour
         if (eyeIdle != null)
             eyeIdle.enabled = false;
 
-        Vector3 baseEyesPosition = eyesRect.localPosition;
         float frameDuration = duration / headFrames.Length;
-        // localPosition is measured in the parent UI space, so include the cursor's
-        // own scale. This keeps the bounce proportional to the displayed cursor
-        // when TitleScreenController changes its UI scale for the resolution.
-        float cursorScaleY = Mathf.Abs(eyesRect.localScale.y);
-        float uiUnitsPerSpritePixel = eyesRect.rect.height * cursorScaleY /
-                                      Mathf.Max(1f, defaultHead.rect.height);
-
-        // Confirmation head sprites already contain their eyes.
-        eyesRenderer.enabled = false;
-
         for (int i = 0; i < headFrames.Length; i++)
         {
-            headImage.sprite = headFrames[i];
-            Vector2 bounceOffsetPixels = GetFrameOffset(i);
-            Vector2 bounceOffset = bounceOffsetPixels * uiUnitsPerSpritePixel;
-            eyesRect.localPosition = baseEyesPosition + (Vector3)bounceOffset;
+            SetPose(headFrames[i], confirmEye, $"confirm frame={i + 1}/{headFrames.Length}");
             yield return new WaitForSecondsRealtime(frameDuration);
         }
 
-        eyesRect.localPosition = baseEyesPosition;
-        headImage.sprite = defaultHead;
-        eyesRenderer.enabled = true;
-
+        SetPose(defaultHead, confirmEye, "confirm-end");
         if (eyeIdle != null && restoreEyeIdle)
             eyeIdle.enabled = true;
 
         playing = false;
     }
 
+    void SetPose(Sprite head, Sprite eye, string reason)
+    {
+        if (eyeIdle != null)
+        {
+            eyeIdle.SetPose(head, eye, reason);
+            return;
+        }
+
+        headImage.sprite = head;
+        eyesRenderer.enabled = true;
+        eyesRenderer.idleSprite = eye;
+        eyesRenderer.RefreshFrame();
+    }
+
     bool HasAllHeadFrames()
     {
-        if (headFrames == null || headFrames.Length != 9)
+        if (headFrames == null || headFrames.Length != 11)
             return false;
 
         for (int i = 0; i < headFrames.Length; i++)
@@ -93,15 +87,4 @@ public sealed class TitleScreenCursorConfirmAnimator : MonoBehaviour
 
         return true;
     }
-
-    static Vector2 GetFrameOffset(int frame)
-    {
-        return frame switch
-        {
-            3 or 4 or 5 => new Vector2(0f, 2f),
-            7 => new Vector2(0f, -1f),
-            _ => Vector2.zero
-        };
-    }
-
 }

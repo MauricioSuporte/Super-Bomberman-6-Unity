@@ -438,6 +438,13 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         ApplyFrame();
     }
 
+    /// <summary>Applies an additive local offset while preserving any externally assigned base position.</summary>
+    public void SetRuntimeBaseLocalOffset(Vector3 localOffset)
+    {
+        runtimeBaseOffset = localOffset;
+        ApplyFrame();
+    }
+
     public IEnumerator PlayCycles(int cycles)
     {
         EnsureTargets();

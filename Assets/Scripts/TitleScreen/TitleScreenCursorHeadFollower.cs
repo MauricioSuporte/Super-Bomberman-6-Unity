@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public sealed class TitleScreenCursorHeadFollower : MonoBehaviour
 {
     [SerializeField] RectTransform eyes;
+    [SerializeField] TitleScreenCursorEyeIdle eyePose;
     RectTransform rectTransformCache;
     Image headImage;
 
@@ -12,6 +13,8 @@ public sealed class TitleScreenCursorHeadFollower : MonoBehaviour
     {
         rectTransformCache = transform as RectTransform;
         headImage = GetComponent<Image>();
+        if (eyePose == null && eyes != null)
+            eyePose = eyes.GetComponent<TitleScreenCursorEyeIdle>();
     }
 
     void LateUpdate()
@@ -20,7 +23,8 @@ public sealed class TitleScreenCursorHeadFollower : MonoBehaviour
         bool visible = eyes.gameObject.activeInHierarchy;
         if (headImage != null) headImage.enabled = visible;
         if (!visible) return;
-        rectTransformCache.localPosition = eyes.localPosition;
+        Vector3 eyeOffset = eyePose != null ? eyePose.CurrentEyeLocalOffset : Vector3.zero;
+        rectTransformCache.localPosition = eyes.localPosition - eyeOffset;
         rectTransformCache.localScale = eyes.localScale;
     }
 }

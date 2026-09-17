@@ -372,7 +372,6 @@ public class TitleScreenController : MonoBehaviour
             cursorConfirmAnimator.Configure(
                 cursorRenderer,
                 cursorEyeIdle,
-                cursorRenderer.transform as RectTransform,
                 cursorHeadImage,
                 cursorDefaultHead,
                 cursorConfirmHeadFrames);
