@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 247858796010280834}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -119,7 +119,7 @@ Transform:
   m_GameObject: {fileID: 2735792924121542080}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -202,7 +202,7 @@ MonoBehaviour:
   - {fileID: 3416686201091863649, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: -1189544654682552941, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: -8098890592165270843, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
-  - {fileID: -1189544654682552941, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: 6417681075139482741, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -212,9 +212,10 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &3652775102637384650
@@ -500,7 +501,10 @@ MonoBehaviour:
   eatFrames:
   - {fileID: 8559436120042109187, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: 2991740723393476942, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
-  eatenBombSprite: {fileID: 3384417702957195882, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: 3384417702957195882, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: 6917521027963050856, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: -7921463801926845316, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: 2765941830648295173, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   eatAnimationSeconds: 0.4
   eatenBombHoldSeconds: 0.25
 --- !u!1 &6282633917977292352
@@ -530,7 +534,7 @@ Transform:
   m_GameObject: {fileID: 6282633917977292352}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -630,8 +634,20 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
-  frameOffsets: []
+  frameOffsets:
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: -0.2}
+  - {x: 0, y: -0.2}
+  - {x: 0, y: -0.2}
+  - {x: 0, y: -0.2}
+  - {x: 0, y: -0.2}
+  - {x: 0, y: -0.2}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
@@ -662,7 +678,7 @@ Transform:
   m_GameObject: {fileID: 6978144832976382187}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -717,7 +733,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 228337833145139128, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  m_Sprite: {fileID: -1148868264867746848, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -745,7 +761,7 @@ MonoBehaviour:
   - {fileID: -1148868264867746848, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: -4914652394633887605, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: 228337833145139128, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
-  - {fileID: -4914652394633887605, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: -3320608646627019563, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -755,9 +771,10 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &7578664575342434788
@@ -787,7 +804,7 @@ Transform:
   m_GameObject: {fileID: 7578664575342434788}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -870,7 +887,7 @@ MonoBehaviour:
   - {fileID: -9130320706876557602, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: 921605397362748752, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   - {fileID: -1835340986496896060, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
-  - {fileID: 921605397362748752, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
+  - {fileID: 8035267073670712656, guid: 0af09d659a274a24cab97be05ce346e8, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -880,8 +897,9 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1

@@ -3,12 +3,9 @@ using UnityEngine;
 
 public sealed class GashinMovementController : JunctionTurningEnemyMovementController
 {
-    private const int EatAnimationCycles = 3;
-
     [Header("Bomb Eating")]
     [SerializeField] private SpriteRenderer eatRenderer;
     [SerializeField] private Sprite[] eatFrames;
-    [SerializeField] private Sprite eatenBombSprite;
     [SerializeField, Min(0.01f)] private float eatAnimationSeconds = 0.4f;
     [SerializeField, Min(0.01f)] private float eatenBombHoldSeconds = 0.25f;
 
@@ -187,26 +184,23 @@ public sealed class GashinMovementController : JunctionTurningEnemyMovementContr
         int frameCount = eatFrames != null ? eatFrames.Length : 0;
         if (frameCount > 0)
         {
-            float secondsPerFrame = eatAnimationSeconds / (EatAnimationCycles * frameCount);
-            for (int cycle = 0; cycle < EatAnimationCycles; cycle++)
+            float secondsPerFrame = eatAnimationSeconds / frameCount;
+            for (int frame = 0; frame < frameCount; frame++)
             {
-                for (int frame = 0; frame < frameCount; frame++)
-                {
-                    if (eatRenderer != null)
-                        eatRenderer.sprite = eatFrames[frame];
+                if (eatRenderer != null)
+                    eatRenderer.sprite = eatFrames[frame];
 
-                    yield return new WaitForSeconds(Mathf.Max(0.01f, secondsPerFrame));
+                yield return new WaitForSeconds(Mathf.Max(0.01f, secondsPerFrame));
 
-                    if (isDead)
-                        yield break;
-                }
+                if (isDead)
+                    yield break;
             }
+
+            if (eatRenderer != null)
+                eatRenderer.sprite = eatFrames[frameCount - 1];
+
+            yield return new WaitForSeconds(Mathf.Max(0.01f, eatenBombHoldSeconds));
         }
-
-        if (eatRenderer != null)
-            eatRenderer.sprite = eatenBombSprite;
-
-        yield return new WaitForSeconds(Mathf.Max(0.01f, eatenBombHoldSeconds));
 
         if (eatRenderer != null)
             eatRenderer.enabled = false;
