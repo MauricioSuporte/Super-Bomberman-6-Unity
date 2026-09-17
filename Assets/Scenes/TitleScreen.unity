@@ -538,6 +538,9 @@ GameObject:
   - component: {fileID: 544397351}
   - component: {fileID: 544397350}
   - component: {fileID: 544397349}
+  - component: {fileID: 544397353}
+  - component: {fileID: 544397354}
+  - component: {fileID: 544397355}
   m_Layer: 5
   m_Name: Cursor
   m_TagString: Untagged
@@ -557,19 +560,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300000, guid: efdbc00296c2e4049a4b925e8432840a, type: 3}
-  animationSprite:
-  - {fileID: 21300000, guid: f9815f75686c8864a9b597e93b90ea24, type: 3}
-  - {fileID: 21300000, guid: fa8b84ad5f85ba544a3410172d8c73df, type: 3}
-  - {fileID: 21300000, guid: e5eb7e4edac4992449d6e9e6e7f1d2c2, type: 3}
-  - {fileID: 21300000, guid: e5eb7e4edac4992449d6e9e6e7f1d2c2, type: 3}
-  - {fileID: 21300000, guid: e5eb7e4edac4992449d6e9e6e7f1d2c2, type: 3}
-  - {fileID: 21300000, guid: e5eb7e4edac4992449d6e9e6e7f1d2c2, type: 3}
-  - {fileID: 21300000, guid: e5eb7e4edac4992449d6e9e6e7f1d2c2, type: 3}
-  - {fileID: 21300000, guid: f9815f75686c8864a9b597e93b90ea24, type: 3}
-  - {fileID: 21300000, guid: fa8b84ad5f85ba544a3410172d8c73df, type: 3}
-  - {fileID: 21300000, guid: f9815f75686c8864a9b597e93b90ea24, type: 3}
-  - {fileID: 21300000, guid: f9815f75686c8864a9b597e93b90ea24, type: 3}
+  idleSprite: {fileID: 100002, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  animationSprite: []
   allowFlipX: 0
   animationTime: 0.045454547
   useSequenceDuration: 0
@@ -613,7 +605,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: efdbc00296c2e4049a4b925e8432840a, type: 3}
+  m_Sprite: {fileID: 100002, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -623,6 +615,92 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &544397353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544397348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f8e9e6f5b2a4d1e8c6f0a7b9d4e2c11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenCursorEyeIdle
+  cursorRenderer: {fileID: 544397349}
+  defaultEye: {fileID: 100002, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  briefEye: {fileID: 100003, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  resetCompleteEye: {fileID: 100012, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  alternateEyes:
+  - {fileID: 100004, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100005, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100006, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100007, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100008, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100009, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100010, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100011, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100012, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100013, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100014, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100015, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100016, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100017, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100018, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100019, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  idleDelay: 3
+  alternateDuration: 0.5
+  briefEyeDuration: 0.1
+--- !u!114 &544397354
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544397348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b9e1a7c2d8f4e5a9b6c0d3e7f1a2584, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenCursorConfirmAnimator
+  eyesRenderer: {fileID: 544397349}
+  eyeIdle: {fileID: 544397353}
+  eyesRect: {fileID: 544397352}
+  headImage: {fileID: 925001002}
+  defaultHead: {fileID: 100001, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  headFrames:
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100025, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100026, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100027, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100026, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100025, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  duration: 0.5
+--- !u!114 &544397355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544397348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a4d7e1c6b3f4820a5d8e2f1c7b4a963, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenCursorDeniedAnimator
+  eyesRenderer: {fileID: 544397349}
+  eyeIdle: {fileID: 544397353}
+  headImage: {fileID: 925001002}
+  defaultHead: {fileID: 100001, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  eyeRow3_2: {fileID: 100013, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  head1: {fileID: 100020, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  head2: {fileID: 100021, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  head3: {fileID: 100022, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  head4: {fileID: 100023, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  duration: 0.5
 --- !u!222 &544397351
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1835,6 +1913,7 @@ RectTransform:
   - {fileID: 362350262}
   - {fileID: 691562833}
   - {fileID: 1287610047}
+  - {fileID: 925001004}
   - {fileID: 544397352}
   - {fileID: 1724740266}
   - {fileID: 1601403390}
@@ -2012,6 +2091,21 @@ MonoBehaviour:
   exitDelayRealtime: 1
   startGameFadeOutDuration: 0.25
   cursorRenderer: {fileID: 544397349}
+  cursorEyeIdle: {fileID: 544397353}
+  cursorConfirmAnimator: {fileID: 544397354}
+  cursorDeniedAnimator: {fileID: 544397355}
+  cursorHeadImage: {fileID: 925001002}
+  cursorDefaultHead: {fileID: 100001, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  cursorConfirmHeadFrames:
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100025, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100026, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100027, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100026, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100025, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  - {fileID: 100024, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
   cursorOffset: {x: -28, y: 5}
   scaleCursorWithUi: 1
   pushStartText: {fileID: 0}
@@ -2127,6 +2221,95 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797125728}
   m_CullTransparentMesh: 1
+--- !u!1 &925001001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 925001004}
+  - component: {fileID: 925001003}
+  - component: {fileID: 925001002}
+  - component: {fileID: 925001005}
+  m_Layer: 5
+  m_Name: CursorHead
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &925001002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 100001, guid: 6d5e4f3a2b1c4879a0f1e2d3c4b5a697, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &925001003
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925001001}
+  m_CullTransparentMesh: 1
+--- !u!224 &925001004
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925001001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1599199474}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 1010, y: -480}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 1, y: 0.5}
+--- !u!114 &925001005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d4b6a3f1e947c8b5a2d9e6f0c31457, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenCursorHeadFollower
+  eyes: {fileID: 544397352}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

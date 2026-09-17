@@ -139,6 +139,12 @@ public class TitleScreenController : MonoBehaviour
 
     [Header("Cursor")]
     public AnimatedSpriteRenderer cursorRenderer;
+    [SerializeField] TitleScreenCursorEyeIdle cursorEyeIdle;
+    [SerializeField] TitleScreenCursorConfirmAnimator cursorConfirmAnimator;
+    [SerializeField] TitleScreenCursorDeniedAnimator cursorDeniedAnimator;
+    [SerializeField] Image cursorHeadImage;
+    [SerializeField] Sprite cursorDefaultHead;
+    [SerializeField] Sprite[] cursorConfirmHeadFrames;
     [SerializeField] Vector2 cursorOffset = new(-28f, 5f);
 
     [Header("Cursor Scaling")]
@@ -353,6 +359,23 @@ public class TitleScreenController : MonoBehaviour
             RectTransform root = GetEffectiveLayoutRoot();
             if (root != null)
                 cursorRenderer.transform.SetParent(root, false);
+
+            if (cursorConfirmAnimator == null)
+            {
+                cursorConfirmAnimator = cursorRenderer.GetComponent<TitleScreenCursorConfirmAnimator>();
+                if (cursorConfirmAnimator == null)
+                {
+                    cursorConfirmAnimator = cursorRenderer.gameObject.AddComponent<TitleScreenCursorConfirmAnimator>();
+                }
+            }
+
+            cursorConfirmAnimator.Configure(
+                cursorRenderer,
+                cursorEyeIdle,
+                cursorRenderer.transform as RectTransform,
+                cursorHeadImage,
+                cursorDefaultHead,
+                cursorConfirmHeadFrames);
 
             _cursorBaseLocalScale = cursorRenderer.transform.localScale;
             _cursorBaseScaleCaptured = true;
@@ -1280,12 +1303,30 @@ public class TitleScreenController : MonoBehaviour
         {
             if (input.GetDown(p, action))
             {
+                NotifyCursorInput();
                 pid = p;
                 return true;
             }
         }
 
         return false;
+    }
+
+    void NotifyCursorInput()
+    {
+        if (cursorDeniedAnimator != null)
+            cursorDeniedAnimator.Cancel();
+
+        if (cursorEyeIdle != null)
+            cursorEyeIdle.NotifyInput();
+    }
+
+    IEnumerator PlayCursorConfirm()
+    {
+        if (cursorConfirmAnimator != null)
+            yield return cursorConfirmAnimator.Play();
+        else
+            yield return new WaitForSecondsRealtime(0.5f);
     }
 
     bool TryGetAnyPlayerDownEither(PlayerAction a, PlayerAction b, out int pid)
@@ -1342,6 +1383,7 @@ public class TitleScreenController : MonoBehaviour
                 state.screenPosition = touch.position.ReadValue();
                 state.pressedThisFrame = touch.press.wasPressedThisFrame;
                 state.secondaryPressedThisFrame = false;
+                NotifyCursorInput();
                 return state;
             }
         }
@@ -1362,6 +1404,8 @@ public class TitleScreenController : MonoBehaviour
 
             if (!state.valid)
                 return state;
+
+            NotifyCursorInput();
 
             state.screenPosition = currentMousePosition;
             state.pressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
@@ -1673,7 +1717,7 @@ public class TitleScreenController : MonoBehaviour
                         PlaySelectSfx();
 
                         if (cursorRenderer != null)
-                            yield return cursorRenderer.PlayCycles(2);
+                            yield return PlayCursorConfirm();
 
                         SaveSystem.SetLanguage(languages[menuIndex]);
                         menuMode = MenuMode.Options;
@@ -1824,7 +1868,7 @@ public class TitleScreenController : MonoBehaviour
                         PlaySelectSfx();
 
                         if (cursorRenderer != null)
-                            yield return cursorRenderer.PlayCycles(2);
+                            yield return PlayCursorConfirm();
 
                         menuMode = MenuMode.GameModes;
                         menuIndex = 0;
@@ -1848,7 +1892,7 @@ public class TitleScreenController : MonoBehaviour
                         PlaySelectSfx();
 
                         if (cursorRenderer != null)
-                            yield return cursorRenderer.PlayCycles(2);
+                            yield return PlayCursorConfirm();
 
                         menuMode = MenuMode.Options;
                         menuIndex = 0;
@@ -1871,7 +1915,7 @@ public class TitleScreenController : MonoBehaviour
                         PlaySelectSfx();
 
                         if (cursorRenderer != null)
-                            yield return cursorRenderer.PlayCycles(2);
+                            yield return PlayCursorConfirm();
 
                         AchievementsRequested = true;
                         yield return StartSelectedGameFlow();
@@ -1882,7 +1926,7 @@ public class TitleScreenController : MonoBehaviour
                     PlaySelectSfx();
 
                     if (cursorRenderer != null)
-                        yield return cursorRenderer.PlayCycles(2);
+                        yield return PlayCursorConfirm();
 
                     ExitRequested = true;
                     yield return ExitGame();
@@ -1907,7 +1951,7 @@ public class TitleScreenController : MonoBehaviour
                     PlaySelectSfx();
 
                     if (cursorRenderer != null)
-                        yield return cursorRenderer.PlayCycles(2);
+                        yield return PlayCursorConfirm();
 
                     if (menuIndex == GAME_MODE_IDX_BATTLE)
                     {
@@ -1942,7 +1986,7 @@ public class TitleScreenController : MonoBehaviour
                     PlaySelectSfx();
 
                     if (cursorRenderer != null)
-                        yield return cursorRenderer.PlayCycles(2);
+                        yield return PlayCursorConfirm();
 
                     if (menuIndex == OPTIONS_IDX_CONTROLS)
                     {
@@ -2084,12 +2128,14 @@ public class TitleScreenController : MonoBehaviour
                     PlaySelectSfx();
 
                     if (cursorRenderer != null)
-                        yield return cursorRenderer.PlayCycles(2);
+                        yield return PlayCursorConfirm();
 
                     ResetEntireSaveFile();
                     forceBossRushUnlocked = bossRushInspectorDefaultUnlocked;
 
                     PlayResetSaveCompletedSfx();
+                    if (cursorEyeIdle != null)
+                        cursorEyeIdle.ShowResetCompleteEye();
 
                     menuMode = MenuMode.Options;
                     menuIndex = OptionsResetSaveIndex;
@@ -2122,7 +2168,7 @@ public class TitleScreenController : MonoBehaviour
                     PlaySelectSfx();
 
                     if (cursorRenderer != null)
-                        yield return cursorRenderer.PlayCycles(2);
+                        yield return PlayCursorConfirm();
 
                     if (pendingStartFlow == StartFlowMode.BossRush)
                     {
@@ -2846,6 +2892,9 @@ public class TitleScreenController : MonoBehaviour
 
     void PlayDeniedSfx()
     {
+        if (cursorDeniedAnimator != null)
+            cursorDeniedAnimator.Play();
+
         if (GameMusicController.Instance == null)
             return;
 
