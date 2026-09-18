@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -11,6 +12,10 @@ public static class BomberCharacterSelectPortraitGenerator
     const string OutputRoot = "Assets/Resources/Sprites/CharacterSelect";
     const string PalettePath = OutputRoot + "/SelectionPalette.png";
     const int Size = 32;
+    const int MaxWriteAttempts = 10;
+    static readonly Dictionary<string, byte[]> pendingWrites = new();
+    static int retryAttempts;
+    static double nextRetryTime;
 
     [MenuItem("Tools/Sprites/Generate Character Select Portraits")]
     public static void GenerateAll()
@@ -59,10 +64,7 @@ public static class BomberCharacterSelectPortraitGenerator
                             byte[] bytes = portrait.EncodeToPNG();
                             UnityEngine.Object.DestroyImmediate(portrait);
                             string output = $"{folder}/{sheet}_{frame}.png";
-                            if (File.Exists(output) && File.ReadAllBytes(output).SequenceEqual(bytes))
-                                continue;
-                            File.WriteAllBytes(output, bytes);
-                            AssetDatabase.ImportAsset(output);
+                            WriteGeneratedAsset(output, bytes);
                         }
                     }
                     finally { UnityEngine.Object.DestroyImmediate(recolored); }
@@ -84,35 +86,137 @@ public static class BomberCharacterSelectPortraitGenerator
         if (source == null) return;
         try
         {
-            if (source.width != 40 || source.height != 24)
+            if (source.width != 77 || source.height != 56)
             {
-                Debug.LogWarning($"Selection cursor sheet must be 40x24: {sourcePath}");
+                Debug.LogWarning($"Selection cursor sheet must be 77x56: {sourcePath}");
                 return;
             }
-            string[] names = { "1", "2", "3", "4", "5", "6", "P", "TopLeft", "TopRight", "BottomLeft", "BottomRight" };
-            Vector2Int[] cells = { new(0, 0), new(1, 0), new(2, 0), new(0, 1), new(1, 1), new(2, 1), new(0, 2), new(3, 0), new(4, 0), new(3, 1), new(4, 1) };
+            string[] names = { "1", "2", "3", "4", "5", "6", "P", "TopLeft", "TopRight", "BottomLeft", "BottomRight", "L", "R", "Plus", "Frame" };
+            Vector2Int[] cells = { new(0, 0), new(1, 0), new(2, 0), new(0, 1), new(1, 1), new(2, 1), new(0, 2), new(3, 0), new(4, 0), new(3, 1), new(4, 1), new(1, 2), new(2, 2), new(3, 2), new(0, 3) };
             Directory.CreateDirectory(OutputRoot + "/Cursor");
             for (int i = 0; i < names.Length; i++)
             {
-                Color[] pixels = source.GetPixels(cells[i].x * 8, source.height - (cells[i].y + 1) * 8, 8, 8);
+                int tileSize = names[i] == "Frame" ? 32 : 8;
+                Color[] pixels = source.GetPixels(cells[i].x * 8, source.height - cells[i].y * 8 - tileSize, tileSize, tileSize);
                 for (int p = 0; p < pixels.Length; p++)
                 {
                     Color32 pixel = pixels[p];
                     if (pixel.r == 251 && pixel.g == 255 && pixel.b == 0 && pixel.a > 0)
                         pixels[p] = Color.white; // UI tint changes the ink while keeping black outlines.
                 }
-                Texture2D tile = new(8, 8, TextureFormat.RGBA32, false);
+                Texture2D tile = new(tileSize, tileSize, TextureFormat.RGBA32, false);
                 tile.SetPixels(pixels);
                 tile.Apply();
                 byte[] bytes = tile.EncodeToPNG();
                 UnityEngine.Object.DestroyImmediate(tile);
                 string path = $"{OutputRoot}/Cursor/{names[i]}.png";
-                if (File.Exists(path) && File.ReadAllBytes(path).SequenceEqual(bytes)) continue;
-                File.WriteAllBytes(path, bytes);
-                AssetDatabase.ImportAsset(path);
+                WriteGeneratedAsset(path, bytes);
             }
         }
         finally { UnityEngine.Object.DestroyImmediate(source); }
+    }
+
+    static void WriteGeneratedAsset(string path, byte[] bytes)
+    {
+        if (TryWriteGeneratedAsset(path, bytes, out _))
+        {
+            pendingWrites.Remove(path);
+            return;
+        }
+
+        if (pendingWrites.Count == 0) retryAttempts = 0;
+        pendingWrites[path] = bytes;
+        nextRetryTime = EditorApplication.timeSinceStartup + 0.5;
+        EditorApplication.update -= RetryPendingWrites;
+        EditorApplication.update += RetryPendingWrites;
+    }
+
+    static bool TryWriteGeneratedAsset(string path, byte[] bytes, out string error)
+    {
+        error = null;
+        try
+        {
+            if (File.Exists(path))
+            {
+                byte[] existing = File.ReadAllBytes(path);
+                // PNG encoders can produce different bytes for identical pixels.
+                if (existing.SequenceEqual(bytes) || SamePixels(existing, bytes)) return true;
+            }
+
+            // Never truncate a PNG that Unity may currently have memory-mapped.
+            // Replace only the image; its .meta and GUID remain untouched.
+            string temporary = Path.Combine(Path.GetDirectoryName(path),
+                "." + Path.GetFileName(path) + "." + Guid.NewGuid().ToString("N") + ".tmp");
+            try
+            {
+                File.WriteAllBytes(temporary, bytes);
+                if (File.Exists(path)) File.Replace(temporary, path, null);
+                else File.Move(temporary, path);
+            }
+            finally
+            {
+                if (File.Exists(temporary)) File.Delete(temporary);
+            }
+
+            AssetDatabase.ImportAsset(path);
+            return true;
+        }
+        catch (IOException exception) when (IsFileInUse(exception))
+        {
+            error = exception.Message;
+            return false;
+        }
+    }
+
+    static bool IsFileInUse(IOException exception)
+    {
+        int code = exception.HResult & 0xffff;
+        return code == 32 || code == 33 || code == 1224;
+    }
+
+    static bool SamePixels(byte[] left, byte[] right)
+    {
+        Texture2D a = new(2, 2, TextureFormat.RGBA32, false);
+        Texture2D b = new(2, 2, TextureFormat.RGBA32, false);
+        try
+        {
+            return a.LoadImage(left) && b.LoadImage(right) &&
+                a.width == b.width && a.height == b.height &&
+                a.GetPixels32().SequenceEqual(b.GetPixels32());
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(a);
+            UnityEngine.Object.DestroyImmediate(b);
+        }
+    }
+
+    static void RetryPendingWrites()
+    {
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating ||
+            EditorApplication.timeSinceStartup < nextRetryTime) return;
+
+        nextRetryTime = EditorApplication.timeSinceStartup + 0.5;
+        retryAttempts++;
+        foreach (var pending in pendingWrites.ToArray())
+        {
+            try
+            {
+                if (TryWriteGeneratedAsset(pending.Key, pending.Value, out string error))
+                    pendingWrites.Remove(pending.Key);
+                else if (retryAttempts >= MaxWriteAttempts)
+                {
+                    pendingWrites.Remove(pending.Key);
+                    Debug.LogError($"Could not update selection asset after {MaxWriteAttempts} retries: {pending.Key}\n{error}");
+                }
+            }
+            catch (Exception exception)
+            {
+                pendingWrites.Remove(pending.Key);
+                Debug.LogException(exception);
+            }
+        }
+        if (pendingWrites.Count == 0) EditorApplication.update -= RetryPendingWrites;
     }
 }
 

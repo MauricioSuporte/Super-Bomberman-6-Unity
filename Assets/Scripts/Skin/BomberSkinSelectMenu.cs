@@ -319,6 +319,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
         EnsureUnlockHintText();
         EnsureFooterHintText();
 
+        // Battle Mode reopens the shared root before skin selection starts.
+        // Keep the entire grid (including its frame images) hidden until then.
+        if (gridRoot != null)
+            gridRoot.gameObject.SetActive(false);
+
         if (root != null)
             root.SetActive(false);
     }
@@ -2147,6 +2152,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
             imgRt.sizeDelta = cellSize;
             imgRt.localScale = Vector3.one;
             imgRt.localRotation = Quaternion.identity;
+
+            GameObject frameObject = new("PortraitFrame", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            frameObject.transform.SetParent(slotRt, false);
+            Image frameImage = frameObject.GetComponent<Image>();
+            frameImage.sprite = Resources.Load<Sprite>("Sprites/CharacterSelect/Cursor/Frame");
+            frameImage.raycastTarget = false;
+            RectTransform frameRect = frameImage.rectTransform;
+            frameRect.anchorMin = Vector2.zero;
+            frameRect.anchorMax = Vector2.one;
+            frameRect.offsetMin = frameRect.offsetMax = Vector2.zero;
 
             slotRoots.Add(slotRt);
             slotImages.Add(img);
