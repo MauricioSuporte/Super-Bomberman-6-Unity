@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public sealed class JunctionTurningPersecutingEnemyMovementController : JunctionTurningEnemyMovementController
+public class JunctionTurningPersecutingEnemyMovementController : JunctionTurningEnemyMovementController
 {
     [Header("Player Pursuit")]
     [SerializeField, Min(0.1f)] private float visionDistance = 10f;
@@ -27,6 +27,7 @@ public sealed class JunctionTurningPersecutingEnemyMovementController : Junction
     {
         if (TryGetPlayerDirection(out Vector2 playerDirection))
         {
+            ApplyPursuitSpeed(playerVisible: true);
             Vector2 forwardTile = rb.position + playerDirection * tileSize;
             if (!IsTileBlocked(forwardTile))
             {
@@ -37,7 +38,16 @@ public sealed class JunctionTurningPersecutingEnemyMovementController : Junction
             }
         }
 
+        ApplyPursuitSpeed(playerVisible: false);
         base.DecideNextTile();
+    }
+
+    /// <summary>
+    /// Lets specialized pursuers adjust their movement speed while a player is
+    /// visible without changing the shared pursuit and line-of-sight rules.
+    /// </summary>
+    protected virtual void ApplyPursuitSpeed(bool playerVisible)
+    {
     }
 
     private bool TryGetPlayerDirection(out Vector2 directionToPlayer)
