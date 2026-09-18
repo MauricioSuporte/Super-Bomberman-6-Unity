@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerBomberSkinController : MonoBehaviour
@@ -18,6 +18,12 @@ public class PlayerBomberSkinController : MonoBehaviour
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
     // Sprite-sheet animation indices. Update this block when the shared bomber template changes.
     static readonly int[] BombermanAfkFrames = { 130, 129, 128, 129, 130, 131, 132, 131 };
+    static readonly int[] BombermanPalette2AfkFrames = { 130, 131, 132, 131, 130, 129, 128, 129 };
+    // Attachment frames 7, 6, 8, 6, played four times and held on frame 6.
+    static readonly int[] BombermanPalette2EndStageFrames =
+    {
+        109, 108, 110, 108, 109, 108, 110, 108, 109, 108, 110, 108, 109, 108, 110, 108
+    };
     static readonly int[] LadyBomberAfkFrames = { 126, 125, 124, 123, 122, 125 };
     static readonly int[] TinyBomberAfkFrames =
     {
@@ -190,7 +196,14 @@ public class PlayerBomberSkinController : MonoBehaviour
             ApplyWalkDefinition(renderer, definition, targetMap, skin);
         }
 
-        int[] afkFrames = GetAfkFrames(character);
+        bool usePalette2Animations = character == BomberCharacter.Bomberman && skin == BomberSkin.Palette2;
+        InactivityAnimation inactivity = GetComponentInParent<InactivityAnimation>(true);
+        if (inactivity != null)
+            inactivity.KeepPrimaryLoopUntilInput = usePalette2Animations;
+
+        int[] afkFrames = usePalette2Animations
+            ? BombermanPalette2AfkFrames
+            : GetAfkFrames(character);
         float afkSpeedMultiplier = GetAfkSpeedMultiplier(character);
         ApplyFrameSequence(
             FindAnimatedRenderer("Afk"),
@@ -276,7 +289,7 @@ public class PlayerBomberSkinController : MonoBehaviour
             frameDurations: BuildDeathFrameDurations(deathFrames.Length)
         );
 
-        int[] endStageFrames = GetEndStageFrames(character);
+        int[] endStageFrames = GetEndStageFrames(character, skin);
         ApplyFrameSequence(
             FindAnimatedRenderer("EndStage"),
             "EndStage",
@@ -432,8 +445,11 @@ public class PlayerBomberSkinController : MonoBehaviour
                actualName == expectedName.Replace("Right", "Rigth");
     }
 
-    public static int[] GetEndStageFrames(BomberCharacter character)
+    public static int[] GetEndStageFrames(BomberCharacter character, BomberSkin skin = BomberSkin.Palette1)
     {
+        if (character == BomberCharacter.Bomberman && skin == BomberSkin.Palette2)
+            return BombermanPalette2EndStageFrames;
+
         string folderName = BomberSkinResourceCatalog.GetCharacterFolderName(character);
         if (folderName == "MinerBomber")
             return MinerBomberEndStageFrames;

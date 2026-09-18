@@ -185,6 +185,17 @@ This file gives repository-specific guidance for AI coding agents working on
 
 ## Safe defaults for agents
 
+- When editing text files, always specify UTF-8 explicitly for both reads and
+  writes; never rely on the shell or Python locale default. In Python, read
+  with `encoding="utf-8-sig"` and write with `encoding="utf-8"`; preserve the
+  existing newline style. A valid UTF-8 BOM is allowed, but must never be
+  decoded as ANSI/Windows-1252 and written back as literal text.
+- Before finalizing C# edits, inspect the first bytes of every changed `.cs`
+  file and verify strict UTF-8 decoding. Reject a literal corrupted BOM
+  (`\u00EF\u00BB\u00BF`, UTF-8 bytes `C3 AF C2 BB C2 BF`), duplicate BOMs,
+  or replacement characters (`U+FFFD`). Remove only a confirmed corrupted
+  prefix; do not globally strip non-ASCII characters or rewrite unrelated
+  files. This byte-level check does not require Unity compilation.
 - For every newly imported raster image, set the Unity Texture Importer's
   **Default** platform Compression setting to `None`, with platform overrides
   disabled, before finalizing the asset. Match this setting to existing enemy

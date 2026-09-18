@@ -45,6 +45,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     public float ChanceAltAnimation => Mathf.Clamp01(chanceAltAnimation);
     public bool RefreshFrameOnEnter => refreshFrameOnEnter;
     public bool SuppressMovementInput => manualTriggerHeld;
+    public bool KeepPrimaryLoopUntilInput { get; set; }
 
     public void CancelForExternalOverride()
     {
@@ -202,7 +203,8 @@ public sealed class InactivityAnimation : MonoBehaviour
         if (!isPlaying && idleTime >= secondsToTrigger)
             StartEmote(desiredTarget);
 
-        if (isPlaying && Time.time >= nextSwitchTime)
+        bool keepPrimaryLoop = KeepPrimaryLoopUntilInput && currentTarget == EmoteTarget.Player && !usingAlt;
+        if (isPlaying && !keepPrimaryLoop && Time.time >= nextSwitchTime)
         {
             SwitchEmote();
             nextSwitchTime = Time.time + switchInterval;

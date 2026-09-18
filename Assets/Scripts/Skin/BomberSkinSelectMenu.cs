@@ -980,9 +980,18 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return character + ":" + skin;
     }
 
-    int[] GetEndStageFrames(BomberCharacter character)
+    // Selection confirmation: attachment frames 7, 6, 8, 6, twice.
+    static readonly int[] BombermanPalette2SelectionVictoryFrames =
     {
-        return PlayerBomberSkinController.GetEndStageFrames(character);
+        109, 108, 110, 108, 109, 108, 110, 108
+    };
+
+    int[] GetEndStageFrames(BomberCharacter character, BomberSkin skin)
+    {
+        if (character == BomberCharacter.Bomberman && skin == BomberSkin.Palette2)
+            return BombermanPalette2SelectionVictoryFrames;
+
+        return PlayerBomberSkinController.GetEndStageFrames(character, skin);
     }
 
     static bool ShouldLoopEndStage(BomberCharacter character)
@@ -990,9 +999,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return character == BomberCharacter.LadyBomber;
     }
 
-    int GetEndStageFrame(BomberCharacter character, int frameIndex)
+    int GetEndStageFrame(BomberCharacter character, BomberSkin skin, int frameIndex)
     {
-        int[] frames = GetEndStageFrames(character);
+        int[] frames = GetEndStageFrames(character, skin);
         if (frames == null || frames.Length == 0)
             return idleFrameIndex;
 
@@ -1012,9 +1021,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return baseTime / Mathf.Max(0.01f, ladyBomberEndStageSpeedMultiplier);
     }
 
-    float GetSelectedSkinConfirmFrameTime(BomberCharacter character)
+    float GetSelectedSkinConfirmFrameTime(BomberCharacter character, BomberSkin skin)
     {
-        int[] frames = GetEndStageFrames(character);
+        int[] frames = GetEndStageFrames(character, skin);
         int frameCount = frames != null && frames.Length > 0 ? frames.Length : 1;
         float duration = Mathf.Max(0.05f, selectedSkinConfirmAnimationSeconds);
         return Mathf.Max(0.001f, duration / frameCount);
@@ -1065,7 +1074,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     public Sprite GetBattleModeTeamCelebrationSprite(BomberCharacter character, BomberSkin skin, int frameIndex)
     {
         int frame = idleFrameIndex;
-        int[] frames = GetEndStageFrames(character);
+        int[] frames = PlayerBomberSkinController.GetEndStageFrames(character, skin);
         if (frames != null && frames.Length > 0)
         {
             if (ShouldLoopEndStage(character) && frameIndex == int.MaxValue)
@@ -1398,7 +1407,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             endStageBySlot[slotIndex] = st;
         }
 
-        int[] frames = GetEndStageFrames(character);
+        int[] frames = GetEndStageFrames(character, skin);
         bool loopEndStage = ShouldLoopEndStage(character);
         int finalFrameIndex = 0;
         if (frames != null && frames.Length > 0)
@@ -1472,7 +1481,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 img.rectTransform.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
             }
 
-            int[] frames = GetEndStageFrames(st.character);
+            int[] frames = GetEndStageFrames(st.character, st.skin);
             if (frames != null && frames.Length > 0)
             {
                 int frameIndex = ShouldLoopEndStage(st.character)
@@ -1608,11 +1617,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (cursor == null || !cursor.confirmed || cursor.endStageStopped)
                 continue;
 
-            int[] frames = GetEndStageFrames(cursor.selectedCharacter);
+            int[] frames = GetEndStageFrames(cursor.selectedCharacter, cursor.selected);
             if (frames == null || frames.Length == 0)
                 continue;
 
-            float ft = GetSelectedSkinConfirmFrameTime(cursor.selectedCharacter);
+            float ft = GetSelectedSkinConfirmFrameTime(cursor.selectedCharacter, cursor.selected);
             cursor.endStageTimer += Time.unscaledDeltaTime;
 
             while (cursor.endStageTimer >= ft)
@@ -1637,7 +1646,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (st == null || st.stopped)
                 continue;
 
-            int[] frames = GetEndStageFrames(st.character);
+            int[] frames = GetEndStageFrames(st.character, st.skin);
             if (frames == null || frames.Length == 0)
                 continue;
 
@@ -2404,7 +2413,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             int frame = idleFrameIndex;
             if (cursor.confirmed)
             {
-                int[] frames = GetEndStageFrames(character);
+                int[] frames = GetEndStageFrames(character, skin);
                 if (frames != null && frames.Length > 0)
                 {
                     int frameIndex = Mathf.Clamp(cursor.endStageFrameIdx, 0, frames.Length - 1);
