@@ -6691,7 +6691,7 @@ Tilemap:
       - {fileID: 181609651, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: 1414823366, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -246493938, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 55, y: -3, z: 0}
@@ -6811,7 +6811,7 @@ Tilemap:
       - {fileID: 181609651, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: 1414823366, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -246493938, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 55, y: 0, z: 0}
@@ -6901,7 +6901,7 @@ Tilemap:
       - {fileID: -1353699778, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -1951247315, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
       - {fileID: -248224407, guid: 9a918ca8fdd4ae24e8ace965a5017fef, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 56, y: 2, z: 0}
@@ -16400,8 +16400,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
-  activePlayerMask: 1
+  activePlayerCount: 4
+  activePlayerMask: 15
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0

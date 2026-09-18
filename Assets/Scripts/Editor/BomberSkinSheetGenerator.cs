@@ -64,6 +64,7 @@ public static class BomberSkinSheetGenerator
         UpdatePlayerPrefabPalette1References();
 
         BomberHudPortraitGenerator.GenerateAll();
+        BomberCharacterSelectPortraitGenerator.GenerateAll();
     }
 
     static void UpdatePlayerPrefabPalette1References()
@@ -311,7 +312,7 @@ public static class BomberSkinSheetGenerator
         return null;
     }
 
-    static Texture2D LoadTexture(string assetPath)
+    internal static Texture2D LoadTexture(string assetPath)
     {
         byte[] bytes = File.ReadAllBytes(assetPath);
         Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
@@ -326,7 +327,7 @@ public static class BomberSkinSheetGenerator
         return texture;
     }
 
-    static Dictionary<Color32, Color32> BuildPaletteMap(Texture2D palette, int targetColumn)
+    internal static Dictionary<Color32, Color32> BuildPaletteMap(Texture2D palette, int targetColumn)
     {
         Dictionary<Color32, Color32> map = new();
 
@@ -344,7 +345,7 @@ public static class BomberSkinSheetGenerator
         return map;
     }
 
-    static Texture2D Recolor(Texture2D source, Dictionary<Color32, Color32> colorMap)
+    internal static Texture2D Recolor(Texture2D source, Dictionary<Color32, Color32> colorMap)
     {
         Texture2D generated = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
         Color32[] pixels = source.GetPixels32();

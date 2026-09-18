@@ -56,13 +56,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] Sprite[] cursorSpriteByPlayer = new Sprite[GameSession.MaxPlayerId];
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
-    [SerializeField] float cursorYOffset = 8f;
-
-    [Header("Cursor Blink (Idle)")]
-    [SerializeField] bool cursorBlinkWhileNotConfirmed = true;
-    [SerializeField] float cursorBlinkSpeed = 5.5f;
-    [SerializeField, Range(0f, 1f)] float cursorBlinkMinAlpha = 0.25f;
-    [SerializeField, Range(0f, 1f)] float cursorBlinkMaxAlpha = 1f;
 
     [Header("Background Sprite")]
     [SerializeField] Sprite[] backgroundSprites = new Sprite[2];
@@ -196,7 +189,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     Vector2 _baseCellSize;
     Vector2 _baseSpacing;
     Vector2 _baseCursorPadding;
-    float _baseCursorYOffset;
     float _baseEndStageYOffset;
     bool _baseValuesCaptured;
 
@@ -259,7 +251,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     readonly Dictionary<int, EndStageState> endStageBySlot = new();
 
-    float cursorBlinkT;
     int overlapZTick;
 
     int[] selectedBySlot;
@@ -276,7 +267,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         public int selectedIndex = -1;
         public bool battleComCursor;
         public RectTransform cursorRt;
-        public Image cursorImg;
+        public BomberPortraitSelectionCursor portraitCursor;
         public float endStageTimer;
         public int endStageFrameIdx;
         public int endStageLoopsDone;
@@ -349,7 +340,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyDynamicScaleIfNeeded(false);
 
         TickBackgroundSpriteSwap();
-        TickCursorBlink();
         TickDownClock();
         TickEndStageClocks();
         UpdateSlotVisuals();
@@ -474,7 +464,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         downTimer = 0f;
         downFrameIdx = 0;
 
-        cursorBlinkT = 0f;
         overlapZTick = 0;
 
         RestoreAllSlotPositions();
@@ -1132,13 +1121,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         StartEndStageForCursor(ps);
 
-        if (ps.cursorImg != null)
-        {
-            var c = ps.cursorImg.color;
-            c.a = 1f;
-            ps.cursorImg.color = c;
-        }
-
         PlaySfx(confirmSfx, confirmSfxVolume);
     }
 
@@ -1453,51 +1435,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void ApplyFinalEndStageVisualsImmediate()
     {
-        if (endStageBySlot == null || endStageBySlot.Count <= 0)
-            return;
-
-        foreach (var kv in endStageBySlot)
-        {
-            EndStageState st = kv.Value;
-            if (st == null)
-                continue;
-
-            int slotIndex = st.slotIndex;
-            if (slotIndex < 0 || slotIndex >= slotImages.Count)
-                continue;
-
-            Image img = slotImages[slotIndex];
-            if (img == null)
-                continue;
-
-            if (img.rectTransform != null)
-            {
-                if (!st.baseCaptured)
-                {
-                    st.baseAnchoredPos = Vector2.zero;
-                    st.baseCaptured = true;
-                }
-
-                img.rectTransform.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
-            }
-
-            int[] frames = GetEndStageFrames(st.character, st.skin);
-            if (frames != null && frames.Length > 0)
-            {
-                int frameIndex = ShouldLoopEndStage(st.character)
-                    ? Mathf.Abs(st.frameIdx) % frames.Length
-                    : Mathf.Clamp(st.frameIdx, 0, frames.Length - 1);
-                int frame = frames[frameIndex];
-                img.sprite = GetSpriteByFrame(st.character, st.skin, frame) ?? GetIdleSprite(st.character, st.skin);
-            }
-            else
-            {
-                img.sprite = GetIdleSprite(st.character, st.skin);
-            }
-
-            img.color = selectedTint;
-            img.enabled = img.sprite != null;
-        }
+        UpdateSlotVisuals();
     }
 
     void StopEndStageForSlot(int slotIndex)
@@ -1557,41 +1495,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         return true;
-    }
-
-    void TickCursorBlink()
-    {
-        if (!cursorBlinkWhileNotConfirmed)
-            return;
-
-        cursorBlinkT += Time.unscaledDeltaTime * Mathf.Max(0.01f, cursorBlinkSpeed);
-        float s = (Mathf.Sin(cursorBlinkT) + 1f) * 0.5f;
-        float a = Mathf.Lerp(cursorBlinkMinAlpha, cursorBlinkMaxAlpha, s);
-
-        for (int i = 0; i < players.Count; i++)
-        {
-            var ps = players[i];
-            if (ps.cursorImg == null || ps.cursorRt == null || !ps.cursorRt.gameObject.activeSelf)
-                continue;
-
-            if (ps.confirmed)
-            {
-                var c0 = ps.cursorImg.color;
-                if (c0.a != 1f)
-                {
-                    c0.a = 1f;
-                    ps.cursorImg.color = c0;
-                }
-                continue;
-            }
-
-            var col = ps.cursorImg.color;
-            if (!Mathf.Approximately(col.a, a))
-            {
-                col.a = a;
-                ps.cursorImg.color = col;
-            }
-        }
     }
 
     void TickDownClock()
@@ -1712,18 +1615,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (img.rectTransform != null)
                 img.rectTransform.anchoredPosition = Vector2.zero;
 
-            if (unlocked && activeCursorHere)
-            {
-                int f = downFrames != null && downFrames.Length > 0
-                    ? downFrames[Mathf.Clamp(downFrameIdx, 0, downFrames.Length - 1)]
-                    : idleFrameIndex;
-
-                img.sprite = GetSpriteByFrame(slotCharacter, skin, f) ?? GetIdleSprite(slotCharacter, skin);
-            }
-            else
-            {
-                img.sprite = GetIdleSprite(slotCharacter, skin);
-            }
+            int expression = activeCursorHere ? 1 : 0;
+            img.sprite = HudCharacterPortraitCatalog.LoadSelection(slotCharacter, skin, expression);
 
             img.enabled = img.sprite != null;
         }
@@ -1835,34 +1728,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
             battleComCursor = battleComCursor
         };
 
-        if (skinCursorPrefab != null)
-        {
-            var c = Instantiate(skinCursorPrefab, gridRoot);
-            c.gameObject.SetActive(false);
-            c.SetAsLastSibling();
-            st.cursorRt = c;
-
-            st.cursorImg = c.GetComponent<Image>();
-            if (st.cursorImg != null)
-            {
-                st.cursorImg.raycastTarget = false;
-
-                int spriteIdx = target - 1;
-
-                if (cursorSpriteByPlayer != null &&
-                    spriteIdx >= 0 &&
-                    spriteIdx < cursorSpriteByPlayer.Length &&
-                    cursorSpriteByPlayer[spriteIdx] != null)
-                {
-                    st.cursorImg.sprite = cursorSpriteByPlayer[spriteIdx];
-                    st.cursorImg.preserveAspect = true;
-                }
-
-                var col = st.cursorImg.color;
-                col.a = 1f;
-                st.cursorImg.color = col;
-            }
-        }
+        GameObject cursorObject = new($"PortraitCursor_P{target}", typeof(RectTransform));
+        st.cursorRt = cursorObject.GetComponent<RectTransform>();
+        st.cursorRt.SetParent(gridRoot, false);
+        st.portraitCursor = cursorObject.AddComponent<BomberPortraitSelectionCursor>();
+        st.portraitCursor.Initialize(target);
+        cursorObject.SetActive(false);
 
         return st;
     }
@@ -2190,13 +2061,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         StartEndStageForCursor(cursor);
 
-        if (cursor.cursorImg != null)
-        {
-            Color c = cursor.cursorImg.color;
-            c.a = 1f;
-            cursor.cursorImg.color = c;
-        }
-
         if (cursor.cursorRt != null)
             cursor.cursorRt.gameObject.SetActive(true);
     }
@@ -2280,7 +2144,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             imgRt.anchorMax = new Vector2(0.5f, 0.5f);
             imgRt.pivot = new Vector2(0.5f, 0.5f);
             imgRt.anchoredPosition = Vector2.zero;
-            imgRt.sizeDelta = GetSkinSpriteDisplaySize();
+            imgRt.sizeDelta = cellSize;
             imgRt.localScale = Vector3.one;
             imgRt.localRotation = Quaternion.identity;
 
@@ -2778,15 +2642,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.anchorMin = new Vector2(0.5f, 0.5f);
             ps.cursorRt.anchorMax = new Vector2(0.5f, 0.5f);
             ps.cursorRt.pivot = new Vector2(0.5f, 0.5f);
-            ps.cursorRt.anchoredPosition = new Vector2(0f, cursorYOffset);
-
-            var baseSize = slotRt.rect.size;
-            var targetSize = new Vector2(
-                baseSize.x * cursorSizeMultiplier.x,
-                baseSize.y * cursorSizeMultiplier.y
-            ) + cursorPadding;
-
-            ps.cursorRt.sizeDelta = targetSize;
+            ps.cursorRt.anchoredPosition = Vector2.zero;
+            ps.cursorRt.sizeDelta = slotRt.rect.size;
+            ps.portraitCursor.Refresh(GetCursorPalette(ps), slotRt.rect.size);
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
         }
@@ -3195,7 +3053,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         _baseCellSize = cellSize;
         _baseSpacing = spacing;
         _baseCursorPadding = cursorPadding;
-        _baseCursorYOffset = cursorYOffset;
         _baseEndStageYOffset = endStageYOffset;
         _baseValuesCaptured = true;
     }
@@ -3233,7 +3090,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         cellSize = _baseCellSize * _currentUiScale;
         spacing = _baseSpacing * _currentUiScale;
         cursorPadding = _baseCursorPadding * _currentUiScale;
-        cursorYOffset = _baseCursorYOffset * _currentUiScale;
         endStageYOffset = _baseEndStageYOffset * _currentUiScale;
 
         ApplyScaledLayout();
@@ -3315,7 +3171,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void ApplySkinSpriteDisplaySizes()
     {
-        Vector2 displaySize = GetSkinSpriteDisplaySize();
+        Vector2 displaySize = cellSize;
 
         for (int i = 0; i < slotImages.Count; i++)
         {

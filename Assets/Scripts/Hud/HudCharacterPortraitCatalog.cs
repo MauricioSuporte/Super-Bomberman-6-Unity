@@ -14,6 +14,21 @@ public static class HudCharacterPortraitCatalog
 
     static readonly Dictionary<string, Sprite> cache = new();
 
+    // Selection sheets contain neutral and focused portraits, top to bottom.
+    public static Sprite LoadSelection(BomberCharacter character, BomberSkin skin, int expressionIndex)
+    {
+        string sheet = BomberSkinResourceCatalog.GetSheetName(character, skin);
+        string folder = BomberSkinResourceCatalog.GetCharacterFolderName(character);
+        string path = $"Sprites/CharacterSelect/{folder}/{sheet}_{Mathf.Clamp(expressionIndex, 0, 1)}";
+        if (!cache.TryGetValue(path, out Sprite portrait))
+        {
+            portrait = Resources.Load<Sprite>(path) ?? Load(character, skin, DefaultExpression);
+            cache[path] = portrait;
+        }
+
+        return portrait;
+    }
+
     public static Sprite Load(BomberCharacter character, BomberSkin skin, int expressionIndex)
     {
         BomberSkin normalizedSkin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin);

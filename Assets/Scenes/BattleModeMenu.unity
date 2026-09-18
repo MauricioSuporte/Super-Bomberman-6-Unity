@@ -481,9 +481,9 @@ MonoBehaviour:
   gridRoot: {fileID: 300000101}
   skinItemPrefab: {fileID: 300000113}
   columns: 5
-  cellSize: {x: 56, y: 56}
+  cellSize: {x: 64, y: 64}
   spacing: {x: 12, y: 12}
-  skinSpriteScaleMultiplier: 2
+  skinSpriteScaleMultiplier: 1.75
   lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   selectedTint: {r: 1, g: 1, b: 1, a: 1}
@@ -500,11 +500,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
-  cursorYOffset: 7
-  cursorBlinkWhileNotConfirmed: 1
-  cursorBlinkSpeed: 5.5
-  cursorBlinkMinAlpha: 0.25
-  cursorBlinkMaxAlpha: 1
   backgroundSprites:
   - {fileID: 21300000, guid: 9cd8746a4651a2b4681adcb5eb73a623, type: 3}
   - {fileID: 21300000, guid: 878884cd17e7c3648951f8120973589e, type: 3}
