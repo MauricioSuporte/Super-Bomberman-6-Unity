@@ -22,7 +22,10 @@ public static class HudCharacterPortraitCatalog
         string path = $"Sprites/CharacterSelect/{folder}/{sheet}_{Mathf.Clamp(expressionIndex, 0, 1)}";
         if (!cache.TryGetValue(path, out Sprite portrait))
         {
-            portrait = Resources.Load<Sprite>(path) ?? Load(character, skin, DefaultExpression);
+            string defaultSheet = BomberSkinResourceCatalog.GetSheetName(character, BomberSkin.Palette1);
+            string defaultPath = $"Sprites/CharacterSelect/{folder}/{defaultSheet}_{Mathf.Clamp(expressionIndex, 0, 1)}";
+            portrait = Resources.Load<Sprite>(path) ?? Resources.Load<Sprite>(defaultPath) ??
+                Load(character, skin, DefaultExpression);
             cache[path] = portrait;
         }
 
