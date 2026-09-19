@@ -117,6 +117,7 @@ namespace StageAssets
             MoveLivingPlayersToDestination();
             SetCameraActive(sourceRoomCamera, false);
             SetCameraActive(destinationRoomCamera, true);
+            SnapDestinationCameraToPlayers();
             PlayDestinationRoomMusic();
             yield return null;
 
@@ -345,6 +346,15 @@ namespace StageAssets
             camera.enabled = active;
             if (camera.TryGetComponent(out AudioListener listener))
                 listener.enabled = active;
+        }
+
+        private void SnapDestinationCameraToPlayers()
+        {
+            if (destinationRoomCamera != null &&
+                destinationRoomCamera.TryGetComponent(out CameraFollowClamp2D cameraFollow))
+            {
+                cameraFollow.ForceSnapNow(refreshPlayersNow: true);
+            }
         }
     }
 }
