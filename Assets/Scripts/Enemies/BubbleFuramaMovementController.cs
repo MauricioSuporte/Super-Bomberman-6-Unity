@@ -141,11 +141,11 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     protected override void OnHitInvulnerabilityStarted(float seconds)
     {
-        if (phase != AttackPhase.Walking)
-        {
-            ResumeWalking();
-        }
-        base.OnHitInvulnerabilityStarted(seconds);
+        // Health still applies damage and invulnerability. During an attack,
+        // preserve its timer, flame index and animation instead of entering
+        // the base damaged loop. Lethal damage interrupts through Die().
+        if (phase == AttackPhase.Walking)
+            base.OnHitInvulnerabilityStarted(seconds);
     }
 
     protected override void Die()

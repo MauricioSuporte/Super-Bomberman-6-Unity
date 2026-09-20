@@ -146,7 +146,7 @@ MonoBehaviour:
   sequenceDuration: 0.5
   frameDurations: []
   useUnscaledTime: 1
-  respectGamePause: 1
+  respectGamePause: 0
   loop: 1
   loopStartFrame: 0
   loopRestartDelay: 0
