@@ -243,9 +243,10 @@ MonoBehaviour:
   idleSprite: {fileID: -3406744111651748622, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
   animationSprite:
   - {fileID: -3406744111651748622, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
-  - {fileID: 5239889814012480515, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
-  - {fileID: 6613009709124132419, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
   - {fileID: -7409016314335869516, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
+  - {fileID: 6613009709124132419, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
+  - {fileID: 5239889814012480515, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
+  - {fileID: -3406744111651748622, guid: 2236f83ea7925014ca4a51d15a25194c, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovementController
 {
-    enum AttackPhase { Walking, Preparing, Throwing, Recovering }
+    enum AttackPhase { Walking, Preparing, Throwing, Recovering, ReversingPreparation }
 
     [Header("Bubble Furama Attack")]
     [SerializeField, Min(0.01f)] float attackMinCooldown = 7f;
@@ -70,6 +70,8 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
             return;
 
         phaseTimer -= Time.deltaTime;
+        if (phase == AttackPhase.ReversingPreparation)
+            RefreshReversePreparationFrame();
         if (phaseTimer > 0f)
             return;
 
@@ -102,6 +104,13 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
                 }
                 break;
             case AttackPhase.Recovering:
+                phase = AttackPhase.ReversingPreparation;
+                ShowAttack(preparing);
+                preparing.SetManualAnimationUpdate(true);
+                phaseTimer = preparing.sequenceDuration;
+                RefreshReversePreparationFrame();
+                break;
+            case AttackPhase.ReversingPreparation:
                 ResumeWalking();
                 break;
         }
@@ -143,6 +152,8 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
     {
         if (isDead)
             return;
+        if (preparing != null)
+            preparing.SetManualAnimationUpdate(false);
         SetVisible(preparing, false);
         SetVisible(throwingFlames, false);
         SetVisible(flame, false);
@@ -151,6 +162,8 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     void OnDisable()
     {
+        if (preparing != null)
+            preparing.SetManualAnimationUpdate(false);
         SetVisible(preparing, false);
         SetVisible(throwingFlames, false);
         SetVisible(flame, false);
@@ -184,6 +197,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     void ShowAttack(AnimatedSpriteRenderer animation)
     {
+        preparing.SetManualAnimationUpdate(false);
         SetVisible(movimentation, false);
         SetVisible(preparing, false);
         SetVisible(throwingFlames, false);
@@ -198,6 +212,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     void ResumeWalking()
     {
+        preparing.SetManualAnimationUpdate(false);
         SetVisible(preparing, false);
         SetVisible(throwingFlames, false);
         ResetCooldown();
@@ -205,6 +220,19 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
         movimentation.loop = true;
         UpdateSpriteDirection(direction);
         DecideNextTile();
+    }
+
+    void RefreshReversePreparationFrame()
+    {
+        int frameCount = preparing.animationSprite != null ? preparing.animationSprite.Length : 0;
+        if (frameCount == 0)
+            return;
+
+        // Select frames backwards without modifying the authored sprite array.
+        // The attack timer also freezes this animation during pause or stun.
+        float progress = 1f - Mathf.Clamp01(phaseTimer / preparing.sequenceDuration);
+        preparing.CurrentFrame = Mathf.Max(0, frameCount - 1 - Mathf.FloorToInt(progress * frameCount));
+        preparing.RefreshFrame();
     }
 
     void ResetCooldown()
