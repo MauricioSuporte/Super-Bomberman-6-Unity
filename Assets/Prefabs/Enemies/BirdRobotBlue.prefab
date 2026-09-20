@@ -504,7 +504,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
   life: 2
-  hitInvulnerableDuration: 0
+  hitInvulnerableDuration: 2
   hitBlinkInterval: 0.01
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
@@ -643,15 +643,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76d5cc6efb670a840801db78e5307071, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JunctionTurningPersecutingEnemyMovementController
-  speed: 2
+  speed: 1.5
   tileSize: 1
-  spriteUp: {fileID: 0}
-  spriteDown: {fileID: 0}
-  spriteLeft: {fileID: 0}
+  spriteUp: {fileID: 3191304308348635352}
+  spriteDown: {fileID: 4324336837847743703}
+  spriteLeft: {fileID: 7003003161161745949}
   spriteRight: {fileID: 0}
-  spriteDeath: {fileID: 0}
+  spriteDeath: {fileID: 5377621145806304886}
   spriteDamaged: {fileID: 0}
-  waitForFullDeathAnimation: 0
+  waitForFullDeathAnimation: 1
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
