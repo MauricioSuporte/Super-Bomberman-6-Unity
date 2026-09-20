@@ -267,6 +267,7 @@ namespace StageAssets
                 Show(target, false);
                 Show(explosion, true);
                 Move(explosion, impactPosition + Vector3.up * (0.5f * tileHeight));
+                TriggerZubattoRocketEvasion();
                 BombController damageSource = FindAnyObjectByType<BombController>();
                 if (damageSource != null)
                 {
@@ -317,6 +318,17 @@ namespace StageAssets
                 shadowJitter = new Vector3(offset.x, offset.y, 0f);
             }
             Move(ascendShadow, position + Vector3.down * (2f * tileHeight) + shadowJitter);
+        }
+
+        private void TriggerZubattoRocketEvasion()
+        {
+            Collider2D[] hits = Physics2D.OverlapBoxAll(impactPosition, Vector2.one * 0.5f, 0f);
+            foreach (Collider2D hit in hits)
+            {
+                ZubattoMovementController zubatto = hit.GetComponentInParent<ZubattoMovementController>();
+                if (zubatto != null && zubatto.TryEvadeRocketImpact(impactPosition))
+                    return;
+            }
         }
 
         private void ResolveRoom()

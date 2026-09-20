@@ -2,9 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// A junction-turning enemy that evades an explosion with a vertical jump and
-/// can be damaged only during its one-second landing pause.
+/// can be damaged only during its landing pause.
 /// </summary>
-public sealed class PenguinMovementController : JunctionTurningEnemyMovementController
+public class PenguinMovementController : JunctionTurningEnemyMovementController
 {
     private enum PenguinState
     {
@@ -14,16 +14,16 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
     }
 
     [Header("Jump Visuals")]
-    [SerializeField] private AnimatedSpriteRenderer jumpUp;
-    [SerializeField] private AnimatedSpriteRenderer jumpDown;
-    [SerializeField] private AnimatedSpriteRenderer jumpLeft;
-    [SerializeField] private AnimatedSpriteRenderer jumpRight;
+    [SerializeField] protected AnimatedSpriteRenderer jumpUp;
+    [SerializeField] protected AnimatedSpriteRenderer jumpDown;
+    [SerializeField] protected AnimatedSpriteRenderer jumpLeft;
+    [SerializeField] protected AnimatedSpriteRenderer jumpRight;
 
     [Header("Jump Timing")]
-    [SerializeField, Min(0.01f)] private float jumpDurationSeconds = 2f;
-    [SerializeField, Min(0f)] private float jumpHeightTiles = 3f;
-    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
-    [SerializeField, Min(0.01f)] private float landingPauseSeconds = 2f;
+    [SerializeField, Min(0.01f)] protected float jumpDurationSeconds = 2f;
+    [SerializeField, Min(0f)] protected float jumpHeightTiles = 3f;
+    [SerializeField, Min(1)] protected int pixelsPerUnit = 16;
+    [SerializeField, Min(0.01f)] protected float landingPauseSeconds = 2f;
 
     [Header("Jump Shadow")]
     [SerializeField] private Color shadowColor = new(0f, 0f, 0f, 0.45f);
@@ -96,7 +96,21 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
         if (state == PenguinState.Resting)
             penguinHealth?.TakeDamage(1, fromExplosion: true);
         else if (state == PenguinState.Walking)
-            BeginJump();
+            TryEvadeExplosion();
+    }
+
+    /// <summary>
+    /// Starts this enemy's normal explosion evasion when it is able to do so.
+    /// External hazards can use this to react before they spawn a shared
+    /// explosion hitbox.
+    /// </summary>
+    public bool TryEvadeExplosion()
+    {
+        if (isDead || state != PenguinState.Walking)
+            return false;
+
+        BeginJump();
+        return true;
     }
 
     protected override void Die()
@@ -125,7 +139,7 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
         CreateJumpShadow();
     }
 
-    private void BeginLandingPause()
+    protected virtual void BeginLandingPause()
     {
         // Resume only from a tile center, just like Eskimo's recovery. This
         // keeps the next target aligned with the grid and prevents a visible
@@ -149,7 +163,7 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
         penguinHealth?.SetExternalInvulnerability(false);
     }
 
-    private void ResumeWalking()
+    protected virtual void ResumeWalking()
     {
         state = PenguinState.Walking;
         stateElapsed = 0f;
@@ -172,7 +186,7 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
             penguinHealth?.TakeDamage(1, fromExplosion: true);
     }
 
-    private void ShowJumpVisual(Vector2 jumpDirection)
+    protected virtual void ShowJumpVisual(Vector2 jumpDirection)
     {
         if (spriteUp != null) spriteUp.enabled = false;
         if (spriteDown != null) spriteDown.enabled = false;
@@ -196,7 +210,7 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
             renderer.flipX = jumpDirection == Vector2.right && selected == jumpLeft;
     }
 
-    private void SetJumpVisualsEnabled(bool enabled)
+    protected virtual void SetJumpVisualsEnabled(bool enabled)
     {
         if (jumpUp != null) jumpUp.enabled = enabled;
         if (jumpDown != null) jumpDown.enabled = enabled;
@@ -204,7 +218,7 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
         if (jumpRight != null) jumpRight.enabled = enabled;
     }
 
-    private void ApplyJumpArc(float progress)
+    protected virtual void ApplyJumpArc(float progress)
     {
         if (activeSprite == null)
             return;
@@ -214,7 +228,7 @@ public sealed class PenguinMovementController : JunctionTurningEnemyMovementCont
         activeSprite.SetExternalBaseOffsetFromInitial(Vector3.up * pixelPerfectHeight);
     }
 
-    private void ClearJumpArc()
+    protected virtual void ClearJumpArc()
     {
         if (jumpUp != null) jumpUp.ClearExternalBase();
         if (jumpDown != null) jumpDown.ClearExternalBase();
