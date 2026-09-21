@@ -222,6 +222,7 @@ public class MovementController : MonoBehaviour, IKillable
     public bool InputLocked => inputLocked;
 
     private bool isEndingStage;
+    private bool resultPoseActive;
     public bool IsEndingStage => isEndingStage;
 
     protected Vector2 direction = Vector2.zero;
@@ -574,6 +575,10 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void Update()
     {
         using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
+
+        if (resultPoseActive && !GamePauseController.IsPaused &&
+            InactivityAnimation.HasPoseCancelInput(PlayerId))
+            CancelResultPose();
 
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
@@ -3726,8 +3731,40 @@ public class MovementController : MonoBehaviour, IKillable
             battleHud.OnPlayerRespawn(PlayerId);
     }
 
+    public void CancelPlayerPoses()
+    {
+        if (TryGetComponent<CorneredAnimation>(out var cornered))
+            cornered.CancelForExternalOverride();
+        if (TryGetComponent<InactivityAnimation>(out var inactivity))
+            inactivity.CancelForExternalOverride();
+        CancelResultPose();
+    }
+
+    private void CancelResultPose()
+    {
+        if (!resultPoseActive)
+            return;
+
+        resultPoseActive = false;
+        SetAnimEnabled(spriteRendererEndStage, false);
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererTimeOver, false);
+        SetAnimEnabled(spriteRendererCornered, false);
+        if (isMounted)
+        {
+            var mount = GetComponentInChildren<MountVisualController>(true);
+            if (mount != null)
+                mount.CancelResultPose();
+        }
+        // Keep the round/portal flow locked; only release its presentation.
+        ForceIdleFacing(Vector2.down);
+    }
+
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
     {
+        CancelPlayerPoses();
+        resultPoseActive = true;
+        SetSuppressInactivityAnimation(true);
         if (IsPlayer())
             HudPortraitStateNotifier.SetVictory(PlayerId, true);
 
@@ -3834,6 +3871,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void PlayBattleTimeUpSequence()
     {
+        CancelPlayerPoses();
+        resultPoseActive = true;
+        SetSuppressInactivityAnimation(true);
         if (IsPlayer())
             HudPortraitStateNotifier.SetTimeUp(PlayerId, true);
 

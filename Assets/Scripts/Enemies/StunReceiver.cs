@@ -323,6 +323,8 @@ public partial class StunReceiver : MonoBehaviour
 
     IEnumerator StunRoutine()
     {
+        if (cachedMovement != null)
+            cachedMovement.CancelPlayerPoses();
         isStunned = true;
 
         activeStunAnimatedRenderer = ResolveStunAnimatedRenderer();

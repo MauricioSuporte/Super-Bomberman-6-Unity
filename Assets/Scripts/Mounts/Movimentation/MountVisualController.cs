@@ -295,6 +295,7 @@ public class MountVisualController : MonoBehaviour
         if (louieInactivityEmoteLoopAlt != null)
             SetRendererBranchEnabled(louieInactivityEmoteLoopAlt, false);
 
+        SetRendererBranchEnabled(activeLouieInactivityRenderer, false);
         activeLouieInactivityRenderer = null;
 
         if (owner == null)
@@ -343,7 +344,7 @@ public class MountVisualController : MonoBehaviour
 
         playingInactivity = true;
 
-        activeLouieInactivityRenderer.loop = true;
+        activeLouieInactivityRenderer.loop = activeLouieInactivityRenderer != louieEndStage;
         activeLouieInactivityRenderer.idle = false;
         activeLouieInactivityRenderer.pingPong = false;
 
@@ -379,6 +380,15 @@ public class MountVisualController : MonoBehaviour
             louieEndStage.animationTime = totalTime / frameCount;
 
         return true;
+    }
+
+    public void CancelResultPose()
+    {
+        playingEndStage = false;
+        playingCornered = false;
+        SetRendererBranchEnabled(louieEndStage, false);
+        SetRendererBranchEnabled(louieCornered, false);
+        ApplyDirection(Vector2.down, true);
     }
 
     public void ForceIdleUp()
@@ -814,7 +824,7 @@ public class MountVisualController : MonoBehaviour
         HardExclusive(target);
 
         target.idle = false;
-        target.loop = true;
+        target.loop = target != louieEndStage;
         target.pingPong = false;
         target.RefreshFrame();
     }
