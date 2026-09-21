@@ -40,9 +40,9 @@ public class PlayerBomberSkinController : MonoBehaviour
     static readonly int[] BombermanTimeOverFrames = { 98, 97, 96, 95, 94 };
     static readonly int[] TinyBomberTimeOverFrames = { 98, 97, 96, 95, 94 };
     static readonly int[] LadyBomberTimeOverFrames = { 94, 95 };
-    static readonly int[] BombermanCorneredFrames = { 103, 104, 105, 106, 107, 105, 106, 107 };
-    static readonly int[] LadyBomberCorneredFrames = { 100, 101, 102, 103, 104, 102, 103, 104 };
-    const int CorneredLoopStartFrame = 5;
+    static readonly int[] BombermanCorneredFrames = { 103, 104, 105, 105, 106, 105, 107 };
+    static readonly int[] LadyBomberCorneredFrames = { 100, 101, 102, 102, 103, 102, 104 };
+    const int CorneredLoopStartFrame = 3;
     static readonly int[] BombermanDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(112));
     static readonly int[] LadyBomberDeathFrames = BuildSmoothedDeathFrames(BuildDeathFrames(106));
     static readonly int[] DeathJumpTileHeights = { 0, 0, 1, 2, 3, 2, 1, 0 };

@@ -1083,10 +1083,9 @@ MonoBehaviour:
   - {fileID: -6926756782191489582, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
   - {fileID: 8600950210194900248, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
   - {fileID: -7700094928915961521, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
-  - {fileID: -3682213374468973138, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
-  - {fileID: -5938581197125422139, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
   - {fileID: -7700094928915961521, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
   - {fileID: -3682213374468973138, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
+  - {fileID: -7700094928915961521, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
   - {fileID: -5938581197125422139, guid: 9abc0127793c4229ae7272c9996fc4bb, type: 3}
   allowFlipX: 0
   animationTime: 0.125
@@ -1096,7 +1095,7 @@ MonoBehaviour:
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
-  loopStartFrame: 5
+  loopStartFrame: 3
   loopRestartDelay: 0
   idle: 0
   frameOffsets: []
