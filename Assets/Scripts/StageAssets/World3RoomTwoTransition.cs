@@ -147,6 +147,9 @@ namespace StageAssets
             BarrelPillarTrap[] barrelTraps = FindObjectsByType<BarrelPillarTrap>(FindObjectsInactive.Exclude);
             for (int i = 0; i < barrelTraps.Length; i++)
                 barrelTraps[i]?.CancelFallIfRunning();
+
+            foreach (SnowBallTrap snowBall in FindObjectsByType<SnowBallTrap>())
+                snowBall.CancelRollIfRunning();
         }
 
         private void PlayDestinationRoomMusic()
