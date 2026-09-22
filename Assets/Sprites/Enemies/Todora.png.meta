@@ -1,0 +1,646 @@
+fileFormatVersion: 2
+guid: c74921f71a5bde04da2cb3fdd956d6af
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5088561059245045197
+    second: Todora_0
+  - first:
+      213: 44041257794298653
+    second: Todora_1
+  - first:
+      213: -4488291719851047833
+    second: Todora_2
+  - first:
+      213: -5827010953575509975
+    second: Todora_3
+  - first:
+      213: -5735488783862663996
+    second: Todora_4
+  - first:
+      213: -4956851592434489854
+    second: Todora_5
+  - first:
+      213: 9088556367669646541
+    second: Todora_6
+  - first:
+      213: -8042728163635355246
+    second: Todora_7
+  - first:
+      213: -3400952393551064041
+    second: Todora_8
+  - first:
+      213: -7007128294353454923
+    second: Todora_9
+  - first:
+      213: -8169127718662629975
+    second: Todora_10
+  - first:
+      213: -3304461997545867926
+    second: Todora_11
+  - first:
+      213: 954406821875415308
+    second: Todora_12
+  - first:
+      213: -1877997735213169107
+    second: Todora_13
+  - first:
+      213: 6391610261258068540
+    second: Todora_14
+  - first:
+      213: -8844247791320765784
+    second: Todora_15
+  - first:
+      213: 4971046191918385826
+    second: Todora_16
+  - first:
+      213: -559074482325181345
+    second: Todora_17
+  - first:
+      213: 1352984794107826853
+    second: Todora_18
+  - first:
+      213: 6296673032805551779
+    second: Todora_19
+  - first:
+      213: 7055662880148567001
+    second: Todora_20
+  - first:
+      213: -8581806841925368275
+    second: Todora_21
+  - first:
+      213: -7030278997376851817
+    second: Todora_22
+  - first:
+      213: 5472405853494519414
+    second: Todora_23
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Todora_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 77
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33a40dd4dacc169b0800000000000000
+      internalID: -5088561059245045197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_1
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 77
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d136a466a477c9000800000000000000
+      internalID: 44041257794298653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_2
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 77
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76483f5f57266b1c0800000000000000
+      internalID: -4488291719851047833
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_5
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 57
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 206ec9c3db9b53bb0800000000000000
+      internalID: -4956851592434489854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_6
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 53
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc45018fcd9012e70800000000000000
+      internalID: 9088556367669646541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_7
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 53
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2912c7de85d726090800000000000000
+      internalID: -8042728163635355246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_8
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 53
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 714df5c21d36dc0d0800000000000000
+      internalID: -3400952393551064041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_9
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 52
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b8397f01fda1ce90800000000000000
+      internalID: -7007128294353454923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_10
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 57
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a5115c2f9d61ae80800000000000000
+      internalID: -8169127718662629975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_11
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 57
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a65308e22513422d0800000000000000
+      internalID: -3304461997545867926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_12
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 15
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c09f715a2fbbe3d00800000000000000
+      internalID: 954406821875415308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_13
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 15
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2681a7820300f5e0800000000000000
+      internalID: -1877997735213169107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_14
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 15
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c32670d1baf83b850800000000000000
+      internalID: 6391610261258068540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_15
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 34
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8aaeacc1e7be24580800000000000000
+      internalID: -8844247791320765784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_16
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 34
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2aa8a5f7c24bcf440800000000000000
+      internalID: 4971046191918385826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_17
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 34
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5ca50e68b4cd38f0800000000000000
+      internalID: -559074482325181345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_18
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 35
+        width: 40
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a25d477084c6c210800000000000000
+      internalID: 1352984794107826853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_21
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 18
+        width: 40
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d268508452c47e880800000000000000
+      internalID: -8581806841925368275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_22
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 1
+        width: 40
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 790a679ff7e6f6e90800000000000000
+      internalID: -7030278997376851817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6beb48c132cbe3f4a8a528d0b50d69a3
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Todora_0: -5088561059245045197
+      Todora_1: 44041257794298653
+      Todora_10: -8169127718662629975
+      Todora_11: -3304461997545867926
+      Todora_12: 954406821875415308
+      Todora_13: -1877997735213169107
+      Todora_14: 6391610261258068540
+      Todora_15: -8844247791320765784
+      Todora_16: 4971046191918385826
+      Todora_17: -559074482325181345
+      Todora_18: 1352984794107826853
+      Todora_19: 6296673032805551779
+      Todora_2: -4488291719851047833
+      Todora_20: 7055662880148567001
+      Todora_21: -8581806841925368275
+      Todora_22: -7030278997376851817
+      Todora_23: 5472405853494519414
+      Todora_3: -5827010953575509975
+      Todora_4: -5735488783862663996
+      Todora_5: -4956851592434489854
+      Todora_6: 9088556367669646541
+      Todora_7: -8042728163635355246
+      Todora_8: -3400952393551064041
+      Todora_9: -7007128294353454923
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
