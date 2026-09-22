@@ -3,9 +3,121 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public sealed class BattleModeComEditModeTests
 {
+    [Test]
+    public void PowderTrailAnimation_RestoresTilesAndTransformsWithoutTouchingOtherCells()
+    {
+        var root = new GameObject("Powder trail test", typeof(Grid));
+        root.SetActive(false);
+        var mapObject = new GameObject("Ground", typeof(Tilemap));
+        mapObject.transform.SetParent(root.transform);
+        Tilemap map = mapObject.GetComponent<Tilemap>();
+        var controller = root.AddComponent<BattleMode3PowderTrailController>();
+        var original = ScriptableObject.CreateInstance<Tile>();
+        var explosion = ScriptableObject.CreateInstance<Tile>();
+        original.flags = explosion.flags = TileFlags.None;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        System.Type type = typeof(BattleMode3PowderTrailController);
+        try
+        {
+            type.GetField("groundTilemap", flags).SetValue(controller, map);
+            type.GetMethod("BuildTrailCells", flags).Invoke(controller, null);
+            var cells = (List<Vector3Int>)type.GetField("trailCells", flags).GetValue(controller);
+            var transforms = (Dictionary<Vector3Int, Matrix4x4>)type.GetField("explosionTransformByCell", flags).GetValue(controller);
+            foreach (string field in new[] { "horizontalExplosionTiles", "horizontalExplosionTilesFlippedY",
+                "verticalExplosionTiles", "verticalExplosionTilesFlippedX", "cornerExplosionTiles" })
+                type.GetField(field, flags).SetValue(controller, new[] { explosion });
+            Matrix4x4 originalTransform = Matrix4x4.Scale(new Vector3(-1f, 1f, 1f));
+            foreach (Vector3Int cell in cells)
+            {
+                map.SetTile(cell, original);
+                map.SetTransformMatrix(cell, originalTransform);
+            }
+            Vector3Int outside = new Vector3Int(20, 20, 0);
+            map.SetTile(outside, original);
+            map.SetTransformMatrix(outside, originalTransform);
+            type.GetMethod("CacheOriginalTiles", flags).Invoke(controller, new object[] { true });
+            // Exercise both ordinary completion and restoration on re-ignition.
+            foreach (string restore in new[] { "RestoreOriginalTiles", "RestoreStableTrailStateIfNeeded" })
+            {
+                type.GetMethod("ApplyExplosionTileFrame", flags).Invoke(controller, new object[] { 0 });
+                foreach (Vector3Int cell in cells)
+                {
+                    Assert.AreSame(explosion, map.GetTile(cell));
+                    Assert.AreEqual(transforms[cell], map.GetTransformMatrix(cell));
+                }
+                type.GetMethod(restore, flags).Invoke(controller,
+                    restore == "RestoreOriginalTiles" ? null : new object[] { true });
+                foreach (Vector3Int cell in cells)
+                {
+                    Assert.AreSame(original, map.GetTile(cell));
+                    Assert.AreEqual(originalTransform, map.GetTransformMatrix(cell));
+                }
+                Assert.AreSame(original, map.GetTile(outside));
+                Assert.AreEqual(originalTransform, map.GetTransformMatrix(outside));
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(original);
+            Object.DestroyImmediate(explosion);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void CandidateScorePruning_PreservesExhaustiveWinnerWithDetoursAndUnreachableTargets(bool farm)
+    {
+        var random = new System.Random(81723);
+        int skipped = 0;
+        for (int scenario = 0; scenario < 100; scenario++)
+        {
+            float exhaustiveScore = float.NegativeInfinity;
+            float prunedScore = float.NegativeInfinity;
+            int exhaustiveWinner = -1, prunedWinner = -1;
+            for (int candidate = 0; candidate < 64; candidate++)
+            {
+                int minimumDistance = random.Next(0, 15);
+                int actualDistance = minimumDistance + random.Next(0, 8);
+                float baseScore = farm ? random.Next(1, 6) * 1000f : random.Next(0, 3) * 0.15f;
+                float noise = (float)random.NextDouble() - 0.5f;
+                bool reachable = random.Next(0, 4) != 0;
+                float score = baseScore - actualDistance * 10f + noise;
+                if (reachable && score > exhaustiveScore)
+                {
+                    exhaustiveScore = score;
+                    exhaustiveWinner = candidate;
+                }
+                if (!BattleModeComController.CanDistanceScoredCandidateImprove(
+                        minimumDistance, farm ? baseScore : 0.3f, noise, prunedScore))
+                {
+                    skipped++;
+                    continue;
+                }
+                if (reachable && score > prunedScore)
+                {
+                    prunedScore = score;
+                    prunedWinner = candidate;
+                }
+            }
+            Assert.AreEqual(exhaustiveWinner, prunedWinner, $"Scenario {scenario}");
+            Assert.AreEqual(exhaustiveScore, prunedScore);
+        }
+        Assert.Greater(skipped, 0, "The bound must actually avoid unnecessary searches.");
+    }
+
+    [Test]
+    public void CandidateScorePruning_PreservesFirstWinnerOnExactTie()
+    {
+        Assert.IsFalse(BattleModeComController.CanDistanceScoredCandidateImprove(2, 1000f, 0f, 980f));
+        Assert.IsTrue(BattleModeComController.CanDistanceScoredCandidateImprove(2, 2000f, 0f, 980f));
+        Assert.IsTrue(BattleModeComController.CanDistanceScoredCandidateImprove(20, 0.3f, 0f, float.NegativeInfinity));
+    }
+
     [Test]
     public void PathDirectionOrder_PreservesTiesMovementPreferenceAndCallerStorage()
     {

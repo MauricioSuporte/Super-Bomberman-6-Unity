@@ -87,7 +87,6 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private const int PostPlantDiagnosticPlayerIdFilter = 5;
     private const float KickBombRiskLogIntervalSeconds = 0.25f;
-    private const string BattleMode3SceneName = "BattleMode_3";
 
     private const float BombTapCooldownSeconds = 0.35f;
     private const float EasyMaxNoBombPlantIntervalSeconds = 2.5f;
@@ -193,6 +192,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private CharacterHealth health;
     private readonly List<Collider2D> ownColliders = new(8);
     private readonly List<MonoBehaviour> comComponents = new(32);
+    private readonly List<BattleModeComKickBombAbility> kickComComponents = new(2);
     private readonly BattleModeComDifficultySettings runtimeSettings = new();
     private readonly BattleModeComDifficultySettings diagnosticSettings = new();
     private ContactFilter2D obstacleFilter;
@@ -283,8 +283,6 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastItemPriorityLogKey = string.Empty;
     private Vector2Int recentItemPickupTile = new(int.MinValue, int.MinValue);
     private float recentItemPickupFarmLockoutUntil = -10f;
-    private float lastStage3PlantDiagnosticTime = -10f;
-    private string lastStage3PlantDiagnosticKey = string.Empty;
     private float lastHardLouieSecurePickupDiagnosticTime = -10f;
     private string lastHardLouieSecurePickupDiagnosticKey = string.Empty;
     private bool hardLouieSecurePlanActive;
@@ -935,7 +933,8 @@ public sealed class BattleModeComController : MonoBehaviour
                 $"com:{(bombPassCom != null || (isCom && bombPassEnabled))}");
         }
 
-        if (isCom && Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
+        if (isCom && BattleModeComKickBombAbility.EnableKickBombLoadDiagnostics &&
+            Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
         {
             bool diagnosticKickEnabled =
                 abilitySystem != null &&
@@ -951,10 +950,10 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private BattleModeComKickBombAbility FindExactKickBombComAbility()
     {
-        var abilities = GetComponents<BattleModeComKickBombAbility>();
-        for (int i = 0; i < abilities.Length; i++)
+        GetComponents(kickComComponents);
+        for (int i = 0; i < kickComComponents.Count; i++)
         {
-            BattleModeComKickBombAbility ability = abilities[i];
+            BattleModeComKickBombAbility ability = kickComComponents[i];
             if (ability != null && ability.GetType() == typeof(BattleModeComKickBombAbility))
                 return ability;
         }
@@ -2532,12 +2531,6 @@ public sealed class BattleModeComController : MonoBehaviour
                 currentDangerSeconds,
                 selected,
                 route);
-            LogStage3P5PlantDiagnostic(
-                "TAP",
-                myTile,
-                $"action:{selected.Action} route:{route} target:{selected.TargetTile} " +
-                $"move:{FirstMoveDescription(selected.FirstMove)} danger:{FormatDanger(currentDangerSeconds)} " +
-                $"reason:{selected.Reason}");
             Tap(PlayerAction.ActionA);
             lastBombTapTime = Time.time;
             currentInputDescription = AppendInput(currentInputDescription, "ActionA");
@@ -3660,6 +3653,14 @@ public sealed class BattleModeComController : MonoBehaviour
         return candidate.Weight;
     }
 
+    // Both candidate scorers subtract ten points per cardinal step. Using a
+    // lower bound on distance gives an upper bound on score, including tie behavior.
+    internal static bool CanDistanceScoredCandidateImprove(
+        int minimumDistance, float maximumBaseScore, float noise, float bestScore)
+    {
+        return maximumBaseScore - minimumDistance * 10f + noise > bestScore;
+    }
+
     private bool TryBuildCollectCandidate(
         BattleModeComDifficultySettings settings,
         Vector2Int myTile,
@@ -3688,6 +3689,13 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             Vector2Int itemTile = WorldToTile(item.transform.position);
+            float scoreNoise = GetDecisionNoise(1000 + i, ItemTargetJitter);
+            // Cardinal BFS distance cannot be less than Manhattan distance, and
+            // the danger bonus is at most 2 * 0.15. Skip only proven non-winners.
+            if (!CanDistanceScoredCandidateImprove(Manhattan(myTile, itemTile), 0.3f, scoreNoise, bestScore))
+            {
+                continue;
+            }
             bool isLouieEgg = IsLouieEggItem(item.type);
             bool isSingleExitLouieEgg = false;
             Vector2Int louieEggExitTile = itemTile;
@@ -3745,7 +3753,7 @@ public sealed class BattleModeComController : MonoBehaviour
             float dangerBonus = float.IsInfinity(danger) ? 2f : Mathf.Clamp(danger, 0f, 2f);
             float score = -path.Distance * 10f +
                           dangerBonus * 0.15f +
-                          GetDecisionNoise(1000 + i, ItemTargetJitter);
+                          scoreNoise;
 
             if (score > bestScore)
             {
@@ -3772,6 +3780,13 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             Vector2Int pickupTile = WorldToTile(pickup.transform.position);
+            float scoreNoise = GetDecisionNoise(2000 + i, ItemTargetJitter);
+            // Cardinal BFS distance cannot be less than Manhattan distance, and
+            // the danger bonus is at most 2 * 0.15. Skip only proven non-winners.
+            if (!CanDistanceScoredCandidateImprove(Manhattan(myTile, pickupTile), 0.3f, scoreNoise, bestScore))
+            {
+                continue;
+            }
             if (settings.difficulty == BattleModeComputerLevel.Hard &&
                 IsSingleExitTrapTile(pickupTile, myTile, out Vector2Int pickupExitTile, out _))
             {
@@ -3802,7 +3817,7 @@ public sealed class BattleModeComController : MonoBehaviour
             float dangerBonus = float.IsInfinity(danger) ? 2f : Mathf.Clamp(danger, 0f, 2f);
             float score = -path.Distance * 10f +
                           dangerBonus * 0.15f +
-                          GetDecisionNoise(2000 + i, ItemTargetJitter);
+                          scoreNoise;
 
             if (score > bestScore)
             {
@@ -4128,6 +4143,13 @@ public sealed class BattleModeComController : MonoBehaviour
             if (destructibleCount <= 0)
                 continue;
 
+            float scoreNoise = GetDecisionNoise(2000 + i, FarmTargetJitter);
+            if (!CanDistanceScoredCandidateImprove(
+                    Manhattan(myTile, tile), destructibleCount * 1000f, scoreNoise, bestScore))
+            {
+                continue;
+            }
+
             farmItems ??= FindSceneItems();
             farmMounts ??= FindSceneMounts();
             if (WouldPlannedBombHitUsefulItem(
@@ -4160,7 +4182,7 @@ public sealed class BattleModeComController : MonoBehaviour
             float score =
                 destructibleCount * 1000f -
                 path.Distance * 10f +
-                GetDecisionNoise(2000 + i, FarmTargetJitter);
+                scoreNoise;
             if (score > bestScore)
             {
                 bestTile = tile;
@@ -5459,6 +5481,8 @@ public sealed class BattleModeComController : MonoBehaviour
         int bestFarmDistance = int.MaxValue;
         int bestFarmDestructibles = 0;
         float bestFarmScore = float.NegativeInfinity;
+        ItemPickup[] farmItems = null;
+        MountWorldPickup[] farmMounts = null;
 
         for (int i = 0; i < reachableTiles.Count; i++)
         {
@@ -5471,8 +5495,17 @@ public sealed class BattleModeComController : MonoBehaviour
                 continue;
 
             int destructibleCount = CountBombHitDestructibles(tile, radius);
-            if (destructibleCount <= 0 ||
-                WouldPlannedBombHitUsefulItem(tile, radius, out _, out _) ||
+            if (destructibleCount <= 0)
+                continue;
+            float scoreNoise = GetDecisionNoise(9500 + i, FarmTargetJitter);
+            if (!CanDistanceScoredCandidateImprove(
+                    Manhattan(myTile, tile), destructibleCount * 1000f, scoreNoise, bestFarmScore))
+            {
+                continue;
+            }
+            farmItems ??= FindSceneItems();
+            farmMounts ??= FindSceneMounts();
+            if (WouldPlannedBombHitUsefulItem(tile, radius, false, out _, out _, farmItems, farmMounts) ||
                 !CanPlantBombWithEscape(tile, radius, settings, out _, out _) ||
                 !TryFindPath(
                     myTile,
@@ -5489,7 +5522,7 @@ public sealed class BattleModeComController : MonoBehaviour
             float score =
                 destructibleCount * 1000f -
                 path.Distance * 10f +
-                GetDecisionNoise(9500 + i, FarmTargetJitter);
+                scoreNoise;
             if (score <= bestFarmScore)
                 continue;
 
@@ -5541,6 +5574,10 @@ public sealed class BattleModeComController : MonoBehaviour
         if (bombController == null || bombController.BombsRemaining <= 0)
             return false;
 
+        // One synchronous evaluation: reuse object discovery, but evaluate blast
+        // coverage and usefulness for every candidate against current state.
+        ItemPickup[] secondBombItems = null;
+        MountWorldPickup[] secondBombMounts = null;
         int radius = GetPlannedBombRadiusAt(myTile);
         GatherReachableSafeTiles(myTile, settings.searchDepth + 3, settings);
 
@@ -5583,7 +5620,9 @@ public sealed class BattleModeComController : MonoBehaviour
                 Vector2Int tile = reachableTiles[i];
                 int tileRadius = GetPlannedBombRadiusAt(tile);
                 if (IsBombAtTile(tile)) continue;
-                if (WouldPlannedBombHitUsefulItem(tile, tileRadius, out _, out _)) continue;
+                secondBombItems ??= FindSceneItems();
+                secondBombMounts ??= FindSceneMounts();
+                if (WouldPlannedBombHitUsefulItem(tile, tileRadius, false, out _, out _, secondBombItems, secondBombMounts)) continue;
                 if (!IsTileInBlastLineRuntime(tile, targetTile, tileRadius)) continue;
                 if (!CanPlantAdditionalBombWithEscape(tile, tileRadius, settings, out Vector2 esc, out _, out _)) continue;
                 if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
@@ -5633,7 +5672,9 @@ public sealed class BattleModeComController : MonoBehaviour
             int tileRadius = GetPlannedBombRadiusAt(tile);
             if (IsBombAtTile(tile)) continue;
             if (!CanBombHitDestructible(tile, tileRadius)) continue;
-            if (WouldPlannedBombHitUsefulItem(tile, tileRadius, out _, out _)) continue;
+            secondBombItems ??= FindSceneItems();
+            secondBombMounts ??= FindSceneMounts();
+            if (WouldPlannedBombHitUsefulItem(tile, tileRadius, false, out _, out _, secondBombItems, secondBombMounts)) continue;
             if (!CanPlantAdditionalBombWithEscape(tile, tileRadius, settings, out Vector2 esc, out _, out _)) continue;
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path)) continue;
 
@@ -8342,13 +8383,6 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int tile = WorldToTile(transform.position);
         LogBehaviorDiagnostic("DEATH", tile, GetDangerSeconds(tile, null), force: true);
 
-        if (IsStage3P5SurgicalDiagnostic())
-        {
-            Debug.LogWarning(
-                BuildDeathDiagnosticReport(
-                    $"[BattleCOMStage3Plant][P5] DEATH"),
-                this);
-        }
     }
 
     private void OnMovementDied(MovementController deadMovement)
@@ -9527,8 +9561,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         radius = GetPlannedBombRadiusAt(plantTile, radius);
         List<Vector2Int> plannedBlast = BuildPlannedBombBlastTiles(plantTile, radius);
-        int directBlastTileCount = plannedBlast.Count;
-        bool expandedByStage = AppendPlannedBombStageDanger(
+        AppendPlannedBombStageDanger(
             plantTile,
             plannedBlast);
         bool foundEscape = TryFindEscape(
@@ -9537,17 +9570,7 @@ public sealed class BattleModeComController : MonoBehaviour
             plannedBlast,
             out escapeMove,
             out escapeTile,
-            out string escapeRoute);
-
-        if (expandedByStage && plantTile == WorldToTile(transform.position))
-        {
-            LogStage3P5PlantDiagnostic(
-                "PREPLANT",
-                plantTile,
-                $"pathResult:{(foundEscape ? "FOUND" : "NOT_FOUND")} radius:{radius} " +
-                $"directTiles:{directBlastTileCount} expandedTiles:{plannedBlast.Count} " +
-                $"escape:{escapeTile} move:{FirstMoveDescription(escapeMove)} route:{escapeRoute}");
-        }
+            out _);
 
         if (!foundEscape)
             return false;
@@ -9610,40 +9633,6 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return expanded;
-    }
-
-    private bool IsStage3P5SurgicalDiagnostic()
-    {
-        return playerId == 5 &&
-               string.Equals(
-                   SceneManager.GetActiveScene().name,
-                   BattleMode3SceneName,
-                   StringComparison.Ordinal);
-    }
-
-    private void LogStage3P5PlantDiagnostic(
-        string key,
-        Vector2Int tile,
-        string detail)
-    {
-        if (!IsStage3P5SurgicalDiagnostic())
-            return;
-
-        string diagnosticKey = $"{key}:{tile}:{detail}";
-        if (key == "PREPLANT" &&
-            diagnosticKey == lastStage3PlantDiagnosticKey &&
-            Time.time - lastStage3PlantDiagnosticTime < 0.35f)
-        {
-            return;
-        }
-
-        lastStage3PlantDiagnosticKey = diagnosticKey;
-        lastStage3PlantDiagnosticTime = Time.time;
-
-        Debug.LogWarning(
-            $"[BattleCOMStage3Plant][P5] {key} frame:{Time.frameCount} " +
-            $"t:{Time.time:F2} tile:{tile} pos:{transform.position} {detail}",
-            this);
     }
 
     private bool CanPlantAdditionalBombWithEscape(

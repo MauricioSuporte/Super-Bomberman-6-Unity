@@ -210,7 +210,8 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
                 yield return null;
             }
 
-            ApplyExplosionTileFrame(frameCount - 1);
+            if (lastFrame != frameCount - 1)
+                ApplyExplosionTileFrame(frameCount - 1);
         }
 
         RestoreOriginalTiles();
@@ -285,7 +286,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
                 groundTilemap.SetTransformMatrix(entry.Key, matrix);
         }
 
-        groundTilemap.RefreshAllTiles();
+        // SetTile/SetTransformMatrix invalidate the changed cells; no full-map refresh.
     }
 
     private void RestoreOriginalTiles()
@@ -301,7 +302,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
                 groundTilemap.SetTransformMatrix(entry.Key, matrix);
         }
 
-        groundTilemap.RefreshAllTiles();
+        // SetTile/SetTransformMatrix invalidate the changed cells; no full-map refresh.
     }
 
     private void ApplyExplosionTileFrame(int frame)
@@ -325,7 +326,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
             }
         }
 
-        groundTilemap.RefreshAllTiles();
+        // SetTile/SetTransformMatrix invalidate the changed cells; no full-map refresh.
     }
 
     private void SpawnHitboxes(BombController source, Vector2 origin)
