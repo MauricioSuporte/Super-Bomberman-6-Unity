@@ -977,6 +977,17 @@ public partial class BombController : MonoBehaviour
         return skullExplosionRadiusOverride;
     }
 
+    private void CaptureExplosionRadiusAtPlanting(Bomb bombComponent)
+    {
+        if (bombComponent == null)
+            return;
+
+        int skullRadiusOverride = GetSkullExplosionRadiusOverride();
+        bombComponent.ExplosionRadiusOverride = skullRadiusOverride > 0
+            ? skullRadiusOverride
+            : GetPlannedExplosionRadius();
+    }
+
     private void PlaceBomb()
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -1055,10 +1066,7 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsControlBomb = controlEnabled;
         bombComponent.IsPierceBomb = pierceEnabled;
         bombComponent.IsRubberBomb = rubberEnabled;
-
-        int skullRadiusOverride = GetSkullExplosionRadiusOverride();
-        if (skullRadiusOverride > 0)
-            bombComponent.ExplosionRadiusOverride = skullRadiusOverride;
+        CaptureExplosionRadiusAtPlanting(bombComponent);
 
         if (canUsePowerNow)
             TrackNewActivePowerBomb(bomb);
@@ -3122,6 +3130,7 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsControlBomb = controlEnabled;
         bombComponent.IsPierceBomb = pierceEnabled;
         bombComponent.IsRubberBomb = rubberEnabled;
+        CaptureExplosionRadiusAtPlanting(bombComponent);
 
         if (canUsePowerNow)
             TrackNewActivePowerBomb(bomb);
