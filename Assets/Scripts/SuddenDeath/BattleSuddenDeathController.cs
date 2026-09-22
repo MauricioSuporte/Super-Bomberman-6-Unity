@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -172,7 +172,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     }
 
     public bool TryGetOverlappingThreatenedCell(
-        Collider2D[] playerColliders,
+        IReadOnlyList<Collider2D> playerColliders,
         Vector3Int ignoredCell,
         float maximumSeconds,
         out Vector3Int threatenedCell,
@@ -188,7 +188,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         bool found = false;
 
-        for (int i = 0; i < playerColliders.Length; i++)
+        for (int i = 0; i < playerColliders.Count; i++)
         {
             Collider2D playerCollider = playerColliders[i];
             if (playerCollider == null || !playerCollider.enabled || playerCollider.isTrigger)
