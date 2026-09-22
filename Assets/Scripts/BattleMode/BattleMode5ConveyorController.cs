@@ -425,10 +425,12 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
                 continue;
             }
 
+            Vector2 movementDirection = target - rb.position;
             Vector2 next = Vector2.MoveTowards(rb.position, target, maxDistance);
             rb.MovePosition(next);
             bomb.transform.position = next;
             SetBombLogicalPosition(bomb, next);
+            bomb.DestroyPickupsFromMovingBombImpact(next, movementDirection);
         }
 
         bombSnapshot.Clear();

@@ -2469,6 +2469,15 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         DestroyPickupsAtWorld(worldCenter, kickDirection);
     }
 
+    /// <summary>
+    /// Applies the moving-bomb item impact rules at the current movement position.
+    /// This is shared by kicked bombs and stage-driven movement such as conveyors.
+    /// </summary>
+    public void DestroyPickupsFromMovingBombImpact(Vector2 worldCenter, Vector2 impactDirection)
+    {
+        DestroyPickupsAtWorld(worldCenter, impactDirection);
+    }
+
     private void DestroyPickupsAtWorld(Vector2 worldCenter, Vector2 impactDirection)
     {
         Vector2 size = Vector2.one * (kickTileSize * 0.45f);

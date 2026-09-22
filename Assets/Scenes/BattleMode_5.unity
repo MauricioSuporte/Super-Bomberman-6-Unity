@@ -275,6 +275,20 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
+  showPauseWindow: 1
+  pauseWindowFill: {r: 0, g: 0, b: 0, a: 0.5}
+  pauseWindowOuterBorder: {r: 0.16, g: 0.08, b: 0, a: 1}
+  pauseWindowGoldBorder: {r: 1, g: 0.64, b: 0, a: 1}
+  pauseWindowHighlightBorder: {r: 1, g: 0.96, b: 0.08, a: 1}
+  pauseWindowInnerBorder: {r: 0.05, g: 0, b: 0, a: 1}
+  pauseWindowShadow: {r: 0.22, g: 0.08, b: 0, a: 0.82}
+  pauseWindowPaddingAtDesign: {x: 44, y: 40}
+  pauseWindowMinVerticalPaddingAtDesign: 56
+  pauseWindowOuterBorderThicknessAtDesign: 5
+  pauseWindowGoldBorderThicknessAtDesign: 5
+  pauseWindowHighlightThicknessAtDesign: 3
+  pauseWindowInnerBorderThicknessAtDesign: 5
+  pauseWindowShadowDistanceAtDesign: {x: 7, y: -7}
 --- !u!114 &124024470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -345,7 +359,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -455,6 +469,7 @@ MonoBehaviour:
   destructiblePassAmount: 1
   invincibleSuitAmount: 0
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 3
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -465,16 +480,21 @@ MonoBehaviour:
   redLouieEggAmount: 0
   clockAmount: 0
   skullAmount: 2
+  randomSb5EggAmount: 0
   randomEggsMin: 4
   randomEggsMax: 8
+  hiddenObjectRooms: []
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
   destructiblePrefab: {fileID: 3440613785117735154, guid: 001902d810140af4ca33e28830b45500, type: 3}
-  groundTilemap: {fileID: 672307155}
-  groundTile: {fileID: 11400000, guid: 052703488448cae43ac345df45c7bef7, type: 2}
-  groundShadowTile: {fileID: 0}
-  indestructibleGroundShadowTile: {fileID: 11400000, guid: 9bd10ac513ccde8428dabad9f01dd9ab, type: 2}
+  destructiblePrefabOverrides: []
+  tilemapDoChao: {fileID: 672307155}
+  tileChaoNormal: {fileID: 11400000, guid: 052703488448cae43ac345df45c7bef7, type: 2}
+  tileSombraChaoAbaixoDoDestrutivel: {fileID: 0}
+  tileSombraChaoSobDestrutivel: {fileID: 0}
+  tileSombraChaoAbaixoDoIndestrutivel: {fileID: 11400000, guid: 9bd10ac513ccde8428dabad9f01dd9ab, type: 2}
+  tileDestrutivelComSombraDoIndestrutivel: {fileID: 0}
   groundShadowIgnoredTiles:
   - {fileID: 11400000, guid: 5a74803de18fdcc40aa17b0c00d425b8, type: 2}
   - {fileID: 11400000, guid: cdb9d608c699ef04690974952557bab8, type: 2}
@@ -484,6 +504,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6686a8d1c0f06654685b56adb382d233, type: 2}
   - {fileID: 11400000, guid: 76db82ea5e00cd94ab99959cb8abd4c1, type: 2}
   - {fileID: 11400000, guid: bd2d0060010af394a8ab1055abb8c40e, type: 2}
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -5028,7 +5049,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -7552911586742008429, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 9095229337106392085, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12
+      m_AnimationSpeed: 12.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 2, y: -7, z: 0}
@@ -5091,7 +5112,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 3135224812723779439, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 4132502062500096886, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12
+      m_AnimationSpeed: 12.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -3, z: 0}
@@ -5181,7 +5202,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -3804801382750276116, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 582383472684679092, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12
+      m_AnimationSpeed: 12.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 6, y: 1, z: 0}
@@ -5235,7 +5256,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 3135224812723779439, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 4132502062500096886, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12
+      m_AnimationSpeed: 12.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 5, z: 0}
@@ -5271,7 +5292,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -7552911586742008429, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 9095229337106392085, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12
+      m_AnimationSpeed: 12.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 5, z: 0}
@@ -5307,7 +5328,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 4449135409836199414, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 6705381191897712659, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12
+      m_AnimationSpeed: 12.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   m_TileAssetArray:
@@ -5968,12 +5989,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 6
-  activePlayerMask: 63
+  activePlayerCount: 2
+  activePlayerMask: 3
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
-  battleMatchWins: 000000000000000000000000000000000000000000000000
+  battleMatchWins: 000000000000000000000000000000000000000000000000i
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
+  hardcoreNormalGameRunInProgress: 0
+  hardcoreEliminatedPlayerMask: 0
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -6023,8 +6048,8 @@ RectTransform:
   - {fileID: 2011670928}
   m_Father: {fileID: 1866114541}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.23333333, y: 0.085185185}
+  m_AnchorMax: {x: 0.76666665, y: 0.91481483}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -6202,6 +6227,11 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: 601dfc6b591c8664ba091b84c02f5b85, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
+  roomMusics: []
+  defaultRoomId: 
+  roomMusicLoudnessReference: {fileID: 0}
+  roomMusicLoudnessReferenceVolume: 0.4
+  stageMusicLoudnessCalibrated: 0
   defaultMusicVolume: 0.5
 --- !u!82 &1560934952
 AudioSource:
@@ -6615,6 +6645,10 @@ MonoBehaviour:
   - {x: 3, y: -4, z: 0}
   - {x: -5, y: -4, z: 0}
   conveyorGroundTiles: []
+  upConveyorTile: {fileID: 0}
+  downConveyorTile: {fileID: 0}
+  leftConveyorTile: {fileID: 0}
+  rightConveyorTile: {fileID: 0}
   reverseDirectionTiles:
   - {fileID: 11400000, guid: 7bb5289eae593fd4897405c1bcdb461a, type: 2}
   - {fileID: 11400000, guid: 30b07e78dee6f6b499a6fd1cf719734b, type: 2}
