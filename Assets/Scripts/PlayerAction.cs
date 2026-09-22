@@ -12,5 +12,7 @@
     ActionC,
 
     ActionL,
-    ActionR
+    ActionR,
+
+    Select
 }

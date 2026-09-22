@@ -51,6 +51,7 @@ public class PlayerInputProfile
             defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.RightArrow);
 
             defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Return);
+            defaultBindings[PlayerAction.Select] = Binding.FromKey(KeyCode.Space);
 
             defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.C);
             defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.X);
@@ -68,6 +69,7 @@ public class PlayerInputProfile
         defaultBindings[PlayerAction.MoveRight] = Binding.Empty();
 
         defaultBindings[PlayerAction.Start] = Binding.Empty();
+        defaultBindings[PlayerAction.Select] = Binding.Empty();
         defaultBindings[PlayerAction.ActionA] = Binding.Empty();
         defaultBindings[PlayerAction.ActionB] = Binding.Empty();
         defaultBindings[PlayerAction.ActionC] = Binding.Empty();

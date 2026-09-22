@@ -12,23 +12,24 @@ public sealed class BattleModeComEditModeTests
         DestroyInputManagerIfPresent();
     }
 
-    [Test]
-    public void PlayerInputManager_RecognizesSyntheticHeldAndDown()
+    [TestCase(PlayerAction.ActionA)]
+    [TestCase(PlayerAction.Select)]
+    public void PlayerInputManager_RecognizesSyntheticHeldAndDown(PlayerAction heldAction)
     {
         DestroyInputManagerIfPresent();
 
         var go = new GameObject("PlayerInputManager_Test");
         var input = go.AddComponent<PlayerInputManager>();
 
-        input.SetSyntheticHeld(2, PlayerAction.ActionA, true);
+        input.SetSyntheticHeld(2, heldAction, true);
 
-        Assert.IsTrue(input.Get(2, PlayerAction.ActionA));
-        Assert.IsTrue(input.GetDown(2, PlayerAction.ActionA));
+        Assert.IsTrue(input.Get(2, heldAction));
+        Assert.IsTrue(input.GetDown(2, heldAction));
 
         InvokeLateUpdate(input);
 
-        Assert.IsTrue(input.Get(2, PlayerAction.ActionA));
-        Assert.IsFalse(input.GetDown(2, PlayerAction.ActionA));
+        Assert.IsTrue(input.Get(2, heldAction));
+        Assert.IsFalse(input.GetDown(2, heldAction));
 
         input.TapSynthetic(2, PlayerAction.ActionB);
 
@@ -37,7 +38,7 @@ public sealed class BattleModeComEditModeTests
 
         input.ClearSyntheticPlayer(2);
 
-        Assert.IsFalse(input.Get(2, PlayerAction.ActionA));
+        Assert.IsFalse(input.Get(2, heldAction));
         Assert.IsFalse(input.Get(2, PlayerAction.ActionB));
     }
 

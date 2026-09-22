@@ -5,7 +5,7 @@
 public sealed class PlayerManualDismount : MonoBehaviour
 {
     [Header("Input")]
-    private readonly PlayerAction dismountAction = PlayerAction.ActionL;
+    private readonly PlayerAction dismountAction = PlayerAction.Select;
 
     [Header("Dismount Animation")]
     [SerializeField, Range(0.1f, 2f)]

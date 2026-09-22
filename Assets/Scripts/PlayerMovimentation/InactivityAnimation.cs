@@ -455,8 +455,12 @@ public sealed class InactivityAnimation : MonoBehaviour
                     if (movement.endStageFrameCount > 0)
                         mount.louieEndStage.animationTime = movement.endStageTotalTime / movement.endStageFrameCount;
                 }
-                mount.SetInactivityEmote(pressed == PlayerAction.MoveRight
-                    ? mount.louieEndStage : mount.louieCornered, true);
+                var renderer = pressed == PlayerAction.MoveLeft
+                    ? mount.LouieInactivityEmoteLoopAlt ?? mount.LouieInactivityEmoteLoop
+                    : pressed == PlayerAction.MoveRight
+                        ? mount.louieEndStage
+                        : mount.louieCornered;
+                mount.SetInactivityEmote(renderer, true);
             }
         }
         else
@@ -504,7 +508,7 @@ public sealed class InactivityAnimation : MonoBehaviour
         if (input == null)
             return false;
 
-        for (int index = (int)PlayerAction.MoveUp; index <= (int)PlayerAction.ActionR; index++)
+        for (int index = (int)PlayerAction.MoveUp; index <= (int)PlayerAction.Select; index++)
         {
             var action = (PlayerAction)index;
             if (action != PlayerAction.Start && action != PlayerAction.ActionL &&

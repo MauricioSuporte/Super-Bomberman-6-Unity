@@ -576,7 +576,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
 
-        if (resultPoseActive && !GamePauseController.IsPaused &&
+        if (resultPoseActive && !inputLocked && !isEndingStage && !GamePauseController.IsPaused &&
             InactivityAnimation.HasPoseCancelInput(PlayerId))
             CancelResultPose();
 
@@ -3861,6 +3861,9 @@ public class MovementController : MonoBehaviour, IKillable
             SetAnimEnabled(endSprite, true);
             endSprite.idle = false;
             endSprite.loop = false;
+            endSprite.pingPong = false;
+            endSprite.CurrentFrame = 0;
+            endSprite.RefreshFrame();
 
             if (endStageFrameCount > 0)
                 endSprite.animationTime = endStageTotalTime / endStageFrameCount;

@@ -214,6 +214,7 @@ public class ControlsConfigMenu : MonoBehaviour
         PlayerAction.MoveLeft,
         PlayerAction.MoveRight,
         PlayerAction.Start,
+        PlayerAction.Select,
         PlayerAction.ActionA,
         PlayerAction.ActionB,
         PlayerAction.ActionC,
@@ -238,7 +239,7 @@ public class ControlsConfigMenu : MonoBehaviour
     int EffectiveSelectTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
     int EffectiveWaitTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
     int EffectiveConfirmTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
-    int EffectiveRemapTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 3);
+    int EffectiveRemapTitleToBodyGapLines => Mathf.Max(0, selectTitleToBodyGapLines - 1);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
 
     Canvas GetRootCanvas()
@@ -509,7 +510,7 @@ public class ControlsConfigMenu : MonoBehaviour
         bool hasBlockedMessage = Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine);
         return state switch
         {
-            MenuState.BulkRemap => hasBlockedMessage ? 9 : 8,
+            MenuState.BulkRemap => hasBlockedMessage ? 11 : 10,
             MenuState.SelectPlayer => hasBlockedMessage ? 5 : 4,
             MenuState.WaitForInput => 1,
             _ => 3
@@ -901,6 +902,7 @@ public class ControlsConfigMenu : MonoBehaviour
                AnyPlayerHeld(PlayerAction.ActionL) ||
                AnyPlayerHeld(PlayerAction.ActionR) ||
                AnyPlayerHeld(PlayerAction.Start) ||
+               AnyPlayerHeld(PlayerAction.Select) ||
                AnyPlayerHeld(PlayerAction.MoveUp) ||
                AnyPlayerHeld(PlayerAction.MoveDown) ||
                AnyPlayerHeld(PlayerAction.MoveLeft) ||
@@ -1733,10 +1735,12 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<color={colorHint}>{text.ChooseButtonFor}</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
                 blocked +
                 $"<color={colorPlayerSelectedRed}>{text.EscToCancel}</color>\n\n" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>{text.ConfirmPlaceBomb}</color>\n" +
+                $"<color={colorHint}>A:</color> <color={colorWhite}>{text.ConfirmPlaceBomb}</color>\n" +
                 $"<color={colorHint}>B:</color> <color={colorWhite}>{text.ReturnExplodeControlBomb}</color>\n" +
-                $"<color={colorHint}>C:</color> <color={colorWhite}>{text.RestoreDefaultKeysAbilities}</color>\n" +
-                $"<color={colorHint}>L ({text.Riding}):</color> <color={colorWhite}>{text.Dismount}</color>\n" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>{text.Abilities}</color>\n" +
+                $"<color={colorHint}>{text.Start}:</color> <color={colorWhite}>{text.Pause}</color>\n" +
+                $"<color={colorHint}>{text.Select} ({text.Riding}):</color> <color={colorWhite}>{text.Dismount}</color>\n" +
+                $"<color={colorHint}>L + {text.Directional}:</color> <color={colorWhite}>{text.Emote}</color>\n" +
                 $"<color={colorHint}>R:</color> <color={colorWhite}>{text.StopKickedBombs}</color>" +
                 $"</size></align>";
         }
@@ -2095,6 +2099,7 @@ public class ControlsConfigMenu : MonoBehaviour
             PlayerAction.MoveLeft => text.MoveLeft,
             PlayerAction.MoveRight => text.MoveRight,
             PlayerAction.Start => text.Start,
+            PlayerAction.Select => text.Select,
             PlayerAction.ActionA => text.ActionA,
             PlayerAction.ActionB => text.ActionB,
             PlayerAction.ActionC => text.ActionC,

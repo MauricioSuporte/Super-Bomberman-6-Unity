@@ -9,7 +9,7 @@ public class PlayerInputManager : MonoBehaviour
 {
     private const int MinSupportedPlayerId = 1;
     private const int MaxSupportedPlayerId = 6;
-    private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
+    private const int PlayerActionCount = (int)PlayerAction.Select + 1;
 
     public static PlayerInputManager Instance { get; private set; }
 
@@ -538,6 +538,7 @@ public class PlayerInputManager : MonoBehaviour
             ReadHeldRawCached(playerId, PlayerAction.MoveLeft) ||
             ReadHeldRawCached(playerId, PlayerAction.MoveRight) ||
             ReadHeldRawCached(playerId, PlayerAction.Start) ||
+            ReadHeldRawCached(playerId, PlayerAction.Select) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionA) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionB) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionC) ||

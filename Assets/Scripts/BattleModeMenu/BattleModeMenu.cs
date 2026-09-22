@@ -449,7 +449,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         "Start"
     };
 
-    private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
+    private const int PlayerActionCount = (int)PlayerAction.Select + 1;
 
     private readonly List<string> matchModeEntries = new();
 

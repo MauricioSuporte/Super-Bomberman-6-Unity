@@ -344,7 +344,7 @@ public class MountVisualController : MonoBehaviour
 
         playingInactivity = true;
 
-        activeLouieInactivityRenderer.loop = activeLouieInactivityRenderer != louieEndStage;
+        activeLouieInactivityRenderer.loop = true;
         activeLouieInactivityRenderer.idle = false;
         activeLouieInactivityRenderer.pingPong = false;
 
@@ -824,7 +824,7 @@ public class MountVisualController : MonoBehaviour
         HardExclusive(target);
 
         target.idle = false;
-        target.loop = target != louieEndStage;
+        target.loop = true;
         target.pingPong = false;
         target.RefreshFrame();
     }

@@ -28,7 +28,8 @@ public static class SaveSystem
         PlayerAction.ActionB,
         PlayerAction.ActionC,
         PlayerAction.ActionL,
-        PlayerAction.ActionR
+        PlayerAction.ActionR,
+        PlayerAction.Select
     };
 
     public static SaveData Data

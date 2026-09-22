@@ -408,7 +408,10 @@ public static class GameTextDatabase
         ChooseButtonFor = "CHOOSE A BUTTON FOR:",
         ConfirmPlaceBomb = "CONFIRM / PLACE BOMB",
         ReturnExplodeControlBomb = "RETURN / EXPLODE CONTROL BOMB",
-        RestoreDefaultKeysAbilities = "RESTORE DEFAULT KEYS / ABILITIES",
+        Abilities = "ABILITIES",
+        Pause = "PAUSE",
+        Directional = "DIRECTION",
+        Emote = "EMOTE",
         Dismount = "DISMOUNT",
         StopKickedBombs = "STOP KICKED BOMBS",
         Riding = "RIDING",
@@ -420,6 +423,7 @@ public static class GameTextDatabase
         MoveLeft = "LEFT",
         MoveRight = "RIGHT",
         Start = "START",
+        Select = "SELECT",
         ActionA = "A",
         ActionB = "B",
         ActionC = "C",
@@ -453,7 +457,10 @@ public static class GameTextDatabase
         ChooseButtonFor = "ボタンを選択:",
         ConfirmPlaceBomb = "決定 / 爆弾を置く",
         ReturnExplodeControlBomb = "戻る / リモコン爆弾を爆破",
-        RestoreDefaultKeysAbilities = "初期設定に戻す / 特殊能力",
+        Abilities = "特殊能力",
+        Pause = "ポーズ",
+        Directional = "方向キー",
+        Emote = "エモート",
         Dismount = "降りる",
         StopKickedBombs = "蹴った爆弾を止める",
         Riding = "乗車中",
@@ -465,6 +472,7 @@ public static class GameTextDatabase
         MoveLeft = "左",
         MoveRight = "右",
         Start = "スタート",
+        Select = "セレクト",
         ActionA = "A",
         ActionB = "B",
         ActionC = "C",
@@ -498,7 +506,10 @@ public static class GameTextDatabase
         ChooseButtonFor = "ELIGE UN BOTÓN PARA:",
         ConfirmPlaceBomb = "CONFIRMAR / PONER BOMBA",
         ReturnExplodeControlBomb = "VOLVER / EXPLOTAR BOMBA CONTROL",
-        RestoreDefaultKeysAbilities = "RESTAURAR TECLAS / HABILIDADES",
+        Abilities = "HABILIDADES",
+        Pause = "PAUSA",
+        Directional = "DIRECCIONAL",
+        Emote = "EMOTE",
         Dismount = "BAJAR",
         StopKickedBombs = "DETENER BOMBAS PATEADAS",
         Riding = "MONTADO",
@@ -510,6 +521,7 @@ public static class GameTextDatabase
         MoveLeft = "IZQUIERDA",
         MoveRight = "DERECHA",
         Start = "START",
+        Select = "SELECT",
         ActionA = "A",
         ActionB = "B",
         ActionC = "C",
@@ -543,7 +555,10 @@ public static class GameTextDatabase
         ChooseButtonFor = "ESCOLHA UM BOTÃO PARA:",
         ConfirmPlaceBomb = "CONFIRMAR / COLOCAR BOMBA",
         ReturnExplodeControlBomb = "VOLTAR / EXPLODIR BOMBA CONTROLE",
-        RestoreDefaultKeysAbilities = "RESTAURAR TECLAS / HABILIDADES",
+        Abilities = "HABILIDADES",
+        Pause = "PAUSA",
+        Directional = "DIRECIONAL",
+        Emote = "EMOTE",
         Dismount = "DESCER",
         StopKickedBombs = "PARAR BOMBAS CHUTADAS",
         Riding = "MONTADO",
@@ -555,6 +570,7 @@ public static class GameTextDatabase
         MoveLeft = "ESQUERDA",
         MoveRight = "DIREITA",
         Start = "START",
+        Select = "SELECT",
         ActionA = "A",
         ActionB = "B",
         ActionC = "C",
@@ -1227,7 +1243,10 @@ public sealed class ControlsMenuText
     public string ChooseButtonFor;
     public string ConfirmPlaceBomb;
     public string ReturnExplodeControlBomb;
-    public string RestoreDefaultKeysAbilities;
+    public string Abilities;
+    public string Pause;
+    public string Directional;
+    public string Emote;
     public string Dismount;
     public string StopKickedBombs;
     public string Riding;
@@ -1239,6 +1258,7 @@ public sealed class ControlsMenuText
     public string MoveLeft;
     public string MoveRight;
     public string Start;
+    public string Select;
     public string ActionA;
     public string ActionB;
     public string ActionC;
