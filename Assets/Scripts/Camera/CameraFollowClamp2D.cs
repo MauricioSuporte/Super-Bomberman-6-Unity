@@ -34,16 +34,14 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     private Transform followTarget;
     private readonly List<PlayerIdentity> cachedPlayers = new(8);
     private float refreshTimer;
+    private BattleMode9MinecartController[] minecarts;
+    private bool trackingMinecartRider;
 
     private Vector3 rawPos;
 
     private float accPixelsX;
     private float accPixelsY;
     private Vector2 lastMoveDirCardinal = Vector2.zero;
-
-#if UNITY_2022_2_OR_NEWER
-    private PixelPerfectCamera ppc;
-#endif
 
     private float PixelWorldStep => (pixelsPerUnit > 0) ? (1f / pixelsPerUnit) : 0.0625f;
 
@@ -55,10 +53,6 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         followTarget.hideFlags = HideFlags.HideInHierarchy;
 
         rawPos = transform.position;
-
-#if UNITY_2022_2_OR_NEWER
-        ppc = GetComponent<PixelPerfectCamera>();
-#endif
 
         ApplySpeedInternal(speedInternal);
     }
@@ -82,6 +76,9 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         }
 
         if (!TryUpdateFollowTargetPosition(out var targetPos))
+            return;
+
+        if (trackingMinecartRider)
             return;
 
         Vector3 desired = new Vector3(
@@ -135,9 +132,37 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         transform.position = rawPos;
     }
 
+    void LateUpdate()
+    {
+        if (cam == null || !cam.orthographic || boundsCollider == null)
+            return;
+
+        // Rail coroutines move the rider after FixedUpdate. Follow the final
+        // position without the walking-speed cap, including both axes at turns.
+        if (TryUpdateFollowTargetPosition(out _) && trackingMinecartRider)
+            ForceSnapNow(refreshPlayersNow: false);
+    }
+
+    bool IsMinecartRider(Transform player)
+    {
+        if (minecarts == null)
+            return false;
+
+        for (int i = 0; i < minecarts.Length; i++)
+        {
+            var cart = minecarts[i];
+            if (cart != null && cart.isActiveAndEnabled &&
+                cart.CurrentRider != null && cart.CurrentRider.transform == player)
+                return true;
+        }
+
+        return false;
+    }
+
     void RefreshPlayers()
     {
         PlayerIdentity.GetActivePlayers(cachedPlayers);
+        minecarts = FindObjectsByType<BattleMode9MinecartController>();
     }
 
     bool IsConfiguredPlayerActive(int playerId)
@@ -156,6 +181,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     bool TryUpdateFollowTargetPosition(out Vector3 position)
     {
         position = default;
+        trackingMinecartRider = false;
 
         if (cachedPlayers.Count == 0)
             return false;
@@ -173,12 +199,17 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
                     if (p == null || p.playerId != desiredPlayerId)
                         continue;
 
+                    trackingMinecartRider = IsMinecartRider(p.transform);
                     position = p.transform.position;
                     followTarget.position = position;
                     return true;
                 }
             }
 
+            if (cachedPlayers[0] == null)
+                return false;
+
+            trackingMinecartRider = IsMinecartRider(cachedPlayers[0].transform);
             position = cachedPlayers[0].transform.position;
             followTarget.position = position;
             return true;
@@ -196,6 +227,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             if (!IsConfiguredPlayerActive(p.playerId))
                 continue;
 
+            trackingMinecartRider |= IsMinecartRider(p.transform);
             sum += p.transform.position;
             count++;
         }
@@ -408,6 +440,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         rawPos = ClampToBounds(rawPos, boundsCollider.bounds);
 
         transform.position = rawPos;
-        refreshTimer = Mathf.Max(0.05f, refreshPlayersEverySeconds);
+        if (refreshPlayersNow)
+            refreshTimer = Mathf.Max(0.05f, refreshPlayersEverySeconds);
     }
 }
