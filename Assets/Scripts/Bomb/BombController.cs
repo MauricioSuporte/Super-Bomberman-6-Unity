@@ -8,6 +8,9 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(AudioSource))]
 public partial class BombController : MonoBehaviour
 {
+    // Raised before explosion hitboxes are spawned so enemies can begin evasion.
+    public static event System.Action<Vector2, int> BombDetonating;
+
     private const int RevengeLaunchMinDistanceTiles = 3;
     private const int RevengeLaunchMaxDistanceTiles = 7;
     private const float RevengeLaunchMinArcHeightTiles = 2f;
@@ -1514,6 +1517,8 @@ public partial class BombController : MonoBehaviour
         bool pierce = bombComp != null && bombComp.IsPierceBomb;
 
         TryApplyGroundExplosionModifiers(snapped, ref effectiveRadius, ref pierce);
+
+        BombDetonating?.Invoke(snapped, effectiveRadius);
 
         HideBombVisuals(bomb);
 
