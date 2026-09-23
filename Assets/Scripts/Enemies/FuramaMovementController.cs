@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class FuramaMovementController : JunctionTurningEnemyMovementController
 {
+    [SerializeField] AudioClip flameAttackSfx;
+    AudioSource flameAudioSource;
+
     [Header("Furama Fire Attack")]
     [SerializeField, Min(0.01f)] float attackMinCooldown = 7f;
     [SerializeField, Min(0.01f)] float attackMaxCooldown = 10f;
@@ -31,6 +34,11 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
     protected override void Awake()
     {
         base.Awake();
+        // Keep attack playback separate from the enemy death and stun sounds.
+        flameAudioSource = gameObject.AddComponent<AudioSource>();
+        flameAudioSource.playOnAwake = false;
+        flameAudioSource.loop = false;
+        flameAudioSource.spatialBlend = 0f;
         if (attackSprite != null)
             attackSprite.enabled = false;
     }
@@ -43,6 +51,18 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
 
         started = true;
         TryStartAttackLoop();
+    }
+
+    void Update()
+    {
+        if (flameAudioSource == null)
+            return;
+
+        flameAudioSource.volume = Mathf.Min(1f, GameAudioSettings.ApplySfxVolume(1f) * 2f);
+        if (GamePauseController.IsPaused || Time.deltaTime <= 0f || IsStunned() || isInDamagedLoop)
+            flameAudioSource.Pause();
+        else
+            flameAudioSource.UnPause();
     }
 
     protected override void FixedUpdate()
@@ -76,6 +96,9 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
 
     void StopAttackLoop()
     {
+        if (flameAudioSource != null)
+            flameAudioSource.Stop();
+
         if (attackLoop == null)
             return;
 
@@ -117,6 +140,8 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
         {
             if (!IsStunned() && !isInDamagedLoop)
             {
+                if (!launchedFlame && flameVisualPrefab != null)
+                    PlayBoostedFlameSfx();
                 LaunchFlameBurst(fireDirection);
                 launchedFlame = true;
             }
@@ -125,6 +150,8 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
             yield return WaitGameplaySeconds(wait);
             elapsed += wait;
         }
+
+        flameAudioSource.Stop();
 
         if (launchedFlame && isActiveAndEnabled && !isDead)
             yield return WaitGameplaySeconds(flameBurstDuration);
@@ -155,6 +182,15 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
             endTileDistance: Mathf.Max(1, flameLengthTiles),
             tileSize,
             flameBurstDuration);
+    }
+
+    void PlayBoostedFlameSfx()
+    {
+        if (flameAudioSource == null || flameAttackSfx == null)
+            return;
+
+        // The source receives the global SFX volume once, then a 6 dB boost.
+        GameAudioSettings.PlaySfxClip(flameAudioSource, flameAttackSfx);
     }
 
     void ShowDirectionalIdle(Vector2 facingDirection)

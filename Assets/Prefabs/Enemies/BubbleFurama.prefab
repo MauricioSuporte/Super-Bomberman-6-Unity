@@ -791,6 +791,7 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  flameAttackSfx: {fileID: 8300000, guid: f1485d357d1f8294da6af96434adc2e6, type: 3}
   attackMinCooldown: 7
   attackMaxCooldown: 10
   prepareDuration: 1

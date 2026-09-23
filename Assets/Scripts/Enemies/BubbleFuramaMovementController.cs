@@ -4,6 +4,9 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 {
     enum AttackPhase { Walking, Preparing, Throwing, Recovering, ReversingPreparation }
 
+    [SerializeField] AudioClip flameAttackSfx;
+    AudioSource flameAudioSource;
+
     [Header("Bubble Furama Attack")]
     [SerializeField, Min(0.01f)] float attackMinCooldown = 7f;
     [SerializeField, Min(0.01f)] float attackMaxCooldown = 10f;
@@ -36,6 +39,11 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
         spriteUp = spriteDown = spriteLeft = spriteRight = movimentation;
         waitForFullDeathAnimation = true;
         base.Awake();
+        // Keep attack playback separate from the enemy death and stun sounds.
+        flameAudioSource = gameObject.AddComponent<AudioSource>();
+        flameAudioSource.playOnAwake = false;
+        flameAudioSource.loop = false;
+        flameAudioSource.spatialBlend = 0f;
         stunReceiver = GetComponent<StunReceiver>();
         SetVisible(preparing, false);
         SetVisible(throwingFlames, false);
@@ -65,6 +73,16 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     void Update()
     {
+        if (flameAudioSource != null)
+        {
+            flameAudioSource.volume = Mathf.Min(1f, GameAudioSettings.ApplySfxVolume(1f) * 2f);
+            if (GamePauseController.IsPaused || Time.deltaTime <= 0f ||
+                isInDamagedLoop || (stunReceiver != null && stunReceiver.IsStunned))
+                flameAudioSource.Pause();
+            else
+                flameAudioSource.UnPause();
+        }
+
         if (!ready || isDead || GamePauseController.IsPaused || Time.deltaTime <= 0f ||
             isInDamagedLoop || (stunReceiver != null && stunReceiver.IsStunned))
             return;
@@ -90,6 +108,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
                 pairInterval = Mathf.Max(0.01f, sweepDuration) / sweepPairCount;
                 nextPair = 0;
                 ShowAttack(throwingFlames);
+                PlayBoostedFlameSfx();
                 LaunchNextPair();
                 break;
             case AttackPhase.Throwing:
@@ -99,6 +118,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
                 {
                     // At 180 degrees the opposite rays coincide with the initial pair.
                     // Finish the turn without emitting those directions a second time.
+                    flameAudioSource.Stop();
                     phase = AttackPhase.Recovering;
                     phaseTimer = BubbleFuramaFlame.Lifetime;
                 }
@@ -152,6 +172,8 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
     {
         if (isDead)
             return;
+        if (flameAudioSource != null)
+            flameAudioSource.Stop();
         if (preparing != null)
             preparing.SetManualAnimationUpdate(false);
         SetVisible(preparing, false);
@@ -162,6 +184,8 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     void OnDisable()
     {
+        if (flameAudioSource != null)
+            flameAudioSource.Stop();
         if (preparing != null)
             preparing.SetManualAnimationUpdate(false);
         SetVisible(preparing, false);
@@ -193,6 +217,15 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
         copy.gameObject.AddComponent<BubbleFuramaFlame>().Launch(
             copy, ray, Mathf.Max(0.01f, tileSize), Mathf.Max(1f, flameLengthTiles),
             throwingFlames.GetComponent<SpriteRenderer>(), GetComponentsInChildren<Collider2D>(true));
+    }
+
+    void PlayBoostedFlameSfx()
+    {
+        if (flameAudioSource == null || flameAttackSfx == null)
+            return;
+
+        // The source receives the global SFX volume once, then a 6 dB boost.
+        GameAudioSettings.PlaySfxClip(flameAudioSource, flameAttackSfx);
     }
 
     void ShowAttack(AnimatedSpriteRenderer animation)
