@@ -561,6 +561,12 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             if (hit.gameObject == gameObject)
                 continue;
 
+            // IgluRoof keeps a trigger collider on the Stage layer solely so
+            // explosions can target it. It is a visual stage prop, not a
+            // navigation obstacle for any enemy derived from this controller.
+            if (hit.GetComponentInParent<StageAssets.IgluRoofController>() != null)
+                continue;
+
             return true;
         }
 
