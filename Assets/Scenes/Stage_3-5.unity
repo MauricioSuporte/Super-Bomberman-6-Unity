@@ -18593,6 +18593,68 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6369719045934436005, guid: d1a02e3e7a5504544962badebd34a9ce, type: 3}
   m_PrefabInstance: {fileID: 7461443456233143308}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &977382442
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1209433156}
+    m_Modifications:
+    - target: {fileID: 2974861450268481676, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_Name
+      value: IceTower
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 57.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+--- !u!4 &977382443 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4501247732187776239, guid: 21edaa9032b87ec43a8ba61d04328ef6, type: 3}
+  m_PrefabInstance: {fileID: 977382442}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &977957624
 GameObject:
   m_ObjectHideFlags: 0
@@ -19549,6 +19611,68 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0bf758fc9fe54e01a1032a3369c7a140, type: 3}
+--- !u!1001 &1199439679
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1209433156}
+    m_Modifications:
+    - target: {fileID: 2974861450268481676, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_Name
+      value: Pygmin
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 55.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+--- !u!4 &1199439680 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4501247732187776239, guid: 00eb5b9c16451664eac42081c0d7ec49, type: 3}
+  m_PrefabInstance: {fileID: 1199439679}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1203164152
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19645,6 +19769,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 977382443}
+  - {fileID: 1199439680}
   - {fileID: 1683283801}
   - {fileID: 1451907740}
   - {fileID: 1358049188}

@@ -22,8 +22,18 @@ public sealed class IcicleIceProjectile : MonoBehaviour
     private Sprite particleSpriteTwo;
     private float nextParticleTime;
     private bool impacted;
+    private bool destroysBombs = true;
 
-    public static void Create(Vector2 position, Vector2 travelDirection, GameObject shotOwner, Sprite projectileSprite, Sprite particleOne, Sprite particleTwo)
+    public static void Create(
+        Vector2 position,
+        Vector2 travelDirection,
+        GameObject shotOwner,
+        Sprite projectileSprite,
+        Sprite particleOne,
+        Sprite particleTwo,
+        bool destroysBombs = true,
+        Sprite[] projectileAnimationFrames = null,
+        float projectileAnimationTime = 0.1f)
     {
         GameObject projectile = new("IcicleIceProjectile");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
@@ -43,11 +53,24 @@ public sealed class IcicleIceProjectile : MonoBehaviour
         collider.radius = 0.28f;
 
         SpriteRenderer renderer = projectile.AddComponent<SpriteRenderer>();
-        renderer.sprite = projectileSprite;
+        renderer.sprite = projectileAnimationFrames != null && projectileAnimationFrames.Length > 0
+            ? projectileAnimationFrames[0]
+            : projectileSprite;
         renderer.sortingOrder = 6;
 
+        if (projectileAnimationFrames != null && projectileAnimationFrames.Length > 0)
+        {
+            AnimatedSpriteRenderer animation = projectile.AddComponent<AnimatedSpriteRenderer>();
+            animation.idleSprite = projectileAnimationFrames[0];
+            animation.animationSprite = projectileAnimationFrames;
+            animation.animationTime = Mathf.Max(0.01f, projectileAnimationTime);
+            animation.loop = true;
+            animation.idle = false;
+            animation.RestartAnimation();
+        }
+
         IcicleIceProjectile iceProjectile = projectile.AddComponent<IcicleIceProjectile>();
-        iceProjectile.Initialize(travelDirection, shotOwner, particleOne, particleTwo);
+        iceProjectile.Initialize(travelDirection, shotOwner, particleOne, particleTwo, destroysBombs);
     }
 
     private void Awake()
@@ -86,7 +109,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
 
         BeginImpact();
 
-        if (bomb != null)
+        if (bomb != null && destroysBombs)
         {
             if (bomb.Owner != null)
                 bomb.Owner.DestroyBombExternally(bomb.gameObject, refund: true);
@@ -101,12 +124,13 @@ public sealed class IcicleIceProjectile : MonoBehaviour
         }
     }
 
-    private void Initialize(Vector2 travelDirection, GameObject shotOwner, Sprite particleOne, Sprite particleTwo)
+    private void Initialize(Vector2 travelDirection, GameObject shotOwner, Sprite particleOne, Sprite particleTwo, bool shouldDestroyBombs)
     {
         direction = travelDirection == Vector2.zero ? Vector2.down : travelDirection.normalized;
         owner = shotOwner;
         particleSpriteOne = particleOne;
         particleSpriteTwo = particleTwo;
+        destroysBombs = shouldDestroyBombs;
         nextParticleTime = Time.time;
     }
 

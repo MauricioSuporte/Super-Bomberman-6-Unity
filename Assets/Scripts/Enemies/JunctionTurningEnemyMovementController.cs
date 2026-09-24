@@ -8,6 +8,33 @@ public class JunctionTurningEnemyMovementController : EnemyMovementController
 
     public bool preferTurnAtJunction = false;
 
+    private bool hasInitialDirection;
+
+    /// <summary>
+    /// Sets the direction that will be used by Start. This lets a group of
+    /// otherwise standard junction-turning enemies disperse from one tile.
+    /// </summary>
+    public void SetInitialDirection(Vector2 desiredDirection)
+    {
+        if (Mathf.Abs(desiredDirection.x) > Mathf.Abs(desiredDirection.y))
+            direction = desiredDirection.x >= 0f ? Vector2.right : Vector2.left;
+        else
+            direction = desiredDirection.y >= 0f ? Vector2.up : Vector2.down;
+
+        hasInitialDirection = true;
+    }
+
+    protected override void Start()
+    {
+        SnapToGrid();
+
+        if (!hasInitialDirection)
+            ChooseInitialDirection();
+
+        UpdateSpriteDirection(direction);
+        DecideNextTile();
+    }
+
     protected override void DecideNextTile()
     {
         Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
