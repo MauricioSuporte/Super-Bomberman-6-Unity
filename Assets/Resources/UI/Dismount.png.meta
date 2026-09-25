@@ -1,10 +1,7 @@
 fileFormatVersion: 2
-guid: 5692420853d04d1fb6397d9d849b1db2
+guid: a195d4c8b7e64f2ca310d06f849b27e3
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -7458184912709011880
-    second: MechaBomber3_Portrait_1_0
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,34 +110,12 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: MechaBomber3_Portrait_1_0
-      rect:
-        serializedVersion: 2
-        x: 2
-        y: 0
-        width: 23
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 49a1f3f501f84592a7b7620186f98204
-      internalID: -7458184912709011880
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
+    sprites: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 88d364bb82fb4a109e337115c2ae13c3
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 

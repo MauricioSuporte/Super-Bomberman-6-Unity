@@ -26,6 +26,7 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     private Image _hitboxImage;
     private Vector2 _releasedIconPosition;
     private Sprite _defaultIconSprite;
+    private Sprite _defaultVisualSprite;
 
     public PlayerAction Action => action;
 
@@ -36,6 +37,7 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         ConfigureVisualToMatchHitbox();
         CacheReleasedIconPosition();
         CacheDefaultIconSprite();
+        CacheDefaultVisualSprite();
         ApplyReleasedVisual();
     }
 
@@ -48,6 +50,14 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             return;
 
         iconImage.sprite = contextSprite != null ? contextSprite : _defaultIconSprite;
+    }
+
+    public void SetContextVisual(Sprite contextSprite)
+    {
+        if (visualImage == null)
+            return;
+
+        visualImage.sprite = contextSprite != null ? contextSprite : _defaultVisualSprite;
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -137,6 +147,12 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     {
         if (iconTarget != null && iconTarget.TryGetComponent<Image>(out var iconImage))
             _defaultIconSprite = iconImage.sprite;
+    }
+
+    void CacheDefaultVisualSprite()
+    {
+        if (visualImage != null)
+            _defaultVisualSprite = visualImage.sprite;
     }
 
     void OnValidate()

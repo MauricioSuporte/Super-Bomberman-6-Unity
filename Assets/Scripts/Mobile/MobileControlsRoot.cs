@@ -9,11 +9,13 @@ public class MobileControlsRoot : MonoBehaviour
     private MobileButton actionAButton;
     private MobileButton actionBButton;
     private MobileButton actionCButton;
+    private MobileButton selectButton;
     private Sprite placeBombSprite;
     private Sprite powerGloveSprite;
     private Sprite punchBombSprite;
     private Sprite louieAbilitySprite;
     private Sprite detonateControlBombSprite;
+    private Sprite dismountSprite;
 
     void Awake()
     {
@@ -74,6 +76,7 @@ public class MobileControlsRoot : MonoBehaviour
                 case PlayerAction.ActionA: actionAButton = button; break;
                 case PlayerAction.ActionB: actionBButton = button; break;
                 case PlayerAction.ActionC: actionCButton = button; break;
+                case PlayerAction.Select: selectButton = button; break;
             }
         }
 
@@ -82,6 +85,7 @@ public class MobileControlsRoot : MonoBehaviour
         punchBombSprite = Resources.Load<Sprite>("UI/Use_Box_Glove");
         louieAbilitySprite = Resources.Load<Sprite>("UI/Louie_hability");
         detonateControlBombSprite = Resources.Load<Sprite>("UI/Acionate_Bomb");
+        dismountSprite = Resources.Load<Sprite>("UI/Dismount");
     }
 
     void RefreshContextIcons()
@@ -89,6 +93,7 @@ public class MobileControlsRoot : MonoBehaviour
         if (!IsGameplayStage())
         {
             SetContextIcons(null, null, null);
+            selectButton?.SetContextVisual(null);
             return;
         }
 
@@ -96,6 +101,7 @@ public class MobileControlsRoot : MonoBehaviour
         if (player == null)
         {
             SetContextIcons(null, null, null);
+            selectButton?.SetContextVisual(null);
             return;
         }
 
@@ -103,6 +109,7 @@ public class MobileControlsRoot : MonoBehaviour
         var abilities = player.GetComponent<AbilitySystem>();
         var bombs = player.GetComponent<BombController>();
         var powerGlove = player.GetComponent<PowerGloveAbility>();
+        var companion = player.GetComponent<PlayerMountCompanion>();
 
         bool canUsePowerGlove = powerGlove != null && powerGlove.CanPickupBombAtCurrentPosition();
         bool canUsePunch = abilities != null && abilities.IsEnabled(BombPunchAbility.AbilityId);
@@ -111,11 +118,13 @@ public class MobileControlsRoot : MonoBehaviour
                                       bombs != null &&
                                       bombs.PeekOldestControlledBomb() != null;
         bool isMounted = movement != null && movement.IsMounted;
+        bool canDismount = isMounted && companion != null && companion.HasMountedLouie();
 
         SetContextIcons(
             canUsePowerGlove ? powerGloveSprite : placeBombSprite,
             canDetonateControlBomb ? detonateControlBombSprite : null,
             isMounted ? louieAbilitySprite : canUsePunch ? punchBombSprite : null);
+        selectButton?.SetContextVisual(canDismount ? dismountSprite : null);
     }
 
     void SetContextIcons(Sprite actionA, Sprite actionB, Sprite actionC)

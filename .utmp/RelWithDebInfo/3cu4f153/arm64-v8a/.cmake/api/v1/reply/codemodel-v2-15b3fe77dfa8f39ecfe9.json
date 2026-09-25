@@ -66,7 +66,7 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "swappywrapper::@7e25bd1f32ce224db4e9",
-					"jsonFile" : "target-swappywrapper-RelWithDebInfo-4f46dce473e0892c7e35.json",
+					"jsonFile" : "target-swappywrapper-RelWithDebInfo-853d79d49ecee4bc3c60.json",
 					"name" : "swappywrapper",
 					"projectIndex" : 1
 				}
@@ -76,7 +76,7 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3cu4f153/armeabi-v7a",
+		"build" : "C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/.utmp/RelWithDebInfo/3cu4f153/arm64-v8a",
 		"source" : "C:/Users/mauri/source/repos/Super-Bomberman-6-Unity/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp"
 	},
 	"version" : 
