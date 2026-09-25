@@ -203,7 +203,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
             Vector3 snowTileLocalPosition = snowEffectLocalPosition +
                 (Vector3)(direction * tileSize);
             snowEffectSprite.SetExternalBaseLocalPosition(snowTileLocalPosition);
-            snowEffectSprite.enabled = true;
+            SetVisualEnabled(snowEffectSprite, true);
             snowEffectSprite.idle = false;
             snowEffectSprite.loop = true;
             snowEffectSprite.CurrentFrame = 0;
@@ -249,17 +249,14 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
     private void EndSnowPreparation()
     {
         preparingSnow = false;
-        if (activeAttackSnowSprite != null)
-        {
-            activeAttackSnowSprite.enabled = false;
-            activeAttackSnowSprite = null;
-        }
+        DisableAttackSnowSprites();
+        activeAttackSnowSprite = null;
 
         if (snowEffectSprite == null)
             return;
 
         snowEffectSprite.ClearExternalBase();
-        snowEffectSprite.enabled = false;
+        SetVisualEnabled(snowEffectSprite, false);
         snowEffectSprite.transform.localPosition = snowEffectLocalPosition;
     }
 
@@ -276,10 +273,10 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
 
     private void DisableWalkingSpritesForSnow()
     {
-        if (spriteUp != null) spriteUp.enabled = false;
-        if (spriteDown != null) spriteDown.enabled = false;
-        if (spriteLeft != null) spriteLeft.enabled = false;
-        if (spriteRight != null) spriteRight.enabled = false;
+        SetVisualEnabled(spriteUp, false);
+        SetVisualEnabled(spriteDown, false);
+        SetVisualEnabled(spriteLeft, false);
+        SetVisualEnabled(spriteRight, false);
         activeSprite = null;
     }
 
@@ -347,17 +344,18 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
             return;
 
         snowEffectLocalPosition = child.localPosition;
-        snowEffectSprite.enabled = false;
+        SetVisualEnabled(snowEffectSprite, false);
     }
 
     private void ShowAttackSnowSprite(Vector2 attackDirection)
     {
+        DisableAttackSnowSprites();
         Vector2 spriteDirection = attackDirection == Vector2.right ? Vector2.left : attackDirection;
         if (!attackSnowSprites.TryGetValue(spriteDirection, out AnimatedSpriteRenderer snowSprite) || snowSprite == null)
             return;
 
         activeAttackSnowSprite = snowSprite;
-        activeAttackSnowSprite.enabled = true;
+        SetVisualEnabled(activeAttackSnowSprite, true);
         activeAttackSnowSprite.idle = false;
         activeAttackSnowSprite.loop = true;
         activeAttackSnowSprite.CurrentFrame = 0;
@@ -365,6 +363,22 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
 
         if (activeAttackSnowSprite.TryGetComponent(out SpriteRenderer spriteRenderer))
             spriteRenderer.flipX = attackDirection == Vector2.right;
+    }
+
+    private void DisableAttackSnowSprites()
+    {
+        foreach (AnimatedSpriteRenderer attackSprite in attackSnowSprites.Values)
+            SetVisualEnabled(attackSprite, false);
+    }
+
+    private static void SetVisualEnabled(AnimatedSpriteRenderer sprite, bool enabled)
+    {
+        if (sprite == null)
+            return;
+
+        sprite.enabled = enabled;
+        if (sprite.TryGetComponent(out SpriteRenderer spriteRenderer))
+            spriteRenderer.enabled = enabled;
     }
 
 }

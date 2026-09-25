@@ -139,6 +139,8 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         SetJumpInvulnerability(false);
         ClearJumpOffsets();
         SetShadows(jumping: false);
+        SetVisualEnabled(jumpingSprite, false);
+        SetVisualEnabled(transformSprite, false);
         base.Die();
     }
 
@@ -376,7 +378,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         if (transformSprite == null)
             return;
 
-        transformSprite.enabled = true;
+        SetVisualEnabled(transformSprite, true);
         transformSprite.idle = false;
         transformSprite.loop = false;
         transformSprite.RestartAnimation();
@@ -384,8 +386,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     private void HideTransformVisual()
     {
-        if (transformSprite != null)
-            transformSprite.enabled = false;
+        SetVisualEnabled(transformSprite, false);
     }
 
     private void ShowJumpVisual(bool animate)
@@ -394,7 +395,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         if (jumpingSprite == null)
             return;
 
-        jumpingSprite.enabled = true;
+        SetVisualEnabled(jumpingSprite, true);
         jumpingSprite.idle = !animate;
         if (animate)
         {
@@ -410,14 +411,14 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     private void HideSpecialVisualsExcept(AnimatedSpriteRenderer keep)
     {
-        if (jumpingSprite != null && jumpingSprite != keep)
-            jumpingSprite.enabled = false;
-        if (transformSprite != null && transformSprite != keep)
-            transformSprite.enabled = false;
-        if (spriteUp != null) spriteUp.enabled = false;
-        if (spriteDown != null) spriteDown.enabled = false;
-        if (spriteLeft != null) spriteLeft.enabled = false;
-        if (spriteRight != null) spriteRight.enabled = false;
+        if (jumpingSprite != keep)
+            SetVisualEnabled(jumpingSprite, false);
+        if (transformSprite != keep)
+            SetVisualEnabled(transformSprite, false);
+        SetVisualEnabled(spriteUp, false);
+        SetVisualEnabled(spriteDown, false);
+        SetVisualEnabled(spriteLeft, false);
+        SetVisualEnabled(spriteRight, false);
     }
 
     private void SetShadows(bool jumping)
@@ -504,6 +505,16 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
     {
         float inverseTime = 1f - Mathf.Clamp01(time);
         return 1f - inverseTime * inverseTime;
+    }
+
+    private static void SetVisualEnabled(AnimatedSpriteRenderer sprite, bool enabled)
+    {
+        if (sprite == null)
+            return;
+
+        sprite.enabled = enabled;
+        if (sprite.TryGetComponent(out SpriteRenderer spriteRenderer))
+            spriteRenderer.enabled = enabled;
     }
 
 }
