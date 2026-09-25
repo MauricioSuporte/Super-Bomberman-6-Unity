@@ -59,6 +59,10 @@ public class PlayerBomberSkinController : MonoBehaviour
     };
     static readonly int[] MinerBomberEndStageFrames = { 2, 108, 109, 110, 133 };
     static readonly int[] KamikazeBomberEndStageFrames = { 108, 109, 110, 128, 129 };
+    static readonly int[] MechaBomberEndStageFrames =
+    {
+        108, 109, 110, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142
+    };
 
     readonly struct WalkDefinition
     {
@@ -456,6 +460,9 @@ public class PlayerBomberSkinController : MonoBehaviour
 
         if (folderName == "KamikazeBomber")
             return KamikazeBomberEndStageFrames;
+
+        if (folderName == "MechaBomber")
+            return MechaBomberEndStageFrames;
 
         return character switch
         {

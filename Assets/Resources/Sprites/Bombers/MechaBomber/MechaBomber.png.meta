@@ -3446,7 +3446,7 @@ TextureImporter:
       name: MechaBomber_133
       rect:
         serializedVersion: 2
-        x: 1472
+        x: 1344
         y: 128
         width: 64
         height: 64
@@ -3469,7 +3469,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1408
-        y: 64
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -3490,7 +3490,7 @@ TextureImporter:
       name: MechaBomber_135
       rect:
         serializedVersion: 2
-        x: 1472
+        x: 896
         y: 64
         width: 64
         height: 64
@@ -3512,8 +3512,8 @@ TextureImporter:
       name: MechaBomber_136
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 0
+        x: 960
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3534,8 +3534,8 @@ TextureImporter:
       name: MechaBomber_137
       rect:
         serializedVersion: 2
-        x: 1472
-        y: 0
+        x: 1024
+        y: 64
         width: 64
         height: 64
       alignment: 0
@@ -3548,6 +3548,204 @@ TextureImporter:
       bones: []
       spriteID: 387aafd1eb224bbda336d02e56e6eaf1
       internalID: 239045322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_138
+      rect:
+        serializedVersion: 2
+        x: 1088
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f0c055e702a4a89aa3083664828c33e
+      internalID: 1253773012994604352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_139
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9db00e4cf4764d4fa7d608935e296de6
+      internalID: 3786404523754154527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_140
+      rect:
+        serializedVersion: 2
+        x: 1216
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cbf2d6bf7864b89a8f0520be4e9faf2
+      internalID: 4205902521467762715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_141
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c31b2e9672b4277b4134e74b987e1c2
+      internalID: 6903407605177725667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_142
+      rect:
+        serializedVersion: 2
+        x: 1344
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c8aab93187d4adabd66b77665aca1fb
+      internalID: 520996973900108939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_143
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be714d988e864031af73c38e9915ffb1
+      internalID: 3178820748786074109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_144
+      rect:
+        serializedVersion: 2
+        x: 1472
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f179f4447df44fbb4ece58d1a31601b
+      internalID: 1072525032591660549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_145
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 0
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 439ea740b10942d197766211c8935cf4
+      internalID: 1948229913876170666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MechaBomber_146
+      rect:
+        serializedVersion: 2
+        x: 1472
+        y: 0
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f702eafd642d4f82b977c3df48ddd491
+      internalID: 548737971602654504
       vertices: []
       indices: 
       edges: []
@@ -3612,7 +3810,16 @@ TextureImporter:
       MechaBomber_135: -1391604416
       MechaBomber_136: 452258839
       MechaBomber_137: 239045322
+      MechaBomber_138: 1253773012994604352
+      MechaBomber_139: 3786404523754154527
       MechaBomber_14: 8757632248242277778
+      MechaBomber_140: 4205902521467762715
+      MechaBomber_141: 6903407605177725667
+      MechaBomber_142: 520996973900108939
+      MechaBomber_143: 3178820748786074109
+      MechaBomber_144: 1072525032591660549
+      MechaBomber_145: 1948229913876170666
+      MechaBomber_146: 548737971602654504
       MechaBomber_15: 1727086436179205456
       MechaBomber_16: 2824510088341940957
       MechaBomber_17: -6391470257200420165
