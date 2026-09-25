@@ -114,7 +114,7 @@ MonoBehaviour:
   - {fileID: 21300005, guid: b9d88f99398541a68700b7c18119d791, type: 3}
   - {fileID: 21300006, guid: b9d88f99398541a68700b7c18119d791, type: 3}
   allowFlipX: 0
-  animationTime: 0.083333333
+  animationTime: 0.083333336
   useSequenceDuration: 1
   sequenceDuration: 0.5
   frameDurations: []
@@ -259,7 +259,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.25}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.25}
@@ -470,7 +470,7 @@ MonoBehaviour:
   - {fileID: 21300026, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   - {fileID: 21300027, guid: 419d0aadeb4e45969e2c01934626aaf3, type: 3}
   allowFlipX: 0
-  animationTime: 0.062500000
+  animationTime: 0.0625
   useSequenceDuration: 1
   sequenceDuration: 0.5
   frameDurations: []
