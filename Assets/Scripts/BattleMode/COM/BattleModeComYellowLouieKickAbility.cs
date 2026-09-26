@@ -9,7 +9,6 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 {
     private const float KickCommandConfirmationWaitSeconds = 0.35f;
     private const float DefensiveKickMinFuseSeconds = 0.55f;
-    private const float DefensiveLogIntervalSeconds = 0.35f;
     private const float FailedKickRetryBlockSeconds = 1.0f;
 
     private static readonly Vector2Int[] CardinalTiles =
@@ -32,13 +31,8 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
     private Vector2Int failedKickOriginTile;
     private Vector2Int failedKickDirection;
     private float failedKickRetryBlockedUntil = -10f;
-    private float lastDefensiveLogTime = -10f;
-    private string lastDefensiveLogKey = string.Empty;
     private readonly Queue<Vector2Int> escapeOpen = new();
     private readonly Dictionary<Vector2Int, EscapeNode> escapeVisited = new();
-
-    [Header("Debug")]
-    [SerializeField] private bool debugYellowKickTrace;
 
     private struct EscapeNode
     {
@@ -305,16 +299,15 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
         if (IsKickCommandAwaitingConfirmation(bomb, bombTile, kickDirection, out float pendingElapsed))
         {
-            Vector2 waitMove = TileDirectionToVector(kickDirection);
             decision = new BattleModeComAbilityDecision
             {
                 Action = BattleModeComActionType.KickBomb,
                 Weight = Mathf.Max(1, weight - 10),
                 TargetTile = bombTile,
                 HasTarget = true,
-                FirstMove = waitMove,
+                FirstMove = Vector2.zero,
                 Reason = "wait yellow louie kick",
-                InputDescription = FirstMoveDescription(waitMove)
+                InputDescription = "none"
             };
             lastDecisionTrace =
                 $"yellow kick wait bomb:{bombTile} dir:{kickDirection} wait:{pendingElapsed:F2}/{KickCommandConfirmationWaitSeconds:F2}";
@@ -339,9 +332,11 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
             Weight = weight,
             TargetTile = bombTile + kickDirection,
             HasTarget = true,
-            FirstMove = kickMove,
+            // BombPass permite atravessar a bomba. Avançar no mesmo frame do
+            // ActionC fazia a COM ocupar a trajetória e cancelar o chute.
+            FirstMove = Vector2.zero,
             Reason = reason,
-            InputDescription = AppendInput(FirstMoveDescription(kickMove), "ActionC"),
+            InputDescription = "ActionC",
             TapActionC = true
         };
 
@@ -417,6 +412,26 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
         float elapsed = Time.time - pendingKickSentTime;
         bool bombMoved = WorldToTile(pendingKickBomb.GetLogicalPosition()) != pendingKickOriginTile;
+
+        // Enquanto a bomba ainda cruza a primeira célula, BombPass faria a COM
+        // entrar nela. Isso a transforma em obstáculo e a rotina do Yellow Louie
+        // cancela o segmento. Só inicie a fuga após a confirmação do deslocamento.
+        if (!bombMoved && elapsed <= KickCommandConfirmationWaitSeconds)
+        {
+            decision = new BattleModeComAbilityDecision
+            {
+                Action = BattleModeComActionType.KickBomb,
+                Weight = 390 + DifficultyWeight(settings),
+                TargetTile = pendingKickOriginTile,
+                HasTarget = true,
+                FirstMove = Vector2.zero,
+                Reason = "wait yellow louie kick movement",
+                InputDescription = "none"
+            };
+            lastDecisionTrace =
+                $"yellow pending kick wait origin:{pendingKickOriginTile} elapsed:{elapsed:F2}/{KickCommandConfirmationWaitSeconds:F2}";
+            return true;
+        }
 
         if (myTile == pendingKickEscapeTile)
         {
@@ -863,21 +878,6 @@ public sealed class BattleModeComYellowLouieKickAbility : BattleModeComKickBombA
 
     private void LogYellowDefensive(string key, string message, bool force = false)
     {
-        if (!debugYellowKickTrace)
-            return;
-
-        string logKey = key + ":" + message;
-        if (!force &&
-            logKey == lastDefensiveLogKey &&
-            Time.time - lastDefensiveLogTime < DefensiveLogIntervalSeconds)
-        {
-            return;
-        }
-
-        lastDefensiveLogKey = logKey;
-        lastDefensiveLogTime = Time.time;
-        Vector2Int tile = Movement != null ? WorldToTile(Movement.transform.position) : Vector2Int.zero;
-        Debug.Log($"[BattleCOMYellowKickTrace][P{(Movement != null ? Movement.PlayerId : 0)}] t:{Time.time:F3} tile:{tile} {key} {message}", this);
     }
 
     private static string DirectionLabel(Vector2Int dir)
