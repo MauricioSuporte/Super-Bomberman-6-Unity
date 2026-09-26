@@ -559,6 +559,12 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.PowerGlove:
                 GetOrCreateAbilitySystem(player).Enable(PowerGloveAbility.AbilityId);
+                PlayerPersistentStats.SyncBattleModeComAbilityScripts(player, pid);
+                break;
+
+            case ItemType.LineBomb:
+                GetOrCreateAbilitySystem(player).Enable(LineBombAbility.AbilityId);
+                PlayerPersistentStats.SyncBattleModeComAbilityScripts(player, pid);
                 break;
 
             case ItemType.PierceBomb:
@@ -1630,9 +1636,9 @@ public class ItemPickup : MonoBehaviour
         transform.position = p;
 
         // IMPORTANTE:
-        // O AnimatedSpriteRenderer est· no mesmo GameObject do item.
+        // O AnimatedSpriteRenderer est√° no mesmo GameObject do item.
         // Se ele usar frameOffsets, ele pode restaurar o localPosition antigo.
-        // Ent„o atualizamos a base visual para a posiÁ„o local atual.
+        // Ent√£o atualizamos a base visual para a posi√ß√£o local atual.
         SyncSkullAnimatedRendererBasePosition();
 
         if (syncPhysics)

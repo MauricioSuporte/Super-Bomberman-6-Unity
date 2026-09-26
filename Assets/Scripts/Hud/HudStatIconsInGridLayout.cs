@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -122,6 +122,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Sprite bombPassPowerupSprite;
     [SerializeField] private Sprite punchPowerupSprite;
     [SerializeField] private Sprite powerGlovePowerupSprite;
+    [SerializeField] private Sprite lineBombPowerupSprite;
     [SerializeField] private Sprite lifePowerupSprite;
     [SerializeField] private Sprite destructiblePassPowerupSprite;
     [SerializeField] private Sprite fullFirePowerupSprite;
@@ -178,6 +179,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
             SetOptionalPowerupSprite(
                 refs.powerGlovePowerup,
+                state.HasLineBomb ? lineBombPowerupSprite :
                 state.HasPowerGlove ? powerGlovePowerupSprite : null);
 
             SetOptionalPowerupSprite(

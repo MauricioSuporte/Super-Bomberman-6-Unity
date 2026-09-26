@@ -339,8 +339,14 @@ public partial class BombController : MonoBehaviour
             if (input == null)
                 return;
 
-            if (bombsRemaining > 0 && input.GetDown(playerId, PlayerAction.ActionA))
-                PlaceBomb();
+            if (input.GetDown(playerId, PlayerAction.ActionA))
+            {
+                // Resolve before placement: the first press must not also create a line.
+                bool handled = TryGetComponent<LineBombAbility>(out var line) &&
+                    line.TryUseOnExistingBomb();
+                if (!handled && bombsRemaining > 0)
+                    PlaceBomb();
+            }
 
             if (!greenLouieDashActive && IsControlEnabled() && input.GetDown(playerId, PlayerAction.ActionB))
                 TryExplodeOldestControlledBomb();

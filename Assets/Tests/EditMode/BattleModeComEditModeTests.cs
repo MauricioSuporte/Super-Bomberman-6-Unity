@@ -8,6 +8,173 @@ using UnityEngine.Tilemaps;
 public sealed class BattleModeComEditModeTests
 {
     [Test]
+    public void LineBombCom_MountedItemAndPurpleSourcesSurviveIndependentRemoval()
+    {
+        var player = new GameObject("LineBomb COM sources");
+        player.SetActive(false);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            var abilities = player.AddComponent<AbilitySystem>();
+            abilities.Enable(LineBombAbility.AbilityId);
+            var com = player.AddComponent<BattleModeComPurpleLouieBombLineAbility>();
+            var movement = player.GetComponent<MovementController>();
+            typeof(MovementController).GetField("isMounted", flags).SetValue(movement, true);
+            Assert.IsTrue(com.IsAvailable);
+            Assert.AreEqual("LineBombItemA", com.DiagnosticName);
+
+            var state = typeof(BattleModeComPurpleLouieBombLineAbility).GetField("sequenceState", flags);
+            state.SetValue(com, System.Enum.Parse(state.FieldType, "PreparingItemLine"));
+            abilities.Enable(PurpleLouieBombLineAbility.AbilityId);
+            Assert.IsTrue(com.IsAvailable);
+            Assert.AreEqual("LineBombItemA", com.DiagnosticName, "In-flight item sequence keeps ActionA.");
+            abilities.Enable(PowerGloveAbility.AbilityId);
+            Assert.IsTrue(com.IsAvailable);
+            Assert.AreEqual("PurpleLouieLineC", com.DiagnosticName);
+            Assert.AreEqual("None", state.GetValue(com).ToString());
+
+            abilities.Enable(LineBombAbility.AbilityId);
+            abilities.Disable(PurpleLouieBombLineAbility.AbilityId);
+            Assert.IsTrue(com.IsAvailable);
+            Assert.AreEqual("LineBombItemA", com.DiagnosticName);
+            Assert.IsFalse(abilities.IsEnabled(PowerGloveAbility.AbilityId));
+            abilities.Disable(LineBombAbility.AbilityId);
+            Assert.IsFalse(com.IsAvailable);
+        }
+        finally { Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void LineBombCom_ItemPlanReservesSeedAndIncludesItsBlast()
+    {
+        var player = new GameObject("LineBomb COM plan");
+        player.SetActive(false);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            var abilities = player.AddComponent<AbilitySystem>();
+            abilities.Enable(LineBombAbility.AbilityId);
+            var com = player.AddComponent<BattleModeComPurpleLouieBombLineAbility>();
+            var bomb = player.GetComponent<BombController>();
+            typeof(BombController).GetField("bombsRemaining", flags).SetValue(bomb, 3);
+            Assert.IsTrue(com.IsAvailable);
+            var type = com.GetType();
+            foreach (string map in new[] { "groundTilemap", "destructibleTilemap", "indestructibleTilemap" })
+                type.GetField(map, flags).SetValue(com, null);
+            Vector2Int origin = new(1000, 1000);
+            Assert.AreEqual(2, type.GetMethod("CountPlaceableLine", flags).Invoke(com,
+                new object[] { origin, Vector2Int.right }));
+            type.GetMethod("BuildPlannedLineBlast", flags).Invoke(com,
+                new object[] { origin, Vector2Int.right, 2 });
+            var bombs = (List<Vector2Int>)type.GetField("plannedBombTiles", flags).GetValue(com);
+            var blast = (List<Vector2Int>)type.GetField("plannedBlastTiles", flags).GetValue(com);
+            CollectionAssert.Contains(bombs, origin);
+            CollectionAssert.Contains(blast, origin + Vector2Int.left);
+
+            abilities.Enable(PurpleLouieBombLineAbility.AbilityId);
+            Assert.IsTrue(com.IsAvailable);
+            foreach (string map in new[] { "groundTilemap", "destructibleTilemap", "indestructibleTilemap" })
+                type.GetField(map, flags).SetValue(com, null);
+            Assert.AreEqual(3, type.GetMethod("CountPlaceableLine", flags).Invoke(com,
+                new object[] { origin, Vector2Int.right }));
+            type.GetMethod("BuildPlannedLineBlast", flags).Invoke(com,
+                new object[] { origin, Vector2Int.right, 3 });
+            CollectionAssert.DoesNotContain(bombs, origin);
+        }
+        finally { Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void LineBombCom_InPlaceAimAndActionASurviveDecisionConversion()
+    {
+        var decision = new BattleModeComAbilityDecision
+        {
+            FaceDirection = Vector2.left,
+            FirstMove = Vector2.zero,
+            TapActionA = true
+        };
+        var convert = typeof(BattleModeComController).GetMethod("ToCandidateAction",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        object candidate = convert.Invoke(null, new object[] { decision });
+        var type = candidate.GetType();
+        Assert.AreEqual(Vector2.left, type.GetField("FaceDirection").GetValue(candidate));
+        Assert.AreEqual(Vector2.zero, type.GetField("FirstMove").GetValue(candidate));
+        Assert.AreEqual(true, type.GetField("TapActionA").GetValue(candidate));
+        Assert.AreEqual(false, type.GetField("TapActionC").GetValue(candidate));
+        Assert.AreEqual(false, type.GetField("TapBomb").GetValue(candidate));
+    }
+
+    [TestCase("Generic")]
+    [TestCase("PowerZone")]
+    [TestCase("Stage6")]
+    public void LineBomb_HandicapRoundTripPreservesItemAndNormalizesExclusivity(string profile)
+    {
+        var source = new SaveData.BattleModeHandicapSave();
+        source.players[0].lineBomb = true;
+        source.players[0].powerGlove = true;
+        source.players[0].mountedLouie = (int)MountedType.Purple;
+        source.players[1].powerGlove = true;
+        var kind = typeof(SaveSystem).GetNestedType("BattleModeHandicapProfileKind", BindingFlags.NonPublic);
+        var normalize = typeof(SaveSystem).GetMethod("NormalizeBattleModeHandicap",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        // Exercise the JSON shape as well as the normalization used by getters/setters.
+        var restored = JsonUtility.FromJson<SaveData.BattleModeHandicapSave>(JsonUtility.ToJson(source));
+        var result = (SaveData.BattleModeHandicapSave)normalize.Invoke(null,
+            new object[] { restored, System.Enum.Parse(kind, profile) });
+        Assert.IsTrue(result.players[0].lineBomb);
+        Assert.IsFalse(result.players[0].powerGlove);
+        Assert.AreEqual(profile == "PowerZone" ? MountedType.None : MountedType.Purple,
+            (MountedType)result.players[0].mountedLouie);
+        Assert.IsTrue(result.players[1].powerGlove);
+        Assert.IsFalse(result.players[1].lineBomb);
+        Assert.IsFalse(JsonUtility.FromJson<SaveData.BattleModeHandicapPlayerSave>(
+            "{\"powerGlove\":true}").lineBomb);
+    }
+
+    [Test]
+    public void LineBomb_ItemSwapsPreservePurpleLouieAbility()
+    {
+        var player = new GameObject("LineBomb exclusivity test");
+        player.SetActive(false);
+        try
+        {
+            var abilities = player.AddComponent<AbilitySystem>();
+            abilities.Enable(PurpleLouieBombLineAbility.AbilityId);
+            abilities.Enable(PowerGloveAbility.AbilityId);
+            abilities.Enable(LineBombAbility.AbilityId);
+            Assert.IsTrue(abilities.IsEnabled(LineBombAbility.AbilityId));
+            Assert.IsFalse(abilities.IsEnabled(PowerGloveAbility.AbilityId));
+            Assert.IsTrue(abilities.IsEnabled(PurpleLouieBombLineAbility.AbilityId));
+
+            abilities.Enable(PowerGloveAbility.AbilityId);
+            Assert.IsFalse(abilities.IsEnabled(LineBombAbility.AbilityId));
+            Assert.IsTrue(abilities.IsEnabled(PowerGloveAbility.AbilityId));
+            Assert.IsTrue(abilities.IsEnabled(PurpleLouieBombLineAbility.AbilityId));
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+        }
+    }
+
+    [Test]
+    public void LineBomb_LegacyBattleItemAmountsKeepExistingPositions()
+    {
+        var previous = new int[19];
+        for (int i = 0; i < previous.Length; i++) previous[i] = i;
+        var convert = typeof(SaveSystem).GetMethod("ConvertBattleModeItemAmounts",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        var converted = (int[])convert.Invoke(null, new object[]
+        {
+            previous, new int[20], GameManager.BattleModeHiddenDropEntries.Length
+        });
+        Assert.AreEqual(20, converted.Length);
+        for (int i = 0; i < previous.Length; i++) Assert.AreEqual(previous[i], converted[i]);
+        Assert.AreEqual(0, converted[19]);
+        Assert.AreEqual(ItemType.LineBomb, GameManager.BattleModeHiddenDropEntries[19].ItemType);
+    }
+
+    [Test]
     public void PowderTrailAnimation_RestoresTilesAndTransformsWithoutTouchingOtherCells()
     {
         var root = new GameObject("Powder trail test", typeof(Grid));

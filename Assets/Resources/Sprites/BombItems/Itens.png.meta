@@ -966,6 +966,28 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: LineBombIcon
+      rect:
+        serializedVersion: 2
+        x: 624
+        y: 256
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a26d762eb2e348498bf085d184e42231
+      internalID: 1846273901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: BlastRadiusIcon
       rect:
         serializedVersion: 2
@@ -2071,6 +2093,7 @@ TextureImporter:
       ItemBorder4: 1961888906
       ItemBorder5: -1855959577
       ItemBorder6: 1641382087
+      LineBombIcon: 1846273901
       MagnetBombIcon: 280207974
       MagnetBombLarge: 1633498365
       MagnetBombMedium: -1916666758

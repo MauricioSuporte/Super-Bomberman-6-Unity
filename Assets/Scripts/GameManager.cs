@@ -76,7 +76,8 @@ public class GameManager : MonoBehaviour
         new(BattleModeHiddenDropEntryKind.Item, ItemType.PowerGlove),
         new(BattleModeHiddenDropEntryKind.RandomEggsMin),
         new(BattleModeHiddenDropEntryKind.RandomEggsMax),
-        new(BattleModeHiddenDropEntryKind.Item, ItemType.Skull)
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.Skull),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.LineBomb)
     };
 
     public static readonly MountedType[] BattleModeRandomEggMountTypes =
@@ -143,6 +144,7 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int heartAmount = 0;
     [Min(0)] public int oneUpAmount = 0;
     [Min(0)] public int powerGloveAmount = 0;
+    [Min(0)] public int lineBombAmount = 0;
     [Min(0)] public int blueLouieEggAmount = 0;
     [Min(0)] public int blackLouieEggAmount = 0;
     [Min(0)] public int purpleLouieEggAmount = 0;
@@ -736,6 +738,7 @@ public class GameManager : MonoBehaviour
         if (SaveSystem.GetActiveNormalGameDifficulty() == NormalGameDifficulty.Hard)
             TryAssignItem(destructibleCells, ref cursor, ItemType.OneUp, oneUpAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.PowerGlove, powerGloveAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.LineBomb, lineBombAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.BlueLouieEgg, blueLouieEggAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.BlackLouieEgg, blackLouieEggAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.PurpleLouieEgg, purpleLouieEggAmount);
@@ -821,6 +824,7 @@ public class GameManager : MonoBehaviour
             ItemType.InvincibleSuit => 0,
             ItemType.Heart => 0,
             ItemType.PowerGlove => 3,
+            ItemType.LineBomb => 1,
             ItemType.Skull => 2,
             _ => 0
         };
@@ -880,6 +884,7 @@ public class GameManager : MonoBehaviour
             case ItemType.Heart: heartAmount = amount; break;
             case ItemType.OneUp: oneUpAmount = amount; break;
             case ItemType.PowerGlove: powerGloveAmount = amount; break;
+            case ItemType.LineBomb: lineBombAmount = amount; break;
             case ItemType.BlueLouieEgg: blueLouieEggAmount = amount; break;
             case ItemType.BlackLouieEgg: blackLouieEggAmount = amount; break;
             case ItemType.PurpleLouieEgg: purpleLouieEggAmount = amount; break;
@@ -1779,6 +1784,9 @@ public class GameManager : MonoBehaviour
 
         if (state.HasPowerGlove)
             results.Add(ItemType.PowerGlove);
+
+        if (state.HasLineBomb)
+            results.Add(ItemType.LineBomb);
 
         if (state.CanPassDestructibles)
             results.Add(ItemType.DestructiblePass);

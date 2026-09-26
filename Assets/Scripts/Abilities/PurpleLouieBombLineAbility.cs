@@ -156,44 +156,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
     bool DropBombsInFrontLine(Vector2 dir)
     {
-        if (bomb == null || movement == null)
-            return false;
-
-        int count = bomb.BombsRemaining;
-        if (count <= 0)
-            return false;
-
-        Vector2 origin = movement.Rigidbody != null
-            ? movement.Rigidbody.position
-            : (Vector2)transform.position;
-
-        origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
-        origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
-
-        Vector2 pos = origin + dir * movement.tileSize;
-
-        bool placedAny = false;
-
-        for (int i = 0; i < count; i++)
-        {
-            if (HasIndestructibleAt(pos))
-                break;
-
-            if (HasEnemyAt(pos))
-                break;
-
-            if (!bomb.TryPlaceBombAtIgnoringInputLock(pos, out _, consumeBomb: true, playSfx: false))
-                break;
-
-            placedAny = true;
-
-            pos += dir * movement.tileSize;
-
-            if (bomb.BombsRemaining <= 0)
-                break;
-        }
-
-        return placedAny;
+        return LineBombAbility.PlaceLine(movement, bomb, dir) > 0;
     }
 
     public void Enable() => enabledAbility = true;
@@ -212,18 +175,6 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null)
             movement.SetInputLocked(false);
-    }
-
-    private bool HasIndestructibleAt(Vector2 worldPos)
-    {
-        int mask = 1 << LayerMask.NameToLayer("Stage");
-        return Physics2D.OverlapBox(worldPos, Vector2.one * 0.4f, 0f, mask) != null;
-    }
-
-    private bool HasEnemyAt(Vector2 worldPos)
-    {
-        int mask = 1 << LayerMask.NameToLayer("Enemy");
-        return Physics2D.OverlapBox(worldPos, Vector2.one * 0.4f, 0f, mask) != null;
     }
 
     public void CancelCastForDeath()

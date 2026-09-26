@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
+/// Shared COM planner for the LineBomb pickup (ActionA) and PurpleLouie (ActionC).
+/// The existing component name is retained for serialized references.
 /// Ability de IA para usar a linha de bombas do Purple Louie
 /// (PurpleLouieBombLineAbility).
 ///
@@ -29,10 +31,6 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBattleModeComAbility
 {
-    // === Filtro de diagnóstico ===
-    public const int DiagnosticPlayerIdFilter = 0; // 0 = todos
-    public static readonly bool EnablePurpleLineDiagnostics = false;
-    private const float SurgicalLogIntervalSeconds = 0.35f;
 
     // === Constantes de comportamento ===
     // Mínimo de bombas na reserva para a linha valer a pena.
@@ -80,9 +78,17 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
     {
         None,
         ApproachingCastTile,
+        PreparingItemLine,
         Retreating
     }
 
+    private enum LineSource { None, Item, PurpleLouie }
+    private LineSource source;
+    private LineBombAbility itemAbility;
+    private Bomb itemSeedBomb;
+    private bool itemSeedObserved;
+    private int itemCastVersion;
+    private const float ItemSetupTimeoutSeconds = 1.5f;
     private SequenceState sequenceState;
     private float sequenceStartedTime = -10f;
     private Vector2Int setupCastTile;
@@ -135,11 +141,11 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
 
     // === Diagnóstico ===
     private string lastDecisionTrace = "not evaluated";
-    private float lastSurgicalLogTime = -10f;
-    private string lastSurgicalLogKey = string.Empty;
 
     // === IBattleModeComAbility ===
-    public string DiagnosticName => "PurpleLouieLine";
+    public string DiagnosticName => source == LineSource.Item ? "LineBombItemA" : "PurpleLouieLineC";
+    private bool UsesItem => source == LineSource.Item;
+    private int MinimumLineLength => UsesItem ? 1 : MinBombsForLine;
     public string LastDecisionTrace => lastDecisionTrace;
 
     public bool IsAvailable
@@ -147,11 +153,26 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         get
         {
             CacheReferences();
-            if (identity == null || movement == null || movement.isDead)
+            if (!enabled || identity == null || movement == null || movement.isDead)
+            {
+                ResetSequence("inactive or dead");
                 return false;
+            }
 
-            return abilitySystem != null &&
-                   abilitySystem.IsEnabled(PurpleLouieBombLineAbility.AbilityId);
+            bool item = abilitySystem != null && abilitySystem.IsEnabled(LineBombAbility.AbilityId);
+            bool purple = abilitySystem != null && abilitySystem.IsEnabled(PurpleLouieBombLineAbility.AbilityId);
+            bool sourceStillAvailable = source == LineSource.Item ? item : source == LineSource.PurpleLouie && purple;
+            // Keep an in-flight source pinned; losing one never disables the other.
+            if (sequenceState != SequenceState.None && !sourceStillAvailable)
+                ResetSequence("source removed or swapped");
+            LineSource next = sequenceState != SequenceState.None ? source :
+                purple ? LineSource.PurpleLouie : item ? LineSource.Item : LineSource.None;
+            if (source != next)
+            {
+
+                source = next;
+            }
+            return source != LineSource.None;
         }
     }
 
@@ -160,6 +181,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
 
     private void Awake() => CacheReferences();
     private void OnEnable() => CacheReferences();
+    private void OnDisable() => ResetSequence("COM component disabled");
 
     private void CacheReferences()
     {
@@ -167,6 +189,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         if (movement == null) TryGetComponent(out movement);
         if (bombController == null) TryGetComponent(out bombController);
         if (abilitySystem == null) TryGetComponent(out abilitySystem);
+        if (itemAbility == null) TryGetComponent(out itemAbility);
 
         ownColliders = GetComponentsInChildren<Collider2D>(true);
 
@@ -209,6 +232,9 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             return false;
         }
 
+        if (sequenceState == SequenceState.PreparingItemLine)
+            return TryContinueItemLine(settings, myTile, out decision);
+
         if (sequenceState == SequenceState.Retreating)
         {
             if (TryBuildRetreatDecision(settings, myTile, out decision))
@@ -227,6 +253,11 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             lastDecisionTrace = "emergency aborted threatened setup";
             return false;
         }
+
+        // A normal plant can leave the COM on its own seed before a line plan starts.
+        // The item path rechecks fuse time and escape before accepting this extension.
+        if (UsesItem && sequenceState == SequenceState.None && IsUsableItemSeed(FindBombAt(myTile)))
+            return TryStartLineCast(settings, myTile, out decision);
 
         lastDecisionTrace = "emergency no active sequence";
         return false;
@@ -247,15 +278,14 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         if (!IsAvailable)
         {
             lastDecisionTrace = "candidate unavailable";
-            LogSurgical("CANDIDATE_REJECT_UNAVAILABLE",
-                $"identity:{(identity != null)} movement:{(movement != null)} " +
-                $"dead:{(movement != null && movement.isDead)} " +
-                $"abilitySystem:{(abilitySystem != null)} " +
-                $"enabled:{(abilitySystem != null && abilitySystem.IsEnabled(PurpleLouieBombLineAbility.AbilityId))}");
+
             if (sequenceState != SequenceState.None)
                 ResetSequence("ability disabled mid-sequence");
             return false;
         }
+
+        if (sequenceState == SequenceState.PreparingItemLine)
+            return TryContinueItemLine(settings, myTile, out decision);
 
         if (sequenceState == SequenceState.Retreating)
             return TryBuildRetreatDecision(settings, myTile, out decision);
@@ -276,21 +306,20 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
     {
         decision = default;
 
-        if (bombController == null || bombController.BombsRemaining < MinBombsForLine)
+        if (bombController == null || bombController.BombsRemaining < RequiredReserve(myTile))
         {
             int remaining = bombController != null ? bombController.BombsRemaining : 0;
             lastDecisionTrace = $"candidate few bombs ({remaining})";
-            LogSurgical("CANDIDATE_REJECT_FEW_BOMBS",
-                $"my:{myTile} bombs:{remaining} min:{MinBombsForLine}");
+
             return false;
         }
 
         // Nunca re-casta com bombas próprias ainda vivas em campo — era a causa
         // do spam de ActionC colado na linha recém-plantada.
-        if (AnyOwnActiveBomb())
+        if (AnyOwnActiveBomb(UsesItem && IsUsableItemSeed(FindBombAt(myTile)) ? FindBombAt(myTile) : null))
         {
             lastDecisionTrace = "candidate own bombs still active";
-            LogSurgical("CANDIDATE_REJECT_OWN_BOMBS_ACTIVE", $"my:{myTile}");
+
             return false;
         }
 
@@ -298,25 +327,23 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         {
             float wait = nextCastTime - Time.time;
             lastDecisionTrace = $"candidate cooldown {wait:F2}s";
-            LogSurgical("CANDIDATE_REJECT_COOLDOWN", $"my:{myTile} wait:{wait:F2}s");
+
             return false;
         }
 
         // Não inicia a jogada com o próprio tile ameaçado.
-        if (!float.IsInfinity(GetDangerSeconds(myTile)))
+        if (!float.IsInfinity(GetDangerSeconds(myTile)) &&
+            !(UsesItem && IsUsableItemSeed(FindBombAt(myTile))))
         {
             lastDecisionTrace = "candidate own tile threatened";
-            LogSurgical("CANDIDATE_REJECT_TILE_THREATENED",
-                $"my:{myTile} danger:{FormatDanger(GetDangerSeconds(myTile))}");
+
             return false;
         }
 
         if (!TryFindCastPlan(settings, myTile, out CastPlan plan))
         {
             lastDecisionTrace = "candidate no useful line/setup plan";
-            LogSurgical("CANDIDATE_REJECT_NO_PLAN",
-                $"my:{myTile} bombs:{bombController.BombsRemaining} " +
-                $"nearestEnemy:{GetNearestEnemyDistance(myTile)} searchDepth:{settings.searchDepth}");
+
             return false;
         }
 
@@ -330,18 +357,10 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         if (!fullReserve && !closeSetup && !RollCastChance(settings))
         {
             lastDecisionTrace = "candidate chance fail";
-            LogSurgical("CANDIDATE_REJECT_CHANCE",
-                $"my:{myTile} fullReserve:{fullReserve} closeSetup:{closeSetup} " +
-                $"bombs:{bombController.BombsRemaining}/{bombController.bombAmout} " +
-                $"diff:{settings.difficulty}");
+
             return false;
         }
 
-        LogSurgical("CANDIDATE_PLAN_OK",
-            $"my:{myTile} cast:{plan.CastTile} dir:{FirstMoveDescription(plan.Direction)} " +
-            $"enemy:P{plan.EnemyId} depth:{plan.Depth} line:{plan.LineLength} " +
-            $"fullReserve:{fullReserve} closeSetup:{closeSetup}",
-            force: true);
 
         setupCastTile = plan.CastTile;
         setupCastDirection = plan.Direction;
@@ -364,16 +383,13 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             TargetTile = setupCastTile,
             HasTarget = true,
             FirstMove = TileDirectionToVector(plan.FirstStep),
-            Reason = $"purple-line setup for P{setupEnemyId}",
+            Reason = $"{DiagnosticName} setup for P{setupEnemyId}",
             InputDescription = FirstMoveDescription(plan.FirstStep)
         };
 
         lastDecisionTrace =
             $"candidate SETUP tile:{setupCastTile} dir:{setupCastDirection} enemy:P{setupEnemyId} depth:{plan.Depth}";
-        LogSurgical("SETUP",
-            $"my:{myTile} cast:{setupCastTile} dir:{FirstMoveDescription(setupCastDirection)} " +
-            $"enemy:P{setupEnemyId} enemyDist:{plan.EnemyDistance} depth:{plan.Depth} line:{setupLineLength}",
-            force: true);
+
         return true;
     }
 
@@ -437,14 +453,12 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             TargetTile = setupCastTile,
             HasTarget = true,
             FirstMove = firstMove,
-            Reason = $"purple-line setup for P{setupEnemyId}",
+            Reason = $"{DiagnosticName} setup for P{setupEnemyId}",
             InputDescription = FirstMoveDescription(Vector2Int.RoundToInt(firstMove))
         };
 
         lastDecisionTrace = $"setup continue cast:{setupCastTile} enemy:P{setupEnemyId} depth:{depth}";
-        LogSurgical("SETUP_CONTINUE",
-            $"my:{myTile} cast:{setupCastTile} enemy:P{setupEnemyId} depth:{depth} " +
-            $"move:{decision.InputDescription}");
+
         return true;
     }
 
@@ -482,13 +496,11 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         }
 
         if (!TryFindRetreatTile(settings, myTile, null,
-                out _, out Vector2Int plannedRetreat, out int plannedRetreatDepth))
+                out _, out _, out int plannedRetreatDepth))
         {
             ResetSequence("no retreat after line");
             lastDecisionTrace = "cast no retreat after line";
-            LogSurgical("CAST_ABORT_NO_RETREAT",
-                $"my:{myTile} dir:{FirstMoveDescription(setupCastDirection)} len:{setupLineLength}",
-                force: true);
+
             return false;
         }
 
@@ -496,10 +508,23 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         {
             ResetSequence("retreat too deep");
             lastDecisionTrace = "cast retreat too deep";
-            LogSurgical("CAST_ABORT_RETREAT_DEEP",
-                $"my:{myTile} retreat:{plannedRetreat} depth:{plannedRetreatDepth}",
-                force: true);
+
             return false;
+        }
+
+        if (UsesItem)
+        {
+            if (AnyAllyInPlannedZone())
+            {
+                ResetSequence("ally in item line blast");
+                return false;
+            }
+            setupCastTile = myTile;
+            itemSeedBomb = FindBombAt(myTile);
+            itemSeedObserved = itemSeedBomb != null;
+            itemCastVersion = itemAbility != null ? itemAbility.SuccessfulCastVersion : 0;
+            SetSequenceState(SequenceState.PreparingItemLine);
+            return TryContinueItemLine(settings, myTile, out decision);
         }
 
         lineIsControl = HasControlBombs;
@@ -515,19 +540,105 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             TargetTile = myTile + setupCastDirection * setupLineLength,
             HasTarget = true,
             FirstMove = TileDirectionToVector(setupCastDirection),
-            Reason = $"purple-line cast at P{setupEnemyId}",
+            Reason = $"{DiagnosticName} cast at P{setupEnemyId}",
             InputDescription = AppendInput(FirstMoveDescription(setupCastDirection), "ActionC"),
             TapActionC = true
         };
 
         lastDecisionTrace =
             $"CAST dir:{setupCastDirection} len:{setupLineLength} enemy:P{setupEnemyId} control:{lineIsControl}";
-        LogSurgical("CAST",
-            $"my:{myTile} dir:{FirstMoveDescription(setupCastDirection)} len:{setupLineLength} " +
-            $"enemy:P{setupEnemyId} enemyTile:{enemyTile} control:{lineIsControl} " +
-            $"bombs:{bombController.BombsRemaining} plannedRetreat:{plannedRetreat} " +
-            $"retreatDepth:{plannedRetreatDepth}",
-            force: true);
+
+        return true;
+    }
+
+    private int RequiredReserve(Vector2Int tile) =>
+        UsesItem && IsUsableItemSeed(FindBombAt(tile)) ? 1 : MinBombsForLine;
+
+    private bool IsUsableItemSeed(Bomb seed) =>
+        seed != null && !seed.HasExploded && seed.Owner == bombController &&
+        !seed.IsBeingHeldByPowerGlove && !seed.IsBeingKicked && !seed.IsBeingPunched &&
+        !seed.IsBeingMagnetPulled && seed.GetComponent<BoilerCapturedBomb>() == null;
+
+    private bool TryContinueItemLine(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+        if (itemAbility == null || !itemAbility.IsEnabled)
+        {
+            ResetSequence("item lost before ActionA");
+            return false;
+        }
+
+        // A candidate can lose arbitration or be throttled: only the runtime acknowledgement
+        // confirms a cast. Until then we re-evaluate and request an edge, never hold ActionA.
+        if (itemAbility.SuccessfulCastVersion != itemCastVersion)
+        {
+            lineIsControl = HasControlBombs;
+            SetSequenceState(SequenceState.Retreating);
+            nextCastTime = Time.time + DifficultyCooldown(settings);
+            castLockUntil = Time.time;
+            ClearRetreatStuckState();
+
+            return TryBuildRetreatDecision(settings, myTile, out decision);
+        }
+
+        if (myTile != setupCastTile || Time.time - sequenceStartedTime > ItemSetupTimeoutSeconds ||
+            movement.InputLocked || movement.IsRidingPlaying())
+        {
+            ResetSequence("item setup moved, locked or timed out");
+            return false;
+        }
+
+        Bomb seed = FindBombAt(myTile);
+        if ((itemSeedObserved && (seed == null || seed != itemSeedBomb)) ||
+            (seed != null && !IsUsableItemSeed(seed)))
+        {
+            ResetSequence("seed disappeared, moved or became unusable");
+            return false;
+        }
+        if (seed != null)
+        {
+            itemSeedBomb = seed;
+            itemSeedObserved = true;
+        }
+
+        setupLineLength = CountPlaceableLine(myTile, setupCastDirection);
+        BuildPlannedLineBlast(myTile, setupCastDirection, setupLineLength);
+        if (setupLineLength < 1 || AnyAllyInPlannedZone() ||
+            !TryGetEnemyTile(setupEnemyId, out Vector2Int enemyTile) ||
+            !plannedBlastTiles.Contains(enemyTile) ||
+            !TryFindRetreatTile(settings, myTile, null, out _, out _, out int retreatDepth) ||
+            retreatDepth > settings.searchDepth)
+        {
+            ResetSequence("item line lost target or safe retreat");
+            return false;
+        }
+
+        float requiredSeconds = EstimateWalkSeconds(retreatDepth) + settings.dangerReactionSeconds + 0.35f;
+        float danger = GetDangerSeconds(myTile);
+        if ((!float.IsInfinity(danger) && danger <= requiredSeconds) ||
+            (seed != null && !seed.IsControlBomb && seed.RemainingFuseSeconds <= requiredSeconds))
+        {
+            ResetSequence("not enough fuse time for item line and retreat");
+            return false;
+        }
+
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.CombatPlant,
+            Weight = 4000,
+            TargetTile = myTile,
+            HasTarget = true,
+            FirstMove = Vector2.zero,
+            FaceDirection = TileDirectionToVector(setupCastDirection),
+            Reason = seed == null ? "item-line seed bomb" : "item-line cast",
+            InputDescription = "Face" + FirstMoveDescription(setupCastDirection) + "+ActionA",
+            TapActionA = true
+        };
+        lastDecisionTrace = seed == null ? "ITEM_SEED ActionA" : "ITEM_CAST ActionA on existing bomb";
+
         return true;
     }
 
@@ -563,7 +674,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
                 startNearestDistance,
                 castPlans);
 
-            if (node.Depth >= maxDepth)
+            if (node.Depth >= maxDepth || (UsesItem && FindBombAt(start) != null))
                 continue;
 
             for (int i = 0; i < CardinalTiles.Length; i++)
@@ -605,6 +716,8 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         int startNearestDistance,
         List<CastPlan> output)
     {
+        if (UsesItem && FindBombAt(castTile) == null && !CanPlaceBombAt(castTile))
+            return;
         if (depth > 0 && IsLivingPlayerAt(castTile))
             return;
 
@@ -623,10 +736,10 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             // Se o alvo está colado, primeiro abre espaço. Isso evita gastar a
             // linha no tile atual e favorece o comportamento pedido de recuar,
             // virar para o adversário e então usar ActionC.
-            if (startNearestDistance <= CloseEnemyDistance && depth == 0)
+            if (startNearestDistance <= CloseEnemyDistance && depth == 0 && !(UsesItem && FindBombAt(castTile) != null))
                 continue;
 
-            if (startNearestDistance <= CloseEnemyDistance &&
+            if (startNearestDistance <= CloseEnemyDistance && depth > 0 &&
                 enemyDistance <= startNearestDistance)
                 continue;
 
@@ -703,7 +816,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             return;
 
         int lineLength = CountPlaceableLine(castTile, dir);
-        if (lineLength < MinBombsForLine)
+        if (lineLength < MinimumLineLength)
             return;
 
         int radius = Mathf.Max(1, bombController.GetPlannedExplosionRadius());
@@ -727,6 +840,8 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
     private int CountPlaceableLine(Vector2Int castTile, Vector2Int dir)
     {
         int maxBombs = bombController != null ? bombController.BombsRemaining : 0;
+        if (UsesItem && FindBombAt(castTile) == null)
+            maxBombs--; // Reserve the first ActionA for the seed on our tile.
         int count = 0;
         for (int step = 1; step <= maxBombs; step++)
         {
@@ -782,16 +897,18 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         plannedBombTiles.Clear();
         int radius = Mathf.Max(1, bombController != null ? bombController.GetPlannedExplosionRadius() : 2);
 
-        for (int i = 1; i <= lineLength; i++)
+        for (int i = UsesItem ? 0 : 1; i <= lineLength; i++)
         {
             Vector2Int bombTile = myTile + dir * i;
+            Bomb existing = i == 0 ? FindBombAt(myTile) : null;
+            int bombRadius = existing != null ? Mathf.Max(radius, bombController.GetPredictedBlastRadius(existing)) : radius;
             plannedBombTiles.Add(bombTile);
             if (!plannedBlastTiles.Contains(bombTile))
                 plannedBlastTiles.Add(bombTile);
 
             for (int d = 0; d < CardinalTiles.Length; d++)
             {
-                for (int step = 1; step <= radius; step++)
+                for (int step = 1; step <= bombRadius; step++)
                 {
                     Vector2Int tile = bombTile + CardinalTiles[d] * step;
                     bool blocks = HasIndestructibleTile(tile) || HasDestructibleTile(tile);
@@ -861,22 +978,22 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
                     HasTarget = true,
                     FirstMove = Vector2.zero,
                     Reason = enemyInZone
-                        ? $"purple-line detonate hits P{enemyId}"
-                        : "purple-line detonate",
+                        ? $"{DiagnosticName} detonate hits P{enemyId}"
+                        : DiagnosticName + " detonate",
                     InputDescription = "ActionB",
                     TapActionB = true
                 };
 
                 lastDecisionTrace = $"DETONATE enemyInZone:{enemyInZone}";
-                LogSurgical("DETONATE",
-                    $"my:{myTile} enemyInZone:{enemyInZone} zoneTiles:{plannedBlastTiles.Count}",
-                    force: true);
-                ResetSequence("detonated");
+
+                // PurpleLouie detonates the entire line; item ActionB detonates the oldest.
+                if (!UsesItem || !AnyOwnActiveBomb())
+                    ResetSequence("detonated");
                 return true;
             }
 
             // Linha normal: fuse resolve sozinho; sequência completa.
-            LogSurgical("RETREAT_DONE", $"my:{myTile}");
+
             ResetSequence("retreat complete");
             lastDecisionTrace = "retreat complete (normal line)";
             return false;
@@ -888,7 +1005,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         if (!TryFindRetreatTile(settings, myTile, retreatBlockedSteps,
                 out Vector2 firstMove, out Vector2Int target, out int depth))
         {
-            LogSurgical("RETREAT_FAILED", $"my:{myTile}", force: true);
+
             ResetSequence("retreat failed");
             lastDecisionTrace = "retreat failed";
             return false;
@@ -903,13 +1020,12 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             TargetTile = target,
             HasTarget = true,
             FirstMove = firstMove,
-            Reason = "purple-line retreat",
+            Reason = DiagnosticName + " retreat",
             InputDescription = FirstMoveDescription(Vector2Int.RoundToInt(firstMove))
         };
 
         lastDecisionTrace = $"retreat target:{target} depth:{depth}";
-        LogSurgical("RETREAT",
-            $"my:{myTile} target:{target} move:{decision.InputDescription}");
+
         return true;
     }
 
@@ -1105,11 +1221,11 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         return false;
     }
 
-    private bool AnyOwnActiveBomb()
+    private bool AnyOwnActiveBomb(Bomb except = null)
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null || bomb == except || bomb.HasExploded)
                 continue;
 
             if (bomb.Owner == bombController)
@@ -1193,9 +1309,10 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
 
     private void ResetSequence(string reason)
     {
+        lastDecisionTrace = reason;
         if (sequenceState != SequenceState.None)
         {
-            LogSurgical("SEQUENCE_RESET", reason, force: true);
+
             // Abortar um SETUP/recuo não deve gastar o cooldown cheio (esse é
             // exclusivo do CAST). Aplica só uma espera curta para evitar re-roll
             // no mesmo frame, mantendo a habilidade responsiva.
@@ -1208,6 +1325,9 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         setupCastDirection = Vector2Int.zero;
         setupEnemyId = 0;
         setupLineLength = 0;
+        itemSeedBomb = null;
+        itemSeedObserved = false;
+        itemCastVersion = 0;
         lineIsControl = false;
         plannedBlastTiles.Clear();
         plannedBombTiles.Clear();
@@ -1272,9 +1392,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
             {
                 retreatBlockedSteps.Add(retreatLastAttemptedStep);
                 retreatStuckSince = -1f;
-                LogSurgical("RETREAT_STUCK",
-                    $"my:{myTile} blocking:{retreatLastAttemptedStep} total:{retreatBlockedSteps.Count}",
-                    force: true);
+
             }
         }
         else
@@ -1503,31 +1621,7 @@ public sealed class BattleModeComPurpleLouieBombLineAbility : MonoBehaviour, IBa
         return "none";
     }
 
-    private static string FormatDanger(float seconds)
-    {
-        if (float.IsInfinity(seconds)) return "safe";
-        if (seconds <= 0f) return "now";
-        return $"{seconds:F2}";
-    }
-
     private static string AppendInput(string existing, string input) =>
         string.IsNullOrEmpty(existing) || existing == "none" ? input : existing + "+" + input;
 
-    private void LogSurgical(string key, string message, bool force = false)
-    {
-        if (!EnablePurpleLineDiagnostics) return;
-
-        int id = identity != null ? Mathf.Clamp(identity.playerId, 1, 6) : 0;
-        if (DiagnosticPlayerIdFilter != 0 && id != DiagnosticPlayerIdFilter) return;
-
-        if (!force &&
-            key == lastSurgicalLogKey &&
-            Time.time - lastSurgicalLogTime < SurgicalLogIntervalSeconds)
-            return;
-
-        lastSurgicalLogKey = key;
-        lastSurgicalLogTime = Time.time;
-        Vector2Int tile = movement != null ? WorldToTile(movement.transform.position) : Vector2Int.zero;
-        Debug.LogWarning($"[BattleCOM{DiagnosticName}][P{id}] tile:{tile} state:{sequenceState} {key} {message}", this);
-    }
 }

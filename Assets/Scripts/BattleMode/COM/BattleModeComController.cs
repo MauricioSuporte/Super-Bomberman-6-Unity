@@ -74,10 +74,6 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2Int destPassOscLastAppliedDir;
     private float destPassOscLastAppliedTime = -10f;
     private float destPassOscLastFlipLogTime = -10f;
-#pragma warning disable CS0414
-    private float destPassOscLastStateLogTime = -10f;
-#pragma warning restore CS0414
-    private string destPassOscLastStateLogKey = string.Empty;
     private const int ChainBombDiagnosticPlayerIdFilter = 0; // 0 = todos os jogadores
     private const float ChainBombDiagLogIntervalSeconds = 0.45f;
     private const int ChainBombRejectSampleLimit = 4;
@@ -275,10 +271,6 @@ public sealed class BattleModeComController : MonoBehaviour
     private string lastKickBombRiskLogKey = string.Empty;
     private float lastDecisionTraceLogTime = -10f;
     private string lastDecisionTraceLogKey = string.Empty;
-#pragma warning disable CS0414
-    private float lastAbilityDecisionTraceLogTime = -10f;
-#pragma warning restore CS0414
-    private string lastAbilityDecisionTraceLogKey = string.Empty;
     private float lastItemPriorityLogTime = -10f;
     private string lastItemPriorityLogKey = string.Empty;
     private Vector2Int recentItemPickupTile = new(int.MinValue, int.MinValue);
@@ -336,6 +328,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public Vector2Int TargetTile;
         public bool HasTarget;
         public Vector2 FirstMove;
+        public Vector2 FaceDirection;
         public bool HasRoute;
         public string Reason;
         public string InputDescription;
@@ -757,18 +750,28 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
-        // PurpleLouie bomb line: condicionado à ability do mount, mesmo padrão.
+        // One planner handles the item (ActionA, also while mounted) and PurpleLouie (ActionC).
+        bool persistentLineEnabled = PlayerPersistentStats.GetRuntime(playerId).HasLineBomb;
+        if (persistentLineEnabled)
+        {
+            if (abilitySystem == null)
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+            if (!abilitySystem.IsEnabled(LineBombAbility.AbilityId))
+                abilitySystem.Enable(LineBombAbility.AbilityId);
+        }
+        bool itemLineEnabled = abilitySystem != null && abilitySystem.IsEnabled(LineBombAbility.AbilityId);
         bool purpleLineEnabled =
             abilitySystem != null &&
             abilitySystem.IsEnabled(PurpleLouieBombLineAbility.AbilityId);
         TryGetComponent<BattleModeComPurpleLouieBombLineAbility>(out var purpleLineCom);
-        if (isCom && purpleLineEnabled && purpleLineCom == null)
+        if (isCom && (purpleLineEnabled || itemLineEnabled) && purpleLineCom == null)
         {
             gameObject.AddComponent<BattleModeComPurpleLouieBombLineAbility>();
             abilitySystemVersion = -2;
         }
-        else if ((!isCom || !purpleLineEnabled) && purpleLineCom != null)
+        else if ((!isCom || (!purpleLineEnabled && !itemLineEnabled)) && purpleLineCom != null)
         {
+            purpleLineCom.enabled = false;
             Destroy(purpleLineCom);
             abilitySystemVersion = -2;
         }
@@ -837,7 +840,7 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
-        bool persistentPowerGloveEnabled = PlayerPersistentStats.GetRuntime(playerId).HasPowerGlove;
+        bool persistentPowerGloveEnabled = PlayerPersistentStats.GetRuntime(playerId).HasPowerGlove && !persistentLineEnabled;
         if (persistentPowerGloveEnabled)
         {
             if (abilitySystem == null)
@@ -858,6 +861,7 @@ public sealed class BattleModeComController : MonoBehaviour
         }
         else if ((!isCom || !powerGloveEnabled) && powerGloveCom != null)
         {
+            powerGloveCom.enabled = false;
             Destroy(powerGloveCom);
             abilitySystemVersion = -2;
         }
@@ -2482,6 +2486,11 @@ public sealed class BattleModeComController : MonoBehaviour
         string route)
     {
         currentAction = selected.Action;
+        if (selected.FaceDirection != Vector2.zero && movement != null && !movement.InputLocked)
+        {
+            movement.ForceIdleFacing(selected.FaceDirection, "COM line-bomb aim");
+            hasSafeCenterTarget = false;
+        }
         currentMoveInput = selected.FirstMove;
         currentTargetTile = selected.TargetTile;
         hasCurrentTarget = selected.HasTarget;
@@ -2522,6 +2531,11 @@ public sealed class BattleModeComController : MonoBehaviour
                 $"reason:{selected.Reason} input:{selected.InputDescription}",
                 force: true);
         }
+
+        // Ordinary planting must not accidentally cast an unplanned item line.
+        if (selected.TapBomb && TryGetComponent<LineBombAbility>(out var itemLine) &&
+            itemLine.IsEnabled && FindBombAtTile(myTile) != null)
+            selected.TapBomb = false;
 
         if (selected.TapBomb && Time.time - lastBombTapTime >= BombTapCooldownSeconds)
         {
@@ -2987,6 +3001,7 @@ public sealed class BattleModeComController : MonoBehaviour
             TargetTile = decision.TargetTile,
             HasTarget = decision.HasTarget,
             FirstMove = decision.FirstMove,
+            FaceDirection = decision.FaceDirection,
             HasRoute = true,
             Reason = decision.Reason,
             InputDescription = decision.InputDescription,
@@ -11825,6 +11840,14 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void SetActionAHeld(bool held)
     {
+        // Only the glove has a held-A sequence. Do not reassert its old hold after
+        // a LineBomb pickup or mounting, even before the next Think interval.
+        if (held && (movement == null || movement.IsMounted ||
+            !TryGetComponent<PowerGloveAbility>(out var glove) || !glove.IsEnabled))
+        {
+            held = false;
+            currentHoldActionA = false;
+        }
         PlayerInputManager input = PlayerInputManager.Instance;
         if (input != null)
             input.SetSyntheticHeld(playerId, PlayerAction.ActionA, held);

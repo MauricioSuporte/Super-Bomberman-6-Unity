@@ -1622,7 +1622,8 @@ public static class SaveSystem
                 player.speedLevel = sourcePlayer.speedLevel;
                 player.bombType = sourcePlayer.bombType;
                 player.punchBomb = sourcePlayer.punchBomb;
-                player.powerGlove = sourcePlayer.powerGlove;
+                player.lineBomb = sourcePlayer.lineBomb;
+                player.powerGlove = sourcePlayer.powerGlove && !player.lineBomb;
                 player.movementAbility = sourcePlayer.movementAbility;
                 player.fullFire = sourcePlayer.fullFire;
                 player.destructiblePass = sourcePlayer.destructiblePass;
@@ -1671,6 +1672,7 @@ public static class SaveSystem
                 player.bombType != (int)BattleModeHandicapBombType.Default ||
                 player.punchBomb ||
                 player.powerGlove ||
+                player.lineBomb ||
                 (player.movementAbility != (int)BattleModeHandicapMovementAbility.None &&
                  player.movementAbility != (int)BattleModeHandicapMovementAbility.Kick) ||
                 player.fullFire ||
@@ -1707,6 +1709,7 @@ public static class SaveSystem
                 player.bombType != (int)BattleModeHandicapBombType.Default ||
                 player.punchBomb ||
                 player.powerGlove ||
+                player.lineBomb ||
                 !defaultMovement ||
                 player.fullFire ||
                 player.destructiblePass)
@@ -1730,6 +1733,7 @@ public static class SaveSystem
         player.bombType = (int)BattleModeHandicapBombType.Default;
         player.punchBomb = true;
         player.powerGlove = true;
+        player.lineBomb = false;
         player.movementAbility = (int)BattleModeHandicapMovementAbility.Kick;
         player.fullFire = false;
         player.destructiblePass = false;

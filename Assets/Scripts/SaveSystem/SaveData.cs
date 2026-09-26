@@ -111,6 +111,7 @@ public sealed class SaveData
         public int bombType = (int)BattleModeHandicapBombType.Default;
         public bool punchBomb;
         public bool powerGlove;
+        public bool lineBomb;
         public int movementAbility = (int)BattleModeHandicapMovementAbility.None;
         public bool fullFire;
         public bool destructiblePass;

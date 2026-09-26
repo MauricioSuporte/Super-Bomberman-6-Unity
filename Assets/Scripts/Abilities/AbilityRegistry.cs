@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public static class AbilityRegistry
@@ -7,6 +7,7 @@ public static class AbilityRegistry
     {
         { BombKickAbility.AbilityId, typeof(BombKickAbility) },
         { BombPunchAbility.AbilityId, typeof(BombPunchAbility) },
+        { LineBombAbility.AbilityId, typeof(LineBombAbility) },
         { PowerGloveAbility.AbilityId, typeof(PowerGloveAbility) },
         { PierceBombAbility.AbilityId, typeof(PierceBombAbility) },
         { ControlBombAbility.AbilityId, typeof(ControlBombAbility) },

@@ -136,6 +136,7 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private Sprite bombPassSprite;
     [SerializeField] private Sprite punchSprite;
     [SerializeField] private Sprite powerGloveSprite;
+    [SerializeField] private Sprite lineBombSprite;
     [SerializeField] private Sprite extraLifeSprite;
     [SerializeField] private Sprite destructiblePassSprite;
     [SerializeField] private Sprite fullFireSprite;
@@ -1005,7 +1006,8 @@ public sealed class BattleModeHud : MonoBehaviour
 
         activePowerupBuffer[0] = GetKickOrBombPassSprite(state);
         activePowerupBuffer[1] = state != null && state.CanPunchBombs ? punchSprite : null;
-        activePowerupBuffer[2] = state != null && state.HasPowerGlove ? powerGloveSprite : null;
+        activePowerupBuffer[2] = state != null && state.HasLineBomb ? lineBombSprite :
+            state != null && state.HasPowerGlove ? powerGloveSprite : null;
         activePowerupBuffer[3] = GetCurrentBombTypeSprite(state);
         activePowerupBuffer[4] = state != null && state.CanPassDestructibles ? destructiblePassSprite : null;
     }

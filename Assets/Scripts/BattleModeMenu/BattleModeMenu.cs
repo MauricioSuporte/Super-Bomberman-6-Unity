@@ -51,7 +51,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         PowerGlove,
         RandomEggsMin,
         RandomEggsMax,
-        Skull
+        Skull,
+        LineBomb
     }
 
     [System.Serializable]
@@ -297,6 +298,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         ItemSelectEntryId.InvincibleSuit,
         ItemSelectEntryId.Heart,
         ItemSelectEntryId.PowerGlove,
+        ItemSelectEntryId.LineBomb,
         ItemSelectEntryId.RandomEggsMin,
         ItemSelectEntryId.RandomEggsMax,
         ItemSelectEntryId.Skull
@@ -622,6 +624,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         ItemSelectEntryId.InvincibleSuit,
         ItemSelectEntryId.Heart,
         ItemSelectEntryId.PowerGlove,
+        ItemSelectEntryId.LineBomb,
         ItemSelectEntryId.RandomEggsMin,
         ItemSelectEntryId.RandomEggsMax,
         ItemSelectEntryId.Skull
@@ -4299,6 +4302,10 @@ public sealed class BattleModeMenu : MonoBehaviour
                 nextOrder.Add(entryId);
         }
 
+        // Migrate older scene-authored orders without changing persisted item indices.
+        nextOrder.Remove(ItemSelectEntryId.LineBomb);
+        nextOrder.Insert(nextOrder.IndexOf(ItemSelectEntryId.PowerGlove) + 1, ItemSelectEntryId.LineBomb);
+
         bool changed = resolvedItemSelectEntryOrder.Count != nextOrder.Count;
         if (!changed)
         {
@@ -4374,6 +4381,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             ItemSelectEntryId.DestructiblePass => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.DestructiblePass),
             ItemSelectEntryId.InvincibleSuit => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.InvincibleSuit),
             ItemSelectEntryId.Heart => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.Heart),
+            ItemSelectEntryId.LineBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.LineBomb),
             ItemSelectEntryId.PowerGlove => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.PowerGlove),
             ItemSelectEntryId.RandomEggsMin => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin),
             ItemSelectEntryId.RandomEggsMax => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax),
@@ -5531,7 +5539,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             4 => GetHandicapBombTypeSprite(player),
             5 => GetHandicapMovementSprite(player),
             6 => GetItemIconSprite(ItemType.BombPunch),
-            7 => GetItemIconSprite(ItemType.PowerGlove),
+            7 => GetItemIconSprite(player != null && player.lineBomb ? ItemType.LineBomb : ItemType.PowerGlove),
             8 => GetItemIconSprite(ItemType.FullFire),
             9 => GetItemIconSprite(ItemType.DestructiblePass),
             _ => null
@@ -5595,7 +5603,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             4 => player.bombType != (int)BattleModeHandicapBombType.Default,
             5 => IsHandicapKickEnabled(player),
             6 => player.punchBomb,
-            7 => player.powerGlove,
+            7 => player.powerGlove || player.lineBomb,
             8 => player.fullFire,
             9 => player.destructiblePass,
             _ => false
@@ -5655,7 +5663,10 @@ public sealed class BattleModeMenu : MonoBehaviour
                 break;
 
             case 8:
-                player.powerGlove = !player.powerGlove;
+                int handAbility = player.lineBomb ? 2 : player.powerGlove ? 1 : 0;
+                handAbility = WrapValue(handAbility + delta, 0, 2);
+                player.powerGlove = handAbility == 1;
+                player.lineBomb = handAbility == 2;
                 break;
 
             case 9:
@@ -5665,6 +5676,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             case 10:
                 player.destructiblePass = !player.destructiblePass;
                 break;
+
         }
 
         SaveCurrentBattleHandicap();
