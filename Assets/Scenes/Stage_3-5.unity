@@ -1078,9 +1078,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portalResourcesPath: Portal/EndStagePortal
   portalAmount: 0
-  extraBombAmount: 1
-  blastRadiusAmount: 1
-  speedIncreaseAmount: 1
+  extraBombAmount: 0
+  blastRadiusAmount: 0
+  speedIncreaseAmount: 0
   kickBombAmount: 0
   punchBombAmount: 0
   pierceBombAmount: 0
@@ -1091,10 +1091,11 @@ MonoBehaviour:
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
-  invincibleSuitAmount: 1
+  invincibleSuitAmount: 0
   heartAmount: 0
   oneUpAmount: 0
   powerGloveAmount: 0
+  lineBombAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
@@ -1112,23 +1113,23 @@ MonoBehaviour:
     roomBounds: {fileID: 2033100007}
     randomSb5EggAmount: 1
     itemAmounts:
-    - itemType: 0
+    - itemType: 1
+      amount: 1
+    - itemType: 8
       amount: 1
   - name: Room 2
     roomBounds: {fileID: 2033100010}
-    randomSb5EggAmount: 0
+    randomSb5EggAmount: 1
     itemAmounts:
-    - itemType: 1
-      amount: 1
-    - itemType: 9
+    - itemType: 2
       amount: 1
   - name: Room 3
     roomBounds: {fileID: 406990296}
     randomSb5EggAmount: 0
     itemAmounts:
-    - itemType: 2
+    - itemType: 0
       amount: 1
-    - itemType: 11
+    - itemType: 6
       amount: 1
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}

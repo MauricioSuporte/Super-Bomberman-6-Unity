@@ -526,7 +526,8 @@ MonoBehaviour:
   heartAmount: 0
   oneUpAmount: 0
   powerGloveAmount: 1
-  blueLouieEggAmount: 1
+  lineBombAmount: 0
+  blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
@@ -535,7 +536,7 @@ MonoBehaviour:
   redLouieEggAmount: 0
   clockAmount: 0
   skullAmount: 0
-  randomSb5EggAmount: 0
+  randomSb5EggAmount: 1
   randomEggsMin: 0
   randomEggsMax: 0
   hiddenObjectRooms: []
@@ -9567,8 +9568,8 @@ RectTransform:
   - {fileID: 1621220719}
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.033333335, y: 0.014814815}
-  m_AnchorMax: {x: 0.3, y: 0.42962962}
+  m_AnchorMin: {x: 0.23333333, y: 0.085185185}
+  m_AnchorMax: {x: 0.76666665, y: 0.91481483}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

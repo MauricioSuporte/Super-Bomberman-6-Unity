@@ -182,16 +182,17 @@ MonoBehaviour:
   heartAmount: 0
   oneUpAmount: 0
   powerGloveAmount: 0
+  lineBombAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
-  yellowLouieEggAmount: 1
+  yellowLouieEggAmount: 0
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 0
   skullAmount: 0
-  randomSb5EggAmount: 0
+  randomSb5EggAmount: 1
   randomEggsMin: 0
   randomEggsMax: 0
   hiddenObjectRooms: []
