@@ -1133,7 +1133,7 @@ MonoBehaviour:
       amount: 1
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: Stage_3-6
+  nextStageSceneName: 
   destructiblePrefab: {fileID: 3440613785117735154, guid: 31299bedbdffd514daf74ff9db4a5b35, type: 3}
   destructiblePrefabOverrides:
   - tile: {fileID: 11400000, guid: 0b6373692338a5846b4f393c95aa9240, type: 2}
