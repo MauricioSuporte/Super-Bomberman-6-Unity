@@ -23,7 +23,10 @@ public class BombPassAbility : MonoBehaviour, IPlayerAbility
         enabledAbility = true;
 
         if (movement != null)
+        {
             movement.obstacleMask &= ~LayerMask.GetMask("Bomb");
+            movement.RefreshObstacleContactFilter();
+        }
 
         if (TryGetComponent<AbilitySystem>(out var abilitySystem))
             abilitySystem.Disable(BombKickAbility.AbilityId);
@@ -34,6 +37,9 @@ public class BombPassAbility : MonoBehaviour, IPlayerAbility
         enabledAbility = false;
 
         if (movement != null)
+        {
             movement.obstacleMask |= LayerMask.GetMask("Bomb");
+            movement.RefreshObstacleContactFilter();
+        }
     }
 }

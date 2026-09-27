@@ -1706,6 +1706,11 @@ public class MovementController : MonoBehaviour, IKillable
         obstacleContactFilter.useTriggers = true;
     }
 
+    public void RefreshObstacleContactFilter()
+    {
+        RebuildObstacleContactFilter();
+    }
+
     private int GetObstacleHitCount(Vector2 worldPosition, Vector2 size)
     {
         return Physics2D.OverlapBox(worldPosition, size, 0f, obstacleContactFilter, obstacleOverlapBuffer);

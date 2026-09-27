@@ -13,15 +13,15 @@ namespace StageAssets
         {
             public string name = "Room";
             [Tooltip("Defines player presence and is the fallback for CoreMechanisms when no core roots are assigned.")]
-            public Collider2D roomBounds;
+            public Collider2D roomBounds = null;
             [Tooltip("Optional roots. Leave empty to automatically use every enemy inside Player Area.")]
-            public GameObject[] enemyRoots;
+            public GameObject[] enemyRoots = Array.Empty<GameObject>();
             [Tooltip("Optional roots that own this room's CoreMechanisms. Use these when the room bounds are only for player presence.")]
-            public GameObject[] coreRoots;
+            public GameObject[] coreRoots = Array.Empty<GameObject>();
             [Header("Release after every core in this room is destroyed")]
-            public World3BambooExitBlocker bambooToOpen;
-            public World3GateOpenedSequenceController bubbleChipToRelease;
-            public GameObject[] objectsToEnable;
+            public World3BambooExitBlocker bambooToOpen = null;
+            public World3GateOpenedSequenceController bubbleChipToRelease = null;
+            public GameObject[] objectsToEnable = Array.Empty<GameObject>();
 
             [NonSerialized] public readonly HashSet<Vector3Int> remainingCores = new();
             [NonSerialized] public readonly HashSet<CoreMechanismsDestructible> remainingSceneCores = new();
