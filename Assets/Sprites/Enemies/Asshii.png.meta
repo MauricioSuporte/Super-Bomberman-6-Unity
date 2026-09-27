@@ -14,6 +14,12 @@ TextureImporter:
   - first:
       213: 2718349757857702699
     second: Asshii_3
+  - first:
+      213: -1713610072682637475
+    second: Asshii_4
+  - first:
+      213: 8226190342960134381
+    second: Asshii_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -129,8 +135,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -149,10 +155,10 @@ TextureImporter:
       name: Asshii_1
       rect:
         serializedVersion: 2
-        x: 32
+        x: 24
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -171,10 +177,10 @@ TextureImporter:
       name: Asshii_2
       rect:
         serializedVersion: 2
-        x: 64
+        x: 48
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -193,10 +199,10 @@ TextureImporter:
       name: Asshii_3
       rect:
         serializedVersion: 2
-        x: 96
+        x: 72
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -211,11 +217,55 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Asshii_4
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d57583ec7b80838e0800000000000000
+      internalID: -1713610072682637475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Asshii_5
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de833ee588c492270800000000000000
+      internalID: 8226190342960134381
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: cc27c1cf5fc5d964ab3a66057da60afb
+    spriteID: c49c539d8b219e14a8c1f774ffa3364c
     internalID: 0
     vertices: []
     indices: 
@@ -225,12 +275,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":24.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Asshii_0: -5981606596380210362
       Asshii_1: -1161637393349761263
       Asshii_2: 975752363295346617
       Asshii_3: 2718349757857702699
+      Asshii_4: -1713610072682637475
+      Asshii_5: 8226190342960134381
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
