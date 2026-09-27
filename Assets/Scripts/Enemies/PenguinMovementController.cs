@@ -26,14 +26,9 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
     [SerializeField, Min(0.01f)] protected float landingPauseSeconds = 2f;
 
     [Header("Jump Shadow")]
-    [SerializeField] private Color shadowColor = new(0f, 0f, 0f, 0.45f);
-    [SerializeField] private Vector2 shadowScale = new(0.9f, 0.9f);
-    [SerializeField] private Vector2 shadowOffset = new(0f, -0.1875f);
-
-    private static Sprite jumpShadowSprite;
+    [SerializeField] private SpriteRenderer jumpShadow;
 
     private CharacterHealth penguinHealth;
-    private GameObject jumpShadow;
     private PenguinState state;
     private float stateElapsed;
 
@@ -42,6 +37,14 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         base.Awake();
 
         penguinHealth = GetComponent<CharacterHealth>();
+        if (jumpShadow == null)
+        {
+            Transform shadowTransform = transform.Find("Shadow");
+            if (shadowTransform != null)
+                jumpShadow = shadowTransform.GetComponent<SpriteRenderer>();
+        }
+
+        SetJumpShadowEnabled(false);
         SetJumpVisualsEnabled(false);
     }
 
@@ -117,14 +120,14 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
     {
         penguinHealth?.SetExternalInvulnerability(false);
         TryTakeExplosionDamageAtLanding();
-        DestroyJumpShadow();
+        SetJumpShadowEnabled(false);
         ClearJumpArc();
         base.Die();
     }
 
     protected override void OnDestroy()
     {
-        DestroyJumpShadow();
+        SetJumpShadowEnabled(false);
         base.OnDestroy();
     }
 
@@ -136,7 +139,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         penguinHealth?.SetExternalInvulnerability(true);
 
         ShowJumpVisual(direction);
-        CreateJumpShadow();
+        SetJumpShadowEnabled(true);
     }
 
     protected virtual void BeginLandingPause()
@@ -151,7 +154,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         stateElapsed = 0f;
         ClearJumpArc();
         SetJumpVisualsEnabled(false);
-        DestroyJumpShadow();
+        SetJumpShadowEnabled(false);
 
         UpdateSpriteDirection(direction);
         if (activeSprite != null)
@@ -236,59 +239,9 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         if (jumpRight != null) jumpRight.ClearExternalBase();
     }
 
-    private void CreateJumpShadow()
-    {
-        if (jumpShadow == null)
-        {
-            jumpShadow = new GameObject("PenguinJumpShadow");
-            jumpShadow.transform.localScale = new Vector3(shadowScale.x, shadowScale.y, 1f);
-
-            SpriteRenderer shadowRenderer = jumpShadow.AddComponent<SpriteRenderer>();
-            shadowRenderer.sprite = GetJumpShadowSprite();
-            shadowRenderer.color = shadowColor;
-
-            if (activeSprite != null && activeSprite.TryGetComponent(out SpriteRenderer visualRenderer))
-            {
-                shadowRenderer.sortingLayerID = visualRenderer.sortingLayerID;
-                shadowRenderer.sortingOrder = visualRenderer.sortingOrder - 1;
-            }
-        }
-
-        jumpShadow.transform.position = (Vector2)transform.position + shadowOffset;
-    }
-
-    private void DestroyJumpShadow()
+    private void SetJumpShadowEnabled(bool enabled)
     {
         if (jumpShadow != null)
-            Destroy(jumpShadow);
-
-        jumpShadow = null;
-    }
-
-    private static Sprite GetJumpShadowSprite()
-    {
-        if (jumpShadowSprite != null)
-            return jumpShadowSprite;
-
-        Texture2D texture = new(16, 16, TextureFormat.RGBA32, false)
-        {
-            filterMode = FilterMode.Point,
-            name = "PenguinJumpShadow"
-        };
-
-        Vector2 center = new(7.5f, 7.5f);
-        for (int y = 0; y < 16; y++)
-        {
-            for (int x = 0; x < 16; x++)
-            {
-                Vector2 point = new((x - center.x) / 7.5f, (y - center.y) / 4.5f);
-                texture.SetPixel(x, y, point.sqrMagnitude <= 1f ? Color.white : Color.clear);
-            }
-        }
-
-        texture.Apply();
-        jumpShadowSprite = Sprite.Create(texture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f), 16f, 0, SpriteMeshType.FullRect);
-        jumpShadowSprite.name = "PenguinJumpShadowSprite";
-        return jumpShadowSprite;
+            jumpShadow.enabled = enabled;
     }
 }
