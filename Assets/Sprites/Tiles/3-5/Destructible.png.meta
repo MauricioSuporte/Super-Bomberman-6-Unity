@@ -5,12 +5,6 @@ TextureImporter:
   - first:
       213: -525072142509190493
     second: Destructible_0
-  - first:
-      213: -1597741075824049708
-    second: Destructible_1
-  - first:
-      213: -4951791850543950418
-    second: Destructible_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -156,10 +150,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 4d1057ce4fea3d9e0800000000000000
-      internalID: -1597741075824049708
+      spriteID: 975f3a92fb4a63842b853f43c4808f9b
+      internalID: 76909356
       vertices: []
       indices: 
       edges: []
@@ -178,10 +172,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: ea557a23c83b74bb0800000000000000
-      internalID: -4951791850543950418
+      spriteID: 25f6eba6af17c0245bb17836bdb60bae
+      internalID: -2000856902
       vertices: []
       indices: 
       edges: []
@@ -202,8 +196,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fb1f19d14baa31544baaa70f6cc9c97d
-      internalID: -1505442715
+      spriteID: 19c74ef60291c014cb33ee2167c54cc4
+      internalID: -607045289
       vertices: []
       indices: 
       edges: []
@@ -224,8 +218,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5ca25e4c594268247a34bce906c0eb8e
-      internalID: -1746248281
+      spriteID: a01e6e4afb9d16e4bad03fd19b88ae97
+      internalID: -2040930509
       vertices: []
       indices: 
       edges: []
@@ -246,8 +240,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 05380ecc42ce28743b1425e792e92438
-      internalID: -1311173758
+      spriteID: 6b1c35ea5a221cc4bb421c777c906afa
+      internalID: 1182382931
       vertices: []
       indices: 
       edges: []
@@ -268,8 +262,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b82ae6d629cd39b44a06ae0728bd3063
-      internalID: -1025451333
+      spriteID: e2006b7fa6a52884f8c91a60537c5129
+      internalID: -630732270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Destructible_7
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 486b729f5a85f3141be21085c1006227
+      internalID: 177262560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Destructible_8
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64e77d4e11ec22e49aa83cfa62af3232
+      internalID: 1549065172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Destructible_9
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3be50a6b0d4c33642b2799373ddcfa90
+      internalID: 123867334
       vertices: []
       indices: 
       edges: []
@@ -278,7 +338,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: bd7553259dbefc04199e7f710ac168ec
+    spriteID: cd84a59529d1b6143815846668f9b20d
     internalID: 0
     vertices: []
     indices: 
@@ -291,12 +351,15 @@ TextureImporter:
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Destructible_0: -525072142509190493
-      Destructible_1: -1597741075824049708
-      Destructible_2: -4951791850543950418
-      Destructible_3: -1505442715
-      Destructible_4: -1746248281
-      Destructible_5: -1311173758
-      Destructible_6: -1025451333
+      Destructible_1: 76909356
+      Destructible_2: -2000856902
+      Destructible_3: -607045289
+      Destructible_4: -2040930509
+      Destructible_5: 1182382931
+      Destructible_6: -630732270
+      Destructible_7: 177262560
+      Destructible_8: 1549065172
+      Destructible_9: 123867334
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
