@@ -1053,7 +1053,9 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
 
         float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
-        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(movementDir, rawMoveWorld);
+        // This is only a turn preview.  It must not consume the fractional
+        // pixel progress that FixedUpdate will use for the actual movement.
+        float moveWorld = PeekQuantizedMoveWorldPerFixedFrame(movementDir, rawMoveWorld);
 
         if (moveWorld <= 0f)
             return false;
@@ -5414,6 +5416,28 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         Debug.Log($"[BombEscape][Player:{name}] {message}", this);
+    }
+
+    private float PeekQuantizedMoveWorldPerFixedFrame(Vector2 moveDir, float rawWorldStep)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return rawWorldStep;
+
+        moveDir = NormalizeCardinal(moveDir);
+        if (moveDir == Vector2.zero)
+            return 0f;
+
+        float rawPixels = rawWorldStep * pixelsPerUnit;
+        bool movingHorizontal = Mathf.Abs(moveDir.x) > 0.01f;
+
+        // A direction change resets the live accumulator before its movement
+        // step, so preview it from zero as well without changing live state.
+        float accumulator = moveDir == lastMoveDirCardinal
+            ? (movingHorizontal ? accPixelsX : accPixelsY)
+            : 0f;
+
+        accumulator += rawPixels * (movingHorizontal ? Mathf.Sign(moveDir.x) : Mathf.Sign(moveDir.y));
+        return Mathf.Abs((int)accumulator) * PixelWorldStep;
     }
 
     private float GetOwnApproxRadius()
