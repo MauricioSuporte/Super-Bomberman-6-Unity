@@ -403,7 +403,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (!IsCharacterLayer(c.gameObject.layer))
                 continue;
 
-            if (IsCharacterStillOccupyingBomb(c, worldPos))
+            if (IsCharacterStillOccupyingBomb(c))
                 charactersInside.Add(c);
         }
 
@@ -1784,7 +1784,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         int before = charactersInside.Count;
         bool wasTrigger = bombCollider != null && bombCollider.isTrigger;
 
-        if (IsCharacterStillOccupyingBomb(other, rb != null ? rb.position : (Vector2)transform.position))
+        if (IsCharacterStillOccupyingBomb(other))
             charactersInside.Add(other);
 
         if (bombCollider != null && charactersInside.Count > 0)
@@ -2760,26 +2760,15 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return layer == playerLayer || layer == enemyLayer;
     }
 
-    private static float GetColliderApproxRadius(Collider2D col)
+    private bool IsCharacterStillOccupyingBomb(Collider2D col)
     {
-        if (col == null)
-            return 0f;
-
-        Bounds b = col.bounds;
-        return Mathf.Max(b.extents.x, b.extents.y);
-    }
-
-    private bool IsCharacterStillOccupyingBomb(Collider2D col, Vector2 bombWorldPos)
-    {
-        if (col == null)
+        if (col == null || bombCollider == null)
             return false;
 
-        float charRadius = GetColliderApproxRadius(col);
-        float allowedDistance = ApproxRadius + charRadius + 0.02f;
-
-        Vector2 closest = col.ClosestPoint(bombWorldPos);
-        float dist = Vector2.Distance(closest, bombWorldPos);
-
-        return dist <= allowedDistance;
+        // A newly placed bomb must only remain a trigger for a character that
+        // truly overlaps its collider. Using approximate radii also treated a
+        // character in the neighbouring tile as an occupant, which let Line
+        // Bomb placements stay passable.
+        return bombCollider.Distance(col).isOverlapped;
     }
 }

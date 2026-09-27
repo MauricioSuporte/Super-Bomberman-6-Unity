@@ -2631,7 +2631,9 @@ public class MovementController : MonoBehaviour, IKillable
 
                 var hitBomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
                 if (hitBomb != null && !hitBomb.IsSolid)
+                {
                     continue;
+                }
 
                 if (allowMovementAbilities)
                 {

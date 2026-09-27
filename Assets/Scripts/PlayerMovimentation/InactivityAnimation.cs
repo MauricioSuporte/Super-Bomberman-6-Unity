@@ -410,6 +410,11 @@ public sealed class InactivityAnimation : MonoBehaviour
         if (!CompareTag("Player"))
             return false;
 
+        if (TryGetComponent<PowerGloveAbility>(out var powerGlove) &&
+            powerGlove != null &&
+            powerGlove.IsHoldingBomb)
+            return false;
+
         var input = PlayerInputManager.Instance;
         if (input == null || !input.Get(movement.PlayerId, PlayerAction.ActionL))
             return false;
