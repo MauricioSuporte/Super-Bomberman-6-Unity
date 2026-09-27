@@ -212,6 +212,15 @@ public partial class BombController : MonoBehaviour
         _ = GetCachedComponent(ref cachedMagnetBombAbility);
     }
 
+    private void ApplyBaseBombFuse(GameObject prefabToUse, GameObject bomb)
+    {
+        bool isMagnetBomb = bomb != null && bomb.TryGetComponent<MagnetBomb>(out _);
+        bool shouldApplyNormalFuse = prefabToUse == bombPrefab && !isMagnetBomb;
+
+        if (shouldApplyNormalFuse)
+            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
+    }
+
     private void EnsureQueryCaches()
     {
         if (queryCachesInitialized)
@@ -1065,8 +1074,7 @@ public partial class BombController : MonoBehaviour
         lastPlacedBomb = bomb;
         bombsRemaining--;
 
-        if (prefabToUse == bombPrefab)
-            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
+        ApplyBaseBombFuse(prefabToUse, bomb);
 
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
@@ -2992,8 +3000,7 @@ public partial class BombController : MonoBehaviour
         if (bomb == null)
             return false;
 
-        if (prefabToUse == bombPrefab)
-            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
+        ApplyBaseBombFuse(prefabToUse, bomb);
 
         lastPlacedBomb = bomb;
 
@@ -3128,8 +3135,7 @@ public partial class BombController : MonoBehaviour
         placedBomb = bomb;
         lastPlacedBomb = bomb;
 
-        if (prefabToUse == bombPrefab)
-            BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
+        ApplyBaseBombFuse(prefabToUse, bomb);
 
         if (consumeBomb)
             bombsRemaining--;

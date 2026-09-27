@@ -171,8 +171,10 @@ This file gives repository-specific guidance for AI coding agents working on
 - Always fix warnings introduced by your implementation before finalizing the
   task. Correct their cause instead of suppressing them, and review changed
   code for potential warnings even when compilation is not requested.
-- Do not trigger Unity builds or script compilation after code edits unless the
-  user explicitly asks for it.
+- Before finalizing any C# or Unity-content change, run the available C# and
+  Unity compilation checks, resolve every error introduced by the change, and
+  report any check that cannot run (for example, because the project is open
+  in another Unity instance).
 - Prefer targeted manual validation in the touched scene or mode.
 - For shared gameplay changes, validate both single-player and multiplayer
   behavior when practical.
