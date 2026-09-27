@@ -33,9 +33,6 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] Image fadeImage;
     [SerializeField] float fadeDuration = 0.5f;
     [SerializeField, Range(0.001f, 0.1f)] float maxFadeStepDelta = 0.033f;
-#pragma warning disable CS0414
-    [SerializeField] bool logOpenFlowDiagnostics = false;
-#pragma warning restore CS0414
 
     [Header("Music")]
     [SerializeField] AudioClip controlsMusic;
@@ -1094,12 +1091,12 @@ public class ControlsConfigMenu : MonoBehaviour
                 if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out int pidUp))
                 {
                     ownerPlayerId = pidUp;
-                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, MaxConfigurablePlayers - 1);
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, MaxConfigurablePlayers + 1);
                 }
                 else if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out int pidDown))
                 {
                     ownerPlayerId = pidDown;
-                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, MaxConfigurablePlayers - 1);
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, MaxConfigurablePlayers + 1);
                 }
 
                 if (playerSelectIndex != prev)
@@ -1133,7 +1130,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 bool toggleRight = TryGetAnyPlayerDown(PlayerAction.MoveRight, out int pidToggleRight);
                 bool toggleByPad = toggleLeft || toggleRight;
 
-                if (toggleByPad)
+                if (toggleByPad && playerSelectIndex < MaxConfigurablePlayers)
                 {
                     ownerPlayerId = toggleLeft ? pidToggleLeft : pidToggleRight;
 
@@ -1148,7 +1145,7 @@ public class ControlsConfigMenu : MonoBehaviour
                     continue;
                 }
 
-                if (TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
+                if (playerSelectIndex < MaxConfigurablePlayers && TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
                 {
                     ownerPlayerId = pidAskReset;
                     confirmResetPlayerId = playerSelectIndex + 1;
@@ -1170,6 +1167,32 @@ public class ControlsConfigMenu : MonoBehaviour
                     if (confirmByPad)
                         ownerPlayerId = pidConfirm;
 
+                    if (playerSelectIndex == MaxConfigurablePlayers + 1)
+                    {
+                        PlaySfx(backSfx, backVolume);
+                        done = true;
+                        yield return null;
+                        continue;
+                    }
+                    if (playerSelectIndex == MaxConfigurablePlayers)
+                    {
+                        PlaySfx(confirmSfx, confirmVolume);
+                        yield return PulseCursor();
+                        if (cursorRenderer != null) cursorRenderer.gameObject.SetActive(false);
+                        menuText.enabled = false;
+                        if (footerText != null) footerText.enabled = false;
+                        yield return TouchControlsMenu.Open(menuText, backgroundImage,
+                            () => PlaySfx(confirmSfx, confirmVolume),
+                            () => PlaySfx(backSfx, backVolume),
+                            () => PlaySfx(resetSfx, resetVolume),
+                            () => PlaySfx(moveOptionSfx, moveOptionVolume));
+                        menuText.enabled = true;
+                        if (footerText != null) footerText.enabled = true;
+                        while (AnyPlayerHeldAnyMenuKey()) yield return null;
+                        RefreshText();
+                        yield return null;
+                        continue;
+                    }
                     targetPlayerId = playerSelectIndex + 1;
 
                     state = MenuState.WaitForInput;
@@ -1658,6 +1681,9 @@ public class ControlsConfigMenu : MonoBehaviour
                 if (i < MaxConfigurablePlayers - 1)
                     body += RepeatNewLine(selectorRowGap);
             }
+
+            body += $"<align=center><link=\"sel{MaxConfigurablePlayers}\"><size={gridSize}><color={colorHint}>{GameTextDatabase.Touch(0)}</color></size></link>\n";
+            body += $"<link=\"sel{MaxConfigurablePlayers + 1}\"><size={gridSize}><color={colorWhite}>{text.Return}</color></size></link></align>\n";
 
             if (Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine))
                 footer += $"<size={footerSize}>{blockedMessageLine}</size>\n";
@@ -2283,7 +2309,7 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             if (linkId != null && linkId.StartsWith("sel", StringComparison.Ordinal) && linkId.Length > 3)
             {
-                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i < MaxConfigurablePlayers)
+                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i <= MaxConfigurablePlayers + 1)
                 {
                     index = i;
                     return true;

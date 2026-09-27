@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MobileInputBridge : MonoBehaviour
@@ -73,6 +73,15 @@ public class MobileInputBridge : MonoBehaviour
         moveVector = Vector2.zero;
         moveVectorActive = false;
     }
+
+    public void ClearAll()
+    {
+        foreach (var action in Actions) { held[action] = false; down[action] = false; }
+        ClearMoveVector();
+    }
+
+    void OnDisable() => ClearAll();
+    void OnApplicationFocus(bool focus) { if (!focus) ClearAll(); }
 
     void OnDestroy()
     {

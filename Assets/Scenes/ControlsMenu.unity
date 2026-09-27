@@ -1684,7 +1684,6 @@ MonoBehaviour:
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
   maxFadeStepDelta: 0.033
-  logOpenFlowDiagnostics: 1
   controlsMusic: {fileID: 8300000, guid: cb664d6e50930ce42ba645a9be8cc7fe, type: 3}
   controlsMusicLoop: {fileID: 0}
   controlsMusicVolume: 0.5

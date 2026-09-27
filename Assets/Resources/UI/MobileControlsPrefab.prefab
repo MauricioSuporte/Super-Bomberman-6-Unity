@@ -600,8 +600,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 250, y: 200}
-  m_SizeDelta: {x: 220, y: 220}
+  m_AnchoredPosition: {x: 250, y: 280}
+  m_SizeDelta: {x: 280, y: 280}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1961094240592302869
 CanvasRenderer:
@@ -1084,15 +1084,6 @@ MonoBehaviour:
   baseVisual: {fileID: 8280134576727369050}
   handleVisual: {fileID: 2326377171783390689}
   canvas: {fileID: 5375665081260723997}
-  leftSideOnly: 1
-  radius: 120
-  deadZone: 20
-  hideWhenReleased: 0
-  returnToRestPositionOnRelease: 1
-  snapToCardinal: 1
-  cardinalBias: 0.15
-  debugJoystick: 1
-  debugJoystickVerbose: 1
 --- !u!1 &4099866647717079013
 GameObject:
   m_ObjectHideFlags: 0
@@ -1205,7 +1196,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -140, y: 390}
+  m_AnchoredPosition: {x: -95, y: 185}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1771678169989322995
@@ -1622,7 +1613,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -95, y: 185}
+  m_AnchoredPosition: {x: -140, y: 390}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3257842981258197819

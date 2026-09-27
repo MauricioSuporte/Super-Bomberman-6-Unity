@@ -779,6 +779,20 @@ public static class SaveSystem
         Save();
     }
 
+    public static SavedTouchControls GetTouchControls()
+    {
+        EnsureLoaded();
+        data.touchControls ??= new SavedTouchControls();
+        return data.touchControls;
+    }
+
+    public static void SaveTouchControls()
+    {
+        GetTouchControls().Normalize();
+        Save();
+        MobileControlsRoot.Instance?.RefreshVisibilityFromSavedPreference();
+    }
+
     public static bool GetMobileTouchButtonsVisible()
     {
         EnsureLoaded();
@@ -884,6 +898,9 @@ public static class SaveSystem
 
         if (d.unlockedSkins == null)
             d.unlockedSkins = new List<string>();
+
+        d.touchControls ??= new SavedTouchControls();
+        d.touchControls.Normalize();
 
         bool migrateLegacySkinIds = HasLegacySkinNames(d.unlockedSkins);
         MigrateLegacySkinNames(d.unlockedSkins);

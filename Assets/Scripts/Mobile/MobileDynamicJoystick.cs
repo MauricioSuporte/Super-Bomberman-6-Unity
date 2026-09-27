@@ -1,202 +1,102 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class MobileDynamicJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
-    [Header("References")]
     [SerializeField] private RectTransform touchArea;
     [SerializeField] private RectTransform baseVisual;
     [SerializeField] private RectTransform handleVisual;
     [SerializeField] private Canvas canvas;
-
-    [Header("Behavior")]
-    [SerializeField] private bool leftSideOnly = true;
-    [SerializeField] private float radius = 120f;
-    [SerializeField] private float deadZone = 20f;
-    [SerializeField] private bool hideWhenReleased = true;
-    [SerializeField] private bool returnToRestPositionOnRelease = true;
-    [SerializeField] private bool snapToCardinal = false;
-    [SerializeField, Range(0f, 1f)] private float cardinalBias = 0.15f;
-
-    private Camera uiCamera;
-    private int activePointerId = int.MinValue;
-    private Vector2 pointerDownPosition;
-    private Vector2 restBaseAnchoredPosition;
-    private bool hasRestBaseAnchoredPosition;
-    private bool engaged;
+    private readonly Sprite[] dpad = new Sprite[5];
+    private Sprite analogSprite;
+    private Image baseImage;
+    private int pointerId = int.MinValue;
+    private Vector2 origin;
+    private Vector2 restPosition;
+    private Camera UiCamera => canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+    public RectTransform Visual => baseVisual;
+    public bool Engaged => pointerId != int.MinValue;
 
     void Awake()
     {
-        if (canvas == null)
-            canvas = GetComponentInParent<Canvas>();
-
-        if (touchArea == null)
-            touchArea = transform as RectTransform;
-
-        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            uiCamera = canvas.worldCamera;
-
-        CacheRestBasePosition();
-
-        SetVisualVisible(!hideWhenReleased);
-        ResetVisuals();
+        if (canvas == null) canvas = GetComponentInParent<Canvas>();
+        if (touchArea == null) touchArea = (RectTransform)transform;
+        baseImage = baseVisual.GetComponent<Image>();
+        analogSprite = baseImage.sprite;
+        for (int i = 0; i < dpad.Length; i++) dpad[i] = Resources.Load<Sprite>("UI/JoyStickBase" + (i + 1));
+        restPosition = baseVisual.anchoredPosition;
+        RefreshVisual();
     }
 
-    void OnEnable()
+    public void RefreshVisual()
     {
-        RestoreBasePosition();
+        if (baseImage == null) return;
+        bool analog = SaveSystem.GetTouchControls().analog;
+        baseImage.sprite = analog ? analogSprite : dpad[0];
+        handleVisual.sizeDelta = baseVisual.rect.size * (100f / 220f);
+        handleVisual.gameObject.SetActive(analog);
+        baseVisual.gameObject.SetActive(true);
     }
 
-    public void OnPointerDown(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData e)
     {
-        if (activePointerId != int.MinValue)
-            return;
-
-        if (leftSideOnly && eventData.position.x > Screen.width * 0.5f)
-            return;
-
-        activePointerId = eventData.pointerId;
-        pointerDownPosition = eventData.position;
-        engaged = true;
-
-        UpdateBasePosition(pointerDownPosition);
-        ResetVisuals();
-        SetVisualVisible(true);
-
-        if (MobileInputBridge.Instance != null)
-            MobileInputBridge.Instance.ClearMoveVector();
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (!engaged)
-            return;
-
-        if (eventData.pointerId != activePointerId)
-            return;
-
-        Vector2 delta = eventData.position - pointerDownPosition;
-        float distance = delta.magnitude;
-
-        if (distance <= deadZone)
+        if (Engaged || MobileControlsRoot.Editing) return;
+        var settings = SaveSystem.GetTouchControls();
+        bool dynamic = settings.analog && settings.dynamicAnalog;
+        if (!dynamic && !RectTransformUtility.RectangleContainsScreenPoint(baseVisual, e.position, UiCamera)) return;
+        pointerId = e.pointerId;
+        restPosition = baseVisual.anchoredPosition;
+        if (dynamic)
         {
-            UpdateHandle(Vector2.zero);
-
-            if (MobileInputBridge.Instance != null)
-                MobileInputBridge.Instance.ClearMoveVector();
-
-            return;
+            RectTransformUtility.ScreenPointToWorldPointInRectangle(touchArea, e.position, UiCamera, out var point);
+            baseVisual.position = point;
         }
-
-        Vector2 normalized = radius > 0.0001f ? delta / radius : Vector2.zero;
-        normalized = Vector2.ClampMagnitude(normalized, 1f);
-
-        if (snapToCardinal)
-            normalized = SnapVectorToCardinal(normalized, cardinalBias);
-
-        UpdateHandle(normalized);
-
-        if (MobileInputBridge.Instance != null)
-            MobileInputBridge.Instance.SetMoveVector(normalized);
+        origin = RectTransformUtility.WorldToScreenPoint(UiCamera, baseVisual.position);
+        MobileControlsRoot.Instance?.NotifyTouch();
+        OnDrag(e);
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public void OnDrag(PointerEventData e)
     {
-        if (eventData.pointerId != activePointerId)
-            return;
-
-        activePointerId = int.MinValue;
-        engaged = false;
-
-        if (MobileInputBridge.Instance != null)
-            MobileInputBridge.Instance.ClearMoveVector();
-
-        RestoreBasePosition();
-        ResetVisuals();
-        SetVisualVisible(!hideWhenReleased);
+        if (e.pointerId != pointerId || MobileControlsRoot.Editing) return;
+        var settings = SaveSystem.GetTouchControls();
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(baseVisual, e.position, UiCamera, out var current);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(baseVisual, origin, UiCamera, out var center);
+        Vector2 input = (current - center) / Mathf.Max(1f, baseVisual.rect.width * 0.5f);
+        input = ResolveDirection(input, settings.deadzone, settings.blockDiagonals);
+        MobileInputBridge.Instance?.SetMoveVector(input);
+        if (settings.analog) handleVisual.anchoredPosition = input * baseVisual.rect.width * 0.3f;
+        else baseImage.sprite = dpad[input == Vector2.zero ? 0 : Mathf.Abs(input.y) >= Mathf.Abs(input.x) ? (input.y > 0 ? 1 : 3) : (input.x > 0 ? 2 : 4)];
+        MobileControlsRoot.Instance?.NotifyTouch();
     }
 
-    private void UpdateBasePosition(Vector2 screenPosition)
+    // Output is digital after the touch-specific deadzone, so the shared gamepad threshold
+    // cannot silently override the user's touch deadzone.
+    public static Vector2 ResolveDirection(Vector2 input, float deadzone, bool blockDiagonals)
     {
-        if (baseVisual == null || touchArea == null)
-            return;
-
-        bool success = RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            touchArea,
-            screenPosition,
-            uiCamera,
-            out Vector2 localPoint);
-
-        if (success)
-        {
-            Rect rect = touchArea.rect;
-            Vector2 pivotOffset = new Vector2(rect.width * touchArea.pivot.x, rect.height * touchArea.pivot.y);
-            baseVisual.anchoredPosition = localPoint + pivotOffset;
-        }
+        if (input.magnitude <= deadzone) return Vector2.zero;
+        if (blockDiagonals) return Mathf.Abs(input.x) > Mathf.Abs(input.y)
+            ? new Vector2(Mathf.Sign(input.x), 0) : new Vector2(0, Mathf.Sign(input.y));
+        float angle = Mathf.Atan2(input.y, input.x) * Mathf.Rad2Deg;
+        float snapped = Mathf.Round(angle / 45f) * 45f * Mathf.Deg2Rad;
+        return new Vector2(Mathf.Round(Mathf.Cos(snapped)), Mathf.Round(Mathf.Sin(snapped)));
     }
 
-    private void UpdateHandle(Vector2 normalizedInput)
+    public void OnPointerUp(PointerEventData e)
     {
-        if (handleVisual == null)
-            return;
-
-        Vector2 target = normalizedInput * radius;
-        handleVisual.anchoredPosition = target;
+        if (e.pointerId == pointerId) Release();
     }
 
-    private void CacheRestBasePosition()
+    public void Release()
     {
-        if (baseVisual == null)
-        {
-            hasRestBaseAnchoredPosition = false;
-            return;
-        }
-
-        restBaseAnchoredPosition = baseVisual.anchoredPosition;
-        hasRestBaseAnchoredPosition = true;
+        if (Engaged) baseVisual.anchoredPosition = restPosition;
+        pointerId = int.MinValue;
+        MobileInputBridge.Instance?.ClearMoveVector();
+        if (handleVisual != null) handleVisual.anchoredPosition = Vector2.zero;
+        RefreshVisual();
     }
 
-    private void RestoreBasePosition()
-    {
-        if (!returnToRestPositionOnRelease || !hasRestBaseAnchoredPosition || baseVisual == null)
-            return;
-
-        baseVisual.anchoredPosition = restBaseAnchoredPosition;
-    }
-
-    private void ResetVisuals()
-    {
-        if (handleVisual != null)
-            handleVisual.anchoredPosition = Vector2.zero;
-    }
-
-    private void SetVisualVisible(bool visible)
-    {
-        if (baseVisual != null)
-            baseVisual.gameObject.SetActive(visible);
-
-        if (handleVisual != null)
-            handleVisual.gameObject.SetActive(visible);
-    }
-
-    private Vector2 SnapVectorToCardinal(Vector2 input, float bias)
-    {
-        if (input == Vector2.zero)
-            return Vector2.zero;
-
-        float absX = Mathf.Abs(input.x);
-        float absY = Mathf.Abs(input.y);
-
-        if (absX > absY + bias)
-            return new Vector2(Mathf.Sign(input.x), 0f);
-
-        if (absY > absX + bias)
-            return new Vector2(0f, Mathf.Sign(input.y));
-
-        if (absX >= absY)
-            return new Vector2(Mathf.Sign(input.x), 0f);
-
-        return new Vector2(0f, Mathf.Sign(input.y));
-    }
-
+    void OnDisable() => Release();
+    void OnApplicationFocus(bool focus) { if (!focus) Release(); }
 }

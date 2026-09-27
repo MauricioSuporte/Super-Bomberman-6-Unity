@@ -5,6 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 public sealed class SaveData
 {
+    public SavedTouchControls touchControls = new();
     public int activeSlotIndex = -1;
     public int language = (int)GameLanguage.English;
 

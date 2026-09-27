@@ -1,4 +1,4 @@
-public static class GameTextDatabase
+public static partial class GameTextDatabase
 {
     public static TitleScreenText Title => GetTitleScreenText(SaveSystem.GetLanguage());
     public static ControlsMenuText Controls => GetControlsMenuText(SaveSystem.GetLanguage());
