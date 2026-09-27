@@ -251,6 +251,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (movement.sqrMagnitude <= 0.000001f)
             return false;
 
+        // TilemapCollider2D represents every tile in its Tilemap with one
+        // collider.  The escape exception must therefore not treat a regular
+        // indestructible tile in that same Tilemap as the Sudden Death tile
+        // that caught the player.  A target inside another non-Sudden-Death
+        // tile remains blocked; only the active cell itself and an empty exit
+        // cell can be crossed while escaping the falling tile.
+        Vector3Int targetCell = indestructibleTilemap.WorldToCell(targetPosition);
+        if (indestructibleTilemap.HasTile(targetCell) && !IsActiveSuddenDeathCell(targetCell))
+            return false;
+
         Vector3Int centerCell = indestructibleTilemap.WorldToCell(currentPosition);
         Vector3Int moveDirection = Mathf.Abs(movement.x) >= Mathf.Abs(movement.y)
             ? new Vector3Int(movement.x > 0f ? 1 : -1, 0, 0)
