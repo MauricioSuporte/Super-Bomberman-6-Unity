@@ -1113,6 +1113,9 @@ public partial class BombController : MonoBehaviour
         if (TryDestroyBombIfOnHole(bomb, position, refund: true))
             return;
 
+        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
+            bombCollider.isTrigger = true;
+
         if (controlEnabled)
             RegisterBomb(bomb);
 
@@ -3185,6 +3188,9 @@ public partial class BombController : MonoBehaviour
             placedBomb = null;
             return false;
         }
+
+        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
+            bombCollider.isTrigger = true;
 
         if (controlEnabled)
             RegisterBomb(bomb);

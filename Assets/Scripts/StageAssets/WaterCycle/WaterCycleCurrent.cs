@@ -88,6 +88,7 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         if (IsBlockedAhead(current, currentDirection, size, player.gameObject, out _, out _))
             yield break;
 
+        CancelActiveMountMovementAbilities(player);
         player.SetInputLocked(true, forceIdle: true, idleFacing: currentDirection);
         player.SetExternalMovementOverride(true);
         player.SetExternalMovementAllowsHazardDamage(true);
@@ -312,6 +313,24 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         if (currentDirection == Vector2.down) return input.Get(playerId, PlayerAction.MoveUp);
         if (currentDirection == Vector2.left) return input.Get(playerId, PlayerAction.MoveRight);
         return input.Get(playerId, PlayerAction.MoveLeft);
+    }
+
+    static void CancelActiveMountMovementAbilities(MovementController player)
+    {
+        if (player == null)
+            return;
+
+        if (player.TryGetComponent(out GreenLouieDashAbility greenDash) &&
+            greenDash.DashActive)
+        {
+            greenDash.CancelDashForExternalInterruption();
+        }
+
+        if (player.TryGetComponent(out BlackLouieDashPushAbility blackDash) &&
+            blackDash.DashActive)
+        {
+            blackDash.CancelDashForExternalInterruption();
+        }
     }
 
     static void RegisterObstacleBarrier(MovementController player, Vector2 safePosition, Vector2 currentDirection, float size)
