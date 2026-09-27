@@ -124,6 +124,8 @@ MonoBehaviour:
   hitMask:
     serializedVersion: 2
     m_Bits: 10184
+  visualSortingLayerName: Default
+  visualSortingOrder: 3
   explosionRadius: 1
   pierceExplosion: 0
   chainBombOnHit: 1
@@ -206,7 +208,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 3
   m_Sprite: {fileID: 21300000, guid: 06258c90217539b42ab0e06759f055cb, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

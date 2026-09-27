@@ -4,10 +4,13 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public sealed class TankShot : MonoBehaviour
 {
-    public static readonly bool EnableTankShotDiagnostics = false;
-
     [SerializeField, Min(0.1f)] private float speed = 8f;
     [SerializeField] private LayerMask hitMask;
+
+    [Header("Visual")]
+    [Tooltip("Tank shots must render above the ground and destructible tilemaps (orders 0 and 1).")]
+    [SerializeField] private string visualSortingLayerName = "Default";
+    [SerializeField] private int visualSortingOrder = 3;
 
     [Header("Impact -> Explosion (BombController logic)")]
     [SerializeField, Min(0)] private int explosionRadius = 1;
@@ -20,6 +23,7 @@ public sealed class TankShot : MonoBehaviour
     private GameObject _owner;
 
     private AnimatedSpriteRenderer _anim;
+    private SpriteRenderer[] _spriteRenderers;
     private ContactFilter2D _filter;
     private readonly RaycastHit2D[] _castHits = new RaycastHit2D[8];
 
@@ -41,13 +45,7 @@ public sealed class TankShot : MonoBehaviour
         hitMask = mask;
         _owner = owner;
 
-        if (EnableTankShotDiagnostics)
-        {
-            Debug.LogWarning(
-                $"[TankShot][S{ShotId}] SPAWN owner:P{ResolveOwnerPlayerId()} " +
-                $"pos:{transform.position} dir:{_dir} speed:{speed:F2}",
-                this);
-        }
+        ApplyProjectileVisualSorting();
 
         _filter = new ContactFilter2D { useLayerMask = true, useTriggers = true };
         _filter.SetLayerMask(hitMask);
@@ -65,6 +63,7 @@ public sealed class TankShot : MonoBehaviour
             if (_anim.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = (_dir == Vector2.right);
         }
+
     }
 
     private void Awake()
@@ -84,6 +83,8 @@ public sealed class TankShot : MonoBehaviour
             _col.isTrigger = true;
 
         _anim = GetComponentInChildren<AnimatedSpriteRenderer>(true);
+        _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
     }
 
     private void FixedUpdate()
@@ -121,19 +122,6 @@ public sealed class TankShot : MonoBehaviour
 
         _impactHandled = true;
 
-        if (EnableTankShotDiagnostics)
-        {
-            string hitName = other != null ? other.name : "none";
-            int hitLayer = other != null ? other.gameObject.layer : -1;
-            int hitPlayerId = ResolveHitPlayerId(other);
-            string hitTarget = hitPlayerId > 0 ? $"P{hitPlayerId}" : "none";
-            Debug.LogWarning(
-                $"[TankShot][S{ShotId}] IMPACT owner:P{ResolveOwnerPlayerId()} " +
-                $"pos:{impactPos} hit:{hitName} layer:{hitLayer} " +
-                $"target:{hitTarget}",
-                this);
-        }
-
         if (_rb != null)
             _rb.MovePosition(impactPos);
 
@@ -143,22 +131,6 @@ public sealed class TankShot : MonoBehaviour
         TrySpawnExplosion(impactPos);
 
         Destroy(gameObject);
-    }
-
-    private int ResolveOwnerPlayerId()
-    {
-        if (_owner == null)
-            return 0;
-
-        PlayerIdentity ownerIdentity = _owner.GetComponentInParent<PlayerIdentity>();
-        return ownerIdentity != null ? ownerIdentity.playerId : 0;
-    }
-
-    private static int ResolveHitPlayerId(Collider2D other)
-    {
-        PlayerIdentity hitIdentity =
-            other != null ? other.GetComponentInParent<PlayerIdentity>() : null;
-        return hitIdentity != null ? hitIdentity.playerId : 0;
     }
 
     private void TryChainBomb(Collider2D other)
@@ -233,4 +205,22 @@ public sealed class TankShot : MonoBehaviour
             }
         }
     }
+
+    private void ApplyProjectileVisualSorting()
+    {
+        if (_spriteRenderers == null)
+            _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < _spriteRenderers.Length; i++)
+        {
+            SpriteRenderer renderer = _spriteRenderers[i];
+            if (renderer == null)
+                continue;
+
+            renderer.sortingLayerName = visualSortingLayerName;
+            renderer.sortingOrder = visualSortingOrder;
+            renderer.enabled = true;
+        }
+    }
+
 }
