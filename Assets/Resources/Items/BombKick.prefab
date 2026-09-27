@@ -124,6 +124,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -215,7 +216,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 692783235, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  m_Sprite: {fileID: -1762441422, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -284,9 +285,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 692783235, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  idleSprite: {fileID: -1762441422, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   animationSprite:
-  - {fileID: 692783235, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: -1762441422, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   allowFlipX: 0
   animationTime: 0.025
   useSequenceDuration: 0
@@ -296,6 +297,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -409,7 +411,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1364189477, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  m_Sprite: {fileID: -1658215828, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -432,14 +434,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -1364189477, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  idleSprite: {fileID: -1658215828, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   animationSprite:
-  - {fileID: -1364189477, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
-  - {fileID: -880895593, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
-  - {fileID: -1172265464, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
-  - {fileID: 1961888906, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
-  - {fileID: -1855959577, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
-  - {fileID: 1641382087, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: -1658215828, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 179502700, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 1837700901, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: -45686849, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: -1165526200, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: -1479275557, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   allowFlipX: 0
   animationTime: 0.025
   useSequenceDuration: 0
@@ -449,6 +451,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
