@@ -5,6 +5,33 @@ TextureImporter:
   - first:
       213: -2061296368145561271
     second: Onil_0
+  - first:
+      213: 629161311526404177
+    second: Onil_1
+  - first:
+      213: 5698753896945668662
+    second: Onil_2
+  - first:
+      213: -3088163999116506273
+    second: Onil_3
+  - first:
+      213: 2307635130606984535
+    second: Onil_4
+  - first:
+      213: 8668850553851835392
+    second: Onil_5
+  - first:
+      213: -1751418495380556884
+    second: Onil_6
+  - first:
+      213: 2468538867589178403
+    second: Onil_7
+  - first:
+      213: -119626192420054385
+    second: Onil_8
+  - first:
+      213: 5082929493322369548
+    second: Onil_9
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -119,9 +146,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 16
-        height: 16
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -140,20 +167,20 @@ TextureImporter:
       name: Onil_1
       rect:
         serializedVersion: 2
-        x: 16
-        y: 0
-        width: 16
-        height: 16
+        x: 24
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 9fd85f04ceec365448528b56ef2158c8
-      internalID: -338086397
+      spriteID: 15043ff11ea3bb800800000000000000
+      internalID: 629161311526404177
       vertices: []
       indices: 
       edges: []
@@ -162,20 +189,20 @@ TextureImporter:
       name: Onil_2
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
-        width: 16
-        height: 16
+        x: 48
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: e22740ce2c03b3c40ac474c49e045c67
-      internalID: 267369789
+      spriteID: 632d1d9d97a061f40800000000000000
+      internalID: 5698753896945668662
       vertices: []
       indices: 
       edges: []
@@ -184,20 +211,152 @@ TextureImporter:
       name: Onil_3
       rect:
         serializedVersion: 2
-        x: 48
-        y: 0
-        width: 16
-        height: 16
+        x: 72
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: e165cb32ee9418c4ea4b14d29a59d0c9
-      internalID: -1319332089
+      spriteID: f5bc2806433a425d0800000000000000
+      internalID: -3088163999116506273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Onil_4
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 20
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75d9a07cced560020800000000000000
+      internalID: 2307635130606984535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Onil_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 004794136a1fd4870800000000000000
+      internalID: 8668850553851835392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Onil_6
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 0
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca3fac96826b1b7e0800000000000000
+      internalID: -1751418495380556884
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Onil_7
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 324e5ec6503024220800000000000000
+      internalID: 2468538867589178403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Onil_8
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 0
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8a58fe9c90075ef0800000000000000
+      internalID: -119626192420054385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Onil_9
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0a06d391713a8640800000000000000
+      internalID: 5082929493322369548
       vertices: []
       indices: 
       edges: []
@@ -206,7 +365,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 37bd76805e637794497f389631df3a74
+    spriteID: 078727eccd60482448870ef17ac265e2
     internalID: 0
     vertices: []
     indices: 
@@ -216,12 +375,18 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":24.0,"y":20.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Onil_0: -2061296368145561271
-      Onil_1: -338086397
-      Onil_2: 267369789
-      Onil_3: -1319332089
+      Onil_1: 629161311526404177
+      Onil_2: 5698753896945668662
+      Onil_3: -3088163999116506273
+      Onil_4: 2307635130606984535
+      Onil_5: 8668850553851835392
+      Onil_6: -1751418495380556884
+      Onil_7: 2468538867589178403
+      Onil_8: -119626192420054385
+      Onil_9: 5082929493322369548
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
