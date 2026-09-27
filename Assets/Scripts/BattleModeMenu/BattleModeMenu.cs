@@ -311,6 +311,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private Sprite[] itemSelectBorderSprites;
     [SerializeField, Min(0.01f)] private float itemSelectBorderFrameSeconds = 0.025f;
     [SerializeField, Min(0.01f)] private float itemSelectRandomEggIconScale = 1.35f;
+    [SerializeField] private Vector2 itemSelectRandomEggIconOffset = new(0f, 15f);
     [SerializeField] private Vector2 itemSelectAmountOffset = new(36f, 0f);
     [SerializeField] private Vector2 itemSelectAmountSize = new(64f, 36f);
     [SerializeField] private int itemSelectAmountFontSize = 28;
@@ -3995,7 +3996,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 iconRt.anchorMin = new Vector2(0.5f, 0.5f);
                 iconRt.anchorMax = new Vector2(0.5f, 0.5f);
                 iconRt.pivot = new Vector2(0.5f, 0.5f);
-                iconRt.anchoredPosition = itemSelectIconOffset;
+                iconRt.anchoredPosition = GetItemSelectIconPosition(i);
                 iconRt.sizeDelta = GetItemSelectIconSize(i);
                 icon.sprite = GetItemSelectIconSprite(i);
                 icon.enabled = icon.sprite != null;
@@ -4083,6 +4084,11 @@ public sealed class BattleModeMenu : MonoBehaviour
             : 1f;
 
         return itemSelectIconSize * scale;
+    }
+
+    private Vector2 GetItemSelectIconPosition(int index)
+    {
+        return itemSelectIconOffset + (IsRandomEggEntry(index) ? itemSelectRandomEggIconOffset : Vector2.zero);
     }
 
     private void UpdateItemSelectBorderVisual(int index, bool isSelected, bool isEnabled)
