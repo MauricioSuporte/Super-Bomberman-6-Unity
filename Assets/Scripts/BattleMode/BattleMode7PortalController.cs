@@ -708,7 +708,10 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         // sink/rise effect. Calling SetAllSpritesVisible(true) would enable
         // every directional renderer at once.
         if (!usePortalSinkVisual)
+        {
             mover.SetAllSpritesVisible(false);
+            state.mountCompanion?.SetMountedLouieVisible(false);
+        }
         state.powerGlove?.SetTeleportVisualSuppressed(true);
         SetRenderersEnabled(state.heldBombRenderers, false);
         mover.SetExplosionInvulnerable(true);
