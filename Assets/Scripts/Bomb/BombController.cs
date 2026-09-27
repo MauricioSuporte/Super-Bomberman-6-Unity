@@ -3065,7 +3065,12 @@ public partial class BombController : MonoBehaviour
         return true;
     }
 
-    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos, out GameObject placedBomb, bool consumeBomb = true, bool playSfx = true)
+    public bool TryPlaceBombAtIgnoringInputLock(
+        Vector2 worldPos,
+        out GameObject placedBomb,
+        bool consumeBomb = true,
+        bool playSfx = true,
+        bool trackOwnerBombTraversal = true)
     {
         placedBomb = null;
 
@@ -3205,7 +3210,8 @@ public partial class BombController : MonoBehaviour
             bombComponent.BeginFuse();
 
         Vector2 plantDir = GetBombPlantDirection(movement);
-        movement?.NotifyBombPlanted(bombComponent, plantDir);
+        if (trackOwnerBombTraversal)
+            movement?.NotifyBombPlanted(bombComponent, plantDir);
 
         var kickAbility = GetCachedComponent(ref cachedBombKickAbility);
         if (kickAbility != null)

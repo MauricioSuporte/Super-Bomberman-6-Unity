@@ -156,7 +156,11 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
     bool DropBombsInFrontLine(Vector2 dir)
     {
-        return LineBombAbility.PlaceLine(movement, bomb, dir) > 0;
+        return LineBombAbility.PlaceLine(
+            movement,
+            bomb,
+            dir,
+            trackOwnerBombTraversal: false) > 0;
     }
 
     public void Enable() => enabledAbility = true;

@@ -49,7 +49,7 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
         dir = Mathf.Abs(dir.x) >= Mathf.Abs(dir.y)
             ? (dir.x >= 0f ? Vector2.right : Vector2.left)
             : (dir.y >= 0f ? Vector2.up : Vector2.down);
-        int placed = PlaceLine(movement, bomb, dir);
+        int placed = PlaceLine(movement, bomb, dir, trackOwnerBombTraversal: false);
         if (placed > 0) SuccessfulCastVersion++;
         if (placed > 0 && bomb.playerAudioSource != null && bomb.placeBombSfx != null)
             GameAudioSettings.PlaySfx(bomb.playerAudioSource, bomb.placeBombSfx);
@@ -57,7 +57,11 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
     }
 
     // Shared with PurpleLouie: placement retains the bomb controller's tile/variant rules.
-    public static int PlaceLine(MovementController movement, BombController bomb, Vector2 dir)
+    public static int PlaceLine(
+        MovementController movement,
+        BombController bomb,
+        Vector2 dir,
+        bool trackOwnerBombTraversal = true)
     {
         if (movement == null || bomb == null) return 0;
         int count = bomb.BombsRemaining;
@@ -71,7 +75,12 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
         for (int i = 0; i < count; i++)
         {
             if (Physics2D.OverlapBox(pos, Vector2.one * 0.4f, 0f, blockers) != null ||
-                !bomb.TryPlaceBombAtIgnoringInputLock(pos, out _, consumeBomb: true, playSfx: false))
+                !bomb.TryPlaceBombAtIgnoringInputLock(
+                    pos,
+                    out _,
+                    consumeBomb: true,
+                    playSfx: false,
+                    trackOwnerBombTraversal: trackOwnerBombTraversal))
             {
                 break;
             }
