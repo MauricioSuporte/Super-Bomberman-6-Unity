@@ -366,9 +366,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
   idleSprite: {fileID: -5696774602151785439, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   animationSprite:
-  - {fileID: 864020137, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
+  - {fileID: -1757385411064225347, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   - {fileID: -5696774602151785439, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
-  - {fileID: -563297007, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
+  - {fileID: -50111184451634164, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   - {fileID: -5696774602151785439, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   allowFlipX: 0
   animationTime: 0.2
@@ -758,7 +758,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1379665539, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
+  m_Sprite: {fileID: 1327357912, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -781,10 +781,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 1379665539, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
+  idleSprite: {fileID: 1327357912, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   animationSprite:
-  - {fileID: 1379665539, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
-  - {fileID: -1908760183, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
+  - {fileID: 1327357912, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
+  - {fileID: -1854142469, guid: ee8afaab71605e34d98244f852acd4f9, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0

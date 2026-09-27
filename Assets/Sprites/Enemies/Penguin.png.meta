@@ -41,6 +41,12 @@ TextureImporter:
   - first:
       213: -5696774602151785439
     second: Penguin_12
+  - first:
+      213: -1757385411064225347
+    second: Penguin_13
+  - first:
+      213: -50111184451634164
+    second: Penguin_14
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -450,10 +456,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: fe687915ae9cb5e439a852cb7cb95fca
-      internalID: 864020137
+      spriteID: db1201897438c97e0800000000000000
+      internalID: -1757385411064225347
       vertices: []
       indices: 
       edges: []
@@ -472,10 +478,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: ec103bc59907c7c4585c3f38ffc75fe8
-      internalID: -563297007
+      spriteID: c0c7c7ba428fd4ff0800000000000000
+      internalID: -50111184451634164
       vertices: []
       indices: 
       edges: []
@@ -496,8 +502,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d50aa9c00aa7e6144b351009e37c8b9a
-      internalID: 1379665539
+      spriteID: d6862f81517dd3a41ac1ba9e1312f078
+      internalID: 1327357912
       vertices: []
       indices: 
       edges: []
@@ -518,8 +524,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7dc69a1fdb0dd5646b3f12d81c90f4ae
-      internalID: -1908760183
+      spriteID: f719dfdb9c92e284c8938730d9cd16bb
+      internalID: -1854142469
       vertices: []
       indices: 
       edges: []
@@ -528,7 +534,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 39944edb418a0234a8ba0fa2ce25c185
+    spriteID: e6d67792050376c488a1a96f33c92a0a
     internalID: 0
     vertices: []
     indices: 
@@ -545,10 +551,10 @@ TextureImporter:
       Penguin_10: -8068660339955571984
       Penguin_11: 8686782354228950724
       Penguin_12: -5696774602151785439
-      Penguin_13: 864020137
-      Penguin_14: -563297007
-      Penguin_15: 1379665539
-      Penguin_16: -1908760183
+      Penguin_13: -1757385411064225347
+      Penguin_14: -50111184451634164
+      Penguin_15: 1327357912
+      Penguin_16: -1854142469
       Penguin_2: -4211188244288767379
       Penguin_3: 4030129239740745438
       Penguin_4: -8572137081001092996
