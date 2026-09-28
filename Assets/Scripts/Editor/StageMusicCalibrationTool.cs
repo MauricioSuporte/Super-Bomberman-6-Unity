@@ -13,6 +13,7 @@ public static class StageMusicCalibrationTool
     const float ReferenceVolume = 0.4f;
     const string BattleModeMusicResourcesPath = "Sounds/BattleModeMusics";
     const string CalibrationAssetPath = "Assets/Resources/Audio/MusicLoudnessCalibration.asset";
+    const string WorldMapScenePath = "Assets/Scenes/WorldMap.unity";
 
     static readonly Regex NormalStageName = new(@"^Stage_\d+-\d+$", RegexOptions.CultureInvariant);
 
@@ -27,9 +28,10 @@ public static class StageMusicCalibrationTool
         }
 
         int calibratedStages = CalibrateNormalGameStages(referenceClip);
+        int calibratedWorldMapClips = CalibrateWorldMapMusic(referenceClip);
         int calibratedBattleClips = CalibrateBattleModeMusic(referenceClip);
         AssetDatabase.SaveAssets();
-        Debug.Log($"Music calibration complete. Normal Game stages calibrated: {calibratedStages}; Battle Mode clips calibrated: {calibratedBattleClips}.");
+        Debug.Log($"Music calibration complete. Normal Game stages calibrated: {calibratedStages}; World Map clips calibrated: {calibratedWorldMapClips}; Battle Mode clips calibrated: {calibratedBattleClips}.");
     }
 
     static int CalibrateNormalGameStages(AudioClip referenceClip)
@@ -79,6 +81,75 @@ public static class StageMusicCalibrationTool
         }
 
         return calibratedStages;
+    }
+
+    static int CalibrateWorldMapMusic(AudioClip referenceClip)
+    {
+        float referenceRms = GameMusicController.CalculateRepresentativeRms(referenceClip);
+        if (referenceRms <= 0f)
+            return 0;
+
+        SceneSetup[] originalSetup = EditorSceneManager.GetSceneManagerSetup();
+        try
+        {
+            Scene scene = SceneManager.GetSceneByPath(WorldMapScenePath);
+            bool openedByTool = !scene.IsValid() || !scene.isLoaded;
+            if (openedByTool)
+                scene = EditorSceneManager.OpenScene(WorldMapScenePath, OpenSceneMode.Additive);
+
+            WorldMapController controller = FindWorldMapController(scene);
+            if (controller == null)
+                return 0;
+
+            SerializedObject serializedController = new(controller);
+            SerializedProperty worlds = serializedController.FindProperty("worlds");
+            int calibratedClips = 0;
+            float targetOutputRms = referenceRms * ReferenceVolume;
+
+            for (int i = 0; i < worlds.arraySize; i++)
+            {
+                SerializedProperty world = worlds.GetArrayElementAtIndex(i);
+                SerializedProperty music = world.FindPropertyRelative("worldMusic");
+                SerializedProperty musicLoop = world.FindPropertyRelative("worldMusicLoop");
+                SerializedProperty volume = world.FindPropertyRelative("worldMusicVolume");
+                AudioClip clip = musicLoop.objectReferenceValue as AudioClip ?? music.objectReferenceValue as AudioClip;
+                float rms = GameMusicController.CalculateRepresentativeRms(clip);
+                if (rms <= 0f)
+                    continue;
+
+                volume.floatValue = Mathf.Clamp01(targetOutputRms / rms);
+                calibratedClips++;
+            }
+
+            if (calibratedClips > 0)
+            {
+                serializedController.ApplyModifiedPropertiesWithoutUndo();
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+
+            if (openedByTool)
+                EditorSceneManager.CloseScene(scene, true);
+
+            return calibratedClips;
+        }
+        finally
+        {
+            EditorSceneManager.RestoreSceneManagerSetup(originalSetup);
+        }
+    }
+
+    static WorldMapController FindWorldMapController(Scene scene)
+    {
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            WorldMapController controller = roots[i].GetComponentInChildren<WorldMapController>(true);
+            if (controller != null)
+                return controller;
+        }
+
+        return null;
     }
 
     static GameMusicController[] FindMusicControllers(Scene scene)

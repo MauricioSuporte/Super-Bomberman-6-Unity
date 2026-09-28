@@ -22,6 +22,8 @@ public class WorldMapController : MonoBehaviour
     {
         public string worldName = "World 1";
         public GameObject root;
+        public GameObject visualsRoot;
+        public PixelPerfectScrollingSpriteRenderer backgroundScroller;
         public List<StageNode> nodes = new List<StageNode>();
         public int defaultNodeIndex = 0;
 
@@ -481,6 +483,15 @@ public class WorldMapController : MonoBehaviour
         {
             if (worlds[i].root != null)
                 worlds[i].root.SetActive(i == currentWorldIndex);
+
+            if (i != currentWorldIndex && worlds[i].backgroundScroller != null)
+                worlds[i].backgroundScroller.enabled = false;
+
+            if (worlds[i].visualsRoot != null)
+                worlds[i].visualsRoot.SetActive(i == currentWorldIndex);
+
+            if (i == currentWorldIndex && worlds[i].backgroundScroller != null)
+                worlds[i].backgroundScroller.enabled = true;
         }
     }
 

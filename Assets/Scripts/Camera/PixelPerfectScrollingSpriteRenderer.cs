@@ -52,6 +52,8 @@ public class PixelPerfectScrollingSpriteRenderer : MonoBehaviour
     float tileSizeUnits;
     float effectiveStepUnits;
 
+    public float ScrollSpeedUnitsPerSecond => scrollSpeedUnitsPerSecond;
+
     void Reset()
     {
         targetRenderer = GetComponent<SpriteRenderer>();
