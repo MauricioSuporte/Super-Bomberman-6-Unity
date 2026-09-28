@@ -150,6 +150,22 @@ public class ControlsConfigMenu : MonoBehaviour
 
     const int MaxConfigurablePlayers = GameSession.MaxPlayerId;
 
+    static bool IsTouchControlsAvailable
+    {
+        get
+        {
+#if UNITY_ANDROID
+            return true;
+#else
+            return false;
+#endif
+        }
+    }
+
+    static int FirstPlayerSelectionIndex => IsTouchControlsAvailable ? 1 : 0;
+    static int TouchSelectionIndex => IsTouchControlsAvailable ? 0 : -1;
+    static int ReturnSelectionIndex => FirstPlayerSelectionIndex + MaxConfigurablePlayers;
+
     const float COLUMN_LEFT_LABEL_BASE = -350f;
     const float COLUMN_LEFT_VALUE_BASE = -190f;
     const float COLUMN_RIGHT_LABEL_BASE = 200f;
@@ -941,7 +957,8 @@ public class ControlsConfigMenu : MonoBehaviour
 
     bool ToggleSelectedPlayerActive()
     {
-        int playerId = Mathf.Clamp(playerSelectIndex + 1, 1, MaxConfigurablePlayers);
+        if (!TryGetPlayerIdForSelection(playerSelectIndex, out int playerId))
+            return false;
 
         var session = GameSession.Instance;
         if (session == null)
@@ -1091,17 +1108,18 @@ public class ControlsConfigMenu : MonoBehaviour
                 if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out int pidUp))
                 {
                     ownerPlayerId = pidUp;
-                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, MaxConfigurablePlayers + 1);
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, ReturnSelectionIndex);
                 }
                 else if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out int pidDown))
                 {
                     ownerPlayerId = pidDown;
-                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, MaxConfigurablePlayers + 1);
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, ReturnSelectionIndex);
                 }
 
                 if (playerSelectIndex != prev)
                 {
-                    targetPlayerId = playerSelectIndex + 1;
+                    if (TryGetPlayerIdForSelection(playerSelectIndex, out int selectedPlayerId))
+                        targetPlayerId = selectedPlayerId;
                     PlaySfx(moveOptionSfx, moveOptionVolume);
                     RefreshText();
                 }
@@ -1130,7 +1148,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 bool toggleRight = TryGetAnyPlayerDown(PlayerAction.MoveRight, out int pidToggleRight);
                 bool toggleByPad = toggleLeft || toggleRight;
 
-                if (toggleByPad && playerSelectIndex < MaxConfigurablePlayers)
+                if (toggleByPad && TryGetPlayerIdForSelection(playerSelectIndex, out _))
                 {
                     ownerPlayerId = toggleLeft ? pidToggleLeft : pidToggleRight;
 
@@ -1145,10 +1163,10 @@ public class ControlsConfigMenu : MonoBehaviour
                     continue;
                 }
 
-                if (playerSelectIndex < MaxConfigurablePlayers && TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
+                if (TryGetPlayerIdForSelection(playerSelectIndex, out int playerIdToReset) && TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
                 {
                     ownerPlayerId = pidAskReset;
-                    confirmResetPlayerId = playerSelectIndex + 1;
+                    confirmResetPlayerId = playerIdToReset;
                     confirmResetIndex = 1;
                     state = MenuState.ConfirmReset;
                     PlaySfx(confirmSfx, confirmVolume);
@@ -1167,14 +1185,14 @@ public class ControlsConfigMenu : MonoBehaviour
                     if (confirmByPad)
                         ownerPlayerId = pidConfirm;
 
-                    if (playerSelectIndex == MaxConfigurablePlayers + 1)
+                    if (playerSelectIndex == ReturnSelectionIndex)
                     {
                         PlaySfx(backSfx, backVolume);
                         done = true;
                         yield return null;
                         continue;
                     }
-                    if (playerSelectIndex == MaxConfigurablePlayers)
+                    if (playerSelectIndex == TouchSelectionIndex)
                     {
                         PlaySfx(confirmSfx, confirmVolume);
                         yield return PulseCursor();
@@ -1193,7 +1211,8 @@ public class ControlsConfigMenu : MonoBehaviour
                         yield return null;
                         continue;
                     }
-                    targetPlayerId = playerSelectIndex + 1;
+                    if (!TryGetPlayerIdForSelection(playerSelectIndex, out targetPlayerId))
+                        continue;
 
                     state = MenuState.WaitForInput;
                     blockedMessageUntil = 0f;
@@ -1473,8 +1492,10 @@ public class ControlsConfigMenu : MonoBehaviour
     void PrepareInitialMenuStateForOpen()
     {
         state = MenuState.SelectPlayer;
-        playerSelectIndex = Mathf.Clamp(ownerPlayerId - 1, 0, MaxConfigurablePlayers - 1);
-        targetPlayerId = playerSelectIndex + 1;
+        playerSelectIndex = IsTouchControlsAvailable
+            ? TouchSelectionIndex
+            : FirstPlayerSelectionIndex + Mathf.Clamp(ownerPlayerId - 1, 0, MaxConfigurablePlayers - 1);
+        targetPlayerId = ownerPlayerId;
         bulkStep = 0;
         bulkSnapshot = null;
 
@@ -1673,6 +1694,9 @@ public class ControlsConfigMenu : MonoBehaviour
             body += $"<size={bodySize}><color={colorBlueSoft}>{text.ChoosePlayer}</color></size>\n\n";
             body += "</align><align=left>";
 
+            if (IsTouchControlsAvailable)
+                body += $"<align=center><link=\"sel{TouchSelectionIndex}\"><size={gridSize}><color={colorHint}>{GameTextDatabase.Touch(0)}</color></size></link></align>\n";
+
             int selectorRowGap = Mathf.Max(0, playerBlockGapLines - 1);
             for (int i = 0; i < MaxConfigurablePlayers; i++)
             {
@@ -1682,8 +1706,7 @@ public class ControlsConfigMenu : MonoBehaviour
                     body += RepeatNewLine(selectorRowGap);
             }
 
-            body += $"<align=center><link=\"sel{MaxConfigurablePlayers}\"><size={gridSize}><color={colorHint}>{GameTextDatabase.Touch(0)}</color></size></link>\n";
-            body += $"<link=\"sel{MaxConfigurablePlayers + 1}\"><size={gridSize}><color={colorWhite}>{text.Return}</color></size></link></align>\n";
+            body += $"<align=center><link=\"sel{ReturnSelectionIndex}\"><size={gridSize}><color={colorWhite}>{text.Return}</color></size></link></align>\n";
 
             if (Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine))
                 footer += $"<size={footerSize}>{blockedMessageLine}</size>\n";
@@ -1807,7 +1830,8 @@ public class ControlsConfigMenu : MonoBehaviour
     void AppendPlayerSelectRow(ref string body, int index, int gridSize)
     {
         int playerId = index + 1;
-        bool selected = playerSelectIndex == index;
+        int selectionIndex = FirstPlayerSelectionIndex + index;
+        bool selected = playerSelectIndex == selectionIndex;
         bool active = IsPlayerActiveForMenu(playerId);
 
         string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
@@ -1820,7 +1844,7 @@ public class ControlsConfigMenu : MonoBehaviour
         float statusX = valueX + (status.Length == 2 ? gridSize * 0.5f : 0f);
 
         body +=
-            $"<link=\"sel{index}\">" +
+            $"<link=\"sel{selectionIndex}\">" +
             $"<size={gridSize}>" +
             $"<pos={labelX}><color={playerColor}>{playerLabel}</color></pos>" +
             $"<pos={statusX}><color={statusColor}>{status}</color></pos>" +
@@ -2309,7 +2333,7 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             if (linkId != null && linkId.StartsWith("sel", StringComparison.Ordinal) && linkId.Length > 3)
             {
-                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i <= MaxConfigurablePlayers + 1)
+                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i <= ReturnSelectionIndex)
                 {
                     index = i;
                     return true;
@@ -2333,6 +2357,18 @@ public class ControlsConfigMenu : MonoBehaviour
         return false;
     }
 
+    static bool TryGetPlayerIdForSelection(int selectionIndex, out int playerId)
+    {
+        playerId = selectionIndex - FirstPlayerSelectionIndex + 1;
+        if (playerId < 1 || playerId > MaxConfigurablePlayers)
+        {
+            playerId = 0;
+            return false;
+        }
+
+        return true;
+    }
+
     bool TryHandlePointerHover(Vector2 screenPosition)
     {
         if (!TryGetPointerHoveredLinkId(screenPosition, out string linkId))
@@ -2346,7 +2382,8 @@ public class ControlsConfigMenu : MonoBehaviour
         if (state == MenuState.SelectPlayer && idx != playerSelectIndex)
         {
             playerSelectIndex = idx;
-            targetPlayerId = playerSelectIndex + 1;
+            if (TryGetPlayerIdForSelection(playerSelectIndex, out int playerId))
+                targetPlayerId = playerId;
             changed = true;
         }
         else if (state == MenuState.ConfirmReset && idx != confirmResetIndex)
