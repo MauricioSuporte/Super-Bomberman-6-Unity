@@ -3781,6 +3781,7 @@ MonoBehaviour:
   bombPassSprite: {fileID: 21300000, guid: 05267943b815b8e4b8756add93c97057, type: 3}
   punchSprite: {fileID: 21300000, guid: c5752cba91a46e64888f625bb34fe983, type: 3}
   powerGloveSprite: {fileID: 21300000, guid: 6e71f4f05cc332045956a25685bf3ef3, type: 3}
+  lineBombSprite: {fileID: 21300000, guid: 5db396df5e9a4cd58d6bb2f7a161941a, type: 3}
   extraLifeSprite: {fileID: 21300000, guid: 62e34c4b4d31c784aadb617d931f4f48, type: 3}
   destructiblePassSprite: {fileID: 21300000, guid: 5fa0cf68906f18e4ca51de93b1a9d60d, type: 3}
   fullFireSprite: {fileID: 21300000, guid: 6a371813c55dbce45aa349adb1a84f5a, type: 3}

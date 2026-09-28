@@ -2021,6 +2021,28 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: LineBombIcon
+      rect:
+        serializedVersion: 2
+        x: 624
+        y: 256
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 27eb09a5f83a19244b04e82e7e35130c
+      internalID: 1655822166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -2071,6 +2093,7 @@ TextureImporter:
       ItemBorder4: -45686849
       ItemBorder5: -1165526200
       ItemBorder6: -1479275557
+      LineBombIcon: 1655822166
       MagnetBombIcon: 134180625
       MagnetBombLarge: -2087871412
       MagnetBombMedium: 1566889325

@@ -40,6 +40,7 @@ public static class ItemSheetPrefabAuthoring
         new("Assets/Resources/Items/PierceBomb.prefab", "PierceBomb", "PierceBomb", 38, 1),
         new("Assets/Resources/Items/PowerBomb.prefab", "PowerBomb", "PowerBomb", 40, 1),
         new("Assets/Resources/Items/PowerGlove.prefab", "PowerGlove", "PowerGlove", 41, 3),
+        new("Assets/Resources/Items/LineBomb.prefab", "LineBomb", "LineBomb", 39, 3),
         new("Assets/Resources/Items/RubberBomb.prefab", "RubberBomb", "RubberBomb", 39, 1),
         new("Assets/Resources/Items/Skull.prefab", "Skull", "Skull", 34, 1),
         new("Assets/Resources/Items/Clock.prefab", "Clock", "Clock", 40, 6)
@@ -739,6 +740,7 @@ public static class ItemSheetPrefabAuthoring
             CreateSpriteRect("PierceBombIcon", 38, 1, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("PowerBombIcon", 40, 1, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("PowerGloveIcon", 41, 3, existingSpriteRects, ItemIconSize),
+            CreateSpriteRect("LineBombIcon", 39, 3, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("RubberBombIcon", 39, 1, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("SkullIcon", 34, 1, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("ClockIcon", 40, 6, existingSpriteRects, ItemIconSize),
