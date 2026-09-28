@@ -393,8 +393,8 @@ public class EndingStarComemoration : MonoBehaviour
         var slot = SaveSystem.ActiveSlot;
         if (slot != null)
         {
-            totalStages = slot.stageOrder != null ? slot.stageOrder.Count : 0;
-            clearedStages = slot.clearedStages != null ? slot.clearedStages.Count : 0;
+            totalStages = StageUnlockProgress.GetRegisteredStageCount();
+            clearedStages = StageUnlockProgress.GetClearedRegisteredStageCount();
         }
 
         int percent = ComputeCompletionPercent(totalStages, clearedStages);

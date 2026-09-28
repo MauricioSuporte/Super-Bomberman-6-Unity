@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using Assets.Scripts.SaveSystem;
 using TMPro;
 using UnityEngine;
@@ -819,8 +818,8 @@ public class SaveFileMenu : MonoBehaviour
             return info;
 
         info.Exists = SaveSystem.SlotExists(zeroBasedIndex);
-        info.RegisteredStageCount = slot.stageOrder != null ? slot.stageOrder.Count : 0;
-        info.ClearedStageCount = slot.clearedStages != null ? slot.clearedStages.Count : 0;
+        info.RegisteredStageCount = StageUnlockProgress.GetCampaignStageCount();
+        info.ClearedStageCount = StageUnlockProgress.GetClearedCampaignStageCount(slot);
         info.Difficulty = System.Enum.IsDefined(typeof(NormalGameDifficulty), slot.difficulty)
             ? (NormalGameDifficulty)slot.difficulty
             : NormalGameDifficulty.Normal;
@@ -850,44 +849,7 @@ public class SaveFileMenu : MonoBehaviour
 
     private static void EnsureActiveSlotStageOrderExistsFromBuildSettings()
     {
-        var slot = SaveSystem.ActiveSlot;
-        if (slot == null)
-            return;
-
-        if (slot.stageOrder != null && slot.stageOrder.Count > 0)
-            return;
-
-        List<string> buildStages = GetStageSceneNamesFromBuildSettings();
-        if (buildStages.Count <= 0)
-            return;
-
-        slot.stageOrder = buildStages;
-        SaveSystem.Save();
-    }
-
-    private static List<string> GetStageSceneNamesFromBuildSettings()
-    {
-        List<string> result = new();
-
-        int sceneCount = SceneManager.sceneCountInBuildSettings;
-        for (int i = 0; i < sceneCount; i++)
-        {
-            string path = SceneUtility.GetScenePathByBuildIndex(i);
-            if (string.IsNullOrWhiteSpace(path))
-                continue;
-
-            string sceneName = Path.GetFileNameWithoutExtension(path);
-            if (string.IsNullOrWhiteSpace(sceneName))
-                continue;
-
-            if (!sceneName.StartsWith("Stage_"))
-                continue;
-
-            if (!result.Contains(sceneName))
-                result.Add(sceneName);
-        }
-
-        return result;
+        StageUnlockProgress.EnsureCampaignStageOrder();
     }
 
     private void UpdateOptionVisuals()

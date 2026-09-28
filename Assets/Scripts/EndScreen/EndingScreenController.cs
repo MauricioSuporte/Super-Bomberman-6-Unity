@@ -519,8 +519,8 @@ public class EndingScreenController : MonoBehaviour
         var slot = SaveSystem.ActiveSlot;
         if (slot != null)
         {
-            registeredStageCount = slot.stageOrder != null ? slot.stageOrder.Count : 0;
-            clearedStageCount = slot.clearedStages != null ? slot.clearedStages.Count : 0;
+            registeredStageCount = StageUnlockProgress.GetRegisteredStageCount();
+            clearedStageCount = StageUnlockProgress.GetClearedRegisteredStageCount();
         }
 
         int completionPercent = ComputeCompletionPercent(registeredStageCount, clearedStageCount);

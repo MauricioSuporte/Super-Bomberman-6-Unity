@@ -2,11 +2,21 @@ using System.Collections.Generic;
 
 public static class StageUnlockProgress
 {
+    static readonly string[] CampaignStageOrder =
+    {
+        "Stage_1-1", "Stage_1-2", "Stage_1-3", "Stage_1-4", "Stage_1-5", "Stage_1-6", "Stage_1-7",
+        "Stage_2-1", "Stage_2-2", "Stage_2-3", "Stage_2-4", "Stage_2-5", "Stage_2-6", "Stage_2-7",
+        "Stage_3-1", "Stage_3-2", "Stage_3-3", "Stage_3-4", "Stage_3-5"
+    };
+
     public static void ReloadFromPrefs()
     {
         SaveSystem.Reload();
-        EnsureDefaultUnlocked();
-        TryUnlockAllClearRewards();
+        bool progressChanged = EnsureCampaignStageOrder();
+        bool rewardsChanged = TryUnlockAllClearRewards();
+
+        if (progressChanged || rewardsChanged)
+            SaveSystem.Save();
     }
 
     public static void RegisterStageOrder(IEnumerable<string> orderedSceneNames)
@@ -31,12 +41,50 @@ public static class StageUnlockProgress
             }
         }
 
-        if (newOrder.Count > 0)
+        if (newOrder.Count > 0 && !HasSameOrder(slot.stageOrder, newOrder))
             slot.stageOrder = newOrder;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
         TryUnlockAllClearRewards();
         SaveSystem.Save();
+    }
+
+    public static bool EnsureCampaignStageOrder()
+    {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return false;
+
+        bool changed = false;
+
+        if (!HasSameOrder(slot.stageOrder, CampaignStageOrder))
+        {
+            slot.stageOrder = new List<string>(CampaignStageOrder);
+            changed = true;
+        }
+
+        if (EnsureDefaultUnlocked(slot))
+            changed = true;
+
+        for (int i = 0; i < CampaignStageOrder.Length - 1; i++)
+        {
+            string completedStage = CampaignStageOrder[i];
+            string nextStage = CampaignStageOrder[i + 1];
+
+            if (!slot.clearedStages.Contains(completedStage))
+                break;
+
+            if (!slot.unlockedStages.Contains(nextStage))
+            {
+                slot.unlockedStages.Add(nextStage);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            SaveSystem.Save();
+
+        return changed;
     }
 
     public static bool IsUnlocked(string sceneName)
@@ -45,7 +93,7 @@ public static class StageUnlockProgress
         if (slot == null)
             return false;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
@@ -60,7 +108,7 @@ public static class StageUnlockProgress
         if (slot == null)
             return false;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
@@ -75,7 +123,7 @@ public static class StageUnlockProgress
         if (slot == null)
             return false;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
 
         if (slot.stageOrder == null || slot.stageOrder.Count <= 0)
             return false;
@@ -118,7 +166,8 @@ public static class StageUnlockProgress
         if (slot == null)
             return 0;
 
-        return slot.stageOrder != null ? slot.stageOrder.Count : 0;
+        EnsureCampaignStageOrder();
+        return CampaignStageOrder.Length;
     }
 
     public static int GetClearedRegisteredStageCount()
@@ -127,17 +176,24 @@ public static class StageUnlockProgress
         if (slot == null)
             return 0;
 
-        if (slot.stageOrder == null || slot.stageOrder.Count <= 0)
+        EnsureCampaignStageOrder();
+        return GetClearedCampaignStageCount(slot);
+    }
+
+    public static int GetCampaignStageCount()
+    {
+        return CampaignStageOrder.Length;
+    }
+
+    public static int GetClearedCampaignStageCount(Assets.Scripts.SaveSystem.StageSlot slot)
+    {
+        if (slot == null || slot.clearedStages == null)
             return 0;
 
         int count = 0;
-
-        for (int i = 0; i < slot.stageOrder.Count; i++)
-        {
-            string sceneName = slot.stageOrder[i];
-            if (!string.IsNullOrEmpty(sceneName) && slot.clearedStages.Contains(sceneName))
+        for (int i = 0; i < CampaignStageOrder.Length; i++)
+            if (slot.clearedStages.Contains(CampaignStageOrder[i]))
                 count++;
-        }
 
         return count;
     }
@@ -173,7 +229,7 @@ public static class StageUnlockProgress
         if (slot == null)
             return;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
@@ -195,7 +251,7 @@ public static class StageUnlockProgress
         if (slot == null)
             return;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
@@ -233,7 +289,7 @@ public static class StageUnlockProgress
         if (slot == null)
             return;
 
-        EnsureDefaultUnlocked();
+        EnsureCampaignStageOrder();
 
         string normalizedCurrent = Normalize(currentSceneName);
         if (string.IsNullOrEmpty(normalizedCurrent))
@@ -277,14 +333,13 @@ public static class StageUnlockProgress
             SaveSystem.Save();
     }
 
-    private static void EnsureDefaultUnlocked()
+    private static bool EnsureDefaultUnlocked(Assets.Scripts.SaveSystem.StageSlot slot)
     {
-        var slot = SaveSystem.ActiveSlot;
         if (slot == null)
-            return;
+            return false;
 
         if (slot.unlockedStages.Count > 0)
-            return;
+            return false;
 
         string firstStage = null;
 
@@ -295,6 +350,19 @@ public static class StageUnlockProgress
             firstStage = "Stage_1-1";
 
         slot.unlockedStages.Add(firstStage);
+        return true;
+    }
+
+    private static bool HasSameOrder(IList<string> left, IList<string> right)
+    {
+        if (left == null || right == null || left.Count != right.Count)
+            return false;
+
+        for (int i = 0; i < left.Count; i++)
+            if (!string.Equals(left[i], right[i], System.StringComparison.Ordinal))
+                return false;
+
+        return true;
     }
 
     private static bool TryUnlockAllClearRewards()
