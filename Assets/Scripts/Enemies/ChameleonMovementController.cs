@@ -14,6 +14,9 @@ public class DisguiseSpriteSet
 [RequireComponent(typeof(SpriteRenderer))]
 public class ChameleonMovementController : EnemyMovementController
 {
+    const string BombermanSheetResourcesPath = "Sprites/Bombers/Bomberman/Generated/Bomberman";
+    static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
+
     [Header("Chameleon Animation")]
     public SpriteRenderer spriteRenderer;
     public Sprite idleSprite;
@@ -37,6 +40,9 @@ public class ChameleonMovementController : EnemyMovementController
     public float transformDuration = 1f;
     public float transformBlinkInterval = 0.1f;
 
+    [Header("Disguise Sheet Selection")]
+    [Range(0f, 1f)] public float livingPlayerSheetChance = 0.5f;
+
     Coroutine behaviourRoutine;
     bool isDisguised;
     bool isTransforming;
@@ -58,6 +64,10 @@ public class ChameleonMovementController : EnemyMovementController
     Vector2 cachedNormalTargetTile;
     bool hasCachedNormalState;
 
+    readonly List<PlayerIdentity> livePlayers = new(6);
+    readonly Dictionary<int, Sprite> disguiseFrameMap = new(160);
+    PlayerIdentity selectedDisguisePlayer;
+
     protected override void Awake()
     {
         base.Awake();
@@ -67,6 +77,7 @@ public class ChameleonMovementController : EnemyMovementController
         if (!spriteRenderer)
             spriteRenderer = GetComponent<SpriteRenderer>();
 
+        activeSprite = null;
         DisableAllAnimatedChildren();
         DisableDisguiseSprites();
         ForceNormalVisualState();
@@ -84,6 +95,9 @@ public class ChameleonMovementController : EnemyMovementController
 
     void OnEnable()
     {
+        isDisguised = false;
+        isTransforming = false;
+        isBlinking = false;
         DisableAllAnimatedChildren();
         DisableDisguiseSprites();
         ForceNormalVisualState();
@@ -106,7 +120,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     void Update()
     {
-        if (isDead || isTransforming)
+        if (isDead || isTransforming || isBlinking)
             return;
 
         if (isDisguised)
@@ -140,6 +154,7 @@ public class ChameleonMovementController : EnemyMovementController
             if (idleSprite != null)
                 spriteRenderer.sprite = idleSprite;
         }
+
     }
 
     void DisableBaseDirectionalSprites()
@@ -165,6 +180,23 @@ public class ChameleonMovementController : EnemyMovementController
             var sr = anims[i].GetComponent<SpriteRenderer>();
             if (sr != null) sr.enabled = false;
         }
+    }
+
+    void ActivateOnlyDisguiseSprite(AnimatedSpriteRenderer renderer, Vector2 directionToAnimate)
+    {
+        DisableAllAnimatedChildren();
+        DisableBaseDirectionalSprites();
+
+        activeDisguiseSprite = renderer;
+        if (activeDisguiseSprite == null)
+            return;
+
+        activeDisguiseSprite.enabled = true;
+        activeDisguiseSprite.idle = directionToAnimate == Vector2.zero;
+
+        if (activeDisguiseSprite.TryGetComponent(out SpriteRenderer activeRenderer))
+            activeRenderer.enabled = true;
+
     }
 
     void StartBehaviourLoop()
@@ -257,17 +289,35 @@ public class ChameleonMovementController : EnemyMovementController
 
     IEnumerator TransformBlink(Sprite playerIdleSprite)
     {
-        if (spriteRenderer == null || idleSprite == null || playerIdleSprite == null)
+        if (idleSprite == null || playerIdleSprite == null)
+            yield break;
+
+        // The root Chameleon renderer is at Y=0, whereas its player-form
+        // renderers are authored at the walking height. Blink through the
+        // Down disguise child so both alternating sprites retain that Y offset.
+        AnimatedSpriteRenderer transformAnimated = currentDisguiseSet != null ? currentDisguiseSet.down : null;
+        SpriteRenderer transformRenderer = transformAnimated != null
+            ? transformAnimated.GetComponent<SpriteRenderer>()
+            : null;
+
+        if (transformRenderer == null)
             yield break;
 
         isBlinking = true;
+        DisableAllAnimatedChildren();
+        DisableBaseDirectionalSprites();
+
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
+
+        transformRenderer.enabled = true;
 
         float elapsed = 0f;
         bool useChameleon = true;
 
         while (elapsed < transformDuration)
         {
-            spriteRenderer.sprite = useChameleon ? idleSprite : playerIdleSprite;
+            transformRenderer.sprite = useChameleon ? idleSprite : playerIdleSprite;
             useChameleon = !useChameleon;
 
             float wait = transformBlinkInterval;
@@ -275,7 +325,7 @@ public class ChameleonMovementController : EnemyMovementController
             yield return new WaitForSeconds(wait);
         }
 
-        spriteRenderer.sprite = idleSprite;
+        transformRenderer.sprite = idleSprite;
         isBlinking = false;
     }
 
@@ -316,6 +366,7 @@ public class ChameleonMovementController : EnemyMovementController
         if (rb != null) rb.linearVelocity = Vector2.zero;
 
         currentDisguiseSet = disguiseSets[Random.Range(0, disguiseSets.Length)];
+        ApplySelectedDisguiseSheet();
 
         isTransforming = true;
         isDisguised = false;
@@ -391,6 +442,121 @@ public class ChameleonMovementController : EnemyMovementController
         ResyncNormalMovementAfterDisguise();
     }
 
+    void ApplySelectedDisguiseSheet()
+    {
+        if (currentDisguiseSet == null)
+            return;
+
+        string sheetPath = SelectDisguiseSheetPath(out string selectionDescription);
+        Sprite[] sprites = Resources.LoadAll<Sprite>(sheetPath);
+        disguiseFrameMap.Clear();
+
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            Sprite sprite = sprites[i];
+            if (sprite != null && TryExtractFrameIndex(sprite.name, out int frameIndex) && !disguiseFrameMap.ContainsKey(frameIndex))
+                disguiseFrameMap.Add(frameIndex, sprite);
+        }
+
+        if (disguiseFrameMap.Count == 0)
+            return;
+
+        ApplyWalkFrames(currentDisguiseSet.down, 2);
+        ApplyWalkFrames(currentDisguiseSet.right, 25);
+        ApplyWalkFrames(currentDisguiseSet.left, 48);
+        ApplyWalkFrames(currentDisguiseSet.up, 72);
+        ApplyDisguiseWalkOffsets();
+    }
+
+    string SelectDisguiseSheetPath(out string selectionDescription)
+    {
+        selectedDisguisePlayer = null;
+        PlayerIdentity.GetActivePlayers(livePlayers);
+        for (int i = livePlayers.Count - 1; i >= 0; i--)
+        {
+            PlayerIdentity player = livePlayers[i];
+            CharacterHealth health = player != null ? player.GetComponent<CharacterHealth>() : null;
+            if (player == null || !player.gameObject.activeInHierarchy || health == null || health.IsDead || health.life <= 0)
+                livePlayers.RemoveAt(i);
+        }
+
+        if (livePlayers.Count > 0 && Random.value < livingPlayerSheetChance)
+        {
+            PlayerIdentity player = livePlayers[Random.Range(0, livePlayers.Count)];
+            selectedDisguisePlayer = player;
+            PlayerPersistentStats.PlayerState state = PlayerPersistentStats.GetRuntime(player.playerId);
+            BomberCharacter character = BomberSkinResourceCatalog.IsAvailableCharacter(state.Character)
+                ? state.Character
+                : BomberCharacter.Bomberman;
+            BomberSkin skin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, state.Skin);
+            selectionDescription = $"living player={player.playerId}, character={character}, skin={skin}";
+            return $"{BomberSkinResourceCatalog.GetGeneratedResourcesPath(character)}/{BomberSkinResourceCatalog.GetSheetName(character, skin)}";
+        }
+
+        int palette = Random.Range(1, 5);
+        selectionDescription = $"default Bomberman palette={palette}";
+        return $"{BombermanSheetResourcesPath}/Bomberman{palette}";
+    }
+
+    void ApplyDisguiseWalkOffsets()
+    {
+        ApplyDisguiseWalkOffset(currentDisguiseSet.down, "Down");
+        ApplyDisguiseWalkOffset(currentDisguiseSet.right, "Rigth");
+        ApplyDisguiseWalkOffset(currentDisguiseSet.left, "Left");
+        ApplyDisguiseWalkOffset(currentDisguiseSet.up, "Up");
+    }
+
+    void ApplyDisguiseWalkOffset(AnimatedSpriteRenderer disguiseRenderer, string playerRendererName)
+    {
+        if (disguiseRenderer == null)
+            return;
+
+        Vector3 offset = new(0f, 0.3f, disguiseRenderer.transform.localPosition.z);
+        if (selectedDisguisePlayer != null)
+        {
+            AnimatedSpriteRenderer[] playerRenderers = selectedDisguisePlayer.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int i = 0; i < playerRenderers.Length; i++)
+            {
+                AnimatedSpriteRenderer playerRenderer = playerRenderers[i];
+                if (playerRenderer != null && playerRenderer.name == playerRendererName)
+                {
+                    offset = playerRenderer.transform.localPosition;
+                    break;
+                }
+            }
+        }
+
+        disguiseRenderer.transform.localPosition = offset;
+    }
+
+    void ApplyWalkFrames(AnimatedSpriteRenderer renderer, int idleFrame)
+    {
+        if (renderer == null || !disguiseFrameMap.TryGetValue(idleFrame, out Sprite idle))
+            return;
+
+        Sprite[] animation = new Sprite[WalkFramePattern.Length];
+        for (int i = 0; i < WalkFramePattern.Length; i++)
+        {
+            if (!disguiseFrameMap.TryGetValue(idleFrame + WalkFramePattern[i], out Sprite frame))
+                return;
+
+            animation[i] = frame;
+        }
+
+        renderer.idleSprite = idle;
+        renderer.animationSprite = animation;
+        renderer.CurrentFrame = 0;
+        renderer.idle = true;
+        renderer.RefreshFrame();
+    }
+
+    static bool TryExtractFrameIndex(string spriteName, out int frameIndex)
+    {
+        frameIndex = -1;
+        int separator = string.IsNullOrWhiteSpace(spriteName) ? -1 : spriteName.LastIndexOf('_');
+        return separator >= 0 && separator < spriteName.Length - 1 && int.TryParse(spriteName[(separator + 1)..], out frameIndex);
+    }
+
     void DisableDisguiseSprites()
     {
         if (disguiseSets == null)
@@ -440,24 +606,35 @@ public class ChameleonMovementController : EnemyMovementController
             newSprite = currentDisguiseSet.right;
 
         if (newSprite != activeDisguiseSprite)
-        {
-            if (activeDisguiseSprite != null)
-                DisableDisguiseSprite(activeDisguiseSprite);
+            ActivateOnlyDisguiseSprite(newSprite, dir);
 
-            activeDisguiseSprite = newSprite;
-
-            if (activeDisguiseSprite != null)
-            {
-                activeDisguiseSprite.enabled = true;
-                activeDisguiseSprite.idle = false;
-
-                var sr = activeDisguiseSprite.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.enabled = true;
-            }
-        }
+        EnsureOnlyActiveDisguiseSprite();
 
         if (activeDisguiseSprite != null)
             activeDisguiseSprite.idle = dir == Vector2.zero;
+    }
+
+    void EnsureOnlyActiveDisguiseSprite()
+    {
+        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            AnimatedSpriteRenderer animated = anims[i];
+            if (animated == null || animated == activeDisguiseSprite)
+                continue;
+
+            animated.enabled = false;
+            if (animated.TryGetComponent(out SpriteRenderer renderer))
+                renderer.enabled = false;
+        }
+
+        if (activeDisguiseSprite != null)
+        {
+            activeDisguiseSprite.enabled = true;
+            if (activeDisguiseSprite.TryGetComponent(out SpriteRenderer renderer))
+                renderer.enabled = true;
+        }
+
     }
 
     void ResetDirectionTimer()
@@ -477,7 +654,10 @@ public class ChameleonMovementController : EnemyMovementController
             {
                 Vector2 dir = i == 0 ? Vector2.up : i == 1 ? Vector2.down : i == 2 ? Vector2.left : Vector2.right;
                 Vector2 checkPos = rb.position + dir * tileSize;
-                if (!IsBlockedDisguised(checkPos))
+                // A reservation must participate in direction choice, not only
+                // in the final movement check. Otherwise a Chameleon stuck in
+                // a corridor keeps selecting the occupied tile every retry.
+                if (!IsBlockedDisguised(checkPos) && !IsChameleonTileReserved(checkPos))
                     validDirs.Add(dir);
             }
 
@@ -485,6 +665,8 @@ public class ChameleonMovementController : EnemyMovementController
             {
                 disguisedDirection = Vector2.zero;
                 hasDisguisedInput = false;
+                // Recheck quickly after the Chameleon ahead leaves the tile.
+                directionChangeTimer = 0.1f;
             }
             else
             {
@@ -532,6 +714,12 @@ public class ChameleonMovementController : EnemyMovementController
         }
 
         Vector2 targetPosition = position + disguisedDirection * moveSpeed;
+
+        if (IsChameleonTileReserved(targetPosition))
+        {
+            ChooseDirectionAwayFromChameleon();
+            return;
+        }
 
         if (!IsBlockedDisguised(targetPosition))
         {
@@ -681,6 +869,74 @@ public class ChameleonMovementController : EnemyMovementController
         }
 
         return false;
+    }
+
+    bool IsChameleonTileReserved(Vector2 targetPosition)
+    {
+        Vector2Int targetTilePosition = ToTilePosition(targetPosition);
+        ChameleonMovementController[] chameleons = FindObjectsByType<ChameleonMovementController>();
+
+        for (int i = 0; i < chameleons.Length; i++)
+        {
+            ChameleonMovementController other = chameleons[i];
+            if (other == null || other == this || other.isDead || other.rb == null)
+                continue;
+
+            if (targetTilePosition == ToTilePosition(other.rb.position))
+                return true;
+
+            if (!other.isDisguised || other.disguisedDirection == Vector2.zero)
+                continue;
+
+            Vector2Int otherReservedTile = ToTilePosition(other.rb.position + other.disguisedDirection * other.tileSize);
+            if (targetTilePosition != otherReservedTile)
+                continue;
+
+            // When both Chameleons choose the same empty tile, only one keeps
+            // the reservation. The other changes direction before moving.
+            int thisId = GetEntityId().GetHashCode();
+            int otherId = other.GetEntityId().GetHashCode();
+            if (thisId > otherId)
+                return true;
+        }
+
+        return false;
+    }
+
+    Vector2Int ToTilePosition(Vector2 worldPosition)
+    {
+        return new Vector2Int(
+            Mathf.RoundToInt(worldPosition.x / tileSize),
+            Mathf.RoundToInt(worldPosition.y / tileSize));
+    }
+
+    void ChooseDirectionAwayFromChameleon()
+    {
+        List<Vector2> validDirections = new(4);
+        for (int i = 0; i < Dirs.Length; i++)
+        {
+            Vector2 candidate = Dirs[i];
+            Vector2 candidatePosition = rb.position + candidate * tileSize;
+            bool physicallyBlocked = IsBlockedDisguised(candidatePosition);
+            bool reservedByChameleon = IsChameleonTileReserved(candidatePosition);
+
+            if (!physicallyBlocked && !reservedByChameleon)
+                validDirections.Add(candidate);
+        }
+
+        if (validDirections.Count == 0)
+        {
+            disguisedDirection = Vector2.zero;
+            hasDisguisedInput = false;
+        }
+        else
+        {
+            disguisedDirection = validDirections[Random.Range(0, validDirections.Count)];
+            hasDisguisedInput = true;
+        }
+
+        ResetDirectionTimer();
+        SetDisguiseDirection(disguisedDirection);
     }
 
     protected override void Die()

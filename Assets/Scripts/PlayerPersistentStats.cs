@@ -38,8 +38,8 @@ public static class PlayerPersistentStats
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
-        public BomberCharacter Character = BomberCharacter.LadyBomber;
-        public BomberSkin Skin = BomberSkin.Palette25;
+        public BomberCharacter Character = BomberCharacter.Bomberman;
+        public BomberSkin Skin = BomberSkin.Palette1;
 
         public readonly List<ItemType> QueuedEggs = new(8);
 

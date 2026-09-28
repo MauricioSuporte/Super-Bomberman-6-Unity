@@ -42,6 +42,7 @@ public class CharacterHealth : MonoBehaviour
     IKillable killable;
 
     public bool IsInvulnerable => isInvulnerable;
+    public bool IsDead => isDead;
     private bool externalInvulnerability;
 
     private int _blinkOverrideToken;

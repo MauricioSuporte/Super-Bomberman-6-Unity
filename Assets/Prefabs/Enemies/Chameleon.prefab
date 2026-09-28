@@ -422,6 +422,7 @@ MonoBehaviour:
   maxDirectionChangeTime: 1.5
   transformDuration: 1
   transformBlinkInterval: 0.05
+  livingPlayerSheetChance: 0.5
 --- !u!212 &3118841832716318177
 SpriteRenderer:
   serializedVersion: 2
