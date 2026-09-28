@@ -110,6 +110,7 @@ public class GameManager : MonoBehaviour
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
     const string TitleScreenSceneName = "TitleScreen";
     const string BattleModeMenuSceneName = "BattleModeMenu";
+    static readonly string[] WorldBossStageSceneNames = { "Stage_1-7", "Stage_2-7" };
     static AudioClip battleVictorySfx;
 
     public static GameManager Instance { get; private set; }
@@ -172,6 +173,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Stage Flow")]
     public string nextStageSceneName;
+    [SerializeField] private string worldMapSceneName = "WorldMap";
 
     [Header("Stage Prefabs (Optional on Boss Stages)")]
     public Destructible destructiblePrefab;
@@ -994,11 +996,10 @@ public class GameManager : MonoBehaviour
         }
 
         string currentSceneName = SceneManager.GetActiveScene().name;
-
-        CaptureAllPlayersForStageEnd();
+        bool stageWasAlreadyCleared = StageUnlockProgress.IsCleared(currentSceneName);
 
         StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
-
+        CaptureAllPlayersForStageEnd();
         PlayerPersistentStats.CommitStage();
         SaveFileMenu.SaveCurrentProgressToActiveSlot();
 
@@ -1007,6 +1008,16 @@ public class GameManager : MonoBehaviour
             BossRushSession.CapturePlayerSurvivalStateFromScene();
             BossRushSession.PauseTimer();
             StartCoroutine(LoadNextBossRushStageRoutine());
+            return;
+        }
+
+        bool returningFromWorldBoss = IsWorldBossStage(currentSceneName);
+        if (stageWasAlreadyCleared || returningFromWorldBoss)
+        {
+            if (returningFromWorldBoss)
+                WorldMapController.FocusStageOnNextLoad(nextStageSceneName);
+
+            StartCoroutine(LoadWorldMapRoutine());
             return;
         }
 
@@ -1034,6 +1045,27 @@ public class GameManager : MonoBehaviour
 
         EnsureStage1_2PlayersHaveMinimumExplosionRadius();
         SceneManager.LoadScene(nextStageSceneName);
+    }
+
+    IEnumerator LoadWorldMapRoutine()
+    {
+        yield return waitNextStageDelay;
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        SceneManager.LoadScene(worldMapSceneName);
+    }
+
+    static bool IsWorldBossStage(string sceneName)
+    {
+        for (int i = 0; i < WorldBossStageSceneNames.Length; i++)
+        {
+            if (string.Equals(WorldBossStageSceneNames[i], sceneName, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
     }
 
     void EnsureStage1_2PlayersHaveMinimumExplosionRadius()

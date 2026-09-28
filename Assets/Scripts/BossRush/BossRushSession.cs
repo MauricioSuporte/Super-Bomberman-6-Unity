@@ -150,6 +150,7 @@ public static class BossRushSession
             return false;
 
         currentStageIndex = nextIndex;
+        ApplySelectedLoadoutToRunPlayers();
         nextSceneName = stageOrder[currentStageIndex];
         return true;
     }

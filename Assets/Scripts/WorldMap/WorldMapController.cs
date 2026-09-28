@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class WorldMapController : MonoBehaviour
 {
+    static string focusedStageSceneName;
+
     [System.Serializable]
     public class StageNode
     {
@@ -161,6 +163,11 @@ public class WorldMapController : MonoBehaviour
 
     AudioClip lastPlayedWorldMusic;
     AudioClip lastPlayedWorldMusicLoopClip;
+
+    public static void FocusStageOnNextLoad(string sceneName)
+    {
+        focusedStageSceneName = sceneName;
+    }
     float lastPlayedWorldMusicVolume;
     bool lastPlayedWorldMusicLoop;
 
@@ -203,6 +210,13 @@ public class WorldMapController : MonoBehaviour
         ApplyUnlockedStagesFromProgress();
 
         currentWorldIndex = GetInitialWorldIndexFromProgress(out int initialNodeIndex);
+
+        if (TryConsumeFocusedStage(out int focusedWorldIndex, out int focusedNodeIndex))
+        {
+            currentWorldIndex = focusedWorldIndex;
+            initialNodeIndex = focusedNodeIndex;
+        }
+
         ApplyCurrentWorldCameraPosition();
 
         Canvas.ForceUpdateCanvases();
@@ -408,9 +422,6 @@ public class WorldMapController : MonoBehaviour
         else
             yield return new WaitForSecondsRealtime(selectedTransitionDuration);
 
-        PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
-        ApplyInitialExplosionRadiusForStage(sceneName);
-
         StagePreIntroPlayersWalk.SkipOnNextLoad();
         AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName);
         if (loadOperation == null)
@@ -430,33 +441,6 @@ public class WorldMapController : MonoBehaviour
 
         while (!loadOperation.isDone)
             yield return null;
-    }
-
-    bool IsStage1_1OnlyUnlockedStage()
-    {
-        if (!StageUnlockProgress.IsUnlocked("Stage_1-1"))
-            return false;
-
-        return !StageUnlockProgress.IsUnlocked("Stage_1-2");
-    }
-
-    int GetInitialExplosionRadiusForStage(string sceneName)
-    {
-        if (sceneName == "Stage_1-1")
-            return IsStage1_1OnlyUnlockedStage() ? 1 : 2;
-
-        return 2;
-    }
-
-    void ApplyInitialExplosionRadiusForStage(string sceneName)
-    {
-        int initialRadius = GetInitialExplosionRadiusForStage(sceneName);
-
-        for (int playerId = 1; playerId <= 4; playerId++)
-        {
-            var state = PlayerPersistentStats.Get(playerId);
-            state.ExplosionRadius = initialRadius;
-        }
     }
 
     IEnumerator LoadSceneRoutine(string sceneName, AudioClip sfxClip = null, float sfxVolume = 1f)
@@ -1439,6 +1423,41 @@ public class WorldMapController : MonoBehaviour
 
         initialNodeIndex = 0;
         return 0;
+    }
+
+    bool TryConsumeFocusedStage(out int worldIndex, out int nodeIndex)
+    {
+        string sceneName = focusedStageSceneName;
+        focusedStageSceneName = null;
+
+        worldIndex = 0;
+        nodeIndex = 0;
+
+        if (string.IsNullOrWhiteSpace(sceneName) || worlds == null)
+            return false;
+
+        for (int world = 0; world < worlds.Count; world++)
+        {
+            var worldData = worlds[world];
+            if (worldData == null || worldData.nodes == null)
+                continue;
+
+            for (int node = 0; node < worldData.nodes.Count; node++)
+            {
+                var stage = worldData.nodes[node];
+                if (stage == null || !string.Equals(stage.sceneName, sceneName, System.StringComparison.Ordinal))
+                    continue;
+
+                if (!StageUnlockProgress.IsUnlocked(sceneName))
+                    return false;
+
+                worldIndex = world;
+                nodeIndex = node;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     bool IsWorldFullyCleared(int worldIndex)
