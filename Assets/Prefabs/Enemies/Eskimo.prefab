@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 951862542575943034}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.01, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -82,12 +82,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.16, y: 0.24}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -105,13 +105,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: 1840883617, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 1574222518798887810, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -129,7 +129,18 @@ MonoBehaviour:
   loopStartFrame: 0
   loopRestartDelay: 0
   idle: 0
-  frameOffsets: []
+  frameOffsets:
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
+  - {x: 0, y: -0.1}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
@@ -160,7 +171,7 @@ Transform:
   m_GameObject: {fileID: 1210417721633770653}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -215,12 +226,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1023010553, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: -3167952893597212543, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -238,19 +249,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -1023010553, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: -3167952893597212543, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: -1124714866, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: -1023010553, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: 533896816, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: -1023010553, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -7459635460346787419, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -3167952893597212543, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -6177520952915719932, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -3167952893597212543, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
   useUnscaledTime: 1
-  respectGamePause: 1
+  respectGamePause: 0
   loop: 1
   loopStartFrame: 0
   loopRestartDelay: 0
@@ -286,7 +297,7 @@ Transform:
   m_GameObject: {fileID: 2946339164999180951}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -341,12 +352,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1588324959, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: -1340040222132941773, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -364,12 +375,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -1588324959, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: -1340040222132941773, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: -398417234, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: -1588324959, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: -1498567660, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: -1588324959, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 4948761888133831503, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -1340040222132941773, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -2595686808806404314, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -1340040222132941773, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
@@ -641,9 +652,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2974861450268481676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d34a918ff2a74deab0e5cc4f431fa59d, type: 3}
+  m_Script: {fileID: 11500000, guid: 27bd5180bfac4d4ca1200879b53b54a1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EskimoMovementController
+  m_EditorClassIdentifier: Assembly-CSharp::TodoraMovementController
   speed: 1.5
   tileSize: 1
   spriteUp: {fileID: 3191304308348635352}
@@ -667,23 +678,18 @@ MonoBehaviour:
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
   visionDistance: 10
-  alignedToleranceTiles: 0.15
-  scanBoxSizePercent: 0.6
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 0
-  pursuitSpeedMultiplier: 1.5
-  slideDuration: 0.5
-  slideHeightTiles: 0.5
-  pixelsPerUnit: 16
-  recoveryPauseSeconds: 0.5
-  slideUp: {fileID: 4365440154865585160}
-  slideDown: {fileID: 7268826845017733979}
-  slideLeft: {fileID: 6876402992059764884}
-  slideRight: {fileID: 0}
-  shadowColor: {r: 0, g: 0, b: 0, a: 0.45}
-  shadowScale: {x: 0.9, y: 0.9}
-  shadowOffset: {x: 0, y: -0.1875}
+  alignedToleranceTiles: 0.15
+  scanBoxSizePercent: 0.6
+  pursuitSpeedMultiplier: 3
+  chargeUp: {fileID: 4365440154865585160}
+  chargeDown: {fileID: 7268826845017733979}
+  chargeLeft: {fileID: 6876402992059764884}
+  chargeRight: {fileID: 0}
+  chargeSfx: {fileID: 8300000, guid: 5ed9cc9607de4df4bc7f6b88a129cb3c, type: 3}
+  chargeSfxVolume: 1
 --- !u!1 &3004654832041428178
 GameObject:
   m_ObjectHideFlags: 0
@@ -711,7 +717,7 @@ Transform:
   m_GameObject: {fileID: 3004654832041428178}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -766,12 +772,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1481371573, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: 9047141530586304946, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -789,9 +795,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -1481371573, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: 9047141530586304946, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: -1481371573, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 9047141530586304946, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
@@ -834,7 +840,7 @@ Transform:
   m_GameObject: {fileID: 3102524641218541005}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -889,12 +895,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 138406430, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: 9013969217696705899, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -912,9 +918,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 138406430, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: 9013969217696705899, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: 138406430, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 9013969217696705899, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
@@ -957,7 +963,7 @@ Transform:
   m_GameObject: {fileID: 6509626534714726739}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1012,12 +1018,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -826540240098903310, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: -1167614386262972610, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1035,12 +1041,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -826540240098903310, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: -1167614386262972610, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: 1931048277, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   - {fileID: -826540240098903310, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: 1858341077, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
-  - {fileID: -826540240098903310, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -1167614386262972610, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: 2595157104505630166, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -1167614386262972610, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
@@ -1083,7 +1089,7 @@ Transform:
   m_GameObject: {fileID: 7534899987303829306}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1138,12 +1144,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1531181888, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  m_Sprite: {fileID: -2742122228905498736, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1161,9 +1167,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 1531181888, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  idleSprite: {fileID: -2742122228905498736, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   animationSprite:
-  - {fileID: 1531181888, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
+  - {fileID: -2742122228905498736, guid: 21ea6f9cc538ace4c9205cd7bd7e3119, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0

@@ -5,6 +5,54 @@ TextureImporter:
   - first:
       213: -826540240098903310
     second: Eskimo_0
+  - first:
+      213: -1167614386262972610
+    second: Eskimo_1
+  - first:
+      213: 2595157104505630166
+    second: Eskimo_2
+  - first:
+      213: 9013969217696705899
+    second: Eskimo_3
+  - first:
+      213: 1574222518798887810
+    second: Eskimo_4
+  - first:
+      213: 2912290883253692894
+    second: Eskimo_5
+  - first:
+      213: -8556893445516676288
+    second: Eskimo_6
+  - first:
+      213: -67345847507275897
+    second: Eskimo_7
+  - first:
+      213: 2679016365962041418
+    second: Eskimo_8
+  - first:
+      213: 4948761888133831503
+    second: Eskimo_9
+  - first:
+      213: -1340040222132941773
+    second: Eskimo_10
+  - first:
+      213: -2595686808806404314
+    second: Eskimo_11
+  - first:
+      213: 9047141530586304946
+    second: Eskimo_12
+  - first:
+      213: -7459635460346787419
+    second: Eskimo_13
+  - first:
+      213: -3167952893597212543
+    second: Eskimo_14
+  - first:
+      213: -6177520952915719932
+    second: Eskimo_15
+  - first:
+      213: -2742122228905498736
+    second: Eskimo_16
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -119,9 +167,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 16
+        y: 72
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,19 +189,19 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 16
-        y: 16
+        y: 72
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f2c552f7138ecf24a8baf38e57b80df7
-      internalID: 1858341077
+      spriteID: e37e828e6eccbcfe0800000000000000
+      internalID: -1167614386262972610
       vertices: []
       indices: 
       edges: []
@@ -163,19 +211,19 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 32
-        y: 16
+        y: 72
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 8551d0f1fe30ff8469d0d190c4751fdc
-      internalID: 1931048277
+      spriteID: 6dda36603a9d30420800000000000000
+      internalID: 2595157104505630166
       vertices: []
       indices: 
       edges: []
@@ -185,19 +233,19 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 48
-        y: 16
+        y: 72
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 6076ca07fc180064798fda36cc108f57
-      internalID: 138406430
+      spriteID: b6d2e15de3d081d70800000000000000
+      internalID: 9013969217696705899
       vertices: []
       indices: 
       edges: []
@@ -207,19 +255,19 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 64
-        y: 16
+        y: 72
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: c06aa1128c021fd44896ecaa7c1e1060
-      internalID: -1023010553
+      spriteID: 28bad6e4a03c8d510800000000000000
+      internalID: 1574222518798887810
       vertices: []
       indices: 
       edges: []
@@ -228,20 +276,20 @@ TextureImporter:
       name: Eskimo_5
       rect:
         serializedVersion: 2
-        x: 80
-        y: 16
+        x: 0
+        y: 48
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: be91363761eebe144821d4e03a92fed9
-      internalID: -1124714866
+      spriteID: ed9e1fad0298a6820800000000000000
+      internalID: 2912290883253692894
       vertices: []
       indices: 
       edges: []
@@ -250,20 +298,20 @@ TextureImporter:
       name: Eskimo_6
       rect:
         serializedVersion: 2
-        x: 96
-        y: 16
+        x: 16
+        y: 48
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 456c13612c730dc4ea95e4680951f7cf
-      internalID: 533896816
+      spriteID: 0433c176fbecf3980800000000000000
+      internalID: -8556893445516676288
       vertices: []
       indices: 
       edges: []
@@ -272,20 +320,20 @@ TextureImporter:
       name: Eskimo_7
       rect:
         serializedVersion: 2
-        x: 112
-        y: 16
+        x: 32
+        y: 48
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 6980694724761f94fb2db7137b65be66
-      internalID: 1531181888
+      spriteID: 78f2b3afe4db01ff0800000000000000
+      internalID: -67345847507275897
       vertices: []
       indices: 
       edges: []
@@ -294,20 +342,20 @@ TextureImporter:
       name: Eskimo_8
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 48
+        y: 48
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 34d27e5cba08c2d4bb89fa51a1ded2e4
-      internalID: -1588324959
+      spriteID: a4810a8d037cd2520800000000000000
+      internalID: 2679016365962041418
       vertices: []
       indices: 
       edges: []
@@ -316,20 +364,20 @@ TextureImporter:
       name: Eskimo_9
       rect:
         serializedVersion: 2
-        x: 16
-        y: 0
+        x: 0
+        y: 24
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: cd0edaa9b85feba41b4f0659c621125e
-      internalID: -398417234
+      spriteID: f4b5534b7b88da440800000000000000
+      internalID: 4948761888133831503
       vertices: []
       indices: 
       edges: []
@@ -338,20 +386,20 @@ TextureImporter:
       name: Eskimo_10
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
+        x: 16
+        y: 24
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f4c2cc258cde7834898342d8f70dbea1
-      internalID: -1498567660
+      spriteID: 33cc70f8488376de0800000000000000
+      internalID: -1340040222132941773
       vertices: []
       indices: 
       edges: []
@@ -360,20 +408,20 @@ TextureImporter:
       name: Eskimo_11
       rect:
         serializedVersion: 2
-        x: 48
-        y: 0
+        x: 32
+        y: 24
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 7e437b607d8faec459e8a67de971a19e
-      internalID: -1481371573
+      spriteID: 62f4de499944afbd0800000000000000
+      internalID: -2595686808806404314
       vertices: []
       indices: 
       edges: []
@@ -382,20 +430,108 @@ TextureImporter:
       name: Eskimo_12
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
+        x: 48
+        y: 24
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 829afb7d5aae9244c89d2e9802e91d9d
-      internalID: 1840883617
+      spriteID: 2b1d74bc947ed8d70800000000000000
+      internalID: 9047141530586304946
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eskimo_13
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a94f18521d0a7890800000000000000
+      internalID: -7459635460346787419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eskimo_14
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 180a7f7b0ab2904d0800000000000000
+      internalID: -3167952893597212543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eskimo_15
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4090de85c69054aa0800000000000000
+      internalID: -6177520952915719932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eskimo_16
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 097a2677c5602f9d0800000000000000
+      internalID: -2742122228905498736
       vertices: []
       indices: 
       edges: []
@@ -404,7 +540,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 933d39239d4cf56439504de250b55484
+    spriteID: 3d8647dafdb19f245a4d9860e29b46be
     internalID: 0
     vertices: []
     indices: 
@@ -414,21 +550,25 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Eskimo_0: -826540240098903310
-      Eskimo_1: 1858341077
-      Eskimo_10: -1498567660
-      Eskimo_11: -1481371573
-      Eskimo_12: 1840883617
-      Eskimo_2: 1931048277
-      Eskimo_3: 138406430
-      Eskimo_4: -1023010553
-      Eskimo_5: -1124714866
-      Eskimo_6: 533896816
-      Eskimo_7: 1531181888
-      Eskimo_8: -1588324959
-      Eskimo_9: -398417234
+      Eskimo_1: -1167614386262972610
+      Eskimo_10: -1340040222132941773
+      Eskimo_11: -2595686808806404314
+      Eskimo_12: 9047141530586304946
+      Eskimo_13: -7459635460346787419
+      Eskimo_14: -3167952893597212543
+      Eskimo_15: -6177520952915719932
+      Eskimo_16: -2742122228905498736
+      Eskimo_2: 2595157104505630166
+      Eskimo_3: 9013969217696705899
+      Eskimo_4: 1574222518798887810
+      Eskimo_5: 2912290883253692894
+      Eskimo_6: -8556893445516676288
+      Eskimo_7: -67345847507275897
+      Eskimo_8: 2679016365962041418
+      Eskimo_9: 4948761888133831503
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

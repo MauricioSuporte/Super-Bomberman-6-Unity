@@ -94,6 +94,8 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
         if (selected == null)
             return;
 
+        ApplyHorizontalFlip(selected, dir);
+
         if (activeSprite == selected && selected.enabled)
         {
             selected.idle = false;
@@ -267,6 +269,19 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
         if (dir == Vector2.left) return chargeLeft;
         if (dir == Vector2.right) return chargeRight != null ? chargeRight : chargeLeft;
         return chargeDown;
+    }
+
+    private void ApplyHorizontalFlip(AnimatedSpriteRenderer selected, Vector2 dir)
+    {
+        if (!selected.TryGetComponent<SpriteRenderer>(out var spriteRenderer))
+            return;
+
+        bool usesLeftSpriteForRight = dir == Vector2.right &&
+            (isPursuing
+                ? chargeRight == null && selected == chargeLeft
+                : spriteRight == null && selected == spriteLeft);
+
+        spriteRenderer.flipX = usesLeftSpriteForRight;
     }
 
     private void DisableTodoraSprites()
