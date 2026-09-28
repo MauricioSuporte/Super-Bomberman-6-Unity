@@ -676,6 +676,7 @@ MonoBehaviour:
   pixelsPerUnit: 16
   landingPauseSeconds: 2
   jumpShadow: {fileID: 6550513237092059360}
+  contactCollider: {fileID: 7237853958982965006}
 --- !u!1 &3004654832041428178
 GameObject:
   m_ObjectHideFlags: 0

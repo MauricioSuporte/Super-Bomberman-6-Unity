@@ -28,15 +28,21 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
     [Header("Jump Shadow")]
     [SerializeField] private SpriteRenderer jumpShadow;
 
+    [Header("Airborne Contact")]
+    [SerializeField] private Collider2D contactCollider;
+
     private CharacterHealth penguinHealth;
     private PenguinState state;
     private float stateElapsed;
+    private bool contactColliderWasEnabled;
 
     protected override void Awake()
     {
         base.Awake();
 
         penguinHealth = GetComponent<CharacterHealth>();
+        contactCollider ??= GetComponent<Collider2D>();
+        contactColliderWasEnabled = contactCollider != null && contactCollider.enabled;
         if (jumpShadow == null)
         {
             Transform shadowTransform = transform.Find("Shadow");
@@ -119,6 +125,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
     protected override void Die()
     {
         penguinHealth?.SetExternalInvulnerability(false);
+        SetContactColliderEnabled(true);
         TryTakeExplosionDamageAtLanding();
         SetJumpShadowEnabled(false);
         ClearJumpArc();
@@ -131,12 +138,18 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         base.OnDestroy();
     }
 
+    private void OnDisable()
+    {
+        SetContactColliderEnabled(true);
+    }
+
     private void BeginJump()
     {
         state = PenguinState.Jumping;
         stateElapsed = 0f;
         targetTile = rb != null ? rb.position : (Vector2)transform.position;
         penguinHealth?.SetExternalInvulnerability(true);
+        SetContactColliderEnabled(false);
 
         ShowJumpVisual(direction);
         SetJumpShadowEnabled(true);
@@ -155,6 +168,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         ClearJumpArc();
         SetJumpVisualsEnabled(false);
         SetJumpShadowEnabled(false);
+        SetContactColliderEnabled(true);
 
         UpdateSpriteDirection(direction);
         if (activeSprite != null)
@@ -173,6 +187,21 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
         penguinHealth?.SetExternalInvulnerability(true);
         targetTile = rb != null ? rb.position : (Vector2)transform.position;
         base.DecideNextTile();
+    }
+
+    private void SetContactColliderEnabled(bool enabled)
+    {
+        if (contactCollider == null)
+            return;
+
+        if (!enabled)
+        {
+            contactColliderWasEnabled = contactCollider.enabled;
+            contactCollider.enabled = false;
+            return;
+        }
+
+        contactCollider.enabled = contactColliderWasEnabled;
     }
 
     private void TryTakeExplosionDamageAtLanding()

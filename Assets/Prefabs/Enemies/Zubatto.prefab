@@ -800,6 +800,7 @@ MonoBehaviour:
   jumpHeightTiles: 3
   pixelsPerUnit: 16
   landingPauseSeconds: 2
+  contactCollider: {fileID: 7237853958982965006}
   shadowColor: {r: 0, g: 0, b: 0, a: 0.45}
   shadowScale: {x: 0.9, y: 0.9}
   shadowOffset: {x: 0, y: -0.1875}
