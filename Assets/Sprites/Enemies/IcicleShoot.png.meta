@@ -1,19 +1,16 @@
 fileFormatVersion: 2
-guid: e153a70d9baf35b46af443ebf12ebf0e
+guid: 928f03bffbbbed645a9401378f2e6789
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7934883637961306568
-    second: Icicle_0
+      213: -7456341133573209090
+    second: IcicleShoot_0
   - first:
-      213: 6547246780511205408
-    second: Icicle_1
+      213: 947759899858019501
+    second: IcicleShoot_1
   - first:
-      213: -6207490166859875265
-    second: Icicle_2
-  - first:
-      213: -4961817944218590229
-    second: Icicle_3
+      213: -8735455198165064536
+    second: IcicleShoot_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -124,13 +121,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icicle_0
+      name: IcicleShoot_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 16
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -139,20 +136,42 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8c13ebeb0ae5e1e60800000000000000
-      internalID: 7934883637961306568
+      spriteID: ef34c319e31c58890800000000000000
+      internalID: -7456341133573209090
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Icicle_1
+      name: IcicleShoot_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da4a5638b9e172d00800000000000000
+      internalID: 947759899858019501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IcicleShoot_2
       rect:
         serializedVersion: 2
         x: 32
         y: 0
-        width: 32
-        height: 32
+        width: 16
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -161,52 +180,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 028b031124e7cda50800000000000000
-      internalID: 6547246780511205408
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Icicle_2
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f3c3699f4909ad9a0800000000000000
-      internalID: -6207490166859875265
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Icicle_3
-      rect:
-        serializedVersion: 2
-        x: 96
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: be321ba5ed4142bb0800000000000000
-      internalID: -4961817944218590229
+      spriteID: 8a4280a97cd65c680800000000000000
+      internalID: -8735455198165064536
       vertices: []
       indices: 
       edges: []
@@ -215,7 +190,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 9d0bcfdc1cd57a44d85220332a3d6b56
+    spriteID: d69ef7f6dde2648458fcef1f493a777b
     internalID: 0
     vertices: []
     indices: 
@@ -225,12 +200,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Icicle_0: 7934883637961306568
-      Icicle_1: 6547246780511205408
-      Icicle_2: -6207490166859875265
-      Icicle_3: -4961817944218590229
+      IcicleShoot_0: -7456341133573209090
+      IcicleShoot_1: 947759899858019501
+      IcicleShoot_2: -8735455198165064536
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
