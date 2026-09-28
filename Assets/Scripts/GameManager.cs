@@ -1011,6 +1011,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (string.IsNullOrEmpty(nextStageSceneName))
+        {
+            StartCoroutine(ShowEndingAfterDelayRoutine());
+            return;
+        }
+
         bool returningFromWorldBoss = IsWorldBossStage(currentSceneName);
         if (stageWasAlreadyCleared || returningFromWorldBoss)
         {
@@ -1022,12 +1028,6 @@ public class GameManager : MonoBehaviour
         }
 
         if (!string.IsNullOrEmpty(nextStageSceneName) && nextStageSceneName == "END_SCREEN")
-        {
-            StartCoroutine(ShowEndingAfterDelayRoutine());
-            return;
-        }
-
-        if (string.IsNullOrEmpty(nextStageSceneName))
         {
             StartCoroutine(ShowEndingAfterDelayRoutine());
             return;

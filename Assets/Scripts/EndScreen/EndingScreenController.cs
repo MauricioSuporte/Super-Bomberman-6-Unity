@@ -41,10 +41,6 @@ public class EndingScreenController : MonoBehaviour
     [Header("Static Labels")]
 #pragma warning disable CS0414
     [SerializeField]
-    string demoCompleteLabel =
-        "<size=52><color=#1ABC00>DEMO 4</color>  <color=#E8E8E8>COMPLETE!</color></size>";
-
-    [SerializeField]
     string openSourceBlock =
         "<size=32><color=#3392FF>OPEN SOURCE PROJECT</color></size>\n" +
         "<size=28><color=#E8E8E8>github.com/MauricioSuporte/</color></size>\n" +
@@ -54,54 +50,6 @@ public class EndingScreenController : MonoBehaviour
     string returnBlock =
         "<size=34><color=#FF6F31>PRESS START</color></size>\n" +
         "<size=30><color=#E8E8E8>TO RETURN TO TITLE SCREEN</color></size>";
-#pragma warning restore CS0414
-
-    [Header("Credits")]
-#pragma warning disable CS0414
-    [SerializeField, TextArea(12, 40)]
-    string creditsBlock =
-        "Super Bomberman 6 v0.4.1\n" +
-        "Tribute to Bomberman\n\n" +
-        "Bomberman\n" +
-        "Copyright 1983\n" +
-        "Hudson Soft/Konami\n\n" +
-        "Super Bomberman 6\n\n" +
-        "Coding\n" +
-        "MauricioSuporte\n\n" +
-        "Sprite Contribution\n" +
-        "Srplay\n" +
-        "Joao1417\n" +
-        "WeirdFoxDreams\n" +
-        "Juliocesargamesbr\n" +
-        "Kurobon94\n" +
-        "LeroyUrocyon\n\n" +
-        "Playtesting/Feedback\n" +
-        "Kaaos Gameplays\n" +
-        "Joaololpvp\n" +
-        "Blackingstar\n" +
-        "Júlio Cesar\n" +
-        "Nico Netsumu\n" +
-        "Jei\n" +
-        "Kurobon94\n" +
-        "Tiago Deficigamer\n" +
-        "Ruivo\n" +
-        "Lopez238\n" +
-        "Yamishitsuji\n" +
-        "Luciandro Gamer\n" +
-        "Mackson\n" +
-        "perfig187\n" +
-        "adrianokof games\n" +
-        "Everton Def\n" +
-        "Gleydson Retrogen\n" +
-        "FLPStrike\n" +
-        "Love Vixen\n" +
-        "Juliocesargamesbr\n" +
-        "Rangelukaz\n" +
-        "JonasS JK Ninja\n\n" +
-        "Sounds/Musics\n" +
-        "wolfguarder\n\n" +
-        "Base of the Game\n" +
-        "Zigurous";
 #pragma warning restore CS0414
 
     [SerializeField, Min(1f)] float creditsScrollSpeed = 80f;
@@ -585,9 +533,12 @@ public class EndingScreenController : MonoBehaviour
         const string greenTitleColor = "#8CFF8C";
         const string yellowTitleColor = "#FFF68A";
         CreditsText credits = GameTextDatabase.Credits;
+        string version = Application.version;
+        if (string.IsNullOrEmpty(version))
+            version = "?";
 
         string text =
-            $"<color={greenTitleColor}>Super Bomberman 6 v0.4.1</color>\n" +
+            $"<color={greenTitleColor}>Super Bomberman 6 v{version}</color>\n" +
             $"<color={defaultColor}>{credits.Tribute}</color>\n\n" +
 
             $"<color={greenTitleColor}>Bomberman</color>\n" +
@@ -654,9 +605,18 @@ public class EndingScreenController : MonoBehaviour
         const string blueTitleColor = "#3392FF";
         const string orangeTitleColor = "#FF6F31";
         CreditsText credits = GameTextDatabase.Credits;
+        string version = Application.version;
+        if (string.IsNullOrEmpty(version))
+            version = "?";
+
+        string[] versionParts = version.Split('.');
+        string demoNumber = versionParts.Length > 1 && !string.IsNullOrEmpty(versionParts[1])
+            ? versionParts[1]
+            : version;
+        string demoComplete = credits.DemoComplete.Replace("{0}", demoNumber);
 
         string text =
-            $"<color={greenTitleColor}>{credits.DemoComplete}</color>{spacer}" +
+            $"<color={greenTitleColor}>{demoComplete}</color>{spacer}" +
 
             $"<color={yellowTitleColor}>{statsBlock}</color>{bigSpacer}" +
 

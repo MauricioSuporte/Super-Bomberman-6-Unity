@@ -61,7 +61,6 @@ MonoBehaviour:
   outlineWidth: 0.4
   starComemoration: {fileID: 7227861050984187371}
   titleSceneName: TitleScreen
-  demoCompleteLabel: <size=52><color=#1ABC00>DEMO 4</color>  <color=#E8E8E8>COMPLETE!</color></size>
   openSourceBlock: '<size=32><color=#3392FF>OPEN SOURCE PROJECT</color></size>
 
     <size=28><color=#E8E8E8>github.com/MauricioSuporte/</color></size>
@@ -71,96 +70,6 @@ MonoBehaviour:
 
     <size=30><color=#E8E8E8>TO
     RETURN TO TITLE SCREEN</color></size>'
-  creditsBlock: 'Super Bomberman 6 v0.4.0
-
-    Tribute to Bomberman
-
-
-    Bomberman
-
-    Copyright 1983
-
-    Hudson Soft/Konami
-
-
-    Super Bomberman 6
-
-
-    Coding
-
-    MauricioSuporte
-
-
-    Sprite Contribution
-
-    Srplay
-
-    Joao1417
-
-    WeirdFoxDreams
-
-    Juliocesargamesbr
-
-    Kurobon94
-
-    LeroyUrocyon
-
-
-    Playtesting/Feedback
-
-    Kaaos Gameplays
-
-    Joaololpvp
-
-    Blackingstar
-
-    Júlio Cesar
-
-    Nico Netsumu
-
-    Jei
-
-    Kurobon94
-
-    Tiago Deficigamer
-
-    Ruivo
-
-    Lopez238
-
-    Yamishitsuji
-
-    Luciandro Gamer
-
-    Mackson
-
-    perfig187
-
-    adrianokof games
-
-    Everton Def
-
-    Gleydson Retrogen
-
-    FLPStrike
-
-    Love Vixen
-
-    Juliocesargamesbr
-
-    Rangelukaz
-
-    JonasS JK Ninja
-
-
-    Sounds/Musics
-
-    wolfguarder
-
-
-    Base of the Game
-
-    Zigurous'
   creditsScrollSpeed: 80
   creditsStartBottomPadding: 80
   creditsEndTopPadding: 80

@@ -1083,6 +1083,7 @@ MonoBehaviour:
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
+  worldMapSceneName: WorldMap
   destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
   destructiblePrefabOverrides: []
   tilemapDoChao: {fileID: 0}

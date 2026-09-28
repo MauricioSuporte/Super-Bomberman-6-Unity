@@ -744,7 +744,7 @@ public static partial class GameTextDatabase
 
     private static readonly CreditsText EnglishCredits = new()
     {
-        DemoComplete = "DEMO 4 COMPLETE!",
+        DemoComplete = "DEMO {0} COMPLETE!",
         OpenSourceProject = "OPEN SOURCE PROJECT",
         PressStart = "PRESS START",
         ReturnToTitle = "TO RETURN TO TITLE SCREEN",
@@ -761,7 +761,7 @@ public static partial class GameTextDatabase
 
     private static readonly CreditsText JapaneseCredits = new()
     {
-        DemoComplete = "デモ4 クリア!",
+        DemoComplete = "デモ{0} クリア!",
         OpenSourceProject = "オープンソースプロジェクト",
         PressStart = "STARTを押す",
         ReturnToTitle = "タイトル画面へ戻る",
@@ -778,7 +778,7 @@ public static partial class GameTextDatabase
 
     private static readonly CreditsText SpanishCredits = new()
     {
-        DemoComplete = "¡DEMO 4 COMPLETA!",
+        DemoComplete = "¡DEMO {0} COMPLETA!",
         OpenSourceProject = "PROYECTO DE CÓDIGO ABIERTO",
         PressStart = "PULSA START",
         ReturnToTitle = "PARA VOLVER AL TÍTULO",
@@ -795,7 +795,7 @@ public static partial class GameTextDatabase
 
     private static readonly CreditsText PortugueseBrCredits = new()
     {
-        DemoComplete = "DEMO 4 COMPLETA!",
+        DemoComplete = "DEMO {0} COMPLETA!",
         OpenSourceProject = "PROJETO OPEN SOURCE",
         PressStart = "APERTE START",
         ReturnToTitle = "PARA VOLTAR À TELA DE TÍTULO",
