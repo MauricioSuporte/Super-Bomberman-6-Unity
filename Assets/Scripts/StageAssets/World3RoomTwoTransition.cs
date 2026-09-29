@@ -18,7 +18,7 @@ namespace StageAssets
         }
 
         [Header("Exit")]
-        [SerializeField] private World3BambooExitBlocker exitBlocker;
+        [SerializeField] private ExitBlocker exitBlocker;
 
         [Header("Fade")]
         [SerializeField] private Image fadeImage;

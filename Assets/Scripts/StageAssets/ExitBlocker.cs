@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace StageAssets
 {
     [RequireComponent(typeof(BoxCollider2D))]
     [DisallowMultipleComponent]
-    public sealed class World3BambooExitBlocker : MonoBehaviour
+    [MovedFrom(true, sourceNamespace: "StageAssets", sourceClassName: "World3BambooExitBlocker")]
+    public sealed class ExitBlocker : MonoBehaviour
     {
         private sealed class OpeningBubble
         {

@@ -19,7 +19,7 @@ namespace StageAssets
             [Tooltip("Optional roots that own this room's CoreMechanisms. Use these when the room bounds are only for player presence.")]
             public GameObject[] coreRoots = Array.Empty<GameObject>();
             [Header("Release after every core in this room is destroyed")]
-            public World3BambooExitBlocker bambooToOpen = null;
+            public ExitBlocker bambooToOpen = null;
             public World3GateOpenedSequenceController bubbleChipToRelease = null;
             public GameObject[] objectsToEnable = Array.Empty<GameObject>();
 

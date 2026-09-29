@@ -12558,12 +12558,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5733a4e77c34c1c8068fca443fe96e0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3BambooExitBlocker
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.ExitBlocker
   riseDistanceTiles: 2
   riseDurationSeconds: 1
-  openingDirection: {x: 0, y: -1}
+  openingDirection: {x: 0, y: 1}
   pixelsPerUnit: 16
-  sinkIntoGround: 1
+  sinkIntoGround: 0
   sinkDistanceTiles: 0.5
   sinkHorizontalShakeTiles: 0.125
   sinkHorizontalShakeCycles: 4
@@ -17310,12 +17310,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5733a4e77c34c1c8068fca443fe96e0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3BambooExitBlocker
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.ExitBlocker
   riseDistanceTiles: 2
   riseDurationSeconds: 1
-  openingDirection: {x: 0, y: -1}
+  openingDirection: {x: 0, y: 1}
   pixelsPerUnit: 16
-  sinkIntoGround: 1
+  sinkIntoGround: 0
   sinkDistanceTiles: 0.5
   sinkHorizontalShakeTiles: 0.125
   sinkHorizontalShakeCycles: 4
