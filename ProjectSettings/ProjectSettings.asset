@@ -686,7 +686,7 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
   scriptingDefineSymbols:
-    Standalone: LEVELPLAY_DEPENDENCIES_INSTALLED;ENABLE_NORMAL_GAME_AI
+    Standalone: LEVELPLAY_DEPENDENCIES_INSTALLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
