@@ -4,7 +4,7 @@ using UnityEngine;
 /// A junction-turning Hogera that releases four Mini Hogerás after its death
 /// animation has completed.
 /// </summary>
-public sealed class HogeraMovementController : JunctionTurningEnemyMovementController
+public class HogeraMovementController : JunctionTurningEnemyMovementController
 {
     private static readonly Vector2[] MiniHogeraSpawnDirections =
     {
@@ -22,6 +22,18 @@ public sealed class HogeraMovementController : JunctionTurningEnemyMovementContr
     private bool hasDeathTile;
     private bool spawnedMiniHogeras;
 
+    /// <summary>
+    /// Allows a derived large enemy to change its split count without
+    /// duplicating Hogera's death and enemy-count bookkeeping.
+    /// </summary>
+    protected virtual int MiniHogeraCount => miniHogeraCount;
+
+    /// <summary>
+    /// Most Hogerás release their children after the death visual. Enemies
+    /// that need an immediate split can opt in while retaining that visual.
+    /// </summary>
+    protected virtual bool SpawnMiniHogerasImmediatelyOnDeath => false;
+
     protected override void Die()
     {
         if (isDead)
@@ -32,6 +44,9 @@ public sealed class HogeraMovementController : JunctionTurningEnemyMovementContr
         deathTile.y = Mathf.Round(deathTile.y / tileSize) * tileSize;
         hasDeathTile = true;
 
+        if (SpawnMiniHogerasImmediatelyOnDeath)
+            SpawnMiniHogeras();
+
         base.Die();
     }
 
@@ -41,7 +56,7 @@ public sealed class HogeraMovementController : JunctionTurningEnemyMovementContr
         base.OnDeathAnimationEnded();
     }
 
-    private void SpawnMiniHogeras()
+    protected void SpawnMiniHogeras()
     {
         if (spawnedMiniHogeras || miniHogeraPrefab == null)
             return;
@@ -51,7 +66,8 @@ public sealed class HogeraMovementController : JunctionTurningEnemyMovementContr
             ? new Vector3(deathTile.x, deathTile.y, transform.position.z)
             : transform.position;
 
-        for (int i = 0; i < miniHogeraCount; i++)
+        int spawnCount = Mathf.Max(1, MiniHogeraCount);
+        for (int i = 0; i < spawnCount; i++)
         {
             GameObject miniHogera = Instantiate(miniHogeraPrefab, spawnPosition, Quaternion.identity);
             if (miniHogera.TryGetComponent(out MiniHogeraMovementController movement))
@@ -60,6 +76,6 @@ public sealed class HogeraMovementController : JunctionTurningEnemyMovementContr
 
         GameManager gameManager = FindAnyObjectByType<GameManager>();
         if (gameManager != null)
-            gameManager.NotifyEnemySpawned(miniHogeraCount);
+            gameManager.NotifyEnemySpawned(spawnCount);
     }
 }

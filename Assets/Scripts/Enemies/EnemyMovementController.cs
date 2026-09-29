@@ -13,6 +13,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 {
     const int HardExtraLife = 1;
     const float HardSpeedMultiplier = 1.5f;
+    const float MinimumEnemyHitInvulnerabilitySeconds = 1f;
 
     [Header("Stats")]
     public float speed = 2f;
@@ -75,6 +76,13 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
         health = GetComponent<CharacterHealth>();
+        if (health != null)
+        {
+            health.hitInvulnerableDuration = Mathf.Max(
+                MinimumEnemyHitInvulnerabilitySeconds,
+                health.hitInvulnerableDuration);
+        }
+
         ApplyCampaignDifficultyModifiers(health);
 
         if (health != null)
@@ -431,6 +439,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         }
 
         AnimatedSpriteRenderer previousSprite = activeSprite;
+        int previousFrame = previousSprite != null ? previousSprite.CurrentFrame : 0;
 
         if (spriteUp != null) spriteUp.enabled = false;
         if (spriteDown != null) spriteDown.enabled = false;
@@ -464,9 +473,11 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             return;
         }
 
+        activeSprite.enabled = true;
+
         if (previousSprite != null && previousSprite != activeSprite)
         {
-            int frame = previousSprite.CurrentFrame;
+            int frame = previousFrame;
 
             if (activeSprite.animationSprite != null && activeSprite.animationSprite.Length > 0)
             {
@@ -475,12 +486,10 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             }
 
             activeSprite.CurrentFrame = frame;
-            activeSprite.idle = previousSprite.idle;
-            activeSprite.RefreshFrame();
         }
 
-        activeSprite.enabled = true;
         activeSprite.idle = false;
+        activeSprite.RefreshFrame();
 
         if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
             sr.flipX = ShouldFlipHorizontalSprite(dir, preservesAuthoredHorizontalOrientation);

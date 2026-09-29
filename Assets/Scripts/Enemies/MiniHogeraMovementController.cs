@@ -4,7 +4,7 @@ using UnityEngine;
 /// Junction-turning Mini Hogera that can receive a direction before its first
 /// movement tick, allowing groups spawned on one tile to disperse immediately.
 /// </summary>
-public sealed class MiniHogeraMovementController : JunctionTurningEnemyMovementController
+public class MiniHogeraMovementController : JunctionTurningEnemyMovementController
 {
     private const float InitialEnemyCollisionGraceSeconds = 0.3f;
 

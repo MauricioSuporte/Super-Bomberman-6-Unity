@@ -41,14 +41,55 @@ projectile that persists after impact:
 - Do not redeclare a serialized field name used by `EnemyMovementController`
   (for example `health`). Reuse protected base state where available, or use
   a distinct name only when a separate reference is truly needed.
+- When a derived enemy only needs health for a local diagnostic or one-off
+  decision, retrieve the existing `CharacterHealth` with a local
+  `TryGetComponent` value. Do not add another health field or health wrapper;
+  `CharacterHealth` remains the sole health owner.
+- Every enemy must have at least one second of post-hit invulnerability at
+  runtime. This prevents one explosion or a tightly timed chain from applying
+  multiple damage instances; enforce the floor in shared enemy initialization
+  when a legacy prefab has a smaller serialized value.
 - A projectile that remains as an impact effect must set its impact state and
   disable its collider before applying damage or starting any blink/fade
   routine. It must not move or damage again while it blinks, and should destroy
   itself only after that visual routine finishes.
 
+## Inherited Movement and Split-on-Death Enemies
+
+When a new enemy is a variation of an existing controller, derive from that
+controller instead of copying its movement, death, health, or enemy-count
+logic. First inspect whether the parent is `sealed` and whether the extension
+points needed by the variation are `private`; make the smallest safe change to
+the parent (for example, a protected virtual count or timing property) rather
+than duplicating its lifecycle.
+
+- Put only the variation's behavior in the derived controller: a nearby-player
+  pursuit check, a charge condition, a speed adjustment, or a different child
+  count. Keep the parent behavior as the fallback when that condition is not
+  met.
+- For a split-on-death enemy, capture the snapped death tile before calling the
+  base death method. Spawn children before the base method only when the design
+  explicitly requires an immediate split; otherwise spawn after its death
+  animation. Notify `GameManager.NotifyEnemySpawned` using the actual child
+  count exactly once, and guard against duplicate spawns.
+- Reuse the mini enemy's existing initial-direction or spawn-direction API so
+  children separate cleanly. Do not attach more than one movement controller.
+- Create a named derived controller even when it contains no extra logic if it
+  documents an enemy's intended inheritance (for example, a Mini Baloon using
+  Mini Hogera behavior). This gives later variants a stable extension point.
+- Assign the derived controller and its serialized prefab references through
+  Unity's Editor/prefab APIs after scripts compile. Never replace a prefab's
+  `m_Script` reference by hand in YAML.
+
 ## Walk Animation Sequence
 
 When a movement direction provides exactly three walking frames (`1`, `2`, and `3`), configure its looping `animationSprite` sequence as `1-2-3-2`, rather than `1-2-3`. This gives the walk cycle a return stroke. Apply the rule independently to every authored direction; do not apply it to death animations unless that animation explicitly calls for it.
+
+When an enemy is blocked on every tile, keep its active walking
+`AnimatedSpriteRenderer` enabled with `idle = false`; a blocked enemy must not
+freeze visually. If changing direction disables and reenables separate
+directional renderers, restore the prior frame only after enabling the new
+renderer, because `OnEnable` resets the animation frame.
 
 ## Directional Sprite Rule
 
