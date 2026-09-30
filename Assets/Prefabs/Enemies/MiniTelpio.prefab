@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -9210592962259699086, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  m_Sprite: {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -105,13 +105,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -9210592962259699086, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  idleSprite: {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   animationSprite:
-  - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -215,7 +215,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1235585582068407413, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  m_Sprite: {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -238,12 +238,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -1235585582068407413, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  idleSprite: {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   animationSprite:
-  - {fileID: -1235585582068407413, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: 6355443354573837297, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: -9210592962259699086, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
-  - {fileID: 6355443354573837297, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  - {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -2129085247, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -1018367580, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
@@ -273,9 +273,9 @@ GameObject:
   - component: {fileID: 2053339843682649242}
   - component: {fileID: 429121724601369016}
   - component: {fileID: 3728096759542949433}
-  - component: {fileID: 302416276888654234}
+  - component: {fileID: 8294860225925926909}
   m_Layer: 10
-  m_Name: MiniBaloon
+  m_Name: MiniTelpio
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -501,7 +501,7 @@ MonoBehaviour:
   shakeAmplitude: 0.03
   shakeFrequency: 22
   freezeAnimatedSprites: 1
---- !u!114 &302416276888654234
+--- !u!114 &8294860225925926909
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -510,7 +510,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2974861450268481676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57dca1e48fb04c7c9ce27e30b8a60af1, type: 3}
+  m_Script: {fileID: 11500000, guid: c5ef386d2d45cbd4ea74a7a3fc23a2fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MiniHogeraMovementController
   speed: 1.5

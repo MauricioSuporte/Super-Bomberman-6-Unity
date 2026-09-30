@@ -5,12 +5,6 @@ TextureImporter:
   - first:
       213: 2650798832818506605
     second: Telpio_0
-  - first:
-      213: 7984567343206695241
-    second: Telpio_1
-  - first:
-      213: 2310147468699587556
-    second: Telpio_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,10 +120,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 17
+        width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -146,20 +140,20 @@ TextureImporter:
       name: Telpio_1
       rect:
         serializedVersion: 2
-        x: 17
+        x: 16
         y: 0
-        width: 18
+        width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9410501d1b1eece60800000000000000
-      internalID: 7984567343206695241
+      spriteID: 2663e7d29826d4f40ba91039afd96198
+      internalID: -2129085247
       vertices: []
       indices: 
       edges: []
@@ -168,20 +162,42 @@ TextureImporter:
       name: Telpio_2
       rect:
         serializedVersion: 2
-        x: 35
+        x: 32
         y: 0
-        width: 17
+        width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 4e35b9212ea4f0020800000000000000
-      internalID: 2310147468699587556
+      spriteID: 9416cf51d59cfd34d894183c52308ddb
+      internalID: -1018367580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Telpio_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c4cfdab88c22c3b4eaea584d7f9dd5c0
+      internalID: 1300280917
       vertices: []
       indices: 
       edges: []
@@ -190,7 +206,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: cbb2d47a85b15644c990aeb32bb7fb3e
     internalID: 0
     vertices: []
     indices: 
@@ -198,11 +214,14 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Telpio_0: 2650798832818506605
-      Telpio_1: 7984567343206695241
-      Telpio_2: 2310147468699587556
+      Telpio_1: -2129085247
+      Telpio_2: -1018367580
+      Telpio_3: 1300280917
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
