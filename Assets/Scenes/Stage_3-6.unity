@@ -598,6 +598,68 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 80ccd2e5a44c47841bf57552c32ff99c, type: 3}
+--- !u!1001 &231479202
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 355527351}
+    m_Modifications:
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 8.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8253439425310175443, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_Name
+      value: Roboface (2)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+--- !u!4 &231479203 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+  m_PrefabInstance: {fileID: 231479202}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &248111145 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1099575662610991480, guid: 80ccd2e5a44c47841bf57552c32ff99c, type: 3}
@@ -2846,6 +2908,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1960476938}
+  - {fileID: 231479203}
   - {fileID: 248111145}
   - {fileID: 1642857157}
   - {fileID: 1593098432}
@@ -21275,6 +21339,68 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1001 &1960476937
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 355527351}
+    m_Modifications:
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 16.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8253439425310175443, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+      propertyPath: m_Name
+      value: Roboface (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+--- !u!4 &1960476938 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7441638454500038556, guid: 6fe1e5c788eb02c47921f9e82a68115d, type: 3}
+  m_PrefabInstance: {fileID: 1960476937}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2033100001
 GameObject:
   m_ObjectHideFlags: 0
