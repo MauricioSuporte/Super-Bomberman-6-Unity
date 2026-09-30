@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: BeltCurve
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: 1062054504, guid: 43ce8e8d1ccf4624da43d9b0fa389b5a, type: 3}
+  - {fileID: 1411490242, guid: 43ce8e8d1ccf4624da43d9b0fa389b5a, type: 3}
+  - {fileID: -1973642130, guid: 43ce8e8d1ccf4624da43d9b0fa389b5a, type: 3}
+  - {fileID: 487114398, guid: 43ce8e8d1ccf4624da43d9b0fa389b5a, type: 3}
+  m_MinSpeed: 5
+  m_MaxSpeed: 5
+  m_AnimationStartTime: 0
+  UseSpecifiedTime: 0
+  SpecifiedTime: 0.25
+  m_TileColliderType: 0
