@@ -844,7 +844,7 @@ MonoBehaviour:
       amount: 1
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: 
+  nextStageSceneName: WorldMap
   worldMapSceneName: WorldMap
   destructiblePrefab: {fileID: 3440613785117735154, guid: 9a6a28b2007eec948b17a79b15c99f87, type: 3}
   destructiblePrefabOverrides:

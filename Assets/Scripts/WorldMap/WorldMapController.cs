@@ -396,7 +396,7 @@ public class WorldMapController : MonoBehaviour
         if (node == null)
             return;
 
-        if (!node.unlocked || string.IsNullOrEmpty(node.sceneName))
+        if (!node.unlocked || !IsStageSceneAvailable(node.sceneName))
         {
             PlaySfx(deniedSfx, deniedSfxVolume);
             return;
@@ -441,6 +441,11 @@ public class WorldMapController : MonoBehaviour
 
         while (!loadOperation.isDone)
             yield return null;
+    }
+
+    static bool IsStageSceneAvailable(string sceneName)
+    {
+        return !string.IsNullOrWhiteSpace(sceneName) && Application.CanStreamedLevelBeLoaded(sceneName);
     }
 
     IEnumerator LoadSceneRoutine(string sceneName, AudioClip sfxClip = null, float sfxVolume = 1f)
@@ -689,7 +694,7 @@ public class WorldMapController : MonoBehaviour
         if (node == null || node.runtimeIcon == null)
             return;
 
-        bool isUnlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
+        bool isUnlocked = StageUnlockProgress.IsUnlocked(node.sceneName) && IsStageSceneAvailable(node.sceneName);
         bool isCleared = StageUnlockProgress.IsCleared(node.sceneName);
 
         Sprite sprite;
@@ -1359,7 +1364,7 @@ public class WorldMapController : MonoBehaviour
                 if (node == null)
                     continue;
 
-                node.unlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
+                node.unlocked = StageUnlockProgress.IsUnlocked(node.sceneName) && IsStageSceneAvailable(node.sceneName);
             }
         }
     }
@@ -1448,7 +1453,7 @@ public class WorldMapController : MonoBehaviour
                 if (stage == null || !string.Equals(stage.sceneName, sceneName, System.StringComparison.Ordinal))
                     continue;
 
-                if (!StageUnlockProgress.IsUnlocked(sceneName))
+                if (!StageUnlockProgress.IsUnlocked(sceneName) || !IsStageSceneAvailable(sceneName))
                     return false;
 
                 worldIndex = world;
@@ -1503,7 +1508,7 @@ public class WorldMapController : MonoBehaviour
             if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
                 continue;
 
-            if (StageUnlockProgress.IsUnlocked(node.sceneName))
+            if (StageUnlockProgress.IsUnlocked(node.sceneName) && IsStageSceneAvailable(node.sceneName))
                 lastUnlocked = i;
         }
 

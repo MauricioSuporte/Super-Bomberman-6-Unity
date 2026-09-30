@@ -6,7 +6,7 @@ public static class StageUnlockProgress
     {
         "Stage_1-1", "Stage_1-2", "Stage_1-3", "Stage_1-4", "Stage_1-5", "Stage_1-6", "Stage_1-7",
         "Stage_2-1", "Stage_2-2", "Stage_2-3", "Stage_2-4", "Stage_2-5", "Stage_2-6", "Stage_2-7",
-        "Stage_3-1", "Stage_3-2", "Stage_3-3", "Stage_3-4", "Stage_3-5"
+        "Stage_3-1", "Stage_3-2", "Stage_3-3", "Stage_3-4", "Stage_3-5", "Stage_3-6", "Stage_3-7", "Stage_3-8"
     };
 
     public static void ReloadFromPrefs()
