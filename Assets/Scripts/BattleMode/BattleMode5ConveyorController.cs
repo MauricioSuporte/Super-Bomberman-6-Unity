@@ -9,6 +9,14 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 {
     const string BattleMode5SceneName = "BattleMode_5";
 
+    private enum ConveyorDirection
+    {
+        Up,
+        Down,
+        Left,
+        Right,
+    }
+
     [System.Serializable]
     private struct HorizontalConveyorSegment
     {
@@ -21,6 +29,24 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     {
         public Vector3Int startCell;
         public Vector3Int endCell;
+    }
+
+    [System.Serializable]
+    private struct DirectedConveyorSegment
+    {
+        public Vector3Int startCell;
+        public Vector3Int endCell;
+        public ConveyorDirection direction;
+
+        public DirectedConveyorSegment(
+            Vector3Int startCell,
+            Vector3Int endCell,
+            ConveyorDirection direction)
+        {
+            this.startCell = startCell;
+            this.endCell = endCell;
+            this.direction = direction;
+        }
     }
 
     private sealed class ConveyorAnimatedTileState
@@ -60,6 +86,9 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         new(3, -4, 0),
         new(-5, -4, 0),
     };
+
+    [Tooltip("Segmentos de esteira com direcao fixa. Quando configurados, substituem o circuito padrao do Battle Mode 5.")]
+    [SerializeField] private DirectedConveyorSegment[] directedSegments;
 
     [Tooltip("Opcional. Se vazio, todas as celulas configuradas acima funcionam como esteira.")]
     [SerializeField] private TileBase[] conveyorGroundTiles;
@@ -839,6 +868,12 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
             return;
         }
 
+        if (directedSegments != null && directedSegments.Length > 0)
+        {
+            BuildDirectedSegmentsPath();
+            return;
+        }
+
         AddHorizontalRange(new Vector3Int(-5, 2, 0), new Vector3Int(3, 2, 0), step: 1);
         AddVerticalRange(new Vector3Int(3, 1, 0), new Vector3Int(3, -4, 0), step: -1);
         AddHorizontalRange(new Vector3Int(2, -4, 0), new Vector3Int(-5, -4, 0), step: -1);
@@ -875,6 +910,56 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
                 0);
             clockwiseNextCell[cell] = nextCell;
             counterClockwiseNextCell[cell] = nextCell;
+        }
+    }
+
+    void BuildDirectedSegmentsPath()
+    {
+        for (int i = 0; i < directedSegments.Length; i++)
+        {
+            DirectedConveyorSegment segment = directedSegments[i];
+            AddDirectedCellsFromSegment(
+                segment.startCell,
+                segment.endCell,
+                ToVector2Int(segment.direction));
+        }
+    }
+
+    static Vector2Int ToVector2Int(ConveyorDirection direction)
+        => direction switch
+        {
+            ConveyorDirection.Up => Vector2Int.up,
+            ConveyorDirection.Down => Vector2Int.down,
+            ConveyorDirection.Left => Vector2Int.left,
+            ConveyorDirection.Right => Vector2Int.right,
+            _ => Vector2Int.zero,
+        };
+
+    void AddDirectedCellsFromSegment(
+        Vector3Int start,
+        Vector3Int end,
+        Vector2Int direction)
+    {
+        if (start.x != end.x && start.y != end.y)
+            return;
+
+        Vector3Int step = new(
+            start.x == end.x ? 0 : (start.x < end.x ? 1 : -1),
+            start.y == end.y ? 0 : (start.y < end.y ? 1 : -1),
+            0);
+        Vector3Int cell = start;
+        Vector3Int nextCell = new(direction.x, direction.y, 0);
+
+        while (true)
+        {
+            conveyorCells.Add(cell);
+            clockwiseNextCell[cell] = cell + nextCell;
+            counterClockwiseNextCell[cell] = cell + nextCell;
+
+            if (cell == end)
+                return;
+
+            cell += step;
         }
     }
 
@@ -1154,7 +1239,11 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
            leftConveyorTile != null &&
            rightConveyorTile != null;
 
+    bool HasDirectedSegments
+        => directedSegments != null && directedSegments.Length > 0;
+
     bool IsConveyorSceneActive()
         => UsesTileDirectionOverrides ||
+           HasDirectedSegments ||
            string.Equals(SceneManager.GetActiveScene().name, BattleMode5SceneName, System.StringComparison.Ordinal);
 }
