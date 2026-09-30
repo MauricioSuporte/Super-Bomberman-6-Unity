@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-[RequireComponent(typeof(IKillable))]
 public class CharacterHealth : MonoBehaviour
 {
     [Header("Health")]
