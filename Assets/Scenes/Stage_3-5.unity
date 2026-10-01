@@ -18443,18 +18443,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 21300000, guid: 09314925f3c4cdb478ddfa8b8c1e580b, type: 3}
+  idleSprite: {fileID: 21300000, guid: 7b045f92125629a49a6b6792054ec610, type: 3}
   animationSprite:
-  - {fileID: 21300000, guid: 09314925f3c4cdb478ddfa8b8c1e580b, type: 3}
-  - {fileID: 21300000, guid: 22432fd4e12f3014d8754cd19187d135, type: 3}
-  - {fileID: 21300000, guid: f003420cd950c4a43a8141ae899e1cf3, type: 3}
-  - {fileID: 21300000, guid: 711bbe13ed09a7041acf34cb66daf285, type: 3}
-  - {fileID: 21300000, guid: 5a019d48d5018834395fbda68953e39a, type: 3}
-  - {fileID: 21300000, guid: 2ee675aea90710b44bcf8a8914e31b50, type: 3}
-  - {fileID: 21300000, guid: 9b73cb975fcee374d8a723ba8d5d87d3, type: 3}
-  - {fileID: 21300000, guid: 03a6cf39c1ff7b64f87c8eb86d08e639, type: 3}
+  - {fileID: 21300000, guid: 7b045f92125629a49a6b6792054ec610, type: 3}
+  - {fileID: 21300000, guid: 4d29bf24d4dcee64f8e3a2c51ef76575, type: 3}
+  - {fileID: 21300000, guid: 655a40d82608a6349ae27fdfec4113d1, type: 3}
+  - {fileID: 21300000, guid: 12094c0345063ae44abf0b224e2f9ac3, type: 3}
+  - {fileID: 21300000, guid: 2cbf34597375a62409c6bfd3b1a513bb, type: 3}
+  - {fileID: 21300000, guid: 0b2fc5a569e1d2b4695736864c19a5dc, type: 3}
+  - {fileID: 21300000, guid: 64a3494dfe2b63944be04f34c7c8fcc6, type: 3}
+  - {fileID: 21300000, guid: 41ab80f2a4ba3dd4b937d4d5cca8f1f9, type: 3}
+  - {fileID: 21300000, guid: 08ffb3f92116c0642ba308ecf72050ef, type: 3}
+  - {fileID: 21300000, guid: 75563ca7df72ddb46ad50b36866aaad3, type: 3}
+  - {fileID: 21300000, guid: 6b9d82ee289467342bf6d1f6b561ddb6, type: 3}
   allowFlipX: 0
-  animationTime: 0.15
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -18517,12 +18520,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 09314925f3c4cdb478ddfa8b8c1e580b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7b045f92125629a49a6b6792054ec610, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 3.125, y: 2}
+  m_Size: {x: 2.875, y: 1.75}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1

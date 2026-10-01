@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 22432fd4e12f3014d8754cd19187d135
+guid: 12094c0345063ae44abf0b224e2f9ac3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5670863234750858156
-    second: ShovelBomber_01_0
+      213: 1552252240441831470
+    second: ShovelBomb_SB9_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -115,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ShovelBomber_01_0
+      name: ShovelBomb_SB9_0
       rect:
         serializedVersion: 2
-        x: 24
-        y: 0
-        width: 23
-        height: 29
+        x: 13
+        y: 3
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ca3c5250114f2be40800000000000000
-      internalID: 5670863234750858156
+      spriteID: e20f6514035ba8510800000000000000
+      internalID: 1552252240441831470
       vertices: []
       indices: 
       edges: []
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ShovelBomber_01_0: 5670863234750858156
+      ShovelBomb_SB9_0: 1552252240441831470
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
