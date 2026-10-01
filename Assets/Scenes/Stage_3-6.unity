@@ -19599,7 +19599,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9f8f3e0cbe9a4f4aa7e0360ecff51b32, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleMode5ConveyorController
   groundTilemap: {fileID: 672307155}
   destructibleTilemap: {fileID: 285353618}
@@ -22052,32 +22052,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 16, y: 26}
   m_EdgeRadius: 0
---- !u!114 &2033100012
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2033100005}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b4863c189514013bef4d4d393b103c0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage36RoomOneElectricityController
-  indestructibleTilemap: {fileID: 818279435}
-  roomBounds: {fileID: 2033100007}
-  conductorTile: {fileID: 11400000, guid: 6961b557d03b43d0acc3a0355078f762, type: 2}
-  flashingTile: {fileID: 11400000, guid: 9e0725e7806947843b8ff143199b313b, type: 2}
-  lightningSprite0: {fileID: 6533004366950438166, guid: 1823596aea7b103488ce847119b91544, type: 3}
-  lightningSprite1: {fileID: 1658594313, guid: 1823596aea7b103488ce847119b91544, type: 3}
-  shockSortingLayerName: Enemy
-  shockSortingOrder: 10
-  minimumDelaySeconds: 10
-  maximumDelaySeconds: 20
-  frameSeconds: 0.1
-  warningSeconds: 1
-  shockSeconds: 2
-  shockSfx: {fileID: 8300000, guid: 4c0f8ce4f40d41929b8fadb0d7b8b0ed, type: 3}
 --- !u!4 &2033100008
 Transform:
   m_ObjectHideFlags: 0
@@ -22156,6 +22130,32 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 32, y: 14}
   m_EdgeRadius: 0
+--- !u!114 &2033100012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033100005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b4863c189514013bef4d4d393b103c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.Stage36RoomOneElectricityController
+  indestructibleTilemap: {fileID: 818279435}
+  roomBounds: {fileID: 2033100007}
+  conductorTile: {fileID: 11400000, guid: 6961b557d03b43d0acc3a0355078f762, type: 2}
+  flashingTile: {fileID: 11400000, guid: 9e0725e7806947843b8ff143199b313b, type: 2}
+  lightningSprite0: {fileID: 6533004366950438166, guid: 1823596aea7b103488ce847119b91544, type: 3}
+  lightningSprite1: {fileID: 1658594313, guid: 1823596aea7b103488ce847119b91544, type: 3}
+  shockSortingLayerName: Enemy
+  shockSortingOrder: 10
+  minimumDelaySeconds: 10
+  maximumDelaySeconds: 20
+  frameSeconds: 0.1
+  warningSeconds: 1
+  shockSeconds: 2
+  shockSfx: {fileID: 8300000, guid: 4c0f8ce4f40d41929b8fadb0d7b8b0ed, type: 3}
 --- !u!1001 &2129939011
 PrefabInstance:
   m_ObjectHideFlags: 0

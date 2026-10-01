@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 840843012014962312}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -87,7 +87,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.31, y: 0.28}
+  m_Size: {x: 1.875, y: 2.125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -120,6 +120,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -212,7 +213,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 1.8125, y: 1.875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -246,6 +247,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -310,10 +312,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlackoutColorPalette
   visibleColors:
-  - {r: 0, g: 0, b: 0, a: 1}
-  - {r: 1, g: 1, b: 1, a: 1}
-  - {r: 0.57254905, g: 0.57254905, b: 0.57254905, a: 1}
-  - {r: 0.28627452, g: 0.28627452, b: 0.28627452, a: 1}
+  - {r: 0.5529412, g: 0.5568628, b: 0.6705883, a: 1}
+  - {r: 0.007843138, g: 0.03921569, b: 0.2470588, a: 1}
+  - {r: 0.972549, g: 0.972549, b: 0.972549, a: 1}
+  - {r: 0.8627451, g: 0.8980392, b: 0.972549, a: 1}
+  - {r: 0.654902, g: 0.7607843, b: 0.8901961, a: 1}
+  - {r: 0.5529412, g: 0.5568628, b: 0.6705883, a: 1}
   colorTolerance: 0.001
 --- !u!114 &2033400202
 MonoBehaviour:
@@ -697,7 +701,7 @@ Transform:
   m_GameObject: {fileID: 3865923802851965462}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -752,12 +756,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6261424786551122269, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  m_Sprite: {fileID: -6031007535394775368, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 0.9375, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -775,9 +779,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 6261424786551122269, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  idleSprite: {fileID: -6031007535394775368, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   animationSprite:
-  - {fileID: 6261424786551122269, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  - {fileID: -6031007535394775368, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   allowFlipX: 1
   animationTime: 0.1
   useSequenceDuration: 0
@@ -787,6 +791,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -874,12 +879,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6031007535394775368, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  m_Sprite: {fileID: -971155050626729706, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 0.9375, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -897,9 +902,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -6031007535394775368, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  idleSprite: {fileID: -971155050626729706, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   animationSprite:
-  - {fileID: -6031007535394775368, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  - {fileID: -971155050626729706, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   allowFlipX: 1
   animationTime: 0.1
   useSequenceDuration: 0
@@ -909,6 +914,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -996,12 +1002,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -971155050626729706, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  m_Sprite: {fileID: 6261424786551122269, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 2.0625, y: 1.125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1019,9 +1025,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -971155050626729706, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  idleSprite: {fileID: 6261424786551122269, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   animationSprite:
-  - {fileID: -971155050626729706, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
+  - {fileID: 6261424786551122269, guid: 6b3d0e0e06537654198650f7e3d90c29, type: 3}
   allowFlipX: 1
   animationTime: 0.1
   useSequenceDuration: 0
@@ -1031,6 +1037,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1063,7 +1070,7 @@ Transform:
   m_GameObject: {fileID: 8135197778495855839}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1123,7 +1130,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 1.625, y: 1.6875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1156,6 +1163,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -1188,7 +1196,7 @@ Transform:
   m_GameObject: {fileID: 8177645658000285761}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1248,7 +1256,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 1.8125, y: 1.8125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1281,6 +1289,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0

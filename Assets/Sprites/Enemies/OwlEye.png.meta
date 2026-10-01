@@ -41,6 +41,12 @@ TextureImporter:
   - first:
       213: 6261424786551122269
     second: OwlEye_12
+  - first:
+      213: -8962353707925760290
+    second: OwlEye_13
+  - first:
+      213: -4133159929490470755
+    second: OwlEye_14
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -155,7 +161,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -176,8 +182,8 @@ TextureImporter:
       name: OwlEye_1
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
+        x: 33
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -198,8 +204,8 @@ TextureImporter:
       name: OwlEye_2
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
+        x: 66
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -220,8 +226,8 @@ TextureImporter:
       name: OwlEye_3
       rect:
         serializedVersion: 2
-        x: 96
-        y: 0
+        x: 99
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -242,8 +248,8 @@ TextureImporter:
       name: OwlEye_4
       rect:
         serializedVersion: 2
-        x: 128
-        y: 0
+        x: 132
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -264,8 +270,8 @@ TextureImporter:
       name: OwlEye_5
       rect:
         serializedVersion: 2
-        x: 160
-        y: 0
+        x: 165
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -286,8 +292,8 @@ TextureImporter:
       name: OwlEye_6
       rect:
         serializedVersion: 2
-        x: 192
-        y: 0
+        x: 198
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -308,8 +314,8 @@ TextureImporter:
       name: OwlEye_7
       rect:
         serializedVersion: 2
-        x: 224
-        y: 0
+        x: 231
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -330,8 +336,8 @@ TextureImporter:
       name: OwlEye_8
       rect:
         serializedVersion: 2
-        x: 256
-        y: 0
+        x: 264
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -352,8 +358,8 @@ TextureImporter:
       name: OwlEye_9
       rect:
         serializedVersion: 2
-        x: 288
-        y: 0
+        x: 297
+        y: 1
         width: 32
         height: 32
       alignment: 0
@@ -374,10 +380,10 @@ TextureImporter:
       name: OwlEye_10
       rect:
         serializedVersion: 2
-        x: 320
-        y: 0
-        width: 16
-        height: 16
+        x: 365
+        y: 2
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -396,10 +402,10 @@ TextureImporter:
       name: OwlEye_11
       rect:
         serializedVersion: 2
-        x: 337
-        y: 0
-        width: 16
-        height: 16
+        x: 332
+        y: 18
+        width: 14
+        height: 14
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -418,10 +424,10 @@ TextureImporter:
       name: OwlEye_12
       rect:
         serializedVersion: 2
-        x: 352
-        y: 0
-        width: 32
-        height: 32
+        x: 348
+        y: 18
+        width: 14
+        height: 14
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -430,7 +436,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e7e443fa275664d4b8bf85c267545acc
+      spriteID: 2b8d21e239ae02442bcb4202d8056801
       internalID: 6261424786551122269
       vertices: []
       indices: 
@@ -440,7 +446,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 07520f012a521c14da037d1e54859298
+    spriteID: b5aebc766133f474cb3454ee7257e022
     internalID: 0
     vertices: []
     indices: 
@@ -450,7 +456,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":1.0},"gridSpritePadding":{"x":1.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       OwlEye_0: 6431465099245592224
       OwlEye_1: 8239142442113858812
