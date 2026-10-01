@@ -37,15 +37,18 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         public Vector3Int startCell;
         public Vector3Int endCell;
         public ConveyorDirection direction;
+        public ConveyorDirection reverseDirection;
 
         public DirectedConveyorSegment(
             Vector3Int startCell,
             Vector3Int endCell,
-            ConveyorDirection direction)
+            ConveyorDirection direction,
+            ConveyorDirection reverseDirection)
         {
             this.startCell = startCell;
             this.endCell = endCell;
             this.direction = direction;
+            this.reverseDirection = reverseDirection;
         }
     }
 
@@ -921,7 +924,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
             AddDirectedCellsFromSegment(
                 segment.startCell,
                 segment.endCell,
-                ToVector2Int(segment.direction));
+                ToVector2Int(segment.direction),
+                ToVector2Int(segment.reverseDirection));
         }
     }
 
@@ -938,7 +942,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     void AddDirectedCellsFromSegment(
         Vector3Int start,
         Vector3Int end,
-        Vector2Int direction)
+        Vector2Int direction,
+        Vector2Int reverseDirection)
     {
         if (start.x != end.x && start.y != end.y)
             return;
@@ -949,12 +954,13 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
             0);
         Vector3Int cell = start;
         Vector3Int nextCell = new(direction.x, direction.y, 0);
+        Vector3Int reverseNextCell = new(reverseDirection.x, reverseDirection.y, 0);
 
         while (true)
         {
             conveyorCells.Add(cell);
             clockwiseNextCell[cell] = cell + nextCell;
-            counterClockwiseNextCell[cell] = cell + nextCell;
+            counterClockwiseNextCell[cell] = cell + reverseNextCell;
 
             if (cell == end)
                 return;
