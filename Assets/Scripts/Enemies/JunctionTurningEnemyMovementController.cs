@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class JunctionTurningEnemyMovementController : EnemyMovementController
@@ -8,7 +8,35 @@ public class JunctionTurningEnemyMovementController : EnemyMovementController
 
     public bool preferTurnAtJunction = false;
 
+    [Header("Destructible Pass")]
+    [SerializeField] private bool passesThroughDestructibles;
+    [SerializeField] private string junctionPassDestructiblesTag = "Destructibles";
+
     private bool hasInitialDirection;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        if (!passesThroughDestructibles)
+            return;
+
+        Collider2D junctionCollider = GetComponent<Collider2D>();
+        if (junctionCollider == null)
+            return;
+
+        GameObject[] destructibles = GameObject.FindGameObjectsWithTag(junctionPassDestructiblesTag);
+        for (int objectIndex = 0; objectIndex < destructibles.Length; objectIndex++)
+        {
+            Collider2D[] colliders = destructibles[objectIndex].GetComponentsInChildren<Collider2D>(true);
+            for (int colliderIndex = 0; colliderIndex < colliders.Length; colliderIndex++)
+            {
+                Collider2D destructibleCollider = colliders[colliderIndex];
+                if (destructibleCollider != null)
+                    Physics2D.IgnoreCollision(junctionCollider, destructibleCollider, true);
+            }
+        }
+    }
 
     /// <summary>
     /// Sets the direction that will be used by Start. This lets a group of
@@ -91,5 +119,36 @@ public class JunctionTurningEnemyMovementController : EnemyMovementController
         }
 
         base.DecideNextTile();
+    }
+
+    protected override bool IsTileBlocked(Vector2 tileCenter)
+    {
+        if (!passesThroughDestructibles)
+            return base.IsTileBlocked(tileCenter);
+
+        Vector2 size = Vector2.one * (tileSize * 0.8f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(tileCenter, size, 0f, obstacleMask);
+
+        for (int index = 0; index < hits.Length; index++)
+        {
+            Collider2D hit = hits[index];
+            if (hit == null || hit.gameObject == gameObject || IsDestructible(hit))
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsDestructible(Collider2D hit)
+    {
+        for (Transform current = hit.transform; current != null; current = current.parent)
+        {
+            if (current.CompareTag(junctionPassDestructiblesTag))
+                return true;
+        }
+
+        return false;
     }
 }
