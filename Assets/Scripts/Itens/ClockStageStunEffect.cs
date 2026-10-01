@@ -28,23 +28,24 @@ public sealed class ClockStageStunEffect : MonoBehaviour
         public bool moveWasEnabled;
     }
 
-    public static void Trigger(float seconds)
+    public static void Trigger(float seconds, Vector2 collectorPosition)
     {
         var go = new GameObject("ClockStageStunEffect");
         var fx = go.AddComponent<ClockStageStunEffect>();
-        fx.Begin();
+        fx.Begin(collectorPosition);
     }
 
-    private void Begin()
+    private void Begin(Vector2 collectorPosition)
     {
-        StartCoroutine(Routine());
+        Collider2D roomBounds = StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(collectorPosition);
+        StartCoroutine(Routine(roomBounds));
     }
 
-    private IEnumerator Routine()
+    private IEnumerator Routine(Collider2D roomBounds)
     {
         int enemyLayer = LayerMask.NameToLayer(enemyLayerName);
 
-        var enemies = FindObjectsByType<EnemyMovementController>(FindObjectsInactive.Include);
+        var enemies = FindObjectsByType<EnemyMovementController>();
 
         var targets = new List<Target>(enemies != null ? enemies.Length : 0);
 
@@ -54,6 +55,9 @@ public sealed class ClockStageStunEffect : MonoBehaviour
             {
                 var e = enemies[i];
                 if (e == null) continue;
+
+                if (roomBounds != null && !roomBounds.OverlapPoint(e.transform.position))
+                    continue;
 
                 if (enemyLayer >= 0 && e.gameObject.layer != enemyLayer)
                     continue;

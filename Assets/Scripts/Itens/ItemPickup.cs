@@ -521,7 +521,7 @@ public class ItemPickup : MonoBehaviour
                 break;
 
             case ItemType.Clock:
-                ClockStageStunEffect.Trigger(5f);
+                ClockStageStunEffect.Trigger(5f, player.transform.position);
                 break;
 
             case ItemType.LandMine:
