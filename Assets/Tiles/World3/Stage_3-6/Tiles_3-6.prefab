@@ -1762,7 +1762,7 @@ Tilemap:
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
-      m_AllTileFlags: 1073741825
+      m_AllTileFlags: 1
   - first: {x: -3, y: -2, z: 0}
     second:
       serializedVersion: 2
@@ -1772,7 +1772,7 @@ Tilemap:
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
-      m_AllTileFlags: 1073741825
+      m_AllTileFlags: 1
   - first: {x: 0, y: -2, z: 0}
     second:
       serializedVersion: 2
@@ -2298,6 +2298,16 @@ Tilemap:
       serializedVersion: 2
       m_TileIndex: 243
       m_TileSpriteIndex: 243
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
+  - first: {x: -4, y: 0, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 253
+      m_TileSpriteIndex: 253
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -3367,6 +3377,9 @@ Tilemap:
   - serializedVersion: 2
     m_RefCount: 1
     m_Data: {fileID: 11400000, guid: 6cd1e14982d332f4b95bf996d22091c3, type: 2}
+  - serializedVersion: 2
+    m_RefCount: 1
+    m_Data: {fileID: 11400000, guid: d06467996ef1f0648bc6884d4f735486, type: 2}
   m_TileSpriteArray:
   - serializedVersion: 2
     m_RefCount: 1
@@ -4127,9 +4140,12 @@ Tilemap:
   - serializedVersion: 2
     m_RefCount: 1
     m_Data: {fileID: -1864572235, guid: c2a3d68527083d64aa1be54b4a29c438, type: 3}
+  - serializedVersion: 2
+    m_RefCount: 1
+    m_Data: {fileID: 21300000, guid: ce75ee8b17e27234e810eff88c8a6670, type: 3}
   m_TileMatrixArray:
   - serializedVersion: 2
-    m_RefCount: 253
+    m_RefCount: 254
     m_Data:
       e00: 1
       e01: 0
@@ -4149,7 +4165,7 @@ Tilemap:
       e33: 1
   m_TileColorArray:
   - serializedVersion: 2
-    m_RefCount: 253
+    m_RefCount: 254
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -4350,7 +4366,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3026958387598246548, guid: 9a6a28b2007eec948b17a79b15c99f87, type: 3}
   m_PrefabInstance: {fileID: 7545069713259879524}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4954190110706141062
+--- !u!114 &1998353886347978117
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

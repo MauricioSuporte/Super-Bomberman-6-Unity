@@ -245,8 +245,9 @@ MonoBehaviour:
   - {fileID: -9210592962259699086, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   - {fileID: -7181177420763885346, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  - {fileID: 5028353982119780643, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   allowFlipX: 0
-  animationTime: 0.2
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []

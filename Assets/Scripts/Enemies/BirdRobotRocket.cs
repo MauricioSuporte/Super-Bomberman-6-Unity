@@ -64,7 +64,7 @@ public sealed class BirdRobotRocket : MonoBehaviour
         {
             center = bomb.transform.position;
             if (bomb.Owner != null)
-                bomb.Owner.DestroyBombExternally(bomb.gameObject, refund: true);
+                bomb.Owner.ExplodeBomb(bomb.gameObject);
             else
                 Destroy(bomb.gameObject);
         }

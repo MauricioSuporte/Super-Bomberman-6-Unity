@@ -121,7 +121,7 @@ MonoBehaviour:
   - {fileID: 3032406776422192054, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
   - {fileID: -1430849180586043793, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
   allowFlipX: 0
-  animationTime: 0.2
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -247,8 +247,9 @@ MonoBehaviour:
   - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   - {fileID: 5667647986067697567, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   - {fileID: 5107960370663549975, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: -4962599998705840588, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   allowFlipX: 0
-  animationTime: 0.25
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []

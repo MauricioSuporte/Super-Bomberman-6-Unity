@@ -807,13 +807,13 @@ MonoBehaviour:
   passesThroughDestructibles: 0
   junctionPassDestructiblesTag: Destructibles
   pursuitChance: 0.25
-  skipDestructionChance: 0.5
-  destructionSfxGain: 3
   attackDown: {fileID: 6424789068512577158}
   attackLeft: {fileID: 3047091961459629826}
   wreckage: {fileID: 4192302953244085006}
   bombVisionDistance: 4
-  destructionSfx: {fileID: 8300000, guid: fcef6e1feb0d47f693f72f2a315ea0d3, type: 3}
+  destructionSfx: {fileID: 8300000, guid: c7dc0ca74d25bb44585d43f205a7ad97, type: 3}
+  destructionSfxGain: 3
+  skipDestructionChance: 0.5
 --- !u!1 &5134101596014418435
 GameObject:
   m_ObjectHideFlags: 0
