@@ -8,6 +8,7 @@ public sealed class HeliMovementController : FlyMovimentController
     [SerializeField, Min(1)] private int visionTiles = 8;
     [SerializeField] private Sprite projectileSprite;
     [SerializeField] private Sprite projectileImpactSprite;
+    [SerializeField] private Sprite projectileImpactEndSprite;
     [SerializeField] private string destructibleTag = "Destructibles";
 
     private float nextShotTime;
@@ -16,7 +17,7 @@ public sealed class HeliMovementController : FlyMovimentController
         if (isDead || Time.time < nextShotTime || !TryGetPlayerDirection(out Vector2 shotDirection))
             return;
 
-        HeliProjectile.Create(rb.position + shotDirection * tileSize, shotDirection, gameObject, projectileSprite, projectileImpactSprite);
+        HeliProjectile.Create(rb.position + shotDirection * tileSize, shotDirection, gameObject, projectileSprite, projectileImpactSprite, projectileImpactEndSprite);
         nextShotTime = Time.time + shotCooldownSeconds;
     }
 

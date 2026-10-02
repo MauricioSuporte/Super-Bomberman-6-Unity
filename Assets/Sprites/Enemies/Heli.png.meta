@@ -35,6 +35,15 @@ TextureImporter:
   - first:
       213: -3214063612336283085
     second: Heli_10
+  - first:
+      213: -769273650116170438
+    second: Heli_11
+  - first:
+      213: -6450527971668738076
+    second: Heli_12
+  - first:
+      213: -2879398741025456522
+    second: Heli_13
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -148,10 +157,10 @@ TextureImporter:
       name: Heli_0
       rect:
         serializedVersion: 2
-        x: 2
+        x: 0
         y: 30
-        width: 28
-        height: 20
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -170,10 +179,10 @@ TextureImporter:
       name: Heli_1
       rect:
         serializedVersion: 2
-        x: 2
-        y: 4
-        width: 28
-        height: 20
+        x: 36
+        y: 30
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -192,10 +201,10 @@ TextureImporter:
       name: Heli_2
       rect:
         serializedVersion: 2
-        x: 36
+        x: 72
         y: 30
-        width: 28
-        height: 20
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -214,10 +223,10 @@ TextureImporter:
       name: Heli_3
       rect:
         serializedVersion: 2
-        x: 36
-        y: 4
-        width: 28
-        height: 20
+        x: 108
+        y: 30
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -236,10 +245,10 @@ TextureImporter:
       name: Heli_4
       rect:
         serializedVersion: 2
-        x: 70
+        x: 144
         y: 30
-        width: 28
-        height: 20
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -258,10 +267,10 @@ TextureImporter:
       name: Heli_5
       rect:
         serializedVersion: 2
-        x: 70
-        y: 4
-        width: 28
-        height: 20
+        x: 180
+        y: 30
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -280,10 +289,10 @@ TextureImporter:
       name: Heli_6
       rect:
         serializedVersion: 2
-        x: 102
+        x: 216
         y: 30
-        width: 16
-        height: 20
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -302,10 +311,10 @@ TextureImporter:
       name: Heli_7
       rect:
         serializedVersion: 2
-        x: 101
-        y: 6
-        width: 18
-        height: 18
+        x: 252
+        y: 30
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -324,10 +333,10 @@ TextureImporter:
       name: Heli_8
       rect:
         serializedVersion: 2
-        x: 120
-        y: 30
-        width: 16
-        height: 20
+        x: 0
+        y: 0
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -346,10 +355,10 @@ TextureImporter:
       name: Heli_9
       rect:
         serializedVersion: 2
-        x: 121
-        y: 8
-        width: 14
-        height: 14
+        x: 36
+        y: 0
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -368,10 +377,10 @@ TextureImporter:
       name: Heli_10
       rect:
         serializedVersion: 2
-        x: 138
-        y: 30
-        width: 16
-        height: 20
+        x: 72
+        y: 0
+        width: 36
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -390,20 +399,108 @@ TextureImporter:
       name: Heli_11
       rect:
         serializedVersion: 2
-        x: 139
-        y: 8
-        width: 14
-        height: 14
+        x: 108
+        y: 0
+        width: 36
+        height: 30
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3de1c5e0bdf255f0800000000000000
+      internalID: -769273650116170438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heli_12
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 36
+        height: 30
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4efb6f27cfe1b76a0800000000000000
+      internalID: -6450527971668738076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heli_13
+      rect:
+        serializedVersion: 2
+        x: 180
+        y: 0
+        width: 36
+        height: 30
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67e787ac9125a08d0800000000000000
+      internalID: -2879398741025456522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heli_14
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 0
+        width: 36
+        height: 30
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 081cfc5f1d6784b4ebfa03b87106ab4e
-      internalID: 1575015248
+      spriteID: 52c96b70f29ad944c98b8e19b5255d6e
+      internalID: -514608583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heli_15
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 0
+        width: 36
+        height: 30
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 54277633e672b8c4da32d9250cb0e97f
+      internalID: -1295677706
       vertices: []
       indices: 
       edges: []
@@ -412,7 +509,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 3a9a02d4ef2c09c4a9c523e2472a9613
+    spriteID: c627fedf24d28b64ab6979467148323a
     internalID: 0
     vertices: []
     indices: 
@@ -420,12 +517,18 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":36.0,"y":30.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Heli_0: 8983321032989748548
       Heli_1: 1613218976225800942
       Heli_10: -3214063612336283085
-      Heli_11: 1575015248
+      Heli_11: -769273650116170438
+      Heli_12: -6450527971668738076
+      Heli_13: -2879398741025456522
+      Heli_14: -514608583
+      Heli_15: -1295677706
       Heli_2: -875792578042049640
       Heli_3: 4182984600663114489
       Heli_4: -7913663553265462032

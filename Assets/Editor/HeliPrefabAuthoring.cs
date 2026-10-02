@@ -31,7 +31,8 @@ internal static class HeliPrefabAuthoring
             controller.spriteDeath = Death(root.transform, SmallDeath(Frames(sprites, 11)[0]));
             controller.waitForFullDeathAnimation = true;
             SetPrivateSprite(controller, "projectileSprite", Frames(sprites, 9)[0]);
-            SetPrivateSprite(controller, "projectileImpactSprite", Frames(sprites, 11)[0]);
+            SetPrivateSprite(controller, "projectileImpactSprite", Frames(sprites, 14)[0]);
+            SetPrivateSprite(controller, "projectileImpactEndSprite", Frames(sprites, 15)[0]);
             SetPrivateFloat(controller, "ghostAlpha", 1f);
             PrefabUtility.SaveAsPrefabAsset(root, Prefab);
             AssetDatabase.SaveAssets();

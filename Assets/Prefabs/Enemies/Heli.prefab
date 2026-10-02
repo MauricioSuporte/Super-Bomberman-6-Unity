@@ -278,6 +278,8 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  passesThroughDestructibles: 0
+  junctionPassDestructiblesTag: Destructibles
   destructiblesTag: Destructibles
   ghostAlpha: 1
   deathAlpha: 1
@@ -290,8 +292,9 @@ MonoBehaviour:
   shadowOffset: {x: 0, y: 0}
   shotCooldownSeconds: 2
   visionTiles: 8
-  projectileSprite: {fileID: -8059889362230540562, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  projectileImpactSprite: {fileID: 1575015248, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  projectileSprite: {fileID: -2879398741025456522, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  projectileImpactSprite: {fileID: -514608583, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  projectileImpactEndSprite: {fileID: -1295677706, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   destructibleTag: Destructibles
 --- !u!1 &3748486197632890478
 GameObject:
@@ -380,7 +383,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.75, y: 1.25}
+  m_Size: {x: 1.9375, y: 1.4375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -401,11 +404,11 @@ MonoBehaviour:
   idleSprite: {fileID: 8983321032989748548, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   animationSprite:
   - {fileID: 8983321032989748548, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: 1613218976225800942, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   - {fileID: -875792578042049640, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: -7913663553265462032, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: -875792578042049640, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: 4182984600663114489, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   allowFlipX: 0
-  animationTime: 0.15
+  animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -501,12 +504,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 8195169135354582510, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  m_Sprite: {fileID: -7913663553265462032, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.25}
+  m_Size: {x: 1.9375, y: 1.4375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -524,14 +527,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 8195169135354582510, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  idleSprite: {fileID: -7913663553265462032, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   animationSprite:
+  - {fileID: -7913663553265462032, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: 5180908714284825632, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   - {fileID: 8195169135354582510, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 5046421038504567216, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: -3214063612336283085, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 5046421038504567216, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   allowFlipX: 0
-  animationTime: 0.15
+  animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -627,12 +630,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  m_Sprite: {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.875, y: 0.875}
+  m_Size: {x: 1.6875, y: 1.3125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -650,13 +653,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  idleSprite: {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   animationSprite:
-  - {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 7097367198608025150, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -6450527971668738076, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -760,12 +763,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1613218976225800942, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  m_Sprite: {fileID: 5046421038504567216, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.75, y: 1.25}
+  m_Size: {x: 1.6875, y: 1.375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -783,14 +786,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 1613218976225800942, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  idleSprite: {fileID: 5046421038504567216, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   animationSprite:
-  - {fileID: 1613218976225800942, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 4182984600663114489, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 5180908714284825632, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
-  - {fileID: 4182984600663114489, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: 5046421038504567216, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -8059889362230540562, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -3214063612336283085, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
+  - {fileID: -769273650116170438, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   allowFlipX: 0
-  animationTime: 0.15
+  animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []

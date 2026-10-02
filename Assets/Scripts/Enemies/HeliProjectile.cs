@@ -9,9 +9,10 @@ public sealed class HeliProjectile : MonoBehaviour
     private Vector2 direction;
     private GameObject owner;
     private Sprite impactSprite;
+    private Sprite impactEndSprite;
     private bool impacted;
 
-    public static void Create(Vector2 position, Vector2 direction, GameObject owner, Sprite projectileSprite, Sprite impactSprite)
+    public static void Create(Vector2 position, Vector2 direction, GameObject owner, Sprite projectileSprite, Sprite impactSprite, Sprite impactEndSprite)
     {
         GameObject projectile = new("Heli Projectile") { layer = LayerMask.NameToLayer("Enemy") };
         projectile.transform.position = position;
@@ -28,6 +29,7 @@ public sealed class HeliProjectile : MonoBehaviour
         behaviour.direction = direction.normalized;
         behaviour.owner = owner;
         behaviour.impactSprite = impactSprite;
+        behaviour.impactEndSprite = impactEndSprite;
     }
 
     private void Awake()
@@ -65,7 +67,9 @@ public sealed class HeliProjectile : MonoBehaviour
         impacted = true;
         projectileCollider.enabled = false;
         if (spriteRenderer != null && impactSprite != null) spriteRenderer.sprite = impactSprite;
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.1f);
+        if (spriteRenderer != null && impactEndSprite != null) spriteRenderer.sprite = impactEndSprite;
+        yield return new WaitForSeconds(0.1f);
         Destroy(gameObject);
     }
 }
