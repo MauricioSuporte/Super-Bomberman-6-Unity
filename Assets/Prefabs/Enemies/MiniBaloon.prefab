@@ -241,7 +241,9 @@ MonoBehaviour:
   idleSprite: {fileID: -1235585582068407413, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   animationSprite:
   - {fileID: -1235585582068407413, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  - {fileID: -1235585582068407413, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   - {fileID: 6355443354573837297, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
+  - {fileID: -9210592962259699086, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   - {fileID: -9210592962259699086, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   - {fileID: -7321321298945986180, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
   - {fileID: -7181177420763885346, guid: 52ddbaf312c4d2e448059d64a3847dd6, type: 3}
