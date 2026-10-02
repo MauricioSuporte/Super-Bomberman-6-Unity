@@ -82,12 +82,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  m_Sprite: {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 2, y: 2.375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -105,13 +105,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  idleSprite: {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   animationSprite:
-  - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
-  - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
-  - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
-  - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
-  - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 646592399321555813, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   - {fileID: 835706428027011685, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
   - {fileID: -490596993370003520, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
   - {fileID: -3251351837298874556, guid: c37102e1356f5354b9d804613dcbdacb, type: 3}
@@ -222,7 +222,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 1.625, y: 2.1875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -244,6 +244,9 @@ MonoBehaviour:
   animationSprite:
   - {fileID: -9072659780368451561, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   - {fileID: -7770818881344464707, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 2941657378422573405, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 5667647986067697567, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
+  - {fileID: 5107960370663549975, guid: 8eff76d86d3c73b4c9ce2c9b8b65adde, type: 3}
   allowFlipX: 0
   animationTime: 0.25
   useSequenceDuration: 0
@@ -516,9 +519,9 @@ MonoBehaviour:
   speed: 1
   tileSize: 1
   spriteUp: {fileID: 3191304308348635352}
-  spriteDown: {fileID: 0}
-  spriteLeft: {fileID: 0}
-  spriteRight: {fileID: 0}
+  spriteDown: {fileID: 3191304308348635352}
+  spriteLeft: {fileID: 3191304308348635352}
+  spriteRight: {fileID: 3191304308348635352}
   spriteDeath: {fileID: 6275446319287202855}
   spriteDamaged: {fileID: 0}
   waitForFullDeathAnimation: 0
@@ -535,10 +538,11 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  passesThroughDestructibles: 0
+  junctionPassDestructiblesTag: Destructibles
   miniHogeraPrefab: {fileID: 2974861450268481676, guid: f94444624c1ab9148a5a29846b10bcdd, type: 3}
   miniHogeraCount: 2
   pursuitDistance: 3
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 0
-  logExplosionContacts: 1

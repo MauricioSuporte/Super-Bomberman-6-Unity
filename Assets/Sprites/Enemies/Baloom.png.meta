@@ -14,6 +14,12 @@ TextureImporter:
   - first:
       213: -7321321298945986180
     second: Baloom_3
+  - first:
+      213: -7181177420763885346
+    second: Baloom_4
+  - first:
+      213: 5028353982119780643
+    second: Baloom_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -129,10 +135,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 16
-        height: 16
+        width: 22
+        height: 28
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -149,12 +155,12 @@ TextureImporter:
       name: Baloom_1
       rect:
         serializedVersion: 2
-        x: 18
+        x: 22
         y: 0
-        width: 16
-        height: 16
+        width: 22
+        height: 28
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -171,12 +177,12 @@ TextureImporter:
       name: Baloom_2
       rect:
         serializedVersion: 2
-        x: 35
-        y: 1
-        width: 18
-        height: 15
+        x: 44
+        y: 0
+        width: 22
+        height: 28
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -193,12 +199,12 @@ TextureImporter:
       name: Baloom_3
       rect:
         serializedVersion: 2
-        x: 53
+        x: 66
         y: 0
-        width: 17
-        height: 16
+        width: 22
+        height: 28
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -211,11 +217,77 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Baloom_4
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 0
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed0105eee25575c90800000000000000
+      internalID: -7181177420763885346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Baloom_5
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 0
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 321ab2d2e4d48c540800000000000000
+      internalID: 5028353982119780643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Baloom_6
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 0
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f53e2651fe17dbe46b5cbe5be367187c
+      internalID: 435106508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: dc3b0091552d3f64685753f1a502573c
     internalID: 0
     vertices: []
     indices: 
@@ -223,12 +295,17 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":22.0,"y":28.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Baloom_0: -1235585582068407413
       Baloom_1: 6355443354573837297
       Baloom_2: -9210592962259699086
       Baloom_3: -7321321298945986180
+      Baloom_4: -7181177420763885346
+      Baloom_5: 5028353982119780643
+      Baloom_6: 435106508
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

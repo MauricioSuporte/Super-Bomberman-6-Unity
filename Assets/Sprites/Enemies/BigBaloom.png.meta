@@ -11,6 +11,18 @@ TextureImporter:
   - first:
       213: 2941657378422573405
     second: BigBaloom_2
+  - first:
+      213: 5667647986067697567
+    second: BigBaloom_3
+  - first:
+      213: 5107960370663549975
+    second: BigBaloom_4
+  - first:
+      213: -4962599998705840588
+    second: BigBaloom_5
+  - first:
+      213: 646592399321555813
+    second: BigBaloom_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -124,12 +136,12 @@ TextureImporter:
       name: BigBaloom_0
       rect:
         serializedVersion: 2
-        x: 5
-        y: 3
-        width: 22
-        height: 26
+        x: 0
+        y: 0
+        width: 32
+        height: 44
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -146,12 +158,12 @@ TextureImporter:
       name: BigBaloom_1
       rect:
         serializedVersion: 2
-        x: 38
-        y: 5
-        width: 24
-        height: 24
+        x: 32
+        y: 0
+        width: 32
+        height: 44
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -168,12 +180,12 @@ TextureImporter:
       name: BigBaloom_2
       rect:
         serializedVersion: 2
-        x: 73
-        y: 3
-        width: 22
-        height: 26
+        x: 64
+        y: 0
+        width: 32
+        height: 44
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -186,11 +198,99 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: BigBaloom_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 32
+        height: 44
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9fe58990d787ae40800000000000000
+      internalID: 5667647986067697567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BigBaloom_4
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 32
+        height: 44
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71c6c2cd4ee13e640800000000000000
+      internalID: 5107960370663549975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BigBaloom_5
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 32
+        height: 44
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43ec8ca189d412bb0800000000000000
+      internalID: -4962599998705840588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BigBaloom_6
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 32
+        height: 44
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56367048c5829f800800000000000000
+      internalID: 646592399321555813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 080af10c8741c214cbf48999c68eb4ce
     internalID: 0
     vertices: []
     indices: 
@@ -198,11 +298,17 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":44.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       BigBaloom_0: -9072659780368451561
       BigBaloom_1: -7770818881344464707
       BigBaloom_2: 2941657378422573405
+      BigBaloom_3: 5667647986067697567
+      BigBaloom_4: 5107960370663549975
+      BigBaloom_5: -4962599998705840588
+      BigBaloom_6: 646592399321555813
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
