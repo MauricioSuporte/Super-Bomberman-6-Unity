@@ -1079,7 +1079,7 @@ MonoBehaviour:
   destructiblesTag: Destructibles
   alignedToleranceTiles: 0.15
   scanBoxSizePercent: 0.6
-  attackIntervalSeconds: {x: 3, y: 6}
+  attackIntervalSeconds: {x: 6, y: 12}
   attackUp: {fileID: 1708459636785862632}
   attackDown: {fileID: 6424789068512577158}
   attackLeft: {fileID: 3972939022059856764}

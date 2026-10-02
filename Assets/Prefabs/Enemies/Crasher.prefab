@@ -807,6 +807,8 @@ MonoBehaviour:
   passesThroughDestructibles: 0
   junctionPassDestructiblesTag: Destructibles
   pursuitChance: 0.25
+  skipDestructionChance: 0.5
+  destructionSfxGain: 3
   attackDown: {fileID: 6424789068512577158}
   attackLeft: {fileID: 3047091961459629826}
   wreckage: {fileID: 4192302953244085006}

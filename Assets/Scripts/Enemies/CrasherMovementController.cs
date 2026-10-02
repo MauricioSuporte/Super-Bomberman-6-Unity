@@ -11,6 +11,8 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
 
     [SerializeField, Min(1f)] private float bombVisionDistance = 4f;
     [SerializeField] private AudioClip destructionSfx;
+    [SerializeField, Min(1f)] private float destructionSfxGain = 3f;
+    [SerializeField, Range(0f, 1f)] private float skipDestructionChance = 0.5f;
 
     private AnimatedSpriteRenderer attackSprite;
     private Tilemap attackTilemap;
@@ -51,6 +53,8 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
         AnimatedSpriteRenderer animation = incoming.x == 0f ? attackDown : attackLeft;
         if (!hitBlock || animation == null || animation.animationSprite == null || animation.animationSprite.Length < 5)
             return;
+
+        if (Random.value < skipDestructionChance) return;
 
         nextDirection = direction;
         nextTarget = targetTile;
@@ -207,8 +211,7 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
         GameManager manager = GameManager.Instance;
         GameObject hidden = manager != null ? manager.GetSpawnForDestroyedBlock(attackCell) : null;
         attackTilemap.SetTile(attackCell, null);
-        if (destructionSfx != null && TryGetComponent<AudioSource>(out var source))
-            GameAudioSettings.PlaySfx(source, destructionSfx);
+        PlayDestructionSfx();
         if (manager != null) manager.OnDestructibleDestroyed(attackCell);
         if (hidden != null && manager != null)
         {
@@ -235,6 +238,12 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
         }
     }
 
+    private void PlayDestructionSfx()
+    {
+        if (destructionSfx == null || !TryGetComponent<AudioSource>(out var source)) return;
+        float playbackVolume = Mathf.Clamp01(GameAudioSettings.ApplySfxVolume(1f) * Mathf.Max(1f, destructionSfxGain));
+        source.PlayOneShot(destructionSfx, playbackVolume);
+    }
     private static void SetVisible(AnimatedSpriteRenderer animation, bool visible)
     {
         if (animation == null) return;

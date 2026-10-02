@@ -3,7 +3,7 @@ using UnityEngine;
 public sealed class BirdRobotRedMovementController : JunctionTurningPersecutingEnemyMovementController
 {
     [Header("Rocket Attack")]
-    [SerializeField] private Vector2 attackIntervalSeconds = new(3f, 6f);
+    [SerializeField] private Vector2 attackIntervalSeconds = new(6f, 12f);
     [SerializeField] private AnimatedSpriteRenderer attackUp;
     [SerializeField] private AnimatedSpriteRenderer attackDown;
     [SerializeField] private AnimatedSpriteRenderer attackLeft;
