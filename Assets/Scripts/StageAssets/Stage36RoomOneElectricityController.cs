@@ -37,6 +37,7 @@ namespace StageAssets
         private readonly List<ConductorPair> conductorPairs = new();
         private readonly List<ShockVisual> activeShocks = new();
         private AudioSource audioSource;
+        private bool roomActive;
 
         private sealed class ConductorPair
         {
@@ -62,14 +63,30 @@ namespace StageAssets
             FindConductorPairs();
         }
 
-        private void OnEnable()
+        private void Update()
         {
+            bool occupied = roomBounds != null && World3RoomProgressionController.IsRoomOccupied(roomBounds);
+            if (occupied == roomActive)
+                return;
+
+            if (!occupied)
+            {
+                StopElectricity();
+                return;
+            }
+
+            roomActive = true;
             for (int i = 0; i < conductorPairs.Count; i++)
                 StartCoroutine(ElectricityLoop(conductorPairs[i]));
         }
 
-        private void OnDisable()
+        private void OnDisable() => StopElectricity();
+
+        private void StopElectricity()
         {
+            roomActive = false;
+            if (audioSource != null)
+                audioSource.Stop();
             StopAllCoroutines();
             RestoreConductors();
             ClearShockVisuals();

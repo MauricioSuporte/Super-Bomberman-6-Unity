@@ -23,6 +23,8 @@ namespace StageAssets
 
         private AudioSource steamAudio;
         private bool audioPaused;
+        private Collider2D roomBounds;
+        private bool roomActive;
 
         private readonly HashSet<MovementController> hitPlayers = new();
         private AnimatedSpriteRenderer firstJet;
@@ -52,10 +54,17 @@ namespace StageAssets
             ResetCore();
         }
 
-        private void OnEnable() => ScheduleNext();
-
-        private void OnDisable()
+        private void OnEnable()
         {
+            roomBounds = World3RoomProgressionController.FindRoomBoundsContaining(transform.position);
+            roomActive = false;
+        }
+
+        private void OnDisable() => StopSteam();
+
+        private void StopSteam()
+        {
+            roomActive = false;
             StopJets();
             ResetCore();
             cycling = false;
@@ -64,6 +73,22 @@ namespace StageAssets
 
         private void Update()
         {
+            if (roomBounds == null)
+                roomBounds = World3RoomProgressionController.FindRoomBoundsContaining(transform.position);
+
+            if (roomBounds == null || !World3RoomProgressionController.IsRoomOccupied(roomBounds))
+            {
+                if (roomActive)
+                    StopSteam();
+                return;
+            }
+
+            if (!roomActive)
+            {
+                roomActive = true;
+                ScheduleNext();
+            }
+
             bool paused = GamePauseController.IsPaused || Time.deltaTime <= 0f ||
                 (StageIntroTransition.Instance != null &&
                  (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
