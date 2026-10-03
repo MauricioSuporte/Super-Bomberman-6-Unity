@@ -26,6 +26,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
     protected override void Awake()
     {
         base.Awake();
+        SetWakeProtection(true);
         HideSpecialSprites();
         HideWalkingSprites();
         SetVisible(wakeUp, true);
@@ -75,6 +76,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
         {
             if (state == State.Sleeping) { Wake(); return; }
+            if (state == State.Waking) return;
             base.OnTriggerEnter2D(other);
             return;
         }
@@ -232,6 +234,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
     private void FinishSequence()
     {
         bool wasAttack = state == State.Attacking;
+        if (state == State.Waking) SetWakeProtection(false);
         HideSpecialSprites();
         sequence = null;
         state = State.Walking;
@@ -336,6 +339,19 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
         HideWalkingSprites();
         base.Die();
     }
+
+    private void SetWakeProtection(bool value)
+    {
+        if (TryGetComponent<CharacterHealth>(out var characterHealth))
+            characterHealth.SetExternalInvulnerability(value);
+    }
+
+    private void OnEnable()
+    {
+        if (state == State.Sleeping || state == State.Waking) SetWakeProtection(true);
+    }
+
+    private void OnDisable() => SetWakeProtection(false);
 
     protected override void OnDestroy()
     {

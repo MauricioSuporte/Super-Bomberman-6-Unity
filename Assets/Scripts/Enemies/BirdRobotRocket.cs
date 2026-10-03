@@ -11,9 +11,12 @@ public sealed class BirdRobotRocket : MonoBehaviour
     private float tileSize;
     private float elapsed;
     private bool impacted;
+    private bool singleImpact;
+    private float impactRemaining;
 
-    public void Init(Vector2 travelDirection, GameObject shotOwner, AnimatedSpriteRenderer explosion, float gridSize)
+    public void Init(Vector2 travelDirection, GameObject shotOwner, AnimatedSpriteRenderer explosion, float gridSize, bool useSingleImpact = false)
     {
+        singleImpact = useSingleImpact;
         direction = travelDirection;
         owner = shotOwner;
         tileSize = gridSize;
@@ -35,8 +38,14 @@ public sealed class BirdRobotRocket : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (impacted || GamePauseController.IsPaused)
+        if (GamePauseController.IsPaused)
             return;
+        if (impacted)
+        {
+            impactRemaining -= Time.fixedDeltaTime;
+            if (impactRemaining <= 0f) Destroy(gameObject);
+            return;
+        }
         elapsed += Time.fixedDeltaTime;
         if (elapsed >= 5f)
         {
@@ -56,6 +65,8 @@ public sealed class BirdRobotRocket : MonoBehaviour
         if (bomb == null && player == null && !stage)
             return;
         impacted = true;
+        GetComponent<CircleCollider2D>().enabled = false;
+        body.linearVelocity = Vector2.zero;
         Vector2 contact = other.ClosestPoint(body.position) + direction * 0.2f;
         Tilemap map = other.GetComponentInParent<Tilemap>();
         Vector2 center = map != null ? (Vector2)map.GetCellCenterWorld(map.WorldToCell(contact))
@@ -85,13 +96,36 @@ public sealed class BirdRobotRocket : MonoBehaviour
             }
         }
         SpawnImpact(center);
-        Destroy(gameObject);
+        if (!singleImpact) Destroy(gameObject);
     }
 
     private void SpawnImpact(Vector2 center)
     {
         if (impactTemplate == null)
+        {
+            Destroy(gameObject);
             return;
+        }
+        if (singleImpact)
+        {
+            GetComponent<AnimatedSpriteRenderer>().enabled = false;
+            impactTemplate.transform.SetParent(transform);
+            impactTemplate.transform.position = center;
+            impactTemplate.SetActive(true);
+            AnimatedSpriteRenderer animation = impactTemplate.GetComponent<AnimatedSpriteRenderer>();
+            animation.loop = false;
+            animation.idle = false;
+            animation.enabled = true;
+            animation.RestartAnimation();
+            int frames = Mathf.Max(1, animation.animationSprite.Length);
+            impactRemaining = animation.useSequenceDuration ? animation.sequenceDuration : frames * animation.animationTime;
+            if (animation.frameDurations != null && animation.frameDurations.Length == frames)
+            {
+                impactRemaining = 0f;
+                foreach (float duration in animation.frameDurations) impactRemaining += Mathf.Max(0.0001f, duration);
+            }
+            return;
+        }
         GameObject effect = new("RocketImpact");
         effect.transform.position = center;
         effect.AddComponent<BirdRobotRocketImpact>().Init(impactTemplate, tileSize);

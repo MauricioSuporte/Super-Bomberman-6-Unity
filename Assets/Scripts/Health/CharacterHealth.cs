@@ -59,6 +59,13 @@ public class CharacterHealth : MonoBehaviour
     {
         killable = GetComponent<IKillable>();
         defaultHitBlinkInterval = hitBlinkInterval;
+        EnsureRendererCache();
+    }
+
+    void EnsureRendererCache()
+    {
+        if (spriteRenderers != null)
+            return;
 
         spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         originalColors = new Color[spriteRenderers.Length];
@@ -435,6 +442,8 @@ public class CharacterHealth : MonoBehaviour
 
     public void SetExternalInvulnerability(bool value)
     {
+        // Other components may request protection before this component's Awake.
+        EnsureRendererCache();
         externalInvulnerability = value;
 
         if (externalInvulnerability)
