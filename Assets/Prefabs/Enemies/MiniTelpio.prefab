@@ -82,12 +82,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  m_Sprite: {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.16, y: 0.24}
+  m_Size: {x: 1, y: 1.125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -105,13 +105,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  idleSprite: {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   animationSprite:
-  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
-  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
-  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
-  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
-  - {fileID: 1300280917, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -1535837918, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -220,7 +220,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 1.5}
+  m_Size: {x: 4, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -240,10 +240,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
   idleSprite: {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   animationSprite:
+  - {fileID: 1408280126, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   - {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
-  - {fileID: -2129085247, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
+  - {fileID: -932378602, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   - {fileID: 2650798832818506605, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
-  - {fileID: -1018367580, guid: 4ad3e2f0a11b4424887994fa208f4522, type: 3}
   allowFlipX: 0
   animationTime: 0.2
   useSequenceDuration: 0
@@ -535,3 +535,5 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  passesThroughDestructibles: 0
+  junctionPassDestructiblesTag: Destructibles

@@ -152,8 +152,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2663e7d29826d4f40ba91039afd96198
-      internalID: -2129085247
+      spriteID: 7c6a4406d9a0f3042a3d723a2c16d1a4
+      internalID: 1408280126
       vertices: []
       indices: 
       edges: []
@@ -174,8 +174,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9416cf51d59cfd34d894183c52308ddb
-      internalID: -1018367580
+      spriteID: a1161d0ac88a9234d9a8d5e398a11542
+      internalID: -932378602
       vertices: []
       indices: 
       edges: []
@@ -196,8 +196,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c4cfdab88c22c3b4eaea584d7f9dd5c0
-      internalID: 1300280917
+      spriteID: 33b0048e15bdc8f46ae4e3b2a2cb134c
+      internalID: -1535837918
       vertices: []
       indices: 
       edges: []
@@ -206,7 +206,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: cbb2d47a85b15644c990aeb32bb7fb3e
+    spriteID: 511b2de8e6041bf4198324886f578eac
     internalID: 0
     vertices: []
     indices: 
@@ -219,9 +219,9 @@ TextureImporter:
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Telpio_0: 2650798832818506605
-      Telpio_1: -2129085247
-      Telpio_2: -1018367580
-      Telpio_3: 1300280917
+      Telpio_1: 1408280126
+      Telpio_2: -932378602
+      Telpio_3: -1535837918
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
