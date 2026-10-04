@@ -87,7 +87,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.375}
+  m_Size: {x: 1.25, y: 2.0625}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -108,6 +108,9 @@ MonoBehaviour:
   idleSprite: {fileID: 1230940424005766071, guid: 4d984ca2158632f498335e42453bae09, type: 3}
   animationSprite:
   - {fileID: 1230940424005766071, guid: 4d984ca2158632f498335e42453bae09, type: 3}
+  - {fileID: -4671477451345096798, guid: 4d984ca2158632f498335e42453bae09, type: 3}
+  - {fileID: -2057200545588578253, guid: 4d984ca2158632f498335e42453bae09, type: 3}
+  - {fileID: -4671477451345096798, guid: 4d984ca2158632f498335e42453bae09, type: 3}
   allowFlipX: 0
   animationTime: 1
   useSequenceDuration: 0
