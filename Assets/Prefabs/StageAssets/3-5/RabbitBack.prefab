@@ -80,14 +80,14 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 7
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3670530740794740059, guid: 9106defb70b1ea146b07cde2fa8dcd2e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 1.1875, y: 1.9375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -108,6 +108,9 @@ MonoBehaviour:
   idleSprite: {fileID: -3670530740794740059, guid: 9106defb70b1ea146b07cde2fa8dcd2e, type: 3}
   animationSprite:
   - {fileID: -3670530740794740059, guid: 9106defb70b1ea146b07cde2fa8dcd2e, type: 3}
+  - {fileID: 6606219618060040257, guid: 9106defb70b1ea146b07cde2fa8dcd2e, type: 3}
+  - {fileID: -7496852010907967713, guid: 9106defb70b1ea146b07cde2fa8dcd2e, type: 3}
+  - {fileID: 6606219618060040257, guid: 9106defb70b1ea146b07cde2fa8dcd2e, type: 3}
   allowFlipX: 0
   animationTime: 1
   useSequenceDuration: 0
