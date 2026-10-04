@@ -202,8 +202,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c2bedb672115f2f48b08905bdcce1831
-      internalID: 1692062427
+      spriteID: d89cdcacddd7517419fe62a0a099cf2b
+      internalID: 1917388411
       vertices: []
       indices: 
       edges: []
@@ -224,8 +224,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 623599d99fbc8e641b6f0511ee411ee6
-      internalID: -799654980
+      spriteID: ff94c435a8db50649b583c432437bb09
+      internalID: -976403282
       vertices: []
       indices: 
       edges: []
@@ -246,8 +246,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c6a19d76332261141870bb4f55a09f69
-      internalID: 1376748367
+      spriteID: fcbe932ab367ddc4c8ab7f9cabb38fd6
+      internalID: -291638274
       vertices: []
       indices: 
       edges: []
@@ -268,8 +268,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6c24e68dcd6bb4b48ae22fae97873d45
-      internalID: -1218339485
+      spriteID: 4bde07e79cb6c6a449ec9bd56cfaa34b
+      internalID: -1843662017
       vertices: []
       indices: 
       edges: []
@@ -290,8 +290,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6a7c4d6a5f31723418937354582003a7
-      internalID: -864134973
+      spriteID: 8f87e21d2a4ba05428876a282fd1a822
+      internalID: 1429941058
       vertices: []
       indices: 
       edges: []
@@ -312,8 +312,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6f03d24b1e5845449afc5d3d8fc01a23
-      internalID: -1973413366
+      spriteID: b4dcf11202cd58743b06c334da6ccbef
+      internalID: -2046975235
       vertices: []
       indices: 
       edges: []
@@ -334,8 +334,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 296829c6c26d34248bc3e92a2fe760c4
-      internalID: 1320992588
+      spriteID: 3c547ea799d2b3d42b28fb280631321f
+      internalID: -879379420
       vertices: []
       indices: 
       edges: []
@@ -356,8 +356,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 464a307b2870d064e8a4e80b39d845e9
-      internalID: -1514322109
+      spriteID: 37d483b3dc9839a4d88c7a258801956e
+      internalID: 1127347163
       vertices: []
       indices: 
       edges: []
@@ -378,8 +378,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 89fc20113c03b15469aec274bf87bf90
-      internalID: 81341806
+      spriteID: c6d7c3a73055ba3489f8ce1e667de736
+      internalID: 1536270473
       vertices: []
       indices: 
       edges: []
@@ -400,8 +400,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a4ab11fcfbc66234d8df55870e66b2f4
-      internalID: -430530396
+      spriteID: 51a5df39980b1d14ba53c85490649937
+      internalID: -974052354
       vertices: []
       indices: 
       edges: []
@@ -410,7 +410,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 1dfc6fa6b12641b459d1b44247f7b98d
+    spriteID: fe559dd10e828274c8921dd221f2cfda
     internalID: 0
     vertices: []
     indices: 
@@ -424,17 +424,17 @@ TextureImporter:
     nameFileIdTable:
       MechaBombSB3_0: 5286240154632213446
       MechaBombSB3_1: 5012999864561907053
-      MechaBombSB3_10: -1514322109
-      MechaBombSB3_11: 81341806
-      MechaBombSB3_12: -430530396
+      MechaBombSB3_10: 1127347163
+      MechaBombSB3_11: 1536270473
+      MechaBombSB3_12: -974052354
       MechaBombSB3_2: -8726364091372409207
-      MechaBombSB3_3: 1692062427
-      MechaBombSB3_4: -799654980
-      MechaBombSB3_5: 1376748367
-      MechaBombSB3_6: -1218339485
-      MechaBombSB3_7: -864134973
-      MechaBombSB3_8: -1973413366
-      MechaBombSB3_9: 1320992588
+      MechaBombSB3_3: 1917388411
+      MechaBombSB3_4: -976403282
+      MechaBombSB3_5: -291638274
+      MechaBombSB3_6: -1843662017
+      MechaBombSB3_7: 1429941058
+      MechaBombSB3_8: -2046975235
+      MechaBombSB3_9: -879379420
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
