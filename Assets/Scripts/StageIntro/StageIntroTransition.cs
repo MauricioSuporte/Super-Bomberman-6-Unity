@@ -32,6 +32,9 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Gameplay Root")]
     public GameObject gameplayRoot;
 
+    [Tooltip("Keep player controls disabled after the intro for scenes with scripted selection and movement.")]
+    [SerializeField] private bool keepPlayerInputLockedAfterIntro;
+
     [Header("Only Stage_1-7")]
     public string stage17SceneName = "Stage_1-7";
 
@@ -539,12 +542,12 @@ public class StageIntroTransition : MonoBehaviour
                     m.Rigidbody.simulated = true;
             }
 
-            m.SetInputLocked(false, true);
+            m.SetInputLocked(isPlayer && keepPlayerInputLockedAfterIntro, true);
             m.enabled = true;
         }
 
         foreach (var b in bombControllers)
-            if (b) b.enabled = true;
+            if (b) b.enabled = !keepPlayerInputLockedAfterIntro;
 
         for (int i = 0; i < manualDismounts.Length; i++)
         {
@@ -555,7 +558,7 @@ public class StageIntroTransition : MonoBehaviour
             if (!isPlayer)
                 continue;
 
-            d.enabled = true;
+            d.enabled = !keepPlayerInputLockedAfterIntro;
         }
 
         IntroRunning = false;
