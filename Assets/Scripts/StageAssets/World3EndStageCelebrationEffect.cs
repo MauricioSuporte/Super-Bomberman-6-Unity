@@ -11,7 +11,7 @@ namespace StageAssets
     [DisallowMultipleComponent]
     public sealed class World3EndStageCelebrationEffect : MonoBehaviour
     {
-        private const float Duration = 2.35f;
+        public const float Duration = 2.35f;
         private const float PixelsPerUnit = 16f;
         private const int StarCount = 10;
         private const float TriangleFinalScale = 1.9f;
@@ -26,8 +26,9 @@ namespace StageAssets
         private float elapsed;
         private int sortingLayerId;
         private int sortingOrder;
+        private bool reverse;
 
-        public static void Play(Vector3 center, Transform sortingSource)
+        public static void Play(Vector3 center, Transform sortingSource, bool reverse = false)
         {
             if (sortingSource == null)
                 return;
@@ -36,6 +37,7 @@ namespace StageAssets
             effectObject.transform.position = center;
 
             World3EndStageCelebrationEffect effect = effectObject.AddComponent<World3EndStageCelebrationEffect>();
+            effect.reverse = reverse;
             effect.Initialize(sortingSource);
         }
 
@@ -56,8 +58,9 @@ namespace StageAssets
             elapsed += Time.deltaTime;
             float progress = Mathf.Clamp01(elapsed / Duration);
 
-            AnimateTriangle(firstTriangle, progress, 1f, 18f, 1f);
-            AnimateTriangle(secondTriangle, progress, -1f, -27f, 1f);
+            float visualProgress = reverse ? 1f - progress : progress;
+            AnimateTriangle(firstTriangle, visualProgress, 1f, 18f, 1f);
+            AnimateTriangle(secondTriangle, visualProgress, -1f, -27f, 1f);
 
             if (progress >= 1f)
                 Destroy(gameObject);
@@ -106,7 +109,7 @@ namespace StageAssets
             float startDelay = index * 0.075f;
             float radialGrowth = 0.62f + (index % 4) * 0.16f;
             float orbitDegrees = -(640f - radius * 240f);
-            animation.Initialize(star, angle, radius, radialGrowth, orbitDegrees, startDelay, Duration - startDelay);
+            animation.Initialize(star, angle, radius, radialGrowth, orbitDegrees, startDelay, Duration - startDelay, reverse);
         }
 
         private static Vector3 OrbitPosition(float angleDegrees, float radius)
@@ -217,6 +220,7 @@ namespace StageAssets
         private float startDelay;
         private float duration;
         private float elapsed;
+        private bool reverse;
 
         public void Initialize(
             SpriteRenderer renderer,
@@ -225,7 +229,8 @@ namespace StageAssets
             float growth,
             float rotationDegrees,
             float delay,
-            float lifetime)
+            float lifetime,
+            bool reverse = false)
         {
             spriteRenderer = renderer;
             startingAngle = angle;
@@ -234,15 +239,18 @@ namespace StageAssets
             orbitDegrees = rotationDegrees;
             startDelay = delay;
             duration = Mathf.Max(0.01f, lifetime);
+            this.reverse = reverse;
         }
 
         private void Update()
         {
             elapsed += Time.deltaTime;
-            if (elapsed < startDelay)
+            if (!reverse && elapsed < startDelay)
                 return;
 
-            float progress = Mathf.Clamp01((elapsed - startDelay) / duration);
+            float progress = reverse
+                ? Mathf.Clamp01(1f - elapsed / duration)
+                : Mathf.Clamp01((elapsed - startDelay) / duration);
             float angle = (startingAngle + orbitDegrees * progress) * Mathf.Deg2Rad;
             float radius = Mathf.Lerp(startingRadius, startingRadius + radialGrowth, progress);
             transform.localPosition = new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f);
@@ -252,7 +260,7 @@ namespace StageAssets
             if (spriteRenderer != null)
                 spriteRenderer.color = new Color(0.9f, 0.99f, 1f, Mathf.Clamp01((1f - progress) * 5f) * 0.95f);
 
-            if (progress >= 1f)
+            if (reverse ? elapsed >= duration : progress >= 1f)
                 Destroy(gameObject);
         }
     }

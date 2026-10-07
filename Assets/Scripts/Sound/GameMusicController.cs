@@ -66,6 +66,12 @@ public class GameMusicController : MonoBehaviour
 
     private void Awake()
     {
+        if (SceneManager.GetActiveScene().name == StageAssets.World3HallPortalSelectionController.SceneName &&
+            StageAssets.World3HallChipAssemblyController.HasPendingReveal)
+        {
+            defaultMusic = Resources.Load<AudioClip>("Sounds/Stage_World3HallStageClear");
+            defaultMusicLoop = null;
+        }
         musicSource = GetComponent<AudioSource>();
 
         if (Instance != null && Instance != this)

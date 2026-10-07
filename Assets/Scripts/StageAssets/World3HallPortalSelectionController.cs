@@ -33,9 +33,17 @@ namespace StageAssets
         private bool transitioning;
         private bool exitSelected;
         private bool selectionReady;
+        public bool PresentationBlocked { get; set; }
+
+        public string SelectedStageSceneName =>
+            selectionReady && !exitSelected && portals != null &&
+            selectedIndex >= 0 && selectedIndex < portals.Length && portals[selectedIndex] != null
+                ? portals[selectedIndex].DestinationScene
+                : null;
 
         private void Awake()
         {
+            PresentationBlocked = World3HallChipAssemblyController.HasPendingReveal;
             string initialStage = focusedStageSceneName;
             focusedStageSceneName = null;
             if (portals != null && !string.IsNullOrEmpty(initialStage))
@@ -95,7 +103,7 @@ namespace StageAssets
 
         private void Update()
         {
-            if (transitioning || GamePauseController.IsPaused || portals == null || portals.Length == 0)
+            if (PresentationBlocked || transitioning || GamePauseController.IsPaused || portals == null || portals.Length == 0)
                 return;
 
             var intro = StageIntroTransition.Instance;

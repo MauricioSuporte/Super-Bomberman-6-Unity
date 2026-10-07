@@ -1011,6 +1011,13 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (StageAssets.World3HallChipAssemblyController.IsChipStage(currentSceneName))
+        {
+            StageAssets.World3HallChipAssemblyController.PrepareReturn(currentSceneName, !stageWasAlreadyCleared);
+            StartCoroutine(LoadWorld3HallRoutine());
+            return;
+        }
+
         if (string.IsNullOrEmpty(nextStageSceneName))
         {
             StartCoroutine(ShowEndingAfterDelayRoutine());
@@ -1034,6 +1041,14 @@ public class GameManager : MonoBehaviour
         }
 
         StartCoroutine(LoadNextStageRoutine());
+    }
+
+    IEnumerator LoadWorld3HallRoutine()
+    {
+        yield return waitNextStageDelay;
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(StageAssets.World3HallPortalSelectionController.SceneName);
     }
 
     IEnumerator LoadNextStageRoutine()
