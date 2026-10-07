@@ -2,6 +2,11 @@ using System.Collections.Generic;
 
 public static class StageUnlockProgress
 {
+    static readonly string[] World3InitialStages =
+    {
+        "Stage_3-1", "Stage_3-2", "Stage_3-3", "Stage_3-4", "Stage_3-5"
+    };
+
     static readonly string[] CampaignStageOrder =
     {
         "Stage_1-1", "Stage_1-2", "Stage_1-3", "Stage_1-4", "Stage_1-5", "Stage_1-6", "Stage_1-7",
@@ -80,6 +85,9 @@ public static class StageUnlockProgress
                 changed = true;
             }
         }
+
+        if (EnsureWorld3Unlocks(slot))
+            changed = true;
 
         if (changed)
             SaveSystem.Save();
@@ -274,6 +282,9 @@ public static class StageUnlockProgress
         if (MarkClearedForActiveDifficulty(slot, normalized))
             changed = true;
 
+        if (EnsureWorld3Unlocks(slot))
+            changed = true;
+
         bool rewardsChanged = TryUnlockAllClearRewards();
 
         if (changed || rewardsChanged)
@@ -319,7 +330,7 @@ public static class StageUnlockProgress
             if (nextIndex < slot.stageOrder.Count)
             {
                 string nextScene = slot.stageOrder[nextIndex];
-                if (!string.IsNullOrEmpty(nextScene) && !slot.unlockedStages.Contains(nextScene))
+                if (nextScene != "Stage_3-6" && !string.IsNullOrEmpty(nextScene) && !slot.unlockedStages.Contains(nextScene))
                 {
                     slot.unlockedStages.Add(nextScene);
                     changed = true;
@@ -327,10 +338,47 @@ public static class StageUnlockProgress
             }
         }
 
+        if (EnsureWorld3Unlocks(slot))
+            changed = true;
+
         bool rewardsChanged = TryUnlockAllClearRewards();
 
         if (changed || rewardsChanged)
             SaveSystem.Save();
+    }
+
+    private static bool EnsureWorld3Unlocks(Assets.Scripts.SaveSystem.StageSlot slot)
+    {
+        bool changed = false;
+        bool allInitialStagesCleared = true;
+        bool world2Cleared = slot.clearedStages.Contains("Stage_2-7");
+
+        foreach (string sceneName in World3InitialStages)
+        {
+            if (world2Cleared && !slot.unlockedStages.Contains(sceneName))
+            {
+                slot.unlockedStages.Add(sceneName);
+                changed = true;
+            }
+
+            if (!slot.clearedStages.Contains(sceneName))
+                allInitialStagesCleared = false;
+        }
+
+        if (allInitialStagesCleared)
+        {
+            if (!slot.unlockedStages.Contains("Stage_3-6"))
+            {
+                slot.unlockedStages.Add("Stage_3-6");
+                changed = true;
+            }
+        }
+        else if (slot.unlockedStages.Remove("Stage_3-6"))
+        {
+            changed = true;
+        }
+
+        return changed;
     }
 
     private static bool EnsureDefaultUnlocked(Assets.Scripts.SaveSystem.StageSlot slot)

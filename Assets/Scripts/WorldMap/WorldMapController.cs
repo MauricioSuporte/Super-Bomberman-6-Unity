@@ -396,13 +396,21 @@ public class WorldMapController : MonoBehaviour
         if (node == null)
             return;
 
-        if (!node.unlocked || !IsStageSceneAvailable(node.sceneName))
+        bool useWorld3Hall = node.sceneName != null && node.sceneName.StartsWith("Stage_3-", System.StringComparison.Ordinal);
+        string destinationScene = useWorld3Hall
+            ? StageAssets.World3HallPortalSelectionController.SceneName
+            : node.sceneName;
+
+        if (!node.unlocked || !IsStageSceneAvailable(node.sceneName) || !IsStageSceneAvailable(destinationScene))
         {
             PlaySfx(deniedSfx, deniedSfxVolume);
             return;
         }
 
-        StartCoroutine(ConfirmStageRoutine(node.sceneName));
+        if (useWorld3Hall)
+            StageAssets.World3HallPortalSelectionController.FocusStageOnNextLoad(node.sceneName);
+
+        StartCoroutine(ConfirmStageRoutine(destinationScene));
     }
 
     IEnumerator ConfirmStageRoutine(string sceneName)

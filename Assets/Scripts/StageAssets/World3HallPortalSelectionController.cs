@@ -9,6 +9,14 @@ namespace StageAssets
     [RequireComponent(typeof(AudioSource))]
     public sealed class World3HallPortalSelectionController : MonoBehaviour
     {
+        public const string SceneName = "Stage_World3Hall";
+        private static string focusedStageSceneName;
+
+        public static void FocusStageOnNextLoad(string sceneName)
+        {
+            focusedStageSceneName = sceneName;
+        }
+
         [SerializeField] private World3HallPortal[] portals;
         [SerializeField] private SpriteRenderer cursor;
         [SerializeField] private SpriteRenderer exitCursor;
@@ -28,6 +36,20 @@ namespace StageAssets
 
         private void Awake()
         {
+            string initialStage = focusedStageSceneName;
+            focusedStageSceneName = null;
+            if (portals != null && !string.IsNullOrEmpty(initialStage))
+            {
+                for (int i = 0; i < portals.Length; i++)
+                {
+                    if (portals[i] != null && portals[i].DestinationScene == initialStage)
+                    {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
             audioSource = GetComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
