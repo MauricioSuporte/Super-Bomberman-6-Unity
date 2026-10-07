@@ -114,7 +114,7 @@ MonoBehaviour:
   - {fileID: -2703369221538711723, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   - {fileID: -2703369221538711723, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   allowFlipX: 0
-  animationTime: 0.058333334
+  animationTime: 0.041666668
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -346,7 +346,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6024491792710709525, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
+  m_Sprite: {fileID: 6817694617725566507, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -369,12 +369,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -6024491792710709525, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
+  idleSprite: {fileID: 6817694617725566507, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   animationSprite:
   - {fileID: -7430908481242402098, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
-  - {fileID: -6024491792710709525, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
+  - {fileID: 6817694617725566507, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   - {fileID: 6257904444371528800, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
-  - {fileID: -6024491792710709525, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
+  - {fileID: 6817694617725566507, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   allowFlipX: 0
   animationTime: 0.25
   useSequenceDuration: 0
@@ -504,13 +504,13 @@ MonoBehaviour:
   - {fileID: 201367134, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   - {fileID: 787675861, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   allowFlipX: 0
-  animationTime: 0.11666667
+  animationTime: 0.041666668
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
-  loop: 0
+  loop: 1
   loopStartFrame: 0
   loopRestartDelay: 0
   idle: 0
@@ -632,7 +632,7 @@ MonoBehaviour:
   - {fileID: -6999350236695730881, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   - {fileID: -6999350236695730881, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   allowFlipX: 0
-  animationTime: 0.058333334
+  animationTime: 0.041666668
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
@@ -1296,7 +1296,7 @@ MonoBehaviour:
   - {fileID: 6744022963872104871, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   - {fileID: 6744022963872104871, guid: 4338932ed81356c468a8df32c38be9f9, type: 3}
   allowFlipX: 0
-  animationTime: 0.058333334
+  animationTime: 0.041666668
   useSequenceDuration: 0
   sequenceDuration: 0.5
   frameDurations: []
