@@ -8,6 +8,8 @@ namespace StageAssets
     {
         [SerializeField] private string destinationScene = "Stage_3-1";
 
+        public string DestinationScene => destinationScene;
+
         public int DestinationBuildIndex =>
             SceneUtility.GetBuildIndexByScenePath($"Assets/Scenes/{destinationScene}.unity");
     }

@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace StageAssets
 {
@@ -10,14 +11,19 @@ namespace StageAssets
     {
         [SerializeField] private World3HallPortal[] portals;
         [SerializeField] private SpriteRenderer cursor;
+        [SerializeField] private SpriteRenderer exitCursor;
+        [SerializeField] private AudioClip returnSfx;
+        [SerializeField] private Text selectedStageLabel;
         [SerializeField] private StagePreIntroPlayersWalk portalWalk;
         [SerializeField] private AudioClip confirmSfx;
         [SerializeField] private AudioClip cursorMoveSfx;
         [SerializeField, Min(0.01f)] private float fadeDuration = 0.5f;
 
         private AudioSource audioSource;
+        private WorldMapStageLabelStyle selectedStageLabelStyle;
         private int selectedIndex;
         private bool transitioning;
+        private bool exitSelected;
         private bool selectionReady;
 
         private void Awake()
@@ -27,6 +33,42 @@ namespace StageAssets
             audioSource.spatialBlend = 0f;
             if (cursor != null)
                 cursor.enabled = false;
+            if (exitCursor != null)
+                exitCursor.enabled = false;
+            if (selectedStageLabel != null)
+            {
+                selectedStageLabelStyle = selectedStageLabel.GetComponentInParent<WorldMapStageLabelStyle>();
+                if (selectedStageLabelStyle != null)
+                    selectedStageLabelStyle.gameObject.SetActive(false);
+                else
+                    selectedStageLabel.enabled = false;
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (selectedStageLabel == null || !selectionReady || portals[selectedIndex] == null)
+                return;
+
+            if (exitSelected)
+            {
+                if (selectedStageLabelStyle != null)
+                    selectedStageLabelStyle.gameObject.SetActive(false);
+                else
+                    selectedStageLabel.enabled = false;
+                return;
+            }
+
+            string stage = portals[selectedIndex].DestinationScene.Replace("Stage_", "").Replace("-", " - ");
+            LocalizedTmpFontFallback.Apply(selectedStageLabel);
+            selectedStageLabel.text = GameTextDatabase.WorldMap.WorldPrefix + stage;
+            selectedStageLabel.enabled = true;
+
+            if (selectedStageLabelStyle != null)
+            {
+                selectedStageLabelStyle.gameObject.SetActive(true);
+                selectedStageLabelStyle.ApplyStyle();
+            }
         }
 
         private void Update()
@@ -50,28 +92,74 @@ namespace StageAssets
             if (input == null)
                 return;
 
+            if (input.GetDown(1, PlayerAction.ActionB))
+            {
+                ReturnToWorldMap();
+                return;
+            }
+
+            bool previousExitSelected = exitSelected;
             int previousIndex = selectedIndex;
-            if (input.GetDown(1, PlayerAction.MoveLeft))
+            if (input.GetDown(1, PlayerAction.MoveDown) && exitCursor != null)
+                exitSelected = true;
+            else if (input.GetDown(1, PlayerAction.MoveUp))
+                exitSelected = false;
+            else if (!exitSelected && input.GetDown(1, PlayerAction.MoveLeft))
                 selectedIndex = (selectedIndex + portals.Length - 1) % portals.Length;
-            else if (input.GetDown(1, PlayerAction.MoveRight))
+            else if (!exitSelected && input.GetDown(1, PlayerAction.MoveRight))
                 selectedIndex = (selectedIndex + 1) % portals.Length;
 
-            if (selectedIndex != previousIndex && cursorMoveSfx != null)
+            if ((selectedIndex != previousIndex || exitSelected != previousExitSelected) && cursorMoveSfx != null)
                 GameAudioSettings.PlaySfx(audioSource, cursorMoveSfx);
 
             RefreshCursor();
 
             if (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start))
-                ConfirmSelection();
+            {
+                if (exitSelected)
+                    ReturnToWorldMap();
+                else
+                    ConfirmSelection();
+            }
         }
 
         private void RefreshCursor()
         {
+            if (exitCursor != null)
+                exitCursor.enabled = exitSelected;
+            if (exitSelected)
+            {
+                if (cursor != null)
+                    cursor.enabled = false;
+                return;
+            }
+
             if (cursor == null || portals[selectedIndex] == null)
                 return;
 
             cursor.transform.position = portals[selectedIndex].transform.position;
             cursor.enabled = true;
+        }
+
+        private void ReturnToWorldMap()
+        {
+            if (transitioning)
+                return;
+
+            transitioning = true;
+            if (returnSfx != null)
+                GameAudioSettings.PlaySfx(audioSource, returnSfx);
+            StartCoroutine(ReturnToWorldMapRoutine());
+        }
+
+        private IEnumerator ReturnToWorldMapRoutine()
+        {
+            if (StageIntroTransition.Instance != null)
+                StageIntroTransition.Instance.StartFadeOut(fadeDuration);
+            yield return new WaitForSecondsRealtime(fadeDuration);
+            if (GameMusicController.Instance != null)
+                GameMusicController.Instance.StopMusic();
+            SceneManager.LoadSceneAsync("WorldMap");
         }
 
         private void ConfirmSelection()
