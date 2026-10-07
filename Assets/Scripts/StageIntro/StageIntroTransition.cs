@@ -24,6 +24,7 @@ public class StageIntroTransition : MonoBehaviour
     private readonly float startSfxVolume = 0.5f;
 
     [Header("Stage Intro")]
+    [SerializeField] private bool showStagePresentation = true;
     public StageLabel stageLabel;
     public int world = 1;
     public int stageNumber = 1;
@@ -342,6 +343,15 @@ public class StageIntroTransition : MonoBehaviour
                 yield break;
             }
 
+            if (!showStagePresentation)
+            {
+                GamePauseController.ClearPauseFlag();
+                Time.timeScale = 1f;
+                EnableGameplay();
+                TryStartDefaultMusicNormalFlow();
+                yield break;
+            }
+
             if (stageLabel != null)
             {
                 stageLabel.gameObject.SetActive(true);
@@ -385,6 +395,15 @@ public class StageIntroTransition : MonoBehaviour
         fadeImage.gameObject.SetActive(false);
 
         if (isBattleMode)
+        {
+            GamePauseController.ClearPauseFlag();
+            Time.timeScale = 1f;
+            EnableGameplay();
+            TryStartDefaultMusicNormalFlow();
+            yield break;
+        }
+
+        if (!showStagePresentation)
         {
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
@@ -678,7 +697,7 @@ public class StageIntroTransition : MonoBehaviour
 
     private void TryPlayIntroMusic()
     {
-        if (introMusic == null)
+        if (!showStagePresentation || introMusic == null)
             return;
 
         if (GameMusicController.Instance == null)
