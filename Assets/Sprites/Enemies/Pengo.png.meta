@@ -50,6 +50,24 @@ TextureImporter:
   - first:
       213: 9057575538883662985
     second: Pengo_15
+  - first:
+      213: -3334712780995569791
+    second: Pengo_16
+  - first:
+      213: -2956212793109838849
+    second: Pengo_17
+  - first:
+      213: 6744022963872104871
+    second: Pengo_18
+  - first:
+      213: 4285365615706385739
+    second: Pengo_19
+  - first:
+      213: -81042318062059303
+    second: Pengo_20
+  - first:
+      213: -6841699309412577466
+    second: Pengo_21
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -164,9 +182,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 48
-        width: 20
-        height: 24
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -185,10 +203,10 @@ TextureImporter:
       name: Pengo_1
       rect:
         serializedVersion: 2
-        x: 20
-        y: 48
-        width: 20
-        height: 24
+        x: 30
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -207,10 +225,10 @@ TextureImporter:
       name: Pengo_2
       rect:
         serializedVersion: 2
-        x: 40
-        y: 48
-        width: 20
-        height: 24
+        x: 60
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -229,10 +247,10 @@ TextureImporter:
       name: Pengo_3
       rect:
         serializedVersion: 2
-        x: 60
-        y: 48
-        width: 20
-        height: 24
+        x: 90
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -251,10 +269,10 @@ TextureImporter:
       name: Pengo_4
       rect:
         serializedVersion: 2
-        x: 80
-        y: 48
-        width: 20
-        height: 24
+        x: 120
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -273,10 +291,10 @@ TextureImporter:
       name: Pengo_5
       rect:
         serializedVersion: 2
-        x: 0
-        y: 24
-        width: 20
-        height: 24
+        x: 150
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -295,10 +313,10 @@ TextureImporter:
       name: Pengo_6
       rect:
         serializedVersion: 2
-        x: 20
-        y: 24
-        width: 20
-        height: 24
+        x: 180
+        y: 80
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -317,10 +335,10 @@ TextureImporter:
       name: Pengo_7
       rect:
         serializedVersion: 2
-        x: 40
-        y: 24
-        width: 20
-        height: 24
+        x: 0
+        y: 48
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -339,10 +357,10 @@ TextureImporter:
       name: Pengo_8
       rect:
         serializedVersion: 2
-        x: 60
-        y: 24
-        width: 20
-        height: 24
+        x: 30
+        y: 48
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -361,10 +379,10 @@ TextureImporter:
       name: Pengo_9
       rect:
         serializedVersion: 2
-        x: 80
-        y: 24
-        width: 20
-        height: 24
+        x: 60
+        y: 48
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -383,10 +401,10 @@ TextureImporter:
       name: Pengo_10
       rect:
         serializedVersion: 2
-        x: 100
-        y: 24
-        width: 20
-        height: 24
+        x: 90
+        y: 48
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -405,10 +423,10 @@ TextureImporter:
       name: Pengo_11
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 20
-        height: 24
+        x: 120
+        y: 48
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -427,10 +445,10 @@ TextureImporter:
       name: Pengo_12
       rect:
         serializedVersion: 2
-        x: 20
-        y: 0
-        width: 20
-        height: 24
+        x: 150
+        y: 48
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -449,10 +467,10 @@ TextureImporter:
       name: Pengo_13
       rect:
         serializedVersion: 2
-        x: 40
-        y: 0
-        width: 20
-        height: 24
+        x: 0
+        y: 16
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -471,10 +489,10 @@ TextureImporter:
       name: Pengo_14
       rect:
         serializedVersion: 2
-        x: 60
-        y: 0
-        width: 20
-        height: 24
+        x: 30
+        y: 16
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -493,10 +511,10 @@ TextureImporter:
       name: Pengo_15
       rect:
         serializedVersion: 2
-        x: 80
-        y: 0
-        width: 20
-        height: 24
+        x: 60
+        y: 16
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -515,20 +533,20 @@ TextureImporter:
       name: Pengo_16
       rect:
         serializedVersion: 2
-        x: 100
-        y: 0
-        width: 20
-        height: 24
+        x: 90
+        y: 16
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 254776525846d4d48939b07eb2b2ca02
-      internalID: 1805582612
+      spriteID: 187ddccc468b8b1d0800000000000000
+      internalID: -3334712780995569791
       vertices: []
       indices: 
       edges: []
@@ -538,19 +556,19 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 120
-        y: 0
-        width: 20
-        height: 24
+        y: 16
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: edf2b19c12fa5c94c899d8f42ff7142f
-      internalID: 1711454393
+      spriteID: ff3093a902c69f6d0800000000000000
+      internalID: -2956212793109838849
       vertices: []
       indices: 
       edges: []
@@ -559,20 +577,152 @@ TextureImporter:
       name: Pengo_18
       rect:
         serializedVersion: 2
-        x: 140
-        y: 0
-        width: 20
-        height: 24
+        x: 150
+        y: 16
+        width: 30
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a18cae7725979d50800000000000000
+      internalID: 6744022963872104871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pengo_19
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3f921b7584f37264b954efd215c53e31
-      internalID: -455487175
+      spriteID: 0887504c64f87c04f8bfc69581dbc9cd
+      internalID: 4285365615706385739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pengo_20
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6995fddee0f9535409db682568ee230a
+      internalID: -81042318062059303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pengo_21
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 86f887ebab3cd3a4aa2c596d8f9a3912
+      internalID: -6841699309412577466
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pengo_22
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ffab48a1350e072439617e4b48b09a34
+      internalID: 1360744595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pengo_23
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: daef27b002513174eb133f761bf38384
+      internalID: 201367134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pengo_24
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae7a74f0ce0e282498307f23668c6810
+      internalID: 787675861
       vertices: []
       indices: 
       edges: []
@@ -581,7 +731,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 3e2b219d060070b4eb059904896e999a
+    spriteID: d637ae57e491be04f9a6a4f0e1a1d728
     internalID: 0
     vertices: []
     indices: 
@@ -591,7 +741,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":20.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":30.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Pengo_0: -6312187792658241447
       Pengo_1: 8462872658961467400
@@ -601,10 +751,16 @@ TextureImporter:
       Pengo_13: -5170642530102360969
       Pengo_14: -4356493999094966838
       Pengo_15: 9057575538883662985
-      Pengo_16: 1805582612
-      Pengo_17: 1711454393
-      Pengo_18: -455487175
+      Pengo_16: -3334712780995569791
+      Pengo_17: -2956212793109838849
+      Pengo_18: 6744022963872104871
+      Pengo_19: 4285365615706385739
       Pengo_2: -7206690371904727216
+      Pengo_20: -81042318062059303
+      Pengo_21: -6841699309412577466
+      Pengo_22: 1360744595
+      Pengo_23: 201367134
+      Pengo_24: 787675861
       Pengo_3: -8737106014920619657
       Pengo_4: 1401257502842547354
       Pengo_5: -2703369221538711723

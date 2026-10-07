@@ -9,7 +9,7 @@ using UnityEngine.Tilemaps;
 /// </summary>
 public sealed class PengoMovementController : JunctionTurningEnemyMovementController
 {
-    private const float SnowDuration = 0.5f;
+    private const float SnowDuration = 0.7f;
     private const float DirectionAlignmentToleranceInTiles = 0.2f;
 
     private readonly Dictionary<Vector2, AnimatedSpriteRenderer> attackSnowSprites = new();
@@ -80,7 +80,24 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
     protected override void OnTriggerEnter2D(Collider2D other)
     {
         if (!preparingSnow)
+        {
             base.OnTriggerEnter2D(other);
+            return;
+        }
+
+        if (isDead || other.gameObject.layer != LayerMask.NameToLayer("Explosion"))
+            return;
+
+        // An unfinished Snow is only a visual, so it cannot shield Pengo
+        // from an explosion or become a block after the attack is interrupted.
+        EndSnowPreparation();
+        base.OnTriggerEnter2D(other);
+
+        if (!isDead && !isInDamagedLoop)
+        {
+            UpdateSpriteDirection(direction);
+            base.DecideNextTile();
+        }
     }
 
     protected override void Die()
@@ -201,11 +218,11 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
             // frame. Set that base instead of assigning world position, so the
             // Snow stays on the tile being created for the whole loop.
             Vector3 snowTileLocalPosition = snowEffectLocalPosition +
-                (Vector3)(direction * tileSize);
+                (Vector3)(direction * tileSize) + Vector3.down * (tileSize * 0.5f);
             snowEffectSprite.SetExternalBaseLocalPosition(snowTileLocalPosition);
             SetVisualEnabled(snowEffectSprite, true);
             snowEffectSprite.idle = false;
-            snowEffectSprite.loop = true;
+            snowEffectSprite.loop = false;
             snowEffectSprite.CurrentFrame = 0;
             snowEffectSprite.RefreshFrame();
         }
