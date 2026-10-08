@@ -22,6 +22,22 @@ namespace StageAssets
         private int remainingDrops;
         private double nextImpactTime;
         private readonly List<ImpactVoice> impactVoices = new();
+        private readonly List<PlayerDanceState> dancingPlayers = new();
+
+        private sealed class PlayerDanceState
+        {
+            public MovementController Movement;
+            public Transform Root;
+            public Vector3 Origin;
+            public Vector3 FinalPosition;
+            public Collider2D Collider;
+            public bool ColliderEnabled;
+            public BombController Bomb;
+            public bool BombEnabled;
+            public bool InputLocked;
+            public bool ExternalOverride;
+            public bool MovementEnabled;
+        }
 
         private struct ImpactVoice
         {
@@ -47,6 +63,7 @@ namespace StageAssets
                 GameMusicController.Instance.PlayMusic(stageMusic, stageMusicVolume, loop: true);
 
             tileDropSfx.LoadAudioData();
+            StartCoroutine(MovePlayersRoutine());
 
             var cells = new List<Vector3Int>();
             for (int y = 3; y <= 4; y++)
@@ -93,6 +110,107 @@ namespace StageAssets
         private void Update()
         {
             CleanupImpactVoices();
+        }
+
+        private IEnumerator MovePlayersRoutine()
+        {
+            foreach (var movement in FindObjectsByType<MovementController>())
+            {
+                if (!movement.CompareTag("Player") || movement.isDead)
+                    continue;
+                var identity = movement.GetComponentInParent<PlayerIdentity>();
+                Transform root = identity != null ? identity.transform : movement.transform;
+                var collider = movement.GetComponent<Collider2D>();
+                var bomb = movement.GetComponent<BombController>();
+                dancingPlayers.Add(new PlayerDanceState
+                {
+                    Movement = movement, Root = root, Origin = root.position,
+                    FinalPosition = root.position + Vector3.up * movement.tileSize,
+                    Collider = collider, ColliderEnabled = collider != null && collider.enabled,
+                    Bomb = bomb, BombEnabled = bomb != null && bomb.enabled,
+                    InputLocked = movement.InputLocked, ExternalOverride = movement.ExternalMovementOverride,
+                    MovementEnabled = movement.enabled
+                });
+                movement.SetInputLocked(true, true);
+                movement.SetExternalMovementOverride(true);
+                movement.enabled = true;
+                if (collider != null)
+                    collider.enabled = false;
+                if (bomb != null)
+                    bomb.enabled = false;
+            }
+
+            const float pauseDuration = 0.2f;
+            const float secondsPerTile = (SequenceDuration - 2f * pauseDuration) / 13f;
+            Vector2[] steps =
+            {
+                Vector2.up, Vector2.zero, Vector2.left, Vector2.right * 2f,
+                Vector2.left * 2f, Vector2.right * 2f, Vector2.left * 2f,
+                Vector2.right, Vector2.down, Vector2.zero, Vector2.up
+            };
+            float elapsed = 0f;
+            while (elapsed < SequenceDuration)
+            {
+                float segmentTime = elapsed;
+                Vector2 offset = Vector2.zero;
+                Vector2 direction = Vector2.zero;
+                foreach (Vector2 step in steps)
+                {
+                    float duration = step == Vector2.zero ? pauseDuration : step.magnitude * secondsPerTile;
+                    if (segmentTime < duration)
+                    {
+                        offset += step * Mathf.Clamp01(segmentTime / duration);
+                        direction = step.normalized;
+                        break;
+                    }
+                    segmentTime -= duration;
+                    offset += step;
+                }
+
+                foreach (PlayerDanceState player in dancingPlayers)
+                {
+                    if (player.Movement == null || player.Root == null || player.Movement.isDead)
+                        continue;
+                    player.Movement.ApplyDirectionFromVector(direction);
+                    Vector3 position = player.Origin + (Vector3)(offset * player.Movement.tileSize);
+                    player.Root.position = position;
+                    if (player.Movement.Rigidbody != null)
+                    {
+                        player.Movement.Rigidbody.position = position;
+                        player.Movement.Rigidbody.linearVelocity = Vector2.zero;
+                    }
+                }
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            RestoreDancingPlayers(completed: true);
+        }
+
+        private void RestoreDancingPlayers(bool completed = false)
+        {
+            foreach (PlayerDanceState player in dancingPlayers)
+            {
+                if (player.Movement == null)
+                    continue;
+                if (player.Root != null)
+                    player.Root.position = completed ? player.FinalPosition : player.Origin;
+                if (player.Movement.Rigidbody != null)
+                    player.Movement.Rigidbody.position = completed ? player.FinalPosition : player.Origin;
+                player.Movement.SetExternalMovementOverride(player.ExternalOverride);
+                player.Movement.SetInputLocked(player.InputLocked, false);
+                player.Movement.ForceIdleUpConsideringMount();
+                player.Movement.enabled = player.MovementEnabled;
+                if (player.Collider != null)
+                    player.Collider.enabled = player.ColliderEnabled;
+                if (player.Bomb != null)
+                    player.Bomb.enabled = player.BombEnabled;
+            }
+            dancingPlayers.Clear();
+        }
+
+        private void OnDisable()
+        {
+            RestoreDancingPlayers();
         }
 
         private void CleanupImpactVoices()
