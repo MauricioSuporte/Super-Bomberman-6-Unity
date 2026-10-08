@@ -4098,28 +4098,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void ForceIdleUpConsideringMount()
     {
-        direction = Vector2.zero;
-        hasInput = false;
-        ResetDualInputAxes();
-
-        SetFacingDirection(Vector2.up, "ForceIdleUpConsideringMount");
-
-        if (isMounted)
-        {
-            var up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
-            SetDirection(Vector2.zero, up);
-
-            var rider = GetComponentInChildren<MountVisualController>(true);
-            if (rider != null)
-                rider.ForceIdleUp();
-        }
-        else
-        {
-            if (spriteRendererUp != null)
-                SetDirection(Vector2.zero, spriteRendererUp);
-            else
-                SetDirection(Vector2.zero, activeSpriteRenderer);
-        }
+        ForceMountedUpExclusive();
     }
 
     public void ForceMountedUpExclusive()

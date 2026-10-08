@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 namespace StageAssets
 {
+    [DefaultExecutionOrder(10000)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
     public sealed class World3HallPortalSelectionController : MonoBehaviour
@@ -33,6 +34,7 @@ namespace StageAssets
         private bool transitioning;
         private bool exitSelected;
         private bool selectionReady;
+        private MovementController[] players;
         public bool PresentationBlocked { get; set; }
 
         public string SelectedStageSceneName =>
@@ -77,6 +79,8 @@ namespace StageAssets
 
         private void LateUpdate()
         {
+            KeepPlayersFacingUp();
+
             if (selectedStageLabel == null || !selectionReady || portals[selectedIndex] == null)
                 return;
 
@@ -98,6 +102,36 @@ namespace StageAssets
             {
                 selectedStageLabelStyle.gameObject.SetActive(true);
                 selectedStageLabelStyle.ApplyStyle();
+            }
+        }
+
+        private void KeepPlayersFacingUp()
+        {
+            if (transitioning)
+                return;
+
+            if (players == null || players.Length == 0)
+                players = FindObjectsByType<MovementController>();
+
+            foreach (var player in players)
+            {
+                if (player == null || !player.gameObject.activeInHierarchy || player.isDead ||
+                    !player.CompareTag("Player") || player.Direction != Vector2.zero)
+                    continue;
+
+                // Intro controllers can be disabled while their sprites are visible.
+                // Preserve hidden entrance/fade states instead of revealing them early.
+                bool visible = false;
+                foreach (var sprite in player.GetComponentsInChildren<SpriteRenderer>(true))
+                {
+                    if (sprite.enabled && sprite.gameObject.activeInHierarchy)
+                    {
+                        visible = true;
+                        break;
+                    }
+                }
+                if (visible)
+                    player.ForceMountedUpExclusive();
             }
         }
 

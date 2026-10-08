@@ -318,6 +318,9 @@ public class StageIntroTransition : MonoBehaviour
 
             ApplyLouieAndEggsIntroVisibility(m, visible: true);
             m.EnableExclusiveFromState();
+            if (m.gameObject.scene.name == StageAssets.World3HallPortalSelectionController.SceneName &&
+                m.CompareTag("Player"))
+                m.ForceMountedUpExclusive();
         }
 
         yield return null;
