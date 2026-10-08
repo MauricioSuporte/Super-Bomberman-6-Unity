@@ -6104,7 +6104,8 @@ MonoBehaviour:
   maxNodes: 4096
   maxExpandSteps: 20000
   overlapBoxScale: 0.6
-  walkSpeedUnitsPerSecond: 5.25
+  walkSpeedUnitsPerSecond: 9
+  walkAnimationDurationMultiplier: 1
   reachEpsilon: 0.06
   delayBeforeWalkSeconds: 0.15
   delayAfterWalkSeconds: 0.05

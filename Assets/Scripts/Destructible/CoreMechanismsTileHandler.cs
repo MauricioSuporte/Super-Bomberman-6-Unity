@@ -73,6 +73,17 @@ public sealed class CoreMechanismsTileHandler : MonoBehaviour, IDestructibleTile
         return true;
     }
 
+    public CoreMechanismsDestructible DestroyForClearedStage(Tilemap tilemap, Vector3Int cell)
+    {
+        Vector3 position = tilemap.GetCellCenterWorld(cell) + spawnOffset;
+        tilemap.SetTile(cell, null);
+        if (deathPrefab == null)
+            return null;
+        CoreMechanismsDestructible instance = Instantiate(deathPrefab, position, Quaternion.identity, tilemap.transform);
+        instance.PlayDeath();
+        return instance;
+    }
+
     static void ResetStageCounter()
     {
         allDestroyedSfxPlayed = false;

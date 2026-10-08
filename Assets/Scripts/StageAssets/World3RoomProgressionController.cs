@@ -33,6 +33,7 @@ namespace StageAssets
 
         private readonly Dictionary<EnemyMovementController, bool> enemyOriginalStates = new();
         private bool enemyRoomLifecycleInitialized;
+        private bool stageAlreadyCleared;
 
         /// <summary>
         /// Suspends enemy GameObjects from the room being left and wakes those
@@ -101,6 +102,7 @@ namespace StageAssets
 
         private void Start()
         {
+            stageAlreadyCleared = StageUnlockProgress.IsCleared(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
             Physics2D.SyncTransforms();
             ScanRoomCores();
         }
@@ -123,6 +125,37 @@ namespace StageAssets
         {
             if (!enemyRoomLifecycleInitialized)
                 TryInitializeEnemyRoomLifecycle();
+
+            if (!stageAlreadyCleared || rooms == null || GamePauseController.IsPaused || Time.timeScale == 0f ||
+                (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning))
+                return;
+
+            foreach (Room room in rooms)
+            {
+                if (room == null || room.released || room.roomBounds == null || !HasGameplayPlayer(room.roomBounds))
+                    continue;
+
+                CoreMechanismsDestructible completionCore = null;
+                foreach (CoreMechanismsDestructible core in new List<CoreMechanismsDestructible>(room.remainingSceneCores))
+                {
+                    if (core == null)
+                        continue;
+                    completionCore = core;
+                    core.PlayDeath();
+                }
+                CoreMechanismsTileHandler tileHandler = coreTilemap.GetComponent<CoreMechanismsTileHandler>();
+                foreach (Vector3Int cell in room.remainingCores)
+                {
+                    if (tileHandler != null)
+                        completionCore = tileHandler.DestroyForClearedStage(coreTilemap, cell) ?? completionCore;
+                    else
+                        coreTilemap.SetTile(cell, null);
+                }
+                room.remainingSceneCores.Clear();
+                room.remainingCores.Clear();
+                if (!room.released)
+                    Release(room, completionCore);
+            }
         }
 
         private void ScanRoomCores()
@@ -165,6 +198,15 @@ namespace StageAssets
                 }
             }
 
+        }
+
+        private static bool HasGameplayPlayer(Collider2D bounds)
+        {
+            foreach (MovementController player in FindObjectsByType<MovementController>())
+                if (player.CompareTag("Player") && !player.isDead && player.enabled && !player.InputLocked &&
+                    bounds.OverlapPoint(BattleMode7PortalController.GetRoomPresencePosition(player)))
+                    return true;
+            return false;
         }
 
         private void HandleCoreDestroyed(Tilemap tilemap, Vector3Int cell)

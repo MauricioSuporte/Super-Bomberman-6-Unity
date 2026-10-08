@@ -55,6 +55,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [Header("Movement")]
     [Tooltip("World units per second. (tileSize=1 => 3 means 3 tiles/sec)")]
     [SerializeField, Min(0.1f)] private float walkSpeedUnitsPerSecond = 3.5f;
+    [SerializeField, Min(0.01f)] private float walkAnimationDurationMultiplier = 1f;
+    private readonly Dictionary<MovementController, float> originalWalkTimings = new();
     [SerializeField, Min(0.01f)] private float reachEpsilon = 0.06f;
 
     [Header("Timings")]
@@ -112,6 +114,11 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         if (entranceCameraFollow != null)
             entranceCameraFollow.enabled = false;
+    }
+
+    private void OnDisable()
+    {
+        StopWalkLoopSfx();
     }
 
     public void PrepareEntranceCamerasForIntro()
@@ -501,6 +508,9 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Transform root = id.transform != null ? id.transform : move.transform;
 
             move.SetExternalMovementOverride(true);
+            if (!originalWalkTimings.ContainsKey(move))
+                originalWalkTimings[move] = move.WalkAnimationDurationMultiplier;
+            move.SetWalkAnimationDurationMultiplier(walkAnimationDurationMultiplier);
             move.SetInputLocked(true, true);
 
             if (!cachedColliders.ContainsKey(move))
@@ -1131,6 +1141,13 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
     private void StopWalkLoopSfx()
     {
+        foreach (var entry in originalWalkTimings)
+        {
+            if (entry.Key == null)
+                continue;
+            entry.Key.SetWalkAnimationDurationMultiplier(entry.Value);
+        }
+        originalWalkTimings.Clear();
         walkSfxActive = false;
 
         if (walkSfxRoutine != null)

@@ -14,12 +14,13 @@ namespace StageAssets
 
             cleanupTriggered = true;
             World3GateOpenedSequenceController sequence = GetComponentInParent<World3GateOpenedSequenceController>();
-            if (sequence != null)
+            if (sequence != null && !sequence.UsesCollectedChipExit)
                 sequence.BeginChipBlinkOut();
 
-            World3EndStageCelebrationEffect.Play(
-                sequence != null ? sequence.GetChipCenterWorld() : other.transform.position,
-                other.transform);
+            if (sequence == null || !sequence.UsesCollectedChipExit)
+                World3EndStageCelebrationEffect.Play(
+                    sequence != null ? sequence.GetChipCenterWorld() : other.transform.position,
+                    other.transform);
             KillActiveEnemies();
         }
 

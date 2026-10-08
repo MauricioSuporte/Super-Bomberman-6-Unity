@@ -49,6 +49,41 @@ namespace StageAssets
         private bool chipBlinkOutStarted;
         private bool tileSwapsApplied;
         private readonly List<GameObject> bubbleCrashPhase1Pieces = new();
+        public bool UsesCollectedChipExit { get; private set; }
+
+        private void Start()
+        {
+            UsesCollectedChipExit = StageUnlockProgress.IsCleared(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+            if (!UsesCollectedChipExit)
+                return;
+
+            Vector3 center = GetChipCenterWorld();
+            Transform chip = FindBubbleChipChild("Chip");
+            Transform bubbleRoot = chip;
+            while (bubbleRoot != null && bubbleRoot.name != "BubbleChip")
+                bubbleRoot = bubbleRoot.parent;
+            if (bubbleRoot != null)
+                bubbleRoot.gameObject.SetActive(false);
+
+            Sprite sheet = Resources.Load<Sprite>("StageAssets/ExitChip");
+            if (sheet == null)
+                return;
+            Sprite[] frames = new Sprite[4];
+            for (int i = 0; i < frames.Length; i++)
+                frames[i] = Sprite.Create(sheet.texture, new Rect(i * 16, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
+            GameObject exit = new("ExitChip");
+            exit.transform.SetParent(transform, false);
+            exit.transform.position = center + Vector3.right * (1f / 16f);
+            SpriteRenderer visual = exit.AddComponent<SpriteRenderer>();
+            visual.sortingOrder = 10;
+            visual.sprite = frames[0];
+            AnimatedSpriteRenderer animation = exit.AddComponent<AnimatedSpriteRenderer>();
+            animation.animationSprite = frames;
+            animation.idleSprite = frames[0];
+            animation.animationTime = 0.15f;
+            animation.idle = false;
+            animation.loop = true;
+        }
 
         public void BeginSequence() => HandleAllCoreMechanismsDestroyed();
 
@@ -86,6 +121,11 @@ namespace StageAssets
                 return;
 
             sequenceStarted = true;
+            if (UsesCollectedChipExit)
+            {
+                ApplyTileSwaps();
+                return;
+            }
             StartCoroutine(SequenceRoutine());
         }
 

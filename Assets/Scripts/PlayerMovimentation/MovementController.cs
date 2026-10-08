@@ -1484,13 +1484,21 @@ public class MovementController : MonoBehaviour, IKillable
         return GetWalkAnimationFrameTime() * ReferenceWalkAnimationFrameCount / frameCount;
     }
 
+    public float WalkAnimationDurationMultiplier { get; private set; } = 1f;
+
+    public void SetWalkAnimationDurationMultiplier(float multiplier)
+    {
+        WalkAnimationDurationMultiplier = Mathf.Max(0.01f, multiplier);
+        ApplyWalkAnimationTimingToMovementSprites();
+    }
+
     void ApplyWalkAnimationTiming(AnimatedSpriteRenderer renderer)
     {
         if (renderer == null)
             return;
 
         renderer.useSequenceDuration = false;
-        renderer.animationTime = GetWalkAnimationFrameTimeForFrameCount(GetAnimationFrameCount(renderer));
+        renderer.animationTime = GetWalkAnimationFrameTimeForFrameCount(GetAnimationFrameCount(renderer)) * WalkAnimationDurationMultiplier;
     }
 
     static int GetAnimationFrameCount(AnimatedSpriteRenderer renderer)
