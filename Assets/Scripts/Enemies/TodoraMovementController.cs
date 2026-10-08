@@ -106,7 +106,7 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
         DisableTodoraSprites();
 
         activeSprite = selected;
-        activeSprite.enabled = true;
+        SetSpriteEnabled(activeSprite, true);
         activeSprite.idle = false;
         activeSprite.loop = true;
 
@@ -298,8 +298,16 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
 
     private static void SetSpriteEnabled(AnimatedSpriteRenderer sprite, bool enabled)
     {
-        if (sprite != null)
-            sprite.enabled = enabled;
+        if (sprite == null)
+            return;
+
+        sprite.enabled = enabled;
+
+        // During parent Awake, the child's OnDisable may not run yet.
+        // Synchronize visibility explicitly so the serialized Down renderer
+        // cannot remain visible beside the selected walking/charge sprite.
+        if (sprite.TryGetComponent<SpriteRenderer>(out var renderer))
+            renderer.enabled = enabled;
     }
 
 }

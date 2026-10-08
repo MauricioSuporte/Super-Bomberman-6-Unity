@@ -489,6 +489,8 @@ public class GamePauseController : MonoBehaviour
             GameMusicController.Instance.StopMusic();
 
         bool exitingBattleModeStage = IsBattleModeStageActive;
+        bool preserveNormalGameItems = sceneName == worldMapSceneName &&
+            !exitingBattleModeStage && !IsBossRushGameplayActive;
 
         ForceUnpause(resumeMusic: false);
 
@@ -511,6 +513,16 @@ public class GamePauseController : MonoBehaviour
         if (resetSessionForTitle)
         {
             PlayerPersistentStats.ResetSessionForReturnToTitle();
+        }
+        else if (preserveNormalGameItems)
+        {
+            foreach (var movement in FindObjectsByType<MovementController>())
+            {
+                if (movement.CompareTag("Player") && movement.gameObject.activeInHierarchy && !movement.isDead)
+                    PlayerPersistentStats.StageCaptureFromRuntime(movement, movement.GetComponent<BombController>());
+            }
+
+            PlayerPersistentStats.CommitStage();
         }
         else if (resetPlayersToBaseState)
         {
