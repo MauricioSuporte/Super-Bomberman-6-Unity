@@ -19,6 +19,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
     private Tilemap indestructibleTilemap;
     private TileBase destructibleTileTemplate;
     private bool preparingSnow;
+    private bool snowDamagedDuringPreparation;
     private Vector2 pendingSnowDirection;
     private float snowStartedAt;
     private AnimatedSpriteRenderer snowEffectSprite;
@@ -88,16 +89,14 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
         if (isDead || other.gameObject.layer != LayerMask.NameToLayer("Explosion"))
             return;
 
-        // An unfinished Snow is only a visual, so it cannot shield Pengo
-        // from an explosion or become a block after the attack is interrupted.
-        EndSnowPreparation();
+        // Keep the unfinished Snow visual running while normal health handling
+        // applies damage and blinks every child renderer, including the Snow.
+        CharacterHealth pengoHealth = GetComponent<CharacterHealth>();
+        int lifeBeforeHit = pengoHealth != null ? pengoHealth.life : 0;
         base.OnTriggerEnter2D(other);
 
-        if (!isDead && !isInDamagedLoop)
-        {
-            UpdateSpriteDirection(direction);
-            base.DecideNextTile();
-        }
+        if (preparingSnow && pengoHealth != null && pengoHealth.life < lifeBeforeHit)
+            snowDamagedDuringPreparation = true;
     }
 
     protected override void Die()
@@ -204,6 +203,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
     private void BeginSnowPreparation()
     {
         preparingSnow = true;
+        snowDamagedDuringPreparation = false;
         isStuck = false;
         targetTile = rb.position;
         direction = pendingSnowDirection;
@@ -245,7 +245,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
         // immediately ahead, never the tile occupied by Pengo itself.
         Vector2 targetPosition = GetNextTilePosition(pendingSnowDirection);
         bool createdDestructible = false;
-        if (CanCreateDestructibleAt(targetPosition))
+        if (!snowDamagedDuringPreparation && CanCreateDestructibleAt(targetPosition))
         {
             Vector3Int cell = destructibleTilemap.WorldToCell(targetPosition);
             destructibleTilemap.SetTile(cell, destructibleTileTemplate);
@@ -254,6 +254,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
         }
 
         EndSnowPreparation();
+        UpdateSpriteDirection(direction);
         if (createdDestructible)
         {
             ChooseDirectionAfterCreatingTile(pendingSnowDirection);
