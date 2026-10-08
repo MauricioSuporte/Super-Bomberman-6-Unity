@@ -378,6 +378,17 @@ public static class StageUnlockProgress
             changed = true;
         }
 
+        if (slot.clearedStages.Contains("Stage_3-6"))
+        {
+            if (!slot.unlockedStages.Contains("Stage_3-7"))
+            {
+                slot.unlockedStages.Add("Stage_3-7");
+                changed = true;
+            }
+        }
+        else if (slot.unlockedStages.Remove("Stage_3-7"))
+            changed = true;
+
         return changed;
     }
 

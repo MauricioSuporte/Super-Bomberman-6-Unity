@@ -11,6 +11,8 @@ namespace StageAssets
 
         public static bool HasPendingReveal => pendingRevealStage != null && pendingRevealSlot == SaveSystem.ActiveSlot;
 
+        public static string PendingRevealStage => HasPendingReveal ? pendingRevealStage : null;
+
         public static bool IsChipStage(string sceneName) =>
             sceneName != null && sceneName.Length == 9 && sceneName.StartsWith("Stage_3-") &&
             sceneName[8] >= '1' && sceneName[8] <= '6';
@@ -59,6 +61,10 @@ namespace StageAssets
 
             if (selection != null)
                 selection.PresentationBlocked = true;
+            // StageIntroTransition sets IntroRunning in Start. Wait until every
+            // scene Start has run before checking it, otherwise the effect can
+            // be created during fade-in and remain visible at timeScale zero.
+            yield return null;
             while (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning)
                 yield return null;
 
@@ -66,25 +72,31 @@ namespace StageAssets
             yield return new WaitForSeconds(World3EndStageCelebrationEffect.Duration);
 
             SpriteRenderer part = parts[revealingPart];
-            for (int i = 0; i < 3; i++)
+            // Six cycles in half the time previously used by three cycles.
+            var revealBlinkWait = new WaitForSeconds(blinkInterval * 0.25f);
+            for (int i = 0; i < 6; i++)
             {
                 SetAlpha(part, 1f);
-                yield return new WaitForSeconds(blinkInterval);
+                yield return revealBlinkWait;
                 SetAlpha(part, 0f);
-                yield return new WaitForSeconds(blinkInterval);
+                yield return revealBlinkWait;
             }
 
             if (GameMusicController.Instance != null)
                 GameMusicController.Instance.PlaySfx(revealSfx);
+            const float fadeDuration = 1.25f;
             float fadeElapsed = 0f;
-            while (fadeElapsed < 1f)
+            while (fadeElapsed < fadeDuration)
             {
-                SetAlpha(part, Mathf.Clamp01(fadeElapsed));
+                SetAlpha(part, Mathf.Clamp01(fadeElapsed / fadeDuration));
                 yield return null;
                 fadeElapsed += Time.deltaTime;
             }
             SetAlpha(part, 1f);
             revealingPart = -1;
+            RefreshParts();
+            if (selection != null)
+                yield return selection.RevealUnlockedPortals();
             if (selection != null)
                 selection.PresentationBlocked = false;
             RefreshParts();
@@ -110,11 +122,12 @@ namespace StageAssets
             }
             else
             {
+                float selectionBlinkInterval = blinkInterval * 0.5f;
                 elapsed += Time.deltaTime;
-                if (elapsed >= blinkInterval)
+                if (elapsed >= selectionBlinkInterval)
                 {
-                    int steps = Mathf.FloorToInt(elapsed / blinkInterval);
-                    elapsed -= steps * blinkInterval;
+                    int steps = Mathf.FloorToInt(elapsed / selectionBlinkInterval);
+                    elapsed -= steps * selectionBlinkInterval;
                     if ((steps & 1) != 0)
                         pendingVisible = !pendingVisible;
                 }

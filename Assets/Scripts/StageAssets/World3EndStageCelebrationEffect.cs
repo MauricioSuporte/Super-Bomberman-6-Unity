@@ -124,6 +124,7 @@ namespace StageAssets
             child.transform.SetParent(transform, false);
 
             SpriteRenderer renderer = child.AddComponent<SpriteRenderer>();
+            renderer.color = Color.clear;
             renderer.sprite = sprite;
             renderer.sortingLayerID = sortingLayerId;
             renderer.sortingOrder = order;

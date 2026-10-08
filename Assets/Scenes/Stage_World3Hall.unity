@@ -1932,6 +1932,7 @@ MonoBehaviour:
   portalWalk: {fileID: 1525976996}
   confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   cursorMoveSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  portalUnlockSfx: {fileID: 8300000, guid: 87760f90858c4726abf4bc02abacaa70, type: 3}
   fadeDuration: 0.5
 --- !u!82 &613056521
 AudioSource:
@@ -5660,7 +5661,19 @@ PrefabInstance:
     - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+      objectReference: {fileID: 2100000, guid: 97ee630346a0c6047aa3d87c30969619, type: 2}
+    - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4695506962431821358, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1

@@ -26,6 +26,7 @@ namespace StageAssets
         [SerializeField] private StagePreIntroPlayersWalk portalWalk;
         [SerializeField] private AudioClip confirmSfx;
         [SerializeField] private AudioClip cursorMoveSfx;
+        [SerializeField] private AudioClip portalUnlockSfx;
         [SerializeField, Min(0.01f)] private float fadeDuration = 0.5f;
 
         private AudioSource audioSource;
@@ -60,9 +61,27 @@ namespace StageAssets
                 }
             }
 
+            if (portals != null && portals.Length > 0)
+            {
+                string pendingStage = World3HallChipAssemblyController.PendingRevealStage;
+                foreach (var portal in portals)
+                    if (portal != null)
+                        portal.SetAvailable(StageUnlockProgress.IsUnlocked(portal.DestinationScene) &&
+                            (pendingStage == null || portal.UnlockedBeforeClear(pendingStage)));
+                if (portals[selectedIndex] == null || !portals[selectedIndex].Available)
+                    for (int i = 0; i < portals.Length; i++)
+                        if (portals[i] != null && portals[i].Available)
+                        {
+                            selectedIndex = i;
+                            break;
+                        }
+            }
+
             audioSource = GetComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
+            if (portalUnlockSfx == null)
+                portalUnlockSfx = Resources.Load<AudioClip>("Sounds/Portal Unlock");
             if (cursor != null)
                 cursor.enabled = false;
             if (exitCursor != null)
@@ -215,7 +234,7 @@ namespace StageAssets
             float bestDistance = float.PositiveInfinity;
             for (int i = 0; i < portals.Length; i++)
             {
-                if (i == selectedIndex || portals[i] == null)
+                if (i == selectedIndex || portals[i] == null || !portals[i].Available)
                     continue;
 
                 Vector2 delta = (Vector2)portals[i].transform.position - origin;
@@ -244,7 +263,7 @@ namespace StageAssets
             float edge = direction > 0f ? float.PositiveInfinity : float.NegativeInfinity;
             for (int i = 0; i < portals.Length; i++)
             {
-                if (portals[i] == null)
+                if (portals[i] == null || !portals[i].Available)
                     continue;
                 float x = portals[i].transform.position.x;
                 if ((direction > 0f && x < edge) || (direction < 0f && x > edge))
@@ -297,7 +316,7 @@ namespace StageAssets
         private void ConfirmSelection()
         {
             var portal = portals[selectedIndex];
-            if (portal == null || portalWalk == null)
+            if (portal == null || !portal.Available || portalWalk == null)
                 return;
 
             int destinationIndex = portal.DestinationBuildIndex;
@@ -319,6 +338,18 @@ namespace StageAssets
 
             PlayerPersistentStats.CommitStage();
             StartCoroutine(EnterSelectedPortal(portal.transform.position, destinationIndex));
+        }
+
+        public IEnumerator RevealUnlockedPortals()
+        {
+            if (portals == null)
+                yield break;
+            foreach (var portal in portals)
+            {
+                if (portal == null || portal.Available || !StageUnlockProgress.IsUnlocked(portal.DestinationScene))
+                    continue;
+                yield return portal.Reveal(portalUnlockSfx);
+            }
         }
 
         private IEnumerator EnterSelectedPortal(Vector2 portalCenter, int destinationIndex)
