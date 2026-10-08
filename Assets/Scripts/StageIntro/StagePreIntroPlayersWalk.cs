@@ -325,27 +325,30 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         var plans = new List<PortalWalkPlan>(players.Count);
         foreach (var player in players)
         {
-            Vector2 start = RoundToGrid(GetRootWorldPos(player.root, player.mover), player.tileSize);
-            Vector2 goal = RoundToGrid(portalCenter, player.tileSize);
+            Vector2 start = GetRootWorldPos(player.root, player.mover);
+            Vector2 goal = portalCenter;
             var path = new List<Vector2> { start };
             Vector2 position = start;
-            while (Mathf.Abs(position.x - goal.x) > player.tileSize * 0.5f)
+            while (Mathf.Abs(position.x - goal.x) > 0.0001f)
             {
-                position.x += Mathf.Sign(goal.x - position.x) * player.tileSize;
+                position.x = Mathf.MoveTowards(position.x, goal.x, player.tileSize);
                 path.Add(position);
             }
-            while (Mathf.Abs(position.y - goal.y) > player.tileSize * 0.5f)
+            while (Mathf.Abs(position.y - goal.y) > 0.0001f)
             {
-                position.y += Mathf.Sign(goal.y - position.y) * player.tileSize;
+                position.y = Mathf.MoveTowards(position.y, goal.y, player.tileSize);
                 path.Add(position);
             }
             path.Add(goal + Vector2.up * (player.tileSize * 0.5f));
-            plans.Add(new PortalWalkPlan { player = player, path = path });
+            var distances = new List<float>(path.Count) { 0f };
+            for (int i = 1; i < path.Count; i++)
+                distances.Add(distances[i - 1] + Vector2.Distance(path[i - 1], path[i]) / player.tileSize);
+            plans.Add(new PortalWalkPlan { player = player, path = path, distances = distances });
         }
 
         plans.Sort((a, b) =>
         {
-            int distanceOrder = a.path.Count.CompareTo(b.path.Count);
+            int distanceOrder = a.distances[^1].CompareTo(b.distances[^1]);
             return distanceOrder != 0 ? distanceOrder : a.player.playerId.CompareTo(b.player.playerId);
         });
 
@@ -368,10 +371,10 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                     // The last half-tile segment and the absorption reserve the
                     // portal base as well as the raised endpoint.
                     float occupiedUntil = sharedTile >= previous.path.Count - 2
-                        ? (previous.path.Count - 1.5f) * previous.secondsPerTile + PortalAbsorptionSeconds
-                        : (sharedTile + 0.5f) * previous.secondsPerTile;
+                        ? previous.distances[^1] * previous.secondsPerTile + PortalAbsorptionSeconds
+                        : (previous.distances[sharedTile] + previous.distances[sharedTile + 1]) * 0.5f * previous.secondsPerTile;
                     plan.secondsPerTile = Mathf.Max(plan.secondsPerTile,
-                        (occupiedUntil + 0.02f) / (tile - 0.5f));
+                        (occupiedUntil + 0.02f) / ((plan.distances[tile - 1] + plan.distances[tile]) * 0.5f));
                 }
             }
         }
@@ -401,16 +404,18 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                         continue;
                     }
 
-                    float arrivalTime = (plan.path.Count - 1.5f) * plan.secondsPerTile;
+                    float arrivalTime = plan.distances[^1] * plan.secondsPerTile;
                     if (elapsed < arrivalTime)
                     {
                         float progress = elapsed / plan.secondsPerTile;
-                        int tile = Mathf.Min(Mathf.FloorToInt(progress), plan.path.Count - 2);
+                        int tile = 0;
+                        while (tile < plan.path.Count - 2 && progress >= plan.distances[tile + 1])
+                            tile++;
                         Vector2 direction = (plan.path[tile + 1] - plan.path[tile]).normalized;
                         plan.player.mover.ApplyDirectionFromVector(direction);
                         float segmentTiles = Vector2.Distance(plan.path[tile], plan.path[tile + 1]) / plan.player.tileSize;
                         SetRootWorldPos(plan.player.root,
-                            Vector2.Lerp(plan.path[tile], plan.path[tile + 1], (progress - tile) / segmentTiles));
+                            Vector2.Lerp(plan.path[tile], plan.path[tile + 1], (progress - plan.distances[tile]) / segmentTiles));
                         continue;
                     }
 
@@ -469,6 +474,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     {
         public PlayerWalkData player;
         public List<Vector2> path;
+        public List<float> distances;
         public float secondsPerTile;
         public bool finished;
         public SpriteRenderer[] blinkRenderers;

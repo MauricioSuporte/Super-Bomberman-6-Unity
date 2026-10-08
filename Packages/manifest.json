@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.0.0",
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.3.0",
     "com.unity.2d.animation": "16.0.0",
     "com.unity.2d.pixel-perfect": "6.0.0",
     "com.unity.2d.psdimporter": "15.0.0",

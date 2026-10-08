@@ -165,13 +165,31 @@ namespace StageAssets
             bool previousExitSelected = exitSelected;
             int previousIndex = selectedIndex;
             if (input.GetDown(1, PlayerAction.MoveDown) && exitCursor != null)
-                exitSelected = true;
+            {
+                if (!exitSelected)
+                {
+                    int below = FindPortalInDirection(Vector2.down);
+                    if (below >= 0)
+                        selectedIndex = below;
+                    else
+                        exitSelected = true;
+                }
+            }
             else if (input.GetDown(1, PlayerAction.MoveUp))
-                exitSelected = false;
+            {
+                if (exitSelected)
+                    exitSelected = false;
+                else
+                {
+                    int above = FindPortalInDirection(Vector2.up);
+                    if (above >= 0)
+                        selectedIndex = above;
+                }
+            }
             else if (!exitSelected && input.GetDown(1, PlayerAction.MoveLeft))
-                selectedIndex = (selectedIndex + portals.Length - 1) % portals.Length;
+                MoveHorizontal(-1f);
             else if (!exitSelected && input.GetDown(1, PlayerAction.MoveRight))
-                selectedIndex = (selectedIndex + 1) % portals.Length;
+                MoveHorizontal(1f);
 
             if ((selectedIndex != previousIndex || exitSelected != previousExitSelected) && cursorMoveSfx != null)
                 GameAudioSettings.PlaySfx(audioSource, cursorMoveSfx);
@@ -184,6 +202,56 @@ namespace StageAssets
                     ReturnToWorldMap();
                 else
                     ConfirmSelection();
+            }
+        }
+
+        private int FindPortalInDirection(Vector2 direction)
+        {
+            if (portals[selectedIndex] == null)
+                return -1;
+
+            Vector2 origin = portals[selectedIndex].transform.position;
+            int nearest = -1;
+            float bestDistance = float.PositiveInfinity;
+            for (int i = 0; i < portals.Length; i++)
+            {
+                if (i == selectedIndex || portals[i] == null)
+                    continue;
+
+                Vector2 delta = (Vector2)portals[i].transform.position - origin;
+                if (Vector2.Dot(delta, direction) <= 0.01f)
+                    continue;
+
+                float distance = direction.x != 0f ? Mathf.Abs(delta.x) : delta.sqrMagnitude;
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    nearest = i;
+                }
+            }
+            return nearest;
+        }
+
+        private void MoveHorizontal(float direction)
+        {
+            int next = FindPortalInDirection(new Vector2(direction, 0f));
+            if (next >= 0)
+            {
+                selectedIndex = next;
+                return;
+            }
+
+            float edge = direction > 0f ? float.PositiveInfinity : float.NegativeInfinity;
+            for (int i = 0; i < portals.Length; i++)
+            {
+                if (portals[i] == null)
+                    continue;
+                float x = portals[i].transform.position.x;
+                if ((direction > 0f && x < edge) || (direction < 0f && x > edge))
+                {
+                    edge = x;
+                    selectedIndex = i;
+                }
             }
         }
 
