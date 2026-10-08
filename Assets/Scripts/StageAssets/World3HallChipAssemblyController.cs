@@ -26,6 +26,7 @@ namespace StageAssets
 
         [SerializeField] private SpriteRenderer[] parts = new SpriteRenderer[7];
         [SerializeField] private AudioClip revealSfx;
+        [SerializeField, Range(0f, 1f)] private float revealSfxVolume = 1f;
         [SerializeField, Min(0.01f)] private float blinkInterval = 0.5f;
 
         [SerializeField] private World3HallPortalSelectionController selection;
@@ -83,7 +84,7 @@ namespace StageAssets
             }
 
             if (GameMusicController.Instance != null)
-                GameMusicController.Instance.PlaySfx(revealSfx);
+                GameMusicController.Instance.PlaySfx(revealSfx, revealSfxVolume);
             const float fadeDuration = 1.25f;
             float fadeElapsed = 0f;
             while (fadeElapsed < fadeDuration)

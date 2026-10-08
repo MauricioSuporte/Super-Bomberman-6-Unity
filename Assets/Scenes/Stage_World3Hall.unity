@@ -386,7 +386,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 92a78ccf9f8b93e4caa26934c3f4c9a2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -1070,7 +1070,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: b956e8a98ac948e4382f5ac95d49c6b0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1456,7 +1456,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 7968158a2bbda7c40a7457f17b3a76da, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -1529,6 +1529,7 @@ MonoBehaviour:
   - {fileID: 2079638704}
   - {fileID: 1507839989}
   revealSfx: {fileID: 8300000, guid: fa2b3544bb0b75942ae148f59150e118, type: 3}
+  revealSfxVolume: 1
   blinkInterval: 0.5
   selection: {fileID: 613056520}
 --- !u!1001 &473662686
@@ -1898,6 +1899,7 @@ GameObject:
   - component: {fileID: 613056522}
   - component: {fileID: 613056521}
   - component: {fileID: 613056520}
+  - component: {fileID: 613056523}
   m_Layer: 0
   m_Name: World3HallPortalSelection
   m_TagString: Untagged
@@ -1930,6 +1932,7 @@ MonoBehaviour:
   returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   selectedStageLabel: {fileID: 51724101}
   portalWalk: {fileID: 1525976996}
+  stageSevenSequence: {fileID: 613056523}
   confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   cursorMoveSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   portalUnlockSfx: {fileID: 8300000, guid: 87760f90858c4726abf4bc02abacaa70, type: 3}
@@ -2049,6 +2052,24 @@ Transform:
   - {fileID: 528573462}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &613056523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 613056519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5b3536e21344ef0b9a2b19b660a06c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3HallStageSevenSequence
+  indestructibleTilemap: {fileID: 818279435}
+  indestructibleTile: {fileID: 11400000, guid: aaf11187670e49e8b0f4969143a19ee1, type: 2}
+  hallExit: {fileID: 528573461}
+  stageMusic: {fileID: 8300000, guid: 67629076b9b54934bfae01d7015a93ae, type: 3}
+  stageMusicVolume: 0.50978214
+  tileDropSfx: {fileID: 8300000, guid: 39027e7c7b4146779d5205d29d09e665, type: 3}
 --- !u!1001 &644027880
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4404,7 +4425,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -5659,11 +5680,7 @@ PrefabInstance:
     m_TransformParent: {fileID: 1749591381}
     m_Modifications:
     - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 97ee630346a0c6047aa3d87c30969619, type: 2}
-    - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
-      propertyPath: m_Color.r
+      propertyPath: m_Color.b
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
@@ -5671,9 +5688,13 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
-      propertyPath: m_Color.b
+      propertyPath: m_Color.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3860834428012579157, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 97ee630346a0c6047aa3d87c30969619, type: 2}
     - target: {fileID: 4695506962431821358, guid: 6e9d75ce16df85242994ca3a170eb219, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1
@@ -5822,7 +5843,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 69263bf8aba9b50469af99fcd10178cb, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -5923,8 +5944,8 @@ RectTransform:
   - {fileID: 767549365}
   m_Father: {fileID: 1866114541}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.033333335, y: 0.014814815}
-  m_AnchorMax: {x: 0.3, y: 0.42962962}
+  m_AnchorMin: {x: 0.23333333, y: 0.085185185}
+  m_AnchorMax: {x: 0.76666665, y: 0.91481483}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -6020,7 +6041,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 37440469d707b4d45a27ca843ec6e6c0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -6367,7 +6388,11 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: c9c90b713f99f8c4bb67018ed2736d09, type: 3}
   defaultMusicLoop: {fileID: 8300000, guid: 1ff34fff50215224c8b382de5bee398f, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
-  roomMusics: []
+  roomMusics:
+  - roomId: Stage_World3HallStageClear
+    music: {fileID: 8300000, guid: 621a2f603f8ab8c4da59a7563bb51359, type: 3}
+    musicLoop: {fileID: 0}
+    volume: 0.36888373
   defaultRoomId: 
   roomMusicLoudnessReference: {fileID: 8300000, guid: 0696fdf7e29eb574a8a21b9cccbee800, type: 3}
   roomMusicLoudnessReferenceVolume: 0.4
@@ -6598,7 +6623,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 9b075daaec2a1b249a0899162403bd63, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -6819,7 +6844,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 52b9f5315fa1b5f49b15ad59fa9922fe, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}

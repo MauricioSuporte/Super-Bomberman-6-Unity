@@ -24,6 +24,7 @@ namespace StageAssets
         [SerializeField] private AudioClip returnSfx;
         [SerializeField] private Text selectedStageLabel;
         [SerializeField] private StagePreIntroPlayersWalk portalWalk;
+        [SerializeField] private World3HallStageSevenSequence stageSevenSequence;
         [SerializeField] private AudioClip confirmSfx;
         [SerializeField] private AudioClip cursorMoveSfx;
         [SerializeField] private AudioClip portalUnlockSfx;
@@ -316,7 +317,36 @@ namespace StageAssets
         private void ConfirmSelection()
         {
             var portal = portals[selectedIndex];
-            if (portal == null || !portal.Available || portalWalk == null)
+            if (portal == null || !portal.Available)
+                return;
+
+            if (portal.DestinationScene == "Stage_3-7")
+            {
+                if (stageSevenSequence == null || !stageSevenSequence.CanPlay)
+                {
+                    Debug.LogError("World3 Hall stage 3-7 sequence is not configured.", this);
+                    return;
+                }
+
+                transitioning = true;
+                selectionReady = false;
+                foreach (var hallPortal in portals)
+                    if (hallPortal != null)
+                        hallPortal.gameObject.SetActive(false);
+                if (cursor != null)
+                    cursor.gameObject.SetActive(false);
+                if (exitCursor != null)
+                    exitCursor.gameObject.SetActive(false);
+                if (selectedStageLabelStyle != null)
+                    selectedStageLabelStyle.gameObject.SetActive(false);
+                else if (selectedStageLabel != null)
+                    selectedStageLabel.enabled = false;
+
+                stageSevenSequence.Play();
+                return;
+            }
+
+            if (portalWalk == null)
                 return;
 
             int destinationIndex = portal.DestinationBuildIndex;

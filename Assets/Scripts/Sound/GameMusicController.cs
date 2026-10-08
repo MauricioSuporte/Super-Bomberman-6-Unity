@@ -71,6 +71,8 @@ public class GameMusicController : MonoBehaviour
         {
             defaultMusic = Resources.Load<AudioClip>("Sounds/Stage_World3HallStageClear");
             defaultMusicLoop = null;
+            if (TryGetRoomMusic("Stage_World3HallStageClear", out RoomMusic clearMusic))
+                defaultMusicVolume = clearMusic.volume;
         }
         musicSource = GetComponent<AudioSource>();
 
