@@ -652,11 +652,11 @@ MonoBehaviour:
   randomEggsMin: 0
   randomEggsMax: 0
   hiddenObjectRooms: []
-  destructibleTilemap: {fileID: 0}
-  indestructibleTilemap: {fileID: 0}
+  destructibleTilemap: {fileID: 285353618}
+  indestructibleTilemap: {fileID: 818279435}
   nextStageSceneName: Stage_1-2
   worldMapSceneName: WorldMap
-  destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
+  destructiblePrefab: {fileID: 3440613785117735154, guid: ad55f1c9532af7f4fa4c3c36f864a05f, type: 3}
   destructiblePrefabOverrides: []
   tilemapDoChao: {fileID: 672307155}
   tileChaoNormal: {fileID: 0}
@@ -2066,6 +2066,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.World3HallStageSevenSequence
   indestructibleTilemap: {fileID: 818279435}
   indestructibleTile: {fileID: 11400000, guid: aaf11187670e49e8b0f4969143a19ee1, type: 2}
+  destructibleTilemap: {fileID: 285353618}
+  destructibleTile: {fileID: 11400000, guid: 181e1c7558b18154a81a08afae27b54f, type: 2}
   hallExit: {fileID: 528573461}
   stageMusic: {fileID: 8300000, guid: 67629076b9b54934bfae01d7015a93ae, type: 3}
   stageMusicVolume: 0.50978214

@@ -13,12 +13,22 @@ namespace StageAssets
 
         [SerializeField] private Tilemap indestructibleTilemap;
         [SerializeField] private Tile indestructibleTile;
+        [SerializeField] private Tilemap destructibleTilemap;
+        [SerializeField] private Tile destructibleTile;
         [SerializeField] private GameObject hallExit;
         [SerializeField] private AudioClip stageMusic;
         [SerializeField, Range(0f, 1f)] private float stageMusicVolume = 1f;
         [SerializeField] private AudioClip tileDropSfx;
 
         private bool started;
+        private bool playersMovementFinished;
+        private static readonly HashSet<Vector3Int> DestructibleCells = new()
+        {
+            new(-5, -5, 0), new(-3, -5, 0), new(1, -5, 0), new(3, -5, 0),
+            new(-6, -4, 0), new(4, -4, 0), new(-3, -3, 0), new(3, -3, 0),
+            new(-6, 0, 0), new(4, 0, 0), new(-5, 1, 0), new(-3, 1, 0),
+            new(1, 1, 0), new(3, 1, 0)
+        };
         private int remainingDrops;
         private double nextImpactTime;
         private readonly List<ImpactVoice> impactVoices = new();
@@ -46,7 +56,8 @@ namespace StageAssets
         }
 
         public bool CanPlay => indestructibleTilemap != null && indestructibleTile != null &&
-            indestructibleTile.sprite != null && hallExit != null && stageMusic != null && tileDropSfx != null;
+            indestructibleTile.sprite != null && destructibleTilemap != null && destructibleTile != null &&
+            destructibleTile.sprite != null && hallExit != null && stageMusic != null && tileDropSfx != null;
 
         public void Play()
         {
@@ -73,6 +84,7 @@ namespace StageAssets
                 for (int x = -6; x <= 4; x += 2)
                     cells.Add(new Vector3Int(x, y, 0));
 
+            cells.AddRange(DestructibleCells);
             // Equal x+y cells fall together: sweep from bottom-left to top-right.
             cells.Sort((a, b) =>
             {
@@ -83,7 +95,6 @@ namespace StageAssets
             int firstDiagonal = cells[0].x + cells[0].y;
             remainingDrops = cells.Count;
             int lastDiagonal = cells[cells.Count - 1].x + cells[cells.Count - 1].y;
-            var renderer = indestructibleTilemap.GetComponent<TilemapRenderer>();
             int next = 0;
             float elapsed = 0f;
             while (elapsed < SequenceDuration)
@@ -95,15 +106,19 @@ namespace StageAssets
                         (float)(lastDiagonal - firstDiagonal) * (SequenceDuration - FallingDuration);
                     if (dropAt > elapsed)
                         break;
-                    StartCoroutine(DropTile(cell, renderer));
+                    StartCoroutine(DropTile(cell));
                     next++;
                 }
                 yield return null;
                 elapsed += Time.deltaTime;
             }
 
-            // Let every overlapping impact finish, including the last tile's tail.
-            while (remainingDrops > 0 || impactVoices.Count > 0)
+            while (remainingDrops > 0 || !playersMovementFinished)
+                yield return null;
+            RestoreDancingPlayers(completed: true, enableGameplay: true);
+
+            // Gameplay starts immediately; the final impact sounds can finish.
+            while (impactVoices.Count > 0)
                 yield return null;
         }
 
@@ -146,7 +161,7 @@ namespace StageAssets
             {
                 Vector2.up, Vector2.zero, Vector2.left, Vector2.right * 2f,
                 Vector2.left * 2f, Vector2.right * 2f, Vector2.left * 2f,
-                Vector2.right, Vector2.down, Vector2.zero, Vector2.up
+                Vector2.right * 2f, Vector2.left, Vector2.zero
             };
             float elapsed = 0f;
             while (elapsed < SequenceDuration)
@@ -171,7 +186,10 @@ namespace StageAssets
                 {
                     if (player.Movement == null || player.Root == null || player.Movement.isDead)
                         continue;
-                    player.Movement.ApplyDirectionFromVector(direction);
+                    if (elapsed >= SequenceDuration - pauseDuration)
+                        player.Movement.ForceIdleFacing(Vector2.down);
+                    else
+                        player.Movement.ApplyDirectionFromVector(direction);
                     Vector3 position = player.Origin + (Vector3)(offset * player.Movement.tileSize);
                     player.Root.position = position;
                     if (player.Movement.Rigidbody != null)
@@ -183,10 +201,10 @@ namespace StageAssets
                 yield return null;
                 elapsed += Time.deltaTime;
             }
-            RestoreDancingPlayers(completed: true);
+            playersMovementFinished = true;
         }
 
-        private void RestoreDancingPlayers(bool completed = false)
+        private void RestoreDancingPlayers(bool completed = false, bool enableGameplay = false)
         {
             foreach (PlayerDanceState player in dancingPlayers)
             {
@@ -196,14 +214,14 @@ namespace StageAssets
                     player.Root.position = completed ? player.FinalPosition : player.Origin;
                 if (player.Movement.Rigidbody != null)
                     player.Movement.Rigidbody.position = completed ? player.FinalPosition : player.Origin;
-                player.Movement.SetExternalMovementOverride(player.ExternalOverride);
-                player.Movement.SetInputLocked(player.InputLocked, false);
+                player.Movement.SetExternalMovementOverride(!enableGameplay && player.ExternalOverride);
+                player.Movement.SetInputLocked(!enableGameplay && player.InputLocked, false);
                 player.Movement.ForceIdleUpConsideringMount();
-                player.Movement.enabled = player.MovementEnabled;
+                player.Movement.enabled = enableGameplay || player.MovementEnabled;
                 if (player.Collider != null)
-                    player.Collider.enabled = player.ColliderEnabled;
+                    player.Collider.enabled = enableGameplay || player.ColliderEnabled;
                 if (player.Bomb != null)
-                    player.Bomb.enabled = player.BombEnabled;
+                    player.Bomb.enabled = enableGameplay || player.BombEnabled;
             }
             dancingPlayers.Clear();
         }
@@ -253,9 +271,13 @@ namespace StageAssets
                 source.PlayScheduled(startTime);
         }
 
-        private IEnumerator DropTile(Vector3Int cell, TilemapRenderer tilemapRenderer)
+        private IEnumerator DropTile(Vector3Int cell)
         {
-            Vector3 end = indestructibleTilemap.GetCellCenterWorld(cell);
+            bool destructible = DestructibleCells.Contains(cell);
+            Tilemap tilemap = destructible ? destructibleTilemap : indestructibleTilemap;
+            Tile tile = destructible ? destructibleTile : indestructibleTile;
+            var tilemapRenderer = tilemap.GetComponent<TilemapRenderer>();
+            Vector3 end = tilemap.GetCellCenterWorld(cell);
             float spawnY = end.y + 6f;
             var camera = Camera.main;
             if (camera != null)
@@ -268,7 +290,7 @@ namespace StageAssets
             var visual = new GameObject("Stage3-7 Falling Block");
             visual.transform.SetParent(transform, false);
             var sprite = visual.AddComponent<SpriteRenderer>();
-            sprite.sprite = indestructibleTile.sprite;
+            sprite.sprite = tile.sprite;
             if (tilemapRenderer != null)
             {
                 sprite.sortingLayerID = tilemapRenderer.sortingLayerID;
@@ -294,7 +316,7 @@ namespace StageAssets
                 elapsed += Time.deltaTime;
             }
 
-            indestructibleTilemap.SetTile(cell, indestructibleTile);
+            tilemap.SetTile(cell, tile);
             PlayImpact();
             remainingDrops--;
             Destroy(visual);
