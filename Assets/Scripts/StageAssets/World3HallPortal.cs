@@ -39,11 +39,11 @@ namespace StageAssets
                 visual.forceRenderingOff = !available;
         }
 
-        public IEnumerator Reveal(AudioClip unlockSfx)
+        public IEnumerator Reveal(AudioClip unlockSfx, bool reverse = false)
         {
             if (visual == null || visual.sprite == null)
             {
-                SetAvailable(true);
+                SetAvailable(!reverse);
                 yield break;
             }
 
@@ -101,8 +101,9 @@ namespace StageAssets
             while (elapsed < RevealDuration)
             {
                 // 0.5s fade, 0.75s widening, 0.5s hold, 0.75s downward reveal.
-                float expansion = Mathf.Clamp01((elapsed - 0.5f) / 0.75f);
-                int removedRows = Mathf.FloorToInt(height * Mathf.Clamp01((elapsed - 1.75f) / 0.75f));
+                float animationTime = reverse ? RevealDuration - elapsed : elapsed;
+                float expansion = Mathf.Clamp01((animationTime - 0.5f) / 0.75f);
+                int removedRows = Mathf.FloorToInt(height * Mathf.Clamp01((animationTime - 1.75f) / 0.75f));
                 for (int y = 0; y < height; y++)
                 {
                     // Only the footprint copies portal alpha; the shaft stays solid.
@@ -116,7 +117,7 @@ namespace StageAssets
                 beamTexture.SetPixels32(pixels);
                 beamTexture.Apply();
                 Color color = visual.color;
-                color.a = 0.75f * Mathf.Clamp01(elapsed / 0.5f);
+                color.a = 0.75f * Mathf.Clamp01(animationTime / 0.5f);
                 beam.color = color;
                 beamProperties.SetFloat("_RevealY", beamTop - removedRows / 16f);
                 UpdateBeamPixelMask(beam, beamProperties, properties);
@@ -138,7 +139,7 @@ namespace StageAssets
             // so the final fully visible portal never overlaps its remaining rows.
             beam.enabled = false;
             visual.SetPropertyBlock(originalProperties);
-            SetAvailable(true);
+            SetAvailable(!reverse);
             ClearReveal();
         }
 

@@ -9,7 +9,9 @@ namespace StageAssets
     public sealed class World3HallStageSevenSequence : MonoBehaviour
     {
         private const float SequenceDuration = 3f;
-        private const float FallingDuration = 0.5f;
+        private const float FallingDuration = 0.75f;
+        private const float BeforeDropDelay = 0.35f;
+        private const float ImpactShakeDuration = 0.2f;
 
         [SerializeField] private Tilemap indestructibleTilemap;
         [SerializeField] private Tile indestructibleTile;
@@ -38,7 +40,6 @@ namespace StageAssets
             new(1, 1, 0), new(3, 1, 0)
         };
         private int remainingDrops;
-        private double nextImpactTime;
         private readonly List<ImpactVoice> impactVoices = new();
         private readonly List<PlayerDanceState> dancingPlayers = new();
 
@@ -83,6 +84,7 @@ namespace StageAssets
                 GameMusicController.Instance.PlayMusic(stageMusic, stageMusicVolume, loop: true);
 
             tileDropSfx.LoadAudioData();
+            yield return new WaitForSeconds(BeforeDropDelay);
             StartCoroutine(MovePlayersRoutine());
 
             var cells = new List<Vector3Int>();
@@ -174,10 +176,10 @@ namespace StageAssets
             {
                 Vector2.up, Vector2.zero, Vector2.left, Vector2.right * 2f,
                 Vector2.left * 2f, Vector2.right * 2f, Vector2.left * 2f,
-                Vector2.right * 2f, Vector2.left, Vector2.zero
+                Vector2.right * 2f, Vector2.left
             };
             float elapsed = 0f;
-            while (elapsed < SequenceDuration)
+            while (elapsed < SequenceDuration - pauseDuration)
             {
                 float segmentTime = elapsed;
                 Vector2 offset = Vector2.zero;
@@ -199,10 +201,7 @@ namespace StageAssets
                 {
                     if (player.Movement == null || player.Root == null || player.Movement.isDead)
                         continue;
-                    if (elapsed >= SequenceDuration - pauseDuration)
-                        player.Movement.ForceIdleFacing(Vector2.down);
-                    else
-                        player.Movement.ApplyDirectionFromVector(direction);
+                    player.Movement.ApplyDirectionFromVector(direction);
                     Vector3 position = player.Origin + (Vector3)(offset * player.Movement.tileSize);
                     player.Root.position = position;
                     if (player.Movement.Rigidbody != null)
@@ -214,6 +213,22 @@ namespace StageAssets
                 yield return null;
                 elapsed += Time.deltaTime;
             }
+            foreach (PlayerDanceState player in dancingPlayers)
+            {
+                if (player.Movement == null || player.Root == null || player.Movement.isDead)
+                    continue;
+                player.Root.position = player.FinalPosition;
+                if (player.Movement.Rigidbody != null)
+                {
+                    player.Movement.Rigidbody.position = player.FinalPosition;
+                    player.Movement.Rigidbody.linearVelocity = Vector2.zero;
+                }
+                player.Movement.ForceIdleFacing(Vector2.down);
+            }
+            yield return new WaitForSeconds(pauseDuration);
+            foreach (PlayerDanceState player in dancingPlayers)
+                if (player.Movement != null && !player.Movement.isDead)
+                    player.Movement.ForceIdleUpConsideringMount();
             playersMovementFinished = true;
         }
 
@@ -359,19 +374,13 @@ namespace StageAssets
             source.clip = tileDropSfx;
             source.volume = GameAudioSettings.ApplySfxVolume(1f);
             double now = AudioSettings.dspTime;
-            double startTime = System.Math.Max(now, nextImpactTime);
-            // Keep the first landing immediate; stagger simultaneous landings
-            // by 15-30 ms without changing their individual playback volume.
-            nextImpactTime = startTime + Random.Range(0.015f, 0.03f);
             impactVoices.Add(new ImpactVoice
             {
                 Source = source,
-                EndTime = startTime + tileDropSfx.length
+                EndTime = now + tileDropSfx.length
             });
-            if (startTime <= now)
-                source.Play();
-            else
-                source.PlayScheduled(startTime);
+            // Start at the landing, without accumulating delays across blocks.
+            source.Play();
         }
 
         private IEnumerator DropTile(Vector3Int cell)
@@ -419,11 +428,22 @@ namespace StageAssets
                 elapsed += Time.deltaTime;
             }
 
-            tilemap.SetTile(cell, tile);
+            visual.transform.position = end;
+            Destroy(shadow);
             PlayImpact();
+            elapsed = 0f;
+            while (elapsed < ImpactShakeDuration)
+            {
+                float strength = 1f - Mathf.Clamp01(elapsed / ImpactShakeDuration);
+                // One world pixel at PPU 16, settling back onto the cell center.
+                float offset = Mathf.Round(Mathf.Sin(elapsed * 100f) * strength) / 16f;
+                visual.transform.position = end + Vector3.right * offset;
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            tilemap.SetTile(cell, tile);
             remainingDrops--;
             Destroy(visual);
-            Destroy(shadow);
         }
     }
 }

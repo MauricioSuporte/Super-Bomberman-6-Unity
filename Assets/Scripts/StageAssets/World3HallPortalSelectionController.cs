@@ -371,9 +371,6 @@ namespace StageAssets
 
                 transitioning = true;
                 selectionReady = false;
-                foreach (var hallPortal in portals)
-                    if (hallPortal != null)
-                        hallPortal.gameObject.SetActive(false);
                 if (cursor != null)
                     cursor.gameObject.SetActive(false);
                 if (exitCursor != null)
@@ -383,7 +380,7 @@ namespace StageAssets
                 else if (selectedStageLabel != null)
                     selectedStageLabel.enabled = false;
 
-                stageSevenSequence.Play();
+                StartCoroutine(EnterStageSeven());
                 return;
             }
 
@@ -409,6 +406,45 @@ namespace StageAssets
 
             PlayerPersistentStats.CommitStage();
             StartCoroutine(EnterSelectedPortal(portal.transform.position, destinationIndex));
+        }
+
+        private IEnumerator EnterStageSeven()
+        {
+            StartCoroutine(PlayPortalClosingSounds());
+            var hidingPortals = new System.Collections.Generic.List<Coroutine>();
+            foreach (var portal in portals)
+                if (portal != null && portal.Available)
+                    hidingPortals.Add(StartCoroutine(portal.Reveal(null, reverse: true)));
+            foreach (var hiding in hidingPortals)
+                yield return hiding;
+            foreach (var portal in portals)
+                if (portal != null)
+                    portal.gameObject.SetActive(false);
+            stageSevenSequence.Play();
+        }
+
+        private IEnumerator PlayPortalClosingSounds()
+        {
+            if (portalUnlockSfx == null)
+                yield break;
+            if (portalUnlockSfx.loadState == AudioDataLoadState.Unloaded)
+                portalUnlockSfx.LoadAudioData();
+            while (portalUnlockSfx.loadState == AudioDataLoadState.Loading)
+                yield return null;
+
+            for (int i = 0; i < 3; i++)
+            {
+                var soundObject = new GameObject("Portal closing audio");
+                soundObject.transform.SetParent(transform, false);
+                var source = soundObject.AddComponent<AudioSource>();
+                source.playOnAwake = false;
+                source.spatialBlend = 0f;
+                source.pitch = portalUnlockSfx.length / World3HallPortal.RevealDuration;
+                GameAudioSettings.PlaySfxClip(source, portalUnlockSfx);
+                Destroy(soundObject, World3HallPortal.RevealDuration + 0.1f);
+                if (i < 2)
+                    yield return new WaitForSeconds(Random.Range(0.06f, 0.12f));
+            }
         }
 
         private IEnumerator EnterCompletedChip()
