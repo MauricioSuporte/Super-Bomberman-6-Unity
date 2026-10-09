@@ -182,6 +182,12 @@ public class GamePauseController : MonoBehaviour
         if (string.IsNullOrEmpty(sceneName))
             return false;
 
+        if (sceneName == StageAssets.World3HallPortalSelectionController.SceneName)
+        {
+            var duel = FindAnyObjectByType<StageAssets.World3HallStageSevenSequence>();
+            return duel != null && duel.DuelActive;
+        }
+
         if (blockedSceneNames != null)
         {
             for (int i = 0; i < blockedSceneNames.Length; i++)

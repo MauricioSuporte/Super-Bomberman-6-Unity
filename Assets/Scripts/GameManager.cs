@@ -984,6 +984,11 @@ public class GameManager : MonoBehaviour
 
     public void EndStage()
     {
+        EndStage(SceneManager.GetActiveScene().name);
+    }
+
+    public void EndStage(string completedStageSceneName)
+    {
         if (endStageTriggered)
             return;
 
@@ -995,7 +1000,8 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        string currentSceneName = SceneManager.GetActiveScene().name;
+        string currentSceneName = string.IsNullOrEmpty(completedStageSceneName)
+            ? SceneManager.GetActiveScene().name : completedStageSceneName;
         bool stageWasAlreadyCleared = StageUnlockProgress.IsCleared(currentSceneName);
 
         StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);

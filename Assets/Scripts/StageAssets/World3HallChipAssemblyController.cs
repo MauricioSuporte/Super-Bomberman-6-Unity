@@ -15,7 +15,7 @@ namespace StageAssets
 
         public static bool IsChipStage(string sceneName) =>
             sceneName != null && sceneName.Length == 9 && sceneName.StartsWith("Stage_3-") &&
-            sceneName[8] >= '1' && sceneName[8] <= '6';
+            sceneName[8] >= '1' && sceneName[8] <= '7';
 
         public static void PrepareReturn(string sceneName, bool firstClear)
         {
@@ -143,6 +143,14 @@ namespace StageAssets
             {
                 if (parts[i] == null || i == revealingPart)
                     continue;
+
+                // The outgoing hall already shares the updated save. Keep its
+                // newly earned part hidden until the reloaded hall reveals it.
+                if (revealingPart < 0 && PendingRevealStage == $"Stage_3-{i + 1}")
+                {
+                    SetAlpha(parts[i], 0f);
+                    continue;
+                }
 
                 bool cleared = StageUnlockProgress.IsCleared($"Stage_3-{i + 1}");
                 Color color = parts[i].color;

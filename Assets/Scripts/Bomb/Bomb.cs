@@ -1919,7 +1919,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = origin;
         transform.position = origin;
 
-        TryPlayBombSfx_NoOverlap(magnetPullSfx, magnetPullSfxVolume);
+        if (!TryGetComponent<PrettyBomb>(out _))
+            TryPlayBombSfx_NoOverlap(magnetPullSfx, magnetPullSfxVolume);
 
         magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(
             steps,

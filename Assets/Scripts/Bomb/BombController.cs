@@ -215,7 +215,8 @@ public partial class BombController : MonoBehaviour
     private void ApplyBaseBombFuse(GameObject prefabToUse, GameObject bomb)
     {
         bool isMagnetBomb = bomb != null && bomb.TryGetComponent<MagnetBomb>(out _);
-        bool shouldApplyNormalFuse = prefabToUse == bombPrefab && !isMagnetBomb;
+        bool isPrettyBomb = bomb != null && bomb.TryGetComponent<PrettyBomb>(out _);
+        bool shouldApplyNormalFuse = prefabToUse == bombPrefab && !isMagnetBomb && !isPrettyBomb;
 
         if (shouldApplyNormalFuse)
             BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());

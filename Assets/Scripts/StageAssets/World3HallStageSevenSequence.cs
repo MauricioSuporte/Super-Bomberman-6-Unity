@@ -19,8 +19,16 @@ namespace StageAssets
         [SerializeField] private AudioClip stageMusic;
         [SerializeField, Range(0f, 1f)] private float stageMusicVolume = 1f;
         [SerializeField] private AudioClip tileDropSfx;
+        [SerializeField] private GameObject prettyBomberPrefab = null;
+        [SerializeField] private AudioClip bossEntranceSfx = null;
+
+        private GameObject entranceVisual;
+        private GameObject enteringBoss;
 
         private bool started;
+        public bool DuelActive { get; private set; }
+
+        public void FinishDuel() => DuelActive = false;
         private bool playersMovementFinished;
         private static readonly HashSet<Vector3Int> DestructibleCells = new()
         {
@@ -57,7 +65,8 @@ namespace StageAssets
 
         public bool CanPlay => indestructibleTilemap != null && indestructibleTile != null &&
             indestructibleTile.sprite != null && destructibleTilemap != null && destructibleTile != null &&
-            destructibleTile.sprite != null && hallExit != null && stageMusic != null && tileDropSfx != null;
+            destructibleTile.sprite != null && hallExit != null && stageMusic != null && tileDropSfx != null &&
+            prettyBomberPrefab != null && bossEntranceSfx != null;
 
         public void Play()
         {
@@ -115,9 +124,10 @@ namespace StageAssets
 
             while (remainingDrops > 0 || !playersMovementFinished)
                 yield return null;
+            yield return PrettyBomberEntrance();
             RestoreDancingPlayers(completed: true, enableGameplay: true);
 
-            // Gameplay starts immediately; the final impact sounds can finish.
+            // The entrance has finished; remaining impact sounds can finish.
             while (impactVoices.Count > 0)
                 yield return null;
         }
@@ -228,7 +238,96 @@ namespace StageAssets
 
         private void OnDisable()
         {
+            DuelActive = false;
+            StopAllCoroutines();
             RestoreDancingPlayers();
+            if (enteringBoss != null)
+                Destroy(enteringBoss);
+            CleanupEntranceVisual();
+            foreach (ImpactVoice voice in impactVoices)
+                if (voice.Source != null)
+                    Destroy(voice.Source.gameObject);
+            impactVoices.Clear();
+        }
+
+        private IEnumerator PrettyBomberEntrance()
+        {
+            Vector3 destination = new(-1f, 0f, 0f);
+            enteringBoss = Instantiate(prettyBomberPrefab, destination, Quaternion.identity);
+            var movement = enteringBoss.GetComponent<MovementControllerAI>();
+            var brain = enteringBoss.GetComponent<BrainIA>();
+            var bombs = enteringBoss.GetComponent<BombController>();
+            var colliders = enteringBoss.GetComponentsInChildren<Collider2D>();
+            var colliderStates = new bool[colliders.Length];
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                colliderStates[i] = colliders[i].enabled;
+                colliders[i].enabled = false;
+            }
+            brain.enabled = false;
+            bombs.enabled = false;
+            bombs.destructibleTiles = destructibleTilemap;
+            movement.SetInputLocked(true, true);
+            movement.SetExplosionInvulnerable(true);
+            movement.ForceFacingDirection(Vector2.down);
+            movement.SetIntroIdle(true);
+            enteringBoss.GetComponent<AbilitySystem>().Enable(BombPassAbility.AbilityId);
+
+            var renderers = enteringBoss.GetComponentsInChildren<SpriteRenderer>(true);
+            var effect = PrettyBomberMagicEffect.Create(destination + Vector3.down * 0.5f,
+                movement.tileSize, renderers[0]);
+            entranceVisual = effect.gameObject;
+            entranceVisual.transform.SetParent(transform, true);
+
+            var visibleStates = new bool[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                visibleStates[i] = renderers[i].enabled;
+                renderers[i].enabled = false;
+            }
+            yield return effect.Grow(0.5f);
+            for (int i = 0; i < renderers.Length; i++)
+                renderers[i].enabled = visibleStates[i];
+
+            var audioObject = new GameObject("PrettyBomber Entrance Audio");
+            audioObject.transform.SetParent(transform, false);
+            var audio = audioObject.AddComponent<AudioSource>();
+            audio.playOnAwake = false;
+            audio.spatialBlend = 0f;
+            GameAudioSettings.PlaySfx(audio, bossEntranceSfx);
+            Destroy(audioObject, bossEntranceSfx.length + 0.1f);
+
+            yield return effect.Reveal(enteringBoss, movement, true, 0.5f);
+
+            float elapsed = 0f;
+            while (elapsed < 1f)
+            {
+                yield return null;
+                if (!GamePauseController.IsPaused)
+                    elapsed += Time.deltaTime;
+            }
+
+            movement.SetIntroIdle(false);
+            movement.SetInputLocked(false, true);
+            movement.SetExplosionInvulnerable(false);
+            for (int i = 0; i < colliders.Length; i++)
+                colliders[i].enabled = colliderStates[i];
+            bombs.enabled = true;
+            brain.enabled = true;
+            DuelActive = true;
+            if (StageIntroTransition.Instance != null)
+            {
+                StageIntroTransition.Instance.world = 3;
+                StageIntroTransition.Instance.stageNumber = 7;
+            }
+            enteringBoss = null;
+            CleanupEntranceVisual();
+        }
+
+        private void CleanupEntranceVisual()
+        {
+            if (entranceVisual != null)
+                Destroy(entranceVisual);
         }
 
         private void CleanupImpactVoices()

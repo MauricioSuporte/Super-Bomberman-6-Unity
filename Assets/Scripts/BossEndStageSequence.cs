@@ -7,6 +7,7 @@ public class BossEndStageSequence : MonoBehaviour
 {
     [Header("Audio")]
     public AudioClip endStageMusic;
+    public string completedStageSceneName;
 
     [Header("End Stage - Random Good SFX (Resources/Sounds)")]
     [SerializeField] private bool playRandomGoodSfx = true;
@@ -44,6 +45,7 @@ public class BossEndStageSequence : MonoBehaviour
         var runner = runnerGo.AddComponent<BossEndStageSequence>();
 
         runner.endStageMusic = endStageMusic;
+        runner.completedStageSceneName = completedStageSceneName;
         runner.delayBeforeStart = delayBeforeStart;
         runner.celebrationSeconds = celebrationSeconds;
         runner.fadeDuration = fadeDuration;
@@ -133,7 +135,7 @@ public class BossEndStageSequence : MonoBehaviour
             StageIntroTransition.Instance.StartFadeOut(fadeDuration);
 
         if (gameManager != null)
-            gameManager.EndStage();
+            gameManager.EndStage(completedStageSceneName);
 
         Destroy(gameObject);
     }
@@ -145,7 +147,13 @@ public class BossEndStageSequence : MonoBehaviour
 
         progressMarked = true;
 
-        string currentSceneName = SceneManager.GetActiveScene().name;
+        string currentSceneName = string.IsNullOrEmpty(completedStageSceneName)
+            ? SceneManager.GetActiveScene().name : completedStageSceneName;
+
+        // GameManager must see the first-clear state before marking chip stages,
+        // so the return to the hall can reveal the newly earned part.
+        if (StageAssets.World3HallChipAssemblyController.IsChipStage(currentSceneName))
+            return;
 
         StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
     }
