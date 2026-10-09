@@ -7,6 +7,350 @@ using UnityEngine.Tilemaps;
 
 public sealed class BattleModeComEditModeTests
 {
+    [TestCase(1, -1, 0, 6)]
+    [TestCase(1, 1, 0, 8)]
+    [TestCase(8, -1, 0, 1)]
+    [TestCase(8, 1, 0, 6)]
+    [TestCase(8, 0, 1, 7)]
+    [TestCase(8, 0, -1, 0)]
+    [TestCase(7, 0, -1, 8)]
+    [TestCase(7, 0, 1, 0)]
+    [TestCase(2, 1, 0, 8)]
+    [TestCase(2, -1, 0, 1)]
+    [TestCase(3, 1, 0, 7)]
+    [TestCase(3, -1, 0, 2)]
+    public void World3Hall_NavigationIncludesCentralChipAndExit(int stage, int x, int y, int expected)
+    {
+        var neighbor = typeof(StageAssets.World3HallPortalSelectionController).GetMethod(
+            "Neighbor", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.AreEqual(expected, neighbor.Invoke(null, new object[] { stage, new Vector2(x, y) }));
+    }
+
+    [TestCase(1, 1, 0, 2)]
+    [TestCase(2, 1, 0, 3)]
+    [TestCase(1, 0, 1, 2)]
+    [TestCase(3, -1, 0, 2)]
+    [TestCase(3, 0, -1, 2)]
+    [TestCase(3, 1, 0, 7)]
+    [TestCase(7, 1, 0, 4)]
+    [TestCase(4, -1, 0, 7)]
+    [TestCase(7, -1, 0, 3)]
+    [TestCase(6, 1, 0, 0)]
+    [TestCase(0, 1, 0, 1)]
+    [TestCase(0, -1, 0, 6)]
+    public void World3Hall_LockedChipKeepsNumericalNavigation(int stage, int x, int y, int expected)
+    {
+        var neighbor = typeof(StageAssets.World3HallPortalSelectionController).GetMethod(
+            "SequentialNeighbor", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.AreEqual(expected, neighbor.Invoke(null, new object[] { stage, new Vector2(x, y) }));
+    }
+
+    [Test]
+    public void World3Unlocks_DuelCompletionUnlocksFinalChipStageOnlyWithAllParts()
+    {
+        var slot = new Assets.Scripts.SaveSystem.StageSlot();
+        var ensure = typeof(StageUnlockProgress).GetMethod("EnsureWorld3Unlocks", BindingFlags.Static | BindingFlags.NonPublic);
+        for (int i = 1; i <= 6; i++) slot.clearedStages.Add($"Stage_3-{i}");
+        ensure.Invoke(null, new object[] { slot });
+        Assert.Contains("Stage_3-7", slot.unlockedStages);
+        Assert.IsFalse(slot.unlockedStages.Contains("Stage_3-8"));
+        slot.clearedStages.Add("Stage_3-7");
+        ensure.Invoke(null, new object[] { slot });
+        Assert.Contains("Stage_3-8", slot.unlockedStages);
+        Assert.IsFalse(slot.clearedStages.Contains("Stage_3-8"), "Unlocking the chip must not mark the final stage cleared.");
+        slot.clearedStages.Remove("Stage_3-1");
+        ensure.Invoke(null, new object[] { slot });
+        Assert.IsFalse(slot.unlockedStages.Contains("Stage_3-7"));
+        Assert.IsFalse(slot.unlockedStages.Contains("Stage_3-8"));
+    }
+
+    [Test]
+    public void SearchBomb_TileTrailPreservesTurnsAndBacktracking()
+    {
+        var root = new GameObject("Search bomb trail");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        try
+        {
+            var search = root.AddComponent<SearchBomb>();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var record = typeof(SearchBomb).GetMethod("RecordTargetTile", flags);
+            var trail = (Queue<Vector2Int>)typeof(SearchBomb).GetField("targetTrail", flags).GetValue(search);
+            Vector2Int[] visited = { new(1, 0), new(1, 1), new(2, 1), new(1, 1) };
+            foreach (var cell in visited) record.Invoke(search, new object[] { cell });
+            record.Invoke(search, new object[] { visited[visited.Length - 1] });
+            CollectionAssert.AreEqual(visited, trail.ToArray(), "Turns and revisited tiles must not be shortcut.");
+            search.SuspendPursuit();
+            Assert.AreEqual(0, trail.Count, "External movement invalidates the old target trail.");
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void SearchBomb_TileTrailFillsStraightSamplesAndClearsTeleportGaps()
+    {
+        var root = new GameObject("Search bomb trail samples");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        try
+        {
+            var search = root.AddComponent<SearchBomb>();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var record = typeof(SearchBomb).GetMethod("RecordTargetTile", flags);
+            var trail = (Queue<Vector2Int>)typeof(SearchBomb).GetField("targetTrail", flags).GetValue(search);
+            record.Invoke(search, new object[] { new Vector2Int(3, 0) });
+            CollectionAssert.AreEqual(new[] { new Vector2Int(1, 0), new Vector2Int(2, 0), new Vector2Int(3, 0) }, trail.ToArray());
+            record.Invoke(search, new object[] { new Vector2Int(20, 0) });
+            Assert.AreEqual(0, trail.Count, "Do not invent a trail across teleportation.");
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [TestCase(3, 0, true)]
+    [TestCase(2, 1, true)]
+    [TestCase(4, 0, false)]
+    [TestCase(3, 1, false)]
+    public void SearchBomb_PursuitRangeRejectsTargetsBeyondThreeTiles(int x, int y, bool expected)
+    {
+        var root = new GameObject("Search bomb range");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        try
+        {
+            var search = root.AddComponent<SearchBomb>();
+            var method = typeof(SearchBomb).GetMethod("IsWithinDetectionRange", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.AreEqual(expected, method.Invoke(search, new object[] { Vector2Int.zero, new Vector2Int(x, y) }));
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void SearchBomb_DuelBlocksUseSceneAmountsAndPreserveOtherHiddenDrops()
+    {
+        var root = new GameObject("Duel drop distribution", typeof(Grid));
+        root.SetActive(false);
+        var child = new GameObject("Destructibles", typeof(Tilemap));
+        child.transform.SetParent(root.transform, false);
+        var tile = ScriptableObject.CreateInstance<Tile>();
+        try
+        {
+            var map = child.GetComponent<Tilemap>();
+            map.SetTile(Vector3Int.zero, tile);
+            map.SetTile(Vector3Int.right, tile);
+            var manager = root.AddComponent<GameManager>();
+            manager.destructibleTilemap = map;
+            manager.extraBombAmount = 1;
+            manager.blastRadiusAmount = 0;
+            manager.speedIncreaseAmount = 0;
+            var hidden = (Dictionary<Vector3Int, GameObject>)typeof(GameManager)
+                .GetField("hiddenObjectSpawnsByCell", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager);
+            Vector3Int existing = new(9, 9, 0);
+            hidden[existing] = null;
+            manager.RegisterSpawnedDestructibles(new[] { Vector3Int.zero, Vector3Int.right, Vector3Int.zero });
+            Assert.IsTrue(hidden.ContainsKey(existing));
+            Assert.AreEqual(2, hidden.Count, "One scene-configured drop plus the existing unrelated mapping.");
+            foreach (var entry in hidden)
+                if (entry.Key != existing)
+                    Assert.AreEqual(ItemType.ExtraBomb, entry.Value.GetComponent<ItemPickup>().type);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+    }
+
+    [Test]
+    public void SearchBomb_PathAcceptsEmptyInteriorOfSparseWallBounds()
+    {
+        var grid = new GameObject("Search bomb bounds", typeof(Grid));
+        grid.SetActive(false);
+        grid.transform.position = new Vector3(1000f, 1000f, 0f);
+        var mapObject = new GameObject("Indestructibles", typeof(Tilemap));
+        mapObject.transform.SetParent(grid.transform, false);
+        var root = new GameObject("Search bomb bounds test");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        var wall = ScriptableObject.CreateInstance<Tile>();
+        try
+        {
+            var map = mapObject.GetComponent<Tilemap>();
+            map.SetTile(new Vector3Int(-2, -2, 0), wall);
+            map.SetTile(new Vector3Int(2, 2, 0), wall);
+            var bomb = root.AddComponent<Bomb>();
+            bomb.SetStageBoundsTilemap(map);
+            typeof(Bomb).GetField("indestructibleTilemap", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(bomb, map);
+            Assert.IsFalse(map.HasTile(Vector3Int.zero));
+            Assert.IsTrue(bomb.CanSearchMoveTo(new Vector2(1000.5f, 1000.5f), 1f),
+                "Free cells inside a wall map's bounds must be usable for pursuit.");
+            Assert.IsFalse(bomb.CanSearchMoveTo(new Vector2(1002.5f, 1002.5f), 1f));
+            Assert.IsFalse(bomb.CanSearchMoveTo(new Vector2(1004.5f, 1000.5f), 1f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(grid);
+            Object.DestroyImmediate(wall);
+        }
+    }
+
+    [Test]
+    public void SearchBomb_SheetAndBothPrefabsUseTheFourInGameFrames()
+    {
+        const string sheetPath = "Assets/Resources/Sprites/BombItems/Itens.png";
+        var sprites = new Dictionary<string, Sprite>();
+        foreach (var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(sheetPath))
+            if (asset is Sprite sprite) sprites[sprite.name] = sprite;
+        Sprite[] expected = new Sprite[4];
+        for (int i = 0; i < expected.Length; i++)
+        {
+            Assert.IsTrue(sprites.TryGetValue($"SearchBombFrame{i + 1}", out expected[i]));
+            Assert.AreEqual(new Rect((22 + i) * 16, expected[i].texture.height - 32, 16, 16), expected[i].rect);
+        }
+        foreach (string path in new[] { "Assets/Prefabs/Bombs/SearchBomb.prefab",
+                     "Assets/Resources/Bombs/SearchBomb.prefab" })
+        {
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            Assert.IsNotNull(prefab.GetComponent<SearchBomb>());
+            var renderer = prefab.GetComponent<AnimatedSpriteRenderer>();
+            CollectionAssert.AreEqual(expected, renderer.animationSprite);
+            Assert.AreEqual(expected[0], renderer.idleSprite);
+            Assert.AreEqual(expected[0], prefab.GetComponent<SpriteRenderer>().sprite);
+            Assert.IsFalse(renderer.idle);
+            Assert.IsTrue(renderer.loop);
+        }
+    }
+
+    [Test]
+    public void SearchBomb_PrettyBomberUsesSharedAbilityAndRenamedPrefab()
+    {
+        var pretty = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bombers/PrettyBomber.prefab");
+        var search = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bombs/SearchBomb.prefab");
+        var normal = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bombs/Bomb.prefab");
+        Assert.IsNotNull(pretty.GetComponent<AbilitySystem>());
+        Assert.IsTrue(pretty.GetComponent<SearchBombAbility>().IsEnabled);
+        Assert.AreSame(search, pretty.GetComponent<BombController>().searchBombPrefab);
+        Assert.AreSame(normal, pretty.GetComponent<BombController>().bombPrefab);
+    }
+
+    [TestCase("Player", true)]
+    [TestCase("Enemy", false)]
+    public void SearchBomb_EnemyOwnerOnlyPursuesPlayers(string candidateLayer, bool expected)
+    {
+        var owner = new GameObject("Search bomb enemy owner");
+        owner.SetActive(false);
+        owner.layer = LayerMask.NameToLayer("Enemy");
+        var root = new GameObject("Search bomb targeting");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        var candidate = new GameObject("Search bomb target");
+        candidate.layer = LayerMask.NameToLayer(candidateLayer);
+        try
+        {
+            var controller = owner.AddComponent<BombController>();
+            var bomb = root.AddComponent<Bomb>();
+            var search = root.AddComponent<SearchBomb>();
+            var collider = candidate.AddComponent<CircleCollider2D>();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(Bomb).GetField("owner", flags).SetValue(bomb, controller);
+            typeof(SearchBomb).GetField("bomb", flags).SetValue(search, bomb);
+            Assert.AreEqual(expected, typeof(SearchBomb).GetMethod("IsValidTarget", flags, null, new[] { typeof(Collider2D) }, null)
+                .Invoke(search, new object[] { collider }));
+        }
+        finally
+        {
+            Object.DestroyImmediate(candidate);
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(owner);
+        }
+    }
+
+    [Test]
+    public void SearchBomb_LegacyBattleAmountsPreserveLineBombAndDefaultSearchToZero()
+    {
+        var previous = new int[20];
+        for (int i = 0; i < previous.Length; i++) previous[i] = i;
+        var convert = typeof(SaveSystem).GetMethod("ConvertBattleModeItemAmounts",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        var converted = (int[])convert.Invoke(null, new object[]
+        {
+            previous, new int[21], GameManager.BattleModeHiddenDropEntries.Length
+        });
+        for (int i = 0; i < previous.Length; i++) Assert.AreEqual(previous[i], converted[i]);
+        Assert.AreEqual(ItemType.LineBomb, GameManager.BattleModeHiddenDropEntries[19].ItemType);
+        Assert.AreEqual(ItemType.SearchBomb, GameManager.BattleModeHiddenDropEntries[20].ItemType);
+        Assert.AreEqual(0, converted[20]);
+    }
+
+    [Test]
+    public void SearchBomb_AbilityReplacesOtherBombTypesAndCanBeReplaced()
+    {
+        var player = new GameObject("Search bomb exclusivity");
+        player.SetActive(false);
+        try
+        {
+            var abilities = player.AddComponent<AbilitySystem>();
+            abilities.Enable(MagnetBombAbility.AbilityId);
+            abilities.Enable(SearchBombAbility.AbilityId);
+            Assert.IsTrue(abilities.IsEnabled(SearchBombAbility.AbilityId));
+            Assert.IsFalse(abilities.IsEnabled(MagnetBombAbility.AbilityId));
+            abilities.Enable(RubberBombAbility.AbilityId);
+            Assert.IsFalse(abilities.IsEnabled(SearchBombAbility.AbilityId));
+            Assert.IsTrue(abilities.IsEnabled(RubberBombAbility.AbilityId));
+        }
+        finally { Object.DestroyImmediate(player); }
+    }
+
+    [TestCase("Glove")]
+    [TestCase("YellowLouie")]
+    [TestCase("ExternalStop")]
+    [TestCase("Moved")]
+    public void SearchBomb_ExternalMovementSuspendsThenAllowsSearchAgain(string action)
+    {
+        var root = new GameObject("Search bomb cancellation");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        try
+        {
+            var bomb = root.AddComponent<Bomb>();
+            var search = root.AddComponent<SearchBomb>();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(SearchBomb).GetField("bomb", flags).SetValue(search, bomb);
+            switch (action)
+            {
+                case "Glove": bomb.SetPowerGloveHeld(true); bomb.SetPowerGloveHeld(false); break;
+                case "YellowLouie": bomb.SetYellowLouieKickMovement(true); bomb.SetYellowLouieKickMovement(false); break;
+                case "ExternalStop": bomb.StopKickPunchMagnetRoutines(); break;
+                case "Moved": bomb.MarkMovedByKickOrPunch(); break;
+            }
+            Assert.IsTrue((bool)typeof(SearchBomb).GetField("pursuitSuspended",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(search));
+            Assert.IsFalse(bomb.HasExploded, "Suspending pursuit must leave the fuse alive.");
+            var update = typeof(SearchBomb).GetMethod("Update", flags);
+            bomb.SetPowerGloveHeld(true);
+            update.Invoke(search, null);
+            Assert.IsTrue((bool)typeof(SearchBomb).GetField("pursuitSuspended", flags).GetValue(search),
+                "Search cannot resume while the glove holds the bomb.");
+            bomb.SetPowerGloveHeld(false);
+            update.Invoke(search, null);
+            Assert.IsFalse((bool)typeof(SearchBomb).GetField("pursuitSuspended", flags).GetValue(search),
+                "After all movement ends the bomb can search again.");
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void SearchBomb_LoadoutSnapshotCopiesTheBombType()
+    {
+        var state = new PlayerPersistentStats.PlayerState { HasSearchBomb = true };
+        var snapshot = PlayerPersistentStats.CloneState(state);
+        Assert.IsTrue(snapshot.HasSearchBomb);
+        Assert.IsFalse(snapshot.HasMagnetBomb);
+        state.HasSearchBomb = false;
+        Assert.IsTrue(snapshot.HasSearchBomb);
+    }
+
     [Test]
     public void LineBombCom_MountedItemAndPurpleSourcesSurviveIndependentRemoval()
     {
@@ -168,7 +512,7 @@ public sealed class BattleModeComEditModeTests
         {
             previous, new int[20], GameManager.BattleModeHiddenDropEntries.Length
         });
-        Assert.AreEqual(20, converted.Length);
+        Assert.AreEqual(GameManager.BattleModeHiddenDropEntries.Length, converted.Length);
         for (int i = 0; i < previous.Length; i++) Assert.AreEqual(previous[i], converted[i]);
         Assert.AreEqual(0, converted[19]);
         Assert.AreEqual(ItemType.LineBomb, GameManager.BattleModeHiddenDropEntries[19].ItemType);

@@ -126,7 +126,8 @@ public enum BattleModeHandicapBombType
     Rubber = 2,
     Pierce = 3,
     Control = 4,
-    Magnet = 5
+    Magnet = 5,
+    Search = 6
 }
 
 public enum BattleModeHandicapMovementAbility

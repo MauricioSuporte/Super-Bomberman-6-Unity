@@ -21,7 +21,7 @@ namespace StageAssets
         {
             pendingRevealStage = firstClear ? sceneName : null;
             pendingRevealSlot = firstClear ? SaveSystem.ActiveSlot : null;
-            World3HallPortalSelectionController.FocusStageOnNextLoad(sceneName);
+            World3HallPortalSelectionController.FocusStageOnNextLoad(sceneName == "Stage_3-7" ? "Stage_3-8" : sceneName);
         }
 
         [SerializeField] private SpriteRenderer[] parts = new SpriteRenderer[7];
@@ -99,7 +99,11 @@ namespace StageAssets
             if (selection != null)
                 yield return selection.RevealUnlockedPortals();
             if (selection != null)
+            {
+                if (StageUnlockProgress.IsCleared("Stage_3-7"))
+                    selection.FocusCompletedChip();
                 selection.PresentationBlocked = false;
+            }
             RefreshParts();
         }
 

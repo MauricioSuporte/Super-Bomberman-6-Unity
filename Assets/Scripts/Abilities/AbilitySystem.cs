@@ -60,6 +60,21 @@ public class AbilitySystem : MonoBehaviour
         else if (id == PowerGloveAbility.AbilityId && IsEnabled(LineBombAbility.AbilityId))
             Disable(LineBombAbility.AbilityId);
 
+        if (id == SearchBombAbility.AbilityId)
+        {
+            string[] bombTypes = { SearchBombAbility.AbilityId, MagnetBombAbility.AbilityId,
+                PierceBombAbility.AbilityId, ControlBombAbility.AbilityId,
+                PowerBombAbility.AbilityId, RubberBombAbility.AbilityId };
+            foreach (string bombType in bombTypes)
+                if (bombType != id)
+                    Disable(bombType);
+        }
+
+        else if (id == MagnetBombAbility.AbilityId || id == PierceBombAbility.AbilityId ||
+                 id == ControlBombAbility.AbilityId || id == PowerBombAbility.AbilityId ||
+                 id == RubberBombAbility.AbilityId)
+            Disable(SearchBombAbility.AbilityId);
+
         bool wasEnabled = ability.IsEnabled;
         ability.Enable();
 

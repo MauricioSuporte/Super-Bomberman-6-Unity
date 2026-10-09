@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -453,7 +453,12 @@ public class WorldMapController : MonoBehaviour
 
     static bool IsStageSceneAvailable(string sceneName)
     {
-        return !string.IsNullOrWhiteSpace(sceneName) && Application.CanStreamedLevelBeLoaded(sceneName);
+        if (string.IsNullOrWhiteSpace(sceneName))
+            return false;
+        // 3-7 is a duel inside the hall; 3-8 is selected from its completed chip.
+        if (sceneName == "Stage_3-7" || sceneName == "Stage_3-8")
+            return Application.CanStreamedLevelBeLoaded(StageAssets.World3HallPortalSelectionController.SceneName);
+        return Application.CanStreamedLevelBeLoaded(sceneName);
     }
 
     IEnumerator LoadSceneRoutine(string sceneName, AudioClip sfxClip = null, float sfxVolume = 1f)

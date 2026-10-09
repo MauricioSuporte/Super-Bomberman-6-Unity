@@ -14,6 +14,9 @@ namespace StageAssets
         private SpriteRenderer selectionRenderer;
         private float animationTime;
         private bool wasVisible;
+        private Vector2 selectionSize = new(64f, 32f);
+
+        public void SetSelectionSize(Vector2 size) => selectionSize = size;
 
         private void Awake()
         {
@@ -48,9 +51,9 @@ namespace StageAssets
             {
                 var corner = corners[i];
                 corner.enabled = visible;
-                // Centers of 14 px corners inside a 64 x 32 px border (PPU 16).
-                float x = ((i & 1) != 0 ? 1f : -1f) * (25f + expansion) / 16f;
-                float y = ((i & 2) != 0 ? 1f : -1f) * (9f + expansion) / 16f;
+                // Keep the same 14 px corner sprites for Exit and the completed chip (PPU 16).
+                float x = ((i & 1) != 0 ? 1f : -1f) * (selectionSize.x * 0.5f - 7f + expansion) / 16f;
+                float y = ((i & 2) != 0 ? 1f : -1f) * (selectionSize.y * 0.5f - 7f + expansion) / 16f;
                 corner.transform.localPosition = new Vector3(x, y, 0f);
             }
         }

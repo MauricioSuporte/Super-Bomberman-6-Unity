@@ -52,7 +52,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         RandomEggsMin,
         RandomEggsMax,
         Skull,
-        LineBomb
+        LineBomb,
+        SearchBomb
     }
 
     [System.Serializable]
@@ -292,6 +293,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         ItemSelectEntryId.PowerBomb,
         ItemSelectEntryId.RubberBomb,
         ItemSelectEntryId.MagnetBomb,
+        ItemSelectEntryId.SearchBomb,
         ItemSelectEntryId.FullFire,
         ItemSelectEntryId.BombPass,
         ItemSelectEntryId.DestructiblePass,
@@ -619,6 +621,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         ItemSelectEntryId.PowerBomb,
         ItemSelectEntryId.RubberBomb,
         ItemSelectEntryId.MagnetBomb,
+        ItemSelectEntryId.SearchBomb,
         ItemSelectEntryId.FullFire,
         ItemSelectEntryId.BombPass,
         ItemSelectEntryId.DestructiblePass,
@@ -4381,6 +4384,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             ItemSelectEntryId.ControlBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.ControlBomb),
             ItemSelectEntryId.PowerBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.PowerBomb),
             ItemSelectEntryId.RubberBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.RubberBomb),
+            ItemSelectEntryId.SearchBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.SearchBomb),
             ItemSelectEntryId.MagnetBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.MagnetBomb),
             ItemSelectEntryId.FullFire => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.FullFire),
             ItemSelectEntryId.BombPass => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.BombPass),
@@ -5564,6 +5568,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             BattleModeHandicapBombType.Rubber => GetItemIconSprite(ItemType.RubberBomb),
             BattleModeHandicapBombType.Pierce => GetItemIconSprite(ItemType.PierceBomb),
             BattleModeHandicapBombType.Control => GetItemIconSprite(ItemType.ControlBomb),
+            BattleModeHandicapBombType.Search => GetItemIconSprite(ItemType.SearchBomb),
             BattleModeHandicapBombType.Magnet => GetItemIconSprite(ItemType.MagnetBomb),
             _ => GetItemIconSprite(ItemType.ExtraBomb)
         };
@@ -5657,7 +5662,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 break;
 
             case 5:
-                player.bombType = WrapValue(player.bombType + delta, 0, 5);
+                player.bombType = WrapValue(player.bombType + delta, 0, 6);
                 break;
 
             case 6:

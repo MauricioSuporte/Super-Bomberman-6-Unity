@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 2922516725846522430}
   - component: {fileID: 7151199009588158301}
   - component: {fileID: 8471245369133857625}
+  - component: {fileID: 730140006440002}
   m_Layer: 10
   m_Name: PrettyBomber
   m_TagString: BossBomber
@@ -254,7 +255,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerId: 1
   useAIInput: 1
-  bombPrefab: {fileID: 147425199346742615, guid: 457adb3be7e4eb4458f374993478c43a, type: 3}
+  bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
+  searchBombPrefab: {fileID: 147425199346742615, guid: 457adb3be7e4eb4458f374993478c43a, type: 3}
   pierceBombPrefab: {fileID: 0}
   controlBombPrefab: {fileID: 0}
   powerBombPrefab: {fileID: 0}
@@ -375,6 +377,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3bc1b92679b429b8a21cde3619a64d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrettyBomberDefeatSequence
+  searchBombDropPrefab: {fileID: 6615915676916675380, guid: 657b40a75f1e4c72b3c944e96589ad50, type: 3}
+  endStageWaitNoItemsSeconds: 3
   damagedAnimation: {fileID: 7661374584512628626}
   endStageMusic: {fileID: 8300000, guid: 4923b7e8bbf870e4ea64be1906159dbc, type: 3}
 --- !u!82 &3101258277916350091
@@ -1818,3 +1822,16 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+--- !u!114 &730140006440002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de7a1d13bd21417bbbe08318943d4359, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SearchBombAbility
+  enabledAbility: 1

@@ -7,6 +7,9 @@ public sealed class PrettyBomberDefeatSequence : MonoBehaviour
 {
     [SerializeField] private AnimatedSpriteRenderer damagedAnimation = null;
     [SerializeField] private AudioClip endStageMusic = null;
+    [Header("Defeat reward")]
+    [SerializeField] private ItemPickup searchBombDropPrefab;
+    [SerializeField, Min(0f)] private float endStageWaitNoItemsSeconds = 3f;
     private CharacterHealth health;
     private MovementControllerAI movement;
     private bool started;
@@ -51,6 +54,8 @@ public sealed class PrettyBomberDefeatSequence : MonoBehaviour
 
     private IEnumerator DefeatRoutine()
     {
+        // The disappearance animation moves the boss below the floor.
+        Vector3 rewardPosition = transform.position;
         GetComponent<BrainIA>().enabled = false;
         GetComponent<BombController>().enabled = false;
         movement.SetAIDirection(Vector2.zero);
@@ -65,7 +70,9 @@ public sealed class PrettyBomberDefeatSequence : MonoBehaviour
         movement.enabled = false;
         movement.SetVisualOverrideActive(true);
         ShowAnimation(damagedAnimation, true);
+        health.StartTemporaryInvulnerability(health.hitInvulnerableDuration, withBlink: true);
         yield return WaitUnpaused(health.hitInvulnerableDuration);
+        health.SetExternalInvulnerability(true);
 
         var death = movement.spriteRendererDeath;
         death.useSequenceDuration = true;
@@ -85,8 +92,27 @@ public sealed class PrettyBomberDefeatSequence : MonoBehaviour
         death.enabled = false;
         Destroy(magic.gameObject);
         magic = null;
-        yield return WaitUnpaused(1f);
         var gameManager = FindAnyObjectByType<GameManager>();
+        ItemPickup reward = searchBombDropPrefab != null ? searchBombDropPrefab : AutoItemDatabase.Get(ItemType.SearchBomb);
+        if (reward != null)
+        {
+            Vector3 position = rewardPosition;
+            if (gameManager != null && gameManager.groundTilemap != null)
+                position = gameManager.groundTilemap.GetCellCenterWorld(gameManager.groundTilemap.WorldToCell(position));
+            Instantiate(reward, position, Quaternion.identity);
+        }
+        float elapsed = 0f;
+        while (elapsed < endStageWaitNoItemsSeconds)
+        {
+            bool remainingItems = gameManager != null ? gameManager.HasUncollectedStageItems() :
+                FindObjectsByType<ItemPickup>().Length > 0;
+            if (!remainingItems)
+                break;
+            yield return null;
+            if (!GamePauseController.IsPaused)
+                elapsed += Time.deltaTime;
+        }
+        yield return WaitUnpaused(1f);
         if (gameManager != null)
             gameManager.nextStageSceneName = "Stage_3-8";
         var ending = gameObject.AddComponent<BossEndStageSequence>();

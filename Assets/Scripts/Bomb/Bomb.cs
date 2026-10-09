@@ -330,6 +330,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public void StopKickPunchMagnetRoutines()
     {
+        SuspendSearchPursuit();
         if (kickRoutine != null)
         {
             StopCoroutine(kickRoutine);
@@ -359,6 +360,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void StopMagnetMovement()
     {
+        SuspendSearchPursuit();
         if (magnetRoutine == null)
             return;
 
@@ -1298,6 +1300,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public void MarkMovedByKickOrPunch()
     {
+        SuspendSearchPursuit();
         WasMovedByKickOrPunch = true;
     }
 
@@ -1887,14 +1890,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         LayerMask blockMoveMask,
         float overlapBoxSize,
         float originBlockerSize,
-        bool originBlockerUseTrigger)
+        bool originBlockerUseTrigger,
+        bool searchMovement = false)
     {
         if (IsBlockedFromMagnetMovement)
             return false;
 
-        if (magnetRoutine != null)
+        if (!searchMovement)
+            StopMagnetMovement();
+        else if (magnetRoutine != null)
+        {
             StopCoroutine(magnetRoutine);
-
+            magnetRoutine = null;
+        }
         RemoveMagnetOriginBlocker();
 
         magnetSpeedMultiplier = Mathf.Max(0.05f, speedMultiplier);
@@ -1919,7 +1927,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = origin;
         transform.position = origin;
 
-        if (!TryGetComponent<PrettyBomb>(out _))
+        if (!searchMovement)
             TryPlayBombSfx_NoOverlap(magnetPullSfx, magnetPullSfxVolume);
 
         magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(
@@ -1928,7 +1936,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             blockMoveMask,
             Mathf.Clamp(overlapBoxSize, 0.1f, 1.5f),
             Mathf.Clamp(originBlockerSize, 0.2f, 1.2f),
-            originBlockerUseTrigger));
+            originBlockerUseTrigger,
+            searchMovement));
 
         return true;
     }
@@ -1939,7 +1948,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         LayerMask blockMoveMask,
         float overlapBoxSize,
         float originBlockerSize,
-        bool originBlockerUseTrigger)
+        bool originBlockerUseTrigger,
+        bool searchMovement)
     {
         float mult = Mathf.Max(0.05f, speedMultiplier);
         int remainingSteps = Mathf.Max(0, steps);
@@ -1952,7 +1962,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (IsBlockedFromMagnetMovement)
                 break;
 
-            if (remainingSteps > 0 && remainingSteps-- == 0)
+            if (searchMovement)
+            {
+                if (remainingSteps-- <= 0)
+                    break;
+            }
+            else if (remainingSteps > 0 && remainingSteps-- == 0)
                 break;
 
             Vector2 start = currentTileCenter;
@@ -2052,6 +2067,24 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         magnetRoutine = null;
+    }
+
+    private void SuspendSearchPursuit()
+    {
+        if (TryGetComponent<SearchBomb>(out var searchBomb))
+            searchBomb.SuspendPursuit();
+    }
+
+    public bool CanSearchMoveTo(Vector2 worldCenter, float tileSize)
+    {
+        kickTileSize = tileSize;
+        kickDestructibleTilemap = owner != null ? owner.destructibleTiles : null;
+        ResolveIndestructibleTilemapIfNeeded();
+        // Bounds commonly come from the indestructible wall map. Its empty
+        // interior cells are walkable; requiring a painted wall rejects them.
+        if (stageBoundsTilemap != null && !stageBoundsTilemap.cellBounds.Contains(stageBoundsTilemap.WorldToCell(worldCenter)))
+            return false;
+        return !IsMagnetTileBlocked(worldCenter, LayerMask.GetMask("Stage", "Bomb", "Player", "Enemy", "Louie"), 0.6f);
     }
 
     private bool IsMagnetTileBlocked(Vector2 worldCenter, LayerMask mask, float boxSize)

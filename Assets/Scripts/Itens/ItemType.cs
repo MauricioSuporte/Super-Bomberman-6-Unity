@@ -27,5 +27,6 @@ public enum ItemType
     MagnetBomb = 24,
     Skull = 25,
     OneUp = 26,
-    LineBomb = 27
+    LineBomb = 27,
+    SearchBomb = 28
 }

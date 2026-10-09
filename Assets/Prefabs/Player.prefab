@@ -4402,6 +4402,7 @@ MonoBehaviour:
   powerBombPrefab: {fileID: 147425199346742615, guid: 9928ad697fc8ff64587c25df57a4209b, type: 3}
   rubberBombPrefab: {fileID: 147425199346742615, guid: 26d7fe4d167283544b2eef6186339436, type: 3}
   magnetBombPrefab: {fileID: 147425199346742615, guid: 851ce7b3e6e8c724dbbf6dae1abc11dc, type: 3}
+  searchBombPrefab: {fileID: 0}
   revengeBombPrefab: {fileID: 147425199346742615, guid: 57db8dbb73a5d57489893e05dba3ca00, type: 3}
   bombFuseTime: 2.3
   bombAmout: 1

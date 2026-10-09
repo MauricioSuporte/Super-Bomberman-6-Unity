@@ -319,6 +319,7 @@ public static class BossRushSession
             state.HasPowerBomb = false;
             state.HasRubberBombs = false;
             state.HasMagnetBomb = false;
+            state.HasSearchBomb = false;
             state.HasFullFire = false;
             state.MountedLouie = MountedType.None;
             state.QueuedEggs.Clear();
@@ -459,6 +460,7 @@ public static class BossRushSession
             state.HasPowerBomb = false;
             state.HasRubberBombs = false;
             state.HasMagnetBomb = false;
+            state.HasSearchBomb = false;
             state.HasFullFire = false;
             state.MountedLouie = MountedType.None;
             state.QueuedEggs.Clear();

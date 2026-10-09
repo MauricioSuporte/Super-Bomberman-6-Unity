@@ -13,6 +13,8 @@ public static class ItemSheetPrefabAuthoring
     private const string RubberBombPrefabPath = "Assets/Prefabs/Bombs/RubberBomb.prefab";
     private const string PowerBombPrefabPath = "Assets/Prefabs/Bombs/PowerBomb.prefab";
     private const string ControlBombPrefabPath = "Assets/Prefabs/Bombs/ControlBomb.prefab";
+    private const string SearchBombPrefabPath = "Assets/Prefabs/Bombs/SearchBomb.prefab";
+    private const string SearchBombResourcesPrefabPath = "Assets/Resources/Bombs/SearchBomb.prefab";
     private const string MagnetBombPrefabPath = "Assets/Prefabs/Bombs/MagnetBomb.prefab";
     private const string RevengeBombPrefabPath = "Assets/Prefabs/Bombs/MadBomberBomb.prefab";
     private const string ExplosionPrefabPath = "Assets/Resources/Explosions/BombExplosion.prefab";
@@ -36,6 +38,7 @@ public static class ItemSheetPrefabAuthoring
         new("Assets/Resources/Items/FullFire.prefab", "FullFire", "FullFire", 32, 5, false),
         new("Assets/Resources/Items/Heart.prefab", "Heart", "Heart", 33, 1),
         new("Assets/Resources/Items/InvincibleSuit.prefab", "InvincibleSuit", "InvincibleSuit", 36, 1),
+        new("Assets/Resources/Items/SearchBomb.prefab", "SearchBomb", "SearchBomb", 32, 2),
         new("Assets/Resources/Items/MagnetBomb.prefab", "MagnetBomb", "MagnetBomb", 38, 2),
         new("Assets/Resources/Items/PierceBomb.prefab", "PierceBomb", "PierceBomb", 38, 1),
         new("Assets/Resources/Items/PowerBomb.prefab", "PowerBomb", "PowerBomb", 40, 1),
@@ -61,6 +64,8 @@ public static class ItemSheetPrefabAuthoring
         prefabsChanged |= ApplyPowerBombSpritesIfNeeded();
         prefabsChanged |= ApplyControlBombSpritesIfNeeded();
         prefabsChanged |= ApplyMagnetBombSpritesIfNeeded();
+        prefabsChanged |= ApplySearchBombSpritesIfNeeded(SearchBombPrefabPath);
+        prefabsChanged |= ApplySearchBombSpritesIfNeeded(SearchBombResourcesPrefabPath);
         prefabsChanged |= ApplyRevengeBombSpritesIfNeeded();
         foreach (ItemIconDefinition item in ItemIcons)
         {
@@ -418,6 +423,33 @@ public static class ItemSheetPrefabAuthoring
         Debug.Log("[ItemSheetPrefabAuthoring] ControlBomb.prefab now uses Itens.png frames (22,2), (23,2), (24,2), (25,2).");
     }
 
+    private static bool ApplySearchBombSpritesIfNeeded(string prefabPath)
+    {
+        if (IsAnimatedSpritePrefabConfigured(prefabPath, false,
+                "SearchBombFrame1", "SearchBombFrame2", "SearchBombFrame3", "SearchBombFrame4"))
+            return false;
+
+        GameObject prefabRoot = PrefabUtility.LoadPrefabContents(prefabPath);
+        try
+        {
+            Sprite[] frames = Enumerable.Range(1, 4).Select(index => LoadSprite($"SearchBombFrame{index}")).ToArray();
+            if (frames.Any(frame => frame == null))
+                throw new InvalidOperationException("Search bomb sprites could not be loaded from Itens.png.");
+            AnimatedSpriteRenderer renderer = prefabRoot.GetComponent<AnimatedSpriteRenderer>();
+            renderer.idleSprite = frames[0];
+            renderer.animationSprite = frames;
+            renderer.idle = false;
+            renderer.loop = true;
+            prefabRoot.GetComponent<SpriteRenderer>().sprite = frames[0];
+            PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabRoot);
+        }
+        return true;
+    }
+
     private static bool ApplyMagnetBombSpritesIfNeeded()
     {
         if (IsAnimatedSpritePrefabConfigured(MagnetBombPrefabPath, false, "MagnetBombMedium", "MagnetBombLarge", "MagnetBombMedium", "MagnetBombSmall"))
@@ -718,6 +750,11 @@ public static class ItemSheetPrefabAuthoring
             CreateSpriteRect("ControlBombFrame2", 23, 2, existingSpriteRects),
             CreateSpriteRect("ControlBombFrame3", 24, 2, existingSpriteRects),
             CreateSpriteRect("ControlBombFrame4", 25, 2, existingSpriteRects),
+            CreateSpriteRect("SearchBombFrame1", 22, 1, existingSpriteRects),
+            CreateSpriteRect("SearchBombFrame2", 23, 1, existingSpriteRects),
+            CreateSpriteRect("SearchBombFrame3", 24, 1, existingSpriteRects),
+            CreateSpriteRect("SearchBombFrame4", 25, 1, existingSpriteRects),
+            CreateSpriteRect("SearchBombIcon", 32, 2, existingSpriteRects, ItemIconSize),
             CreateSpriteRect("MagnetBombLarge", 25, 4, existingSpriteRects),
             CreateSpriteRect("MagnetBombMedium", 26, 4, existingSpriteRects),
             CreateSpriteRect("MagnetBombSmall", 27, 4, existingSpriteRects),

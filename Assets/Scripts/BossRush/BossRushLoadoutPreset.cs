@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +24,7 @@ public class BossRushLoadoutPreset
     public bool hasPowerBomb;
     public bool hasRubberBombs;
     public bool hasMagnetBomb;
+    public bool hasSearchBomb;
     public bool hasFullFire;
 
     [Header("Mount")]
@@ -54,6 +55,7 @@ public class BossRushLoadoutPreset
         state.HasPowerBomb = hasPowerBomb;
         state.HasRubberBombs = hasRubberBombs;
         state.HasMagnetBomb = hasMagnetBomb;
+        state.HasSearchBomb = hasSearchBomb;
         state.HasFullFire = hasFullFire;
 
         if (state.HasControlBombs)

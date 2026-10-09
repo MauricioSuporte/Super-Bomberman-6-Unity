@@ -124,6 +124,9 @@ namespace StageAssets
 
             while (remainingDrops > 0 || !playersMovementFinished)
                 yield return null;
+            var manager = FindAnyObjectByType<GameManager>();
+            if (manager != null)
+                manager.RegisterSpawnedDestructibles(DestructibleCells);
             yield return PrettyBomberEntrance();
             RestoreDancingPlayers(completed: true, enableGameplay: true);
 
@@ -298,6 +301,7 @@ namespace StageAssets
             Destroy(audioObject, bossEntranceSfx.length + 0.1f);
 
             yield return effect.Reveal(enteringBoss, movement, true, 0.5f);
+            yield return effect.Close(0.5f);
 
             float elapsed = 0f;
             while (elapsed < 1f)

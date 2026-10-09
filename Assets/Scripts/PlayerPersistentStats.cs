@@ -30,11 +30,12 @@ public static class PlayerPersistentStats
         public bool HasLineBomb = false;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
+        public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
-        public bool HasMagnetBomb = false;
+        public bool HasMagnetBomb = true;
+        public bool HasSearchBomb = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
@@ -224,6 +225,7 @@ public static class PlayerPersistentStats
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
         s.HasMagnetBomb = false;
+        s.HasSearchBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -258,6 +260,7 @@ public static class PlayerPersistentStats
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
         s.HasMagnetBomb = false;
+        s.HasSearchBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -300,6 +303,7 @@ public static class PlayerPersistentStats
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
         s.HasMagnetBomb = false;
+        s.HasSearchBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -392,6 +396,7 @@ public static class PlayerPersistentStats
         bool runtimePower = false;
         bool runtimeRubber = false;
         bool runtimeMagnet = false;
+        bool runtimeSearch = false;
 
         if (abilitySystem != null)
         {
@@ -427,6 +432,7 @@ public static class PlayerPersistentStats
 
             var magnet = abilitySystem.Get<MagnetBombAbility>(MagnetBombAbility.AbilityId);
             runtimeMagnet = magnet != null && magnet.IsEnabled;
+            runtimeSearch = abilitySystem.IsEnabled(SearchBombAbility.AbilityId);
         }
 
         if (runtimeKick)
@@ -462,6 +468,17 @@ public static class PlayerPersistentStats
 
         if (runtimeMagnet)
             s.HasMagnetBomb = true;
+        if (runtimeSearch)
+        {
+            s.HasSearchBomb = true;
+            s.HasMagnetBomb = false;
+            s.HasControlBombs = false;
+            s.HasPierceBombs = false;
+            s.HasPowerBomb = false;
+            s.HasRubberBombs = false;
+        }
+        else if (runtimeMagnet || runtimeControl || runtimePierce || runtimePower || runtimeRubber)
+            s.HasSearchBomb = false;
 
         if (runtimeControl)
         {
@@ -651,6 +668,9 @@ public static class PlayerPersistentStats
             if (s.HasMagnetBomb) abilitySystem.Enable(MagnetBombAbility.AbilityId);
             else abilitySystem.Disable(MagnetBombAbility.AbilityId);
 
+            if (s.HasSearchBomb) abilitySystem.Enable(SearchBombAbility.AbilityId);
+            else abilitySystem.Disable(SearchBombAbility.AbilityId);
+
             if (s.CanPassBombs) abilitySystem.Enable(BombPassAbility.AbilityId);
             else abilitySystem.Disable(BombPassAbility.AbilityId);
 
@@ -808,6 +828,7 @@ public static class PlayerPersistentStats
         to.HasPowerBomb = from.HasPowerBomb;
         to.HasRubberBombs = from.HasRubberBombs;
         to.HasMagnetBomb = from.HasMagnetBomb;
+        to.HasSearchBomb = from.HasSearchBomb;
         to.HasFullFire = from.HasFullFire;
 
         to.MountedLouie = from.MountedLouie;
@@ -895,6 +916,7 @@ public static class PlayerPersistentStats
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
         s.HasMagnetBomb = false;
+        s.HasSearchBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -927,6 +949,7 @@ public static class PlayerPersistentStats
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
         s.HasMagnetBomb = false;
+        s.HasSearchBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -1023,6 +1046,7 @@ public static class PlayerPersistentStats
         state.HasPowerBomb = false;
         state.HasRubberBombs = false;
         state.HasMagnetBomb = false;
+        state.HasSearchBomb = false;
 
         switch (bombType)
         {
@@ -1040,6 +1064,10 @@ public static class PlayerPersistentStats
 
             case BattleModeHandicapBombType.Control:
                 state.HasControlBombs = true;
+                break;
+
+            case BattleModeHandicapBombType.Search:
+                state.HasSearchBomb = true;
                 break;
 
             case BattleModeHandicapBombType.Magnet:
@@ -1085,6 +1113,7 @@ public static class PlayerPersistentStats
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
         s.HasMagnetBomb = false;
+        s.HasSearchBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -1231,6 +1260,7 @@ public static class PlayerPersistentStats
                 s.HasPowerBomb = false;
                 s.HasRubberBombs = false;
                 s.HasMagnetBomb = false;
+                s.HasSearchBomb = false;
                 break;
 
             case ItemType.ControlBomb:
@@ -1239,6 +1269,7 @@ public static class PlayerPersistentStats
                 s.HasPowerBomb = false;
                 s.HasRubberBombs = false;
                 s.HasMagnetBomb = false;
+                s.HasSearchBomb = false;
                 break;
 
             case ItemType.PowerBomb:
@@ -1247,6 +1278,7 @@ public static class PlayerPersistentStats
                 s.HasControlBombs = false;
                 s.HasRubberBombs = false;
                 s.HasMagnetBomb = false;
+                s.HasSearchBomb = false;
                 break;
 
             case ItemType.RubberBomb:
@@ -1255,10 +1287,21 @@ public static class PlayerPersistentStats
                 s.HasControlBombs = false;
                 s.HasPowerBomb = false;
                 s.HasMagnetBomb = false;
+                s.HasSearchBomb = false;
                 break;
 
             case ItemType.MagnetBomb:
+                s.HasSearchBomb = false;
                 s.HasMagnetBomb = true;
+                s.HasPierceBombs = false;
+                s.HasControlBombs = false;
+                s.HasPowerBomb = false;
+                s.HasRubberBombs = false;
+                break;
+
+            case ItemType.SearchBomb:
+                s.HasSearchBomb = true;
+                s.HasMagnetBomb = false;
                 s.HasPierceBombs = false;
                 s.HasControlBombs = false;
                 s.HasPowerBomb = false;
@@ -1347,6 +1390,9 @@ public static class PlayerPersistentStats
         if (s.HasMagnetBomb)
             candidates.Add(ItemType.MagnetBomb);
 
+        if (s.HasSearchBomb)
+            candidates.Add(ItemType.SearchBomb);
+
         if (s.HasFullFire)
             candidates.Add(ItemType.FullFire);
 
@@ -1419,6 +1465,10 @@ public static class PlayerPersistentStats
                 s.HasMagnetBomb = false;
                 break;
 
+            case ItemType.SearchBomb:
+                s.HasSearchBomb = false;
+                break;
+
             case ItemType.FullFire:
                 s.HasFullFire = false;
                 break;
@@ -1487,6 +1537,10 @@ public static class PlayerPersistentStats
                 break;
             case ItemType.MagnetBomb:
                 abilitySystem.Disable(MagnetBombAbility.AbilityId);
+                break;
+
+            case ItemType.SearchBomb:
+                abilitySystem.Disable(SearchBombAbility.AbilityId);
                 break;
             case ItemType.FullFire:
                 abilitySystem.Disable(FullFireAbility.AbilityId);

@@ -32,6 +32,7 @@ public partial class BombController : MonoBehaviour
     public GameObject powerBombPrefab;
     public GameObject rubberBombPrefab;
     public GameObject magnetBombPrefab;
+    public GameObject searchBombPrefab;
     public GameObject revengeBombPrefab;
     public float bombFuseTime = 2.3f;
     public int bombAmout = 1;
@@ -215,8 +216,8 @@ public partial class BombController : MonoBehaviour
     private void ApplyBaseBombFuse(GameObject prefabToUse, GameObject bomb)
     {
         bool isMagnetBomb = bomb != null && bomb.TryGetComponent<MagnetBomb>(out _);
-        bool isPrettyBomb = bomb != null && bomb.TryGetComponent<PrettyBomb>(out _);
-        bool shouldApplyNormalFuse = prefabToUse == bombPrefab && !isMagnetBomb && !isPrettyBomb;
+        bool isSearchBomb = bomb != null && bomb.TryGetComponent<SearchBomb>(out _);
+        bool shouldApplyNormalFuse = prefabToUse == bombPrefab && !isMagnetBomb && !isSearchBomb;
 
         if (shouldApplyNormalFuse)
             BombSheetSpriteSet.ApplyNormalBombFuse(bomb.GetComponent<AnimatedSpriteRenderer>());
@@ -1057,14 +1058,18 @@ public partial class BombController : MonoBehaviour
         bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
         bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
         bool shouldMakeFirstPlacedBombMagnetic = IsMagnetBombEnabled() && !HasAnyAliveBombOwnedByMe();
+        bool shouldMakeFirstPlacedBombSearch = GetCachedComponent(ref cachedAbilitySystem) != null &&
+            cachedAbilitySystem.IsEnabled(SearchBombAbility.AbilityId) && !HasAnyAliveBombOwnedByMe();
 
         GameObject prefabToUse =
-            (shouldMakeFirstPlacedBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
+            (shouldMakeFirstPlacedBombSearch ? (searchBombPrefab != null ? searchBombPrefab :
+                Resources.Load<GameObject>("Bombs/SearchBomb")) : null) ??
+            ((shouldMakeFirstPlacedBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
             (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
             (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
             (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
-            bombPrefab;
+            bombPrefab);
 
         if (prefabToUse == null)
             return;
@@ -1091,6 +1096,12 @@ public partial class BombController : MonoBehaviour
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(GetSkullModifiedBombFuseTime(bombFuseTime));
+        if (shouldMakeFirstPlacedBombSearch)
+        {
+            bombComponent.SetFuseSeconds(GetSkullModifiedBombFuseTime(3f));
+            if (!bomb.TryGetComponent<SearchBomb>(out _))
+                bomb.AddComponent<SearchBomb>();
+        }
         bombComponent.Initialize(this);
 
         if (shouldMakeFirstPlacedBombMagnetic)
@@ -3122,14 +3133,18 @@ public partial class BombController : MonoBehaviour
         bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
         bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
         bool shouldMakeFirstPlacedBombMagnetic = IsMagnetBombEnabled() && !HasAnyAliveBombOwnedByMe();
+        bool shouldMakeFirstPlacedBombSearch = GetCachedComponent(ref cachedAbilitySystem) != null &&
+            cachedAbilitySystem.IsEnabled(SearchBombAbility.AbilityId) && !HasAnyAliveBombOwnedByMe();
 
         GameObject prefabToUse =
-            (shouldMakeFirstPlacedBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
+            (shouldMakeFirstPlacedBombSearch ? (searchBombPrefab != null ? searchBombPrefab :
+                Resources.Load<GameObject>("Bombs/SearchBomb")) : null) ??
+            ((shouldMakeFirstPlacedBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
             (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
             (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
             (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
-            bombPrefab;
+            bombPrefab);
 
         if (prefabToUse == null)
             return false;
@@ -3160,6 +3175,12 @@ public partial class BombController : MonoBehaviour
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
+        if (shouldMakeFirstPlacedBombSearch)
+        {
+            bombComponent.SetFuseSeconds(GetSkullModifiedBombFuseTime(3f));
+            if (!bomb.TryGetComponent<SearchBomb>(out _))
+                bomb.AddComponent<SearchBomb>();
+        }
         bombComponent.Initialize(this);
 
         if (shouldMakeFirstPlacedBombMagnetic)

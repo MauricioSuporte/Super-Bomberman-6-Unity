@@ -77,7 +77,8 @@ public class GameManager : MonoBehaviour
         new(BattleModeHiddenDropEntryKind.RandomEggsMin),
         new(BattleModeHiddenDropEntryKind.RandomEggsMax),
         new(BattleModeHiddenDropEntryKind.Item, ItemType.Skull),
-        new(BattleModeHiddenDropEntryKind.Item, ItemType.LineBomb)
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.LineBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.SearchBomb)
     };
 
     public static readonly MountedType[] BattleModeRandomEggMountTypes =
@@ -137,6 +138,7 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int controlBombAmount = 0;
     [Min(0)] public int powerBombAmount = 0;
     [Min(0)] public int rubberBombAmount = 0;
+    [Min(0)] public int searchBombAmount;
     [Min(0)] public int magnetBombAmount = 0;
     [Min(0)] public int fullFireAmount = 0;
     [Min(0)] public int bombPassAmount = 0;
@@ -659,6 +661,40 @@ public class GameManager : MonoBehaviour
         ConfigureLegacyHiddenObjects(destructibleCells);
     }
 
+    public void RegisterSpawnedDestructibles(IEnumerable<Vector3Int> cells)
+    {
+        if (destructibleTilemap == null || cells == null)
+            return;
+        AutoItemDatabase.BuildIfNeeded();
+        var addedCells = new List<Vector3Int>();
+        var unique = new HashSet<Vector3Int>();
+        foreach (Vector3Int cell in cells)
+        {
+            if (!unique.Add(cell) || !destructibleTilemap.HasTile(cell))
+                continue;
+            hiddenObjectSpawnsByCell.Remove(cell);
+            addedCells.Add(cell);
+        }
+        totalDestructibleBlocks += addedCells.Count;
+        if (HasConfiguredHiddenObjectRooms())
+            ConfigureRoomHiddenObjects(addedCells);
+        else
+            ConfigureLegacyHiddenObjects(addedCells);
+    }
+
+    public bool HasUncollectedStageItems()
+    {
+        if (FindObjectsByType<ItemPickup>().Length > 0 || pendingHiddenItemCells.Count > 0)
+            return true;
+        if (destructibleTilemap == null)
+            return false;
+        foreach (var entry in hiddenObjectSpawnsByCell)
+            if (entry.Value != null && entry.Value.GetComponent<ItemPickup>() != null &&
+                destructibleTilemap.HasTile(entry.Key))
+                return true;
+        return false;
+    }
+
     bool HasConfiguredHiddenObjectRooms()
     {
         if (hiddenObjectRooms == null)
@@ -732,6 +768,7 @@ public class GameManager : MonoBehaviour
         TryAssignItem(destructibleCells, ref cursor, ItemType.PowerBomb, powerBombAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.RubberBomb, rubberBombAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.MagnetBomb, magnetBombAmount);
+        TryAssignItem(destructibleCells, ref cursor, ItemType.SearchBomb, searchBombAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.FullFire, fullFireAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.BombPass, bombPassAmount);
         TryAssignItem(destructibleCells, ref cursor, ItemType.DestructiblePass, destructiblePassAmount);
@@ -879,6 +916,7 @@ public class GameManager : MonoBehaviour
             case ItemType.PowerBomb: powerBombAmount = amount; break;
             case ItemType.RubberBomb: rubberBombAmount = amount; break;
             case ItemType.MagnetBomb: magnetBombAmount = amount; break;
+            case ItemType.SearchBomb: searchBombAmount = amount; break;
             case ItemType.FullFire: fullFireAmount = amount; break;
             case ItemType.BombPass: bombPassAmount = amount; break;
             case ItemType.DestructiblePass: destructiblePassAmount = amount; break;
@@ -1909,6 +1947,8 @@ public class GameManager : MonoBehaviour
             return ItemType.RubberBomb;
         if (state.HasMagnetBomb)
             return ItemType.MagnetBomb;
+        if (state.HasSearchBomb)
+            return ItemType.SearchBomb;
 
         return ItemType.LandMine;
     }

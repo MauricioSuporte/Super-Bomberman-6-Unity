@@ -21,6 +21,7 @@ namespace StageAssets
         [SerializeField] private World3HallPortal[] portals;
         [SerializeField] private SpriteRenderer cursor;
         [SerializeField] private SpriteRenderer exitCursor;
+        [SerializeField] private Transform chipAnchor;
         [SerializeField] private AudioClip returnSfx;
         [SerializeField] private Text selectedStageLabel;
         [SerializeField] private StagePreIntroPlayersWalk portalWalk;
@@ -36,18 +37,35 @@ namespace StageAssets
         private bool transitioning;
         private bool exitSelected;
         private bool selectionReady;
+        private Vector3 exitCursorPosition;
+        private bool ChipSelected => portals != null && selectedIndex == portals.Length;
+        private bool ChipAvailable
+        {
+            get
+            {
+                return chipAnchor != null && StageUnlockProgress.IsUnlocked("Stage_3-8");
+            }
+        }
         private MovementController[] players;
         public bool PresentationBlocked { get; set; }
 
-        public string SelectedStageSceneName =>
-            selectionReady && !exitSelected && portals != null &&
-            selectedIndex >= 0 && selectedIndex < portals.Length && portals[selectedIndex] != null
-                ? portals[selectedIndex].DestinationScene
-                : null;
+        public string SelectedStageSceneName => !selectionReady || exitSelected ? null :
+            ChipSelected ? "Stage_3-8" : portals != null && selectedIndex >= 0 &&
+            selectedIndex < portals.Length && portals[selectedIndex] != null
+                ? portals[selectedIndex].DestinationScene : null;
+
+        public void FocusCompletedChip()
+        {
+            if (!ChipAvailable) return;
+            selectedIndex = portals.Length;
+            exitSelected = false;
+            RefreshCursor();
+        }
 
         private void Awake()
         {
             PresentationBlocked = World3HallChipAssemblyController.HasPendingReveal;
+            if (exitCursor != null) exitCursorPosition = exitCursor.transform.position;
             string initialStage = focusedStageSceneName;
             focusedStageSceneName = null;
             if (portals != null && !string.IsNullOrEmpty(initialStage))
@@ -78,6 +96,9 @@ namespace StageAssets
                         }
             }
 
+            if (initialStage == "Stage_3-8" && ChipAvailable)
+                selectedIndex = portals.Length;
+
             audioSource = GetComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
@@ -101,7 +122,7 @@ namespace StageAssets
         {
             KeepPlayersFacingUp();
 
-            if (selectedStageLabel == null || !selectionReady || portals[selectedIndex] == null)
+            if (selectedStageLabel == null || !selectionReady || (!ChipSelected && portals[selectedIndex] == null))
                 return;
 
             if (exitSelected)
@@ -113,7 +134,7 @@ namespace StageAssets
                 return;
             }
 
-            string stage = portals[selectedIndex].DestinationScene.Replace("Stage_", "").Replace("-", " - ");
+            string stage = (ChipSelected ? "Stage_3-8" : portals[selectedIndex].DestinationScene).Replace("Stage_", "").Replace("-", " - ");
             LocalizedTmpFontFallback.Apply(selectedStageLabel);
             selectedStageLabel.text = GameTextDatabase.WorldMap.WorldPrefix + stage;
             selectedStageLabel.enabled = true;
@@ -184,32 +205,13 @@ namespace StageAssets
 
             bool previousExitSelected = exitSelected;
             int previousIndex = selectedIndex;
-            if (input.GetDown(1, PlayerAction.MoveDown) && exitCursor != null)
-            {
-                if (!exitSelected)
-                {
-                    int below = FindPortalInDirection(Vector2.down);
-                    if (below >= 0)
-                        selectedIndex = below;
-                    else
-                        exitSelected = true;
-                }
-            }
-            else if (input.GetDown(1, PlayerAction.MoveUp))
-            {
-                if (exitSelected)
-                    exitSelected = false;
-                else
-                {
-                    int above = FindPortalInDirection(Vector2.up);
-                    if (above >= 0)
-                        selectedIndex = above;
-                }
-            }
-            else if (!exitSelected && input.GetDown(1, PlayerAction.MoveLeft))
-                MoveHorizontal(-1f);
-            else if (!exitSelected && input.GetDown(1, PlayerAction.MoveRight))
-                MoveHorizontal(1f);
+            Vector2 direction = Vector2.zero;
+            if (input.GetDown(1, PlayerAction.MoveDown)) direction = Vector2.down;
+            else if (input.GetDown(1, PlayerAction.MoveUp)) direction = Vector2.up;
+            else if (input.GetDown(1, PlayerAction.MoveLeft)) direction = Vector2.left;
+            else if (input.GetDown(1, PlayerAction.MoveRight)) direction = Vector2.right;
+            if (direction != Vector2.zero)
+                MoveSelection(direction);
 
             if ((selectedIndex != previousIndex || exitSelected != previousExitSelected) && cursorMoveSfx != null)
                 GameAudioSettings.PlaySfx(audioSource, cursorMoveSfx);
@@ -225,61 +227,91 @@ namespace StageAssets
             }
         }
 
-        private int FindPortalInDirection(Vector2 direction)
+        // Clockwise portals around the central chip. Explicit neighbors keep
+        // navigation stable when the large chip selection overlaps their rows.
+        private static int Neighbor(int stage, Vector2 direction)
         {
-            if (portals[selectedIndex] == null)
-                return -1;
-
-            Vector2 origin = portals[selectedIndex].transform.position;
-            int nearest = -1;
-            float bestDistance = float.PositiveInfinity;
-            for (int i = 0; i < portals.Length; i++)
-            {
-                if (i == selectedIndex || portals[i] == null || !portals[i].Available)
-                    continue;
-
-                Vector2 delta = (Vector2)portals[i].transform.position - origin;
-                if (Vector2.Dot(delta, direction) <= 0.01f)
-                    continue;
-
-                float distance = direction.x != 0f ? Mathf.Abs(delta.x) : delta.sqrMagnitude;
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    nearest = i;
-                }
-            }
-            return nearest;
+            if (direction == Vector2.left)
+                return stage switch { 1 => 6, 2 => 1, 3 => 2, 4 => 7, 5 => 8, 6 => 8, 7 => 3, 8 => 1, _ => 1 };
+            if (direction == Vector2.right)
+                return stage switch { 1 => 8, 2 => 8, 3 => 7, 4 => 5, 5 => 6, 6 => 1, 7 => 4, 8 => 6, _ => 6 };
+            if (direction == Vector2.up)
+                return stage switch { 1 => 2, 2 => 3, 3 => 0, 4 => 0, 5 => 4, 6 => 5, 7 => 0, 8 => 7, _ => 8 };
+            return stage switch { 1 => 0, 2 => 1, 3 => 2, 4 => 5, 5 => 6, 6 => 0, 7 => 8, 8 => 0, _ => 7 };
         }
 
-        private void MoveHorizontal(float direction)
+        private static int SequentialNeighbor(int stage, Vector2 direction)
         {
-            int next = FindPortalInDirection(new Vector2(direction, 0f));
-            if (next >= 0)
+            // Horizontal navigation follows the upper portal between 3-3 and 3-4.
+            if (direction == Vector2.right)
+                return stage switch { 3 => 7, 7 => 4, 6 => 0, _ => stage + 1 };
+            if (direction == Vector2.left)
+                return stage switch { 4 => 7, 7 => 3, 0 => 6, _ => stage - 1 };
+            int step = direction == Vector2.up ? 1 : -1;
+            // Exit is zero; the seven stage choices wrap around it.
+            return (stage + step + 8) % 8;
+        }
+
+        private void MoveSelection(Vector2 direction)
+        {
+            int current = exitSelected ? 0 : ChipSelected ? 8 :
+                int.Parse(portals[selectedIndex].DestinationScene.Substring("Stage_3-".Length));
+            if (exitSelected && (direction == Vector2.left || direction == Vector2.right))
             {
-                selectedIndex = next;
+                int destination = direction == Vector2.left ? 1 : 6;
+                for (; destination >= 1; destination--)
+                {
+                    for (int i = 0; i < portals.Length; i++)
+                        if (portals[i] != null && portals[i].Available && portals[i].DestinationScene == $"Stage_3-{destination}")
+                        {
+                            exitSelected = false;
+                            selectedIndex = i;
+                            return;
+                        }
+                    if (direction == Vector2.left) break;
+                }
                 return;
             }
-
-            float edge = direction > 0f ? float.PositiveInfinity : float.NegativeInfinity;
-            for (int i = 0; i < portals.Length; i++)
+            int next = current;
+            bool chipAvailable = ChipAvailable;
+            // Skip unavailable stages in the same direction without selecting
+            // a locked portal or getting stuck in a cycle.
+            for (int attempt = 0; attempt < 9; attempt++)
             {
-                if (portals[i] == null || !portals[i].Available)
-                    continue;
-                float x = portals[i].transform.position.x;
-                if ((direction > 0f && x < edge) || (direction < 0f && x > edge))
+                next = chipAvailable ? Neighbor(next, direction) : SequentialNeighbor(next, direction);
+                if (next == current) return;
+                if (next == 0 && exitCursor != null)
                 {
-                    edge = x;
-                    selectedIndex = i;
+                    exitSelected = true;
+                    return;
                 }
+                if (next == 8 && chipAvailable)
+                {
+                    exitSelected = false;
+                    selectedIndex = portals.Length;
+                    return;
+                }
+                for (int i = 0; i < portals.Length; i++)
+                    if (portals[i] != null && portals[i].Available && portals[i].DestinationScene == $"Stage_3-{next}")
+                    {
+                        exitSelected = false;
+                        selectedIndex = i;
+                        return;
+                    }
             }
         }
 
         private void RefreshCursor()
         {
             if (exitCursor != null)
-                exitCursor.enabled = exitSelected;
-            if (exitSelected)
+            {
+                exitCursor.transform.position = ChipSelected && !exitSelected ? chipAnchor.position : exitCursorPosition;
+                exitCursor.enabled = selectionReady && (exitSelected || ChipSelected);
+                var animator = exitCursor.GetComponent<World3HallExitCursorAnimator>();
+                if (animator != null)
+                    animator.SetSelectionSize(ChipSelected && !exitSelected ? new Vector2(80f, 80f) : new Vector2(64f, 32f));
+            }
+            if (exitSelected || ChipSelected)
             {
                 if (cursor != null)
                     cursor.enabled = false;
@@ -316,6 +348,15 @@ namespace StageAssets
 
         private void ConfirmSelection()
         {
+            if (ChipSelected)
+            {
+                if (!ChipAvailable || !Application.CanStreamedLevelBeLoaded("Stage_3-8"))
+                    return;
+                transitioning = true;
+                if (confirmSfx != null) GameAudioSettings.PlaySfx(audioSource, confirmSfx);
+                StartCoroutine(EnterCompletedChip());
+                return;
+            }
             var portal = portals[selectedIndex];
             if (portal == null || !portal.Available)
                 return;
@@ -368,6 +409,20 @@ namespace StageAssets
 
             PlayerPersistentStats.CommitStage();
             StartCoroutine(EnterSelectedPortal(portal.transform.position, destinationIndex));
+        }
+
+        private IEnumerator EnterCompletedChip()
+        {
+            foreach (var movement in FindObjectsByType<MovementController>())
+                if (movement.CompareTag("Player") && !movement.isDead)
+                    PlayerPersistentStats.StageCaptureFromRuntime(movement, movement.GetComponent<BombController>());
+            PlayerPersistentStats.CommitStage();
+            if (StageIntroTransition.Instance != null)
+                StageIntroTransition.Instance.StartFadeOut(fadeDuration);
+            yield return new WaitForSecondsRealtime(fadeDuration);
+            if (GameMusicController.Instance != null)
+                GameMusicController.Instance.StopMusic();
+            SceneManager.LoadSceneAsync("Stage_3-8");
         }
 
         public IEnumerator RevealUnlockedPortals()

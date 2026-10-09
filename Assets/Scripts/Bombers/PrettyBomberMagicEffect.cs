@@ -58,6 +58,20 @@ public sealed class PrettyBomberMagicEffect : MonoBehaviour
         SetExpansion(1f);
     }
 
+    public IEnumerator Close(float seconds)
+    {
+        float time = 0f;
+        while (time < seconds)
+        {
+            SetExpansion(1f - time / seconds);
+            yield return null;
+            if (!GamePauseController.IsPaused)
+                time += Time.deltaTime;
+        }
+        SetExpansion(0f);
+        visual.enabled = false;
+    }
+
     private void Update()
     {
         if (GamePauseController.IsPaused)

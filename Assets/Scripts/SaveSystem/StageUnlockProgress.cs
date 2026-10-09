@@ -378,7 +378,7 @@ public static class StageUnlockProgress
             changed = true;
         }
 
-        if (slot.clearedStages.Contains("Stage_3-6"))
+        if (allInitialStagesCleared && slot.clearedStages.Contains("Stage_3-6"))
         {
             if (!slot.unlockedStages.Contains("Stage_3-7"))
             {
@@ -387,6 +387,20 @@ public static class StageUnlockProgress
             }
         }
         else if (slot.unlockedStages.Remove("Stage_3-7"))
+            changed = true;
+
+        // The duel earns the seventh chip part; only the complete chip opens 3-8.
+        bool completeChip = allInitialStagesCleared && slot.clearedStages.Contains("Stage_3-6") &&
+            slot.clearedStages.Contains("Stage_3-7");
+        if (completeChip)
+        {
+            if (!slot.unlockedStages.Contains("Stage_3-8"))
+            {
+                slot.unlockedStages.Add("Stage_3-8");
+                changed = true;
+            }
+        }
+        else if (slot.unlockedStages.Remove("Stage_3-8"))
             changed = true;
 
         return changed;

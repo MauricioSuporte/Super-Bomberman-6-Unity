@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 4491695425928016186}
   - component: {fileID: 730140006440001}
   m_Layer: 7
-  m_Name: PrettyBomb
+  m_Name: SearchBomb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -150,7 +150,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 631097303594395179, guid: 753a8953e28c3c14e912529aac1d6194, type: 3}
+  m_Sprite: {fileID: 213900001, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -173,9 +173,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 631097303594395179, guid: 753a8953e28c3c14e912529aac1d6194, type: 3}
+  idleSprite: {fileID: 213900001, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   animationSprite:
-  - {fileID: 631097303594395179, guid: 753a8953e28c3c14e912529aac1d6194, type: 3}
+  - {fileID: 213900001, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 213900002, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 213900003, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
+  - {fileID: 213900004, guid: 508037450cc8f7947a3eb47e7ada206c, type: 3}
   allowFlipX: 1
   animationTime: 0.25
   useSequenceDuration: 0
@@ -217,7 +220,7 @@ MonoBehaviour:
   punchLandingBounceSpeedMultiplier: 2
   punchPixelsPerUnit: 16
   chainStepDelay: 0.1
-  FuseSeconds: 2
+  FuseSeconds: 3
   stageBoundsTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
@@ -329,7 +332,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 147425199346742615}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 558ec0fd5eea47dab834a7c79b1214c5, type: 3}
+  m_Script: {fileID: 11500000, guid: 841b28d4e58541cea49bab030102c1b5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PrettyBomb
+  m_EditorClassIdentifier: Assembly-CSharp::SearchBomb
+  detectionRangeTiles: 3
+  scanInterval: 0.08
   movementSpeedMultiplier: 0.3

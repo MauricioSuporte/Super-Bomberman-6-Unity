@@ -622,6 +622,18 @@ public class ItemPickup : MonoBehaviour
                     break;
                 }
 
+            case ItemType.SearchBomb:
+                {
+                    var ab = GetOrCreateAbilitySystem(player);
+                    ab.Enable(SearchBombAbility.AbilityId);
+                    ab.Disable(MagnetBombAbility.AbilityId);
+                    ab.Disable(PierceBombAbility.AbilityId);
+                    ab.Disable(ControlBombAbility.AbilityId);
+                    ab.Disable(PowerBombAbility.AbilityId);
+                    ab.Disable(RubberBombAbility.AbilityId);
+                    break;
+                }
+
             case ItemType.FullFire:
                 GetOrCreateAbilitySystem(player).Enable(FullFireAbility.AbilityId);
                 break;

@@ -356,6 +356,9 @@ public sealed class BattleModeRules : MonoBehaviour
             case ItemType.RubberBomb:
                 SetBombType(state, rubber: true);
                 break;
+            case ItemType.SearchBomb:
+                SetBombType(state, search: true);
+                break;
             case ItemType.MagnetBomb:
                 SetBombType(state, magnet: true);
                 break;
@@ -388,13 +391,15 @@ public sealed class BattleModeRules : MonoBehaviour
         bool control = false,
         bool power = false,
         bool rubber = false,
-        bool magnet = false)
+        bool magnet = false,
+        bool search = false)
     {
         state.HasPierceBombs = pierce;
         state.HasControlBombs = control;
         state.HasPowerBomb = power;
         state.HasRubberBombs = rubber;
         state.HasMagnetBomb = magnet;
+        state.HasSearchBomb = search;
     }
 
     static MountedType EggToLouie(ItemType type)
