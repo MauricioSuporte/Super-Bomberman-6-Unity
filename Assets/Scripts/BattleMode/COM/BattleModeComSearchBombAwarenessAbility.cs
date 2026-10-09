@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Escapes pursuit by simulating the real tile trail up to the remaining fuse.
+/// Plants a barrier on the pursued tile and commits to a validated escape.
+/// Falls back to predicting the real pursuit trail when planting is unsafe.
 /// Uses the shared COM walkability, explosion and timed danger contracts.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MovementController))]
+[RequireComponent(typeof(BombController))]
 public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBattleModeComAbility
 {
     private static readonly Vector2Int[] Directions =
@@ -43,12 +45,23 @@ public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBa
     private Vector2Int previousStep;
     private Vector2Int previousTile;
     private float stuckSince;
+    private readonly List<Vector2Int> blockadeRoute = new(MaximumDepth);
+    private readonly List<Vector2Int> blockadeDanger = new(64);
+    private readonly HashSet<Bomb> counteredThreats = new();
+    private BombController bombController;
+    private Bomb blockadeBomb;
+    private Vector2Int blockadeTile;
+    private float blockadeAttemptTime;
+    private bool blockadePending;
+    private bool predictionBlockadeActive;
+    private float predictionBlockadeFuse;
     public string DiagnosticName => "SearchBombAwareness";
     public string LastDecisionTrace { get; private set; } = "not evaluated";
     public bool IsAvailable => isActiveAndEnabled && movement != null && !movement.isDead;
     private void Awake()
     {
         movement = GetComponent<MovementController>();
+        bombController = GetComponent<BombController>();
         predictionFilter = new ContactFilter2D { useTriggers = true };
         predictionFilter.SetLayerMask(LayerMask.GetMask("Stage", "Bomb", "Player", "Enemy", "Louie", "Item"));
     }
@@ -56,6 +69,10 @@ public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBa
     {
         threats.Clear();
         previousStep = Vector2Int.zero;
+        blockadePending = false;
+        blockadeBomb = null;
+        blockadeRoute.Clear();
+        counteredThreats.Clear();
     }
 
     public bool TryBuildEmergencyDecision(BattleModeComDifficultySettings settings,
@@ -72,12 +89,23 @@ public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBa
         BattleModeComController controller, Vector2Int start, out BattleModeComAbilityDecision decision)
     {
         decision = default;
-        threats.Clear();
         if (!IsAvailable || controller == null)
         {
+            if (movement != null && movement.isDead)
+            {
+                blockadePending = false;
+                blockadeBomb = null;
+                blockadeRoute.Clear();
+                counteredThreats.Clear();
+            }
             LastDecisionTrace = "unavailable";
             return false;
         }
+        if (bombController == null) TryGetComponent(out bombController);
+        if (TryContinueBlockade(settings, controller, start, out decision))
+            return true;
+        threats.Clear();
+        counteredThreats.RemoveWhere(bomb => bomb == null || bomb.HasExploded);
         float size = Mathf.Max(0.01f, movement.tileSize);
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
@@ -98,6 +126,8 @@ public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBa
             LastDecisionTrace = "no pursuing search bomb";
             return false;
         }
+        if (TryBuildBlockade(settings, controller, start, out decision))
+            return true;
         if (start != previousTile || previousStep == Vector2Int.zero)
             stuckSince = Time.time;
         bool stuck = Time.time - stuckSince > Mathf.Max(0.4f, 1.5f / Mathf.Max(1f, movement.speed));
@@ -158,12 +188,128 @@ public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBa
         return true;
     }
 
+    private bool TryBuildBlockade(BattleModeComDifficultySettings settings,
+        BattleModeComController controller, Vector2Int start, out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+        if (blockadePending) return false;
+        bool uncountered = false;
+        foreach (Threat threat in threats)
+            uncountered |= !counteredThreats.Contains(threat.Bomb);
+        if (!uncountered || bombController == null ||
+            !controller.TryPlanAbilityBlockadeBombWithEscape(start, settings,
+                blockadeRoute, blockadeDanger, out float fuse))
+            return false;
+
+        blockadeTile = start;
+        foreach (Threat threat in threats)
+            fuse = Mathf.Min(fuse, threat.Fuse); // Adjacent search blast can chain the barrier.
+        predictionBlockadeFuse = fuse;
+        predictionBlockadeActive = true;
+        try
+        {
+            route.Clear();
+            route.AddRange(blockadeRoute);
+            Vector2Int first = route[0] - start;
+            float firstSeconds = controller.GetAbilityFirstMoveTraversalSeconds(first);
+            float arrival = firstSeconds + (route.Count - 1) / Mathf.Max(0.01f, movement.speed);
+            if (!EvaluateRoute(controller, start, firstSeconds, arrival, out float clearance) || clearance <= 0f)
+                return false;
+            for (int i = 0; i < route.Count; i++)
+            {
+                float eta = firstSeconds + i / Mathf.Max(0.01f, movement.speed);
+                if (route[i] == start ||
+                    (blockadeDanger.Contains(route[i]) && eta + settings.dangerReactionSeconds >= fuse))
+                    return false;
+            }
+            if (blockadeDanger.Contains(route[route.Count - 1])) return false;
+            blockadeAttemptTime = Time.time;
+            blockadePending = true;
+            blockadeBomb = null;
+            decision = new BattleModeComAbilityDecision
+            {
+                Action = BattleModeComActionType.CombatPlant, Weight = 4000,
+                TargetTile = route[route.Count - 1], HasTarget = true, FirstMove = first,
+                TapBomb = true, Reason = "search bomb block trail then escape",
+                InputDescription = $"ActionA+Move {first}"
+            };
+            LastDecisionTrace = $"search blockade plant:{start} escape:{decision.TargetTile} fuse:{fuse:F2}";
+            return true;
+        }
+        finally { predictionBlockadeActive = false; }
+    }
+
+    private bool TryContinueBlockade(BattleModeComDifficultySettings settings,
+        BattleModeComController controller, Vector2Int start, out BattleModeComAbilityDecision decision)
+    {
+        decision = default;
+        if (!blockadePending) return false;
+        if (blockadeBomb == null && bombController != null)
+        {
+            float size = Mathf.Max(0.01f, movement.tileSize);
+            foreach (Bomb bomb in Bomb.ActiveBombs)
+            {
+                if (bomb != null && !bomb.HasExploded && bomb.Owner == bombController &&
+                    ToTile(bomb.GetLogicalPosition(), size) == blockadeTile)
+                {
+                    blockadeBomb = bomb;
+                    foreach (Threat threat in threats) counteredThreats.Add(threat.Bomb);
+                    break;
+                }
+            }
+        }
+        // Confirm placement instead of assuming an ActionA tap succeeded.
+        if (blockadeBomb == null)
+        {
+            if (Time.time - blockadeAttemptTime <= 0.5f) return false;
+            blockadePending = false;
+            blockadeRoute.Clear();
+            return false;
+        }
+        if (blockadeBomb.HasExploded || Time.time - blockadeAttemptTime > 5f)
+        {
+            blockadePending = false;
+            blockadeRoute.Clear();
+            return false;
+        }
+        int reached = blockadeRoute.IndexOf(start);
+        if (reached >= 0) blockadeRoute.RemoveRange(0, reached + 1);
+        Vector2Int target = blockadeRoute.Count > 0 ? blockadeRoute[blockadeRoute.Count - 1] : start;
+        Vector2Int first = blockadeRoute.Count > 0 ? blockadeRoute[0] - start : Vector2Int.zero;
+        float remainingDeadline = predictionBlockadeFuse - (Time.time - blockadeAttemptTime);
+        bool chainDeadlineMissed = first != Vector2Int.zero && blockadeDanger.Contains(start + first) &&
+            controller.GetAbilityFirstMoveTraversalSeconds(first) + settings.dangerReactionSeconds >= remainingDeadline;
+        if (chainDeadlineMissed || (first != Vector2Int.zero &&
+             (Manhattan(start, start + first) != 1 ||
+              !controller.IsAbilityTileWalkable(start + first, start) ||
+              controller.IsAbilityTileDangerousAt(start + first,
+                  controller.GetAbilityFirstMoveTraversalSeconds(first), settings))) ||
+            !float.IsInfinity(controller.GetAbilityDangerSeconds(target)))
+        {
+            // Let the existing emergency and mount abilities replan a blocked route.
+            blockadePending = false;
+            blockadeRoute.Clear();
+            return false;
+        }
+        decision = new BattleModeComAbilityDecision
+        {
+            Action = BattleModeComActionType.Reposition, Weight = 4000,
+            TargetTile = target, HasTarget = true, FirstMove = first,
+            Reason = "search blockade committed escape", InputDescription = $"Move {first}"
+        };
+        LastDecisionTrace = $"search blockade escape target:{target} remaining:{blockadeRoute.Count}";
+        return true;
+    }
+
     private bool EvaluateRoute(BattleModeComController controller, Vector2Int start,
         float firstSeconds, float arrival, out float clearance)
     {
         clearance = float.PositiveInfinity;
-        foreach (Threat threat in threats)
+        foreach (Threat snapshot in threats)
         {
+            Threat threat = snapshot;
+            if (predictionBlockadeActive)
+                threat.Fuse = Mathf.Min(threat.Fuse, predictionBlockadeFuse);
             prediction.Clear();
             prediction.AddRange(threat.Trail);
             Vector2Int last = prediction.Count > 0 ? prediction[prediction.Count - 1] : start;
@@ -227,6 +373,7 @@ public sealed class BattleModeComSearchBombAwarenessAbility : MonoBehaviour, IBa
     }
     private bool CanPredictBombEnter(Bomb bomb, Vector2Int tile, float size)
     {
+        if (predictionBlockadeActive && tile == blockadeTile) return false;
         Vector2 world = (Vector2)tile * size;
         GameManager manager = GameManager.Instance;
         if (manager != null)

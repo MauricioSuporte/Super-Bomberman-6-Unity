@@ -125,6 +125,97 @@ public sealed class BattleModeComEditModeTests
         }
     }
 
+    [TestCase(false, 2, 1)]
+    [TestCase(true, 0, 0)]
+    public void SearchBombAwareness_PlantedBarrierStopsPredictedPursuit(bool planted, int x, int y)
+    {
+        var player = new GameObject("Search barrier player");
+        var bombObject = new GameObject("Search pursuing bomb");
+        try
+        {
+            var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            var bomb = bombObject.AddComponent<Bomb>();
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            typeof(BattleModeComSearchBombAwarenessAbility).GetField("predictionBlockadeActive", flags)
+                .SetValue(awareness, planted);
+            typeof(BattleModeComSearchBombAwarenessAbility).GetField("blockadeTile", flags)
+                .SetValue(awareness, Vector2Int.right);
+            var type = typeof(BattleModeComSearchBombAwarenessAbility).GetNestedType("Threat", BindingFlags.NonPublic);
+            object threat = System.Activator.CreateInstance(type);
+            type.GetField("Bomb").SetValue(threat, bomb);
+            type.GetField("StepSeconds").SetValue(threat, 0.3f);
+            object[] args = { threat, new List<Vector2Int> { Vector2Int.right, new(2, 0), new(2, 1) },
+                0, Vector2Int.zero, 0.3f, 3f, false };
+            typeof(BattleModeComSearchBombAwarenessAbility).GetMethod("AdvancePrediction", flags).Invoke(awareness, args);
+            Assert.AreEqual(new Vector2Int(x, y), args[3]);
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(bombObject);
+        }
+    }
+
+    [Test]
+    public void SearchBombAwareness_ConfirmedBarrierKeepsEscapeWithoutPlantingAgain()
+    {
+        var player = new GameObject("Search blockade escape");
+        player.SetActive(false);
+        var bombObject = new GameObject("Confirmed blockade bomb");
+        bombObject.SetActive(false);
+        try
+        {
+            var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            var controller = player.AddComponent<BattleModeComController>();
+            var bomb = bombObject.AddComponent<Bomb>();
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var type = typeof(BattleModeComSearchBombAwarenessAbility);
+            type.GetField("blockadePending", flags).SetValue(awareness, true);
+            type.GetField("blockadeBomb", flags).SetValue(awareness, bomb);
+            type.GetField("blockadeAttemptTime", flags).SetValue(awareness, Time.time);
+            var route = (List<Vector2Int>)type.GetField("blockadeRoute", flags).GetValue(awareness);
+            route.Add(Vector2Int.right);
+            route.Add(Vector2Int.one);
+            object[] args = { new BattleModeComDifficultySettings(), controller, Vector2Int.zero, null };
+            Assert.IsTrue((bool)type.GetMethod("TryContinueBlockade", flags).Invoke(awareness, args));
+            var decision = (BattleModeComAbilityDecision)args[3];
+            Assert.IsFalse(decision.TapBomb);
+            Assert.AreEqual(Vector2.right, decision.FirstMove);
+            Assert.AreEqual(Vector2Int.one, decision.TargetTile);
+
+            args[2] = Vector2Int.one;
+            Assert.IsTrue((bool)type.GetMethod("TryContinueBlockade", flags).Invoke(awareness, args));
+            decision = (BattleModeComAbilityDecision)args[3];
+            Assert.IsFalse(decision.TapBomb);
+            Assert.AreEqual(Vector2.zero, decision.FirstMove);
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(bombObject);
+        }
+    }
+
+    [Test]
+    public void SearchBombAwareness_FailedPlacementReleasesCommittedEscape()
+    {
+        var player = new GameObject("Search failed blockade");
+        player.SetActive(false);
+        try
+        {
+            var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            var controller = player.AddComponent<BattleModeComController>();
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var type = typeof(BattleModeComSearchBombAwarenessAbility);
+            type.GetField("blockadePending", flags).SetValue(awareness, true);
+            type.GetField("blockadeAttemptTime", flags).SetValue(awareness, Time.time - 1f);
+            object[] args = { new BattleModeComDifficultySettings(), controller, Vector2Int.zero, null };
+            Assert.IsFalse((bool)type.GetMethod("TryContinueBlockade", flags).Invoke(awareness, args));
+            Assert.IsFalse((bool)type.GetField("blockadePending", flags).GetValue(awareness));
+        }
+        finally { Object.DestroyImmediate(player); }
+    }
+
     [Test]
     public void SearchBomb_TileTrailPreservesTurnsAndBacktracking()
     {

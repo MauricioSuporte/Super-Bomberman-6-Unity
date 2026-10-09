@@ -8984,6 +8984,42 @@ public sealed class BattleModeComController : MonoBehaviour
             out escapeTile);
     }
 
+    // Return the actual shared escape path and combined chain/stage danger for
+    // abilities that plant a barrier and must keep walking the validated route.
+    public bool TryPlanAbilityBlockadeBombWithEscape(
+        Vector2Int plantTile,
+        BattleModeComDifficultySettings settings,
+        List<Vector2Int> escapeRoute,
+        List<Vector2Int> plannedDanger,
+        out float fuseSeconds)
+    {
+        escapeRoute.Clear();
+        plannedDanger.Clear();
+        fuseSeconds = GetAbilityBombFuseSeconds();
+        if (Time.time - lastBombTapTime < BombTapCooldownSeconds ||
+            !TryPlanAbilityBombWithEscape(plantTile, settings, out _, out Vector2Int escapeTile))
+            return false;
+
+        Vector2Int cell = escapeTile;
+        while (cell != plantTile && escapeRoute.Count < settings.searchDepth + 8)
+        {
+            if (!visited.TryGetValue(cell, out PathNode node) || node.Parent == cell)
+                return false;
+            escapeRoute.Add(cell);
+            cell = node.Parent;
+        }
+        if (cell != plantTile || escapeRoute.Count == 0)
+            return false;
+        escapeRoute.Reverse();
+        if (!TryBuildChainBlastTiles(plantTile, GetPlannedBombRadiusAt(plantTile),
+                out List<Vector2Int> chainBlast))
+            return false;
+        plannedDanger.AddRange(chainBlast);
+        // Existing explosions can detonate the new barrier before its own fuse.
+        fuseSeconds = Mathf.Min(fuseSeconds, GetDangerSeconds(plantTile, null));
+        return fuseSeconds > 0f;
+    }
+
     public float GetAbilityBombFuseSeconds()
         => bombController != null
             ? Mathf.Max(0.1f, bombController.bombFuseTime)
