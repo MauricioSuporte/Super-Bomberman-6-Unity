@@ -54,12 +54,45 @@ namespace StageAssets
             selectedIndex < portals.Length && portals[selectedIndex] != null
                 ? portals[selectedIndex].DestinationScene : null;
 
-        public void FocusCompletedChip()
+        private bool TrySelectStage(string sceneName)
         {
-            if (!ChipAvailable) return;
-            selectedIndex = portals.Length;
-            exitSelected = false;
-            RefreshCursor();
+            if (portals == null || !StageUnlockProgress.IsUnlocked(sceneName))
+                return false;
+
+            if (sceneName == "Stage_3-8" && ChipAvailable)
+            {
+                selectedIndex = portals.Length;
+                return true;
+            }
+
+            for (int i = 0; i < portals.Length; i++)
+            {
+                if (portals[i] != null && portals[i].DestinationScene == sceneName)
+                {
+                    selectedIndex = i;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void SelectInitialStage(string worldMapStage)
+        {
+            if (!string.IsNullOrEmpty(worldMapStage) && TrySelectStage(worldMapStage))
+                return;
+
+            // Use saved unlocks, including portals awaiting their reveal animation.
+            for (int stage = 1; stage <= 8; stage++)
+            {
+                string sceneName = $"Stage_3-{stage}";
+                if (!StageUnlockProgress.IsCleared(sceneName) && TrySelectStage(sceneName))
+                    return;
+            }
+
+            // Keep completed stages selectable when the entire world is cleared.
+            for (int stage = 1; stage <= 8; stage++)
+                if (TrySelectStage($"Stage_3-{stage}"))
+                    return;
         }
 
         private void Awake()
@@ -68,18 +101,6 @@ namespace StageAssets
             if (exitCursor != null) exitCursorPosition = exitCursor.transform.position;
             string initialStage = focusedStageSceneName;
             focusedStageSceneName = null;
-            if (portals != null && !string.IsNullOrEmpty(initialStage))
-            {
-                for (int i = 0; i < portals.Length; i++)
-                {
-                    if (portals[i] != null && portals[i].DestinationScene == initialStage)
-                    {
-                        selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-
             if (portals != null && portals.Length > 0)
             {
                 string pendingStage = World3HallChipAssemblyController.PendingRevealStage;
@@ -87,17 +108,9 @@ namespace StageAssets
                     if (portal != null)
                         portal.SetAvailable(StageUnlockProgress.IsUnlocked(portal.DestinationScene) &&
                             (pendingStage == null || portal.UnlockedBeforeClear(pendingStage)));
-                if (portals[selectedIndex] == null || !portals[selectedIndex].Available)
-                    for (int i = 0; i < portals.Length; i++)
-                        if (portals[i] != null && portals[i].Available)
-                        {
-                            selectedIndex = i;
-                            break;
-                        }
             }
 
-            if (initialStage == "Stage_3-8" && ChipAvailable)
-                selectedIndex = portals.Length;
+            SelectInitialStage(initialStage);
 
             audioSource = GetComponent<AudioSource>();
             audioSource.playOnAwake = false;
@@ -456,8 +469,6 @@ namespace StageAssets
                 if (portal == null || portal.Available || !StageUnlockProgress.IsUnlocked(portal.DestinationScene))
                     continue;
                 yield return portal.Reveal(portalUnlockSfx);
-                selectedIndex = i;
-                exitSelected = false;
             }
             RefreshCursor();
         }
