@@ -24,6 +24,11 @@ namespace StageAssets
         [SerializeField] private GameObject prettyBomberPrefab = null;
         [SerializeField] private AudioClip bossEntranceSfx = null;
 
+        [SerializeField] private AudioClip stageEightIntro;
+        [SerializeField, Range(0f, 1f)] private float stageEightIntroVolume = 1f;
+        [SerializeField] private AudioClip stageEightLoop;
+        [SerializeField, Range(0f, 1f)] private float stageEightLoopVolume = 1f;
+        private bool stageEight;
         private GameObject entranceVisual;
         private GameObject enteringBoss;
 
@@ -69,11 +74,14 @@ namespace StageAssets
             destructibleTile.sprite != null && hallExit != null && stageMusic != null && tileDropSfx != null &&
             prettyBomberPrefab != null && bossEntranceSfx != null;
 
-        public void Play()
+        public bool CanPlayStageEight => CanPlay && stageEightIntro != null && stageEightLoop != null;
+
+        public void Play(bool finalStage = false)
         {
-            if (started || !CanPlay)
+            if (started || (finalStage ? !CanPlayStageEight : !CanPlay))
                 return;
             started = true;
+            stageEight = finalStage;
             hallExit.SetActive(false);
             StartCoroutine(PlayRoutine());
         }
@@ -81,28 +89,24 @@ namespace StageAssets
         private IEnumerator PlayRoutine()
         {
             if (GameMusicController.Instance != null)
-                GameMusicController.Instance.PlayMusic(stageMusic, stageMusicVolume, loop: true);
+            {
+                if (stageEight)
+                    GameMusicController.Instance.PlayMusicIntroThenLoop(stageEightIntro, stageEightIntroVolume,
+                        stageEightLoop, stageEightLoopVolume);
+                else
+                    GameMusicController.Instance.PlayMusic(stageMusic, stageMusicVolume, loop: true);
+            }
 
             tileDropSfx.LoadAudioData();
             yield return new WaitForSeconds(BeforeDropDelay);
             StartCoroutine(MovePlayersRoutine());
 
-            var cells = new List<Vector3Int>();
-            for (int y = 3; y <= 4; y++)
-                for (int x = -7; x <= 5; x++)
-                    cells.Add(new Vector3Int(x, y, 0));
-            for (int y = -5; y <= 1; y += 2)
-                for (int x = -6; x <= 4; x += 2)
-                    cells.Add(new Vector3Int(x, y, 0));
-
-            cells.AddRange(DestructibleCells);
-            // Equal x+y cells fall together: sweep from bottom-left to top-right.
-            cells.Sort((a, b) =>
-            {
-                int diagonal = (a.x + a.y).CompareTo(b.x + b.y);
-                return diagonal != 0 ? diagonal : a.x.CompareTo(b.x);
-            });
-
+            var cells = CreateDropCells(stageEight);
+            // Both stages use the 3-7 impact pattern, independently of their visual layout.
+            var impactCells = CreateDropCells(false);
+            int firstImpactDiagonal = impactCells[0].x + impactCells[0].y;
+            int lastImpactDiagonal = impactCells[impactCells.Count - 1].x + impactCells[impactCells.Count - 1].y;
+            int nextImpact = 0;
             int firstDiagonal = cells[0].x + cells[0].y;
             remainingDrops = cells.Count;
             int lastDiagonal = cells[cells.Count - 1].x + cells[cells.Count - 1].y;
@@ -120,6 +124,16 @@ namespace StageAssets
                     StartCoroutine(DropTile(cell));
                     next++;
                 }
+                while (nextImpact < impactCells.Count)
+                {
+                    Vector3Int cell = impactCells[nextImpact];
+                    float impactDropAt = (cell.x + cell.y - firstImpactDiagonal) /
+                        (float)(lastImpactDiagonal - firstImpactDiagonal) * (SequenceDuration - FallingDuration);
+                    if (impactDropAt > elapsed)
+                        break;
+                    StartCoroutine(PlayFallingImpact());
+                    nextImpact++;
+                }
                 yield return null;
                 elapsed += Time.deltaTime;
             }
@@ -127,7 +141,7 @@ namespace StageAssets
             while (remainingDrops > 0 || !playersMovementFinished)
                 yield return null;
             var manager = FindAnyObjectByType<GameManager>();
-            if (manager != null)
+            if (manager != null && !stageEight)
                 manager.RegisterSpawnedDestructibles(DestructibleCells);
             yield return PrettyBomberEntrance();
             RestoreDancingPlayers(completed: true, enableGameplay: true);
@@ -135,6 +149,42 @@ namespace StageAssets
             // The entrance has finished; remaining impact sounds can finish.
             while (impactVoices.Count > 0)
                 yield return null;
+        }
+
+        private static List<Vector3Int> CreateDropCells(bool finalStage)
+        {
+            var cells = new List<Vector3Int>();
+            if (!finalStage)
+            {
+                for (int y = 3; y <= 4; y++)
+                    for (int x = -7; x <= 5; x++)
+                        cells.Add(new Vector3Int(x, y, 0));
+            }
+            for (int y = -5; y <= (finalStage ? 3 : 1); y += 2)
+                for (int x = -6; x <= 4; x += 2)
+                    cells.Add(new Vector3Int(x, y, 0));
+
+            if (!finalStage)
+                cells.AddRange(DestructibleCells);
+            // Equal x+y cells fall together: sweep from bottom-left to top-right.
+            cells.Sort((a, b) =>
+            {
+                int diagonal = (a.x + a.y).CompareTo(b.x + b.y);
+                return diagonal != 0 ? diagonal : a.x.CompareTo(b.x);
+            });
+
+            return cells;
+        }
+
+        private IEnumerator PlayFallingImpact()
+        {
+            float elapsed = 0f;
+            while (elapsed < FallingDuration)
+            {
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+            PlayImpact();
         }
 
         private void Update()
@@ -171,15 +221,20 @@ namespace StageAssets
             }
 
             const float pauseDuration = 0.2f;
-            const float secondsPerTile = (SequenceDuration - 2f * pauseDuration) / 13f;
-            Vector2[] steps =
+            float secondsPerTile = (SequenceDuration - 2f * pauseDuration) / (stageEight ? 15f : 13f);
+            Vector2[] steps = stageEight ? new[]
+            {
+                Vector2.up, Vector2.zero, Vector2.left, Vector2.right * 2f,
+                Vector2.left * 2f, Vector2.right * 2f, Vector2.left * 2f,
+                Vector2.right * 2f, Vector2.left, Vector2.down, Vector2.zero, Vector2.up
+            } : new[]
             {
                 Vector2.up, Vector2.zero, Vector2.left, Vector2.right * 2f,
                 Vector2.left * 2f, Vector2.right * 2f, Vector2.left * 2f,
                 Vector2.right * 2f, Vector2.left
             };
             float elapsed = 0f;
-            while (elapsed < SequenceDuration - pauseDuration)
+            while (elapsed < (stageEight ? SequenceDuration : SequenceDuration - pauseDuration))
             {
                 float segmentTime = elapsed;
                 Vector2 offset = Vector2.zero;
@@ -223,12 +278,18 @@ namespace StageAssets
                     player.Movement.Rigidbody.position = player.FinalPosition;
                     player.Movement.Rigidbody.linearVelocity = Vector2.zero;
                 }
-                player.Movement.ForceIdleFacing(Vector2.down);
-            }
-            yield return new WaitForSeconds(pauseDuration);
-            foreach (PlayerDanceState player in dancingPlayers)
-                if (player.Movement != null && !player.Movement.isDead)
+                if (stageEight)
                     player.Movement.ForceIdleUpConsideringMount();
+                else
+                    player.Movement.ForceIdleFacing(Vector2.down);
+            }
+            if (!stageEight)
+            {
+                yield return new WaitForSeconds(pauseDuration);
+                foreach (PlayerDanceState player in dancingPlayers)
+                    if (player.Movement != null && !player.Movement.isDead)
+                        player.Movement.ForceIdleUpConsideringMount();
+            }
             playersMovementFinished = true;
         }
 
@@ -268,6 +329,32 @@ namespace StageAssets
             impactVoices.Clear();
         }
 
+        private static void ConfigurePrettyBomberDeath(GameObject boss, MovementControllerAI movement)
+        {
+            boss.GetComponent<BrainIA>().enabled = false;
+            boss.GetComponent<BombController>().enabled = false;
+            boss.GetComponent<PrettyBomberDefeatSequence>().enabled = false;
+            boss.GetComponent<CharacterHealth>().SetExternalInvulnerability(true);
+            movement.SetInputLocked(true, true);
+            movement.SetExplosionInvulnerable(true);
+            movement.SetVisualOverrideActive(true);
+            movement.enabled = false;
+            foreach (var collider in boss.GetComponentsInChildren<Collider2D>(true))
+                collider.enabled = false;
+            foreach (var animation in boss.GetComponentsInChildren<AnimatedSpriteRenderer>(true))
+                animation.enabled = false;
+            foreach (var renderer in boss.GetComponentsInChildren<SpriteRenderer>(true))
+                renderer.enabled = false;
+            var death = movement.spriteRendererDeath;
+            death.gameObject.SetActive(true);
+            death.idle = false;
+            death.loop = true;
+            death.SetFrozen(false);
+            death.enabled = true;
+            death.RefreshFrame();
+
+        }
+
         private IEnumerator PrettyBomberEntrance()
         {
             Vector3 destination = new(-1f, 0f, 0f);
@@ -290,6 +377,8 @@ namespace StageAssets
             movement.ForceFacingDirection(Vector2.down);
             movement.SetIntroIdle(true);
             enteringBoss.GetComponent<AbilitySystem>().Enable(BombPassAbility.AbilityId);
+            if (stageEight)
+                ConfigurePrettyBomberDeath(enteringBoss, movement);
 
             var renderers = enteringBoss.GetComponentsInChildren<SpriteRenderer>(true);
             var effect = PrettyBomberMagicEffect.Create(destination + Vector3.down * 0.5f,
@@ -312,7 +401,9 @@ namespace StageAssets
             var audio = audioObject.AddComponent<AudioSource>();
             audio.playOnAwake = false;
             audio.spatialBlend = 0f;
-            GameAudioSettings.PlaySfx(audio, bossEntranceSfx);
+            // PlayOneShot gain can exceed one; keep the user's SFX setting on the source.
+            audio.volume = GameAudioSettings.ApplySfxVolume(1f);
+            audio.PlayOneShot(bossEntranceSfx, 2f);
             Destroy(audioObject, bossEntranceSfx.length + 0.1f);
 
             yield return effect.Reveal(enteringBoss, movement, true, 0.5f);
@@ -326,18 +417,21 @@ namespace StageAssets
                     elapsed += Time.deltaTime;
             }
 
-            movement.SetIntroIdle(false);
-            movement.SetInputLocked(false, true);
-            movement.SetExplosionInvulnerable(false);
-            for (int i = 0; i < colliders.Length; i++)
-                colliders[i].enabled = colliderStates[i];
-            bombs.enabled = true;
-            brain.enabled = true;
+            if (!stageEight)
+            {
+                movement.SetIntroIdle(false);
+                movement.SetInputLocked(false, true);
+                movement.SetExplosionInvulnerable(false);
+                for (int i = 0; i < colliders.Length; i++)
+                    colliders[i].enabled = colliderStates[i];
+                bombs.enabled = true;
+                brain.enabled = true;
+            }
             DuelActive = true;
             if (StageIntroTransition.Instance != null)
             {
                 StageIntroTransition.Instance.world = 3;
-                StageIntroTransition.Instance.stageNumber = 7;
+                StageIntroTransition.Instance.stageNumber = stageEight ? 8 : 7;
             }
             enteringBoss = null;
             CleanupEntranceVisual();
@@ -385,7 +479,7 @@ namespace StageAssets
 
         private IEnumerator DropTile(Vector3Int cell)
         {
-            bool destructible = DestructibleCells.Contains(cell);
+            bool destructible = !stageEight && DestructibleCells.Contains(cell);
             Tilemap tilemap = destructible ? destructibleTilemap : indestructibleTilemap;
             Tile tile = destructible ? destructibleTile : indestructibleTile;
             var tilemapRenderer = tilemap.GetComponent<TilemapRenderer>();
@@ -430,7 +524,6 @@ namespace StageAssets
 
             visual.transform.position = end;
             Destroy(shadow);
-            PlayImpact();
             elapsed = 0f;
             while (elapsed < ImpactShakeDuration)
             {

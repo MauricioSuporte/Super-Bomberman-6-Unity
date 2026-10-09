@@ -350,11 +350,9 @@ namespace StageAssets
         {
             if (ChipSelected)
             {
-                if (!ChipAvailable || !Application.CanStreamedLevelBeLoaded("Stage_3-8"))
+                if (!ChipAvailable || stageSevenSequence == null || !stageSevenSequence.CanPlayStageEight)
                     return;
-                transitioning = true;
-                if (confirmSfx != null) GameAudioSettings.PlaySfx(audioSource, confirmSfx);
-                StartCoroutine(EnterCompletedChip());
+                BeginHallBattle(true);
                 return;
             }
             var portal = portals[selectedIndex];
@@ -369,18 +367,7 @@ namespace StageAssets
                     return;
                 }
 
-                transitioning = true;
-                selectionReady = false;
-                if (cursor != null)
-                    cursor.gameObject.SetActive(false);
-                if (exitCursor != null)
-                    exitCursor.gameObject.SetActive(false);
-                if (selectedStageLabelStyle != null)
-                    selectedStageLabelStyle.gameObject.SetActive(false);
-                else if (selectedStageLabel != null)
-                    selectedStageLabel.enabled = false;
-
-                StartCoroutine(EnterStageSeven());
+                BeginHallBattle(false);
                 return;
             }
 
@@ -408,7 +395,19 @@ namespace StageAssets
             StartCoroutine(EnterSelectedPortal(portal.transform.position, destinationIndex));
         }
 
-        private IEnumerator EnterStageSeven()
+        private void BeginHallBattle(bool finalStage)
+        {
+            transitioning = true;
+            selectionReady = false;
+            if (confirmSfx != null) GameAudioSettings.PlaySfx(audioSource, confirmSfx);
+            if (cursor != null) cursor.gameObject.SetActive(false);
+            if (exitCursor != null) exitCursor.gameObject.SetActive(false);
+            if (selectedStageLabelStyle != null) selectedStageLabelStyle.gameObject.SetActive(false);
+            else if (selectedStageLabel != null) selectedStageLabel.enabled = false;
+            StartCoroutine(EnterStageSeven(finalStage));
+        }
+
+        private IEnumerator EnterStageSeven(bool finalStage)
         {
             StartCoroutine(PlayPortalClosingSounds());
             var hidingPortals = new System.Collections.Generic.List<Coroutine>();
@@ -420,7 +419,7 @@ namespace StageAssets
             foreach (var portal in portals)
                 if (portal != null)
                     portal.gameObject.SetActive(false);
-            stageSevenSequence.Play();
+            stageSevenSequence.Play(finalStage);
         }
 
         private IEnumerator PlayPortalClosingSounds()
@@ -445,20 +444,6 @@ namespace StageAssets
                 if (i < 2)
                     yield return new WaitForSeconds(Random.Range(0.06f, 0.12f));
             }
-        }
-
-        private IEnumerator EnterCompletedChip()
-        {
-            foreach (var movement in FindObjectsByType<MovementController>())
-                if (movement.CompareTag("Player") && !movement.isDead)
-                    PlayerPersistentStats.StageCaptureFromRuntime(movement, movement.GetComponent<BombController>());
-            PlayerPersistentStats.CommitStage();
-            if (StageIntroTransition.Instance != null)
-                StageIntroTransition.Instance.StartFadeOut(fadeDuration);
-            yield return new WaitForSecondsRealtime(fadeDuration);
-            if (GameMusicController.Instance != null)
-                GameMusicController.Instance.StopMusic();
-            SceneManager.LoadSceneAsync("Stage_3-8");
         }
 
         public IEnumerator RevealUnlockedPortals()

@@ -75,7 +75,11 @@ public static class StageMusicCalibrationTool
             foreach (GameObject root in scene.GetRootGameObjects())
             {
                 foreach (var sequence in root.GetComponentsInChildren<StageAssets.World3HallStageSevenSequence>(true))
+                {
                     calibratedClips += CalibrateClipVolume(sequence, "stageMusic", "stageMusicVolume", targetRms);
+                    calibratedClips += CalibrateClipVolume(sequence, "stageEightIntro", "stageEightIntroVolume", targetRms);
+                    calibratedClips += CalibrateClipVolume(sequence, "stageEightLoop", "stageEightLoopVolume", targetRms);
+                }
                 foreach (var assembly in root.GetComponentsInChildren<StageAssets.World3HallChipAssemblyController>(true))
                     calibratedClips += CalibrateClipVolume(assembly, "revealSfx", "revealSfxVolume", targetRms);
             }

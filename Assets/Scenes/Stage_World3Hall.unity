@@ -2077,7 +2077,11 @@ MonoBehaviour:
   destructibleTile: {fileID: 11400000, guid: 181e1c7558b18154a81a08afae27b54f, type: 2}
   hallExit: {fileID: 528573461}
   stageMusic: {fileID: 8300000, guid: 67629076b9b54934bfae01d7015a93ae, type: 3}
-  stageMusicVolume: 0.50978214
+  stageMusicVolume: 0.51240390
+  stageEightIntro: {fileID: 8300000, guid: 3c87cf2cd668412b8bd6f4361702a567, type: 3}
+  stageEightIntroVolume: 0.31957193
+  stageEightLoop: {fileID: 8300000, guid: ab7601444e054940bb9320011e65b223, type: 3}
+  stageEightLoopVolume: 0.34852858
   tileDropSfx: {fileID: 8300000, guid: 39027e7c7b4146779d5205d29d09e665, type: 3}
   prettyBomberPrefab: {fileID: 444576652216317808, guid: 49370a6aba921c24797c817ef2431694, type: 3}
   bossEntranceSfx: {fileID: 8300000, guid: 62fe5a39b96e41968edfb9fc253efb80, type: 3}
