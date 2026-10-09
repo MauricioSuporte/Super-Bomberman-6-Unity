@@ -208,6 +208,15 @@ public class GameManager : MonoBehaviour
     [Tooltip("Variante sombreada do bloco destrutível, usada quando existe um bloco indestrutível logo acima dele.")]
     public TileBase tileDestrutivelComSombraDoIndestrutivel;
 
+    [System.Serializable]
+    private sealed class GroundShadowRule
+    {
+        public TileBase normalGroundTile = null;
+        public TileBase shadowGroundTile = null;
+    }
+
+    [SerializeField] private GroundShadowRule[] groundShadowRules;
+
     // Legacy API aliases keep existing gameplay code and external scene scripts compatible.
     public Tilemap groundTilemap { get => tilemapDoChao; set => tilemapDoChao = value; }
     public TileBase groundTile { get => tileChaoNormal; set => tileChaoNormal = value; }
@@ -1184,8 +1193,8 @@ public class GameManager : MonoBehaviour
         }
 
         if (groundTilemap != null &&
-            groundTile != null &&
-            HasAnyGroundShadowTile())
+            ((groundShadowRules != null && groundShadowRules.Length > 0) ||
+             (groundTile != null && HasAnyGroundShadowTile())))
         {
             BoundsInt bounds = groundTilemap.cellBounds;
             foreach (Vector3Int groundCell in bounds.allPositionsWithin)
@@ -1283,6 +1292,9 @@ public class GameManager : MonoBehaviour
 
     void RefreshGroundShadowAt(Vector3Int groundCell)
     {
+        if (TryRefreshGroundShadowRuleAt(groundCell))
+            return;
+
         if (groundTilemap == null ||
             groundTile == null ||
             !HasAnyGroundShadowTile())
@@ -1322,6 +1334,36 @@ public class GameManager : MonoBehaviour
             if (targetGroundTile != null && currentGround != targetGroundTile)
                 groundTilemap.SetTile(groundCell, targetGroundTile);
         }
+    }
+
+    bool TryRefreshGroundShadowRuleAt(Vector3Int cell)
+    {
+        if (groundTilemap == null || groundShadowRules == null)
+            return false;
+
+        TileBase current = groundTilemap.GetTile(cell);
+        Vector3Int above = cell + Vector3Int.up;
+        TileBase destructibleAbove = destructibleTilemap != null ? destructibleTilemap.GetTile(above) : null;
+        bool hasCaster = HasIndestructibleGroundShadowCasterAt(above) ||
+            (destructibleAbove != null && !IsGroundShadowIgnoredTile(destructibleAbove));
+
+        foreach (GroundShadowRule rule in groundShadowRules)
+        {
+            if (rule == null ||
+                rule.normalGroundTile == null || rule.shadowGroundTile == null)
+                continue;
+
+            if (current != rule.normalGroundTile && current != rule.shadowGroundTile)
+                continue;
+
+            TileBase target = hasCaster
+                ? rule.shadowGroundTile : rule.normalGroundTile;
+            if (current != target)
+                groundTilemap.SetTile(cell, target);
+            return true;
+        }
+
+        return false;
     }
 
     void ResolveGroundTileShadowHandlers()

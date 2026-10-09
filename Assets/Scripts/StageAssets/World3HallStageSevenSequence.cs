@@ -442,6 +442,9 @@ namespace StageAssets
                 elapsed += Time.deltaTime;
             }
             tilemap.SetTile(cell, tile);
+            var manager = FindAnyObjectByType<GameManager>();
+            if (manager != null)
+                manager.OnIndestructiblePlaced(cell);
             remainingDrops--;
             Destroy(visual);
         }
