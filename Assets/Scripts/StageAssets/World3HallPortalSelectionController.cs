@@ -429,12 +429,16 @@ namespace StageAssets
         {
             if (portals == null)
                 yield break;
-            foreach (var portal in portals)
+            for (int i = 0; i < portals.Length; i++)
             {
+                var portal = portals[i];
                 if (portal == null || portal.Available || !StageUnlockProgress.IsUnlocked(portal.DestinationScene))
                     continue;
                 yield return portal.Reveal(portalUnlockSfx);
+                selectedIndex = i;
+                exitSelected = false;
             }
+            RefreshCursor();
         }
 
         private IEnumerator EnterSelectedPortal(Vector2 portalCenter, int destinationIndex)

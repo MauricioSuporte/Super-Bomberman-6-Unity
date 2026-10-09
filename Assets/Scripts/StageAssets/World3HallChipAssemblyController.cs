@@ -94,13 +94,14 @@ namespace StageAssets
                 fadeElapsed += Time.deltaTime;
             }
             SetAlpha(part, 1f);
+            bool completedFinalPart = revealingPart == 6;
             revealingPart = -1;
             RefreshParts();
             if (selection != null)
                 yield return selection.RevealUnlockedPortals();
             if (selection != null)
             {
-                if (StageUnlockProgress.IsCleared("Stage_3-7"))
+                if (completedFinalPart)
                     selection.FocusCompletedChip();
                 selection.PresentationBlocked = false;
             }
