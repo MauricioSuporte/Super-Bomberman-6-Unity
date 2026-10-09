@@ -106,8 +106,9 @@ namespace StageAssets
                 int removedRows = Mathf.FloorToInt(height * Mathf.Clamp01((animationTime - 1.75f) / 0.75f));
                 for (int y = 0; y < height; y++)
                 {
-                    // Only the footprint copies portal alpha; the shaft stays solid.
-                    int narrowWidth = y == 0 ? 1 : y == 1 ? 3 : y < 4 ? 5 : 3;
+                    // Keep a five-pixel shaft, tapering only at the bottom to three then one.
+                    // All rows expand to the portal width; its footprint still copies portal alpha.
+                    int narrowWidth = y == 0 ? 1 : y == 1 ? 3 : 5;
                     int rowWidth = Mathf.RoundToInt(Mathf.Lerp(narrowWidth, width, expansion));
                     int left = (width - rowWidth) / 2;
                     for (int x = 0; x < width; x++)
