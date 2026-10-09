@@ -4314,6 +4314,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         // Migrate older scene-authored orders without changing persisted item indices.
         nextOrder.Remove(ItemSelectEntryId.LineBomb);
         nextOrder.Insert(nextOrder.IndexOf(ItemSelectEntryId.PowerGlove) + 1, ItemSelectEntryId.LineBomb);
+        nextOrder.Remove(ItemSelectEntryId.SearchBomb);
+        nextOrder.Insert(nextOrder.IndexOf(ItemSelectEntryId.MagnetBomb) + 1, ItemSelectEntryId.SearchBomb);
 
         bool changed = resolvedItemSelectEntryOrder.Count != nextOrder.Count;
         if (!changed)
@@ -5662,7 +5664,8 @@ public sealed class BattleModeMenu : MonoBehaviour
                 break;
 
             case 5:
-                player.bombType = WrapValue(player.bombType + delta, 0, 6);
+                player.bombType = WrapValue(player.bombType + delta,
+                    (int)BattleModeHandicapBombType.Default, (int)BattleModeHandicapBombType.Search);
                 break;
 
             case 6:

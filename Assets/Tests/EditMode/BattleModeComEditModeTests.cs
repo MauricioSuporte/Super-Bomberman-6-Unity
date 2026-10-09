@@ -64,6 +64,67 @@ public sealed class BattleModeComEditModeTests
         Assert.IsFalse(slot.unlockedStages.Contains("Stage_3-8"));
     }
 
+    [TestCase(0.29f, 0, 0)]
+    [TestCase(0.31f, 1, 0)]
+    [TestCase(0.61f, 1, 1)]
+    [TestCase(0.91f, 2, 1)]
+    public void SearchBombAwareness_PredictionPreservesTrailTurns(float until, int x, int y)
+    {
+        var player = new GameObject("Search prediction player");
+        var bombObject = new GameObject("Search prediction bomb");
+        try
+        {
+            var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            var bomb = bombObject.AddComponent<Bomb>();
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var type = typeof(BattleModeComSearchBombAwarenessAbility).GetNestedType("Threat", BindingFlags.NonPublic);
+            object threat = System.Activator.CreateInstance(type);
+            type.GetField("Bomb").SetValue(threat, bomb);
+            type.GetField("StepSeconds").SetValue(threat, 0.3f);
+            var cells = new List<Vector2Int> { Vector2Int.right, new(1, 1), new(2, 1) };
+            object[] args = { threat, cells, 0, Vector2Int.zero, 0.3f, until, false };
+            typeof(BattleModeComSearchBombAwarenessAbility).GetMethod("AdvancePrediction", flags).Invoke(awareness, args);
+            Assert.AreEqual(new Vector2Int(x, y), args[3]);
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(bombObject);
+        }
+    }
+
+    [Test]
+    public void SearchBombAwareness_PredictionStopsAtBlockedTrailTile()
+    {
+        var player = new GameObject("Search prediction player");
+        var bombObject = new GameObject("Search prediction bomb");
+        var obstacle = new GameObject("Search prediction wall");
+        try
+        {
+            obstacle.layer = LayerMask.NameToLayer("Stage");
+            obstacle.transform.position = Vector2.right;
+            obstacle.AddComponent<BoxCollider2D>();
+            Physics2D.SyncTransforms();
+            var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            var bomb = bombObject.AddComponent<Bomb>();
+            var type = typeof(BattleModeComSearchBombAwarenessAbility).GetNestedType("Threat", BindingFlags.NonPublic);
+            object threat = System.Activator.CreateInstance(type);
+            type.GetField("Bomb").SetValue(threat, bomb);
+            type.GetField("StepSeconds").SetValue(threat, 0.3f);
+            object[] args = { threat, new List<Vector2Int> { Vector2Int.right, new(2, 0) },
+                0, Vector2Int.zero, 0.3f, 3f, false };
+            typeof(BattleModeComSearchBombAwarenessAbility).GetMethod("AdvancePrediction",
+                BindingFlags.NonPublic | BindingFlags.Instance).Invoke(awareness, args);
+            Assert.AreEqual(Vector2Int.zero, args[3]);
+        }
+        finally
+        {
+            Object.DestroyImmediate(obstacle);
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(bombObject);
+        }
+    }
+
     [Test]
     public void SearchBomb_TileTrailPreservesTurnsAndBacktracking()
     {

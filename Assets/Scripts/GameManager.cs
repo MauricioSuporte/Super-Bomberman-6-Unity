@@ -857,6 +857,7 @@ public class GameManager : MonoBehaviour
             ItemType.PowerBomb => 1,
             ItemType.RubberBomb => 1,
             ItemType.MagnetBomb => 1,
+            ItemType.SearchBomb => 0,
             ItemType.FullFire => 1,
             ItemType.BombPass => 1,
             ItemType.DestructiblePass => 1,

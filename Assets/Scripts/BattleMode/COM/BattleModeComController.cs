@@ -637,8 +637,14 @@ public sealed class BattleModeComController : MonoBehaviour
             abilitySystemVersion = -2;
         }
 
-        // MagnetBombAwareness é sempre ativa — magnet bombs adversárias perseguem
-        // a IA quando alinhada na mesma linha/coluna; quebrar o alinhamento é a defesa.
+        // Search awareness is passive for every COM, regardless of its loadout.
+        if (isCom && !TryGetComponent<BattleModeComSearchBombAwarenessAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            abilitySystemVersion = -2;
+        }
+
+        // MagnetBombAwareness é sempre ativa — quebra o alinhamento com a bomba.
         if (isCom && !TryGetComponent<BattleModeComMagnetBombAwarenessAbility>(out _))
         {
             gameObject.AddComponent<BattleModeComMagnetBombAwarenessAbility>();
@@ -1436,6 +1442,17 @@ public sealed class BattleModeComController : MonoBehaviour
         lastWeightedTotal = -1;
         EnsurePersonalitySeed();
         UpdateRecentItemPickupMemory(settings, myTile, currentDangerSeconds);
+
+        // Search bombs move after the normal danger snapshot. Replan before
+        // continuing static escape routes or committing to an offensive action.
+        if (TryGetComponent(out BattleModeComSearchBombAwarenessAbility searchAwareness) &&
+            searchAwareness.TryBuildEmergencyDecision(settings, this, myTile,
+                currentDangerSeconds, out BattleModeComAbilityDecision searchEscape))
+        {
+            ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds,
+                ToCandidateAction(searchEscape), "searchEscape");
+            return;
+        }
 
         if (hardLouieSecurePlanActive &&
             TryBuildHardLouieSecurePickupCandidate(

@@ -21,6 +21,43 @@ public sealed class SearchBomb : MonoBehaviour
     private bool pursuitSuspended;
     private float nextScanTime;
 
+    public int DetectionRangeTiles => Mathf.Min(3, detectionRangeTiles);
+    public float PursuitTilesPerSecond(float tileSize) =>
+        bomb.SearchMovementSpeed * Mathf.Max(0.05f, movementSpeedMultiplier) / Mathf.Max(0.0001f, tileSize);
+
+    // Copy the real queued turns without exposing or changing the live pursuit.
+    public bool CopyPursuitTrail(Transform candidate, float tileSize, List<Vector2Int> destination)
+    {
+        destination.Clear();
+        if (bomb == null || bomb.HasExploded || pursuitSuspended || bomb.Owner == null ||
+            bomb.IsBeingHeldByPowerGlove || candidate == null)
+            return false;
+        Collider2D collider = candidate.GetComponentInChildren<Collider2D>();
+        if (!IsValidTarget(collider))
+            return false;
+        Vector2Int origin = GetCell(bomb.GetLogicalPosition(), tileSize);
+        Vector2Int goal = GetCell(candidate.position, tileSize);
+        if (!IsWithinDetectionRange(origin, goal))
+            return false;
+        if (target != null)
+        {
+            if (target.transform != candidate && !target.transform.IsChildOf(candidate))
+                return false;
+            destination.AddRange(targetTrail);
+            return true;
+        }
+        if (!TryFindDirection(origin, goal, tileSize, out _))
+            return false;
+        Vector2Int cell = goal;
+        while (cell != origin)
+        {
+            destination.Add(cell);
+            cell = previousCells[cell];
+        }
+        destination.Reverse();
+        return true;
+    }
+
     private void Awake() => bomb = GetComponent<Bomb>();
 
     // External movement owns the bomb until it finishes. Clear the old target

@@ -1296,6 +1296,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             $"isTrigger:{bombCollider.isTrigger} approxRadius:{ApproxRadius:F3}");
     }
 
+    public float SearchMovementSpeed => Mathf.Max(0.0001f, magnetPullSpeed);
+
     public Vector2 GetLogicalPosition() => lastPos;
 
     public void MarkMovedByKickOrPunch()
