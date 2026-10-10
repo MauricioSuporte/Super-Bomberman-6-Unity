@@ -27,6 +27,8 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     [Min(0.1f)] public float moveSpeed = 2.1f;
     [Min(0.1f)] public float deathSeconds = 6f;
     [Header("Presentation")]
+    public AudioClip tornadoCastSfx;
+    [Min(0f)] public float tornadoCastSfxGain = 3f;
     public AudioClip iceCastSfx;
     [Min(0f)] public float iceCastSfxGain = 3f;
     public AudioClip iceSfx;
@@ -209,15 +211,15 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         }
         else
         {
-            for (int i = 0; i < preparation.Length; i++)
-            {
-                SetFrame(preparation, i);
-                yield return WaitUnpaused(0.16f);
-            }
+            yield return PlayTornadoCast();
         }
         if (attack == 0)
+        {
+            SetFrame(castFrames, 0);
             SpawnProjectile(FreezerVenusProjectile.AttackKind.Tornado, Vector2.down,
                 Arena.Center(Arena.NearestFloor(GroundPosition)));
+            PlayAttackSfx(tornadoCastSfx, tornadoCastSfxGain);
+        }
         else if (attack == 1)
         {
             SetFrame(dollCastFrames, 4);
@@ -246,10 +248,43 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
             SetFrame(dollCastFrames, 0);
             yield return WaitUnpaused(0.16f);
         }
+        else if (attack == 0)
+        {
+            float elapsed = 0f;
+            while (elapsed < 2.5f)
+            {
+                SetFrame(idleFrames, Mathf.FloorToInt(elapsed / 0.2f) % Mathf.Max(1, idleFrames.Length));
+                yield return null;
+                if (!GamePauseController.IsPaused) elapsed += Time.deltaTime;
+            }
+        }
         else
             yield return WaitUnpaused(0.45f);
         attacking = false;
         ChooseMovementDestination();
+    }
+
+    private IEnumerator PlayTornadoCast()
+    {
+        float elapsed = 0f;
+        while (elapsed < 2.5f)
+        {
+            if (elapsed < 0.3f)
+            {
+                bool opening = Mathf.FloorToInt(elapsed / 0.05f) % 2 == 1;
+                SetFrame(opening ? openingFrames : castFrames, opening ? 4 : 0);
+            }
+            else if (elapsed < 1.3f)
+                SetFrame(castFrames, Mathf.FloorToInt((elapsed - 0.3f) / 0.1f) % 2);
+            else if (elapsed < 1.8f)
+                SetFrame(castFrames, 2 + Mathf.FloorToInt((elapsed - 1.3f) / 0.05f) % 2);
+            else if (elapsed < 2.3f)
+                SetFrame(castFrames, Mathf.FloorToInt((elapsed - 1.8f) / 0.05f) % 2 == 0 ? 3 : 0);
+            else
+                SetFrame(castFrames, 4);
+            yield return null;
+            if (!GamePauseController.IsPaused) elapsed += Time.deltaTime;
+        }
     }
 
     private IEnumerator PlaySummonEffects(List<Vector3Int> cells)

@@ -318,8 +318,11 @@ MonoBehaviour:
   - {fileID: 1166875663, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
   - {fileID: 1358830179, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
   castFrames:
-  - {fileID: -1063217654, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
-  - {fileID: 1930500366, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
+  - {fileID: -1074965398, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
+  - {fileID: 2031523212, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
+  - {fileID: 736727243, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
+  - {fileID: 1055873334, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
+  - {fileID: 1964734845, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
   iceCastFrames:
   - {fileID: 1064857953, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
   - {fileID: -71440880, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
@@ -384,6 +387,8 @@ MonoBehaviour:
   - {fileID: -448079913, guid: 627ec2ac6607e2f4d99d6730fb854f87, type: 3}
   moveSpeed: 2.1
   deathSeconds: 6
+  tornadoCastSfx: {fileID: 8300000, guid: 8fcd8337b72a41349699e0ff5ac4fa6b, type: 3}
+  tornadoCastSfxGain: 3
   iceCastSfx: {fileID: 8300000, guid: 29d5d8cb38794f31815bf00ff9b9d7b4, type: 3}
   iceCastSfxGain: 3
   iceSfx: {fileID: 8300000, guid: b5434ed8d4b64c70ae88831a72a8f8f8, type: 3}

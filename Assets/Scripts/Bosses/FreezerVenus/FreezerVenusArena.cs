@@ -55,6 +55,26 @@ public sealed class FreezerVenusArena
         return best;
     }
 
+    public bool TryTornadoStep(Vector3Int start, Vector3Int destination, out Vector3Int next)
+    {
+        // A player directly behind a bomb can shelter there. Once they leave
+        // that clear row/column, normal bomb-aware pathfinding resumes.
+        next = start;
+        Vector3Int delta = destination - start;
+        if (delta != Vector3Int.zero && (delta.x == 0 || delta.y == 0))
+        {
+            Vector3Int step = new(Mathf.Clamp(delta.x, -1, 1), Mathf.Clamp(delta.y, -1, 1), 0);
+            bool clearCorridor = true;
+            for (Vector3Int cell = start + step; ; cell += step)
+            {
+                if (!IsStaticWalkable(cell)) { clearCorridor = false; break; }
+                if (cell == destination) break;
+            }
+            if (clearCorridor) { next = start + step; return true; }
+        }
+        return TryNextStep(start, destination, out next);
+    }
+
     public bool TryNextStep(Vector3Int start, Vector3Int destination, out Vector3Int next)
     {
         next = start;

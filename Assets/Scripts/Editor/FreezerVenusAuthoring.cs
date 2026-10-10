@@ -71,7 +71,7 @@ public static class FreezerVenusAuthoring
             };
             boss.dollCastFrames = Frames(sprites, "DollCast", 5);
             boss.hurtFrames = Frames(sprites, "Hurt", 2);
-            boss.tornadoFrames = Frames(sprites, "Tornado", 4);
+            boss.tornadoFrames = Frames(sprites, "Tornado", 6);
             boss.iceFrames = new[] { sprites["Ice"] };
             boss.summonCastFrames = new[] { sprites["SummonCast_1"], sprites["SummonCast2"] };
             boss.summonEffectFrames = new[] { sprites["Summon_1"], sprites["Summon_2"], sprites["Summon_3"] };
@@ -80,6 +80,8 @@ public static class FreezerVenusAuthoring
             var sun = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bosses/SunMask/SunMask.prefab");
             var reference = sun.GetComponent<SunMaskBoss>();
             boss.summonCastSfxGain = 3f;
+            boss.tornadoCastSfx = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/TornadoCast.wav");
+            boss.tornadoCastSfxGain = 3f;
             boss.iceCastSfx = iceCastSfx;
             boss.iceSfx = iceSfx;
             boss.iceCastSfxGain = 3f;
@@ -209,7 +211,8 @@ public static class FreezerVenusAuthoring
         Add("Ice", 5, 390, 16, 18);
         Add("Shadow", 76, 66, 34, 16);
         // Preserve manually sliced summon sprites and their stable identifiers.
-        rects.AddRange(existingRects.Where(r => r.name.StartsWith("Summon", StringComparison.Ordinal)));
+        rects.AddRange(existingRects.Where(r => r.name.StartsWith("Summon", StringComparison.Ordinal) ||
+            r.name == "Tornado4" || r.name == "Tornado5"));
         provider.SetSpriteRects(rects.ToArray());
         provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(
             rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));
