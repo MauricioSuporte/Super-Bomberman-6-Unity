@@ -1107,7 +1107,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: IceCast0
+      name: SummonCast2
       rect:
         serializedVersion: 2
         x: 14
@@ -1129,7 +1129,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: IceCast1
+      name: SummonCast_1
       rect:
         serializedVersion: 2
         x: 9
@@ -1348,6 +1348,116 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Summon_1
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 244
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b7e0bfcc70593964da2eba3e89d11336
+      internalID: -248160663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Summon_2
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 240
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 257ef63f501b1da40a727080ddccce28
+      internalID: -670508230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Summon_3
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 240
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 20ebcc316b1bed74eba1c7fdf95d5ac0
+      internalID: -1929662843
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Summon_4
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 240
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 29152efb28387f644874f2cde4fde2a7
+      internalID: -815364462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Summon_5
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 240
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a936dc237cfb4548bf111b37c509c4c
+      internalID: -448079913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -1378,14 +1488,19 @@ TextureImporter:
       Hurt0: 934298021
       Hurt1: 1184215937
       Ice: -2113816688
-      IceCast0: 1930500366
-      IceCast1: -1063217654
       Opening0: -1134048588
       Opening1: -1960521484
       Opening2: 1500138285
       Opening3: 1166875663
       Opening4: 1358830179
       Shadow: -1629539595
+      SummonCast2: 1930500366
+      SummonCast_1: -1063217654
+      Summon_1: -248160663
+      Summon_2: -670508230
+      Summon_3: -1929662843
+      Summon_4: -815364462
+      Summon_5: -448079913
       Tornado: 1848108879
       Tornado0: 794306491
       Tornado1: 1716661969

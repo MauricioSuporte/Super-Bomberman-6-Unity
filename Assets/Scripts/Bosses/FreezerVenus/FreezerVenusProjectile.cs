@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -14,7 +15,6 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
     private float elapsed;
     private float speed;
     private bool spent;
-    private GameManager manager;
     private Vector3Int currentCell;
     private Vector3Int segmentCell;
     private Vector3 segmentEnd;
@@ -22,6 +22,14 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
     private bool travelling;
     private bool returningToCenter;
     private float turnPause;
+    private Collider2D hitbox;
+    private float walkTime;
+    private float jumpTime;
+    private bool invocationWalking;
+    private static readonly int[] WalkSequence = { 0, 1, 0, 2 };
+    private static readonly int[] JumpSequence = { 3, 4, 5, 6, 7, 6, 5, 4, 3, 9, 10, 11 };
+    private const float JumpCycleSeconds = 0.2f;
+    private const float InvocationInitialSpeed = 2.2f;
     private const float ObstaclePauseSeconds = 0.18f;
     public AttackKind Kind => kind;
     public float Speed => speed;
@@ -56,11 +64,17 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         projectile.frames = frames;
         projectile.visual = visual;
         projectile.rb = rb;
+        projectile.hitbox = collider;
         projectile.logicalPosition = position;
         projectile.currentCell = owner.Arena.Cell(position);
         projectile.direction = direction.normalized;
-        projectile.speed = kind == AttackKind.Tornado ? 5f : kind == AttackKind.Ice ? 7.6f : 2.2f;
-        projectile.manager = FindAnyObjectByType<GameManager>();
+        projectile.speed = kind == AttackKind.Tornado ? 5f : kind == AttackKind.Ice ? 7.6f : InvocationInitialSpeed;
+        if (kind == AttackKind.Doll)
+        {
+            projectile.invocationWalking = true;
+            projectile.segmentCell = projectile.currentCell + Vector3Int.down;
+            projectile.segmentEnd = owner.Arena.Center(projectile.segmentCell);
+        }
         return projectile;
     }
 
@@ -70,7 +84,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         if (owner == null || !owner.CombatActive) { Despawn(); return; }
         elapsed += Time.fixedDeltaTime;
         if (elapsed >= (kind == AttackKind.Tornado ? 7f : 6f)) { Despawn(); return; }
-        if (frames.Length > 0)
+        if (kind != AttackKind.Doll && frames.Length > 0)
         {
             int frame = (int)(elapsed * 10f);
             if (kind == AttackKind.Tornado)
@@ -80,7 +94,11 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         }
         if (kind == AttackKind.Ice)
             visual.transform.rotation = Quaternion.Euler(0f, 0f, 90f * (Mathf.FloorToInt(elapsed / 0.25f) % 4));
-        if (kind == AttackKind.Tornado)
+        if (kind == AttackKind.Doll)
+        {
+            MoveInvocation();
+        }
+        else if (kind == AttackKind.Tornado)
         {
             if (elapsed < 1f) return;
             MoveTornado();
@@ -89,10 +107,82 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         {
             logicalPosition += (Vector3)(direction * speed * Time.fixedDeltaTime);
             Vector3Int cell = owner.Arena.Cell(logicalPosition);
-            if (kind == AttackKind.Doll && !owner.Arena.IsStaticWalkable(cell)) { Despawn(); return; }
             if (kind == AttackKind.Ice && !owner.Arena.IsFloor(cell)) { Despawn(); return; }
             ApplyPosition();
         }
+    }
+
+    private void Update()
+    {
+        if (kind != AttackKind.Doll || spent || GamePauseController.IsPaused ||
+            owner == null || !owner.CombatActive) return;
+        int frame;
+        if (invocationWalking)
+        {
+            walkTime += Time.deltaTime;
+            frame = WalkSequence[Mathf.FloorToInt(walkTime / 0.1f) % WalkSequence.Length];
+        }
+        else
+        {
+            jumpTime = Mathf.Min(JumpCycleSeconds, jumpTime + Time.deltaTime);
+            frame = JumpSequence[Mathf.Min(JumpSequence.Length - 1,
+                Mathf.FloorToInt(jumpTime / JumpCycleSeconds * JumpSequence.Length))];
+        }
+        if (frame < frames.Length) visual.sprite = frames[frame];
+    }
+
+    private void MoveInvocation()
+    {
+        Vector3 next;
+        if (invocationWalking)
+            next = Vector3.MoveTowards(logicalPosition, segmentEnd, speed * Time.fixedDeltaTime);
+        else
+        {
+            if (jumpTime < JumpCycleSeconds) return;
+            speed = InvocationInitialSpeed * 3f;
+            next = logicalPosition + Vector3.down * (speed * Time.fixedDeltaTime);
+        }
+        var cell = owner.Arena.Cell(next);
+        if (!owner.Arena.IsStaticWalkable(cell))
+        {
+            FinishInvocation(false);
+            return;
+        }
+        logicalPosition = next;
+        ApplyPosition();
+        if (invocationWalking && (logicalPosition - segmentEnd).sqrMagnitude < 0.000001f)
+        {
+            invocationWalking = false;
+            if (frames.Length > 3) visual.sprite = frames[3];
+        }
+    }
+
+    private void FinishInvocation(bool killedByExplosion)
+    {
+        if (spent) return;
+        spent = true;
+        hitbox.enabled = false;
+        rb.linearVelocity = Vector2.zero;
+        StartCoroutine(InvocationFinish(killedByExplosion));
+    }
+
+    private IEnumerator InvocationFinish(bool killedByExplosion)
+    {
+        Sprite[] finishFrames = killedByExplosion ? owner.invocationDeathFrames : owner.invocationCollisionFrames;
+        if (killedByExplosion && frames.Length > 8)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                visual.sprite = frames[8];
+                yield return FreezerVenusBoss.WaitUnpaused(0.1f);
+            }
+        }
+        foreach (var frame in finishFrames)
+        {
+            visual.sprite = frame;
+            yield return FreezerVenusBoss.WaitUnpaused(0.1f);
+        }
+        Destroy(gameObject);
     }
 
     private void MoveTornado()
@@ -148,7 +238,8 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
         {
             // Like SunMask stars (obstacleMask = 0), ice passes through explosions.
-            if (kind != AttackKind.Ice) Despawn();
+            if (kind == AttackKind.Doll) FinishInvocation(true);
+            else if (kind != AttackKind.Ice) Despawn();
             return;
         }
         // The newborn tornado remains harmless for its one-second stationary wind-up.
@@ -163,9 +254,16 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         {
             if (kind == AttackKind.Doll)
             {
-                bomb.StartKick(Vector2.down, 1f, LayerMask.GetMask("Stage"),
-                    manager != null ? manager.destructibleTilemap : null);
-                Despawn();
+                FinishInvocation(false);
+                var manager = FindAnyObjectByType<GameManager>();
+                float tileSize = Vector3.Distance(owner.Arena.Center(currentCell),
+                    owner.Arena.Center(currentCell + Vector3Int.down));
+                // Use BombKickAbility's blocking masks and kick parameters.
+                bool kicked = bomb.StartKick(Vector2.down, tileSize, LayerMask.GetMask("Stage", "Enemy"),
+                    manager != null ? manager.destructibleTilemap : null,
+                    LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
+                    0.60f, 0.90f, false);
+                if (kicked) owner.PlayInvocationKickSfx();
             }
             else if (kind == AttackKind.Tornado && travelling && !returningToCenter &&
                 owner.Arena.Cell(bomb.transform.position) == segmentCell) ReturnToCenter();
@@ -173,7 +271,8 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         else if (kind == AttackKind.Doll && other.gameObject.layer == LayerMask.NameToLayer("Stage"))
         {
             // Tile occupancy is checked every step; also catch the terminal wall's collider.
-            if (!owner.Arena.IsStaticWalkable(owner.Arena.Cell(other.ClosestPoint(transform.position)))) Despawn();
+            if (!owner.Arena.IsStaticWalkable(owner.Arena.Cell(other.ClosestPoint(transform.position))))
+                FinishInvocation(false);
         }
     }
 

@@ -73,11 +73,17 @@ public static class FreezerVenusAuthoring
             boss.hurtFrames = Frames(sprites, "Hurt", 2);
             boss.tornadoFrames = Frames(sprites, "Tornado", 4);
             boss.iceFrames = new[] { sprites["Ice"] };
-            boss.dollFrames = new[] { sprites["Opening3"], sprites["Opening4"] };
+            boss.summonCastFrames = new[] { sprites["SummonCast_1"], sprites["SummonCast2"] };
+            boss.summonEffectFrames = new[] { sprites["Summon_1"], sprites["Summon_2"], sprites["Summon_3"] };
+            ConfigureInvocationSprites(boss, sprites);
+            boss.summonCastSfx = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SummonCast.wav");
             var sun = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bosses/SunMask/SunMask.prefab");
             var reference = sun.GetComponent<SunMaskBoss>();
+            boss.summonCastSfxGain = 3f;
             boss.iceCastSfx = iceCastSfx;
             boss.iceSfx = iceSfx;
+            boss.iceCastSfxGain = 3f;
+            boss.iceSfxGain = 3f;
             boss.deathSfx = reference.deathExplosionSfx;
             boss.explosionPrefab = reference.explosionPrefab;
             boss.endStageMusic = sun.GetComponent<BossEndStageSequence>().endStageMusic;
@@ -104,6 +110,52 @@ public static class FreezerVenusAuthoring
         EditorSceneManager.SaveScene(scene);
     }
 
+    public static void ConfigureInvocationSprites(FreezerVenusBoss boss, Dictionary<string, Sprite> bossSprites)
+    {
+        const string path = "Assets/Sprites/Bosses/FreezerVenus/FreezeVenusInvocation.png";
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Multiple;
+        importer.spritePixelsPerUnit = 16f;
+        importer.filterMode = FilterMode.Point;
+        importer.mipmapEnabled = false;
+        importer.alphaIsTransparency = true;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        foreach (string platform in new[] { "Standalone", "Android", "iPhone", "WebGL", "Windows Store Apps", "Server" })
+            importer.ClearPlatformTextureSettings(platform);
+        var factories = new SpriteDataProviderFactories();
+        factories.Init();
+        var provider = factories.GetSpriteEditorDataProviderFromObject(importer);
+        provider.InitSpriteEditorDataProvider();
+        var old = provider.GetSpriteRects().ToDictionary(r => r.name, r => r.spriteID);
+        var rects = new List<SpriteRect>();
+        for (int i = 0; i < 12; i++)
+        {
+            string name = "Invocation_" + (i + 1);
+            rects.Add(new SpriteRect
+            {
+                name = name,
+                rect = i < 9 ? new Rect(i * 16, 32, 16, 32) : new Rect((i - 9) * 32, 0, 32, 32),
+                alignment = SpriteAlignment.Custom,
+                pivot = new Vector2(0.5f, 0.25f),
+                spriteID = old.TryGetValue(name, out var id) ? id : new GUID(Hash128.Compute("FreezerVenus/" + name).ToString())
+            });
+        }
+        provider.SetSpriteRects(rects.ToArray());
+        provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(
+            rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));
+        provider.Apply();
+        importer.SaveAndReimport();
+        var invocation = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().ToDictionary(s => s.name);
+        boss.dollFrames = Enumerable.Range(1, 12).Select(i => invocation["Invocation_" + i]).ToArray();
+        var funya = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemies/Funya.prefab");
+        var sharedDeath = funya.GetComponentsInChildren<AnimatedSpriteRenderer>(true)
+            .Single(animation => animation.name == "Death");
+        boss.invocationDeathFrames = sharedDeath.animationSprite.Skip(5).ToArray();
+        boss.invocationCollisionFrames = Enumerable.Range(1, 5).Select(i => bossSprites["Summon_" + i]).ToArray();
+    }
+
     private static Sprite[] Frames(Dictionary<string, Sprite> sprites, string prefix, int count)
         => Enumerable.Range(0, count).Select(i => sprites[prefix + i]).ToArray();
 
@@ -126,7 +178,8 @@ public static class FreezerVenusAuthoring
         factories.Init();
         var provider = factories.GetSpriteEditorDataProviderFromObject(importer);
         provider.InitSpriteEditorDataProvider();
-        var old = provider.GetSpriteRects().ToDictionary(r => r.name, r => r.spriteID);
+        var existingRects = provider.GetSpriteRects();
+        var old = existingRects.ToDictionary(r => r.name, r => r.spriteID);
         var rects = new List<SpriteRect>();
         void Add(string name, int x, int top, int width, int height)
         {
@@ -155,6 +208,8 @@ public static class FreezerVenusAuthoring
         Add("Tornado3", 425, 289, 20, 29);
         Add("Ice", 5, 390, 16, 18);
         Add("Shadow", 76, 66, 34, 16);
+        // Preserve manually sliced summon sprites and their stable identifiers.
+        rects.AddRange(existingRects.Where(r => r.name.StartsWith("Summon", StringComparison.Ordinal)));
         provider.SetSpriteRects(rects.ToArray());
         provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(
             rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));

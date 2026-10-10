@@ -15,23 +15,31 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     public Sprite[] castFrames;
     public Sprite[] iceCastFrames;
     public Sprite[] dollCastFrames;
+    public Sprite[] summonCastFrames;
+    public Sprite[] summonEffectFrames;
     public Sprite[] hurtFrames;
     public Sprite[] tornadoFrames;
     public Sprite[] iceFrames;
     public Sprite[] dollFrames;
+    public Sprite[] invocationDeathFrames;
+    public Sprite[] invocationCollisionFrames;
     [Header("Combat")]
     [Min(0.1f)] public float moveSpeed = 2.1f;
     [Min(0.1f)] public float deathSeconds = 6f;
     [Header("Presentation")]
     public AudioClip iceCastSfx;
-    [Min(0f)] public float iceCastSfxGain = 2f;
+    [Min(0f)] public float iceCastSfxGain = 3f;
     public AudioClip iceSfx;
+    [Min(0f)] public float iceSfxGain = 3f;
+    public AudioClip summonCastSfx;
+    [Min(0f)] public float summonCastSfxGain = 3f;
     public AudioClip deathSfx;
     public AudioClip endStageMusic;
     public GameObject explosionPrefab;
 
     private readonly List<FreezerVenusProjectile> projectiles = new();
     private readonly List<GameObject> deathEffects = new();
+    private readonly List<GameObject> summonEffects = new();
     private CharacterHealth health;
     private Rigidbody2D rb;
     private Collider2D hitbox;
@@ -43,7 +51,6 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     private Vector3 logicalGroundPosition;
     private Vector3 movementDestination;
     private bool moving;
-    private Sprite[] smallDollFrames;
     private int attackIndex;
     private bool attacking;
     private bool dead;
@@ -52,7 +59,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     public FreezerVenusArena Arena { get; private set; }
     public Vector3 GroundPosition => FreezerVenusArena.Snap(transform.position + Vector3.down * 1.75f);
     public Vector3 CrownPosition => FreezerVenusArena.Snap(transform.position + Vector3.up * 0.875f);
-    public Sprite[] SmallDollFrames => smallDollFrames;
+    public Sprite[] SmallDollFrames => dollFrames;
 
     private void Awake()
     {
@@ -71,7 +78,6 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         rb.interpolation = RigidbodyInterpolation2D.None;
         Arena = new FreezerVenusArena(FindAnyObjectByType<GameManager>());
-        smallDollFrames = CreateSmallDollFrames();
         if (shadow != null) shadow.enabled = false;
         SetFrame(closedFrames, 0);
     }
@@ -184,6 +190,17 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
                 if (!GamePauseController.IsPaused) elapsed += Time.deltaTime;
             }
         }
+        else if (attack == 2)
+        {
+            float elapsed = 0f;
+            while (elapsed < 0.15f)
+            {
+                SetFrame(summonCastFrames, Mathf.FloorToInt(elapsed / 0.075f));
+                yield return null;
+                if (!GamePauseController.IsPaused) elapsed += Time.deltaTime;
+            }
+            SetFrame(summonCastFrames, summonCastFrames.Length - 1);
+        }
         else
         {
             for (int i = 0; i < preparation.Length; i++)
@@ -198,8 +215,8 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         else if (attack == 1)
         {
             SetFrame(dollCastFrames, 4);
-            PlayIceSfx(iceCastSfx, iceCastSfxGain);
-            PlayIceSfx(iceSfx);
+            PlayAttackSfx(iceCastSfx, iceCastSfxGain);
+            PlayAttackSfx(iceSfx, iceSfxGain);
             for (int i = 0; i < 6; i++)
             {
                 Vector2 direction = Quaternion.Euler(0f, 0f, Mathf.Lerp(-65f, 65f, i / 5f)) * Vector2.down;
@@ -208,7 +225,10 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         }
         else
         {
-            foreach (var cell in Arena.DollSpawnCells(GroundPosition))
+            var pendingSummonCells = Arena.DollSpawnCells(GroundPosition);
+            yield return PlaySummonEffects(pendingSummonCells);
+            PlayAttackSfx(summonCastSfx, summonCastSfxGain);
+            foreach (var cell in pendingSummonCells)
             {
                 SpawnProjectile(FreezerVenusProjectile.AttackKind.Doll, Vector2.down, Arena.Center(cell));
             }
@@ -226,11 +246,70 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         ChooseMovementDestination();
     }
 
-    private void PlayIceSfx(AudioClip clip, float gain = 1f)
+    private IEnumerator PlaySummonEffects(List<Vector3Int> cells)
     {
-        if (clip == null || audioSource == null) return;
-        // Match Pretty Bomber entrance: PlayOneShot gain may exceed one without bypassing SFX volume.
+        // Hand anchors in the 58x66 SummonCast2 sprite, measured from its bottom-left.
+        var leftHand = CreateSummonEffect(SummonHandPosition(new Vector2(5f, 30f)));
+        var rightHand = CreateSummonEffect(SummonHandPosition(new Vector2(53f, 30f)));
+        for (int i = 0; i < 2; i++)
+        {
+            SetSummonEffectFrame(leftHand, i);
+            SetSummonEffectFrame(rightHand, i);
+            yield return WaitUnpaused(0.1f);
+        }
+        ClearSummonEffects();
+        var destinations = new List<SpriteRenderer>();
+        foreach (var cell in cells) destinations.Add(CreateSummonEffect(Arena.Center(cell)));
+        for (int i = 0; i < 3; i++)
+        {
+            foreach (var destination in destinations) SetSummonEffectFrame(destination, i);
+            yield return WaitUnpaused(0.1f);
+        }
+        ClearSummonEffects();
+    }
+
+    private Vector3 SummonHandPosition(Vector2 pixelPosition)
+    {
+        Sprite castSprite = body.sprite;
+        Vector2 offset = (pixelPosition - castSprite.pivot) / castSprite.pixelsPerUnit;
+        if (body.flipX) offset.x = -offset.x;
+        if (body.flipY) offset.y = -offset.y;
+        return body.transform.TransformPoint(offset);
+    }
+
+    private SpriteRenderer CreateSummonEffect(Vector3 position)
+    {
+        var effect = new GameObject("FreezerVenus summon effect");
+        effect.transform.position = FreezerVenusArena.Snap(position);
+        var renderer = effect.AddComponent<SpriteRenderer>();
+        renderer.sortingLayerID = body.sortingLayerID;
+        renderer.sortingOrder = body.sortingOrder + 1;
+        summonEffects.Add(effect);
+        return renderer;
+    }
+
+    private void SetSummonEffectFrame(SpriteRenderer renderer, int index)
+    {
+        if (summonEffectFrames != null && index < summonEffectFrames.Length)
+            renderer.sprite = summonEffectFrames[index];
+    }
+
+    private void ClearSummonEffects()
+    {
+        foreach (var effect in summonEffects) if (effect != null) Destroy(effect);
+        summonEffects.Clear();
+    }
+
+    public void PlayInvocationKickSfx()
+    {
+        PlayAttackSfx(Resources.Load<AudioClip>("Sounds/KickBomb"));
+    }
+
+    private void PlayAttackSfx(AudioClip clip, float gain = 1f)
+    {
+        if (clip == null || audioSource == null || !audioSource.isActiveAndEnabled) return;
         float effectiveVolume = Mathf.Max(0f, gain) * Mathf.Clamp01(GameAudioSettings.SfxVolume);
+        // One-shot gain can exceed one while respecting the player's SFX setting.
         audioSource.PlayOneShot(clip, effectiveVolume);
     }
 
@@ -238,7 +317,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     {
         projectiles.RemoveAll(p => p == null);
         Sprite[] frames = kind == FreezerVenusProjectile.AttackKind.Tornado ? tornadoFrames :
-            kind == FreezerVenusProjectile.AttackKind.Ice ? iceFrames : smallDollFrames;
+            kind == FreezerVenusProjectile.AttackKind.Ice ? iceFrames : dollFrames;
         var projectile = FreezerVenusProjectile.Create(this, kind, frames,
             position, direction);
         projectiles.Add(projectile);
@@ -314,6 +393,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         hitbox.enabled = false;
         StopAllCoroutines();
         ClearProjectiles();
+        ClearSummonEffects();
         var duel = FindAnyObjectByType<StageAssets.World3HallStageSevenSequence>();
         if (duel != null) duel.FinishDuel();
         StartCoroutine(DeathRoutine());
@@ -396,43 +476,17 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         if (effect != null) Destroy(effect);
     }
 
-    private Sprite[] CreateSmallDollFrames()
-    {
-        var result = new Sprite[dollFrames.Length];
-        for (int i = 0; i < result.Length; i++)
-        {
-            Sprite source = dollFrames[i];
-            Rect rect = source.rect;
-            int width = Mathf.FloorToInt(rect.width / 2f);
-            int height = Mathf.FloorToInt(rect.height / 2f);
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
-                { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "FreezerVenus doll pixels" };
-            var pixels = new Color32[width * height];
-            Color32[] sheet = source.texture.GetPixels32();
-            for (int y = 0; y < height; y++)
-                for (int x = 0; x < width; x++)
-                    pixels[y * width + x] = sheet[((int)rect.y + y * 2) * source.texture.width + (int)rect.x + x * 2];
-            texture.SetPixels32(pixels);
-            texture.Apply(false, true);
-            result[i] = Sprite.Create(texture, new Rect(0, 0, width, height),
-                new Vector2(Mathf.Floor(width / 2f) / width, Mathf.Floor(height / 2f) / height), 16f, 0, SpriteMeshType.FullRect);
-        }
-        return result;
-    }
-
     private void OnDisable()
     {
         StopAllCoroutines();
         ClearProjectiles();
+        ClearSummonEffects();
         foreach (var effect in deathEffects) if (effect != null) Destroy(effect);
         deathEffects.Clear();
     }
 
     private void OnDestroy()
     {
-        if (smallDollFrames != null)
-            foreach (var sprite in smallDollFrames)
-                if (sprite != null) { Destroy(sprite.texture); Destroy(sprite); }
         if (health == null) return;
         health.Damaged -= OnDamaged;
         health.Died -= Kill;
