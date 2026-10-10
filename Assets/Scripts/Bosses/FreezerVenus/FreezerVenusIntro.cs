@@ -5,13 +5,15 @@ using UnityEngine;
 public sealed class FreezerVenusIntro : MonoBehaviour
 {
     [Min(0.1f)] public float descendSeconds = 1.35f;
-    [Min(0.1f)] public float beamOpenSeconds = 0.55f;
+    [Min(1.3f)] public float beamOpenSeconds = 1.3f;
+    [SerializeField] private AudioClip abductionSfx;
     [Min(0.1f)] public float absorptionSeconds = 1.5f;
     private const int BeamWidth = 32;
     private Texture2D beamTexture;
     private Sprite beamSprite;
     private Color32[] pixels;
     private GameObject beam;
+    private AudioSource beamAudio;
     private Texture2D shadowTexture;
     private Sprite growingShadow;
     private Sprite originalShadow;
@@ -47,7 +49,6 @@ public sealed class FreezerVenusIntro : MonoBehaviour
             }
             yield return null;
         }
-        CleanupShadow();
         yield return FreezerVenusBoss.WaitUnpaused(0.2f);
         Vector3 tip = boss.CrownPosition;
         // Same floor and full width as PrettyBomberMagicEffect's portal ellipse.
@@ -85,6 +86,7 @@ public sealed class FreezerVenusIntro : MonoBehaviour
         Destroy(pretty);
         yield return AnimateBeam(false);
         CleanupBeam();
+        CleanupShadow();
         for (int i = 0; i < boss.openingFrames.Length; i++)
         {
             boss.SetFrame(boss.openingFrames, i);
@@ -146,6 +148,7 @@ public sealed class FreezerVenusIntro : MonoBehaviour
         growingShadow = Sprite.Create(shadowTexture, new Rect(0, 0, width, height),
             originalShadow.pivot / new Vector2(width, height), originalShadow.pixelsPerUnit, 0, SpriteMeshType.FullRect);
         renderer.sprite = growingShadow;
+        renderer.enabled = true;
         DrawShadow(0f);
     }
 
@@ -177,7 +180,11 @@ public sealed class FreezerVenusIntro : MonoBehaviour
 
     private void CleanupShadow()
     {
-        if (shadowRenderer != null && originalShadow != null) shadowRenderer.sprite = originalShadow;
+        if (shadowRenderer != null)
+        {
+            shadowRenderer.enabled = false;
+            if (originalShadow != null) shadowRenderer.sprite = originalShadow;
+        }
         if (growingShadow != null) Destroy(growingShadow);
         if (shadowTexture != null) Destroy(shadowTexture);
         shadowRenderer = null;
@@ -201,23 +208,47 @@ public sealed class FreezerVenusIntro : MonoBehaviour
         renderer.sprite = beamSprite;
         renderer.sortingLayerID = boss.body.sortingLayerID;
         renderer.sortingOrder = boss.body.sortingOrder + 2;
+        beamAudio = beam.AddComponent<AudioSource>();
+        beamAudio.playOnAwake = false;
+        beamAudio.spatialBlend = 0f;
         DrawBeam(0f);
     }
 
     private IEnumerator AnimateBeam(bool opening)
     {
+        const float widthStart = 0.33f;
+        float raySeconds = beamOpenSeconds * widthStart;
+        float widthSeconds = Mathf.Max(1.3f, beamOpenSeconds,
+            abductionSfx != null ? abductionSfx.length : 0f);
+        if (opening)
+            yield return AnimateBeamProgress(0f, widthStart, raySeconds);
+
+        // The sound starts with the width change, after the initial ray extends.
+        if (abductionSfx != null)
+        {
+            beamAudio.volume = GameAudioSettings.ApplySfxVolume(1f);
+            beamAudio.PlayOneShot(abductionSfx);
+        }
+        yield return AnimateBeamProgress(opening ? widthStart : 1f,
+            opening ? 1f : widthStart, widthSeconds);
+
+        if (!opening)
+            yield return AnimateBeamProgress(widthStart, 0f, raySeconds);
+    }
+
+    private IEnumerator AnimateBeamProgress(float from, float to, float seconds)
+    {
         float elapsed = 0f;
-        while (elapsed < beamOpenSeconds)
+        while (elapsed < seconds)
         {
             if (!GamePauseController.IsPaused)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / beamOpenSeconds);
-                DrawBeam(opening ? t : 1f - t);
+                DrawBeam(Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / seconds)));
             }
             yield return null;
         }
-        DrawBeam(opening ? 1f : 0f);
+        DrawBeam(to);
     }
 
     private void DrawBeam(float progress)
@@ -245,6 +276,7 @@ public sealed class FreezerVenusIntro : MonoBehaviour
         if (beamSprite != null) Destroy(beamSprite);
         if (beamTexture != null) Destroy(beamTexture);
         beam = null;
+        beamAudio = null;
         beamSprite = null;
         beamTexture = null;
         pixels = null;

@@ -71,6 +71,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         rb.interpolation = RigidbodyInterpolation2D.None;
         Arena = new FreezerVenusArena(FindAnyObjectByType<GameManager>());
         smallDollFrames = CreateSmallDollFrames();
+        if (shadow != null) shadow.enabled = false;
         SetFrame(closedFrames, 0);
     }
 
@@ -82,7 +83,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         hitbox.enabled = true;
         attackTimer = attackInterval;
         RefreshPlayers();
-        if (shadow != null) shadow.transform.localPosition = Vector3.down * 1.75f;
+        if (shadow != null) shadow.enabled = false;
         logicalGroundPosition = GroundPosition;
         SetWorldPosition(logicalGroundPosition + Vector3.up * 1.75f);
         ChooseMovementDestination();
@@ -289,7 +290,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         for (int i = 0; i < bursts; i++)
         {
             body.enabled = i % 2 == 0;
-            if (shadow != null) shadow.enabled = body.enabled;
+            if (shadow != null) shadow.enabled = false;
             if (explosionPrefab != null)
                 lastEffectDuration = SpawnDeathExplosion();
             if (i % 3 == 0 && audioSource != null && deathSfx != null)
