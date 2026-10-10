@@ -17,6 +17,12 @@ public static class FreezerVenusAuthoring
         if (EditorApplication.isPlayingOrWillChangePlaymode)
             throw new InvalidOperationException("Exit Play Mode before rebuilding Freezer Venus.");
         ImportSprites();
+        AssetDatabase.ImportAsset("Assets/Sounds/IceCast.wav", ImportAssetOptions.ForceSynchronousImport);
+        AssetDatabase.ImportAsset("Assets/Sounds/Ice.wav", ImportAssetOptions.ForceSynchronousImport);
+        var iceCastSfx = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/IceCast.wav");
+        var iceSfx = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Ice.wav");
+        if (iceCastSfx == null || iceSfx == null)
+            throw new InvalidOperationException("Import IceCast.wav and Ice.wav before rebuilding Freezer Venus.");
         var sprites = AssetDatabase.LoadAllAssetsAtPath(SheetPath).OfType<Sprite>().ToDictionary(s => s.name);
         if (!AssetDatabase.IsValidFolder("Assets/Prefabs/Bosses/FreezerVenus"))
             AssetDatabase.CreateFolder("Assets/Prefabs/Bosses", "FreezerVenus");
@@ -57,7 +63,12 @@ public static class FreezerVenusAuthoring
             boss.openingFrames = Frames(sprites, "Opening", 5);
             boss.idleFrames = new[] { sprites["Opening3"], sprites["Opening4"] };
             boss.castFrames = Frames(sprites, "Cast", 5);
-            boss.iceCastFrames = new[] { sprites["IceCast0"], sprites["IceCast1"], sprites["IceCast0"] };
+            boss.iceCastFrames = new[]
+            {
+                sprites["DollCast0"], sprites["DollCast1"], sprites["DollCast2"], sprites["DollCast3"],
+                sprites["DollCast3"], sprites["DollCast2"], sprites["DollCast1"], sprites["DollCast2"],
+                sprites["DollCast3"], sprites["DollCast2"]
+            };
             boss.dollCastFrames = Frames(sprites, "DollCast", 5);
             boss.hurtFrames = Frames(sprites, "Hurt", 2);
             boss.tornadoFrames = Frames(sprites, "Tornado", 4);
@@ -65,6 +76,8 @@ public static class FreezerVenusAuthoring
             boss.dollFrames = new[] { sprites["Opening3"], sprites["Opening4"] };
             var sun = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bosses/SunMask/SunMask.prefab");
             var reference = sun.GetComponent<SunMaskBoss>();
+            boss.iceCastSfx = iceCastSfx;
+            boss.iceSfx = iceSfx;
             boss.deathSfx = reference.deathExplosionSfx;
             boss.explosionPrefab = reference.explosionPrefab;
             boss.endStageMusic = sun.GetComponent<BossEndStageSequence>().endStageMusic;

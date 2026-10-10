@@ -21,9 +21,11 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     public Sprite[] dollFrames;
     [Header("Combat")]
     [Min(0.1f)] public float moveSpeed = 2.1f;
-    [Min(0.1f)] public float attackInterval = 2.4f;
     [Min(0.1f)] public float deathSeconds = 6f;
     [Header("Presentation")]
+    public AudioClip iceCastSfx;
+    [Min(0f)] public float iceCastSfxGain = 2f;
+    public AudioClip iceSfx;
     public AudioClip deathSfx;
     public AudioClip endStageMusic;
     public GameObject explosionPrefab;
@@ -38,7 +40,6 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     private float retargetTimer;
     private float animationTime;
     private float hurtTime;
-    private float attackTimer;
     private Vector3 logicalGroundPosition;
     private Vector3 movementDestination;
     private bool moving;
@@ -81,7 +82,6 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         CombatActive = true;
         health.SetExternalInvulnerability(false);
         hitbox.enabled = true;
-        attackTimer = attackInterval;
         RefreshPlayers();
         if (shadow != null) shadow.enabled = false;
         logicalGroundPosition = GroundPosition;
@@ -112,8 +112,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         if (!attacking && hurtTime > 0f) SetFrame(hurtFrames, (int)(animationTime * 8f) % Mathf.Max(1, hurtFrames.Length));
         else if (!attacking) SetFrame(idleFrames, (int)(animationTime * 5f) % Mathf.Max(1, idleFrames.Length));
         if (attacking || moving || hurtTime > 0f) return;
-        attackTimer -= Time.deltaTime;
-        if (attackTimer <= 0f && FindTarget(transform.position) != null)
+        if (FindTarget(transform.position) != null)
             StartCoroutine(AttackRoutine());
     }
 
@@ -131,7 +130,12 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
             Mathf.Clamp(travel.x, -Mathf.Abs(delta.x), Mathf.Abs(delta.x)),
             Mathf.Clamp(travel.y, -Mathf.Abs(delta.y), Mathf.Abs(delta.y)), 0f);
         SetWorldPosition(logicalGroundPosition + Vector3.up * 1.75f);
-        if ((logicalGroundPosition - movementDestination).sqrMagnitude < 0.000001f) moving = false;
+        if ((logicalGroundPosition - movementDestination).sqrMagnitude < 0.000001f)
+        {
+            moving = false;
+            if (FindTarget(transform.position) != null)
+                StartCoroutine(AttackRoutine());
+        }
     }
 
     private void ChooseMovementDestination()
@@ -168,16 +172,34 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         // Alternate attacks so all patterns remain available even if players camp a corner.
         int attack = attackIndex++ % 3;
         Sprite[] preparation = attack == 1 ? iceCastFrames : attack == 2 ? dollCastFrames : castFrames;
-        for (int i = 0; i < preparation.Length; i++)
+        if (attack == 1)
         {
-            SetFrame(preparation, i);
-            yield return WaitUnpaused(0.16f);
+            // Use one clock so frame rounding does not extend the 1.1-second preparation.
+            float elapsed = 0f;
+            float frameSeconds = 1.1f / Mathf.Max(1, preparation.Length);
+            while (elapsed < 1.1f)
+            {
+                SetFrame(preparation, Mathf.FloorToInt(elapsed / frameSeconds));
+                yield return null;
+                if (!GamePauseController.IsPaused) elapsed += Time.deltaTime;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < preparation.Length; i++)
+            {
+                SetFrame(preparation, i);
+                yield return WaitUnpaused(0.16f);
+            }
         }
         if (attack == 0)
             SpawnProjectile(FreezerVenusProjectile.AttackKind.Tornado, Vector2.down,
                 Arena.Center(Arena.NearestFloor(GroundPosition)));
         else if (attack == 1)
         {
+            SetFrame(dollCastFrames, 4);
+            PlayIceSfx(iceCastSfx, iceCastSfxGain);
+            PlayIceSfx(iceSfx);
             for (int i = 0; i < 6; i++)
             {
                 Vector2 direction = Quaternion.Euler(0f, 0f, Mathf.Lerp(-65f, 65f, i / 5f)) * Vector2.down;
@@ -191,10 +213,25 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
                 SpawnProjectile(FreezerVenusProjectile.AttackKind.Doll, Vector2.down, Arena.Center(cell));
             }
         }
-        yield return WaitUnpaused(0.45f);
+        if (attack == 1)
+        {
+            // Keep DollCast4 through firing, then return to DollCast0 before moving.
+            yield return WaitUnpaused(1.1f - 0.16f);
+            SetFrame(dollCastFrames, 0);
+            yield return WaitUnpaused(0.16f);
+        }
+        else
+            yield return WaitUnpaused(0.45f);
         attacking = false;
-        attackTimer = attackInterval;
         ChooseMovementDestination();
+    }
+
+    private void PlayIceSfx(AudioClip clip, float gain = 1f)
+    {
+        if (clip == null || audioSource == null) return;
+        // Match Pretty Bomber entrance: PlayOneShot gain may exceed one without bypassing SFX volume.
+        float effectiveVolume = Mathf.Max(0f, gain) * Mathf.Clamp01(GameAudioSettings.SfxVolume);
+        audioSource.PlayOneShot(clip, effectiveVolume);
     }
 
     private void SpawnProjectile(FreezerVenusProjectile.AttackKind kind, Vector2 direction, Vector3 position)
