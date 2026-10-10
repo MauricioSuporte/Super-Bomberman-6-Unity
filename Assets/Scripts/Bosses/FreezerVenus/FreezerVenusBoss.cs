@@ -389,7 +389,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     private void RefreshLowHealthTint()
     {
-        if (CombatActive && !dead && health.life < initialFightLife * 0.5f)
+        if (dead || (CombatActive && health.life < initialFightLife * 0.5f))
             health.SetPersistentTint(new Color(1.35f, 0.45f, 0.45f, 1f), 0.4f, tintExcludedRenderers);
         else
             health.ClearPersistentTint();
@@ -455,18 +455,32 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         SetFrame(hurtFrames, hurtFrames.Length - 1);
         int bursts = Mathf.CeilToInt(deathSeconds / 0.15f);
         float lastEffectDuration = 0f;
+        float deathElapsed = 0f;
+        float blinkPhase = 0f;
+        body.enabled = true;
         for (int i = 0; i < bursts; i++)
         {
-            body.enabled = i % 2 == 0;
             if (shadow != null) shadow.enabled = false;
             if (explosionPrefab != null)
                 lastEffectDuration = SpawnDeathExplosion();
             if (i % 3 == 0 && audioSource != null && deathSfx != null)
-                GameAudioSettings.PlaySfx(audioSource, deathSfx);
-            yield return WaitUnpaused(0.15f);
+                PlayAttackSfx(deathSfx, 3f);
+            float burstElapsed = 0f;
+            while (burstElapsed < 0.15f)
+            {
+                yield return null;
+                if (GamePauseController.IsPaused) continue;
+                float delta = Time.deltaTime;
+                burstElapsed += delta;
+                deathElapsed += delta;
+                float progress = Mathf.Clamp01(deathElapsed / deathSeconds);
+                // Short hidden flashes accelerate from 2 to 10 blinks per second.
+                blinkPhase = Mathf.Repeat(blinkPhase + delta * Mathf.Lerp(2f, 10f, progress), 1f);
+                body.enabled = blinkPhase < Mathf.Lerp(0.85f, 0.65f, progress);
+            }
         }
-        yield return WaitUnpaused(lastEffectDuration);
         body.enabled = false;
+        yield return WaitUnpaused(lastEffectDuration);
         if (shadow != null) shadow.enabled = false;
         var manager = FindAnyObjectByType<GameManager>();
         // 3-8 is the current campaign's final stage, hosted in World3Hall.
