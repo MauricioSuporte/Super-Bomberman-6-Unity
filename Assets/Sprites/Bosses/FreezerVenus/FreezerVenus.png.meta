@@ -1,0 +1,1400 @@
+fileFormatVersion: 2
+guid: 627ec2ac6607e2f4d99d6730fb854f87
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3975518247418742156
+    second: FreezerVenus_0
+  - first:
+      213: 3657207482125848052
+    second: FreezerVenus_1
+  - first:
+      213: 6912420287511682212
+    second: FreezerVenus_2
+  - first:
+      213: -3932916849232848836
+    second: FreezerVenus_3
+  - first:
+      213: -4705167577429377394
+    second: FreezerVenus_4
+  - first:
+      213: -6423550726466895566
+    second: FreezerVenus_5
+  - first:
+      213: 1189260811371206073
+    second: FreezerVenus_6
+  - first:
+      213: -7459195669813555691
+    second: FreezerVenus_7
+  - first:
+      213: -875414987047589300
+    second: FreezerVenus_8
+  - first:
+      213: -6342475240730644863
+    second: FreezerVenus_9
+  - first:
+      213: -1006633014800146072
+    second: FreezerVenus_10
+  - first:
+      213: -3972303175083500985
+    second: FreezerVenus_11
+  - first:
+      213: -3546662555694963586
+    second: FreezerVenus_12
+  - first:
+      213: -2355955127304179372
+    second: FreezerVenus_13
+  - first:
+      213: -1668918534817272261
+    second: FreezerVenus_14
+  - first:
+      213: 5016178968148194309
+    second: FreezerVenus_15
+  - first:
+      213: -7229847913366773426
+    second: FreezerVenus_16
+  - first:
+      213: -8841039969676212799
+    second: FreezerVenus_17
+  - first:
+      213: 2194979257055209929
+    second: FreezerVenus_18
+  - first:
+      213: -1712302472869893602
+    second: FreezerVenus_19
+  - first:
+      213: 8390080724496178971
+    second: FreezerVenus_20
+  - first:
+      213: -5520360067214553038
+    second: FreezerVenus_21
+  - first:
+      213: -938592944061872669
+    second: FreezerVenus_22
+  - first:
+      213: 541884905151207702
+    second: FreezerVenus_23
+  - first:
+      213: -1546372511302093361
+    second: FreezerVenus_24
+  - first:
+      213: 9086842582087717493
+    second: FreezerVenus_25
+  - first:
+      213: -5275939759388622153
+    second: FreezerVenus_26
+  - first:
+      213: 2917171391176519159
+    second: FreezerVenus_27
+  - first:
+      213: 7345440262433752533
+    second: FreezerVenus_28
+  - first:
+      213: -5689014360537597969
+    second: FreezerVenus_29
+  - first:
+      213: 1006042402826783558
+    second: FreezerVenus_30
+  - first:
+      213: 3684710706344311258
+    second: FreezerVenus_31
+  - first:
+      213: -257123671693798127
+    second: FreezerVenus_32
+  - first:
+      213: -6917922035480943987
+    second: FreezerVenus_33
+  - first:
+      213: -3825949795104342462
+    second: FreezerVenus_34
+  - first:
+      213: 871349724025870688
+    second: FreezerVenus_35
+  - first:
+      213: -4693999770341864101
+    second: FreezerVenus_36
+  - first:
+      213: -8923942681327659685
+    second: FreezerVenus_37
+  - first:
+      213: -8968055120660374483
+    second: FreezerVenus_38
+  - first:
+      213: -4465391440084840051
+    second: FreezerVenus_39
+  - first:
+      213: 7986273069191454274
+    second: FreezerVenus_40
+  - first:
+      213: 8301237716924422557
+    second: FreezerVenus_41
+  - first:
+      213: -4673312916930706488
+    second: FreezerVenus_42
+  - first:
+      213: 868496758966643889
+    second: FreezerVenus_43
+  - first:
+      213: 5030846360151290798
+    second: FreezerVenus_44
+  - first:
+      213: -5790190121990285044
+    second: FreezerVenus_45
+  - first:
+      213: -7226807378713529108
+    second: FreezerVenus_46
+  - first:
+      213: 5766627771077835808
+    second: FreezerVenus_47
+  - first:
+      213: 2643839232571602649
+    second: FreezerVenus_48
+  - first:
+      213: 6807911366068484090
+    second: FreezerVenus_49
+  - first:
+      213: -2153166991956835173
+    second: FreezerVenus_50
+  - first:
+      213: 1901866280802234376
+    second: FreezerVenus_51
+  - first:
+      213: 2662955855813652836
+    second: FreezerVenus_52
+  - first:
+      213: -3567482425635457068
+    second: FreezerVenus_53
+  - first:
+      213: -5641658372657325022
+    second: FreezerVenus_54
+  - first:
+      213: 6796271353882214257
+    second: FreezerVenus_55
+  - first:
+      213: 5219006113439381624
+    second: FreezerVenus_56
+  - first:
+      213: -546817058671852786
+    second: FreezerVenus_57
+  - first:
+      213: 2201479979957168147
+    second: FreezerVenus_58
+  - first:
+      213: 1494486110783714732
+    second: FreezerVenus_59
+  - first:
+      213: 729194236030397569
+    second: FreezerVenus_60
+  - first:
+      213: 5354004231923463313
+    second: FreezerVenus_61
+  - first:
+      213: -6672964460436244307
+    second: FreezerVenus_62
+  - first:
+      213: 5458398570972741701
+    second: FreezerVenus_63
+  - first:
+      213: 3516692504981528004
+    second: FreezerVenus_64
+  - first:
+      213: 9095545488514077542
+    second: FreezerVenus_65
+  - first:
+      213: -739235336581556314
+    second: FreezerVenus_66
+  - first:
+      213: 4361752041236364847
+    second: FreezerVenus_67
+  - first:
+      213: -3262533785264468048
+    second: FreezerVenus_68
+  - first:
+      213: -4610908861701239053
+    second: FreezerVenus_69
+  - first:
+      213: 4280834683954103055
+    second: FreezerVenus_70
+  - first:
+      213: 94912228185218827
+    second: FreezerVenus_71
+  - first:
+      213: 1468604193532816802
+    second: FreezerVenus_72
+  - first:
+      213: 4046028443739718427
+    second: FreezerVenus_73
+  - first:
+      213: -4195961268483682094
+    second: FreezerVenus_74
+  - first:
+      213: -7228034037549085661
+    second: FreezerVenus_75
+  - first:
+      213: 4283586999843695378
+    second: FreezerVenus_76
+  - first:
+      213: -3462865882453374783
+    second: FreezerVenus_77
+  - first:
+      213: 5155289447841392381
+    second: FreezerVenus_78
+  - first:
+      213: -7430960280345568493
+    second: FreezerVenus_79
+  - first:
+      213: 3410727447300231087
+    second: FreezerVenus_80
+  - first:
+      213: 8642967780297917024
+    second: FreezerVenus_81
+  - first:
+      213: -159210347825500351
+    second: FreezerVenus_82
+  - first:
+      213: 3088164046218043654
+    second: FreezerVenus_83
+  - first:
+      213: -1054940532024658591
+    second: FreezerVenus_84
+  - first:
+      213: 6623249612750443148
+    second: FreezerVenus_85
+  - first:
+      213: 1172811732581322207
+    second: FreezerVenus_86
+  - first:
+      213: 3096097206178504597
+    second: FreezerVenus_87
+  - first:
+      213: -4831750417864059533
+    second: FreezerVenus_88
+  - first:
+      213: -8041707132421548507
+    second: FreezerVenus_89
+  - first:
+      213: 5871144707361980619
+    second: FreezerVenus_90
+  - first:
+      213: -1720268286670181734
+    second: FreezerVenus_91
+  - first:
+      213: 4725358954948024851
+    second: FreezerVenus_92
+  - first:
+      213: 651756045151359091
+    second: FreezerVenus_93
+  - first:
+      213: -7322155351881169438
+    second: FreezerVenus_94
+  - first:
+      213: 7100096110485346672
+    second: FreezerVenus_95
+  - first:
+      213: -8596269154797647615
+    second: FreezerVenus_96
+  - first:
+      213: -2116854623671587572
+    second: FreezerVenus_97
+  - first:
+      213: -7029535224460379118
+    second: FreezerVenus_98
+  - first:
+      213: -8750501444500584485
+    second: FreezerVenus_99
+  - first:
+      213: 8220967935867062920
+    second: FreezerVenus_100
+  - first:
+      213: -7423144964377986413
+    second: FreezerVenus_101
+  - first:
+      213: -4280051929303584786
+    second: FreezerVenus_102
+  - first:
+      213: -6857100925505883768
+    second: FreezerVenus_103
+  - first:
+      213: 140714987159184631
+    second: FreezerVenus_104
+  - first:
+      213: -210168650164263669
+    second: FreezerVenus_105
+  - first:
+      213: 9066912053655445836
+    second: FreezerVenus_106
+  - first:
+      213: 2064755848784620068
+    second: FreezerVenus_107
+  - first:
+      213: -5662088132397909555
+    second: FreezerVenus_108
+  - first:
+      213: -8615636743734590183
+    second: FreezerVenus_109
+  - first:
+      213: 2858139854759148876
+    second: FreezerVenus_110
+  - first:
+      213: -2958975446171464750
+    second: FreezerVenus_111
+  - first:
+      213: -1960034021405106562
+    second: FreezerVenus_112
+  - first:
+      213: 97203948096878649
+    second: FreezerVenus_113
+  - first:
+      213: -7406500254001662579
+    second: FreezerVenus_114
+  - first:
+      213: -7264357307880183390
+    second: FreezerVenus_115
+  - first:
+      213: -2908662146856068969
+    second: FreezerVenus_116
+  - first:
+      213: 412444435669778002
+    second: FreezerVenus_117
+  - first:
+      213: -940655218123675920
+    second: FreezerVenus_118
+  - first:
+      213: 5039687647553057899
+    second: FreezerVenus_119
+  - first:
+      213: -4474625253831134282
+    second: FreezerVenus_120
+  - first:
+      213: -7149421232140994248
+    second: FreezerVenus_121
+  - first:
+      213: -7173952762490445255
+    second: FreezerVenus_122
+  - first:
+      213: -5620096096730268350
+    second: FreezerVenus_123
+  - first:
+      213: 2073227984094894930
+    second: FreezerVenus_124
+  - first:
+      213: -1135425078655812744
+    second: FreezerVenus_125
+  - first:
+      213: 4623934712940837755
+    second: FreezerVenus_126
+  - first:
+      213: -8540974068933201707
+    second: FreezerVenus_127
+  - first:
+      213: -2665181927665208965
+    second: FreezerVenus_128
+  - first:
+      213: -7734120801865428418
+    second: FreezerVenus_129
+  - first:
+      213: 5359781038342948453
+    second: FreezerVenus_130
+  - first:
+      213: 7223382261270262496
+    second: FreezerVenus_131
+  - first:
+      213: -6310534006935209851
+    second: FreezerVenus_132
+  - first:
+      213: -3647872343929475317
+    second: FreezerVenus_133
+  - first:
+      213: -5302407912423997393
+    second: FreezerVenus_134
+  - first:
+      213: 3721504654362389993
+    second: FreezerVenus_135
+  - first:
+      213: -5745270954320680353
+    second: FreezerVenus_136
+  - first:
+      213: -7715952740996383695
+    second: FreezerVenus_137
+  - first:
+      213: -6438713054388954810
+    second: FreezerVenus_138
+  - first:
+      213: 3839648946346957030
+    second: FreezerVenus_139
+  - first:
+      213: -1193456523160446626
+    second: FreezerVenus_140
+  - first:
+      213: 3408560221607101084
+    second: FreezerVenus_141
+  - first:
+      213: 9061155623612582746
+    second: FreezerVenus_142
+  - first:
+      213: -2737518106391487980
+    second: FreezerVenus_143
+  - first:
+      213: 5259559617912954474
+    second: FreezerVenus_144
+  - first:
+      213: -4613893876267959646
+    second: FreezerVenus_145
+  - first:
+      213: 7197527638858575539
+    second: FreezerVenus_146
+  - first:
+      213: -8334804743735408684
+    second: FreezerVenus_147
+  - first:
+      213: -3130508727103774504
+    second: FreezerVenus_148
+  - first:
+      213: 1438952840112478082
+    second: FreezerVenus_149
+  - first:
+      213: -6920551718873051583
+    second: FreezerVenus_150
+  - first:
+      213: 1842167179984285139
+    second: FreezerVenus_151
+  - first:
+      213: -632562044973005284
+    second: FreezerVenus_152
+  - first:
+      213: -8841276646125966777
+    second: FreezerVenus_153
+  - first:
+      213: 446636104188587186
+    second: FreezerVenus_154
+  - first:
+      213: 5387833370854243733
+    second: FreezerVenus_155
+  - first:
+      213: -7668303969804161537
+    second: FreezerVenus_156
+  - first:
+      213: 4909312801026593162
+    second: FreezerVenus_157
+  - first:
+      213: -1824438159950502267
+    second: FreezerVenus_158
+  - first:
+      213: -7241493099452242923
+    second: FreezerVenus_159
+  - first:
+      213: 9221657585016238148
+    second: FreezerVenus_160
+  - first:
+      213: -720896994701744376
+    second: FreezerVenus_161
+  - first:
+      213: 544056760813608266
+    second: FreezerVenus_162
+  - first:
+      213: 4907096620082379807
+    second: FreezerVenus_163
+  - first:
+      213: -4477284739644744898
+    second: FreezerVenus_164
+  - first:
+      213: -2959799640821898220
+    second: FreezerVenus_165
+  - first:
+      213: 1953056074878145922
+    second: FreezerVenus_166
+  - first:
+      213: 7001890642680904837
+    second: FreezerVenus_167
+  - first:
+      213: 3359053954453856004
+    second: FreezerVenus_168
+  - first:
+      213: -1899086317859804006
+    second: FreezerVenus_169
+  - first:
+      213: 1292701455104018432
+    second: FreezerVenus_170
+  - first:
+      213: 6405342958728361641
+    second: FreezerVenus_171
+  - first:
+      213: 6770366454492228013
+    second: FreezerVenus_172
+  - first:
+      213: 5602124635426987295
+    second: FreezerVenus_173
+  - first:
+      213: -2943807516274654217
+    second: FreezerVenus_174
+  - first:
+      213: -2101529070944836141
+    second: FreezerVenus_175
+  - first:
+      213: -6007192286982733011
+    second: FreezerVenus_176
+  - first:
+      213: 825197854746574974
+    second: FreezerVenus_177
+  - first:
+      213: -5860752079531941313
+    second: FreezerVenus_178
+  - first:
+      213: 3393722448549106862
+    second: FreezerVenus_179
+  - first:
+      213: 6792725654936666276
+    second: FreezerVenus_180
+  - first:
+      213: 5944193256065712501
+    second: FreezerVenus_181
+  - first:
+      213: -8278677270039417546
+    second: FreezerVenus_182
+  - first:
+      213: 8112459837017348505
+    second: FreezerVenus_183
+  - first:
+      213: 5942958666881890913
+    second: FreezerVenus_184
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 1
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Closed0
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 384
+        width: 48
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6634a6e44147e10ca2c2e8ebc6d43b2c
+      internalID: -741601900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Closed1
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 384
+        width: 48
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0a9fe2d3b8b149063ed9a643632c743b
+      internalID: -1531397014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Closed2
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 384
+        width: 48
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 998a6528ed6e48e9ac528c095aeab557
+      internalID: -1295814732
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Opening0
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 294
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e9251416cfdb578457f2cc48d98a451
+      internalID: -1134048588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Opening1
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 295
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c62c5628b906f14559e2d1dd9c55e53
+      internalID: -1960521484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Opening2
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 295
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f256c7def45c6d4b0612fdfb10b5fac3
+      internalID: 1500138285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Opening3
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 294
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5cd3975276491cae2cae1a9f37b76584
+      internalID: 1166875663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Opening4
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 294
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 57a29ad7459aa4185263de0b7146e17d
+      internalID: 1358830179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cast0
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 130
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e8ad6d05438efc7a59c3e5d51fbdd9e
+      internalID: -1074965398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cast1
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 130
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e3714e4b82fd01a91642c8217e3332b6
+      internalID: 2031523212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cast2
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 130
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17dd6cee53d3a25de9a6591a5b8ddf36
+      internalID: 736727243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cast3
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 130
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2bb58836027c28bc682b8c9e260fda1a
+      internalID: 1055873334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cast4
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 130
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3847ee3a6ce3764289d3a3fac00987d8
+      internalID: 1964734845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hurt0
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 226
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d3ee49ba8270fc2a0fbaa214c05f045c
+      internalID: 934298021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hurt1
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 226
+        width: 50
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bcea1dec05d91002490ec10fa5e4989a
+      internalID: 1184215937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado0
+      rect:
+        serializedVersion: 2
+        x: 387
+        y: 199
+        width: 20
+        height: 32
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4827586}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d0c7fc049efc109211fb5e300d0a464
+      internalID: 794306491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado1
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 200
+        width: 20
+        height: 32
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4827586}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 13b99684271368f058e75f77f58ed731
+      internalID: 1716661969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado2
+      rect:
+        serializedVersion: 2
+        x: 427
+        y: 200
+        width: 20
+        height: 32
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4827586}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba9c9c88e17b2cb25227945003727d11
+      internalID: 1450311624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado3
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 167
+        width: 20
+        height: 32
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4827586}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 22897d5440f2c6ba1a5e0fc4ff349920
+      internalID: 153555236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ice
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 42
+        width: 16
+        height: 18
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b36ce673614e6f04b30ee38b6871bfbc
+      internalID: -2113816688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IceCast0
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 214
+        width: 58
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f186e402361486c20643d47be992854a
+      internalID: 1930500366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IceCast1
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 145
+        width: 68
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 085a26113f2b9ab2a1534fa9363e3503
+      internalID: -1063217654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DollCast0
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 25
+        width: 68
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe816aaf43a175ed1974b7eb318e3ece
+      internalID: 1064857953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DollCast1
+      rect:
+        serializedVersion: 2
+        x: 140
+        y: 25
+        width: 68
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 80e06f22c02250cf2c17d0e5ecba682d
+      internalID: -71440880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DollCast2
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 23
+        width: 68
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e16b1dd18bf953f44abe539aec853062
+      internalID: -322917036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DollCast3
+      rect:
+        serializedVersion: 2
+        x: 327
+        y: 23
+        width: 68
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf9b0b1d4afe6fea48c9d80ce856d84d
+      internalID: -1414465263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DollCast4
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 23
+        width: 52
+        height: 66
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4923077}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 209f3c1842c961bab23786af64fc1966
+      internalID: -1368862609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shadow
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 368
+        width: 34
+        height: 16
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5a84037df163e641fa6a02910c30dd1d
+      internalID: -1629539595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado4
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 166
+        width: 20
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c8688560dfacfe442931435bfdcd29da
+      internalID: -922345940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado5
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 134
+        width: 20
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0786e00ad21fb664ab947ef24bb047fd
+      internalID: -360984621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tornado
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 134
+        width: 20
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38055eaeff02ee342bc37375d8803d7a
+      internalID: 1848108879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: d1c867b582e88bc4585bdf3554f6b0e8
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Cast0: -1074965398
+      Cast1: 2031523212
+      Cast2: 736727243
+      Cast3: 1055873334
+      Cast4: 1964734845
+      Closed0: -741601900
+      Closed1: -1531397014
+      Closed2: -1295814732
+      DollCast0: 1064857953
+      DollCast1: -71440880
+      DollCast2: -322917036
+      DollCast3: -1414465263
+      DollCast4: -1368862609
+      Hurt0: 934298021
+      Hurt1: 1184215937
+      Ice: -2113816688
+      IceCast0: 1930500366
+      IceCast1: -1063217654
+      Opening0: -1134048588
+      Opening1: -1960521484
+      Opening2: 1500138285
+      Opening3: 1166875663
+      Opening4: 1358830179
+      Shadow: -1629539595
+      Tornado: 1848108879
+      Tornado0: 794306491
+      Tornado1: 1716661969
+      Tornado2: 1450311624
+      Tornado3: 153555236
+      Tornado4: -922345940
+      Tornado5: -360984621
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

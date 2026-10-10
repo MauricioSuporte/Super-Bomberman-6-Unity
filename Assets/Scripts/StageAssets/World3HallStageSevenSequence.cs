@@ -28,6 +28,8 @@ namespace StageAssets
         [SerializeField, Range(0f, 1f)] private float stageEightIntroVolume = 1f;
         [SerializeField] private AudioClip stageEightLoop;
         [SerializeField, Range(0f, 1f)] private float stageEightLoopVolume = 1f;
+        [SerializeField] private FreezerVenusBoss freezerVenusPrefab;
+        private FreezerVenusBoss enteringFreezerVenus;
         private bool stageEight;
         private GameObject entranceVisual;
         private GameObject enteringBoss;
@@ -74,7 +76,7 @@ namespace StageAssets
             destructibleTile.sprite != null && hallExit != null && stageMusic != null && tileDropSfx != null &&
             prettyBomberPrefab != null && bossEntranceSfx != null;
 
-        public bool CanPlayStageEight => CanPlay && stageEightIntro != null && stageEightLoop != null;
+        public bool CanPlayStageEight => CanPlay && stageEightIntro != null && stageEightLoop != null && freezerVenusPrefab != null;
 
         public void Play(bool finalStage = false)
         {
@@ -145,6 +147,11 @@ namespace StageAssets
                 manager.RegisterSpawnedDestructibles(DestructibleCells);
             yield return PrettyBomberEntrance();
             RestoreDancingPlayers(completed: true, enableGameplay: true);
+            if (enteringFreezerVenus != null)
+            {
+                enteringFreezerVenus.BeginCombat();
+                enteringFreezerVenus = null;
+            }
 
             // The entrance has finished; remaining impact sounds can finish.
             while (impactVoices.Count > 0)
@@ -322,6 +329,8 @@ namespace StageAssets
             RestoreDancingPlayers();
             if (enteringBoss != null)
                 Destroy(enteringBoss);
+            if (enteringFreezerVenus != null)
+                Destroy(enteringFreezerVenus.gameObject);
             CleanupEntranceVisual();
             foreach (ImpactVoice voice in impactVoices)
                 if (voice.Source != null)
@@ -410,7 +419,7 @@ namespace StageAssets
             yield return effect.Close(0.5f);
 
             float elapsed = 0f;
-            while (elapsed < 1f)
+            while (elapsed < (stageEight ? 0.15f : 1f))
             {
                 yield return null;
                 if (!GamePauseController.IsPaused)
@@ -426,6 +435,11 @@ namespace StageAssets
                     colliders[i].enabled = colliderStates[i];
                 bombs.enabled = true;
                 brain.enabled = true;
+            }
+            if (stageEight)
+            {
+                enteringFreezerVenus = Instantiate(freezerVenusPrefab, destination + Vector3.up * 9f, Quaternion.identity);
+                yield return enteringFreezerVenus.GetComponent<FreezerVenusIntro>().Play(enteringFreezerVenus, enteringBoss);
             }
             DuelActive = true;
             if (StageIntroTransition.Instance != null)
