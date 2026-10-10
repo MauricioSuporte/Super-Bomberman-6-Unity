@@ -41,6 +41,8 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     private readonly List<GameObject> deathEffects = new();
     private readonly List<GameObject> summonEffects = new();
     private CharacterHealth health;
+    private int initialFightLife;
+    private SpriteRenderer[] tintExcludedRenderers;
     private Rigidbody2D rb;
     private Collider2D hitbox;
     private AudioSource audioSource;
@@ -86,6 +88,9 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     {
         if (dead || CombatActive) return;
         CombatActive = true;
+        initialFightLife = health.life;
+        tintExcludedRenderers = shadow != null ? new[] { shadow } : null;
+        RefreshLowHealthTint();
         health.SetExternalInvulnerability(false);
         hitbox.enabled = true;
         RefreshPlayers();
@@ -111,6 +116,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
     private void Update()
     {
         if (!CombatActive || dead || GamePauseController.IsPaused) return;
+        RefreshLowHealthTint();
         animationTime += Time.deltaTime;
         hurtTime = Mathf.Max(0f, hurtTime - Time.deltaTime);
         retargetTimer -= Time.deltaTime;
@@ -346,9 +352,18 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         return closest;
     }
 
+    private void RefreshLowHealthTint()
+    {
+        if (CombatActive && !dead && health.life < initialFightLife * 0.5f)
+            health.SetPersistentTint(new Color(1.35f, 0.45f, 0.45f, 1f), 0.4f, tintExcludedRenderers);
+        else
+            health.ClearPersistentTint();
+    }
+
     private void OnDamaged(int amount)
     {
         if (dead) return;
+        RefreshLowHealthTint();
         // Damage still counts, but casting owns the sprite until the attack finishes.
         if (!attacking)
         {
@@ -390,6 +405,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         if (dead) return;
         dead = true;
         CombatActive = false;
+        RefreshLowHealthTint();
         hitbox.enabled = false;
         StopAllCoroutines();
         ClearProjectiles();
@@ -478,6 +494,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     private void OnDisable()
     {
+        if (health != null) health.ClearPersistentTint();
         StopAllCoroutines();
         ClearProjectiles();
         ClearSummonEffects();
