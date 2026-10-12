@@ -11,6 +11,10 @@ implementation, not completed multiplayer for every mode.
 
 ## Find the live implementation
 
+Use the original repository `C:/Users/mauri/source/repos/Super-Bomberman-6-Unity`
+on `v0.5.0` by default. The user requested retiring the `.codex` worktrees;
+do not create another worktree unless explicitly requested.
+
 Confirm checkout, branch, dirty files, Unity version, package manifest and
 enabled scenes. A fork PR, an open Editor and the shell can refer to different
 checkouts. Verify the Editor project root before using Unity MCP. Do not assume

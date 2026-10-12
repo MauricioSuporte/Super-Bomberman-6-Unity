@@ -1,8 +1,11 @@
 # Current baseline
 
 Snapshot updated 2026-10-12. Verify the active tree rather than treating this
-date as a release marker. The live online integration has been developed in
-`codex/online-battle-flow`; do not assume it exists in every branch/worktree.
+date as a release marker. The default workspace is the original repository at
+`C:/Users/mauri/source/repos/Super-Bomberman-6-Unity`, branch `v0.5.0`.
+The user requested working only in this checkout; do not create a worktree
+unless explicitly requested. `codex/online-battle-flow` and `mirror-pr7` are
+historical integration worktrees, now retired.
 
 ## Rendering and engine
 
