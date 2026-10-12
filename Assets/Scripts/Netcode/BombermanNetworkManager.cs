@@ -12,6 +12,8 @@ namespace Assets.Scripts.Netcode
     {
         public int winnerId;
         public byte kind;
+        public bool matchComplete;
+        public int[] survivingWinnerIds;
         public int[] activePlayerIds; // F5a-3: players na partida (linhas do placar)
         public int[] wins;            // F5a-3: vitórias por player (paralelo ao acima)
     }
@@ -36,7 +38,7 @@ namespace Assets.Scripts.Netcode
     ///
     /// Wiring no Editor: ver Docs/multiplayer/mirror-battlemode-poc.md.
     /// </summary>
-    public class BombermanNetworkManager : NetworkManager
+    public partial class BombermanNetworkManager : NetworkManager
     {
         // Conexão -> playerId atribuído (lado servidor).
         readonly Dictionary<int, int> playerIdByConnection = new();
@@ -94,6 +96,13 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active || singleton == null)
                 return;
 
+            if (singleton is BombermanNetworkManager manager)
+            {
+                manager.selectionHeld.Clear();
+                manager.selectionPressed.Clear();
+            }
+            GameSession.Instance?.EndBattleMatch();
+            BattleModeMenu.OpenDirectlyAtStageSelect = false;
             singleton.ServerChangeScene(NetworkLobby.SceneName);
         }
 
@@ -160,6 +169,7 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active)
             {
                 NetSync.Mode = NetSync.NetMode.Client;
+                InitializeRoomClient();
                 DestroyPreExistingLocalPlayers();
                 // F5a — cliente puro escuta os anúncios do host.
                 NetworkClient.RegisterHandler<RoundOverMessage>(OnRoundOverMessage);
@@ -169,6 +179,7 @@ namespace Assets.Scripts.Netcode
 
         static void OnRoundOverMessage(RoundOverMessage msg)
         {
+            if (msg.kind == 0) BattleModeHud.CaptureDisplayedVictorySnapshot();
             // F5a-3 — aplica players ativos + placar replicados antes do scoreboard
             // (o presenter lê do GameSession; o cliente não tinha esses dados).
             if (GameSession.Instance != null && msg.activePlayerIds != null)
@@ -183,7 +194,7 @@ namespace Assets.Scripts.Netcode
             }
 
             if (GameManager.Instance != null)
-                GameManager.Instance.PlayOnlineRoundOver(msg.winnerId, msg.kind);
+                GameManager.Instance.PlayOnlineRoundOver(msg.winnerId, msg.kind, msg.matchComplete, msg.survivingWinnerIds);
         }
 
         static void OnRoundTimerMessage(RoundTimerMessage msg)
@@ -210,7 +221,7 @@ namespace Assets.Scripts.Netcode
         // F5a — host anuncia o fim de round APENAS aos clientes remotos (o host
         // já toca a apresentação localmente). Custom message evita depender de um
         // objeto de cena com NetworkIdentity.
-        public static void ServerBroadcastRoundOver(int winnerId, byte kind)
+        public static void ServerBroadcastRoundOver(int winnerId, byte kind, bool matchComplete = false, int[] survivingWinnerIds = null)
         {
             if (!NetworkServer.active)
                 return;
@@ -230,6 +241,8 @@ namespace Assets.Scripts.Netcode
             {
                 winnerId = winnerId,
                 kind = kind,
+                matchComplete = matchComplete,
+                survivingWinnerIds = survivingWinnerIds,
                 activePlayerIds = activeIds,
                 wins = wins,
             };
@@ -257,6 +270,7 @@ namespace Assets.Scripts.Netcode
             // é AQUI que definimos o modo — senão o servidor não simularia.
             NetSync.Mode = NetSync.NetMode.Host;
             playerIdByConnection.Clear();
+            InitializeRoomServer();
             DestroyPreExistingLocalPlayers();
         }
 
@@ -281,6 +295,7 @@ namespace Assets.Scripts.Netcode
         {
             base.OnStopServer();
             playerIdByConnection.Clear();
+            global::SaveSystem.EndOnlineBattleSettings();
         }
 
         // ---- Spawn de players --------------------------------------------
@@ -288,14 +303,17 @@ namespace Assets.Scripts.Netcode
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
             int playerId = AllocatePlayerId(conn);
+            if (playerId == 0) { conn.Disconnect(); return; }
+            global::SaveSystem.SetBattleModePlayerControlMode(playerId, BattleModePlayerControlMode.Man);
 
             // F5c — no lobby não spawnamos player (só registramos a conexão/id). O
             // player nasce quando a partida começa: o ServerChangeScene para a cena
             // de batalha deixa localPlayer == null e o Mirror re-chama OnServerAddPlayer
             // (autoCreatePlayer) já na cena certa.
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName)
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName || InConfiguration)
             {
                 SyncActivePlayersToSession();
+                BroadcastRoom();
                 TryDedicatedAutoStart();
                 return;
             }
@@ -308,7 +326,9 @@ namespace Assets.Scripts.Netcode
             else
                 Debug.LogError("[Net] playerPrefab sem NetworkPlayerSetup.");
 
+            PrepareOnlinePlayer(player, playerId, false);
             NetworkServer.AddPlayerForConnection(conn, player);
+            RegisterRoundPlayerSpawn(playerId);
 
             SyncActivePlayersToSession();
         }
@@ -320,6 +340,9 @@ namespace Assets.Scripts.Netcode
 
             base.OnServerDisconnect(conn); // destrói os objetos do player
             SyncActivePlayersToSession();
+            selectionHeld.Clear();
+            selectionPressed.Clear();
+            if (!InLobbyScene() && !leavingRoom) ServerReturnToLobby();
         }
 
         int AllocatePlayerId(NetworkConnectionToClient conn)
@@ -327,17 +350,8 @@ namespace Assets.Scripts.Netcode
             if (playerIdByConnection.TryGetValue(conn.connectionId, out int existing))
                 return existing;
 
-            var used = new HashSet<int>(playerIdByConnection.Values);
-            int assigned = GameSession.MinPlayerId;
-            for (int id = GameSession.MinPlayerId; id <= GameSession.MaxPlayerId; id++)
-            {
-                if (!used.Contains(id))
-                {
-                    assigned = id;
-                    break;
-                }
-            }
-
+            int assigned = FindAvailableRoomSlot(new HashSet<int>(playerIdByConnection.Values));
+            if (assigned == 0) return 0;
             playerIdByConnection[conn.connectionId] = assigned;
             return assigned;
         }
@@ -361,6 +375,12 @@ namespace Assets.Scripts.Netcode
             if (ids.Count == 0)
                 ids.Add(GameSession.MinPlayerId);
 
+            if (!InLobbyScene() && !InConfiguration)
+            {
+                var modes = global::SaveSystem.GetBattleModePlayerControlModes();
+                for (int i = 0; i < modes.Length; i++)
+                    if (modes[i] == BattleModePlayerControlMode.Com && !ids.Contains(i + 1)) ids.Add(i + 1);
+            }
             GameSession.Instance.SetActivePlayerIds(ids);
         }
     }

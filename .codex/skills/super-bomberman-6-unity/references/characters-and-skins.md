@@ -24,6 +24,16 @@ character animation, selection preview, or HUD portrait.
 - `Assets/Scripts/Editor/BomberSkinSheetGenerator.cs` and
   `BomberHudPortraitGenerator.cs` generate derived skin sheets and portraits.
 
+## Online selections
+
+Use [the online skill](../../super-bomberman-6-online/SKILL.md) for network changes.
+OnlinePlayerSelections applies room choices to base/runtime caches by P1-P6;
+NetworkPlayerState replicates character and skin at initial spawn and updates.
+Remote rendering must use generated-catalog normalization, not the observer's
+unlock clamp. Embedded selection remains sequential and only accepts the
+participant's local P1 controls during their turn. Preserve offline selection
+persistence and normal validation of selectable skins.
+
 ## Resource conventions
 
 - Keep original character sheets and palettes under

@@ -201,6 +201,7 @@ public class TitleScreenController : MonoBehaviour
     public bool NormalGameRequested { get; private set; }
     public bool BossRushRequested { get; private set; }
     public bool BattleModeRequested { get; private set; }
+    public bool OnlineBattleRequested { get; private set; }
     public bool AchievementsRequested { get; private set; }
     public bool ExitRequested { get; private set; }
 
@@ -220,7 +221,8 @@ public class TitleScreenController : MonoBehaviour
         ResetSaveConfirm = 4,
         GameModes = 5,
         Language = 6,
-        Sound = 7
+        Sound = 7,
+        BattleConnection = 8
     }
 
     enum StartFlowMode
@@ -1202,6 +1204,7 @@ public class TitleScreenController : MonoBehaviour
         NormalGameRequested = false;
         BossRushRequested = false;
         BattleModeRequested = false;
+        OnlineBattleRequested = false;
         AchievementsRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
@@ -1532,6 +1535,7 @@ public class TitleScreenController : MonoBehaviour
         NormalGameRequested = false;
         BossRushRequested = false;
         BattleModeRequested = false;
+        OnlineBattleRequested = false;
         AchievementsRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
@@ -1638,18 +1642,23 @@ public class TitleScreenController : MonoBehaviour
             }
 
             bool backPressedByPad =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Sound || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.BattleConnection || menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Sound || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
                 TryGetAnyPlayerDown(PlayerAction.ActionB, out _);
 
             bool backPressedByMouse =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Sound || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.BattleConnection || menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.Sound || menuMode == MenuMode.Language || menuMode == MenuMode.ResetSaveConfirm) &&
                 IsPointerBackPressed();
 
             if (backPressedByPad || backPressedByMouse)
             {
                 PlayBackSfx();
 
-                if (menuMode == MenuMode.PlayerCount)
+                if (menuMode == MenuMode.BattleConnection)
+                {
+                    menuMode = MenuMode.GameModes;
+                    menuIndex = GAME_MODE_IDX_BATTLE;
+                }
+                else if (menuMode == MenuMode.PlayerCount)
                 {
                     menuIndex = GetGameModeIndexForPendingStartFlow();
                     menuMode = MenuMode.GameModes;
@@ -1696,6 +1705,18 @@ public class TitleScreenController : MonoBehaviour
 
                 yield return null;
                 continue;
+            }
+
+            if (menuMode == MenuMode.BattleConnection &&
+                (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _) || IsPointerConfirmPressedOnCurrentSelection()))
+            {
+                locked = true;
+                OnlineBattleRequested = menuIndex == 1;
+                BattleModeRequested = true;
+                PlaySelectSfx();
+                yield return PlayCursorConfirm();
+                yield return StartSelectedGameFlow();
+                yield break;
             }
 
             if (menuMode == MenuMode.Language)
@@ -1949,9 +1970,13 @@ public class TitleScreenController : MonoBehaviour
 
                     if (menuIndex == GAME_MODE_IDX_BATTLE)
                     {
-                        BattleModeRequested = true;
-                        yield return StartSelectedGameFlow();
-                        yield break;
+                        menuMode = MenuMode.BattleConnection;
+                        menuIndex = 0;
+                        locked = false;
+                        RefreshMenuText();
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+                        continue;
                     }
 
                     if (menuIndex == GAME_MODE_IDX_NORMAL)
@@ -2152,9 +2177,13 @@ public class TitleScreenController : MonoBehaviour
 
                     if (pendingStartFlow == StartFlowMode.BattleMode)
                     {
-                        BattleModeRequested = true;
-                        yield return StartSelectedGameFlow();
-                        yield break;
+                        menuMode = MenuMode.BattleConnection;
+                        menuIndex = 0;
+                        locked = false;
+                        RefreshMenuText();
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+                        continue;
                     }
 
                     NormalGameRequested = true;
@@ -2169,6 +2198,7 @@ public class TitleScreenController : MonoBehaviour
 
     int GetMenuItemCount()
     {
+        if (menuMode == MenuMode.BattleConnection) return 2;
         if (menuMode == MenuMode.PlayerCount) return 4;
         if (menuMode == MenuMode.GameModes) return 3;
         if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 5 : 4;
@@ -2342,6 +2372,13 @@ public class TitleScreenController : MonoBehaviour
                 $"<size={size}>{exit}</size>" +
                 "</align>";
 
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+            return;
+        }
+
+        if (menuMode == MenuMode.BattleConnection)
+        {
+            menuText.text = $"<align=left><size={size}>{GameTextDatabase.Online.Offline}</size>\n<size={size}>{GameTextDatabase.Online.Online}</size></align>";
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
             return;
         }

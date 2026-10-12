@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public static class PlayerPersistentStats
+public static partial class PlayerPersistentStats
 {
     static bool sessionBooted;
 
@@ -113,25 +113,25 @@ public static class PlayerPersistentStats
 
         switch (playerId)
         {
-            case 1: SaveSystem.Data.player1SelectedSkin = (int)s.Skin; break;
-            case 2: SaveSystem.Data.player2SelectedSkin = (int)s.Skin; break;
-            case 3: SaveSystem.Data.player3SelectedSkin = (int)s.Skin; break;
-            case 4: SaveSystem.Data.player4SelectedSkin = (int)s.Skin; break;
-            case 5: SaveSystem.Data.player5SelectedSkin = (int)s.Skin; break;
-            case 6: SaveSystem.Data.player6SelectedSkin = (int)s.Skin; break;
+            case 1: SaveSystem.BattleConfigurationData.player1SelectedSkin = (int)s.Skin; break;
+            case 2: SaveSystem.BattleConfigurationData.player2SelectedSkin = (int)s.Skin; break;
+            case 3: SaveSystem.BattleConfigurationData.player3SelectedSkin = (int)s.Skin; break;
+            case 4: SaveSystem.BattleConfigurationData.player4SelectedSkin = (int)s.Skin; break;
+            case 5: SaveSystem.BattleConfigurationData.player5SelectedSkin = (int)s.Skin; break;
+            case 6: SaveSystem.BattleConfigurationData.player6SelectedSkin = (int)s.Skin; break;
         }
 
         switch (playerId)
         {
-            case 1: SaveSystem.Data.player1SelectedCharacter = (int)s.Character; break;
-            case 2: SaveSystem.Data.player2SelectedCharacter = (int)s.Character; break;
-            case 3: SaveSystem.Data.player3SelectedCharacter = (int)s.Character; break;
-            case 4: SaveSystem.Data.player4SelectedCharacter = (int)s.Character; break;
-            case 5: SaveSystem.Data.player5SelectedCharacter = (int)s.Character; break;
-            case 6: SaveSystem.Data.player6SelectedCharacter = (int)s.Character; break;
+            case 1: SaveSystem.BattleConfigurationData.player1SelectedCharacter = (int)s.Character; break;
+            case 2: SaveSystem.BattleConfigurationData.player2SelectedCharacter = (int)s.Character; break;
+            case 3: SaveSystem.BattleConfigurationData.player3SelectedCharacter = (int)s.Character; break;
+            case 4: SaveSystem.BattleConfigurationData.player4SelectedCharacter = (int)s.Character; break;
+            case 5: SaveSystem.BattleConfigurationData.player5SelectedCharacter = (int)s.Character; break;
+            case 6: SaveSystem.BattleConfigurationData.player6SelectedCharacter = (int)s.Character; break;
         }
 
-        SaveSystem.Save();
+        if (!SaveSystem.HasOnlineBattleSettings) SaveSystem.Save();
     }
 
     static void LoadSelectedCharacterInternal(int playerId)
@@ -142,12 +142,12 @@ public static class PlayerPersistentStats
 
         int raw = playerId switch
         {
-            1 => SaveSystem.Data.player1SelectedCharacter,
-            2 => SaveSystem.Data.player2SelectedCharacter,
-            3 => SaveSystem.Data.player3SelectedCharacter,
-            4 => SaveSystem.Data.player4SelectedCharacter,
-            5 => SaveSystem.Data.player5SelectedCharacter,
-            6 => SaveSystem.Data.player6SelectedCharacter,
+            1 => SaveSystem.BattleConfigurationData.player1SelectedCharacter,
+            2 => SaveSystem.BattleConfigurationData.player2SelectedCharacter,
+            3 => SaveSystem.BattleConfigurationData.player3SelectedCharacter,
+            4 => SaveSystem.BattleConfigurationData.player4SelectedCharacter,
+            5 => SaveSystem.BattleConfigurationData.player5SelectedCharacter,
+            6 => SaveSystem.BattleConfigurationData.player6SelectedCharacter,
             _ => (int)BomberCharacter.Bomberman
         };
 
@@ -162,12 +162,12 @@ public static class PlayerPersistentStats
 
         int raw = playerId switch
         {
-            1 => SaveSystem.Data.player1SelectedSkin,
-            2 => SaveSystem.Data.player2SelectedSkin,
-            3 => SaveSystem.Data.player3SelectedSkin,
-            4 => SaveSystem.Data.player4SelectedSkin,
-            5 => SaveSystem.Data.player5SelectedSkin,
-            6 => SaveSystem.Data.player6SelectedSkin,
+            1 => SaveSystem.BattleConfigurationData.player1SelectedSkin,
+            2 => SaveSystem.BattleConfigurationData.player2SelectedSkin,
+            3 => SaveSystem.BattleConfigurationData.player3SelectedSkin,
+            4 => SaveSystem.BattleConfigurationData.player4SelectedSkin,
+            5 => SaveSystem.BattleConfigurationData.player5SelectedSkin,
+            6 => SaveSystem.BattleConfigurationData.player6SelectedSkin,
             _ => (int)GetDefaultSkinForPlayer(playerId)
         };
 
@@ -616,7 +616,9 @@ public static class PlayerPersistentStats
         s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal);
         s.Life = Mathf.Max(1, s.Life);
         s.Character = NormalizeCharacter(s.Character);
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = SaveSystem.HasOnlineBattleSettings
+            ? BomberSkinResourceCatalog.NormalizeGeneratedSkin(s.Character, s.Skin)
+            : UnlockProgress.ClampToUnlocked(s.Skin);
 
         if (movement != null)
             movement.ApplySpeedInternal(s.SpeedInternal);
@@ -956,7 +958,9 @@ public static class PlayerPersistentStats
         s.QueuedEggs.Clear();
 
         s.Character = NormalizeCharacter(s.Character);
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = SaveSystem.HasOnlineBattleSettings
+            ? BomberSkinResourceCatalog.NormalizeGeneratedSkin(s.Character, s.Skin)
+            : UnlockProgress.ClampToUnlocked(s.Skin);
     }
 
     public static void ResetGameplayPersistenceToBaseValues()
@@ -1120,7 +1124,9 @@ public static class PlayerPersistentStats
         s.QueuedEggs.Clear();
 
         s.Character = NormalizeCharacter(s.Character);
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = SaveSystem.HasOnlineBattleSettings
+            ? BomberSkinResourceCatalog.NormalizeGeneratedSkin(s.Character, s.Skin)
+            : UnlockProgress.ClampToUnlocked(s.Skin);
     }
 
     static BomberCharacter NormalizeCharacter(BomberCharacter character)

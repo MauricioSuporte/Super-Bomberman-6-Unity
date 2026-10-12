@@ -57,10 +57,12 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
+            if (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive && move != null && move.IsEndingStage)
+                return;
             // Client-autoritativo: o DONO (host ou cliente) amostra a própria animação
             // (simulada localmente) e sincroniza (SyncVars ClientToServer); os players
             // remotos aplicam a saída replicada (modo manual).
-            if (isOwned)
+            if (isOwned || (isServer && connectionToClient == null))
             {
                 SampleOwned();
                 return;

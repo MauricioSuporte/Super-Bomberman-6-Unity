@@ -12,6 +12,17 @@ gimmicks, unlocks, and mode-specific integration. Use
 - [Preserve arena unlock semantics](#preserve-arena-unlock-semantics)
 - [Items, Louies, and handicap](#change-selectable-items-louies-or-handicap)
 
+## Online counterpart
+
+Title routes Offline directly here, or Online through the shared OnlineLobby.
+Clients observe the same native configuration panels and select their own
+character only on their turn. Rules, slots, pause and scene changes belong to
+the host. Settings use the temporary SaveSystem Battle configuration rather
+than each client's disk save. Ordinary round reloads retain wins; completed
+matches play Win Match and return to Stage Select with room settings intact.
+Read [the online skill](../../super-bomberman-6-online/SKILL.md) before changing
+network flow or adding simulation gates to human/COM controllers.
+
 ## Ownership map
 
 - `Assets/Scripts/BattleModeMenu/BattleModeMenu.cs`

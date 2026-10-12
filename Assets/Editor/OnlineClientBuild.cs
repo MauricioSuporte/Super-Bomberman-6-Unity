@@ -5,17 +5,17 @@ using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 /// <summary>
-/// F5d — build do CLIENTE online (player gráfico normal) que boota na OnlineLobby
-/// (menu Host/Join). Diferente do servidor dedicado, o cliente NÃO é headless: é
+/// F5d — build do CLIENTE online (player gráfico normal) que inicia na TitleScreen
+/// (Battle Mode: Online/Offline). Diferente do servidor dedicado, o cliente NÃO é headless: é
 /// um player comum que renderiza o jogo e mostra o menu OnGUI de Join.
 ///
 /// Dispare por: menu "Build > Online Client (Linux/Windows)".
-/// Força a OnlineLobby como cena 0 (independente do EditorBuildSettings) e o
+/// Força a TitleScreen como cena 0 (independente do EditorBuildSettings) e o
 /// subtarget Player (não Server). Saída em Build/OnlineClient/&lt;plataforma&gt;.
 /// </summary>
 public static class OnlineClientBuild
 {
-    const string LobbyScene = "Assets/Scenes/OnlineLobby.unity";
+    const string EntryScene = "Assets/Scenes/TitleScreen.unity";
 
     [MenuItem("Build/Online Client (Linux)")]
     public static void BuildLinux()
@@ -35,10 +35,10 @@ public static class OnlineClientBuild
         // Cliente = player gráfico normal (NÃO o subtarget Server).
         EditorUserBuildSettings.standaloneBuildSubtarget = StandaloneBuildSubtarget.Player;
 
-        // OnlineLobby como cena 0 (boot), sem depender da ordem do EditorBuildSettings.
+        // TitleScreen como cena 0 (boot), sem depender da ordem do EditorBuildSettings.
         var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToList();
-        scenes.Remove(LobbyScene);
-        scenes.Insert(0, LobbyScene);
+        scenes.Remove(EntryScene);
+        scenes.Insert(0, EntryScene);
 
         var opts = new BuildPlayerOptions
         {

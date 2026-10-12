@@ -49,6 +49,8 @@ namespace Assets.Scripts.Netcode
         BombController bomb;
         int lastSentMask = -1;
         int serverHeldMask;
+        static bool GameplayInputBlocked => GamePauseController.IsPaused ||
+            (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive);
 
         void Awake()
         {
@@ -69,6 +71,8 @@ namespace Assets.Scripts.Netcode
 
         void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive)
+                return;
             if (isLocalPlayer && !isServer)
             {
                 SampleAndSendLocalInput();
@@ -76,7 +80,7 @@ namespace Assets.Scripts.Netcode
                 InjectLocalMovementSynthetic();
             }
 
-            if (isServer)
+            if (isServer && connectionToClient != null)
                 ApplyServerHeldMask();
         }
 
@@ -132,6 +136,7 @@ namespace Assets.Scripts.Netcode
         [Command]
         void CmdTap(int actionIndex)
         {
+            if (GameplayInputBlocked) return;
             var input = PlayerInputManager.Instance;
             if (input == null || setup == null)
                 return;
@@ -147,6 +152,7 @@ namespace Assets.Scripts.Netcode
         [Command]
         void CmdBombTap(Vector2 ownerPos)
         {
+            if (GameplayInputBlocked) return;
             var input = PlayerInputManager.Instance;
             if (input == null || setup == null)
                 return;
@@ -180,7 +186,7 @@ namespace Assets.Scripts.Netcode
         [Command]
         void CmdSendInput(int mask)
         {
-            serverHeldMask = mask;
+            serverHeldMask = GameplayInputBlocked ? 0 : mask;
         }
 
         void ApplyServerHeldMask()
@@ -218,6 +224,7 @@ namespace Assets.Scripts.Netcode
         [Command]
         void CmdKickBomb(uint bombNetId, Vector2 dir, float tileSize, int obstacleMask)
         {
+            if (GameplayInputBlocked) return;
             if (!NetworkServer.spawned.TryGetValue(bombNetId, out var id) || id == null)
                 return;
 

@@ -1,11 +1,12 @@
 using System.Collections;
+using Assets.Scripts.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
-public class GamePauseController : MonoBehaviour
+public partial class GamePauseController : MonoBehaviour
 {
     public static bool IsPaused { get; private set; }
 
@@ -133,6 +134,9 @@ public class GamePauseController : MonoBehaviour
 
     void Update()
     {
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
+            return;
+
         if (exitingToScene)
             return;
 
@@ -174,6 +178,9 @@ public class GamePauseController : MonoBehaviour
 
     bool IsPauseAllowedInCurrentScene()
     {
+        if (CurrentSceneName == Assets.Scripts.Netcode.NetworkLobby.SceneName)
+            return false;
+
         Scene scene = SceneManager.GetActiveScene();
         if (!scene.IsValid())
             return false;
@@ -249,6 +256,9 @@ public class GamePauseController : MonoBehaviour
 
     void TogglePause()
     {
+        if (NetSync.IsOnline && !NetSync.IsServer)
+            return;
+
         if (exitingToScene)
             return;
 
@@ -299,6 +309,9 @@ public class GamePauseController : MonoBehaviour
 
     void TickPauseMenu()
     {
+        if (NetSync.IsOnline && !NetSync.IsServer)
+            return;
+
         if (exitingToScene)
             return;
 
@@ -538,6 +551,7 @@ public class GamePauseController : MonoBehaviour
         if (!string.IsNullOrEmpty(sceneName) && sceneName == titleSceneName)
             TitleScreenBootstrap.SkipNextIntroSequence();
 
+        if (RouteOnlinePauseExit(sceneName)) yield break;
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
@@ -656,7 +670,8 @@ public class GamePauseController : MonoBehaviour
         var input = PlayerInputManager.Instance;
         if (input == null) return false;
 
-        for (int p = 1; p <= 4; p++)
+        int lastPlayer = Assets.Scripts.Netcode.NetSync.IsOnline ? 1 : GameSession.MaxPlayerId;
+        for (int p = 1; p <= lastPlayer; p++)
         {
             if (input.GetDown(p, action))
             {
@@ -671,7 +686,9 @@ public class GamePauseController : MonoBehaviour
     bool IsStartPressed()
     {
         var input = PlayerInputManager.Instance;
-        bool startPressed = input != null && input.AnyGetDown(PlayerAction.Start);
+        bool startPressed = input != null && (Assets.Scripts.Netcode.NetSync.IsOnline
+            ? Assets.Scripts.Netcode.NetSync.IsServer && input.GetDown(1, PlayerAction.Start)
+            : input.AnyGetDown(PlayerAction.Start));
 
         if (startPressed)
             return true;

@@ -25,6 +25,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] byte explosionRadius = 2;
         [SyncVar] int speedInternal;
         [SyncVar] byte skin;
+        [SyncVar] byte character;
         [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
         [SyncVar] byte tempFx;        // F4: bit0 = skull ativo, bit1 = invencível
         [SyncVar] byte mountType;     // F6: MountedType do Louie montado (0=None)
@@ -45,6 +46,7 @@ namespace Assets.Scripts.Netcode
         AbilitySystem abilitySystem;
 
         int appliedSkin = -1;
+        int appliedCharacter = -1;
         int appliedTempFx = 0;
         int appliedMountType = -1;
         bool appliedGloveHolding;
@@ -138,6 +140,12 @@ namespace Assets.Scripts.Netcode
                 eliminated = true;
         }
 
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            ServerSample();
+        }
+
         public override void OnStartClient()
         {
             base.OnStartClient();
@@ -193,6 +201,7 @@ namespace Assets.Scripts.Netcode
 
             byte sk = (byte)PlayerPersistentStats.Get(pid).Skin;
             if (sk != skin) skin = sk;
+            character = (byte)PlayerPersistentStats.Get(pid).Character;
 
             // Flags de powerup (fonte viva no host = runtime state, que o HUD lê).
             var rt = PlayerPersistentStats.GetRuntime(pid);
@@ -291,16 +300,19 @@ namespace Assets.Scripts.Netcode
                 rt.HasFullFire         = (abilityFlags & (1 << 10)) != 0;
                 rt.HasLineBomb         = (abilityFlags & (1 << 11)) != 0;
                 rt.HasSearchBomb       = (abilityFlags & (1 << 12)) != 0;
+                rt.Character           = (BomberCharacter)character;
+                rt.Skin                = (BomberSkin)skin;
             }
 
             // Client-auth: além do dado no rt (HUD), liga as abilities de verdade
             // no cliente (chute, atravessar bloco, etc. dependem disso).
-            ApplyAbilityFlagsToClientAbilitySystem();
+            if (move == null || !move.IsEndingStage) ApplyAbilityFlagsToClientAbilitySystem();
 
             // Skin: aplica só quando muda (Apply carrega sprites; tem cache).
-            if (skin != appliedSkin && skinController != null)
+            if ((skin != appliedSkin || character != appliedCharacter) && skinController != null)
             {
-                skinController.Apply((BomberSkin)skin);
+                skinController.Apply((BomberCharacter)character, (BomberSkin)skin);
+                appliedCharacter = character;
                 appliedSkin = skin;
             }
 
@@ -327,7 +339,7 @@ namespace Assets.Scripts.Netcode
 
             // F6 — mostra/esconde o visual do Louie conforme o tipo replicado.
             // (Passo A: o Louie aparece; a animação/facing dele é o Passo B.)
-            if (mountType != appliedMountType && mountCompanion != null)
+            if (mountType != appliedMountType && mountCompanion != null && (move == null || !move.IsEndingStage))
             {
                 // "Montando agora" = de nenhuma montaria (0/desconhecido) para X. Nesse
                 // caso o DONO reproduz o hop de montar localmente (o NetworkPlayerAnimation
@@ -358,7 +370,7 @@ namespace Assets.Scripts.Netcode
             // vem do próprio facing simulado localmente; o arremesso dispara ao
             // deixar de carregar. Enquanto morto/eliminado não desenha (a morte
             // assume o visual).
-            if (glove != null && isOwned)
+            if (glove != null && isOwned && (move == null || !move.IsEndingStage))
             {
                 bool carryNow = gloveHolding && life > 0 && !eliminated;
                 if (carryNow != appliedGloveHolding)

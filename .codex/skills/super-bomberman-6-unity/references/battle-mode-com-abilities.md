@@ -118,4 +118,5 @@ menu, arena, rules, round, and unlock flow.
   holes, tile handlers, pickups, mounts, Revenge Bomber, and Sudden Death as
   applicable.
 - Do not claim tests, compilation, or scene validation unless they were run.
-  Do not trigger Unity compilation or builds unless the user explicitly asks.
+  Run available compilation checks required by AGENTS for C#/Unity-content
+  edits and report checks blocked by the Editor or missing tools.
