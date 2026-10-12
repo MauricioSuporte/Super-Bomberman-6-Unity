@@ -28,6 +28,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     [SerializeField] private Color disabledColor = new Color32(0, 120, 0, 180);
 
     [Header("Difficulty Selection Colors")]
+    [SerializeField] private Color easyDifficultySelectedColor = new Color32(63, 159, 231, 255);
     [SerializeField] private Color hardDifficultySelectedColor = new Color32(231, 63, 63, 255);
     [SerializeField] private Color hardcoreDifficultySelectedColor = Color.black;
     [SerializeField] private Color hardcoreDifficultyOutlineColor = new Color32(231, 63, 63, 255);
@@ -630,7 +631,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     {
         if (!enabled)
         {
-            if (_difficultySelectionMode && isSelected && index == 2)
+            if (_difficultySelectionMode && isSelected && index == 3)
             {
                 return new OptionVisualStyle(
                     ApplyLockedDifficultyAlpha(hardcoreDifficultySelectedColor),
@@ -647,9 +648,10 @@ public class SaveFileMenuOptions : MonoBehaviour
 
             return index switch
             {
-                0 => new OptionVisualStyle(selectedColor, outlineColor),
-                1 => new OptionVisualStyle(hardDifficultySelectedColor, outlineColor),
-                2 => new OptionVisualStyle(hardcoreDifficultySelectedColor, hardcoreDifficultyOutlineColor),
+                0 => new OptionVisualStyle(easyDifficultySelectedColor, outlineColor),
+                1 => new OptionVisualStyle(selectedColor, outlineColor),
+                2 => new OptionVisualStyle(hardDifficultySelectedColor, outlineColor),
+                3 => new OptionVisualStyle(hardcoreDifficultySelectedColor, hardcoreDifficultyOutlineColor),
                 _ => new OptionVisualStyle(normalColor, outlineColor)
             };
         }
@@ -730,6 +732,7 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         OptionVisualStyle style = difficultyColumnStyles[index] switch
         {
+            3 => new OptionVisualStyle(easyDifficultySelectedColor, outlineColor),
             1 => new OptionVisualStyle(hardDifficultySelectedColor, outlineColor),
             2 => new OptionVisualStyle(hardcoreDifficultySelectedColor, hardcoreDifficultyOutlineColor),
             _ => new OptionVisualStyle(normalColor, outlineColor)
@@ -743,6 +746,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         CommonMenuText text = GameTextDatabase.Common;
         return style switch
         {
+            3 => text.Easy,
             1 => text.Hard,
             2 => text.Hardcore,
             _ => text.Normal

@@ -329,8 +329,24 @@ public class MovementController : MonoBehaviour, IKillable
         EnableExclusiveFromState();
     }
 
+    private Vector2 normalGameRespawnPosition;
+
+    public void SetNormalGameRespawnPosition(Vector2 worldPosition)
+    {
+        normalGameRespawnPosition = worldPosition;
+    }
+
+    public bool HasEasyNormalGameRespawn => IsPlayer() &&
+        !BossRushSession.IsActive && !Assets.Scripts.Netcode.NetSync.IsOnline &&
+        UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal) &&
+        SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Easy;
+
     protected virtual void Awake()
     {
+        normalGameRespawnPosition = transform.position;
+        if (IsPlayer() && TryGetComponent<PlayerIdentity>(out var identity))
+            playerId = Mathf.Clamp(identity.playerId, 1, 6);
+
         Rigidbody = GetComponent<Rigidbody2D>();
         stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
@@ -3527,6 +3543,12 @@ public class MovementController : MonoBehaviour, IKillable
             battleRevengeSwapDeathCompleted = null;
 
             callback?.Invoke();
+            return;
+        }
+
+        if (HasEasyNormalGameRespawn)
+        {
+            RespawnFromBattleRevenge(normalGameRespawnPosition, 2.5f, 0.1f);
             return;
         }
 

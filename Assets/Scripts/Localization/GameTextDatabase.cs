@@ -660,7 +660,11 @@ public static partial class GameTextDatabase
         DeleteFile = "Delete File",
         NoEmptySlot = "NO EMPTY SLOT",
         NoSaveData = "NO SAVE DATA",
-        HardcoreLocked = "CLEAR NORMAL GAME ON HARD"
+        HardcoreLocked = "CLEAR NORMAL GAME ON HARD",
+        EasyHint = "NORMAL GAME, INFINITE LIVES AND INSTANT RESPAWN",
+        NormalHint = "NORMAL GAME, INFINITE LIVES",
+        HardHint = "HARD, STRONGER ENEMIES",
+        HardcoreHint = "HARDCORE, ONLY 1 LIFE"
     };
 
     private static readonly SaveFileMenuText JapaneseSaveFile = new()
@@ -677,7 +681,11 @@ public static partial class GameTextDatabase
         DeleteFile = "ファイル消去",
         NoEmptySlot = "空きファイルがありません",
         NoSaveData = "セーブデータがありません",
-        HardcoreLocked = "ハードでノーマルゲームをクリア"
+        HardcoreLocked = "ハードでノーマルゲームをクリア",
+        EasyHint = "ノーマルゲーム、残機無限・即リスポーン",
+        NormalHint = "ノーマルゲーム、残機無限",
+        HardHint = "ハード、敵が強くなる",
+        HardcoreHint = "ハードコア、残機は1のみ"
     };
 
     private static readonly SaveFileMenuText SpanishSaveFile = new()
@@ -694,7 +702,11 @@ public static partial class GameTextDatabase
         DeleteFile = "Borrar Archivo",
         NoEmptySlot = "NO HAY ARCHIVO VACÍO",
         NoSaveData = "NO HAY DATOS",
-        HardcoreLocked = "COMPLETA JUEGO NORMAL EN DIFÍCIL"
+        HardcoreLocked = "COMPLETA JUEGO NORMAL EN DIFÍCIL",
+        EasyHint = "JUEGO NORMAL, VIDAS INFINITAS Y REAPARICIÓN INSTANTÁNEA",
+        NormalHint = "JUEGO NORMAL, VIDAS INFINITAS",
+        HardHint = "DIFÍCIL, ENEMIGOS MÁS FUERTES",
+        HardcoreHint = "EXTREMO, SOLO 1 VIDA"
     };
 
     private static readonly SaveFileMenuText PortugueseBrSaveFile = new()
@@ -711,7 +723,11 @@ public static partial class GameTextDatabase
         DeleteFile = "Apagar Arquivo",
         NoEmptySlot = "NENHUM ARQUIVO VAZIO",
         NoSaveData = "NENHUM SAVE",
-        HardcoreLocked = "TERMINE O JOGO NORMAL NO DIFÍCIL"
+        HardcoreLocked = "TERMINE O JOGO NORMAL NO DIFÍCIL",
+        EasyHint = "NORMAL GAME, VIDAS INFINITAS E INSTANT RESPAWN",
+        NormalHint = "NORMAL GAME, VIDAS INFINITAS",
+        HardHint = "HARD, INIMIGOS SÃO MAIS FORTES",
+        HardcoreHint = "HARDCORE, APENAS 1 VIDA"
     };
 
     private static readonly AchievementMenuText EnglishAchievementMenu = new()
@@ -1321,6 +1337,10 @@ public sealed class SaveFileMenuText
     public string NoEmptySlot;
     public string NoSaveData;
     public string HardcoreLocked;
+    public string EasyHint;
+    public string NormalHint;
+    public string HardHint;
+    public string HardcoreHint;
 }
 
 public sealed class AchievementMenuText

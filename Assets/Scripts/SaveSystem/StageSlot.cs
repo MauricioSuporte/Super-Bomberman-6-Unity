@@ -7,7 +7,8 @@ namespace Assets.Scripts.SaveSystem
     {
         Normal = 0,
         Hard = 1,
-        Hardcore = 2
+        Hardcore = 2,
+        Easy = 3
     }
 
     [Serializable]

@@ -58,6 +58,9 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
+            if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient))
+                return;
+
             GameObject mount = companion != null ? companion.GetMountedLouieObject() : null;
             if (mount != trackedMount)
                 RebindMount(mount);

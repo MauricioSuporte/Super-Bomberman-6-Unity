@@ -171,6 +171,11 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
+            // The shared Player prefab also runs in local modes. SyncVar defaults
+            // must never replace local skin, pickups or mount state.
+            if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient))
+                return;
+
             if (isServer)
                 ServerSample();
             else
@@ -250,6 +255,9 @@ namespace Assets.Scripts.Netcode
 
         void ClientApply()
         {
+            if (!NetSync.IsOnline || netIdentity == null || !isClient || isServer)
+                return;
+
             int playerId = setup != null ? setup.PlayerId : GameSession.MinPlayerId;
 
             // CharacterHealth local: o HUD lê a vida daqui.

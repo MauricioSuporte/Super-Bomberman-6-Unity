@@ -213,6 +213,15 @@ namespace StageAssets
 
         private void MoveLivingPlayersToDestination()
         {
+            // A player still playing the death animation must respawn in the
+            // destination room too once gameplay resumes after the fade.
+            foreach (MovementController player in FindObjectsByType<MovementController>())
+            {
+                if (player != null && player.HasEasyNormalGameRespawn &&
+                    TryGetDestination(player, out Vector2 respawnPosition))
+                    player.SetNormalGameRespawnPosition(respawnPosition);
+            }
+
             for (int i = 0; i < players.Count; i++)
             {
                 MovementController player = players[i];
@@ -230,6 +239,7 @@ namespace StageAssets
                 }
 
                 player.transform.position = position;
+                player.SetNormalGameRespawnPosition(destination);
                 player.ApplyDirectionFromVector(Vector2.zero);
             }
         }

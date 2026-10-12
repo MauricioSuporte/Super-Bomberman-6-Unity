@@ -57,6 +57,9 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
+            if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient))
+                return;
+
             if (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive && move != null && move.IsEndingStage)
                 return;
             // Client-autoritativo: o DONO (host ou cliente) amostra a própria animação

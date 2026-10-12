@@ -1618,6 +1618,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (deadPlayer != null && deadPlayer.HasEasyNormalGameRespawn)
+            return;
+
         EvaluatePlayerWinState();
     }
 

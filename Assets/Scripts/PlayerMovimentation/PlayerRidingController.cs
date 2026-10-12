@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -213,13 +213,13 @@ public sealed class PlayerRidingController : MonoBehaviour
         DisableAllRiding();
         ClearAllRuntimeOffsets();
 
+        isPlaying = false;
+
         if (restoreMovementState && movement != null)
         {
             movement.EnableExclusiveFromState();
             movement.SetInputLocked(false, forceIdle: true);
         }
-
-        isPlaying = false;
     }
 
     IEnumerator PlayMountArcRoutine(
@@ -282,12 +282,13 @@ public sealed class PlayerRidingController : MonoBehaviour
         DisableAllRiding();
         ClearAllRuntimeOffsets();
 
+        // Finalize the mounted visual after leaving the riding-only state.
+        isPlaying = false;
         onComplete?.Invoke();
 
         movement.EnableExclusiveFromState();
         movement.SetInputLocked(false, forceIdle: true);
 
-        isPlaying = false;
         routine = null;
     }
 
@@ -366,6 +367,9 @@ public sealed class PlayerRidingController : MonoBehaviour
                 if (a == null)
                     continue;
 
+                if (a.GetComponentInParent<MountVisualController>(true) != null)
+                    continue;
+
                 if (!allowedAnims.Contains(a) && a.enabled)
                     a.enabled = false;
             }
@@ -377,6 +381,9 @@ public sealed class PlayerRidingController : MonoBehaviour
             {
                 SpriteRenderer sr = cachedSpriteRenderers[i];
                 if (sr == null)
+                    continue;
+
+                if (sr.GetComponentInParent<MountVisualController>(true) != null)
                     continue;
 
                 if (!allowedSrs.Contains(sr) && sr.enabled)

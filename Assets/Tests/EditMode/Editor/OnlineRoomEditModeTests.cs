@@ -16,6 +16,53 @@ public sealed class OnlineRoomEditModeTests
         PlayerPersistentStats.ApplyOnlineSelections(SaveSystem.BattleConfigurationData);
     }
 
+    [TestCase(NetSync.NetMode.Offline)]
+    [TestCase(NetSync.NetMode.Host)]
+    [TestCase(NetSync.NetMode.Client)]
+    public void UnspawnedNetworkPlayerDoesNotOverwriteLocalSelectionOrPickups(NetSync.NetMode mode)
+    {
+        PlayerPersistentStats.EnsureSessionBooted();
+        var baseState = PlayerPersistentStats.Get(1);
+        var runtimeState = PlayerPersistentStats.GetRuntime(1);
+        var copyState = typeof(PlayerPersistentStats).GetMethod("CopyState",
+            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var savedBase = new PlayerPersistentStats.PlayerState();
+        var savedRuntime = new PlayerPersistentStats.PlayerState();
+        copyState.Invoke(null, new object[] { baseState, savedBase });
+        copyState.Invoke(null, new object[] { runtimeState, savedRuntime });
+        var previousMode = NetSync.Mode;
+        var player = new GameObject("LocalPlayerPersistenceRegression");
+        player.SetActive(false);
+        try
+        {
+            NetSync.Mode = mode;
+            baseState.Character = runtimeState.Character = BomberCharacter.LadyBomber;
+            baseState.Skin = runtimeState.Skin = BomberSkin.Palette7;
+            baseState.BombAmount = runtimeState.BombAmount = 3;
+            baseState.ExplosionRadius = runtimeState.ExplosionRadius = 4;
+            baseState.SpeedInternal = runtimeState.SpeedInternal = PlayerPersistentStats.BaseSpeedNormal;
+            var networkState = player.AddComponent<NetworkPlayerState>();
+            foreach (string method in new[] { "LateUpdate", "ClientApply" })
+            {
+                typeof(NetworkPlayerState).GetMethod(method,
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(networkState, null);
+                Assert.AreEqual(BomberCharacter.LadyBomber, runtimeState.Character);
+                Assert.AreEqual(BomberSkin.Palette7, runtimeState.Skin);
+                Assert.AreEqual(3, runtimeState.BombAmount);
+                Assert.AreEqual(4, runtimeState.ExplosionRadius);
+                Assert.AreEqual(PlayerPersistentStats.BaseSpeedNormal, runtimeState.SpeedInternal);
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+            copyState.Invoke(null, new object[] { savedBase, baseState });
+            copyState.Invoke(null, new object[] { savedRuntime, runtimeState });
+            NetSync.Mode = previousMode;
+        }
+    }
+
     [Test]
     public void FullRoomRejectsSeventhSlot()
     {

@@ -37,6 +37,30 @@ conflicts against current code and the latest user requirements.
 - [Validation](references/validation.md): multiplayer reproduction, available
   tests, compilation limits and areas still needing polish.
 
+## Offline, host and client parity
+
+Every change to shared gameplay or presentation must preserve the same game
+rules and visible results in Offline (including local 2P), host, owner client
+and observing clients. Authority and replication paths differ; that must not
+change skins, pickup effects, HUD values, mounts, death or round outcomes.
+
+- Shared prefabs contain NetworkBehaviours even during offline play. Guard
+  network update/apply paths with an active online session and an initialized
+  network identity that is actually a server or client. `!isServer` alone does
+  not identify a client: it is also true on offline prefab instances. Never
+  apply default SyncVars to local persistent/runtime state or disable local
+  animation drivers before a network player has started.
+- Preserve the existing ownership model: the server decides gameplay, owner
+  clients drive authorized movement/animation, and observers display replicated
+  results. Do not fix one role by making another role skip required behavior or
+  by running an authoritative effect twice on the host.
+- For touched behavior, check Offline with distinct P1/P2 selections, host,
+  owner client and observer client. Trace selection, spawn, pickups, HUD,
+  mount transitions and repeated scene/round entry where relevant. Include a
+  regression check that unspawned network components cannot overwrite local
+  character/skin or collected items. Report untested roles explicitly;
+  compilation and unspawned-component tests do not prove two-peer gameplay.
+
 ## Invariants
 
 - The server owns P1-P6 slot assignments, rules, damage, gameplay RNG, gameplay

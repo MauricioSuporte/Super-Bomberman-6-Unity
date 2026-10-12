@@ -132,6 +132,7 @@ public class SaveFileMenu : MonoBehaviour
     private readonly List<int> _displayDifficultyStyles = new();
     private readonly NormalGameDifficulty[] _newGameDifficulties =
     {
+        NormalGameDifficulty.Easy,
         NormalGameDifficulty.Normal,
         NormalGameDifficulty.Hard,
         NormalGameDifficulty.Hardcore
@@ -787,6 +788,7 @@ public class SaveFileMenu : MonoBehaviour
         CommonMenuText text = GameTextDatabase.Common;
         return difficulty switch
         {
+            NormalGameDifficulty.Easy => text.Easy,
             NormalGameDifficulty.Normal => text.Normal,
             NormalGameDifficulty.Hard => text.Hard,
             NormalGameDifficulty.Hardcore => text.Hardcore,
@@ -856,6 +858,34 @@ public class SaveFileMenu : MonoBehaviour
     {
         if (leftPanel != null)
             leftPanel.UpdateOptionVisuals(selectedIndex, confirmed || _cursorConfirmVisual);
+
+        UpdateDifficultyHint();
+    }
+
+    private void UpdateDifficultyHint()
+    {
+        if (_state != MenuState.SelectNewGameDifficulty || disabledMessageRoutine != null)
+            return;
+
+        EnsureDisabledOptionText();
+        if (disabledOptionText == null)
+            return;
+
+        SaveFileMenuText text = GameTextDatabase.SaveFile;
+        NormalGameDifficulty difficulty = _newGameDifficulties[Mathf.Clamp(selectedIndex, 0, _newGameDifficulties.Length - 1)];
+        LocalizedTmpFontFallback.Apply(disabledOptionText);
+        disabledOptionText.text = difficulty switch
+        {
+            NormalGameDifficulty.Easy => text.EasyHint,
+            NormalGameDifficulty.Hard => text.HardHint,
+            NormalGameDifficulty.Hardcore => text.HardcoreHint,
+            _ => text.NormalHint
+        };
+        disabledMessageRect.sizeDelta = new Vector2(-24f * _currentUiScale, disabledOptionText.fontSize * 2.4f);
+        disabledOptionText.enableAutoSizing = true;
+        disabledOptionText.fontSizeMin = 8f;
+        disabledOptionText.fontSizeMax = disabledOptionText.fontSize;
+        disabledOptionText.gameObject.SetActive(true);
     }
 
     private void PlaySfx(AudioClip clip, float volume)
@@ -1306,6 +1336,7 @@ public class SaveFileMenu : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, duration));
         HideDisabledMessageImmediate();
+        UpdateDifficultyHint();
     }
 
     private void HideDisabledMessageImmediate()
@@ -1328,6 +1359,7 @@ public class SaveFileMenu : MonoBehaviour
         if (disabledMessageFontAsset != null)
             disabledOptionText.font = disabledMessageFontAsset;
 
+        disabledOptionText.enableAutoSizing = false;
         disabledOptionText.alignment = TextAlignmentOptions.Center;
         disabledOptionText.textWrappingMode = TextWrappingModes.NoWrap;
         disabledOptionText.overflowMode = TextOverflowModes.Overflow;

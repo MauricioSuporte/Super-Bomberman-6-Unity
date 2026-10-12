@@ -552,6 +552,11 @@ public class StageIntroTransition : MonoBehaviour
         {
             if (!m) continue;
 
+            // Mounted Louies are driven by MountVisualController. Their own
+            // movement must stay disabled when the stage intro releases players.
+            if (m is MountMovementController && m.GetComponentInParent<PlayerIdentity>() != null)
+                continue;
+
             bool isPlayer = m.CompareTag("Player") || m.GetComponent<PlayerIdentity>() != null;
             if (isPlayer)
             {
@@ -566,7 +571,14 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         foreach (var b in bombControllers)
-            if (b) b.enabled = !keepPlayerInputLockedAfterIntro;
+        {
+            if (b == null) continue;
+            if (b.GetComponent<MountMovementController>() != null &&
+                b.GetComponentInParent<PlayerIdentity>() != null)
+                continue;
+
+            b.enabled = !keepPlayerInputLockedAfterIntro;
+        }
 
         for (int i = 0; i < manualDismounts.Length; i++)
         {

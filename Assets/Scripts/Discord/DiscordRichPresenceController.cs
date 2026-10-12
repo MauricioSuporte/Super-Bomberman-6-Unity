@@ -327,6 +327,7 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
     {
         return difficulty switch
         {
+            NormalGameDifficulty.Easy => "Easy",
             NormalGameDifficulty.Hard => "Hard",
             NormalGameDifficulty.Hardcore => "Hardcore",
             _ => "Normal"

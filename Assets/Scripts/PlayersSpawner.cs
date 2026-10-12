@@ -151,6 +151,10 @@ public sealed class PlayersSpawner : MonoBehaviour
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
+        // Assign the identity before Awake/OnEnable load stats and mounts.
+        GameObject stagingRoot = new("PlayerSpawnStaging");
+        stagingRoot.SetActive(false);
+
         for (int i = 0; i < configuredPlayerIds.Count; i++)
         {
             int playerId = configuredPlayerIds[i];
@@ -170,18 +174,20 @@ public sealed class PlayersSpawner : MonoBehaviour
             int index = playerId - 1;
             Vector3 spawnPos = ResolveSpawnPosition(index, preset);
 
-            var go = Instantiate(playerPrefab, spawnPos, Quaternion.identity, playersParent);
+            var go = Instantiate(playerPrefab, spawnPos, Quaternion.identity, stagingRoot.transform);
+            if (!go.TryGetComponent<PlayerIdentity>(out var id))
+                id = go.AddComponent<PlayerIdentity>();
+            id.playerId = playerId;
+            if (go.TryGetComponent<BombController>(out var spawnedBomb))
+                spawnedBomb.SetPlayerId(playerId);
+
+            go.transform.SetParent(playersParent, true);
 
             if (IsWorld3WaterStage() && go.GetComponent<PlayerWaterSubmersionEffect>() == null)
                 go.AddComponent<PlayerWaterSubmersionEffect>();
 
             if (IsWorld3WaterStage() && go.GetComponent<StageAssets.World3WaterRippleTrail>() == null)
                 go.AddComponent<StageAssets.World3WaterRippleTrail>();
-
-            if (!go.TryGetComponent<PlayerIdentity>(out var id))
-                id = go.AddComponent<PlayerIdentity>();
-
-            id.playerId = playerId;
 
             var move = go.GetComponent<MovementController>();
             var bomb = go.GetComponent<BombController>();
@@ -204,6 +210,8 @@ public sealed class PlayersSpawner : MonoBehaviour
 
             ConfigureBattleModeComController(go, playerId);
         }
+
+        Destroy(stagingRoot);
     }
 
     public void ConfigureBattleModeComController(GameObject playerObject, int playerId)
