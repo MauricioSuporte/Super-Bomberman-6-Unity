@@ -71,3 +71,5 @@ reconexão e migração de host continuam fora desta entrega.
 Os testes `OnlineRoomEditModeTests` cobrem limite/reutilização de slots,
 isolamento das configurações offline, conteúdo do snapshot e entrada/saída
 do host no lobby, aplicação de skins por slot e reprodução dos painéis e uma morte durante a proteção de spawn em dois rounds consecutivos. Eles não substituem o teste entre duas máquinas.
+
+Validação em 2026-10-12, no repositório original após o merge em `v0.5.0`: Unity compilou e os nove `OnlineRoomEditModeTests` passaram, sem falhas ou testes ignorados. Isto não substitui a validação manual entre host e cliente em todas as arenas.

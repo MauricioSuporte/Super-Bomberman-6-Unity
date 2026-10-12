@@ -53,11 +53,13 @@ Check introduced warnings, strict UTF-8/BOM integrity and `.meta` pairing.
 Existing Mirror/vendor warnings differ from newly introduced game warnings.
 Documentation-only skill updates do not require Unity compilation.
 
-Evidence from this implementation: user-reported success includes the online
-flow and early-death/repeated-round fix; C# compilation passed. An earlier
-five-test room suite ran successfully. Later panel/pause/skin/round regressions
-were added and compiled but execution was blocked by the open Editor.
-Do not claim that all current tests, arenas or multiplayer combinations passed.
+Evidence updated 2026-10-12 after merging into v0.5.0 in the original checkout:
+Unity compiled the project and all nine OnlineRoomEditModeTests passed, with
+zero failures or skips. This includes native panel/start transition, skins,
+pause, lobby and the early-death regression across two host/COM rounds.
+The user also reported success for the online flow and repeated-round fix.
+This does not certify every arena, internet/latency scenario or multiplayer
+combination; two-peer manual validation remains distinct from these tests.
 
 ## Remaining areas to inspect when relevant
 
