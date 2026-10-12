@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class BomberSkinSelectMenu : MonoBehaviour
+public partial class BomberSkinSelectMenu : MonoBehaviour
 {
     static readonly Vector2 FooterHintItemSelectAnchoredPos = new(0f, -295f);
     static readonly Vector2 FooterHintItemSelectSize = new(900f, 120f);
@@ -506,13 +506,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
             {
                 int p = configuredPlayerIds[i];
                 while (input != null &&
-                       (input.Get(p, PlayerAction.ActionA) ||
-                        input.Get(p, PlayerAction.ActionB) ||
-                        input.Get(p, PlayerAction.Start) ||
-                        input.Get(p, PlayerAction.MoveLeft) ||
-                        input.Get(p, PlayerAction.MoveRight) ||
-                        input.Get(p, PlayerAction.MoveUp) ||
-                        input.Get(p, PlayerAction.MoveDown)))
+                       (Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.ActionA) ||
+                        Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.ActionB) ||
+                        Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.Start) ||
+                        Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.MoveLeft) ||
+                        Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.MoveRight) ||
+                        Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.MoveUp) ||
+                        Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, p, PlayerAction.MoveDown)))
                 {
                     yield return null;
                 }
@@ -522,7 +522,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
             InitializeCursorSelection(players[i]);
 
-        if (resumeFromSavedSkins)
+        if (resumeFromSavedSkins && !Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration)
             PreconfirmBattleModeSelectionFromSavedSkins();
 
         UpdateSlotVisuals();
@@ -568,6 +568,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
         bool done = false;
         while (!done)
         {
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration && !Assets.Scripts.Netcode.NetSync.IsServer)
+            {
+                ApplyOnlineCursorView();
+                var onlineView = BattleModeMenu.ReadOnlineView();
+                if (onlineView != null && !onlineView.characters) done = true;
+                yield return null;
+                continue;
+            }
+
             bool anyReturnToTitle = false;
 
             if (useBattleModeComAssignment && HandleCompletedBattleModeBackInputs(input))
@@ -600,14 +609,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
             bool downDown = DirectionalPressed(input, pid, PlayerAction.MoveDown);
             bool leftDown = DirectionalPressed(input, pid, PlayerAction.MoveLeft);
             bool rightDown = DirectionalPressed(input, pid, PlayerAction.MoveRight);
-            bool aDown = input != null && input.GetDown(pid, PlayerAction.ActionA);
-            bool cDown = input != null && input.GetDown(pid, PlayerAction.ActionC);
+            bool aDown = input != null && Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, pid, PlayerAction.ActionA);
+            bool cDown = input != null && Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, pid, PlayerAction.ActionC);
             bool bDown = useBattleModeComAssignment
                 ? BattleModeBackPressed(input, pid)
-                : input != null && input.GetDown(pid, PlayerAction.ActionB);
-            bool lDown = input != null && input.GetDown(pid, PlayerAction.ActionL);
-            bool rDown = input != null && input.GetDown(pid, PlayerAction.ActionR);
-            bool startDown = input != null && input.GetDown(pid, PlayerAction.Start);
+                : input != null && Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, pid, PlayerAction.ActionB);
+            bool lDown = input != null && Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, pid, PlayerAction.ActionL);
+            bool rDown = input != null && Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, pid, PlayerAction.ActionR);
+            bool startDown = input != null && Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, pid, PlayerAction.Start);
 
             bool moved = false;
             int nextIndex = ps.index;
@@ -1683,7 +1692,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (input == null || directionIndex < 0)
             return false;
 
-        bool held = input.Get(clampedPlayerId, action);
+        bool held = Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, clampedPlayerId, action);
         if (!held)
         {
             previousDirectionalHeld[clampedPlayerId, directionIndex] = false;
@@ -2354,7 +2363,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (input == null)
             return false;
 
-        bool held = input.Get(clampedPlayerId, PlayerAction.ActionB);
+        bool held = Assets.Scripts.Netcode.BombermanNetworkManager.SelectionHeld(input, clampedPlayerId, PlayerAction.ActionB);
         if (!held)
         {
             battleBackReleaseRequired[clampedPlayerId] = false;
@@ -2364,7 +2373,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (battleBackReleaseRequired[clampedPlayerId])
             return false;
 
-        if (!input.GetDown(clampedPlayerId, PlayerAction.ActionB))
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.SelectionDown(input, clampedPlayerId, PlayerAction.ActionB))
             return false;
 
         battleBackReleaseRequired[clampedPlayerId] = true;

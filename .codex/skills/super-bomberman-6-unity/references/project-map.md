@@ -62,6 +62,29 @@ tree.
 - Resolve the current arenas from `EditorBuildSettings.asset`. The current
   project includes `BattleMode_1` through `BattleMode_15`.
 
+## Mirror online
+
+- `Assets/Scripts/Netcode/` owns room lifecycle, slot mapping, network input,
+  player state/animation, bomb VFX, mount/egg presentation and dedicated boot.
+  `OnlineRoomSession.cs` extends BombermanNetworkManager rather than introducing
+  another manager. Human movement has owner prediction; COM are server-owned.
+- `Assets/Scripts/BattleModeMenu/OnlineBattleModeMenu.cs`,
+  `Skin/OnlineCharacterSelection.cs`, `Skin/OnlinePlayerSelections.cs`,
+  `SaveSystem/OnlineBattleSettings.cs`, and `Pause/OnlineGamePause.cs` extend
+  the corresponding native menus/state through partial classes.
+- `Assets/Scenes/OnlineLobby.unity` precedes online Battle configuration.
+  `Assets/Editor/OnlineClientBuild.cs` builds graphical clients starting at Title.
+- See [the online skill](../../super-bomberman-6-online/SKILL.md) for scene,
+  authority, persistence and repeated-round boundaries. Old multiplayer plans
+  are historical/future context, not an exact inventory of current behavior.
+
+## Rendering
+
+- URP pipeline/2D renderer are under `Assets/Settings/`.
+- `Camera/UrpPixelPerfectCameraFallback.cs`, `PixelPerfectViewport.cs` and
+  `UICameraViewportFitter.cs` maintain gameplay viewport and UI safe frames.
+  See [current-baseline.md](current-baseline.md) before altering camera/UI output.
+
 ## Progression, UI, and scene flow
 
 - `Assets/Scripts/SaveSystem/`
@@ -96,3 +119,6 @@ tree.
   Normal Game AI also use runtime bootstraps.
 - `Assets/Tests/EditMode/BattleModeComEditModeTests.cs` contains the current
   first-party Edit Mode coverage for synthetic input and COM helpers.
+- `Assets/Tests/EditMode/Editor/OnlineRoomEditModeTests.cs` defines room,
+  configuration/skin/pause and consecutive-round regressions. Some tests enter
+  PlayMode; inspect actual execution results before reporting coverage.

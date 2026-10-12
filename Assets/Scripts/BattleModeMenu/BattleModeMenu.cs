@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public sealed class BattleModeMenu : MonoBehaviour
+public sealed partial class BattleModeMenu : MonoBehaviour
 {
     private const string ItemSheetResourcesPath = "Sprites/BombItems/Itens";
     private static readonly string[] ItemBorderSpriteNames =
@@ -655,6 +655,13 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void Start()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration && !Assets.Scripts.Netcode.NetSync.IsServer)
+        {
+            OpenDirectlyAtStageSelect = false;
+            StartCoroutine(ObserveOnlineMenu());
+            return;
+        }
+
         if (OpenDirectlyAtStageSelect)
         {
             OpenDirectlyAtStageSelect = false;
@@ -6036,6 +6043,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void UpdateRestoreDefaultsConfirmationVisuals(int selectedIndex)
     {
+        onlineRestoreIndex = selectedIndex;
         BattleModeMenuText text = GameTextDatabase.BattleModeMenu;
         string yes = selectedIndex == 0 ? $"<color=#FFA621>{text.Yes}</color>" : text.Yes;
         string no = selectedIndex == 1 ? $"<color=#FFA621>{text.No}</color>" : text.No;
@@ -6511,6 +6519,13 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         int playerIndex = Mathf.Clamp(selectedPlayerIndex, 0, playerModes.Length - 1);
         int playerId = playerIndex + 1;
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration)
+        {
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.IsConnectedSlot(playerId)) return;
+            playerModes[playerIndex] = playerModes[playerIndex] == BattleModePlayerControlMode.Com
+                ? BattleModePlayerControlMode.Off : BattleModePlayerControlMode.Com;
+            return;
+        }
         int current = (int)playerModes[playerIndex];
         int step = direction < 0 ? -1 : 1;
 
@@ -6596,6 +6611,14 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration)
+        {
+            if (sceneName == Assets.Scripts.Netcode.NetworkLobby.SceneName || sceneName == "TitleScreen")
+                Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
+            else
+                Assets.Scripts.Netcode.BombermanNetworkManager.ServerLaunchConfiguredBattle(sceneName);
+            return;
+        }
         SceneManager.LoadScene(sceneName);
     }
 
@@ -6631,6 +6654,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         for (int playerId = 1; playerId <= 6; playerId++)
         {
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration && playerId != 1) continue;
             if (input.Get(playerId, action))
                 return true;
         }
@@ -6782,6 +6806,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         for (int playerId = 1; playerId <= 6; playerId++)
         {
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration && playerId != 1) continue;
             if (input.Get(playerId, action))
             {
                 triggeringPlayerId = playerId;
@@ -6827,6 +6852,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         if (clip == null)
             return;
+
+        RecordOnlineSound(clip, volume);
 
         GameMusicController music = GameMusicController.Instance;
         if (music == null)

@@ -188,12 +188,12 @@ MonoBehaviour:
   unreliableRedundancy: 0
   transport: {fileID: 1121810758}
   networkAddress: localhost
-  maxConnections: 100
+  maxConnections: 6
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   exceptionsDisconnect: 1
   authenticator: {fileID: 0}
-  offlineScene: OnlineLobby
+  offlineScene:
   onlineScene: 
   offlineSceneLoadDelay: 0
   playerPrefab: {fileID: 4947014498081102474, guid: a0c9407e33176584981a9df061a537bc, type: 3}

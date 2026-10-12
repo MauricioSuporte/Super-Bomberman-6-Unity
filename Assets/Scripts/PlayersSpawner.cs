@@ -206,7 +206,7 @@ public sealed class PlayersSpawner : MonoBehaviour
         }
     }
 
-    void ConfigureBattleModeComController(GameObject playerObject, int playerId)
+    public void ConfigureBattleModeComController(GameObject playerObject, int playerId)
     {
         if (playerObject == null)
             return;

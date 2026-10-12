@@ -5,7 +5,7 @@ using System.IO;
 using UnityEngine;
 using static SaveData;
 
-public static class SaveSystem
+public static partial class SaveSystem
 {
     private const string SaveFolderName = "SaveData";
     private const string SaveFileName = "save.dat";
@@ -317,7 +317,7 @@ public static class SaveSystem
     public static BattleModeRules.MatchMode GetBattleModeMatchMode()
     {
         EnsureLoaded();
-        return NormalizeBattleModeMatchMode(data.battleModeMatchMode);
+        return NormalizeBattleModeMatchMode(BattleData.battleModeMatchMode);
     }
 
     public static void SetBattleModeMatchMode(BattleModeRules.MatchMode matchMode)
@@ -325,21 +325,21 @@ public static class SaveSystem
         EnsureLoaded();
 
         BattleModeRules.MatchMode normalized = NormalizeBattleModeMatchMode((int)matchMode);
-        if (data.battleModeMatchMode == (int)normalized)
+        if (BattleData.battleModeMatchMode == (int)normalized)
             return;
 
-        data.battleModeMatchMode = (int)normalized;
-        Save();
+        BattleData.battleModeMatchMode = (int)normalized;
+        SaveBattleConfiguration();
     }
 
     public static BattleModePlayerControlMode[] GetBattleModePlayerControlModes()
     {
         EnsureLoaded();
-        EnsureBattleModePlayerControlModes(data);
+        EnsureBattleModePlayerControlModes(BattleData);
 
         BattleModePlayerControlMode[] result = new BattleModePlayerControlMode[6];
         for (int i = 0; i < result.Length; i++)
-            result[i] = NormalizeBattleModePlayerControlMode(data.battleModePlayerControlModes[i]);
+            result[i] = NormalizeBattleModePlayerControlMode(BattleData.battleModePlayerControlModes[i]);
 
         return result;
     }
@@ -347,10 +347,10 @@ public static class SaveSystem
     public static void SetBattleModePlayerControlModes(IReadOnlyList<BattleModePlayerControlMode> modes)
     {
         EnsureLoaded();
-        EnsureBattleModePlayerControlModes(data);
+        EnsureBattleModePlayerControlModes(BattleData);
 
         bool changed = false;
-        for (int i = 0; i < data.battleModePlayerControlModes.Length; i++)
+        for (int i = 0; i < BattleData.battleModePlayerControlModes.Length; i++)
         {
             BattleModePlayerControlMode mode = modes != null && i < modes.Count
                 ? modes[i]
@@ -359,51 +359,51 @@ public static class SaveSystem
             mode = NormalizeBattleModePlayerControlMode((int)mode);
             int value = (int)mode;
 
-            if (data.battleModePlayerControlModes[i] == value)
+            if (BattleData.battleModePlayerControlModes[i] == value)
                 continue;
 
-            data.battleModePlayerControlModes[i] = value;
+            BattleData.battleModePlayerControlModes[i] = value;
             changed = true;
         }
 
         if (changed)
-            Save();
+            SaveBattleConfiguration();
     }
 
     public static void SetBattleModePlayerControlMode(int playerId, BattleModePlayerControlMode mode)
     {
         EnsureLoaded();
-        EnsureBattleModePlayerControlModes(data);
+        EnsureBattleModePlayerControlModes(BattleData);
 
         playerId = Mathf.Clamp(playerId, 1, 6);
         int index = playerId - 1;
 
         mode = NormalizeBattleModePlayerControlMode((int)mode);
 
-        if (data.battleModePlayerControlModes[index] == (int)mode)
+        if (BattleData.battleModePlayerControlModes[index] == (int)mode)
             return;
 
-        data.battleModePlayerControlModes[index] = (int)mode;
-        Save();
+        BattleData.battleModePlayerControlModes[index] = (int)mode;
+        SaveBattleConfiguration();
     }
 
     public static BattleModePlayerControlMode GetBattleModePlayerControlMode(int playerId)
     {
         EnsureLoaded();
-        EnsureBattleModePlayerControlModes(data);
+        EnsureBattleModePlayerControlModes(BattleData);
 
         playerId = Mathf.Clamp(playerId, 1, 6);
-        return NormalizeBattleModePlayerControlMode(data.battleModePlayerControlModes[playerId - 1]);
+        return NormalizeBattleModePlayerControlMode(BattleData.battleModePlayerControlModes[playerId - 1]);
     }
 
     public static BattleModeRules.TeamId[] GetBattleModePlayerTeams()
     {
         EnsureLoaded();
-        EnsureBattleModePlayerTeams(data);
+        EnsureBattleModePlayerTeams(BattleData);
 
         BattleModeRules.TeamId[] result = new BattleModeRules.TeamId[6];
         for (int i = 0; i < result.Length; i++)
-            result[i] = NormalizeBattleModeTeamId(data.battleModePlayerTeams[i]);
+            result[i] = NormalizeBattleModeTeamId(BattleData.battleModePlayerTeams[i]);
 
         return result;
     }
@@ -411,10 +411,10 @@ public static class SaveSystem
     public static void SetBattleModePlayerTeams(IReadOnlyList<BattleModeRules.TeamId> teams)
     {
         EnsureLoaded();
-        EnsureBattleModePlayerTeams(data);
+        EnsureBattleModePlayerTeams(BattleData);
 
         bool changed = false;
-        for (int i = 0; i < data.battleModePlayerTeams.Length; i++)
+        for (int i = 0; i < BattleData.battleModePlayerTeams.Length; i++)
         {
             BattleModeRules.TeamId team = teams != null && i < teams.Count
                 ? teams[i]
@@ -423,21 +423,21 @@ public static class SaveSystem
             team = NormalizeBattleModeTeamId((int)team);
             int value = (int)team;
 
-            if (data.battleModePlayerTeams[i] == value)
+            if (BattleData.battleModePlayerTeams[i] == value)
                 continue;
 
-            data.battleModePlayerTeams[i] = value;
+            BattleData.battleModePlayerTeams[i] = value;
             changed = true;
         }
 
         if (changed)
-            Save();
+            SaveBattleConfiguration();
     }
 
     public static BattleModeComputerLevel GetBattleModeComputerLevel()
     {
         EnsureLoaded();
-        return NormalizeBattleModeComputerLevel(data.battleModeComputerLevel);
+        return NormalizeBattleModeComputerLevel(BattleData.battleModeComputerLevel);
     }
 
     public static void SetBattleModeComputerLevel(BattleModeComputerLevel level)
@@ -445,17 +445,17 @@ public static class SaveSystem
         EnsureLoaded();
 
         BattleModeComputerLevel normalized = NormalizeBattleModeComputerLevel((int)level);
-        if (data.battleModeComputerLevel == (int)normalized)
+        if (BattleData.battleModeComputerLevel == (int)normalized)
             return;
 
-        data.battleModeComputerLevel = (int)normalized;
-        Save();
+        BattleData.battleModeComputerLevel = (int)normalized;
+        SaveBattleConfiguration();
     }
 
     public static int GetBattleModeBattlesToWin()
     {
         EnsureLoaded();
-        return Mathf.Clamp(data.battleModeBattlesToWin, 1, 5);
+        return Mathf.Clamp(BattleData.battleModeBattlesToWin, 1, 5);
     }
 
     public static void SetBattleModeBattlesToWin(int battlesToWin)
@@ -463,17 +463,17 @@ public static class SaveSystem
         EnsureLoaded();
 
         int normalized = Mathf.Clamp(battlesToWin, 1, 5);
-        if (data.battleModeBattlesToWin == normalized)
+        if (BattleData.battleModeBattlesToWin == normalized)
             return;
 
-        data.battleModeBattlesToWin = normalized;
-        Save();
+        BattleData.battleModeBattlesToWin = normalized;
+        SaveBattleConfiguration();
     }
 
     public static BattleModeRules.RoundTimerMode GetBattleModeRoundTimerMode()
     {
         EnsureLoaded();
-        return NormalizeBattleModeRoundTimerMode(data.battleModeRoundTimerMode);
+        return NormalizeBattleModeRoundTimerMode(BattleData.battleModeRoundTimerMode);
     }
 
     public static void SetBattleModeRoundTimerMode(BattleModeRules.RoundTimerMode timerMode)
@@ -481,17 +481,17 @@ public static class SaveSystem
         EnsureLoaded();
 
         BattleModeRules.RoundTimerMode normalized = NormalizeBattleModeRoundTimerMode((int)timerMode);
-        if (data.battleModeRoundTimerMode == (int)normalized)
+        if (BattleData.battleModeRoundTimerMode == (int)normalized)
             return;
 
-        data.battleModeRoundTimerMode = (int)normalized;
-        Save();
+        BattleData.battleModeRoundTimerMode = (int)normalized;
+        SaveBattleConfiguration();
     }
 
     public static BattleModeSuddenDeathSetting GetBattleModeSuddenDeathSetting()
     {
         EnsureLoaded();
-        return NormalizeBattleModeSuddenDeathSetting(data.battleModeSuddenDeath);
+        return NormalizeBattleModeSuddenDeathSetting(BattleData.battleModeSuddenDeath);
     }
 
     public static void SetBattleModeSuddenDeathSetting(BattleModeSuddenDeathSetting setting)
@@ -499,34 +499,34 @@ public static class SaveSystem
         EnsureLoaded();
 
         BattleModeSuddenDeathSetting normalized = NormalizeBattleModeSuddenDeathSetting((int)setting);
-        if (data.battleModeSuddenDeath == (int)normalized)
+        if (BattleData.battleModeSuddenDeath == (int)normalized)
             return;
 
-        data.battleModeSuddenDeath = (int)normalized;
-        Save();
+        BattleData.battleModeSuddenDeath = (int)normalized;
+        SaveBattleConfiguration();
     }
 
     public static bool GetBattleModeRevengeBomberEnabled()
     {
         EnsureLoaded();
-        return data.battleModeRevengeBomber;
+        return BattleData.battleModeRevengeBomber;
     }
 
     public static void SetBattleModeRevengeBomberEnabled(bool enabled)
     {
         EnsureLoaded();
 
-        if (data.battleModeRevengeBomber == enabled)
+        if (BattleData.battleModeRevengeBomber == enabled)
             return;
 
-        data.battleModeRevengeBomber = enabled;
-        Save();
+        BattleData.battleModeRevengeBomber = enabled;
+        SaveBattleConfiguration();
     }
 
     public static int GetBattleModeStageIndex()
     {
         EnsureLoaded();
-        int stageIndex = Mathf.Clamp(data.battleModeStageIndex, 1, 15);
+        int stageIndex = Mathf.Clamp(BattleData.battleModeStageIndex, 1, 15);
         if (!IsBattleModeStageUnlocked(stageIndex))
             stageIndex = 1;
 
@@ -541,11 +541,11 @@ public static class SaveSystem
         if (!IsBattleModeStageUnlocked(normalized))
             normalized = 1;
 
-        if (data.battleModeStageIndex == normalized)
+        if (BattleData.battleModeStageIndex == normalized)
             return;
 
-        data.battleModeStageIndex = normalized;
-        Save();
+        BattleData.battleModeStageIndex = normalized;
+        SaveBattleConfiguration();
     }
 
     public static bool IsBattleModeStageUnlocked(int stageIndex)
@@ -607,7 +607,7 @@ public static class SaveSystem
     public static int GetBattleModeMusicSelectionMask()
     {
         EnsureLoaded();
-        return NormalizeBattleModeMusicSelectionMask(data.battleModeMusicSelectionMask);
+        return NormalizeBattleModeMusicSelectionMask(BattleData.battleModeMusicSelectionMask);
     }
 
     public static void SetBattleModeMusicSelectionMask(int selectionMask)
@@ -615,19 +615,19 @@ public static class SaveSystem
         EnsureLoaded();
 
         int normalized = NormalizeBattleModeMusicSelectionMask(selectionMask);
-        if (data.battleModeMusicSelectionMask == normalized)
+        if (BattleData.battleModeMusicSelectionMask == normalized)
             return;
 
-        data.battleModeMusicSelectionMask = normalized;
-        Save();
+        BattleData.battleModeMusicSelectionMask = normalized;
+        SaveBattleConfiguration();
     }
 
     public static BattleModeHandicapSave GetBattleModeHandicapForStage(int stageIndex)
     {
         EnsureLoaded();
-        EnsureBattleModeHandicapProfiles(data);
+        EnsureBattleModeHandicapProfiles(BattleData);
 
-        BattleModeHandicapSave source = GetBattleModeHandicapProfile(data, stageIndex);
+        BattleModeHandicapSave source = GetBattleModeHandicapProfile(BattleData, stageIndex);
         return CloneBattleModeHandicap(source, GetBattleModeHandicapProfileKind(stageIndex));
     }
 
@@ -646,7 +646,7 @@ public static class SaveSystem
     public static void SetBattleModeHandicapForStage(int stageIndex, BattleModeHandicapSave handicap)
     {
         EnsureLoaded();
-        EnsureBattleModeHandicapProfiles(data);
+        EnsureBattleModeHandicapProfiles(BattleData);
 
         BattleModeHandicapProfileKind kind = GetBattleModeHandicapProfileKind(stageIndex);
         BattleModeHandicapSave normalized = CloneBattleModeHandicap(handicap, kind);
@@ -654,19 +654,19 @@ public static class SaveSystem
         switch (kind)
         {
             case BattleModeHandicapProfileKind.PowerZone:
-                data.battleModeHandicapPowerZone = normalized;
-                data.battleModeHandicapPowerZoneInitialized = true;
+                BattleData.battleModeHandicapPowerZone = normalized;
+                BattleData.battleModeHandicapPowerZoneInitialized = true;
                 break;
             case BattleModeHandicapProfileKind.Stage6:
-                data.battleModeHandicapStage6 = normalized;
-                data.battleModeHandicapStage6Initialized = true;
+                BattleData.battleModeHandicapStage6 = normalized;
+                BattleData.battleModeHandicapStage6Initialized = true;
                 break;
             default:
-                data.battleModeHandicapGeneric = normalized;
+                BattleData.battleModeHandicapGeneric = normalized;
                 break;
         }
 
-        Save();
+        SaveBattleConfiguration();
     }
 
     private static void NormalizeBattleModeRandomEggRange(int[] amounts)
@@ -1451,13 +1451,13 @@ public static class SaveSystem
     public static int[] GetBattleModeItemAmounts(IReadOnlyList<int> fallbackAmounts)
     {
         EnsureLoaded();
-        EnsureBattleModeItemAmounts(data, fallbackAmounts);
+        EnsureBattleModeItemAmounts(BattleData, fallbackAmounts);
 
         int itemCount = GameManager.BattleModeHiddenDropEntries.Length;
         int[] result = new int[itemCount];
 
         for (int i = 0; i < itemCount; i++)
-            result[i] = Mathf.Clamp(data.battleModeItemAmounts[i], 0, 99);
+            result[i] = Mathf.Clamp(BattleData.battleModeItemAmounts[i], 0, 99);
 
         NormalizeBattleModeRandomEggRange(result);
         return result;
@@ -1466,7 +1466,7 @@ public static class SaveSystem
     public static void SetBattleModeItemAmounts(IReadOnlyList<int> amounts)
     {
         EnsureLoaded();
-        EnsureBattleModeItemAmounts(data, GameManager.GetDefaultBattleModeHiddenItemAmounts());
+        EnsureBattleModeItemAmounts(BattleData, GameManager.GetDefaultBattleModeHiddenItemAmounts());
 
         int itemCount = GameManager.BattleModeHiddenDropEntries.Length;
         bool changed = false;
@@ -1475,25 +1475,25 @@ public static class SaveSystem
         {
             int value = amounts != null && i < amounts.Count
                 ? amounts[i]
-                : data.battleModeItemAmounts[i];
+                : BattleData.battleModeItemAmounts[i];
 
             value = Mathf.Clamp(value, 0, 99);
 
-            if (data.battleModeItemAmounts[i] == value)
+            if (BattleData.battleModeItemAmounts[i] == value)
                 continue;
 
-            data.battleModeItemAmounts[i] = value;
+            BattleData.battleModeItemAmounts[i] = value;
             changed = true;
         }
 
         int[] beforeNormalize = new int[itemCount];
-        Array.Copy(data.battleModeItemAmounts, beforeNormalize, itemCount);
+        Array.Copy(BattleData.battleModeItemAmounts, beforeNormalize, itemCount);
 
-        NormalizeBattleModeRandomEggRange(data.battleModeItemAmounts);
+        NormalizeBattleModeRandomEggRange(BattleData.battleModeItemAmounts);
 
         for (int i = 0; i < itemCount; i++)
         {
-            if (beforeNormalize[i] != data.battleModeItemAmounts[i])
+            if (beforeNormalize[i] != BattleData.battleModeItemAmounts[i])
             {
                 changed = true;
                 break;
@@ -1501,7 +1501,7 @@ public static class SaveSystem
         }
 
         if (changed)
-            Save();
+            SaveBattleConfiguration();
     }
 
     private static NormalGameDifficulty NormalizeNormalGameDifficulty(int difficulty)
@@ -1515,12 +1515,12 @@ public static class SaveSystem
     public static int[] GetBattleModeLouieAmounts(IReadOnlyList<int> fallbackAmounts)
     {
         EnsureLoaded();
-        EnsureBattleModeLouieAmounts(data, fallbackAmounts);
+        EnsureBattleModeLouieAmounts(BattleData, fallbackAmounts);
 
         int count = GameManager.BattleModeRandomEggMountTypes.Length;
         int[] result = new int[count];
         for (int i = 0; i < count; i++)
-            result[i] = Mathf.Clamp(data.battleModeLouieAmounts[i], 0, 99);
+            result[i] = Mathf.Clamp(BattleData.battleModeLouieAmounts[i], 0, 99);
 
         return result;
     }
@@ -1528,7 +1528,7 @@ public static class SaveSystem
     public static void SetBattleModeLouieAmounts(IReadOnlyList<int> amounts)
     {
         EnsureLoaded();
-        EnsureBattleModeLouieAmounts(data, GameManager.GetDefaultBattleModeLouieAmounts());
+        EnsureBattleModeLouieAmounts(BattleData, GameManager.GetDefaultBattleModeLouieAmounts());
 
         int count = GameManager.BattleModeRandomEggMountTypes.Length;
         bool changed = false;
@@ -1536,18 +1536,18 @@ public static class SaveSystem
         {
             int value = amounts != null && i < amounts.Count
                 ? amounts[i]
-                : data.battleModeLouieAmounts[i];
+                : BattleData.battleModeLouieAmounts[i];
 
             value = Mathf.Clamp(value, 0, 99);
-            if (data.battleModeLouieAmounts[i] == value)
+            if (BattleData.battleModeLouieAmounts[i] == value)
                 continue;
 
-            data.battleModeLouieAmounts[i] = value;
+            BattleData.battleModeLouieAmounts[i] = value;
             changed = true;
         }
 
         if (changed)
-            Save();
+            SaveBattleConfiguration();
     }
 
     private enum BattleModeHandicapProfileKind

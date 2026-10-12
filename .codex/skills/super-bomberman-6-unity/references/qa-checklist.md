@@ -6,6 +6,7 @@ change; do not imply that unchecked combinations were covered.
 ## Contents
 
 - [Automated baseline](#automated-baseline)
+- [Online](#online-checks)
 - [Core gameplay](#core-gameplay-checks)
 - [Items and abilities](#item-and-ability-checks)
 - [Bombs and explosions](#bomb-and-explosion-checks)
@@ -26,6 +27,18 @@ change; do not imply that unchecked combinations were covered.
   covered without scene authoring.
 - Do not claim that tests, compilation, a build, or a scene passed unless it
   was actually run.
+
+## Online checks
+
+Use [the online validation reference](../../super-bomberman-6-online/references/validation.md)
+for two-peer menu, skin, pause, authority and repeated-round checks.
+Rebuild the client before testing runtime changes. Include an early second-round
+elimination without another death and a completed match returning to Stage
+Select. Do not equate a test definition or C# build with verified multiplayer.
+
+For runtime/content changes, run available compilation required by AGENTS,
+resolve introduced warnings/errors and report Unity checks blocked by an open
+Editor. Verify the MCP Editor project root before invoking tools.
 
 ## Core gameplay checks
 

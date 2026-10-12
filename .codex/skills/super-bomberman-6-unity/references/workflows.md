@@ -84,10 +84,20 @@
    aligned with restart, death, pause exit, Game Over, and stage completion.
 5. Validate three slots, fresh and legacy data, reset/delete boundaries,
    Normal/Hard/Hardcore behavior, Boss Rush isolation, and Battle Mode arrays.
-6. Do not route audio volume or voice settings through the JSON save:
+6. Online Battle settings use a temporary SaveSystem copy and snapshot
+   whitelist. Use BattleConfigurationData/the existing Battle getters and
+   setters; do not persist the room's data to a client's offline save. See
+   [the online skill](../../super-bomberman-6-online/SKILL.md) for selection/cache
+   and authority rules.
+7. Do not route audio volume or voice settings through the JSON save:
    `GameAudioSettings` intentionally persists them in `PlayerPrefs`.
 
 ## Add or change menus, localization, audio, or input
+
+For online Battle, trace host controls and client observation separately.
+Clients need native panel visibility, cursor frames, SFX, blink and fades,
+not merely the host's selected value. Confirm room EventSystem cleanup and
+host-only pause. Follow the online skill when those paths are affected.
 
 1. Keep scene-local controllers near `TitleScreen/`, `SaveFileMenu/`,
    `BattleModeMenu/`, `Achievements/`, `Skin/`, `Controls/`, `Pause/`, or the

@@ -1,6 +1,6 @@
 ---
 name: super-bomberman-6-unity
-description: Use for implementation, debugging, reviews, and refactors in the Super Bomberman 6 Unity repository, including Normal Game, Boss Rush, Battle Mode and COM AI, stages and bosses, items and abilities, bombs, mounts, characters and skins, HUD and menus, saves and unlocks, achievements, localization, audio, input, mobile, and Unity scene, prefab, tilemap, Resources, and generated-asset integration.
+description: Implement, debug, review, or refactor Super Bomberman 6 Unity gameplay and content, including Normal Game, Boss Rush, offline and Mirror online Battle Mode, COM, menus, saves, characters, URP pixel-perfect rendering, scenes and prefabs. Use for changes in this repository; consult the online companion for network authority and multiplayer flow.
 ---
 
 # Super Bomberman 6 Unity
@@ -11,6 +11,9 @@ prefab, Resources, save, and player-count integration.
 
 ## Establish the live baseline
 
+- Confirm the active checkout/branch and the Editor project root. A source repo,
+  fork PR and open Unity Editor may point to different worktrees. Preserve dirty
+  user files and avoid assuming this session's online changes are committed.
 - Read `ProjectSettings/ProjectVersion.txt` instead of relying on a remembered
   Unity version.
 - Read `ProjectSettings/EditorBuildSettings.asset` for the enabled scene list
@@ -21,6 +24,11 @@ prefab, Resources, save, and player-count integration.
 
 ## Route to the right reference
 
+- Read [references/current-baseline.md](references/current-baseline.md) for the
+  current rendering, online integration, persistence and validation boundaries.
+- For Mirror/network gameplay or online menu/round/pause changes, use
+  [super-bomberman-6-online](../super-bomberman-6-online/SKILL.md). Keep its
+  authority/presentation guidance separate from offline-only work.
 - Read `references/project-map.md` to find the current owner and neighboring
   systems.
 - Read `references/workflows.md` for items, abilities, bombs, mounts, bosses,
@@ -63,6 +71,9 @@ prefab, Resources, save, and player-count integration.
   `*AutoLoader` or `*Bootstrap` components before adding a persistent service.
 - Preserve keyboard, Gamepad/Joystick/HID, synthetic COM/AI, and mobile input
   paths when action routing changes.
+- Shared Battle changes must account for Offline, host, owner client, remote
+  client and server-controlled COM. Do not apply a server-only gate to current
+  owner movement/animation without checking prediction and replication direction.
 - Add sensible defaults and normalization for new persisted fields or arrays;
   test both fresh and existing save shapes.
 
@@ -72,5 +83,12 @@ prefab, Resources, save, and player-count integration.
   changing covered COM, danger, diagnostic, or synthetic-input behavior.
 - Do not claim that tests, compilation, or a Unity scene passed unless they were
   actually run.
-- Do not trigger Unity builds or script compilation unless the user explicitly
-  asks. Prefer targeted manual validation in the affected scene or mode.
+- For C# or Unity-content edits, run available C# and Unity compilation checks
+  required by `AGENTS.md`, resolve introduced errors/warnings, and report checks
+  blocked by the open Editor or unavailable tools. Prefer targeted runtime tests
+  in the touched mode; documentation-only updates do not require compilation.
+- Inspect `Assets/Tests/EditMode/Editor/OnlineRoomEditModeTests.cs` for room,
+  menu, skin, pause and repeated-round regressions when touching online.
+- Keep UTF-8/newline integrity and `.meta` pairs. Check changed C# bytes for
+  corrupted/duplicate BOMs or replacement characters and remove obsolete private
+  fields with their serialized scene/prefab settings, as required by `AGENTS.md`.

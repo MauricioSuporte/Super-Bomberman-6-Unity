@@ -1,7 +1,7 @@
 interface:
   display_name: "Super Bomberman 6 Unity"
-  short_description: "Unity skill for Bomberman gameplay integration."
-  default_prompt: "Use $super-bomberman-6-unity to implement or fix a feature in this Unity repository while keeping scene, prefab, save, and gameplay wiring consistent."
+  short_description: "Gameplay, URP e integração offline/online do jogo."
+  default_prompt: "Use $super-bomberman-6-unity to implement or fix a feature in this Unity repository while keeping current URP, scenes, prefabs, saves and offline/online gameplay boundaries consistent."
 
 policy:
   allow_implicit_invocation: true

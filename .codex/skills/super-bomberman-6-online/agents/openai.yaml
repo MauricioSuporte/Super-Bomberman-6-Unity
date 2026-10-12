@@ -1,0 +1,6 @@
+interface:
+  display_name: "Super Bomberman 6 Online"
+  short_description: "Mirror online: lobby, partida e sincronização."
+  default_prompt: "Use $super-bomberman-6-online para ajustar o online deste jogo, preservando autoridade, slots P1-P6, configuração da sala e fluxo offline."
+policy:
+  allow_implicit_invocation: true
