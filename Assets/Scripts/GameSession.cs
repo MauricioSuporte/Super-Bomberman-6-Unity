@@ -248,6 +248,16 @@ public sealed class GameSession : MonoBehaviour
         battleMatchWins[playerId - 1] = Mathf.Clamp(battleMatchWins[playerId - 1] + 1, 0, 9);
     }
 
+    // F5a — usado pelo cliente para aplicar o placar replicado pelo host.
+    public void SetBattleMatchWins(int playerId, int count)
+    {
+        if (playerId < MinPlayerId || playerId > MaxPlayerId)
+            return;
+
+        EnsureBattleMatchStorage();
+        battleMatchWins[playerId - 1] = Mathf.Clamp(count, 0, 9);
+    }
+
     public int GetBattleMatchWins(int playerId)
     {
         if (!IsValidPlayerId(playerId))

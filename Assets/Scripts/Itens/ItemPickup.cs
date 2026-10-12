@@ -392,6 +392,8 @@ public class ItemPickup : MonoBehaviour
 
         if (playDestroyAnim)
             DestroyWithAnimation();
+        else if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
         else
             Destroy(gameObject);
     }
@@ -667,6 +669,11 @@ public class ItemPickup : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        // Online: host-authoritative. Only the host resolves item pickup/hit;
+        // the client just renders the replicated item.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (isBeingDestroyed || other == null)
             return;
 

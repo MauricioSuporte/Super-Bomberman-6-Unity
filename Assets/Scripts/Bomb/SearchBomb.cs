@@ -73,6 +73,9 @@ public sealed class SearchBomb : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return;
+
         if (GamePauseController.IsPaused || bomb.HasExploded)
             return;
         var owner = bomb.Owner;

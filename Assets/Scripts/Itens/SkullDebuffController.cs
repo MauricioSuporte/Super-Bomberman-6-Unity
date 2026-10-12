@@ -38,6 +38,11 @@ public sealed class SkullDebuffController : MonoBehaviour
         activeEffect == SkullDebuffType.FastSpeed &&
         GetRemainingDuration() > 0.01f;
 
+    // F4 (multiplayer) — o host consulta isto para replicar o VISUAL do skull.
+    public bool HasActiveEffect =>
+        hasActiveEffect &&
+        GetRemainingDuration() > 0.01f;
+
     public void ApplyRandom(float durationSeconds = DefaultDurationSeconds)
     {
         CacheReferences();

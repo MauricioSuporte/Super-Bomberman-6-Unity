@@ -43,6 +43,19 @@ sysinfo.txt
 *.db
 *.diff
 
+# IDE / editor
+.vscode/
+*.slnx
+
+# Mirror import artifact
+MirrorExamplesPipelineConverted.txt
+
+# Standalone player builds (não commitar; idealmente buildar fora do repo)
+/UnityPlayer.so
+/*.x86_64
+/*_Data/
+/*_BurstDebugInformation_DoNotShip/
+/libdecor-*.so*
 # Windows build measurements and distribution archives
 /output/WindowsMeasurements/
 /output/WindowsBuildReports/

@@ -1,0 +1,3 @@
+# Pacote Mirror embutido (terceiros): colapsa no diff do GitHub e não conta
+# nas estatísticas de linguagem — o código do multiplayer é o de Assets/Scripts/Netcode.
+Packages/com.mirrornetworking.mirror/** linguist-vendored linguist-generated -diff

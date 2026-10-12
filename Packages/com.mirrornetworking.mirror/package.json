@@ -1,0 +1,26 @@
+{
+  "name": "com.mirrornetworking.mirror",
+  "version": "96.6.4",
+  "displayName": "Mirror",
+  "unity": "2021.3",
+  "scripts": {
+    "postInstall": "Editor.PostInstallScript.Execute"
+  },
+  "documentationUrl": "https://github.com/MirrorNetworking/Mirror/blob/master/README.md",
+  "changelogUrl": "https://github.com/MirrorNetworking/Mirror/releases/tag/v96.6.4",
+  "licensesUrl": "https://github.com/MirrorNetworking/Mirror/blob/master/LICENSE",
+  "keywords": [
+    "mirror"
+  ],
+  "dependencies": {},
+  "samples": [],
+  "author": {
+    "name": "Chaoyang",
+    "email": "960208781@qq.com",
+    "url": "https://github.com/960208781/UnityMirror.git"
+  },
+  "publishConfig": {
+    "registry": "https://package.openupm.com"
+  },
+  "_fingerprint": "ebf5d41bb3b04d40bac181900c5a2dfeeb2f12c7"
+}

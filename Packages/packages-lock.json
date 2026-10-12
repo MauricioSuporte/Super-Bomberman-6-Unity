@@ -17,6 +17,12 @@
       },
       "hash": "aa5fc638d623f56178d50329d9ad8c541a57fe66"
     },
+    "com.mirrornetworking.mirror": {
+      "version": "file:com.mirrornetworking.mirror",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.2d.animation": {
       "version": "16.0.0",
       "depth": 0,

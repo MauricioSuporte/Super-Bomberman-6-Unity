@@ -167,6 +167,42 @@ public class PlayerMountCompanion : MonoBehaviour
     public void RestoreMountedTank() => RestoreMounted(MountedType.Tank);
 
     public MountedType GetMountedLouieType() => currentLouie == null ? MountedType.None : mountedType;
+
+    // F6 — mostra/esconde o Louie no CLIENTE (SÓ visual), a partir do tipo replicado
+    // pelo NetworkPlayerState. O gameplay (montar/habilidades/dano) é host-autoritativo,
+    // e o sprite "montado" do player já replica via NetworkPlayerAnimation; aqui só
+    // anexamos o objeto do Louie ao player (sem FinalizeMount/ApplyRules).
+    public void ShowMountVisualClient(MountedType type)
+    {
+        if (mountedType == type && currentLouie != null)
+            return;
+
+        HideMountVisualClient();
+
+        if (type == MountedType.None || movement == null)
+            return;
+
+        var prefab = GetPrefab(type);
+        if (prefab == null)
+            return;
+
+        mountedType = type;
+        currentLouie = Instantiate(prefab, transform);
+        EnsureWorld3WaterSubmersionEffect(currentLouie, type);
+        SetupLouieAsChildMounted(currentLouie);
+        DisableLouieComponentsForMount(currentLouie);
+        SetMountedLouieVisible(true);
+    }
+
+    public void HideMountVisualClient()
+    {
+        if (currentLouie != null)
+        {
+            Destroy(currentLouie);
+            currentLouie = null;
+        }
+        mountedType = MountedType.None;
+    }
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
     public bool HasMountedLouie() => currentLouie != null;
     public GameObject GetMountedLouieObject() => currentLouie;
