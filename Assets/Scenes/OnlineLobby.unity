@@ -131,6 +131,8 @@ GameObject:
   - component: {fileID: 1121810759}
   - component: {fileID: 1121810758}
   - component: {fileID: 1121810761}
+  - component: {fileID: 1121810762}
+  - component: {fileID: 1121810763}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -282,6 +284,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.OnlineLobbyMenu
   battleSceneName: BattleMode_1
   address: localhost
+--- !u!114 &1121810762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121810756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac0c6d46c8644f2998668a6d851306af, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.OnlineRoomDiscovery
+  enableActiveDiscovery: 1
+  BroadcastAddress:
+  serverBroadcastListenPort: 47776
+  ActiveDiscoveryInterval: 3
+  transport: {fileID: 1121810758}
+  OnServerFound:
+    m_PersistentCalls:
+      m_Calls: []
+  secretHandshake: 5999417380756737281
+--- !u!114 &1121810763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121810756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bccc92b983d4ee5bea466a5b02ffa9a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.OnlineRoomBrowser
 --- !u!1 &1263999823
 GameObject:
   m_ObjectHideFlags: 0
@@ -292,6 +327,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1263999825}
   - component: {fileID: 1263999824}
+  - component: {fileID: 1263999826}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -350,6 +386,14 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!81 &1263999826
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1263999823}
+  m_Enabled: 1
 --- !u!4 &1263999825
 Transform:
   m_ObjectHideFlags: 0

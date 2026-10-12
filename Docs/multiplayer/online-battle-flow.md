@@ -48,8 +48,11 @@ Personagens e skins são aplicados por slot antes do spawn e replicados no
 estado do jogador, sem depender dos desbloqueios locais de quem os observa.
 
 `OnlineRoomMode` identifica Battle Mode, Normal Game e Boss Rush, mas apenas
-Battle Mode está disponível neste fluxo. Descoberta pública de salas, relay,
-reconexão e migração de host continuam fora desta entrega.
+Battle Mode está disponível neste fluxo. O lobby agora descobre salas LAN automaticamente e permite entrar por seleção.
+Salas públicas usam o catálogo próprio em `Tools/RoomDirectory`, após hospedagem
+e configuração de `Assets/Resources/OnlineRoomDirectory.json`. O catálogo não
+é relay; hosts públicos precisam de porta UDP acessível. Relay, reconexão e
+migração de host continuam fora desta entrega.
 
 ## Teste manual
 
@@ -73,3 +76,11 @@ isolamento das configurações offline, conteúdo do snapshot e entrada/saída
 do host no lobby, aplicação de skins por slot e reprodução dos painéis e uma morte durante a proteção de spawn em dois rounds consecutivos. Eles não substituem o teste entre duas máquinas.
 
 Validação em 2026-10-12, no repositório original após o merge em `v0.5.0`: Unity compilou e os nove `OnlineRoomEditModeTests` passaram, sem falhas ou testes ignorados. Isto não substitui a validação manual entre host e cliente em todas as arenas.
+
+Validação da descoberta em 2026-10-12: compilação C# runtime/Editor e Unity
+sem novos erros/avisos do projeto; dez OnlineRoomEditModeTests aprovados,
+incluindo resposta UDP do host LAN. Quatro testes do catálogo Python aprovados.
+No Editor, consulta ao catálogo local, publicação e remoção ao sair foram
+verificadas com o serviço real em loopback. A hospedagem pública e conexão
+entre duas redes/máquinas ainda não foram validadas. Veja
+`Tools/RoomDirectory/README.md` para configuração e teste.

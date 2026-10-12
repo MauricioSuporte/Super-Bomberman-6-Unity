@@ -20,11 +20,34 @@ namespace Assets.Scripts.Netcode
         TMP_InputField addressInput;
         GameObject roomEventSystem;
         Button hostButton, joinButton, configureButton, leaveButton;
+        OnlineRoomBrowser browser;
+        GameObject browserRoot;
+        TextMeshProUGUI browserStatus, pageLabel;
+        TextMeshProUGUI directJoinLabel;
+        Button refreshButton, publicButton, previousButton, nextButton;
+        readonly Button[] roomButtons = new Button[4];
+        readonly OnlineListedRoom[] visibleRooms = new OnlineListedRoom[4];
+        int page;
+        bool roomSceneTransition;
+
+        void OnEnable() => SceneManager.sceneLoaded += OnRoomSceneLoaded;
+
+        void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnRoomSceneLoaded;
+            ReleaseRoomEventSystem();
+        }
+
+        void OnRoomSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name == NetworkLobby.SceneName) roomSceneTransition = false;
+        }
 
         void Start()
         {
             var manager = NetworkManager.singleton;
             if (manager == null) return;
+            browser = GetComponent<OnlineRoomBrowser>();
             if (HasArg("-server")) { manager.StartServer(); return; }
             if (HasArg("-autohost"))
             {
@@ -41,7 +64,7 @@ namespace Assets.Scripts.Netcode
         void Update()
         {
             if (canvasRoot == null) return;
-            bool lobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
+            bool lobby = !roomSceneTransition && SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
             if (lobby) EnsureRoomEventSystem();
             canvasRoot.SetActive(lobby);
             if (!canvasRoot.activeSelf) return;
@@ -75,9 +98,12 @@ namespace Assets.Scripts.Netcode
                     lines.AppendLine($"P{id}: {mode}");
                 }
                 lines.AppendLine(BombermanNetworkManager.RoomPlayers.Length < 2 ? text.NeedPlayers : text.Waiting);
+                if (browser.PublishPublic && browser.DirectoryFailed) lines.AppendLine(text.PublicUnavailable);
             }
-            else lines.AppendLine(NetworkClient.active ? text.Connecting : text.Address);
+            else if (NetworkClient.active) lines.AppendLine(text.Connecting);
             details.text = lines.ToString();
+            details.gameObject.SetActive(!idle);
+            UpdateBrowser(idle && lobby);
         }
 
         void CreateRoomCanvas()
@@ -123,20 +149,98 @@ namespace Assets.Scripts.Netcode
             });
             configureButton = MakeButton(panel.transform, "Configure", 0, -280, BombermanNetworkManager.ServerBeginConfiguration);
             leaveButton = MakeButton(panel.transform, "Leave", 0, -390, BombermanNetworkManager.LeaveRoom);
+            CreateBrowser(panel.transform);
             EnsureRoomEventSystem();
+        }
+
+        void CreateBrowser(Transform parent)
+        {
+            browserRoot = new GameObject("RoomBrowser", typeof(RectTransform));
+            browserRoot.transform.SetParent(parent, false);
+            Position(browserRoot.GetComponent<RectTransform>(), 0, 0, 1080, 1040);
+            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 355, 1040, 75, 23);
+            directJoinLabel = Label(browserRoot.transform, "DirectJoin", 0, -135, 1040, 40, 22);
+            for (int i = 0; i < roomButtons.Length; i++)
+            {
+                int index = i;
+                roomButtons[i] = MakeButton(browserRoot.transform, "Room" + i, 0, 265 - i * 85, () => JoinListedRoom(index));
+                Position(roomButtons[i].GetComponent<RectTransform>(), 0, 265 - i * 85, 1000, 70);
+                var label = roomButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+                Position(label.rectTransform, 0, 0, 960, 65);
+                label.fontSize = 22;
+                label.richText = false;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+            }
+            previousButton = MakeButton(browserRoot.transform, "Previous", -405, -80, () => page = Mathf.Max(0, page - 1));
+            nextButton = MakeButton(browserRoot.transform, "Next", 405, -80, () => page++);
+            Position(previousButton.GetComponent<RectTransform>(), -405, -80, 160, 55);
+            Position(nextButton.GetComponent<RectTransform>(), 405, -80, 160, 55);
+            previousButton.GetComponentInChildren<TextMeshProUGUI>().text = "<";
+            nextButton.GetComponentInChildren<TextMeshProUGUI>().text = ">";
+            pageLabel = Label(browserRoot.transform, "Page", 0, -80, 400, 55, 22);
+            refreshButton = MakeButton(browserRoot.transform, "Refresh", -250, -450, () =>
+            {
+                browser.RefreshRequested = true;
+                GetComponent<OnlineRoomDiscovery>().BroadcastDiscoveryRequest();
+            });
+            publicButton = MakeButton(browserRoot.transform, "Public", 250, -450, () => browser.PublishPublic = !browser.PublishPublic);
+            Position(refreshButton.GetComponent<RectTransform>(), -250, -450, 460, 55);
+            Position(publicButton.GetComponent<RectTransform>(), 250, -450, 460, 55);
+        }
+
+        void JoinListedRoom(int index)
+        {
+            var room = visibleRooms[index];
+            if (room == null || NetworkClient.active || NetworkServer.active || !browser.Rooms.Contains(room)) return;
+            if (Uri.TryCreate(room.uri, UriKind.Absolute, out var uri)) NetworkManager.singleton.StartClient(uri);
+        }
+
+        void UpdateBrowser(bool visible)
+        {
+            browserRoot.SetActive(visible);
+            if (!visible || browser == null) return;
+            var text = GameTextDatabase.Online;
+            directJoinLabel.text = text.DirectJoin;
+            int pages = Mathf.Max(1, Mathf.CeilToInt(browser.Rooms.Count / 4f));
+            page = Mathf.Clamp(page, 0, pages - 1);
+            browserStatus.text = text.AvailableRooms + "\n" +
+                (browser.LanFailed ? text.LanUnavailable : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom) + " · " +
+                (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.DirectoryFailed ? text.PublicUnavailable : text.PublicRooms);
+            for (int i = 0; i < roomButtons.Length; i++)
+            {
+                int index = page * 4 + i;
+                visibleRooms[i] = index < browser.Rooms.Count ? browser.Rooms[index] : null;
+                roomButtons[i].gameObject.SetActive(visibleRooms[i] != null);
+                if (visibleRooms[i] == null) continue;
+                var room = visibleRooms[i];
+                roomButtons[i].GetComponentInChildren<TextMeshProUGUI>().text =
+                    $"{(room.local ? text.LocalRooms : text.PublicRooms)} · {room.name} · {room.players}/6 · {text.Join}";
+            }
+            previousButton.interactable = page > 0;
+            nextButton.interactable = page + 1 < pages;
+            pageLabel.text = $"{page + 1} / {pages}";
+            refreshButton.GetComponentInChildren<TextMeshProUGUI>().text = text.RefreshRooms;
+            publicButton.interactable = browser.DirectoryConfigured;
+            publicButton.GetComponentInChildren<TextMeshProUGUI>().text = browser.PublishPublic ? text.CreatePublic : text.CreateLocal;
         }
 
         void EnsureRoomEventSystem()
         {
+            if (roomSceneTransition || SceneManager.GetActiveScene().name != NetworkLobby.SceneName) return;
             if (EventSystem.current != null) return;
+            var existing = FindAnyObjectByType<EventSystem>();
+            if (existing != null && existing.isActiveAndEnabled) return;
             roomEventSystem = new GameObject("OnlineRoomEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-            roomEventSystem.transform.SetParent(transform, false);
+            // Keep input owned by the lobby scene rather than its persistent NetworkManager.
+            SceneManager.MoveGameObjectToScene(roomEventSystem, SceneManager.GetActiveScene());
             roomEventSystem.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
             EventSystem.current.SetSelectedGameObject(hostButton.gameObject);
         }
 
         public void ReleaseRoomEventSystem()
         {
+            roomSceneTransition = true;
+            if (canvasRoot != null) canvasRoot.SetActive(false);
             if (roomEventSystem == null) return;
             roomEventSystem.SetActive(false);
             Destroy(roomEventSystem);

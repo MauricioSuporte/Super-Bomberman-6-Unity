@@ -164,6 +164,53 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [UnityTest]
+    public System.Collections.IEnumerator LobbyAutomaticallyBrowsesAndAdvertisesLanRooms()
+    {
+        yield return new EnterPlayMode();
+        yield return SceneManager.LoadSceneAsync(NetworkLobby.SceneName);
+        yield return null;
+        var manager = Object.FindAnyObjectByType<BombermanNetworkManager>();
+        var browser = manager.GetComponent<OnlineRoomBrowser>();
+        var discovery = manager.GetComponent<OnlineRoomDiscovery>();
+        Assert.IsNotNull(browser);
+        Assert.IsNotNull(discovery);
+        Assert.IsNotNull(GameObject.Find("OnlineRoomCanvas/SafeFrame/RoomPanel/RoomBrowser"));
+        Assert.IsFalse(browser.PublishPublic);
+        if (manager.transport is kcp2k.KcpTransport transport) transport.Port = 0;
+        manager.StartHost();
+        yield return null;
+        using (var socket = new System.Net.Sockets.UdpClient(0))
+        {
+            byte[] packet;
+            using (var writer = NetworkWriterPool.Get())
+            {
+                writer.WriteLong(discovery.secretHandshake);
+                writer.Write(new OnlineDiscoveryRequest());
+                packet = writer.ToArray();
+            }
+            socket.Send(packet, packet.Length, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 47776));
+            var responseTask = socket.ReceiveAsync();
+            float deadline = Time.realtimeSinceStartup + 3f;
+            while (!responseTask.IsCompleted && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.IsTrue(responseTask.IsCompleted, "LAN host must respond to discovery without manually entering its gameplay IP.");
+            using (var reader = NetworkReaderPool.Get(responseTask.Result.Buffer))
+            {
+                Assert.AreEqual(discovery.secretHandshake, reader.ReadLong());
+                var room = reader.Read<OnlineDiscoveryResponse>();
+                Assert.IsTrue(room.available);
+                Assert.AreEqual(1, room.players);
+                Assert.AreEqual("kcp", room.uri.Scheme);
+            }
+        }
+        Assert.IsTrue(OnlineRoomDiscovery.AcceptingPlayers);
+        BombermanNetworkManager.ServerStartMatch("BattleMode_1");
+        Assert.IsFalse(OnlineRoomDiscovery.AcceptingPlayers);
+        BombermanNetworkManager.LeaveRoom();
+        yield return null;
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
     public System.Collections.IEnumerator LobbyCanHostAndReturnToTitle()
     {
         yield return new EnterPlayMode();
@@ -172,6 +219,8 @@ public sealed class OnlineRoomEditModeTests
         var manager = Object.FindAnyObjectByType<BombermanNetworkManager>();
         Assert.IsNotNull(manager);
         Assert.IsNotNull(manager.GetComponent<OnlineLobbyMenu>());
+        Assert.AreEqual(1, Object.FindObjectsByType<AudioListener>().Length);
+        Assert.AreEqual(1, Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>().Length);
         if (manager.transport is kcp2k.KcpTransport transport) transport.Port = 0;
         manager.StartHost();
         float timeout = Time.realtimeSinceStartup + 3f;
@@ -181,6 +230,26 @@ public sealed class OnlineRoomEditModeTests
             $"playing={Application.isPlaying}, client={NetworkClient.isConnected}, ready={NetworkClient.ready}, connections={NetworkServer.connections.Count}, room={string.Join(",", BombermanNetworkManager.RoomPlayers)}");
         CollectionAssert.AreEqual(new[] { 1 }, BombermanNetworkManager.RoomPlayers);
         Assert.IsTrue(SaveSystem.HasOnlineBattleSettings);
+        // Mirror releases lobby input before the asynchronous scene load starts.
+        // Updating the still-active lobby must not recreate that EventSystem.
+        manager.GetComponent<OnlineLobbyMenu>().ReleaseRoomEventSystem();
+        yield return null;
+        yield return null;
+        Assert.AreEqual(0, Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>().Length);
+        manager.ServerChangeScene("BattleModeMenu");
+        timeout = Time.realtimeSinceStartup + 8f;
+        while (NetworkServer.isLoadingScene && Time.realtimeSinceStartup < timeout) yield return null;
+        yield return null;
+        Assert.AreEqual("BattleModeMenu", SceneManager.GetActiveScene().name);
+        Assert.AreEqual(1, Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>().Length);
+        Assert.AreEqual(1, Object.FindObjectsByType<AudioListener>().Length);
+        BombermanNetworkManager.ServerReturnToLobby();
+        timeout = Time.realtimeSinceStartup + 8f;
+        while (NetworkServer.isLoadingScene && Time.realtimeSinceStartup < timeout) yield return null;
+        yield return null;
+        Assert.AreEqual(NetworkLobby.SceneName, SceneManager.GetActiveScene().name);
+        Assert.AreEqual(1, Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>().Length);
+        Assert.AreEqual(1, Object.FindObjectsByType<AudioListener>().Length);
         BombermanNetworkManager.LeaveRoom();
         yield return null;
         Assert.AreEqual("TitleScreen", SceneManager.GetActiveScene().name);

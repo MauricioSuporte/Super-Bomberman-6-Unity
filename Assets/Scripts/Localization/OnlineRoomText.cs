@@ -19,6 +19,26 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
+    public string AvailableRooms => LanguageText("AVAILABLE ROOMS", "参加できるルーム", "SALAS DISPONIBLES", "SALAS DISPONÍVEIS");
+    public string NoRooms => LanguageText("SEARCHING · NO ROOMS FOUND", "検索中 · ルームが見つかりません", "BUSCANDO · NO HAY SALAS", "BUSCANDO · NENHUMA SALA ENCONTRADA");
+    public string SelectRoom => LanguageText("SELECT A ROOM TO JOIN", "ルームを選んで参加", "ELIGE UNA SALA PARA ENTRAR", "SELECIONE UMA SALA PARA ENTRAR");
+    public string LocalRooms => LanguageText("LAN", "LAN", "LAN", "LAN");
+    public string PublicRooms => LanguageText("PUBLIC", "公開", "PÚBLICA", "PÚBLICA");
+    public string RefreshRooms => LanguageText("REFRESH ROOMS", "ルームを更新", "ACTUALIZAR SALAS", "ATUALIZAR SALAS");
+    public string CreatePublic => LanguageText("VISIBILITY: PUBLIC", "公開範囲: 公開", "VISIBILIDAD: PÚBLICA", "VISIBILIDADE: PÚBLICA");
+    public string CreateLocal => LanguageText("VISIBILITY: LAN", "公開範囲: LAN", "VISIBILIDAD: LAN", "VISIBILIDADE: LAN");
+    public string PublicNotConfigured => LanguageText("PUBLIC DIRECTORY NOT CONFIGURED", "公開リスト未設定", "LISTA PÚBLICA SIN CONFIGURAR", "LISTA PÚBLICA NÃO CONFIGURADA");
+    public string PublicUnavailable => LanguageText("PUBLIC DIRECTORY UNAVAILABLE", "公開リストに接続できません", "LISTA PÚBLICA NO DISPONIBLE", "LISTA PÚBLICA INDISPONÍVEL");
+    public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
+    public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
+
+    static string LanguageText(string en, string ja, string es, string pt) => SaveSystem.GetLanguage() switch
+    {
+        GameLanguage.Japanese => ja,
+        GameLanguage.Spanish => es,
+        GameLanguage.PortugueseBr => pt,
+        _ => en
+    };
     public OnlineRoomText(string online, string offline, string room, string battleMode, string host,
         string join, string address, string leave, string configure, string connecting, string waiting,
         string you, string empty, string hostConfiguring, string choosing, string confirmed,
