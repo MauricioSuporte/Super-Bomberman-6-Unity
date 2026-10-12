@@ -233,7 +233,7 @@ public sealed class QueenOyobeeController : MonoBehaviour
         if (boss.shadow != null && shadowSprite != null)
         {
             boss.shadow.transform.position = boss.GroundPosition;
-            boss.shadow.enabled = boss.CombatActive && boss.body.enabled;
+            boss.shadow.enabled = boss.body.enabled;
         }
         if (scepter != null) scepter.enabled = boss.CombatActive && boss.body.enabled;
         if (wornCrown != null) wornCrown.gameObject.SetActive(boss.body.enabled);

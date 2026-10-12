@@ -148,7 +148,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         Sprite[] currentIdle = queen != null && queen.Active ? queen.CurrentIdleFrames : idleFrames;
         if (!attacking && hurtTime > 0f) SetFrame(currentHurt, (int)(animationTime * 8f) % Mathf.Max(1, currentHurt.Length));
         else if (!attacking || (queen != null && queen.Active)) SetFrame(currentIdle, (int)(animationTime * 5f) % Mathf.Max(1, currentIdle.Length));
-        if (attacking || hurtTime > 0f) return;
+        if (attacking) return;
         if (TryChasePlayerAbove() || moving) return;
         if (FindTarget(transform.position) != null)
             StartCoroutine(AttackRoutine());
@@ -164,7 +164,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
             floatOffset = queen.FloatOffset;
             SetWorldPosition(logicalGroundPosition + Vector3.up * (1.75f + floatOffset));
         }
-        if (attacking || !moving || hurtTime > 0f) return;
+        if (attacking || !moving) return;
         // Fly diagonally until one axis reaches its destination, then finish cardinally.
         // Floor obstacles and bombs only constrain grounded projectiles, not the boss.
         Vector3 delta = movementDestination - logicalGroundPosition;
@@ -548,9 +548,10 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         float deathElapsed = 0f;
         float blinkPhase = 0f;
         body.enabled = true;
+        if (queen != null && queen.Active) queen.SyncVisibility();
         for (int i = 0; i < bursts; i++)
         {
-            if (shadow != null) shadow.enabled = false;
+            if (shadow != null && (queen == null || !queen.Active)) shadow.enabled = false;
             if (explosionPrefab != null)
                 lastEffectDuration = SpawnDeathExplosion();
             if (i % 3 == 0 && audioSource != null && deathSfx != null)
