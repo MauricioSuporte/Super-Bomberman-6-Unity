@@ -881,10 +881,13 @@ public class SaveFileMenu : MonoBehaviour
             NormalGameDifficulty.Hardcore => text.HardcoreHint,
             _ => text.NormalHint
         };
-        disabledMessageRect.sizeDelta = new Vector2(-24f * _currentUiScale, disabledOptionText.fontSize * 2.4f);
-        disabledOptionText.enableAutoSizing = true;
-        disabledOptionText.fontSizeMin = 8f;
-        disabledOptionText.fontSizeMax = disabledOptionText.fontSize;
+        ApplyDisabledMessageVisualStyle(difficultyHint: true);
+        disabledMessageRect.anchorMin = disabledMessageRect.anchorMax = new Vector2(0.5f, 0f);
+        Vector2 preferred = disabledOptionText.GetPreferredValues(disabledOptionText.text);
+        disabledMessageRect.sizeDelta = new Vector2(
+            preferred.x + 16f * _currentUiScale, disabledOptionText.fontSize * 2.8f);
+        disabledOptionText.alignment = TextAlignmentOptions.Left;
+        disabledOptionText.margin = new Vector4(8f * _currentUiScale, 0f, 8f * _currentUiScale, 0f);
         disabledOptionText.gameObject.SetActive(true);
     }
 
@@ -1241,6 +1244,7 @@ public class SaveFileMenu : MonoBehaviour
             leftPanel.SetUiScale(_currentUiScale);
 
         ApplyDisabledMessageVisualStyle();
+        UpdateDifficultyHint();
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)
@@ -1351,7 +1355,9 @@ public class SaveFileMenu : MonoBehaviour
             disabledOptionText.gameObject.SetActive(false);
     }
 
-    private void ApplyDisabledMessageVisualStyle()
+    private static readonly Color DifficultyHintColor = new Color32(232, 194, 104, 255);
+
+    private void ApplyDisabledMessageVisualStyle(bool difficultyHint = false)
     {
         if (disabledOptionText == null)
             return;
@@ -1364,18 +1370,20 @@ public class SaveFileMenu : MonoBehaviour
         disabledOptionText.textWrappingMode = TextWrappingModes.NoWrap;
         disabledOptionText.overflowMode = TextOverflowModes.Overflow;
         disabledOptionText.extraPadding = true;
-        disabledOptionText.fontSize = Mathf.Clamp(Mathf.RoundToInt(disabledMessageFontSize * _currentUiScale), 8, 300);
-        disabledOptionText.color = disabledMessageFaceColor;
+        disabledOptionText.fontSize = difficultyHint
+            ? (leftPanel != null ? leftPanel.ScaledOptionFontSize : disabledMessageFontSize * _currentUiScale) * 0.75f
+            : Mathf.Clamp(Mathf.RoundToInt(disabledMessageFontSize * _currentUiScale), 8, 300);
+        disabledOptionText.color = difficultyHint ? DifficultyHintColor : disabledMessageFaceColor;
         disabledOptionText.margin = Vector4.zero;
         disabledOptionText.raycastTarget = false;
 
-        if (forceDisabledMessageBold)
+        if (difficultyHint || forceDisabledMessageBold)
             disabledOptionText.fontStyle |= FontStyles.Bold;
         else
             disabledOptionText.fontStyle &= ~FontStyles.Bold;
 
         Material runtimeMat = GetOrCreateDisabledMessageRuntimeMaterial();
-        ApplyDisabledMessageMaterialStyle(runtimeMat);
+        ApplyDisabledMessageMaterialStyle(runtimeMat, difficultyHint);
 
         if (runtimeMat != null)
             disabledOptionText.fontMaterial = runtimeMat;
@@ -1410,16 +1418,16 @@ public class SaveFileMenu : MonoBehaviour
         return disabledMessageRuntimeMaterial;
     }
 
-    private void ApplyDisabledMessageMaterialStyle(Material mat)
+    private void ApplyDisabledMessageMaterialStyle(Material mat, bool difficultyHint)
     {
         if (mat == null)
             return;
 
-        TrySetColor(mat, "_FaceColor", disabledMessageFaceColor);
+        TrySetColor(mat, "_FaceColor", difficultyHint ? DifficultyHintColor : disabledMessageFaceColor);
 
-        if (useDisabledMessageOutline)
+        if (difficultyHint || useDisabledMessageOutline)
         {
-            TrySetColor(mat, "_OutlineColor", disabledMessageOutlineColor);
+            TrySetColor(mat, "_OutlineColor", difficultyHint ? Color.black : disabledMessageOutlineColor);
             TrySetFloat(mat, "_OutlineWidth", disabledMessageOutlineWidth);
             TrySetFloat(mat, "_OutlineSoftness", disabledMessageOutlineSoftness);
         }

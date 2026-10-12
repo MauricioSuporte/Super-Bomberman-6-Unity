@@ -3549,6 +3549,10 @@ public class MovementController : MonoBehaviour, IKillable
         if (HasEasyNormalGameRespawn)
         {
             RespawnFromBattleRevenge(normalGameRespawnPosition, 2.5f, 0.1f);
+            var spawner = FindAnyObjectByType<PlayersSpawner>();
+            bool faceUp = StageMechaIntroController.Instance != null ||
+                (spawner != null && spawner.IsBossStage);
+            ForceIdleFacing(faceUp ? Vector2.up : Vector2.down, "EasyNormalGameRespawn");
             return;
         }
 

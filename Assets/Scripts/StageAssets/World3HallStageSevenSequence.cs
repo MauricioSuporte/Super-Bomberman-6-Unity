@@ -316,6 +316,8 @@ namespace StageAssets
                     player.Root.position = completed ? player.FinalPosition : player.Origin;
                 if (player.Movement.Rigidbody != null)
                     player.Movement.Rigidbody.position = completed ? player.FinalPosition : player.Origin;
+                if (completed)
+                    player.Movement.SetNormalGameRespawnPosition(player.FinalPosition);
                 player.Movement.SetExternalMovementOverride(!enableGameplay && player.ExternalOverride);
                 player.Movement.SetInputLocked(!enableGameplay && player.InputLocked, false);
                 player.Movement.ForceIdleUpConsideringMount();

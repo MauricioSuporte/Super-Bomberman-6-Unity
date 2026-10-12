@@ -940,6 +940,8 @@ public class SaveFileMenuOptions : MonoBehaviour
         }
     }
 
+    public float ScaledOptionFontSize => ScaledFont(fontSize);
+
     private int ScaledFont(int baseSize)
     {
         return Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
