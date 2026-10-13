@@ -36,6 +36,11 @@ public class PlayerBomberSkinController : MonoBehaviour
         131, 132, 133, 134, 135, 136, 137, 138,
         139, 140, 141, 142, 143, 144, 145, 146, 147
     };
+    static readonly int[] BookwormAfkFrames = { 128, 129, 130, 131, 132, 154, 155, 156, 157 };
+    static readonly int[] BookwormEndStageFrames =
+    {
+        108, 109, 110, 161, 162, 158, 159, 160
+    };
     static readonly int[] DismountedAfk2Frames = { 19, 20, 65, 66, 89, 90, 42, 43 };
     static readonly int[] BombermanTimeOverFrames = { 98, 97, 96, 95, 94 };
     static readonly int[] TinyBomberTimeOverFrames = { 98, 97, 96, 95, 94 };
@@ -246,10 +251,11 @@ public class PlayerBomberSkinController : MonoBehaviour
             ? new[] { 96, 97, 98, 99 }
             : new[] { 99, 100, 101, 102 };
         ApplyFrameSequence(FindAnimatedRenderer("Stun"), "Stun", stunFrames[0], stunFrames, targetMap, skin, loop: true);
-        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyDown"), "HeadOnlyDown", GetLastFrame(targetMap, 0), targetMap, skin);
-        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyLeft"), "HeadOnlyLeft", GetLastFrame(targetMap, 1), targetMap, skin);
-        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyRight"), "HeadOnlyRight", GetLastFrame(targetMap, 2), targetMap, skin);
-        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyUp"), "HeadOnlyUp", GetLastFrame(targetMap, 3), targetMap, skin);
+        bool isBookworm = BomberSkinResourceCatalog.GetCharacterFolderName(character) == "Bookworm";
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyDown"), "HeadOnlyDown", isBookworm ? 134 : GetLastFrame(targetMap, 0), targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyLeft"), "HeadOnlyLeft", isBookworm ? 135 : GetLastFrame(targetMap, 1), targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyRight"), "HeadOnlyRight", isBookworm ? 136 : GetLastFrame(targetMap, 2), targetMap, skin);
+        ApplySingleFrame(FindAnimatedRenderer("HeadOnlyUp"), "HeadOnlyUp", isBookworm ? 137 : GetLastFrame(targetMap, 3), targetMap, skin);
 
         ApplyDirectionFrames("MountAscend", new[] { 16, 39, 62, 86 }, targetMap, skin);
         ApplyDirectionFrames("MountDescend", new[] { 17, 40, 63, 87 }, targetMap, skin);
@@ -461,6 +467,9 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (folderName == "KamikazeBomber")
             return KamikazeBomberEndStageFrames;
 
+        if (folderName == "Bookworm")
+            return BookwormEndStageFrames;
+
         if (folderName == "MechaBomber")
             return MechaBomberEndStageFrames;
 
@@ -480,6 +489,9 @@ public class PlayerBomberSkinController : MonoBehaviour
 
         if (folderName == "KamikazeBomber")
             return KamikazeBomberAfkFrames;
+
+        if (folderName == "Bookworm")
+            return BookwormAfkFrames;
 
         return character switch
         {
