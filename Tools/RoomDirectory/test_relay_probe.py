@@ -1,9 +1,21 @@
 import unittest
 from unittest.mock import patch
-from relay_probe import EdgegapRelay, RelayError, credentials, session_status
+from relay_probe import EdgegapRelay, RelayError, credentials, session_status, support_snapshot
 
 
 class RelayProbeTests(unittest.TestCase):
+    def test_support_snapshot_removes_all_authorization_values(self):
+        import json
+        data = self.ready()
+        data['error'] = 'private error'
+        snapshot = support_snapshot(data, 'example-S')
+        encoded = json.dumps(snapshot)
+        for secret in ('4000000000', '3000000000', '2000000000', 'private error'):
+            self.assertNotIn(secret, encoded)
+        self.assertEqual('example-S', snapshot['session_id'])
+        self.assertEqual('8.8.8.8', snapshot['session_users'][0]['ip_address'])
+        self.assertIn('captured_at_utc', snapshot)
+
     def test_status_never_returns_authorization_tokens_or_raw_error(self):
         result = self.ready()
         result['error'] = 'private details'

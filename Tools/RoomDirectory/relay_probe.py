@@ -1,5 +1,6 @@
 """Create/delete a private two-peer Edgegap probe; never put the API key in Unity."""
 import argparse
+from datetime import datetime, timezone
 import ipaddress
 import json
 import os
@@ -114,6 +115,27 @@ def check_local_credentials(result, directory):
     return checks
 
 
+def support_snapshot(result, session):
+    """Only export the fields requested by support; authorization values are never copied."""
+    relay = result.get("relay") or {}
+    ports = relay.get("ports") or {}
+    return {
+        "captured_at_utc": datetime.now(timezone.utc).isoformat(),
+        "session_id": session,
+        "status": result.get("status"), "ready": result.get("ready"),
+        "linked": result.get("linked"),
+        "error": None if not result.get("error") else "[ERROR PRESENT: DETAILS OMITTED]",
+        "authorization_token": "[REDACTED]",
+        "session_users": [{"ip_address": user.get("ip_address"),
+                           "authorization_token": "[REDACTED]"}
+                          for user in result.get("session_users", []) if isinstance(user, dict)],
+        "relay": {"ip": relay.get("ip"), "host": relay.get("host"),
+                  "ports": {role: {"port": (ports.get(role) or {}).get("port"),
+                                   "protocol": (ports.get(role) or {}).get("protocol")}
+                            for role in ("server", "client")}},
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -125,9 +147,20 @@ def main():
     delete.add_argument("--session-file", required=True, type=Path)
     status = commands.add_parser("status")
     status.add_argument("--session-file", required=True, type=Path)
+    support = commands.add_parser("support-snapshot")
+    support.add_argument("--session-file", required=True, type=Path)
+    support.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
         api = EdgegapRelay(os.environ.get("EDGEGAP_RELAY_API_TOKEN"))
+        if args.command == "support-snapshot":
+            session = json.loads(args.session_file.read_text(encoding="utf-8-sig"))["session_id"]
+            result = api.request("GET", "/" + quote(session, safe=""))
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            with args.output.open("x", encoding="utf-8", newline="\n") as stream:
+                json.dump(support_snapshot(result, session), stream, indent=2)
+            print("Saved redacted API snapshot. Attach it only to the private support ticket.")
+            return
         if args.command == "status":
             session = json.loads(args.session_file.read_text(encoding="utf-8-sig"))["session_id"]
             result = api.request("GET", "/" + quote(session, safe=""))

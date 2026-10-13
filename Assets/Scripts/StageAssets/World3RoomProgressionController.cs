@@ -402,6 +402,16 @@ namespace StageAssets
             if (core == null || room == null)
                 return false;
 
+            if (core.TryGetComponent<AttachedCoreMechanismsController>(out var attachment) && attachment.host != null)
+            {
+                if (room.enemyRoots != null)
+                    foreach (GameObject root in room.enemyRoots)
+                        if (root != null && attachment.host.transform.IsChildOf(root.transform))
+                            return true;
+
+                return room.roomBounds != null && room.roomBounds.OverlapPoint(attachment.host.transform.position);
+            }
+
             if (room.coreRoots != null && room.coreRoots.Length > 0)
             {
                 for (int i = 0; i < room.coreRoots.Length; i++)

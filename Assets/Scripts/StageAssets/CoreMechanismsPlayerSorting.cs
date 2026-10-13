@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+[DefaultExecutionOrder(300)]
 public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
 {
     [SerializeField, Min(0.1f)] private float horizontalRange = 0.7f;
@@ -42,6 +43,34 @@ public sealed class CoreMechanismsPlayerSorting : MonoBehaviour
         RestoreAdjustedBombs();
         ApplyPlayerSorting();
         ApplyBombSorting();
+        ApplyIndestructibleSorting();
+    }
+
+    private void ApplyIndestructibleSorting()
+    {
+        var tilemap = GameManager.Instance != null ? GameManager.Instance.indestructibleTilemap : null;
+        if (tilemap == null)
+            return;
+        Vector3 position = TryGetComponent<AttachedCoreMechanismsController>(out var attachment)
+            ? attachment.GroundPosition : transform.position;
+        Vector3Int cell = tilemap.WorldToCell(position) + Vector3Int.up;
+        if (!tilemap.HasTile(cell) || !tilemap.TryGetComponent<UnityEngine.Tilemaps.TilemapRenderer>(out var tileRenderer))
+            return;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null)
+                continue;
+            int currentLayer = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
+            int tileLayer = SortingLayer.GetLayerValueFromID(tileRenderer.sortingLayerID);
+            if (currentLayer < tileLayer)
+            {
+                renderer.sortingLayerID = tileRenderer.sortingLayerID;
+                renderer.sortingOrder = tileRenderer.sortingOrder + sortingOrderOffset;
+            }
+            else if (currentLayer == tileLayer)
+                renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, tileRenderer.sortingOrder + sortingOrderOffset);
+        }
     }
 
     private void CacheRenderers()

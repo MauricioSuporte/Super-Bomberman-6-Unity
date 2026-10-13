@@ -9,6 +9,7 @@ using UnityEngine.Tilemaps;
 /// the lower body remains visibly underwater.
 /// </summary>
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(200)]
 public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 {
     private const string WaterMaterialResourcePath = "Materials/PlayerWaterSubmersion";
@@ -46,6 +47,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     private bool mountedPlayerSuppressed;
     private bool terrainOrBombSuppressed;
     private bool bridgeSuppressed;
+    private bool attachedCoreSuppressed;
     private Tilemap destructibleTilemap;
     private int bombLayerMask;
     private CoreMechanismsDestructible coreMechanisms;
@@ -110,6 +112,13 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
     {
         propertyBlock ??= new MaterialPropertyBlock();
 
+        bool suppressAttachedCore = TryGetComponent<AttachedCoreMechanismsController>(out var attachment) && !attachment.IsGrounded;
+        if (attachedCoreSuppressed != suppressAttachedCore)
+        {
+            attachedCoreSuppressed = suppressAttachedCore;
+            ApplyMaterial();
+        }
+
         bool shouldSuppressPlayerVisual =
             TryGetComponent(out PlayerMountCompanion companion) &&
             companion.HasMountedLouie();
@@ -148,9 +157,10 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             }
 
             renderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetFloat(WaterSurfaceY, waterSurfaceY);
+            bool isShadow = IsAttachedCoreShadow(renderer);
+            propertyBlock.SetFloat(WaterSurfaceY, isShadow ? renderer.bounds.max.y + 1f / 16f : waterSurfaceY);
             propertyBlock.SetFloat(SurfaceLineHeight, DefaultSurfaceLineHeight);
-            propertyBlock.SetFloat(UseSurfaceLine, showSurfaceLine ? 1f : 0f);
+            propertyBlock.SetFloat(UseSurfaceLine, showSurfaceLine && !isShadow ? 1f : 0f);
             propertyBlock.SetFloat(PremultiplyUnderwaterOpacity, premultiplyUnderwaterOpacity ? 1f : 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
@@ -196,6 +206,26 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
                 originalMaterials.Add(spriteRenderer, spriteRenderer.sharedMaterial);
 
             bodyRenderers.Add(spriteRenderer);
+        }
+
+        // The attached core's wake-up renderer is driven by its controller,
+        // rather than AnimatedSpriteRenderer, but uses the same water treatment.
+        if (coreMechanisms != null && TryGetComponent<AttachedCoreMechanismsController>(out var attachment) &&
+            attachment.attachedRenderer != null && !bodyRenderers.Contains(attachment.attachedRenderer))
+        {
+            SpriteRenderer renderer = attachment.attachedRenderer;
+            if (!originalMaterials.ContainsKey(renderer))
+                originalMaterials.Add(renderer, renderer.sharedMaterial);
+            bodyRenderers.Add(renderer);
+        }
+
+        if (coreMechanisms != null && TryGetComponent<AttachedCoreMechanismsController>(out var shadowAttachment) &&
+            shadowAttachment.shadowRenderer != null && !bodyRenderers.Contains(shadowAttachment.shadowRenderer))
+        {
+            SpriteRenderer renderer = shadowAttachment.shadowRenderer;
+            if (!originalMaterials.ContainsKey(renderer))
+                originalMaterials.Add(renderer, renderer.sharedMaterial);
+            bodyRenderers.Add(renderer);
         }
 
         if (bodyRenderers.Count == 0)
@@ -244,7 +274,7 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
             if (renderer == null)
                 continue;
 
-            if (suppressed &&
+            if (suppressed && !IsAttachedCoreShadow(renderer) &&
                 originalMaterials.TryGetValue(renderer, out Material originalMaterial))
                 renderer.sharedMaterial = originalMaterial;
             else
@@ -255,7 +285,13 @@ public sealed class PlayerWaterSubmersionEffect : MonoBehaviour
 
     private bool IsSuppressed()
     {
-        return targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed || bridgeSuppressed;
+        return targetTileSuppressed || mountedPlayerSuppressed || terrainOrBombSuppressed || bridgeSuppressed || attachedCoreSuppressed;
+    }
+
+    private bool IsAttachedCoreShadow(SpriteRenderer renderer)
+    {
+        return coreMechanisms != null && TryGetComponent<AttachedCoreMechanismsController>(out var attachment) &&
+               renderer == attachment.shadowRenderer;
     }
 
 }

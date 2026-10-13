@@ -17,6 +17,7 @@ public sealed class CoreMechanismsDestructible : Destructible
     [SerializeField, Min(0f)] private float allDestroyedSfxVolume = 3f;
 
     private bool dying;
+    public bool IsDying => dying;
     static bool allDestroyedSfxPlayed;
     static ulong sceneHandleRaw = ulong.MaxValue;
 
@@ -56,6 +57,8 @@ public sealed class CoreMechanismsDestructible : Destructible
             return;
 
         dying = true;
+        if (TryGetComponent<AttachedCoreMechanismsController>(out var attachment))
+            attachment.Detach();
         CoreMechanismDestroyed?.Invoke(this);
 
         bool allDestroyed = !HasRemainingAliveCoreMechanisms();

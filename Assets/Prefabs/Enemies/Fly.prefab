@@ -136,6 +136,8 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  passesThroughDestructibles: 0
+  junctionPassDestructiblesTag: Destructibles
   destructiblesTag: Destructibles
   ghostAlpha: 1
   deathAlpha: 1
@@ -145,6 +147,7 @@ MonoBehaviour:
   hoverFrequency: 3
   shadowColor: {r: 0, g: 0, b: 0, a: 0.45}
   shadowScale: {x: 0.9, y: 0.9}
+  shadowOffset: {x: 0, y: 0}
 --- !u!114 &8638696913730581265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -403,6 +406,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
@@ -535,6 +539,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0

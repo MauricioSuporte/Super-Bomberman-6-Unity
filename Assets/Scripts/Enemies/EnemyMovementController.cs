@@ -237,6 +237,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     public void Kill()
     {
+        foreach (var attachment in GetComponentsInChildren<AttachedCoreMechanismsController>())
+            attachment.Detach();
         Die();
     }
 
