@@ -58,7 +58,7 @@ public sealed class CoreMechanismsDestructible : Destructible
 
         dying = true;
         if (TryGetComponent<AttachedCoreMechanismsController>(out var attachment))
-            attachment.Detach();
+            attachment.PrepareForDestruction();
         CoreMechanismDestroyed?.Invoke(this);
 
         bool allDestroyed = !HasRemainingAliveCoreMechanisms();

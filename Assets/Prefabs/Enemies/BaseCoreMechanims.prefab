@@ -709,6 +709,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8957809788494808989}
   - component: {fileID: 1892057701075401388}
+  - component: {fileID: 6668678530191726464}
   m_Layer: 0
   m_Name: AttachedVisual
   m_TagString: Untagged
@@ -791,6 +792,32 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &6668678530191726464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2069928822713295225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f73ad71f6e48e18c71a8ecda779a40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlackoutVisibleParts
+  maskMaterial: {fileID: 2100000, guid: d2aa593467d646c799107c41bca617fb, type: 2}
+  parts:
+  - source: {fileID: 1892057701075401388}
+    overlaySprite: {fileID: 0}
+    region:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    palette: {fileID: 5556191009670615865}
+    fullyVisibleSprites: []
+    colors: []
+    colorTolerance: 0.01
 --- !u!1 &3501598134215938243
 GameObject:
   m_ObjectHideFlags: 0
@@ -1231,6 +1258,7 @@ MonoBehaviour:
   - {x: 0, y: 6}
   - {x: 0, y: 5}
   - {x: 0, y: 6}
+  additionalAnimations: []
   pixelsPerUnit: 16
   riseSeconds: 0.4
   apexApproachSeconds: 0.1

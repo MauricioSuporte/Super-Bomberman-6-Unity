@@ -112,8 +112,8 @@ namespace StageAssets
 
                     // Bounce height is visual only: the damage footprint stays on
                     // the ground path and sweeps continuously, including in midair.
-                    DamageCharactersInSweep(previousDamagePosition, damagePosition);
                     DestroyCoreMechanismsInSweep(previousDamagePosition, damagePosition);
+                    DamageCharactersInSweep(previousDamagePosition, damagePosition);
                     ExplodeBombsInSweep(previousDamagePosition, damagePosition);
                     if (progress >= 1f)
                         break;
@@ -192,7 +192,10 @@ namespace StageAssets
                 if (mechanism == null)
                     continue;
 
-                Vector3 position = mechanism.transform.position;
+                // Attached visuals can sit above the host (or follow its jump).
+                // The barrel hits their logical ground tile, just like the enemy.
+                Vector3 position = mechanism.TryGetComponent<AttachedCoreMechanismsController>(out var attachment)
+                    ? attachment.GroundPosition : mechanism.transform.position;
                 if (Mathf.Abs(position.x - current.x) > damageHalfWidth || position.y < minY || position.y > maxY)
                     continue;
 

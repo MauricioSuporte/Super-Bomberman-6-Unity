@@ -65,12 +65,26 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
 
     void OnEnable() => RefreshAttachedPose();
 
+    public void PrepareForDestruction()
+    {
+        Detach();
+        if (attachedRenderer != null)
+            attachedRenderer.enabled = false;
+        if (shadowRenderer != null)
+            shadowRenderer.enabled = false;
+        // Crush stun may already have hidden these renderers on the host.
+        foreach (SpriteRenderer renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            renderer.forceRenderingOff = false;
+    }
+
     /// <summary>Prepares the attached visual even while a room fade has frozen gameplay.</summary>
     public void RefreshAttachedPose()
     {
         if (detached || finished || host == null)
             return;
         Vector3 hover = host is SubmarineBubbleMovementController submarine ? submarine.AttachmentHoverOffset : Vector3.zero;
+        if (host is HopRobotMovementController hopRobot)
+            hover += hopRobot.AttachmentJumpOffset;
         transform.position = SnapToPixels(host.transform.position + GetAttachmentOffset() + hover);
         if (attachedRenderer != null && attachedFrames != null && attachedFrames.Length > 0)
             attachedRenderer.sprite = attachedFrames[(int)(elapsed / Mathf.Max(0.01f, frameSeconds)) % attachedFrames.Length];
@@ -347,9 +361,10 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
             var renderer = animation.GetComponent<SpriteRenderer>();
             offsets = renderer != null && renderer.flipX ? rightFrameOffsets : leftFrameOffsets;
         }
-        if (animation == null || offsets == null || animation.CurrentFrame >= offsets.Length)
+        int attachmentFrame = host is HopRobotMovementController hop ? hop.AttachmentPoseIndex : animation != null ? animation.CurrentFrame : 0;
+        if (animation == null || offsets == null || attachmentFrame >= offsets.Length)
             return backOffset;
-        return backOffset + (Vector3)(offsets[animation.CurrentFrame] / Mathf.Max(1f, pixelsPerUnit));
+        return backOffset + (Vector3)(offsets[attachmentFrame] / Mathf.Max(1f, pixelsPerUnit));
     }
 
     void SetNormal(bool visible)

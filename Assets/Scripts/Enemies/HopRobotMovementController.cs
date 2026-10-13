@@ -35,6 +35,8 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
     private enum HopPhase { Idle, Preparing, Airborne, Landing }
     private HopPhase phase;
     private float phaseElapsed;
+    public int AttachmentPoseIndex { get; private set; }
+    public Vector3 AttachmentJumpOffset { get; private set; }
     private Vector2 jumpStart;
     private GameObject shadow;
     private StunReceiver barrelStun;
@@ -132,6 +134,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
             return;
 
         activeSprite.enabled = true;
+        AttachmentPoseIndex = poseIndex;
         activeSprite.idleSprite = poses[poseIndex];
         activeSprite.animationSprite = new[] { poses[poseIndex] };
         activeSprite.idle = true;
@@ -150,12 +153,14 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
 
     private void ApplyJumpOffset(float height)
     {
+        AttachmentJumpOffset = Vector3.up * height;
         if (activeSprite != null)
             activeSprite.SetExternalBaseOffsetFromInitial(Vector3.up * height);
     }
 
     private void ClearJumpOffset()
     {
+        AttachmentJumpOffset = Vector3.zero;
         foreach (AnimatedSpriteRenderer animated in GetComponentsInChildren<AnimatedSpriteRenderer>(true))
             if (animated != null) animated.ClearExternalBase();
     }
