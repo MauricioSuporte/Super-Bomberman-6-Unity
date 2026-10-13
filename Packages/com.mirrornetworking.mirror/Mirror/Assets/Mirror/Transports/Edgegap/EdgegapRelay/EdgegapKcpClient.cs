@@ -19,6 +19,8 @@ namespace Edgegap
 
         // ping
         double lastPingTime;
+        public int PingAttempts { get; private set; }
+        public int PingReplies { get; private set; }
 
         public EdgegapKcpClient(
             Action OnConnected,
@@ -71,6 +73,7 @@ namespace Edgegap
                                 // parse state
                                 if (reader.Remaining < 1) return false;
                                 ConnectionState last = connectionState;
+                                PingReplies++;
                                 connectionState = (ConnectionState)reader.ReadByte();
 
                                 // log state changes for debugging.
@@ -114,6 +117,7 @@ namespace Edgegap
 
         void SendPing()
         {
+            PingAttempts++;
             using (NetworkWriterPooled writer = NetworkWriterPool.Get())
             {
                 writer.WriteUInt(userId);
@@ -125,7 +129,9 @@ namespace Edgegap
 
         public override void TickOutgoing()
         {
-            if (connected)
+            // Relay authentication must run while KCP is still connecting.
+            // Waiting for 'connected' prevents the pings needed to establish that connection.
+            if (socket != null)
             {
                 // ping every interval for keepalive & handshake
                 if (NetworkTime.localTime >= lastPingTime + Protocol.PingInterval)

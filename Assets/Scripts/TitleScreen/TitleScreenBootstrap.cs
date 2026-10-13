@@ -187,12 +187,17 @@ public class TitleScreenBootstrap : MonoBehaviour
                 }
             }
 
+            if (titleScreen.OnlineRequested)
+            {
+                SceneManager.LoadScene(Assets.Scripts.Netcode.NetworkLobby.SceneName);
+                yield break;
+            }
+
             if (titleScreen.BattleModeRequested)
             {
                 if (!string.IsNullOrEmpty(battleModeMenuSceneName))
                 {
-                    SceneManager.LoadScene(titleScreen.OnlineBattleRequested
-                        ? Assets.Scripts.Netcode.NetworkLobby.SceneName : battleModeMenuSceneName);
+                    SceneManager.LoadScene(battleModeMenuSceneName);
                     yield break;
                 }
             }

@@ -23,6 +23,9 @@ namespace Edgegap
 
         // ping
         double lastPingTime;
+        public int PingAttempts { get; private set; }
+        public int PingsSent { get; private set; }
+        public int PingReplies { get; private set; }
 
         // custom 'active'. while connected to relay
         bool relayActive;
@@ -105,6 +108,7 @@ namespace Edgegap
                                 // parse state
                                 if (reader.Remaining < 1) return false;
                                 ConnectionState last = state;
+                                PingReplies++;
                                 state = (ConnectionState)reader.ReadByte();
 
                                 // log state changes for debugging.
@@ -166,6 +170,7 @@ namespace Edgegap
 
         void SendPing()
         {
+            PingAttempts++;
             using (NetworkWriterPooled writer = NetworkWriterPool.Get())
             {
                 writer.WriteUInt(userId);
@@ -175,7 +180,7 @@ namespace Edgegap
 
                 try
                 {
-                    relaySocket.SendNonBlocking(message);
+                    if (relaySocket.SendNonBlocking(message)) PingsSent++;
                 }
                 catch (SocketException e)
                 {

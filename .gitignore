@@ -59,3 +59,4 @@ MirrorExamplesPipelineConverted.txt
 # Windows build measurements and distribution archives
 /output/WindowsMeasurements/
 /output/WindowsBuildReports/
+/output/RelayProbe/

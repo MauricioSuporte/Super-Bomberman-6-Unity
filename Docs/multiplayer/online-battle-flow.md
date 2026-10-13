@@ -1,7 +1,10 @@
 # Battle Mode: entrada online pelo título
 
-O título oferece `Battle Mode → Offline / Online`. Offline continua abrindo
-o `BattleModeMenu` local. Online abre a cena compartilhada `OnlineLobby`.
+O título oferece, na lista de modos, `Normal Game`, `Boss Rush`, `Battle Mode`
+e `Online`, nessa ordem. `Battle Mode` abre diretamente o `BattleModeMenu`
+local. `Online` abre a cena compartilhada `OnlineLobby`, sem submenu Offline/Online.
+O lobby atualmente oferece Battle Mode; Normal Game e Boss Rush online são
+extensões futuras, não funcionalidades já disponíveis.
 Os builds `Build/Online Client (Windows/Linux)` agora começam no título.
 O build de servidor dedicado continua usando seu bootstrap headless.
 
@@ -53,6 +56,12 @@ Salas públicas usam o catálogo próprio em `Tools/RoomDirectory`, após hosped
 e configuração de `Assets/Resources/OnlineRoomDirectory.json`. O catálogo não
 é relay; hosts públicos precisam de porta UDP acessível. Relay, reconexão e
 migração de host continuam fora desta entrega.
+
+A prova opt-in de Edgegap Relay está descrita em `relay-probe.md`: usa
+credenciais privadas por participante e não publica salas no catálogo.
+O fluxo normal agora exige igualdade de versão do jogo e protocolo no
+handshake antes de admitir a conexão. A integração automática catálogo +
+relay ainda depende do teste real e da hospedagem do backend.
 
 ## Teste manual
 

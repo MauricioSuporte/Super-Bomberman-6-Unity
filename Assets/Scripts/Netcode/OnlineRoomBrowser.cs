@@ -51,6 +51,8 @@ namespace Assets.Scripts.Netcode
 
         void Start()
         {
+            // A probe has no public listing: its credentials are delivered privately per participant.
+            if (OnlineRelayProbe.Active) { enabled = false; return; }
             discovery = GetComponent<OnlineRoomDiscovery>();
             discovery.RoomFound += OnRoomFound;
             var config = Resources.Load<TextAsset>("OnlineRoomDirectory");

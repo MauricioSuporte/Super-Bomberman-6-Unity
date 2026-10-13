@@ -46,8 +46,15 @@ namespace Assets.Scripts.Netcode
         void Start()
         {
             var manager = NetworkManager.singleton;
-            if (manager == null) return;
+            if (manager == null || !manager.enabled) return;
             browser = GetComponent<OnlineRoomBrowser>();
+            if (OnlineRelayProbe.Active)
+            {
+                if (OnlineRelayProbe.Role == "host") manager.StartHost();
+                else manager.StartClient();
+                CreateRoomCanvas();
+                return;
+            }
             if (HasArg("-server")) { manager.StartServer(); return; }
             if (HasArg("-autohost"))
             {
@@ -72,6 +79,7 @@ namespace Assets.Scripts.Netcode
             heading.text = text.Room + " — " + text.BattleMode;
             bool connected = NetworkServer.active || NetworkClient.isConnected;
             bool idle = !NetworkServer.active && !NetworkClient.active;
+            idle &= !OnlineRelayProbe.Active;
             hostButton.gameObject.SetActive(idle && lobby);
             joinButton.gameObject.SetActive(idle && lobby);
             addressInput.gameObject.SetActive(idle && lobby);
@@ -101,8 +109,9 @@ namespace Assets.Scripts.Netcode
                 if (browser.PublishPublic && browser.DirectoryFailed) lines.AppendLine(text.PublicUnavailable);
             }
             else if (NetworkClient.active) lines.AppendLine(text.Connecting);
+            else if (OnlineVersionAuthenticator.VersionRejected) lines.AppendLine(text.VersionMismatch);
             details.text = lines.ToString();
-            details.gameObject.SetActive(!idle);
+            details.gameObject.SetActive(!idle || OnlineVersionAuthenticator.VersionRejected);
             UpdateBrowser(idle && lobby);
         }
 

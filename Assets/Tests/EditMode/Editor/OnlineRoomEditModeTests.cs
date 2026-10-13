@@ -9,6 +9,34 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase("0.5.0", 1, true)]
+    [TestCase("0.5.1", 1, false)]
+    [TestCase("0.5.0", 2, false)]
+    [TestCase("", 1, false)]
+    public void OnlineCompatibilityRequiresSameBuildAndProtocol(string remoteVersion, int protocol, bool expected)
+    {
+        Assert.AreEqual(expected, OnlineVersionAuthenticator.Compatible("0.5.0", remoteVersion, protocol));
+    }
+
+    [Test]
+    public void RelayProbeCredentialsRejectInvalidEndpointOrRole()
+    {
+        var data = new OnlineRelayProbe.Credentials
+        {
+            role = "host", relayAddress = "relay.example.com", relayGameServerPort = 12345,
+            relayGameClientPort = 23456, sessionId = uint.MaxValue, userId = uint.MaxValue
+        };
+        Assert.IsTrue(data.IsValid);
+        data.role = "server";
+        Assert.IsFalse(data.IsValid);
+        data.role = "client";
+        data.relayGameClientPort = 65536;
+        Assert.IsFalse(data.IsValid);
+        data.relayGameClientPort = 23456;
+        data.relayAddress = "https://relay.example.com/";
+        Assert.IsFalse(data.IsValid);
+    }
+
     [TearDown]
     public void EndRoomSettings()
     {

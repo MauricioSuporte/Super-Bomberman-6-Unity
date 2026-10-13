@@ -53,6 +53,10 @@ namespace Assets.Scripts.Netcode
         public override void Awake()
         {
             base.Awake();
+            if (singleton != this) return;
+            OnlineRelayProbe.Configure(this);
+            if (authenticator == null)
+                authenticator = gameObject.AddComponent<OnlineVersionAuthenticator>();
             // A cena tem um NetworkManager → é destinada a rede. Impede o gameplay
             // (ex.: relógio de round) de rodar antes de clicar Host/Client.
             NetSync.IsNetworkedScene = true;

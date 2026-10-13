@@ -31,6 +31,7 @@ public sealed class OnlineRoomText
     public string PublicUnavailable => LanguageText("PUBLIC DIRECTORY UNAVAILABLE", "公開リストに接続できません", "LISTA PÚBLICA NO DISPONIBLE", "LISTA PÚBLICA INDISPONÍVEL");
     public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
     public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
+    public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: UPDATE THE GAME", "バージョンが異なります。ゲームを更新してください", "VERSIÓN INCOMPATIBLE: ACTUALIZA EL JUEGO", "VERSÃO INCOMPATÍVEL: ATUALIZE O JOGO");
 
     static string LanguageText(string en, string ja, string es, string pt) => SaveSystem.GetLanguage() switch
     {
