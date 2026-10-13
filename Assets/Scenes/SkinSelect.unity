@@ -329,6 +329,7 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  searchBombAmount: 0
   magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
@@ -337,6 +338,7 @@ MonoBehaviour:
   heartAmount: 0
   oneUpAmount: 0
   powerGloveAmount: 0
+  lineBombAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
@@ -346,17 +348,23 @@ MonoBehaviour:
   redLouieEggAmount: 0
   clockAmount: 1
   skullAmount: 0
+  randomSb5EggAmount: 0
   randomEggsMin: 0
   randomEggsMax: 0
+  hiddenObjectRooms: []
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
+  worldMapSceneName: WorldMap
   destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
-  groundTilemap: {fileID: 0}
-  groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
-  groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
-  indestructibleGroundShadowTile: {fileID: 0}
-  shadowDestructibleTile: {fileID: 0}
+  destructiblePrefabOverrides: []
+  tilemapDoChao: {fileID: 0}
+  tileChaoNormal: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
+  tileSombraChaoAbaixoDoDestrutivel: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  tileSombraChaoSobDestrutivel: {fileID: 0}
+  tileSombraChaoAbaixoDoIndestrutivel: {fileID: 0}
+  tileDestrutivelComSombraDoIndestrutivel: {fileID: 0}
+  groundShadowRules: []
   groundShadowIgnoredTiles: []
   indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
@@ -760,7 +768,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -1011,8 +1019,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
-  enableSurgicalLogs: 0
-  logHintSpacingEveryUpdate: 0
   forceRootPanelStretchToParent: 0
   forceBackgroundStretchToRootPanel: 0
   root: {fileID: 861532794}
@@ -1045,7 +1051,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
   - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
   - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
-  logCursorPositionDebug: 1
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
   backgroundSprites:
@@ -1057,8 +1062,7 @@ MonoBehaviour:
   downFrameTime: 0.1
   endStageFrameTime: 0.1
   ladyBomberEndStageSpeedMultiplier: 1.5
-  downFrames: 0100000000000000010000000200000003000000040000000300000002000000
-  endStageFrames: 69000000680000006a00000068000000690000006a000000
+  downFrames: 0100000000000000010000000200000003000000040000000300000002000000i
   endStageYOffset: 2
   endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: e4c38e02c55a4284ab2b5678b839b24f, type: 3}
@@ -1083,7 +1087,7 @@ MonoBehaviour:
   extraScaleMultiplier: 2
   minScale: 0.5
   maxScale: 10
-  gridBaseAnchoredPos: {x: 0, y: -10}
+  gridBaseAnchoredPos: {x: 0, y: 0}
   unlockHintText: {fileID: 0}
   unlockHintFontSize: 16
   unlockHintBottomMargin: 18
@@ -1108,10 +1112,9 @@ MonoBehaviour:
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
   selectedSkinsListRoot: {fileID: 0}
-  selectedSkinsListBaseAnchoredPos: {x: 0, y: 85}
+  selectedSkinsListBaseAnchoredPos: {x: 0, y: 120}
   selectedSkinEntryBaseSpacing: 12
   selectedSkinEntryCompactSpacing: 2
-  selectedSkinSpriteYOffset: -20
   selectedSkinsListSafeFrameWidthRatio: 0.96
   selectedSkinCurrentCursorAlpha: 0.45
   selectedSkinPendingCursorAlpha: 0.25
@@ -1120,13 +1123,14 @@ MonoBehaviour:
   footerHintText: {fileID: 0}
   footerHintFontAsset: {fileID: 0}
   footerHintFontMaterialPreset: {fileID: 0}
-  logFooterHintStyle: 1
   footerHintBaseAnchoredPos: {x: 0, y: -55}
   footerHintBaseSize: {x: 900, y: 48}
   footerHintFontSize: 22
   footerHintLineSpacing: 12
-  selectableCharacters: 000000000100000002000000
-  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d0000001000000002000000150000000e0000000c00000009000000110000001400000012000000160000001700000018000000190000001300000000000000
+  selectableCharacters: 0000000001000000020000009b0503063dcbf51d0c5da61553fc2335i
+  selectableSkins: 0100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e0000000f000000100000001100000012000000130000001400000015000000160000001700000018000000190000001a0000001b0000001c0000001d0000001e0000001f000000200000002100000022000000230000002400000025000000260000002700000028000000290000002a0000002b000000i
+  changePaletteSfx: {fileID: 0}
+  changePaletteSfxVolume: 1
 --- !u!224 &1311323898
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1181,7 +1185,7 @@ MonoBehaviour:
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
-  battleMatchWins: 000000000000000000000000000000000000000000000000
+  battleMatchWins: 000000000000000000000000000000000000000000000000i
   hardNormalGameRunInProgress: 0
   hardNormalGameRemainingLives: 3
   hardcoreNormalGameRunInProgress: 0
@@ -1485,6 +1489,11 @@ MonoBehaviour:
   defaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
+  roomMusics: []
+  defaultRoomId: 
+  roomMusicLoudnessReference: {fileID: 0}
+  roomMusicLoudnessReferenceVolume: 0.4
+  stageMusicLoudnessCalibrated: 0
   defaultMusicVolume: 0.8
 --- !u!82 &1560934952
 AudioSource:
@@ -1615,8 +1624,8 @@ RectTransform:
   - {fileID: 1311323898}
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.23333333, y: 0.085185185}
+  m_AnchorMax: {x: 0.76666665, y: 0.91481483}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

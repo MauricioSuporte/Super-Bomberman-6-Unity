@@ -560,7 +560,7 @@ MonoBehaviour:
   unlockHintUnderlayOffsetY: -0.25
   unlockHintBottomPercentOfReferenceHeight: 0.12
   selectedSkinsListRoot: {fileID: 0}
-  selectedSkinsListBaseAnchoredPos: {x: 0, y: 85}
+  selectedSkinsListBaseAnchoredPos: {x: 0, y: 120}
   selectedSkinEntryBaseSpacing: 12
   selectedSkinEntryCompactSpacing: -20
   selectedSkinsListSafeFrameWidthRatio: 0.96
