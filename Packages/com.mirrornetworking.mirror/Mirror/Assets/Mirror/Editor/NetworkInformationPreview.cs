@@ -60,7 +60,9 @@ namespace Mirror
         }
 
         GUIContent title;
-        Styles styles = new Styles();
+        // Inspector previews can be constructed before EditorStyles is ready.
+        // Create styles in OnPreviewGUI, within the GUI repaint context.
+        Styles styles;
 
         public override GUIContent GetPreviewTitle()
         {
