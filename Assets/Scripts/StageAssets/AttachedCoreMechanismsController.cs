@@ -5,6 +5,14 @@ using UnityEngine.Tilemaps;
 [DefaultExecutionOrder(100)]
 public sealed class AttachedCoreMechanismsController : MonoBehaviour
 {
+    [System.Serializable]
+    public sealed class AnimationAttachment
+    {
+        public AnimatedSpriteRenderer animation;
+        public bool mirrored;
+        public Vector2[] frameOffsets = new Vector2[0];
+    }
+
     public EnemyMovementController host;
     public SpriteRenderer attachedRenderer;
     public Sprite[] attachedFrames;
@@ -20,6 +28,8 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
     public Vector2[] downFrameOffsets = new Vector2[0];
     public Vector2[] leftFrameOffsets = new Vector2[0];
     public Vector2[] rightFrameOffsets = new Vector2[0];
+    [Header("Additional host animations (attack, etc.)")]
+    public AnimationAttachment[] additionalAnimations = new AnimationAttachment[0];
     [Min(1f)] public float pixelsPerUnit = 16f;
 
     [Header("Disconnect jump")]
@@ -53,6 +63,19 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
 
     public Vector3 GroundPosition => detached ? landingPosition : host != null ? host.transform.position : transform.position;
 
+    void OnEnable() => RefreshAttachedPose();
+
+    /// <summary>Prepares the attached visual even while a room fade has frozen gameplay.</summary>
+    public void RefreshAttachedPose()
+    {
+        if (detached || finished || host == null)
+            return;
+        Vector3 hover = host is SubmarineBubbleMovementController submarine ? submarine.AttachmentHoverOffset : Vector3.zero;
+        transform.position = SnapToPixels(host.transform.position + GetAttachmentOffset() + hover);
+        if (attachedRenderer != null && attachedFrames != null && attachedFrames.Length > 0)
+            attachedRenderer.sprite = attachedFrames[(int)(elapsed / Mathf.Max(0.01f, frameSeconds)) % attachedFrames.Length];
+    }
+
     void Start()
     {
         core = GetComponent<CoreMechanismsDestructible>();
@@ -68,6 +91,7 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
         SetColliders(false);
         if (attachedRenderer != null)
             attachedRenderer.enabled = true;
+        RefreshAttachedPose();
     }
 
     void LateUpdate()
@@ -87,15 +111,14 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
         }
         if (!detached && (host == null || (hostHealth != null && hostHealth.IsDead)))
             Detach();
+        if (!detached)
+            RefreshAttachedPose();
         if (GamePauseController.IsPaused || Time.timeScale == 0f)
             return;
         elapsed += Time.deltaTime;
-        float duration = Mathf.Max(0.01f, frameSeconds);
         if (!detached)
         {
-            transform.position = SnapToPixels(host.transform.position + GetAttachmentOffset());
-            if (attachedRenderer != null && attachedFrames != null && attachedFrames.Length > 0)
-                attachedRenderer.sprite = attachedFrames[(int)(elapsed / duration) % attachedFrames.Length];
+            RefreshAttachedPose();
             return;
         }
         float rise = TotalRiseSeconds;
@@ -295,6 +318,17 @@ public sealed class AttachedCoreMechanismsController : MonoBehaviour
 
     Vector3 GetAttachmentOffset()
     {
+        foreach (AnimationAttachment entry in additionalAnimations)
+        {
+            if (entry == null || entry.animation == null || !entry.animation.enabled)
+                continue;
+            SpriteRenderer renderer = entry.animation.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.flipX != entry.mirrored)
+                continue;
+            int frame = entry.animation.CurrentFrame;
+            return entry.frameOffsets != null && frame < entry.frameOffsets.Length
+                ? backOffset + (Vector3)(entry.frameOffsets[frame] / Mathf.Max(1f, pixelsPerUnit)) : backOffset;
+        }
         AnimatedSpriteRenderer animation = host.spriteDown;
         Vector2[] offsets = downFrameOffsets;
         if (host.spriteUp != null && host.spriteUp.enabled)

@@ -336,6 +336,9 @@ namespace StageAssets
 
                 if (enemy.gameObject.activeSelf != active)
                     enemy.gameObject.SetActive(active);
+                if (active)
+                    foreach (var attachment in enemy.GetComponentsInChildren<AttachedCoreMechanismsController>(true))
+                        attachment.RefreshAttachedPose();
             }
         }
 

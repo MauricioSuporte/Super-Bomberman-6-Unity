@@ -429,9 +429,14 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
         if (activeSprite == null)
             return;
 
-        float height = hoverBaseHeight + Mathf.Sin(Time.time * hoverFrequency) * hoverAmplitude;
-        activeSprite.SetExternalBaseOffsetFromInitial(Vector3.up * height);
+        activeSprite.SetExternalBaseOffsetFromInitial(GetWalkingHoverOffset(Time.time));
     }
+
+    public Vector3 GetWalkingHoverOffset(float time) =>
+        Vector3.up * (hoverBaseHeight + Mathf.Sin(time * hoverFrequency) * hoverAmplitude);
+
+    public Vector3 AttachmentHoverOffset => !isDead && !isInDamagedLoop && state == BubbleState.Walking
+        ? GetWalkingHoverOffset(Time.time) : Vector3.zero;
 
     private void ClearHoverOffset()
     {

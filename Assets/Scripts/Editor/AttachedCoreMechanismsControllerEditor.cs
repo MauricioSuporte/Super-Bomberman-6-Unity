@@ -66,7 +66,20 @@ public sealed class AttachedCoreMechanismsControllerEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Attachment Preview (no Play Mode)", EditorStyles.boldLabel);
         int previousDirection = direction;
-        direction = GUILayout.Toolbar(direction, Directions);
+        if (attachment.additionalAnimations != null && attachment.additionalAnimations.Length > 0)
+        {
+            var labels = new string[4 + attachment.additionalAnimations.Length];
+            System.Array.Copy(Directions, labels, 4);
+            for (int i = 0; i < attachment.additionalAnimations.Length; i++)
+            {
+                var entry = attachment.additionalAnimations[i];
+                labels[4 + i] = entry != null && entry.animation != null
+                    ? entry.animation.name + (entry.mirrored ? " (Right / mirrored)" : "") : "Unassigned";
+            }
+            direction = EditorGUILayout.Popup("Host animation", Mathf.Clamp(direction, 0, labels.Length - 1), labels);
+        }
+        else
+            direction = GUILayout.Toolbar(Mathf.Clamp(direction, 0, 3), Directions);
         bool nextPlayLoop = EditorGUILayout.ToggleLeft("Play animation loop (enemy + Core)", playLoop);
         if (nextPlayLoop != playLoop || previousDirection != direction)
         {
@@ -85,10 +98,11 @@ public sealed class AttachedCoreMechanismsControllerEditor : Editor
         zoom = EditorGUILayout.Slider("Zoom", zoom, 2f, 12f);
 
         serializedObject.Update();
-        SerializedProperty offsets = serializedObject.FindProperty(OffsetFields[direction]);
+        SerializedProperty offsets = direction < 4 ? serializedObject.FindProperty(OffsetFields[direction])
+            : serializedObject.FindProperty("additionalAnimations").GetArrayElementAtIndex(direction - 4).FindPropertyRelative("frameOffsets");
         if (offsets.arraySize <= enemyFrame)
         {
-            if (GUILayout.Button("Create offsets for every walking frame"))
+            if (GUILayout.Button("Create offsets for every animation frame"))
             {
                 int previousSize = offsets.arraySize;
                 offsets.arraySize = animation.animationSprite.Length;
@@ -112,12 +126,22 @@ public sealed class AttachedCoreMechanismsControllerEditor : Editor
         float ppu = Mathf.Max(1f, attachment.pixelsPerUnit);
         Vector3 corePosition = attachment.backOffset + (Vector3)(offset / ppu) + attachment.attachedRenderer.transform.localPosition;
         Vector3 enemyPosition = attachment.host.transform.InverseTransformPoint(animation.transform.position);
+        if (direction < 4 && attachment.host is SubmarineBubbleMovementController submarine)
+        {
+            float time = playLoop ? (float)(EditorApplication.timeSinceStartup - playbackStarted) : 0f;
+            Vector3 hover = submarine.GetWalkingHoverOffset(time);
+            enemyPosition += hover;
+            corePosition += hover;
+        }
+        corePosition.x = Mathf.Round(corePosition.x * ppu) / ppu;
+        corePosition.y = Mathf.Round(corePosition.y * ppu) / ppu;
         Rect area = GUILayoutUtility.GetRect(100f, Mathf.Max(180f, 48f * zoom), GUILayout.ExpandWidth(true));
         EditorGUI.DrawRect(area, new Color(0.12f, 0.17f, 0.22f));
         Vector2 center = area.center + new Vector2(0f, 8f * zoom);
         EditorGUI.DrawRect(new Rect(center.x - 1f, area.y, 1f, area.height), new Color(1f, 1f, 1f, 0.15f));
         EditorGUI.DrawRect(new Rect(area.x, center.y, area.width, 1f), new Color(1f, 1f, 1f, 0.15f));
-        bool flip = direction == 3 && attachment.host.spriteRight == null;
+        bool flip = direction < 4 ? direction == 3 && attachment.host.spriteRight == null
+            : attachment.additionalAnimations[direction - 4].mirrored;
         SpriteRenderer enemyRenderer = animation.GetComponent<SpriteRenderer>();
         bool coreOnTop = enemyRenderer == null ||
             SortingLayer.GetLayerValueFromID(attachment.attachedRenderer.sortingLayerID) > SortingLayer.GetLayerValueFromID(enemyRenderer.sortingLayerID) ||
@@ -132,6 +156,9 @@ public sealed class AttachedCoreMechanismsControllerEditor : Editor
 
     AnimatedSpriteRenderer GetAnimation(AttachedCoreMechanismsController attachment)
     {
+        if (direction >= 4)
+            return attachment.additionalAnimations != null && direction - 4 < attachment.additionalAnimations.Length
+                ? attachment.additionalAnimations[direction - 4]?.animation : null;
         switch (direction)
         {
             case 0: return attachment.host.spriteUp;
