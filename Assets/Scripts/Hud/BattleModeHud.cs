@@ -145,6 +145,7 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private Sprite powerBombSprite;
     [SerializeField] private Sprite rubberBombSprite;
     [SerializeField] private Sprite magnetBombSprite;
+    [SerializeField] private Sprite searchBombSprite;
     [SerializeField] private Sprite remoteBombSprite;
     [SerializeField] private Sprite pierceBombSprite;
 
@@ -1036,6 +1037,9 @@ public sealed class BattleModeHud : MonoBehaviour
 
         if (state.HasPierceBombs)
             return pierceBombSprite;
+
+        if (state.HasSearchBomb)
+            return searchBombSprite;
 
         if (state.HasMagnetBomb)
             return magnetBombSprite;

@@ -113,6 +113,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Sprite powerBombSprite;
     [SerializeField] private Sprite rubberBombSprite;
     [SerializeField] private Sprite magnetBombSprite;
+    [SerializeField] private Sprite searchBombSprite;
 
     [Header("Number Sprites 0-9")]
     [SerializeField] private Sprite[] digitSprites = new Sprite[10];
@@ -339,6 +340,9 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
         if (state.HasPierceBombs)
             return pierceBombSprite;
+
+        if (state.HasSearchBomb)
+            return searchBombSprite;
 
         if (state.HasMagnetBomb)
             return magnetBombSprite;

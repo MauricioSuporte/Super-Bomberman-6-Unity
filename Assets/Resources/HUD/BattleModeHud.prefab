@@ -3666,6 +3666,7 @@ MonoBehaviour:
   powerBombSprite: {fileID: 21300000, guid: ff79f1c3e6bdfdf4d9374db2878efa61, type: 3}
   rubberBombSprite: {fileID: 21300000, guid: f64b2a392886c7b44a8699c010d9d434, type: 3}
   magnetBombSprite: {fileID: 21300000, guid: 26d3f026d23a935449bfaba3057c603c, type: 3}
+  searchBombSprite: {fileID: 21300000, guid: f6c3f9e115a44772ae0d2ce126f80fd2, type: 3}
   digitSprites:
   - {fileID: 905470350162025073, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
   - {fileID: -1620449166, guid: 8d31add7da592854eabd6ad1c755b8d0, type: 3}
@@ -3788,6 +3789,7 @@ MonoBehaviour:
   powerBombSprite: {fileID: 21300000, guid: 7e219991aa1df97428568da76fd83ff6, type: 3}
   rubberBombSprite: {fileID: 21300000, guid: b1a178dfde3e7f149b33132fab0b0c80, type: 3}
   magnetBombSprite: {fileID: 21300000, guid: 80d1a0501869f0d4faf63e3535dedbcb, type: 3}
+  searchBombSprite: {fileID: 21300000, guid: 4cf55a40aba34b6783dc5870b8e23029, type: 3}
   remoteBombSprite: {fileID: 21300000, guid: 5dda5457878e1664d82235d7ef6ffa9b, type: 3}
   pierceBombSprite: {fileID: 21300000, guid: 0071492598ef6b242b83c5d0e2f81927, type: 3}
   pushStartFont: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
