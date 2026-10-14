@@ -338,3 +338,4 @@ MonoBehaviour:
   detectionRangeTiles: 3
   scanInterval: 0.08
   movementSpeedMultiplier: 0.3
+  shadowSprite: {fileID: 21300000, guid: 66a901c3964049e495a838484e4b6d06, type: 3}

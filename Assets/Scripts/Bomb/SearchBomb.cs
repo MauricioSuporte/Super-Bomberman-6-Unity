@@ -9,6 +9,12 @@ public sealed class SearchBomb : MonoBehaviour
     [SerializeField, Min(0.01f)] private float scanInterval = 0.08f;
     [SerializeField, Min(0.01f)] private float movementSpeedMultiplier = 0.3f;
 
+    [SerializeField] private Sprite shadowSprite;
+    private SpriteRenderer sourceRenderer;
+    private SpriteRenderer floatingRenderer;
+    private SpriteRenderer shadowRenderer;
+    private float hoverTime;
+
     private static readonly Vector2Int[] Directions =
         { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
     private readonly Queue<Vector2Int> frontier = new();
@@ -58,7 +64,80 @@ public sealed class SearchBomb : MonoBehaviour
         return true;
     }
 
-    private void Awake() => bomb = GetComponent<Bomb>();
+    private void Awake()
+    {
+        bomb = GetComponent<Bomb>();
+        sourceRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private void OnEnable()
+    {
+        if (sourceRenderer == null)
+            return;
+        if (floatingRenderer == null)
+        {
+            floatingRenderer = CreateVisualRenderer("FloatingVisual");
+            shadowRenderer = CreateVisualRenderer("GroundShadow");
+            shadowRenderer.sprite = shadowSprite != null ? shadowSprite :
+                Resources.Load<Sprite>("Bombs/SearchBombShadow");
+        }
+        sourceRenderer.forceRenderingOff = true;
+    }
+
+    private SpriteRenderer CreateVisualRenderer(string objectName)
+    {
+        var visual = new GameObject(objectName);
+        visual.layer = gameObject.layer;
+        visual.transform.SetParent(transform, false);
+        var renderer = visual.AddComponent<SpriteRenderer>();
+        renderer.sharedMaterial = sourceRenderer.sharedMaterial;
+        renderer.sortingLayerID = sourceRenderer.sortingLayerID;
+        renderer.maskInteraction = sourceRenderer.maskInteraction;
+        return renderer;
+    }
+
+    private void LateUpdate()
+    {
+        if (floatingRenderer == null)
+            return;
+        if (!GamePauseController.IsPaused)
+            hoverTime += Time.deltaTime;
+
+        // Only the presentation rises: physics, pursuit and explosion stay on the ground.
+        const float pixelsPerUnit = 16f;
+        // A centered 16px bomb extends 8px below its pivot. Keep its bottom
+        // above the shadow, whose opaque rows sit around the ground footpoint.
+        float heightPixels = 6f + Mathf.Round(Mathf.Sin(hoverTime * Mathf.PI * 2f / 1.2f));
+        Vector3 position = transform.position;
+        position.x = Mathf.Round(position.x * pixelsPerUnit) / pixelsPerUnit;
+        position.y = Mathf.Round(position.y * pixelsPerUnit) / pixelsPerUnit;
+        floatingRenderer.transform.position = position + Vector3.up * (heightPixels / pixelsPerUnit);
+        floatingRenderer.sprite = sourceRenderer.sprite;
+        floatingRenderer.color = sourceRenderer.color;
+        floatingRenderer.flipX = sourceRenderer.flipX;
+        floatingRenderer.flipY = sourceRenderer.flipY;
+        floatingRenderer.sortingLayerID = sourceRenderer.sortingLayerID;
+        floatingRenderer.sortingOrder = sourceRenderer.sortingOrder;
+        floatingRenderer.enabled = sourceRenderer.enabled && !bomb.HasExploded;
+
+        Vector2 groundPosition = bomb.GetLogicalPosition();
+        shadowRenderer.transform.position = new Vector3(
+            Mathf.Round(groundPosition.x * pixelsPerUnit) / pixelsPerUnit,
+            (Mathf.Round(groundPosition.y * pixelsPerUnit) - 4f) / pixelsPerUnit, position.z);
+        shadowRenderer.sortingLayerID = sourceRenderer.sortingLayerID;
+        shadowRenderer.sortingOrder = sourceRenderer.sortingOrder - 1;
+        shadowRenderer.enabled = floatingRenderer.enabled && !bomb.IsBeingHeldByPowerGlove;
+    }
+
+    private void OnDisable()
+    {
+        if (sourceRenderer != null)
+            sourceRenderer.forceRenderingOff = false;
+        if (floatingRenderer != null)
+            floatingRenderer.enabled = false;
+        if (shadowRenderer != null)
+            shadowRenderer.enabled = false;
+    }
 
     // External movement owns the bomb until it finishes. Clear the old target
     // now, then allow a fresh search when all movement/holding states end.
@@ -93,7 +172,7 @@ public sealed class SearchBomb : MonoBehaviour
             else if (!IsBossTarget(target))
                 RecordTargetTile(currentTargetCell);
         }
-        if (bomb.IsBeingMagnetPulled || !bomb.CanBeMagnetPulled)
+        if (bomb.IsBeingMagnetPulled || !bomb.CanSearchMove)
         {
             return;
         }

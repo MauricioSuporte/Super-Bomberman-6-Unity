@@ -493,6 +493,29 @@ public sealed class BattleModeComEditModeTests
     }
 
     [Test]
+    public void SearchBomb_RejectsExternalMagnetPullButCanStillPursue()
+    {
+        var root = new GameObject("Search bomb magnetic immunity");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        try
+        {
+            var bomb = root.AddComponent<Bomb>();
+            Assert.IsTrue(bomb.CanBeMagnetPulled);
+            root.AddComponent<SearchBomb>();
+            Assert.IsFalse(bomb.CanBeMagnetPulled);
+            Assert.IsTrue(bomb.CanSearchMove);
+            Assert.IsFalse(bomb.StartMagnetPull(Vector2.right, 1f, 1, 0, null, 1f));
+            Assert.IsFalse(bomb.IsBeingMagnetPulled);
+            bomb.SetPowerGloveHeld(true);
+            Assert.IsFalse(bomb.CanSearchMove);
+            bomb.SetPowerGloveHeld(false);
+            Assert.IsTrue(bomb.CanSearchMove);
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
     public void SearchBomb_LoadoutSnapshotCopiesTheBombType()
     {
         var state = new PlayerPersistentStats.PlayerState { HasSearchBomb = true };

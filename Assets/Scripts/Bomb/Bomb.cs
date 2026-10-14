@@ -73,7 +73,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool CanBeKickedEarly => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove;
     public bool CanBeKicked => !HasExploded && !IsBeingKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !IsBeingKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
-    public bool CanBeMagnetPulled => !HasMagnetIncompatibleMovement && !IsBeingMagnetPulled;
+    public bool CanSearchMove => !HasMagnetIncompatibleMovement && !IsBeingMagnetPulled;
+    public bool CanBeMagnetPulled => CanSearchMove && !TryGetComponent<SearchBomb>(out _);
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
     public bool IsRubberBomb { get; set; }
@@ -1906,7 +1907,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         bool originBlockerUseTrigger,
         bool searchMovement = false)
     {
-        if (IsBlockedFromMagnetMovement)
+        if (IsBlockedFromMagnetMovement || (!searchMovement && TryGetComponent<SearchBomb>(out _)))
             return false;
 
         if (!searchMovement)
