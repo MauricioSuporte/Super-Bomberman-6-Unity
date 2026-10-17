@@ -734,7 +734,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
 
         yield return null;
         Canvas.ForceUpdateCanvases();
-        yield return new WaitForEndOfFrame();
+        yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
 
         ApplyDynamicScaleIfNeeded(true);
@@ -810,7 +810,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
 
         yield return null;
         Canvas.ForceUpdateCanvases();
-        yield return new WaitForEndOfFrame();
+        yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
 
         ApplyDynamicScaleIfNeeded(true);
@@ -1677,7 +1677,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
 
     private IEnumerator RevealLeftPanelCursorAfterLayoutRoutine()
     {
-        yield return new WaitForEndOfFrame();
+        yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);

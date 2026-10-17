@@ -210,25 +210,17 @@ public class MovementController : MonoBehaviour, IKillable
     public Rigidbody2D Rigidbody { get; private set; }
     public Vector2 Direction => direction;
 
-    // Predição de cliente (Etapa 1): quando true, este MovementController — o player
-    // LOCAL de um cliente puro — SIMULA localmente (prediz) em vez de só renderizar o
-    // estado replicado. Ligado por NetworkPlayerInput.OnStartLocalPlayer; desligado na
-    // morte (NetworkPlayerState). É por-instância (não global): remotos ficam false.
+    // Compatibility flag for existing presentation helpers. Dedicated clients do not predict.
     private bool predictLocally;
     public bool PredictLocally => predictLocally;
     public void SetPredictLocally(bool value) => predictLocally = value;
 
-    // Gate de INPUT (Update): host/offline OU o dono deste player. O host lê input
-    // dos remotos (via sintético) para saber a DIREÇÃO deles (bomba/kick continuam
-    // host-autoritativos), mas NÃO move a física deles (ver ShouldMovePhysicsLocally).
     private bool ShouldSimulateLocallyOrPredict =>
         Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || predictLocally;
 
-    // Client-autoritativo: só o DONO move a física do seu player (offline move tudo).
-    // O host NÃO move mais os players remotos — a posição deles chega pela rede
-    // (NetworkTransform ClientToServer). Elimina a dupla-simulação e o rubber-band.
+    // Offline and the dedicated server own physics; clients display replicated positions.
     private bool ShouldMovePhysicsLocally =>
-        !Assets.Scripts.Netcode.NetSync.IsOnline || predictLocally;
+        Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || predictLocally;
 
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;

@@ -8,7 +8,7 @@ public static partial class GameTextDatabase
         _ => EnglishOnlineRoom
     };
 
-    static readonly OnlineRoomText EnglishOnlineRoom = new("ONLINE", "OFFLINE", "ONLINE ROOM", "BATTLE MODE", "HOST", "JOIN", "HOST IP", "LEAVE ROOM", "CONFIGURE MATCH", "CONNECTING...", "WAITING FOR PLAYERS", "YOU: P{0}", "EMPTY", "THE HOST IS CONFIGURING THE MATCH", "P{0} IS CHOOSING", "CONFIRMED", "AT LEAST TWO ONLINE PLAYERS ARE REQUIRED", "ROOM FULL OR MATCH ALREADY STARTED", "RULES", "ITEMS", "LOUIES", "HANDICAP");
+    static readonly OnlineRoomText EnglishOnlineRoom = new("ONLINE", "OFFLINE", "ONLINE ROOM", "BATTLE MODE", "CREATE ROOM", "JOIN", "HOST IP", "LEAVE ROOM", "CONFIGURE MATCH", "CONNECTING...", "WAITING FOR PLAYERS", "YOU: P{0}", "EMPTY", "THE HOST IS CONFIGURING THE MATCH", "P{0} IS CHOOSING", "CONFIRMED", "AT LEAST TWO ONLINE PLAYERS ARE REQUIRED", "ROOM FULL OR MATCH ALREADY STARTED", "RULES", "ITEMS", "LOUIES", "HANDICAP");
     static readonly OnlineRoomText JapaneseOnlineRoom = new("オンライン", "オフライン", "オンラインルーム", "バトルモード", "ルーム作成", "参加", "ホストIP", "ルームを退出", "対戦設定", "接続中...", "プレイヤーを待っています", "あなた: P{0}", "空き", "ホストが対戦を設定中です", "P{0}が選択中", "決定済み", "オンラインプレイヤーが2人以上必要です", "満員または対戦開始済み", "ルール", "アイテム", "ルーイ", "ハンデ");
     static readonly OnlineRoomText SpanishOnlineRoom = new("ONLINE", "OFFLINE", "SALA ONLINE", "MODO BATALLA", "CREAR SALA", "ENTRAR", "IP DEL HOST", "SALIR DE LA SALA", "CONFIGURAR PARTIDA", "CONECTANDO...", "ESPERANDO JUGADORES", "TÚ: P{0}", "VACÍO", "EL HOST ESTÁ CONFIGURANDO LA PARTIDA", "P{0} ESTÁ ELIGIENDO", "CONFIRMADO", "SE NECESITAN DOS JUGADORES ONLINE", "SALA LLENA O PARTIDA INICIADA", "REGLAS", "OBJETOS", "LOUIES", "HÁNDICAP");
     static readonly OnlineRoomText PortugueseOnlineRoom = new("ONLINE", "OFFLINE", "SALA ONLINE", "MODO BATALHA", "CRIAR SALA", "ENTRAR", "IP DO HOST", "SAIR DA SALA", "CONFIGURAR PARTIDA", "CONECTANDO...", "AGUARDANDO JOGADORES", "VOCÊ: P{0}", "VAZIO", "O HOST ESTÁ CONFIGURANDO A PARTIDA", "P{0} ESTÁ ESCOLHENDO", "CONFIRMADO", "SÃO NECESSÁRIOS DOIS JOGADORES ONLINE", "SALA CHEIA OU PARTIDA INICIADA", "REGRAS", "ITENS", "LOUIES", "HANDICAP");
@@ -32,6 +32,15 @@ public sealed class OnlineRoomText
     public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
     public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
     public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: UPDATE THE GAME", "バージョンが異なります。ゲームを更新してください", "VERSIÓN INCOMPATIBLE: ACTUALIZA EL JUEGO", "VERSÃO INCOMPATÍVEL: ATUALIZE O JOGO");
+    public string RoomAdmin => LanguageText("ROOM ADMIN: P{0}", "ルーム管理者: P{0}", "ADMINISTRADOR: P{0}", "ADMINISTRADOR: P{0}");
+
+    public string CoopPending => LanguageText("CO-OP GAMEPLAY COMING SOON", "協力プレイは準備中です", "COOPERATIVO EN PREPARACIÓN", "COOPERATIVO EM PREPARAÇÃO");
+    public string ModeName(Assets.Scripts.Netcode.OnlineRoomMode mode) => mode switch
+    {
+        Assets.Scripts.Netcode.OnlineRoomMode.NormalGame => LanguageText("NORMAL GAME", "ノーマルゲーム", "JUEGO NORMAL", "JOGO NORMAL"),
+        Assets.Scripts.Netcode.OnlineRoomMode.BossRush => LanguageText("BOSS RUSH", "ボスラッシュ", "BOSS RUSH", "BOSS RUSH"),
+        _ => BattleMode
+    };
 
     static string LanguageText(string en, string ja, string es, string pt) => SaveSystem.GetLanguage() switch
     {

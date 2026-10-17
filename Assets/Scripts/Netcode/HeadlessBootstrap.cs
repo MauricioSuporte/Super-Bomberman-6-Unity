@@ -19,8 +19,11 @@ namespace Assets.Scripts.Netcode
         static void Boot()
         {
             var args = System.Environment.GetCommandLineArgs();
-            if (!HasArg(args, "-server"))
-                return;
+            bool startServer = HasArg(args, "-server");
+#if UNITY_SERVER
+            startServer = true;
+#endif
+            if (!startServer) return;
 
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var nm = NetworkManager.singleton;
@@ -33,7 +36,7 @@ namespace Assets.Scripts.Netcode
                 + (found.Length > 0 ? " (" + found[0].GetType().Name + ", active=" + found[0].gameObject.activeInHierarchy + ")" : "")
                 + " serverActive=" + NetworkServer.active);
 
-            if (mgr != null && !NetworkServer.active && !NetworkClient.active)
+            if (mgr != null && mgr.enabled && !NetworkServer.active && !NetworkClient.active)
                 mgr.StartServer();
         }
 

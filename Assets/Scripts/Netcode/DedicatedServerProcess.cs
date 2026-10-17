@@ -1,0 +1,217 @@
+using System;
+using System.IO;
+using System.Diagnostics;
+using kcp2k;
+using UnityEngine;
+using UnityEngine.Profiling;
+using Unity.Profiling;
+using Mirror;
+using Debug = UnityEngine.Debug;
+
+namespace Assets.Scripts.Netcode
+{
+    public partial class BombermanNetworkManager
+    {
+        float dedicatedLastOccupied, dedicatedNextReport;
+        int dedicatedIdleSeconds;
+        string dedicatedRoomId, dedicatedStatusPath, dedicatedToken;
+        Process dedicatedProcess;
+        double dedicatedCpuTime;
+        float dedicatedMetricsStart, dedicatedNextStatus, dedicatedMaxFrame;
+        int dedicatedFrames, dedicatedGcCount;
+        long dedicatedIncomingBytes, dedicatedOutgoingBytes;
+        readonly string[] dedicatedMarkerNames = { BattleModePerformanceMarkers.PlayerUpdateName,
+            BattleModePerformanceMarkers.PlayerFixedUpdateName, BattleModePerformanceMarkers.BombControllerUpdateName,
+            BattleModePerformanceMarkers.ComUpdateName, BattleModePerformanceMarkers.ComThinkName,
+            BattleModePerformanceMarkers.AbilityUpdateName, BattleModePerformanceMarkers.ArenaUpdateName,
+            BattleModePerformanceMarkers.InputUpdateName };
+        ProfilerRecorder[] dedicatedRecorders;
+        double[] dedicatedMarkerTotals;
+        string dedicatedLogDirectory;
+        readonly object dedicatedLogLock = new();
+
+        [Serializable]
+        sealed class DedicatedEvent
+        {
+            public string utc, room, level, message, stack;
+        }
+
+        [Serializable]
+        sealed class DedicatedStatus
+        {
+            public string token;
+            public int players;
+            public bool available;
+        }
+
+        [Serializable]
+        sealed class DedicatedMetrics
+        {
+            public string utc, room, scene;
+            public int players, objects, gcCollections;
+            public float fps, maxFrameMs;
+            public double cpuPercentOneCore, residentMiB, managedMiB, unityAllocatedMiB;
+            public double incomingKiBPerSecond, outgoingKiBPerSecond;
+            public string[] markerNames;
+            public double[] averageMarkerMs;
+        }
+
+        public static int ReadDedicatedNumber(string[] args, string option, int fallback, int minimum, int maximum)
+        {
+            int index = Array.IndexOf(args, option);
+            if (index < 0) return fallback;
+            if (index + 1 >= args.Length || !int.TryParse(args[index + 1], out int value) || value < minimum || value > maximum)
+                throw new ArgumentException($"{option} must be between {minimum} and {maximum}.");
+            return value;
+        }
+
+        void ConfigureDedicatedProcess()
+        {
+            var args = Environment.GetCommandLineArgs();
+            int port = ReadDedicatedNumber(args, "-port", 7777, 1, ushort.MaxValue);
+            int fps = ReadDedicatedNumber(args, "-server-fps", 60, 10, 240);
+            dedicatedIdleSeconds = ReadDedicatedNumber(args, "-server-idle-seconds", 300, 0, 86400);
+            if (transport is not KcpTransport kcp)
+                throw new InvalidOperationException("Dedicated server requires KcpTransport.");
+            kcp.Port = (ushort)port;
+            Application.runInBackground = true;
+            Application.targetFrameRate = fps;
+            QualitySettings.vSyncCount = 0;
+            dedicatedLastOccupied = Time.realtimeSinceStartup;
+            dedicatedRoomId = Environment.GetEnvironmentVariable("SB6_ROOM_ID") ?? "standalone";
+            dedicatedStatusPath = Environment.GetEnvironmentVariable("SB6_ROOM_STATUS");
+            dedicatedToken = Environment.GetEnvironmentVariable("SB6_ROOM_TOKEN");
+            if (!string.IsNullOrEmpty(dedicatedStatusPath))
+            {
+                dedicatedLogDirectory = Path.GetDirectoryName(dedicatedStatusPath);
+                Application.logMessageReceivedThreaded += CaptureDedicatedEvent;
+            }
+            Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            dedicatedProcess = Process.GetCurrentProcess();
+            dedicatedCpuTime = dedicatedProcess.TotalProcessorTime.TotalSeconds;
+            dedicatedMetricsStart = Time.realtimeSinceStartup;
+            dedicatedNextReport = dedicatedMetricsStart + 10;
+            dedicatedGcCount = GC.CollectionCount(0);
+            BattleModePerformanceMarkers.EnsureInitialized();
+            dedicatedRecorders = new ProfilerRecorder[dedicatedMarkerNames.Length];
+            dedicatedMarkerTotals = new double[dedicatedMarkerNames.Length];
+            for (int i = 0; i < dedicatedRecorders.Length; i++)
+                dedicatedRecorders[i] = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, dedicatedMarkerNames[i], 1,
+                    ProfilerRecorderOptions.StartImmediately | ProfilerRecorderOptions.WrapAroundWhenCapacityReached |
+                    ProfilerRecorderOptions.SumAllSamplesInFrame);
+            NetworkDiagnostics.InMessageEvent += DedicatedIncoming;
+            NetworkDiagnostics.OutMessageEvent += DedicatedOutgoing;
+            Debug.Log($"[Dedicated] configured UDP port={port}; fps={fps}; idleSeconds={dedicatedIdleSeconds}; protocol={OnlineVersionAuthenticator.ProtocolVersion}");
+        }
+
+        void TickDedicatedProcess()
+        {
+            if (!dedicatedServer || !Mirror.NetworkServer.active) return;
+            dedicatedFrames++;
+            dedicatedMaxFrame = Mathf.Max(dedicatedMaxFrame, Time.unscaledDeltaTime);
+            for (int i = 0; i < dedicatedRecorders.Length; i++)
+                if (dedicatedRecorders[i].Valid) dedicatedMarkerTotals[i] += dedicatedRecorders[i].LastValue / 1000000d;
+            if (playerIdByConnection.Count > 0) dedicatedLastOccupied = Time.realtimeSinceStartup;
+            if (Time.realtimeSinceStartup >= dedicatedNextStatus)
+            {
+                dedicatedNextStatus = Time.realtimeSinceStartup + 2;
+                if (!string.IsNullOrEmpty(dedicatedStatusPath))
+                {
+                    try
+                    {
+                        string temporary = dedicatedStatusPath + ".tmp";
+                        File.WriteAllText(temporary, JsonUtility.ToJson(new DedicatedStatus
+                        {
+                            token = dedicatedToken, players = playerIdByConnection.Count,
+                            available = !leavingRoom && OnlineRoomDiscovery.AcceptingPlayers
+                        }), new System.Text.UTF8Encoding(false));
+                        if (File.Exists(dedicatedStatusPath)) File.Delete(dedicatedStatusPath);
+                        File.Move(temporary, dedicatedStatusPath);
+                    }
+                    catch (IOException error) { Debug.LogError("[Dedicated] status write failed: " + error.Message); }
+                }
+            }
+            if (Time.realtimeSinceStartup >= dedicatedNextReport)
+            {
+                dedicatedNextReport = Time.realtimeSinceStartup + 10;
+                dedicatedProcess.Refresh();
+                double cpu = dedicatedProcess.TotalProcessorTime.TotalSeconds;
+                float elapsed = Mathf.Max(0.001f, Time.realtimeSinceStartup - dedicatedMetricsStart);
+                string metrics = JsonUtility.ToJson(new DedicatedMetrics
+                {
+                    utc = DateTime.UtcNow.ToString("O"), room = dedicatedRoomId,
+                    scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                    players = playerIdByConnection.Count, objects = Mirror.NetworkServer.spawned.Count,
+                    fps = dedicatedFrames / elapsed, maxFrameMs = dedicatedMaxFrame * 1000,
+                    cpuPercentOneCore = (cpu - dedicatedCpuTime) / elapsed * 100,
+                    residentMiB = dedicatedProcess.WorkingSet64 / 1048576d,
+                    managedMiB = GC.GetTotalMemory(false) / 1048576d,
+                    unityAllocatedMiB = Profiler.GetTotalAllocatedMemoryLong() / 1048576d,
+                    gcCollections = GC.CollectionCount(0) - dedicatedGcCount,
+                    incomingKiBPerSecond = dedicatedIncomingBytes / elapsed / 1024d ,
+                    outgoingKiBPerSecond = dedicatedOutgoingBytes / elapsed / 1024d ,
+                    markerNames = dedicatedMarkerNames ,
+                    averageMarkerMs = DedicatedMarkerAverages()
+                });
+                Debug.Log("[ServerMetrics] " + metrics);
+                AppendDedicatedLog("metrics.jsonl", metrics);
+                dedicatedCpuTime = cpu;
+                dedicatedMetricsStart = Time.realtimeSinceStartup;
+                dedicatedFrames = 0;
+                dedicatedMaxFrame = 0;
+                dedicatedGcCount = GC.CollectionCount(0);
+                dedicatedIncomingBytes = dedicatedOutgoingBytes = 0;
+                Array.Clear(dedicatedMarkerTotals, 0, dedicatedMarkerTotals.Length);
+            }
+            if (dedicatedIdleSeconds > 0 && Time.realtimeSinceStartup - dedicatedLastOccupied >= dedicatedIdleSeconds)
+            {
+                Debug.Log("[Dedicated] idle timeout; stopping room process.");
+                StopServer();
+                Application.Quit();
+            }
+        }
+
+        double[] DedicatedMarkerAverages()
+        {
+            var result = new double[dedicatedMarkerTotals.Length];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = dedicatedRecorders[i].Valid ? dedicatedMarkerTotals[i] / Mathf.Max(1, dedicatedFrames) : -1;
+            return result;
+        }
+
+        void DedicatedIncoming(NetworkDiagnostics.MessageInfo info) => dedicatedIncomingBytes += (long)info.bytes * info.count;
+        void DedicatedOutgoing(NetworkDiagnostics.MessageInfo info) => dedicatedOutgoingBytes += (long)info.bytes * info.count;
+
+        void DisposeDedicatedMetrics()
+        {
+            Application.logMessageReceivedThreaded -= CaptureDedicatedEvent;
+            NetworkDiagnostics.InMessageEvent -= DedicatedIncoming;
+            NetworkDiagnostics.OutMessageEvent -= DedicatedOutgoing;
+            if (dedicatedRecorders != null)
+                foreach (var recorder in dedicatedRecorders) recorder.Dispose();
+            dedicatedProcess?.Dispose();
+        }
+
+        void CaptureDedicatedEvent(string message, string stack, LogType type)
+        {
+            if (type == LogType.Log && !message.StartsWith("[Room]", StringComparison.Ordinal) &&
+                !message.StartsWith("[Dedicated]", StringComparison.Ordinal)) return;
+            AppendDedicatedLog("events.jsonl", JsonUtility.ToJson(new DedicatedEvent
+            {
+                utc = DateTime.UtcNow.ToString("O"), room = dedicatedRoomId,
+                level = type.ToString(), message = message, stack = stack
+            }));
+        }
+
+        void AppendDedicatedLog(string file, string line)
+        {
+            if (string.IsNullOrEmpty(dedicatedLogDirectory)) return;
+            lock (dedicatedLogLock)
+            {
+                try { File.AppendAllText(Path.Combine(dedicatedLogDirectory, file), line + "\n", new System.Text.UTF8Encoding(false)); }
+                catch (IOException) { /* Unity's primary log remains the fallback when the disk is full. */ }
+                catch (UnauthorizedAccessException) { /* Preserve the original error without recursive logging. */ }
+            }
+        }
+    }
+}

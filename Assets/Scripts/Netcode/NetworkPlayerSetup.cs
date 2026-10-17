@@ -29,6 +29,8 @@ namespace Assets.Scripts.Netcode
         public override void OnStartClient()
         {
             ApplyPlayerId(netPlayerId);
+            if (TryGetComponent<NetworkTransformReliable>(out var transformSync))
+                transformSync.syncDirection = SyncDirection.ServerToClient;
 
             // Cliente puro não simula física: deixa o Rigidbody2D kinematic
             // para o NetworkTransform posicionar sem conflito.

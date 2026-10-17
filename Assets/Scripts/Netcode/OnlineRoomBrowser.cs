@@ -9,181 +9,129 @@ using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts.Netcode
 {
-    [Serializable]
-    public sealed class OnlineDirectorySettings
+    [Serializable] public sealed class OnlineDirectorySettings { public string directoryUrl = ""; }
+    [Serializable] public sealed class OnlineListedRoom
     {
-        public string directoryUrl = "";
-    }
-
-    [Serializable]
-    public sealed class OnlineListedRoom
-    {
-        public string id, name, uri;
+        public string id, name, uri, mode;
+        public int maxPlayers;
         public int players;
-        [NonSerialized] public bool local;
-        [NonSerialized] public float lastSeen;
-    }
-
-    [Serializable] public sealed class OnlineRoomListing { public OnlineListedRoom[] rooms; }
-    [Serializable] public sealed class OnlineRoomRegistration
-    {
-        public string id, token, name, protocol = "sb6-room-v1", scheme;
-        public int port, players;
         public bool available;
+        public OnlineRoomMode Mode => Enum.TryParse(mode, out OnlineRoomMode parsed) && OnlineRoomRules.IsValid(parsed)
+            ? parsed : OnlineRoomMode.BattleMode;
     }
+    [Serializable] public sealed class OnlineRoomListing { public OnlineListedRoom[] rooms; }
 
-    // Lives beside the existing persistent NetworkManager; does not own room authority.
-    [RequireComponent(typeof(OnlineRoomDiscovery))]
+    // Clients discover and allocate rooms here; gameplay lives in dedicated processes.
     public sealed class OnlineRoomBrowser : MonoBehaviour
     {
-        readonly Dictionary<string, OnlineListedRoom> localRooms = new();
-        readonly List<OnlineListedRoom> publicRooms = new();
         public readonly List<OnlineListedRoom> Rooms = new();
-        OnlineRoomDiscovery discovery;
-        string directoryUrl, registrationId = "", registrationToken = "";
-        bool wasServer, wasBrowsing, published, lanStarted;
-        float nextLanAttempt;
-        public bool PublishPublic { get; set; }
+        string directoryUrl;
         public bool DirectoryConfigured => !string.IsNullOrEmpty(directoryUrl);
         public bool DirectoryFailed { get; private set; }
-        public bool LanFailed { get; private set; }
         public bool RefreshRequested { get; set; }
+        public bool Creating { get; private set; }
 
         void Start()
         {
-            // A probe has no public listing: its credentials are delivered privately per participant.
-            if (OnlineRelayProbe.Active) { enabled = false; return; }
-            discovery = GetComponent<OnlineRoomDiscovery>();
-            discovery.RoomFound += OnRoomFound;
+            if (NetworkManager.singleton is BombermanNetworkManager manager && manager.IsDedicatedServer)
+            { enabled = false; return; }
             var config = Resources.Load<TextAsset>("OnlineRoomDirectory");
             var settings = config != null ? JsonUtility.FromJson<OnlineDirectorySettings>(config.text) : new();
-            registrationId = Guid.NewGuid().ToString("N");
-            registrationToken = Guid.NewGuid().ToString("N");
-            directoryUrl = settings.directoryUrl?.Trim().TrimEnd('/');
+            directoryUrl = OnlineRoomRules.DirectoryUrl(settings.directoryUrl);
             if (!Uri.TryCreate(directoryUrl, UriKind.Absolute, out var endpoint) ||
-                (endpoint.Scheme != "https" && !(endpoint.Scheme == "http" && endpoint.IsLoopback)))
-                directoryUrl = "";
-            StartCoroutine(DirectoryLoop());
+                (endpoint.Scheme != "https" && !(endpoint.Scheme == "http" &&
+                    (endpoint.IsLoopback || endpoint.Host == "100.64.0.46" || endpoint.Host == "192.48.205.46")))) directoryUrl = "";
+            StartCoroutine(RefreshLoop());
         }
 
-        void Update()
-        {
-            bool server = NetworkServer.active;
-            bool browsing = SceneManager.GetActiveScene().name == NetworkLobby.SceneName &&
-                !server && !NetworkClient.active;
-            if (server != wasServer || browsing != wasBrowsing)
-            {
-                discovery.StopDiscovery();
-                lanStarted = false;
-                nextLanAttempt = 0;
-                if (browsing) { publicRooms.Clear(); localRooms.Clear(); RefreshRequested = true; }
-                wasServer = server;
-                wasBrowsing = browsing;
-            }
-            if ((server || browsing) && !lanStarted && Time.unscaledTime >= nextLanAttempt &&
-                Mirror.Discovery.NetworkDiscovery.SupportedOnThisPlatform)
-            {
-                try
-                {
-                    if (server) discovery.AdvertiseServer(); else discovery.StartDiscovery();
-                    lanStarted = true;
-                    LanFailed = false;
-                }
-                catch (System.Net.Sockets.SocketException) { LanFailed = true; nextLanAttempt = Time.unscaledTime + 10; }
-            }
-            Rooms.Clear();
-            foreach (var room in localRooms.Values)
-                if (Time.unscaledTime - room.lastSeen < 10) Rooms.Add(room);
-            Rooms.AddRange(publicRooms);
-            Rooms.Sort((a, b) => a.local != b.local ? (a.local ? -1 : 1) : string.CompareOrdinal(a.id, b.id));
-        }
+        bool Browsing => SceneManager.GetActiveScene().name == NetworkLobby.SceneName &&
+            !NetworkClient.active && !NetworkServer.active;
 
-        void OnRoomFound(OnlineDiscoveryResponse response)
+        IEnumerator RefreshLoop()
         {
-            string key = response.serverId.ToString();
-            if (!response.available) { localRooms.Remove(key); return; }
-            localRooms[key] = new OnlineListedRoom
-            {
-                id = key, name = response.uri.Host, uri = response.uri.AbsoluteUri,
-                players = response.players, local = true, lastSeen = Time.unscaledTime
-            };
-        }
-
-        IEnumerator DirectoryLoop()
-        {
-            float nextRequest = 0;
+            float next = 0;
             while (true)
             {
-                if (!DirectoryConfigured) { yield return new WaitForSecondsRealtime(1); continue; }
-                bool advertise = NetworkServer.active && PublishPublic && OnlineRoomDiscovery.AcceptingPlayers;
-                if (published && !advertise)
-                {
-                    using var remove = UnityWebRequest.Delete(directoryUrl + "/rooms/" + registrationId);
-                    remove.SetRequestHeader("Authorization", "Bearer " + registrationToken);
-                    remove.timeout = 5;
-                    yield return remove.SendWebRequest();
-                    published = false; // Server TTL also cleans up abrupt exits or failed deletion.
-                }
-                if (Time.unscaledTime >= nextRequest || RefreshRequested)
+                if (DirectoryConfigured && Browsing && !Creating && (RefreshRequested || Time.unscaledTime >= next))
                 {
                     RefreshRequested = false;
-                    nextRequest = Time.unscaledTime + 5;
-                    if (advertise)
+                    next = Time.unscaledTime + 5;
+                    using var request = UnityWebRequest.Get(directoryUrl + "/rooms");
+                    request.timeout = 5;
+                    yield return request.SendWebRequest();
+                    DirectoryFailed = request.result != UnityWebRequest.Result.Success;
+                    Rooms.Clear();
+                    if (!DirectoryFailed)
                     {
-                        var uri = Transport.active.ServerUri();
-                        var registration = new OnlineRoomRegistration
-                        {
-                            id = registrationId, token = registrationToken,
-                            name = "Battle Mode " + registrationId.Substring(0, 6),
-                            port = uri.Port, scheme = uri.Scheme,
-                            players = NetworkServer.connections.Count, available = true
-                        };
-                        using var request = new UnityWebRequest(directoryUrl + "/rooms", "POST");
-                        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(registration)));
-                        request.downloadHandler = new DownloadHandlerBuffer();
-                        request.SetRequestHeader("Content-Type", "application/json");
-                        request.timeout = 5;
-                        yield return request.SendWebRequest();
-                        DirectoryFailed = request.result != UnityWebRequest.Result.Success;
-                        if (!DirectoryFailed) published = true;
-                    }
-                    else if (wasBrowsing)
-                    {
-                        using var request = UnityWebRequest.Get(directoryUrl + "/rooms?protocol=sb6-room-v1");
-                        request.timeout = 5;
-                        yield return request.SendWebRequest();
-                        DirectoryFailed = request.result != UnityWebRequest.Result.Success;
-                        publicRooms.Clear();
-                        if (!DirectoryFailed)
-                        {
-                            OnlineRoomListing listing = null;
-                            try { listing = JsonUtility.FromJson<OnlineRoomListing>(request.downloadHandler.text); }
-                            catch (ArgumentException) { DirectoryFailed = true; }
-                            if (listing?.rooms != null)
-                                foreach (var room in listing.rooms)
-                                    if (room != null && room.players >= 0 && room.players < GameSession.MaxPlayerId &&
-                                        Uri.TryCreate(room.uri, UriKind.Absolute, out var uri) &&
-                                        uri.Scheme == Transport.active.ServerUri().Scheme && uri.Port > 0 &&
-                                        !string.IsNullOrEmpty(room.id)) publicRooms.Add(room);
-                        }
+                        OnlineRoomListing listing = null;
+                        try { listing = JsonUtility.FromJson<OnlineRoomListing>(request.downloadHandler.text); }
+                        catch (ArgumentException) { DirectoryFailed = true; }
+                        if (listing?.rooms != null)
+                            foreach (var room in listing.rooms)
+                                if (Valid(room) && room.available && room.players < room.maxPlayers) Rooms.Add(room);
                     }
                 }
                 yield return new WaitForSecondsRealtime(0.5f);
             }
         }
 
-        void OnDestroy()
+        static bool Valid(OnlineListedRoom room) => room != null && !string.IsNullOrEmpty(room.id) &&
+            room.players >= 0 && room.players <= room.maxPlayers &&
+            Enum.TryParse(room.mode, out OnlineRoomMode mode) && OnlineRoomRules.IsValid(mode) &&
+            room.maxPlayers == OnlineRoomRules.Capacity(mode) && Uri.TryCreate(room.uri, UriKind.Absolute, out var uri) &&
+            uri.Scheme == "kcp" && uri.Port > 0;
+
+        public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode)
         {
-            if (discovery != null) { discovery.RoomFound -= OnRoomFound; discovery.StopDiscovery(); }
-            // LeaveRoom destroys the manager immediately, so its coroutine cannot finish a DELETE.
-            // Let the native request finish independently; TTL covers application shutdown/failure.
-            if (published && DirectoryConfigured)
+            if (!DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode)) return;
+            StartCoroutine(Allocate(mode));
+        }
+
+        IEnumerator Allocate(OnlineRoomMode mode)
+        {
+            Creating = true;
+            DirectoryFailed = false;
+            using var request = new UnityWebRequest(directoryUrl + "/rooms", "POST");
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
+                "{\"protocol\":" + OnlineVersionAuthenticator.ProtocolVersion + ",\"mode\":\"" + mode + "\"}"));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = 10;
+            yield return request.SendWebRequest();
+            OnlineListedRoom allocated = null;
+            if (request.result == UnityWebRequest.Result.Success)
             {
-                var remove = UnityWebRequest.Delete(directoryUrl + "/rooms/" + registrationId);
-                remove.SetRequestHeader("Authorization", "Bearer " + registrationToken);
-                remove.timeout = 5;
-                remove.SendWebRequest().completed += _ => remove.Dispose();
+                try { allocated = JsonUtility.FromJson<OnlineListedRoom>(request.downloadHandler.text); }
+                catch (ArgumentException) { }
             }
+            if (!Valid(allocated) || allocated.Mode != mode)
+            { DirectoryFailed = true; Creating = false; yield break; }
+            float deadline = Time.realtimeSinceStartup + 45;
+            while (Browsing && Time.realtimeSinceStartup < deadline)
+            {
+                using var poll = UnityWebRequest.Get(directoryUrl + "/rooms/" + Uri.EscapeDataString(allocated.id));
+                poll.timeout = 5;
+                yield return poll.SendWebRequest();
+                if (poll.result != UnityWebRequest.Result.Success) break;
+                OnlineListedRoom room = null;
+                try { room = JsonUtility.FromJson<OnlineListedRoom>(poll.downloadHandler.text); }
+                catch (ArgumentException) { }
+                if (Valid(room) && room.Mode == mode && room.available)
+                {
+                    Creating = false;
+                    JoinRoom(room);
+                    yield break;
+                }
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
+            DirectoryFailed = true;
+            Creating = false;
+        }
+
+        public void JoinRoom(OnlineListedRoom room)
+        {
+            if (!Browsing || Creating || !Valid(room)) return;
+            NetworkManager.singleton.StartClient(new Uri(room.uri));
         }
     }
 }

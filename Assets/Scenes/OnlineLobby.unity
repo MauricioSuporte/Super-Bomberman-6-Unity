@@ -282,8 +282,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11be04f066882d8ef909dbf537adba74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.OnlineLobbyMenu
-  battleSceneName: BattleMode_1
-  address: localhost
 --- !u!114 &1121810762
 MonoBehaviour:
   m_ObjectHideFlags: 0

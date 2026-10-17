@@ -40,7 +40,12 @@ public partial class GamePauseController
         if (!NetSync.IsOnline) return false;
         if (!NetSync.IsServer) return true;
         ForceUnpause();
-        if (sceneName == titleSceneName) BombermanNetworkManager.LeaveRoom();
+        if (sceneName == titleSceneName)
+        {
+            if (Mirror.NetworkManager.singleton is BombermanNetworkManager manager && manager.IsDedicatedServer)
+                BombermanNetworkManager.ServerDisconnectRoomAdmin();
+            else BombermanNetworkManager.LeaveRoom();
+        }
         else if (sceneName == battleModeMenuSceneName)
         {
             GameSession.Instance?.EndBattleMatch();

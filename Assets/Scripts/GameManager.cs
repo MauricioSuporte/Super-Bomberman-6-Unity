@@ -2701,7 +2701,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator ClearReservedItemSpawnCellsAtEndOfFrame()
     {
-        yield return new WaitForEndOfFrame();
+        yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
         reservedItemSpawnCells.Clear();
         clearReservedItemSpawnCellsRoutine = null;
     }

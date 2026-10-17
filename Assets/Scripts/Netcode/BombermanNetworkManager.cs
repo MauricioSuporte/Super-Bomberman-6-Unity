@@ -38,6 +38,7 @@ namespace Assets.Scripts.Netcode
     ///
     /// Wiring no Editor: ver Docs/multiplayer/mirror-battlemode-poc.md.
     /// </summary>
+    [DefaultExecutionOrder(-150)]
     public partial class BombermanNetworkManager : NetworkManager
     {
         // Conexão -> playerId atribuído (lado servidor).
@@ -54,13 +55,29 @@ namespace Assets.Scripts.Netcode
         {
             base.Awake();
             if (singleton != this) return;
-            OnlineRelayProbe.Configure(this);
             if (authenticator == null)
                 authenticator = gameObject.AddComponent<OnlineVersionAuthenticator>();
             // A cena tem um NetworkManager → é destinada a rede. Impede o gameplay
             // (ex.: relógio de round) de rodar antes de clicar Host/Client.
             NetSync.IsNetworkedScene = true;
             dedicatedServer = HasArg("-server");
+#if UNITY_SERVER
+            dedicatedServer = true;
+#endif
+            if (dedicatedServer)
+            {
+                try
+                {
+                    ConfigureDedicatedProcess();
+                }
+                catch (System.Exception error) when (error is System.ArgumentException || error is System.InvalidOperationException)
+                {
+                    enabled = false;
+                    Debug.LogError("[Dedicated] " + error.Message);
+                    Application.Quit(1);
+                    return;
+                }
+            }
         }
 
         static bool HasArg(string arg)
@@ -80,6 +97,7 @@ namespace Assets.Scripts.Netcode
             if (NetworkManager.singleton == null || NetworkManager.singleton == this)
                 NetSync.IsNetworkedScene = false;
 
+            DisposeDedicatedMetrics();
             base.OnDestroy(); // cleanup do Mirror (singleton/estáticos)
         }
 
@@ -115,7 +133,7 @@ namespace Assets.Scripts.Netcode
         // (Invoke) para não trocar de cena de dentro do OnServerAddPlayer.
         void TryDedicatedAutoStart()
         {
-            if (!dedicatedServer || !InLobbyScene())
+            if (!dedicatedServer || !HasArg("-server-autostart") || !InLobbyScene())
                 return;
             if (NetworkServer.connections.Count < minPlayersToAutoStart)
                 return;
@@ -216,7 +234,7 @@ namespace Assets.Scripts.Netcode
             var msg = new RoundTimerMessage { remaining = remaining, hasLimit = hasLimit };
             foreach (var conn in NetworkServer.connections.Values)
             {
-                if (conn == null || conn == NetworkServer.localConnection)
+                if (conn == null || !conn.isAuthenticated || conn == NetworkServer.localConnection)
                     continue;
                 conn.Send(msg);
             }
@@ -253,7 +271,7 @@ namespace Assets.Scripts.Netcode
 
             foreach (var conn in NetworkServer.connections.Values)
             {
-                if (conn == null || conn == NetworkServer.localConnection)
+                if (conn == null || !conn.isAuthenticated || conn == NetworkServer.localConnection)
                     continue;
                 conn.Send(msg);
             }
@@ -297,6 +315,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopServer()
         {
+            ClearDedicatedAdminInput();
             base.OnStopServer();
             playerIdByConnection.Clear();
             global::SaveSystem.EndOnlineBattleSettings();
@@ -339,14 +358,28 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
+            bool ownerLeft = playerIdByConnection.TryGetValue(conn.connectionId, out int departedId) &&
+                departedId == RoomAdminPlayerId;
             if (playerIdByConnection.TryGetValue(conn.connectionId, out _))
                 playerIdByConnection.Remove(conn.connectionId);
 
+            if (departedId > 0) PlayerInputManager.Instance?.ClearSyntheticPlayer(departedId);
+            Debug.Log($"[Room] disconnect connection={conn.connectionId} player={departedId} owner={ownerLeft}");
             base.OnServerDisconnect(conn); // destrói os objetos do player
             SyncActivePlayersToSession();
             selectionHeld.Clear();
             selectionPressed.Clear();
+            selectionLastReceived.Clear();
+            ClearDedicatedAdminInput();
+            if (ownerLeft && dedicatedServer && !leavingRoom)
+            {
+                leavingRoom = true;
+                StopServer();
+                Application.Quit();
+                return;
+            }
             if (!InLobbyScene() && !leavingRoom) ServerReturnToLobby();
+            BroadcastRoom();
         }
 
         int AllocatePlayerId(NetworkConnectionToClient conn)
@@ -354,9 +387,10 @@ namespace Assets.Scripts.Netcode
             if (playerIdByConnection.TryGetValue(conn.connectionId, out int existing))
                 return existing;
 
-            int assigned = FindAvailableRoomSlot(new HashSet<int>(playerIdByConnection.Values));
+            int assigned = FindAvailableRoomSlot(new HashSet<int>(playerIdByConnection.Values), RoomCapacity);
             if (assigned == 0) return 0;
             playerIdByConnection[conn.connectionId] = assigned;
+            Debug.Log($"[Room] join connection={conn.connectionId} player={assigned}");
             return assigned;
         }
 

@@ -10,7 +10,7 @@ namespace Assets.Scripts.Netcode
     public sealed class OnlineVersionAuthenticator : NetworkAuthenticator
     {
         // Bump when wire messages, network prefabs or gameplay content become incompatible.
-        public const int ProtocolVersion = 1;
+        public const int ProtocolVersion = 4;
         readonly HashSet<NetworkConnectionToClient> pending = new();
         public static bool VersionRejected { get; private set; }
 
@@ -38,7 +38,6 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerAuthenticate(NetworkConnectionToClient connection)
         {
-            if (OnlineRelayProbe.Active) Debug.Log("[RelayProbe v2] server awaiting version handshake");
             pending.Add(connection);
             StartCoroutine(Timeout(connection));
         }
@@ -53,7 +52,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!pending.Remove(connection)) return;
             bool compatible = Compatible(Application.version, request.gameVersion, request.protocol);
-            if (OnlineRelayProbe.Active) Debug.Log($"[RelayProbe v2] server version handshake compatible={compatible}");
+            if (!compatible) Debug.LogWarning($"[Room] rejected incompatible connection={connection.connectionId} protocol={request.protocol}");
             connection.Send(new Response { compatible = compatible });
             if (compatible) ServerAccept(connection);
             else StartCoroutine(Reject(connection));
@@ -80,7 +79,6 @@ namespace Assets.Scripts.Netcode
 
         void OnResponse(Response response)
         {
-            if (OnlineRelayProbe.Active) Debug.Log($"[RelayProbe v2] client version handshake compatible={response.compatible}");
             if (response.compatible) ClientAccept();
             else { VersionRejected = true; ClientReject(); }
         }

@@ -9,8 +9,37 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
-    [TestCase("0.5.0", 1, true)]
+    [TestCase(NetSync.NetMode.Offline, true)]
+    [TestCase(NetSync.NetMode.Host, true)]
+    [TestCase(NetSync.NetMode.Client, false)]
+    public void ServerMovesHumanPhysicsWithoutOwnerPrediction(NetSync.NetMode mode, bool expected)
+    {
+        var previous = NetSync.Mode;
+        var player = new GameObject("ServerAuthorityRegression");
+        player.SetActive(false);
+        try
+        {
+            NetSync.Mode = mode;
+            player.AddComponent<BoxCollider2D>();
+            var movement = player.AddComponent<MovementController>();
+            movement.SetPredictLocally(false);
+            var property = typeof(MovementController).GetProperty("ShouldMovePhysicsLocally",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.AreEqual(expected, property.GetValue(movement));
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player.prefab");
+            Assert.AreEqual(SyncDirection.ServerToClient, prefab.GetComponent<NetworkTransformReliable>().syncDirection);
+        }
+        finally
+        {
+            NetSync.Mode = previous;
+            Object.DestroyImmediate(player);
+        }
+    }
+
+    [TestCase("0.5.0", 4, true)]
+    [TestCase("0.5.0", 3, false)]
     [TestCase("0.5.1", 1, false)]
+    [TestCase("0.5.0", 1, false)]
     [TestCase("0.5.0", 2, false)]
     [TestCase("", 1, false)]
     public void OnlineCompatibilityRequiresSameBuildAndProtocol(string remoteVersion, int protocol, bool expected)
@@ -19,22 +48,39 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [Test]
-    public void RelayProbeCredentialsRejectInvalidEndpointOrRole()
+    public void RoomAdminIsRetainedAndNeverTransferredOnDeparture()
     {
-        var data = new OnlineRelayProbe.Credentials
-        {
-            role = "host", relayAddress = "relay.example.com", relayGameServerPort = 12345,
-            relayGameClientPort = 23456, sessionId = uint.MaxValue, userId = uint.MaxValue
-        };
-        Assert.IsTrue(data.IsValid);
-        data.role = "server";
-        Assert.IsFalse(data.IsValid);
-        data.role = "client";
-        data.relayGameClientPort = 65536;
-        Assert.IsFalse(data.IsValid);
-        data.relayGameClientPort = 23456;
-        data.relayAddress = "https://relay.example.com/";
-        Assert.IsFalse(data.IsValid);
+        Assert.AreEqual(2, BombermanNetworkManager.FindRoomAdmin(new[] { 4, 2 }));
+        Assert.AreEqual(4, BombermanNetworkManager.FindRoomAdmin(new[] { 1, 4 }, 4));
+        Assert.AreEqual(0, BombermanNetworkManager.FindRoomAdmin(new[] { 5, 2 }, 4));
+        Assert.AreEqual(0, BombermanNetworkManager.FindRoomAdmin(System.Array.Empty<int>(), 4));
+    }
+
+    [TestCase(OnlineRoomMode.BattleMode, 6)]
+    [TestCase(OnlineRoomMode.NormalGame, 4)]
+    [TestCase(OnlineRoomMode.BossRush, 4)]
+    public void RoomModesUseFixedCapacityAndRejectAnExtraSlot(OnlineRoomMode mode, int capacity)
+    {
+        Assert.AreEqual(capacity, OnlineRoomRules.Capacity(mode));
+        Assert.AreEqual(mode, OnlineRoomRules.ReadMode(new[] { "-room-mode", mode.ToString() }));
+        var slots = new List<int>();
+        for (int id = 1; id <= capacity; id++) slots.Add(id);
+        Assert.AreEqual(0, BombermanNetworkManager.FindAvailableRoomSlot(slots, capacity));
+        slots.Remove(2);
+        Assert.AreEqual(2, BombermanNetworkManager.FindAvailableRoomSlot(slots, capacity));
+        Assert.Throws<System.ArgumentException>(() => OnlineRoomRules.ReadMode(new[] { "-room-mode", "invalid" }));
+    }
+
+    [Test]
+    public void DedicatedOptionsValidatePortsAndKeepProcessesIndependent()
+    {
+        Assert.AreEqual(7777, BombermanNetworkManager.ReadDedicatedNumber(new string[0], "-port", 7777, 1, 65535));
+        Assert.AreEqual(7778, BombermanNetworkManager.ReadDedicatedNumber(new[] { "-port", "7778" }, "-port", 7777, 1, 65535));
+        foreach (var value in new[] { "0", "65536", "invalid" })
+            Assert.Throws<System.ArgumentException>(() => BombermanNetworkManager.ReadDedicatedNumber(
+                new[] { "-port", value }, "-port", 7777, 1, 65535));
+        Assert.Throws<System.ArgumentException>(() => BombermanNetworkManager.ReadDedicatedNumber(
+            new[] { "-port" }, "-port", 7777, 1, 65535));
     }
 
     [TearDown]
@@ -239,47 +285,16 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [UnityTest]
-    public System.Collections.IEnumerator LobbyAutomaticallyBrowsesAndAdvertisesLanRooms()
+    public System.Collections.IEnumerator LobbyUsesDedicatedDirectoryWithoutStartingLocalServer()
     {
         yield return new EnterPlayMode();
         yield return SceneManager.LoadSceneAsync(NetworkLobby.SceneName);
         yield return null;
         var manager = Object.FindAnyObjectByType<BombermanNetworkManager>();
-        var browser = manager.GetComponent<OnlineRoomBrowser>();
-        var discovery = manager.GetComponent<OnlineRoomDiscovery>();
-        Assert.IsNotNull(browser);
-        Assert.IsNotNull(discovery);
+        Assert.IsNotNull(manager.GetComponent<OnlineRoomBrowser>());
         Assert.IsNotNull(GameObject.Find("OnlineRoomCanvas/SafeFrame/RoomPanel/RoomBrowser"));
-        Assert.IsFalse(browser.PublishPublic);
-        if (manager.transport is kcp2k.KcpTransport transport) transport.Port = 0;
-        manager.StartHost();
-        yield return null;
-        using (var socket = new System.Net.Sockets.UdpClient(0))
-        {
-            byte[] packet;
-            using (var writer = NetworkWriterPool.Get())
-            {
-                writer.WriteLong(discovery.secretHandshake);
-                writer.Write(new OnlineDiscoveryRequest());
-                packet = writer.ToArray();
-            }
-            socket.Send(packet, packet.Length, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 47776));
-            var responseTask = socket.ReceiveAsync();
-            float deadline = Time.realtimeSinceStartup + 3f;
-            while (!responseTask.IsCompleted && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.IsTrue(responseTask.IsCompleted, "LAN host must respond to discovery without manually entering its gameplay IP.");
-            using (var reader = NetworkReaderPool.Get(responseTask.Result.Buffer))
-            {
-                Assert.AreEqual(discovery.secretHandshake, reader.ReadLong());
-                var room = reader.Read<OnlineDiscoveryResponse>();
-                Assert.IsTrue(room.available);
-                Assert.AreEqual(1, room.players);
-                Assert.AreEqual("kcp", room.uri.Scheme);
-            }
-        }
-        Assert.IsTrue(OnlineRoomDiscovery.AcceptingPlayers);
-        BombermanNetworkManager.ServerStartMatch("BattleMode_1");
-        Assert.IsFalse(OnlineRoomDiscovery.AcceptingPlayers);
+        Assert.IsNull(GameObject.Find("OnlineRoomCanvas/SafeFrame/RoomPanel/HostAddress"));
+        Assert.IsFalse(NetworkServer.active);
         BombermanNetworkManager.LeaveRoom();
         yield return null;
         yield return new ExitPlayMode();

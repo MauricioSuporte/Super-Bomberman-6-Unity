@@ -352,7 +352,7 @@ namespace Assets.Scripts.Netcode
                 // "Montando agora" = de nenhuma montaria (0/desconhecido) para X. Nesse
                 // caso o DONO reproduz o hop de montar localmente (o NetworkPlayerAnimation
                 // replica); nos demais casos (remoto, dismount, remount X→Y) vai direto.
-                bool mountingNow = mountType != 0 && appliedMountType <= 0 && isOwned && move != null && life > 0;
+                bool mountingNow = mountType != 0 && appliedMountType <= 0 && move != null && move.PredictLocally && life > 0;
 
                 if (mountingNow && TryPlayOwnerMountHop((MountedType)mountType))
                 {
@@ -366,7 +366,7 @@ namespace Assets.Scripts.Netcode
                     // O DONO troca o PRÓPRIO corpo para o visual "montado" (rider) para
                     // não sobrepor o Louie; os remotos recebem via NetworkPlayerAnimation.
                     // Só enquanto vivo — a animação de morte tem prioridade.
-                    if (isOwned && move != null && life > 0)
+                    if (move != null && move.PredictLocally && life > 0)
                         move.SetMountedOnLouie(mountType != 0);
                 }
 
@@ -378,7 +378,7 @@ namespace Assets.Scripts.Netcode
             // vem do próprio facing simulado localmente; o arremesso dispara ao
             // deixar de carregar. Enquanto morto/eliminado não desenha (a morte
             // assume o visual).
-            if (glove != null && isOwned && (move == null || !move.IsEndingStage))
+            if (glove != null && move != null && move.PredictLocally && (move == null || !move.IsEndingStage))
             {
                 bool carryNow = gloveHolding && life > 0 && !eliminated;
                 if (carryNow != appliedGloveHolding)

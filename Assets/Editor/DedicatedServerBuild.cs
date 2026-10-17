@@ -1,4 +1,5 @@
 using System.Linq;
+using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -13,13 +14,26 @@ using UnityEngine;
 /// </summary>
 public static class DedicatedServerBuild
 {
-    const string OutputPath = "Build/LinuxServer/SB6.x86_64";
-
     [MenuItem("Build/Linux Dedicated Server")]
-    public static void BuildLinuxServer()
+    public static void BuildLinuxServer() => Build(BuildTarget.StandaloneLinux64,
+        "Build/LinuxServer/SB6.x86_64", StandaloneBuildSubtarget.Server);
+
+    [MenuItem("Build/Linux Dedicated Server (Profiling)")]
+    public static void BuildLinuxProfilingServer() => Build(BuildTarget.StandaloneLinux64,
+        "Build/LinuxServer/SB6.x86_64", StandaloneBuildSubtarget.Server, BuildOptions.Development);
+
+    [MenuItem("Build/Windows Headless Server (Local Test)")]
+    public static void BuildWindowsTestServer() => Build(BuildTarget.StandaloneWindows64,
+        "Build/WindowsServer/SB6Server.exe", StandaloneBuildSubtarget.Player);
+
+    static void Build(BuildTarget target, string outputPath, StandaloneBuildSubtarget subtarget,
+        BuildOptions options = BuildOptions.None)
     {
-        PlayerSettings.SetScriptingBackend(NamedBuildTarget.Server, ScriptingImplementation.Mono2x);
-        EditorUserBuildSettings.standaloneBuildSubtarget = StandaloneBuildSubtarget.Server;
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, target))
+            throw new System.InvalidOperationException("Install the Unity build support module for " + target + " first.");
+        var buildGroup = subtarget == StandaloneBuildSubtarget.Server ? NamedBuildTarget.Server : NamedBuildTarget.Standalone;
+        var previousBackend = PlayerSettings.GetScriptingBackend(buildGroup);
+        var previousSubtarget = EditorUserBuildSettings.standaloneBuildSubtarget;
 
         // O servidor DEVE bootar na OnlineLobby (onde vive o NetworkManager).
         // Forçamos ela como cena 0 aqui, sem depender da ordem do EditorBuildSettings
@@ -32,20 +46,32 @@ public static class DedicatedServerBuild
         var opts = new BuildPlayerOptions
         {
             scenes = scenes.ToArray(),
-            locationPathName = OutputPath,
-            target = BuildTarget.StandaloneLinux64,
+            locationPathName = outputPath,
+            target = target,
             targetGroup = BuildTargetGroup.Standalone,
-            subtarget = (int)StandaloneBuildSubtarget.Server,
-            options = BuildOptions.Development,
+            subtarget = (int)subtarget,
+            options = options,
         };
 
-        BuildReport report = BuildPipeline.BuildPlayer(opts);
-        // volta o subtarget pra Player para não confundir builds futuros do editor.
-        EditorUserBuildSettings.standaloneBuildSubtarget = StandaloneBuildSubtarget.Player;
+        BuildReport report;
+        try
+        {
+            PlayerSettings.SetScriptingBackend(buildGroup, ScriptingImplementation.Mono2x);
+            EditorUserBuildSettings.standaloneBuildSubtarget = subtarget;
+            report = BuildPipeline.BuildPlayer(opts);
+        }
+        finally
+        {
+            EditorUserBuildSettings.standaloneBuildSubtarget = previousSubtarget;
+            PlayerSettings.SetScriptingBackend(buildGroup, previousBackend);
+        }
 
         BuildSummary s = report.summary;
         Debug.Log($"[DedicatedServerBuild] result={s.result} errors={s.totalErrors} " +
                   $"sizeMB={(s.totalSize / (1024f * 1024f)):F0} out={s.outputPath}");
+
+        if (s.result != BuildResult.Succeeded || s.totalErrors > 0 || !File.Exists(outputPath))
+            throw new BuildFailedException("Dedicated server build did not produce a valid executable. Check installed platform modules and restart the Editor after installing them.");
 
         // em batchmode, sinaliza falha com exit code != 0
         if (s.result != BuildResult.Succeeded && (Application.isBatchMode))

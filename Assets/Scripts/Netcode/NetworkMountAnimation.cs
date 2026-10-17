@@ -51,9 +51,8 @@ namespace Assets.Scripts.Netcode
         {
             companion = GetComponent<PlayerMountCompanion>();
             syncInterval = 0.03f;
-            // Client-auth (igual ao NetworkPlayerAnimation): garante em código que o
-            // sentido é ClientToServer, sem depender só do prefab.
-            syncDirection = SyncDirection.ClientToServer;
+            // The server samples animation for humans and COM.
+            syncDirection = SyncDirection.ServerToClient;
         }
 
         void LateUpdate()
@@ -68,7 +67,7 @@ namespace Assets.Scripts.Netcode
             if (renderers == null)
                 return;
 
-            if (isOwned)
+            if (isServer)
             {
                 SampleOwned();
                 return;
@@ -97,7 +96,7 @@ namespace Assets.Scripts.Netcode
 
             // Cliente remoto puro: desliga o driver de animação do mount (leria um
             // facing não-simulado e congelaria); nós dirigimos os frames replicados.
-            if (!isOwned && !isServer && visualController != null)
+            if (!isServer && visualController != null)
                 visualController.enabled = false;
         }
 

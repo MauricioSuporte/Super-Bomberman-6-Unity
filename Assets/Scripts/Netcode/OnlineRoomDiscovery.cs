@@ -30,7 +30,7 @@ namespace Assets.Scripts.Netcode
 
         public static bool AcceptingPlayers => NetworkServer.active &&
             !NetworkServer.isLoadingScene && SceneManager.GetActiveScene().name == NetworkLobby.SceneName &&
-            NetworkServer.connections.Count < GameSession.MaxPlayerId;
+            NetworkServer.connections.Count < BombermanNetworkManager.RoomCapacity;
 
         protected override OnlineDiscoveryResponse ProcessRequest(OnlineDiscoveryRequest request, IPEndPoint endpoint)
             => new OnlineDiscoveryResponse

@@ -49,10 +49,8 @@ namespace Assets.Scripts.Netcode
             move = GetComponent<MovementController>();
             // Sincroniza frames com frequência suficiente para animação fluida.
             syncInterval = 0.03f;
-            // Client-auth: o DONO amostra a própria animação e escreve as SyncVars.
-            // Garante em CÓDIGO (não só no prefab) que o sentido é ClientToServer —
-            // se o prefab resetar, as animações dos remotos não param silenciosamente.
-            syncDirection = SyncDirection.ClientToServer;
+            // The server samples animation for humans and COM.
+            syncDirection = SyncDirection.ServerToClient;
         }
 
         void LateUpdate()
@@ -62,10 +60,8 @@ namespace Assets.Scripts.Netcode
 
             if (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive && move != null && move.IsEndingStage)
                 return;
-            // Client-autoritativo: o DONO (host ou cliente) amostra a própria animação
-            // (simulada localmente) e sincroniza (SyncVars ClientToServer); os players
-            // remotos aplicam a saída replicada (modo manual).
-            if (isOwned || (isServer && connectionToClient == null))
+            // Clients, including the owner, apply server frames.
+            if (isServer)
             {
                 SampleOwned();
                 return;

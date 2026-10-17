@@ -1,4 +1,3 @@
-using System;
 using System.Text;
 using Mirror;
 using TMPro;
@@ -12,19 +11,17 @@ namespace Assets.Scripts.Netcode
 {
     public class OnlineLobbyMenu : MonoBehaviour
     {
-        [SerializeField] string battleSceneName = "BattleMode_1";
-        [SerializeField] string address = "localhost";
         GameObject canvasRoot;
         TextMeshProUGUI heading;
         TextMeshProUGUI details;
-        TMP_InputField addressInput;
         GameObject roomEventSystem;
-        Button hostButton, joinButton, configureButton, leaveButton;
+        Button hostButton, configureButton, leaveButton;
+        readonly Button[] modeButtons = new Button[3];
+        OnlineRoomMode selectedMode = OnlineRoomMode.BattleMode;
         OnlineRoomBrowser browser;
         GameObject browserRoot;
         TextMeshProUGUI browserStatus, pageLabel;
-        TextMeshProUGUI directJoinLabel;
-        Button refreshButton, publicButton, previousButton, nextButton;
+        Button refreshButton, previousButton, nextButton;
         readonly Button[] roomButtons = new Button[4];
         readonly OnlineListedRoom[] visibleRooms = new OnlineListedRoom[4];
         int page;
@@ -48,25 +45,13 @@ namespace Assets.Scripts.Netcode
             var manager = NetworkManager.singleton;
             if (manager == null || !manager.enabled) return;
             browser = GetComponent<OnlineRoomBrowser>();
-            if (OnlineRelayProbe.Active)
+            if (manager is BombermanNetworkManager dedicated && dedicated.IsDedicatedServer)
             {
-                if (OnlineRelayProbe.Role == "host") manager.StartHost();
-                else manager.StartClient();
-                CreateRoomCanvas();
+                if (!NetworkServer.active) manager.StartServer();
                 return;
-            }
-            if (HasArg("-server")) { manager.StartServer(); return; }
-            if (HasArg("-autohost"))
-            {
-                manager.StartHost();
-                Invoke(nameof(AutoStartMatch), 1.5f);
             }
             CreateRoomCanvas();
         }
-
-        void AutoStartMatch() => BombermanNetworkManager.ServerStartMatch(battleSceneName);
-        static bool HasArg(string value) => Array.Exists(Environment.GetCommandLineArgs(),
-            arg => string.Equals(arg, value, StringComparison.OrdinalIgnoreCase));
 
         void Update()
         {
@@ -76,15 +61,23 @@ namespace Assets.Scripts.Netcode
             canvasRoot.SetActive(lobby);
             if (!canvasRoot.activeSelf) return;
             var text = GameTextDatabase.Online;
-            heading.text = text.Room + " — " + text.BattleMode;
+            heading.text = text.Room + " — " + text.ModeName(
+                NetworkClient.isConnected || NetworkServer.active ? BombermanNetworkManager.RoomMode : selectedMode);
             bool connected = NetworkServer.active || NetworkClient.isConnected;
             bool idle = !NetworkServer.active && !NetworkClient.active;
-            idle &= !OnlineRelayProbe.Active;
             hostButton.gameObject.SetActive(idle && lobby);
-            joinButton.gameObject.SetActive(idle && lobby);
-            addressInput.gameObject.SetActive(idle && lobby);
+            hostButton.interactable = browser != null && browser.DirectoryConfigured && !browser.Creating;
+            for (int i = 0; i < modeButtons.Length; i++)
+            {
+                modeButtons[i].gameObject.SetActive(idle);
+                modeButtons[i].interactable = browser != null && !browser.Creating;
+                var mode = (OnlineRoomMode)i;
+                modeButtons[i].GetComponent<Image>().color = selectedMode == mode ? new Color(0.25f, 0.5f, 0.65f) : new Color(0.15f, 0.25f, 0.42f);
+                modeButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(mode) + " (" + OnlineRoomRules.Capacity(mode) + ")";
+            }
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
-            configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 2;
+            configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 2 &&
+                BombermanNetworkManager.RoomMode == OnlineRoomMode.BattleMode;
             if (EventSystem.current != null && (EventSystem.current.currentSelectedGameObject == null ||
                 !EventSystem.current.currentSelectedGameObject.activeInHierarchy))
             {
@@ -93,22 +86,24 @@ namespace Assets.Scripts.Netcode
                 EventSystem.current.SetSelectedGameObject(selection.gameObject);
             }
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
-            joinButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Join;
             configureButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Configure;
             leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Leave;
             var lines = new StringBuilder();
             if (connected)
             {
                 lines.AppendLine(string.Format(text.You, BombermanNetworkManager.LocalRoomPlayerId));
-                for (int id = 1; id <= GameSession.MaxPlayerId; id++)
+                if (BombermanNetworkManager.RoomAdminPlayerId > 0)
+                    lines.AppendLine(string.Format(text.RoomAdmin, BombermanNetworkManager.RoomAdminPlayerId));
+                for (int id = 1; id <= BombermanNetworkManager.RoomCapacity; id++)
                 {
                     string mode = BombermanNetworkManager.IsConnectedSlot(id) ? GameTextDatabase.BattleModeMenu.Man : text.Empty;
                     lines.AppendLine($"P{id}: {mode}");
                 }
-                lines.AppendLine(BombermanNetworkManager.RoomPlayers.Length < 2 ? text.NeedPlayers : text.Waiting);
-                if (browser.PublishPublic && browser.DirectoryFailed) lines.AppendLine(text.PublicUnavailable);
+                lines.AppendLine(BombermanNetworkManager.RoomMode != OnlineRoomMode.BattleMode ? text.CoopPending :
+                    BombermanNetworkManager.RoomPlayers.Length < 2 ? text.NeedPlayers : text.Waiting);
+
             }
-            else if (NetworkClient.active) lines.AppendLine(text.Connecting);
+            else if (NetworkClient.active || (browser != null && browser.Creating)) lines.AppendLine(text.Connecting);
             else if (OnlineVersionAuthenticator.VersionRejected) lines.AppendLine(text.VersionMismatch);
             details.text = lines.ToString();
             details.gameObject.SetActive(!idle || OnlineVersionAuthenticator.VersionRejected);
@@ -137,27 +132,18 @@ namespace Assets.Scripts.Netcode
             details.alignment = TextAlignmentOptions.TopLeft;
             details.textWrappingMode = TextWrappingModes.Normal;
             details.overflowMode = TextOverflowModes.Truncate;
-            var inputRoot = new GameObject("HostAddress", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
-            inputRoot.transform.SetParent(panel.transform, false);
-            Position(inputRoot.GetComponent<RectTransform>(), 0, -185, 940, 65);
-            inputRoot.GetComponent<Image>().color = new Color(0.15f, 0.17f, 0.24f);
-            var inputText = Label(inputRoot.transform, "Value", 0, 0, 880, 60, 28);
-            inputText.alignment = TextAlignmentOptions.Left;
-            addressInput = inputRoot.GetComponent<TMP_InputField>();
-            addressInput.textViewport = inputRoot.GetComponent<RectTransform>();
-            addressInput.textComponent = inputText;
-            addressInput.characterLimit = 255;
-            addressInput.text = address;
-            hostButton = MakeButton(panel.transform, "Host", -250, -280, () => NetworkManager.singleton.StartHost());
-            joinButton = MakeButton(panel.transform, "Join", 250, -280, () =>
-            {
-                address = addressInput.text.Trim();
-                if (string.IsNullOrEmpty(address)) return;
-                NetworkManager.singleton.networkAddress = address;
-                NetworkManager.singleton.StartClient();
-            });
+            hostButton = MakeButton(panel.transform, "Create", 0, -280, () => browser.CreateRoom(selectedMode));
             configureButton = MakeButton(panel.transform, "Configure", 0, -280, BombermanNetworkManager.ServerBeginConfiguration);
             leaveButton = MakeButton(panel.transform, "Leave", 0, -390, BombermanNetworkManager.LeaveRoom);
+            for (int i = 0; i < modeButtons.Length; i++)
+            {
+                var mode = (OnlineRoomMode)i;
+                modeButtons[i] = MakeButton(panel.transform, "Mode" + mode, -350 + i * 350, -195, () => selectedMode = mode);
+                Position(modeButtons[i].GetComponent<RectTransform>(), -350 + i * 350, -195, 335, 60);
+                var label = modeButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+                Position(label.rectTransform, 0, 0, 325, 55);
+                label.fontSize = 20;
+            }
             CreateBrowser(panel.transform);
             EnsureRoomEventSystem();
         }
@@ -168,7 +154,6 @@ namespace Assets.Scripts.Netcode
             browserRoot.transform.SetParent(parent, false);
             Position(browserRoot.GetComponent<RectTransform>(), 0, 0, 1080, 1040);
             browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 355, 1040, 75, 23);
-            directJoinLabel = Label(browserRoot.transform, "DirectJoin", 0, -135, 1040, 40, 22);
             for (int i = 0; i < roomButtons.Length; i++)
             {
                 int index = i;
@@ -190,18 +175,15 @@ namespace Assets.Scripts.Netcode
             refreshButton = MakeButton(browserRoot.transform, "Refresh", -250, -450, () =>
             {
                 browser.RefreshRequested = true;
-                GetComponent<OnlineRoomDiscovery>().BroadcastDiscoveryRequest();
             });
-            publicButton = MakeButton(browserRoot.transform, "Public", 250, -450, () => browser.PublishPublic = !browser.PublishPublic);
             Position(refreshButton.GetComponent<RectTransform>(), -250, -450, 460, 55);
-            Position(publicButton.GetComponent<RectTransform>(), 250, -450, 460, 55);
         }
 
         void JoinListedRoom(int index)
         {
             var room = visibleRooms[index];
             if (room == null || NetworkClient.active || NetworkServer.active || !browser.Rooms.Contains(room)) return;
-            if (Uri.TryCreate(room.uri, UriKind.Absolute, out var uri)) NetworkManager.singleton.StartClient(uri);
+            browser.JoinRoom(room);
         }
 
         void UpdateBrowser(bool visible)
@@ -209,12 +191,11 @@ namespace Assets.Scripts.Netcode
             browserRoot.SetActive(visible);
             if (!visible || browser == null) return;
             var text = GameTextDatabase.Online;
-            directJoinLabel.text = text.DirectJoin;
             int pages = Mathf.Max(1, Mathf.CeilToInt(browser.Rooms.Count / 4f));
             page = Mathf.Clamp(page, 0, pages - 1);
             browserStatus.text = text.AvailableRooms + "\n" +
-                (browser.LanFailed ? text.LanUnavailable : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom) + " · " +
-                (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.DirectoryFailed ? text.PublicUnavailable : text.PublicRooms);
+                (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.DirectoryFailed ? text.PublicUnavailable :
+                    browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom);
             for (int i = 0; i < roomButtons.Length; i++)
             {
                 int index = page * 4 + i;
@@ -223,14 +204,12 @@ namespace Assets.Scripts.Netcode
                 if (visibleRooms[i] == null) continue;
                 var room = visibleRooms[i];
                 roomButtons[i].GetComponentInChildren<TextMeshProUGUI>().text =
-                    $"{(room.local ? text.LocalRooms : text.PublicRooms)} · {room.name} · {room.players}/6 · {text.Join}";
+                    $"{text.ModeName(room.Mode)} · {room.name} · {room.players}/{room.maxPlayers} · {text.Join}";
             }
             previousButton.interactable = page > 0;
             nextButton.interactable = page + 1 < pages;
             pageLabel.text = $"{page + 1} / {pages}";
             refreshButton.GetComponentInChildren<TextMeshProUGUI>().text = text.RefreshRooms;
-            publicButton.interactable = browser.DirectoryConfigured;
-            publicButton.GetComponentInChildren<TextMeshProUGUI>().text = browser.PublishPublic ? text.CreatePublic : text.CreateLocal;
         }
 
         void EnsureRoomEventSystem()
