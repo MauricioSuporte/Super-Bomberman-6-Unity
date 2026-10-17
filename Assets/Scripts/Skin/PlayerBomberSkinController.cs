@@ -18,7 +18,8 @@ public class PlayerBomberSkinController : MonoBehaviour
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
     // Sprite-sheet animation indices. Update this block when the shared bomber template changes.
     static readonly int[] BombermanAfkFrames = { 130, 129, 128, 129, 130, 131, 132, 131 };
-    static readonly int[] BombermanPalette2AfkFrames = { 130, 131, 132, 131, 130, 129, 128, 129 };
+    static readonly int[] BombermanPalette2AfkFrames = { 128, 129, 130, 131, 132, 131, 130, 129 };
+    static readonly float[] BombermanPalette2AfkDurations = { 1.2f, 0.18f, 0.18f, 1.2f, 0.6f, 1.2f, 0.18f, 0.18f };
     // Attachment frames 7, 6, 8, 6, played four times and held on frame 6.
     static readonly int[] BombermanPalette2EndStageFrames =
     {
@@ -221,7 +222,8 @@ public class PlayerBomberSkinController : MonoBehaviour
             afkFrames,
             targetMap,
             skin,
-            speedMultiplier: afkSpeedMultiplier
+            speedMultiplier: afkSpeedMultiplier,
+            frameDurations: usePalette2Animations ? BombermanPalette2AfkDurations : null
         );
 
         ApplyFrameSequence(
