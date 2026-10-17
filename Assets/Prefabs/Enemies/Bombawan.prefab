@@ -113,8 +113,8 @@ MonoBehaviour:
   - {fileID: 1058342436014902054, guid: 5f75c0c0f90faa246ad46135dc73dd7d, type: 3}
   allowFlipX: 0
   animationTime: 0.2
-  useSequenceDuration: 0
-  sequenceDuration: 0.5
+  useSequenceDuration: 1
+  sequenceDuration: 0.8
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
@@ -239,8 +239,8 @@ MonoBehaviour:
   - {fileID: -5660526366397937352, guid: 5f75c0c0f90faa246ad46135dc73dd7d, type: 3}
   allowFlipX: 0
   animationTime: 0.2
-  useSequenceDuration: 0
-  sequenceDuration: 0.5
+  useSequenceDuration: 1
+  sequenceDuration: 0.8
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
@@ -533,7 +533,6 @@ MonoBehaviour:
   passesThroughDestructibles: 0
   junctionPassDestructiblesTag: Destructibles
   fuseAnimation: {fileID: 0}
-  flipOnVerticalWalkCycle: 1
   explosionDelay: 0.5
   explosionRadius: 5
   pierceExplosion: 0
@@ -650,8 +649,8 @@ MonoBehaviour:
   - {fileID: 8126631707323286724, guid: 5f75c0c0f90faa246ad46135dc73dd7d, type: 3}
   allowFlipX: 0
   animationTime: 0.2
-  useSequenceDuration: 0
-  sequenceDuration: 0.5
+  useSequenceDuration: 1
+  sequenceDuration: 0.8
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
