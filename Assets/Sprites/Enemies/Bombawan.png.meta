@@ -32,36 +32,6 @@ TextureImporter:
   - first:
       213: 1059122522586663167
     second: Bombawan_9
-  - first:
-      213: -3105047852188674744
-    second: Bombawan_10
-  - first:
-      213: -9170929685551770265
-    second: Bombawan_11
-  - first:
-      213: 1464928602178894810
-    second: Bombawan_12
-  - first:
-      213: 1880756165882190845
-    second: Bombawan_13
-  - first:
-      213: 3111610561742746217
-    second: Bombawan_Body_00
-  - first:
-      213: -9068628829714342789
-    second: Bombawan_Body_01
-  - first:
-      213: -4767046989673275028
-    second: Bombawan_Body_02
-  - first:
-      213: -2078637333938363578
-    second: Bombawan_Fuse_00
-  - first:
-      213: -3194296180346573486
-    second: Bombawan_Fuse_01
-  - first:
-      213: 2400163032134633199
-    second: Bombawan_Death
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -172,110 +142,22 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Bombawan_Body_00
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 34
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 962b704e159ae2b20800000000000000
-      internalID: 3111610561742746217
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bombawan_Body_01
-      rect:
-        serializedVersion: 2
-        x: 52
-        y: 34
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b7c92058022c52280800000000000000
-      internalID: -9068628829714342789
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bombawan_Body_02
-      rect:
-        serializedVersion: 2
-        x: 104
-        y: 34
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c61ede0150c08ddb0800000000000000
-      internalID: -4767046989673275028
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bombawan_Death
-      rect:
-        serializedVersion: 2
-        x: 156
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fe6c865af871f4120800000000000000
-      internalID: 2400163032134633199
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Bombawan_0
       rect:
         serializedVersion: 2
-        x: 138
-        y: 34
+        x: 0
+        y: 33
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: d9d177b2a5e3e284786381ef3dc9dbff
+      spriteID: 62bc36596dcffae00800000000000000
       internalID: 1058342436014902054
       vertices: []
       indices: 
@@ -285,19 +167,19 @@ TextureImporter:
       name: Bombawan_1
       rect:
         serializedVersion: 2
-        x: 1
-        y: 0
+        x: 33
+        y: 33
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 25f530176a8483449bdbc15fac223fc7
+      spriteID: a32c0560a83efb780800000000000000
       internalID: -8664956976086597062
       vertices: []
       indices: 
@@ -307,19 +189,19 @@ TextureImporter:
       name: Bombawan_2
       rect:
         serializedVersion: 2
-        x: 53
-        y: 0
+        x: 66
+        y: 33
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: ffa910bfdad2f02409081500c42971bb
+      spriteID: fe057e6213ee26190800000000000000
       internalID: -7970546495618854673
       vertices: []
       indices: 
@@ -329,19 +211,19 @@ TextureImporter:
       name: Bombawan_3
       rect:
         serializedVersion: 2
-        x: 105
-        y: 0
+        x: 99
+        y: 33
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 88105c477721e8548a506a44c32a688a
+      spriteID: 4c44e672b7897c070800000000000000
       internalID: 8126631707323286724
       vertices: []
       indices: 
@@ -351,19 +233,19 @@ TextureImporter:
       name: Bombawan_4
       rect:
         serializedVersion: 2
-        x: 35
-        y: 54
-        width: 12
-        height: 12
+        x: 132
+        y: 33
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: a0f7c03625f702c46971315a347a1366
+      spriteID: 3563beb63067e6e50800000000000000
       internalID: 6804505844070954579
       vertices: []
       indices: 
@@ -373,19 +255,19 @@ TextureImporter:
       name: Bombawan_5
       rect:
         serializedVersion: 2
-        x: 91
-        y: 54
-        width: 12
-        height: 12
+        x: 165
+        y: 33
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f7674dd5697a3284c90e0a6fdd8ad813
+      spriteID: 4459ad30e64dfdb70800000000000000
       internalID: 8926086555447760196
       vertices: []
       indices: 
@@ -395,19 +277,19 @@ TextureImporter:
       name: Bombawan_6
       rect:
         serializedVersion: 2
-        x: 35
-        y: 20
-        width: 12
-        height: 12
+        x: 0
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 58b95bdec79537d459745f274dfa0987
+      spriteID: 8394e11b245c171b0800000000000000
       internalID: -5660526366397937352
       vertices: []
       indices: 
@@ -417,19 +299,19 @@ TextureImporter:
       name: Bombawan_7
       rect:
         serializedVersion: 2
-        x: 91
-        y: 21
-        width: 12
-        height: 12
+        x: 33
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 9b41bc93367320b48956e205ebdc7231
+      spriteID: 752f28ad98e0945f0800000000000000
       internalID: -772069875878006185
       vertices: []
       indices: 
@@ -439,20 +321,42 @@ TextureImporter:
       name: Bombawan_8
       rect:
         serializedVersion: 2
-        x: 144
-        y: 21
-        width: 12
-        height: 12
+        x: 66
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 4a6efb8556d9606488c86ce59834a34a
+      spriteID: 4148db9e416100ba0800000000000000
       internalID: -6124871214147206124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Bombawan_9
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff8c464a252c2be00800000000000000
+      internalID: 1059122522586663167
       vertices: []
       indices: 
       edges: []
@@ -461,7 +365,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: be1653bd2f9ce1b4fb4f8f1e2a53cae2
+    spriteID: 5e0b86a4092f05a49bb13275c8463998
     internalID: 0
     vertices: []
     indices: 
@@ -469,14 +373,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":1.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Bombawan_0: 1058342436014902054
       Bombawan_1: -8664956976086597062
-      Bombawan_10: -3105047852188674744
-      Bombawan_11: -9170929685551770265
-      Bombawan_12: 1464928602178894810
-      Bombawan_13: 1880756165882190845
       Bombawan_2: -7970546495618854673
       Bombawan_3: 8126631707323286724
       Bombawan_4: 6804505844070954579
@@ -485,12 +387,6 @@ TextureImporter:
       Bombawan_7: -772069875878006185
       Bombawan_8: -6124871214147206124
       Bombawan_9: 1059122522586663167
-      Bombawan_Body_00: 3111610561742746217
-      Bombawan_Body_01: -9068628829714342789
-      Bombawan_Body_02: -4767046989673275028
-      Bombawan_Death: 2400163032134633199
-      Bombawan_Fuse_00: -2078637333938363578
-      Bombawan_Fuse_01: -3194296180346573486
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

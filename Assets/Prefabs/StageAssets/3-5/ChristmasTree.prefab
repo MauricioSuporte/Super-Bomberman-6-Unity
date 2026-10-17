@@ -142,6 +142,7 @@ MonoBehaviour:
   - {fileID: 5630095236989487909, guid: 904f63b96589c3d45bd528f4b710a2be, type: 3}
   - {fileID: 2009032248765078307, guid: 904f63b96589c3d45bd528f4b710a2be, type: 3}
   - {fileID: 3092348350429322040, guid: 904f63b96589c3d45bd528f4b710a2be, type: 3}
+  - {fileID: 2009032248765078307, guid: 904f63b96589c3d45bd528f4b710a2be, type: 3}
   allowFlipX: 0
   animationTime: 0.125
   useSequenceDuration: 0
