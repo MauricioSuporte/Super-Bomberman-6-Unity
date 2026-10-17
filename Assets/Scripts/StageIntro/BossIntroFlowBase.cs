@@ -43,6 +43,7 @@ public abstract class BossIntroFlowBase : MonoBehaviour
 
     protected virtual IEnumerator FlowRoutine()
     {
+        while (!Assets.Scripts.Netcode.BombermanNetworkManager.OnlineCoopPlayersReady) yield return null;
         RefreshPlayersRefs();
         PushPlayersSafety();
 

@@ -28,6 +28,32 @@ public static class BossRushSession
     static int runPlayerMask = GameSession.CreateMaskFromCount(1);
     static readonly bool[] eliminatedPlayers = new bool[GameSession.MaxPlayerId + 1];
 
+    [Serializable]
+    sealed class OnlineState
+    {
+        public bool active, paused;
+        public int stage, difficulty, players, eliminated;
+        public float elapsed;
+    }
+    public static string CaptureOnlineState()
+    {
+        int eliminated = 0;
+        for (int i = 1; i < eliminatedPlayers.Length; i++) if (eliminatedPlayers[i]) eliminated |= (1 << (i - 1));
+        return JsonUtility.ToJson(new OnlineState { active = active, paused = timerPaused, stage = currentStageIndex,
+            difficulty = (int)selectedDifficulty, players = runPlayerMask, eliminated = eliminated, elapsed = elapsedSeconds });
+    }
+    public static void ApplyOnlineState(string json)
+    {
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopRoom || Assets.Scripts.Netcode.NetSync.IsServer || string.IsNullOrEmpty(json)) return;
+        var state = JsonUtility.FromJson<OnlineState>(json);
+        active = state.active; timerPaused = state.paused;
+        currentStageIndex = Mathf.Clamp(state.stage, 0, stageOrder.Length - 1);
+        selectedDifficulty = (BossRushDifficulty)Mathf.Clamp(state.difficulty, 0, 3);
+        runPlayerMask = SanitizeRunPlayerMask(state.players);
+        elapsedSeconds = Mathf.Max(0, state.elapsed);
+        for (int i = 1; i < eliminatedPlayers.Length; i++) eliminatedPlayers[i] = (state.eliminated & (1 << (i - 1))) != 0;
+    }
+
     public static bool IsActive => active;
     public static bool IsWorld3HallEncounter => active &&
         (GetCurrentStageSceneName() == "Stage_3-7" || GetCurrentStageSceneName() == "Stage_3-8");
@@ -109,7 +135,7 @@ public static class BossRushSession
 
     public static void AddElapsed(float deltaSeconds)
     {
-        if (!active || timerPaused)
+        if (!active || timerPaused || (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopRoom && !Assets.Scripts.Netcode.NetSync.IsServer))
             return;
 
         if (deltaSeconds <= 0f)

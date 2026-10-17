@@ -1,0 +1,369 @@
+using System;
+using System.Collections.Generic;
+using Mirror;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
+
+namespace Assets.Scripts.Netcode
+{
+    public struct CoopWorldBegin : NetworkMessage { public string scene, hash; }
+    public struct CoopSpriteFrame
+    {
+        public int id, sprite, material, sortingLayer, order;
+        public Vector3 position, scale;
+        public Quaternion rotation;
+        public Color color;
+        public bool flipX, flipY, visible;
+        public bool Matches(CoopSpriteFrame other) => id == other.id && sprite == other.sprite && material == other.material &&
+            sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
+            rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible;
+    }
+    public struct CoopSprites : NetworkMessage { public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
+    public struct CoopTileFrame
+    {
+        public Vector3Int cell; public int tile; public Color color; public Matrix4x4 matrix;
+        public bool Matches(CoopTileFrame other) => cell == other.cell && tile == other.tile && color == other.color && matrix == other.matrix;
+    }
+    public struct CoopTiles : NetworkMessage
+    {
+        public string scene, path;
+        public bool reset;
+        public Vector3 position, scale;
+        public Quaternion rotation;
+        public Color color;
+        public CoopTileFrame[] cells;
+    }
+    public struct CoopSound : NetworkMessage { public string scene, resource; public int clip; public float volume, pitch; public bool voice; }
+
+    /// <summary>
+    /// A co-op stage executes its scene behaviours only on the server. Clients keep
+    /// the local tilemaps/camera/HUD and receive bounded visual deltas for scene actors.
+    /// Mirror players, bombs, items and mounts retain their existing network paths.
+    /// </summary>
+    public partial class BombermanNetworkManager
+    {
+        public static bool IsCoopRoom => NetSync.IsOnline && RoomMode != OnlineRoomMode.BattleMode;
+        public static bool IsCoopStage => IsCoopRoom && SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal);
+        static readonly Unity.Profiling.ProfilerMarker CoopPresentationMarker = new("SB6.Coop.Presentation");
+        CoopSceneCatalog coopCatalog;
+        readonly Dictionary<Sprite, int> coopSpriteIds = new();
+        readonly Dictionary<TileBase, int> coopTileIds = new();
+        readonly Dictionary<Material, int> coopMaterialIds = new();
+        readonly Dictionary<AudioClip, int> coopSoundIds = new();
+        readonly Dictionary<int, CoopSpriteFrame> coopLastSprites = new();
+        readonly Dictionary<int, SpriteRenderer> coopViews = new();
+        readonly Dictionary<string, Tilemap> coopMaps = new();
+        readonly Dictionary<string, Dictionary<Vector3Int, CoopTileFrame>> coopLastTiles = new();
+        readonly HashSet<int> coopInitializedPeers = new();
+        readonly HashSet<string> coopMissingAssets = new();
+        SpriteRenderer[] coopRenderers = Array.Empty<SpriteRenderer>();
+        float coopNextDiscover, coopNextFrame, coopNextTiles;
+        string coopScene;
+        GameObject coopViewRoot;
+
+        void InitializeCoopClient()
+        {
+            NetworkClient.RegisterHandler<CoopWorldBegin>(ApplyCoopBegin);
+            NetworkClient.RegisterHandler<CoopSprites>(ApplyCoopSprites);
+            NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
+            NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
+            NetworkClient.RegisterHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
+            NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);
+            NetworkClient.RegisterHandler<CoopStageStatus>(ApplyCoopStageStatus);
+        }
+
+        void CoopSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ClearCoopWorld();
+            if (!IsCoopStage) return;
+            coopScene = scene.name;
+            coopCatalog = Resources.Load<CoopSceneCatalog>("CoopScenes/" + scene.name);
+            if (coopCatalog == null)
+            {
+                Debug.LogError("[Coop] Missing scene catalog: " + scene.name + ". Refresh Co-op Scene Catalogs and rebuild both peers.");
+                return;
+            }
+            IndexCatalog(coopCatalog.sprites, coopSpriteIds);
+            IndexCatalog(coopCatalog.tiles, coopTileIds);
+            IndexCatalog(coopCatalog.materials, coopMaterialIds);
+            IndexCatalog(coopCatalog.sounds, coopSoundIds);
+            foreach (var map in FindObjectsByType<Tilemap>(FindObjectsInactive.Include))
+                if (map.gameObject.scene == scene) coopMaps[CoopPath(map.transform)] = map;
+            foreach (var health in FindObjectsByType<CharacterHealth>(FindObjectsInactive.Include))
+                if (health.gameObject.scene == scene && !HasNetworkParent(health.transform)) coopSceneHealth[CoopPath(health.transform)] = health;
+            InitializeCoopCinematics();
+            if (NetworkServer.active)
+            {
+                GameMusicController.Instance?.PlayDefaultMusic();
+                return;
+            }
+            if (BossRushSession.IsActive) BossRushTimerPresenter.EnsureInScene();
+            if (StageIntroTransition.Instance != null)
+            {
+                if (StageIntroTransition.Instance.fadeImage != null) StageIntroTransition.Instance.fadeImage.gameObject.SetActive(false);
+                if (StageIntroTransition.Instance.stageLabel != null) StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
+            }
+
+            coopViewRoot = new GameObject("CoopServerPresentation");
+            SceneManager.MoveGameObjectToScene(coopViewRoot, scene);
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                foreach (var behaviour in root.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (behaviour == null || HasNetworkParent(behaviour.transform) || KeepCoopPresentation(behaviour)) continue;
+                    behaviour.enabled = false;
+                    behaviour.StopAllCoroutines();
+                }
+                foreach (var animator in root.GetComponentsInChildren<Animator>(true))
+                    if (!HasNetworkParent(animator.transform)) animator.enabled = false;
+                foreach (var body in root.GetComponentsInChildren<Rigidbody2D>(true))
+                    if (!HasNetworkParent(body.transform)) body.simulated = false;
+                foreach (var collider in root.GetComponentsInChildren<Collider2D>(true))
+                    if (!HasNetworkParent(collider.transform)) collider.enabled = false;
+                foreach (var sprite in root.GetComponentsInChildren<SpriteRenderer>(true))
+                    if (!HasNetworkParent(sprite.transform)) sprite.forceRenderingOff = true;
+            }
+            Debug.Log("[Coop] Client stage simulation disabled; awaiting server presentation: " + coopScene);
+        }
+
+        static bool KeepCoopPresentation(MonoBehaviour behaviour)
+        {
+            Type type = behaviour.GetType();
+            if (type.Assembly != typeof(GameManager).Assembly || behaviour.GetComponentInParent<Canvas>(true) != null) return true;
+            string name = type.Name;
+            return behaviour is BombermanNetworkManager or OnlineLobbyMenu or OnlineRoomBrowser or GamePauseController ||
+                name.Contains("Camera", StringComparison.Ordinal) || name.Contains("Hud", StringComparison.Ordinal) ||
+                name.Contains("HUD", StringComparison.Ordinal) || name.Contains("Viewport", StringComparison.Ordinal) ||
+                name.StartsWith("Localized", StringComparison.Ordinal) || name == "PlayerInputManager" ||
+                name == "GameSession" || name == "GameMusicController" || name == "BossRushTimerPresenter";
+        }
+
+        static bool HasNetworkParent(Transform value)
+        {
+            for (; value != null; value = value.parent)
+                if (value.TryGetComponent<NetworkIdentity>(out _)) return true;
+            return false;
+        }
+
+        static string CoopPath(Transform value)
+        {
+            string path = value.name;
+            while (value.parent != null) { value = value.parent; path = value.name + "/" + path; }
+            return path;
+        }
+
+        static void IndexCatalog<T>(T[] values, Dictionary<T, int> index) where T : UnityEngine.Object
+        {
+            index.Clear();
+            for (int i = 0; i < values.Length; i++) if (values[i] != null) index[values[i]] = i;
+        }
+
+        void ClearCoopWorld()
+        {
+            ClearCoopSprites();
+            coopLastSprites.Clear(); coopViews.Clear(); coopMaps.Clear(); coopLastTiles.Clear();
+            coopInitializedPeers.Clear(); coopMissingAssets.Clear();
+            coopSpriteIds.Clear(); coopTileIds.Clear(); coopMaterialIds.Clear(); coopSoundIds.Clear();
+            coopCinematicImages.Clear(); coopClientImages.Clear();
+            coopSceneHealth.Clear(); coopServerHealth = Array.Empty<CharacterHealth>(); coopNextStatus = 0;
+            coopRenderers = Array.Empty<SpriteRenderer>();
+            coopCatalog = null; coopScene = null; coopHasMusic = false;
+            if (coopViewRoot != null) Destroy(coopViewRoot);
+            coopViewRoot = null;
+            coopNextDiscover = coopNextFrame = coopNextTiles = 0;
+        }
+
+        void TickCoopWorld()
+        {
+            if (!NetworkServer.active || !IsCoopStage || coopCatalog == null || NetworkServer.isLoadingScene) return;
+            if (Time.unscaledTime < coopNextFrame) return;
+            using var scope = CoopPresentationMarker.Auto();
+            coopNextFrame = Time.unscaledTime + 0.05f;
+            var peers = new List<NetworkConnectionToClient>();
+            foreach (var peer in NetworkServer.connections.Values)
+            {
+                if (peer == null || !peer.isAuthenticated || !peer.isReady || peer == NetworkServer.localConnection) continue;
+                peers.Add(peer);
+                if (!coopInitializedPeers.Add(peer.connectionId)) continue;
+                peer.Send(new CoopWorldBegin { scene = coopScene, hash = coopCatalog.contentHash });
+                if (coopHasMusic) peer.Send(coopMusic);
+                foreach (var definition in coopDefinitions.Values) peer.Send(definition);
+                SendCoopSprites(peer, new List<CoopSpriteFrame>(coopLastSprites.Values), Array.Empty<int>());
+                foreach (var map in coopMaps)
+                    if (map.Value != null) SendCoopTiles(peer, map.Key, map.Value, true,
+                        coopLastTiles.TryGetValue(map.Key, out var cells) ? new List<CoopTileFrame>(cells.Values) : new());
+            }
+            if (Time.unscaledTime >= coopNextDiscover)
+            {
+                coopNextDiscover = Time.unscaledTime + 0.25f;
+                coopServerHealth = FindObjectsByType<CharacterHealth>(FindObjectsInactive.Include);
+                var found = FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include);
+                var renderers = new List<SpriteRenderer>();
+                foreach (var renderer in found)
+                    if (renderer.gameObject.scene.name == coopScene && !HasNetworkParent(renderer.transform)) renderers.Add(renderer);
+                coopRenderers = renderers.ToArray();
+            }
+            CaptureCoopStageStatus();
+            var changed = new List<CoopSpriteFrame>();
+            var current = new HashSet<int>();
+            foreach (var renderer in coopRenderers)
+            {
+                if (renderer == null) continue;
+                int id = renderer.GetEntityId().GetHashCode();
+                current.Add(id);
+                var frame = new CoopSpriteFrame
+                {
+                    id = id, sprite = CoopSpriteId(renderer.sprite),
+                    material = CatalogId(renderer.sharedMaterial, coopMaterialIds),
+                    position = renderer.transform.position, rotation = renderer.transform.rotation,
+                    scale = renderer.transform.lossyScale, color = renderer.color,
+                    sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
+                    visible = renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff,
+                    flipX = renderer.flipX, flipY = renderer.flipY
+                };
+                if (!coopLastSprites.TryGetValue(id, out var previous) || !frame.Matches(previous)) changed.Add(frame);
+                coopLastSprites[id] = frame;
+            }
+            var removed = new List<int>();
+            foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
+            foreach (int id in removed) coopLastSprites.Remove(id);
+            foreach (var peer in peers) SendCoopSprites(peer, changed, removed.ToArray());
+            if (Time.unscaledTime >= coopNextTiles)
+            {
+                coopNextTiles = Time.unscaledTime + 0.25f;
+                foreach (var map in coopMaps) if (map.Value != null) CaptureCoopTiles(map.Key, map.Value, peers);
+            }
+        }
+
+        int CatalogId<T>(T value, Dictionary<T, int> index) where T : UnityEngine.Object
+        {
+            if (value == null) return -1;
+            if (index.TryGetValue(value, out int id)) return id;
+            if (value is Material) return -1;
+            string key = typeof(T).Name + ":" + value.name;
+            if (coopMissingAssets.Add(key)) Debug.LogWarning("[Coop] Catalog asset unavailable: " + key + " scene=" + coopScene);
+            return -1;
+        }
+
+        void SendCoopSprites(NetworkConnectionToClient peer, List<CoopSpriteFrame> frames, int[] removed)
+        {
+            const int batch = 48;
+            if (frames.Count == 0 && removed.Length > 0)
+                peer.Send(new CoopSprites { scene = coopScene, frames = Array.Empty<CoopSpriteFrame>(), removed = removed });
+            for (int start = 0; start < frames.Count; start += batch)
+                peer.Send(new CoopSprites { scene = coopScene, frames = frames.GetRange(start, Mathf.Min(batch, frames.Count - start)).ToArray(),
+                    removed = start == 0 ? removed : Array.Empty<int>() });
+        }
+
+        void CaptureCoopTiles(string path, Tilemap map, List<NetworkConnectionToClient> peers)
+        {
+            bool first = !coopLastTiles.TryGetValue(path, out var previous);
+            previous ??= new Dictionary<Vector3Int, CoopTileFrame>();
+            var current = new Dictionary<Vector3Int, CoopTileFrame>();
+            var changed = new List<CoopTileFrame>();
+            foreach (var cell in map.cellBounds.allPositionsWithin)
+            {
+                var tile = map.GetTile(cell);
+                if (tile == null) continue;
+                var frame = new CoopTileFrame { cell = cell, tile = CatalogId(tile, coopTileIds),
+                    color = map.GetColor(cell), matrix = map.GetTransformMatrix(cell) };
+                current[cell] = frame;
+                if (!previous.TryGetValue(cell, out var old) || !frame.Matches(old)) changed.Add(frame);
+            }
+            foreach (var cell in previous.Keys)
+                if (!current.ContainsKey(cell)) changed.Add(new CoopTileFrame { cell = cell, tile = -1 });
+            coopLastTiles[path] = current;
+            // Map pose/color can change even without individual tile edits.
+            foreach (var peer in peers) SendCoopTiles(peer, path, map, first, changed);
+        }
+
+        void SendCoopTiles(NetworkConnectionToClient peer, string path, Tilemap map, bool reset, List<CoopTileFrame> cells)
+        {
+            const int batch = 48;
+            for (int start = 0; start < Mathf.Max(1, cells.Count); start += batch)
+                peer.Send(new CoopTiles { scene = coopScene, path = path, reset = reset && start == 0,
+                    position = map.transform.position, rotation = map.transform.rotation, scale = map.transform.lossyScale,
+                    color = map.color, cells = cells.GetRange(start, Mathf.Min(batch, cells.Count - start)).ToArray() });
+        }
+
+        bool CanApplyCoop(string scene) => !NetworkServer.active && IsCoopStage && coopCatalog != null && scene == coopScene;
+        void ApplyCoopBegin(CoopWorldBegin message)
+        {
+            if (!CanApplyCoop(message.scene)) return;
+            if (message.hash != coopCatalog.contentHash)
+            {
+                Debug.LogError("[Coop] Scene catalog mismatch. Rebuild client and server together: " + message.scene);
+                StopClient();
+                return;
+            }
+            foreach (var view in coopViews.Values) if (view != null) Destroy(view.gameObject);
+            coopViews.Clear();
+        }
+
+        void ApplyCoopSprites(CoopSprites message)
+        {
+            if (!CanApplyCoop(message.scene)) return;
+            foreach (int id in message.removed ?? Array.Empty<int>())
+                if (coopViews.Remove(id, out var removed) && removed != null) Destroy(removed.gameObject);
+            foreach (var frame in message.frames ?? Array.Empty<CoopSpriteFrame>())
+            {
+                if (!coopViews.TryGetValue(frame.id, out var view) || view == null)
+                {
+                    var go = new GameObject("ServerActor " + frame.id, typeof(SpriteRenderer));
+                    go.transform.SetParent(coopViewRoot.transform, false);
+                    view = go.GetComponent<SpriteRenderer>(); coopViews[frame.id] = view;
+                }
+                view.transform.SetPositionAndRotation(frame.position, frame.rotation);
+                view.transform.localScale = frame.scale;
+                coopViewSpriteIds[frame.id] = frame.sprite;
+                view.sprite = CoopSpriteAt(frame.sprite);
+                var material = At(coopCatalog.materials, frame.material);
+                if (material != null) view.sharedMaterial = material;
+                view.enabled = frame.visible; view.color = frame.color;
+                view.flipX = frame.flipX; view.flipY = frame.flipY;
+                view.sortingLayerID = frame.sortingLayer; view.sortingOrder = frame.order;
+            }
+        }
+
+        void ApplyCoopTiles(CoopTiles message)
+        {
+            if (!CanApplyCoop(message.scene) || !coopMaps.TryGetValue(message.path, out var map)) return;
+            if (message.reset) map.ClearAllTiles();
+            map.transform.SetPositionAndRotation(message.position, message.rotation);
+            var parent = map.transform.parent;
+            Vector3 scale = parent == null ? Vector3.one : parent.lossyScale;
+            map.transform.localScale = new Vector3(message.scale.x / scale.x, message.scale.y / scale.y, message.scale.z / scale.z);
+            map.color = message.color;
+            foreach (var cell in message.cells ?? Array.Empty<CoopTileFrame>())
+            {
+                map.SetTile(cell.cell, At(coopCatalog.tiles, cell.tile));
+                if (cell.tile < 0) continue;
+                map.SetTileFlags(cell.cell, TileFlags.None);
+                map.SetColor(cell.cell, cell.color);
+                map.SetTransformMatrix(cell.cell, cell.matrix);
+            }
+        }
+
+        static T At<T>(T[] values, int index) where T : UnityEngine.Object => index >= 0 && index < values.Length ? values[index] : null;
+
+        public static void CoopPlaySound(AudioClip clip, float volume = 1f, float pitch = 1f, bool voice = false)
+        {
+            if (!IsCoopStage || !NetworkServer.active || singleton is not BombermanNetworkManager manager || manager.coopCatalog == null) return;
+            int id = manager.CoopSoundId(clip);
+            string resource = manager.CoopSoundResource(clip);
+            if (id >= 0 || resource != null) NetworkServer.SendToReady(new CoopSound { scene = manager.coopScene, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice });
+        }
+
+        void ApplyCoopSound(CoopSound message)
+        {
+            if (!CanApplyCoop(message.scene)) return;
+            var clip = At(coopCatalog.sounds, message.clip) ?? (string.IsNullOrEmpty(message.resource) ? null : Resources.Load<AudioClip>(message.resource));
+            if (clip == null) return;
+            var go = new GameObject("CoopSound", typeof(AudioSource));
+            var source = go.GetComponent<AudioSource>();
+            source.clip = clip; source.volume = message.voice ? GameAudioSettings.ApplyVoiceSfxVolume(message.volume) : GameAudioSettings.ApplySfxVolume(message.volume); source.pitch = message.pitch;
+            source.Play(); Destroy(go, clip.length / Mathf.Max(0.1f, Mathf.Abs(message.pitch)) + 0.5f);
+        }
+    }
+}

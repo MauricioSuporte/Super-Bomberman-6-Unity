@@ -55,7 +55,7 @@ public static class OnlineClientBuild
         Debug.Log($"[OnlineClientBuild] {target} result={s.result} errors={s.totalErrors} " +
                   $"sizeMB={(s.totalSize / (1024f * 1024f)):F0} out={s.outputPath}");
 
-        if (s.result != BuildResult.Succeeded && Application.isBatchMode)
-            EditorApplication.Exit(1);
+        if (s.result != BuildResult.Succeeded || s.totalErrors > 0 || !System.IO.File.Exists(outputPath))
+            throw new BuildFailedException("Online client build failed. See the build report.");
     }
 }

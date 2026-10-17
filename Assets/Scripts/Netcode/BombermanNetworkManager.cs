@@ -53,8 +53,10 @@ namespace Assets.Scripts.Netcode
 
         public override void Awake()
         {
+            if (singleton != null && singleton != this) { Destroy(gameObject); return; }
             base.Awake();
             if (singleton != this) return;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += CoopSceneLoaded;
             if (authenticator == null)
                 authenticator = gameObject.AddComponent<OnlineVersionAuthenticator>();
             // A cena tem um NetworkManager → é destinada a rede. Impede o gameplay
@@ -97,6 +99,8 @@ namespace Assets.Scripts.Netcode
             if (NetworkManager.singleton == null || NetworkManager.singleton == this)
                 NetSync.IsNetworkedScene = false;
 
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= CoopSceneLoaded;
+            ClearCoopWorld();
             DisposeDedicatedMetrics();
             base.OnDestroy(); // cleanup do Mirror (singleton/estáticos)
         }
@@ -124,6 +128,7 @@ namespace Assets.Scripts.Netcode
                 manager.selectionPressed.Clear();
             }
             GameSession.Instance?.EndBattleMatch();
+            if (IsCoopRoom) BossRushSession.CancelRun();
             BattleModeMenu.OpenDirectlyAtStageSelect = false;
             singleton.ServerChangeScene(NetworkLobby.SceneName);
         }
@@ -318,7 +323,9 @@ namespace Assets.Scripts.Netcode
             ClearDedicatedAdminInput();
             base.OnStopServer();
             playerIdByConnection.Clear();
+            if (global::SaveSystem.HasOnlineCoopSettings) BossRushSession.CancelRun();
             global::SaveSystem.EndOnlineBattleSettings();
+            global::SaveSystem.EndOnlineCoopSettings();
         }
 
         // ---- Spawn de players --------------------------------------------
@@ -341,6 +348,7 @@ namespace Assets.Scripts.Netcode
                 return;
             }
 
+            if (IsCoopRoom && BossRushSession.IsActive && !BossRushSession.ShouldSpawnPlayer(playerId)) return;
             Vector3 spawnPos = ResolveSpawnPosition(playerId);
             GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
 
@@ -374,8 +382,7 @@ namespace Assets.Scripts.Netcode
             if (ownerLeft && dedicatedServer && !leavingRoom)
             {
                 leavingRoom = true;
-                StopServer();
-                Application.Quit();
+                StartCoroutine(StopDedicatedRoomAfterDisconnect());
                 return;
             }
             if (!InLobbyScene() && !leavingRoom) ServerReturnToLobby();
@@ -413,7 +420,7 @@ namespace Assets.Scripts.Netcode
             if (ids.Count == 0)
                 ids.Add(GameSession.MinPlayerId);
 
-            if (!InLobbyScene() && !InConfiguration)
+            if (RoomMode == OnlineRoomMode.BattleMode && !InLobbyScene() && !InConfiguration)
             {
                 var modes = global::SaveSystem.GetBattleModePlayerControlModes();
                 for (int i = 0; i < modes.Length; i++)

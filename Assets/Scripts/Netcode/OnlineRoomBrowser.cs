@@ -41,6 +41,13 @@ namespace Assets.Scripts.Netcode
             if (!Uri.TryCreate(directoryUrl, UriKind.Absolute, out var endpoint) ||
                 (endpoint.Scheme != "https" && !(endpoint.Scheme == "http" &&
                     (endpoint.IsLoopback || endpoint.Host == "100.64.0.46" || endpoint.Host == "192.48.205.46")))) directoryUrl = "";
+            var args = Environment.GetCommandLineArgs();
+            int join = Array.IndexOf(args, "-online-join");
+            if (join >= 0 && join + 1 < args.Length && Uri.TryCreate(args[join + 1], UriKind.Absolute, out var server) && server.Scheme == "kcp")
+            {
+                NetworkManager.singleton.StartClient(server);
+                return;
+            }
             StartCoroutine(RefreshLoop());
         }
 

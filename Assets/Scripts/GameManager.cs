@@ -306,6 +306,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && !Assets.Scripts.Netcode.NetSync.IsServer) return;
         endStageTriggered = false;
         EndStageVoiceSfx.ResetPlaybackState();
 
@@ -1001,6 +1002,14 @@ public class GameManager : MonoBehaviour
 
     IEnumerator RestartRoundRoutine()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+        {
+            yield return new WaitForSecondsRealtime(NormalGameDeathFadeDuration);
+            PlayerPersistentStats.RollbackStage();
+            if (BossRushSession.IsActive) Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
+            else Assets.Scripts.Netcode.BombermanNetworkManager.ServerStartNextRound();
+            yield break;
+        }
         float restartDelay = Mathf.Max(restartAfterDeathSeconds, NormalGameDeathFadeDuration);
         yield return new WaitForSecondsRealtime(restartDelay);
 
@@ -1054,6 +1063,15 @@ public class GameManager : MonoBehaviour
     {
         if (endStageTriggered)
             return;
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+        {
+            if (!Assets.Scripts.Netcode.NetSync.IsServer) return;
+            endStageTriggered = true;
+            CaptureAllPlayersForStageEnd();
+            PlayerPersistentStats.CommitStage();
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopStageCompleted(this, nextStageSceneName, completedStageSceneName);
+            return;
+        }
 
         endStageTriggered = true;
 
@@ -2165,6 +2183,13 @@ public class GameManager : MonoBehaviour
 
     // A apresentação usa o fluxo local de comemoração, placar, Win Match e fade.
     // Apenas o host troca a cena, depois de esperar a apresentação dos clientes.
+    public void ApplyOnlineCoopStage(int enemies, bool ending)
+    {
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage || Assets.Scripts.Netcode.NetSync.IsServer) return;
+        EnemiesAlive = Mathf.Max(0, enemies);
+        endStageTriggered = ending;
+    }
+
     public bool OnlineRoundPresentationActive => Assets.Scripts.Netcode.NetSync.IsOnline && endStageTriggered;
 
     public void PlayOnlineRoundOver(int winnerId, byte kind, bool matchComplete = false, int[] survivingWinnerIds = null)

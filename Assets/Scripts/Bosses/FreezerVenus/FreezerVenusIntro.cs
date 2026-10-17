@@ -227,7 +227,7 @@ public sealed class FreezerVenusIntro : MonoBehaviour
         if (abductionSfx != null)
         {
             beamAudio.volume = GameAudioSettings.ApplySfxVolume(1f);
-            beamAudio.PlayOneShot(abductionSfx);
+            GameAudioSettings.PlaySfx(beamAudio, abductionSfx);
         }
         yield return AnimateBeamProgress(opening ? widthStart : 1f,
             opening ? 1f : widthStart, widthSeconds);

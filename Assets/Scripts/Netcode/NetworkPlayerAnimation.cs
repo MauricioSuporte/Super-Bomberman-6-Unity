@@ -58,7 +58,7 @@ namespace Assets.Scripts.Netcode
             if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient))
                 return;
 
-            if (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive && move != null && move.IsEndingStage)
+            if (!BombermanNetworkManager.IsCoopStage && GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive && move != null && move.IsEndingStage)
                 return;
             // Clients, including the owner, apply server frames.
             if (isServer)

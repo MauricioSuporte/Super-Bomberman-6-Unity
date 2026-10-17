@@ -133,12 +133,14 @@ public static partial class SaveSystem
 
     public static void Reload()
     {
+        if (HasOnlineCoopSettings) return;
         loaded = false;
         EnsureLoaded();
     }
 
     public static void Save()
     {
+        if (HasOnlineCoopSettings) return;
         EnsureLoaded();
 
         try

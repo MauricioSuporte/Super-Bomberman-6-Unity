@@ -23,7 +23,12 @@ namespace Assets.Scripts.Netcode
 #if UNITY_SERVER
             startServer = true;
 #endif
-            if (!startServer) return;
+            if (!startServer)
+            {
+                if (HasArg(args, "-online-join") && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != NetworkLobby.SceneName)
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(NetworkLobby.SceneName);
+                return;
+            }
 
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var nm = NetworkManager.singleton;
@@ -36,6 +41,11 @@ namespace Assets.Scripts.Netcode
                 + (found.Length > 0 ? " (" + found[0].GetType().Name + ", active=" + found[0].gameObject.activeInHierarchy + ")" : "")
                 + " serverActive=" + NetworkServer.active);
 
+            if (mgr == null && scene.name != NetworkLobby.SceneName)
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(NetworkLobby.SceneName);
+                return;
+            }
             if (mgr != null && mgr.enabled && !NetworkServer.active && !NetworkClient.active)
                 mgr.StartServer();
         }

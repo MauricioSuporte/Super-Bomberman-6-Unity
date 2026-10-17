@@ -166,6 +166,7 @@ public class GameMusicController : MonoBehaviour
 
     public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true, float pitch = 1f, bool restart = true)
     {
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlayMusic(clip, volume, loop, pitch);
         if (clip == null || musicSource == null)
             return;
 
@@ -193,6 +194,7 @@ public class GameMusicController : MonoBehaviour
         float pitch = 1f,
         bool restart = true)
     {
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlayMusic(introClip, introVolume, false, pitch, loopClip, loopVolume);
         if (introClip == null || musicSource == null)
             return;
 
@@ -325,6 +327,7 @@ public class GameMusicController : MonoBehaviour
 
     public void StopMusic()
     {
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlayMusic(null, 0, false, 1f, stopped: true);
         if (musicSource == null)
             return;
 

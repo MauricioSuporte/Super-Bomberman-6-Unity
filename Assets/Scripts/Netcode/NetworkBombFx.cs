@@ -44,7 +44,7 @@ namespace Assets.Scripts.Netcode
         void RpcPlay(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration)
         {
             // No host o visual já foi tocado localmente pela simulação.
-            if (isServer || bomb == null)
+            if (isServer || bomb == null || BombermanNetworkManager.IsCoopStage)
                 return;
 
             for (int i = 0; i < parts.Length; i++)
@@ -68,7 +68,7 @@ namespace Assets.Scripts.Netcode
         [ClientRpc]
         void RpcClearDestructibles(Vector3Int[] cells)
         {
-            if (isServer)
+            if (isServer || BombermanNetworkManager.IsCoopStage)
                 return;
 
             var gm = GameManager.Instance;

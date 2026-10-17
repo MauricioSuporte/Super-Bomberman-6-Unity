@@ -384,7 +384,8 @@ namespace StageAssets
             yield return new WaitForSecondsRealtime(fadeDuration);
             if (GameMusicController.Instance != null)
                 GameMusicController.Instance.StopMusic();
-            SceneManager.LoadSceneAsync("WorldMap");
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteCoopScene("WorldMap"))
+                SceneManager.LoadSceneAsync("WorldMap");
         }
 
         private void ConfirmSelection()
@@ -517,7 +518,8 @@ namespace StageAssets
                 GameMusicController.Instance.StopMusic();
 
             StagePreIntroPlayersWalk.SkipOnNextLoad();
-            SceneManager.LoadSceneAsync(destinationIndex);
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteCoopScene(destinationIndex))
+                SceneManager.LoadSceneAsync(destinationIndex);
         }
     }
 }

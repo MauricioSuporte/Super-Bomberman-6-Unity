@@ -140,9 +140,13 @@ public class MechaBossSequence : MonoBehaviour
 
         if (groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
             RebuildSpawnableCells();
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && Assets.Scripts.Netcode.NetSync.IsServer)
+            TryStartSequence();
     }
 
-    void OnEnable()
+    void OnEnable() => TryStartSequence();
+
+    void TryStartSequence()
     {
         if (initialized && !sequenceStarted)
         {
@@ -154,6 +158,7 @@ public class MechaBossSequence : MonoBehaviour
 
     IEnumerator SpawnFirstMechaAfterStageStart()
     {
+        while (!Assets.Scripts.Netcode.BombermanNetworkManager.OnlineCoopPlayersReady) yield return null;
         MechaIntroRunning = true;
         if (StageMechaIntroController.Instance != null)
             StageMechaIntroController.Instance.SetIntroRunning(true);

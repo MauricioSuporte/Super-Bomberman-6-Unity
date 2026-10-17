@@ -267,7 +267,10 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
                 GameObject hidden = manager.GetSpawnForDestroyedBlock(cell);
                 tiles.SetTile(cell, null);
                 if (destructionSfx != null && TryGetComponent<AudioSource>(out var source))
+                {
+                    Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(destructionSfx, Mathf.Max(1f, destructionSfxGain), source.pitch);
                     source.PlayOneShot(destructionSfx, Mathf.Clamp01(GameAudioSettings.ApplySfxVolume(1f) * Mathf.Max(1f, destructionSfxGain)));
+                }
                 manager.OnDestructibleDestroyed(cell);
                 if (hidden != null)
                 {

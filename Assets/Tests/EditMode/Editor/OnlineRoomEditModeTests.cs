@@ -36,7 +36,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 4, true)]
+    [TestCase("0.5.0", 5, true)]
+    [TestCase("0.5.0", 4, false)]
     [TestCase("0.5.0", 3, false)]
     [TestCase("0.5.1", 1, false)]
     [TestCase("0.5.0", 1, false)]
@@ -45,6 +46,43 @@ public sealed class OnlineRoomEditModeTests
     public void OnlineCompatibilityRequiresSameBuildAndProtocol(string remoteVersion, int protocol, bool expected)
     {
         Assert.AreEqual(expected, OnlineVersionAuthenticator.Compatible("0.5.0", remoteVersion, protocol));
+    }
+
+    [Test]
+    public void CoopCampaignUsesTemporarySaveAndRestoresOfflineData()
+    {
+        var offline = SaveSystem.Data;
+        string original = JsonUtility.ToJson(offline);
+        try
+        {
+            SaveSystem.BeginOnlineCoopSettings();
+            Assert.AreNotSame(offline, SaveSystem.Data);
+            Assert.IsTrue(SaveSystem.ActiveSlot.started);
+            Assert.AreEqual(Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal, SaveSystem.GetActiveNormalGameDifficulty());
+            SaveSystem.ActiveSlot.clearedStages.Add("Stage_1-1");
+            SaveSystem.Reload();
+            Assert.Contains("Stage_1-1", SaveSystem.ActiveSlot.clearedStages);
+            Assert.AreEqual(original, JsonUtility.ToJson(offline));
+        }
+        finally { SaveSystem.EndOnlineCoopSettings(); }
+        Assert.AreSame(offline, SaveSystem.Data);
+        Assert.AreEqual(original, JsonUtility.ToJson(SaveSystem.Data));
+    }
+
+    [Test]
+    public void CoopVisualBatchesRoundTripWithoutLosingPoseOrTileRemoval()
+    {
+        var frame = new CoopSpriteFrame { id = 12, sprite = 3, visible = true,
+            position = new Vector3(1, 2, 0), scale = Vector3.one, rotation = Quaternion.identity, color = Color.red };
+        using var writer = NetworkWriterPool.Get();
+        writer.Write(new CoopSprites { scene = "Stage_1-1", frames = new[] { frame }, removed = new[] { 20 } });
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+        var result = reader.Read<CoopSprites>();
+        Assert.AreEqual("Stage_1-1", result.scene);
+        Assert.AreEqual(frame.position, result.frames[0].position);
+        Assert.AreEqual(frame.color, result.frames[0].color);
+        Assert.IsTrue(result.frames[0].visible);
+        CollectionAssert.AreEqual(new[] { 20 }, result.removed);
     }
 
     [Test]

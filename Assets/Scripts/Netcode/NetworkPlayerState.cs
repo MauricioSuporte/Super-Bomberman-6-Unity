@@ -279,7 +279,7 @@ namespace Assets.Scripts.Netcode
 
             // Som da morte: TODOS os clientes (dono e remotos) tocam uma vez na
             // transição para life==0, para todos ouvirem a eliminação.
-            if (!isServer && !playedDeathSfx && life == 0 && move != null)
+            if (!isServer && !BombermanNetworkManager.IsCoopStage && !playedDeathSfx && life == 0 && move != null)
             {
                 move.PlayDeathSfxLocal();
                 playedDeathSfx = true;

@@ -24,7 +24,7 @@ namespace Assets.Scripts.Netcode
             BattleModePerformanceMarkers.PlayerFixedUpdateName, BattleModePerformanceMarkers.BombControllerUpdateName,
             BattleModePerformanceMarkers.ComUpdateName, BattleModePerformanceMarkers.ComThinkName,
             BattleModePerformanceMarkers.AbilityUpdateName, BattleModePerformanceMarkers.ArenaUpdateName,
-            BattleModePerformanceMarkers.InputUpdateName };
+            BattleModePerformanceMarkers.InputUpdateName, "SB6.Coop.Presentation" };
         ProfilerRecorder[] dedicatedRecorders;
         double[] dedicatedMarkerTotals;
         string dedicatedLogDirectory;
@@ -123,7 +123,7 @@ namespace Assets.Scripts.Netcode
                         File.WriteAllText(temporary, JsonUtility.ToJson(new DedicatedStatus
                         {
                             token = dedicatedToken, players = playerIdByConnection.Count,
-                            available = !leavingRoom && OnlineRoomDiscovery.AcceptingPlayers
+                            available = !leavingRoom && AcceptingRoomPlayers
                         }), new System.Text.UTF8Encoding(false));
                         if (File.Exists(dedicatedStatusPath)) File.Delete(dedicatedStatusPath);
                         File.Move(temporary, dedicatedStatusPath);
@@ -144,7 +144,7 @@ namespace Assets.Scripts.Netcode
                     players = playerIdByConnection.Count, objects = Mirror.NetworkServer.spawned.Count,
                     fps = dedicatedFrames / elapsed, maxFrameMs = dedicatedMaxFrame * 1000,
                     cpuPercentOneCore = (cpu - dedicatedCpuTime) / elapsed * 100,
-                    residentMiB = dedicatedProcess.WorkingSet64 / 1048576d,
+                    residentMiB = dedicatedProcess.WorkingSet64 > 0 ? dedicatedProcess.WorkingSet64 / 1048576d : -1,  // Mono on Windows may not expose RSS.
                     managedMiB = GC.GetTotalMemory(false) / 1048576d,
                     unityAllocatedMiB = Profiler.GetTotalAllocatedMemoryLong() / 1048576d,
                     gcCollections = GC.CollectionCount(0) - dedicatedGcCount,

@@ -3,7 +3,7 @@
 O fluxo é `TitleScreen → Game Modes → Online → OnlineLobby`. Criar sala chama
 o supervisor HTTP da VM, que inicia um processo Unity headless com uma porta
 KCP exclusiva. O cliente aguarda o processo ficar pronto e conecta como
-qualquer outro participante. Não existe host local nesse fluxo.
+qualquer outro participante. O mesmo supervisor pode ser iniciado localmente pelo menu Tools descrito abaixo.
 
 O primeiro participante é o dono. Com dois humanos conectados, ele pode abrir
 a configuração nativa de Battle Mode; os demais acompanham os painéis e
@@ -14,7 +14,7 @@ partida retorna os restantes ao lobby. Não há transferência de dono.
 Movimento, física, bombas, dano, COM e decisões de partida executam no servidor.
 Clientes enviam controles a 30 Hz e recebem transformações, estado e animação.
 Não há predição local nesse fluxo; a latência até a VM influencia a resposta.
-Offline continua usando a simulação local. O protocolo 3 rejeita clientes antigos.
+Offline continua usando a simulação local. O protocolo 5 rejeita clientes antigos.
 
 ## Rede e implantação
 
@@ -121,7 +121,8 @@ na tentativa enquanto a liberação UDP estava pendente.
 ## Servidor de teste local no Windows
 
 No Unity, use `Tools > Super Bomberman 6 > Online > Build and Start Local Server`.
-Isso compila o servidor Windows e inicia o supervisor Python em loopback
+Isso compila o cliente Windows (também usado com `-server -batchmode -nographics`)
+e inicia o supervisor Python em loopback
 (API 18081, UDP 17777–17780). Python 3 deve estar no PATH; alternativamente,
 defina `SB6_PYTHON` com o caminho do executável antes de abrir o Editor.
 `Start Local Server (Existing Build)` reutiliza o último build, que precisa ser
@@ -133,9 +134,82 @@ com o mesmo perfil de usuário. Saia e entre novamente no lobby após trocar.
 `Use Public Server` restaura o endereço do JSON. Também é possível passar
 `-online-directory http://127.0.0.1:18081` ao executável do cliente.
 
-Protocolo 4: POST /rooms recebe `mode` (`BattleMode`, `NormalGame`, `BossRush`).
+Protocolo 5: POST /rooms recebe `mode` (`BattleMode`, `NormalGame`, `BossRush`).
 O modo é fixado no processo com `-room-mode` e anunciado junto com `maxPlayers`.
 Battle Mode permite seis slots; Normal Game e Boss Rush permitem quatro.
 Não existe mensagem nem endpoint para alterar o modo de uma sala criada.
-Nesta etapa intermediária, as salas cooperativas aparecem no lobby, mas seu
-início fica bloqueado até a integração da simulação cooperativa.
+O dono inicia Normal Game ou Boss Rush com dois a quatro participantes. Normal
+Game começa uma campanha temporária em Stage_1-1; Boss Rush começa em
+Stage_1-6, na dificuldade NORMAL. Battle Mode mantém sua configuração nativa.
+A campanha cooperativa usa uma cópia completa do save em memória. Escritas e
+reloads de disco ficam bloqueados durante a sessão; ao sair, a referência ao
+save offline é restaurada.
+
+## Replicação cooperativa das fases
+
+Os jogadores continuam usando os componentes Mirror existentes. Os scripts de
+inimigos, chefes, projéteis e mecanismos da fase executam no servidor. No cliente,
+a simulação desses objetos de cena é desativada antes de Start; câmera, UI e HUD
+continuam ativos. A apresentação recebe deltas de sprites a 20 Hz e de tilemaps
+a 4 Hz, com lotes limitados e uma sincronização completa para cada cliente pronto.
+Sprites gerados em runtime e pequenas texturas geradas por efeitos são enviados
+sob demanda, com limite de 65.536 pixels por textura. Objetos já replicados pelo
+Mirror mantêm seu próprio caminho e ficam fora desse fluxo de sprites.
+
+`CoopSceneCatalogBuilder` gera catálogos por fase, com referências ordenadas por
+GUID/local id. Eles são atualizados antes dos builds e devem acompanhar ambos os
+executáveis. O hash é comparado ao iniciar a apresentação de cada fase; clientes
+com catálogo incompatível desconectam com diagnóstico. Sons carregados de Resources
+usam caminhos, sem carregar todos os áudios de todos os mundos ao entrar na fase.
+
+Transições são decididas pelo servidor. O estado do Boss Rush (encontro, tempo e
+eliminações) é replicado; conclusão da sequência retorna ao lobby. Morte de toda a
+equipe reinicia a fase Normal ou encerra a tentativa de Boss Rush. Saída de um
+participante retorna ao lobby; saída do dono encerra o processo. O marcador
+`SB6.Coop.Presentation` permite medir o custo adicional da replicação no build
+com profiling. Não aumente a capacidade de produção sem medir fases e chefes
+reais com quatro jogadores.
+
+
+## Verificação cooperativa local
+
+A suíte `OnlineRoomEditModeTests` passou com 30 casos, sem falhas ou skips;
+os cinco testes Python do supervisor também passaram. Um servidor Windows
+headless e dois clientes reais iniciaram Normal Game em Stage_1-1: o cliente
+recebeu dois jogadores e os sprites da fase, com os três controladores locais
+de inimigos desativados. Movimento e bomba enviados pelo cliente foram
+processados no servidor, incluindo vida zero após a explosão. Desconectar o
+participante retornou o dono ao lobby, e a saída do dono encerrou o processo
+com código 0. Capturas e XML ficam em Build/Validation (não versionado).
+
+Boss Rush foi repetido após a correção da inicialização: Stage_1-6 recebeu dois
+jogadores, loadout NORMAL, cronômetro, Mecha ativo com movimento e bombas
+replicados. A pausa enviada pelo dono foi aplicada no cliente (timeScale 0).
+Suspender o cliente do dono provocou timeout real de 10 segundos no KCP com o
+segundo participante ainda conectado; o processo encerrou com código 0, sem
+exceção de alteração da coleção de conexões.
+
+O build Windows passou com zero erros. Nesta execução local, o lobby estável
+consumiu cerca de 1,5 KiB/s por cliente; o primeiro encontro do Boss Rush registrou
+aproximadamente 21–23 KiB/s de saída total e 60 FPS após o carregamento. Esses
+valores são amostras de dois jogadores parados em um desktop, não um benchmark
+de capacidade. A campanha inteira, todos os chefes e quatro clientes simultâneos
+ainda precisam de uma sessão de QA completa.
+
+RSS com valor -1 indica que o runtime não disponibilizou a medida (Mono no
+Windows pode retornar zero); a memória alocada pelo Unity continua disponível.
+As medições locais não representam a capacidade nem a latência da VM.
+
+## Atualização da VM para protocolo 5
+
+O build Linux dedicado com profiling passou com zero erros (321 MB) e foi
+instalado junto com o supervisor atualizado. A API pública confirmou protocolo 5;
+uma sala Boss Rush publicou disponibilidade/capacidade 4 e encerrou por ociosidade
+com código 0. O executável anterior permanece em server-before-coop-v5 na VM.
+
+UDP 7777/7778 continuou sem resposta do Windows tanto pelo IP público quanto
+pelo Tailscale. Uma tentativa de túnel temporário para QA foi rejeitada pela
+revisão automática da ferramenta; nenhuma partida Linux com clientes foi validada.
+O lobby vazio registrou RSS 312–314 MiB, mas também janelas de 36–47 FPS e frames
+máximos de 2–3 segundos. Essas pausas precisam ser investigadas em uma medição
+controlada antes de afirmar capacidade de partidas. Não foi atribuída uma causa.

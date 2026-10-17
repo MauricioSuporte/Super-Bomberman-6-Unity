@@ -57,17 +57,17 @@ public static class GameAudioSettings
 
     public static void PlaySfx(AudioSource source, AudioClip clip, float volume = 1f)
     {
-        if (source == null || clip == null)
-            return;
-
+        if (clip == null) return;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume, source != null ? source.pitch : 1f);
+        if (source == null) return;
         source.PlayOneShot(clip, ApplySfxVolume(volume));
     }
 
     public static void PlayVoiceSfx(AudioSource source, AudioClip clip, float volume = 1f)
     {
-        if (source == null || clip == null || !VoicesEnabled)
-            return;
-
+        if (clip == null) return;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume, source != null ? source.pitch : 1f, true);
+        if (source == null || !VoicesEnabled) return;
         source.PlayOneShot(clip, ApplyVoiceSfxVolume(volume));
     }
 
@@ -76,14 +76,15 @@ public static class GameAudioSettings
         if (clip == null)
             return;
 
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume);
         AudioSource.PlayClipAtPoint(clip, position, ApplySfxVolume(volume));
     }
 
     public static void PlaySfxClip(AudioSource source, AudioClip clip, float volume = 1f)
     {
-        if (source == null || clip == null)
-            return;
-
+        if (clip == null) return;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume, source != null ? source.pitch : 1f);
+        if (source == null) return;
         source.clip = clip;
         source.volume = ApplySfxVolume(volume);
         source.Play();
@@ -91,9 +92,9 @@ public static class GameAudioSettings
 
     public static void PlayVoiceSfxAtPoint(AudioClip clip, Vector3 position, float volume = 1f)
     {
-        if (clip == null || !VoicesEnabled)
-            return;
-
+        if (clip == null) return;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume, 1f, true);
+        if (!VoicesEnabled) return;
         AudioSource.PlayClipAtPoint(clip, position, ApplyVoiceSfxVolume(volume));
     }
 

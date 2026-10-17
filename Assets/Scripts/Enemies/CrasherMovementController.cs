@@ -242,6 +242,7 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
     {
         if (destructionSfx == null || !TryGetComponent<AudioSource>(out var source)) return;
         float playbackVolume = Mathf.Clamp01(GameAudioSettings.ApplySfxVolume(1f) * Mathf.Max(1f, destructionSfxGain));
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(destructionSfx, Mathf.Max(1f, destructionSfxGain), source.pitch);
         source.PlayOneShot(destructionSfx, playbackVolume);
     }
     private static void SetVisible(AnimatedSpriteRenderer animation, bool visible)

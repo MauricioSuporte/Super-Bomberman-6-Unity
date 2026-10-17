@@ -404,6 +404,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         if (clip == null || audioSource == null || !audioSource.isActiveAndEnabled) return;
         float effectiveVolume = Mathf.Max(0f, gain) * Mathf.Clamp01(GameAudioSettings.SfxVolume);
         // One-shot gain can exceed one while respecting the player's SFX setting.
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, Mathf.Max(0f, gain), audioSource.pitch);
         audioSource.PlayOneShot(clip, effectiveVolume);
     }
 

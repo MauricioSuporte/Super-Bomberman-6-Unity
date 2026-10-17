@@ -131,7 +131,6 @@ GameObject:
   - component: {fileID: 1121810759}
   - component: {fileID: 1121810758}
   - component: {fileID: 1121810761}
-  - component: {fileID: 1121810762}
   - component: {fileID: 1121810763}
   m_Layer: 0
   m_Name: NetworkManager
@@ -282,27 +281,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11be04f066882d8ef909dbf537adba74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.OnlineLobbyMenu
---- !u!114 &1121810762
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1121810756}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac0c6d46c8644f2998668a6d851306af, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.OnlineRoomDiscovery
-  enableActiveDiscovery: 1
-  BroadcastAddress:
-  serverBroadcastListenPort: 47776
-  ActiveDiscoveryInterval: 3
-  transport: {fileID: 1121810758}
-  OnServerFound:
-    m_PersistentCalls:
-      m_Calls: []
-  secretHandshake: 5999417380756737281
 --- !u!114 &1121810763
 MonoBehaviour:
   m_ObjectHideFlags: 0

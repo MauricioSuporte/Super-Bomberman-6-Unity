@@ -76,8 +76,7 @@ namespace Assets.Scripts.Netcode
                 modeButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(mode) + " (" + OnlineRoomRules.Capacity(mode) + ")";
             }
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
-            configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 2 &&
-                BombermanNetworkManager.RoomMode == OnlineRoomMode.BattleMode;
+            configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 2;
             if (EventSystem.current != null && (EventSystem.current.currentSelectedGameObject == null ||
                 !EventSystem.current.currentSelectedGameObject.activeInHierarchy))
             {
@@ -86,11 +85,14 @@ namespace Assets.Scripts.Netcode
                 EventSystem.current.SetSelectedGameObject(selection.gameObject);
             }
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
-            configureButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Configure;
+            configureButton.GetComponentInChildren<TextMeshProUGUI>().text = BombermanNetworkManager.RoomMode == OnlineRoomMode.BattleMode ? text.Configure : text.StartGame;
             leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Leave;
             var lines = new StringBuilder();
             if (connected)
             {
+                if (BombermanNetworkManager.RoomCompleted)
+                    lines.AppendLine(text.RunCompleted + (BombermanNetworkManager.CompletedRunTime > 0 ?
+                        " " + System.TimeSpan.FromSeconds(BombermanNetworkManager.CompletedRunTime).ToString(@"mm\:ss") : ""));
                 lines.AppendLine(string.Format(text.You, BombermanNetworkManager.LocalRoomPlayerId));
                 if (BombermanNetworkManager.RoomAdminPlayerId > 0)
                     lines.AppendLine(string.Format(text.RoomAdmin, BombermanNetworkManager.RoomAdminPlayerId));
@@ -99,8 +101,7 @@ namespace Assets.Scripts.Netcode
                     string mode = BombermanNetworkManager.IsConnectedSlot(id) ? GameTextDatabase.BattleModeMenu.Man : text.Empty;
                     lines.AppendLine($"P{id}: {mode}");
                 }
-                lines.AppendLine(BombermanNetworkManager.RoomMode != OnlineRoomMode.BattleMode ? text.CoopPending :
-                    BombermanNetworkManager.RoomPlayers.Length < 2 ? text.NeedPlayers : text.Waiting);
+                lines.AppendLine(BombermanNetworkManager.RoomPlayers.Length < 2 ? text.NeedPlayers : text.Waiting);
 
             }
             else if (NetworkClient.active || (browser != null && browser.Creating)) lines.AppendLine(text.Connecting);

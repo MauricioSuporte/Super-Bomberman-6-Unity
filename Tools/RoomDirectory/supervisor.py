@@ -16,7 +16,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-PROTOCOL = 4
+PROTOCOL = 5
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
@@ -240,7 +240,7 @@ def main():
                         count = len(pool.rooms)
                     log.info(json.dumps(dict(event="host_metrics", rooms=count,
                         load1=os.getloadavg()[0] if hasattr(os, "getloadavg") else None,
-                        availableMiB=memory.get("MemAvailable", 0) / 1024,
+                        availableMiB=memory["MemAvailable"] / 1024 if "MemAvailable" in memory else None,
                         diskFreeGiB=shutil.disk_usage(pool.logs).free / 1073741824)))
             except OSError:
                 log.exception("supervisor monitoring failed")

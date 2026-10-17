@@ -31,7 +31,11 @@ public partial class GamePauseController
         confirmReturn = state.confirming;
         confirmIndex = state.confirmation;
         confirmTarget = (PauseExitTarget)state.target;
-        if (state.paused) RefreshPauseUI();
+        if (state.paused)
+        {
+            if (!wasPaused) GameMusicController.Instance?.PauseMusic();
+            RefreshPauseUI();
+        }
         else if (wasPaused) ResumeGame();
     }
 
@@ -46,6 +50,8 @@ public partial class GamePauseController
                 BombermanNetworkManager.ServerDisconnectRoomAdmin();
             else BombermanNetworkManager.LeaveRoom();
         }
+        else if (BombermanNetworkManager.IsCoopRoom && (sceneName == bossRushSceneName || sceneName == worldMapSceneName))
+            BombermanNetworkManager.ServerReturnToLobby();
         else if (sceneName == battleModeMenuSceneName)
         {
             GameSession.Instance?.EndBattleMatch();

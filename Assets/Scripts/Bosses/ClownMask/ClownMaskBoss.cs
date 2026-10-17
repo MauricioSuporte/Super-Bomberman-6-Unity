@@ -349,6 +349,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     IEnumerator IntroSequence()
     {
+        while (!Assets.Scripts.Netcode.BombermanNetworkManager.OnlineCoopPlayersReady) yield return null;
         BossIntroRunning = true;
 
         ResetBossState();

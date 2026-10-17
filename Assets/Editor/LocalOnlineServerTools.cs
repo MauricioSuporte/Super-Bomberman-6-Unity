@@ -20,7 +20,7 @@ public static class LocalOnlineServerTools
         if (EditorApplication.isPlaying || BuildPipeline.isBuildingPlayer)
             throw new InvalidOperationException("Stop Play Mode and wait for the current build first.");
         Stop();
-        DedicatedServerBuild.BuildWindowsTestServer();
+        OnlineClientBuild.BuildWindows();
         Start();
     }
 
@@ -29,7 +29,7 @@ public static class LocalOnlineServerTools
     {
         if (IsRunning()) { UseLocal(); return; }
         string root = Directory.GetParent(Application.dataPath).FullName;
-        string binary = Path.Combine(root, "Build/WindowsServer/SB6Server.exe");
+        string binary = Path.Combine(root, "Build/OnlineClient/Windows/SB6.exe");
         if (!File.Exists(binary))
             throw new FileNotFoundException("Use Build and Start Local Server first.", binary);
         string logs = Path.Combine(root, "Build/LocalServerLogs");

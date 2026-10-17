@@ -34,7 +34,8 @@ public sealed class OnlineRoomText
     public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: UPDATE THE GAME", "バージョンが異なります。ゲームを更新してください", "VERSIÓN INCOMPATIBLE: ACTUALIZA EL JUEGO", "VERSÃO INCOMPATÍVEL: ATUALIZE O JOGO");
     public string RoomAdmin => LanguageText("ROOM ADMIN: P{0}", "ルーム管理者: P{0}", "ADMINISTRADOR: P{0}", "ADMINISTRADOR: P{0}");
 
-    public string CoopPending => LanguageText("CO-OP GAMEPLAY COMING SOON", "協力プレイは準備中です", "COOPERATIVO EN PREPARACIÓN", "COOPERATIVO EM PREPARAÇÃO");
+    public string RunCompleted => LanguageText("RUN COMPLETE!", "クリア！", "¡PARTIDA COMPLETADA!", "PARTIDA CONCLUÍDA!");
+    public string StartGame => LanguageText("START GAME", "ゲーム開始", "INICIAR JUEGO", "INICIAR JOGO");
     public string ModeName(Assets.Scripts.Netcode.OnlineRoomMode mode) => mode switch
     {
         Assets.Scripts.Netcode.OnlineRoomMode.NormalGame => LanguageText("NORMAL GAME", "ノーマルゲーム", "JUEGO NORMAL", "JOGO NORMAL"),
