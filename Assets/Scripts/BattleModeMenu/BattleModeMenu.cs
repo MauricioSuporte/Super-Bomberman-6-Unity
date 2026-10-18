@@ -733,9 +733,13 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
 
         yield return null;
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         ApplyDynamicScaleIfNeeded(true);
         BuildMatchModeMenu();
@@ -809,9 +813,13 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
 
         yield return null;
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         ApplyDynamicScaleIfNeeded(true);
         StartSelectMusic();
@@ -1322,9 +1330,13 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         else
             BuildMatchModeMenu();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         yield return null;
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
 
         if (leftPanel != null)
@@ -1500,7 +1512,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         if (resumeAtLastMember)
             ResumeTeamSelectionAtLastMember();
         UpdateTeamSelectVisuals(true);
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -1661,7 +1675,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
             UpdateOptionVisuals();
         }
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
 
         if (leftPanel != null)
@@ -1679,7 +1695,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
     {
         yield return Application.isBatchMode ? null : new WaitForEndOfFrame();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         UpdateOptionVisuals();
 
@@ -2180,7 +2198,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         ApplyCurrentBackgroundSprite(true);
         UpdatePromptTitle();
         UpdateRuleConfigVisuals();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -2639,7 +2659,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         UpdateStageSelectVisuals();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -3256,7 +3278,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         UpdateSpecificSettingsVisuals();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -3365,7 +3389,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         UpdateMusicSelectVisuals();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -3727,7 +3753,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         UpdateItemSelectVisuals();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -4539,7 +4567,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         UpdateLouieSelectVisuals();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -5064,7 +5094,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         UpdateHandicapSelectVisuals();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyDynamicScaleIfNeeded(true);
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -6925,7 +6957,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         fadeImage.gameObject.SetActive(true);
         BringFadeImageToFront();
         SetFadeAlpha(0f);
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         yield return null;
 
         float duration = Mathf.Max(0.001f, durationSeconds);

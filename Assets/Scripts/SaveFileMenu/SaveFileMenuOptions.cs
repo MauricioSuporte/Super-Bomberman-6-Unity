@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -280,7 +280,9 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (layout != null)
             layout.spacing = Mathf.Round(ScaledFloat(optionSpacing.y));
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         if (optionListRoot != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(optionListRoot);
     }
@@ -414,7 +416,9 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         ApplyOptionListLayoutSettings();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         LayoutRebuilder.ForceRebuildLayoutImmediate(optionListRoot);
     }
 

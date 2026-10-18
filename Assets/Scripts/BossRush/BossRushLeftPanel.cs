@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -190,7 +190,9 @@ public class BossRushLeftPanel : MonoBehaviour
             if (layout != null)
                 layout.spacing = ScaledFloat(difficultySpacing.y);
 
+#if !UNITY_SERVER
             Canvas.ForceUpdateCanvases();
+#endif
             if (difficultyListRoot != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(difficultyListRoot);
         }
@@ -280,7 +282,9 @@ public class BossRushLeftPanel : MonoBehaviour
         if (cursorRenderer != null)
             cursorRenderer.transform.SetAsLastSibling();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         LayoutRebuilder.ForceRebuildLayoutImmediate(difficultyListRoot);
         DumpDifficultyState("BuildDifficultyList END");
     }

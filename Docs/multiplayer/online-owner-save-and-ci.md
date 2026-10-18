@@ -128,3 +128,13 @@ recuperável no AssetDatabase; recebeu metadados válidos e GUID próprio.
 `SnowBall.mp3.meta` terminava sem a linha final esperada pelo parser Unity;
 o terminador foi corrigido preservando seu GUID e os parâmetros de áudio.
 Os arquivos de prefab/áudio não foram removidos ou substituídos.
+
+
+O runner conserva somente o cache de importação `Library/` entre execuções.
+Antes do checkout, remove arquivos não versionados e saídas antigas da sua cópia
+isolada; o checkout força os arquivos versionados para o commit solicitado.
+Isso evita reimportar todos os assets em cada correção e não conserva código
+extra em Assets. O caminho é verificado contra o workspace do runner antes da
+limpeza. Os painéis nativos mantêm os rebuilds de layout no servidor e deixam
+as atualizações gráficas de Canvas para os clientes, evitando pedir shaders
+removidos do Linux Dedicated Server.

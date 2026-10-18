@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -397,7 +397,9 @@ public class BossRushRightPanel : MonoBehaviour
 
     void ForceRebuildLayouts()
     {
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         if (firstRow != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(firstRow);
@@ -412,7 +414,9 @@ public class BossRushRightPanel : MonoBehaviour
         if (root != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(root);
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
     }
 
     void ConfigureTitleHeight()

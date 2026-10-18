@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -607,7 +607,9 @@ public class BossRushTopPanel : MonoBehaviour
 
     void ForceRebuild()
     {
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         RectTransform rt = transform as RectTransform;
         if (rt != null)

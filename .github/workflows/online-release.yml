@@ -21,11 +21,22 @@ jobs:
       run:
         shell: powershell
     steps:
-      - name: Enable long Git paths on Windows
-        run: git config --global core.longpaths true
+      - name: Prepare isolated checkout and retain Unity import cache
+        run: |
+          git config --global core.longpaths true
+          $workspace = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $runnerRoot = [IO.Path]::GetFullPath($env:RUNNER_WORKSPACE)
+          $runnerPrefix = $runnerRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+          if (-not $workspace.StartsWith($runnerPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            throw 'Checkout escaped the runner workspace'
+          }
+          if (Test-Path -LiteralPath (Join-Path $workspace '.git')) {
+            git -C $workspace clean -ffdx -e /Library/
+            if ($LASTEXITCODE -ne 0) { throw 'Unable to clean isolated checkout' }
+          }
       - uses: actions/checkout@v7
         with:
-          clean: true
+          clean: false
           persist-credentials: false
       - name: Compile, test and build release players
         run: python Tools/Ci/release.py build
