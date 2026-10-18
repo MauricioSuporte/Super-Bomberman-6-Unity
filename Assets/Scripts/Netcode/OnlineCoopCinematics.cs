@@ -17,6 +17,7 @@ namespace Assets.Scripts.Netcode
     {
         readonly List<Image> coopCinematicImages = new();
         readonly Dictionary<string, Image> coopClientImages = new();
+        Image coopSpotlightImage;
 
         void InitializeCoopCinematics()
         {
@@ -25,7 +26,8 @@ namespace Assets.Scripts.Netcode
             AddCoopCinematic(StageIntroTransition.Instance != null ? StageIntroTransition.Instance.fadeImage : null);
             AddCoopCinematic(StageMechaIntroController.Instance != null ? StageMechaIntroController.Instance.fadeImage : null);
             var clown = FindAnyObjectByType<StageIntroClownMaskBoss>(FindObjectsInactive.Include);
-            if (clown != null) AddCoopCinematic(clown.spotlightImage);
+            coopSpotlightImage = clown != null ? clown.spotlightImage : null;
+            AddCoopCinematic(coopSpotlightImage);
         }
 
         void AddCoopCinematic(Image image)
@@ -41,7 +43,9 @@ namespace Assets.Scripts.Netcode
                 if (image == null) continue;
                 var frame = new CoopCinematicFrame { path = CoopPath(image.transform), color = image.color,
                     visible = image.enabled && image.gameObject.activeInHierarchy };
-                var material = image.material;
+                // Plain fades only need color/visibility. Accessing their default
+                // UI material requests a shader stripped from headless builds.
+                var material = image == coopSpotlightImage ? image.material : null;
                 if (material != null && material.HasProperty("_EllipseX"))
                 {
                     frame.spotlight = true;

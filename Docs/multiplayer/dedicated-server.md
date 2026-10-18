@@ -14,7 +14,7 @@ partida retorna os restantes ao lobby. Não há transferência de dono.
 Movimento, física, bombas, dano, COM e decisões de partida executam no servidor.
 Clientes enviam controles a 30 Hz e recebem transformações, estado e animação.
 Não há predição local nesse fluxo; a latência até a VM influencia a resposta.
-Offline continua usando a simulação local. O protocolo 5 rejeita clientes antigos.
+Offline continua usando a simulação local. O protocolo 6 rejeita clientes antigos.
 
 ## Rede e implantação
 
@@ -63,7 +63,8 @@ residente, memória gerenciada e alocada pelo Unity, coletas GC, FPS, maior
 intervalo de frame, quantidade de objetos de rede e KiB/s de mensagens Mirror.
 O tráfego medido não inclui cabeçalhos/retransmissões do transporte.
 
-`Build → Linux Dedicated Server (Profiling)` habilita o Development Build
+`Build → Linux Dedicated Server (Profiling)` gera o Development Build separado
+em `Build/LinuxServerBenchmark/`, preservando o release em `Build/LinuxServer/`,
 para capturar os marcadores existentes de movimento, física do jogador,
 bombas, COM, habilidades, arena e input. As médias são por frame e podem se
 sobrepor por conter escopos aninhados; não devem ser somadas. `-1` significa
@@ -200,7 +201,7 @@ RSS com valor -1 indica que o runtime não disponibilizou a medida (Mono no
 Windows pode retornar zero); a memória alocada pelo Unity continua disponível.
 As medições locais não representam a capacidade nem a latência da VM.
 
-## Atualização da VM para protocolo 5
+## Histórico: atualização da VM para protocolo 5
 
 O build Linux dedicado com profiling passou com zero erros (321 MB) e foi
 instalado junto com o supervisor atualizado. A API pública confirmou protocolo 5;

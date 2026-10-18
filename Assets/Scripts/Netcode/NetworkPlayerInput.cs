@@ -11,7 +11,7 @@ namespace Assets.Scripts.Netcode
         static readonly PlayerAction[] Actions =
         {
             PlayerAction.MoveUp, PlayerAction.MoveDown, PlayerAction.MoveLeft,
-            PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionB, PlayerAction.ActionC
+            PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionB, PlayerAction.ActionC, PlayerAction.Select
         };
         NetworkPlayerSetup setup;
         int serverHeldMask;
@@ -31,13 +31,13 @@ namespace Assets.Scripts.Netcode
         {
             var input = PlayerInputManager.Instance;
             if (input == null || setup == null) return;
-            if (isLocalPlayer && !isServer)
+            if (isLocalPlayer && !isServer && NetworkClient.ready && !Blocked)
             {
                 int held = 0, pressed = 0;
                 for (int i = 0; i < Actions.Length; i++)
                 {
-                    if (!Blocked && input.Get(1, Actions[i])) held |= 1 << i;
-                    if (!Blocked && i >= 4 && input.GetDown(1, Actions[i])) pressed |= 1 << i;
+                    if (input.Get(1, Actions[i])) held |= 1 << i;
+                    if (i >= 4 && input.GetDown(1, Actions[i])) pressed |= 1 << i;
                 }
                 if (pressed != 0 || Time.unscaledTime >= nextSend)
                 {
@@ -58,7 +58,7 @@ namespace Assets.Scripts.Netcode
         void CmdControls(int held, int pressed)
         {
             lastReceived = Time.unscaledTime;
-            serverHeldMask = Blocked ? 0 : held & 127;
+            serverHeldMask = Blocked ? 0 : held & ((1 << Actions.Length) - 1);
             if (Blocked || setup == null || PlayerInputManager.Instance == null) return;
             for (int i = 4; i < Actions.Length; i++)
                 if ((pressed & (1 << i)) != 0)

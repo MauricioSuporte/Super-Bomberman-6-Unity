@@ -13,6 +13,15 @@ public sealed class MountWorldPickup : MonoBehaviour
 
     bool consumed;
     Collider2D _col;
+    internal Assets.Scripts.Netcode.NetworkWorldMount NetworkPresentation { get; set; }
+
+    void Start()
+    {
+        // Covers revealed pickups, manual dismount and an interrupted mount arc.
+        // Cooperative stages already present these actors through scene snapshots.
+        if (Assets.Scripts.Netcode.NetSync.IsServer && !Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+            Assets.Scripts.Netcode.NetworkWorldMount.Spawn(this);
+    }
 
     public MountedType Type
     {

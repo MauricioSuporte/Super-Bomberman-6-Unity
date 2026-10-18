@@ -65,6 +65,10 @@ namespace Assets.Scripts.Netcode
             dedicatedServer = HasArg("-server");
 #if UNITY_SERVER
             dedicatedServer = true;
+#if DEBUG
+            // Explicit development-only loopback load generator, never a release role.
+            if (Debug.isDebugBuild && HasArg("-load-test-client")) dedicatedServer = false;
+#endif
 #endif
             if (dedicatedServer)
             {
@@ -362,6 +366,14 @@ namespace Assets.Scripts.Netcode
             RegisterRoundPlayerSpawn(playerId);
 
             SyncActivePlayersToSession();
+        }
+
+        public override void OnApplicationQuit()
+        {
+            // Shutdown disconnects every peer. Those callbacks must not route
+            // the departing process back into the lobby or start new loads.
+            leavingRoom = true;
+            base.OnApplicationQuit();
         }
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn)

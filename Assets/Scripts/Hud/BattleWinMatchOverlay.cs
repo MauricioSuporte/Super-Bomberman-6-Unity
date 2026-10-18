@@ -699,7 +699,9 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         canvasGroup.blocksRaycasts = false;
 
         transform.SetAsLastSibling();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
     }
 
     void PlayWinMatchMusic()

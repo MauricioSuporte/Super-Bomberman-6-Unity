@@ -39,7 +39,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopSessionState>(message => BossRushSession.ApplyOnlineState(message.bossRush));
         }
 
-        void ServerStartCoop()
+        void ServerStartCoop(string initialScene = null)
         {
             if (!NetworkServer.active || !InLobbyScene() || RoomPlayers.Length < 2 || !IsCoopRoom) return;
             RoomCompleted = false; CompletedRunTime = 0;
@@ -54,7 +54,7 @@ namespace Assets.Scripts.Netcode
                     { difficulty = BossRushDifficulty.NORMAL, life = 4, bombAmount = 3, explosionRadius = 3, speedUps = 2 });
             BroadcastCoopSession();
             BroadcastRoom();
-            ServerChangeScene(RoomMode == OnlineRoomMode.BossRush ? BossRushSession.GetCurrentStageSceneName() : "Stage_1-1");
+            ServerChangeScene(initialScene ?? (RoomMode == OnlineRoomMode.BossRush ? BossRushSession.GetCurrentStageSceneName() : "Stage_1-1"));
         }
 
         void BroadcastCoopSession()

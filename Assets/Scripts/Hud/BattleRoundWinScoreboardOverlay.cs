@@ -182,7 +182,9 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
 
         presenter.Configure(activePlayerIds, winnerPlayerId, usesTeams, targetVictories);
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         float uiScale = GetPixelPerfectUiScale(parentRect);
         rect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -199,7 +201,9 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         }
 
         transform.SetAsLastSibling();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         float slideDistance = GetSlideDistance(parentRect, rect);
         Vector2 hiddenPosition = new(0f, -slideDistance);

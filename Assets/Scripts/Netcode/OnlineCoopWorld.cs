@@ -55,6 +55,12 @@ namespace Assets.Scripts.Netcode
         readonly Dictionary<int, SpriteRenderer> coopViews = new();
         readonly Dictionary<string, Tilemap> coopMaps = new();
         readonly Dictionary<string, Dictionary<Vector3Int, CoopTileFrame>> coopLastTiles = new();
+        readonly Dictionary<string, Dictionary<Vector3Int, CoopTileFrame>> coopTileScratch = new();
+        readonly List<NetworkConnectionToClient> coopPeerBuffer = new();
+        readonly List<CoopSpriteFrame> coopChangedSprites = new();
+        readonly List<int> coopRemovedSprites = new();
+        readonly HashSet<int> coopCurrentSprites = new();
+        readonly List<CoopTileFrame> coopChangedTiles = new();
         readonly HashSet<int> coopInitializedPeers = new();
         readonly HashSet<string> coopMissingAssets = new();
         SpriteRenderer[] coopRenderers = Array.Empty<SpriteRenderer>();
@@ -163,9 +169,12 @@ namespace Assets.Scripts.Netcode
         {
             ClearCoopSprites();
             coopLastSprites.Clear(); coopViews.Clear(); coopMaps.Clear(); coopLastTiles.Clear();
+            coopTileScratch.Clear(); coopPeerBuffer.Clear(); coopChangedSprites.Clear();
+            coopRemovedSprites.Clear(); coopCurrentSprites.Clear(); coopChangedTiles.Clear();
             coopInitializedPeers.Clear(); coopMissingAssets.Clear();
             coopSpriteIds.Clear(); coopTileIds.Clear(); coopMaterialIds.Clear(); coopSoundIds.Clear();
             coopCinematicImages.Clear(); coopClientImages.Clear();
+            coopSpotlightImage = null;
             coopSceneHealth.Clear(); coopServerHealth = Array.Empty<CharacterHealth>(); coopNextStatus = 0;
             coopRenderers = Array.Empty<SpriteRenderer>();
             coopCatalog = null; coopScene = null; coopHasMusic = false;
@@ -180,7 +189,8 @@ namespace Assets.Scripts.Netcode
             if (Time.unscaledTime < coopNextFrame) return;
             using var scope = CoopPresentationMarker.Auto();
             coopNextFrame = Time.unscaledTime + 0.05f;
-            var peers = new List<NetworkConnectionToClient>();
+            var peers = coopPeerBuffer;
+            peers.Clear();
             foreach (var peer in NetworkServer.connections.Values)
             {
                 if (peer == null || !peer.isAuthenticated || !peer.isReady || peer == NetworkServer.localConnection) continue;
@@ -198,6 +208,8 @@ namespace Assets.Scripts.Netcode
             {
                 coopNextDiscover = Time.unscaledTime + 0.25f;
                 coopServerHealth = FindObjectsByType<CharacterHealth>(FindObjectsInactive.Include);
+                // Keep pooled renderers tracked so even short-lived activations are
+                // sampled at 20 Hz rather than waiting for the next discovery pass.
                 var found = FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include);
                 var renderers = new List<SpriteRenderer>();
                 foreach (var renderer in found)
@@ -205,13 +217,18 @@ namespace Assets.Scripts.Netcode
                 coopRenderers = renderers.ToArray();
             }
             CaptureCoopStageStatus();
-            var changed = new List<CoopSpriteFrame>();
-            var current = new HashSet<int>();
+            var changed = coopChangedSprites;
+            var current = coopCurrentSprites;
+            changed.Clear(); current.Clear();
             foreach (var renderer in coopRenderers)
             {
                 if (renderer == null) continue;
                 int id = renderer.GetEntityId().GetHashCode();
                 current.Add(id);
+                bool active = renderer.gameObject.activeInHierarchy;
+                // Send the visible -> hidden transition once. Sleeping pool objects
+                // need no repeated transform/material/sprite reads or initial clone.
+                if (!active && (!coopLastSprites.TryGetValue(id, out var sleeping) || !sleeping.visible)) continue;
                 var frame = new CoopSpriteFrame
                 {
                     id = id, sprite = CoopSpriteId(renderer.sprite),
@@ -219,16 +236,17 @@ namespace Assets.Scripts.Netcode
                     position = renderer.transform.position, rotation = renderer.transform.rotation,
                     scale = renderer.transform.lossyScale, color = renderer.color,
                     sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
-                    visible = renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff,
+                    visible = renderer.enabled && active && !renderer.forceRenderingOff,
                     flipX = renderer.flipX, flipY = renderer.flipY
                 };
                 if (!coopLastSprites.TryGetValue(id, out var previous) || !frame.Matches(previous)) changed.Add(frame);
                 coopLastSprites[id] = frame;
             }
-            var removed = new List<int>();
+            var removed = coopRemovedSprites;
+            removed.Clear();
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
             foreach (int id in removed) coopLastSprites.Remove(id);
-            foreach (var peer in peers) SendCoopSprites(peer, changed, removed.ToArray());
+            SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
             if (Time.unscaledTime >= coopNextTiles)
             {
                 coopNextTiles = Time.unscaledTime + 0.25f;
@@ -256,12 +274,30 @@ namespace Assets.Scripts.Netcode
                     removed = start == 0 ? removed : Array.Empty<int>() });
         }
 
+        void SendCoopSpriteDeltas(List<NetworkConnectionToClient> peers, List<CoopSpriteFrame> frames, int[] removed)
+        {
+            const int batch = 48;
+            if (frames.Count == 0 && removed.Length == 0) return;
+            for (int start = 0; start < Mathf.Max(1, frames.Count); start += batch)
+            {
+                int count = Mathf.Min(batch, frames.Count - start);
+                var chunk = count == 0 ? Array.Empty<CoopSpriteFrame>() : new CoopSpriteFrame[count];
+                if (count > 0) frames.CopyTo(start, chunk, 0, count);
+                var message = new CoopSprites { scene = coopScene, frames = chunk,
+                    removed = start == 0 ? removed : Array.Empty<int>() };
+                // Send serializes synchronously. All observers can share the frame array.
+                foreach (var peer in peers) peer.Send(message);
+            }
+        }
+
         void CaptureCoopTiles(string path, Tilemap map, List<NetworkConnectionToClient> peers)
         {
             bool first = !coopLastTiles.TryGetValue(path, out var previous);
             previous ??= new Dictionary<Vector3Int, CoopTileFrame>();
-            var current = new Dictionary<Vector3Int, CoopTileFrame>();
-            var changed = new List<CoopTileFrame>();
+            if (!coopTileScratch.TryGetValue(path, out var current)) current = new Dictionary<Vector3Int, CoopTileFrame>();
+            current.Clear();
+            var changed = coopChangedTiles;
+            changed.Clear();
             foreach (var cell in map.cellBounds.allPositionsWithin)
             {
                 var tile = map.GetTile(cell);
@@ -274,8 +310,19 @@ namespace Assets.Scripts.Netcode
             foreach (var cell in previous.Keys)
                 if (!current.ContainsKey(cell)) changed.Add(new CoopTileFrame { cell = cell, tile = -1 });
             coopLastTiles[path] = current;
+            coopTileScratch[path] = previous;
             // Map pose/color can change even without individual tile edits.
-            foreach (var peer in peers) SendCoopTiles(peer, path, map, first, changed);
+            const int batch = 48;
+            for (int start = 0; start < Mathf.Max(1, changed.Count); start += batch)
+            {
+                int count = Mathf.Min(batch, changed.Count - start);
+                var chunk = count == 0 ? Array.Empty<CoopTileFrame>() : new CoopTileFrame[count];
+                if (count > 0) changed.CopyTo(start, chunk, 0, count);
+                var message = new CoopTiles { scene = coopScene, path = path, reset = first && start == 0,
+                    position = map.transform.position, rotation = map.transform.rotation, scale = map.transform.lossyScale,
+                    color = map.color, cells = chunk };
+                foreach (var peer in peers) peer.Send(message);
+            }
         }
 
         void SendCoopTiles(NetworkConnectionToClient peer, string path, Tilemap map, bool reset, List<CoopTileFrame> cells)

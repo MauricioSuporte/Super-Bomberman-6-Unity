@@ -346,7 +346,9 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         canvasGroup.blocksRaycasts = false;
 
         transform.SetAsLastSibling();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
     }
 
     IEnumerator FadeCanvas(float from, float to, float duration)

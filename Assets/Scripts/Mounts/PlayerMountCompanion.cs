@@ -2245,6 +2245,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
     public GameObject GetMountPrefabForType(MountedType type)
     {
+        // Prefab catalogs are also read without instantiating a player/Awake.
+        if (prefabByType.Count == 0) BuildTypeMaps();
         return GetPrefab(type);
     }
 

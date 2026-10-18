@@ -36,6 +36,8 @@ public sealed class PlayerManualDismount : MonoBehaviour
     {
         using var performanceSample = BattleModePerformanceMarkers.PlayerAuxUpdate.Auto();
 
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+
         if (movement == null || companion == null)
             return;
 

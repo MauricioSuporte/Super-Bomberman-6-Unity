@@ -175,14 +175,19 @@ namespace Assets.Scripts.Netcode
         {
             base.Update();
             TickDedicatedProcess();
+#if UNITY_EDITOR || DEBUG
+            TickLocalLoadTest();
+#endif
             TickCoopWorld();
             TickDedicatedAdminInput();
             if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
             {
                 nextRoomBroadcast = Time.unscaledTime + (InConfiguration ? 1f / 30f : IsCoopRoom ? 0.5f : 0.1f);
-                BroadcastRoom(RoomMode == OnlineRoomMode.BattleMode);
+                // Joins and transitions send a full snapshot. Battle settings can
+                // only change in configuration, not during lobby/gameplay ticks.
+                BroadcastRoom(InConfiguration);
             }
-            if (NetworkServer.active && IsCoopRoom && Time.unscaledTime >= nextCoopSessionBroadcast)
+            if (NetworkServer.active && RoomMode == OnlineRoomMode.BossRush && Time.unscaledTime >= nextCoopSessionBroadcast)
             {
                 nextCoopSessionBroadcast = Time.unscaledTime + 0.1f;
                 BroadcastCoopSession();

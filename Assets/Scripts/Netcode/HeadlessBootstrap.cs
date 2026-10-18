@@ -22,6 +22,9 @@ namespace Assets.Scripts.Netcode
             bool startServer = HasArg(args, "-server");
 #if UNITY_SERVER
             startServer = true;
+#if DEBUG
+            if (Debug.isDebugBuild && HasArg(args, "-load-test-client")) startServer = false;
+#endif
 #endif
             if (!startServer)
             {

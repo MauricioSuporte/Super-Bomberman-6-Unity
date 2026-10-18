@@ -20,7 +20,7 @@ public static class DedicatedServerBuild
 
     [MenuItem("Build/Linux Dedicated Server (Profiling)")]
     public static void BuildLinuxProfilingServer() => Build(BuildTarget.StandaloneLinux64,
-        "Build/LinuxServer/SB6.x86_64", StandaloneBuildSubtarget.Server, BuildOptions.Development);
+        "Build/LinuxServerBenchmark/SB6.x86_64", StandaloneBuildSubtarget.Server, BuildOptions.Development);
 
     [MenuItem("Build/Windows Headless Server (Local Test)")]
     public static void BuildWindowsTestServer() => Build(BuildTarget.StandaloneWindows64,

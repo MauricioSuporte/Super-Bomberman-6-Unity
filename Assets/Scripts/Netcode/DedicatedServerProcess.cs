@@ -19,7 +19,14 @@ namespace Assets.Scripts.Netcode
         double dedicatedCpuTime;
         float dedicatedMetricsStart, dedicatedNextStatus, dedicatedMaxFrame;
         int dedicatedFrames, dedicatedGcCount;
+        readonly int[] dedicatedFrameHistogram = new int[4097];
+        int dedicatedSlowFrames;
+        ulong dedicatedMetricsSceneHandle;
+        bool dedicatedWindowIncludesTransition;
+        long dedicatedGcAllocated;
+        ProfilerRecorder dedicatedGcRecorder;
         long dedicatedIncomingBytes, dedicatedOutgoingBytes;
+        bool dedicatedNetworkDiagnosticsReady;
         readonly string[] dedicatedMarkerNames = { BattleModePerformanceMarkers.PlayerUpdateName,
             BattleModePerformanceMarkers.PlayerFixedUpdateName, BattleModePerformanceMarkers.BombControllerUpdateName,
             BattleModePerformanceMarkers.ComUpdateName, BattleModePerformanceMarkers.ComThinkName,
@@ -47,9 +54,13 @@ namespace Assets.Scripts.Netcode
         [Serializable]
         sealed class DedicatedMetrics
         {
+            public int metricsVersion = 2;
+            public bool includesTransition;
             public string utc, room, scene;
             public int players, objects, gcCollections;
-            public float fps, maxFrameMs;
+            public float fps, maxFrameMs, p50FrameMs, p95FrameMs, p99FrameMs;
+            public int frames, framesOver33Ms;
+            public double gcAllocatedKiBPerSecond;
             public double cpuPercentOneCore, residentMiB, managedMiB, unityAllocatedMiB;
             public double incomingKiBPerSecond, outgoingKiBPerSecond;
             public string[] markerNames;
@@ -99,15 +110,32 @@ namespace Assets.Scripts.Netcode
                 dedicatedRecorders[i] = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, dedicatedMarkerNames[i], 1,
                     ProfilerRecorderOptions.StartImmediately | ProfilerRecorderOptions.WrapAroundWhenCapacityReached |
                     ProfilerRecorderOptions.SumAllSamplesInFrame);
-            NetworkDiagnostics.InMessageEvent += DedicatedIncoming;
-            NetworkDiagnostics.OutMessageEvent += DedicatedOutgoing;
+            dedicatedGcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame", 1);
             Debug.Log($"[Dedicated] configured UDP port={port}; fps={fps}; idleSeconds={dedicatedIdleSeconds}; protocol={OnlineVersionAuthenticator.ProtocolVersion}");
         }
 
         void TickDedicatedProcess()
         {
             if (!dedicatedServer || !Mirror.NetworkServer.active) return;
+            if (!dedicatedNetworkDiagnosticsReady)
+            {
+                // A Linux server boots directly into the lobby. Mirror resets its
+                // diagnostics in AfterSceneLoad, after our Awake configuration.
+                // Subscribe on the first running frame, after those resets finish.
+                NetworkDiagnostics.InMessageEvent += DedicatedIncoming;
+                NetworkDiagnostics.OutMessageEvent += DedicatedOutgoing;
+                dedicatedNetworkDiagnosticsReady = true;
+            }
+            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            ulong sceneHandle = scene.handle.GetRawData();
+            dedicatedWindowIncludesTransition |= sceneHandle != dedicatedMetricsSceneHandle ||
+                NetworkServer.isLoadingScene || (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive);
+            dedicatedMetricsSceneHandle = sceneHandle;
             dedicatedFrames++;
+            float frameMs = Time.unscaledDeltaTime * 1000;
+            dedicatedFrameHistogram[Mathf.Clamp((int)Math.Ceiling(frameMs * 4), 0, dedicatedFrameHistogram.Length - 1)]++;
+            if (frameMs > 33.333f) dedicatedSlowFrames++;
+            if (dedicatedGcRecorder.Valid) dedicatedGcAllocated += dedicatedGcRecorder.LastValue;
             dedicatedMaxFrame = Mathf.Max(dedicatedMaxFrame, Time.unscaledDeltaTime);
             for (int i = 0; i < dedicatedRecorders.Length; i++)
                 if (dedicatedRecorders[i].Valid) dedicatedMarkerTotals[i] += dedicatedRecorders[i].LastValue / 1000000d;
@@ -141,8 +169,12 @@ namespace Assets.Scripts.Netcode
                 {
                     utc = DateTime.UtcNow.ToString("O"), room = dedicatedRoomId,
                     scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                    includesTransition = dedicatedWindowIncludesTransition,
                     players = playerIdByConnection.Count, objects = Mirror.NetworkServer.spawned.Count,
                     fps = dedicatedFrames / elapsed, maxFrameMs = dedicatedMaxFrame * 1000,
+                    frames = dedicatedFrames, framesOver33Ms = dedicatedSlowFrames,
+                    p50FrameMs = DedicatedFramePercentile(0.50f), p95FrameMs = DedicatedFramePercentile(0.95f), p99FrameMs = DedicatedFramePercentile(0.99f),
+                    gcAllocatedKiBPerSecond = dedicatedGcRecorder.Valid ? dedicatedGcAllocated / elapsed / 1024d : -1,
                     cpuPercentOneCore = (cpu - dedicatedCpuTime) / elapsed * 100,
                     residentMiB = dedicatedProcess.WorkingSet64 > 0 ? dedicatedProcess.WorkingSet64 / 1048576d : -1,  // Mono on Windows may not expose RSS.
                     managedMiB = GC.GetTotalMemory(false) / 1048576d,
@@ -157,7 +189,10 @@ namespace Assets.Scripts.Netcode
                 AppendDedicatedLog("metrics.jsonl", metrics);
                 dedicatedCpuTime = cpu;
                 dedicatedMetricsStart = Time.realtimeSinceStartup;
-                dedicatedFrames = 0;
+                dedicatedFrames = dedicatedSlowFrames = 0;
+                dedicatedWindowIncludesTransition = false;
+                dedicatedGcAllocated = 0;
+                Array.Clear(dedicatedFrameHistogram, 0, dedicatedFrameHistogram.Length);
                 dedicatedMaxFrame = 0;
                 dedicatedGcCount = GC.CollectionCount(0);
                 dedicatedIncomingBytes = dedicatedOutgoingBytes = 0;
@@ -169,6 +204,17 @@ namespace Assets.Scripts.Netcode
                 StopServer();
                 Application.Quit();
             }
+        }
+
+        float DedicatedFramePercentile(float percentile)
+        {
+            int target = Mathf.CeilToInt(dedicatedFrames * percentile), total = 0;
+            for (int i = 0; i < dedicatedFrameHistogram.Length; i++)
+            {
+                total += dedicatedFrameHistogram[i];
+                if (total >= target) return i == dedicatedFrameHistogram.Length - 1 ? dedicatedMaxFrame * 1000 : i * 0.25f;
+            }
+            return 0;
         }
 
         double[] DedicatedMarkerAverages()
@@ -189,13 +235,15 @@ namespace Assets.Scripts.Netcode
             NetworkDiagnostics.OutMessageEvent -= DedicatedOutgoing;
             if (dedicatedRecorders != null)
                 foreach (var recorder in dedicatedRecorders) recorder.Dispose();
+            dedicatedGcRecorder.Dispose();
             dedicatedProcess?.Dispose();
         }
 
         void CaptureDedicatedEvent(string message, string stack, LogType type)
         {
             if (type == LogType.Log && !message.StartsWith("[Room]", StringComparison.Ordinal) &&
-                !message.StartsWith("[Dedicated]", StringComparison.Ordinal)) return;
+                !message.StartsWith("[Dedicated]", StringComparison.Ordinal) &&
+                !message.StartsWith("[WorldMount]", StringComparison.Ordinal)) return;
             AppendDedicatedLog("events.jsonl", JsonUtility.ToJson(new DedicatedEvent
             {
                 utc = DateTime.UtcNow.ToString("O"), room = dedicatedRoomId,

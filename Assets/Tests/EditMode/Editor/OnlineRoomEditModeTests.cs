@@ -9,6 +9,85 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void LineBombIdentityBelongsToPickupRoot()
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Items/LineBomb.prefab");
+        Assert.NotNull(prefab.GetComponent<ItemPickup>());
+        Assert.NotNull(prefab.GetComponent<NetworkIdentity>());
+        Assert.AreEqual(1, prefab.GetComponentsInChildren<NetworkIdentity>(true).Length);
+    }
+
+    [Test]
+    public void WorldMountProxyKeepsSharedMountPrefabsFreeOfNestedIdentities()
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/NetworkWorldMount.prefab");
+        Assert.NotNull(prefab.GetComponent<NetworkIdentity>());
+        var component = prefab.GetComponent<NetworkWorldMount>();
+        Assert.AreNotEqual(0u, prefab.GetComponent<NetworkIdentity>().assetId);
+        Assert.NotNull(component);
+        var serialized = new UnityEditor.SerializedObject(component);
+        var catalog = serialized.FindProperty("mountCatalog").objectReferenceValue as PlayerMountCompanion;
+        Assert.NotNull(catalog);
+        foreach (MountedType type in System.Enum.GetValues(typeof(MountedType)))
+        {
+            if (type == MountedType.None) continue;
+            var mount = catalog.GetMountPrefabForType(type);
+            Assert.NotNull(mount);
+            Assert.AreEqual(0, mount.GetComponentsInChildren<NetworkIdentity>(true).Length);
+            Assert.Greater(mount.GetComponentsInChildren<AnimatedSpriteRenderer>(true).Length, 0);
+        }
+        string lobby = System.IO.File.ReadAllText("Assets/Scenes/OnlineLobby.unity", System.Text.Encoding.UTF8);
+        StringAssert.Contains(UnityEditor.AssetDatabase.AssetPathToGUID("Assets/Prefabs/NetworkWorldMount.prefab"), lobby);
+        StringAssert.Contains("fileID: 6871244334814668704, guid: 1859c76e0a194baa929ef21612edfdca", lobby);
+    }
+
+    [Test]
+    public void WorldMountFrameRoundTripsPoseAndVisibility()
+    {
+        var frame = new NetworkWorldMount.MountFrame { visible = true, idle = false, frame = 7,
+            flipX = true, color = new Color(0.5f, 1f, 0.2f, 0.4f), localPosition = new Vector3(1, 2, 3) };
+        using var writer = NetworkWriterPool.Get();
+        writer.Write(frame);
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+        Assert.IsTrue(frame.Equals(reader.Read<NetworkWorldMount.MountFrame>()));
+        var hidden = frame; hidden.visible = false;
+        Assert.IsFalse(frame.Equals(hidden));
+    }
+
+    [TestCase(MountedType.Mole)]
+    [TestCase(MountedType.Tank)]
+    [TestCase(MountedType.Blue)]
+    [TestCase(MountedType.Black)]
+    [TestCase(MountedType.Purple)]
+    [TestCase(MountedType.Green)]
+    [TestCase(MountedType.Yellow)]
+    [TestCase(MountedType.Pink)]
+    [TestCase(MountedType.Red)]
+    public void WorldMountClientCloneOnlyPresentsServerOutput(MountedType type)
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/NetworkWorldMount.prefab");
+        var instance = Object.Instantiate(prefab);
+        try
+        {
+            var proxy = instance.GetComponent<NetworkWorldMount>();
+            // Edit Mode does not run NetworkIdentity.Awake; initialize the same
+            // behaviour binding Mirror establishes before OnStartClient at runtime.
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance).Invoke(instance.GetComponent<NetworkIdentity>(), null);
+            typeof(NetworkWorldMount).GetField("mountType", System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance).SetValue(proxy, type);
+            proxy.OnStartClient();
+            Assert.AreEqual(1, instance.transform.childCount);
+            foreach (var body in instance.GetComponentsInChildren<Rigidbody2D>(true)) Assert.IsFalse(body.simulated);
+            foreach (var collider in instance.GetComponentsInChildren<Collider2D>(true)) Assert.IsFalse(collider.enabled);
+            foreach (var behaviour in instance.transform.GetChild(0).GetComponentsInChildren<MonoBehaviour>(true))
+                Assert.IsFalse(behaviour.enabled, behaviour.GetType().Name);
+            Assert.AreEqual(1, instance.GetComponentsInChildren<NetworkIdentity>(true).Length);
+        }
+        finally { Object.DestroyImmediate(instance); }
+    }
+
     [TestCase(NetSync.NetMode.Offline, true)]
     [TestCase(NetSync.NetMode.Host, true)]
     [TestCase(NetSync.NetMode.Client, false)]
@@ -36,7 +115,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 5, true)]
+    [TestCase("0.5.0", 6, true)]
+    [TestCase("0.5.0", 5, false)]
     [TestCase("0.5.0", 4, false)]
     [TestCase("0.5.0", 3, false)]
     [TestCase("0.5.1", 1, false)]
@@ -83,6 +163,80 @@ public sealed class OnlineRoomEditModeTests
         Assert.AreEqual(frame.color, result.frames[0].color);
         Assert.IsTrue(result.frames[0].visible);
         CollectionAssert.AreEqual(new[] { 20 }, result.removed);
+    }
+
+    [Test]
+    public void CoopTileDeltasPreserveRemovalRecreationAndTransformChanges()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var managerObject = new GameObject("CoopDeltaRegression");
+        managerObject.SetActive(false);
+        var grid = new GameObject("DeltaGrid", typeof(Grid));
+        var mapObject = new GameObject("DeltaMap", typeof(UnityEngine.Tilemaps.Tilemap));
+        mapObject.transform.SetParent(grid.transform);
+        var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        try
+        {
+            var manager = managerObject.AddComponent<BombermanNetworkManager>();
+            var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            var type = typeof(BombermanNetworkManager);
+            var ids = (Dictionary<UnityEngine.Tilemaps.TileBase, int>)type.GetField("coopTileIds", flags).GetValue(manager);
+            ids[tile] = 7;
+            var capture = type.GetMethod("CaptureCoopTiles", flags);
+            var changes = (List<CoopTileFrame>)type.GetField("coopChangedTiles", flags).GetValue(manager);
+            var peers = new List<NetworkConnectionToClient>();
+            var arguments = new object[] { "DeltaMap", map, peers };
+            map.SetTile(Vector3Int.zero, tile);
+            capture.Invoke(manager, arguments);
+            Assert.AreEqual(7, changes[0].tile);
+            map.SetTile(Vector3Int.zero, null);
+            capture.Invoke(manager, arguments);
+            Assert.AreEqual(1, changes.Count);
+            Assert.AreEqual(-1, changes[0].tile);
+            map.SetTile(Vector3Int.zero, tile);
+            map.SetTileFlags(Vector3Int.zero, UnityEngine.Tilemaps.TileFlags.None);
+            map.SetColor(Vector3Int.zero, Color.blue);
+            var matrix = Matrix4x4.Translate(Vector3.up);
+            map.SetTransformMatrix(Vector3Int.zero, matrix);
+            capture.Invoke(manager, arguments);
+            Assert.AreEqual(7, changes[0].tile);
+            Assert.AreEqual(Color.blue, changes[0].color);
+            Assert.AreEqual(matrix, changes[0].matrix);
+            capture.Invoke(manager, arguments);
+            Assert.IsEmpty(changes);
+            map.SetTile(Vector3Int.zero, null);
+            capture.Invoke(manager, arguments);
+            Assert.AreEqual(-1, changes[0].tile);
+            capture.Invoke(manager, arguments);
+            Assert.IsEmpty(changes);
+        }
+        finally
+        {
+            Object.DestroyImmediate(grid); Object.DestroyImmediate(tile); Object.DestroyImmediate(managerObject);
+        }
+    }
+
+    [Test]
+    public void DedicatedFramePercentilesKeepTailAndOverflowStalls()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var managerObject = new GameObject("FramePercentileRegression");
+        managerObject.SetActive(false);
+        try
+        {
+            var manager = managerObject.AddComponent<BombermanNetworkManager>();
+            var type = typeof(BombermanNetworkManager);
+            var histogram = (int[])type.GetField("dedicatedFrameHistogram", flags).GetValue(manager);
+            histogram[40] = 95; histogram[160] = 4; histogram[histogram.Length - 1] = 1;
+            type.GetField("dedicatedFrames", flags).SetValue(manager, 100);
+            type.GetField("dedicatedMaxFrame", flags).SetValue(manager, 2.5f);
+            var percentile = type.GetMethod("DedicatedFramePercentile", flags);
+            Assert.AreEqual(10f, percentile.Invoke(manager, new object[] { 0.50f }));
+            Assert.AreEqual(10f, percentile.Invoke(manager, new object[] { 0.95f }));
+            Assert.AreEqual(40f, percentile.Invoke(manager, new object[] { 0.99f }));
+            Assert.AreEqual(2500f, percentile.Invoke(manager, new object[] { 1f }));
+        }
+        finally { Object.DestroyImmediate(managerObject); }
     }
 
     [Test]

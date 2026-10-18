@@ -1431,6 +1431,23 @@ public sealed class BattleModeComController : MonoBehaviour
         float currentDangerSeconds,
         bool inDanger)
     {
+        // Candidate planners share one view of scene pickups/effects for this
+        // synchronous decision. Never retain it across decisions or action frames.
+        sceneQuerySnapshotActive = true;
+        try { ThinkCore(settings, myTile, currentDangerSeconds, inDanger); }
+        finally
+        {
+            sceneQuerySnapshotActive = false;
+            decisionItems = null; decisionMounts = null; decisionExplosions = null;
+        }
+    }
+
+    private void ThinkCore(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        bool inDanger)
+    {
         using var detailSample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.ComThink, playerId);
         using var performanceSample = BattleModePerformanceMarkers.ComThink.Auto();
 
@@ -5081,7 +5098,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private bool HasOwnExplosionAtTile(Vector2Int tile)
     {
-        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        BombExplosion[] explosions = FindSceneExplosions();
         for (int i = 0; i < explosions.Length; i++)
         {
             BombExplosion explosion = explosions[i];
@@ -7267,7 +7284,7 @@ public sealed class BattleModeComController : MonoBehaviour
             best = Mathf.Min(best, Manhattan(tile, WorldToTile(bomb.GetLogicalPosition())));
         }
 
-        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        BombExplosion[] explosions = FindSceneExplosions();
         for (int i = 0; i < explosions.Length; i++)
         {
             BombExplosion explosion = explosions[i];
@@ -10103,16 +10120,30 @@ public sealed class BattleModeComController : MonoBehaviour
         return count;
     }
 
+    bool sceneQuerySnapshotActive;
+    ItemPickup[] decisionItems;
+    MountWorldPickup[] decisionMounts;
+    BombExplosion[] decisionExplosions;
+
     private ItemPickup[] FindSceneItems()
     {
         using var sample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.SceneQueries, playerId);
-        return FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        if (!sceneQuerySnapshotActive) return FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        return decisionItems ??= FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
     }
 
     private MountWorldPickup[] FindSceneMounts()
     {
         using var sample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.SceneQueries, playerId);
-        return FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        if (!sceneQuerySnapshotActive) return FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        return decisionMounts ??= FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+    }
+
+    private BombExplosion[] FindSceneExplosions()
+    {
+        using var sample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.SceneQueries, playerId);
+        if (!sceneQuerySnapshotActive) return FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        return decisionExplosions ??= FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
     }
 
     private bool WouldPlannedBombHitUsefulItem(
@@ -11593,7 +11624,7 @@ public sealed class BattleModeComController : MonoBehaviour
                 return true;
         }
 
-        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        BombExplosion[] explosions = FindSceneExplosions();
         for (int i = 0; i < explosions.Length; i++)
         {
             BombExplosion explosion = explosions[i];

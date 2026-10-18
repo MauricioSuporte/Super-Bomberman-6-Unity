@@ -42,6 +42,8 @@ namespace Assets.Scripts.Netcode
             if (instance.GetComponent<NetworkIdentity>() == null)
             {
                 if (BombermanNetworkManager.IsCoopStage) return; // Scene presentation carries this actor.
+                if (instance.TryGetComponent<MountWorldPickup>(out var pickup) &&
+                    NetworkWorldMount.Spawn(pickup)) return;
                 Debug.LogError(
                     $"[NetSpawn] '{instance.name}' não tem NetworkIdentity; " +
                     "não será replicado. Adicione NetworkIdentity ao prefab e " +
@@ -64,7 +66,8 @@ namespace Assets.Scripts.Netcode
                 return;
             }
 
-            if (!NetSync.IsOnline || (NetSync.IsServer && BombermanNetworkManager.IsCoopStage))
+            if (!NetSync.IsOnline || (NetSync.IsServer &&
+                (BombermanNetworkManager.IsCoopStage || instance.TryGetComponent<MountWorldPickup>(out _))))
                 Object.Destroy(instance);
             // Client puro: não destrói manualmente; espera o despawn do servidor.
         }

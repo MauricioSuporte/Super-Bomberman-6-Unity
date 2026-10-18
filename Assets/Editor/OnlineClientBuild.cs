@@ -29,7 +29,11 @@ public static class OnlineClientBuild
         Build(BuildTarget.StandaloneWindows64, "Build/OnlineClient/Windows/SB6.exe");
     }
 
-    static void Build(BuildTarget target, string outputPath)
+    [MenuItem("Tools/Super Bomberman 6/Online/Build Performance Test Player")]
+    public static void BuildPerformancePlayer() => Build(BuildTarget.StandaloneWindows64,
+        "Build/ServerBenchmark/Windows/SB6.exe", BuildOptions.Development);
+
+    static void Build(BuildTarget target, string outputPath, BuildOptions options = BuildOptions.None)
     {
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);
         // Cliente = player gráfico normal (NÃO o subtarget Server).
@@ -47,7 +51,7 @@ public static class OnlineClientBuild
             target = target,
             targetGroup = BuildTargetGroup.Standalone,
             subtarget = (int)StandaloneBuildSubtarget.Player,
-            options = BuildOptions.None, // release; Debug.Log ainda vai pro Player.log
+            options = options,
         };
 
         BuildReport report = BuildPipeline.BuildPlayer(opts);

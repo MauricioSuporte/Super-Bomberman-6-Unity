@@ -225,6 +225,11 @@ sealed class LouieDashAfterimage : MonoBehaviour
 
     public static Material ResolveMaterial(Material sourceMaterial)
     {
+#if UNITY_SERVER
+        // Dedicated builds strip shader data. Keep the sprite/colour lifetime
+        // for cooperative snapshots without reading or creating a shader.
+        return null;
+#else
         // This runtime material contains the moving Louie's water-surface
         // state. A frozen afterimage must not inherit it, or it can be clipped
         // or tinted according to a different world position.
@@ -233,6 +238,7 @@ sealed class LouieDashAfterimage : MonoBehaviour
             return GetUrpSpriteUnlitMaterial();
 
         return sourceMaterial;
+#endif
     }
 
     static Material GetUrpSpriteUnlitMaterial()
