@@ -2448,6 +2448,9 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     void EnsureFooterHintText()
     {
+        if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
+            return;
+
         if (footerHintText != null)
             return;
 
@@ -2476,6 +2479,9 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     void UpdateFooterHintVisual()
     {
+        if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
+            return;
+
         EnsureFooterHintText();
 
         if (footerHintText == null)
