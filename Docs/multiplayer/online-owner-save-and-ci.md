@@ -116,3 +116,15 @@ com sucesso. Artefatos de uma compilação cujo deploy falhou podem ser usados n
 servidores locais correspondentes, mas não demonstram compatibilidade com o
 release que permaneceu na VM. A inspeção gráfica, controles humanos e campanha
 completa até o final continuam sendo validações manuais.
+
+
+## Preparação de checkout limpo no Windows
+
+O workflow habilita `git config --global core.longpaths true` na conta do runner
+antes do checkout, necessário pelos caminhos longos do pacote Mirror embutido.
+A primeira execução revelou também dois metadados inválidos já existentes:
+`BirdRobotBlue 1.prefab.meta` continha somente bytes NUL e não tinha GUID
+recuperável no AssetDatabase; recebeu metadados válidos e GUID próprio.
+`SnowBall.mp3.meta` terminava sem a linha final esperada pelo parser Unity;
+o terminador foi corrigido preservando seu GUID e os parâmetros de áudio.
+Os arquivos de prefab/áudio não foram removidos ou substituídos.

@@ -21,6 +21,8 @@ jobs:
       run:
         shell: powershell
     steps:
+      - name: Enable long Git paths on Windows
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v7
         with:
           clean: true
