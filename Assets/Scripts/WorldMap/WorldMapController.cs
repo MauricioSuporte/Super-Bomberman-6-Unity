@@ -219,7 +219,9 @@ public class WorldMapController : MonoBehaviour
 
         ApplyCurrentWorldCameraPosition();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         CaptureAuthoredStageAnchorPositionsOnce();
         ApplyScaledStageAnchorPositions();
@@ -233,7 +235,9 @@ public class WorldMapController : MonoBehaviour
         RefreshOptionalWorldScrollers();
         UpdateAllStageIcons();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         if (snapCursorToDefaultStageOnStart)
             SnapCursorToStage(currentWorldIndex, initialNodeIndex);
@@ -263,6 +267,7 @@ public class WorldMapController : MonoBehaviour
 
     void Update()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) { ApplyOnlineView(); return; }
         if (transitioning)
             return;
 
@@ -370,7 +375,9 @@ public class WorldMapController : MonoBehaviour
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         if (snapCursorToDefaultStageOnWorldChange)
             SnapCursorToDefaultStage();
@@ -431,6 +438,7 @@ public class WorldMapController : MonoBehaviour
             yield return new WaitForSecondsRealtime(selectedTransitionDuration);
 
         StagePreIntroPlayersWalk.SkipOnNextLoad();
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(sceneName)) yield break;
         AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName);
         if (loadOperation == null)
         {
@@ -476,7 +484,7 @@ public class WorldMapController : MonoBehaviour
         else
             yield return FadeMusicOutRoutine(fadeDuration);
 
-        SceneManager.LoadScene(sceneName);
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(sceneName)) SceneManager.LoadScene(sceneName);
     }
 
     void ApplyWorldVisibility()
@@ -1159,7 +1167,9 @@ public class WorldMapController : MonoBehaviour
         lastMovementAreaPxRect = movementAreaPx;
         lastMovementAreaLocalRect = movementAreaLocal;
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         ApplyScaledStageAnchorPositions();
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
@@ -1683,5 +1693,41 @@ public class WorldMapController : MonoBehaviour
     void OnDestroy()
     {
         StopAllClearedStageSpinAnimations();
+    }
+
+    [System.Serializable]
+    sealed class OnlineView
+    {
+        public int world;
+        public Vector2 position;
+        public bool moving, selected;
+        public float fade;
+    }
+    public string CaptureOnlineView() => JsonUtility.ToJson(new OnlineView
+    {
+        world = currentWorldIndex,
+        position = cursorMovementArea != null ? new Vector2(cursorLocalPosition.x / Mathf.Max(1, cursorMovementArea.rect.width),
+            cursorLocalPosition.y / Mathf.Max(1, cursorMovementArea.rect.height)) : Vector2.zero,
+        moving = wasMovingLastFrame, selected = playingSelectedAnimation,
+        fade = fadeImage != null ? fadeImage.color.a : 0
+    });
+    void ApplyOnlineView()
+    {
+        string json = Assets.Scripts.Netcode.BombermanNetworkManager.FlowView;
+        if (string.IsNullOrEmpty(json) || worlds.Count == 0) return;
+        var view = JsonUtility.FromJson<OnlineView>(json);
+        int world = Mathf.Clamp(view.world, 0, worlds.Count - 1);
+        if (world != currentWorldIndex)
+        {
+            currentWorldIndex = world; ApplyCurrentWorldCameraPosition();
+            ApplyWorldVisibility(); PlayMusicForCurrentWorld(forceRestart: true);
+        }
+        ApplyUnlockedStagesFromProgress(); UpdateAllStageIcons();
+        if (cursorMovementArea != null) cursorLocalPosition = new Vector2(view.position.x * cursorMovementArea.rect.width,
+            view.position.y * cursorMovementArea.rect.height);
+        RefreshHoveredStage(); RefreshWorldStageLabel();
+        RefreshCursorVisualState(view.moving, true, view.selected);
+        ApplyCursorVisualTransform();
+        if (fadeImage != null) SetFadeAlpha(view.fade);
     }
 }

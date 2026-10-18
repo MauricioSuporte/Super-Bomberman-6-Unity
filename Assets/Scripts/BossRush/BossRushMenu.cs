@@ -206,6 +206,7 @@ public class BossRushMenu : MonoBehaviour
 
     void Update()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) ApplyOnlineView();
         if (!menuActive)
             return;
 
@@ -333,6 +334,7 @@ public class BossRushMenu : MonoBehaviour
 
         while (!confirmed)
         {
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) { yield return null; continue; }
             if (input == null)
             {
                 yield return null;
@@ -437,7 +439,7 @@ public class BossRushMenu : MonoBehaviour
             Time.timeScale = 1f;
 
             StagePreIntroPlayersWalk.SkipOnNextLoad();
-            SceneManager.LoadScene(BossRushSession.GetCurrentStageSceneName());
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(BossRushSession.GetCurrentStageSceneName())) SceneManager.LoadScene(BossRushSession.GetCurrentStageSceneName());
         }
     }
 
@@ -1226,5 +1228,20 @@ public class BossRushMenu : MonoBehaviour
             return;
 
         Debug.Log($"{LOG} {message}", this);
+    }
+
+    [System.Serializable]
+    sealed class OnlineView { public int index; public bool confirmed; public float fade; }
+    public string CaptureOnlineView() => JsonUtility.ToJson(new OnlineView
+    { index = selectedIndex, confirmed = confirmed, fade = fadeImage != null ? fadeImage.color.a : 0 });
+    void ApplyOnlineView()
+    {
+        string json = Assets.Scripts.Netcode.BombermanNetworkManager.FlowView;
+        if (string.IsNullOrEmpty(json)) return;
+        var view = JsonUtility.FromJson<OnlineView>(json);
+        if (selectedIndex != view.index) PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+        selectedIndex = Mathf.Clamp(view.index, 0, leftPanel != null ? Mathf.Max(0, leftPanel.Count - 1) : 0);
+        UpdateDifficultyVisuals(); UpdateTopItems(); UpdateBestTimes();
+        if (fadeImage != null) SetFadeAlpha(view.fade);
     }
 }

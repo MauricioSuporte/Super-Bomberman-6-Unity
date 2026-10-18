@@ -105,6 +105,7 @@ namespace Assets.Scripts.Netcode
             var lines = new StringBuilder();
             if (connected)
             {
+                if (BombermanNetworkManager.OwnerModeLocked) lines.AppendLine(GameTextDatabase.Title.BossRushLocked);
                 if (BombermanNetworkManager.RoomCompleted)
                     lines.AppendLine(text.RunCompleted + (BombermanNetworkManager.CompletedRunTime > 0 ?
                         " " + System.TimeSpan.FromSeconds(BombermanNetworkManager.CompletedRunTime).ToString(@"mm\:ss") : ""));

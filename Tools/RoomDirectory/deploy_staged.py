@@ -44,7 +44,7 @@ if __name__ == '__main__':
     if hashlib.sha256(supervisor_bytes).hexdigest() != manifest['supervisorSha256']: parser.error('supervisor hash mismatch')
     match = re.search(rb'^PROTOCOL = (\d+)\r?$', supervisor_bytes, re.M)
     if not match or int(match[1]) != manifest['protocol']: parser.error('directory/server protocol mismatch')
-    if any(name in assembly for name in (b'LocalServerLoadTest', b'TickLocalLoadTest', b'LocalNetworkInputSmoke')):
+    if any(name in assembly for name in (b'LocalServerLoadTest', b'TickLocalLoadTest', b'LocalNetworkInputSmoke', b'LocalOnlineFlowSmoke')):
         parser.error('development harness in release')
     if rooms(): raise SystemExit('Active rooms; deployment left unchanged')
     smoke = base/(args.stage+'-smoke')

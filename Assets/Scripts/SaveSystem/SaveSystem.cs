@@ -54,7 +54,17 @@ public static partial class SaveSystem
         }
     }
 
-    public static string SaveDirectoryPath => Path.Combine(Application.persistentDataPath, SaveFolderName);
+    public static string SaveDirectoryPath
+    {
+        get
+        {
+            // CI and standalone batch smoke clients use isolated files. Normal
+            // Editor/player sessions always retain the user's usual save path.
+            string sandbox = Environment.GetEnvironmentVariable("SB6_SAVE_DIRECTORY");
+            return Application.isBatchMode && !string.IsNullOrWhiteSpace(sandbox)
+                ? Path.GetFullPath(sandbox) : Path.Combine(Application.persistentDataPath, SaveFolderName);
+        }
+    }
     public static string SaveFilePath => Path.Combine(SaveDirectoryPath, SaveFileName);
 
     public static void SetActiveSlot(int slotIndex)
@@ -1945,6 +1955,7 @@ public static partial class SaveSystem
 
     public static void LoadControlActivePlayersIntoGameSession()
     {
+        if (Assets.Scripts.Netcode.NetSync.IsOnline) return;
         EnsureLoaded();
         EnsureControlProfiles(data);
 

@@ -1159,6 +1159,8 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(worldMapSceneName);
     }
 
+    public bool IsCompletedWorldBoss(string sceneName) => IsWorldBossStage(sceneName);
+
     static bool IsWorldBossStage(string sceneName)
     {
         for (int i = 0; i < WorldBossStageSceneNames.Length; i++)

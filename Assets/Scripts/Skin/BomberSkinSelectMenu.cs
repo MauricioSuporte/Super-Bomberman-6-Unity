@@ -359,7 +359,9 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         if (!menuActive)
             return;
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         UpdateAllCursorsToSelected();
         CycleOverlappedCursors();
         UpdateSelectedSkinsListVisuals();
@@ -492,10 +494,14 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
         ApplyDynamicScaleIfNeeded(true);
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         if (gridRoot is RectTransform gridRtBefore)
             LayoutRebuilder.ForceRebuildLayoutImmediate(gridRtBefore);
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         BuildPlayerCursors(configuredPlayerIds);
         RebuildSelectedSkinsListVisuals();
@@ -531,10 +537,14 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         ApplyFinalEndStageVisualsImmediate();
         UpdateUnlockHint();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         if (gridRoot is RectTransform gridRtAfter)
             LayoutRebuilder.ForceRebuildLayoutImmediate(gridRtAfter);
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         UpdateSlotVisuals();
         UpdateSelectedSkinsListVisuals();
@@ -543,7 +553,9 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         UpdateAllCursorsToSelected();
         CycleOverlappedCursors();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         if (shouldRestoreCanvasGroupAlpha && temporaryHiddenCanvasGroup != null)
             temporaryHiddenCanvasGroup.alpha = previousCanvasGroupAlpha;
@@ -568,11 +580,11 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         bool done = false;
         while (!done)
         {
-            if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration && !Assets.Scripts.Netcode.NetSync.IsServer)
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.InCharacterConfiguration && !Assets.Scripts.Netcode.NetSync.IsServer)
             {
                 ApplyOnlineCursorView();
                 var onlineView = BattleModeMenu.ReadOnlineView();
-                if (onlineView != null && !onlineView.characters) done = true;
+                if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration && onlineView != null && !onlineView.characters) done = true;
                 yield return null;
                 continue;
             }

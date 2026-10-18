@@ -115,7 +115,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 6, true)]
+    [TestCase("0.5.0", 7, true)]
+    [TestCase("0.5.0", 6, false)]
     [TestCase("0.5.0", 5, false)]
     [TestCase("0.5.0", 4, false)]
     [TestCase("0.5.0", 3, false)]
@@ -137,8 +138,8 @@ public sealed class OnlineRoomEditModeTests
         {
             SaveSystem.BeginOnlineCoopSettings();
             Assert.AreNotSame(offline, SaveSystem.Data);
-            Assert.IsTrue(SaveSystem.ActiveSlot.started);
-            Assert.AreEqual(Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal, SaveSystem.GetActiveNormalGameDifficulty());
+            SaveSystem.SetActiveSlot(0);
+            SaveSystem.ResetSlot(0, Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard);
             SaveSystem.ActiveSlot.clearedStages.Add("Stage_1-1");
             SaveSystem.Reload();
             Assert.Contains("Stage_1-1", SaveSystem.ActiveSlot.clearedStages);
@@ -147,6 +148,58 @@ public sealed class OnlineRoomEditModeTests
         finally { SaveSystem.EndOnlineCoopSettings(); }
         Assert.AreSame(offline, SaveSystem.Data);
         Assert.AreEqual(original, JsonUtility.ToJson(SaveSystem.Data));
+    }
+
+    [Test]
+    public void OwnerProgressRetainsCampaignAndNeverImportsHardwarePreferences()
+    {
+        var offline = SaveSystem.Data;
+        string original = JsonUtility.ToJson(offline);
+        string controls = JsonUtility.ToJson(offline.controls[0]);
+        try
+        {
+            SaveSystem.BeginOnlineCoopSettings();
+            var incoming = JsonUtility.FromJson<SaveData>(original);
+            incoming.activeSlotIndex = 1;
+            incoming.slots[1].started = true;
+            incoming.slots[1].difficulty = (int)Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard;
+            incoming.slots[1].unlockedStages.Add("Stage_2-5");
+            incoming.controls.Clear(); incoming.language = 123;
+            incoming.bossRushUnlocked = true;
+            Assert.IsTrue(SaveSystem.ApplyRoomProgress(JsonUtility.ToJson(incoming), false));
+            Assert.AreEqual(1, SaveSystem.Data.activeSlotIndex);
+            Assert.Contains("Stage_2-5", SaveSystem.ActiveSlot.unlockedStages);
+            Assert.AreEqual(Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard, SaveSystem.GetActiveNormalGameDifficulty());
+            Assert.AreEqual(controls, JsonUtility.ToJson(SaveSystem.Data.controls[0]));
+            Assert.AreEqual(offline.language, SaveSystem.Data.language);
+            Assert.IsTrue(SaveSystem.Data.bossRushUnlocked);
+            Assert.AreSame(SaveSystem.Data, SaveSystem.BattleConfigurationData);
+            Assert.AreEqual(original, JsonUtility.ToJson(offline));
+            var capturedOriginal = JsonUtility.FromJson<SaveData>(SaveSystem.CaptureRoomOwnerSave());
+            Assert.AreEqual(offline.activeSlotIndex, capturedOriginal.activeSlotIndex);
+            Assert.IsTrue(capturedOriginal.controls == null || capturedOriginal.controls.Count == 0);
+        }
+        finally { SaveSystem.EndOnlineBattleSettings(); SaveSystem.EndOnlineCoopSettings(); }
+        Assert.AreSame(offline, SaveSystem.Data);
+    }
+
+    [TestCase("")]
+    [TestCase("{broken")]
+    [TestCase("{\"slots\":[]}")]
+    public void InvalidOwnerSaveCannotReplaceLocalProgress(string json)
+    {
+        var before = SaveSystem.Data;
+        Assert.IsFalse(SaveSystem.ApplyRoomProgress(json, false));
+        Assert.AreSame(before, SaveSystem.Data);
+    }
+
+    [TestCase("SaveFileMenu", true)]
+    [TestCase("WorldMap", true)]
+    [TestCase("BossRush", true)]
+    [TestCase("Stage_1-1", false)]
+    public void NativeConfigurationScenesAreRecognized(string scene, bool expected)
+    {
+        Assert.AreEqual(expected, BombermanNetworkManager.IsOwnerMenuScene(scene));
     }
 
     [Test]

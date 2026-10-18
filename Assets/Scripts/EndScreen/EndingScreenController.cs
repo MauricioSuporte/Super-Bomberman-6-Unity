@@ -297,9 +297,9 @@ public class EndingScreenController : MonoBehaviour
             fadeImageOptional.gameObject.SetActive(false);
 
         PlayerInputManager input = PlayerInputManager.Instance;
-        if (input != null && input.AnyGet(PlayerAction.Start))
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGet(PlayerAction.Start))
         {
-            while (input != null && input.AnyGet(PlayerAction.Start))
+            while (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGet(PlayerAction.Start))
                 yield return _waitFrame;
 
             yield return null;
@@ -321,9 +321,9 @@ public class EndingScreenController : MonoBehaviour
         yield return RollFinalMessageRoutine(creditsSkippedByUser);
 
         input = PlayerInputManager.Instance;
-        if (input != null && input.AnyGet(PlayerAction.Start))
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGet(PlayerAction.Start))
         {
-            while (input != null && input.AnyGet(PlayerAction.Start))
+            while (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGet(PlayerAction.Start))
                 yield return _waitFrame;
 
             yield return null;
@@ -332,7 +332,7 @@ public class EndingScreenController : MonoBehaviour
         while (true)
         {
             input = PlayerInputManager.Instance;
-            if (input != null && input.AnyGetDown(PlayerAction.Start))
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGetDown(PlayerAction.Start))
                 break;
 
             yield return null;
@@ -347,7 +347,7 @@ public class EndingScreenController : MonoBehaviour
 
         PlayerPersistentStats.ResetSessionForReturnToTitle();
         TitleScreenSkip.SkipNextIntro = true;
-        SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(titleSceneName)) SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }
 
     IEnumerator RollCreditsRoutine(float endY)
@@ -366,7 +366,7 @@ public class EndingScreenController : MonoBehaviour
         while (rt != null && rt.anchoredPosition.y < endY)
         {
             input = PlayerInputManager.Instance;
-            if (input != null && input.AnyGetDown(PlayerAction.Start))
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGetDown(PlayerAction.Start))
             {
                 creditsSkippedByUser = true;
                 break;

@@ -70,12 +70,14 @@ namespace Assets.Scripts.Netcode
         {
             if (!IsCoopRoom) return false;
             if (!NetworkServer.active) return true;
-            if (target == "TitleScreen" || target == "BossRush" || target == "WorldMap" || target == "END_SCREEN")
+            if (target == "END_SCREEN")
             {
                 if (target == "END_SCREEN") RoomCompleted = true;
                 BossRushSession.CancelRun();
-                ServerReturnToLobby();
+                RouteOnlineMenuScene(target);
             }
+            else if (target is "TitleScreen" or "BossRush" or "WorldMap" or "SkinSelect" or "SaveFileMenu")
+                RouteOnlineMenuScene(target);
             else
             {
                 if (singleton is BombermanNetworkManager manager) manager.BroadcastCoopSession();
@@ -107,7 +109,7 @@ namespace Assets.Scripts.Netcode
                 {
                     BossRushSession.CompleteRunAndStoreTime();
                     RoomCompleted = true; CompletedRunTime = BossRushSession.LastCompletedTime;
-                    ServerReturnToLobby();
+                    RouteOnlineMenuScene("BossRush");
                 }
             }
             else
@@ -115,10 +117,16 @@ namespace Assets.Scripts.Netcode
                 string current = string.IsNullOrEmpty(completedStage) ? SceneManager.GetActiveScene().name : completedStage;
                 bool cleared = StageUnlockProgress.IsCleared(current);
                 StageUnlockProgress.UnlockCurrentAndNext(current);
+                SaveFileMenu.SaveCurrentProgressToActiveSlot();
                 if (global::StageAssets.World3HallChipAssemblyController.IsChipStage(current))
                 {
                     global::StageAssets.World3HallChipAssemblyController.PrepareReturn(current, !cleared);
                     RouteCoopScene(global::StageAssets.World3HallPortalSelectionController.SceneName);
+                }
+                else if (cleared || game.IsCompletedWorldBoss(current))
+                {
+                    if (game.IsCompletedWorldBoss(current)) WorldMapController.FocusStageOnNextLoad(nextStage);
+                    RouteCoopScene("WorldMap");
                 }
                 else RouteCoopScene(string.IsNullOrEmpty(nextStage) ? "END_SCREEN" : nextStage);
             }

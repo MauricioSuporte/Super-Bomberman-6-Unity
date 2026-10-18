@@ -202,6 +202,94 @@ namespace Assets.Scripts.Netcode
         }
     }
 
+    public sealed class LocalOnlineFlowSmoke : MonoBehaviour
+    {
+        float nextInput, stageAt;
+        bool configured, left, observedStage;
+        string lastScene = "";
+        string originalControls;
+        [Serializable] sealed class View { public int state = 0, index = 0; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Boot()
+        {
+            var args = Environment.GetCommandLineArgs();
+            if (!Debug.isDebugBuild || Array.IndexOf(args, "-load-test-owner-flow") < 0 || Array.IndexOf(args, "-server") >= 0) return;
+            Application.runInBackground = true; Application.targetFrameRate = 60; QualitySettings.vSyncCount = 0;
+            var root = new GameObject("LocalOnlineFlowSmoke");
+            DontDestroyOnLoad(root); root.AddComponent<LocalOnlineFlowSmoke>();
+        }
+
+        void Update()
+        {
+            string scene = SceneManager.GetActiveScene().name;
+            if (scene != lastScene)
+            {
+                lastScene = scene;
+                Debug.Log("[OwnerFlowSmoke] scene=" + scene + " player=" + BombermanNetworkManager.LocalRoomPlayerId);
+            }
+            if (observedStage && scene == "TitleScreen")
+            {
+                Debug.Log("[OwnerFlowSmoke] returned to title disconnected=" + !NetworkClient.active);
+                enabled = false; return;
+            }
+            if (!NetworkClient.isConnected || !NetworkClient.connection.isAuthenticated) return;
+            originalControls ??= JsonUtility.ToJson(global::SaveSystem.Data.controls[0]);
+            if (JsonUtility.ToJson(global::SaveSystem.Data.controls[0]) != originalControls)
+                throw new InvalidOperationException("Owner flow changed local hardware controls");
+            if (scene.StartsWith("Stage_", StringComparison.Ordinal))
+            {
+                if (NetworkClient.localPlayer == null || !NetworkClient.ready) return;
+                if (!observedStage)
+                {
+                    observedStage = true; stageAt = Time.unscaledTime;
+                    Debug.Log("[OwnerFlowSmoke] gameplay slot=" + global::SaveSystem.Data.activeSlotIndex +
+                        " difficulty=" + global::SaveSystem.GetActiveNormalGameDifficulty() + " players=" + BombermanNetworkManager.RoomPlayers.Length +
+                        " boss=" + BossRushSession.IsActive + " bossDifficulty=" + BossRushSession.CurrentDifficulty);
+                }
+                // The non-owner exercises closing the entire room as requested.
+                if (!left && !BombermanNetworkManager.IsRoomAdmin && Time.unscaledTime - stageAt > 8)
+                { left = true; BombermanNetworkManager.LeaveRoom(); }
+                return;
+            }
+            if (Time.unscaledTime < nextInput) return;
+            nextInput = Time.unscaledTime + 1;
+            if (scene == NetworkLobby.SceneName && BombermanNetworkManager.IsRoomAdmin && BombermanNetworkManager.RoomPlayers.Length >= 2 && !configured)
+            {
+                configured = true;
+                var fixture = new SaveData { activeSlotIndex = 1, bossRushUnlocked = true, nightmareUnlocked = true };
+                fixture.slots[1].started = true;
+                fixture.slots[1].difficulty = (int)Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard;
+                fixture.slots[1].unlockedStages.Add("Stage_1-1");
+                fixture.slots[1].unlockedStages.Add("Stage_2-5");
+                NetworkClient.Send(new OnlineConfigureRoomMessage { ownerSave = JsonUtility.ToJson(fixture) });
+            }
+            else if (scene == "SkinSelect")
+            {
+                var characters = FindAnyObjectByType<BomberSkinSelectMenu>();
+                if (characters != null && characters.ActiveOnlineSelectionPlayerId == BombermanNetworkManager.LocalRoomPlayerId) Press(PlayerAction.ActionA, scene);
+            }
+            else if (BombermanNetworkManager.IsRoomAdmin && scene == "SaveFileMenu" && !string.IsNullOrEmpty(BombermanNetworkManager.FlowView))
+            {
+                var view = JsonUtility.FromJson<View>(BombermanNetworkManager.FlowView);
+                int desired = 1; // Continue, then the owner's second save slot.
+                Press(view.index == desired ? PlayerAction.ActionA : PlayerAction.MoveDown, scene);
+            }
+            else if (BombermanNetworkManager.IsRoomAdmin && scene == "WorldMap") Press(PlayerAction.ActionA, scene);
+            else if (BombermanNetworkManager.IsRoomAdmin && scene == "BossRush" && !string.IsNullOrEmpty(BombermanNetworkManager.FlowView))
+            {
+                var view = JsonUtility.FromJson<View>(BombermanNetworkManager.FlowView);
+                Press(view.index == (int)BossRushDifficulty.HARD ? PlayerAction.ActionA : PlayerAction.MoveDown, scene);
+            }
+        }
+
+        static void Press(PlayerAction action, string scene)
+        {
+            NetworkClient.Send(new OnlineSelectionInputMessage { pressed = 1 << (int)action, scene = scene });
+            Debug.Log("[OwnerFlowSmoke] input=" + action + " scene=" + scene);
+        }
+    }
+
     // Many real KCP peers in one process; receives/acknowledges every packet but
     // does not load, instantiate or render the replicated client world.
     public sealed class LocalServerLoadTest : MonoBehaviour
@@ -275,7 +363,7 @@ namespace Assets.Scripts.Netcode
 
             public void ConfigureRoom()
             {
-                if (roomOwner) Send(new OnlineConfigureRoomMessage());
+                if (roomOwner) Send(new OnlineConfigureRoomMessage { ownerSave = global::SaveSystem.CaptureRoomOwnerSave() });
             }
             // Cecil full signature used by Mirror's weaver (verified via the server delegate).
             static readonly ushort ControlsHash = (ushort)("System.Void Assets.Scripts.Netcode.NetworkPlayerInput::CmdControls(System.Int32,System.Int32)".GetStableHashCode() & 0xffff);

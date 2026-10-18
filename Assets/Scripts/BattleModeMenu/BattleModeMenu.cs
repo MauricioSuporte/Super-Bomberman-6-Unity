@@ -6614,7 +6614,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         if (Assets.Scripts.Netcode.BombermanNetworkManager.InConfiguration)
         {
             if (sceneName == Assets.Scripts.Netcode.NetworkLobby.SceneName || sceneName == "TitleScreen")
-                Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
+                Assets.Scripts.Netcode.BombermanNetworkManager.CloseRoomForEveryone();
             else
                 Assets.Scripts.Netcode.BombermanNetworkManager.ServerLaunchConfiguredBattle(sceneName);
             return;

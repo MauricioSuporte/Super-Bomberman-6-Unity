@@ -59,10 +59,12 @@ public class SkinSelectBootstrap : MonoBehaviour
             {
                 TitleScreenSkip.SkipNextIntro = true;
 
-                SceneManager.LoadScene(titleSceneName);
+                if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(titleSceneName)) SceneManager.LoadScene(titleSceneName);
                 yield break;
             }
         }
+
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) yield break;
 
         PopulateConfiguredPlayerIds(configuredPlayerIds);
 
@@ -85,7 +87,7 @@ public class SkinSelectBootstrap : MonoBehaviour
 
                     if (!string.IsNullOrEmpty(bossRushScene))
                     {
-                        SceneManager.LoadScene(bossRushScene);
+                        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(bossRushScene)) SceneManager.LoadScene(bossRushScene);
                         yield break;
                     }
 
@@ -99,7 +101,7 @@ public class SkinSelectBootstrap : MonoBehaviour
 
                     if (!string.IsNullOrEmpty(customScene))
                     {
-                        SceneManager.LoadScene(customScene);
+                        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(customScene)) SceneManager.LoadScene(customScene);
                         yield break;
                     }
 
@@ -112,7 +114,7 @@ public class SkinSelectBootstrap : MonoBehaviour
 
                     if (!string.IsNullOrEmpty(firstStageSceneName))
                     {
-                        SceneManager.LoadScene(firstStageSceneName);
+                        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(firstStageSceneName)) SceneManager.LoadScene(firstStageSceneName);
                         yield break;
                     }
 
@@ -126,13 +128,13 @@ public class SkinSelectBootstrap : MonoBehaviour
 
                     if (!string.IsNullOrEmpty(saveFileMenuSceneName))
                     {
-                        SceneManager.LoadScene(saveFileMenuSceneName);
+                        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(saveFileMenuSceneName)) SceneManager.LoadScene(saveFileMenuSceneName);
                         yield break;
                     }
 
                     if (!string.IsNullOrEmpty(firstStageSceneName))
                     {
-                        SceneManager.LoadScene(firstStageSceneName);
+                        if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(firstStageSceneName)) SceneManager.LoadScene(firstStageSceneName);
                         yield break;
                     }
 

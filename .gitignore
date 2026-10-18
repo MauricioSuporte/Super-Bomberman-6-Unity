@@ -29,6 +29,10 @@ UserSettings/**
 *.svd
 *.pdb
 
+# Python tooling caches
+__pycache__/
+*.py[cod]
+
 # =========================
 # Unity crash / error files
 # =========================

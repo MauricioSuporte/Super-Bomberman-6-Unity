@@ -8,13 +8,13 @@ qualquer outro participante. O mesmo supervisor pode ser iniciado localmente pel
 O primeiro participante é o dono. Com dois humanos conectados, ele pode abrir
 a configuração nativa de Battle Mode; os demais acompanham os painéis e
 escolhem seus personagens na própria vez. Se o dono desconectar, o processo
-encerra a sala e desconecta todos. Uma saída de outro participante durante a
-partida retorna os restantes ao lobby. Não há transferência de dono.
+encerra a sala e desconecta todos. A saída de qualquer participante também encerra a sala para todos e retorna
+os clientes à tela de título. Não há transferência de dono.
 
 Movimento, física, bombas, dano, COM e decisões de partida executam no servidor.
 Clientes enviam controles a 30 Hz e recebem transformações, estado e animação.
 Não há predição local nesse fluxo; a latência até a VM influencia a resposta.
-Offline continua usando a simulação local. O protocolo 6 rejeita clientes antigos.
+Offline continua usando a simulação local. O protocolo 7 rejeita clientes antigos.
 
 ## Rede e implantação
 
@@ -135,13 +135,14 @@ com o mesmo perfil de usuário. Saia e entre novamente no lobby após trocar.
 `Use Public Server` restaura o endereço do JSON. Também é possível passar
 `-online-directory http://127.0.0.1:18081` ao executável do cliente.
 
-Protocolo 5: POST /rooms recebe `mode` (`BattleMode`, `NormalGame`, `BossRush`).
+Protocolo 7: POST /rooms recebe `mode` (`BattleMode`, `NormalGame`, `BossRush`).
 O modo é fixado no processo com `-room-mode` e anunciado junto com `maxPlayers`.
 Battle Mode permite seis slots; Normal Game e Boss Rush permitem quatro.
 Não existe mensagem nem endpoint para alterar o modo de uma sala criada.
 O dono inicia Normal Game ou Boss Rush com dois a quatro participantes. Normal
-Game começa uma campanha temporária em Stage_1-1; Boss Rush começa em
-Stage_1-6, na dificuldade NORMAL. Battle Mode mantém sua configuração nativa.
+Game passa por SkinSelect, SaveFileMenu e WorldMap usando o save do dono;
+Boss Rush passa por SkinSelect e pela escolha nativa de dificuldade. Battle Mode
+carrega a configuração salva do dono. Veja [save do dono e CI](online-owner-save-and-ci.md).
 A campanha cooperativa usa uma cópia completa do save em memória. Escritas e
 reloads de disco ficam bloqueados durante a sessão; ao sair, a referência ao
 save offline é restaurada.

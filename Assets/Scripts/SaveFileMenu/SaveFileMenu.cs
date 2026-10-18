@@ -222,6 +222,7 @@ public class SaveFileMenu : MonoBehaviour
 
     private void Update()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) ApplyOnlineView();
         if (root != null && root.activeInHierarchy)
         {
             ApplyDynamicScaleIfNeeded(false);
@@ -261,9 +262,14 @@ public class SaveFileMenu : MonoBehaviour
         ApplyCurrentBackgroundSprite(true);
 
         yield return null;
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
-        yield return new WaitForEndOfFrame();
+#endif
+        if (Application.isBatchMode) yield return null;
+        else yield return new WaitForEndOfFrame();
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
 
         ApplyDynamicScaleIfNeeded(true);
 
@@ -272,7 +278,9 @@ public class SaveFileMenu : MonoBehaviour
 
         BuildMainMenu();
 
+#if !UNITY_SERVER
         Canvas.ForceUpdateCanvases();
+#endif
         yield return null;
 
         if (leftPanel != null)
@@ -304,6 +312,7 @@ public class SaveFileMenu : MonoBehaviour
 
         while (!confirmed)
         {
+            if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) { yield return null; continue; }
             if (input == null)
             {
                 yield return null;
@@ -508,12 +517,12 @@ public class SaveFileMenu : MonoBehaviour
 
         if (useWorldMapAfterSelection && !string.IsNullOrWhiteSpace(worldMapSceneName))
         {
-            SceneManager.LoadScene(worldMapSceneName);
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(worldMapSceneName)) SceneManager.LoadScene(worldMapSceneName);
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(titleSceneName))
-            SceneManager.LoadScene(titleSceneName);
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(titleSceneName)) SceneManager.LoadScene(titleSceneName);
     }
 
     private void LoadBackScene()
@@ -523,12 +532,12 @@ public class SaveFileMenu : MonoBehaviour
 
         if (!string.IsNullOrWhiteSpace(backSceneName))
         {
-            SceneManager.LoadScene(backSceneName);
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(backSceneName)) SceneManager.LoadScene(backSceneName);
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(titleSceneName))
-            SceneManager.LoadScene(titleSceneName);
+            if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(titleSceneName)) SceneManager.LoadScene(titleSceneName);
     }
 
     private void BuildMainMenu()
@@ -1467,5 +1476,45 @@ public class SaveFileMenu : MonoBehaviour
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);
+    }
+
+    [System.Serializable]
+    sealed class OnlineView
+    {
+        public int state, index, pending;
+        public bool confirmed, cursor;
+        public float fade;
+        public string message;
+    }
+    public string CaptureOnlineView() => JsonUtility.ToJson(new OnlineView
+    {
+        state = (int)_state, index = selectedIndex, pending = _pendingNewGameSlotIndex,
+        confirmed = confirmed, cursor = _cursorConfirmVisual,
+        fade = fadeImage != null ? fadeImage.color.a : 0,
+        message = disabledOptionText != null && disabledOptionText.gameObject.activeSelf ? disabledOptionText.text : ""
+    });
+    void ApplyOnlineView()
+    {
+        string json = Assets.Scripts.Netcode.BombermanNetworkManager.FlowView;
+        if (string.IsNullOrEmpty(json)) return;
+        var view = JsonUtility.FromJson<OnlineView>(json);
+        var state = (MenuState)view.state;
+        if (_state != state)
+        {
+            if (state == MenuState.Main) BuildMainMenu();
+            else if (state == MenuState.SelectNewGameDifficulty) BuildDifficultyMenu();
+            else BuildSlotMenu(state);
+        }
+        if (selectedIndex != view.index) PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+        selectedIndex = Mathf.Clamp(view.index, 0, Mathf.Max(0, _displayEntries.Count - 1));
+        _pendingNewGameSlotIndex = view.pending;
+        confirmed = view.confirmed; _cursorConfirmVisual = view.cursor;
+        UpdateOptionVisuals();
+        if (fadeImage != null) SetFadeAlpha(view.fade);
+        if (disabledOptionText != null)
+        {
+            disabledOptionText.text = view.message;
+            disabledOptionText.gameObject.SetActive(!string.IsNullOrEmpty(view.message));
+        }
     }
 }

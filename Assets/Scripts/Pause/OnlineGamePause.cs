@@ -51,7 +51,7 @@ public partial class GamePauseController
             else BombermanNetworkManager.LeaveRoom();
         }
         else if (BombermanNetworkManager.IsCoopRoom && (sceneName == bossRushSceneName || sceneName == worldMapSceneName))
-            BombermanNetworkManager.ServerReturnToLobby();
+            BombermanNetworkManager.RouteOnlineMenuScene(sceneName);
         else if (sceneName == battleModeMenuSceneName)
         {
             GameSession.Instance?.EndBattleMatch();

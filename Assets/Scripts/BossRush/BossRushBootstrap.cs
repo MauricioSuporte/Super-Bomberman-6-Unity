@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -49,6 +49,8 @@ public class BossRushBootstrap : MonoBehaviour
             $"Elapsed={BossRushSession.GetFormattedElapsed()}"
         );
 
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) yield break;
+
         if (bossRushMenu.ReturnRequested)
         {
             if (!string.IsNullOrEmpty(returnSceneName))
@@ -63,7 +65,7 @@ public class BossRushBootstrap : MonoBehaviour
                     GameMusicController.Instance.StopMusic();
 
                 SkinSelectFlowRouter.SetReturnToBossRush(targetBossRushScene);
-                SceneManager.LoadScene(returnSceneName);
+                if (!Assets.Scripts.Netcode.BombermanNetworkManager.RouteOnlineMenuScene(returnSceneName)) SceneManager.LoadScene(returnSceneName);
                 yield break;
             }
         }

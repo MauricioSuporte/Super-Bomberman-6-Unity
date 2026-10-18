@@ -26,6 +26,14 @@ public static class DedicatedServerBuild
     public static void BuildWindowsTestServer() => Build(BuildTarget.StandaloneWindows64,
         "Build/WindowsServer/SB6Server.exe", StandaloneBuildSubtarget.Player);
 
+    // Invoked by the isolated Windows Actions checkout. All outputs are release.
+    public static void BuildReleaseArtifacts()
+    {
+        BuildLinuxServer();
+        OnlineClientBuild.BuildWindows();
+        BuildWindowsTestServer();
+    }
+
     static void Build(BuildTarget target, string outputPath, StandaloneBuildSubtarget subtarget,
         BuildOptions options = BuildOptions.None)
     {

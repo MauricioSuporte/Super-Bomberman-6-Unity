@@ -344,7 +344,7 @@ namespace Assets.Scripts.Netcode
             // player nasce quando a partida começa: o ServerChangeScene para a cena
             // de batalha deixa localPlayer == null e o Mirror re-chama OnServerAddPlayer
             // (autoCreatePlayer) já na cena certa.
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName || InConfiguration)
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == NetworkLobby.SceneName || InAnyMenu)
             {
                 SyncActivePlayersToSession();
                 BroadcastRoom();
@@ -391,7 +391,7 @@ namespace Assets.Scripts.Netcode
             selectionPressed.Clear();
             selectionLastReceived.Clear();
             ClearDedicatedAdminInput();
-            if (ownerLeft && dedicatedServer && !leavingRoom)
+            if (departedId > 0 && dedicatedServer && !leavingRoom)
             {
                 leavingRoom = true;
                 StartCoroutine(StopDedicatedRoomAfterDisconnect());

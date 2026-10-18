@@ -1,0 +1,55 @@
+name: Online release v0.5.0
+
+on:
+  push:
+    branches: [v0.5.0]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sb6-online-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    if: github.repository == 'MauricioSuporte/Super-Bomberman-6-Unity' && github.actor == 'MauricioSuporte' && github.ref == 'refs/heads/v0.5.0'
+    runs-on: [self-hosted, Windows, X64, sb6-unity]
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          clean: true
+          persist-credentials: false
+      - name: Compile, test and build release players
+        run: python Tools/Ci/release.py build
+      - name: Windows client for players
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Windows-Client-${{ github.sha }}
+          path: Build/OnlineClient/Windows/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Windows server for local testing
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Windows-Server-${{ github.sha }}
+          path: Build/WindowsServer/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish Linux release when rooms are empty
+        run: python Tools/Ci/release.py deploy
+      - name: Test reports, build manifests and deploy result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Validation-${{ github.sha }}
+          path: |
+            Build/CI/
+            Logs/CI/
+          if-no-files-found: warn
+          retention-days: 14

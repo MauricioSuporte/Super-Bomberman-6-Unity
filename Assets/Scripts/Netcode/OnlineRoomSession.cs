@@ -19,6 +19,9 @@ namespace Assets.Scripts.Netcode
         public string settings;
         public string menu;
         public string characters;
+        public string progress, flowView;
+        public int bossDifficulty;
+        public bool ownerModeLocked;
     }
 
     public struct OnlineSelectionInputMessage : NetworkMessage
@@ -28,7 +31,8 @@ namespace Assets.Scripts.Netcode
         public string scene;
     }
 
-    public struct OnlineConfigureRoomMessage : NetworkMessage { }
+    public struct OnlineConfigureRoomMessage : NetworkMessage { public string ownerSave; public int bossDifficulty; }
+    public struct OnlineLeaveRoomMessage : NetworkMessage { }
 
     public struct OnlinePauseMessage : NetworkMessage
     {
@@ -82,15 +86,27 @@ namespace Assets.Scripts.Netcode
             var modes = new BattleModePlayerControlMode[GameSession.MaxPlayerId];
             Array.Fill(modes, BattleModePlayerControlMode.Off);
             global::SaveSystem.SetBattleModePlayerControlModes(modes);
+            OwnerModeLocked = false;
             RoomMode = OnlineRoomRules.ReadMode(System.Environment.GetCommandLineArgs());
             RoomCompleted = false; CompletedRunTime = 0;
             RoomAdminPlayerId = 0;
             DedicatedRoom = dedicatedServer;
-            NetworkServer.RegisterHandler<OnlineConfigureRoomMessage>((connection, _) =>
+            NetworkServer.RegisterHandler<OnlineLeaveRoomMessage>((connection, _) =>
+            {
+                if (connection.isAuthenticated && playerIdByConnection.ContainsKey(connection.connectionId)) CloseRoomForEveryone();
+            });
+            NetworkServer.RegisterHandler<OnlineConfigureRoomMessage>((connection, message) =>
             {
                 if (dedicatedServer && InLobbyScene() && connection.isAuthenticated &&
                     playerIdByConnection.TryGetValue(connection.connectionId, out int id) && id == RoomAdminPlayerId)
+                {
+                    if (!global::SaveSystem.ApplyRoomProgress(message.ownerSave, false)) return;
+                    OwnerModeLocked = RoomMode == OnlineRoomMode.BossRush && !global::SaveSystem.Data.bossRushUnlocked;
+                    if (OwnerModeLocked) { BroadcastRoom(); return; }
+                    BossRushProgress.SetSelectedDifficulty((BossRushDifficulty)Mathf.Clamp(message.bossDifficulty, 0, 3));
+                    ownerFlowConfigured = true;
                     ServerBeginConfiguration();
+                }
             });
             NetworkServer.RegisterHandler<OnlineSelectionInputMessage>(ReceiveSelectionInput);
         }
@@ -99,6 +115,7 @@ namespace Assets.Scripts.Netcode
         {
             if (GameSession.Instance == null) new GameObject("GameSession").AddComponent<GameSession>();
             global::SaveSystem.BeginOnlineBattleSettings();
+            global::SaveSystem.BeginOnlineCoopSettings();
             InitializeCoopSessionClient();
             NetworkClient.RegisterHandler<OnlineRoomMessage>(ReceiveRoom);
             NetworkClient.RegisterHandler<OnlinePauseMessage>(message => GamePauseController.Instance?.ApplyOnlinePause(message.state));
@@ -110,7 +127,11 @@ namespace Assets.Scripts.Netcode
             RoomPlayers = message.players ?? Array.Empty<int>();
             RoomCompleted = message.completed; CompletedRunTime = message.completedTime;
             RoomMode = message.mode;
-            if (RoomMode != OnlineRoomMode.BattleMode) global::SaveSystem.BeginOnlineCoopSettings();
+            if (!string.IsNullOrEmpty(message.progress)) global::SaveSystem.ApplyRoomProgress(message.progress, message.playerId == message.adminPlayerId);
+            if (!string.IsNullOrEmpty(message.progress) && RoomMode == OnlineRoomMode.BossRush)
+                BossRushProgress.ApplyOnlineSelection((BossRushDifficulty)message.bossDifficulty, message.playerId == message.adminPlayerId);
+            OwnerModeLocked = message.ownerModeLocked;
+            FlowView = message.flowView ?? "";
             RoomAdminPlayerId = message.adminPlayerId;
             DedicatedRoom = message.dedicated;
             MenuView = message.menu ?? "";
@@ -139,9 +160,9 @@ namespace Assets.Scripts.Netcode
             bool adminInput = dedicatedServer && id == RoomAdminPlayerId && !InLobbyScene();
             if (!adminInput)
             {
-                if (!InConfiguration) return;
+                if (!InCharacterConfiguration) return;
                 var menu = FindAnyObjectByType<BattleModeMenu>(FindObjectsInactive.Include);
-                if (menu == null || !menu.OnlineCharacterSelectionActive) return;
+                if (InConfiguration && (menu == null || !menu.OnlineCharacterSelectionActive)) return;
                 var characters = FindAnyObjectByType<BomberSkinSelectMenu>(FindObjectsInactive.Include);
                 if (characters == null || characters.ActiveOnlineSelectionPlayerId != id) return;
             }
@@ -154,8 +175,8 @@ namespace Assets.Scripts.Netcode
         public static bool SelectionHeld(PlayerInputManager input, int id, PlayerAction action)
         {
             var manager = singleton as BombermanNetworkManager;
-            if (!InConfiguration || manager == null || id == LocalRoomPlayerId)
-                return input != null && input.Get(InConfiguration ? 1 : id, action);
+            if (!InCharacterConfiguration || manager == null || id == LocalRoomPlayerId)
+                return input != null && input.Get(InCharacterConfiguration ? 1 : id, action);
             return manager.selectionLastReceived.TryGetValue(id, out float received) &&
                 Time.unscaledTime - received < 1f && manager.selectionHeld.TryGetValue(id, out int mask) && (mask & (1 << (int)action)) != 0;
         }
@@ -163,8 +184,8 @@ namespace Assets.Scripts.Netcode
         public static bool SelectionDown(PlayerInputManager input, int id, PlayerAction action)
         {
             var manager = singleton as BombermanNetworkManager;
-            if (!InConfiguration || manager == null || id == LocalRoomPlayerId)
-                return input != null && input.GetDown(InConfiguration ? 1 : id, action);
+            if (!InCharacterConfiguration || manager == null || id == LocalRoomPlayerId)
+                return input != null && input.GetDown(InCharacterConfiguration ? 1 : id, action);
             if (!manager.selectionPressed.TryGetValue(id, out int mask)) return false;
             int bit = 1 << (int)action;
             manager.selectionPressed[id] = mask & ~bit;
@@ -182,17 +203,17 @@ namespace Assets.Scripts.Netcode
             TickDedicatedAdminInput();
             if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
             {
-                nextRoomBroadcast = Time.unscaledTime + (InConfiguration ? 1f / 30f : IsCoopRoom ? 0.5f : 0.1f);
+                nextRoomBroadcast = Time.unscaledTime + (InAnyMenu ? 1f / 30f : IsCoopRoom ? 0.5f : 0.1f);
                 // Joins and transitions send a full snapshot. Battle settings can
                 // only change in configuration, not during lobby/gameplay ticks.
-                BroadcastRoom(InConfiguration);
+                BroadcastRoom(InAnyMenu);
             }
             if (NetworkServer.active && RoomMode == OnlineRoomMode.BossRush && Time.unscaledTime >= nextCoopSessionBroadcast)
             {
                 nextCoopSessionBroadcast = Time.unscaledTime + 0.1f;
                 BroadcastCoopSession();
             }
-            if ((InConfiguration || (DedicatedRoom && IsRoomAdmin && !InLobbyScene())) &&
+            if ((InCharacterConfiguration || (DedicatedRoom && IsRoomAdmin && !InLobbyScene())) &&
                 !NetworkServer.active && NetworkClient.isConnected && NetworkClient.connection.isAuthenticated)
             {
                 var input = PlayerInputManager.Instance;
@@ -244,7 +265,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!dedicatedServer || !NetworkServer.active) return;
             var menu = InConfiguration ? FindAnyObjectByType<BattleModeMenu>(FindObjectsInactive.Include) : null;
-            bool configuring = menu != null && !menu.OnlineCharacterSelectionActive;
+            bool configuring = (menu != null && !menu.OnlineCharacterSelectionActive) || InOwnerMenu;
             bool playing = IsCoopStage || SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal);
             if ((!configuring && !playing) || !selectionLastReceived.TryGetValue(RoomAdminPlayerId, out float received) ||
                 Time.unscaledTime - received > 0.5f)
@@ -287,8 +308,10 @@ namespace Assets.Scripts.Netcode
             Array.Sort(RoomPlayers);
             var menu = InConfiguration ? FindAnyObjectByType<BattleModeMenu>(FindObjectsInactive.Include) : null;
             MenuView = menu != null ? menu.CaptureOnlineView() : "";
-            var characters = InConfiguration ? FindAnyObjectByType<BomberSkinSelectMenu>(FindObjectsInactive.Include) : null;
+            var characters = InCharacterConfiguration ? FindAnyObjectByType<BomberSkinSelectMenu>(FindObjectsInactive.Include) : null;
             CharacterView = characters != null ? characters.CaptureOnlineView() : "";
+            string progress = CaptureChangedRoomProgress();
+            string flow = CaptureOwnerMenuView();
             string settings = includeSettings ? global::SaveSystem.CaptureOnlineBattleSettings() : "";
             foreach (var connection in NetworkServer.connections.Values)
             {
@@ -298,7 +321,7 @@ namespace Assets.Scripts.Netcode
                 connection.Send(new OnlineRoomMessage { playerId = id, adminPlayerId = RoomAdminPlayerId,
                     dedicated = dedicatedServer, completed = RoomCompleted, completedTime = CompletedRunTime,
                     players = RoomPlayers, mode = RoomMode,
-                    settings = settings, menu = MenuView, characters = CharacterView });
+                    settings = settings, menu = MenuView, characters = CharacterView, progress = progress, flowView = flow, bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty(), ownerModeLocked = OwnerModeLocked });
             }
         }
 
@@ -307,18 +330,19 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active)
             {
                 if (DedicatedRoom && IsRoomAdmin && NetworkClient.isConnected && InLobbyScene())
-                    NetworkClient.Send(new OnlineConfigureRoomMessage());
+                    NetworkClient.Send(new OnlineConfigureRoomMessage { ownerSave = global::SaveSystem.CaptureRoomOwnerSave(), bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty() });
                 return;
             }
             if (RoomMode != OnlineRoomMode.BattleMode)
             {
-                if (singleton is BombermanNetworkManager coop && CanConfigure) coop.ServerStartCoop();
+                if (singleton is BombermanNetworkManager coop && CanConfigure) coop.ServerBeginOwnerCoopFlow();
                 return;
             }
             if (!CanConfigure || RoomPlayers.Length < 2 || singleton is not BombermanNetworkManager manager) return;
             var modes = global::SaveSystem.GetBattleModePlayerControlModes();
             for (int i = 0; i < modes.Length; i++)
-                modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man : BattleModePlayerControlMode.Off;
+                modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
+                    modes[i] == BattleModePlayerControlMode.Com ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
             global::SaveSystem.SetBattleModePlayerControlModes(modes);
             manager.BroadcastRoom();
             singleton.ServerChangeScene(ConfigurationScene);
@@ -390,6 +414,7 @@ namespace Assets.Scripts.Netcode
         public static void LeaveRoom()
         {
             if (singleton is not BombermanNetworkManager manager || manager.leavingRoom) return;
+            if (NetworkClient.isConnected && NetworkClient.connection.isAuthenticated) NetworkClient.Send(new OnlineLeaveRoomMessage());
             manager.leavingRoom = true;
             if (NetworkServer.active && NetworkClient.active) manager.StopHost();
             else if (NetworkServer.active) manager.StopServer();
@@ -403,11 +428,13 @@ namespace Assets.Scripts.Netcode
         static void ClearRoom()
         {
             LocalRoomPlayerId = 0;
+            OwnerModeLocked = false;
+            BossRushProgress.ClearOnlineSelection();
             RoomCompleted = false; CompletedRunTime = 0;
             RoomAdminPlayerId = 0;
             DedicatedRoom = false;
             RoomPlayers = Array.Empty<int>();
-            MenuView = CharacterView = "";
+            MenuView = CharacterView = FlowView = "";
             BossRushSession.CancelRun();
             global::SaveSystem.EndOnlineBattleSettings();
             global::SaveSystem.EndOnlineCoopSettings();
@@ -468,7 +495,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnClientChangeScene(string newSceneName, SceneOperation operation, bool customHandling)
         {
-            MenuView = CharacterView = "";
+            MenuView = CharacterView = FlowView = "";
             GetComponent<OnlineLobbyMenu>()?.ReleaseRoomEventSystem();
             base.OnClientChangeScene(newSceneName, operation, customHandling);
         }
@@ -483,6 +510,86 @@ namespace Assets.Scripts.Netcode
             if (player.TryGetComponent<MovementController>(out var movement)) movement.SetPredictLocally(false);
             if (player.TryGetComponent<NetworkPlayerAnimation>(out var animation)) animation.syncDirection = SyncDirection.ServerToClient;
             if (player.TryGetComponent<NetworkTransformReliable>(out var transformSync)) transformSync.syncDirection = SyncDirection.ServerToClient;
+        }
+    }
+}
+
+namespace Assets.Scripts.Netcode
+{
+    public partial class BombermanNetworkManager
+    {
+        public static string FlowView { get; private set; } = "";
+        bool ownerFlowConfigured;
+        string lastRoomProgress;
+        int lastRoomDifficulty = -1;
+        public static bool OwnerModeLocked { get; private set; }
+        public static bool InOwnerMenu => NetSync.IsOnline && IsOwnerMenuScene(SceneManager.GetActiveScene().name);
+        public static bool InAnyMenu => InConfiguration || InOwnerMenu || (NetSync.IsOnline && SceneManager.GetActiveScene().name == "SkinSelect");
+        public static bool InCharacterConfiguration => InConfiguration || (NetSync.IsOnline && SceneManager.GetActiveScene().name == "SkinSelect");
+        public static bool IsMenuObserver => NetSync.IsOnline && !NetworkServer.active;
+        public static bool IsOwnerMenuScene(string scene) => scene is "SaveFileMenu" or "WorldMap" or "BossRush" or "END_SCREEN";
+
+        void ServerBeginOwnerCoopFlow()
+        {
+            if (!NetworkServer.active || !InLobbyScene() || RoomPlayers.Length < 2 || !ownerFlowConfigured) return;
+            RoomCompleted = false; CompletedRunTime = 0;
+            PlayerPersistentStats.EnsureSessionBooted();
+            PlayerPersistentStats.ApplyOnlineSelections(global::SaveSystem.BattleConfigurationData);
+            PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
+            GameSession.Instance?.EndBattleMatch();
+            GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
+            BossRushSession.CancelRun();
+            if (RoomMode == OnlineRoomMode.BossRush) SkinSelectFlowRouter.SetReturnToBossRush("BossRush");
+            else SkinSelectFlowRouter.SetReturnToSaveFileMenu();
+            BroadcastRoom();
+            ServerChangeScene("SkinSelect");
+        }
+
+        string CaptureChangedRoomProgress()
+        {
+            if (!ownerFlowConfigured) return "";
+            string snapshot = global::SaveSystem.CaptureRoomProgress();
+            int difficulty = (int)BossRushProgress.GetSelectedDifficulty();
+            if (snapshot == lastRoomProgress && difficulty == lastRoomDifficulty) return "";
+            lastRoomProgress = snapshot;
+            lastRoomDifficulty = difficulty;
+            return snapshot;
+        }
+
+        string CaptureOwnerMenuView()
+        {
+            if (!InOwnerMenu) return "";
+            if (FindAnyObjectByType<SaveFileMenu>() is { } saves) return saves.CaptureOnlineView();
+            if (FindAnyObjectByType<BossRushMenu>() is { } boss) return boss.CaptureOnlineView();
+            if (FindAnyObjectByType<WorldMapController>() is { } map) return map.CaptureOnlineView();
+            return "";
+        }
+
+        public static bool RouteOnlineMenuScene(string target)
+        {
+            if (!NetSync.IsOnline) return false;
+            if (!NetworkServer.active) return true;
+            if (target == "TitleScreen") { CloseRoomForEveryone(); return true; }
+            if (singleton is BombermanNetworkManager manager)
+            {
+                if (target == "SkinSelect")
+                {
+                    if (RoomMode == OnlineRoomMode.BossRush) SkinSelectFlowRouter.SetReturnToBossRush("BossRush");
+                    else SkinSelectFlowRouter.SetReturnToSaveFileMenu();
+                }
+                manager.BroadcastRoom();
+                manager.BroadcastCoopSession();
+                manager.ServerChangeScene(target);
+            }
+            return true;
+        }
+
+        public static void CloseRoomForEveryone()
+        {
+            if (!NetworkServer.active || singleton is not BombermanNetworkManager manager || manager.leavingRoom) return;
+            manager.BroadcastRoom();
+            manager.leavingRoom = true;
+            manager.StartCoroutine(manager.StopDedicatedRoomAfterDisconnect());
         }
     }
 }

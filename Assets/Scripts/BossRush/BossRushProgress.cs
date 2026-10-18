@@ -1,17 +1,29 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class BossRushProgress
 {
+    static BossRushDifficulty? onlineDifficulty;
+    public static void ClearOnlineSelection() => onlineDifficulty = null;
+    public static void ApplyOnlineSelection(BossRushDifficulty difficulty, bool owner)
+    {
+        onlineDifficulty = difficulty;
+        if (!owner) return;
+        if (Application.isBatchMode && !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("SB6_SAVE_DIRECTORY"))) return;
+        PlayerPrefs.SetInt(SelectedDifficultyKey, (int)difficulty);
+        PlayerPrefs.Save();
+    }
+
     private const string SelectedDifficultyKey = "BossRush_SelectedDifficulty";
 
     public static BossRushDifficulty GetSelectedDifficulty()
     {
-        return (BossRushDifficulty)PlayerPrefs.GetInt(SelectedDifficultyKey, (int)BossRushDifficulty.NORMAL);
+        return onlineDifficulty ?? (BossRushDifficulty)PlayerPrefs.GetInt(SelectedDifficultyKey, (int)BossRushDifficulty.NORMAL);
     }
 
     public static void SetSelectedDifficulty(BossRushDifficulty difficulty)
     {
+        if (Assets.Scripts.Netcode.NetSync.IsOnline) { onlineDifficulty = difficulty; return; }
         PlayerPrefs.SetInt(SelectedDifficultyKey, (int)difficulty);
         PlayerPrefs.Save();
     }
