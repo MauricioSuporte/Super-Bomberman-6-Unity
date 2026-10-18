@@ -395,6 +395,7 @@ namespace Assets.Scripts.Netcode
             else if (NetworkServer.active) manager.StopServer();
             else manager.StopClient();
             ClearRoom();
+            GameMusicController.Instance?.StopMusic();
             Destroy(manager.gameObject);
             SceneManager.LoadScene("TitleScreen");
         }

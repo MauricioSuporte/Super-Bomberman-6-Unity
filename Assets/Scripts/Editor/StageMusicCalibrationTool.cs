@@ -31,12 +31,33 @@ public static class StageMusicCalibrationTool
         if (AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/QueenOyobee.mp3") != null)
             QueenOyobeeAuthoring.CalibrateMusic();
 
+        CalibrateOnlineLobbyMusic();
         int calibratedStages = CalibrateNormalGameStages(referenceClip);
         int calibratedHallClips = CalibrateWorld3HallMusic(referenceClip);
         int calibratedWorldMapClips = CalibrateWorldMapMusic(referenceClip);
         int calibratedBattleClips = CalibrateBattleModeMusic(referenceClip);
         AssetDatabase.SaveAssets();
         Debug.Log($"Music calibration complete. Normal Game stages calibrated: {calibratedStages}; World3 Hall clips calibrated: {calibratedHallClips}; World Map clips calibrated: {calibratedWorldMapClips}; Battle Mode clips calibrated: {calibratedBattleClips}.");
+    }
+
+    public static bool CalibrateOnlineLobbyMusic()
+    {
+        var reference = AssetDatabase.LoadAssetAtPath<AudioClip>(ReferenceClipPath);
+        var scene = SceneManager.GetSceneByPath("Assets/Scenes/OnlineLobby.unity");
+        bool opened = !scene.IsValid() || !scene.isLoaded;
+        if (opened) scene = EditorSceneManager.OpenScene("Assets/Scenes/OnlineLobby.unity", OpenSceneMode.Additive);
+        bool calibrated = false;
+        try
+        {
+            foreach (var controller in FindMusicControllers(scene))
+                calibrated |= controller.CalibrateStageMusic(reference, ReferenceVolume);
+            if (calibrated) EditorSceneManager.SaveScene(scene);
+        }
+        finally
+        {
+            if (opened) EditorSceneManager.CloseScene(scene, true);
+        }
+        return calibrated;
     }
 
     static int CalibrateWorld3HallMusic(AudioClip referenceClip)

@@ -19,6 +19,7 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
+    public string Back => LanguageText("BACK", "戻る", "VOLVER", "VOLTAR");
     public string AvailableRooms => LanguageText("AVAILABLE ROOMS", "参加できるルーム", "SALAS DISPONIBLES", "SALAS DISPONÍVEIS");
     public string NoRooms => LanguageText("SEARCHING · NO ROOMS FOUND", "検索中 · ルームが見つかりません", "BUSCANDO · NO HAY SALAS", "BUSCANDO · NENHUMA SALA ENCONTRADA");
     public string SelectRoom => LanguageText("SELECT A ROOM TO JOIN", "ルームを選んで参加", "ELIGE UNA SALA PARA ENTRAR", "SELECIONE UMA SALA PARA ENTRAR");

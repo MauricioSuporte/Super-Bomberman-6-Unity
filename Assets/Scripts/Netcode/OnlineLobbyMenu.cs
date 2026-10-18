@@ -1,4 +1,5 @@
 using System.Text;
+using System.Collections.Generic;
 using Mirror;
 using TMPro;
 using UnityEngine;
@@ -12,7 +13,13 @@ namespace Assets.Scripts.Netcode
     public class OnlineLobbyMenu : MonoBehaviour
     {
         GameObject canvasRoot;
-        TextMeshProUGUI heading;
+        [SerializeField] Sprite[] backgrounds;
+        [SerializeField] TMP_FontAsset lobbyFont;
+        Image background;
+        RectTransform panelRect;
+        RectTransform safeRect;
+        RectTransform roomContent;
+        ScrollRect roomScroll;
         TextMeshProUGUI details;
         GameObject roomEventSystem;
         Button hostButton, configureButton, leaveButton;
@@ -20,11 +27,10 @@ namespace Assets.Scripts.Netcode
         OnlineRoomMode selectedMode = OnlineRoomMode.BattleMode;
         OnlineRoomBrowser browser;
         GameObject browserRoot;
-        TextMeshProUGUI browserStatus, pageLabel;
-        Button refreshButton, previousButton, nextButton;
-        readonly Button[] roomButtons = new Button[4];
-        readonly OnlineListedRoom[] visibleRooms = new OnlineListedRoom[4];
-        int page;
+        TextMeshProUGUI browserStatus;
+        Button refreshButton;
+        readonly List<Button> roomButtons = new();
+        readonly List<OnlineListedRoom> visibleRooms = new();
         bool roomSceneTransition;
 
         void OnEnable() => SceneManager.sceneLoaded += OnRoomSceneLoaded;
@@ -37,7 +43,12 @@ namespace Assets.Scripts.Netcode
 
         void OnRoomSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (scene.name == NetworkLobby.SceneName) roomSceneTransition = false;
+            if (scene.name == NetworkLobby.SceneName)
+            {
+                roomSceneTransition = false;
+                if (GameMusicController.Instance != null)
+                    GameMusicController.Instance.PlayDefaultMusic(false);
+            }
         }
 
         void Start()
@@ -51,6 +62,8 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             CreateRoomCanvas();
+            if (GameMusicController.Instance != null)
+                GameMusicController.Instance.PlayDefaultMusic(false);
         }
 
         void Update()
@@ -61,8 +74,8 @@ namespace Assets.Scripts.Netcode
             canvasRoot.SetActive(lobby);
             if (!canvasRoot.activeSelf) return;
             var text = GameTextDatabase.Online;
-            heading.text = text.Room + " — " + text.ModeName(
-                NetworkClient.isConnected || NetworkServer.active ? BombermanNetworkManager.RoomMode : selectedMode);
+            if (backgrounds != null && backgrounds.Length > 0)
+                background.sprite = backgrounds[(int)(Time.unscaledTime / 2f) % backgrounds.Length];
             bool connected = NetworkServer.active || NetworkClient.isConnected;
             bool idle = !NetworkServer.active && !NetworkClient.active;
             hostButton.gameObject.SetActive(idle && lobby);
@@ -72,7 +85,7 @@ namespace Assets.Scripts.Netcode
                 modeButtons[i].gameObject.SetActive(idle);
                 modeButtons[i].interactable = browser != null && !browser.Creating;
                 var mode = (OnlineRoomMode)i;
-                modeButtons[i].GetComponent<Image>().color = selectedMode == mode ? new Color(0.25f, 0.5f, 0.65f) : new Color(0.15f, 0.25f, 0.42f);
+                modeButtons[i].GetComponent<Image>().color = selectedMode == mode ? new Color32(93, 65, 149, 255) : new Color32(30, 22, 61, 255);
                 modeButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(mode) + " (" + OnlineRoomRules.Capacity(mode) + ")";
             }
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
@@ -86,7 +99,9 @@ namespace Assets.Scripts.Netcode
             }
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
             configureButton.GetComponentInChildren<TextMeshProUGUI>().text = BombermanNetworkManager.RoomMode == OnlineRoomMode.BattleMode ? text.Configure : text.StartGame;
-            leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Leave;
+            leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = idle ? text.Back : text.Leave;
+            Position(leaveButton.GetComponent<RectTransform>(), idle ? -53 : 0, -78, idle ? 98 : 196, 16);
+            Position(leaveButton.GetComponentInChildren<TextMeshProUGUI>().rectTransform, 0, 0, idle ? 94 : 188, 14);
             var lines = new StringBuilder();
             if (connected)
             {
@@ -118,66 +133,82 @@ namespace Assets.Scripts.Netcode
             var canvas = canvasRoot.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;
+            canvas.pixelPerfect = true;
             var scaler = canvasRoot.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280, 1120);
-            scaler.matchWidthOrHeight = 1;
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
             var safe = new GameObject("SafeFrame", typeof(RectTransform), typeof(UICameraViewportFitter));
             safe.transform.SetParent(canvasRoot.transform, false);
-            var panel = new GameObject("RoomPanel", typeof(RectTransform), typeof(Image));
+            safeRect = safe.GetComponent<RectTransform>();
+            var panel = new GameObject("RoomPanel", typeof(RectTransform));
             panel.transform.SetParent(safe.transform, false);
-            Position(panel.GetComponent<RectTransform>(), 0, 0, 1160, 1040);
-            panel.GetComponent<Image>().color = new Color(0.035f, 0.045f, 0.09f, 0.98f);
-            heading = Label(panel.transform, "Heading", 0, 435, 1080, 100, 32);
-            details = Label(panel.transform, "Players", 0, 115, 1040, 510, 28);
+            panelRect = panel.GetComponent<RectTransform>();
+            Position(panelRect, 0, 0, 256, 224);
+            var art = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            art.transform.SetParent(panel.transform, false);
+            Position(art.GetComponent<RectTransform>(), 0, 0, 256, 224);
+            background = art.GetComponent<Image>();
+            background.raycastTarget = false;
+            if (backgrounds != null && backgrounds.Length > 0) background.sprite = backgrounds[0];
+            details = Label(panel.transform, "Players", 0, 14, 212, 128, 7);
             details.alignment = TextAlignmentOptions.TopLeft;
             details.textWrappingMode = TextWrappingModes.Normal;
             details.overflowMode = TextOverflowModes.Truncate;
-            hostButton = MakeButton(panel.transform, "Create", 0, -280, () => browser.CreateRoom(selectedMode));
-            configureButton = MakeButton(panel.transform, "Configure", 0, -280, BombermanNetworkManager.ServerBeginConfiguration);
-            leaveButton = MakeButton(panel.transform, "Leave", 0, -390, BombermanNetworkManager.LeaveRoom);
+            hostButton = MakeButton(panel.transform, "Create", 0, -60, () => browser.CreateRoom(selectedMode));
+            configureButton = MakeButton(panel.transform, "Configure", 0, -60, BombermanNetworkManager.ServerBeginConfiguration);
+            leaveButton = MakeButton(panel.transform, "Leave", 0, -78, BombermanNetworkManager.LeaveRoom);
             for (int i = 0; i < modeButtons.Length; i++)
             {
                 var mode = (OnlineRoomMode)i;
-                modeButtons[i] = MakeButton(panel.transform, "Mode" + mode, -350 + i * 350, -195, () => selectedMode = mode);
-                Position(modeButtons[i].GetComponent<RectTransform>(), -350 + i * 350, -195, 335, 60);
-                var label = modeButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-                Position(label.rectTransform, 0, 0, 325, 55);
-                label.fontSize = 20;
+                modeButtons[i] = MakeButton(panel.transform, "Mode" + mode, 0, -3 - i * 18, () => selectedMode = mode);
             }
             CreateBrowser(panel.transform);
             EnsureRoomEventSystem();
+        }
+
+        void LateUpdate()
+        {
+            if (panelRect == null || safeRect == null) return;
+            float scale = Mathf.Max(1f, Mathf.Floor(Mathf.Min(safeRect.rect.width / 256f, safeRect.rect.height / 224f)));
+            panelRect.localScale = new Vector3(scale, scale, 1);
+            // Keep keyboard/controller selection inside the scrolling room list.
+            var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            if (selected == null || roomContent == null || selected.transform.parent != roomContent) return;
+            float top = -selected.GetComponent<RectTransform>().anchoredPosition.y - 10;
+            float offset = roomContent.anchoredPosition.y;
+            float height = roomScroll.viewport.rect.height;
+            if (top < offset) offset = top;
+            else if (top + 20 > offset + height) offset = top + 20 - height;
+            roomContent.anchoredPosition = new Vector2(0, Mathf.Clamp(offset, 0, Mathf.Max(0, roomContent.rect.height - height)));
         }
 
         void CreateBrowser(Transform parent)
         {
             browserRoot = new GameObject("RoomBrowser", typeof(RectTransform));
             browserRoot.transform.SetParent(parent, false);
-            Position(browserRoot.GetComponent<RectTransform>(), 0, 0, 1080, 1040);
-            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 355, 1040, 75, 23);
-            for (int i = 0; i < roomButtons.Length; i++)
-            {
-                int index = i;
-                roomButtons[i] = MakeButton(browserRoot.transform, "Room" + i, 0, 265 - i * 85, () => JoinListedRoom(index));
-                Position(roomButtons[i].GetComponent<RectTransform>(), 0, 265 - i * 85, 1000, 70);
-                var label = roomButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-                Position(label.rectTransform, 0, 0, 960, 65);
-                label.fontSize = 22;
-                label.richText = false;
-                label.overflowMode = TextOverflowModes.Ellipsis;
-            }
-            previousButton = MakeButton(browserRoot.transform, "Previous", -405, -80, () => page = Mathf.Max(0, page - 1));
-            nextButton = MakeButton(browserRoot.transform, "Next", 405, -80, () => page++);
-            Position(previousButton.GetComponent<RectTransform>(), -405, -80, 160, 55);
-            Position(nextButton.GetComponent<RectTransform>(), 405, -80, 160, 55);
-            previousButton.GetComponentInChildren<TextMeshProUGUI>().text = "<";
-            nextButton.GetComponentInChildren<TextMeshProUGUI>().text = ">";
-            pageLabel = Label(browserRoot.transform, "Page", 0, -80, 400, 55, 22);
-            refreshButton = MakeButton(browserRoot.transform, "Refresh", -250, -450, () =>
-            {
-                browser.RefreshRequested = true;
-            });
-            Position(refreshButton.GetComponent<RectTransform>(), -250, -450, 460, 55);
+            Position(browserRoot.GetComponent<RectTransform>(), 0, 0, 256, 224);
+            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 65, 212, 30, 6);
+            browserStatus.textWrappingMode = TextWrappingModes.Normal;
+            var viewport = new GameObject("RoomList", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
+            viewport.transform.SetParent(browserRoot.transform, false);
+            Position(viewport.GetComponent<RectTransform>(), 0, 28, 212, 40);
+            viewport.GetComponent<Image>().color = new Color(0, 0, 0, 0.15f);
+            roomScroll = viewport.GetComponent<ScrollRect>();
+            roomScroll.viewport = viewport.GetComponent<RectTransform>();
+            roomScroll.horizontal = false;
+            roomScroll.movementType = ScrollRect.MovementType.Clamped;
+            roomScroll.scrollSensitivity = 20;
+            roomScroll.inertia = false;
+            var content = new GameObject("Rooms", typeof(RectTransform));
+            content.transform.SetParent(viewport.transform, false);
+            roomContent = content.GetComponent<RectTransform>();
+            roomContent.anchorMin = roomContent.anchorMax = new Vector2(0.5f, 1);
+            roomContent.pivot = new Vector2(0.5f, 1);
+            roomContent.sizeDelta = new Vector2(212, 40);
+            roomScroll.content = roomContent;
+            refreshButton = MakeButton(browserRoot.transform, "Refresh", 53, -78, () => browser.RefreshRequested = true);
+            Position(refreshButton.GetComponent<RectTransform>(), 53, -78, 98, 16);
+            refreshButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 5;
+            Position(refreshButton.GetComponentInChildren<TextMeshProUGUI>().rectTransform, 0, 0, 94, 14);
         }
 
         void JoinListedRoom(int index)
@@ -192,24 +223,36 @@ namespace Assets.Scripts.Netcode
             browserRoot.SetActive(visible);
             if (!visible || browser == null) return;
             var text = GameTextDatabase.Online;
-            int pages = Mathf.Max(1, Mathf.CeilToInt(browser.Rooms.Count / 4f));
-            page = Mathf.Clamp(page, 0, pages - 1);
             browserStatus.text = text.AvailableRooms + "\n" +
                 (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.DirectoryFailed ? text.PublicUnavailable :
                     browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom);
-            for (int i = 0; i < roomButtons.Length; i++)
+            while (roomButtons.Count < browser.Rooms.Count)
             {
-                int index = page * 4 + i;
+                int index = roomButtons.Count;
+                var button = MakeButton(roomContent, "Room" + index, 0, 0, () => JoinListedRoom(index));
+                var rect = button.GetComponent<RectTransform>();
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1);
+                rect.anchoredPosition = new Vector2(0, -10 - index * 22);
+                rect.sizeDelta = new Vector2(208, 20);
+                var label = button.GetComponentInChildren<TextMeshProUGUI>();
+                label.richText = false;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                label.fontSize = 5;
+                label.textWrappingMode = TextWrappingModes.Normal;
+                roomButtons.Add(button);
+                visibleRooms.Add(null);
+            }
+            roomContent.sizeDelta = new Vector2(212, Mathf.Max(40, browser.Rooms.Count * 22));
+            for (int i = 0; i < roomButtons.Count; i++)
+            {
+                int index = i;
                 visibleRooms[i] = index < browser.Rooms.Count ? browser.Rooms[index] : null;
                 roomButtons[i].gameObject.SetActive(visibleRooms[i] != null);
                 if (visibleRooms[i] == null) continue;
                 var room = visibleRooms[i];
                 roomButtons[i].GetComponentInChildren<TextMeshProUGUI>().text =
-                    $"{text.ModeName(room.Mode)} · {room.name} · {room.players}/{room.maxPlayers} · {text.Join}";
+                    $"{text.ModeName(room.Mode)} / {room.name} / {room.players}/{room.maxPlayers} / {text.Join}";
             }
-            previousButton.interactable = page > 0;
-            nextButton.interactable = page + 1 < pages;
-            pageLabel.text = $"{page + 1} / {pages}";
             refreshButton.GetComponentInChildren<TextMeshProUGUI>().text = text.RefreshRooms;
         }
 
@@ -243,13 +286,18 @@ namespace Assets.Scripts.Netcode
             rect.sizeDelta = new Vector2(width, height);
         }
 
-        static TextMeshProUGUI Label(Transform parent, string name, float x, float y, float width, float height, int size)
+        TextMeshProUGUI Label(Transform parent, string name, float x, float y, float width, float height, int size)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent, false);
             Position(go.GetComponent<RectTransform>(), x, y, width, height);
             var text = go.GetComponent<TextMeshProUGUI>();
-            text.font = TMP_Settings.defaultFontAsset;
+            text.font = lobbyFont != null ? lobbyFont : TMP_Settings.defaultFontAsset;
+            text.color = new Color32(32, 255, 72, 255);
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            var shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = Color.black;
+            shadow.effectDistance = new Vector2(1, -1);
             text.fontSize = size;
             text.alignment = TextAlignmentOptions.Center;
             text.raycastTarget = false;
@@ -257,14 +305,24 @@ namespace Assets.Scripts.Netcode
             return text;
         }
 
-        static Button MakeButton(Transform parent, string name, float x, float y, UnityEngine.Events.UnityAction action)
+        Button MakeButton(Transform parent, string name, float x, float y, UnityEngine.Events.UnityAction action)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
-            Position(go.GetComponent<RectTransform>(), x, y, 460, 80);
-            go.GetComponent<Image>().color = new Color(0.15f, 0.25f, 0.42f);
-            Label(go.transform, "Label", 0, 0, 440, 70, 26);
+            Position(go.GetComponent<RectTransform>(), x, y, 196, 16);
+            go.GetComponent<Image>().color = new Color32(30, 22, 61, 255);
+            var border = go.AddComponent<Outline>();
+            border.effectColor = new Color32(202, 161, 54, 255);
+            border.effectDistance = new Vector2(1, -1);
+            Label(go.transform, "Label", 0, 0, 188, 14, 6);
             var button = go.GetComponent<Button>();
+            var colors = button.colors;
+            colors.highlightedColor = new Color32(145, 183, 255, 255);
+            colors.selectedColor = new Color32(145, 183, 255, 255);
+            colors.pressedColor = new Color32(255, 216, 86, 255);
+            colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 1);
+            colors.fadeDuration = 0;
+            button.colors = colors;
             button.onClick.AddListener(action);
             return button;
         }
