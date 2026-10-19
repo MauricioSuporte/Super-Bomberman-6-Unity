@@ -9,6 +9,40 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase(true)]
+    [TestCase(false)]
+    public void IncompatibleDirectoryStopsBrowsingAndBlocksRoomActions(bool staleProtocol)
+    {
+        var go = new GameObject("VersionBlockedBrowser");
+        go.SetActive(false);
+        try
+        {
+            var browser = go.AddComponent<OnlineRoomBrowser>();
+            Assert.IsFalse(browser.CanUseOnline, "No online actions before compatibility is checked");
+            var apply = typeof(OnlineRoomBrowser).GetMethod("ApplyDirectoryHealth",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            apply.Invoke(browser, new object[] { new OnlineDirectoryHealth { ok = true,
+                protocol = OnlineVersionAuthenticator.ProtocolVersion - (staleProtocol ? 1 : 0),
+                buildIdentity = staleProtocol ? OnlineVersionAuthenticator.BuildIdentity : "different-build" } });
+            Assert.IsTrue(browser.VersionBlocked);
+            Assert.IsFalse(browser.CanUseOnline);
+            browser.Rooms.Add(new OnlineListedRoom());
+            browser.RefreshRequested = true;
+            var loop = (System.Collections.IEnumerator)typeof(OnlineRoomBrowser).GetMethod("RefreshLoop",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(browser, null);
+            Assert.IsFalse(loop.MoveNext(), "Blocked browser must exit before creating any web request");
+            Assert.IsEmpty(browser.Rooms);
+            Assert.IsFalse(browser.RefreshRequested);
+            browser.CreateRoom();
+            browser.JoinRoom(new OnlineListedRoom());
+            Assert.IsFalse(browser.Creating);
+            apply.Invoke(browser, new object[] { new OnlineDirectoryHealth { ok = true,
+                protocol = OnlineVersionAuthenticator.ProtocolVersion, buildIdentity = OnlineVersionAuthenticator.BuildIdentity } });
+            Assert.IsTrue(browser.VersionBlocked, "A rejection remains latched until the client is updated/restarted");
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
     [Test]
     public void MenuDeltaSendsChangesAndHeartbeatWithoutRepeatingPayloads()
     {

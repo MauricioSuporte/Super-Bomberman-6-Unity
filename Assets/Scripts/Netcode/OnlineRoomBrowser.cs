@@ -37,6 +37,9 @@ namespace Assets.Scripts.Netcode
         public bool DirectoryConfigured => !string.IsNullOrEmpty(directoryUrl);
         public bool DirectoryFailed { get; private set; }
         public bool BuildRejected { get; private set; }
+        public bool VersionBlocked => BuildRejected || OnlineVersionAuthenticator.VersionRejected;
+        public bool CompatibilityChecked { get; private set; }
+        public bool CanUseOnline => CompatibilityChecked && !VersionBlocked;
         public bool RefreshRequested { get; set; }
         public bool Creating { get; private set; }
 
@@ -52,12 +55,12 @@ namespace Assets.Scripts.Netcode
                     (endpoint.IsLoopback || endpoint.Host == "100.64.0.46" || endpoint.Host == "192.48.205.46")))) directoryUrl = "";
             var args = Environment.GetCommandLineArgs();
             int join = Array.IndexOf(args, "-online-join");
-            if (join >= 0 && join + 1 < args.Length && Uri.TryCreate(args[join + 1], UriKind.Absolute, out var server) && server.Scheme == "kcp")
+            if (!VersionBlocked && join >= 0 && join + 1 < args.Length && Uri.TryCreate(args[join + 1], UriKind.Absolute, out var server) && server.Scheme == "kcp")
             {
                 NetworkManager.singleton.StartClient(server);
                 return;
             }
-            StartCoroutine(RefreshLoop());
+            if (!VersionBlocked) StartCoroutine(RefreshLoop());
         }
 
         bool Browsing => SceneManager.GetActiveScene().name == NetworkLobby.SceneName &&
@@ -66,7 +69,7 @@ namespace Assets.Scripts.Netcode
         IEnumerator RefreshLoop()
         {
             float next = 0;
-            while (true)
+            while (!VersionBlocked)
             {
                 if (DirectoryConfigured && Browsing && !Creating && (RefreshRequested || Time.unscaledTime >= next))
                 {
@@ -75,19 +78,26 @@ namespace Assets.Scripts.Netcode
                     using var health = UnityWebRequest.Get(directoryUrl + "/health");
                     health.timeout = 5;
                     yield return health.SendWebRequest();
+                    if (VersionBlocked) break;
+                    OnlineDirectoryHealth version = null;
                     if (health.result == UnityWebRequest.Result.Success)
                     {
-                        OnlineDirectoryHealth version = null;
                         try { version = JsonUtility.FromJson<OnlineDirectoryHealth>(health.downloadHandler.text); }
                         catch (ArgumentException) { }
-                        if (version != null && version.ok)
-                            BuildRejected = version.protocol != OnlineVersionAuthenticator.ProtocolVersion ||
-                                !string.Equals(version.buildIdentity, OnlineVersionAuthenticator.BuildIdentity, StringComparison.Ordinal);
                     }
-                    if (BuildRejected) { Rooms.Clear(); yield return null; continue; }
+                    ApplyDirectoryHealth(version);
+                    if (VersionBlocked) break;
+                    if (!CompatibilityChecked)
+                    {
+                        DirectoryFailed = true;
+                        Rooms.Clear();
+                        yield return new WaitForSecondsRealtime(0.5f);
+                        continue;
+                    }
                     using var request = UnityWebRequest.Get(directoryUrl + "/rooms");
                     request.timeout = 5;
                     yield return request.SendWebRequest();
+                    if (VersionBlocked) break;
                     DirectoryFailed = request.result != UnityWebRequest.Result.Success;
                     Rooms.Clear();
                     if (!DirectoryFailed)
@@ -102,6 +112,17 @@ namespace Assets.Scripts.Netcode
                 }
                 yield return new WaitForSecondsRealtime(0.5f);
             }
+            Rooms.Clear();
+            RefreshRequested = false;
+        }
+
+        void ApplyDirectoryHealth(OnlineDirectoryHealth version)
+        {
+            CompatibilityChecked = version != null && version.ok;
+            if (!CompatibilityChecked) return;
+            // A rejection stays latched for this client session, including lobby returns.
+            BuildRejected |= version.protocol != OnlineVersionAuthenticator.ProtocolVersion ||
+                !string.Equals(version.buildIdentity, OnlineVersionAuthenticator.BuildIdentity, StringComparison.Ordinal);
         }
 
         static bool Valid(OnlineListedRoom room) => room != null && !string.IsNullOrEmpty(room.id) &&
@@ -112,16 +133,16 @@ namespace Assets.Scripts.Netcode
 
         public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode, string password = "")
         {
-            if (!DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode) ||
+            if (!CanUseOnline || !DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode) ||
                 !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
             StartCoroutine(Allocate(mode, password));
         }
 
         IEnumerator Allocate(OnlineRoomMode mode, string password)
         {
+            if (!CanUseOnline) yield break;
             Creating = true;
             DirectoryFailed = false;
-            BuildRejected = false;
             using var request = new UnityWebRequest(directoryUrl + "/rooms", "POST");
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
                 JsonUtility.ToJson(new OnlineRoomAllocation { protocol = OnlineVersionAuthenticator.ProtocolVersion,
@@ -130,7 +151,8 @@ namespace Assets.Scripts.Netcode
             request.SetRequestHeader("Content-Type", "application/json");
             request.timeout = 10;
             yield return request.SendWebRequest();
-            BuildRejected = request.responseCode == 409;
+            BuildRejected |= request.responseCode == 409;
+            if (VersionBlocked) { Rooms.Clear(); Creating = false; yield break; }
             OnlineListedRoom allocated = null;
             if (request.result == UnityWebRequest.Result.Success)
             {
@@ -140,12 +162,12 @@ namespace Assets.Scripts.Netcode
             if (!Valid(allocated) || allocated.Mode != mode)
             { DirectoryFailed = true; Creating = false; yield break; }
             float deadline = Time.realtimeSinceStartup + 45;
-            while (Browsing && Time.realtimeSinceStartup < deadline)
+            while (!VersionBlocked && Browsing && Time.realtimeSinceStartup < deadline)
             {
                 using var poll = UnityWebRequest.Get(directoryUrl + "/rooms/" + Uri.EscapeDataString(allocated.id));
                 poll.timeout = 5;
                 yield return poll.SendWebRequest();
-                if (poll.result != UnityWebRequest.Result.Success) break;
+                if (VersionBlocked || poll.result != UnityWebRequest.Result.Success) break;
                 OnlineListedRoom room = null;
                 try { room = JsonUtility.FromJson<OnlineListedRoom>(poll.downloadHandler.text); }
                 catch (ArgumentException) { }
@@ -163,7 +185,7 @@ namespace Assets.Scripts.Netcode
 
         public void JoinRoom(OnlineListedRoom room, string password = "")
         {
-            if (!Browsing || Creating || !Valid(room) || !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
+            if (!CanUseOnline || !Browsing || Creating || !Valid(room) || !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
             OnlineVersionAuthenticator.RoomPassword = password;
             NetworkManager.singleton.StartClient(new Uri(room.uri));
         }

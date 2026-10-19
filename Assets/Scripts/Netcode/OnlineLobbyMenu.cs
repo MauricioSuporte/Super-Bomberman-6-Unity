@@ -112,13 +112,20 @@ namespace Assets.Scripts.Netcode
                 background.sprite = backgrounds[(int)(Time.unscaledTime / 2f) % backgrounds.Length];
             bool connected = NetworkServer.active || NetworkClient.isConnected;
             bool idle = !NetworkServer.active && !NetworkClient.active;
-            bool incompatible = OnlineVersionAuthenticator.VersionRejected || (browser != null && browser.BuildRejected);
+            bool incompatible = OnlineVersionAuthenticator.VersionRejected || (browser != null && browser.VersionBlocked);
+            if (incompatible)
+            {
+                if (nameRoot.activeSelf) CloseName();
+                passwordOpen = false;
+                passwordRoot.SetActive(false);
+            }
+            nameButton.gameObject.SetActive(idle && !incompatible);
             updateButton.gameObject.SetActive(idle && incompatible);
             updateButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.RunUpdater;
             roomScroll.gameObject.SetActive(!incompatible);
             nameButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.EditName;
             hostButton.gameObject.SetActive(idle && lobby && !incompatible);
-            hostButton.interactable = browser != null && browser.DirectoryConfigured && !browser.Creating;
+            hostButton.interactable = browser != null && browser.DirectoryConfigured && browser.CanUseOnline && !browser.Creating;
             passwordButton.gameObject.SetActive(idle && privateRoom && !incompatible);
             passwordButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.Password + ": ******";
             modeButton.gameObject.SetActive(idle && !incompatible);
@@ -298,6 +305,7 @@ namespace Assets.Scripts.Netcode
 
         void JoinListedRoom(int index)
         {
+            if (browser == null || !browser.CanUseOnline || index < 0 || index >= visibleRooms.Count) return;
             var room = visibleRooms[index];
             if (room == null || NetworkClient.active || NetworkServer.active || !browser.Rooms.Contains(room)) return;
             if (!HasPlayerName()) return;
@@ -311,6 +319,12 @@ namespace Assets.Scripts.Netcode
             if (!visible || browser == null) return;
             var text = GameTextDatabase.Online;
             string savedName = OnlineVersionAuthenticator.PlayerName;
+            if (browser.VersionBlocked)
+            {
+                browserStatus.text = text.VersionMismatch;
+                foreach (var button in roomButtons) button.gameObject.SetActive(false);
+                return;
+            }
             browserStatus.text = text.CurrentName + ": " + (string.IsNullOrEmpty(savedName) ? text.Empty : savedName) + "\n" +
                 (!browser.DirectoryConfigured ? text.PublicNotConfigured : nameRequired || OnlineVersionAuthenticator.NameRejected ? text.ChangeNameRequired : OnlineVersionAuthenticator.PasswordRejected ? text.WrongPassword : browser.BuildRejected || OnlineVersionAuthenticator.VersionRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
                     browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom);
@@ -413,6 +427,7 @@ namespace Assets.Scripts.Netcode
 
         void CreateSelectedRoom()
         {
+            if (browser == null || !browser.CanUseOnline) return;
             if (!HasPlayerName()) return;
             if (privateRoom && string.IsNullOrEmpty(creationPassword)) { OpenPassword(null, true); return; }
             browser.CreateRoom(selectedMode, privateRoom ? creationPassword : "");
@@ -435,7 +450,7 @@ namespace Assets.Scripts.Netcode
             try
             {
                 using var process = System.Diagnostics.Process.GetCurrentProcess();
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, "--wait-for-game " + process.Id)
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, "--language " + (int)SaveSystem.GetLanguage() + " --wait-for-game " + process.Id)
                     { UseShellExecute = true, WorkingDirectory = System.IO.Path.GetDirectoryName(path) });
                 Application.Quit();
             }

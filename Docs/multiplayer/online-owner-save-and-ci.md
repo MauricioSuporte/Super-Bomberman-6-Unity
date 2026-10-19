@@ -218,3 +218,13 @@ O servidor verifica mudanças a 60 Hz nos menus, mas envia apenas os campos alte
 Clientes reutilizam o estado já interpretado do Battle Mode e evitam reaplicar estados idênticos na seleção de skins e Save File Menu. Os painéis do Battle Mode deixam de ser desativados e reativados a cada atualização. Sons, cursores e fades continuam associados às mudanças do servidor.
 
 Validação local: compilação C# e compilação Unity concluídas; 17 casos direcionados de envio incremental e compatibilidade aprovados no Edit Mode; 15 testes do CI e 7 do diretório de salas aprovados. Desempenho no computador do participante e navegação com dois clientes ainda dependem do teste após a publicação.
+
+## Atualizador: progresso e idioma
+
+GameUpdater.exe mostra uma barra com percentual e tempo restante estimado durante download, verificação SHA-256, extração e instalação. O cálculo acompanha o trabalho concluído e pode variar com a velocidade da conexão e do disco; sem tamanho conhecido, informa que está calculando. Extração e instalação atualizam o progresso durante a cópia dos arquivos grandes.
+
+Ao iniciar pelo lobby, o jogo passa --language com o idioma selecionado; o processo auxiliar conserva esse argumento. Ao abrir diretamente, o atualizador lê language no SaveData/save.dat local (ou em SB6_SAVE_DIRECTORY). Inglês, japonês, espanhol e português são suportados. Save ausente ou inválido usa inglês.
+
+O lobby exige uma resposta /health compatível antes de listar, criar ou entrar em salas. Detectada uma identidade de build ou protocolo incorreto, encerra as consultas, limpa a lista e bloqueia essas ações durante a sessão, exibindo a orientação para executar GameUpdater.exe. Retornar ao lobby não desfaz essa rejeição.
+
+Validação: compilação C# e Unity aprovadas; atualizador compilado com avisos tratados como erros; 17 testes das ferramentas CI (incluindo 8 do atualizador) e 2 casos Edit Mode de bloqueio por protocolo/build aprovados. A apresentação visual no cliente e o download da publicação real ainda exigem validação manual.
