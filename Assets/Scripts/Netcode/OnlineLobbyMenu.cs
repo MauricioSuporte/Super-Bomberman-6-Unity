@@ -25,9 +25,9 @@ namespace Assets.Scripts.Netcode
         GameObject roomEventSystem;
         Button hostButton, configureButton, leaveButton;
         Button modeButton, privacyButton, passwordButton;
-        TextMeshProUGUI modeLeft, modeRight;
+        TextMeshProUGUI modeLeft, modeRight, privacyLeft, privacyRight;
         GameObject passwordRoot;
-        TextMeshProUGUI passwordText;
+        TextMeshProUGUI passwordText, passwordTitle, passwordHints;
         readonly int[] passwordDigits = new int[6];
         int passwordDigit;
         bool privateRoom, passwordOpen, createAfterPassword;
@@ -111,12 +111,13 @@ namespace Assets.Scripts.Netcode
             privacyButton.GetComponentInChildren<TextMeshProUGUI>().text = privateRoom ? text.PrivateRoom : text.PublicRooms;
             bool arrowsVisible = idle && Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.5f;
             modeLeft.gameObject.SetActive(arrowsVisible); modeRight.gameObject.SetActive(arrowsVisible);
+            privacyLeft.gameObject.SetActive(arrowsVisible); privacyRight.gameObject.SetActive(arrowsVisible);
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
             configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 1;
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
             configureButton.GetComponentInChildren<TextMeshProUGUI>().text = text.StartGame;
             leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = idle ? text.Back : text.Leave;
-            Position(leaveButton.GetComponent<RectTransform>(), idle ? -53 : 0, -78, idle ? 98 : 196, 16);
+            Position(leaveButton.GetComponent<RectTransform>(), idle ? -53 : 0, idle ? -78 : -82, idle ? 98 : 196, 16);
             Position(leaveButton.GetComponentInChildren<TextMeshProUGUI>().rectTransform, 0, 0, idle ? 94 : 188, 14);
             var lines = new StringBuilder();
             if (connected)
@@ -178,25 +179,35 @@ namespace Assets.Scripts.Netcode
             timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, -16);
             timeoutLabel.textWrappingMode = TextWrappingModes.Normal;
             timeoutRoot.SetActive(false);
-            details = Label(panel.transform, "Players", 0, 25, 212, 110, 7);
+            details = Label(panel.transform, "Players", 0, 30, 212, 100, 7);
             details.alignment = TextAlignmentOptions.TopLeft;
             details.textWrappingMode = TextWrappingModes.Normal;
             details.overflowMode = TextOverflowModes.Truncate;
-            hostButton = MakeButton(panel.transform, "Create", 0, -60, CreateSelectedRoom);
-            configureButton = MakeButton(panel.transform, "Configure", 0, -60, BombermanNetworkManager.ServerBeginConfiguration);
+            hostButton = MakeButton(panel.transform, "Create", 0, -56, CreateSelectedRoom);
+            configureButton = MakeButton(panel.transform, "Configure", 0, -56, BombermanNetworkManager.ServerBeginConfiguration);
             leaveButton = MakeButton(panel.transform, "Leave", 0, -78, LeaveLobby);
-            modeButton = MakeButton(panel.transform, "RoomType", 0, -4, () => ChangeMode(1));
-            privacyButton = MakeButton(panel.transform, "Visibility", 0, -24, TogglePrivacy);
-            passwordButton = MakeButton(panel.transform, "EditPassword", 0, -42, () => OpenPassword(null, false));
+            modeButton = MakeButton(panel.transform, "RoomType", 0, -2, () => ChangeMode(1));
+            privacyButton = MakeButton(panel.transform, "Visibility", 0, -20, TogglePrivacy);
+            passwordButton = MakeButton(panel.transform, "EditPassword", 0, -38, () => OpenPassword(null, false));
             cursorButton = modeButton;
-            modeLeft = Label(panel.transform, "PreviousType", -108, -4, 10, 16, 8); modeLeft.text = "<";
-            modeRight = Label(panel.transform, "NextType", 108, -4, 10, 16, 8); modeRight.text = ">";
+            modeLeft = Label(panel.transform, "PreviousType", -108, -2, 10, 16, 8); modeLeft.text = "<";
+            modeRight = Label(panel.transform, "NextType", 108, -2, 10, 16, 8); modeRight.text = ">";
+            privacyLeft = Label(panel.transform, "PreviousVisibility", -108, -20, 10, 16, 8); privacyLeft.text = "<";
+            privacyRight = Label(panel.transform, "NextVisibility", 108, -20, 10, 16, 8); privacyRight.text = ">";
             passwordRoot = new GameObject("Password", typeof(RectTransform), typeof(Image));
             passwordRoot.transform.SetParent(panel.transform, false);
             Position(passwordRoot.GetComponent<RectTransform>(), 0, 0, 244, 160);
             passwordRoot.GetComponent<Image>().color = new Color32(30, 22, 61, 255);
-            passwordText = Label(passwordRoot.transform, "PasswordText", 0, 0, 232, 142, 7);
-            passwordText.textWrappingMode = TextWrappingModes.Normal;
+            passwordTitle = Label(passwordRoot.transform, "PasswordTitle", 0, 56, 232, 18, 8);
+            var entry = new GameObject("PasswordEntry", typeof(RectTransform), typeof(Image), typeof(Outline));
+            entry.transform.SetParent(passwordRoot.transform, false);
+            Position(entry.GetComponent<RectTransform>(), 0, 22, 200, 26);
+            entry.GetComponent<Image>().color = new Color32(12, 9, 29, 255);
+            entry.GetComponent<Outline>().effectColor = new Color32(173, 133, 231, 255);
+            entry.GetComponent<Outline>().effectDistance = Vector2.one;
+            passwordText = Label(entry.transform, "PasswordText", 0, 0, 194, 22, 8);
+            passwordHints = Label(passwordRoot.transform, "PasswordHints", 0, -40, 232, 64, 6);
+            passwordHints.alignment = TextAlignmentOptions.BottomLeft;
             passwordRoot.SetActive(false);
             CreateBrowser(panel.transform);
             EnsureRoomEventSystem();
@@ -211,7 +222,7 @@ namespace Assets.Scripts.Netcode
             timeoutLabel.rectTransform.localScale = new Vector3(warningScale, warningScale, 1);
             timeoutLabel.rectTransform.anchorMin = timeoutLabel.rectTransform.anchorMax = new Vector2(0.5f, 0);
             bool lobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
-            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, (lobby ? 72 : 22) * warningScale);
+            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, (lobby ? 78 : 22) * warningScale);
             // Keep keyboard/controller selection inside the scrolling room list.
             var selected = cursorButton != null ? cursorButton.gameObject : null;
             if (selected == null || roomContent == null || selected.transform.parent != roomContent) return;
@@ -391,7 +402,9 @@ namespace Assets.Scripts.Netcode
             var digits = new StringBuilder();
             for (int i = 0; i < 6; i++)
                 digits.Append(i == passwordDigit ? "<color=#C080FF>[" + passwordDigits[i] + "]</color>" : " * ");
-            passwordText.text = GameTextDatabase.Online.Password + "\n\n" + digits + "\n\n" + GameTextDatabase.Online.PasswordHint;
+            passwordTitle.text = GameTextDatabase.Online.Password;
+            passwordText.text = digits.ToString();
+            passwordHints.text = GameTextDatabase.Online.PasswordHint;
             if (input.GetDown(1, PlayerAction.ActionB))
             {
                 PlayLobbySound(returnSfx);

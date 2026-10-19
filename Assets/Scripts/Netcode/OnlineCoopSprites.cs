@@ -94,8 +94,204 @@ namespace Assets.Scripts.Netcode
         {
             foreach (var sprite in coopDynamicSprites.Values) if (sprite != null) Destroy(sprite);
             foreach (var texture in coopDynamicTextures.Values) if (texture != null) Destroy(texture);
+            coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
+            coopVisualRemovals.Clear(); coopViewClips.Clear(); bombVisualSamples.Clear();
+            coopExpiredViews.Clear(); expiredBombViews.Clear(); coopPendingRenderers.Clear(); nextBombAnimation = 0;
             coopDynamicIds.Clear(); coopDynamicVersions.Clear(); coopDefinitions.Clear();
             coopDynamicSprites.Clear(); coopDynamicTextures.Clear(); coopViewSpriteIds.Clear();
+        }
+    }
+
+    public struct CoopAnimationDefinition : NetworkMessage
+    {
+        public string scene;
+        public int id, idleSprite, loopStart;
+        public int[] sprites;
+        public float animationTime, sequenceDuration, restartDelay;
+        public float[] durations;
+        public bool sequence, loop, pingPong;
+    }
+
+    public struct BombAnimationFrame
+    {
+        public uint id;
+        public double time;
+        public float animationTime;
+        public AnimatedSpriteRenderer.PlaybackState playback;
+    }
+
+    public struct BombAnimations : NetworkMessage
+    {
+        public string scene;
+        public BombAnimationFrame[] frames;
+    }
+
+    public partial class BombermanNetworkManager
+    {
+        readonly Dictionary<int, CoopAnimationDefinition> coopAnimationDefinitions = new();
+        readonly Dictionary<int, (int hash, int clip)> coopAnimationClips = new();
+        readonly Dictionary<int, List<CoopSpriteFrame>> coopVisualSamples = new();
+        readonly Dictionary<int, double> coopVisualRemovals = new();
+        readonly Dictionary<uint, List<BombAnimationFrame>> bombVisualSamples = new();
+        readonly List<int> coopExpiredViews = new();
+        readonly List<uint> expiredBombViews = new();
+        float nextBombAnimation;
+
+        int CaptureCoopAnimation(AnimatedSpriteRenderer source)
+        {
+            var hash = new System.HashCode();
+            hash.Add(source.idleSprite); hash.Add(source.animationTime);
+            hash.Add(source.useSequenceDuration); hash.Add(source.sequenceDuration);
+            hash.Add(source.loop); hash.Add(source.loopStartFrame);
+            hash.Add(source.loopRestartDelay); hash.Add(source.pingPong);
+            if (source.animationSprite != null) foreach (var sprite in source.animationSprite) hash.Add(sprite);
+            if (source.frameDurations != null) foreach (float duration in source.frameDurations) hash.Add(duration);
+            int key = source.GetEntityId().GetHashCode(), signature = hash.ToHashCode();
+            if (coopAnimationClips.TryGetValue(key, out var cached) && cached.hash == signature) return cached.clip;
+            int id = coopAnimationDefinitions.Count + 1;
+            var sprites = source.animationSprite ?? System.Array.Empty<Sprite>();
+            var definition = new CoopAnimationDefinition
+            {
+                scene = coopScene, id = id, idleSprite = CoopSpriteId(source.idleSprite),
+                sprites = new int[sprites.Length], animationTime = source.animationTime,
+                sequence = source.useSequenceDuration, sequenceDuration = source.sequenceDuration,
+                durations = source.frameDurations == null ? null : (float[])source.frameDurations.Clone(),
+                loop = source.loop, loopStart = source.loopStartFrame,
+                restartDelay = source.loopRestartDelay, pingPong = source.pingPong
+            };
+            for (int i = 0; i < sprites.Length; i++) definition.sprites[i] = CoopSpriteId(sprites[i]);
+            coopAnimationClips[key] = (signature, id);
+            coopAnimationDefinitions[id] = definition;
+            NetworkServer.SendToReady(definition);
+            return id;
+        }
+
+        void ApplyCoopAnimationDefinition(CoopAnimationDefinition message)
+        {
+            if (CanApplyCoop(message.scene)) coopAnimationDefinitions[message.id] = message;
+        }
+
+        void PresentCoopAnimation(SpriteRenderer view, CoopSpriteFrame frame)
+        {
+            if (frame.animation == 0 || !coopAnimationDefinitions.TryGetValue(frame.animation, out var clip)) return;
+            if (!view.TryGetComponent<AnimatedSpriteRenderer>(out var animation))
+            {
+                animation = view.gameObject.AddComponent<AnimatedSpriteRenderer>();
+                animation.SetManualAnimationUpdate(true);
+            }
+            // Definitions are immutable and sent once. Resolve their sprites only when the clip changes.
+            if (!coopViewClips.TryGetValue(frame.id, out int previous) || previous != frame.animation)
+            {
+                animation.idleSprite = CoopSpriteAt(clip.idleSprite);
+                animation.animationSprite = new Sprite[clip.sprites.Length];
+                for (int i = 0; i < clip.sprites.Length; i++) animation.animationSprite[i] = CoopSpriteAt(clip.sprites[i]);
+                animation.animationTime = clip.animationTime;
+                animation.useSequenceDuration = clip.sequence; animation.sequenceDuration = clip.sequenceDuration;
+                animation.frameDurations = clip.durations;
+                animation.loop = clip.loop; animation.loopStartFrame = clip.loopStart;
+                animation.loopRestartDelay = clip.restartDelay; animation.pingPong = clip.pingPong;
+                coopViewClips[frame.id] = frame.animation;
+            }
+            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, NetworkTime.time - frame.time), false);
+        }
+
+        readonly Dictionary<int, int> coopViewClips = new();
+
+        void PresentOnlineSprites()
+        {
+            if (!NetworkClient.active || NetworkServer.active) return;
+            double clock = NetworkTime.time;
+            if (coopCatalog != null && coopViewRoot != null)
+            {
+                coopExpiredViews.Clear();
+                foreach (var pair in coopVisualSamples)
+                {
+                    int id = pair.Key;
+                    if (coopVisualRemovals.TryGetValue(id, out double removed) && clock >= removed)
+                    {
+                        if (coopViews.Remove(id, out var view) && view != null) Destroy(view.gameObject);
+                        coopViewSpriteIds.Remove(id); coopViewClips.Remove(id);
+                        coopExpiredViews.Add(id); continue;
+                    }
+                    var samples = pair.Value;
+                    while (samples.Count > 1 && samples[1].time <= clock) samples.RemoveAt(0);
+                    if (samples.Count == 0 || samples[0].time > clock) continue;
+                    var frame = samples[0];
+                    if (samples.Count > 1 && frame.visible && samples[1].visible && samples[1].time > frame.time)
+                    {
+                        var next = samples[1];
+                        float t = Mathf.Clamp01((float)((clock - frame.time) / (next.time - frame.time)));
+                        frame.position = Vector3.Lerp(frame.position, next.position, t);
+                        frame.rotation = Quaternion.Slerp(frame.rotation, next.rotation, t);
+                        frame.scale = Vector3.Lerp(frame.scale, next.scale, t);
+                    }
+                    PresentCoopSprite(frame);
+                }
+                foreach (int id in coopExpiredViews) { coopVisualSamples.Remove(id); coopVisualRemovals.Remove(id); }
+            }
+            expiredBombViews.Clear();
+            foreach (var pair in bombVisualSamples)
+            {
+                if (!NetworkClient.spawned.TryGetValue(pair.Key, out var identity) || identity == null)
+                {
+                    if (pair.Value.Count > 0 && clock - pair.Value[^1].time > 2) expiredBombViews.Add(pair.Key);
+                    continue;
+                }
+                var samples = pair.Value;
+                double bombClock = clock - BombVisualOffset(identity);
+                while (samples.Count > 1 && samples[1].time <= bombClock) samples.RemoveAt(0);
+                if (samples.Count == 0 || samples[0].time > bombClock || !identity.TryGetComponent<AnimatedSpriteRenderer>(out var animation)) continue;
+                var frame = samples[0];
+                animation.SetManualAnimationUpdate(true);
+                animation.animationTime = frame.animationTime;
+                animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, bombClock - frame.time));
+            }
+            foreach (uint id in expiredBombViews) bombVisualSamples.Remove(id);
+        }
+
+        static double BombVisualOffset(NetworkIdentity identity)
+        {
+            if (!identity.TryGetComponent<NetworkTransformReliable>(out var sync)) return 0;
+            return NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +
+                (sync.timelineOffset ? sync.sendIntervalMultiplier : 0));
+        }
+
+        readonly HashSet<SpriteRenderer> coopPendingRenderers = new();
+
+        public static void CoopTrackAnimation(AnimatedSpriteRenderer animation)
+        {
+            if (!NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager ||
+                manager.coopCatalog == null || HasNetworkParent(animation.transform) ||
+                !animation.TryGetComponent<SpriteRenderer>(out var renderer)) return;
+            manager.coopPendingRenderers.Add(renderer);
+        }
+
+        void TickBombAnimations()
+        {
+            if (!NetworkServer.active || Time.unscaledTime < nextBombAnimation || NetworkServer.isLoadingScene) return;
+            nextBombAnimation = Time.unscaledTime + .05f;
+            var frames = new List<BombAnimationFrame>();
+            foreach (var bomb in Bomb.ActiveBombs)
+            {
+                if (bomb == null || !bomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0 ||
+                    !bomb.TryGetComponent<AnimatedSpriteRenderer>(out var animation)) continue;
+                frames.Add(new BombAnimationFrame { id = identity.netId, time = NetworkTime.localTime,
+                    animationTime = animation.animationTime, playback = animation.CapturePlayback() });
+            }
+            if (frames.Count > 0) NetworkServer.SendToReady(new BombAnimations
+                { scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, frames = frames.ToArray() });
+        }
+
+        void ApplyBombAnimations(BombAnimations message)
+        {
+            if (NetworkServer.active || message.scene != UnityEngine.SceneManagement.SceneManager.GetActiveScene().name) return;
+            foreach (var frame in message.frames ?? System.Array.Empty<BombAnimationFrame>())
+            {
+                if (!bombVisualSamples.TryGetValue(frame.id, out var samples))
+                    bombVisualSamples[frame.id] = samples = new List<BombAnimationFrame>();
+                samples.Add(frame);
+                if (samples.Count > 64) samples.RemoveAt(0);
+            }
         }
     }
 }

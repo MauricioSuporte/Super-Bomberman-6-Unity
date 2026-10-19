@@ -9,6 +9,45 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase(false, false)]
+    [TestCase(true, false)]
+    [TestCase(false, true)]
+    public void RemoteFastAnimationPreservesPlaybackPhase(bool pingPong, bool customDurations)
+    {
+        var local = new GameObject("LocalAnimation", typeof(SpriteRenderer));
+        var remote = new GameObject("RemoteAnimation", typeof(SpriteRenderer));
+        var parent = new GameObject("RemoteParent");
+        remote.transform.SetParent(parent.transform, false);
+        try
+        {
+            var source = local.AddComponent<AnimatedSpriteRenderer>();
+            var target = remote.AddComponent<AnimatedSpriteRenderer>();
+            foreach (var animation in new[] { source, target })
+            {
+                animation.animationSprite = new Sprite[4];
+                animation.idle = false; animation.loop = true; animation.animationTime = .01f;
+                animation.pingPong = pingPong;
+                if (customDurations) animation.frameDurations = new[] { .01f, .02f, .005f, .015f };
+                animation.SetManualAnimationUpdate(true);
+            }
+            source.AdvanceAnimation(.057f, .057f);
+            var snapshot = source.CapturePlayback();
+            source.AdvanceAnimation(.033f, .033f);
+            target.PresentPlayback(snapshot, .033f, false);
+            Assert.AreEqual(source.CurrentFrame, target.CurrentFrame);
+            Assert.AreEqual(source.DebugFrameTimer, target.DebugFrameTimer, .00001f);
+            var position = new Vector3(4, 3, 0);
+            target.transform.position = position;
+            target.frameOffsets = new[] { Vector2.up, Vector2.down };
+            target.PresentPlayback(snapshot, .033f, false);
+            Assert.AreEqual(position, target.transform.position, "Offsets already included in server positions must not be applied twice");
+            source.SetFrozen(true);
+            target.PresentPlayback(source.CapturePlayback(), .2f, false);
+            Assert.AreEqual(source.CurrentFrame, target.CurrentFrame);
+        }
+        finally { Object.DestroyImmediate(local); Object.DestroyImmediate(remote); Object.DestroyImmediate(parent); }
+    }
+
     [UnityTest]
     public System.Collections.IEnumerator LeavingRoomCanReloadTheOnlineBrowser()
     {
@@ -183,7 +222,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 10, true)]
+    [TestCase("0.5.0", 11, true)]
+    [TestCase("0.5.0", 10, false)]
     [TestCase("0.5.0", 9, false)]
     [TestCase("0.5.0", 8, false)]
     [TestCase("0.5.0", 7, false)]

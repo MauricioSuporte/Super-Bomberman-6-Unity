@@ -110,7 +110,11 @@ def build():
     (ROOT / "Build/OnlineClient/Windows/build-info.json").write_text(
         json.dumps(dict(sourceCommit=commit, protocol=protocol(), builtUtc=manifest["builtUtc"]), indent=2),
         encoding="utf-8")
-    distribution = ROOT / "Build/Distribution/Super Bomberman 6"
+    settings = (ROOT / "ProjectSettings/ProjectSettings.asset").read_text(encoding="utf-8-sig")
+    version = re.search(r"^  bundleVersion: ([0-9A-Za-z._-]+)\s*$", settings, re.M)
+    if version is None:
+        raise RuntimeError("missing or invalid game version for the client package")
+    distribution = ROOT / "Build/Distribution" / f"Super Bomberman 6 v{version[1]}"
     shutil.copytree(ROOT / "Build/OnlineClient/Windows", distribution,
                     ignore=shutil.ignore_patterns("SB6.exe", "SB6_Data", "SB6_BurstDebugInformation_DoNotShip"))
     (distribution / "Start-Online-Diagnostics.cmd").write_text(

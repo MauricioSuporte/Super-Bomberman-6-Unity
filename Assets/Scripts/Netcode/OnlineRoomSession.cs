@@ -236,6 +236,14 @@ namespace Assets.Scripts.Netcode
             return (mask & bit) != 0;
         }
 
+        public override void LateUpdate()
+        {
+            base.LateUpdate();
+            TickCoopWorld();
+            TickBombAnimations();
+            PresentOnlineSprites();
+        }
+
         public override void Update()
         {
             base.Update();
@@ -244,7 +252,6 @@ namespace Assets.Scripts.Netcode
 #if UNITY_EDITOR || DEBUG
             TickLocalLoadTest();
 #endif
-            TickCoopWorld();
             TickDedicatedAdminInput();
             if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
             {

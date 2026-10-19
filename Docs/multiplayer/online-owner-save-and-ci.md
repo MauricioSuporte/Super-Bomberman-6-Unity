@@ -26,7 +26,7 @@ seus saves originais são restaurados. A VM não grava o save do dono no disco.
 Sair da sala, ou perder a conexão de um participante registrado, encerra a sala
 para todos e retorna os clientes à TitleScreen. Não há transferência de dono.
 
-O protocolo atual é 10 e inclui a identidade do build na autenticação.
+O protocolo atual é 11 e inclui a identidade do build na autenticação.
 Servidor, API e clientes devem ser recompilados juntos, mesmo mantendo 0.5.0.
 
 ## Runner Windows
@@ -71,7 +71,7 @@ artefatos de um commit anterior.
 
 No GitHub, abra Actions → Online release v0.5.0 → execução → Artifacts:
 
-- `SB6-Windows-Client-<data-hora>`: extrair tudo, abrir a pasta Super Bomberman 6 e executar Super Bomberman 6.exe.
+- `SB6-Windows-<data-hora>`: extrair tudo, abrir a pasta Super Bomberman 6 v<versão> e executar Super Bomberman 6.exe.
 - `SB6-Validation-<data-hora>`: relatórios de testes, logs de compilação e publicação,
   manifesto. O pacote Linux é enviado somente à VM. Retenção configurada em 14 dias.
 
@@ -197,3 +197,5 @@ Para diagnosticar movimento, abrir Start-Online-Diagnostics.cmd na pasta do jogo
 Após jogar, enviar OnlineMotion.log, criado nessa mesma pasta. O parâmetro
 -online-motion-logs registra RTT, buffers, posição e animação uma vez por segundo,
 sem registrar senhas.
+
+Animações de atores do co-op enviam a sequência e os tempos de cada frame uma vez por configuração. O cliente reproduz a fase entre snapshots, incluindo ping-pong, frames com duração própria e congelamento. Posições e animações usam a linha de apresentação do Mirror; bombas mantêm seu NetworkTransform e recebem a fase visual, enquanto explosões do Battle aguardam essa mesma linha antes de aparecer.

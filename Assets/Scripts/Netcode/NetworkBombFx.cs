@@ -1,3 +1,4 @@
+using System.Collections;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -37,16 +38,23 @@ namespace Assets.Scripts.Netcode
         {
             if (parts == null || parts.Length == 0)
                 return;
-            RpcPlay(origin, parts, pierce, duration);
+            RpcPlay(origin, parts, pierce, duration, NetworkTime.localTime);
         }
 
         [ClientRpc]
-        void RpcPlay(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration)
+        void RpcPlay(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration, double time)
         {
             // No host o visual já foi tocado localmente pela simulação.
             if (isServer || bomb == null || BombermanNetworkManager.IsCoopStage)
                 return;
 
+            StartCoroutine(PlayOnTimeline(origin, parts, pierce, duration, time));
+        }
+
+        IEnumerator PlayOnTimeline(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration, double time)
+        {
+            while (NetworkClient.active && NetworkTime.time < time) yield return null;
+            if (!NetworkClient.active || bomb == null) yield break;
             for (int i = 0; i < parts.Length; i++)
                 bomb.PlayNetworkExplosionVisual(parts[i].pos, parts[i].part, parts[i].dir, origin, duration, pierce);
 

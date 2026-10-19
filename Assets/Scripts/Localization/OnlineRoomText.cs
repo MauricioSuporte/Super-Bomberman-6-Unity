@@ -21,7 +21,7 @@ public sealed class OnlineRoomText
         Rules, Items, Louies, Handicap;
     public string PrivateRoom => LanguageText("PRIVATE", "非公開", "PRIVADA", "PRIVADA");
     public string Password => LanguageText("PASSWORD (6 DIGITS)", "パスワード（数字6桁）", "CLAVE (6 DÍGITOS)", "SENHA (6 DÍGITOS)");
-    public string PasswordHint => LanguageText("LEFT/RIGHT: DIGIT · UP/DOWN: CHANGE\nA: CONFIRM · B: BACK", "左右: 桁 · 上下: 数字\nA: 決定 · B: 戻る", "IZQ/DER: DÍGITO · ARR/ABA: CAMBIAR\nA: CONFIRMAR · B: VOLVER", "ESQ/DIR: DÍGITO · CIMA/BAIXO: ALTERAR\nA: CONFIRMAR · B: VOLTAR");
+    public string PasswordHint => LanguageText("LEFT/RIGHT: DIGIT\nUP/DOWN: CHANGE\nA: CONFIRM\nB: BACK", "左右: 桁\n上下: 数字\nA: 決定\nB: 戻る", "IZQ/DER: DÍGITO\nARR/ABA: CAMBIAR\nA: CONFIRMAR\nB: VOLVER", "ESQ/DIR: DÍGITO\nCIMA/BAIXO: ALTERAR\nA: CONFIRMAR\nB: VOLTAR");
     public string WrongPassword => LanguageText("INCORRECT PASSWORD", "パスワードが違います", "CLAVE INCORRECTA", "SENHA INCORRETA");
     public string Back => LanguageText("BACK", "戻る", "VOLVER", "VOLTAR");
     public string AvailableRooms => LanguageText("AVAILABLE ROOMS", "参加できるルーム", "SALAS DISPONIBLES", "SALAS DISPONÍVEIS");

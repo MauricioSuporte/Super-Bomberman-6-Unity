@@ -70,6 +70,38 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     float loopRestartTimer;
     bool manualAnimationUpdate;
 
+    // Playback state is visual only; remote peers never run animation owners or gameplay.
+    public struct PlaybackState
+    {
+        public int frame, direction;
+        public float timer, restartTimer, speed;
+        public bool idle, frozen;
+    }
+
+    public PlaybackState CapturePlayback() => new()
+    {
+        frame = animationFrame, direction = direction, timer = frameTimer,
+        restartTimer = loopRestartTimer, idle = idle,
+        frozen = frozen || (respectGamePause && GamePauseController.IsPaused),
+        speed = useUnscaledTime ? 1f : Time.timeScale
+    };
+
+    public void PresentPlayback(PlaybackState state, float elapsed, bool applyOffsets = true)
+    {
+        CurrentFrame = state.frame;
+        direction = state.direction;
+        frameTimer = state.timer;
+        loopRestartTimer = state.restartTimer;
+        idle = state.idle;
+        frozen = state.frozen;
+        bool offsets = canMoveVisualLocal;
+        if (!applyOffsets) canMoveVisualLocal = false;
+        ApplyFrame();
+        if (!frozen && !(respectGamePause && GamePauseController.IsPaused))
+            AdvanceAnimation(elapsed * state.speed, elapsed * state.speed);
+        canMoveVisualLocal = offsets;
+    }
+
     public int CurrentFrame
     {
         get => animationFrame;
@@ -139,6 +171,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         SetupTiming();
         ApplyFrame();
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackAnimation(this);
     }
 
     void OnDisable()

@@ -56,7 +56,7 @@ jobs:
       - name: Windows client for players
         uses: actions/upload-artifact@v7
         with:
-          name: SB6-Windows-Client-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          name: SB6-Windows-${{ env.SB6_ARTIFACT_TIMESTAMP }}
           path: Build/Distribution/
           compression-level: 1
           if-no-files-found: error
