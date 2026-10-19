@@ -24,6 +24,11 @@ REPORTS = ROOT / "Build/CI"
 def command(args, **kwargs):
     print("Running:", " ".join(str(a) for a in args), flush=True)
     started = time.monotonic()
+    # Do not let native tools attach to the PowerShell/runner console.
+    if os.name == "nt":
+        kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
+    if kwargs.get("text") or kwargs.get("universal_newlines"):
+        kwargs.setdefault("encoding", "utf-8")
     result = subprocess.run([str(a) for a in args], cwd=ROOT, check=True, **kwargs)
     print(f"Completed in {time.monotonic() - started:.1f}s", flush=True)
     return result
@@ -48,7 +53,16 @@ def unity(args, log):
     if not executable.is_file():
         raise RuntimeError(f"Unity {version} not installed at {executable}")
     environment = dict(os.environ, SB6_SAVE_DIRECTORY=str(REPORTS / "test-save"))
-    command([executable, "-batchmode", "-nographics", "-projectPath", ROOT, "-logFile", log, *args], timeout=3600, env=environment)
+    launch = {}
+    if os.name == "nt":
+        # Unity manages its console during shutdown. Give it a separate hidden
+        # console so it cannot invalidate the runner's console handles.
+        startup = subprocess.STARTUPINFO()
+        startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startup.wShowWindow = subprocess.SW_HIDE
+        launch = dict(creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup)
+    command([executable, "-batchmode", "-nographics", "-projectPath", ROOT, "-logFile", log, *args],
+            timeout=3600, env=environment, **launch)
 
 
 def build():
@@ -59,6 +73,11 @@ def build():
     if profile not in ("quick", "full"):
         raise RuntimeError("invalid release profile")
     commit = command(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    expected = os.environ.get("GITHUB_SHA", commit)
+    if not re.fullmatch(r"[0-9a-f]{40}", commit) or commit != expected:
+        raise RuntimeError("checkout does not match triggering commit")
+    dirty_before_build = bool(command(["git", "status", "--porcelain", "--untracked-files=no"],
+                                      capture_output=True, text=True).stdout.strip())
     stamp = ROOT / "Assets/Resources/OnlineBuildIdentity.txt"
     stamp.write_text(commit, encoding="utf-8")
     print("Release profile:", profile, "build identity:", commit, flush=True)
@@ -79,14 +98,11 @@ def build():
     if any(marker in assembly.read_bytes() for marker in (b"LocalServerLoadTest", b"TickLocalLoadTest", b"LocalNetworkInputSmoke", b"LocalOnlineFlowSmoke")):
         raise RuntimeError("development harness present in release")
     shutil.copy2(ROOT / "Tools/RoomDirectory/supervisor.py", stage / "supervisor.py")
-    commit = command(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
-    expected = os.environ.get("GITHUB_SHA", commit)
-    if commit != expected:
-        raise RuntimeError("checkout does not match triggering commit")
+    # The isolated checkout revision was validated before launching Unity.
+    # Reuse it for every artifact rather than launching Git again after the build.
     editor_version = re.search(r"^m_EditorVersion: (.+)$", (ROOT / "ProjectSettings/ProjectVersion.txt").read_text(encoding="utf-8-sig"), re.M)[1].strip()
-    dirty = bool(command(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True).stdout.strip())
     manifest = dict(builtUtc=datetime.now(timezone.utc).isoformat(), sourceCommit=commit, unity=editor_version,
-                    workingTreeDirty=dirty, kind="Linux Dedicated Server release", profile=profile, buildIdentity=commit, protocol=protocol(),
+                    workingTreeDirtyBeforeBuild=dirty_before_build, kind="Linux Dedicated Server release", profile=profile, buildIdentity=commit, protocol=protocol(),
                     metricsVersion=2, benchmarkHarness=False, assemblySha256=sha(assembly),
                     executableSha256=sha(stage / "SB6.x86_64"), supervisorSha256=sha(stage / "supervisor.py"))
     for destination in (stage / "deployment.json", REPORTS / "deployment.json"):
@@ -121,7 +137,8 @@ def deploy():
         command(["scp", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", local, f"{SSH}:{remote}"])
     # The remote helper validates the release and disconnects rooms on activation.
     completed = subprocess.run([*ssh, f"python3 ~/sb6/ci-tools/activate_release.py {name} {stage} {backup}"],
-                               cwd=ROOT, capture_output=True, text=True, timeout=2100, check=False)
+                               cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=2100, check=False,
+                               **({"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}))
     (REPORTS / "deploy-result.txt").write_text(completed.stdout + completed.stderr, encoding="utf-8")
     print(completed.stdout + completed.stderr, flush=True)
     completed.check_returncode()
