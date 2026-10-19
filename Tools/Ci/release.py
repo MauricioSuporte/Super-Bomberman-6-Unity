@@ -51,16 +51,6 @@ def build():
     REPORTS.mkdir(parents=True, exist_ok=True)
     logs = ROOT / "Logs/CI"
     logs.mkdir(parents=True, exist_ok=True)
-    # Leave the developer's Editor open and wait for a bounded memory reserve.
-    import sys
-    sys.path.insert(0, str(ROOT / "Tools/RoomDirectory"))
-    from benchmark_local import host_memory
-    deadline = time.monotonic() + 600
-    while host_memory()["availableMiB"] < 3072:
-        if time.monotonic() >= deadline:
-            raise RuntimeError("need 3 GiB available to build; developer Editor left open")
-        print("Waiting for 3 GiB available RAM before Unity build", flush=True)
-        time.sleep(10)
     tests = REPORTS / "online-tests.xml"
     tests.unlink(missing_ok=True)
     unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests", "-testResults", tests], logs / "tests.log")
