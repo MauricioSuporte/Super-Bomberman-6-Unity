@@ -11,6 +11,7 @@ namespace Assets.Scripts.Netcode
     public struct OnlineRoomMessage : NetworkMessage
     {
         public int playerId;
+        public int maxPlayers;
         public int adminPlayerId;
         public bool dedicated, completed;
         public float completedTime;
@@ -45,7 +46,7 @@ namespace Assets.Scripts.Netcode
         static bool SameState(OnlineRoomMessage a, OnlineRoomMessage b) =>
             a.playerId == b.playerId && a.adminPlayerId == b.adminPlayerId &&
             a.dedicated == b.dedicated && a.completed == b.completed && a.completedTime == b.completedTime &&
-            a.mode == b.mode && a.bossDifficulty == b.bossDifficulty && a.ownerModeLocked == b.ownerModeLocked &&
+            a.maxPlayers == b.maxPlayers && a.mode == b.mode && a.bossDifficulty == b.bossDifficulty && a.ownerModeLocked == b.ownerModeLocked &&
             a.settings == b.settings && a.menu == b.menu && a.characters == b.characters &&
             a.progress == b.progress && a.flowView == b.flowView && SameValues(a.players, b.players) && SameValues(a.names, b.names);
 
@@ -96,7 +97,8 @@ namespace Assets.Scripts.Netcode
         public static OnlineRoomMode RoomMode { get; private set; } = OnlineRoomMode.BattleMode;
         public static bool AcceptingRoomPlayers => NetworkServer.active && !NetworkServer.isLoadingScene &&
             SceneManager.GetActiveScene().name == NetworkLobby.SceneName && NetworkServer.connections.Count < RoomCapacity;
-        public static int RoomCapacity => OnlineRoomRules.Capacity(RoomMode);
+        static int roomPlayerLimit;
+        public static int RoomCapacity => roomPlayerLimit >= 2 ? Mathf.Min(roomPlayerLimit, OnlineRoomRules.Capacity(RoomMode)) : OnlineRoomRules.Capacity(RoomMode);
         public static string[] RoomPlayerNames { get; private set; } = Array.Empty<string>();
         public static string RoomPlayerName(int id)
         {
@@ -179,6 +181,7 @@ namespace Assets.Scripts.Netcode
             global::SaveSystem.SetBattleModePlayerControlModes(modes);
             OwnerModeLocked = false;
             RoomMode = OnlineRoomRules.ReadMode(System.Environment.GetCommandLineArgs());
+            roomPlayerLimit = ReadDedicatedNumber(System.Environment.GetCommandLineArgs(), "-room-max-players", OnlineRoomRules.Capacity(RoomMode), 2, OnlineRoomRules.Capacity(RoomMode));
             RoomCompleted = false; CompletedRunTime = 0;
             RoomAdminPlayerId = 0;
             DedicatedRoom = dedicatedServer;
@@ -226,6 +229,7 @@ namespace Assets.Scripts.Netcode
             RoomPlayerNames = message.names ?? Array.Empty<string>();
             RoomCompleted = message.completed; CompletedRunTime = message.completedTime;
             RoomMode = message.mode;
+            roomPlayerLimit = message.maxPlayers;
             if (!string.IsNullOrEmpty(message.progress)) global::SaveSystem.ApplyRoomProgress(message.progress, message.playerId == message.adminPlayerId);
             if (!string.IsNullOrEmpty(message.progress) && RoomMode == OnlineRoomMode.BossRush)
                 BossRushProgress.ApplyOnlineSelection((BossRushDifficulty)message.bossDifficulty, message.playerId == message.adminPlayerId);
@@ -435,7 +439,7 @@ namespace Assets.Scripts.Netcode
                     roomPresentationByConnection[connection.connectionId] = cache = new OnlineRoomPresentationCache();
                 var message = new OnlineRoomMessage { playerId = id, adminPlayerId = RoomAdminPlayerId,
                     dedicated = dedicatedServer, completed = RoomCompleted, completedTime = CompletedRunTime,
-                    players = RoomPlayers, names = RoomPlayerNames, mode = RoomMode, timeoutSeconds = RoomTimeoutSeconds,
+                    players = RoomPlayers, names = RoomPlayerNames, mode = RoomMode, maxPlayers = RoomCapacity, timeoutSeconds = RoomTimeoutSeconds,
                     settings = settings, menu = MenuView, characters = CharacterView, progress = progress, flowView = flow, bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty(), ownerModeLocked = OwnerModeLocked };
                 if (cache.Prepare(ref message, Time.unscaledTime)) connection.Send(message);
             }
@@ -555,6 +559,7 @@ namespace Assets.Scripts.Netcode
             RoomAdminPlayerId = 0;
             DedicatedRoom = false;
             RoomPlayers = Array.Empty<int>(); RoomPlayerNames = Array.Empty<string>();
+            roomPlayerLimit = 0;
             MenuView = CharacterView = FlowView = "";
             BossRushSession.CancelRun();
             global::SaveSystem.EndOnlineBattleSettings();

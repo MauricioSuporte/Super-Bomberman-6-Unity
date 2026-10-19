@@ -12,7 +12,7 @@ namespace Assets.Scripts.Netcode
     [Serializable] public sealed class OnlineDirectorySettings { public string directoryUrl = ""; }
     [Serializable] public sealed class OnlineListedRoom
     {
-        public string id, name, uri, mode;
+        public string id, name, creator, uri, mode;
         public int maxPlayers;
         public int players;
         public bool available, requiresPassword;
@@ -25,7 +25,8 @@ namespace Assets.Scripts.Netcode
     [Serializable] public sealed class OnlineRoomAllocation
     {
         public int protocol;
-        public string mode, buildIdentity, password;
+        public string mode, buildIdentity, password, name, creator;
+        public int maxPlayers;
         public bool isPrivate;
     }
 
@@ -128,17 +129,17 @@ namespace Assets.Scripts.Netcode
         static bool Valid(OnlineListedRoom room) => room != null && !string.IsNullOrEmpty(room.id) &&
             room.players >= 0 && room.players <= room.maxPlayers &&
             Enum.TryParse(room.mode, out OnlineRoomMode mode) && OnlineRoomRules.IsValid(mode) &&
-            room.maxPlayers == OnlineRoomRules.Capacity(mode) && Uri.TryCreate(room.uri, UriKind.Absolute, out var uri) &&
+            room.maxPlayers >= 2 && room.maxPlayers <= OnlineRoomRules.Capacity(mode) && Uri.TryCreate(room.uri, UriKind.Absolute, out var uri) &&
             uri.Scheme == "kcp" && uri.Port > 0;
 
-        public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode, string password = "")
+        public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode, string password = "", string roomName = "", int maxPlayers = 0)
         {
             if (!CanUseOnline || !DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode) ||
                 !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
-            StartCoroutine(Allocate(mode, password));
+            StartCoroutine(Allocate(mode, password, roomName, maxPlayers));
         }
 
-        IEnumerator Allocate(OnlineRoomMode mode, string password)
+        IEnumerator Allocate(OnlineRoomMode mode, string password, string roomName, int maxPlayers)
         {
             if (!CanUseOnline) yield break;
             Creating = true;
@@ -146,7 +147,8 @@ namespace Assets.Scripts.Netcode
             using var request = new UnityWebRequest(directoryUrl + "/rooms", "POST");
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
                 JsonUtility.ToJson(new OnlineRoomAllocation { protocol = OnlineVersionAuthenticator.ProtocolVersion,
-                    mode = mode.ToString(), buildIdentity = OnlineVersionAuthenticator.BuildIdentity, password = password, isPrivate = !string.IsNullOrEmpty(password) })));
+                    mode = mode.ToString(), name = roomName, creator = OnlineVersionAuthenticator.PlayerName,
+                    maxPlayers = maxPlayers == 0 ? OnlineRoomRules.Capacity(mode) : Mathf.Clamp(maxPlayers, 2, OnlineRoomRules.Capacity(mode)), buildIdentity = OnlineVersionAuthenticator.BuildIdentity, password = password, isPrivate = !string.IsNullOrEmpty(password) })));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.timeout = 10;

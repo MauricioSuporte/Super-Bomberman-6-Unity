@@ -50,6 +50,21 @@ class RoomsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.pool.create("invalid-owner", "NormalGame", password)
 
+    def test_room_metadata_and_player_limit_are_forwarded_without_password(self):
+        room = self.pool.create("custom-owner", "BattleMode", "123456", "ARENA 1", "BOMBER", 3)
+        self.assertEqual((room["name"], room["creator"], room["maxPlayers"]), ("ARENA 1", "BOMBER", 3))
+        args = self.calls[-1][0]
+        self.assertEqual(args[args.index("-room-max-players") + 1], "3")
+        self.assertNotIn("password", room)
+        for limit in (0, 1, 7, True, "3"):
+            with self.assertRaises(ValueError):
+                self.pool.create("bad-limit", "BattleMode", max_players=limit)
+        with self.assertRaises(ValueError):
+            self.pool.create("bad-coop", "NormalGame", max_players=5)
+        for name in ("<b>ROOM</b>", "A" * 17, 12):
+            with self.assertRaises(ValueError):
+                self.pool.create("bad-name", name=name)
+
     def test_deployed_manifest_controls_directory_build_identity(self):
         binary = Path(self.temp.name) / "SB6.x86_64"
         manifest = binary.parent / "deployment.json"

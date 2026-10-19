@@ -1,0 +1,18 @@
+Online Lobby validation — 2026-10-19
+
+- Unity 6000.6.0f1, active original checkout confirmed over MCP.
+- C# compilation passed. Initial dependency rebuild reported existing Mirror package warnings; subsequent project build: zero warnings/errors.
+- Final Windows development validation build: succeeded, zero warnings/errors. Validation build contains OnlineLobby and TitleScreen only; it is not a release build.
+- Ten existing EditMode cases passed: incompatible directory (2), valid/invalid names (6), private password authentication (1), presentation delta/heartbeat (1).
+- Exercised empty browser, real public room listing, room creation, joining from the browser, password dialog, and connected room presentation.
+- Three real clients connected to a local dedicated process. Captured the third participant joining, with highlighted slot, NOVO badge and arrival notice. Confirm SFX reference is assigned; audio output was not independently recorded.
+- Integer panel scale 4 at 1920x1080. Screen corners: (448,92), (448,988), (1472,988), (1472,92). No overflowing active text detected in the connected Portuguese room.
+- final-browser.png: empty listing/creation view, Portuguese.
+- final-player-arrival.png: actual third connection, Portuguese.
+- final-room-two-players.png: stable room with two clients, Portuguese.
+- final-browser-filled.png: real public room row; capture has incomplete background due to occluded Game view, so use final-browser.png for overall visual review.
+- password-dialog.png: password UI, English.
+- lobby-before.png: original incompatible-version screen.
+- Physical controller/mobile input, all four languages, six simultaneous clients, and later match configuration/gameplay were not fully exercised.
+- Cold development-server startup occasionally exceeded the supervisor startup limit. Warm retries worked; no production timeout or compatibility checks were changed.
+- Removed temporary Editor validation helper. Stopped test peers/supervisor and restored test name/directory/language preferences. No commit created.

@@ -17,7 +17,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-PROTOCOL = 14
+PROTOCOL = 15
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
@@ -53,11 +53,18 @@ class RoomPool:
                 log.info(json.dumps(dict(event="room_exit", room=key, exit_code=code)))
                 del self.rooms[key]
 
-    def create(self, ip, mode="BattleMode", password=""):
+    def create(self, ip, mode="BattleMode", password="", name="", creator="", max_players=None):
         if not isinstance(mode, str) or mode not in MODES:
             raise ValueError("invalid room mode")
         if not isinstance(password, str) or (password and not re.fullmatch(r"[0-9]{6}", password)):
             raise ValueError("private room passwords require six digits")
+        for value in (name, creator):
+            if not isinstance(value, str) or len(value) > 16 or any(not (c.isalnum() or c in " _-") for c in value):
+                raise ValueError("invalid room name or creator")
+        if max_players is None:
+            max_players = MODES[mode][1]
+        if type(max_players) is not int or not 2 <= max_players <= MODES[mode][1]:
+            raise ValueError("invalid player limit")
         with self.lock:
             self.reap()
             now = time.monotonic()
@@ -80,11 +87,11 @@ class RoomPool:
             # Preserve loader/native failures that happen before Unity opens its log.
             with (directory / "launcher.log").open("ab") as launch_log:
                 process = self.spawn([self.binary, "-batchmode", "-nographics", "-server",
-                                      "-room-mode", mode, "-port", str(port), "-server-idle-seconds", "60",
+                                      "-room-mode", mode, "-room-max-players", str(max_players), "-port", str(port), "-server-idle-seconds", "60",
                                       "-logFile", str(directory / "unity.log")],
                                      cwd=str(Path(self.binary).parent), env=env,
                                      stdout=launch_log, stderr=subprocess.STDOUT)
-            room = dict(id=key, mode=mode, maxPlayers=MODES[mode][1], name=MODES[mode][0] + " " + key[:6], uri=f"kcp://{self.host}:{port}",
+            room = dict(id=key, mode=mode, maxPlayers=max_players, creator=creator.strip(), name=name.strip() or MODES[mode][0] + " " + key[:6], uri=f"kcp://{self.host}:{port}",
                         players=0, available=False, requiresPassword=bool(password), process=process, port=port, token=token,
                         heartbeat=now, status=directory / "status.json", last_status=0)
             self.rooms[key] = room
@@ -94,7 +101,7 @@ class RoomPool:
 
     @staticmethod
     def public(room):
-        return {k: room[k] for k in ("id", "name", "uri", "players", "available", "mode", "maxPlayers", "requiresPassword")}
+        return {k: room[k] for k in ("id", "creator", "name", "uri", "players", "available", "mode", "maxPlayers", "requiresPassword")}
 
     def refresh(self):
         with self.lock:
@@ -201,7 +208,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(404, {"error": "not found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < length <= 256:
+            if not 0 < length <= 1024:
                 raise ValueError()
             data = json.loads(self.rfile.read(length).decode("utf-8"))
             if data.get("protocol") != PROTOCOL or data.get("buildIdentity") != self.server.pool.build_identity:
@@ -210,7 +217,7 @@ class Handler(BaseHTTPRequestHandler):
             password = data.get("password", "") if private else ""
             if not isinstance(private, bool) or (private and not re.fullmatch(r"[0-9]{6}", password if isinstance(password, str) else "")):
                 raise ValueError("private room passwords require six digits")
-            room = self.server.pool.create(self.client_address[0], data.get("mode", "BattleMode"), password)
+            room = self.server.pool.create(self.client_address[0], data.get("mode", "BattleMode"), password, data.get("name", ""), data.get("creator", ""), data.get("maxPlayers"))
             self.reply(202, room)
         except OverflowError as error:
             self.reply(429, {"error": str(error)})

@@ -19,6 +19,18 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
+    public string NewRoom => LanguageText("NEW ROOM", "新しいルーム", "NUEVA SALA", "NOVA SALA");
+    public string RoomName => LanguageText("ROOM NAME", "ルーム名", "NOMBRE DE SALA", "NOME DA SALA");
+    public string RoomType => LanguageText("TYPE", "種類", "TIPO", "TIPO");
+    public string RoomPassword => LanguageText("ROOM PASSWORD", "ルームのパスワード", "CLAVE DE SALA", "SENHA DA SALA");
+    public string MaxPlayers => LanguageText("MAXIMUM PLAYERS", "最大プレイヤー数", "MÁXIMO DE JUGADORES", "MÁXIMO DE JOGADORES");
+    public string NoPassword => LanguageText("NO PASSWORD", "パスワードなし", "SIN CLAVE", "SEM SENHA");
+    public string Creator => LanguageText("CREATOR", "作成者", "CREADOR", "CRIADOR");
+    public string NameColumn => LanguageText("NAME", "名前", "NOMBRE", "NOME");
+    public string PlayersColumn => LanguageText("PLAYERS", "人数", "JUGADORES", "JOGADORES");
+    public string PasswordColumn => LanguageText("PASS", "パス", "CLAVE", "SENHA");
+    public string Yes => LanguageText("YES", "あり", "SÍ", "SIM");
+    public string No => LanguageText("NO", "なし", "NO", "NÃO");
     public string EditName => LanguageText("EDIT NAME", "名前を変更", "CAMBIAR NOMBRE", "ALTERAR NOME");
     public string CurrentName => LanguageText("NAME", "名前", "NOMBRE", "NOME");
     public string ChangeNameRequired => LanguageText("SELECT EDIT NAME: NAME MISSING, INVALID OR IN USE", "名前が空欄・無効・使用中です。名前を変更してください", "ELIGE CAMBIAR NOMBRE: VACÍO, INVÁLIDO O EN USO", "SELECIONE ALTERAR NOME: VAZIO, INVÁLIDO OU EM USO");
@@ -44,12 +56,21 @@ public sealed class OnlineRoomText
     public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
     public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
     public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: RUN GameUpdater.exe", "バージョンが異なります。GameUpdater.exe を実行してください", "VERSIÓN INCOMPATIBLE: EJECUTA GameUpdater.exe", "VERSÃO INCOMPATÍVEL: EXECUTE GameUpdater.exe");
+    public string PlayerJoined => LanguageText("{0} JOINED!", "{0}が参加！", "¡{0} HA ENTRADO!", "{0} ENTROU!");
+    public string PlayersCount => LanguageText("PLAYERS {0}/{1}", "プレイヤー {0}/{1}", "JUGADORES {0}/{1}", "JOGADORES {0}/{1}");
+    public string NewPlayer => LanguageText("NEW", "新規", "NUEVO", "NOVO");
     public string RoomAdmin => LanguageText("ROOM ADMIN: P{0}", "ルーム管理者: P{0}", "ADMINISTRADOR: P{0}", "ADMINISTRADOR: P{0}");
 
     public string RunCompleted => LanguageText("RUN COMPLETE!", "クリア！", "¡PARTIDA COMPLETADA!", "PARTIDA CONCLUÍDA!");
     public string StartGame => LanguageText("START ONLINE GAME", "オンラインゲーム開始", "INICIAR PARTIDA ONLINE", "INICIAR PARTIDA ONLINE");
     public string LobbyTimeout => LanguageText("START WITHIN {0} OR THE ROOM CLOSES", "{0}以内に開始しないと終了します", "INICIA EN {0} O SE CIERRA LA SALA", "INICIE EM {0} OU A SALA SERÁ ENCERRADA");
     public string IdleTimeout => LanguageText("NO INPUT: ROOM CLOSES IN {0}", "操作なし: あと{0}で終了", "SIN ACTIVIDAD: CIERRE EN {0}", "SEM INPUTS: SALA ENCERRA EM {0}");
+    public string TableModeName(Assets.Scripts.Netcode.OnlineRoomMode mode) => mode switch
+    {
+        Assets.Scripts.Netcode.OnlineRoomMode.NormalGame => LanguageText("NORMAL", "ノーマル", "NORMAL", "NORMAL"),
+        Assets.Scripts.Netcode.OnlineRoomMode.BossRush => LanguageText("BOSS RUSH", "ボスラッシュ", "BOSS RUSH", "BOSS RUSH"),
+        _ => LanguageText("BATTLE", "バトル", "BATALLA", "BATALHA")
+    };
     public string ModeName(Assets.Scripts.Netcode.OnlineRoomMode mode) => mode switch
     {
         Assets.Scripts.Netcode.OnlineRoomMode.NormalGame => LanguageText("NORMAL GAME", "ノーマルゲーム", "JUEGO NORMAL", "JOGO NORMAL"),
