@@ -51,7 +51,8 @@ public sealed class OnlineRoomEditModeTests
     [TestCase("", false)]
     [TestCase("   ", false)]
     [TestCase("<b>NAME</b>", false)]
-    [TestCase("ABCDEFGHIJKLM", false)]
+    [TestCase("ABCDEFGHIJKLMNOPQ", false)]
+    [TestCase("MauricioSuporte", true)]
     [TestCase("Jogador_1", true)]
     public void OnlineNamesMustBeNonEmptyAndValid(string name, bool expected)
     {
@@ -97,6 +98,34 @@ public sealed class OnlineRoomEditModeTests
             Assert.AreEqual(1, target.CurrentFrame);
         }
         finally { Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void GeneratedOnlineCharacterIdsSurviveSelectionAndReplication()
+    {
+        SaveSystem.BeginOnlineBattleSettings();
+        try
+        {
+            var characters = BomberSkinResourceCatalog.GetAvailableCharacters();
+            BomberCharacter generated = System.Array.Find(characters, value => (int)value > byte.MaxValue);
+            Assert.Greater((int)generated, byte.MaxValue, "The generated catalog should include a full-width character id");
+            var settings = SaveSystem.BattleConfigurationData;
+            settings.player1SelectedCharacter = (int)generated;
+            settings.player1SelectedSkin = (int)BomberSkinResourceCatalog.NormalizeGeneratedSkin(generated, BomberSkin.Palette1);
+            string snapshot = SaveSystem.CaptureOnlineBattleSettings();
+            PlayerPersistentStats.ApplyOnlineSelections(settings);
+            Assert.AreEqual(generated, PlayerPersistentStats.Get(1).Character);
+            Assert.AreEqual(generated, PlayerPersistentStats.GetRuntime(1).Character);
+            SaveSystem.ApplyOnlineBattleSettings(snapshot);
+            Assert.AreEqual(generated, PlayerPersistentStats.Get(1).Character);
+            var wire = typeof(NetworkPlayerState).GetField("character", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.AreEqual(typeof(int), wire.FieldType, "Network state must preserve the complete generated character id");
+        }
+        finally
+        {
+            SaveSystem.EndOnlineBattleSettings();
+            PlayerPersistentStats.ApplyOnlineSelections(SaveSystem.Data);
+        }
     }
 
     [UnityTest]
@@ -273,7 +302,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 12, true)]
+    [TestCase("0.5.0", 13, true)]
+    [TestCase("0.5.0", 12, false)]
     [TestCase("0.5.0", 11, false)]
     [TestCase("0.5.0", 10, false)]
     [TestCase("0.5.0", 9, false)]

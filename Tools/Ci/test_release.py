@@ -92,11 +92,11 @@ class ReleaseProfileTests(unittest.TestCase):
                 self.assertTrue((folder / "build-info.json").is_file())
                 self.assertTrue((folder / "Super Bomberman 6.exe").is_file())
                 self.assertTrue((folder / "Start-Online-Diagnostics.cmd").is_file())
-                self.assertTrue((folder / "Atualizar jogo.exe").is_file())
+                self.assertTrue((folder / "GameUpdater.exe").is_file())
                 update = json.loads((reports / "client-update.json").read_text(encoding="utf-8"))
                 self.assertEqual(release.sha(reports / update["package"]), update["sha256"])
                 self.assertEqual(folder.name, update["folder"])
-                self.assertIn("Atualizar jogo.exe", json.loads((folder / "client-files.json").read_text(encoding="utf-8")))
+                self.assertIn("GameUpdater.exe", json.loads((folder / "client-files.json").read_text(encoding="utf-8")))
                 self.assertFalse((folder / "SB6.exe").exists())
                 return [call.args[0] for call in build.call_args_list]
 

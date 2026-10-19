@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Threading;
 using Assets.Scripts.SaveSystem;
+using Assets.Scripts.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -93,7 +94,7 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
     // Apenas monta o estado e sinaliza a worker — nunca toca no pipe.
     IEnumerator PresenceLoop()
     {
-        var wait = new WaitForSeconds(RefreshSeconds);
+        var wait = new WaitForSecondsRealtime(RefreshSeconds);
 
         while (true)
         {
@@ -103,6 +104,11 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
     }
 
     // === Main thread: monta a activity (lê APIs do Unity) e entrega à worker ===
+    public static void RefreshOnlinePresence()
+    {
+        if (instance != null) instance.PostPresence(SceneManager.GetActiveScene().name);
+    }
+
     void PostPresence(string sceneName)
     {
         if (client == null)
@@ -214,6 +220,27 @@ public sealed class DiscordRichPresenceController : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(sceneName))
             return activity;
+
+        if (sceneName == NetworkLobby.SceneName)
+        {
+            bool connected = Mirror.NetworkClient.isConnected || Mirror.NetworkServer.active;
+            activity.Details = "Online Lobby";
+            activity.State = "Browsing online rooms";
+            if (connected)
+            {
+                string mode = BombermanNetworkManager.RoomMode switch
+                {
+                    OnlineRoomMode.NormalGame => "Normal Game",
+                    OnlineRoomMode.BossRush => "Boss Rush",
+                    _ => "Battle Mode"
+                };
+                activity.State = mode + " - Waiting for players";
+                activity.PartyId = "online-room";
+                activity.PartySize = Mathf.Max(1, BombermanNetworkManager.RoomPlayers.Length);
+                activity.PartyMax = BombermanNetworkManager.RoomCapacity;
+            }
+            return activity;
+        }
 
         if (sceneName.StartsWith("Stage_", StringComparison.Ordinal))
         {

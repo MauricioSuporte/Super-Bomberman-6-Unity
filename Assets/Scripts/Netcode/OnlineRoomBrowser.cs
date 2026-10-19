@@ -19,6 +19,7 @@ namespace Assets.Scripts.Netcode
         public OnlineRoomMode Mode => Enum.TryParse(mode, out OnlineRoomMode parsed) && OnlineRoomRules.IsValid(parsed)
             ? parsed : OnlineRoomMode.BattleMode;
     }
+    [Serializable] public sealed class OnlineDirectoryHealth { public bool ok; public int protocol; public string buildIdentity; }
     [Serializable] public sealed class OnlineRoomListing { public OnlineListedRoom[] rooms; }
 
     [Serializable] public sealed class OnlineRoomAllocation
@@ -71,6 +72,19 @@ namespace Assets.Scripts.Netcode
                 {
                     RefreshRequested = false;
                     next = Time.unscaledTime + 5;
+                    using var health = UnityWebRequest.Get(directoryUrl + "/health");
+                    health.timeout = 5;
+                    yield return health.SendWebRequest();
+                    if (health.result == UnityWebRequest.Result.Success)
+                    {
+                        OnlineDirectoryHealth version = null;
+                        try { version = JsonUtility.FromJson<OnlineDirectoryHealth>(health.downloadHandler.text); }
+                        catch (ArgumentException) { }
+                        if (version != null && version.ok)
+                            BuildRejected = version.protocol != OnlineVersionAuthenticator.ProtocolVersion ||
+                                !string.Equals(version.buildIdentity, OnlineVersionAuthenticator.BuildIdentity, StringComparison.Ordinal);
+                    }
+                    if (BuildRejected) { Rooms.Clear(); yield return null; continue; }
                     using var request = UnityWebRequest.Get(directoryUrl + "/rooms");
                     request.timeout = 5;
                     yield return request.SendWebRequest();

@@ -11,7 +11,7 @@ public static partial class PlayerPersistentStats
             settings.player4SelectedSkin, settings.player5SelectedSkin, settings.player6SelectedSkin };
         for (int id = 1; id <= GameSession.MaxPlayerId; id++)
         {
-            var character = Enum.IsDefined(typeof(BomberCharacter), characters[id - 1])
+            var character = BomberSkinResourceCatalog.IsAvailableCharacter((BomberCharacter)characters[id - 1])
                 ? (BomberCharacter)characters[id - 1] : BomberCharacter.Bomberman;
             var skin = Enum.IsDefined(typeof(BomberSkin), skins[id - 1])
                 ? (BomberSkin)skins[id - 1] : GetDefaultSkinForPlayer(id);

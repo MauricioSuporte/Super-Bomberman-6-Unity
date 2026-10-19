@@ -48,7 +48,7 @@ def sha(path):
 
 def build_updater():
     compiler = Path(os.environ.get("WINDIR", "C:/Windows")) / "Microsoft.NET/Framework64/v4.0.30319/csc.exe"
-    output = REPORTS / "Atualizar jogo.exe"
+    output = REPORTS / "GameUpdater.exe"
     command([compiler, "/nologo", "/codepage:65001", "/target:exe", "/optimize+", "/warnaserror+", f"/out:{output}",
              "/reference:System.Web.Extensions.dll", "/reference:System.IO.Compression.dll",
              "/reference:System.IO.Compression.FileSystem.dll", ROOT / "Tools/Ci/SB6Updater.cs"])
@@ -135,7 +135,7 @@ def build():
     distribution = ROOT / "Build/Distribution" / f"Super Bomberman 6 v{version[1]}"
     shutil.copytree(ROOT / "Build/OnlineClient/Windows", distribution,
                     ignore=shutil.ignore_patterns("SB6.exe", "SB6_Data", "SB6_BurstDebugInformation_DoNotShip"))
-    shutil.copy2(updater, distribution / "Atualizar jogo.exe")
+    shutil.copy2(updater, distribution / "GameUpdater.exe")
     (distribution / "Start-Online-Diagnostics.cmd").write_text(
         '@echo off\ncd /d "%~dp0"\nstart "" "Super Bomberman 6.exe" -online-motion-logs -logFile "%~dp0OnlineMotion.log"\n',
         encoding="utf-8", newline="\r\n")
@@ -224,7 +224,7 @@ def publish_client():
                 existing = json.load(response)
     update["url"] = existing["browser_download_url"]
     update.pop("package")
-    body = "Cliente correspondente ao servidor online publicado. Execute Atualizar jogo.exe com o jogo fechado.\n\n"
+    body = "Cliente correspondente ao servidor online publicado. Execute GameUpdater.exe com o jogo fechado.\n\n"
     body += f"Build: {update['sourceCommit']}\n\n<!-- sb6-update:{json.dumps(update, separators=(',', ':'))} -->"
     request(f"{endpoint}/{release['id']}", "PATCH", dict(body=body, prerelease=True, make_latest="false"))
     print("Client updater channel published:", update["sourceCommit"], flush=True)

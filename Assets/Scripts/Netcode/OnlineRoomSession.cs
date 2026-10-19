@@ -175,6 +175,8 @@ namespace Assets.Scripts.Netcode
                 manager.receivedTimeoutAt = Time.unscaledTime;
             }
             LocalRoomPlayerId = message.playerId;
+            bool presenceChanged = RoomPlayers.Length != (message.players?.Length ?? 0) ||
+                RoomAdminPlayerId != message.adminPlayerId || RoomMode != message.mode;
             RoomPlayers = message.players ?? Array.Empty<int>();
             RoomPlayerNames = message.names ?? Array.Empty<string>();
             RoomCompleted = message.completed; CompletedRunTime = message.completedTime;
@@ -186,6 +188,7 @@ namespace Assets.Scripts.Netcode
             FlowView = message.flowView ?? "";
             RoomAdminPlayerId = message.adminPlayerId;
             DedicatedRoom = message.dedicated;
+            if (presenceChanged) DiscordRichPresenceController.RefreshOnlinePresence();
             MenuView = message.menu ?? "";
             CharacterView = message.characters ?? "";
             global::SaveSystem.ApplyOnlineBattleSettings(message.settings);

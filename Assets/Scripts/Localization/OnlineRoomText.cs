@@ -19,7 +19,11 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
-    public string EnterName => LanguageText("YOUR NAME (1-12)", "名前（1～12文字）", "TU NOMBRE (1-12)", "SEU NOME (1-12)");
+    public string EditName => LanguageText("EDIT NAME", "名前を変更", "CAMBIAR NOMBRE", "ALTERAR NOME");
+    public string CurrentName => LanguageText("NAME", "名前", "NOMBRE", "NOME");
+    public string ChangeNameRequired => LanguageText("SELECT EDIT NAME: NAME MISSING, INVALID OR IN USE", "名前が空欄・無効・使用中です。名前を変更してください", "ELIGE CAMBIAR NOMBRE: VACÍO, INVÁLIDO O EN USO", "SELECIONE ALTERAR NOME: VAZIO, INVÁLIDO OU EM USO");
+    public string RunUpdater => LanguageText("RUN GAME UPDATER", "ゲーム更新を起動", "EJECUTAR ACTUALIZADOR", "EXECUTAR ATUALIZADOR");
+    public string EnterName => LanguageText("YOUR NAME (1-16)", "名前（1～16文字）", "TU NOMBRE (1-16)", "SEU NOME (1-16)");
     public string NameUnavailable => LanguageText("NAME EMPTY, INVALID OR ALREADY IN USE", "名前が空欄・無効・使用中です", "NOMBRE VACÍO, INVÁLIDO O EN USO", "NOME VAZIO, INVÁLIDO OU JÁ EM USO");
     public string NameHint => LanguageText("TYPE OR USE ARROWS\nLEFT/RIGHT: POSITION\nUP/DOWN: LETTER\nA / ENTER: CONFIRM · B: BACK", "入力または矢印キー\n左右：位置\n上下：文字\nA / ENTER：決定 · B：戻る", "ESCRIBE O USA LAS FLECHAS\nIZQ/DER: POSICIÓN\nARR/ABA: LETRA\nA / ENTER: CONFIRMAR · B: VOLVER", "DIGITE OU USE AS SETAS\nESQ/DIR: POSIÇÃO\nCIMA/BAIXO: LETRA\nA / ENTER: CONFIRMAR · B: VOLTAR");
     public string PrivateRoom => LanguageText("PRIVATE", "非公開", "PRIVADA", "PRIVADA");
@@ -39,7 +43,7 @@ public sealed class OnlineRoomText
     public string PublicUnavailable => LanguageText("PUBLIC DIRECTORY UNAVAILABLE", "公開リストに接続できません", "LISTA PÚBLICA NO DISPONIBLE", "LISTA PÚBLICA INDISPONÍVEL");
     public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
     public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
-    public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: UPDATE THE GAME", "バージョンが異なります。ゲームを更新してください", "VERSIÓN INCOMPATIBLE: ACTUALIZA EL JUEGO", "VERSÃO INCOMPATÍVEL: ATUALIZE O JOGO");
+    public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: RUN GameUpdater.exe", "バージョンが異なります。GameUpdater.exe を実行してください", "VERSIÓN INCOMPATIBLE: EJECUTA GameUpdater.exe", "VERSÃO INCOMPATÍVEL: EXECUTE GameUpdater.exe");
     public string RoomAdmin => LanguageText("ROOM ADMIN: P{0}", "ルーム管理者: P{0}", "ADMINISTRADOR: P{0}", "ADMINISTRADOR: P{0}");
 
     public string RunCompleted => LanguageText("RUN COMPLETE!", "クリア！", "¡PARTIDA COMPLETADA!", "PARTIDA CONCLUÍDA!");

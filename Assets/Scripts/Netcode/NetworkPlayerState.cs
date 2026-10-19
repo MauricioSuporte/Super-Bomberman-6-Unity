@@ -25,7 +25,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] byte explosionRadius = 2;
         [SyncVar] int speedInternal;
         [SyncVar] byte skin;
-        [SyncVar] byte character;
+        [SyncVar] int character;
         [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
         [SyncVar] byte tempFx;        // F4: bit0 = skull ativo, bit1 = invencível
         [SyncVar] byte mountType;     // F6: MountedType do Louie montado (0=None)
@@ -207,7 +207,7 @@ namespace Assets.Scripts.Netcode
 
             byte sk = (byte)PlayerPersistentStats.Get(pid).Skin;
             if (sk != skin) skin = sk;
-            character = (byte)PlayerPersistentStats.Get(pid).Character;
+            character = (int)PlayerPersistentStats.Get(pid).Character;
 
             // Flags de powerup (fonte viva no host = runtime state, que o HUD lê).
             var rt = PlayerPersistentStats.GetRuntime(pid);

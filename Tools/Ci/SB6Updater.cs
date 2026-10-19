@@ -23,7 +23,12 @@ internal static class SB6Updater
         {
             if (args.Length == 3 && args[0] == "--check-path") { SafePath(args[1], args[2]); return 0; }
             if (args.Length == 4 && args[0] == "--validate-package") { ValidatePackage(args[1], args[2], args[3]); return 0; }
-            if (args.Length != 2 || args[0] != "--apply")
+            bool applying = args.Length >= 2 && args[0] == "--apply";
+            int waitForGame = 0;
+            int waitIndex = Array.IndexOf(args, "--wait-for-game");
+            if (waitIndex >= 0 && (waitIndex + 1 >= args.Length || !int.TryParse(args[waitIndex + 1], out waitForGame) || waitForGame <= 0))
+                throw new ArgumentException("Identificador do jogo inválido.");
+            if (!applying)
             {
                 string install = AppDomain.CurrentDomain.BaseDirectory;
                 if (!File.Exists(Path.Combine(install, Game))) throw new IOException("Coloque este atualizador na pasta do jogo.");
@@ -31,9 +36,18 @@ internal static class SB6Updater
                 Directory.CreateDirectory(helper);
                 string copy = Path.Combine(helper, "Updater.exe");
                 File.Copy(Process.GetCurrentProcess().MainModule.FileName, copy);
-                Process.Start(new ProcessStartInfo(copy, "--apply \"" + install.TrimEnd(Path.DirectorySeparatorChar) + "\"")
+                Process.Start(new ProcessStartInfo(copy, "--apply \"" + install.TrimEnd(Path.DirectorySeparatorChar) + "\"" + (waitForGame > 0 ? " --wait-for-game " + waitForGame : ""))
                     { UseShellExecute = false, WorkingDirectory = helper });
                 return 0;
+            }
+            if (waitForGame > 0)
+            {
+                try
+                {
+                    using (var game = Process.GetProcessById(waitForGame))
+                        if (!game.WaitForExit(15000)) throw new IOException("Feche o jogo antes de atualizar.");
+                }
+                catch (ArgumentException) { } // The game may already have exited.
             }
             Update(Path.GetFullPath(args[1]));
             Console.WriteLine("Pressione ENTER para fechar."); Console.ReadLine();

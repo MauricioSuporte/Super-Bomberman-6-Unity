@@ -10,7 +10,7 @@ namespace Assets.Scripts.Netcode
     public sealed class OnlineVersionAuthenticator : NetworkAuthenticator
     {
         // Bump when wire messages, network prefabs or gameplay content become incompatible.
-        public const int ProtocolVersion = 12;
+        public const int ProtocolVersion = 13;
         public static string BuildIdentity
         {
             get
@@ -21,12 +21,14 @@ namespace Assets.Scripts.Netcode
         }
 
         public static string RoomPassword { get; set; } = "";
+        public const int MaxPlayerNameLength = 16;
         public static string PlayerName
         {
             get => PlayerPrefs.GetString("OnlinePlayerName", "");
             set { PlayerPrefs.SetString("OnlinePlayerName", NormalizePlayerName(value)); PlayerPrefs.Save(); }
         }
         public static bool NameRejected { get; private set; }
+        public static void ClearNameRejection() => NameRejected = false;
         readonly Dictionary<int, string> admittedNames = new();
         public static string NormalizePlayerName(string name)
         {
@@ -37,7 +39,7 @@ namespace Assets.Scripts.Netcode
         public static bool ValidPlayerName(string name)
         {
             string normalized = NormalizePlayerName(name);
-            if (normalized.Length < 1 || normalized.Length > 12) return false;
+            if (normalized.Length < 1 || normalized.Length > MaxPlayerNameLength) return false;
             foreach (char c in normalized)
                 if (!char.IsLetterOrDigit(c) && c != ' ' && c != '_' && c != '-') return false;
             return true;
