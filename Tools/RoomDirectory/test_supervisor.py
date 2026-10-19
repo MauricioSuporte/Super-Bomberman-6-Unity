@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import threading
@@ -34,6 +35,20 @@ class RoomsTests(unittest.TestCase):
         data = dict(token=token or room["token"], players=players, available=available)
         room["status"].write_text(json.dumps(data), encoding="utf-8")
         self.pool.refresh()
+
+    def test_private_room_stores_only_a_salted_verifier_and_requires_six_digits(self):
+        public = self.pool.create("private-owner", "NormalGame", "123456")
+        self.assertTrue(public["requiresPassword"])
+        self.assertNotIn("password", public)
+        self.assertNotIn("passwordHash", public)
+        env = self.calls[0][1]["env"]
+        salt = env["SB6_ROOM_PASSWORD_SALT"]
+        self.assertTrue(salt)
+        self.assertEqual(hashlib.sha256((salt + "123456").encode("utf-8")).hexdigest(), env["SB6_ROOM_PASSWORD_HASH"])
+        self.assertNotIn("123456", self.calls[0][0])
+        for password in ("12345", "1234567", "abcdef", 123456):
+            with self.assertRaises(ValueError):
+                self.pool.create("invalid-owner", "NormalGame", password)
 
     def test_deployed_manifest_controls_directory_build_identity(self):
         binary = Path(self.temp.name) / "SB6.x86_64"

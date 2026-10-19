@@ -406,6 +406,10 @@ public class GameMusicController : MonoBehaviour
 
     IEnumerator PlayLoopAfterIntroRoutine(AudioClip introClip, AudioClip loopClip, float loopVolume, float pitch)
     {
+        // Clients received the complete intro/loop pair and time it on their audio device.
+        // A dedicated server has no playing AudioSource; its completion is not an audio clock.
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && Mirror.NetworkServer.active)
+            yield break;
         PreloadAudioData(loopClip);
 
         while (musicSource != null && musicSource.clip == introClip)

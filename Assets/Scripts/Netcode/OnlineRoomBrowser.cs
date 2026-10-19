@@ -15,7 +15,7 @@ namespace Assets.Scripts.Netcode
         public string id, name, uri, mode;
         public int maxPlayers;
         public int players;
-        public bool available;
+        public bool available, requiresPassword;
         public OnlineRoomMode Mode => Enum.TryParse(mode, out OnlineRoomMode parsed) && OnlineRoomRules.IsValid(parsed)
             ? parsed : OnlineRoomMode.BattleMode;
     }
@@ -24,7 +24,8 @@ namespace Assets.Scripts.Netcode
     [Serializable] public sealed class OnlineRoomAllocation
     {
         public int protocol;
-        public string mode, buildIdentity;
+        public string mode, buildIdentity, password;
+        public bool isPrivate;
     }
 
     // Clients discover and allocate rooms here; gameplay lives in dedicated processes.
@@ -95,13 +96,13 @@ namespace Assets.Scripts.Netcode
             room.maxPlayers == OnlineRoomRules.Capacity(mode) && Uri.TryCreate(room.uri, UriKind.Absolute, out var uri) &&
             uri.Scheme == "kcp" && uri.Port > 0;
 
-        public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode)
+        public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode, string password = "")
         {
             if (!DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode)) return;
-            StartCoroutine(Allocate(mode));
+            StartCoroutine(Allocate(mode, password));
         }
 
-        IEnumerator Allocate(OnlineRoomMode mode)
+        IEnumerator Allocate(OnlineRoomMode mode, string password)
         {
             Creating = true;
             DirectoryFailed = false;
@@ -109,7 +110,7 @@ namespace Assets.Scripts.Netcode
             using var request = new UnityWebRequest(directoryUrl + "/rooms", "POST");
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
                 JsonUtility.ToJson(new OnlineRoomAllocation { protocol = OnlineVersionAuthenticator.ProtocolVersion,
-                    mode = mode.ToString(), buildIdentity = OnlineVersionAuthenticator.BuildIdentity })));
+                    mode = mode.ToString(), buildIdentity = OnlineVersionAuthenticator.BuildIdentity, password = password, isPrivate = !string.IsNullOrEmpty(password) })));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.timeout = 10;
@@ -136,7 +137,7 @@ namespace Assets.Scripts.Netcode
                 if (Valid(room) && room.Mode == mode && room.available)
                 {
                     Creating = false;
-                    JoinRoom(room);
+                    JoinRoom(room, password);
                     yield break;
                 }
                 yield return new WaitForSecondsRealtime(0.5f);
@@ -145,9 +146,10 @@ namespace Assets.Scripts.Netcode
             Creating = false;
         }
 
-        public void JoinRoom(OnlineListedRoom room)
+        public void JoinRoom(OnlineListedRoom room, string password = "")
         {
             if (!Browsing || Creating || !Valid(room)) return;
+            OnlineVersionAuthenticator.RoomPassword = password;
             NetworkManager.singleton.StartClient(new Uri(room.uri));
         }
     }

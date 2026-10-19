@@ -15,6 +15,7 @@ namespace Assets.Scripts.Netcode
         [SerializeField] Sprite[] backgrounds;
         [SerializeField] TMP_FontAsset lobbyFont;
         [SerializeField] AudioClip moveCursorSfx;
+        [SerializeField] AudioClip confirmSfx, returnSfx;
         Image background;
         RectTransform panelRect;
         RectTransform safeRect;
@@ -23,7 +24,15 @@ namespace Assets.Scripts.Netcode
         TextMeshProUGUI details;
         GameObject roomEventSystem;
         Button hostButton, configureButton, leaveButton;
-        readonly Button[] modeButtons = new Button[3];
+        Button modeButton, privacyButton, passwordButton;
+        TextMeshProUGUI modeLeft, modeRight;
+        GameObject passwordRoot;
+        TextMeshProUGUI passwordText;
+        readonly int[] passwordDigits = new int[6];
+        int passwordDigit;
+        bool privateRoom, passwordOpen, createAfterPassword;
+        string creationPassword = "";
+        OnlineListedRoom passwordRoom;
         OnlineRoomMode selectedMode = OnlineRoomMode.BattleMode;
         OnlineRoomBrowser browser;
         GameObject browserRoot;
@@ -93,14 +102,15 @@ namespace Assets.Scripts.Netcode
             bool idle = !NetworkServer.active && !NetworkClient.active;
             hostButton.gameObject.SetActive(idle && lobby);
             hostButton.interactable = browser != null && browser.DirectoryConfigured && !browser.Creating;
-            for (int i = 0; i < modeButtons.Length; i++)
-            {
-                modeButtons[i].gameObject.SetActive(idle);
-                modeButtons[i].interactable = browser != null && !browser.Creating;
-                var mode = (OnlineRoomMode)i;
-
-                modeButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(mode) + " (" + OnlineRoomRules.Capacity(mode) + ")" + (selectedMode == mode ? " *" : "");
-            }
+            passwordButton.gameObject.SetActive(idle && privateRoom);
+            passwordButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Password + ": ******";
+            modeButton.gameObject.SetActive(idle);
+            privacyButton.gameObject.SetActive(idle);
+            modeButton.interactable = privacyButton.interactable = browser != null && !browser.Creating;
+            modeButton.GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(selectedMode);
+            privacyButton.GetComponentInChildren<TextMeshProUGUI>().text = privateRoom ? text.PrivateRoom : text.PublicRooms;
+            bool arrowsVisible = idle && Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.5f;
+            modeLeft.gameObject.SetActive(arrowsVisible); modeRight.gameObject.SetActive(arrowsVisible);
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
             configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 1;
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
@@ -131,7 +141,7 @@ namespace Assets.Scripts.Netcode
             details.text = lines.ToString();
             details.gameObject.SetActive(!idle || OnlineVersionAuthenticator.VersionRejected);
             UpdateBrowser(idle && lobby);
-            UpdateNavigation();
+            if (passwordOpen) UpdatePassword(); else UpdateNavigation();
         }
 
         void CreateRoomCanvas()
@@ -168,18 +178,26 @@ namespace Assets.Scripts.Netcode
             timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, -16);
             timeoutLabel.textWrappingMode = TextWrappingModes.Normal;
             timeoutRoot.SetActive(false);
-            details = Label(panel.transform, "Players", 0, 14, 212, 128, 7);
+            details = Label(panel.transform, "Players", 0, 25, 212, 110, 7);
             details.alignment = TextAlignmentOptions.TopLeft;
             details.textWrappingMode = TextWrappingModes.Normal;
             details.overflowMode = TextOverflowModes.Truncate;
-            hostButton = MakeButton(panel.transform, "Create", 0, -60, () => browser.CreateRoom(selectedMode));
+            hostButton = MakeButton(panel.transform, "Create", 0, -60, CreateSelectedRoom);
             configureButton = MakeButton(panel.transform, "Configure", 0, -60, BombermanNetworkManager.ServerBeginConfiguration);
-            leaveButton = MakeButton(panel.transform, "Leave", 0, -78, BombermanNetworkManager.LeaveRoom);
-            for (int i = 0; i < modeButtons.Length; i++)
-            {
-                var mode = (OnlineRoomMode)i;
-                modeButtons[i] = MakeButton(panel.transform, "Mode" + mode, 0, -3 - i * 18, () => selectedMode = mode);
-            }
+            leaveButton = MakeButton(panel.transform, "Leave", 0, -78, LeaveLobby);
+            modeButton = MakeButton(panel.transform, "RoomType", 0, -4, () => ChangeMode(1));
+            privacyButton = MakeButton(panel.transform, "Visibility", 0, -24, TogglePrivacy);
+            passwordButton = MakeButton(panel.transform, "EditPassword", 0, -42, () => OpenPassword(null, false));
+            cursorButton = modeButton;
+            modeLeft = Label(panel.transform, "PreviousType", -108, -4, 10, 16, 8); modeLeft.text = "<";
+            modeRight = Label(panel.transform, "NextType", 108, -4, 10, 16, 8); modeRight.text = ">";
+            passwordRoot = new GameObject("Password", typeof(RectTransform), typeof(Image));
+            passwordRoot.transform.SetParent(panel.transform, false);
+            Position(passwordRoot.GetComponent<RectTransform>(), 0, 0, 244, 160);
+            passwordRoot.GetComponent<Image>().color = new Color32(30, 22, 61, 255);
+            passwordText = Label(passwordRoot.transform, "PasswordText", 0, 0, 232, 142, 7);
+            passwordText.textWrappingMode = TextWrappingModes.Normal;
+            passwordRoot.SetActive(false);
             CreateBrowser(panel.transform);
             EnsureRoomEventSystem();
         }
@@ -191,7 +209,9 @@ namespace Assets.Scripts.Netcode
             panelRect.localScale = new Vector3(scale, scale, 1);
             float warningScale = Mathf.Max(1f, Mathf.Floor(Mathf.Min(timeoutLabel.transform.parent.GetComponent<RectTransform>().rect.width / 256f, timeoutLabel.transform.parent.GetComponent<RectTransform>().rect.height / 224f)));
             timeoutLabel.rectTransform.localScale = new Vector3(warningScale, warningScale, 1);
-            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, -16 * warningScale);
+            timeoutLabel.rectTransform.anchorMin = timeoutLabel.rectTransform.anchorMax = new Vector2(0.5f, 0);
+            bool lobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
+            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, (lobby ? 72 : 22) * warningScale);
             // Keep keyboard/controller selection inside the scrolling room list.
             var selected = cursorButton != null ? cursorButton.gameObject : null;
             if (selected == null || roomContent == null || selected.transform.parent != roomContent) return;
@@ -237,7 +257,8 @@ namespace Assets.Scripts.Netcode
         {
             var room = visibleRooms[index];
             if (room == null || NetworkClient.active || NetworkServer.active || !browser.Rooms.Contains(room)) return;
-            browser.JoinRoom(room);
+            if (room.requiresPassword) OpenPassword(room, false);
+            else browser.JoinRoom(room);
         }
 
         void UpdateBrowser(bool visible)
@@ -246,7 +267,7 @@ namespace Assets.Scripts.Netcode
             if (!visible || browser == null) return;
             var text = GameTextDatabase.Online;
             browserStatus.text = text.AvailableRooms + "\n" +
-                (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.BuildRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
+                (!browser.DirectoryConfigured ? text.PublicNotConfigured : OnlineVersionAuthenticator.PasswordRejected ? text.WrongPassword : browser.BuildRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
                     browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom);
             while (roomButtons.Count < browser.Rooms.Count)
             {
@@ -273,7 +294,7 @@ namespace Assets.Scripts.Netcode
                 if (visibleRooms[i] == null) continue;
                 var room = visibleRooms[i];
                 roomButtons[i].GetComponentInChildren<TextMeshProUGUI>().text =
-                    $"{text.ModeName(room.Mode)} / {room.name} / {room.players}/{room.maxPlayers} / {text.Join}";
+                    $"{text.ModeName(room.Mode)} / {room.name} / {(room.requiresPassword ? text.PrivateRoom : text.PublicRooms)} / {text.Join}";
             }
             refreshButton.GetComponentInChildren<TextMeshProUGUI>().text = text.RefreshRooms;
         }
@@ -281,7 +302,9 @@ namespace Assets.Scripts.Netcode
         void UpdateNavigation()
         {
             navigationButtons.Clear();
-            foreach (var button in modeButtons) AddNavigationButton(button);
+            AddNavigationButton(modeButton);
+            AddNavigationButton(privacyButton);
+            AddNavigationButton(passwordButton);
             foreach (var button in roomButtons) AddNavigationButton(button);
             AddNavigationButton(hostButton);
             AddNavigationButton(configureButton);
@@ -293,8 +316,8 @@ namespace Assets.Scripts.Netcode
             var input = PlayerInputManager.Instance;
             if (input != null)
             {
-                bool previous = input.Get(1, PlayerAction.MoveUp) || input.Get(1, PlayerAction.MoveLeft);
-                bool next = input.Get(1, PlayerAction.MoveDown) || input.Get(1, PlayerAction.MoveRight);
+                bool previous = input.Get(1, PlayerAction.MoveUp);
+                bool next = input.Get(1, PlayerAction.MoveDown);
                 if (!previous && !next) nextNavigation = 0;
                 else if (Time.unscaledTime >= nextNavigation)
                 {
@@ -303,14 +326,85 @@ namespace Assets.Scripts.Netcode
                     GameMusicController.Instance?.PlaySfx(moveCursorSfx, 0.5f);
                 }
                 cursorButton = navigationButtons[index];
+                if (input.GetDown(1, PlayerAction.MoveLeft) || input.GetDown(1, PlayerAction.MoveRight))
+                {
+                    if (cursorButton == modeButton) ChangeMode(input.GetDown(1, PlayerAction.MoveLeft) ? -1 : 1);
+                    else if (cursorButton == privacyButton) TogglePrivacy();
+                }
                 if (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start))
+                {
+                    if (cursorButton != leaveButton) PlayLobbySound(confirmSfx);
                     cursorButton.onClick.Invoke();
-                else if (input.GetDown(1, PlayerAction.ActionB)) leaveButton.onClick.Invoke();
+                }
+                else if (input.GetDown(1, PlayerAction.ActionB)) LeaveLobby();
             }
             cursorButton = navigationButtons[index];
             foreach (var button in navigationButtons)
                 button.GetComponent<Image>().color = button == cursorButton
                     ? new Color32(93, 65, 149, 255) : new Color32(30, 22, 61, 255);
+        }
+
+        void PlayLobbySound(AudioClip clip) => GameMusicController.Instance?.PlaySfx(clip, 0.5f);
+
+        void LeaveLobby()
+        {
+            PlayLobbySound(returnSfx);
+            if (NetworkClient.active || NetworkServer.active) BombermanNetworkManager.LeaveRoomToBrowser();
+            else BombermanNetworkManager.LeaveRoom();
+        }
+
+        void ChangeMode(int delta)
+        {
+            selectedMode = (OnlineRoomMode)(((int)selectedMode + delta + 3) % 3);
+            PlayLobbySound(moveCursorSfx);
+        }
+
+        void TogglePrivacy()
+        {
+            privateRoom = !privateRoom;
+            PlayLobbySound(moveCursorSfx);
+            if (privateRoom && string.IsNullOrEmpty(creationPassword)) OpenPassword(null, false);
+        }
+
+        void CreateSelectedRoom()
+        {
+            if (privateRoom && string.IsNullOrEmpty(creationPassword)) { OpenPassword(null, true); return; }
+            browser.CreateRoom(selectedMode, privateRoom ? creationPassword : "");
+        }
+
+        void OpenPassword(OnlineListedRoom room, bool create)
+        {
+            passwordRoom = room; createAfterPassword = create; passwordDigit = 0;
+            System.Array.Clear(passwordDigits, 0, passwordDigits.Length);
+            passwordOpen = true;
+            passwordRoot.SetActive(true); passwordRoot.transform.SetAsLastSibling();
+        }
+
+        void UpdatePassword()
+        {
+            var input = PlayerInputManager.Instance;
+            if (input == null) return;
+            if (input.GetDown(1, PlayerAction.MoveLeft)) { passwordDigit = (passwordDigit + 5) % 6; PlayLobbySound(moveCursorSfx); }
+            if (input.GetDown(1, PlayerAction.MoveRight)) { passwordDigit = (passwordDigit + 1) % 6; PlayLobbySound(moveCursorSfx); }
+            if (input.GetDown(1, PlayerAction.MoveUp)) { passwordDigits[passwordDigit] = (passwordDigits[passwordDigit] + 1) % 10; PlayLobbySound(moveCursorSfx); }
+            if (input.GetDown(1, PlayerAction.MoveDown)) { passwordDigits[passwordDigit] = (passwordDigits[passwordDigit] + 9) % 10; PlayLobbySound(moveCursorSfx); }
+            var digits = new StringBuilder();
+            for (int i = 0; i < 6; i++)
+                digits.Append(i == passwordDigit ? "<color=#C080FF>[" + passwordDigits[i] + "]</color>" : " * ");
+            passwordText.text = GameTextDatabase.Online.Password + "\n\n" + digits + "\n\n" + GameTextDatabase.Online.PasswordHint;
+            if (input.GetDown(1, PlayerAction.ActionB))
+            {
+                PlayLobbySound(returnSfx);
+                if (passwordRoom == null && string.IsNullOrEmpty(creationPassword)) privateRoom = false;
+                passwordOpen = false; passwordRoot.SetActive(false); return;
+            }
+            if (!input.GetDown(1, PlayerAction.ActionA) && !input.GetDown(1, PlayerAction.Start)) return;
+            PlayLobbySound(confirmSfx);
+            string password = string.Concat(passwordDigits);
+            passwordOpen = false; passwordRoot.SetActive(false);
+            if (passwordRoom != null) browser.JoinRoom(passwordRoom, password);
+            else { creationPassword = password; if (createAfterPassword) CreateSelectedRoom(); }
+            System.Array.Clear(passwordDigits, 0, passwordDigits.Length);
         }
 
         void AddNavigationButton(Button button)

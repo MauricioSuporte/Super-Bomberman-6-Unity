@@ -55,6 +55,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     bool frozen;
 
     Vector3 runtimeBaseOffset;
+    public Vector3 RuntimeBaseLocalOffset => runtimeBaseOffset;
     bool runtimeLockX;
     float runtimeLockedLocalX;
 

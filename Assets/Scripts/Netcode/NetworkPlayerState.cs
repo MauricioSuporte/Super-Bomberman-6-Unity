@@ -35,6 +35,7 @@ namespace Assets.Scripts.Netcode
 
         const int FxSkull = 1 << 0;
         const int FxInvuln = 1 << 1;
+        const int FxInvulnBlink = 1 << 2;
 
         NetworkPlayerSetup setup;
         CharacterHealth health;
@@ -236,7 +237,10 @@ namespace Assets.Scripts.Netcode
             if (TryGetComponent<SkullDebuffController>(out var skull) && skull.HasActiveEffect)
                 fx |= FxSkull;
             if (health != null && health.IsInvulnerable)
+            {
                 fx |= FxInvuln;
+                if (health.InvulnerabilityBlinks) fx |= FxInvulnBlink;
+            }
             byte fxb = (byte)fx;
             if (fxb != tempFx) tempFx = fxb;
 
@@ -338,9 +342,9 @@ namespace Assets.Scripts.Netcode
                 if (skullNow) move.ApplyTemporarySkullVisual(3600f);
                 else          move.ClearTemporarySkullVisual();
             }
-            if (invulnNow != invulnWas && health != null)
+            if ((invulnNow != invulnWas || ((tempFx ^ appliedTempFx) & FxInvulnBlink) != 0) && health != null)
             {
-                if (invulnNow) health.StartTemporaryInvulnerability(3600f, true);
+                if (invulnNow) health.StartTemporaryInvulnerability(3600f, (tempFx & FxInvulnBlink) != 0);
                 else           health.StopInvulnerability();
             }
             appliedTempFx = tempFx;

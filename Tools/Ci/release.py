@@ -110,6 +110,12 @@ def build():
     (ROOT / "Build/OnlineClient/Windows/build-info.json").write_text(
         json.dumps(dict(sourceCommit=commit, protocol=protocol(), builtUtc=manifest["builtUtc"]), indent=2),
         encoding="utf-8")
+    distribution = ROOT / "Build/Distribution/Super Bomberman 6"
+    shutil.copytree(ROOT / "Build/OnlineClient/Windows", distribution,
+                    ignore=shutil.ignore_patterns("SB6.exe", "SB6_Data", "SB6_BurstDebugInformation_DoNotShip"))
+    (distribution / "Start-Online-Diagnostics.cmd").write_text(
+        '@echo off\ncd /d "%~dp0"\nstart "" "Super Bomberman 6.exe" -online-motion-logs -logFile "%~dp0OnlineMotion.log"\n',
+        encoding="utf-8", newline="\r\n")
     archive = REPORTS / "linux-release.tar.gz"
     with tarfile.open(archive, "w:gz", compresslevel=1) as package:
         for child in stage.iterdir():

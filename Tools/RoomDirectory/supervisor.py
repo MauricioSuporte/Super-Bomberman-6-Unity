@@ -1,6 +1,7 @@
 """Bounded, local Unity room supervisor. Public HTTP is exposed through a proxy."""
 import argparse
 import hmac
+import hashlib
 import json
 import logging
 from logging.handlers import RotatingFileHandler
@@ -16,7 +17,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-PROTOCOL = 9
+PROTOCOL = 10
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
@@ -52,9 +53,11 @@ class RoomPool:
                 log.info(json.dumps(dict(event="room_exit", room=key, exit_code=code)))
                 del self.rooms[key]
 
-    def create(self, ip, mode="BattleMode"):
+    def create(self, ip, mode="BattleMode", password=""):
         if not isinstance(mode, str) or mode not in MODES:
             raise ValueError("invalid room mode")
+        if not isinstance(password, str) or (password and not re.fullmatch(r"[0-9]{6}", password)):
+            raise ValueError("private room passwords require six digits")
         with self.lock:
             self.reap()
             now = time.monotonic()
@@ -70,6 +73,10 @@ class RoomPool:
             directory.mkdir()
             env = dict(os.environ, SB6_ROOM_ID=key, SB6_ROOM_TOKEN=token,
                        SB6_ROOM_STATUS=str(directory / "status.json"))
+            salt = secrets.token_hex(16) if password else ""
+            digest = hashlib.sha256((salt + password).encode("utf-8")).hexdigest() if password else ""
+            env["SB6_ROOM_PASSWORD_SALT"] = salt
+            env["SB6_ROOM_PASSWORD_HASH"] = digest
             # Preserve loader/native failures that happen before Unity opens its log.
             with (directory / "launcher.log").open("ab") as launch_log:
                 process = self.spawn([self.binary, "-batchmode", "-nographics", "-server",
@@ -78,7 +85,7 @@ class RoomPool:
                                      cwd=str(Path(self.binary).parent), env=env,
                                      stdout=launch_log, stderr=subprocess.STDOUT)
             room = dict(id=key, mode=mode, maxPlayers=MODES[mode][1], name=MODES[mode][0] + " " + key[:6], uri=f"kcp://{self.host}:{port}",
-                        players=0, available=False, process=process, port=port, token=token,
+                        players=0, available=False, requiresPassword=bool(password), process=process, port=port, token=token,
                         heartbeat=now, status=directory / "status.json", last_status=0)
             self.rooms[key] = room
             self.last_create[ip] = now
@@ -87,7 +94,7 @@ class RoomPool:
 
     @staticmethod
     def public(room):
-        return {k: room[k] for k in ("id", "name", "uri", "players", "available", "mode", "maxPlayers")}
+        return {k: room[k] for k in ("id", "name", "uri", "players", "available", "mode", "maxPlayers", "requiresPassword")}
 
     def refresh(self):
         with self.lock:
@@ -199,7 +206,11 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length).decode("utf-8"))
             if data.get("protocol") != PROTOCOL or data.get("buildIdentity") != self.server.pool.build_identity:
                 return self.reply(409, {"error": "incompatible build or protocol"})
-            room = self.server.pool.create(self.client_address[0], data.get("mode", "BattleMode"))
+            private = data.get("isPrivate", False)
+            password = data.get("password", "") if private else ""
+            if not isinstance(private, bool) or (private and not re.fullmatch(r"[0-9]{6}", password if isinstance(password, str) else "")):
+                raise ValueError("private room passwords require six digits")
+            room = self.server.pool.create(self.client_address[0], data.get("mode", "BattleMode"), password)
             self.reply(202, room)
         except OverflowError as error:
             self.reply(429, {"error": str(error)})

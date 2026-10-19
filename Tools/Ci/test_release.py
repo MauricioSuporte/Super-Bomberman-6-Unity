@@ -19,6 +19,8 @@ class ReleaseProfileTests(unittest.TestCase):
             (managed / "Assembly-CSharp.dll").write_bytes(b"release assembly")
             (root / "Build/LinuxServer/SB6.x86_64").write_bytes(b"server")
             (root / "Build/OnlineClient/Windows").mkdir(parents=True)
+            (root / "Build/OnlineClient/Windows/SB6.exe").write_bytes(b"stale executable")
+            (root / "Build/OnlineClient/Windows/Super Bomberman 6.exe").write_bytes(b"current executable")
             (root / "ProjectSettings").mkdir()
             (root / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 6000.6.0f1", encoding="utf-8")
             (root / "Tools/RoomDirectory").mkdir(parents=True)
@@ -46,6 +48,11 @@ class ReleaseProfileTests(unittest.TestCase):
                 self.assertEqual(profile, manifest["profile"])
                 self.assertEqual(revision, (root / "Assets/Resources/OnlineBuildIdentity.txt").read_text(encoding="utf-8"))
                 self.assertTrue((reports / "linux-release.tar.gz").is_file())
+                folder = root / "Build/Distribution/Super Bomberman 6"
+                self.assertTrue((folder / "build-info.json").is_file())
+                self.assertTrue((folder / "Super Bomberman 6.exe").is_file())
+                self.assertTrue((folder / "Start-Online-Diagnostics.cmd").is_file())
+                self.assertFalse((folder / "SB6.exe").exists())
                 return [call.args[0] for call in build.call_args_list]
 
     @unittest.skipUnless(release.os.name == "nt", "Windows console flags")

@@ -26,7 +26,7 @@ seus saves originais são restaurados. A VM não grava o save do dono no disco.
 Sair da sala, ou perder a conexão de um participante registrado, encerra a sala
 para todos e retorna os clientes à TitleScreen. Não há transferência de dono.
 
-O protocolo atual é 9 e inclui a identidade do build na autenticação.
+O protocolo atual é 10 e inclui a identidade do build na autenticação.
 Servidor, API e clientes devem ser recompilados juntos, mesmo mantendo 0.5.0.
 
 ## Runner Windows
@@ -71,8 +71,8 @@ artefatos de um commit anterior.
 
 No GitHub, abra Actions → Online release v0.5.0 → execução → Artifacts:
 
-- `SB6-Windows-Client-<SHA>`: extrair tudo e abrir SB6.exe para jogar no público.
-- `SB6-Validation-<SHA>`: relatórios de testes, logs de compilação e publicação,
+- `SB6-Windows-Client-<data-hora>`: extrair tudo, abrir a pasta Super Bomberman 6 e executar Super Bomberman 6.exe.
+- `SB6-Validation-<data-hora>`: relatórios de testes, logs de compilação e publicação,
   manifesto. O pacote Linux é enviado somente à VM. Retenção configurada em 14 dias.
 
 O servidor Windows é um player release iniciado em headless para testes locais;
@@ -167,3 +167,33 @@ IPs, portas e caminhos de instalação estão presentes no repositório; a chave
 SSH usada para publicar permanece na conta Windows do runner. SB6_DEPLOY_SSH
 permite configurar o destino por ambiente, mantendo o destino existente como
 padrão. Isso não remove informações já existentes no histórico do Git.
+
+
+## Lobby, distribuição e apresentação online
+
+Os nomes dos artefatos usam yyyy-MM-dd_HH-mm-ss no fuso America/Cuiaba.
+O SHA continua no build-info.json e na autenticação, para garantir compatibilidade.
+O ZIP Windows contém uma pasta Super Bomberman 6 com os arquivos do jogo,
+incluindo Super Bomberman 6.exe. Executáveis antigos do cache são excluídos da cópia.
+
+No lobby, cima/baixo selecionam uma linha, esquerda/direita trocam o modo ou a
+visibilidade. Salas privadas usam seis dígitos: esquerda/direita selecionam o
+dígito, cima/baixo alteram o valor, A confirma e B cancela. O servidor valida a
+senha mesmo em conexões diretas; a listagem expõe somente requiresPassword,
+sem senha ou hash. O processo recebe um verificador com salt via ambiente.
+Tentativas incorretas são limitadas por endereço. Sair da sala volta à listagem;
+voltar da listagem abre TitleScreen.
+
+A música intro/loop é temporizada no dispositivo de áudio do cliente. O servidor
+headless não usa AudioSource.isPlaying para antecipar a troca do loop. Reenvios
+do mesmo estado musical não reiniciam o áudio.
+
+A animação do jogador replica offsets verticais e é apresentada na mesma linha
+do tempo da posição interpolada. A proteção silenciosa de montar/desmontar é
+replicada separadamente da proteção com blink. Esses ajustes ainda exigem
+validação visual entre peers; compilação não comprova fluidez ou timing.
+
+Para diagnosticar movimento, abrir Start-Online-Diagnostics.cmd na pasta do jogo.
+Após jogar, enviar OnlineMotion.log, criado nessa mesma pasta. O parâmetro
+-online-motion-logs registra RTT, buffers, posição e animação uma vez por segundo,
+sem registrar senhas.

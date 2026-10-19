@@ -456,7 +456,10 @@ namespace Assets.Scripts.Netcode
             else ServerStartNextRound();
         }
 
-        public static void LeaveRoom()
+        public static void LeaveRoom() => LeaveRoomToScene("TitleScreen");
+        public static void LeaveRoomToBrowser() => LeaveRoomToScene(NetworkLobby.SceneName);
+
+        static void LeaveRoomToScene(string destination)
         {
             if (singleton is not BombermanNetworkManager manager || manager.leavingRoom) return;
             if (NetworkClient.isConnected && NetworkClient.connection.isAuthenticated) NetworkClient.Send(new OnlineLeaveRoomMessage());
@@ -467,7 +470,8 @@ namespace Assets.Scripts.Netcode
             ClearRoom();
             GameMusicController.Instance?.StopMusic();
             Destroy(manager.gameObject);
-            SceneManager.LoadScene("TitleScreen");
+            OnlineVersionAuthenticator.RoomPassword = "";
+            SceneManager.LoadScene(destination);
         }
 
         static void ClearRoom()
@@ -504,7 +508,7 @@ namespace Assets.Scripts.Netcode
         public override void OnClientDisconnect()
         {
             base.OnClientDisconnect();
-            if (!leavingRoom && !NetworkServer.active) LeaveRoom();
+            if (!leavingRoom && !NetworkServer.active) LeaveRoomToBrowser();
         }
 
         public override void OnServerSceneChanged(string sceneName)

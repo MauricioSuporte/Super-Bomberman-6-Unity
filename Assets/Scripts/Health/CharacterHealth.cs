@@ -41,6 +41,7 @@ public class CharacterHealth : MonoBehaviour
     IKillable killable;
 
     public bool IsInvulnerable => isInvulnerable;
+    public bool InvulnerabilityBlinks { get; private set; }
     public bool IsDead => isDead;
     private bool externalInvulnerability;
 
@@ -143,6 +144,7 @@ public class CharacterHealth : MonoBehaviour
         if (hitRoutine != null)
             StopCoroutine(hitRoutine);
 
+        InvulnerabilityBlinks = withBlink;
         if (withBlink)
             hitRoutine = StartCoroutine(TemporaryInvulnerabilityRoutine(seconds));
         else
@@ -362,6 +364,7 @@ public class CharacterHealth : MonoBehaviour
         isInvulnerable = true;
 
         bool shouldBlink = !playDamagedLoopInsteadOfBlink || playDamagedLoopAndBlink;
+        InvulnerabilityBlinks = shouldBlink;
 
         if (shouldBlink)
         {
@@ -450,6 +453,7 @@ public class CharacterHealth : MonoBehaviour
         // Other components may request protection before this component's Awake.
         EnsureRendererCache();
         externalInvulnerability = value;
+        InvulnerabilityBlinks = false;
 
         if (externalInvulnerability)
         {

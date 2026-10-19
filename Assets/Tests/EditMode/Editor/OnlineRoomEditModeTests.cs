@@ -9,6 +9,38 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [UnityTest]
+    public System.Collections.IEnumerator LeavingRoomCanReloadTheOnlineBrowser()
+    {
+        yield return new EnterPlayMode();
+        yield return SceneManager.LoadSceneAsync(NetworkLobby.SceneName);
+        yield return null;
+        BombermanNetworkManager.LeaveRoomToBrowser();
+        yield return null;
+        float deadline = Time.realtimeSinceStartup + 5f;
+        while (Object.FindAnyObjectByType<BombermanNetworkManager>() == null && Time.realtimeSinceStartup < deadline)
+            yield return null;
+        Assert.AreEqual(NetworkLobby.SceneName, SceneManager.GetActiveScene().name);
+        Assert.IsNotNull(Object.FindAnyObjectByType<OnlineRoomBrowser>());
+        Assert.IsFalse(NetworkClient.active);
+        Assert.IsFalse(NetworkServer.active);
+        BombermanNetworkManager.LeaveRoom();
+        yield return null;
+        yield return new ExitPlayMode();
+    }
+
+    [Test]
+    public void PrivateRoomAuthenticationRequiresTheCorrectPassword()
+    {
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        string hash = System.BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes("salt123456"))).Replace("-", "").ToLowerInvariant();
+        Assert.IsTrue(OnlineVersionAuthenticator.PasswordMatches("salt", hash, "123456"));
+        Assert.IsFalse(OnlineVersionAuthenticator.PasswordMatches("salt", hash, "654321"));
+        Assert.IsFalse(OnlineVersionAuthenticator.PasswordMatches("other", hash, "123456"));
+        Assert.IsFalse(OnlineVersionAuthenticator.PasswordMatches("salt", hash, ""));
+        Assert.IsTrue(OnlineVersionAuthenticator.PasswordMatches("", "", ""));
+    }
+
     [TestCase("commit-a", "commit-a", true)]
     [TestCase("commit-a", "commit-b", false)]
     [TestCase("commit-a", "", false)]
@@ -151,7 +183,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 9, true)]
+    [TestCase("0.5.0", 10, true)]
+    [TestCase("0.5.0", 9, false)]
     [TestCase("0.5.0", 8, false)]
     [TestCase("0.5.0", 7, false)]
     [TestCase("0.5.0", 6, false)]

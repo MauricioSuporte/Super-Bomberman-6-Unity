@@ -29,6 +29,11 @@ jobs:
       run:
         shell: powershell
     steps:
+      - name: Set artifact date and time
+        run: |
+          $zone = [TimeZoneInfo]::FindSystemTimeZoneById('Central Brazilian Standard Time')
+          $localTime = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $zone)
+          "SB6_ARTIFACT_TIMESTAMP=$($localTime.ToString('yyyy-MM-dd_HH-mm-ss'))" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Prepare isolated checkout and retain Unity import cache
         run: |
           git config --global core.longpaths true
@@ -51,8 +56,8 @@ jobs:
       - name: Windows client for players
         uses: actions/upload-artifact@v7
         with:
-          name: SB6-Windows-Client-${{ github.sha }}
-          path: Build/OnlineClient/Windows/
+          name: SB6-Windows-Client-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          path: Build/Distribution/
           compression-level: 1
           if-no-files-found: error
           retention-days: 14
@@ -62,7 +67,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: SB6-Validation-${{ github.sha }}
+          name: SB6-Validation-${{ env.SB6_ARTIFACT_TIMESTAMP }}
           path: |
             Build/CI/*.json
             Build/CI/*.xml

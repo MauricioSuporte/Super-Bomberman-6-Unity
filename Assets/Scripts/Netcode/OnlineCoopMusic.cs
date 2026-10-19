@@ -6,6 +6,7 @@ namespace Assets.Scripts.Netcode
     public struct CoopMusic : NetworkMessage
     {
         public string scene, introResource, loopResource;
+        public uint sequence;
         public int intro, loop;
         public float volume, loopVolume, pitch;
         public bool looping, stopped;
@@ -15,12 +16,13 @@ namespace Assets.Scripts.Netcode
     {
         CoopMusic coopMusic;
         bool coopHasMusic;
+        uint coopMusicSequence, appliedCoopMusicSequence;
 
         public static void CoopPlayMusic(AudioClip intro, float volume, bool looping, float pitch,
             AudioClip loop = null, float loopVolume = 1f, bool stopped = false)
         {
             if (!IsCoopStage || !NetworkServer.active || singleton is not BombermanNetworkManager manager || manager.coopCatalog == null) return;
-            manager.coopMusic = new CoopMusic { scene = manager.coopScene,
+            manager.coopMusic = new CoopMusic { scene = manager.coopScene, sequence = ++manager.coopMusicSequence,
                 intro = manager.CoopSoundId(intro), loop = manager.CoopSoundId(loop),
                 introResource = manager.CoopSoundResource(intro), loopResource = manager.CoopSoundResource(loop),
                 volume = volume, loopVolume = loopVolume, pitch = pitch, looping = looping, stopped = stopped };
@@ -42,6 +44,8 @@ namespace Assets.Scripts.Netcode
         void ApplyCoopMusic(CoopMusic message)
         {
             if (!CanApplyCoop(message.scene) || GameMusicController.Instance == null) return;
+            if (message.sequence == appliedCoopMusicSequence) return;
+            appliedCoopMusicSequence = message.sequence;
             if (message.stopped) { GameMusicController.Instance.StopMusic(); return; }
             var intro = At(coopCatalog.sounds, message.intro) ?? (string.IsNullOrEmpty(message.introResource) ? null : Resources.Load<AudioClip>(message.introResource));
             var loop = At(coopCatalog.sounds, message.loop) ?? (string.IsNullOrEmpty(message.loopResource) ? null : Resources.Load<AudioClip>(message.loopResource));

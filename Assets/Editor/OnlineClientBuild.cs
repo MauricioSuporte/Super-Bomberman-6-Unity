@@ -26,7 +26,7 @@ public static class OnlineClientBuild
     [MenuItem("Build/Online Client (Windows)")]
     public static void BuildWindows()
     {
-        Build(BuildTarget.StandaloneWindows64, "Build/OnlineClient/Windows/SB6.exe");
+        Build(BuildTarget.StandaloneWindows64, "Build/OnlineClient/Windows/Super Bomberman 6.exe");
     }
 
     [MenuItem("Tools/Super Bomberman 6/Online/Build Performance Test Player")]

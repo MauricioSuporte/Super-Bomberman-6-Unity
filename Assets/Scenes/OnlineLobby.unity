@@ -438,6 +438,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9f5f969d754d4b4499dc66250aec489d, type: 3}
   lobbyFont: {fileID: 11400000, guid: 85be15c3c761b0248a9f6b5e84031bc6, type: 2}
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
+  returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
 --- !u!114 &1121810763
 MonoBehaviour:
   m_ObjectHideFlags: 0

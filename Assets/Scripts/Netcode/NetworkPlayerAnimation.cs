@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
@@ -33,6 +34,33 @@ namespace Assets.Scripts.Netcode
         [SyncVar] bool activeIdle = true;
         [SyncVar] bool activeFlip;
         [SyncVar] byte activeFrame;
+        [SyncVar] Vector3 activeOffset;
+        [SyncVar(hook = nameof(OnVisualTime))] double visualTime;
+
+        struct VisualFrame
+        {
+            public double time;
+            public byte index, frame;
+            public bool idle, flip;
+            public Vector3 offset;
+        }
+
+        readonly List<VisualFrame> visualFrames = new(64);
+        NetworkTransformReliable positionSync;
+        float nextDiagnostic;
+        bool diagnostics;
+
+        void OnVisualTime(double previous, double current)
+        {
+            if (isServer) return;
+            double adjustment = 0;
+            if (positionSync != null)
+                adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
+                    (positionSync.timelineOffset ? positionSync.sendIntervalMultiplier : 0));
+            visualFrames.Add(new VisualFrame { time = current + adjustment, index = activeIndex,
+                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset });
+            if (visualFrames.Count > 64) visualFrames.RemoveAt(0);
+        }
 
         AnimatedSpriteRenderer[] renderers;
 
@@ -47,6 +75,8 @@ namespace Assets.Scripts.Netcode
         {
             renderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
             move = GetComponent<MovementController>();
+            positionSync = GetComponent<NetworkTransformReliable>();
+            diagnostics = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-online-motion-logs") >= 0;
             // Sincroniza frames com frequência suficiente para animação fluida.
             syncInterval = 0.03f;
             // The server samples animation for humans and COM.
@@ -102,10 +132,27 @@ namespace Assets.Scripts.Netcode
             if (idle != activeIdle) activeIdle = idle;
             if (flip != activeFlip) activeFlip = flip;
             if (frame != activeFrame) activeFrame = frame;
+            activeOffset = active != null ? active.RuntimeBaseLocalOffset : Vector3.zero;
+            visualTime = NetworkTime.localTime;
         }
 
         void ClientApply()
         {
+            byte activeIndex = this.activeIndex, activeFrame = this.activeFrame;
+            bool activeIdle = this.activeIdle, activeFlip = this.activeFlip;
+            Vector3 activeOffset = this.activeOffset;
+            if (visualFrames.Count > 0)
+            {
+                while (visualFrames.Count > 1 && visualFrames[1].time <= NetworkTime.time) visualFrames.RemoveAt(0);
+                var sample = visualFrames[0];
+                activeIndex = sample.index; activeFrame = sample.frame;
+                activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset;
+            }
+            if (diagnostics && Time.unscaledTime >= nextDiagnostic)
+            {
+                nextDiagnostic = Time.unscaledTime + 1f;
+                Debug.Log($"[OnlineMotion] player={netId} rttMs={NetworkTime.rtt * 1000:F1} visualBuffer={visualFrames.Count} positionBuffer={(positionSync != null ? positionSync.clientSnapshots.Count : 0)} position={transform.position} animation={activeIndex}:{activeFrame} idle={activeIdle} offset={activeOffset}");
+            }
             if (renderers == null)
                 return;
 
@@ -114,7 +161,10 @@ namespace Assets.Scripts.Netcode
             if (activeIndex != appliedIndex)
             {
                 for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] != null && i != activeIndex) renderers[i].ClearRuntimeBaseOffset();
                     SetEnabled(renderers[i], i == activeIndex);
+                }
 
                 if (activeIndex != NoRenderer && activeIndex < renderers.Length && renderers[activeIndex] != null)
                     renderers[activeIndex].SetManualAnimationUpdate(true);
@@ -133,6 +183,7 @@ namespace Assets.Scripts.Netcode
                 return;
 
             bool dirty = false;
+            if (active.RuntimeBaseLocalOffset != activeOffset) active.SetRuntimeBaseLocalOffset(activeOffset);
 
             if (activeIdle != appliedIdle)
             {
