@@ -93,7 +93,7 @@ def build():
     shutil.copy2(ROOT / "Tools/RoomDirectory/supervisor.py", server / "supervisor.py")
     (server / "Start-Local-Server.cmd").write_text(
         '@echo off\ncd /d "%~dp0"\npython supervisor.py --binary "%~dp0SB6Server.exe" '
-        '--host 127.0.0.1 --bind 127.0.0.1 --port 18081 --first-port 17777 --capacity 4 --logs logs\npause\n',
+        '--host 127.0.0.1 --bind 127.0.0.1 --port 18081 --first-port 17777 --capacity 3 --logs logs\npause\n',
         encoding="utf-8", newline="\r\n")
     (server / "README.txt").write_text(
         "Install Python 3, then open Start-Local-Server.cmd.\n"

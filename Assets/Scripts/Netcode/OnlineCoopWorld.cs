@@ -101,13 +101,19 @@ namespace Assets.Scripts.Netcode
             InitializeCoopCinematics();
             if (NetworkServer.active)
             {
-                GameMusicController.Instance?.PlayDefaultMusic();
+                if (StageIntroTransition.Instance == null) GameMusicController.Instance?.PlayDefaultMusic();
                 return;
             }
             if (BossRushSession.IsActive) BossRushTimerPresenter.EnsureInScene();
             if (StageIntroTransition.Instance != null)
             {
-                if (StageIntroTransition.Instance.fadeImage != null) StageIntroTransition.Instance.fadeImage.gameObject.SetActive(false);
+                if (StageIntroTransition.Instance.fadeImage != null)
+                {
+                    var fade = StageIntroTransition.Instance.fadeImage;
+                    fade.gameObject.SetActive(true);
+                    fade.color = Color.black;
+                    fade.transform.SetAsLastSibling();
+                }
                 if (StageIntroTransition.Instance.stageLabel != null) StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
             }
 

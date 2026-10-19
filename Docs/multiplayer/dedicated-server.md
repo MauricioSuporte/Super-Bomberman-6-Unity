@@ -5,7 +5,7 @@ o supervisor HTTP da VM, que inicia um processo Unity headless com uma porta
 KCP exclusiva. O cliente aguarda o processo ficar pronto e conecta como
 qualquer outro participante. O mesmo supervisor pode ser iniciado localmente pelo menu Tools descrito abaixo.
 
-O primeiro participante é o dono. Com dois humanos conectados, ele pode abrir
+O primeiro participante é o dono. Com pelo menos um humano conectado durante o período de release, ele pode abrir
 a configuração nativa de Battle Mode; os demais acompanham os painéis e
 escolhem seus personagens na própria vez. Se o dono desconectar, o processo
 encerra a sala e desconecta todos. A saída de qualquer participante também encerra a sala para todos e retorna
@@ -36,10 +36,17 @@ UDP das salas. Disponibilizar apenas SSH ou HTTP não valida o tráfego de jogo.
    `systemctl --user daemon-reload` e `systemctl --user enable --now sb6-rooms`.
    `loginctl show-user mauricio -p Linger` deve indicar `yes` para sobreviver ao SSH.
 
-O supervisor tem limite inicial de duas salas simultâneas, portas UDP 7777 e
-7778. Esse limite é uma proteção de recursos, não uma capacidade já medida.
+O supervisor tem limite de três salas simultâneas, portas UDP 7777 a
+7779. Esse limite é uma proteção de recursos, não uma capacidade já medida.
 Cada processo mantém estado separado, expira sem ocupantes após 60 segundos
 e é removido se encerrar ou deixar de atualizar o status por 30 segundos.
+O lobby encerra a sala após cinco minutos sem iniciar, com contador visível.
+Após iniciar a configuração, cinco minutos sem inputs humanos encerram a sala;
+o aviso aparece apenas no último minuto. Inputs mantidos contam como atividade,
+mas pacotes de rede sem ações não renovam o prazo. O relógio usa tempo real,
+inclusive durante a pausa. O deploy migra o limite do serviço existente para três
+salas e restaura a configuração anterior se a ativação falhar.
+
 Não é necessário Docker. O serviço usa a conta da aplicação, sem sudo.
 
 ## Logs e custo das partidas
@@ -139,7 +146,7 @@ Protocolo 7: POST /rooms recebe `mode` (`BattleMode`, `NormalGame`, `BossRush`).
 O modo é fixado no processo com `-room-mode` e anunciado junto com `maxPlayers`.
 Battle Mode permite seis slots; Normal Game e Boss Rush permitem quatro.
 Não existe mensagem nem endpoint para alterar o modo de uma sala criada.
-O dono inicia Normal Game ou Boss Rush com dois a quatro participantes. Normal
+O dono inicia Normal Game ou Boss Rush com um a quatro participantes durante o release. Normal
 Game passa por SkinSelect, SaveFileMenu e WorldMap usando o save do dono;
 Boss Rush passa por SkinSelect e pela escolha nativa de dificuldade. Battle Mode
 carrega a configuração salva do dono. Veja [save do dono e CI](online-owner-save-and-ci.md).

@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/home/mauricio/sb6
-ExecStart=/usr/bin/python3 /home/mauricio/sb6/supervisor.py --binary /home/mauricio/sb6/server/SB6.x86_64 --host 192.48.205.46 --bind 0.0.0.0 --capacity 2 --logs /home/mauricio/sb6/logs
+ExecStart=/usr/bin/python3 /home/mauricio/sb6/supervisor.py --binary /home/mauricio/sb6/server/SB6.x86_64 --host 192.48.205.46 --bind 0.0.0.0 --capacity 3 --logs /home/mauricio/sb6/logs
 Restart=on-failure
 RestartSec=3
 KillMode=control-group

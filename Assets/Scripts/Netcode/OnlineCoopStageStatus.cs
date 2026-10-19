@@ -9,7 +9,8 @@ namespace Assets.Scripts.Netcode
     {
         public string scene;
         public int enemies;
-        public bool ending, fadeVisible;
+        public bool ending, fadeVisible, introLabel;
+        public int world, stage;
         public Color fade;
         public CoopHealthFrame[] health;
         public CoopCinematicFrame[] cinematics;
@@ -32,6 +33,10 @@ namespace Assets.Scripts.Netcode
             var fade = StageIntroTransition.Instance != null ? StageIntroTransition.Instance.fadeImage : null;
             var game = GameManager.Instance;
             NetworkServer.SendToReady(new CoopStageStatus { scene = coopScene,
+                introLabel = StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning && StageIntroTransition.Instance.stageLabel != null &&
+                    StageIntroTransition.Instance.stageLabel.gameObject.activeInHierarchy,
+                world = StageIntroTransition.Instance != null ? StageIntroTransition.Instance.world : 1,
+                stage = StageIntroTransition.Instance != null ? StageIntroTransition.Instance.stageNumber : 1,
                 enemies = game != null ? game.EnemiesAlive : 0,
                 ending = game != null && game.OnlineRoundPresentationActive,
                 fadeVisible = fade != null && fade.gameObject.activeInHierarchy && fade.color.a > 0.001f,
@@ -43,6 +48,12 @@ namespace Assets.Scripts.Netcode
             if (!CanApplyCoop(message.scene)) return;
             GameManager.Instance?.ApplyOnlineCoopStage(message.enemies, message.ending);
             ApplyCoopCinematics(message.cinematics);
+            if (!GamePauseController.IsPaused && StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
+            {
+                var label = StageIntroTransition.Instance.stageLabel;
+                label.gameObject.SetActive(message.introLabel);
+                if (message.introLabel) label.SetStage(message.world, message.stage);
+            }
             var fade = StageIntroTransition.Instance != null ? StageIntroTransition.Instance.fadeImage : null;
             if (fade != null)
             {

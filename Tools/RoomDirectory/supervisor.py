@@ -16,13 +16,13 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-PROTOCOL = 7
+PROTOCOL = 8
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
 
 class RoomPool:
-    def __init__(self, binary, host, *, first_port=7777, capacity=2, logs="logs", spawn=subprocess.Popen):
+    def __init__(self, binary, host, *, first_port=7777, capacity=3, logs="logs", spawn=subprocess.Popen):
         self.binary, self.host = str(Path(binary).resolve()), host
         self.first_port, self.capacity, self.spawn = first_port, capacity, spawn
         self.logs = Path(logs).resolve()
@@ -208,7 +208,7 @@ def main():
     parser.add_argument("--bind", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--first-port", type=int, default=7777)
-    parser.add_argument("--capacity", type=int, default=2)
+    parser.add_argument("--capacity", type=int, default=3)
     parser.add_argument("--logs", default="logs")
     parser.add_argument("--stop-file", help="Local launcher stop request file")
     args = parser.parse_args()

@@ -41,10 +41,11 @@ namespace Assets.Scripts.Netcode
 
         void ServerStartCoop(string initialScene = null)
         {
-            if (!NetworkServer.active || !InLobbyScene() || RoomPlayers.Length < 2 || !IsCoopRoom) return;
+            if (!NetworkServer.active || !InLobbyScene() || RoomPlayers.Length < 1 || !IsCoopRoom) return;
             RoomCompleted = false; CompletedRunTime = 0;
             global::SaveSystem.BeginOnlineCoopSettings();
-            PlayerPersistentStats.ResetToDefaultsAll();
+            PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
+            PlayerPersistentStats.ApplyOnlineSelections(global::SaveSystem.BattleConfigurationData);
             GameSession.Instance?.EndBattleMatch();
             GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
             PlayerPersistentStats.RollbackStage();

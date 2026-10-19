@@ -33,7 +33,7 @@ public partial class GamePauseController
         confirmTarget = (PauseExitTarget)state.target;
         if (state.paused)
         {
-            if (!wasPaused) GameMusicController.Instance?.PauseMusic();
+            // The native pause menu leaves stage music playing.
             RefreshPauseUI();
         }
         else if (wasPaused) ResumeGame();

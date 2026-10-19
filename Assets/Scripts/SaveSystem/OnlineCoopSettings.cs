@@ -26,7 +26,27 @@ public static partial class SaveSystem
     }
 
     public static string CaptureRoomOwnerSave() => JsonUtility.ToJson(GameplayCopy(coopOfflineData ?? Data));
-    public static string CaptureRoomProgress() => JsonUtility.ToJson(GameplayCopy(Data));
+    public static string CaptureRoomProgress()
+    {
+        var copy = GameplayCopy(Data);
+        if (HasOnlineBattleSettings)
+        {
+            var selections = BattleConfigurationData;
+            copy.player1SelectedCharacter = selections.player1SelectedCharacter;
+            copy.player2SelectedCharacter = selections.player2SelectedCharacter;
+            copy.player3SelectedCharacter = selections.player3SelectedCharacter;
+            copy.player4SelectedCharacter = selections.player4SelectedCharacter;
+            copy.player5SelectedCharacter = selections.player5SelectedCharacter;
+            copy.player6SelectedCharacter = selections.player6SelectedCharacter;
+            copy.player1SelectedSkin = selections.player1SelectedSkin;
+            copy.player2SelectedSkin = selections.player2SelectedSkin;
+            copy.player3SelectedSkin = selections.player3SelectedSkin;
+            copy.player4SelectedSkin = selections.player4SelectedSkin;
+            copy.player5SelectedSkin = selections.player5SelectedSkin;
+            copy.player6SelectedSkin = selections.player6SelectedSkin;
+        }
+        return JsonUtility.ToJson(copy);
+    }
 
     public static bool ApplyRoomProgress(string json, bool persistOwner)
     {

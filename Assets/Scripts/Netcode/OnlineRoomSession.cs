@@ -14,6 +14,7 @@ namespace Assets.Scripts.Netcode
         public int adminPlayerId;
         public bool dedicated, completed;
         public float completedTime;
+        public float timeoutSeconds;
         public int[] players;
         public OnlineRoomMode mode;
         public string settings;
@@ -67,6 +68,41 @@ namespace Assets.Scripts.Netcode
         float nextRoomBroadcast, nextCoopSessionBroadcast;
         float nextSelectionSend;
         bool leavingRoom;
+        float roomDeadline;
+        bool roomStarted;
+        float receivedTimeoutAt, receivedTimeoutSeconds;
+        public static float RoomTimeoutSeconds => singleton is BombermanNetworkManager manager
+            ? Mathf.Max(0, NetworkServer.active ? manager.roomDeadline - Time.unscaledTime :
+                manager.receivedTimeoutSeconds - (Time.unscaledTime - manager.receivedTimeoutAt)) : 0;
+
+        public static void RegisterRoomActivity()
+        {
+            if (NetworkServer.active && singleton is BombermanNetworkManager manager && manager.roomStarted)
+                manager.roomDeadline = Time.unscaledTime + 300f;
+        }
+
+        void TickRoomTimeout()
+        {
+            if (!NetworkServer.active || leavingRoom) return;
+            if (NetworkClient.active && !dedicatedServer && PlayerInputManager.Instance != null)
+                for (int i = 0; i < 11; i++)
+                    if (PlayerInputManager.Instance.Get(1, (PlayerAction)i) || PlayerInputManager.Instance.GetDown(1, (PlayerAction)i))
+                    { RegisterRoomActivity(); break; }
+            if (Time.unscaledTime >= roomDeadline) CloseRoomForEveryone();
+        }
+
+        public static System.Collections.IEnumerator WaitForOnlineSceneReady()
+        {
+            if (!NetworkServer.active || !NetSync.IsOnline) yield break;
+            while (NetworkServer.active)
+            {
+                bool ready = !NetworkServer.isLoadingScene;
+                foreach (var peer in NetworkServer.connections.Values)
+                    if (peer != null && peer.isAuthenticated && !peer.isReady) ready = false;
+                if (ready) yield break;
+                yield return null;
+            }
+        }
 
         public static bool InConfiguration => NetSync.IsOnline && SceneManager.GetActiveScene().name == ConfigurationScene;
         public static bool IsConnectedSlot(int playerId) => Array.IndexOf(RoomPlayers, playerId) >= 0;
@@ -76,6 +112,8 @@ namespace Assets.Scripts.Netcode
 
         void InitializeRoomServer()
         {
+            roomStarted = false;
+            roomDeadline = Time.unscaledTime + 300f;
             if (GameSession.Instance == null) new GameObject("GameSession").AddComponent<GameSession>();
             NetworkServer.RegisterHandler<OnlineRoundPresentationFinishedMessage>((connection, message) =>
             {
@@ -123,6 +161,11 @@ namespace Assets.Scripts.Netcode
 
         static void ReceiveRoom(OnlineRoomMessage message)
         {
+            if (singleton is BombermanNetworkManager manager)
+            {
+                manager.receivedTimeoutSeconds = message.timeoutSeconds;
+                manager.receivedTimeoutAt = Time.unscaledTime;
+            }
             LocalRoomPlayerId = message.playerId;
             RoomPlayers = message.players ?? Array.Empty<int>();
             RoomCompleted = message.completed; CompletedRunTime = message.completedTime;
@@ -157,6 +200,7 @@ namespace Assets.Scripts.Netcode
             if (message.scene != SceneManager.GetActiveScene().name ||
                 !playerIdByConnection.TryGetValue(connection.connectionId, out int id))
                 return;
+            if ((message.held | message.pressed) != 0) RegisterRoomActivity();
             bool adminInput = dedicatedServer && id == RoomAdminPlayerId && !InLobbyScene();
             if (!adminInput)
             {
@@ -196,6 +240,7 @@ namespace Assets.Scripts.Netcode
         {
             base.Update();
             TickDedicatedProcess();
+            TickRoomTimeout();
 #if UNITY_EDITOR || DEBUG
             TickLocalLoadTest();
 #endif
@@ -320,7 +365,7 @@ namespace Assets.Scripts.Netcode
                 if (connection == NetworkServer.localConnection) { LocalRoomPlayerId = id; continue; }
                 connection.Send(new OnlineRoomMessage { playerId = id, adminPlayerId = RoomAdminPlayerId,
                     dedicated = dedicatedServer, completed = RoomCompleted, completedTime = CompletedRunTime,
-                    players = RoomPlayers, mode = RoomMode,
+                    players = RoomPlayers, mode = RoomMode, timeoutSeconds = RoomTimeoutSeconds,
                     settings = settings, menu = MenuView, characters = CharacterView, progress = progress, flowView = flow, bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty(), ownerModeLocked = OwnerModeLocked });
             }
         }
@@ -338,7 +383,7 @@ namespace Assets.Scripts.Netcode
                 if (singleton is BombermanNetworkManager coop && CanConfigure) coop.ServerBeginOwnerCoopFlow();
                 return;
             }
-            if (!CanConfigure || RoomPlayers.Length < 2 || singleton is not BombermanNetworkManager manager) return;
+            if (!CanConfigure || RoomPlayers.Length < 1 || singleton is not BombermanNetworkManager manager) return;
             var modes = global::SaveSystem.GetBattleModePlayerControlModes();
             for (int i = 0; i < modes.Length; i++)
                 modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
@@ -350,7 +395,7 @@ namespace Assets.Scripts.Netcode
 
         public static void ServerLaunchConfiguredBattle(string scene)
         {
-            if (!CanConfigure || singleton is not BombermanNetworkManager manager || RoomPlayers.Length < 2) return;
+            if (!CanConfigure || singleton is not BombermanNetworkManager manager || RoomPlayers.Length < 1) return;
             PlayerPersistentStats.ApplyOnlineSelections(global::SaveSystem.BattleConfigurationData);
             manager.BroadcastRoom();
             singleton.ServerChangeScene(scene);
@@ -483,6 +528,9 @@ namespace Assets.Scripts.Netcode
         public override void OnServerChangeScene(string newSceneName)
         {
             Debug.Log($"[Room] scene={newSceneName} players={playerIdByConnection.Count} admin={RoomAdminPlayerId}");
+            if (!roomStarted || newSceneName == NetworkLobby.SceneName)
+                roomDeadline = Time.unscaledTime + 300f;
+            roomStarted = newSceneName != NetworkLobby.SceneName;
             ClearDedicatedAdminInput();
             selectionHeld.Clear();
             selectionPressed.Clear();
@@ -490,6 +538,8 @@ namespace Assets.Scripts.Netcode
             roundPlayersReady = false;
             roundSpawnedPlayerIds.Clear();
             GetComponent<OnlineLobbyMenu>()?.ReleaseRoomEventSystem();
+            if (newSceneName.StartsWith("Stage_", StringComparison.Ordinal))
+                PlayerPersistentStats.ApplyOnlineSelections(global::SaveSystem.BattleConfigurationData);
             base.OnServerChangeScene(newSceneName);
         }
 
@@ -531,7 +581,7 @@ namespace Assets.Scripts.Netcode
 
         void ServerBeginOwnerCoopFlow()
         {
-            if (!NetworkServer.active || !InLobbyScene() || RoomPlayers.Length < 2 || !ownerFlowConfigured) return;
+            if (!NetworkServer.active || !InLobbyScene() || RoomPlayers.Length < 1 || !ownerFlowConfigured) return;
             RoomCompleted = false; CompletedRunTime = 0;
             PlayerPersistentStats.EnsureSessionBooted();
             PlayerPersistentStats.ApplyOnlineSelections(global::SaveSystem.BattleConfigurationData);
@@ -587,6 +637,7 @@ namespace Assets.Scripts.Netcode
         public static void CloseRoomForEveryone()
         {
             if (!NetworkServer.active || singleton is not BombermanNetworkManager manager || manager.leavingRoom) return;
+            if (!manager.dedicatedServer) { LeaveRoom(); return; }
             manager.BroadcastRoom();
             manager.leavingRoom = true;
             manager.StartCoroutine(manager.StopDedicatedRoomAfterDisconnect());

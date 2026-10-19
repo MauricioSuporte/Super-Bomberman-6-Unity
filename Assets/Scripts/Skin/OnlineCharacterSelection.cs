@@ -5,6 +5,24 @@ using UnityEngine;
 public partial class BomberSkinSelectMenu
 {
     public int ActiveOnlineSelectionPlayerId => GetCursorInputPlayerId(GetActiveSelectionCursor());
+    int onlineSoundSequence, onlineSoundIndex, appliedOnlineSoundSequence;
+    float onlineSoundVolume;
+    AudioClip[] OnlineSounds => new[] { moveCursorSfx, confirmSfx, lockedConfirmSfx, returnSfx, changePaletteSfx };
+    void RecordOnlineSound(AudioClip clip, float volume)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || clip == null) return;
+        int index = System.Array.IndexOf(OnlineSounds, clip);
+        if (index < 0) return;
+        onlineSoundIndex = index; onlineSoundVolume = volume; onlineSoundSequence++;
+    }
+    void ApplyOnlineSound(int sequence, int index, float volume)
+    {
+        if (sequence == appliedOnlineSoundSequence) return;
+        appliedOnlineSoundSequence = sequence;
+        if (sequence > 0 && index >= 0 && index < OnlineSounds.Length)
+            PlaySfx(OnlineSounds[index], volume);
+    }
+
     [Serializable]
     sealed class OnlineCursorView
     {
@@ -16,7 +34,7 @@ public partial class BomberSkinSelectMenu
         public bool confirmed;
     }
     [Serializable]
-    sealed class OnlineCharacterView { public OnlineCursorView[] players; }
+    sealed class OnlineCharacterView { public OnlineCursorView[] players; public int soundSequence, soundIndex; public float soundVolume, fade; public bool fadeVisible; }
 
     public string CaptureOnlineView()
     {
@@ -27,7 +45,7 @@ public partial class BomberSkinSelectMenu
             views[i] = new OnlineCursorView { player = p.playerId, index = p.index, palette = p.selectedPaletteIndex,
                 character = (int)p.selectedCharacter, skin = (int)p.selected, confirmed = p.confirmed };
         }
-        return JsonUtility.ToJson(new OnlineCharacterView { players = views });
+        return JsonUtility.ToJson(new OnlineCharacterView { players = views, soundSequence = onlineSoundSequence, soundIndex = onlineSoundIndex, soundVolume = onlineSoundVolume, fade = fadeImage != null ? fadeImage.color.a : 0, fadeVisible = fadeImage != null && fadeImage.gameObject.activeSelf });
     }
 
     void ApplyOnlineCursorView()
@@ -35,6 +53,13 @@ public partial class BomberSkinSelectMenu
         if (string.IsNullOrEmpty(BombermanNetworkManager.CharacterView)) return;
         var view = JsonUtility.FromJson<OnlineCharacterView>(BombermanNetworkManager.CharacterView);
         if (view?.players == null) return;
+        ApplyOnlineSound(view.soundSequence, view.soundIndex, view.soundVolume);
+        if (fadeInCoroutine != null) { StopCoroutine(fadeInCoroutine); fadeInCoroutine = null; }
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(view.fadeVisible); SetFadeAlpha(view.fade);
+            if (view.fadeVisible) fadeImage.transform.SetAsLastSibling();
+        }
         if (selectedBySlot != null) Array.Clear(selectedBySlot, 0, selectedBySlot.Length);
         foreach (var entry in view.players)
         {

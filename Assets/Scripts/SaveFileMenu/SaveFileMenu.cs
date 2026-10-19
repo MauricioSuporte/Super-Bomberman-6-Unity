@@ -902,6 +902,7 @@ public class SaveFileMenu : MonoBehaviour
 
     private void PlaySfx(AudioClip clip, float volume)
     {
+        RecordOnlineSound(clip, volume);
         if (clip == null)
             return;
 
@@ -974,6 +975,8 @@ public class SaveFileMenu : MonoBehaviour
 
     private IEnumerator FadeInRoutine()
     {
+        yield return Assets.Scripts.Netcode.BombermanNetworkManager.WaitForOnlineSceneReady();
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) yield break;
         if (fadeImage == null)
             yield break;
 
@@ -1478,18 +1481,41 @@ public class SaveFileMenu : MonoBehaviour
             mat.SetColor(prop, value);
     }
 
+    int onlineSoundSequence, onlineSoundIndex, appliedOnlineSoundSequence;
+    float onlineSoundVolume;
+    AudioClip[] OnlineSounds => new[] { moveCursorSfx, confirmSfx, returnSfx, deniedOptionSfx };
+    void RecordOnlineSound(AudioClip clip, float volume)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || clip == null) return;
+        int index = System.Array.IndexOf(OnlineSounds, clip);
+        if (index < 0) return;
+        onlineSoundIndex = index; onlineSoundVolume = volume; onlineSoundSequence++;
+    }
+    void ApplyOnlineSound(int sequence, int index, float volume)
+    {
+        if (sequence == appliedOnlineSoundSequence) return;
+        appliedOnlineSoundSequence = sequence;
+        if (sequence > 0 && index >= 0 && index < OnlineSounds.Length)
+            PlaySfx(OnlineSounds[index], volume);
+    }
+
     [System.Serializable]
     sealed class OnlineView
     {
         public int state, index, pending;
         public bool confirmed, cursor;
         public float fade;
+        public bool fadeVisible;
+        public int soundSequence, soundIndex;
+        public float soundVolume;
         public string message;
     }
     public string CaptureOnlineView() => JsonUtility.ToJson(new OnlineView
     {
         state = (int)_state, index = selectedIndex, pending = _pendingNewGameSlotIndex,
         confirmed = confirmed, cursor = _cursorConfirmVisual,
+        soundSequence = onlineSoundSequence, soundIndex = onlineSoundIndex, soundVolume = onlineSoundVolume,
+        fadeVisible = fadeImage != null && fadeImage.gameObject.activeSelf,
         fade = fadeImage != null ? fadeImage.color.a : 0,
         message = disabledOptionText != null && disabledOptionText.gameObject.activeSelf ? disabledOptionText.text : ""
     });
@@ -1505,12 +1531,17 @@ public class SaveFileMenu : MonoBehaviour
             else if (state == MenuState.SelectNewGameDifficulty) BuildDifficultyMenu();
             else BuildSlotMenu(state);
         }
-        if (selectedIndex != view.index) PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+        if (fadeInCoroutine != null) { StopCoroutine(fadeInCoroutine); fadeInCoroutine = null; }
         selectedIndex = Mathf.Clamp(view.index, 0, Mathf.Max(0, _displayEntries.Count - 1));
         _pendingNewGameSlotIndex = view.pending;
         confirmed = view.confirmed; _cursorConfirmVisual = view.cursor;
         UpdateOptionVisuals();
-        if (fadeImage != null) SetFadeAlpha(view.fade);
+        ApplyOnlineSound(view.soundSequence, view.soundIndex, view.soundVolume);
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(view.fadeVisible); SetFadeAlpha(view.fade);
+            if (view.fadeVisible) fadeImage.transform.SetAsLastSibling();
+        }
         if (disabledOptionText != null)
         {
             disabledOptionText.text = view.message;

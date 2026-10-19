@@ -78,6 +78,9 @@ public class SkinSelectBootstrap : MonoBehaviour
             PlayerPersistentStats.SaveSelectedSkin(playerId);
         }
 
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
+            PlayerPersistentStats.ApplyOnlineSelections(SaveSystem.BattleConfigurationData);
+
         switch (SkinSelectFlowRouter.NextDestination)
         {
             case SkinSelectFlowRouter.Destination.BossRush:

@@ -437,6 +437,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e4f49ef31a879114e97c0b2309f55e06, type: 3}
   - {fileID: 21300000, guid: 9f5f969d754d4b4499dc66250aec489d, type: 3}
   lobbyFont: {fileID: 11400000, guid: 85be15c3c761b0248a9f6b5e84031bc6, type: 2}
+  moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
 --- !u!114 &1121810763
 MonoBehaviour:
   m_ObjectHideFlags: 0

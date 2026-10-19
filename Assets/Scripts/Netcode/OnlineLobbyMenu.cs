@@ -4,7 +4,6 @@ using Mirror;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -15,6 +14,7 @@ namespace Assets.Scripts.Netcode
         GameObject canvasRoot;
         [SerializeField] Sprite[] backgrounds;
         [SerializeField] TMP_FontAsset lobbyFont;
+        [SerializeField] AudioClip moveCursorSfx;
         Image background;
         RectTransform panelRect;
         RectTransform safeRect;
@@ -32,6 +32,12 @@ namespace Assets.Scripts.Netcode
         readonly List<Button> roomButtons = new();
         readonly List<OnlineListedRoom> visibleRooms = new();
         bool roomSceneTransition;
+        Button cursorButton;
+        readonly List<Button> navigationButtons = new();
+        float nextNavigation;
+        TextMeshProUGUI timeoutLabel;
+        GameObject timeoutRoot;
+
 
         void OnEnable() => SceneManager.sceneLoaded += OnRoomSceneLoaded;
 
@@ -69,6 +75,13 @@ namespace Assets.Scripts.Netcode
         void Update()
         {
             if (canvasRoot == null) return;
+            bool inRoom = NetworkServer.active || NetworkClient.isConnected;
+            float remaining = BombermanNetworkManager.RoomTimeoutSeconds;
+            bool inLobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
+            timeoutRoot.SetActive(inRoom && (inLobby || remaining <= 60));
+            timeoutLabel.text = string.Format(inLobby ? GameTextDatabase.Online.LobbyTimeout : GameTextDatabase.Online.IdleTimeout,
+                System.TimeSpan.FromSeconds(Mathf.CeilToInt(remaining)).ToString(@"mm\:ss"));
+
             bool lobby = !roomSceneTransition && SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
             if (lobby) EnsureRoomEventSystem();
             canvasRoot.SetActive(lobby);
@@ -85,20 +98,13 @@ namespace Assets.Scripts.Netcode
                 modeButtons[i].gameObject.SetActive(idle);
                 modeButtons[i].interactable = browser != null && !browser.Creating;
                 var mode = (OnlineRoomMode)i;
-                modeButtons[i].GetComponent<Image>().color = selectedMode == mode ? new Color32(93, 65, 149, 255) : new Color32(30, 22, 61, 255);
-                modeButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(mode) + " (" + OnlineRoomRules.Capacity(mode) + ")";
+
+                modeButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = text.ModeName(mode) + " (" + OnlineRoomRules.Capacity(mode) + ")" + (selectedMode == mode ? " *" : "");
             }
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
-            configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 2;
-            if (EventSystem.current != null && (EventSystem.current.currentSelectedGameObject == null ||
-                !EventSystem.current.currentSelectedGameObject.activeInHierarchy))
-            {
-                var selection = configureButton.gameObject.activeSelf && configureButton.interactable ? configureButton :
-                    hostButton.gameObject.activeSelf ? hostButton : leaveButton;
-                EventSystem.current.SetSelectedGameObject(selection.gameObject);
-            }
+            configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 1;
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
-            configureButton.GetComponentInChildren<TextMeshProUGUI>().text = BombermanNetworkManager.RoomMode == OnlineRoomMode.BattleMode ? text.Configure : text.StartGame;
+            configureButton.GetComponentInChildren<TextMeshProUGUI>().text = text.StartGame;
             leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = idle ? text.Back : text.Leave;
             Position(leaveButton.GetComponent<RectTransform>(), idle ? -53 : 0, -78, idle ? 98 : 196, 16);
             Position(leaveButton.GetComponentInChildren<TextMeshProUGUI>().rectTransform, 0, 0, idle ? 94 : 188, 14);
@@ -117,7 +123,7 @@ namespace Assets.Scripts.Netcode
                     string mode = BombermanNetworkManager.IsConnectedSlot(id) ? GameTextDatabase.BattleModeMenu.Man : text.Empty;
                     lines.AppendLine($"P{id}: {mode}");
                 }
-                lines.AppendLine(BombermanNetworkManager.RoomPlayers.Length < 2 ? text.NeedPlayers : text.Waiting);
+                lines.AppendLine(text.Waiting);
 
             }
             else if (NetworkClient.active || (browser != null && browser.Creating)) lines.AppendLine(text.Connecting);
@@ -125,11 +131,12 @@ namespace Assets.Scripts.Netcode
             details.text = lines.ToString();
             details.gameObject.SetActive(!idle || OnlineVersionAuthenticator.VersionRejected);
             UpdateBrowser(idle && lobby);
+            UpdateNavigation();
         }
 
         void CreateRoomCanvas()
         {
-            canvasRoot = new GameObject("OnlineRoomCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvasRoot = new GameObject("OnlineRoomCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
             canvasRoot.transform.SetParent(transform, false);
             var canvas = canvasRoot.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -150,6 +157,17 @@ namespace Assets.Scripts.Netcode
             background = art.GetComponent<Image>();
             background.raycastTarget = false;
             if (backgrounds != null && backgrounds.Length > 0) background.sprite = backgrounds[0];
+            timeoutRoot = new GameObject("RoomTimeout", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            timeoutRoot.transform.SetParent(transform, false);
+            timeoutRoot.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            timeoutRoot.GetComponent<Canvas>().sortingOrder = 200;
+            var timeoutSafe = new GameObject("SafeFrame", typeof(RectTransform), typeof(UICameraViewportFitter));
+            timeoutSafe.transform.SetParent(timeoutRoot.transform, false);
+            timeoutLabel = Label(timeoutSafe.transform, "Timeout", 0, 0, 246, 20, 7);
+            timeoutLabel.rectTransform.anchorMin = timeoutLabel.rectTransform.anchorMax = new Vector2(0.5f, 1);
+            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, -16);
+            timeoutLabel.textWrappingMode = TextWrappingModes.Normal;
+            timeoutRoot.SetActive(false);
             details = Label(panel.transform, "Players", 0, 14, 212, 128, 7);
             details.alignment = TextAlignmentOptions.TopLeft;
             details.textWrappingMode = TextWrappingModes.Normal;
@@ -171,8 +189,11 @@ namespace Assets.Scripts.Netcode
             if (panelRect == null || safeRect == null) return;
             float scale = Mathf.Max(1f, Mathf.Floor(Mathf.Min(safeRect.rect.width / 256f, safeRect.rect.height / 224f)));
             panelRect.localScale = new Vector3(scale, scale, 1);
+            float warningScale = Mathf.Max(1f, Mathf.Floor(Mathf.Min(timeoutLabel.transform.parent.GetComponent<RectTransform>().rect.width / 256f, timeoutLabel.transform.parent.GetComponent<RectTransform>().rect.height / 224f)));
+            timeoutLabel.rectTransform.localScale = new Vector3(warningScale, warningScale, 1);
+            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, -16 * warningScale);
             // Keep keyboard/controller selection inside the scrolling room list.
-            var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            var selected = cursorButton != null ? cursorButton.gameObject : null;
             if (selected == null || roomContent == null || selected.transform.parent != roomContent) return;
             float top = -selected.GetComponent<RectTransform>().anchoredPosition.y - 10;
             float offset = roomContent.anchoredPosition.y;
@@ -257,16 +278,57 @@ namespace Assets.Scripts.Netcode
             refreshButton.GetComponentInChildren<TextMeshProUGUI>().text = text.RefreshRooms;
         }
 
+        void UpdateNavigation()
+        {
+            navigationButtons.Clear();
+            foreach (var button in modeButtons) AddNavigationButton(button);
+            foreach (var button in roomButtons) AddNavigationButton(button);
+            AddNavigationButton(hostButton);
+            AddNavigationButton(configureButton);
+            AddNavigationButton(leaveButton);
+            AddNavigationButton(refreshButton);
+            if (navigationButtons.Count == 0) return;
+            int index = navigationButtons.IndexOf(cursorButton);
+            if (index < 0) index = 0;
+            var input = PlayerInputManager.Instance;
+            if (input != null)
+            {
+                bool previous = input.Get(1, PlayerAction.MoveUp) || input.Get(1, PlayerAction.MoveLeft);
+                bool next = input.Get(1, PlayerAction.MoveDown) || input.Get(1, PlayerAction.MoveRight);
+                if (!previous && !next) nextNavigation = 0;
+                else if (Time.unscaledTime >= nextNavigation)
+                {
+                    index = (index + (previous ? -1 : 1) + navigationButtons.Count) % navigationButtons.Count;
+                    nextNavigation = Time.unscaledTime + 0.18f;
+                    GameMusicController.Instance?.PlaySfx(moveCursorSfx, 0.5f);
+                }
+                cursorButton = navigationButtons[index];
+                if (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start))
+                    cursorButton.onClick.Invoke();
+                else if (input.GetDown(1, PlayerAction.ActionB)) leaveButton.onClick.Invoke();
+            }
+            cursorButton = navigationButtons[index];
+            foreach (var button in navigationButtons)
+                button.GetComponent<Image>().color = button == cursorButton
+                    ? new Color32(93, 65, 149, 255) : new Color32(30, 22, 61, 255);
+        }
+
+        void AddNavigationButton(Button button)
+        {
+            if (button != null && button.gameObject.activeInHierarchy && button.interactable)
+                navigationButtons.Add(button);
+        }
+
         void EnsureRoomEventSystem()
         {
             if (roomSceneTransition || SceneManager.GetActiveScene().name != NetworkLobby.SceneName) return;
             if (EventSystem.current != null) return;
             var existing = FindAnyObjectByType<EventSystem>();
             if (existing != null && existing.isActiveAndEnabled) return;
-            roomEventSystem = new GameObject("OnlineRoomEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            roomEventSystem = new GameObject("OnlineRoomEventSystem", typeof(EventSystem));
             // Keep input owned by the lobby scene rather than its persistent NetworkManager.
             SceneManager.MoveGameObjectToScene(roomEventSystem, SceneManager.GetActiveScene());
-            roomEventSystem.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
+
             EventSystem.current.SetSelectedGameObject(hostButton.gameObject);
         }
 
@@ -318,8 +380,9 @@ namespace Assets.Scripts.Netcode
             Label(go.transform, "Label", 0, 0, 188, 14, 6);
             var button = go.GetComponent<Button>();
             var colors = button.colors;
-            colors.highlightedColor = new Color32(145, 183, 255, 255);
-            colors.selectedColor = new Color32(145, 183, 255, 255);
+            button.transition = Selectable.Transition.None;
+            colors.highlightedColor = new Color32(93, 65, 149, 255);
+            colors.selectedColor = new Color32(93, 65, 149, 255);
             colors.pressedColor = new Color32(255, 216, 86, 255);
             colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 1);
             colors.fadeDuration = 0;

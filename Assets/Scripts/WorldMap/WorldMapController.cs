@@ -907,6 +907,7 @@ public class WorldMapController : MonoBehaviour
 
     void PlaySfx(AudioClip clip, float volume)
     {
+        RecordOnlineSound(clip, volume);
         if (clip == null || GameMusicController.Instance == null)
             return;
 
@@ -915,6 +916,8 @@ public class WorldMapController : MonoBehaviour
 
     IEnumerator FadeInRoutine(float duration)
     {
+        yield return Assets.Scripts.Netcode.BombermanNetworkManager.WaitForOnlineSceneReady();
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) yield break;
         if (fadeImage == null)
             yield break;
 
@@ -1695,6 +1698,24 @@ public class WorldMapController : MonoBehaviour
         StopAllClearedStageSpinAnimations();
     }
 
+    int onlineSoundSequence, onlineSoundIndex, appliedOnlineSoundSequence;
+    float onlineSoundVolume;
+    AudioClip[] OnlineSounds => new[] { confirmStageSfx, deniedSfx, backSceneSfx };
+    void RecordOnlineSound(AudioClip clip, float volume)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || clip == null) return;
+        int index = System.Array.IndexOf(OnlineSounds, clip);
+        if (index < 0) return;
+        onlineSoundIndex = index; onlineSoundVolume = volume; onlineSoundSequence++;
+    }
+    void ApplyOnlineSound(int sequence, int index, float volume)
+    {
+        if (sequence == appliedOnlineSoundSequence) return;
+        appliedOnlineSoundSequence = sequence;
+        if (sequence > 0 && index >= 0 && index < OnlineSounds.Length)
+            PlaySfx(OnlineSounds[index], volume);
+    }
+
     [System.Serializable]
     sealed class OnlineView
     {
@@ -1702,6 +1723,9 @@ public class WorldMapController : MonoBehaviour
         public Vector2 position;
         public bool moving, selected;
         public float fade;
+        public bool fadeVisible;
+        public int soundSequence, soundIndex;
+        public float soundVolume;
     }
     public string CaptureOnlineView() => JsonUtility.ToJson(new OnlineView
     {
@@ -1709,6 +1733,8 @@ public class WorldMapController : MonoBehaviour
         position = cursorMovementArea != null ? new Vector2(cursorLocalPosition.x / Mathf.Max(1, cursorMovementArea.rect.width),
             cursorLocalPosition.y / Mathf.Max(1, cursorMovementArea.rect.height)) : Vector2.zero,
         moving = wasMovingLastFrame, selected = playingSelectedAnimation,
+        soundSequence = onlineSoundSequence, soundIndex = onlineSoundIndex, soundVolume = onlineSoundVolume,
+        fadeVisible = fadeImage != null && fadeImage.gameObject.activeSelf,
         fade = fadeImage != null ? fadeImage.color.a : 0
     });
     void ApplyOnlineView()
@@ -1726,8 +1752,16 @@ public class WorldMapController : MonoBehaviour
         if (cursorMovementArea != null) cursorLocalPosition = new Vector2(view.position.x * cursorMovementArea.rect.width,
             view.position.y * cursorMovementArea.rect.height);
         RefreshHoveredStage(); RefreshWorldStageLabel();
-        RefreshCursorVisualState(view.moving, true, view.selected);
+        RefreshOptionalWorldScrollers();
+        RefreshCursorVisualState(view.moving, view.selected != playingSelectedAnimation, view.selected);
+        playingSelectedAnimation = view.selected;
+        wasMovingLastFrame = view.moving;
         ApplyCursorVisualTransform();
-        if (fadeImage != null) SetFadeAlpha(view.fade);
+        ApplyOnlineSound(view.soundSequence, view.soundIndex, view.soundVolume);
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(view.fadeVisible); SetFadeAlpha(view.fade);
+            if (view.fadeVisible) fadeImage.transform.SetAsLastSibling();
+        }
     }
 }

@@ -36,7 +36,9 @@ public sealed class OnlineRoomText
     public string RoomAdmin => LanguageText("ROOM ADMIN: P{0}", "ルーム管理者: P{0}", "ADMINISTRADOR: P{0}", "ADMINISTRADOR: P{0}");
 
     public string RunCompleted => LanguageText("RUN COMPLETE!", "クリア！", "¡PARTIDA COMPLETADA!", "PARTIDA CONCLUÍDA!");
-    public string StartGame => LanguageText("START GAME", "ゲーム開始", "INICIAR JUEGO", "INICIAR JOGO");
+    public string StartGame => LanguageText("START ONLINE GAME", "オンラインゲーム開始", "INICIAR PARTIDA ONLINE", "INICIAR PARTIDA ONLINE");
+    public string LobbyTimeout => LanguageText("START WITHIN {0} OR THE ROOM CLOSES", "{0}以内に開始しないと終了します", "INICIA EN {0} O SE CIERRA LA SALA", "INICIE EM {0} OU A SALA SERÁ ENCERRADA");
+    public string IdleTimeout => LanguageText("NO INPUT: ROOM CLOSES IN {0}", "操作なし: あと{0}で終了", "SIN ACTIVIDAD: CIERRE EN {0}", "SEM INPUTS: SALA ENCERRA EM {0}");
     public string ModeName(Assets.Scripts.Netcode.OnlineRoomMode mode) => mode switch
     {
         Assets.Scripts.Netcode.OnlineRoomMode.NormalGame => LanguageText("NORMAL GAME", "ノーマルゲーム", "JUEGO NORMAL", "JOGO NORMAL"),

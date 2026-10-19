@@ -84,13 +84,10 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
-        // Battle Mode online (Mirror): se a cena tem um NetworkManager, pular a
-        // intro local por completo. A intro pausa o tempo (timeScale=0), tranca
-        // input, esconde sprites e spawna players/bots locais — tudo isso
-        // congela e conflita com os players spawnados pela rede. Com a intro
-        // pulada, o BombermanNetworkManager é o único a spawnar players, já
-        // controláveis.
-        if (FindAnyObjectByType<Assets.Scripts.Netcode.BombermanNetworkManager>() != null)
+        // Co-op runs the native intro on the server after all human players spawn.
+        // Clients display replicated fades, labels, animation and audio.
+        if (Assets.Scripts.Netcode.NetSync.IsOnline &&
+            (!Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage || !Mirror.NetworkServer.active))
         {
             IntroRunning = false;
             EndingRunning = false;
@@ -262,6 +259,10 @@ public class StageIntroTransition : MonoBehaviour
 
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
+
+        yield return Assets.Scripts.Netcode.BombermanNetworkManager.WaitForOnlineSceneReady();
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+            yield return new WaitUntil(() => Assets.Scripts.Netcode.BombermanNetworkManager.OnlineCoopPlayersReady);
 
         yield return PreloadIntroAudio();
 

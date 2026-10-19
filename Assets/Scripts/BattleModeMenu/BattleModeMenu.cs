@@ -6926,6 +6926,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
 
     private IEnumerator FadeInRoutine()
     {
+        yield return Assets.Scripts.Netcode.BombermanNetworkManager.WaitForOnlineSceneReady();
         if (fadeImage == null)
             yield break;
 

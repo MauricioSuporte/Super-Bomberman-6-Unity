@@ -10,6 +10,32 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void RoomProgressKeepsSelectionsFromTheOnlineConfiguration()
+    {
+        SaveSystem.BeginOnlineCoopSettings();
+        SaveSystem.BeginOnlineBattleSettings();
+        try
+        {
+            SaveSystem.BattleConfigurationData.player1SelectedCharacter = (int)BomberCharacter.Bomberman;
+            SaveSystem.BattleConfigurationData.player2SelectedCharacter = (int)BomberCharacter.Bomberman;
+            SaveSystem.BattleConfigurationData.player1SelectedSkin = (int)BomberSkin.Palette2;
+            SaveSystem.BattleConfigurationData.player2SelectedSkin = (int)BomberSkin.Palette3;
+            var snapshot = JsonUtility.FromJson<SaveData>(SaveSystem.CaptureRoomProgress());
+            Assert.AreEqual((int)BomberSkin.Palette2, snapshot.player1SelectedSkin);
+            Assert.AreEqual((int)BomberSkin.Palette3, snapshot.player2SelectedSkin);
+            PlayerPersistentStats.ApplyOnlineSelections(snapshot);
+            Assert.AreEqual(BomberSkin.Palette2, PlayerPersistentStats.GetRuntime(1).Skin);
+            Assert.AreEqual(BomberSkin.Palette3, PlayerPersistentStats.GetRuntime(2).Skin);
+        }
+        finally
+        {
+            SaveSystem.EndOnlineBattleSettings();
+            SaveSystem.EndOnlineCoopSettings();
+            PlayerPersistentStats.ApplyOnlineSelections(SaveSystem.Data);
+        }
+    }
+
+    [Test]
     public void LineBombIdentityBelongsToPickupRoot()
     {
         var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Items/LineBomb.prefab");
@@ -115,7 +141,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 7, true)]
+    [TestCase("0.5.0", 8, true)]
+    [TestCase("0.5.0", 7, false)]
     [TestCase("0.5.0", 6, false)]
     [TestCase("0.5.0", 5, false)]
     [TestCase("0.5.0", 4, false)]

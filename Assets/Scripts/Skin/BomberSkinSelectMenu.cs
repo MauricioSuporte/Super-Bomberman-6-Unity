@@ -2739,6 +2739,7 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     void PlaySfx(AudioClip clip, float volume)
     {
+        RecordOnlineSound(clip, volume);
         if (clip == null)
             return;
 
@@ -2894,6 +2895,8 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     IEnumerator FadeInRoutine()
     {
+        yield return Assets.Scripts.Netcode.BombermanNetworkManager.WaitForOnlineSceneReady();
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver) yield break;
         if (fadeImage == null)
             yield break;
 

@@ -78,7 +78,12 @@ if __name__ == '__main__':
     if rooms(): raise SystemExit('A room opened during preflight; deployment left unchanged')
     service_env = dict(os.environ, XDG_RUNTIME_DIR=f'/run/user/{os.getuid()}')
     def service(action, check=True):
-        return subprocess.run(['systemctl','--user',action,'sb6-rooms.service'],env=service_env,check=check)
+        return subprocess.run(['systemctl','--user',action] + ([] if action == 'daemon-reload' else ['sb6-rooms.service']), env=service_env, check=check)
+    service_file = Path.home()/'.config/systemd/user/sb6-rooms.service'
+    service_before = service_file.read_bytes()
+    service_text = service_before.decode('utf-8-sig')
+    service_after, replacements = re.subn(r'--capacity\s+\d+', '--capacity 3', service_text)
+    if replacements != 1: raise RuntimeError('expected one room capacity in service')
     service('stop')
     swapped = False
     supervisor_swapped = False
@@ -93,6 +98,8 @@ if __name__ == '__main__':
         shutil.copy2(live/'supervisor.py', base/'supervisor-next.py')
         (base/'supervisor-next.py').replace(supervisor)
         supervisor_swapped = True
+        service_file.write_text(service_after, encoding='utf-8')
+        service('daemon-reload')
         service('start')
         for _ in range(20):
             try:
@@ -109,5 +116,7 @@ if __name__ == '__main__':
             live.rename(stage)
             backup.rename(live)
         if supervisor_swapped: shutil.copy2(supervisor_backup, supervisor)
+        service_file.write_bytes(service_before)
+        service('daemon-reload', check=False)
         service('start', check=False)
         raise

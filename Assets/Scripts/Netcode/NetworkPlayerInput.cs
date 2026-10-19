@@ -17,6 +17,7 @@ namespace Assets.Scripts.Netcode
         int serverHeldMask;
         float nextSend, lastReceived;
         static bool Blocked => GamePauseController.IsPaused ||
+            (BombermanNetworkManager.IsCoopStage && StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) ||
             (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive);
 
         void Awake() => setup = GetComponent<NetworkPlayerSetup>();
@@ -57,6 +58,7 @@ namespace Assets.Scripts.Netcode
         [Command]
         void CmdControls(int held, int pressed)
         {
+            if (((held | pressed) & ((1 << Actions.Length) - 1)) != 0) BombermanNetworkManager.RegisterRoomActivity();
             lastReceived = Time.unscaledTime;
             serverHeldMask = Blocked ? 0 : held & ((1 << Actions.Length) - 1);
             if (Blocked || setup == null || PlayerInputManager.Instance == null) return;
