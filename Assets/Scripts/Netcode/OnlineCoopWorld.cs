@@ -37,7 +37,7 @@ namespace Assets.Scripts.Netcode
         public CoopTileFrame[] cells;
     }
     public struct BattleFeedback : NetworkMessage { public string scene; public byte kind; public uint netId; public Vector3Int cell; public Vector2 direction; public float value; public int steps; public Vector3Int[] path; }
-    public struct CoopSound : NetworkMessage { public string scene, resource; public int clip; public float volume, pitch; public bool voice; }
+    public struct CoopSound : NetworkMessage { public string scene, resource; public int clip; public float volume, pitch; public bool voice, exclusiveExplosion; }
 
     /// <summary>
     /// A co-op stage executes its scene behaviours only on the server. Clients keep
@@ -458,17 +458,20 @@ namespace Assets.Scripts.Netcode
                 case 4: item.DestroySilently(); break;
                 case 5: item.DestroyFromMovingBombImpact(); break;
                 case 6: item.TryExpelItem(message.direction, message.value, null, message.steps); break;
+                case 7: item.ApplyNetworkLanding(message.direction); break;
             }
         }
 
-        public static void CoopPlaySound(AudioClip clip, float volume = 1f, float pitch = 1f, bool voice = false)
+        AudioSource remoteExplosionAudio;
+
+        public static void CoopPlaySound(AudioClip clip, float volume = 1f, float pitch = 1f, bool voice = false, bool exclusiveExplosion = false)
         {
             if (!NetSync.IsOnline || !NetworkServer.active || singleton is not BombermanNetworkManager manager) return;
             if (!IsCoopStage && !SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal)) return;
             if (!IsCoopStage && GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive) return;
             int id = manager.CoopSoundId(clip);
             string resource = manager.CoopSoundResource(clip);
-            if (id >= 0 || resource != null) NetworkServer.SendToReady(new CoopSound { scene = SceneManager.GetActiveScene().name, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice });
+            if (id >= 0 || resource != null) NetworkServer.SendToReady(new CoopSound { scene = SceneManager.GetActiveScene().name, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice, exclusiveExplosion = exclusiveExplosion });
         }
 
         void ApplyCoopSound(CoopSound message)
@@ -476,8 +479,14 @@ namespace Assets.Scripts.Netcode
             if (NetworkServer.active || !NetSync.IsOnline || message.scene != SceneManager.GetActiveScene().name) return;
             var clip = (SoundCatalog == null ? null : At(SoundCatalog.sounds, message.clip)) ?? (string.IsNullOrEmpty(message.resource) ? null : Resources.Load<AudioClip>(message.resource));
             if (clip == null) return;
+            if (message.exclusiveExplosion && remoteExplosionAudio != null)
+            {
+                remoteExplosionAudio.Stop();
+                Destroy(remoteExplosionAudio.gameObject);
+            }
             var go = new GameObject("CoopSound", typeof(AudioSource));
             var source = go.GetComponent<AudioSource>();
+            if (message.exclusiveExplosion) remoteExplosionAudio = source;
             source.ignoreListenerPause = true;
             source.clip = clip; source.volume = message.voice ? GameAudioSettings.ApplyVoiceSfxVolume(message.volume) : GameAudioSettings.ApplySfxVolume(message.volume); source.pitch = message.pitch;
             source.Play(); Destroy(go, clip.length / Mathf.Max(0.1f, Mathf.Abs(message.pitch)) + 0.5f);

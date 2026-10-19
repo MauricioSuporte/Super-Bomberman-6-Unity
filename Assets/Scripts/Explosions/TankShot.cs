@@ -89,6 +89,7 @@ public sealed class TankShot : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (_impactHandled)
             return;
 
@@ -130,7 +131,7 @@ public sealed class TankShot : MonoBehaviour
 
         TrySpawnExplosion(impactPos);
 
-        Destroy(gameObject);
+        Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
     }
 
     private void TryChainBomb(Collider2D other)

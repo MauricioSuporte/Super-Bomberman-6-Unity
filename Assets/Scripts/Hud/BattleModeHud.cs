@@ -162,6 +162,12 @@ public sealed class BattleModeHud : MonoBehaviour
     readonly CharacterHealth[] playerHealthCache = new CharacterHealth[MaxPlayers];
     readonly List<Sprite> activePowerupBuffer = new List<Sprite>(6);
     readonly List<int> activePlayerIdsBuffer = new List<int>(MaxPlayers);
+    public RectTransform GetPortraitAnchor(int playerId)
+    {
+        int index = activePlayerIdsBuffer.IndexOf(playerId);
+        return index >= 0 && index < slots.Length && slots[index]?.Portrait != null ? slots[index].Portrait.rectTransform : null;
+    }
+
     readonly SlotUi[] slots = new SlotUi[MaxPlayers];
     readonly Dictionary<int, Sprite> livePortraits = new Dictionary<int, Sprite>();
     readonly Dictionary<int, Sprite> deadPortraits = new Dictionary<int, Sprite>();

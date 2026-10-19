@@ -16,7 +16,7 @@ namespace Assets.Scripts.Netcode
         NetworkPlayerSetup setup;
         int serverHeldMask, lastSentHeld;
         float nextSend, lastReceived;
-        static bool Blocked => GamePauseController.IsPaused ||
+        static bool Blocked => GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
             (BombermanNetworkManager.IsCoopStage && StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) ||
             (GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive);
 

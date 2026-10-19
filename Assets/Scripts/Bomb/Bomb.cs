@@ -581,6 +581,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (ignoredCollider == null)
             ignoredCollider = movementController.GetComponentInChildren<Collider2D>();
 
+        Assets.Scripts.Netcode.NetSpawn.Server(item.gameObject);
         item.TryExpelItem(direction, tileSize, ignoredCollider, 3);
     }
 

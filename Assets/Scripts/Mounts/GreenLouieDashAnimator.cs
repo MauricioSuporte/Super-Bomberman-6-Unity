@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnimator
@@ -111,11 +111,20 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         }
     }
 
-    void SpawnAfterimage()
+    public void PresentNetworkAfterimage(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null || (renderer != rollUp && renderer != rollDown && renderer != rollLeft && renderer != rollRight) ||
+            Time.time < nextAfterimageTime) return;
+        SpawnAfterimage(renderer);
+        nextAfterimageTime = Time.time + Mathf.Max(0.01f, afterimageInterval);
+    }
+
+    void SpawnAfterimage(AnimatedSpriteRenderer replicated = null)
     {
         SpriteRenderer source = null;
-        if (active == null || !active.enabled ||
-            !active.TryGetComponent(out source) ||
+        var animation = replicated != null ? replicated : active;
+        if (animation == null || (replicated == null && !animation.enabled) ||
+            !animation.TryGetComponent(out source) ||
             source == null || !source.enabled || source.sprite == null)
             return;
 

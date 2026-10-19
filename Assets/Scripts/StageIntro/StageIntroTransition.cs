@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class StageIntroTransition : MonoBehaviour
+[DefaultExecutionOrder(-500)]
+public partial class StageIntroTransition : MonoBehaviour
 {
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtimeStartDelay = new(0.5f);
@@ -84,6 +85,11 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
+        if (IsBattleModeScene())
+        {
+            StartCoroutine(BattleRoundEntrance());
+            return;
+        }
         // Co-op runs the native intro on the server after all human players spawn.
         // Clients display replicated fades, labels, animation and audio.
         if (Assets.Scripts.Netcode.NetSync.IsOnline &&

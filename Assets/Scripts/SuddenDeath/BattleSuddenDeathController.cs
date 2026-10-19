@@ -374,7 +374,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void Update()
     {
-        if (!Application.isPlaying) return;
+        if (!Application.isPlaying || (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning)) return;
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
         {
             if (suddenDeathStarted && !suddenDeathFinished)

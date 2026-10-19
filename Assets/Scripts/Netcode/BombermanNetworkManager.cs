@@ -197,6 +197,7 @@ namespace Assets.Scripts.Netcode
         public override void OnStartClient()
         {
             base.OnStartClient();
+            InitializeBattleStartClient();
             if (!NetworkServer.active)
             {
                 NetSync.Mode = NetSync.NetMode.Client;

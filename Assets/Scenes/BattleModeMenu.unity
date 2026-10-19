@@ -1122,13 +1122,11 @@ MonoBehaviour:
   specificSettingsFontSize: 32
   specificCursorOffset: {x: -220, y: 0}
   specificCursorSize: {x: 62, y: 62}
-  specificStartWaitSeconds: 4
   specificStartFadeSeconds: 1
   specificStageImageFallbackColor: {r: 0, g: 0, b: 0, a: 0.65}
   battleStartTexture: {fileID: 2800000, guid: 2a09435323dbf524a825460f374796a8, type: 3}
   battleStartOffset: {x: 0, y: 270}
   battleStartSize: {x: 190, y: 19}
-  battleStartBlinkSeconds: 0.05
   musicSelectRootOffset: {x: 0, y: 0}
   musicSelectOptionsOffset: {x: 120, y: 0}
   musicSelectNameColumnOffset: {x: -180, y: 0}
@@ -1228,8 +1226,6 @@ MonoBehaviour:
   returnSfxVolume: 1
   deniedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedSfxVolume: 1
-  specificStartSfx: {fileID: 8300000, guid: 65bb48bbd86fe1848bca77982611e394, type: 3}
-  specificStartSfxVolume: 1
   restoreDefaultSfx: {fileID: 8300000, guid: ce0ca761e372457ca254ba3311cc5b9a, type: 3}
   restoreDefaultSfxVolume: 1
   restoreDefaultsQuestionOffset: {x: 0, y: 100}

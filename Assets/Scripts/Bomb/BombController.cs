@@ -2397,7 +2397,7 @@ public partial class BombController : MonoBehaviour
         AudioClip clip = GetExplosionSfx(radius, pierce);
 
         if (clip != null)
-            GameAudioSettings.PlaySfx(source, clip, explosionSfxVolume);
+            GameAudioSettings.PlaySfx(source, clip, explosionSfxVolume, exclusiveExplosion: true);
     }
 
     public void PlayExplosionSfxExclusive(AudioSource source, int radius, bool pierce = false)
@@ -2421,7 +2421,7 @@ public partial class BombController : MonoBehaviour
             currentExplosionAudio.Stop();
 
         currentExplosionAudio = source;
-        GameAudioSettings.PlaySfx(currentExplosionAudio, clip, explosionSfxVolume);
+        GameAudioSettings.PlaySfx(currentExplosionAudio, clip, explosionSfxVolume, exclusiveExplosion: true);
     }
 
     // Rede: toca o SOM da explosão no CLIENTE (o VFX já vem replicado pelo
@@ -3081,16 +3081,25 @@ public partial class BombController : MonoBehaviour
 
         TryApplyGroundExplosionModifiers(p, ref effectiveRadius, ref effectivePierce);
 
+        var previousFx = _netFxCollector;
+        var previousCells = _netDestroyedCells;
+        _netFxCollector = Assets.Scripts.Netcode.NetSync.IsServer ? new(16) : null;
+        _netDestroyedCells = Assets.Scripts.Netcode.NetSync.IsServer ? new(8) : null;
+
         if (sfxSource != null)
             PlayExplosionSfxExclusive(sfxSource, effectiveRadius, effectivePierce);
 
         BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
         centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p, effectivePierce);
+        _netFxCollector?.Add(new Assets.Scripts.Netcode.ExplosionFx { pos = p, part = (byte)BombExplosion.ExplosionPart.Start });
 
         Explode(p, Vector2.up, effectiveRadius, effectivePierce);
         Explode(p, Vector2.down, effectiveRadius, effectivePierce);
         Explode(p, Vector2.left, effectiveRadius, effectivePierce);
         Explode(p, Vector2.right, effectiveRadius, effectivePierce);
+        EmitAbilityExplosionFx(p, effectivePierce);
+        _netFxCollector = previousFx;
+        _netDestroyedCells = previousCells;
     }
 
     /// <summary>
@@ -3116,6 +3125,11 @@ public partial class BombController : MonoBehaviour
         bool effectivePierce = pierce;
         TryApplyGroundExplosionModifiers(p, ref effectiveLength, ref effectivePierce);
 
+        var previousFx = _netFxCollector;
+        var previousCells = _netDestroyedCells;
+        _netFxCollector = Assets.Scripts.Netcode.NetSync.IsServer ? new(16) : null;
+        _netDestroyedCells = Assets.Scripts.Netcode.NetSync.IsServer ? new(8) : null;
+
         if (sfxSource != null)
             PlayExplosionSfxExclusive(sfxSource, effectiveLength, effectivePierce);
 
@@ -3124,6 +3138,16 @@ public partial class BombController : MonoBehaviour
             : (direction.y >= 0f ? Vector2.up : Vector2.down);
 
         Explode(p, cardinalDirection, effectiveLength, effectivePierce);
+        EmitAbilityExplosionFx(p, effectivePierce);
+        _netFxCollector = previousFx;
+        _netDestroyedCells = previousCells;
+    }
+
+    void EmitAbilityExplosionFx(Vector2 origin, bool pierce)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx)) return;
+        if (_netFxCollector != null && _netFxCollector.Count > 0) fx.ServerEmit(origin, _netFxCollector.ToArray(), pierce, explosionDuration);
+        if (_netDestroyedCells != null && _netDestroyedCells.Count > 0) fx.ServerEmitDestroyed(_netDestroyedCells.ToArray());
     }
 
     public bool LaunchRevengeBomb(Vector2 launchWorldPos, Vector2 direction, int distanceTiles, int forcedRadius)

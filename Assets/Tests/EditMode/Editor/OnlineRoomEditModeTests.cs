@@ -10,6 +10,68 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void BattleCountdownWaitsForBothSceneReadyAndPresentedScreens()
+    {
+        var first = new NetworkConnectionToClient(101) { isAuthenticated = true, isReady = true };
+        var second = new NetworkConnectionToClient(102) { isAuthenticated = true, isReady = true };
+        var peers = new[] { first, second };
+        var presented = new HashSet<int> { 101 };
+        var check = typeof(BombermanNetworkManager).GetMethod("AreBattleScreensReady",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.IsFalse((bool)check.Invoke(null, new object[] { peers, presented }), "The slower rendered screen must hold the round.");
+        presented.Add(102);
+        Assert.IsTrue((bool)check.Invoke(null, new object[] { peers, presented }));
+        second.isReady = false;
+        Assert.IsFalse((bool)check.Invoke(null, new object[] { peers, presented }), "An acknowledgement cannot bypass Mirror scene readiness.");
+        Assert.IsFalse((bool)check.Invoke(null, new object[] { new NetworkConnectionToClient[0], presented }));
+    }
+
+    [Test]
+    public void BattleReadinessAndCountdownResetWhenReloadingSameArena()
+    {
+        var go = new GameObject("BattleStartResetRegression");
+        go.SetActive(false);
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        try
+        {
+            var manager = go.AddComponent<BombermanNetworkManager>();
+            var type = typeof(BombermanNetworkManager);
+            var ready = (HashSet<int>)type.GetField("battleScreenReadyPeers", flags).GetValue(manager);
+            ready.Add(101);
+            type.GetField("battleReleaseTime", flags).SetValue(manager, 123.0);
+            type.GetMethod("ResetBattleStart", flags).Invoke(manager, new object[] { "BattleMode_1" });
+            Assert.IsEmpty(ready);
+            Assert.AreEqual(0.0, type.GetField("battleReleaseTime", flags).GetValue(manager));
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void TankShotPrefabHasAuthoritativeTransformAndPresentation()
+    {
+        var prefab = Resources.Load<GameObject>("Tank/Shot");
+        Assert.IsNotNull(prefab.GetComponent<NetworkIdentity>());
+        Assert.IsNotNull(prefab.GetComponent<NetworkTankShot>());
+        var transform = prefab.GetComponent<NetworkTransformReliable>();
+        Assert.IsNotNull(transform);
+        Assert.AreEqual(SyncDirection.ServerToClient, transform.syncDirection);
+    }
+
+    [Test]
+    public void BattleAudioMessageKeepsExplosionExclusivitySeparateFromVoices()
+    {
+        using var writer = NetworkWriterPool.Get();
+        writer.Write(new CoopSound { scene = "BattleMode_1", clip = 12, exclusiveExplosion = true, volume = 0.7f, pitch = 1.1f });
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+        var result = reader.Read<CoopSound>();
+        Assert.IsTrue(result.exclusiveExplosion);
+        Assert.IsFalse(result.voice);
+        Assert.AreEqual(12, result.clip);
+        Assert.AreEqual(0.7f, result.volume);
+        Assert.AreEqual(1.1f, result.pitch);
+    }
+
+    [Test]
     public void BattleFeedbackPreservesAuthoritativePathAndExpulsionParameters()
     {
         var path = new[] { new Vector3Int(-6, 4, 0), new Vector3Int(-5, 4, 0) };
@@ -915,7 +977,7 @@ public sealed class OnlineRoomEditModeTests
         {
             deadline = Time.realtimeSinceStartup + 8f;
             while ((GameManager.Instance == null || GameManager.Instance == previousManager ||
-                    SceneManager.GetActiveScene().name != "BattleMode_1" || !BombermanNetworkManager.OnlineRoundPlayersReady) &&
+                    SceneManager.GetActiveScene().name != "BattleMode_1" || !BombermanNetworkManager.OnlineRoundPlayersReady || BombermanNetworkManager.BattleStartPending) &&
                    Time.realtimeSinceStartup < deadline) yield return null;
             var game = GameManager.Instance;
             Assert.IsNotNull(game);

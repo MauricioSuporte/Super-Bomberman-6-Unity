@@ -318,6 +318,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             proj = go.AddComponent<TankShot>();
 
         proj.Init(dir, projectileSpeed, projectileHitMask, gameObject);
+        Assets.Scripts.Netcode.NetSpawn.Server(go);
     }
 
     private bool IsMountedOnTank()

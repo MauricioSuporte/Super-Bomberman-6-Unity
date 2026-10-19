@@ -1180,6 +1180,20 @@ public class ItemPickup : MonoBehaviour
         skullBounceRoutine = null;
     }
 
+    public void ApplyNetworkLanding(Vector2 position)
+    {
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || isBeingDestroyed) return;
+        if (skullBounceRoutine != null) StopCoroutine(skullBounceRoutine);
+        skullBounceRoutine = null;
+        skullBounceMoving = false;
+        transform.localRotation = Quaternion.identity;
+        RestoreSkullBounceFlipState();
+        SetSkullWorldPosition(position, syncPhysics: true);
+        SyncSkullAnimatedRendererBasePosition();
+        StartSkullBouncePositionLock(position);
+        if (_col != null) _col.enabled = true;
+    }
+
     IEnumerator SkullExpelRoutine(
         Vector2 direction,
         float tileSize,
@@ -1258,6 +1272,7 @@ public class ItemPickup : MonoBehaviour
             $"expel finish item:{GetDebugIdentity()} origin:{FormatVec(origin)} " +
             $"final:{FormatVec(current)} landed:{landed}");
 
+        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(7, gameObject, direction: current);
         skullBounceMoving = false;
         skullBounceRoutine = null;
     }

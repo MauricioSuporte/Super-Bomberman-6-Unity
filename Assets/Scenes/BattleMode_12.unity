@@ -7508,6 +7508,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98c1acda7aa60e043b90d01e4a1b6459, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  battlePlayerCursors:
+  - {fileID: 1079589407007453078, guid: 3dc067a863e2d754b8101e2c9686d9a3, type: 3}
+  - {fileID: 8769020015163931379, guid: 0651b2f0c4d59a34393bfef0a2fa0885, type: 3}
+  - {fileID: 2209356201476908330, guid: 0773d25e48d28f140a6ef2ed138c7c1c, type: 3}
+  - {fileID: 3436256897922708183, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
+  - {fileID: -7352667033606481797, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
+  - {fileID: -2312526217183143546, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
   fadeImage: {fileID: 765618197}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   playStartSfxOnIntroEnd: 1

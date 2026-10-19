@@ -73,7 +73,7 @@ public sealed partial class BattleModeMenu
     int onlineSoundSequence, onlineSoundIndex, appliedOnlineSoundSequence;
     float onlineSoundVolume;
 
-    AudioClip[] OnlineSounds => new[] { moveCursorSfx, confirmSfx, returnSfx, deniedSfx, specificStartSfx, restoreDefaultSfx };
+    AudioClip[] OnlineSounds => new[] { moveCursorSfx, confirmSfx, returnSfx, deniedSfx, null, restoreDefaultSfx };
 
     void RecordOnlineSound(AudioClip clip, float volume)
     {
@@ -97,7 +97,7 @@ public sealed partial class BattleModeMenu
         {
             GameMusicController.Instance?.StopMusic();
             battleStartBlinkTimer = 0f;
-            battleStartVisible = true;
+            battleStartVisible = false;
             StartSpecificSettingsCursorConfirmAnimation();
         }
         if (view.startConfirmed)

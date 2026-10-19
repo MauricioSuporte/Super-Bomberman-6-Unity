@@ -17,6 +17,8 @@ namespace Assets.Scripts.Netcode
         bool rosterInitialized;
         float noticeUntil;
         string arrivalName;
+        bool ownArrival;
+        int presentedLocalId;
 
         static readonly Color32 Ink = new(19, 15, 43, 255);
         static readonly Color32 Gold = new(255, 216, 106, 255);
@@ -72,12 +74,21 @@ namespace Assets.Scripts.Netcode
             if (!connected)
             {
                 rosterInitialized = false;
+                presentedLocalId = 0;
                 System.Array.Clear(occupiedSlots, 0, occupiedSlots.Length);
                 System.Array.Clear(arrivalUntil, 0, arrivalUntil.Length);
                 noticeUntil = 0;
                 return;
             }
             if (!rosterInitialized) cursorButton = BombermanNetworkManager.CanConfigure ? configureButton : leaveButton;
+            int localId = BombermanNetworkManager.LocalRoomPlayerId;
+            if (localId <= 0) return; // Wait for the roster that identifies this connection.
+            if (presentedLocalId != localId)
+            {
+                presentedLocalId = localId;
+                ownArrival = true;
+                noticeUntil = Time.unscaledTime + 5f;
+            }
             creationOpen = false;
             bool joined = false;
             int count = 0;
@@ -93,6 +104,7 @@ namespace Assets.Scripts.Netcode
                     arrivalUntil[i] = Time.unscaledTime + 5f;
                     noticeUntil = Time.unscaledTime + 5f;
                     arrivalName = BombermanNetworkManager.RoomPlayerName(id);
+                    ownArrival = false;
                     joined = true;
                 }
                 occupiedSlots[i] = occupied;
@@ -110,7 +122,7 @@ namespace Assets.Scripts.Netcode
             rosterInitialized = true;
             if (joined) PlayLobbySound(confirmSfx);
             rosterStatus.text = string.Format(text.PlayersCount, count, BombermanNetworkManager.RoomCapacity);
-            arrivalNotice.text = Time.unscaledTime < noticeUntil ? string.Format(text.PlayerJoined, arrivalName) :
+            arrivalNotice.text = Time.unscaledTime < noticeUntil ? (ownArrival ? text.YouJoined : string.Format(text.PlayerJoined, arrivalName)) :
                 BombermanNetworkManager.OwnerModeLocked ? GameTextDatabase.Title.BossRushLocked :
                 BombermanNetworkManager.RoomCompleted ? text.RunCompleted : text.Waiting;
             arrivalNotice.color = Time.unscaledTime < noticeUntil ? Gold : Muted;

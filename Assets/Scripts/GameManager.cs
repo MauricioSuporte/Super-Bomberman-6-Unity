@@ -2091,6 +2091,8 @@ public class GameManager : MonoBehaviour
 
     void UpdateBattleRoundTimer()
     {
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.BattleStartPending ||
+            (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning)) return;
         if (!Application.isPlaying)
             return;
 

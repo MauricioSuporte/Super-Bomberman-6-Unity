@@ -262,13 +262,11 @@ public sealed partial class BattleModeMenu : MonoBehaviour
     [SerializeField] private int specificSettingsFontSize = 32;
     [SerializeField] private Vector2 specificCursorOffset = new(-210f, 0f);
     [SerializeField] private Vector2 specificCursorSize = new(62f, 62f);
-    [SerializeField, Min(0f)] private float specificStartWaitSeconds = 4f;
     [SerializeField, Min(0.01f)] private float specificStartFadeSeconds = 1f;
     [SerializeField] private Color specificStageImageFallbackColor = new(0f, 0f, 0f, 0.65f);
     [SerializeField] private Texture2D battleStartTexture;
     [SerializeField] private Vector2 battleStartOffset = Vector2.zero;
     [SerializeField] private Vector2 battleStartSize = new(190f, 19f);
-    [SerializeField, Min(0.01f)] private float battleStartBlinkSeconds = 0.05f;
     [SerializeField] private Vector2 musicSelectRootOffset = Vector2.zero;
     [SerializeField] private Vector2 musicSelectOptionsOffset = new(120f, 0f);
     [SerializeField] private Vector2 musicSelectNameColumnOffset = new(-180f, 0f);
@@ -384,8 +382,6 @@ public sealed partial class BattleModeMenu : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float returnSfxVolume = 1f;
     [SerializeField] private AudioClip deniedSfx;
     [SerializeField, Range(0f, 1f)] private float deniedSfxVolume = 1f;
-    [SerializeField] private AudioClip specificStartSfx;
-    [SerializeField, Range(0f, 1f)] private float specificStartSfxVolume = 1f;
     [SerializeField] private AudioClip restoreDefaultSfx;
     [SerializeField, Range(0f, 1f)] private float restoreDefaultSfxVolume = 1f;
 
@@ -6112,37 +6108,18 @@ public sealed partial class BattleModeMenu : MonoBehaviour
     {
         specificStartConfirmed = true;
         battleStartBlinkTimer = 0f;
-        battleStartVisible = true;
+        battleStartVisible = false;
         if (specificCursorRt != null)
             specificConfirmedCursorPosition = specificCursorRt.anchoredPosition;
         StartSpecificSettingsCursorConfirmAnimation();
 
         GameMusicController.Instance?.StopMusic();
-        PlaySfx(specificStartSfx != null ? specificStartSfx : confirmSfx, specificStartSfx != null ? specificStartSfxVolume : confirmSfxVolume);
+        PlaySfx(confirmSfx, confirmSfxVolume);
         confirmed = true;
-
-        if (specificStartWaitSeconds > 0f)
-            yield return ProbeSpecificStartWait();
 
         yield return FadeOutRoutine(specificStartFadeSeconds);
         Hide();
         LoadScene(GetBattleStageSceneName(SaveSystem.GetBattleModeStageIndex()));
-    }
-
-    private IEnumerator ProbeSpecificStartWait()
-    {
-        float wait = Mathf.Max(0f, specificStartWaitSeconds);
-        if (wait <= 0f)
-            yield break;
-
-        float elapsed = 0f;
-
-        while (elapsed < wait)
-        {
-            elapsed += Time.unscaledDeltaTime;
-
-            yield return null;
-        }
     }
 
     private void EnsureSpecificSettingsBuilt()
@@ -6264,7 +6241,6 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         if (specificStartConfirmed)
         {
             LockSpecificSettingsCursorPosition();
-            UpdateBattleStartBlink();
             LayoutBattleStartImage();
             return;
         }
@@ -6330,20 +6306,6 @@ public sealed partial class BattleModeMenu : MonoBehaviour
             "Start" => text.Start,
             _ => optionId
         };
-    }
-
-    private void UpdateBattleStartBlink()
-    {
-        if (battleStartImage == null)
-            return;
-
-        battleStartBlinkTimer += Time.unscaledDeltaTime;
-        float blinkSeconds = Mathf.Max(0.01f, battleStartBlinkSeconds);
-        while (battleStartBlinkTimer >= blinkSeconds)
-        {
-            battleStartBlinkTimer -= blinkSeconds;
-            battleStartVisible = !battleStartVisible;
-        }
     }
 
     private void LayoutBattleStartImage()

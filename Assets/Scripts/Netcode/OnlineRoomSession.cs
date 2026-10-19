@@ -166,6 +166,7 @@ namespace Assets.Scripts.Netcode
 
         void InitializeRoomServer()
         {
+            InitializeBattleStartServer();
             roomPresentationByConnection.Clear();
             roomStarted = false;
             roomDeadline = Time.unscaledTime + 300f;
@@ -316,6 +317,7 @@ namespace Assets.Scripts.Netcode
         public override void Update()
         {
             base.Update();
+            TickBattleStart();
             TickDedicatedProcess();
             TickRoomTimeout();
 #if UNITY_EDITOR || DEBUG
@@ -609,6 +611,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerChangeScene(string newSceneName)
         {
+            ResetBattleStart(newSceneName);
             roomPresentationByConnection.Clear();
             Debug.Log($"[Room] scene={newSceneName} players={playerIdByConnection.Count} admin={RoomAdminPlayerId}");
             if (!roomStarted || newSceneName == NetworkLobby.SceneName)
@@ -628,6 +631,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnClientChangeScene(string newSceneName, SceneOperation operation, bool customHandling)
         {
+            ResetBattleStart(newSceneName);
             MenuView = CharacterView = FlowView = "";
             GetComponent<OnlineLobbyMenu>()?.ReleaseRoomEventSystem();
             base.OnClientChangeScene(newSceneName, operation, customHandling);

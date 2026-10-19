@@ -535,7 +535,10 @@ public class GameMusicController : MonoBehaviour
             yield return null;
         }
 
+        yield return null; // Allow the arena entrance to take ownership of music playback.
         preloadAndPlayRoutine = null;
+        if ((StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) ||
+            Assets.Scripts.Netcode.BombermanNetworkManager.BattleStartPending) yield break;
         PlayDefaultMusic(true);
     }
 
