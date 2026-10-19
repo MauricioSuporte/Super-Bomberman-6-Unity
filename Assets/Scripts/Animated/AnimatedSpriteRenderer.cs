@@ -86,6 +86,17 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         speed = useUnscaledTime ? 1f : Time.timeScale
     };
 
+    public Vector2 CurrentSpriteOffset => frameOffsets != null && frameOffsets.Length > 0
+        ? frameOffsets[Mathf.Clamp(animationFrame, 0, frameOffsets.Length - 1)] : Vector2.zero;
+
+    public Vector3 FrameOffsetToWorld(Vector2 offset)
+    {
+        if (!canMoveVisualLocal || frozen || visualTransform == null) return Vector3.zero;
+        if (spriteRenderer != null && spriteRenderer.flipX) offset.x = -offset.x;
+        if (runtimeLockX) offset.x = 0;
+        return visualTransform.parent != null ? visualTransform.parent.TransformVector(offset) : (Vector3)offset;
+    }
+
     public void PresentPlayback(PlaybackState state, float elapsed, bool applyOffsets = true)
     {
         CurrentFrame = state.frame;

@@ -15,6 +15,10 @@ import subprocess
 import tarfile
 import time
 import xml.etree.ElementTree as ET
+import urllib.error
+import urllib.parse
+import urllib.request
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 SSH = os.environ.get("SB6_DEPLOY_SSH", "mauricio@100.64.0.46")
@@ -35,7 +39,20 @@ def command(args, **kwargs):
 
 
 def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_updater():
+    compiler = Path(os.environ.get("WINDIR", "C:/Windows")) / "Microsoft.NET/Framework64/v4.0.30319/csc.exe"
+    output = REPORTS / "Atualizar jogo.exe"
+    command([compiler, "/nologo", "/codepage:65001", "/target:exe", "/optimize+", "/warnaserror+", f"/out:{output}",
+             "/reference:System.Web.Extensions.dll", "/reference:System.IO.Compression.dll",
+             "/reference:System.IO.Compression.FileSystem.dll", ROOT / "Tools/Ci/SB6Updater.cs"])
+    return output
 
 
 def protocol():
@@ -72,6 +89,7 @@ def build():
     profile = os.environ.get("SB6_RELEASE_PROFILE", "full")
     if profile not in ("quick", "full"):
         raise RuntimeError("invalid release profile")
+    updater = build_updater()
     commit = command(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     expected = os.environ.get("GITHUB_SHA", commit)
     if not re.fullmatch(r"[0-9a-f]{40}", commit) or commit != expected:
@@ -117,9 +135,22 @@ def build():
     distribution = ROOT / "Build/Distribution" / f"Super Bomberman 6 v{version[1]}"
     shutil.copytree(ROOT / "Build/OnlineClient/Windows", distribution,
                     ignore=shutil.ignore_patterns("SB6.exe", "SB6_Data", "SB6_BurstDebugInformation_DoNotShip"))
+    shutil.copy2(updater, distribution / "Atualizar jogo.exe")
     (distribution / "Start-Online-Diagnostics.cmd").write_text(
         '@echo off\ncd /d "%~dp0"\nstart "" "Super Bomberman 6.exe" -online-motion-logs -logFile "%~dp0OnlineMotion.log"\n',
         encoding="utf-8", newline="\r\n")
+    files = sorted(path.relative_to(distribution).as_posix() for path in distribution.rglob("*") if path.is_file())
+    (distribution / "client-files.json").write_text(json.dumps(files + ["client-files.json"]), encoding="utf-8")
+    stamp = os.environ.get("SB6_ARTIFACT_TIMESTAMP", datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S"))
+    if not re.fullmatch(r"[0-9_-]+", stamp):
+        raise RuntimeError("invalid package timestamp")
+    package = REPORTS / f"SB6-Windows-{stamp}.zip"
+    with zipfile.ZipFile(package, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=1) as archive:
+        for path in sorted(distribution.rglob("*")):
+            if path.is_file():
+                archive.write(path, path.relative_to(distribution.parent).as_posix())
+    (REPORTS / "client-update.json").write_text(json.dumps(dict(sourceCommit=commit, version=version[1],
+        folder=distribution.name, package=package.name, sha256=sha(package)), indent=2), encoding="utf-8")
     archive = REPORTS / "linux-release.tar.gz"
     with tarfile.open(archive, "w:gz", compresslevel=1) as package:
         for child in stage.iterdir():
@@ -154,8 +185,53 @@ def deploy():
     completed.check_returncode()
 
 
+def publish_client():
+    """Expose the successfully deployed client without distributing GitHub credentials."""
+    token = os.environ["GITHUB_TOKEN"]
+    repository = "MauricioSuporte/Super-Bomberman-6-Unity"
+    endpoint = f"https://api.github.com/repos/{repository}/releases"
+    tag = "online-v0.5.0"
+    update = json.loads((REPORTS / "client-update.json").read_text(encoding="utf-8"))
+    if not re.fullmatch(r"SB6-Windows-[0-9_-]+\.zip", update["package"]):
+        raise RuntimeError("invalid client archive")
+    package = REPORTS / update["package"]
+    if sha(package) != update["sha256"]:
+        raise RuntimeError("client package changed after build")
+
+    def request(url, method="GET", payload=None, content_type="application/json"):
+        body = json.dumps(payload).encode("utf-8") if payload is not None else None
+        headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
+                   "User-Agent": "SB6-Release", "Content-Type": content_type}
+        with urllib.request.urlopen(urllib.request.Request(url, data=body, headers=headers, method=method), timeout=120) as response:
+            return json.load(response)
+
+    try:
+        release = request(f"{endpoint}/tags/{tag}")
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise
+        release = request(endpoint, "POST", dict(tag_name=tag, target_commitish=update["sourceCommit"],
+            name="Online v0.5.0 — atualização automática", prerelease=True, make_latest="false"))
+    # Upload before atomically changing the public update pointer. Failed uploads leave the old client available.
+    upload = release["upload_url"].split("{")[0] + "?name=" + urllib.parse.quote(package.name)
+    existing = next((asset for asset in release["assets"] if asset["name"] == package.name), None)
+    if existing is None:
+        # Stream large Unity packages rather than loading the complete ZIP into runner RAM.
+        with package.open("rb") as stream:
+            headers = {"Authorization": f"Bearer {token}", "User-Agent": "SB6-Release",
+                       "Content-Type": "application/zip", "Content-Length": str(package.stat().st_size)}
+            with urllib.request.urlopen(urllib.request.Request(upload, data=stream, headers=headers, method="POST"), timeout=1800) as response:
+                existing = json.load(response)
+    update["url"] = existing["browser_download_url"]
+    update.pop("package")
+    body = "Cliente correspondente ao servidor online publicado. Execute Atualizar jogo.exe com o jogo fechado.\n\n"
+    body += f"Build: {update['sourceCommit']}\n\n<!-- sb6-update:{json.dumps(update, separators=(',', ':'))} -->"
+    request(f"{endpoint}/{release['id']}", "PATCH", dict(body=body, prerelease=True, make_latest="false"))
+    print("Client updater channel published:", update["sourceCommit"], flush=True)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("build", "deploy"))
+    parser.add_argument("action", choices=("build", "deploy", "publish-client"))
     options = parser.parse_args()
-    (build if options.action == "build" else deploy)()
+    {"build": build, "deploy": deploy, "publish-client": publish_client}[options.action]()

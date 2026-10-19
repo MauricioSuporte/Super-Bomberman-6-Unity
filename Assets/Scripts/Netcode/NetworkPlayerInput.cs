@@ -14,7 +14,7 @@ namespace Assets.Scripts.Netcode
             PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionB, PlayerAction.ActionC, PlayerAction.Select
         };
         NetworkPlayerSetup setup;
-        int serverHeldMask;
+        int serverHeldMask, lastSentHeld;
         float nextSend, lastReceived;
         static bool Blocked => GamePauseController.IsPaused ||
             (BombermanNetworkManager.IsCoopStage && StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) ||
@@ -40,9 +40,10 @@ namespace Assets.Scripts.Netcode
                     if (input.Get(1, Actions[i])) held |= 1 << i;
                     if (i >= 4 && input.GetDown(1, Actions[i])) pressed |= 1 << i;
                 }
-                if (pressed != 0 || Time.unscaledTime >= nextSend)
+                if (pressed != 0 || held != lastSentHeld || Time.unscaledTime >= nextSend)
                 {
-                    nextSend = Time.unscaledTime + 1f / 30f;
+                    nextSend = Time.unscaledTime + 1f / 60f;
+                    lastSentHeld = held;
                     CmdControls(held, pressed);
                 }
             }

@@ -99,7 +99,8 @@ namespace Assets.Scripts.Netcode
         IEnumerator CoopStageCompletedRoutine(GameManager game, string nextStage, string completedStage)
         {
             // Keep the existing portal/death choreography on the authoritative scene.
-            yield return new WaitForSecondsRealtime(2f);
+            yield return new WaitForSecondsRealtime(3f);
+            yield return new WaitForSecondsRealtime((float)(NetworkServer.sendInterval * Math.Max(2, NetworkClient.bufferTimeMultiplier) + .1));
             if (game == null || !NetworkServer.active) yield break;
             if (RoomMode == OnlineRoomMode.BossRush)
             {

@@ -109,6 +109,7 @@ namespace Assets.Scripts.Netcode
         public int[] sprites;
         public float animationTime, sequenceDuration, restartDelay;
         public float[] durations;
+        public Vector2[] offsets;
         public bool sequence, loop, pingPong;
     }
 
@@ -146,6 +147,7 @@ namespace Assets.Scripts.Netcode
             hash.Add(source.loopRestartDelay); hash.Add(source.pingPong);
             if (source.animationSprite != null) foreach (var sprite in source.animationSprite) hash.Add(sprite);
             if (source.frameDurations != null) foreach (float duration in source.frameDurations) hash.Add(duration);
+            if (source.frameOffsets != null) foreach (var offset in source.frameOffsets) hash.Add(offset);
             int key = source.GetEntityId().GetHashCode(), signature = hash.ToHashCode();
             if (coopAnimationClips.TryGetValue(key, out var cached) && cached.hash == signature) return cached.clip;
             int id = coopAnimationDefinitions.Count + 1;
@@ -156,6 +158,7 @@ namespace Assets.Scripts.Netcode
                 sprites = new int[sprites.Length], animationTime = source.animationTime,
                 sequence = source.useSequenceDuration, sequenceDuration = source.sequenceDuration,
                 durations = source.frameDurations == null ? null : (float[])source.frameDurations.Clone(),
+                offsets = source.frameOffsets == null ? null : (Vector2[])source.frameOffsets.Clone(),
                 loop = source.loop, loopStart = source.loopStartFrame,
                 restartDelay = source.loopRestartDelay, pingPong = source.pingPong
             };
@@ -193,6 +196,11 @@ namespace Assets.Scripts.Netcode
                 coopViewClips[frame.id] = frame.animation;
             }
             animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, NetworkTime.time - frame.time), false);
+            if (clip.offsets != null && clip.offsets.Length > 0)
+            {
+                Vector2 offset = clip.offsets[Mathf.Clamp(animation.CurrentFrame, 0, clip.offsets.Length - 1)];
+                view.transform.position += frame.offsetRight * offset.x + frame.offsetUp * offset.y;
+            }
         }
 
         readonly Dictionary<int, int> coopViewClips = new();

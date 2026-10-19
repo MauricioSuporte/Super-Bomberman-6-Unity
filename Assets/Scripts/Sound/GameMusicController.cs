@@ -170,6 +170,13 @@ public class GameMusicController : MonoBehaviour
         if (clip == null || musicSource == null)
             return;
 
+        if (!restart && musicSource.isPlaying && musicSource.clip == clip)
+        {
+            currentMusicVolume = Mathf.Clamp01(volume);
+            musicSource.volume = GameAudioSettings.ApplyMusicVolume(currentMusicVolume);
+            musicSource.pitch = pitch; musicSource.loop = loop;
+            return;
+        }
         StopMusicTransitionRoutine();
 
         bool sameClip = musicSource.clip == clip;
@@ -198,6 +205,13 @@ public class GameMusicController : MonoBehaviour
         if (introClip == null || musicSource == null)
             return;
 
+        if (!restart && musicSource.isPlaying && (musicSource.clip == introClip || (loopClip != null && musicSource.clip == loopClip)))
+        {
+            currentMusicVolume = Mathf.Clamp01(musicSource.clip == introClip ? introVolume : loopVolume);
+            musicSource.volume = GameAudioSettings.ApplyMusicVolume(currentMusicVolume);
+            musicSource.pitch = pitch;
+            return;
+        }
         StopMusicTransitionRoutine();
 
         if (loopClip == null)

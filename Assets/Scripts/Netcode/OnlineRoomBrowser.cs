@@ -98,7 +98,8 @@ namespace Assets.Scripts.Netcode
 
         public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode, string password = "")
         {
-            if (!DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode)) return;
+            if (!DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode) ||
+                !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
             StartCoroutine(Allocate(mode, password));
         }
 
@@ -148,7 +149,7 @@ namespace Assets.Scripts.Netcode
 
         public void JoinRoom(OnlineListedRoom room, string password = "")
         {
-            if (!Browsing || Creating || !Valid(room)) return;
+            if (!Browsing || Creating || !Valid(room) || !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
             OnlineVersionAuthenticator.RoomPassword = password;
             NetworkManager.singleton.StartClient(new Uri(room.uri));
         }

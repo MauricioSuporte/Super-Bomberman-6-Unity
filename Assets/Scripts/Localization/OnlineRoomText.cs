@@ -19,6 +19,9 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
+    public string EnterName => LanguageText("YOUR NAME (1-12)", "名前（1～12文字）", "TU NOMBRE (1-12)", "SEU NOME (1-12)");
+    public string NameUnavailable => LanguageText("NAME EMPTY, INVALID OR ALREADY IN USE", "名前が空欄・無効・使用中です", "NOMBRE VACÍO, INVÁLIDO O EN USO", "NOME VAZIO, INVÁLIDO OU JÁ EM USO");
+    public string NameHint => LanguageText("TYPE OR USE ARROWS\nLEFT/RIGHT: POSITION\nUP/DOWN: LETTER\nA / ENTER: CONFIRM · B: BACK", "入力または矢印キー\n左右：位置\n上下：文字\nA / ENTER：決定 · B：戻る", "ESCRIBE O USA LAS FLECHAS\nIZQ/DER: POSICIÓN\nARR/ABA: LETRA\nA / ENTER: CONFIRMAR · B: VOLVER", "DIGITE OU USE AS SETAS\nESQ/DIR: POSIÇÃO\nCIMA/BAIXO: LETRA\nA / ENTER: CONFIRMAR · B: VOLTAR");
     public string PrivateRoom => LanguageText("PRIVATE", "非公開", "PRIVADA", "PRIVADA");
     public string Password => LanguageText("PASSWORD (6 DIGITS)", "パスワード（数字6桁）", "CLAVE (6 DÍGITOS)", "SENHA (6 DÍGITOS)");
     public string PasswordHint => LanguageText("LEFT/RIGHT: DIGIT\nUP/DOWN: CHANGE\nA: CONFIRM\nB: BACK", "左右: 桁\n上下: 数字\nA: 決定\nB: 戻る", "IZQ/DER: DÍGITO\nARR/ABA: CAMBIAR\nA: CONFIRMAR\nB: VOLVER", "ESQ/DIR: DÍGITO\nCIMA/BAIXO: ALTERAR\nA: CONFIRMAR\nB: VOLTAR");

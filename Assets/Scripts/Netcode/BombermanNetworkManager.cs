@@ -378,6 +378,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
+            if (authenticator is OnlineVersionAuthenticator names) names.ReleaseName(conn.connectionId);
             bool ownerLeft = playerIdByConnection.TryGetValue(conn.connectionId, out int departedId) &&
                 departedId == RoomAdminPlayerId;
             if (playerIdByConnection.TryGetValue(conn.connectionId, out _))

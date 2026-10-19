@@ -1,4 +1,5 @@
 import json
+import io
 from pathlib import Path
 import subprocess
 import tempfile
@@ -9,6 +10,42 @@ import release
 
 
 class ReleaseProfileTests(unittest.TestCase):
+    def test_updater_pointer_changes_only_after_a_successful_asset_upload(self):
+        for fail_upload in (False, True):
+            with self.subTest(fail_upload=fail_upload), tempfile.TemporaryDirectory() as temporary:
+                reports = Path(temporary)
+                package = reports / "SB6-Windows-2026-10-19_10-00-00.zip"
+                package.write_bytes(b"client archive")
+                manifest = dict(sourceCommit="a" * 40, version="0.5.0", folder="Super Bomberman 6 v0.5.0",
+                    package=package.name, sha256=release.sha(package))
+                (reports / "client-update.json").write_text(json.dumps(manifest), encoding="utf-8")
+                calls = []
+
+                def api(request, **kwargs):
+                    calls.append(request)
+                    if request.get_method() == "GET":
+                        response = dict(id=42, assets=[], upload_url="https://uploads.github.com/repos/test/assets{?name,label}")
+                    elif request.full_url.startswith("https://uploads.github.com/"):
+                        self.assertEqual(b"client archive", request.data.read())
+                        if fail_upload:
+                            raise release.urllib.error.HTTPError(request.full_url, 503, "unavailable", {}, None)
+                        response = dict(browser_download_url="https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases/download/online-v0.5.0/" + package.name)
+                    else:
+                        self.assertEqual("PATCH", request.get_method())
+                        body = json.loads(request.data)["body"]
+                        self.assertIn(manifest["sha256"], body)
+                        self.assertIn(package.name, body)
+                        response = {}
+                    return io.BytesIO(json.dumps(response).encode("utf-8"))
+
+                with patch.object(release, "REPORTS", reports), patch.dict(release.os.environ, {"GITHUB_TOKEN": "test-token"}), patch.object(release.urllib.request, "urlopen", side_effect=api):
+                    if fail_upload:
+                        with self.assertRaises(release.urllib.error.HTTPError):
+                            release.publish_client()
+                    else:
+                        release.publish_client()
+                self.assertEqual(not fail_upload, any(call.get_method() == "PATCH" for call in calls))
+
     def run_profile(self, profile):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -21,6 +58,8 @@ class ReleaseProfileTests(unittest.TestCase):
             (root / "Build/OnlineClient/Windows").mkdir(parents=True)
             (root / "Build/OnlineClient/Windows/SB6.exe").write_bytes(b"stale executable")
             (root / "Build/OnlineClient/Windows/Super Bomberman 6.exe").write_bytes(b"current executable")
+            updater = root / "Updater.exe"
+            updater.write_bytes(b"standalone updater")
             (root / "ProjectSettings").mkdir()
             (root / "ProjectSettings/ProjectSettings.asset").write_text("  bundleVersion: 0.5.0\n", encoding="utf-8")
             (root / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 6000.6.0f1", encoding="utf-8")
@@ -42,7 +81,7 @@ class ReleaseProfileTests(unittest.TestCase):
                 if "-runTests" in args:
                     reports.joinpath("online-tests.xml").write_text('<test-run result="Passed" failed="0"/>', encoding="utf-8")
 
-            with patch.object(release, "ROOT", root), patch.object(release, "REPORTS", reports), patch.object(release, "protocol", return_value=9), patch.object(release, "command", side_effect=command), patch.object(release, "unity", side_effect=unity) as build, patch.dict(release.os.environ, {"SB6_RELEASE_PROFILE": profile, "GITHUB_SHA": revision}):
+            with patch.object(release, "ROOT", root), patch.object(release, "REPORTS", reports), patch.object(release, "build_updater", return_value=updater), patch.object(release, "protocol", return_value=9), patch.object(release, "command", side_effect=command), patch.object(release, "unity", side_effect=unity) as build, patch.dict(release.os.environ, {"SB6_RELEASE_PROFILE": profile, "GITHUB_SHA": revision}):
                 release.build()
                 manifest = json.loads((reports / "deployment.json").read_text(encoding="utf-8"))
                 self.assertEqual(revision, manifest["buildIdentity"])
@@ -53,6 +92,11 @@ class ReleaseProfileTests(unittest.TestCase):
                 self.assertTrue((folder / "build-info.json").is_file())
                 self.assertTrue((folder / "Super Bomberman 6.exe").is_file())
                 self.assertTrue((folder / "Start-Online-Diagnostics.cmd").is_file())
+                self.assertTrue((folder / "Atualizar jogo.exe").is_file())
+                update = json.loads((reports / "client-update.json").read_text(encoding="utf-8"))
+                self.assertEqual(release.sha(reports / update["package"]), update["sha256"])
+                self.assertEqual(folder.name, update["folder"])
+                self.assertIn("Atualizar jogo.exe", json.loads((folder / "client-files.json").read_text(encoding="utf-8")))
                 self.assertFalse((folder / "SB6.exe").exists())
                 return [call.args[0] for call in build.call_args_list]
 

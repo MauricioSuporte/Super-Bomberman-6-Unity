@@ -16,6 +16,7 @@ namespace Assets.Scripts.Netcode
         public float completedTime;
         public float timeoutSeconds;
         public int[] players;
+        public string[] names;
         public OnlineRoomMode mode;
         public string settings;
         public string menu;
@@ -53,6 +54,12 @@ namespace Assets.Scripts.Netcode
         public static bool AcceptingRoomPlayers => NetworkServer.active && !NetworkServer.isLoadingScene &&
             SceneManager.GetActiveScene().name == NetworkLobby.SceneName && NetworkServer.connections.Count < RoomCapacity;
         public static int RoomCapacity => OnlineRoomRules.Capacity(RoomMode);
+        public static string[] RoomPlayerNames { get; private set; } = Array.Empty<string>();
+        public static string RoomPlayerName(int id)
+        {
+            int index = Array.IndexOf(RoomPlayers, id);
+            return index >= 0 && index < RoomPlayerNames.Length ? RoomPlayerNames[index] : "";
+        }
         public static bool RoomCompleted { get; private set; }
         public static float CompletedRunTime { get; private set; }
         public static int RoomAdminPlayerId { get; private set; }
@@ -67,6 +74,7 @@ namespace Assets.Scripts.Netcode
         readonly Dictionary<int, float> selectionLastReceived = new();
         float nextRoomBroadcast, nextCoopSessionBroadcast;
         float nextSelectionSend;
+        int lastSelectionHeld;
         bool leavingRoom;
         float roomDeadline;
         bool roomStarted;
@@ -168,6 +176,7 @@ namespace Assets.Scripts.Netcode
             }
             LocalRoomPlayerId = message.playerId;
             RoomPlayers = message.players ?? Array.Empty<int>();
+            RoomPlayerNames = message.names ?? Array.Empty<string>();
             RoomCompleted = message.completed; CompletedRunTime = message.completedTime;
             RoomMode = message.mode;
             if (!string.IsNullOrEmpty(message.progress)) global::SaveSystem.ApplyRoomProgress(message.progress, message.playerId == message.adminPlayerId);
@@ -210,6 +219,7 @@ namespace Assets.Scripts.Netcode
                 var characters = FindAnyObjectByType<BomberSkinSelectMenu>(FindObjectsInactive.Include);
                 if (characters == null || characters.ActiveOnlineSelectionPlayerId != id) return;
             }
+            if (InAnyMenu) nextRoomBroadcast = 0;
             const int valid = (1 << 11) - 1;
             selectionHeld[id] = message.held & valid;
             selectionPressed[id] = (selectionPressed.TryGetValue(id, out int previous) ? previous : 0) | (message.pressed & valid);
@@ -242,6 +252,14 @@ namespace Assets.Scripts.Netcode
             TickCoopWorld();
             TickBombAnimations();
             PresentOnlineSprites();
+            TickOnlinePauseBroadcast();
+            if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
+            {
+                nextRoomBroadcast = Time.unscaledTime + (InAnyMenu ? 1f / 60f : IsCoopRoom ? 0.5f : 0.1f);
+                // Joins and transitions send a full snapshot. Battle settings can
+                // only change in configuration, not during lobby/gameplay ticks.
+                BroadcastRoom(InAnyMenu);
+            }
         }
 
         public override void Update()
@@ -253,13 +271,6 @@ namespace Assets.Scripts.Netcode
             TickLocalLoadTest();
 #endif
             TickDedicatedAdminInput();
-            if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
-            {
-                nextRoomBroadcast = Time.unscaledTime + (InAnyMenu ? 1f / 30f : IsCoopRoom ? 0.5f : 0.1f);
-                // Joins and transitions send a full snapshot. Battle settings can
-                // only change in configuration, not during lobby/gameplay ticks.
-                BroadcastRoom(InAnyMenu);
-            }
             if (NetworkServer.active && RoomMode == OnlineRoomMode.BossRush && Time.unscaledTime >= nextCoopSessionBroadcast)
             {
                 nextCoopSessionBroadcast = Time.unscaledTime + 0.1f;
@@ -281,9 +292,10 @@ namespace Assets.Scripts.Netcode
                     UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
                     pressed |= 1 << (int)PlayerAction.Start;
 #endif
-                if (pressed != 0 || Time.unscaledTime >= nextSelectionSend)
+                if (pressed != 0 || held != lastSelectionHeld || Time.unscaledTime >= nextSelectionSend)
                 {
-                    nextSelectionSend = Time.unscaledTime + 0.05f;
+                    nextSelectionSend = Time.unscaledTime + 1f / 60f;
+                    lastSelectionHeld = held;
                     NetworkClient.Send(new OnlineSelectionInputMessage
                         { held = held, pressed = pressed, scene = SceneManager.GetActiveScene().name });
                 }
@@ -350,14 +362,15 @@ namespace Assets.Scripts.Netcode
         void BroadcastRoom(bool includeSettings = true)
         {
             RoomAdminPlayerId = FindRoomAdmin(playerIdByConnection.Values, RoomAdminPlayerId);
-            if (GamePauseController.Instance != null)
-            {
-                var pause = new OnlinePauseMessage { state = GamePauseController.Instance.CaptureOnlinePause() };
-                foreach (var peer in NetworkServer.connections.Values)
-                    if (peer != null && peer.isAuthenticated && peer != NetworkServer.localConnection) peer.Send(pause);
-            }
             RoomPlayers = new List<int>(playerIdByConnection.Values).ToArray();
             Array.Sort(RoomPlayers);
+            RoomPlayerNames = new string[RoomPlayers.Length];
+            if (authenticator is OnlineVersionAuthenticator names)
+                foreach (var connection in playerIdByConnection)
+                {
+                    int index = Array.IndexOf(RoomPlayers, connection.Value);
+                    if (index >= 0) RoomPlayerNames[index] = names.NameForConnection(connection.Key);
+                }
             var menu = InConfiguration ? FindAnyObjectByType<BattleModeMenu>(FindObjectsInactive.Include) : null;
             MenuView = menu != null ? menu.CaptureOnlineView() : "";
             var characters = InCharacterConfiguration ? FindAnyObjectByType<BomberSkinSelectMenu>(FindObjectsInactive.Include) : null;
@@ -372,7 +385,7 @@ namespace Assets.Scripts.Netcode
                 if (connection == NetworkServer.localConnection) { LocalRoomPlayerId = id; continue; }
                 connection.Send(new OnlineRoomMessage { playerId = id, adminPlayerId = RoomAdminPlayerId,
                     dedicated = dedicatedServer, completed = RoomCompleted, completedTime = CompletedRunTime,
-                    players = RoomPlayers, mode = RoomMode, timeoutSeconds = RoomTimeoutSeconds,
+                    players = RoomPlayers, names = RoomPlayerNames, mode = RoomMode, timeoutSeconds = RoomTimeoutSeconds,
                     settings = settings, menu = MenuView, characters = CharacterView, progress = progress, flowView = flow, bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty(), ownerModeLocked = OwnerModeLocked });
             }
         }
@@ -475,7 +488,8 @@ namespace Assets.Scripts.Netcode
             else if (NetworkServer.active) manager.StopServer();
             else manager.StopClient();
             ClearRoom();
-            GameMusicController.Instance?.StopMusic();
+            if (destination != NetworkLobby.SceneName || SceneManager.GetActiveScene().name != NetworkLobby.SceneName)
+                GameMusicController.Instance?.StopMusic();
             Destroy(manager.gameObject);
             OnlineVersionAuthenticator.RoomPassword = "";
             SceneManager.LoadScene(destination);
@@ -489,7 +503,7 @@ namespace Assets.Scripts.Netcode
             RoomCompleted = false; CompletedRunTime = 0;
             RoomAdminPlayerId = 0;
             DedicatedRoom = false;
-            RoomPlayers = Array.Empty<int>();
+            RoomPlayers = Array.Empty<int>(); RoomPlayerNames = Array.Empty<string>();
             MenuView = CharacterView = FlowView = "";
             BossRushSession.CancelRun();
             global::SaveSystem.EndOnlineBattleSettings();

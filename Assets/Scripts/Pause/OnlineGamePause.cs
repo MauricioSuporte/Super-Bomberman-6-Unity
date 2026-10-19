@@ -62,3 +62,20 @@ public partial class GamePauseController
         return true;
     }
 }
+
+namespace Assets.Scripts.Netcode
+{
+    public partial class BombermanNetworkManager
+    {
+        GamePauseController.OnlinePauseState lastPauseView;
+        bool hasPauseView;
+        void TickOnlinePauseBroadcast()
+        {
+            if (!Mirror.NetworkServer.active || GamePauseController.Instance == null) return;
+            var state = GamePauseController.Instance.CaptureOnlinePause();
+            if (hasPauseView && state.Equals(lastPauseView)) return;
+            lastPauseView = state; hasPauseView = true;
+            Mirror.NetworkServer.SendToReady(new OnlinePauseMessage { state = state });
+        }
+    }
+}

@@ -26,6 +26,13 @@ namespace Assets.Scripts.Netcode
         Button hostButton, configureButton, leaveButton;
         Button modeButton, privacyButton, passwordButton;
         TextMeshProUGUI modeLeft, modeRight, privacyLeft, privacyRight;
+        GameObject nameRoot;
+        TextMeshProUGUI nameText, nameTitle, nameHints;
+        string editedName = "";
+        int nameCursor, nameTextFrame = -1;
+        bool invalidName;
+        System.Action afterName;
+        const string NameCharacters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
         GameObject passwordRoot;
         TextMeshProUGUI passwordText, passwordTitle, passwordHints;
         readonly int[] passwordDigits = new int[6];
@@ -53,6 +60,10 @@ namespace Assets.Scripts.Netcode
         void OnDisable()
         {
             SceneManager.sceneLoaded -= OnRoomSceneLoaded;
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Keyboard.current != null)
+                UnityEngine.InputSystem.Keyboard.current.onTextInput -= TypeName;
+#endif
             ReleaseRoomEventSystem();
         }
 
@@ -117,7 +128,7 @@ namespace Assets.Scripts.Netcode
             hostButton.GetComponentInChildren<TextMeshProUGUI>().text = text.Host;
             configureButton.GetComponentInChildren<TextMeshProUGUI>().text = text.StartGame;
             leaveButton.GetComponentInChildren<TextMeshProUGUI>().text = idle ? text.Back : text.Leave;
-            Position(leaveButton.GetComponent<RectTransform>(), idle ? -53 : 0, idle ? -78 : -82, idle ? 98 : 196, 16);
+            Position(leaveButton.GetComponent<RectTransform>(), idle ? -53 : 0, -78, idle ? 98 : 196, 16);
             Position(leaveButton.GetComponentInChildren<TextMeshProUGUI>().rectTransform, 0, 0, idle ? 94 : 188, 14);
             var lines = new StringBuilder();
             if (connected)
@@ -131,7 +142,7 @@ namespace Assets.Scripts.Netcode
                     lines.AppendLine(string.Format(text.RoomAdmin, BombermanNetworkManager.RoomAdminPlayerId));
                 for (int id = 1; id <= BombermanNetworkManager.RoomCapacity; id++)
                 {
-                    string mode = BombermanNetworkManager.IsConnectedSlot(id) ? GameTextDatabase.BattleModeMenu.Man : text.Empty;
+                    string mode = BombermanNetworkManager.IsConnectedSlot(id) ? BombermanNetworkManager.RoomPlayerName(id) : text.Empty;
                     lines.AppendLine($"P{id}: {mode}");
                 }
                 lines.AppendLine(text.Waiting);
@@ -142,7 +153,7 @@ namespace Assets.Scripts.Netcode
             details.text = lines.ToString();
             details.gameObject.SetActive(!idle || OnlineVersionAuthenticator.VersionRejected);
             UpdateBrowser(idle && lobby);
-            if (passwordOpen) UpdatePassword(); else UpdateNavigation();
+            if (nameRoot.activeSelf) UpdateName(); else if (passwordOpen) UpdatePassword(); else UpdateNavigation();
         }
 
         void CreateRoomCanvas()
@@ -179,25 +190,27 @@ namespace Assets.Scripts.Netcode
             timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, -16);
             timeoutLabel.textWrappingMode = TextWrappingModes.Normal;
             timeoutRoot.SetActive(false);
-            details = Label(panel.transform, "Players", 0, 30, 212, 100, 7);
+            details = Label(panel.transform, "Players", 0, 34, 212, 96, 7);
             details.alignment = TextAlignmentOptions.TopLeft;
             details.textWrappingMode = TextWrappingModes.Normal;
             details.overflowMode = TextOverflowModes.Truncate;
             hostButton = MakeButton(panel.transform, "Create", 0, -56, CreateSelectedRoom);
-            configureButton = MakeButton(panel.transform, "Configure", 0, -56, BombermanNetworkManager.ServerBeginConfiguration);
+            configureButton = MakeButton(panel.transform, "Configure", 0, -50, BombermanNetworkManager.ServerBeginConfiguration);
             leaveButton = MakeButton(panel.transform, "Leave", 0, -78, LeaveLobby);
-            modeButton = MakeButton(panel.transform, "RoomType", 0, -2, () => ChangeMode(1));
+            modeButton = MakeButton(panel.transform, "RoomType", 0, 2, () => ChangeMode(1));
             privacyButton = MakeButton(panel.transform, "Visibility", 0, -20, TogglePrivacy);
             passwordButton = MakeButton(panel.transform, "EditPassword", 0, -38, () => OpenPassword(null, false));
             cursorButton = modeButton;
-            modeLeft = Label(panel.transform, "PreviousType", -108, -2, 10, 16, 8); modeLeft.text = "<";
-            modeRight = Label(panel.transform, "NextType", 108, -2, 10, 16, 8); modeRight.text = ">";
-            privacyLeft = Label(panel.transform, "PreviousVisibility", -108, -20, 10, 16, 8); privacyLeft.text = "<";
-            privacyRight = Label(panel.transform, "NextVisibility", 108, -20, 10, 16, 8); privacyRight.text = ">";
-            passwordRoot = new GameObject("Password", typeof(RectTransform), typeof(Image));
+            modeLeft = Label(panel.transform, "PreviousType", -108, 2, 10, 16, 8); modeLeft.text = "<";
+            modeRight = Label(panel.transform, "NextType", 108, 2, 10, 16, 8); modeRight.text = ">";
+            privacyLeft = Label(panel.transform, "PreviousVisibility", -108, 20, 10, 16, 8); privacyLeft.text = "<";
+            privacyRight = Label(panel.transform, "NextVisibility", 108, 20, 10, 16, 8); privacyRight.text = ">";
+            passwordRoot = new GameObject("Password", typeof(RectTransform), typeof(Image), typeof(Outline));
             passwordRoot.transform.SetParent(panel.transform, false);
             Position(passwordRoot.GetComponent<RectTransform>(), 0, 0, 244, 160);
             passwordRoot.GetComponent<Image>().color = new Color32(30, 22, 61, 255);
+            passwordRoot.GetComponent<Outline>().effectColor = new Color32(173, 133, 231, 255);
+            passwordRoot.GetComponent<Outline>().effectDistance = new Vector2(1, -1);
             passwordTitle = Label(passwordRoot.transform, "PasswordTitle", 0, 56, 232, 18, 8);
             var entry = new GameObject("PasswordEntry", typeof(RectTransform), typeof(Image), typeof(Outline));
             entry.transform.SetParent(passwordRoot.transform, false);
@@ -207,8 +220,19 @@ namespace Assets.Scripts.Netcode
             entry.GetComponent<Outline>().effectDistance = Vector2.one;
             passwordText = Label(entry.transform, "PasswordText", 0, 0, 194, 22, 8);
             passwordHints = Label(passwordRoot.transform, "PasswordHints", 0, -40, 232, 64, 6);
-            passwordHints.alignment = TextAlignmentOptions.BottomLeft;
+            passwordHints.alignment = TextAlignmentOptions.Bottom;
             passwordRoot.SetActive(false);
+            nameRoot = new GameObject("PlayerName", typeof(RectTransform), typeof(Image), typeof(Outline));
+            nameRoot.transform.SetParent(panel.transform, false);
+            Position(nameRoot.GetComponent<RectTransform>(), 0, 0, 244, 160);
+            nameRoot.GetComponent<Image>().color = new Color32(30, 22, 61, 255);
+            nameRoot.GetComponent<Outline>().effectColor = new Color32(173, 133, 231, 255);
+            nameRoot.GetComponent<Outline>().effectDistance = new Vector2(1, -1);
+            nameTitle = Label(nameRoot.transform, "Title", 0, 55, 232, 20, 7);
+            nameText = Label(nameRoot.transform, "Name", 0, 20, 232, 25, 8);
+            nameHints = Label(nameRoot.transform, "Hints", 0, -38, 232, 66, 6);
+            nameHints.alignment = TextAlignmentOptions.Bottom;
+            nameRoot.SetActive(false);
             CreateBrowser(panel.transform);
             EnsureRoomEventSystem();
         }
@@ -222,7 +246,7 @@ namespace Assets.Scripts.Netcode
             timeoutLabel.rectTransform.localScale = new Vector3(warningScale, warningScale, 1);
             timeoutLabel.rectTransform.anchorMin = timeoutLabel.rectTransform.anchorMax = new Vector2(0.5f, 0);
             bool lobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
-            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, (lobby ? 78 : 22) * warningScale);
+            timeoutLabel.rectTransform.anchoredPosition = new Vector2(0, (lobby ? 84 : 22) * warningScale);
             // Keep keyboard/controller selection inside the scrolling room list.
             var selected = cursorButton != null ? cursorButton.gameObject : null;
             if (selected == null || roomContent == null || selected.transform.parent != roomContent) return;
@@ -243,7 +267,7 @@ namespace Assets.Scripts.Netcode
             browserStatus.textWrappingMode = TextWrappingModes.Normal;
             var viewport = new GameObject("RoomList", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
             viewport.transform.SetParent(browserRoot.transform, false);
-            Position(viewport.GetComponent<RectTransform>(), 0, 28, 212, 40);
+            Position(viewport.GetComponent<RectTransform>(), 0, 32, 212, 40);
             viewport.GetComponent<Image>().color = new Color(0, 0, 0, 0.15f);
             roomScroll = viewport.GetComponent<ScrollRect>();
             roomScroll.viewport = viewport.GetComponent<RectTransform>();
@@ -268,8 +292,11 @@ namespace Assets.Scripts.Netcode
         {
             var room = visibleRooms[index];
             if (room == null || NetworkClient.active || NetworkServer.active || !browser.Rooms.Contains(room)) return;
-            if (room.requiresPassword) OpenPassword(room, false);
-            else browser.JoinRoom(room);
+            OpenName(() =>
+            {
+                if (room.requiresPassword) OpenPassword(room, false);
+                else browser.JoinRoom(room);
+            });
         }
 
         void UpdateBrowser(bool visible)
@@ -278,7 +305,7 @@ namespace Assets.Scripts.Netcode
             if (!visible || browser == null) return;
             var text = GameTextDatabase.Online;
             browserStatus.text = text.AvailableRooms + "\n" +
-                (!browser.DirectoryConfigured ? text.PublicNotConfigured : OnlineVersionAuthenticator.PasswordRejected ? text.WrongPassword : browser.BuildRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
+                (!browser.DirectoryConfigured ? text.PublicNotConfigured : OnlineVersionAuthenticator.NameRejected ? text.NameUnavailable : OnlineVersionAuthenticator.PasswordRejected ? text.WrongPassword : browser.BuildRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
                     browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom);
             while (roomButtons.Count < browser.Rooms.Count)
             {
@@ -377,10 +404,82 @@ namespace Assets.Scripts.Netcode
             if (privateRoom && string.IsNullOrEmpty(creationPassword)) OpenPassword(null, false);
         }
 
-        void CreateSelectedRoom()
+        void CreateSelectedRoom() => OpenName(CreateNamedRoom);
+
+        void CreateNamedRoom()
         {
             if (privateRoom && string.IsNullOrEmpty(creationPassword)) { OpenPassword(null, true); return; }
             browser.CreateRoom(selectedMode, privateRoom ? creationPassword : "");
+        }
+
+        void OpenName(System.Action complete)
+        {
+            afterName = complete; invalidName = false;
+            editedName = OnlineVersionAuthenticator.PlayerName;
+            nameCursor = Mathf.Min(editedName.Length, 11);
+            nameRoot.SetActive(true); nameRoot.transform.SetAsLastSibling();
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Keyboard.current != null)
+            {
+                UnityEngine.InputSystem.Keyboard.current.onTextInput -= TypeName;
+                UnityEngine.InputSystem.Keyboard.current.onTextInput += TypeName;
+            }
+#endif
+        }
+
+        void TypeName(char c)
+        {
+            if (nameRoot == null || !nameRoot.activeSelf) return;
+            nameTextFrame = Time.frameCount; invalidName = false;
+            if (c == '\b' && editedName.Length > 0) editedName = editedName[..^1];
+            else if (editedName.Length < 12 && (char.IsLetterOrDigit(c) || c is ' ' or '_' or '-')) editedName += c;
+            nameCursor = Mathf.Min(editedName.Length, 11);
+        }
+
+        void CloseName()
+        {
+            nameRoot.SetActive(false);
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Keyboard.current != null)
+                UnityEngine.InputSystem.Keyboard.current.onTextInput -= TypeName;
+#endif
+        }
+
+        void UpdateName()
+        {
+            var input = PlayerInputManager.Instance;
+            if (input == null) return;
+            bool buttons = nameTextFrame != Time.frameCount;
+            if (buttons && input.GetDown(1, PlayerAction.MoveLeft)) nameCursor = (nameCursor + 11) % 12;
+            if (buttons && input.GetDown(1, PlayerAction.MoveRight)) nameCursor = (nameCursor + 1) % 12;
+            int delta = !buttons ? 0 : input.GetDown(1, PlayerAction.MoveUp) ? 1 : input.GetDown(1, PlayerAction.MoveDown) ? -1 : 0;
+            if (delta != 0)
+            {
+                var characters = editedName.PadRight(12).ToCharArray();
+                int current = Mathf.Max(0, NameCharacters.IndexOf(char.ToUpperInvariant(characters[nameCursor])));
+                characters[nameCursor] = NameCharacters[(current + delta + NameCharacters.Length) % NameCharacters.Length];
+                editedName = new string(characters).TrimEnd(); invalidName = false;
+                PlayLobbySound(moveCursorSfx);
+            }
+            nameTitle.text = invalidName ? GameTextDatabase.Online.NameUnavailable : GameTextDatabase.Online.EnterName;
+            nameTitle.fontSize = 6; nameTitle.textWrappingMode = TextWrappingModes.Normal;
+            var display = new StringBuilder();
+            string padded = editedName.PadRight(12);
+            for (int i = 0; i < 12; i++)
+                display.Append(i == nameCursor ? "<color=#C080FF><u>" + (padded[i] == ' ' ? '_' : padded[i]) + "</u></color>" : padded[i].ToString());
+            nameText.text = display.ToString();
+            nameHints.text = GameTextDatabase.Online.NameHint;
+            bool enter = false;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            enter = keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame);
+#endif
+            if (buttons && input.GetDown(1, PlayerAction.ActionB)) { CloseName(); afterName = null; PlayLobbySound(returnSfx); return; }
+            if (!enter && !(buttons && (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start)))) return;
+            if (!OnlineVersionAuthenticator.ValidPlayerName(editedName)) { invalidName = true; return; }
+            OnlineVersionAuthenticator.PlayerName = editedName;
+            CloseName(); PlayLobbySound(confirmSfx);
+            var complete = afterName; afterName = null; complete?.Invoke();
         }
 
         void OpenPassword(OnlineListedRoom room, bool create)

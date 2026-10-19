@@ -48,6 +48,57 @@ public sealed class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(local); Object.DestroyImmediate(remote); Object.DestroyImmediate(parent); }
     }
 
+    [TestCase("", false)]
+    [TestCase("   ", false)]
+    [TestCase("<b>NAME</b>", false)]
+    [TestCase("ABCDEFGHIJKLM", false)]
+    [TestCase("Jogador_1", true)]
+    public void OnlineNamesMustBeNonEmptyAndValid(string name, bool expected)
+    {
+        Assert.AreEqual(expected, OnlineVersionAuthenticator.ValidPlayerName(name));
+    }
+
+    [Test]
+    public void OnlineNamesAreUniqueIgnoringCaseAndNormalizedSpaces()
+    {
+        var go = new GameObject("Names");
+        try
+        {
+            var auth = go.AddComponent<OnlineVersionAuthenticator>();
+            var field = typeof(OnlineVersionAuthenticator).GetField("admittedNames", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var names = (Dictionary<int, string>)field.GetValue(auth);
+            names[1] = "Jogador";
+            Assert.IsFalse(auth.NameAvailable(" jogador "));
+            Assert.IsTrue(auth.NameAvailable("Outro"));
+            auth.ReleaseName(1);
+            Assert.IsTrue(auth.NameAvailable("JOGADOR"));
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
+    [TestCase("CrazyCup", 2f)]
+    [TestCase("Fooler", 2f)]
+    [TestCase("Springer", 1f)]
+    public void StageOneTwoEnemiesKeepTheirConfiguredSequenceDuration(string enemy, float expected)
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemies/" + enemy + ".prefab");
+        var source = prefab.GetComponentsInChildren<AnimatedSpriteRenderer>(true)[0];
+        Assert.IsTrue(source.useSequenceDuration);
+        Assert.AreEqual(expected, source.sequenceDuration);
+        var go = new GameObject("RemoteSequence", typeof(SpriteRenderer));
+        try
+        {
+            var target = go.AddComponent<AnimatedSpriteRenderer>();
+            target.animationSprite = source.animationSprite;
+            target.useSequenceDuration = true; target.sequenceDuration = source.sequenceDuration;
+            target.idle = false; target.loop = source.loop;
+            target.frameDurations = source.frameDurations;
+            target.AdvanceAnimation(expected / source.animationSprite.Length * 1.5f, expected / source.animationSprite.Length * 1.5f);
+            Assert.AreEqual(1, target.CurrentFrame);
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
     [UnityTest]
     public System.Collections.IEnumerator LeavingRoomCanReloadTheOnlineBrowser()
     {
@@ -222,7 +273,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 11, true)]
+    [TestCase("0.5.0", 12, true)]
+    [TestCase("0.5.0", 11, false)]
     [TestCase("0.5.0", 10, false)]
     [TestCase("0.5.0", 9, false)]
     [TestCase("0.5.0", 8, false)]

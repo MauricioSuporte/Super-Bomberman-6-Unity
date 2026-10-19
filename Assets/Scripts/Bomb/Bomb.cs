@@ -154,7 +154,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         rb.bodyType = RigidbodyType2D.Kinematic;
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        rb.interpolation = Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer
+            ? RigidbodyInterpolation2D.None : RigidbodyInterpolation2D.Interpolate;
 
         if (audioSource != null)
         {

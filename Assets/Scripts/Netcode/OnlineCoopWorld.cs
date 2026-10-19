@@ -13,7 +13,7 @@ namespace Assets.Scripts.Netcode
         public int id, sprite, material, sortingLayer, order, animation;
         public double time;
         public AnimatedSpriteRenderer.PlaybackState playback;
-        public Vector3 position, scale;
+        public Vector3 position, scale, offsetRight, offsetUp;
         public Quaternion rotation;
         public Color color;
         public bool flipX, flipY, visible;
@@ -262,6 +262,11 @@ namespace Assets.Scripts.Netcode
                 {
                     frame.animation = CaptureCoopAnimation(animation);
                     frame.playback = animation.CapturePlayback();
+                    // Remove the sampled jump offset; the client reapplies the offset for its rendered animation frame.
+                    frame.offsetRight = animation.FrameOffsetToWorld(Vector2.right);
+                    frame.offsetUp = animation.FrameOffsetToWorld(Vector2.up);
+                    Vector2 offset = animation.CurrentSpriteOffset;
+                    frame.position -= frame.offsetRight * offset.x + frame.offsetUp * offset.y;
                 }
                 if (!coopLastSprites.TryGetValue(id, out var previous) || !frame.Matches(previous)) changed.Add(frame);
                 coopLastSprites[id] = frame;

@@ -20,6 +20,8 @@ concurrency:
 
 jobs:
   build-and-deploy:
+    permissions:
+      contents: write
     if: github.repository == 'MauricioSuporte/Super-Bomberman-6-Unity' && github.actor == 'MauricioSuporte' && github.ref == 'refs/heads/v0.5.0'
     runs-on: [self-hosted, Windows, X64, sb6-unity]
     timeout-minutes: 120
@@ -63,6 +65,10 @@ jobs:
           retention-days: 14
       - name: Publish Linux release and disconnect current rooms
         run: python Tools/Ci/release.py deploy
+      - name: Publish client updater channel after successful server deployment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python Tools/Ci/release.py publish-client
       - name: Test reports, build manifests and deploy result
         if: always()
         uses: actions/upload-artifact@v7
