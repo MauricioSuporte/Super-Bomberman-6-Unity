@@ -1830,6 +1830,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (!ShouldMovePhysicsLocally)
             return;
 
+        MotionDiagnosticProbe.SimulationTick(this);
         using var performanceSample = BattleModePerformanceMarkers.PlayerFixedUpdate.Auto();
 
         if (UpdateBombReentryCentering())

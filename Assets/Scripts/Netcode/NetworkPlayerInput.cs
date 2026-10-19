@@ -44,6 +44,7 @@ namespace Assets.Scripts.Netcode
                 {
                     nextSend = Time.unscaledTime + 1f / 60f;
                     lastSentHeld = held;
+                    MotionDiagnosticProbe.NetworkInput(gameObject, "input_send", held, pressed);
                     CmdControls(held, pressed);
                 }
             }
@@ -54,11 +55,13 @@ namespace Assets.Scripts.Netcode
             int mask = Time.unscaledTime - lastReceived > 0.5f ? 0 : serverHeldMask;
             for (int i = 0; i < Actions.Length; i++)
                 input.SetSyntheticHeld(setup.PlayerId, Actions[i], (mask & (1 << i)) != 0);
+            MotionDiagnosticProbe.InputApplied(gameObject, mask, (Time.unscaledTime - lastReceived) * 1000);
         }
 
         [Command]
         void CmdControls(int held, int pressed)
         {
+            MotionDiagnosticProbe.NetworkInput(gameObject, "input_receive", held, pressed, Blocked);
             if (((held | pressed) & ((1 << Actions.Length) - 1)) != 0) BombermanNetworkManager.RegisterRoomActivity();
             lastReceived = Time.unscaledTime;
             serverHeldMask = Blocked ? 0 : held & ((1 << Actions.Length) - 1);

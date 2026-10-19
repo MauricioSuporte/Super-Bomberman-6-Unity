@@ -84,6 +84,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool IsBeingMagnetPulled => magnetRoutine != null;
 
     public static readonly HashSet<Bomb> ActiveBombs = new();
+    double diagnosticKickBeganAt, nextDiagnosticKickReject;
 
     public float ApproxRadius { get; private set; } = 0.5f;
 
@@ -336,6 +337,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public void StopKickPunchMagnetRoutines()
     {
+        if (kickRoutine != null) TraceKickDiagnostic("kick_cancelled", "external_stop", kickDirection);
         SuspendSearchPursuit();
         if (kickRoutine != null)
         {
@@ -1411,6 +1413,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if ((!CanBeKicked && !CanBeKickedEarly) || direction == Vector2.zero)
         {
+            TraceKickDiagnostic("kick_rejected", "unavailable_or_zero_direction", direction);
             return false;
         }
 
@@ -1431,16 +1434,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (IsKickBlocked(next))
         {
+            TraceKickDiagnostic("kick_rejected", "destination_tile_blocked", direction);
             return false;
         }
 
         if (IsKickBlockedByCharacterOnImmediateExit(origin, next))
         {
+            TraceKickDiagnostic("kick_rejected", "character_blocks_exit", direction);
             return false;
         }
 
         if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
         {
+            TraceKickDiagnostic("kick_rejected", "destination_overlap_blocked", direction);
             return false;
         }
 
@@ -1458,13 +1464,29 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         isKicked = true;
         WasMovedByKickOrPunch = true;
 
+        diagnosticKickBeganAt = Time.realtimeSinceStartupAsDouble;
+        TraceKickDiagnostic("kick_accepted", "speed=" + kickSpeed, direction);
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
         return true;
     }
 
+    void TraceKickDiagnostic(string kind, string reason, Vector2 direction)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled) return;
+        if (kind == "kick_rejected")
+        {
+            double now = Time.realtimeSinceStartupAsDouble;
+            if (now < nextDiagnosticKickReject) return;
+            nextDiagnosticKickReject = now + 0.25;
+        }
+        GameplayLatencyDiagnostics.Kick(this, kind, reason, direction);
+    }
+
     private IEnumerator KickRoutineFixed()
     {
+        bool diagnosticFirstMotion = false;
+        Vector2 diagnosticOrigin = rb.position;
         while (true)
         {
             if (HasExploded || !isKicked)
@@ -1599,6 +1621,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 DestroyPickupsAtWorld(pos);
 
                 yield return waitFixed;
+                if (!diagnosticFirstMotion && GameplayLatencyDiagnostics.Enabled && ((Vector2)rb.position - diagnosticOrigin).sqrMagnitude > 0.0001f)
+                {
+                    var entry = GameplayLatencyDiagnostics.For("kick_first_physics_motion", bomb: this);
+                    entry.durationMs = (Time.realtimeSinceStartupAsDouble - diagnosticKickBeganAt) * 1000;
+                    GameplayLatencyDiagnostics.Write(entry);
+                    diagnosticFirstMotion = true;
+                }
             }
 
             if (HasExploded || !isKicked)
@@ -1670,6 +1699,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         lastPos = currentTileCenter;
         FinishKickPushedSkull(currentTileCenter);
 
+        TraceKickDiagnostic("kick_stopped", "routine_end", kickDirection);
         isKicked = false;
         kickRoutine = null;
 
@@ -1688,6 +1718,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (!isKicked)
             return;
 
+        TraceKickDiagnostic("kick_stopped", "stop_and_snap", kickDirection);
         tileSize = Mathf.Max(0.0001f, tileSize);
 
         if (kickRoutine != null)

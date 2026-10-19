@@ -353,6 +353,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             false
         );
 
+        MotionDiagnosticProbe.KickResult(movement, bomb, kicked, playerToBombDist, signedAxisOffset, perpendicularOffset);
+
         LogBombKick(
             $"StartKick RESULT bomb:{bomb.name} kicked:{kicked} " +
             $"isSolidNow:{bomb.IsSolid} isBeingKickedNow:{bomb.IsBeingKicked} " +
@@ -752,5 +754,6 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private void LogBombKick(string message, bool verbose = false)
     {
+        MotionDiagnosticProbe.KickDetail(movement, message, verbose);
     }
 }

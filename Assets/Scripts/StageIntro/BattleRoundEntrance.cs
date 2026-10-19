@@ -7,8 +7,6 @@ using UnityEngine.UI;
 
 public partial class StageIntroTransition
 {
-    [SerializeField] Sprite[] battlePlayerCursors;
-
     IEnumerator BattleRoundEntrance()
     {
         if (!NetSync.IsOnline) PlayerPersistentStats.EnsureSessionBooted();
@@ -75,13 +73,7 @@ public partial class StageIntroTransition
             waiting.text = GameTextDatabase.Online.PleaseWait;
             if (NetSync.IsOnline)
             {
-                cursor = new GameObject("LocalPlayerCursor", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-                cursor.transform.SetParent(safe, false);
-                cursor.raycastTarget = false;
-                int index = BombermanNetworkManager.LocalRoomPlayerId - 1;
-                cursor.sprite = battlePlayerCursors != null && index >= 0 && index < battlePlayerCursors.Length ? battlePlayerCursors[index] : null;
-                cursor.enabled = cursor.sprite != null;
-                if (cursor.sprite != null) cursor.rectTransform.sizeDelta = cursor.sprite.rect.size;
+                cursor = CreateBattlePlayerCursor(safe);
             }
         }
 
@@ -94,7 +86,12 @@ public partial class StageIntroTransition
             var hud = FindAnyObjectByType<BattleModeHud>();
             var portrait = hud != null ? hud.GetPortraitAnchor(BombermanNetworkManager.LocalRoomPlayerId) : null;
             if (cursor != null && portrait != null)
-                SetEntranceCursorFromScreen(cursor, safe, RectTransformUtility.WorldToScreenPoint(portrait.GetComponentInParent<Canvas>().worldCamera, portrait.position));
+            {
+                var hudCanvas = portrait.GetComponentInParent<Canvas>().rootCanvas;
+                var hudCamera = hudCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : hudCanvas.worldCamera;
+                SetEntranceCursorFromScreen(cursor, safe, RectTransformUtility.WorldToScreenPoint(hudCamera, portrait.position));
+                UpdateBattleCursorIdentity(cursor);
+            }
             if (waiting != null)
             {
                 waiting.enabled = Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.5f;
@@ -113,41 +110,90 @@ public partial class StageIntroTransition
         double release = NetSync.IsOnline ? BombermanNetworkManager.BattleReleaseTime : localRelease;
         if (graphical)
         {
-            EnsureStartClipLoaded();
-            var voice = overlay.AddComponent<AudioSource>();
-            voice.playOnAwake = false;
-            if (playStartSfxOnIntroEnd && s_startSfxClip != null)
-                voice.PlayOneShot(s_startSfxClip, GameAudioSettings.ApplyVoiceSfxVolume(startSfxVolume));
             shade.color = new Color(0, 0, 0, 0.2f);
             waiting.enabled = false;
             title.fontSize = 18;
             title.rectTransform.anchoredPosition = Vector2.zero;
         }
         Vector2 cursorOrigin = cursor != null ? cursor.rectTransform.anchoredPosition : Vector2.zero;
+        double cursorStartedAt = Time.realtimeSinceStartupAsDouble;
         while ((NetSync.IsOnline ? NetworkTime.time : Time.realtimeSinceStartupAsDouble) < release)
         {
             double now = NetSync.IsOnline ? NetworkTime.time : Time.realtimeSinceStartupAsDouble;
-            float elapsed = Mathf.Max(0, (float)(now - (release - 3)));
             if (title != null) title.text = Mathf.Clamp(Mathf.CeilToInt((float)(release - now)), 1, 3).ToString();
             if (cursor != null)
             {
-                float cursorElapsed = elapsed - 1.63f;
+                float cursorElapsed = (float)(Time.realtimeSinceStartupAsDouble - cursorStartedAt);
                 var player = NetworkClient.localPlayer;
                 if (player != null && Camera.main != null)
                 {
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(safe, Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 1.25f), null, out var destination);
+                    var viewport = PixelPerfectViewport.ResolveFinalPixelRect(Camera.main);
+                    var point = Camera.main.WorldToViewportPoint(player.transform.position + Vector3.up * 1.25f);
+                    var screen = new Vector2(viewport.x + point.x * viewport.width, viewport.y + point.y * viewport.height);
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(safe, screen, null, out var destination);
                     Vector2 position = Vector2.Lerp(cursorOrigin, destination, Mathf.Clamp01(cursorElapsed / 0.37f));
                     cursor.rectTransform.anchoredPosition = new Vector2(Mathf.Round(position.x), Mathf.Round(position.y));
                 }
-                cursor.enabled = cursor.sprite != null && (cursorElapsed < 0.37f || Mathf.Repeat(cursorElapsed - 0.37f, 0.2f) < 0.12f);
+                cursor.GetComponent<CanvasGroup>().alpha = cursorElapsed < 0.37f || (cursorElapsed < 1.37f && Mathf.Repeat(cursorElapsed - 0.37f, 0.2f) < 0.12f) ? 1f : 0f;
             }
             yield return null;
         }
+        if (graphical) PlayBattleStartVoice();
         if (overlay != null) Destroy(overlay);
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
         EnableGameplay();
         TryStartDefaultMusicNormalFlow();
+    }
+
+    void PlayBattleStartVoice()
+    {
+        EnsureStartClipLoaded();
+        if (!playStartSfxOnIntroEnd || s_startSfxClip == null) return;
+        // The sound outlives the entrance overlay and plays once on each graphical peer.
+        var sound = new GameObject("BattleStartVoice", typeof(AudioSource));
+        var source = sound.GetComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.PlayOneShot(s_startSfxClip, GameAudioSettings.ApplyVoiceSfxVolume(startSfxVolume));
+        Destroy(sound, s_startSfxClip.length + 0.25f);
+    }
+
+    static Image CreateBattlePlayerCursor(RectTransform parent)
+    {
+        var cursor = new GameObject("LocalPlayerCursor", typeof(RectTransform), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
+        cursor.transform.SetParent(parent, false);
+        cursor.rectTransform.sizeDelta = new Vector2(16, 18);
+        cursor.color = Color.clear;
+        cursor.raycastTarget = false;
+        var letter = CreateBattleCursorPart(cursor.transform, "Letter", new Vector2(-3, 3), new Vector2(8, 8));
+        letter.sprite = Resources.Load<Sprite>("Sprites/CharacterSelect/Cursor/P");
+        CreateBattleCursorPart(cursor.transform, "Number", new Vector2(3, 3), new Vector2(8, 8));
+        for (int row = 0; row < 3; row++)
+        {
+            var arrow = CreateBattleCursorPart(cursor.transform, "Arrow" + row, new Vector2(0, -3 - row), new Vector2(5 - row * 2, 1));
+            arrow.color = new Color32(255, 216, 106, 255);
+        }
+        UpdateBattleCursorIdentity(cursor);
+        return cursor;
+    }
+
+    static Image CreateBattleCursorPart(Transform parent, string name, Vector2 position, Vector2 size)
+    {
+        var part = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Shadow)).GetComponent<Image>();
+        part.transform.SetParent(parent, false);
+        part.rectTransform.anchoredPosition = position;
+        part.rectTransform.sizeDelta = size;
+        part.raycastTarget = false;
+        part.GetComponent<Shadow>().effectDistance = new Vector2(1, -1);
+        return part;
+    }
+
+    static void UpdateBattleCursorIdentity(Image cursor)
+    {
+        int id = BombermanNetworkManager.LocalRoomPlayerId;
+        var number = cursor.transform.Find("Number").GetComponent<Image>();
+        number.sprite = id >= 1 && id <= 6 ? Resources.Load<Sprite>("Sprites/CharacterSelect/Cursor/" + id) : null;
+        cursor.GetComponent<CanvasGroup>().alpha = number.sprite != null ? 1f : 0f;
     }
 
     void Update()

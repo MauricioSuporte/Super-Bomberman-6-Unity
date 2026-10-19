@@ -4119,6 +4119,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3797169763190965992}
+  - component: {fileID: 880001010}
   - component: {fileID: 8689873400551580866}
   - component: {fileID: 4063543003117991542}
   - component: {fileID: 6013594429678645981}
@@ -4221,6 +4222,18 @@ Transform:
   - {fileID: 3310982506413275048}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &880001010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 089f52c5149c418e9442f2e82e8d290e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MotionDiagnosticProbe
 --- !u!50 &8689873400551580866
 Rigidbody2D:
   serializedVersion: 5
