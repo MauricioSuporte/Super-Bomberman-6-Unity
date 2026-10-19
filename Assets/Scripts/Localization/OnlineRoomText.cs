@@ -36,8 +36,9 @@ public sealed class OnlineRoomText
     public string ChangeNameRequired => LanguageText("SELECT EDIT NAME: NAME MISSING, INVALID OR IN USE", "名前が空欄・無効・使用中です。名前を変更してください", "ELIGE CAMBIAR NOMBRE: VACÍO, INVÁLIDO O EN USO", "SELECIONE ALTERAR NOME: VAZIO, INVÁLIDO OU EM USO");
     public string RunUpdater => LanguageText("RUN GAME UPDATER", "ゲーム更新を起動", "EJECUTAR ACTUALIZADOR", "EXECUTAR ATUALIZADOR");
     public string EnterName => LanguageText("YOUR NAME (1-16)", "名前（1～16文字）", "TU NOMBRE (1-16)", "SEU NOME (1-16)");
+    public string NameInUse => LanguageText("NAME ALREADY IN USE IN THIS ROOM\nCHOOSE ANOTHER NAME", "この部屋では名前が使用中です\n別の名前を選んでください", "NOMBRE YA EN USO EN ESTA SALA\nELIGE OTRO NOMBRE", "NOME JÁ EM USO NESTA SALA\nESCOLHA OUTRO NOME");
     public string NameUnavailable => LanguageText("NAME EMPTY, INVALID OR ALREADY IN USE", "名前が空欄・無効・使用中です", "NOMBRE VACÍO, INVÁLIDO O EN USO", "NOME VAZIO, INVÁLIDO OU JÁ EM USO");
-    public string NameHint => LanguageText("TYPE OR USE ARROWS\nLEFT/RIGHT: POSITION\nUP/DOWN: LETTER\nA / ENTER: CONFIRM · B: BACK", "入力または矢印キー\n左右：位置\n上下：文字\nA / ENTER：決定 · B：戻る", "ESCRIBE O USA LAS FLECHAS\nIZQ/DER: POSICIÓN\nARR/ABA: LETRA\nA / ENTER: CONFIRMAR · B: VOLVER", "DIGITE OU USE AS SETAS\nESQ/DIR: POSIÇÃO\nCIMA/BAIXO: LETRA\nA / ENTER: CONFIRMAR · B: VOLTAR");
+    public string NameHint => LanguageText("TYPE OR USE ARROWS\nLEFT/RIGHT: POSITION\nUP/DOWN: LETTER\nA / ENTER: CONFIRM\nB: BACK", "入力または矢印キー\n左右：位置\n上下：文字\nA / ENTER：決定\nB：戻る", "ESCRIBE O USA LAS FLECHAS\nIZQ/DER: POSICIÓN\nARR/ABA: LETRA\nA / ENTER: CONFIRMAR\nB: VOLVER", "DIGITE OU USE AS SETAS\nESQ/DIR: POSIÇÃO\nCIMA/BAIXO: LETRA\nA / ENTER: CONFIRMAR\nB: VOLTAR");
     public string PrivateRoom => LanguageText("PRIVATE", "非公開", "PRIVADA", "PRIVADA");
     public string Password => LanguageText("PASSWORD (6 DIGITS)", "パスワード（数字6桁）", "CLAVE (6 DÍGITOS)", "SENHA (6 DÍGITOS)");
     public string PasswordHint => LanguageText("LEFT/RIGHT: DIGIT\nUP/DOWN: CHANGE\nA: CONFIRM\nB: BACK", "左右: 桁\n上下: 数字\nA: 決定\nB: 戻る", "IZQ/DER: DÍGITO\nARR/ABA: CAMBIAR\nA: CONFIRMAR\nB: VOLVER", "ESQ/DIR: DÍGITO\nCIMA/BAIXO: ALTERAR\nA: CONFIRMAR\nB: VOLTAR");

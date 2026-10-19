@@ -11,7 +11,9 @@ namespace Assets.Scripts.Netcode
         int selectedMaxPlayers = 6;
         GameObject creationForm;
         Button roomNameButton, browseCreateButton;
-        TextMeshProUGUI creationTitle;
+        TextMeshProUGUI creationTitle, passwordLeft, passwordRight;
+
+        static string ConnectingText(OnlineRoomText text) => text.Connecting.TrimEnd('.') + new string('.', (int)(Time.unscaledTime * 3f) % 4);
         readonly TextMeshProUGUI[] creationCaptions = new TextMeshProUGUI[4];
         readonly TextMeshProUGUI[] tableHeaders = new TextMeshProUGUI[5];
         static readonly float[] ColumnX = { -85, -41, 7, 51, 88 };
@@ -24,8 +26,8 @@ namespace Assets.Scripts.Netcode
             Position(creationForm.GetComponent<RectTransform>(), 0, 0, 256, 224);
             creationTitle = Label(creationForm.transform, "Title", 0, 74, 212, 12, 6);
             creationTitle.color = Gold;
-            Label(passwordButton.transform, "PreviousPassword", -108, 0, 10, 16, 8).text = "<";
-            Label(passwordButton.transform, "NextPassword", 108, 0, 10, 16, 8).text = ">";
+            passwordLeft = Label(passwordButton.transform, "PreviousPassword", -108, 0, 10, 16, 8); passwordLeft.text = "<";
+            passwordRight = Label(passwordButton.transform, "NextPassword", 108, 0, 10, 16, 8); passwordRight.text = ">";
             roomNameButton = MakeButton(creationForm.transform, "RoomName", 0, 46, OpenRoomName);
             Button[] fields = { roomNameButton, modeButton, passwordButton, capacityButton };
             for (int i = 0; i < fields.Length; i++)
@@ -35,7 +37,7 @@ namespace Assets.Scripts.Netcode
                 creationCaptions[i] = Label(creationForm.transform, "FieldCaption" + i, 0, 58 - i * 26, 212, 8, 4);
                 creationCaptions[i].color = Gold;
             }
-            browseCreateButton = MakeButton(browserRoot.transform, "NewRoom", 0, -62, () =>
+            browseCreateButton = MakeButton(browserRoot.transform, "NewRoom", 0, -61, () =>
             {
                 creationOpen = true;
                 cursorButton = roomNameButton;
@@ -47,7 +49,7 @@ namespace Assets.Scripts.Netcode
         {
             creationForm.SetActive(idle && creationOpen);
             var text = GameTextDatabase.Online;
-            creationTitle.text = browser != null && browser.Creating ? text.Connecting : text.NewRoom;
+            creationTitle.text = browser != null && browser.Creating ? ConnectingText(text) : text.NewRoom;
             browseCreateButton.gameObject.SetActive(idle);
             foreach (var heading in tableHeaders) heading.gameObject.SetActive(idle);
             browseCreateButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.Host;

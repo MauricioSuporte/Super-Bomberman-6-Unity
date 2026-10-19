@@ -57,9 +57,9 @@ namespace Assets.Scripts.Netcode
                 slotBadges[i] = Label(slotPanels[i].transform, "State", 10, -6, 76, 8, 4);
                 slotBadges[i].alignment = TextAlignmentOptions.Left;
             }
-            rosterStatus = Label(rosterRoot.transform, "PlayerCount", 0, -35, 212, 10, 5);
-            var notice = PixelPanel(rosterRoot.transform, "Arrival", 0, -46, 212, 12);
-            arrivalNotice = Label(notice.transform, "Message", 0, 0, 204, 12, 5);
+            rosterStatus = Label(rosterRoot.transform, "PlayerCount", 0, -33, 212, 8, 5);
+            var notice = PixelPanel(rosterRoot.transform, "Arrival", 0, -43, 212, 10);
+            arrivalNotice = Label(notice.transform, "Message", 0, 0, 204, 10, 5);
             arrivalNotice.richText = false;
             arrivalNotice.overflowMode = TextOverflowModes.Ellipsis;
         }
@@ -68,7 +68,7 @@ namespace Assets.Scripts.Netcode
         {
             rosterRoot.SetActive(connected);
             // A private room needs a password row; public creation uses the spare space.
-            Position(hostButton.GetComponent<RectTransform>(), 0, -62, 196, 16);
+            Position(hostButton.GetComponent<RectTransform>(), 0, -61, 196, 16);
             if (!connected)
             {
                 rosterInitialized = false;

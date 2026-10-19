@@ -547,7 +547,8 @@ namespace Assets.Scripts.Netcode
                 GameMusicController.Instance?.StopMusic();
             Destroy(manager.gameObject);
             OnlineVersionAuthenticator.RoomPassword = "";
-            SceneManager.LoadScene(destination);
+            // Let the old singleton finish destruction before the lobby creates its replacement.
+            SceneManager.LoadSceneAsync(destination);
         }
 
         static void ClearRoom()

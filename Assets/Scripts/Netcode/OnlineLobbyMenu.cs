@@ -30,7 +30,7 @@ namespace Assets.Scripts.Netcode
         TextMeshProUGUI nameText, nameTitle, nameHints;
         string editedName = "";
         int nameCursor, nameTextFrame = -1;
-        bool invalidName;
+        bool invalidName, nameRejectionShown;
         const string NameCharacters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
         GameObject passwordRoot;
         TextMeshProUGUI passwordText, passwordTitle, passwordHints;
@@ -42,7 +42,7 @@ namespace Assets.Scripts.Netcode
         OnlineRoomMode selectedMode = OnlineRoomMode.BattleMode;
         OnlineRoomBrowser browser;
         GameObject browserRoot;
-        TextMeshProUGUI browserStatus, emptyRoomList;
+        TextMeshProUGUI browserName, browserStatus, emptyRoomList;
         Button nameButton, updateButton;
         bool nameRequired;
         const int NameLength = OnlineVersionAuthenticator.MaxPlayerNameLength;
@@ -137,12 +137,13 @@ namespace Assets.Scripts.Netcode
             bool arrowsVisible = idle && creationOpen && !incompatible && Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.5f;
             modeLeft.gameObject.SetActive(arrowsVisible); modeRight.gameObject.SetActive(arrowsVisible);
             capacityLeft.gameObject.SetActive(arrowsVisible); capacityRight.gameObject.SetActive(arrowsVisible);
+            passwordLeft.gameObject.SetActive(arrowsVisible); passwordRight.gameObject.SetActive(arrowsVisible);
             configureButton.gameObject.SetActive(lobby && BombermanNetworkManager.CanConfigure);
             configureButton.interactable = BombermanNetworkManager.RoomPlayers.Length >= 1;
             hostButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.Host;
             configureButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.StartGame;
             leaveButton.GetComponentInChildren<TextMeshProUGUI>(true).text = idle ? text.Back : text.Leave;
-            Position(leaveButton.GetComponent<RectTransform>(), idle && !creationOpen ? -53 : 0, -82, idle && !creationOpen ? 98 : 196, 16);
+            Position(leaveButton.GetComponent<RectTransform>(), idle && !creationOpen ? -53 : 0, -80, idle && !creationOpen ? 98 : 196, 16);
             Position(leaveButton.GetComponentInChildren<TextMeshProUGUI>(true).rectTransform, 0, 0, idle && !creationOpen ? 94 : 188, 14);
             var lines = new StringBuilder();
             if (connected)
@@ -151,13 +152,19 @@ namespace Assets.Scripts.Netcode
                 if (BombermanNetworkManager.RoomAdminPlayerId > 0)
                     lines.AppendLine(string.Format(text.RoomAdmin, BombermanNetworkManager.RoomAdminPlayerId));
             }
-            else if (NetworkClient.active || (browser != null && browser.Creating)) lines.AppendLine(text.Connecting);
+            else if (NetworkClient.active || (browser != null && browser.Creating)) lines.AppendLine(ConnectingText(text));
             else if (OnlineVersionAuthenticator.VersionRejected) lines.AppendLine(text.VersionMismatch);
             UpdateRoomPresentation(connected, text);
             details.text = lines.ToString();
             details.gameObject.SetActive(!idle);
             UpdateBrowser(idle && lobby && !creationOpen);
             UpdateCreationForm(idle && !incompatible);
+            if (!OnlineVersionAuthenticator.NameRejected) nameRejectionShown = false;
+            if (idle && !incompatible && OnlineVersionAuthenticator.NameRejected && !nameRejectionShown)
+            {
+                nameRejectionShown = true;
+                OpenName();
+            }
             if (nameRoot.activeSelf) UpdateName(); else if (passwordOpen) UpdatePassword(); else UpdateNavigation();
         }
 
@@ -201,7 +208,7 @@ namespace Assets.Scripts.Netcode
             details.textWrappingMode = TextWrappingModes.Normal;
             details.overflowMode = TextOverflowModes.Truncate;
             hostButton = MakeButton(panel.transform, "Create", 0, -62, CreateSelectedRoom);
-            configureButton = MakeButton(panel.transform, "Configure", 0, -62, BombermanNetworkManager.ServerBeginConfiguration);
+            configureButton = MakeButton(panel.transform, "Configure", 0, -61, BombermanNetworkManager.ServerBeginConfiguration);
             leaveButton = MakeButton(panel.transform, "Leave", 0, -78, LeaveLobby);
             modeButton = MakeButton(panel.transform, "RoomType", 0, -8, () => ChangeMode(1));
             capacityButton = MakeButton(panel.transform, "Capacity", 0, -28, () => ChangeCapacity(1));
@@ -275,7 +282,9 @@ namespace Assets.Scripts.Netcode
             browserRoot = new GameObject("RoomBrowser", typeof(RectTransform));
             browserRoot.transform.SetParent(parent, false);
             Position(browserRoot.GetComponent<RectTransform>(), 0, 0, 256, 224);
-            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 72, 212, 16, 4);
+            browserName = Label(browserRoot.transform, "PlayerName", 0, 73, 212, 12, 6);
+            browserName.richText = false;
+            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 63, 212, 10, 4);
             browserStatus.textWrappingMode = TextWrappingModes.Normal;
             var viewport = new GameObject("RoomList", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
             viewport.transform.SetParent(browserRoot.transform, false);
@@ -301,8 +310,8 @@ namespace Assets.Scripts.Netcode
             roomContent.sizeDelta = new Vector2(212, 92);
             roomScroll.content = roomContent;
             CreateRoomTableHeader(browserRoot.transform);
-            nameButton = MakeButton(browserRoot.transform, "EditName", 53, -82, OpenName);
-            Position(nameButton.GetComponent<RectTransform>(), 53, -82, 98, 16);
+            nameButton = MakeButton(browserRoot.transform, "EditName", 53, -80, OpenName);
+            Position(nameButton.GetComponent<RectTransform>(), 53, -80, 98, 16);
             nameButton.GetComponentInChildren<TextMeshProUGUI>(true).fontSize = 5;
             Position(nameButton.GetComponentInChildren<TextMeshProUGUI>(true).rectTransform, 0, 0, 94, 14);
             updateButton = MakeButton(browserRoot.transform, "UpdateGame", 0, 28, RunUpdater);
@@ -326,6 +335,7 @@ namespace Assets.Scripts.Netcode
             var text = GameTextDatabase.Online;
             RefreshRoomTableHeader(text);
             string savedName = OnlineVersionAuthenticator.PlayerName;
+            browserName.text = text.CurrentName + ": " + (string.IsNullOrEmpty(savedName) ? text.Empty : savedName);
             emptyRoomList.gameObject.SetActive(browser.Rooms.Count == 0 && !browser.VersionBlocked);
             emptyRoomList.text = text.NoRooms;
             if (browser.VersionBlocked)
@@ -334,9 +344,8 @@ namespace Assets.Scripts.Netcode
                 foreach (var button in roomButtons) button.gameObject.SetActive(false);
                 return;
             }
-            browserStatus.text = text.CurrentName + ": " + (string.IsNullOrEmpty(savedName) ? text.Empty : savedName) + "\n" +
-                (!browser.DirectoryConfigured ? text.PublicNotConfigured : nameRequired || OnlineVersionAuthenticator.NameRejected ? text.ChangeNameRequired : OnlineVersionAuthenticator.PasswordRejected ? text.WrongPassword : browser.BuildRejected || OnlineVersionAuthenticator.VersionRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
-                    browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.AvailableRooms : text.SelectRoom);
+            browserStatus.text = (!browser.DirectoryConfigured ? text.PublicNotConfigured : OnlineVersionAuthenticator.NameRejected ? text.NameInUse : nameRequired ? text.ChangeNameRequired : OnlineVersionAuthenticator.PasswordRejected ? text.WrongPassword : browser.BuildRejected || OnlineVersionAuthenticator.VersionRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
+                    browser.Creating ? ConnectingText(text) : browser.Rooms.Count == 0 ? "" : text.SelectRoom);
             while (roomButtons.Count < browser.Rooms.Count)
             {
                 int index = roomButtons.Count;
@@ -371,17 +380,18 @@ namespace Assets.Scripts.Netcode
             navigationButtons.Clear();
             AddNavigationButton(roomNameButton);
             AddNavigationButton(modeButton);
-            AddNavigationButton(capacityButton);
             AddNavigationButton(passwordButton);
+            AddNavigationButton(capacityButton);
             foreach (var button in roomButtons) AddNavigationButton(button);
             AddNavigationButton(browseCreateButton);
             AddNavigationButton(hostButton);
             AddNavigationButton(configureButton);
             AddNavigationButton(leaveButton);
-            AddNavigationButton(nameButton);
+
             AddNavigationButton(updateButton);
             if (navigationButtons.Count == 0) return;
-            int index = navigationButtons.IndexOf(cursorButton);
+            bool footerPair = nameButton.gameObject.activeInHierarchy && !creationOpen;
+            int index = navigationButtons.IndexOf(footerPair && cursorButton == nameButton ? leaveButton : cursorButton);
             if (index < 0) index = 0;
             var input = PlayerInputManager.Instance;
             if (input != null)
@@ -391,14 +401,20 @@ namespace Assets.Scripts.Netcode
                 if (!previous && !next) nextNavigation = 0;
                 else if (Time.unscaledTime >= nextNavigation)
                 {
+                    cursorButton = null;
                     index = (index + (previous ? -1 : 1) + navigationButtons.Count) % navigationButtons.Count;
                     nextNavigation = Time.unscaledTime + 0.18f;
                     GameMusicController.Instance?.PlaySfx(moveCursorSfx, 0.5f);
                 }
-                cursorButton = navigationButtons[index];
+                if (!(footerPair && cursorButton == nameButton)) cursorButton = navigationButtons[index];
                 if (input.GetDown(1, PlayerAction.MoveLeft) || input.GetDown(1, PlayerAction.MoveRight))
                 {
-                    if (cursorButton == modeButton) ChangeMode(input.GetDown(1, PlayerAction.MoveLeft) ? -1 : 1);
+                    if (footerPair && (cursorButton == leaveButton || cursorButton == nameButton))
+                    {
+                        cursorButton = input.GetDown(1, PlayerAction.MoveLeft) ? leaveButton : nameButton;
+                        PlayLobbySound(moveCursorSfx);
+                    }
+                    else if (cursorButton == modeButton) ChangeMode(input.GetDown(1, PlayerAction.MoveLeft) ? -1 : 1);
                     else if (cursorButton == capacityButton) ChangeCapacity(input.GetDown(1, PlayerAction.MoveLeft) ? -1 : 1);
                     else if (cursorButton == passwordButton) TogglePrivacy();
                 }
@@ -527,7 +543,7 @@ namespace Assets.Scripts.Netcode
                 editedName = new string(characters).TrimEnd(); invalidName = false;
                 PlayLobbySound(moveCursorSfx);
             }
-            nameTitle.text = invalidName ? GameTextDatabase.Online.NameUnavailable : editingRoomName ? GameTextDatabase.Online.RoomName : GameTextDatabase.Online.EnterName;
+            nameTitle.text = !editingRoomName && OnlineVersionAuthenticator.NameRejected ? GameTextDatabase.Online.NameInUse : invalidName ? GameTextDatabase.Online.NameUnavailable : editingRoomName ? GameTextDatabase.Online.RoomName : GameTextDatabase.Online.EnterName;
             nameTitle.fontSize = 6; nameTitle.textWrappingMode = TextWrappingModes.Normal;
             var display = new StringBuilder();
             string padded = editedName.PadRight(NameLength);
