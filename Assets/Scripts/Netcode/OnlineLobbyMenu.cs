@@ -442,15 +442,16 @@ namespace Assets.Scripts.Netcode
 
         void RunUpdater()
         {
+            string languageArgument = "--language " + (int)global::SaveSystem.GetLanguage();
 #if UNITY_EDITOR
-            Debug.Log("[Online] Run GameUpdater.exe from the built Windows client.");
+            Debug.Log("[Online] Run GameUpdater.exe from the built Windows client (" + languageArgument + ").");
 #else
             string path = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "GameUpdater.exe"));
             if (!System.IO.File.Exists(path)) { Debug.LogWarning("[Online] GameUpdater.exe missing: " + path); return; }
             try
             {
                 using var process = System.Diagnostics.Process.GetCurrentProcess();
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, "--language " + (int)SaveSystem.GetLanguage() + " --wait-for-game " + process.Id)
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, languageArgument + " --wait-for-game " + process.Id)
                     { UseShellExecute = true, WorkingDirectory = System.IO.Path.GetDirectoryName(path) });
                 Application.Quit();
             }
