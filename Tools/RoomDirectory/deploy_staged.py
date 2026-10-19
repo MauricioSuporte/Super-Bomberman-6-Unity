@@ -46,7 +46,6 @@ if __name__ == '__main__':
     if not match or int(match[1]) != manifest['protocol']: parser.error('directory/server protocol mismatch')
     if any(name in assembly for name in (b'LocalServerLoadTest', b'TickLocalLoadTest', b'LocalNetworkInputSmoke', b'LocalOnlineFlowSmoke')):
         parser.error('development harness in release')
-    if rooms(): raise SystemExit('Active rooms; deployment left unchanged')
     smoke = base/(args.stage+'-smoke')
     smoke.mkdir(mode=0o700)
     env = dict(os.environ, SB6_ROOM_ID='deployment-smoke', SB6_ROOM_TOKEN=secrets.token_hex(32),
@@ -75,7 +74,6 @@ if __name__ == '__main__':
             if process.poll() is None: process.terminate()
             try: process.wait(timeout=15)
             except subprocess.TimeoutExpired: process.kill(); process.wait()
-    if rooms(): raise SystemExit('A room opened during preflight; deployment left unchanged')
     service_env = dict(os.environ, XDG_RUNTIME_DIR=f'/run/user/{os.getuid()}')
     def service(action, check=True):
         return subprocess.run(['systemctl','--user',action] + ([] if action == 'daemon-reload' else ['sb6-rooms.service']), env=service_env, check=check)
@@ -84,6 +82,8 @@ if __name__ == '__main__':
     service_text = service_before.decode('utf-8-sig')
     service_after, replacements = re.subn(r'--capacity\s+\d+', '--capacity 3', service_text)
     if replacements != 1: raise RuntimeError('expected one room capacity in service')
+    # KillMode=control-group stops the supervisor and every active room process.
+    print('Activating release: disconnecting all current rooms', flush=True)
     service('stop')
     swapped = False
     supervisor_swapped = False
@@ -105,7 +105,8 @@ if __name__ == '__main__':
             try:
                 rooms()
                 with urlopen('http://127.0.0.1:8080/health', timeout=3) as response: health = json.load(response)
-                if health.get('protocol') != manifest['protocol']: raise RuntimeError('API protocol differs from release')
+                if health.get('protocol') != manifest['protocol'] or health.get('buildIdentity') != manifest['buildIdentity']:
+                    raise RuntimeError('API protocol/build identity differs from release')
                 break
             except OSError: time.sleep(1)
         else: raise RuntimeError('API did not restart')

@@ -29,9 +29,12 @@ public static class DedicatedServerBuild
     // Invoked by the isolated Windows Actions checkout. All outputs are release.
     public static void BuildReleaseArtifacts()
     {
+        var timer = System.Diagnostics.Stopwatch.StartNew();
         BuildLinuxServer();
+        Debug.Log($"[ReleaseTiming] Linux server: {timer.Elapsed.TotalSeconds:F1}s");
+        timer.Restart();
         OnlineClientBuild.BuildWindows();
-        BuildWindowsTestServer();
+        Debug.Log($"[ReleaseTiming] Windows client: {timer.Elapsed.TotalSeconds:F1}s");
     }
 
     static void Build(BuildTarget target, string outputPath, StandaloneBuildSubtarget subtarget,

@@ -17,12 +17,16 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-SSH = "mauricio@100.64.0.46"
+SSH = os.environ.get("SB6_DEPLOY_SSH", "mauricio@100.64.0.46")
 REPORTS = ROOT / "Build/CI"
 
 
 def command(args, **kwargs):
-    return subprocess.run([str(a) for a in args], cwd=ROOT, check=True, **kwargs)
+    print("Running:", " ".join(str(a) for a in args), flush=True)
+    started = time.monotonic()
+    result = subprocess.run([str(a) for a in args], cwd=ROOT, check=True, **kwargs)
+    print(f"Completed in {time.monotonic() - started:.1f}s", flush=True)
+    return result
 
 
 def sha(path):
@@ -51,12 +55,22 @@ def build():
     REPORTS.mkdir(parents=True, exist_ok=True)
     logs = ROOT / "Logs/CI"
     logs.mkdir(parents=True, exist_ok=True)
+    profile = os.environ.get("SB6_RELEASE_PROFILE", "full")
+    if profile not in ("quick", "full"):
+        raise RuntimeError("invalid release profile")
+    commit = command(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    stamp = ROOT / "Assets/Resources/OnlineBuildIdentity.txt"
+    stamp.write_text(commit, encoding="utf-8")
+    print("Release profile:", profile, "build identity:", commit, flush=True)
     tests = REPORTS / "online-tests.xml"
     tests.unlink(missing_ok=True)
-    unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests", "-testResults", tests], logs / "tests.log")
-    result = ET.parse(tests).getroot()
-    if result.get("result") != "Passed" or int(result.get("failed", "1")):
-        raise RuntimeError("online tests failed; release left unchanged")
+    if profile == "full":
+        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests", "-testResults", tests], logs / "tests.log")
+        result = ET.parse(tests).getroot()
+        if result.get("result") != "Passed" or int(result.get("failed", "1")):
+            raise RuntimeError("online tests failed; release left unchanged")
+    else:
+        print("Quick profile: Unity tests skipped; both player builds still compile.", flush=True)
     command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/RoomDirectory", "-p", "test_supervisor.py"])
     command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/Ci", "-p", "test_*.py"])
     unity(["-quit", "-executeMethod", "DedicatedServerBuild.BuildReleaseArtifacts"], logs / "release.log")
@@ -72,28 +86,16 @@ def build():
     editor_version = re.search(r"^m_EditorVersion: (.+)$", (ROOT / "ProjectSettings/ProjectVersion.txt").read_text(encoding="utf-8-sig"), re.M)[1].strip()
     dirty = bool(command(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True).stdout.strip())
     manifest = dict(builtUtc=datetime.now(timezone.utc).isoformat(), sourceCommit=commit, unity=editor_version,
-                    workingTreeDirty=dirty, kind="Linux Dedicated Server release", protocol=protocol(),
+                    workingTreeDirty=dirty, kind="Linux Dedicated Server release", profile=profile, buildIdentity=commit, protocol=protocol(),
                     metricsVersion=2, benchmarkHarness=False, assemblySha256=sha(assembly),
                     executableSha256=sha(stage / "SB6.x86_64"), supervisorSha256=sha(stage / "supervisor.py"))
     for destination in (stage / "deployment.json", REPORTS / "deployment.json"):
         destination.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    for folder in (ROOT / "Build/OnlineClient/Windows", ROOT / "Build/WindowsServer"):
-        (folder / "build-info.json").write_text(json.dumps(dict(sourceCommit=commit, protocol=protocol(), builtUtc=manifest["builtUtc"]), indent=2), encoding="utf-8")
-    server = ROOT / "Build/WindowsServer"
-    shutil.copy2(ROOT / "Tools/RoomDirectory/supervisor.py", server / "supervisor.py")
-    (server / "Start-Local-Server.cmd").write_text(
-        '@echo off\ncd /d "%~dp0"\npython supervisor.py --binary "%~dp0SB6Server.exe" '
-        '--host 127.0.0.1 --bind 127.0.0.1 --port 18081 --first-port 17777 --capacity 3 --logs logs\npause\n',
-        encoding="utf-8", newline="\r\n")
-    (server / "README.txt").write_text(
-        "Install Python 3, then open Start-Local-Server.cmd.\n"
-        "On this PC start each Windows client with:\n"
-        'SB6.exe -online-directory http://127.0.0.1:18081\n'
-        "Enter Game Modes > Online. Keep this entire server folder together.\n"
-        "Closing the server terminal disconnects its rooms. Public server is separate.\n",
+    (ROOT / "Build/OnlineClient/Windows/build-info.json").write_text(
+        json.dumps(dict(sourceCommit=commit, protocol=protocol(), builtUtc=manifest["builtUtc"]), indent=2),
         encoding="utf-8")
     archive = REPORTS / "linux-release.tar.gz"
-    with tarfile.open(archive, "w:gz") as package:
+    with tarfile.open(archive, "w:gz", compresslevel=1) as package:
         for child in stage.iterdir():
             package.add(child, arcname=child.name)
     print("Release artifacts ready for commit", commit, flush=True)
@@ -117,7 +119,7 @@ def deploy():
                           (ROOT / "Tools/RoomDirectory/deploy_staged.py", "sb6/ci-tools/deploy_staged.py"),
                           (ROOT / "Tools/Ci/activate_release.py", "sb6/ci-tools/activate_release.py")):
         command(["scp", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", local, f"{SSH}:{remote}"])
-    # The remote helper validates names, waits for empty rooms, and keeps rollback.
+    # The remote helper validates the release and disconnects rooms on activation.
     completed = subprocess.run([*ssh, f"python3 ~/sb6/ci-tools/activate_release.py {name} {stage} {backup}"],
                                cwd=ROOT, capture_output=True, text=True, timeout=2100, check=False)
     (REPORTS / "deploy-result.txt").write_text(completed.stdout + completed.stderr, encoding="utf-8")

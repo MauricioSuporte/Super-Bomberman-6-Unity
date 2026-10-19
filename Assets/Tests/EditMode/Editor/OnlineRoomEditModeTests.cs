@@ -9,6 +9,16 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase("commit-a", "commit-a", true)]
+    [TestCase("commit-a", "commit-b", false)]
+    [TestCase("commit-a", "", false)]
+    [TestCase("", "", false)]
+    public void SameVersionRequiresMatchingBuildIdentity(string localBuild, string remoteBuild, bool expected)
+    {
+        Assert.AreEqual(expected, OnlineVersionAuthenticator.Compatible("0.5.0", "0.5.0",
+            OnlineVersionAuthenticator.ProtocolVersion, localBuild, remoteBuild));
+    }
+
     [Test]
     public void RoomProgressKeepsSelectionsFromTheOnlineConfiguration()
     {
@@ -141,7 +151,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 8, true)]
+    [TestCase("0.5.0", 9, true)]
+    [TestCase("0.5.0", 8, false)]
     [TestCase("0.5.0", 7, false)]
     [TestCase("0.5.0", 6, false)]
     [TestCase("0.5.0", 5, false)]

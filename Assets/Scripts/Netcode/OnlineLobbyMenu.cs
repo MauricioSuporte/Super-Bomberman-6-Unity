@@ -246,7 +246,7 @@ namespace Assets.Scripts.Netcode
             if (!visible || browser == null) return;
             var text = GameTextDatabase.Online;
             browserStatus.text = text.AvailableRooms + "\n" +
-                (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.DirectoryFailed ? text.PublicUnavailable :
+                (!browser.DirectoryConfigured ? text.PublicNotConfigured : browser.BuildRejected ? text.VersionMismatch : browser.DirectoryFailed ? text.PublicUnavailable :
                     browser.Creating ? text.Connecting : browser.Rooms.Count == 0 ? text.NoRooms : text.SelectRoom);
             while (roomButtons.Count < browser.Rooms.Count)
             {

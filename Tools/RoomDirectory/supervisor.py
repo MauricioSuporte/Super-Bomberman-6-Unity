@@ -16,7 +16,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-PROTOCOL = 8
+PROTOCOL = 9
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
@@ -25,6 +25,15 @@ class RoomPool:
     def __init__(self, binary, host, *, first_port=7777, capacity=3, logs="logs", spawn=subprocess.Popen):
         self.binary, self.host = str(Path(binary).resolve()), host
         self.first_port, self.capacity, self.spawn = first_port, capacity, spawn
+        self.build_identity = "local-development"
+        for filename in ("deployment.json", "build-info.json"):
+            manifest = Path(self.binary).parent / filename
+            if manifest.is_file():
+                value = json.loads(manifest.read_text(encoding="utf-8-sig"))
+                self.build_identity = value.get("buildIdentity", value.get("sourceCommit", ""))
+                if not isinstance(self.build_identity, str) or not re.fullmatch(r"[0-9a-f]{40}", self.build_identity):
+                    raise ValueError("invalid server build identity")
+                break
         self.logs = Path(logs).resolve()
         self.logs.mkdir(parents=True, exist_ok=True)
         self.rooms, self.last_create = {}, {}
@@ -169,7 +178,7 @@ class Handler(BaseHTTPRequestHandler):
         self.server.pool.refresh()
         with self.server.pool.lock:
             if path == "/health":
-                return self.reply(200, {"ok": True, "protocol": PROTOCOL})
+                return self.reply(200, {"ok": True, "protocol": PROTOCOL, "buildIdentity": self.server.pool.build_identity})
             if path == "/rooms":
                 rooms = [self.server.pool.public(r) for r in self.server.pool.rooms.values()
                          if r["available"] and r["players"] < r["maxPlayers"]]
@@ -188,8 +197,8 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < length <= 256:
                 raise ValueError()
             data = json.loads(self.rfile.read(length).decode("utf-8"))
-            if data.get("protocol") != PROTOCOL:
-                return self.reply(409, {"error": "incompatible protocol"})
+            if data.get("protocol") != PROTOCOL or data.get("buildIdentity") != self.server.pool.build_identity:
+                return self.reply(409, {"error": "incompatible build or protocol"})
             room = self.server.pool.create(self.client_address[0], data.get("mode", "BattleMode"))
             self.reply(202, room)
         except OverflowError as error:

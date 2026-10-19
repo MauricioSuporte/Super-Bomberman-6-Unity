@@ -4,6 +4,12 @@ on:
   push:
     branches: [v0.5.0]
   workflow_dispatch:
+    inputs:
+      profile:
+        description: Validation profile (quick for iteration, full for Unity tests)
+        type: choice
+        default: quick
+        options: [quick, full]
 
 permissions:
   contents: read
@@ -17,6 +23,8 @@ jobs:
     if: github.repository == 'MauricioSuporte/Super-Bomberman-6-Unity' && github.actor == 'MauricioSuporte' && github.ref == 'refs/heads/v0.5.0'
     runs-on: [self-hosted, Windows, X64, sb6-unity]
     timeout-minutes: 120
+    env:
+      SB6_RELEASE_PROFILE: ${{ inputs.profile || 'quick' }}
     defaults:
       run:
         shell: powershell
@@ -31,7 +39,7 @@ jobs:
             throw 'Checkout escaped the runner workspace'
           }
           if (Test-Path -LiteralPath (Join-Path $workspace '.git')) {
-            git -C $workspace clean -ffdx -e /Library/
+            git -C $workspace clean -ffdx -e /Library/ -e /Build/LinuxServer/ -e /Build/OnlineClient/Windows/
             if ($LASTEXITCODE -ne 0) { throw 'Unable to clean isolated checkout' }
           }
       - uses: actions/checkout@v7
@@ -45,16 +53,10 @@ jobs:
         with:
           name: SB6-Windows-Client-${{ github.sha }}
           path: Build/OnlineClient/Windows/
+          compression-level: 1
           if-no-files-found: error
           retention-days: 14
-      - name: Windows server for local testing
-        uses: actions/upload-artifact@v7
-        with:
-          name: SB6-Windows-Server-${{ github.sha }}
-          path: Build/WindowsServer/
-          if-no-files-found: error
-          retention-days: 14
-      - name: Publish Linux release when rooms are empty
+      - name: Publish Linux release and disconnect current rooms
         run: python Tools/Ci/release.py deploy
       - name: Test reports, build manifests and deploy result
         if: always()
@@ -62,7 +64,9 @@ jobs:
         with:
           name: SB6-Validation-${{ github.sha }}
           path: |
-            Build/CI/
+            Build/CI/*.json
+            Build/CI/*.xml
+            Build/CI/*.txt
             Logs/CI/
           if-no-files-found: warn
           retention-days: 14

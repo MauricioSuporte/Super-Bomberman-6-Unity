@@ -29,16 +29,12 @@ class ActivationTests(unittest.TestCase):
             item.size = 4
             archive.addfile(item, io.BytesIO(b"test"))
 
-    def test_active_rooms_timeout_preserves_running_release(self):
-        with patch.object(activate_release.Path, "home", return_value=self.home), \
-             patch.object(activate_release, "urlopen", return_value=io.BytesIO(b'{"rooms":[{"players":2}]}')), \
-             patch.object(activate_release.time, "monotonic", side_effect=[0, 1801]), \
-             patch.object(activate_release.subprocess, "run") as run:
-            with self.assertRaisesRegex(RuntimeError, "rooms remained active"):
-                activate_release.activate("ci-test", "server-ci-test", "backup-ci-test")
-            run.assert_not_called()
-        self.assertEqual("current release", (self.base / "server/current.txt").read_text(encoding="utf-8"))
-        self.assertTrue(self.archive.exists())
+    def test_activation_proceeds_without_polling_or_waiting_for_rooms(self):
+        with patch.object(activate_release.Path, "home", return_value=self.home), patch.object(activate_release.subprocess, "run") as run:
+            activate_release.activate("ci-test", "server-ci-test", "backup-ci-test")
+            run.assert_called_once()
+            self.assertEqual(120, run.call_args.kwargs["timeout"])
+        self.assertFalse(self.archive.exists())
 
     def test_archive_cannot_escape_stage(self):
         self.make_archive("../escape")
@@ -55,7 +51,6 @@ class ActivationTests(unittest.TestCase):
         manual = self.base / "server-before-manual"
         manual.mkdir()
         with patch.object(activate_release.Path, "home", return_value=self.home), \
-             patch.object(activate_release, "urlopen", return_value=io.BytesIO(b'{"rooms":[]}')), \
              patch.object(activate_release.subprocess, "run") as run:
             activate_release.activate("ci-test", "server-ci-test", "backup-ci-test")
             run.assert_called_once()

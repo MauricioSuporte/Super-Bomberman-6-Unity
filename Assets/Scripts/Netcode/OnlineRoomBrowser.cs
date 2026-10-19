@@ -21,6 +21,12 @@ namespace Assets.Scripts.Netcode
     }
     [Serializable] public sealed class OnlineRoomListing { public OnlineListedRoom[] rooms; }
 
+    [Serializable] public sealed class OnlineRoomAllocation
+    {
+        public int protocol;
+        public string mode, buildIdentity;
+    }
+
     // Clients discover and allocate rooms here; gameplay lives in dedicated processes.
     public sealed class OnlineRoomBrowser : MonoBehaviour
     {
@@ -28,6 +34,7 @@ namespace Assets.Scripts.Netcode
         string directoryUrl;
         public bool DirectoryConfigured => !string.IsNullOrEmpty(directoryUrl);
         public bool DirectoryFailed { get; private set; }
+        public bool BuildRejected { get; private set; }
         public bool RefreshRequested { get; set; }
         public bool Creating { get; private set; }
 
@@ -98,13 +105,16 @@ namespace Assets.Scripts.Netcode
         {
             Creating = true;
             DirectoryFailed = false;
+            BuildRejected = false;
             using var request = new UnityWebRequest(directoryUrl + "/rooms", "POST");
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
-                "{\"protocol\":" + OnlineVersionAuthenticator.ProtocolVersion + ",\"mode\":\"" + mode + "\"}"));
+                JsonUtility.ToJson(new OnlineRoomAllocation { protocol = OnlineVersionAuthenticator.ProtocolVersion,
+                    mode = mode.ToString(), buildIdentity = OnlineVersionAuthenticator.BuildIdentity })));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.timeout = 10;
             yield return request.SendWebRequest();
+            BuildRejected = request.responseCode == 409;
             OnlineListedRoom allocated = null;
             if (request.result == UnityWebRequest.Result.Success)
             {

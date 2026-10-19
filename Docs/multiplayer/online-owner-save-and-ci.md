@@ -26,7 +26,7 @@ seus saves originais são restaurados. A VM não grava o save do dono no disco.
 Sair da sala, ou perder a conexão de um participante registrado, encerra a sala
 para todos e retorna os clientes à TitleScreen. Não há transferência de dono.
 
-O protocolo passa a 7 porque as mensagens de configuração e de estado mudaram.
+O protocolo atual é 9 e inclui a identidade do build na autenticação.
 Servidor, API e clientes devem ser recompilados juntos, mesmo mantendo 0.5.0.
 
 ## Runner Windows
@@ -53,12 +53,11 @@ Não é executado em pull requests. Ele usa um checkout próprio dentro do runne
 sem abrir, fechar ou modificar o Editor/checkout usados para desenvolvimento.
 Compila o SHA que disparou a execução; alterações locais não commitadas não entram.
 
-1. Executa a suíte online Unity e os testes Python do supervisor.
-2. Gera Linux Dedicated Server release, cliente Windows e servidor Windows de teste.
+1. Executa os testes Python; no perfil full também executa a suíte online Unity.
+2. Gera Linux Dedicated Server release e cliente Windows.
 3. Publica artefatos Windows no GitHub Actions, identificados pelo SHA do commit.
 4. Envia o release Linux, hashes e o supervisor correspondente para staging na VM.
-5. Aguarda até 30 minutos pelas salas vazias. Se não esvaziarem, falha sem
-   desconectar partidas nem substituir o release atual.
+5. Ativa a versão validada sem aguardar salas vazias; as partidas atuais são desconectadas.
 6. Testa boot/KCP interno, verifica manifesto e ausência dos helpers Development,
    publica e confere health/protocolo. Conserva os três últimos rollbacks criados
    pelo CI; backups manuais com outros nomes ficam preservados.
@@ -73,11 +72,8 @@ artefatos de um commit anterior.
 No GitHub, abra Actions → Online release v0.5.0 → execução → Artifacts:
 
 - `SB6-Windows-Client-<SHA>`: extrair tudo e abrir SB6.exe para jogar no público.
-- `SB6-Windows-Server-<SHA>`: inclui supervisor, README e Start-Local-Server.cmd.
-  Requer Python 3. Para testar no mesmo PC, iniciar o script e abrir o cliente
-  com `SB6.exe -online-directory http://127.0.0.1:18081`.
 - `SB6-Validation-<SHA>`: relatórios de testes, logs de compilação e publicação,
-  manifesto e pacote Linux. Retenção configurada em 14 dias.
+  manifesto. O pacote Linux é enviado somente à VM. Retenção configurada em 14 dias.
 
 O servidor Windows é um player release iniciado em headless para testes locais;
 a produção usa o subtarget Linux Dedicated Server. A publicação automática não
@@ -138,3 +134,36 @@ extra em Assets. O caminho é verificado contra o workspace do runner antes da
 limpeza. Os painéis nativos mantêm os rebuilds de layout no servidor e deixam
 as atualizações gráficas de Canvas para os clientes, evitando pedir shaders
 removidos do Linux Dedicated Server.
+
+
+## Iteração rápida em v0.5.0
+
+O push usa o perfil quick: compila servidor Linux e cliente Windows, executa
+os testes Python e preserva as verificações de integridade e o preflight Linux.
+O servidor Windows continua disponível pelo menu do Editor para testes locais,
+mas não faz parte da publicação. workflow_dispatch oferece full para também
+executar OnlineRoomEditModeTests no Unity. O perfil rápido não executa esses
+testes; uma compilação bem-sucedida não comprova comportamento em jogo.
+Este workflow continua limitado a v0.5.0; não publica automaticamente main.
+
+Library, Build/LinuxServer e Build/OnlineClient/Windows ficam no checkout
+isolado do runner para reaproveitamento incremental. O empacotamento Linux usa
+gzip nível 1 e o artefato Windows usa compressão nível 1. Os comandos
+registram duração, e o log Unity separa os tempos do servidor e do cliente.
+
+A ativação não espera salas vazias. Depois de validar a nova versão, para o
+serviço com KillMode=control-group, desconecta as salas e inicia a nova versão.
+Falha anterior à ativação preserva a versão em execução; falha após a troca
+aciona a restauração prevista no script.
+
+O CI grava o SHA do commit em Assets/Resources/OnlineBuildIdentity.txt
+(ignorado pelo Git) antes de importar o projeto no Unity. Cliente e servidor
+recebem o mesmo identificador. A alocação de salas exige protocolo e build;
+a autenticação Mirror exige também a versão do jogo. Dois builds 0.5.0 de
+commits diferentes não podem jogar juntos. Builds manuais sem esse arquivo
+usam local-development e não se conectam a uma release carimbada pelo CI.
+
+IPs, portas e caminhos de instalação estão presentes no repositório; a chave
+SSH usada para publicar permanece na conta Windows do runner. SB6_DEPLOY_SSH
+permite configurar o destino por ambiente, mantendo o destino existente como
+padrão. Isso não remove informações já existentes no histórico do Git.

@@ -35,6 +35,17 @@ class RoomsTests(unittest.TestCase):
         room["status"].write_text(json.dumps(data), encoding="utf-8")
         self.pool.refresh()
 
+    def test_deployed_manifest_controls_directory_build_identity(self):
+        binary = Path(self.temp.name) / "SB6.x86_64"
+        manifest = binary.parent / "deployment.json"
+        revision = "a" * 40
+        manifest.write_text(json.dumps({"buildIdentity": revision}), encoding="utf-8")
+        pool = RoomPool(binary, "127.0.0.1", logs=Path(self.temp.name) / "manifest-logs")
+        self.assertEqual(revision, pool.build_identity)
+        manifest.write_text(json.dumps({"buildIdentity": ""}), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid server build identity"):
+            RoomPool(binary, "127.0.0.1", logs=Path(self.temp.name) / "invalid-logs")
+
     def test_modes_are_fixed_and_use_correct_capacity(self):
         for mode, capacity in (("NormalGame", 4), ("BossRush", 4), ("BattleMode", 6)):
             room = self.pool.create(mode, mode)
@@ -94,7 +105,7 @@ class RoomsTests(unittest.TestCase):
         thread.start()
         url = f"http://127.0.0.1:{server.server_port}"
         try:
-            request = Request(url + "/rooms", data=json.dumps({"protocol": PROTOCOL}).encode(),
+            request = Request(url + "/rooms", data=json.dumps({"protocol": PROTOCOL, "buildIdentity": self.pool.build_identity}).encode(),
                               headers={"Content-Type": "application/json"})
             with urlopen(request) as response:
                 self.assertEqual(202, response.status)
@@ -106,6 +117,11 @@ class RoomsTests(unittest.TestCase):
             self.ready(room, available=False)
             with urlopen(url + "/rooms") as response:
                 self.assertEqual([], json.load(response)["rooms"])
+            before = len(self.pool.rooms)
+            request = Request(url + "/rooms", data=json.dumps({"protocol": PROTOCOL, "buildIdentity": "stale-commit"}).encode())
+            with self.assertRaises(HTTPError) as error: urlopen(request)
+            self.assertEqual(409, error.exception.code)
+            self.assertEqual(before, len(self.pool.rooms))
             request = Request(url + "/rooms", data=b'{"protocol":2}')
             with self.assertRaises(HTTPError) as error: urlopen(request)
             self.assertEqual(409, error.exception.code)

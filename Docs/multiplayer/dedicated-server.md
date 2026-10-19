@@ -45,7 +45,8 @@ Após iniciar a configuração, cinco minutos sem inputs humanos encerram a sala
 o aviso aparece apenas no último minuto. Inputs mantidos contam como atividade,
 mas pacotes de rede sem ações não renovam o prazo. O relógio usa tempo real,
 inclusive durante a pausa. O deploy migra o limite do serviço existente para três
-salas e restaura a configuração anterior se a ativação falhar.
+salas e restaura a configuração anterior se a ativação falhar. A publicação
+não aguarda salas vazias: a ativação desconecta as salas existentes.
 
 Não é necessário Docker. O serviço usa a conta da aplicação, sem sudo.
 

@@ -1,4 +1,4 @@
-"""VM side of CI deployment: bounded wait, safe archive extraction, rollback."""
+"""VM side of CI deployment: safe archive extraction and immediate activation."""
 import argparse
 import json
 from pathlib import Path
@@ -6,8 +6,6 @@ import re
 import shutil
 import subprocess
 import tarfile
-import time
-from urllib.request import urlopen
 
 
 def activate(name, stage_name, backup_name):
@@ -29,15 +27,6 @@ def activate(name, stage_name, backup_name):
             # provide the same required boundary without the newer filter API.
             package.extractall(stage)
     (stage / "SB6.x86_64").chmod(0o700)
-    deadline = time.monotonic() + 1800
-    while True:
-        with urlopen("http://127.0.0.1:8080/rooms", timeout=5) as response:
-            rooms = json.load(response)["rooms"]
-        if not rooms:
-            break
-        if time.monotonic() >= deadline:
-            raise RuntimeError("rooms remained active for 30 minutes; current release preserved")
-        time.sleep(10)
     subprocess.run(["python3", str(base / "ci-tools/deploy_staged.py"), stage_name, backup_name], check=True, timeout=120)
     (base / (name + ".tar.gz")).unlink()
     # Retain three CI rollbacks only. Manually named backups are never touched.

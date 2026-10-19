@@ -10,13 +10,23 @@ namespace Assets.Scripts.Netcode
     public sealed class OnlineVersionAuthenticator : NetworkAuthenticator
     {
         // Bump when wire messages, network prefabs or gameplay content become incompatible.
-        public const int ProtocolVersion = 8;
+        public const int ProtocolVersion = 9;
+        public static string BuildIdentity
+        {
+            get
+            {
+                var stamp = Resources.Load<TextAsset>("OnlineBuildIdentity");
+                return stamp != null ? stamp.text.Trim() : "local-development";
+            }
+        }
+
         readonly HashSet<NetworkConnectionToClient> pending = new();
         public static bool VersionRejected { get; private set; }
 
         public struct Request : NetworkMessage
         {
             public string gameVersion;
+            public string buildIdentity;
             public int protocol;
         }
 
@@ -26,6 +36,12 @@ namespace Assets.Scripts.Netcode
             !string.IsNullOrEmpty(remoteVersion) && remoteVersion.Length <= 64 &&
             string.Equals(localVersion, remoteVersion, StringComparison.Ordinal) &&
             remoteProtocol == ProtocolVersion;
+
+        public static bool Compatible(string localVersion, string remoteVersion, int remoteProtocol,
+            string localBuild, string remoteBuild) =>
+            Compatible(localVersion, remoteVersion, remoteProtocol) &&
+            !string.IsNullOrEmpty(localBuild) && localBuild.Length <= 64 &&
+            string.Equals(localBuild, remoteBuild, StringComparison.Ordinal);
 
         public override void OnStartServer() => NetworkServer.RegisterHandler<Request>(OnRequest, false);
 
@@ -51,7 +67,7 @@ namespace Assets.Scripts.Netcode
         void OnRequest(NetworkConnectionToClient connection, Request request)
         {
             if (!pending.Remove(connection)) return;
-            bool compatible = Compatible(Application.version, request.gameVersion, request.protocol);
+            bool compatible = Compatible(Application.version, request.gameVersion, request.protocol, BuildIdentity, request.buildIdentity);
             if (!compatible) Debug.LogWarning($"[Room] rejected incompatible connection={connection.connectionId} protocol={request.protocol}");
             connection.Send(new Response { compatible = compatible });
             if (compatible) ServerAccept(connection);
@@ -74,7 +90,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnClientAuthenticate() => NetworkClient.Send(new Request
         {
-            gameVersion = Application.version, protocol = ProtocolVersion
+            gameVersion = Application.version, protocol = ProtocolVersion, buildIdentity = BuildIdentity
         });
 
         void OnResponse(Response response)

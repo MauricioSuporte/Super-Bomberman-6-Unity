@@ -64,3 +64,7 @@ MirrorExamplesPipelineConverted.txt
 /output/WindowsMeasurements/
 /output/WindowsBuildReports/
 /output/RelayProbe/
+
+# CI stamps matching server/client commit identities before Unity import.
+/Assets/Resources/OnlineBuildIdentity.txt
+/Assets/Resources/OnlineBuildIdentity.txt.meta
