@@ -321,7 +321,7 @@ public class ItemPickup : MonoBehaviour
         if (!ShouldPlayPlayerExtraSfx())
             return;
 
-        if (!GameAudioSettings.VoicesEnabled)
+        if (!GameAudioSettings.VoicesEnabled && !Assets.Scripts.Netcode.NetSync.IsServer)
             return;
 
         var playerAudio = player.GetComponent<AudioSource>();
@@ -340,6 +340,7 @@ public class ItemPickup : MonoBehaviour
         audio.Stop();
         audio.clip = playerExtraSfx;
         audio.volume = GameAudioSettings.ApplyVoiceSfxVolume(playerAudio.volume * playerExtraVolume);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(playerExtraSfx, playerAudio.volume * playerExtraVolume, audio.pitch, true);
         audio.Play();
     }
 
@@ -392,10 +393,8 @@ public class ItemPickup : MonoBehaviour
 
         if (playDestroyAnim)
             DestroyWithAnimation();
-        else if (Assets.Scripts.Netcode.NetSync.IsOnline)
-            Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
         else
-            Destroy(gameObject);
+            Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
     }
 
     public void Consume(bool playDestroyAnim) => ConsumeNow(playDestroyAnim);
@@ -805,6 +804,7 @@ public class ItemPickup : MonoBehaviour
 
     public bool TryExpelItem(Vector2 direction, float tileSize, Collider2D ignoredCollider, int distanceTiles)
     {
+        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(6, gameObject, value: tileSize, direction: direction, steps: distanceTiles);
         if (isBeingDestroyed || skullBounceMoving)
             return true;
 
@@ -1321,11 +1321,13 @@ public class ItemPickup : MonoBehaviour
 
     public void DestroyWithAnimation()
     {
+        if (!isBeingDestroyed) Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(2, gameObject);
         PlayDestroyAnimation(destroyRenderer);
     }
 
     public void DestroyWithExplosionAnimation()
     {
+        if (!isBeingDestroyed) Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(3, gameObject);
         if (type == ItemType.Skull)
             return;
 
@@ -1378,7 +1380,7 @@ public class ItemPickup : MonoBehaviour
             rendererToPlay.RefreshFrame();
         }
 
-        Destroy(gameObject, Mathf.Max(0.05f, destroyDelaySeconds));
+        StartCoroutine(DespawnAfterDelay(Mathf.Max(0.05f, destroyDelaySeconds)));
     }
 
     void PlayDestroyAnimationSequence(AnimatedSpriteRenderer firstRenderer, AnimatedSpriteRenderer secondRenderer)
@@ -1424,7 +1426,13 @@ public class ItemPickup : MonoBehaviour
         PlayDestroyRenderer(secondRenderer);
 
         float secondDuration = GetDestroyAnimationDuration(secondRenderer);
-        Destroy(gameObject, Mathf.Max(0.05f, Mathf.Max(secondDuration, destroyDelaySeconds)));
+        StartCoroutine(DespawnAfterDelay(Mathf.Max(0.05f, Mathf.Max(secondDuration, destroyDelaySeconds))));
+    }
+
+    IEnumerator DespawnAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
     }
 
     void PlayDestroyRenderer(AnimatedSpriteRenderer rendererToPlay)
@@ -1585,6 +1593,7 @@ public class ItemPickup : MonoBehaviour
 
     public void DestroySilently()
     {
+        if (!isBeingDestroyed) Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(4, gameObject);
         if (type == ItemType.Skull)
             return;
 
@@ -1596,11 +1605,12 @@ public class ItemPickup : MonoBehaviour
         if (_col != null)
             _col.enabled = false;
 
-        Destroy(gameObject);
+        Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
     }
 
     public void DestroyFromMovingBombImpact()
     {
+        if (!isBeingDestroyed) Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(5, gameObject);
         if (type == ItemType.Skull || isBeingDestroyed)
             return;
 
@@ -1632,7 +1642,7 @@ public class ItemPickup : MonoBehaviour
         }
 
         transform.localScale = Vector3.zero;
-        Destroy(gameObject);
+        Assets.Scripts.Netcode.NetSpawn.Despawn(gameObject);
     }
 
     static Vector2 NormalizeCardinalOrDown(Vector2 direction)

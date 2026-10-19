@@ -9,6 +9,49 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void BattleFeedbackPreservesAuthoritativePathAndExpulsionParameters()
+    {
+        var path = new[] { new Vector3Int(-6, 4, 0), new Vector3Int(-5, 4, 0) };
+        using var writer = NetworkWriterPool.Get();
+        writer.Write(new BattleFeedback { scene = "BattleMode_1", kind = 6, netId = 42,
+            direction = Vector2.left, value = 1.25f, steps = 3, cell = path[0], path = path });
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+        var result = reader.Read<BattleFeedback>();
+        Assert.AreEqual("BattleMode_1", result.scene);
+        Assert.AreEqual(42u, result.netId);
+        Assert.AreEqual(6, result.kind);
+        Assert.AreEqual(Vector2.left, result.direction);
+        Assert.AreEqual(1.25f, result.value);
+        Assert.AreEqual(3, result.steps);
+        Assert.AreEqual(path[0], result.cell);
+        CollectionAssert.AreEqual(path, result.path);
+    }
+
+    [Test]
+    public void BattleSoundCatalogResolvesSerializedClipsWithoutCoopScene()
+    {
+        var catalog = Resources.Load<CoopSceneCatalog>("OnlineBattleAudio");
+        Assert.IsNotNull(catalog);
+        var go = new GameObject("BattleAudioRegression");
+        go.SetActive(false);
+        try
+        {
+            var manager = go.AddComponent<BombermanNetworkManager>();
+            var resolve = typeof(BombermanNetworkManager).GetMethod("CoopSoundId",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Sounds", "Assets/Resources/Sounds" }))
+            {
+                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                int id = (int)resolve.Invoke(manager, new object[] { clip });
+                Assert.GreaterOrEqual(id, 0, path);
+                Assert.AreSame(clip, catalog.sounds[id], path);
+            }
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
     [TestCase(true)]
     [TestCase(false)]
     public void IncompatibleDirectoryStopsBrowsingAndBlocksRoomActions(bool staleProtocol)

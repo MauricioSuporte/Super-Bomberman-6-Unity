@@ -36,6 +36,7 @@ namespace Assets.Scripts.Netcode
         public Color color;
         public CoopTileFrame[] cells;
     }
+    public struct BattleFeedback : NetworkMessage { public string scene; public byte kind; public uint netId; public Vector3Int cell; public Vector2 direction; public float value; public int steps; public Vector3Int[] path; }
     public struct CoopSound : NetworkMessage { public string scene, resource; public int clip; public float volume, pitch; public bool voice; }
 
     /// <summary>
@@ -77,6 +78,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopSprites>(ApplyCoopSprites);
             NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
+            NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
             NetworkClient.RegisterHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
             NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);
@@ -432,21 +434,51 @@ namespace Assets.Scripts.Netcode
 
         static T At<T>(T[] values, int index) where T : UnityEngine.Object => index >= 0 && index < values.Length ? values[index] : null;
 
+        public static void SendBattleFeedback(byte kind, GameObject target = null, Vector3Int cell = default, float value = 0, Vector2 direction = default, int steps = 0, Vector3Int[] path = null)
+        {
+            if (!NetworkServer.active || !NetSync.IsOnline) return;
+            uint id = target != null && target.TryGetComponent<NetworkIdentity>(out var identity) ? identity.netId : 0;
+            NetworkServer.SendToReady(new BattleFeedback { scene = SceneManager.GetActiveScene().name, kind = kind, netId = id, cell = cell, value = value, direction = direction, steps = steps, path = path });
+        }
+
+        void ApplyBattleFeedback(BattleFeedback message)
+        {
+            if (NetworkServer.active || !NetSync.IsOnline || message.scene != SceneManager.GetActiveScene().name) return;
+            if (message.kind < 2)
+            {
+                var suddenDeath = FindAnyObjectByType<BattleSuddenDeathController>();
+                if (suddenDeath != null) suddenDeath.ApplyNetworkDrop(message.kind == 0, message.cell, message.value, message.path);
+                return;
+            }
+            if (!NetworkClient.spawned.TryGetValue(message.netId, out var identity) || !identity.TryGetComponent<ItemPickup>(out var item)) return;
+            switch (message.kind)
+            {
+                case 2: item.DestroyWithAnimation(); break;
+                case 3: item.DestroyWithExplosionAnimation(); break;
+                case 4: item.DestroySilently(); break;
+                case 5: item.DestroyFromMovingBombImpact(); break;
+                case 6: item.TryExpelItem(message.direction, message.value, null, message.steps); break;
+            }
+        }
+
         public static void CoopPlaySound(AudioClip clip, float volume = 1f, float pitch = 1f, bool voice = false)
         {
-            if (!IsCoopStage || !NetworkServer.active || singleton is not BombermanNetworkManager manager || manager.coopCatalog == null) return;
+            if (!NetSync.IsOnline || !NetworkServer.active || singleton is not BombermanNetworkManager manager) return;
+            if (!IsCoopStage && !SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal)) return;
+            if (!IsCoopStage && GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive) return;
             int id = manager.CoopSoundId(clip);
             string resource = manager.CoopSoundResource(clip);
-            if (id >= 0 || resource != null) NetworkServer.SendToReady(new CoopSound { scene = manager.coopScene, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice });
+            if (id >= 0 || resource != null) NetworkServer.SendToReady(new CoopSound { scene = SceneManager.GetActiveScene().name, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice });
         }
 
         void ApplyCoopSound(CoopSound message)
         {
-            if (!CanApplyCoop(message.scene)) return;
-            var clip = At(coopCatalog.sounds, message.clip) ?? (string.IsNullOrEmpty(message.resource) ? null : Resources.Load<AudioClip>(message.resource));
+            if (NetworkServer.active || !NetSync.IsOnline || message.scene != SceneManager.GetActiveScene().name) return;
+            var clip = (SoundCatalog == null ? null : At(SoundCatalog.sounds, message.clip)) ?? (string.IsNullOrEmpty(message.resource) ? null : Resources.Load<AudioClip>(message.resource));
             if (clip == null) return;
             var go = new GameObject("CoopSound", typeof(AudioSource));
             var source = go.GetComponent<AudioSource>();
+            source.ignoreListenerPause = true;
             source.clip = clip; source.volume = message.voice ? GameAudioSettings.ApplyVoiceSfxVolume(message.volume) : GameAudioSettings.ApplySfxVolume(message.volume); source.pitch = message.pitch;
             source.Play(); Destroy(go, clip.length / Mathf.Max(0.1f, Mathf.Abs(message.pitch)) + 0.5f);
         }

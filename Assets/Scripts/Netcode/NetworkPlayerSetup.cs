@@ -25,6 +25,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!isClient || !NetSync.IsOnline || !NetworkClient.active) return;
             string name = BombermanNetworkManager.RoomPlayerName(netPlayerId);
+            if (string.IsNullOrEmpty(name) && !System.Array.Exists(BombermanNetworkManager.RoomPlayers, id => id == netPlayerId)) name = $"COM {netPlayerId}";
             if (string.IsNullOrEmpty(name)) { if (nameLabel != null) nameLabel.gameObject.SetActive(false); return; }
             if (nameLabel == null)
             {

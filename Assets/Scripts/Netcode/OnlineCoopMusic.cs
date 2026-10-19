@@ -30,12 +30,19 @@ namespace Assets.Scripts.Netcode
             NetworkServer.SendToReady(manager.coopMusic);
         }
 
-        int CoopSoundId(AudioClip clip) => clip != null && coopSoundIds.TryGetValue(clip, out int id) ? id : -1;
+        CoopSceneCatalog onlineSoundCatalog;
+        CoopSceneCatalog SoundCatalog => coopCatalog != null ? coopCatalog :
+            onlineSoundCatalog != null ? onlineSoundCatalog : onlineSoundCatalog = Resources.Load<CoopSceneCatalog>("OnlineBattleAudio");
+
+        int CoopSoundId(AudioClip clip) => clip == null ? -1 :
+            coopSoundIds.TryGetValue(clip, out int id) ? id :
+            SoundCatalog != null ? System.Array.IndexOf(SoundCatalog.sounds, clip) : -1;
 
         string CoopSoundResource(AudioClip clip)
         {
-            if (clip == null || coopSoundIds.ContainsKey(clip)) return null;
-            foreach (string path in coopCatalog.resourceSoundPaths ?? System.Array.Empty<string>())
+            if (clip == null || CoopSoundId(clip) >= 0) return null;
+            if (SoundCatalog == null) return null;
+            foreach (string path in SoundCatalog.resourceSoundPaths ?? System.Array.Empty<string>())
                 if (System.IO.Path.GetFileName(path) == clip.name) return path;
             CatalogId(clip, coopSoundIds);
             return null;

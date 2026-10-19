@@ -461,7 +461,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void PlayRandomThrowSfx()
     {
-        if (!GameAudioSettings.VoicesEnabled)
+        if (!GameAudioSettings.VoicesEnabled && !Assets.Scripts.Netcode.NetSync.IsServer)
             return;
 
         if (audioSource == null)

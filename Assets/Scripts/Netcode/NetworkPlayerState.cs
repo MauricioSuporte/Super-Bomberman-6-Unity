@@ -51,7 +51,6 @@ namespace Assets.Scripts.Netcode
         int appliedTempFx = 0;
         int appliedMountType = -1;
         bool appliedGloveHolding;
-        bool playedDeathSfx;
         int appliedAbilityFlags = -1;
 
         void Awake()
@@ -279,14 +278,6 @@ namespace Assets.Scripts.Netcode
 
                 if (glove != null) { glove.NetVisualHardStop(); appliedGloveHolding = false; }
                 move.PlayDeathVisualLocal(diedByExplosion);
-            }
-
-            // Som da morte: TODOS os clientes (dono e remotos) tocam uma vez na
-            // transição para life==0, para todos ouvirem a eliminação.
-            if (!isServer && !BombermanNetworkManager.IsCoopStage && !playedDeathSfx && life == 0 && move != null)
-            {
-                move.PlayDeathSfxLocal();
-                playedDeathSfx = true;
             }
 
             // Runtime state local: o HUD lê bombas/fogo/velocidade daqui.

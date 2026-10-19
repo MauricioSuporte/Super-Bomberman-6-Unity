@@ -59,7 +59,7 @@ namespace Assets.Scripts.Netcode
                 bomb.PlayNetworkExplosionVisual(parts[i].pos, parts[i].part, parts[i].dir, origin, duration, pierce);
 
             // Som da explosão (o VFX acima é mudo; o áudio era host-only).
-            bomb.PlayExplosionSfxNetworked(pierce);
+            // Explosion audio arrives through the shared server sound event.
         }
 
         // F3a — destruição de blocos destrutíveis. O host coleta as células

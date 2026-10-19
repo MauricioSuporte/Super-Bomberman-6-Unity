@@ -18,6 +18,7 @@ public sealed class CoopSceneCatalogBuilder : IPreprocessBuildWithReport
     [MenuItem("Tools/Super Bomberman 6/Online/Refresh Co-op Scene Catalogs")]
     public static void Generate()
     {
+        GenerateBattleAudio();
         const string root = "Assets/Resources/CoopScenes";
         if (!AssetDatabase.IsValidFolder(root)) AssetDatabase.CreateFolder("Assets/Resources", "CoopScenes");
         // Resources used by scripts at runtime may not be serialized scene dependencies.
@@ -54,6 +55,25 @@ public sealed class CoopSceneCatalogBuilder : IPreprocessBuildWithReport
             catalog.sounds = objects.OfType<AudioClip>().ToArray();
             EditorUtility.SetDirty(catalog);
         }
+        AssetDatabase.SaveAssets();
+    }
+
+    [MenuItem("Tools/Super Bomberman 6/Online/Refresh Battle Audio Catalog")]
+    public static void GenerateBattleAudio()
+    {
+        const string path = "Assets/Resources/OnlineBattleAudio.asset";
+        var sounds = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Sounds", "Assets/Resources/Sounds" })
+            .Select(AssetDatabase.GUIDToAssetPath).Select(AssetDatabase.LoadAssetAtPath<AudioClip>)
+            .Where(clip => clip != null).OrderBy(Key, StringComparer.Ordinal).ToArray();
+        var catalog = AssetDatabase.LoadAssetAtPath<CoopSceneCatalog>(path);
+        if (catalog == null)
+        {
+            catalog = ScriptableObject.CreateInstance<CoopSceneCatalog>();
+            AssetDatabase.CreateAsset(catalog, path);
+        }
+        if (catalog.sounds != null && catalog.sounds.SequenceEqual(sounds)) return;
+        catalog.sounds = sounds;
+        EditorUtility.SetDirty(catalog);
         AssetDatabase.SaveAssets();
     }
 

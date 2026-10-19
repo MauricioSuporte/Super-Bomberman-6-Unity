@@ -22,12 +22,8 @@ namespace Assets.Scripts.Netcode
     [RequireComponent(typeof(NetworkIdentity))]
     public class NetworkEggFollower : NetworkBehaviour
     {
-        // Chave-mestra da replicação dos ovos (F6 B2). DESLIGADA por enquanto: o
-        // follow networkado ainda está bugado (pisca/some) e não vale mostrar num
-        // build de demo. Com false, a MountEggQueue não spawna/despawna em rede
-        // (ovos ficam host-only, invisíveis no cliente = comportamento pré-b2) e
-        // este componente fica dormente. Ligar quando o bug do follow for resolvido.
-        public static bool ReplicationEnabled = false;
+        // Queue simulation stays on the server; clients display followers and destruction.
+        public static bool ReplicationEnabled = true;
 
         // 0 = vivo; 1 = destruído normal; 2 = destruído por explosão.
         [SyncVar(hook = nameof(OnDestroyKindChanged))] byte destroyKind;
@@ -44,12 +40,19 @@ namespace Assets.Scripts.Netcode
             destroyVisual = GetComponentInChildren<EggFollowerDestroyVisual>(true);
         }
 
-        void Update()
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isServer) return;
+            foreach (var hitbox in GetComponentsInChildren<Collider2D>(true)) hitbox.enabled = false;
+        }
+
+        void LateUpdate()
         {
             // Só o cliente puro deriva o facing do movimento replicado; no host a
             // MountEggQueue já dirige o EggFollowerDirectionalVisual. Ao destruir,
             // para de dirigir (a VFX assume os renderers).
-            if (!ReplicationEnabled || isServer || directional == null || destroyKind != 0)
+            if (!ReplicationEnabled || !NetSync.IsOnline || !isClient || isServer || directional == null || destroyKind != 0)
                 return;
 
             Vector3 p = transform.position;

@@ -99,6 +99,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     bool selectedClockwise = true;
     SuddenDeathDropPattern selectedDropPattern;
     float suddenDeathShadowStartRemainingTime;
+    float networkShadowStartedAt;
 
     public bool SuddenDeathStarted => suddenDeathStarted;
 
@@ -373,8 +374,17 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void Update()
     {
-        if (!Application.isPlaying)
+        if (!Application.isPlaying) return;
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        {
+            if (suddenDeathStarted && !suddenDeathFinished)
+            {
+                float elapsed = Time.time - networkShadowStartedAt;
+                EnsureQueuedShadows(elapsed, GetDropWindowDuration());
+                UpdateQueuedShadows(elapsed);
+            }
             return;
+        }
 
         if (suddenDeathFinished)
             return;
@@ -423,6 +433,18 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return 0f;
 
         return Mathf.Max(0f, GameManager.Instance.BattleTimeRemainingSeconds);
+    }
+
+    public void ApplyNetworkDrop(bool begin, Vector3Int cell, float remaining, Vector3Int[] path)
+    {
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        if (begin)
+        {
+            BeginSuddenDeath(remaining);
+            if (path != null) { suddenDeathPath.Clear(); suddenDeathPath.AddRange(path); }
+            networkShadowStartedAt = Time.time;
+        }
+        else StartCoroutine(DropTileRoutine(cell));
     }
 
     void BeginSuddenDeath(float remainingTimeAtStart)
@@ -501,6 +523,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             $"emptySlots={emptySlotsInPath}, " +
             $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, randomizeDropPattern={randomizeDropPattern}");
 
+        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(0, value: remainingTimeAtStart, path: suddenDeathPath.ToArray());
         StartCoroutine(PlayHurryUpAndResumeMusic());
     }
 
@@ -637,6 +660,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             $"DropNextTile: slot com queda visual. " +
             $"slotIndex={slotIndex + 1}/{suddenDeathPath.Count}, cell={cell}, slotDuration={slotDuration:0.000}");
 
+        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(1, cell: cell);
         StartCoroutine(DropTileRoutine(cell));
     }
 
@@ -669,6 +693,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             }
         }
 
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, cleanupOverlapSize, 0f);
 
         HashSet<GameObject> processedBombs = new HashSet<GameObject>();
@@ -687,7 +712,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
             if (hit.TryGetComponent<ItemPickup>(out var item))
             {
-                Destroy(item.gameObject);
+                Assets.Scripts.Netcode.NetSpawn.Despawn(item.gameObject);
                 continue;
             }
 
@@ -870,7 +895,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         NotifyGameManagerIndestructibleDropFinished(cell);
         activeFallingCellApplyTimes.Remove(cell);
 
-        PlayFallingSfx();
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) PlayFallingSfx();
         StartDamageOnCell(cell);
     }
 
@@ -1180,11 +1205,13 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         Vector3Int cell = new Vector3Int(-7, 4, 0);
+        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(1, cell: cell);
         StartCoroutine(DropTileRoutine(cell));
     }
 
     void StartDamageOnCell(Vector3Int cell)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (damageCoroutines.ContainsKey(cell))
             return;
 
@@ -1378,7 +1405,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         if (hurryUpSfx != null && GameMusicController.Instance != null)
         {
-            GameMusicController.Instance.PlayOneShotSfx(hurryUpSfx);
+            if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) GameMusicController.Instance.PlayOneShotSfx(hurryUpSfx);
             longestClip = Mathf.Max(longestClip, hurryUpSfx.length);
 
             LogFlow($"HurryUp SFX tocado: {hurryUpSfx.name}");
@@ -1391,7 +1418,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
             if (voice != null)
             {
-                GameMusicController.Instance.PlayOneShotSfx(voice);
+                if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) GameMusicController.Instance.PlayOneShotSfx(voice);
                 longestClip = Mathf.Max(longestClip, voice.length);
 
                 LogFlow($"Voice selecionada: {voice.name}");

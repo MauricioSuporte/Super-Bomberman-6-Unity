@@ -1089,8 +1089,6 @@ public sealed class MountEggQueue : MonoBehaviour
             // F6 (B2) online: replica o seguidor aos clientes (no-op offline; o
             // host mantém seu objeto local, que a fila dirige, e a NetworkTransform
             // replica a posição). A MountEggQueue só roda no host/offline.
-            // Gateado: por ora a replicação está DESLIGADA (bug de follow) — ovos
-            // ficam host-only/invisíveis no cliente, como antes do B2.
             if (Assets.Scripts.Netcode.NetworkEggFollower.ReplicationEnabled)
                 Assets.Scripts.Netcode.NetSpawn.Server(rootGo);
         }

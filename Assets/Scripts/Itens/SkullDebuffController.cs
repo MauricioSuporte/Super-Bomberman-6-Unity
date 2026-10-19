@@ -187,6 +187,7 @@ public sealed class SkullDebuffController : MonoBehaviour
         if (ignoredCollider == null)
             ignoredCollider = GetComponentInChildren<Collider2D>();
 
+        Assets.Scripts.Netcode.NetSpawn.Server(spawnedSkull.gameObject);
         ClearActiveEffect();
         spawnedSkull.TryExpelSkull(direction, tileSize, ignoredCollider, ExpelDistanceTiles);
 
@@ -338,7 +339,7 @@ public sealed class SkullDebuffController : MonoBehaviour
 
     static void PlayTransferSfx(GameObject target)
     {
-        if (!GameAudioSettings.VoicesEnabled)
+        if (!GameAudioSettings.VoicesEnabled && !Assets.Scripts.Netcode.NetSync.IsServer)
             return;
 
         if (target == null)
