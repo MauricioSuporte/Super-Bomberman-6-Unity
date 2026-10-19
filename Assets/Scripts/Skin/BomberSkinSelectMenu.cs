@@ -406,6 +406,7 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     public IEnumerator SelectSkinRoutine()
     {
+        appliedOnlineCharacterJson = null;
         bool resumeFromSavedSkins = ResumeBattleModeSelectionFromSavedSkins;
         ResumeBattleModeSelectionFromSavedSkins = false;
 

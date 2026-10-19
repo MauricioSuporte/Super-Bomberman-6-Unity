@@ -324,6 +324,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopServer()
         {
+            roomPresentationByConnection.Clear();
             ClearDedicatedAdminInput();
             base.OnStopServer();
             playerIdByConnection.Clear();
@@ -378,6 +379,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
+            roomPresentationByConnection.Remove(conn.connectionId);
             if (authenticator is OnlineVersionAuthenticator names) names.ReleaseName(conn.connectionId);
             bool ownerLeft = playerIdByConnection.TryGetValue(conn.connectionId, out int departedId) &&
                 departedId == RoomAdminPlayerId;

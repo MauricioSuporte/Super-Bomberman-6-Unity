@@ -9,6 +9,36 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void MenuDeltaSendsChangesAndHeartbeatWithoutRepeatingPayloads()
+    {
+        var cache = new OnlineRoomPresentationCache();
+        OnlineRoomMessage Snapshot() => new OnlineRoomMessage { menu = "cursor1", characters = "skins", settings = "rules", progress = "save", flowView = "", players = new[] { 1, 2 } };
+        var message = Snapshot();
+        Assert.IsTrue(cache.Prepare(ref message, 0));
+        Assert.AreEqual("rules", message.settings);
+        message = Snapshot();
+        Assert.IsFalse(cache.Prepare(ref message, .01f));
+        message = Snapshot(); message.menu = "cursor2";
+        Assert.IsTrue(cache.Prepare(ref message, .02f));
+        Assert.AreEqual("cursor2", message.menu);
+        Assert.IsNull(message.settings);
+        Assert.IsNull(message.characters);
+        message = Snapshot(); message.menu = "cursor2";
+        Assert.IsTrue(cache.Prepare(ref message, 1.1f));
+        Assert.IsNull(message.menu);
+        Assert.IsNull(message.progress);
+        message = Snapshot(); message.menu = ""; message.progress = "newSave";
+        Assert.IsTrue(cache.Prepare(ref message, 1.2f));
+        Assert.AreEqual("", message.menu, "Empty explicitly clears a previous view");
+        Assert.AreEqual("rules", message.settings, "Progress replaces the settings copy, so restore settings too");
+        var joiningPeer = new OnlineRoomPresentationCache();
+        message = Snapshot();
+        Assert.IsTrue(joiningPeer.Prepare(ref message, 1.3f));
+        Assert.AreEqual("save", message.progress);
+        Assert.AreEqual("skins", message.characters);
+    }
+
     [TestCase(false, false)]
     [TestCase(true, false)]
     [TestCase(false, true)]
@@ -302,7 +332,8 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 13, true)]
+    [TestCase("0.5.0", 14, true)]
+    [TestCase("0.5.0", 13, false)]
     [TestCase("0.5.0", 12, false)]
     [TestCase("0.5.0", 11, false)]
     [TestCase("0.5.0", 10, false)]

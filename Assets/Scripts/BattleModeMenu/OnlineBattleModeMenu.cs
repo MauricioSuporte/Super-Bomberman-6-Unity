@@ -130,9 +130,16 @@ public sealed partial class BattleModeMenu
         }
     }
 
+    OnlineView appliedOnlineMenuView;
+    static string parsedOnlineMenuJson;
+    static OnlineView parsedOnlineMenuView;
+
     public void ApplyOnlineMenuView(OnlineView view)
     {
         if (view == null || !Enum.TryParse(view.step, out MenuState next)) return;
+        if (ReferenceEquals(appliedOnlineMenuView, view) && menuActive) return;
+        bool restoreChanged = appliedOnlineMenuView == null || appliedOnlineMenuView.restoreVisible != view.restoreVisible;
+        appliedOnlineMenuView = view;
         bool changed = state != next || !menuActive;
         bool starting = view.startConfirmed && !specificStartConfirmed;
         state = next;
@@ -168,10 +175,13 @@ public sealed partial class BattleModeMenu
         cursorConfirmVisual = view.cursorConfirmed;
         specificStartConfirmed = view.startConfirmed;
         specificConfirmedCursorPosition = view.startCursorPosition;
-        foreach (var panel in new[] { teamSelectRoot, ruleConfigRoot, stageSelectRoot, specificSettingsRoot,
-            musicSelectRoot, itemSelectRoot, louieSelectRoot, handicapSelectRoot, restoreDefaultsRoot })
-            if (panel != null) panel.gameObject.SetActive(false);
-        if (leftPanel != null) leftPanel.gameObject.SetActive(false);
+        if (changed || restoreChanged)
+        {
+            foreach (var panel in new[] { teamSelectRoot, ruleConfigRoot, stageSelectRoot, specificSettingsRoot,
+                musicSelectRoot, itemSelectRoot, louieSelectRoot, handicapSelectRoot, restoreDefaultsRoot })
+                if (panel != null) panel.gameObject.SetActive(false);
+            if (leftPanel != null) leftPanel.gameObject.SetActive(false);
+        }
         switch (state)
         {
             case MenuState.MatchMode:
@@ -235,8 +245,13 @@ public sealed partial class BattleModeMenu
 
     public static OnlineView ReadOnlineView()
     {
-        return string.IsNullOrEmpty(BombermanNetworkManager.MenuView) ? null :
-            JsonUtility.FromJson<OnlineView>(BombermanNetworkManager.MenuView);
+        string json = BombermanNetworkManager.MenuView;
+        if (json != parsedOnlineMenuJson)
+        {
+            parsedOnlineMenuJson = json;
+            parsedOnlineMenuView = string.IsNullOrEmpty(json) ? null : JsonUtility.FromJson<OnlineView>(json);
+        }
+        return parsedOnlineMenuView;
     }
 
     IEnumerator ObserveOnlineMenu()

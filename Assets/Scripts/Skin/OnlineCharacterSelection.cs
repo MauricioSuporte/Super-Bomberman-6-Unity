@@ -48,11 +48,16 @@ public partial class BomberSkinSelectMenu
         return JsonUtility.ToJson(new OnlineCharacterView { players = views, soundSequence = onlineSoundSequence, soundIndex = onlineSoundIndex, soundVolume = onlineSoundVolume, fade = fadeImage != null ? fadeImage.color.a : 0, fadeVisible = fadeImage != null && fadeImage.gameObject.activeSelf });
     }
 
+    string appliedOnlineCharacterJson;
+
     void ApplyOnlineCursorView()
     {
         if (string.IsNullOrEmpty(BombermanNetworkManager.CharacterView)) return;
-        var view = JsonUtility.FromJson<OnlineCharacterView>(BombermanNetworkManager.CharacterView);
+        string json = BombermanNetworkManager.CharacterView;
+        if (json == appliedOnlineCharacterJson) return;
+        var view = JsonUtility.FromJson<OnlineCharacterView>(json);
         if (view?.players == null) return;
+        appliedOnlineCharacterJson = json;
         ApplyOnlineSound(view.soundSequence, view.soundIndex, view.soundVolume);
         if (fadeInCoroutine != null) { StopCoroutine(fadeInCoroutine); fadeInCoroutine = null; }
         if (fadeImage != null)

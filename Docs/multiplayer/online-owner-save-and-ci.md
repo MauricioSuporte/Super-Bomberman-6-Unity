@@ -26,7 +26,7 @@ seus saves originais são restaurados. A VM não grava o save do dono no disco.
 Sair da sala, ou perder a conexão de um participante registrado, encerra a sala
 para todos e retorna os clientes à TitleScreen. Não há transferência de dono.
 
-O protocolo atual é 13 e inclui a identidade do build na autenticação.
+O protocolo atual é 14 e inclui a identidade do build na autenticação.
 Servidor, API e clientes devem ser recompilados juntos, mesmo mantendo 0.5.0.
 
 ## Runner Windows
@@ -210,3 +210,11 @@ Inputs de menus e gameplay são enviados também nas mudanças de direção/esta
 O botão Edit Name substitui Refresh Rooms; a lista continua atualizando automaticamente. O nome salvo aparece no topo, aceita até 16 caracteres e só é editado pela opção dedicada. A validação de build consulta /health e oferece Run Game Updater, iniciando GameUpdater.exe e aguardando o jogo fechar antes da atualização. O estado de personagens usa o catálogo dinâmico e um int completo na replicação, preservando IDs gerados que excedem um byte. Discord identifica Online Lobby e diferencia busca de salas e espera por jogadores.
 
 Validação desta correção: GeneratedOnlineCharacterIdsSurviveSelectionAndReplication passou no Unity EditMode (1 teste, 0 falhas), além das 22 verificações Python do pipeline/updater e das compilações C# e Unity. A apresentação visual do lobby e o Discord precisam de conferência no cliente gráfico.
+
+## Menus online: envio incremental
+
+O servidor verifica mudanças a 60 Hz nos menus, mas envia apenas os campos alterados, por conexão. Campos nulos preservam o estado anterior e textos vazios limpam a tela. Cada participante recebe um snapshot completo ao entrar ou trocar de cena; sem alterações, recebe apenas um heartbeat por segundo. Configurações são reenviadas junto de alterações do progresso para preservar a cópia temporária do save.
+
+Clientes reutilizam o estado já interpretado do Battle Mode e evitam reaplicar estados idênticos na seleção de skins e Save File Menu. Os painéis do Battle Mode deixam de ser desativados e reativados a cada atualização. Sons, cursores e fades continuam associados às mudanças do servidor.
+
+Validação local: compilação C# e compilação Unity concluídas; 17 casos direcionados de envio incremental e compatibilidade aprovados no Edit Mode; 15 testes do CI e 7 do diretório de salas aprovados. Desempenho no computador do participante e navegação com dois clientes ainda dependem do teste após a publicação.

@@ -238,6 +238,7 @@ public class SaveFileMenu : MonoBehaviour
 
     private IEnumerator OpenMenuRoutine()
     {
+        appliedOnlineViewJson = null;
         if (root == null)
             root = gameObject;
 
@@ -1519,11 +1520,14 @@ public class SaveFileMenu : MonoBehaviour
         fade = fadeImage != null ? fadeImage.color.a : 0,
         message = disabledOptionText != null && disabledOptionText.gameObject.activeSelf ? disabledOptionText.text : ""
     });
+    string appliedOnlineViewJson;
+
     void ApplyOnlineView()
     {
         string json = Assets.Scripts.Netcode.BombermanNetworkManager.FlowView;
-        if (string.IsNullOrEmpty(json)) return;
+        if (string.IsNullOrEmpty(json) || json == appliedOnlineViewJson) return;
         var view = JsonUtility.FromJson<OnlineView>(json);
+        appliedOnlineViewJson = json;
         var state = (MenuState)view.state;
         if (_state != state)
         {

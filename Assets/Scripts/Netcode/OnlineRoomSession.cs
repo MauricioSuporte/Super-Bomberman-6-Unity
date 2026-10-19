@@ -26,6 +26,49 @@ namespace Assets.Scripts.Netcode
         public bool ownerModeLocked;
     }
 
+    // Reliable messages carry null for unchanged presentation fields; empty clears them.
+    public sealed class OnlineRoomPresentationCache
+    {
+        bool initialized;
+        OnlineRoomMessage previous;
+        float nextHeartbeat;
+
+        static bool SameValues<T>(T[] a, T[] b)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (a == null || b == null || a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+                if (!EqualityComparer<T>.Default.Equals(a[i], b[i])) return false;
+            return true;
+        }
+
+        static bool SameState(OnlineRoomMessage a, OnlineRoomMessage b) =>
+            a.playerId == b.playerId && a.adminPlayerId == b.adminPlayerId &&
+            a.dedicated == b.dedicated && a.completed == b.completed && a.completedTime == b.completedTime &&
+            a.mode == b.mode && a.bossDifficulty == b.bossDifficulty && a.ownerModeLocked == b.ownerModeLocked &&
+            a.settings == b.settings && a.menu == b.menu && a.characters == b.characters &&
+            a.progress == b.progress && a.flowView == b.flowView && SameValues(a.players, b.players) && SameValues(a.names, b.names);
+
+        public bool Prepare(ref OnlineRoomMessage message, float now)
+        {
+            bool initial = !initialized;
+            if (!initial && SameState(message, previous) && now < nextHeartbeat) return false;
+            initialized = true;
+            nextHeartbeat = now + 1f;
+            var snapshot = message;
+            if (!initial)
+            {
+                if (message.settings == previous.settings && message.progress == previous.progress && message.bossDifficulty == previous.bossDifficulty) message.settings = null;
+                if (message.menu == previous.menu) message.menu = null;
+                if (message.characters == previous.characters) message.characters = null;
+                if (message.progress == previous.progress && message.bossDifficulty == previous.bossDifficulty) message.progress = null;
+                if (message.flowView == previous.flowView) message.flowView = null;
+            }
+            previous = snapshot;
+            return true;
+        }
+    }
+
     public struct OnlineSelectionInputMessage : NetworkMessage
     {
         public int held;
@@ -72,6 +115,7 @@ namespace Assets.Scripts.Netcode
         readonly Dictionary<int, int> selectionHeld = new();
         readonly Dictionary<int, int> selectionPressed = new();
         readonly Dictionary<int, float> selectionLastReceived = new();
+        readonly Dictionary<int, OnlineRoomPresentationCache> roomPresentationByConnection = new();
         float nextRoomBroadcast, nextCoopSessionBroadcast;
         float nextSelectionSend;
         int lastSelectionHeld;
@@ -120,6 +164,7 @@ namespace Assets.Scripts.Netcode
 
         void InitializeRoomServer()
         {
+            roomPresentationByConnection.Clear();
             roomStarted = false;
             roomDeadline = Time.unscaledTime + 300f;
             if (GameSession.Instance == null) new GameObject("GameSession").AddComponent<GameSession>();
@@ -185,12 +230,12 @@ namespace Assets.Scripts.Netcode
             if (!string.IsNullOrEmpty(message.progress) && RoomMode == OnlineRoomMode.BossRush)
                 BossRushProgress.ApplyOnlineSelection((BossRushDifficulty)message.bossDifficulty, message.playerId == message.adminPlayerId);
             OwnerModeLocked = message.ownerModeLocked;
-            FlowView = message.flowView ?? "";
+            if (message.flowView != null) FlowView = message.flowView;
             RoomAdminPlayerId = message.adminPlayerId;
             DedicatedRoom = message.dedicated;
             if (presenceChanged) DiscordRichPresenceController.RefreshOnlinePresence();
-            MenuView = message.menu ?? "";
-            CharacterView = message.characters ?? "";
+            if (message.menu != null) MenuView = message.menu;
+            if (message.characters != null) CharacterView = message.characters;
             global::SaveSystem.ApplyOnlineBattleSettings(message.settings);
             if (GameSession.Instance != null)
             {
@@ -259,9 +304,8 @@ namespace Assets.Scripts.Netcode
             if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
             {
                 nextRoomBroadcast = Time.unscaledTime + (InAnyMenu ? 1f / 60f : IsCoopRoom ? 0.5f : 0.1f);
-                // Joins and transitions send a full snapshot. Battle settings can
-                // only change in configuration, not during lobby/gameplay ticks.
-                BroadcastRoom(InAnyMenu);
+                // Poll at presentation speed; unchanged payloads are omitted per peer.
+                BroadcastRoom();
             }
         }
 
@@ -362,7 +406,7 @@ namespace Assets.Scripts.Netcode
                 { peer.Disconnect(); return; }
         }
 
-        void BroadcastRoom(bool includeSettings = true)
+        void BroadcastRoom()
         {
             RoomAdminPlayerId = FindRoomAdmin(playerIdByConnection.Values, RoomAdminPlayerId);
             RoomPlayers = new List<int>(playerIdByConnection.Values).ToArray();
@@ -378,18 +422,22 @@ namespace Assets.Scripts.Netcode
             MenuView = menu != null ? menu.CaptureOnlineView() : "";
             var characters = InCharacterConfiguration ? FindAnyObjectByType<BomberSkinSelectMenu>(FindObjectsInactive.Include) : null;
             CharacterView = characters != null ? characters.CaptureOnlineView() : "";
-            string progress = CaptureChangedRoomProgress();
+            CaptureChangedRoomProgress();
+            string progress = ownerFlowConfigured ? lastRoomProgress ?? "" : "";
             string flow = CaptureOwnerMenuView();
-            string settings = includeSettings ? global::SaveSystem.CaptureOnlineBattleSettings() : "";
+            string settings = global::SaveSystem.CaptureOnlineBattleSettings();
             foreach (var connection in NetworkServer.connections.Values)
             {
-                if (connection == null || !connection.isAuthenticated ||
+                if (connection == null || !connection.isAuthenticated || !connection.isReady ||
                     !playerIdByConnection.TryGetValue(connection.connectionId, out int id)) continue;
                 if (connection == NetworkServer.localConnection) { LocalRoomPlayerId = id; continue; }
-                connection.Send(new OnlineRoomMessage { playerId = id, adminPlayerId = RoomAdminPlayerId,
+                if (!roomPresentationByConnection.TryGetValue(connection.connectionId, out var cache))
+                    roomPresentationByConnection[connection.connectionId] = cache = new OnlineRoomPresentationCache();
+                var message = new OnlineRoomMessage { playerId = id, adminPlayerId = RoomAdminPlayerId,
                     dedicated = dedicatedServer, completed = RoomCompleted, completedTime = CompletedRunTime,
                     players = RoomPlayers, names = RoomPlayerNames, mode = RoomMode, timeoutSeconds = RoomTimeoutSeconds,
-                    settings = settings, menu = MenuView, characters = CharacterView, progress = progress, flowView = flow, bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty(), ownerModeLocked = OwnerModeLocked });
+                    settings = settings, menu = MenuView, characters = CharacterView, progress = progress, flowView = flow, bossDifficulty = (int)BossRushProgress.GetSelectedDifficulty(), ownerModeLocked = OwnerModeLocked };
+                if (cache.Prepare(ref message, Time.unscaledTime)) connection.Send(message);
             }
         }
 
@@ -555,6 +603,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerChangeScene(string newSceneName)
         {
+            roomPresentationByConnection.Clear();
             Debug.Log($"[Room] scene={newSceneName} players={playerIdByConnection.Count} admin={RoomAdminPlayerId}");
             if (!roomStarted || newSceneName == NetworkLobby.SceneName)
                 roomDeadline = Time.unscaledTime + 300f;
