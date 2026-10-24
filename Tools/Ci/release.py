@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import tarfile
 import time
+import threading
 import xml.etree.ElementTree as ET
 import urllib.error
 import urllib.parse
@@ -26,16 +27,65 @@ REPORTS = ROOT / "Build/CI"
 
 
 def command(args, **kwargs):
+    """Bound every external tool and never give SSH the runner's stdin pipe."""
+    heartbeat_log = kwargs.pop("heartbeat_log", None)
     print("Running:", " ".join(str(a) for a in args), flush=True)
     started = time.monotonic()
-    # Do not let native tools attach to the PowerShell/runner console.
+    kwargs.setdefault("stdin", subprocess.DEVNULL)
+    kwargs.setdefault("timeout", 300)
     if os.name == "nt":
         kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
     if kwargs.get("text") or kwargs.get("universal_newlines"):
         kwargs.setdefault("encoding", "utf-8")
-    result = subprocess.run([str(a) for a in args], cwd=ROOT, check=True, **kwargs)
-    print(f"Completed in {time.monotonic() - started:.1f}s", flush=True)
+    stop = threading.Event()
+    reporter = None
+    if heartbeat_log is not None:
+        reporter = threading.Thread(target=report_progress,
+            args=(Path(heartbeat_log), stop, started), daemon=True)
+        reporter.start()
+    try:
+        result = subprocess.run([str(a) for a in args], cwd=ROOT, check=True, **kwargs)
+    except subprocess.TimeoutExpired:
+        print(f"::error::Command exceeded {kwargs['timeout']}s: {args[0]}", flush=True)
+        raise
+    finally:
+        stop.set()
+        if reporter is not None:
+            reporter.join(timeout=2)
+        print(f"Command finished after {time.monotonic() - started:.1f}s", flush=True)
     return result
+
+
+def report_progress(path, stop, started):
+    offset = 0
+    while True:
+        finished = stop.wait(10)
+        if path.is_file():
+            with path.open("rb") as log:
+                size = log.seek(0, 2)
+                log.seek(max(0 if size < offset else offset, size - 4096))
+                text = log.read().decode("utf-8", errors="replace")
+                offset = size
+            lines = [line.strip() for line in text.splitlines() if line.strip()]
+            if lines:
+                print(f"[{path.name}] " + " | ".join(lines[-3:])[-900:], flush=True)
+        if finished:
+            return
+        print(f"Still running ({time.monotonic() - started:.0f}s); log: {path}", flush=True)
+
+
+def ssh_options():
+    return ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+            "-o", "ConnectionAttempts=1", "-o", "ServerAliveInterval=10",
+            "-o", "ServerAliveCountMax=2", "-o", "StrictHostKeyChecking=yes"]
+
+
+def preflight():
+    # Run before Unity: an unreachable VM or protocol mismatch should not cost a build.
+    version = protocol()
+    command(["ssh", "-n", "-T", *ssh_options(), SSH,
+             "test -d ~/sb6/server && command -v python3 && df -h ~/sb6"], timeout=40)
+    print("Deployment preflight passed; protocol:", version, flush=True)
 
 
 def sha(path):
@@ -79,7 +129,7 @@ def unity(args, log):
         startup.wShowWindow = subprocess.SW_HIDE
         launch = dict(creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup)
     command([executable, "-batchmode", "-nographics", "-projectPath", ROOT, "-logFile", log, *args],
-            timeout=3600, env=environment, **launch)
+            timeout=1800, env=environment, heartbeat_log=log, **launch)
 
 
 def build():
@@ -89,7 +139,11 @@ def build():
     profile = os.environ.get("SB6_RELEASE_PROFILE", "full")
     if profile not in ("quick", "full"):
         raise RuntimeError("invalid release profile")
-    updater = build_updater()
+    target = os.environ.get("SB6_RELEASE_TARGET", "both")
+    if target not in ("both", "server"):
+        raise RuntimeError("invalid release target")
+    wire_protocol = protocol()
+    updater = build_updater() if target == "both" else None
     commit = command(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     expected = os.environ.get("GITHUB_SHA", commit)
     if not re.fullmatch(r"[0-9a-f]{40}", commit) or commit != expected:
@@ -98,7 +152,7 @@ def build():
                                       capture_output=True, text=True).stdout.strip())
     stamp = ROOT / "Assets/Resources/OnlineBuildIdentity.txt"
     stamp.write_text(commit, encoding="utf-8")
-    print("Release profile:", profile, "build identity:", commit, flush=True)
+    print("Release profile:", profile, "target:", target, "build identity:", commit, flush=True)
     tests = REPORTS / "online-tests.xml"
     tests.unlink(missing_ok=True)
     if profile == "full":
@@ -107,10 +161,15 @@ def build():
         if result.get("result") != "Passed" or int(result.get("failed", "1")):
             raise RuntimeError("online tests failed; release left unchanged")
     else:
-        print("Quick profile: Unity tests skipped; both player builds still compile.", flush=True)
+        print("Quick profile: Unity tests skipped; requested players still compile.", flush=True)
     command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/RoomDirectory", "-p", "test_supervisor.py"])
     command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/Ci", "-p", "test_*.py"])
-    unity(["-quit", "-executeMethod", "DedicatedServerBuild.BuildReleaseArtifacts"], logs / "release.log")
+    method = "DedicatedServerBuild.BuildLinuxServer" if target == "server" else "DedicatedServerBuild.BuildReleaseArtifacts"
+    build_args = ["-quit", "-executeMethod", method]
+    if target == "server":
+        # Select Linux before import, avoiding a Windows import then a target switch.
+        build_args += ["-buildTarget", "Linux64", "-standaloneBuildSubtarget", "Server"]
+    unity(build_args, logs / "release.log")
     stage = ROOT / "Build/LinuxServer"
     assembly = stage / "SB6_Data/Managed/Assembly-CSharp.dll"
     if any(marker in assembly.read_bytes() for marker in (b"LocalServerLoadTest", b"TickLocalLoadTest", b"LocalNetworkInputSmoke", b"LocalOnlineFlowSmoke")):
@@ -120,13 +179,26 @@ def build():
     # Reuse it for every artifact rather than launching Git again after the build.
     editor_version = re.search(r"^m_EditorVersion: (.+)$", (ROOT / "ProjectSettings/ProjectVersion.txt").read_text(encoding="utf-8-sig"), re.M)[1].strip()
     manifest = dict(builtUtc=datetime.now(timezone.utc).isoformat(), sourceCommit=commit, unity=editor_version,
-                    workingTreeDirtyBeforeBuild=dirty_before_build, kind="Linux Dedicated Server release", profile=profile, buildIdentity=commit, protocol=protocol(),
+                    workingTreeDirtyBeforeBuild=dirty_before_build, kind="Linux Dedicated Server release", profile=profile, target=target, buildIdentity=commit, protocol=wire_protocol,
                     metricsVersion=2, benchmarkHarness=False, assemblySha256=sha(assembly),
                     executableSha256=sha(stage / "SB6.x86_64"), supervisorSha256=sha(stage / "supervisor.py"))
     for destination in (stage / "deployment.json", REPORTS / "deployment.json"):
         destination.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    if target == "both":
+        package_client(commit, manifest["builtUtc"], updater, wire_protocol)
+    else:
+        # Never expose a previous run's updater manifest in server-only mode.
+        (REPORTS / "client-update.json").unlink(missing_ok=True)
+    archive = REPORTS / "linux-release.tar.gz"
+    with tarfile.open(archive, "w:gz", compresslevel=1) as package:
+        for child in stage.iterdir():
+            package.add(child, arcname=child.name)
+    print("Release artifacts ready for commit", commit, flush=True)
+
+
+def package_client(commit, built_utc, updater, wire_protocol):
     (ROOT / "Build/OnlineClient/Windows/build-info.json").write_text(
-        json.dumps(dict(sourceCommit=commit, protocol=protocol(), builtUtc=manifest["builtUtc"]), indent=2),
+        json.dumps(dict(sourceCommit=commit, protocol=wire_protocol, builtUtc=built_utc), indent=2),
         encoding="utf-8")
     settings = (ROOT / "ProjectSettings/ProjectSettings.asset").read_text(encoding="utf-8-sig")
     version = re.search(r"^  bundleVersion: ([0-9A-Za-z._-]+)\s*$", settings, re.M)
@@ -151,16 +223,11 @@ def build():
                 archive.write(path, path.relative_to(distribution.parent).as_posix())
     (REPORTS / "client-update.json").write_text(json.dumps(dict(sourceCommit=commit, version=version[1],
         folder=distribution.name, package=package.name, sha256=sha(package)), indent=2), encoding="utf-8")
-    archive = REPORTS / "linux-release.tar.gz"
-    with tarfile.open(archive, "w:gz", compresslevel=1) as package:
-        for child in stage.iterdir():
-            package.add(child, arcname=child.name)
-    print("Release artifacts ready for commit", commit, flush=True)
-
 
 def deploy():
     manifest = json.loads((REPORTS / "deployment.json").read_text(encoding="utf-8"))
     commit = manifest["sourceCommit"]
+    (REPORTS / "deploy-status.json").unlink(missing_ok=True)
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise RuntimeError("invalid source commit")
     suffix = re.sub(r"[^a-z0-9-]", "", os.environ.get("GITHUB_RUN_ID", str(int(time.time()))))
@@ -169,20 +236,26 @@ def deploy():
         raise RuntimeError("invalid run attempt")
     name = f"ci-{commit[:12]}-{suffix}-{attempt}"
     stage, backup = "server-" + name, "backup-" + name
-    # BatchMode prevents a workflow from hanging on a passphrase/host-key prompt.
-    ssh = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", SSH]
-    command([*ssh, "mkdir -p ~/sb6/ci-tools"])
+    ssh = ["ssh", "-n", "-T", *ssh_options(), SSH]
+    command([*ssh, "mkdir -p ~/sb6/ci-tools"], timeout=40)
     for local, remote in ((REPORTS / "linux-release.tar.gz", f"sb6/{name}.tar.gz"),
                           (ROOT / "Tools/RoomDirectory/deploy_staged.py", "sb6/ci-tools/deploy_staged.py"),
                           (ROOT / "Tools/Ci/activate_release.py", "sb6/ci-tools/activate_release.py")):
-        command(["scp", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", local, f"{SSH}:{remote}"])
-    # The remote helper validates the release and disconnects rooms on activation.
-    completed = subprocess.run([*ssh, f"python3 ~/sb6/ci-tools/activate_release.py {name} {stage} {backup}"],
-                               cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=2100, check=False,
-                               **({"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}))
-    (REPORTS / "deploy-result.txt").write_text(completed.stdout + completed.stderr, encoding="utf-8")
-    print(completed.stdout + completed.stderr, flush=True)
-    completed.check_returncode()
+        size_mb = Path(local).stat().st_size / 1024**2
+        print(f"Uploading {Path(local).name} ({size_mb:.1f} MiB)", flush=True)
+        log = REPORTS / (Path(local).name + ".upload.txt")
+        with log.open("w", encoding="utf-8") as output:
+            command(["scp", "-v", *ssh_options(), local, f"{SSH}:{remote}"],
+                    timeout=300, stdout=output, stderr=subprocess.STDOUT, heartbeat_log=log)
+    # No activation retry: an interrupted connection may leave the transaction running remotely.
+    log = REPORTS / "deploy-result.txt"
+    with log.open("w", encoding="utf-8") as output:
+        command([*ssh, f"python3 -u ~/sb6/ci-tools/activate_release.py {name} {stage} {backup}"],
+                timeout=480, stdout=output, stderr=subprocess.STDOUT, heartbeat_log=log)
+    (REPORTS / "deploy-status.json").write_text(json.dumps(dict(sourceCommit=commit,
+        activatedUtc=datetime.now(timezone.utc).isoformat(), success=True)), encoding="utf-8")
+    print("::notice title=Servidor atualizado::" + commit, flush=True)
+    print("Server activated successfully:", commit, flush=True)
 
 
 def publish_client():
@@ -230,8 +303,25 @@ def publish_client():
     print("Client updater channel published:", update["sourceCommit"], flush=True)
 
 
+def summary():
+    destination = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not destination:
+        return
+    target = os.environ.get("SB6_RELEASE_TARGET", "both")
+    status_file = REPORTS / "deploy-status.json"
+    deployed = status_file.is_file() and json.loads(status_file.read_text(encoding="utf-8")).get("success")
+    lines = ["### Homologação online", "", f"- Alvo: `{target}`",
+             f"- Perfil: `{os.environ.get('SB6_RELEASE_PROFILE', 'quick')}`",
+             f"- Servidor atualizado nesta execução: **{'sim' if deployed else 'não'}**",
+             f"- Commit: `{os.environ.get('GITHUB_SHA', 'local')}`"]
+    if target == "server":
+        lines += ["", "Somente servidor: use o Editor no mesmo commit. O cliente Windows e seu atualizador não foram publicados."]
+    with Path(destination).open("a", encoding="utf-8") as output:
+        output.write("\n".join(lines) + "\n")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("build", "deploy", "publish-client"))
+    parser.add_argument("action", choices=("preflight", "build", "deploy", "publish-client", "summary"))
     options = parser.parse_args()
-    {"build": build, "deploy": deploy, "publish-client": publish_client}[options.action]()
+    {"preflight": preflight, "build": build, "deploy": deploy, "publish-client": publish_client, "summary": summary}[options.action]()

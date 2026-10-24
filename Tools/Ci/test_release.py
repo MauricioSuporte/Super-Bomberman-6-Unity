@@ -1,4 +1,5 @@
 import json
+from contextlib import redirect_stdout
 import io
 from pathlib import Path
 import subprocess
@@ -46,7 +47,7 @@ class ReleaseProfileTests(unittest.TestCase):
                         release.publish_client()
                 self.assertEqual(not fail_upload, any(call.get_method() == "PATCH" for call in calls))
 
-    def run_profile(self, profile):
+    def run_profile(self, profile, target="both"):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             reports = root / "Build/CI"
@@ -81,23 +82,28 @@ class ReleaseProfileTests(unittest.TestCase):
                 if "-runTests" in args:
                     reports.joinpath("online-tests.xml").write_text('<test-run result="Passed" failed="0"/>', encoding="utf-8")
 
-            with patch.object(release, "ROOT", root), patch.object(release, "REPORTS", reports), patch.object(release, "build_updater", return_value=updater), patch.object(release, "protocol", return_value=9), patch.object(release, "command", side_effect=command), patch.object(release, "unity", side_effect=unity) as build, patch.dict(release.os.environ, {"SB6_RELEASE_PROFILE": profile, "GITHUB_SHA": revision}):
+            with patch.object(release, "ROOT", root), patch.object(release, "REPORTS", reports), patch.object(release, "build_updater", return_value=updater), patch.object(release, "protocol", return_value=9), patch.object(release, "command", side_effect=command), patch.object(release, "unity", side_effect=unity) as build, patch.dict(release.os.environ, {"SB6_RELEASE_PROFILE": profile, "SB6_RELEASE_TARGET": target, "GITHUB_SHA": revision}):
                 release.build()
                 manifest = json.loads((reports / "deployment.json").read_text(encoding="utf-8"))
                 self.assertEqual(revision, manifest["buildIdentity"])
                 self.assertEqual(profile, manifest["profile"])
                 self.assertEqual(revision, (root / "Assets/Resources/OnlineBuildIdentity.txt").read_text(encoding="utf-8"))
                 self.assertTrue((reports / "linux-release.tar.gz").is_file())
-                folder = root / "Build/Distribution/Super Bomberman 6 v0.5.0"
-                self.assertTrue((folder / "build-info.json").is_file())
-                self.assertTrue((folder / "Super Bomberman 6.exe").is_file())
-                self.assertTrue((folder / "Start-Online-Diagnostics.cmd").is_file())
-                self.assertTrue((folder / "GameUpdater.exe").is_file())
-                update = json.loads((reports / "client-update.json").read_text(encoding="utf-8"))
-                self.assertEqual(release.sha(reports / update["package"]), update["sha256"])
-                self.assertEqual(folder.name, update["folder"])
-                self.assertIn("GameUpdater.exe", json.loads((folder / "client-files.json").read_text(encoding="utf-8")))
-                self.assertFalse((folder / "SB6.exe").exists())
+                if target == "server":
+                    self.assertEqual("server", manifest["target"])
+                    self.assertFalse((reports / "client-update.json").exists())
+                    self.assertFalse((root / "Build/Distribution").exists())
+                else:
+                    folder = root / "Build/Distribution/Super Bomberman 6 v0.5.0"
+                    self.assertTrue((folder / "build-info.json").is_file())
+                    self.assertTrue((folder / "Super Bomberman 6.exe").is_file())
+                    self.assertTrue((folder / "Start-Online-Diagnostics.cmd").is_file())
+                    self.assertTrue((folder / "GameUpdater.exe").is_file())
+                    update = json.loads((reports / "client-update.json").read_text(encoding="utf-8"))
+                    self.assertEqual(release.sha(reports / update["package"]), update["sha256"])
+                    self.assertEqual(folder.name, update["folder"])
+                    self.assertIn("GameUpdater.exe", json.loads((folder / "client-files.json").read_text(encoding="utf-8")))
+                    self.assertFalse((folder / "SB6.exe").exists())
                 return [call.args[0] for call in build.call_args_list]
 
     @unittest.skipUnless(release.os.name == "nt", "Windows console flags")
@@ -107,6 +113,8 @@ class ReleaseProfileTests(unittest.TestCase):
             release.command(["git", "--version"], capture_output=True, text=True)
         self.assertEqual(subprocess.CREATE_NO_WINDOW, run.call_args.kwargs["creationflags"])
         self.assertEqual("utf-8", run.call_args.kwargs["encoding"])
+        self.assertEqual(subprocess.DEVNULL, run.call_args.kwargs["stdin"])
+        self.assertEqual(300, run.call_args.kwargs["timeout"])
 
     @unittest.skipUnless(release.os.name == "nt", "Windows console flags")
     def test_unity_uses_its_own_hidden_console(self):
@@ -116,6 +124,79 @@ class ReleaseProfileTests(unittest.TestCase):
         self.assertEqual(subprocess.CREATE_NEW_CONSOLE, options["creationflags"])
         self.assertEqual(subprocess.SW_HIDE, options["startupinfo"].wShowWindow)
         self.assertTrue(options["startupinfo"].dwFlags & subprocess.STARTF_USESHOWWINDOW)
+
+    def test_server_only_does_not_build_or_package_a_windows_client(self):
+        calls = self.run_profile("quick", "server")
+        self.assertEqual(1, len(calls))
+        self.assertIn("DedicatedServerBuild.BuildLinuxServer", calls[0])
+        self.assertIn("Linux64", calls[0])
+        self.assertIn("Server", calls[0])
+
+    def test_protocol_mismatch_fails_before_updater_or_unity(self):
+        with patch.object(release, "protocol", side_effect=RuntimeError("protocol mismatch")), \
+             patch.object(release, "build_updater") as updater, patch.object(release, "unity") as unity:
+            with self.assertRaisesRegex(RuntimeError, "protocol mismatch"):
+                release.build()
+            updater.assert_not_called()
+            unity.assert_not_called()
+
+    def test_preflight_cannot_wait_on_stdin_and_has_a_short_deadline(self):
+        with patch.object(release, "protocol", return_value=18), patch.object(release, "command") as run:
+            release.preflight()
+        args = run.call_args.args[0]
+        self.assertIn("-n", args)
+        self.assertIn("BatchMode=yes", args)
+        self.assertIn("ServerAliveInterval=10", args)
+        self.assertEqual(40, run.call_args.kwargs["timeout"])
+
+    def test_timeout_is_propagated_instead_of_silently_retrying_activation(self):
+        with redirect_stdout(io.StringIO()), patch.object(release.subprocess, "run", side_effect=subprocess.TimeoutExpired("ssh", 1)) as run:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                release.command(["ssh", "test"], timeout=1)
+        self.assertEqual(1, run.call_count)
+
+    def test_real_command_ignores_parent_stdin_and_logs_progress(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "ssh.log"
+            with path.open("w", encoding="utf-8") as output:
+                release.command([release.os.sys.executable, "-c",
+                    "import sys; assert sys.stdin.read() == ''; print('progress visible')"],
+                    stdout=output, stderr=subprocess.STDOUT, heartbeat_log=path, timeout=10)
+            self.assertIn("progress visible", path.read_text(encoding="utf-8"))
+
+    def test_deploy_has_bounded_noninteractive_transfers_and_persistent_activation_log(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reports = root / "Build/CI"
+            reports.mkdir(parents=True)
+            (reports / "deployment.json").write_text(json.dumps({"sourceCommit": "a" * 40}), encoding="utf-8")
+            for path in (reports / "linux-release.tar.gz", root / "Tools/RoomDirectory/deploy_staged.py",
+                         root / "Tools/Ci/activate_release.py"):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b"test payload")
+            with redirect_stdout(io.StringIO()), patch.object(release, "ROOT", root), patch.object(release, "REPORTS", reports), \
+                 patch.object(release, "command") as run:
+                release.deploy()
+            calls = run.call_args_list
+            self.assertEqual(5, len(calls))
+            self.assertEqual(40, calls[0].kwargs["timeout"])
+            self.assertTrue(all(call.kwargs["timeout"] <= 480 for call in calls))
+            self.assertTrue(all("BatchMode=yes" in call.args[0] for call in calls))
+            self.assertIn("-n", calls[-1].args[0])
+            self.assertIn("python3 -u", calls[-1].args[0][-1])
+            self.assertTrue((reports / "deploy-result.txt").exists())
+            self.assertTrue(json.loads((reports / "deploy-status.json").read_text(encoding="utf-8"))["success"])
+
+    def test_summary_distinguishes_server_deploy_from_client_publication(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            reports = Path(temporary)
+            summary = reports / "summary.md"
+            with patch.object(release, "REPORTS", reports), patch.dict(release.os.environ,
+                    {"GITHUB_STEP_SUMMARY": str(summary), "SB6_RELEASE_TARGET": "server"}):
+                release.summary()
+            text = summary.read_text(encoding="utf-8")
+            self.assertIn("**não**", text)
+            self.assertIn("Editor no mesmo commit", text)
 
     def test_quick_builds_players_without_running_unity_tests(self):
         calls = self.run_profile("quick")

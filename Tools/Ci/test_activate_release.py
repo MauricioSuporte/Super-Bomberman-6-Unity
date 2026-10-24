@@ -33,7 +33,7 @@ class ActivationTests(unittest.TestCase):
         with patch.object(activate_release.Path, "home", return_value=self.home), patch.object(activate_release.subprocess, "run") as run:
             activate_release.activate("ci-test", "server-ci-test", "backup-ci-test")
             run.assert_called_once()
-            self.assertEqual(120, run.call_args.kwargs["timeout"])
+            self.assertEqual(360, run.call_args.kwargs["timeout"])
         self.assertFalse(self.archive.exists())
 
     def test_archive_cannot_escape_stage(self):

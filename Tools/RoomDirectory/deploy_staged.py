@@ -46,6 +46,7 @@ if __name__ == '__main__':
     if not match or int(match[1]) != manifest['protocol']: parser.error('directory/server protocol mismatch')
     if any(name in assembly for name in (b'LocalServerLoadTest', b'TickLocalLoadTest', b'LocalNetworkInputSmoke', b'LocalOnlineFlowSmoke')):
         parser.error('development harness in release')
+    print('Starting staged server boot and KCP check', flush=True)
     smoke = base/(args.stage+'-smoke')
     smoke.mkdir(mode=0o700)
     env = dict(os.environ, SB6_ROOM_ID='deployment-smoke', SB6_ROOM_TOKEN=secrets.token_hex(32),
@@ -76,7 +77,8 @@ if __name__ == '__main__':
             except subprocess.TimeoutExpired: process.kill(); process.wait()
     service_env = dict(os.environ, XDG_RUNTIME_DIR=f'/run/user/{os.getuid()}')
     def service(action, check=True):
-        return subprocess.run(['systemctl','--user',action] + ([] if action == 'daemon-reload' else ['sb6-rooms.service']), env=service_env, check=check)
+        print('Room service:', action, flush=True)
+        return subprocess.run(['systemctl','--user',action] + ([] if action == 'daemon-reload' else ['sb6-rooms.service']), env=service_env, check=check, timeout=35, stdin=subprocess.DEVNULL)
     service_file = Path.home()/'.config/systemd/user/sb6-rooms.service'
     service_before = service_file.read_bytes()
     service_text = service_before.decode('utf-8-sig')

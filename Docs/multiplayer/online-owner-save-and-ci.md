@@ -126,7 +126,8 @@ o terminador foi corrigido preservando seu GUID e os parâmetros de áudio.
 Os arquivos de prefab/áudio não foram removidos ou substituídos.
 
 
-O runner conserva somente o cache de importação `Library/` entre execuções.
+O runner conserva `Library/`, `Build/LinuxServer/` e `Build/OnlineClient/Windows/`
+entre execuções para reaproveitar importação e builds incrementais.
 Antes do checkout, remove arquivos não versionados e saídas antigas da sua cópia
 isolada; o checkout força os arquivos versionados para o commit solicitado.
 Isso evita reimportar todos os assets em cada correção e não conserva código
@@ -228,3 +229,50 @@ Ao iniciar pelo lobby, o jogo passa --language com o idioma selecionado; o proce
 O lobby exige uma resposta /health compatível antes de listar, criar ou entrar em salas. Detectada uma identidade de build ou protocolo incorreto, encerra as consultas, limpa a lista e bloqueia essas ações durante a sessão, exibindo a orientação para executar GameUpdater.exe. Retornar ao lobby não desfaz essa rejeição.
 
 Validação: compilação C# e Unity aprovadas; atualizador compilado com avisos tratados como erros; 17 testes das ferramentas CI (incluindo 8 do atualizador) e 2 casos Edit Mode de bloqueio por protocolo/build aprovados. A apresentação visual no cliente e o download da publicação real ainda exigem validação manual.
+
+
+## Homologação rápida e diagnóstico de deploy
+
+O push normal continua com `quick` + `both`: gera cliente Windows e servidor Linux
+com o mesmo protocolo e identidade de commit. Para testar sem esperar pelo cliente:
+
+- No Actions, abra **Online release v0.5.0 > Run workflow**, selecione a branch
+  **v0.5.0**, `target=server` e `profile=quick`.
+- Alternativamente, inclua **[server-only]** na mensagem do commit enviado para
+  v0.5.0. Esse push compila e publica apenas o servidor. Em disparo manual,
+  a escolha `target` tem prioridade sobre a mensagem do commit.
+- Teste pelo Unity Editor **no mesmo commit**; o Editor já atualiza a identidade
+  ao entrar em Play Mode. O modo server não altera o atualizador Windows.
+  Clientes antigos continuam exigindo o build correspondente e podem ser
+  rejeitados após esse deploy. Para disponibilizar um cliente compatível aos
+  outros jogadores, execute `both`.
+
+O modo server não compila Windows, não gera atualizador, pasta de distribuição
+ou ZIP de cliente, nem faz seus uploads. Abre o Unity diretamente em Linux Server
+para evitar uma importação Windows antes de trocar de plataforma. Não muda para
+Development Build e mantém o preflight de boot/KCP, hashes e rollback. Na execução
+inspecionada, o cliente Windows sozinho levou 193 segundos; esse trabalho é
+eliminado no modo server. O ganho real varia com o cache e a alteração.
+
+O alvo both ativa o servidor antes dos uploads do cliente. O artefato Actions
+reaproveita o ZIP do atualizador com compressão externa zero; ao baixar o artefato,
+extraia também o ZIP SB6-Windows que ele contém. Isso evita comprimir novamente
+centenas de arquivos já empacotados. Alterações somente em Markdown não disparam
+build. `full` continua disponível para executar os testes Unity além dos testes
+Python dos dois perfis.
+
+A verificação inicial valida protocolo jogo/supervisor e acesso SSH antes de abrir
+Unity. SSH usa `-n -T`, stdin nulo, BatchMode, host conhecido e keepalive. Cada
+comando tem deadline total: preparação 40s, cada upload até 300s e ativação até 480s.
+O keepalive detecta uma sessão sem resposta, além do ConnectTimeout de 10s.
+Não há repetição automática de ativação, pois uma perda de conexão pode deixar a
+transação ainda em execução no servidor. O helper remoto tem limite de 360s e
+operações de serviço limitadas a 35s. Os processos Unity têm limite de 30 minutos.
+
+Os logs mostram duração dos comandos e progresso a cada 10 segundos. Transferências
+e ativação também gravam relatórios em Build/CI; a ativação remota roda Python sem
+buffer para mostrar extração, smoke test, parada, troca e retomada do serviço.
+O resumo do Actions distingue servidor publicado de passos posteriores de upload.
+A fila permanece serializada para não interromper uma troca de versão no meio.
+Execuções antigas #23/#24 foram canceladas durante a correção; nenhuma delas
+havia iniciado a transferência do servidor.

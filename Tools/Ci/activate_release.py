@@ -14,8 +14,10 @@ def activate(name, stage_name, backup_name):
     base = Path.home() / "sb6"
     if shutil.disk_usage(base).free < 2 * 1024**3:
         raise RuntimeError("less than 2 GiB free; release left unchanged")
+    print("Validating archive and preparing stage", stage_name, flush=True)
     stage = base / stage_name
     stage.mkdir(mode=0o700)
+    print("Extracting server archive", flush=True)
     with tarfile.open(base / (name + ".tar.gz"), "r:gz") as package:
         for item in package.getmembers():
             if not (item.isfile() or item.isdir()) or not (stage / item.name).resolve().is_relative_to(stage.resolve()):
@@ -27,7 +29,8 @@ def activate(name, stage_name, backup_name):
             # provide the same required boundary without the newer filter API.
             package.extractall(stage)
     (stage / "SB6.x86_64").chmod(0o700)
-    subprocess.run(["python3", str(base / "ci-tools/deploy_staged.py"), stage_name, backup_name], check=True, timeout=120)
+    print("Running boot/KCP preflight and activation", flush=True)
+    subprocess.run(["python3", "-u", str(base / "ci-tools/deploy_staged.py"), stage_name, backup_name], check=True, timeout=360)
     (base / (name + ".tar.gz")).unlink()
     # Retain three CI rollbacks only. Manually named backups are never touched.
     backups = sorted((p for p in base.glob("backup-ci-*")
