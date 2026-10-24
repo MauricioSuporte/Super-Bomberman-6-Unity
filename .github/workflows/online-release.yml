@@ -1,0 +1,104 @@
+name: Online release v0.5.0
+run-name: "Homologation ${{ inputs.target || (contains(github.event.head_commit.message, '[server-only]') && 'server') || 'both' }} / ${{ inputs.profile || 'quick' }} — ${{ github.sha }}"
+
+on:
+  push:
+    branches: [v0.5.0]
+    paths-ignore: ['**/*.md']
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "both = matching client + server; server = fastest, test with Editor at the same commit"
+        type: choice
+        default: both
+        options: [both, server]
+      profile:
+        description: Validation profile (quick for iteration, full for Unity tests)
+        type: choice
+        default: quick
+        options: [quick, full]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sb6-online-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    permissions:
+      contents: write
+    if: github.repository == 'MauricioSuporte/Super-Bomberman-6-Unity' && github.actor == 'MauricioSuporte' && github.ref == 'refs/heads/v0.5.0'
+    runs-on: [self-hosted, Windows, X64, sb6-unity]
+    timeout-minutes: 75
+    env:
+      SB6_RELEASE_PROFILE: ${{ inputs.profile || 'quick' }}
+      SB6_RELEASE_TARGET: ${{ inputs.target || (contains(github.event.head_commit.message, '[server-only]') && 'server') || 'both' }}
+      PYTHONUNBUFFERED: '1'
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Set artifact date and time
+        run: |
+          $zone = [TimeZoneInfo]::FindSystemTimeZoneById('Central Brazilian Standard Time')
+          $localTime = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $zone)
+          "SB6_ARTIFACT_TIMESTAMP=$($localTime.ToString('yyyy-MM-dd_HH-mm-ss'))" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Prepare isolated checkout and retain Unity import cache
+        run: |
+          git config --global core.longpaths true
+          $workspace = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $runnerRoot = [IO.Path]::GetFullPath($env:RUNNER_WORKSPACE)
+          $runnerPrefix = $runnerRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+          if (-not $workspace.StartsWith($runnerPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            throw 'Checkout escaped the runner workspace'
+          }
+          if (Test-Path -LiteralPath (Join-Path $workspace '.git')) {
+            git -C $workspace clean -ffdx -e /Library/ -e /Build/LinuxServer/ -e /Build/OnlineClient/Windows/
+            if ($LASTEXITCODE -ne 0) { throw 'Unable to clean isolated checkout' }
+          }
+      - uses: actions/checkout@v7
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Fail fast on protocol mismatch or unavailable deployment host
+        timeout-minutes: 2
+        run: python Tools/Ci/release.py preflight
+      - name: Compile, test and build requested players
+        timeout-minutes: ${{ inputs.profile == 'full' && 60 || 35 }}
+        run: python Tools/Ci/release.py build
+      - name: Publish Linux release and disconnect current rooms
+        timeout-minutes: 18
+        run: python Tools/Ci/release.py deploy
+      - name: Publish client updater channel after successful server deployment
+        if: env.SB6_RELEASE_TARGET == 'both'
+        timeout-minutes: 12
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python Tools/Ci/release.py publish-client
+      - name: Windows client for players
+        if: env.SB6_RELEASE_TARGET == 'both'
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Windows-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          path: Build/CI/SB6-Windows-*.zip
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+      - name: Deployment summary
+        if: always()
+        run: python Tools/Ci/release.py summary
+      - name: Test reports, build manifests and deploy result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Validation-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          path: |
+            Build/CI/*.json
+            Build/CI/*.xml
+            Build/CI/*.txt
+            Logs/CI/
+          if-no-files-found: warn
+          retention-days: 14
+
