@@ -210,7 +210,7 @@ public class MovementController : MonoBehaviour, IKillable
     public Rigidbody2D Rigidbody { get; private set; }
     public Vector2 Direction => direction;
 
-    // Compatibility flag for existing presentation helpers. Dedicated clients do not predict.
+    // Owner movement prediction is reconciled against server snapshots.
     private bool predictLocally;
     public bool PredictLocally => predictLocally;
     public void SetPredictLocally(bool value) => predictLocally = value;
@@ -218,9 +218,90 @@ public class MovementController : MonoBehaviour, IKillable
     private bool ShouldSimulateLocallyOrPredict =>
         Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || predictLocally;
 
-    // Offline and the dedicated server own physics; clients display replicated positions.
+    // The server owns physics; the local owner replays the movement motor without world simulation.
     private bool ShouldMovePhysicsLocally =>
         Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || predictLocally;
+
+    // Only network-owned humans use this path; offline and COM retain their loop.
+    private bool networkTickDriven;
+    public bool NetworkTickDriven => networkTickDriven;
+    private bool insideNetworkTick;
+    private int networkHeldMask;
+    private float predictedWorldSpeed;
+
+    public struct NetworkMovementState
+    {
+        public Vector2 position, direction, facing, dualPrimary, dualSecondary;
+        public Vector2 pendingTurn, lockedDirection, pendingSingle, lastMove;
+        public Vector2 reentryStart, reentryTarget;
+        public float dualTimer, alignCoordinate, accX, accY, reentryElapsed, worldSpeed;
+        public byte axis, alignAxis;
+        public int animationSpeed;
+        public bool hasInput, alignTarget, reentryActive, canPredict;
+    }
+
+    public bool CanPredictNetworkMovement => !isDead && !inputLocked && !isEndingStage &&
+        !externalMovementOverride && !visualOverrideActive && !externalVisualSuppressed &&
+        !IsSpriteLocked && !isMounted && !IsRidingPlaying() &&
+        (stunReceiver == null || !stunReceiver.IsStunned);
+
+    public void SetNetworkTickDriven(bool value) => networkTickDriven = value;
+
+    public NetworkMovementState CaptureNetworkMovementState() => new()
+    {
+        position = Rigidbody.position, direction = direction, facing = facingDirection,
+        dualPrimary = dualPrimary, dualSecondary = dualSecondary, dualTimer = dualSwitchTimer,
+        pendingTurn = pendingTurnDirection, lockedDirection = lockedMovementDirection,
+        pendingSingle = pendingSingleTurnDirection, lastMove = lastMoveDirCardinal,
+        axis = (byte)currentAxis, alignAxis = (byte)turnAssistTargetAxis,
+        alignTarget = hasTurnAssistAlignmentTarget, alignCoordinate = turnAssistAlignmentCoordinate,
+        hasInput = hasInput, accX = accPixelsX, accY = accPixelsY,
+        reentryActive = bombReentryCenteringActive, reentryStart = bombReentryCenterStart,
+        reentryTarget = bombReentryCenterTarget, reentryElapsed = bombReentryCenterElapsed,
+        worldSpeed = speed * tileSize * GetExternalMovementSpeedMultiplier(),
+        animationSpeed = speedInternal, canPredict = CanPredictNetworkMovement
+    };
+
+    public void RestoreNetworkMovementState(NetworkMovementState state)
+    {
+        SetNetworkPosition(state.position);
+        if (speedInternal != state.animationSpeed) ApplySpeedInternalUnclamped(state.animationSpeed);
+        direction = state.direction; facingDirection = state.facing;
+        dualPrimary = state.dualPrimary; dualSecondary = state.dualSecondary;
+        dualSwitchTimer = state.dualTimer; pendingTurnDirection = state.pendingTurn;
+        lockedMovementDirection = state.lockedDirection; pendingSingleTurnDirection = state.pendingSingle;
+        lastMoveDirCardinal = state.lastMove; currentAxis = (MoveAxis)state.axis;
+        turnAssistTargetAxis = (MoveAxis)state.alignAxis;
+        hasTurnAssistAlignmentTarget = state.alignTarget;
+        turnAssistAlignmentCoordinate = state.alignCoordinate;
+        hasInput = state.hasInput; accPixelsX = state.accX; accPixelsY = state.accY;
+        bombReentryCenteringActive = state.reentryActive;
+        bombReentryCenterStart = state.reentryStart; bombReentryCenterTarget = state.reentryTarget;
+        bombReentryCenterElapsed = state.reentryElapsed; predictedWorldSpeed = state.worldSpeed;
+        // Object references and traversal ownership are authoritative, never replayed.
+        _lastAdjKickedBomb = null;
+        _ownedBombPlantTraversal.Clear();
+    }
+
+    private void SetNetworkPosition(Vector2 position)
+    {
+        Rigidbody.linearVelocity = Vector2.zero;
+        Rigidbody.position = position;
+        transform.position = new Vector3(position.x, position.y, transform.position.z);
+    }
+
+    public void SimulateNetworkMovementTick(int heldMask)
+    {
+        if (Rigidbody == null || !isActiveAndEnabled) return;
+        networkHeldMask = heldMask;
+        insideNetworkTick = true;
+        try
+        {
+            Update();
+            FixedUpdate();
+        }
+        finally { insideNetworkTick = false; }
+    }
 
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;
@@ -605,6 +686,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        if (networkTickDriven && !insideNetworkTick) return;
         // Online host-autoritativo: clientes puros não simulam; a posição
         // e a animação chegam replicadas do servidor (ver NetSync). Exceção: o
         // player LOCAL predito (Etapa 1) simula localmente.
@@ -652,17 +734,17 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         var input = PlayerInputManager.Instance;
-        if (input == null)
+        if (input == null && !insideNetworkTick)
         {
             ApplyDirectionFromVector(Vector2.zero);
             ResetDualInputAxes();
             return;
         }
 
-        bool holdUp = input.Get(playerId, PlayerAction.MoveUp);
-        bool holdDown = input.Get(playerId, PlayerAction.MoveDown);
-        bool holdLeft = input.Get(playerId, PlayerAction.MoveLeft);
-        bool holdRight = input.Get(playerId, PlayerAction.MoveRight);
+        bool holdUp = insideNetworkTick ? (networkHeldMask & 1) != 0 : input.Get(playerId, PlayerAction.MoveUp);
+        bool holdDown = insideNetworkTick ? (networkHeldMask & 2) != 0 : input.Get(playerId, PlayerAction.MoveDown);
+        bool holdLeft = insideNetworkTick ? (networkHeldMask & 4) != 0 : input.Get(playerId, PlayerAction.MoveLeft);
+        bool holdRight = insideNetworkTick ? (networkHeldMask & 8) != 0 : input.Get(playerId, PlayerAction.MoveRight);
 
         Vector2 vertDir = Vector2.zero;
         Vector2 horizDir = Vector2.zero;
@@ -764,7 +846,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         if (dualSwitchTimer > 0f)
-            dualSwitchTimer -= Time.deltaTime;
+            dualSwitchTimer -= insideNetworkTick ? Time.fixedDeltaTime : Time.deltaTime;
 
         Vector2 chosenDir = ResolveDualInputZigZag();
 
@@ -1196,7 +1278,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (dir != Vector2.zero)
             SetFacingDirection(dir, "ApplyDirectionFromVector");
 
-        if (dir != Vector2.zero && TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+        if (!predictLocally && dir != Vector2.zero && TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
             kickAbility.NotifyOwnerDirectionChanged(dir);
 
         if (externalVisualSuppressed || visualOverrideActive)
@@ -1825,8 +1907,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
-        // Client-autoritativo: só o DONO move a física do seu player. Os players
-        // remotos (inclusive no host) são posicionados pela rede (NetworkTransform).
+        if (networkTickDriven && !insideNetworkTick) return;
+        // Offline/server simulate physics; only the owning client predicts movement.
         if (!ShouldMovePhysicsLocally)
             return;
 
@@ -2642,6 +2724,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize, bool allowMovementAbilities = true)
     {
+        // Replays may query collisions, but must never kick or mutate world objects.
+        allowMovementAbilities &= !predictLocally;
         if (WaterCycleCurrent.BlocksPlayerForwardMovement(this, targetPosition))
             return true;
 
@@ -3209,6 +3293,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void TryApplyHazardDamage(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (externalMovementOverride && !externalMovementAllowsHazardDamage)
             return;
 
@@ -4661,7 +4746,8 @@ public class MovementController : MonoBehaviour, IKillable
     private float GetRawMoveWorldPerFixedFrame()
     {
         float dt = Time.fixedDeltaTime;
-        float speedWorldPerSecond = speed * tileSize * GetExternalMovementSpeedMultiplier();
+        float speedWorldPerSecond = predictLocally && insideNetworkTick
+            ? predictedWorldSpeed : speed * tileSize * GetExternalMovementSpeedMultiplier();
         return speedWorldPerSecond * dt;
     }
 
@@ -4740,7 +4826,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 quantized = QuantizeToPixelGrid(worldPos);
 
-        Rigidbody.MovePosition(quantized);
+        if (predictLocally && insideNetworkTick) SetNetworkPosition(quantized);
+        else Rigidbody.MovePosition(quantized);
     }
 
     public void SetExternalMovementOverride(bool active)
@@ -5311,6 +5398,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
     {
+        if (predictLocally) return false;
         if (moveDir == Vector2.zero)
         {
             LogBombEscape($"[KickAdj] skip moveDir zero pos:{position}", verbose: true);
@@ -5578,7 +5666,7 @@ public class MovementController : MonoBehaviour, IKillable
             bombReentryCenteringActive = false;
 
             if (Rigidbody != null)
-                Rigidbody.MovePosition(quantizedTarget);
+                MovePositionPixelPerfect(quantizedTarget);
 
             return;
         }
@@ -5614,7 +5702,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (bombReentryCenterDuration <= 0.0001f)
         {
             bombReentryCenteringActive = false;
-            Rigidbody.MovePosition(QuantizeToPixelGrid(bombReentryCenterTarget));
+            MovePositionPixelPerfect(bombReentryCenterTarget);
             return true;
         }
 
@@ -5625,12 +5713,12 @@ public class MovementController : MonoBehaviour, IKillable
         next = QuantizeToPixelGrid(next);
 
         Rigidbody.linearVelocity = Vector2.zero;
-        Rigidbody.MovePosition(next);
+        MovePositionPixelPerfect(next);
 
         if (t >= 1f || Vector2.Distance(next, bombReentryCenterTarget) <= PixelWorldStep * 0.5f)
         {
             bombReentryCenteringActive = false;
-            Rigidbody.MovePosition(QuantizeToPixelGrid(bombReentryCenterTarget));
+            MovePositionPixelPerfect(bombReentryCenterTarget);
         }
 
         return true;

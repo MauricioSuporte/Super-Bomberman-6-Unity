@@ -136,10 +136,9 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private void Update()
     {
-        // Online: cliente puro não simula animação (a saída vem replicada).
-        // Exceção (Etapa 1): o player local predito dirige a própria animação.
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally &&
-            !(movement != null && movement.PredictLocally))
+        // Special poses are authoritative. Only walking animation is predicted;
+        // local emote/cornered locks must not outlive a movement rollback.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
             return;
 
         using var performanceSample = BattleModePerformanceMarkers.InactivityAnimationUpdate.Auto();

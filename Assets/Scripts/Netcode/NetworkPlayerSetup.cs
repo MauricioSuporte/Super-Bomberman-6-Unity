@@ -62,8 +62,8 @@ namespace Assets.Scripts.Netcode
             if (TryGetComponent<NetworkTransformReliable>(out var transformSync))
                 transformSync.syncDirection = SyncDirection.ServerToClient;
 
-            // Cliente puro não simula física: deixa o Rigidbody2D kinematic
-            // para o NetworkTransform posicionar sem conflito.
+            // Clients use a kinematic body: observers interpolate, while the owner
+            // predicts collision queries and replays authoritative movement snapshots.
             if (!isServer && TryGetComponent<Rigidbody2D>(out var rb))
                 rb.bodyType = RigidbodyType2D.Kinematic;
         }

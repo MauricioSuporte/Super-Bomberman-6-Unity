@@ -444,6 +444,95 @@ public sealed class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(instance); }
     }
 
+    [Test]
+    public void PredictionHistoryAcknowledgesInputsAcrossSequenceRollover()
+    {
+        var history = new NetworkInputHistory();
+        history.Add(new NetworkInputFrame { tick = uint.MaxValue - 1 });
+        history.Add(new NetworkInputFrame { tick = uint.MaxValue });
+        history.Add(new NetworkInputFrame { tick = 0 });
+        history.Add(new NetworkInputFrame { tick = 1 });
+        history.DiscardThrough(uint.MaxValue);
+        Assert.AreEqual(2, history.Count);
+        Assert.AreEqual(0u, history[0].tick);
+        history.DiscardThrough(0);
+        Assert.AreEqual(1u, history[0].tick);
+        Assert.IsFalse(NetworkInputHistory.IsNewer(0, 1));
+        Assert.IsFalse(NetworkInputHistory.IsNewer(1, 1));
+        Assert.IsTrue(NetworkInputHistory.IsNewer(0, uint.MaxValue));
+    }
+
+    [Test]
+    public void PredictionHistoryBoundsAnOutageAndRetainsOnlyUnacknowledgedTicks()
+    {
+        var history = new NetworkInputHistory();
+        for (uint tick = 1; tick <= NetworkInputHistory.Capacity + 20; tick++)
+            history.Add(new NetworkInputFrame { tick = tick, held = 8 });
+        Assert.AreEqual(NetworkInputHistory.Capacity, history.Count);
+        Assert.AreEqual(21u, history[0].tick);
+        history.DiscardThrough(40);
+        Assert.AreEqual(41u, history[0].tick);
+        history.DiscardThrough(NetworkInputHistory.Capacity + 20);
+        Assert.AreEqual(0, history.Count);
+    }
+
+    [Test]
+    public void PredictionRollbackReplaysTheMotorIncludingSubpixelProgressAndTurns()
+    {
+        var previous = NetSync.Mode;
+        var player = new GameObject("PredictionMotorRegression");
+        player.SetActive(false);
+        var obstacle = new GameObject("PredictionObstacleRegression");
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            player.tag = "Player";
+            player.AddComponent<BoxCollider2D>();
+            var body = player.AddComponent<Rigidbody2D>();
+            var movement = player.AddComponent<MovementController>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            // EditMode does not run Awake. Bind only the motor's required body;
+            // avoid booting save/session singletons or changing the open scene.
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            movement.SetNetworkTickDriven(true);
+            movement.SetPredictLocally(true);
+            player.SetActive(true);
+            var initial = new MovementController.NetworkMovementState
+            {
+                position = new Vector2(1000, 1000), facing = Vector2.down,
+                worldSpeed = 4.1f, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true
+            };
+            movement.RestoreNetworkMovementState(initial);
+            var inputs = new[] { 8, 8, 8, 9, 9, 1, 1, 1, 0 };
+            for (int i = 0; i < 3; i++) movement.SimulateNetworkMovementTick(inputs[i]);
+            var acknowledged = movement.CaptureNetworkMovementState();
+            // Capture uses authoritative speed, so preserve the known test speed.
+            acknowledged.worldSpeed = initial.worldSpeed;
+            for (int i = 3; i < inputs.Length; i++) movement.SimulateNetworkMovementTick(inputs[i]);
+            var expected = movement.CaptureNetworkMovementState();
+            Assert.Greater(expected.position.x, initial.position.x);
+            movement.RestoreNetworkMovementState(acknowledged);
+            for (int i = 3; i < inputs.Length; i++) movement.SimulateNetworkMovementTick(inputs[i]);
+            Assert.AreEqual(JsonUtility.ToJson(expected), JsonUtility.ToJson(movement.CaptureNetworkMovementState()));
+            obstacle.layer = LayerMask.NameToLayer("Stage");
+            obstacle.transform.position = initial.position + Vector2.right * 2;
+            obstacle.AddComponent<BoxCollider2D>();
+            Physics2D.SyncTransforms();
+            movement.obstacleMask = LayerMask.GetMask("Stage");
+            movement.RefreshObstacleContactFilter();
+            movement.RestoreNetworkMovementState(initial);
+            for (int i = 0; i < 40; i++) movement.SimulateNetworkMovementTick(8);
+            Assert.LessOrEqual(body.position.x, initial.position.x + 1, "Replay must query walls rather than blindly adding deltas.");
+            Assert.Greater(body.position.x, initial.position.x);
+            movement.SetExternalMovementOverride(true);
+            Assert.IsFalse(movement.CanPredictNetworkMovement, "Launchers and other external motion require server presentation.");
+            movement.SetExternalMovementOverride(false);
+            movement.isDead = true;
+            Assert.IsFalse(movement.CanPredictNetworkMovement);
+        }
+        finally { NetSync.Mode = previous; Object.DestroyImmediate(player); Object.DestroyImmediate(obstacle); }
+    }
+
     [TestCase(NetSync.NetMode.Offline, true)]
     [TestCase(NetSync.NetMode.Host, true)]
     [TestCase(NetSync.NetMode.Client, false)]
@@ -471,7 +560,9 @@ public sealed class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase("0.5.0", 14, true)]
+    [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 17, false)]
+    [TestCase("0.5.0", 14, false)]
     [TestCase("0.5.0", 13, false)]
     [TestCase("0.5.0", 12, false)]
     [TestCase("0.5.0", 11, false)]

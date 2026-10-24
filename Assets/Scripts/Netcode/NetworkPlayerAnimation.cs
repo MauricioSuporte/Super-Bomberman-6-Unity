@@ -52,7 +52,7 @@ namespace Assets.Scripts.Netcode
 
         void OnVisualTime(double previous, double current)
         {
-            if (isServer) return;
+            if (isServer || isLocalPlayer) return;
             double adjustment = 0;
             if (positionSync != null)
                 adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
@@ -70,6 +70,7 @@ namespace Assets.Scripts.Netcode
         int appliedFrame = -1;
 
         MovementController move;
+        bool wasPredicting;
 
         void Awake()
         {
@@ -90,7 +91,18 @@ namespace Assets.Scripts.Netcode
 
             if (!BombermanNetworkManager.IsCoopStage && GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive && move != null && move.IsEndingStage)
                 return;
-            // Clients, including the owner, apply server frames.
+            // Walking owners animate immediately. Special poses and observers retain
+            // authoritative frame playback; replay never emits animation RPCs.
+            bool predicting = !isServer && isLocalPlayer && move != null && move.PredictLocally;
+            if (predicting != wasPredicting)
+            {
+                wasPredicting = predicting;
+                visualFrames.Clear();
+                appliedIndex = -2;
+                foreach (var renderer in renderers)
+                    if (renderer != null) renderer.SetManualAnimationUpdate(!predicting);
+            }
+            if (predicting) return;
             if (isServer)
             {
                 SampleOwned();
