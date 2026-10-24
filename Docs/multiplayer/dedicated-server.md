@@ -223,3 +223,26 @@ revisão automática da ferramenta; nenhuma partida Linux com clientes foi valid
 O lobby vazio registrou RSS 312–314 MiB, mas também janelas de 36–47 FPS e frames
 máximos de 2–3 segundos. Essas pausas precisam ser investigadas em uma medição
 controlada antes de afirmar capacidade de partidas. Não foi atribuída uma causa.
+
+
+## Testar Play Mode junto com o artefato do GitHub
+
+O número `0.5.0` não identifica sozinho um build online: cliente, diretório e
+servidor também precisam ter o mesmo protocolo e commit. No Play Mode, o Editor
+atualiza `OnlineBuildIdentity` com o `HEAD` do checkout, mesmo com alterações
+locais; o Console avisa quando há conteúdo local que pode divergir do servidor.
+O CI continua gravando o commit exato nos artefatos e no servidor.
+
+1. Use o checkout do commit indicado em `build-info.json` do artefato Windows
+   e o servidor publicado para esse mesmo commit.
+2. Abra o executável extraído e inicie o Play Mode a partir de `TitleScreen`.
+   Se o Play Mode já estava aberto, pare e inicie novamente para atualizar a identidade.
+3. Use o mesmo diretório de salas em ambas as instâncias (`Use Public Server`
+   ou `Use Local Server`). Crie uma sala em uma e entre pela outra.
+4. Escolha nomes diferentes no lobby: nomes duplicados na mesma sala são recusados.
+
+Alterações locais de protocolo, prefabs ou gameplay precisam de servidor e
+clientes recompilados juntos para uma validação confiável. Para isso, use
+`Build and Start Local Server`. O Editor não ignora a validação de protocolo
+nem aceita artefatos de outros commits. Não é necessário executar o updater
+para corrigir a identidade do Play Mode.

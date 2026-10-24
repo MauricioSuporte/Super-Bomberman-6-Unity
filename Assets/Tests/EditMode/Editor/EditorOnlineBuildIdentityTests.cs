@@ -7,13 +7,15 @@ using NUnit.Framework;
 public sealed class EditorOnlineBuildIdentityTests
 {
     [Test]
-    public void ReleaseIdentityRequiresUnchangedPlayerInputs()
+    public void PlayModeUsesCheckoutIdentityWithLocalPlayerChanges()
     {
         string root = Path.Combine(Path.GetTempPath(), "SB6-EditorIdentity-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         try
         {
+            Assert.AreEqual("local-development", EditorOnlineBuildIdentity.ResolveIdentity(root));
             Git(root, "init -q");
+            Assert.AreEqual("local-development", EditorOnlineBuildIdentity.ResolveIdentity(root));
             string script = Path.Combine(root, "Assets/Scripts/Player.cs");
             Write(script, "baseline");
             Git(root, "add .");
@@ -26,18 +28,18 @@ public sealed class EditorOnlineBuildIdentityTests
             Assert.AreEqual(commit, EditorOnlineBuildIdentity.ResolveIdentity(root));
 
             Write(script, "modified runtime");
-            Assert.AreEqual("local-development", EditorOnlineBuildIdentity.ResolveIdentity(root));
+            Assert.AreEqual(commit, EditorOnlineBuildIdentity.ResolveIdentity(root));
             Write(script, "baseline");
             Assert.AreEqual(commit, EditorOnlineBuildIdentity.ResolveIdentity(root));
 
             string asset = Path.Combine(root, "Assets/new-asset.txt");
             Write(asset, "untracked player asset");
-            Assert.AreEqual("local-development", EditorOnlineBuildIdentity.ResolveIdentity(root));
+            Assert.AreEqual(commit, EditorOnlineBuildIdentity.ResolveIdentity(root));
             File.Delete(asset);
 
             Write(Path.Combine(root, "Packages/manifest.json"), "{}");
             Git(root, "add Packages");
-            Assert.AreEqual("local-development", EditorOnlineBuildIdentity.ResolveIdentity(root));
+            Assert.AreEqual(commit, EditorOnlineBuildIdentity.ResolveIdentity(root));
         }
         finally
         {
