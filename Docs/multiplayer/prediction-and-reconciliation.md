@@ -231,3 +231,53 @@ server-time credit/floods, and server as well as client motor replay with turns,
 subpixels and walls. Two-peer latency/jitter gameplay remains a separate manual
 check: single A plants once; holding A does not pick up; a new A picks up and
 release throws; also test kick, R, pause, mount and repeated rounds.
+
+
+## Initial local kick prediction (protocol 22)
+
+Compared client motion-20261025-180908-86ed8bf0.jsonl and offline
+motion-20261025-181207-3054eb6b.jsonl with server
+motion-20261025-180906-e426d789.jsonl. All used 3ab80cb/protocol 21.
+Three correlated online contacts waited 70-75 ms for confirmation (RTT 66-73 ms).
+Eight offline kicks first moved in 0.7-24.5 ms. Continuation prediction alone
+could not remove the initial wait for a server-approved segment.
+
+The owner now predicts initial kick presentation on the actual movement contact,
+using BombKickAbility's existing reach and early-kick gates. This works independently
+of diagnostic logging. It checks the next exit locally, moves the replica immediately,
+and plays local kick audio. It never calls client StartKick, sends an extra kick
+command, changes fuse/damage, destroys items or invokes terrain effects. The server
+still evaluates the normal ordered movement input and sends authoritative segments.
+
+Each local prediction records contact tick, origin and bounded per-input bomb
+positions. Reconciliation restores these positions during motor replay and
+reproduces the original adjacent-kick motor hold without starting another kick.
+Confirmed trajectories retain this history and smooth small forward corrections.
+If the server acknowledges the contact without a kick, or confirmation times out,
+presentation rolls back to the replicated position. A rejected same-direction
+contact is suppressed until direction or bomb position changes. Pause freezes the
+presentation timeout; disable/disconnect cancels pending predictions.
+
+The ordinary NetworkTransform stays enabled to decode authoritative snapshots.
+Already-moving replicas and blocked/unknown exits are conservative prediction
+failures; those cases still wait for server authority. Continuation remains bounded
+to one additional tile and 150 ms. This is not full rollback of the entire world.
+
+Kick audio uses a dedicated NetworkBombFx RPC. The predicting owner suppresses
+its confirmed duplicate, other clients play once, and the host plays locally once.
+Other sound events keep the existing shared audio path.
+
+New diagnostics: kick_prediction_begin (durationMs=0 local presentation wait),
+kick_prediction_confirm (elapsed wait for authority and prediction error delta),
+kick_prediction_reject (acknowledgement/timeout and rollback delta). The existing
+kick_segment_receive still measures network feedback, not initial visual delay.
+
+Regression coverage includes immediate presentation before any response, blocked
+exits, Offline/Host role guards, duplicate contacts, confirmation, rejection/retry,
+replay positions and history capacity/uint rollover. Validate online manually with
+normal/RubberBomb, own/other bombs, R stop, glove/punch, moving players, pause,
+water/holes/wrap, explosions and RTT/jitter/loss. No scene/prefab rewiring required.
+
+The first confirmation preserves a bounded owner-input timeline lead (maximum
+150 ms), rather than slowing the bomb back to server-now after immediate local
+feedback. Stop messages inherit no lead. A regression checks this alignment.

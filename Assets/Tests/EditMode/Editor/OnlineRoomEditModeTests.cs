@@ -546,6 +546,99 @@ public sealed class OnlineRoomEditModeTests
         finally { input.ClearSyntheticPlayer(player); if (owned != null) Object.DestroyImmediate(owned); }
     }
 
+    [Test]
+    public void InitialKickPredictionStartsImmediatelyAndRollsBackOrConfirms()
+    {
+        var mode = NetSync.Mode;
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+        var clientState = typeof(NetworkClient).GetField("connectState", flags);
+        var oldState = clientState.GetValue(null);
+        var player = new GameObject("InitialKickPredictionOwner"); player.SetActive(false);
+        var bombObject = new GameObject("InitialKickPredictionBomb"); bombObject.SetActive(false);
+        var blocker = new GameObject("InitialKickPredictionWall");
+        const uint bombId = uint.MaxValue - 50;
+        try
+        {
+            var owner = player.AddComponent<NetworkIdentity>();
+            var input = player.AddComponent<NetworkPlayerInput>();
+            var fx = player.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(owner, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(owner, true);
+            typeof(NetworkPlayerInput).GetField("movementTick", System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance).SetValue(input, 25u);
+            clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var movingBomb = bombObject.AddComponent<Bomb>();
+            var identity = bombObject.AddComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, bombId);
+            NetworkClient.spawned.Add(bombId, identity);
+            Vector2 origin = new Vector2(2000, 2000);
+            bombObject.transform.position = origin;
+            NetSync.Mode = NetSync.NetMode.Offline;
+            Assert.IsFalse(fx.TryPredictKick(movingBomb, Vector2.right, 1), "Offline prefab instances must not use network prediction.");
+            NetSync.Mode = NetSync.NetMode.Host;
+            Assert.IsFalse(fx.TryPredictKick(movingBomb, Vector2.right, 1), "Host uses its authoritative kick.");
+            NetSync.Mode = NetSync.NetMode.Client;
+            blocker.layer = LayerMask.NameToLayer("Stage"); blocker.transform.position = origin + Vector2.right;
+            var wall = blocker.AddComponent<BoxCollider2D>(); Physics2D.SyncTransforms();
+            Assert.IsFalse(fx.TryPredictKick(movingBomb, Vector2.right, 1), "Blocked exits wait for authority.");
+            wall.enabled = false; Physics2D.SyncTransforms();
+            Assert.IsTrue(fx.TryPredictKick(movingBomb, Vector2.right, 1));
+            Assert.Greater(bombObject.transform.position.x, origin.x, "The bomb moves inside the contact call, before any server response.");
+            Assert.IsFalse(movingBomb.IsBeingKicked, "Prediction must not start the gameplay coroutine.");
+            Assert.IsFalse(fx.TryPredictKick(movingBomb, Vector2.right, 1), "Repeated contacts must not restart a prediction.");
+            fx.MarkInitialMotorHold(movingBomb);
+            Assert.IsTrue(fx.ReplayInitialKick(25, Vector2.right));
+            fx.PrepareClientMovementTick(25, true, 8);
+            Assert.AreEqual(origin, (Vector2)bombObject.transform.position, "Replay sees the original contact position.");
+            fx.RestoreClientKickPositions();
+            fx.ReconcilePredictedKicks(24);
+            Assert.Greater(bombObject.transform.position.x, origin.x);
+            fx.ReconcilePredictedKicks(25);
+            Assert.AreEqual(origin, (Vector2)bombObject.transform.position, "Processed input without a kick rolls back presentation.");
+            Assert.IsFalse(fx.TryPredictKick(movingBomb, Vector2.right, 1), "A rejected contact cannot oscillate every tick.");
+            fx.PrepareClientMovementTick(26, false, 1);
+            Assert.IsTrue(fx.TryPredictKick(movingBomb, Vector2.up, 1));
+            fx.ReceiveKickMotion(new NetworkBombFx.KickMotion { bombId = bombId, inputTick = 25,
+                start = origin, end = origin + Vector2.up, duration = 0.12f,
+                serverTime = NetworkBombFx.KickServerNow, moving = true, first = true });
+            fx.ReconcilePredictedKicks(26);
+            Assert.Greater(bombObject.transform.position.y, origin.y, "A confirmed prediction must survive later acknowledgements.");
+            Assert.IsFalse(movingBomb.IsBeingKicked);
+        }
+        finally
+        {
+            NetworkClient.spawned.Remove(bombId); clientState.SetValue(null, oldState); NetSync.Mode = mode;
+            Object.DestroyImmediate(blocker); Object.DestroyImmediate(bombObject); Object.DestroyImmediate(player);
+        }
+    }
+
+    [Test]
+    public void InitialKickConfirmationPreservesBoundedOwnerTimelineLead()
+    {
+        var motion = new NetworkBombFx.KickMotion { start = Vector2.zero, end = Vector2.right, duration = 0.1f, moving = true };
+        Assert.AreEqual(0.03f, NetworkBombFx.InitialKickPresentationLead(Vector2.right * 0.7f, motion, 0.04f), 0.001f);
+        Assert.AreEqual(0f, NetworkBombFx.InitialKickPresentationLead(Vector2.right * 0.2f, motion, 0.04f));
+        Assert.AreEqual(0.15f, NetworkBombFx.InitialKickPresentationLead(Vector2.right * 5, motion, 0));
+        motion.moving = false;
+        Assert.AreEqual(0f, NetworkBombFx.InitialKickPresentationLead(Vector2.right, motion, 0), "Stops must not inherit prediction lead.");
+    }
+
+    [Test]
+    public void KickPredictionHistoryRetainsReplayPositionsAcrossRolloverAndBoundsMemory()
+    {
+        var history = new NetworkBombFx.KickInputHistory(uint.MaxValue, Vector2.one);
+        history.Remember(uint.MaxValue, Vector2.one);
+        history.Remember(0, Vector2.right * 2);
+        Assert.AreEqual(Vector2.one, history.At(uint.MaxValue - 1, Vector2.zero));
+        Assert.AreEqual(Vector2.right * 2, history.At(0, Vector2.zero));
+        Assert.IsFalse(NetworkBombFx.PredictionAcknowledged(uint.MaxValue - 1, uint.MaxValue));
+        Assert.IsTrue(NetworkBombFx.PredictionAcknowledged(0, uint.MaxValue));
+        for (uint i = 1; i < 200; i++) history.Remember(i, Vector2.right * i);
+        Assert.AreEqual(NetworkInputHistory.Capacity, history.Count);
+        Assert.AreEqual(Vector2.right * 199, history.At(199, Vector2.zero));
+    }
+
     [TestCase(NetSync.NetMode.Offline, false)]
     [TestCase(NetSync.NetMode.Host, false)]
     [TestCase(NetSync.NetMode.Client, true)]
@@ -708,6 +801,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 21, false)]
     [TestCase("0.5.0", 20, false)]
     [TestCase("0.5.0", 19, false)]
     [TestCase("0.5.0", 18, false)]

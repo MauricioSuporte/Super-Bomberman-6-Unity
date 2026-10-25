@@ -2727,6 +2727,7 @@ public class MovementController : MonoBehaviour, IKillable
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize, bool allowMovementAbilities = true)
     {
         // Replays may query collisions, but must never kick or mutate world objects.
+        bool allowKickPrediction = allowMovementAbilities && predictLocally && !replayingNetworkTick;
         allowMovementAbilities &= !predictLocally;
         if (WaterCycleCurrent.BlocksPlayerForwardMovement(this, targetPosition))
             return true;
@@ -2779,12 +2780,12 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
-                if (allowMovementAbilities)
+                if (allowMovementAbilities || allowKickPrediction)
                 {
                     for (int i = 0; i < movementAbilities.Length; i++)
                     {
                         var ability = movementAbilities[i];
-                        if (ability != null && ability.IsEnabled)
+                        if (ability != null && ability.IsEnabled && (!predictLocally || ability is BombKickAbility))
                         {
                             if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
                             {
@@ -2868,12 +2869,12 @@ public class MovementController : MonoBehaviour, IKillable
                         $"nearEdgeForKick:{nearEdgeForKick}",
                         verbose: true);
 
-                    if (allowMovementAbilities && nearEdgeForKick && bombCollider != null)
+                    if ((allowMovementAbilities || allowKickPrediction) && nearEdgeForKick && bombCollider != null)
                     {
                         for (int i = 0; i < movementAbilities.Length; i++)
                         {
                             var ability = movementAbilities[i];
-                            if (ability != null && ability.IsEnabled)
+                            if (ability != null && ability.IsEnabled && (!predictLocally || ability is BombKickAbility))
                             {
                                 if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
                                 {
@@ -2932,12 +2933,12 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
-                if (allowMovementAbilities && bombCollider != null)
+                if ((allowMovementAbilities || allowKickPrediction) && bombCollider != null)
                 {
                     for (int i = 0; i < movementAbilities.Length; i++)
                     {
                         var ability = movementAbilities[i];
-                        if (ability != null && ability.IsEnabled)
+                        if (ability != null && ability.IsEnabled && (!predictLocally || ability is BombKickAbility))
                         {
                             if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
                             {
@@ -5400,9 +5401,12 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
     {
-        // Diagnostics inspect the real current tick only; rollback must never
-        // issue kicks, mutate ability state, or report a second contact.
-        if (predictLocally && (replayingNetworkTick || !GameplayLatencyDiagnostics.Enabled)) return false;
+        // Replay reproduces the one motor hold at the original predicted contact;
+        // it never creates a new prediction, command, sound or gameplay effect.
+        if (predictLocally && replayingNetworkTick)
+            return TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var replayFx) &&
+                TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var replayInput) &&
+                replayFx.ReplayInitialKick(replayInput.CurrentMovementTick, moveDir);
         if (moveDir == Vector2.zero)
         {
             LogBombEscape($"[KickAdj] skip moveDir zero pos:{position}", verbose: true);
@@ -5530,7 +5534,14 @@ public class MovementController : MonoBehaviour, IKillable
                 {
                     if (ability is BombKickAbility && playerToBombDist <= tileSize * 1.1f &&
                         signedAxisOffset < 0 && perpendicularOffset <= tileSize * 0.25f)
+                    {
                         MotionDiagnosticProbe.KickContact(this, bomb, dir, playerToBombDist);
+                        if (ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask))
+                        {
+                            GetComponent<Assets.Scripts.Netcode.NetworkBombFx>()?.MarkInitialMotorHold(bomb);
+                            return true;
+                        }
+                    }
                     continue;
                 }
                 bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);

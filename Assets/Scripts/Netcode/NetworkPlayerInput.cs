@@ -66,7 +66,7 @@ namespace Assets.Scripts.Netcode
         readonly NetworkInputStepBudget serverStepBudget = new();
         NetworkPlayerSetup setup;
         MovementController movement;
-        uint localTick, receivedTick, processedTick;
+        uint localTick, receivedTick, processedTick, movementTick;
         int sampledHeld, pendingPressed, serverHeldMask;
         float nextSnapshot;
         uint lastSnapshotTick;
@@ -75,6 +75,7 @@ namespace Assets.Scripts.Netcode
         const double HeldInputGraceSeconds = 0.1;
         bool receivedSnapshot, serverAllowsPrediction;
         public uint CurrentInputTick => isServer ? processedTick : localTick;
+        public uint CurrentMovementTick => isServer ? processedTick : movementTick;
         public int PendingInputCount => pending.Count;
         public int QueuedInputCount => serverInputs.Count;
 
@@ -147,7 +148,8 @@ namespace Assets.Scripts.Netcode
                 movement.SetPredictLocally(predict);
                 if (predict)
                 {
-                    GetComponent<NetworkBombFx>()?.RestoreClientKickPositions();
+                    movementTick = frame.tick;
+                    GetComponent<NetworkBombFx>()?.PrepareClientMovementTick(frame.tick, false, frame.held);
                     movement.SimulateNetworkMovementTick(frame.held);
                 }
             }
@@ -250,7 +252,9 @@ namespace Assets.Scripts.Netcode
             receivedSnapshot = true;
             serverAllowsPrediction = state.canPredict;
             pending.DiscardThrough(acknowledgedTick);
-            GetComponent<NetworkBombFx>()?.RestoreClientKickPositions();
+            var kickFx = GetComponent<NetworkBombFx>();
+            kickFx?.ReconcilePredictedKicks(acknowledgedTick);
+            kickFx?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
@@ -259,7 +263,13 @@ namespace Assets.Scripts.Netcode
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
             if (predict)
-                for (int i = 0; i < pending.Count; i++) movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
+                for (int i = 0; i < pending.Count; i++)
+                {
+                    movementTick = pending[i].tick;
+                    kickFx?.PrepareClientMovementTick(movementTick, true, pending[i].held);
+                    movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
+                }
+            kickFx?.RestoreClientKickPositions();
             MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
         }
 

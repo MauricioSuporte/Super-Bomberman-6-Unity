@@ -301,9 +301,12 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 verbose: true);
         }
 
-        // Contact replay may inspect bombs, but only the server/offline path
-        // can start the actual kick. Confirmed segments are sent to the kicker.
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
+        // On a real owner tick, predict only the local presentation. The server
+        // runs the same ability gates and remains the only caller of StartKick.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return movement != null && movement.PredictLocally &&
+                TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var presenter) &&
+                presenter.TryPredictKick(bomb, direction, tileSize);
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
 
@@ -353,7 +356,13 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
             $"perpendicularOffset:{perpendicularOffset:F3}");
 
-        PlayKick_InterruptPrevious(cachedKickClip, 1f);
+        var networkFx = GetComponent<Assets.Scripts.Netcode.NetworkBombFx>();
+        if (Assets.Scripts.Netcode.NetSync.IsServer && networkFx != null && networkFx.isServer && networkFx.netId != 0)
+        {
+            PlayNetworkKickSound();
+            networkFx.ServerEmitKickSound(bomb);
+        }
+        else PlayKick_InterruptPrevious(cachedKickClip, 1f);
 
         return true;
     }
@@ -541,7 +550,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         ListPool<Bomb>.Release(deadBombs);
     }
 
-    private void PlayKick_InterruptPrevious(AudioClip clip, float volume)
+    public void PlayNetworkKickSound() => PlayKick_InterruptPrevious(cachedKickClip, 1f, localOnly: true);
+
+    private void PlayKick_InterruptPrevious(AudioClip clip, float volume, bool localOnly = false)
     {
         if (audioSource == null || clip == null)
             return;
@@ -553,7 +564,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             kickSfxOwner = audioSource;
             audioSource.Stop();
-            GameAudioSettings.PlaySfx(audioSource, clip, volume);
+            if (localOnly) audioSource.PlayOneShot(clip, GameAudioSettings.ApplySfxVolume(volume));
+            else GameAudioSettings.PlaySfx(audioSource, clip, volume);
         }
     }
 

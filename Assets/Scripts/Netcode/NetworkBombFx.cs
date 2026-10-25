@@ -44,17 +44,166 @@ namespace Assets.Scripts.Netcode
             public bool moving, first;
         }
 
+        public sealed class KickInputHistory
+        {
+            readonly Dictionary<uint, Vector2> positions = new();
+            readonly Queue<uint> ticks = new();
+            public readonly uint startTick;
+            public readonly Vector2 origin;
+            public bool predictedSoundPlayed, holdPlayer;
+            public float presentationLead;
+            public KickInputHistory(uint tick, Vector2 start) { startTick = tick; origin = start; }
+            public void Remember(uint tick, Vector2 position)
+            {
+                if (!positions.ContainsKey(tick)) ticks.Enqueue(tick);
+                positions[tick] = position;
+                if (ticks.Count > NetworkInputHistory.Capacity) positions.Remove(ticks.Dequeue());
+            }
+            public Vector2 At(uint tick, Vector2 fallback) => NetworkInputHistory.IsNewer(startTick, tick) ? origin :
+                positions.TryGetValue(tick, out var position) ? position : fallback;
+            public int Count => positions.Count;
+        }
+
         sealed class KickPlayback
         {
             public KickMotion motion;
             public float elapsed, staleSeconds;
             public double endpointWaitAt = -1;
             public Vector2 presented, correction;
-            public bool predictedContinuation;
+            public bool predictedContinuation, unconfirmed;
+            public Vector2 replicaPosition;
+            public double predictedAt;
+            public KickInputHistory history;
         }
 
         readonly Dictionary<Bomb, KickPlayback> kickPlayback = new();
         readonly List<Bomb> expiredKicks = new();
+        readonly Dictionary<Bomb, (Vector2 origin, Vector2 direction)> rejectedStarts = new();
+
+        public static float InitialKickPresentationLead(Vector2 presented, KickMotion motion, float serverAge)
+        {
+            Vector2 step = motion.end - motion.start;
+            if (!motion.moving || motion.duration <= 0 || step.sqrMagnitude < 0.0001f) return 0;
+            float progressSeconds = Vector2.Dot(presented - motion.start, step) / step.sqrMagnitude * motion.duration;
+            return Mathf.Clamp(progressSeconds - serverAge, 0, 0.15f);
+        }
+
+        public static bool PredictionAcknowledged(uint acknowledged, uint started) =>
+            acknowledged == started || NetworkInputHistory.IsNewer(acknowledged, started);
+
+        public bool TryPredictKick(Bomb movingBomb, Vector2 direction, float tileSize)
+        {
+            if (NetSync.Mode != NetSync.NetMode.Client || isServer || !isLocalPlayer || !NetworkClient.active ||
+                GamePauseController.IsPaused || movingBomb == null || movingBomb.HasExploded ||
+                movingBomb.IsBeingKicked || movingBomb.IsBeingPunched || movingBomb.IsBeingHeldByPowerGlove ||
+                tileSize <= 0 || direction == Vector2.zero || kickPlayback.ContainsKey(movingBomb) ||
+                !movingBomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0 ||
+                !TryGetComponent<NetworkPlayerInput>(out var input)) return false;
+            if (movingBomb.TryGetComponent<NetworkTransformReliable>(out var sync) && sync.clientSnapshots.Count >= 2)
+            {
+                int last = sync.clientSnapshots.Count - 1;
+                if ((sync.clientSnapshots.Values[last].position - sync.clientSnapshots.Values[last - 1].position).sqrMagnitude > 0.0001f)
+                    return false; // already moving on the authoritative timeline
+            }
+            Vector2 origin = new Vector2(Mathf.Round(movingBomb.transform.position.x / tileSize),
+                Mathf.Round(movingBomb.transform.position.y / tileSize)) * tileSize;
+            direction = direction.normalized;
+            if (rejectedStarts.TryGetValue(movingBomb, out var rejected) && rejected.direction == direction &&
+                Vector2.Distance(rejected.origin, origin) < tileSize * 0.1f) return false;
+            if (!movingBomb.CanPredictKickContinuation(origin + direction * tileSize, tileSize)) return false;
+            float duration = Mathf.Ceil((tileSize / Mathf.Max(0.001f, movingBomb.kickSpeed)) / Time.fixedDeltaTime) * Time.fixedDeltaTime;
+            var history = new KickInputHistory(input.CurrentMovementTick, origin);
+            history.Remember(input.CurrentMovementTick, origin);
+            var playback = new KickPlayback { unconfirmed = true, history = history,
+                predictedAt = Time.realtimeSinceStartupAsDouble, replicaPosition = movingBomb.transform.position,
+                motion = new KickMotion { bombId = identity.netId, inputTick = input.CurrentMovementTick,
+                    start = origin, end = origin + direction * tileSize, duration = duration,
+                    moving = true, first = true, serverTime = KickServerNow }, elapsed = Time.fixedDeltaTime };
+            playback.presented = SamplePlayback(movingBomb, playback);
+            history.Remember(input.CurrentMovementTick, playback.presented);
+            kickPlayback[movingBomb] = playback;
+            ApplyKickPosition(movingBomb, playback.presented);
+            if (TryGetComponent<BombKickAbility>(out var kickAbility))
+            {
+                kickAbility.PlayNetworkKickSound();
+                history.predictedSoundPlayed = true;
+            }
+            if (GameplayLatencyDiagnostics.Enabled)
+            {
+                var entry = GameplayLatencyDiagnostics.For("kick_prediction_begin", GetComponent<MovementController>(), movingBomb,
+                    "local contact; gameplay remains authoritative; durationMs=local feedback wait");
+                entry.inputTick = history.startTick; entry.durationMs = 0;
+                entry.delta = playback.presented - origin;
+                GameplayLatencyDiagnostics.Write(entry);
+            }
+            return true;
+        }
+
+        public void PrepareClientMovementTick(uint tick, bool replay, int held)
+        {
+            if (!NetSync.IsOnline || isServer || !isLocalPlayer || !NetworkClient.active) return;
+            if (!replay)
+            {
+                Vector2 direction = MotionDiagnosticProbe.DirectionFromMask(held);
+                expiredKicks.Clear();
+                foreach (var pair in rejectedStarts)
+                    if (pair.Key == null || pair.Value.direction != direction) expiredKicks.Add(pair.Key);
+                foreach (var key in expiredKicks) rejectedStarts.Remove(key);
+            }
+            foreach (var pair in kickPlayback)
+            {
+                if (pair.Key == null || pair.Key.HasExploded) continue;
+                var playback = pair.Value;
+                if (!replay) playback.history?.Remember(tick, playback.presented);
+                ApplyKickPosition(pair.Key, replay && playback.history != null ?
+                    playback.history.At(tick, playback.presented) : playback.presented);
+            }
+        }
+
+        public void MarkInitialMotorHold(Bomb movingBomb)
+        {
+            if (kickPlayback.TryGetValue(movingBomb, out var playback) && playback.unconfirmed)
+            {
+                playback.history.holdPlayer = true;
+                playback.history.Remember(playback.history.startTick, playback.history.origin);
+            }
+        }
+
+        public bool ReplayInitialKick(uint tick, Vector2 direction)
+        {
+            foreach (var pair in kickPlayback)
+                if (pair.Key != null && pair.Value.history != null && pair.Value.history.holdPlayer && pair.Value.history.startTick == tick &&
+                    Vector2.Dot(pair.Value.motion.end - pair.Value.motion.start, direction) > 0) return true;
+            return false;
+        }
+
+        public void ReconcilePredictedKicks(uint acknowledgedTick)
+        {
+            expiredKicks.Clear();
+            foreach (var pair in kickPlayback)
+                if (pair.Value.unconfirmed && PredictionAcknowledged(acknowledgedTick, pair.Value.history.startTick))
+                {
+                    RollbackPrediction(pair.Key, pair.Value, "server_processed_contact_without_kick", acknowledgedTick);
+                    expiredKicks.Add(pair.Key);
+                }
+            foreach (var key in expiredKicks) kickPlayback.Remove(key);
+        }
+
+        void RollbackPrediction(Bomb movingBomb, KickPlayback playback, string reason, uint acknowledgedTick = 0)
+        {
+            if (movingBomb == null || movingBomb.HasExploded) return;
+            rejectedStarts[movingBomb] = (playback.motion.start, (playback.motion.end - playback.motion.start).normalized);
+            playback.replicaPosition = LatestReplicaPosition(movingBomb, playback.replicaPosition);
+            ApplyKickPosition(movingBomb, playback.replicaPosition);
+            if (GameplayLatencyDiagnostics.Enabled)
+            {
+                var entry = GameplayLatencyDiagnostics.For("kick_prediction_reject", GetComponent<MovementController>(), movingBomb, reason);
+                entry.inputTick = playback.history.startTick; entry.authoritativeTick = acknowledgedTick;
+                entry.durationMs = (Time.realtimeSinceStartupAsDouble - playback.predictedAt) * 1000;
+                entry.delta = playback.replicaPosition - playback.presented;
+                GameplayLatencyDiagnostics.Write(entry);
+            }
+        }
 
         // predictedTime is ahead by one-way latency. Remove that lead, rather than
         // adding the snapshot interpolation buffer to an already confirmed kick.
@@ -110,12 +259,14 @@ namespace Assets.Scripts.Netcode
         }
 
         [TargetRpc]
-        void TargetKickMotion(NetworkConnectionToClient target, KickMotion motion)
+        void TargetKickMotion(NetworkConnectionToClient target, KickMotion motion) => ReceiveKickMotion(motion);
+
+        public void ReceiveKickMotion(KickMotion motion)
         {
             if (!NetSync.IsOnline || isServer || !isLocalPlayer || !NetworkClient.active) return;
             if (!NetworkClient.spawned.TryGetValue(motion.bombId, out var identity) ||
                 !identity.TryGetComponent<Bomb>(out var movingBomb)) return;
-            if (kickPlayback.TryGetValue(movingBomb, out var previous) && previous.motion.serverTime > motion.serverTime) return;
+            if (kickPlayback.TryGetValue(movingBomb, out var previous) && !previous.unconfirmed && previous.motion.serverTime > motion.serverTime) return;
             if (previous != null && previous.endpointWaitAt >= 0 && GameplayLatencyDiagnostics.Enabled)
             {
                 var wait = GameplayLatencyDiagnostics.For("kick_endpoint_wait", GetComponent<MovementController>(), movingBomb,
@@ -125,11 +276,29 @@ namespace Assets.Scripts.Netcode
                 GameplayLatencyDiagnostics.Write(wait);
             }
             float age = GamePauseController.IsPaused ? 0 : Mathf.Max(0, (float)(KickServerNow - motion.serverTime));
-            var playback = new KickPlayback { motion = motion, elapsed = age };
+            var playback = new KickPlayback { motion = motion, elapsed = age,
+                history = previous != null && (previous.unconfirmed || !motion.first) ? previous.history : null };
+            if (previous != null && previous.unconfirmed)
+            {
+                playback.history.presentationLead = InitialKickPresentationLead(previous.presented, motion, age);
+                rejectedStarts.Remove(movingBomb);
+                if (GameplayLatencyDiagnostics.Enabled)
+                {
+                    var confirmation = GameplayLatencyDiagnostics.For("kick_prediction_confirm", GetComponent<MovementController>(), movingBomb);
+                    confirmation.inputTick = previous.history.startTick; confirmation.authoritativeTick = motion.inputTick;
+                    confirmation.durationMs = (Time.realtimeSinceStartupAsDouble - previous.predictedAt) * 1000;
+                    confirmation.detail = "owner_input_timeline_lead_ms=" + playback.history.presentationLead * 1000;
+                    confirmation.delta = SampleKickSegment(motion.start, motion.end, motion.duration, age) - previous.presented;
+                    GameplayLatencyDiagnostics.Write(confirmation);
+                }
+            }
+            // Preserve the small lead of the owner's input timeline. Pulling the
+            // bomb back to server-now on the first reply would recreate the hitch.
+            if (motion.moving && playback.history != null) playback.elapsed += playback.history.presentationLead;
             var targetPosition = SamplePlayback(movingBomb, playback);
             // The NetworkTransform may have written its older timeline this frame.
             // Reconcile against our last displayed position, not that stale transform.
-            if (previous != null && !motion.first && motion.moving && previous.motion.moving &&
+            if (previous != null && (!motion.first || previous.unconfirmed) && motion.moving && previous.motion.moving &&
                 Vector2.Dot(motion.end - motion.start, previous.motion.end - previous.motion.start) > 0 &&
                 Vector2.Distance(previous.presented, targetPosition) < 0.75f * (motion.end - motion.start).magnitude)
                 playback.correction = previous.presented - targetPosition;
@@ -156,7 +325,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!NetSync.IsOnline || isServer || !isLocalPlayer || !NetworkClient.active)
             {
-                kickPlayback.Clear();
+                ClearKickPlayback();
                 return;
             }
             expiredKicks.Clear();
@@ -166,6 +335,17 @@ namespace Assets.Scripts.Netcode
                 var playback = pair.Value;
                 if (movingBomb == null || !movingBomb.isActiveAndEnabled || movingBomb.HasExploded)
                 { expiredKicks.Add(movingBomb); continue; }
+                if (playback.unconfirmed)
+                {
+                    // NetworkTransform is still decoding/updating its authoritative
+                    // timeline; retain that replica as the rollback destination.
+                    playback.replicaPosition = LatestReplicaPosition(movingBomb, playback.replicaPosition);
+                    if (playback.staleSeconds > Mathf.Clamp((float)NetworkTime.rtt * 3, 0.5f, 1f))
+                    {
+                        RollbackPrediction(movingBomb, playback, "confirmation_timeout");
+                        expiredKicks.Add(movingBomb); continue;
+                    }
+                }
                 if (!GamePauseController.IsPaused)
                 {
                     playback.elapsed += Time.deltaTime;
@@ -207,13 +387,44 @@ namespace Assets.Scripts.Netcode
                     ApplyKickPosition(pair.Key, pair.Value.presented);
         }
 
+        static Vector2 LatestReplicaPosition(Bomb movingBomb, Vector2 fallback)
+        {
+            if (movingBomb.TryGetComponent<NetworkTransformReliable>(out var sync) && sync.clientSnapshots.Count > 0)
+                return sync.clientSnapshots.Values[sync.clientSnapshots.Count - 1].position;
+            return fallback;
+        }
+
+        [Server]
+        public void ServerEmitKickSound(Bomb movingBomb)
+        {
+            if (movingBomb != null && movingBomb.TryGetComponent<NetworkIdentity>(out var identity))
+                RpcKickSound(identity.netId);
+        }
+
+        [ClientRpc]
+        void RpcKickSound(uint bombId)
+        {
+            if (isServer) return; // host/offline audio already played locally
+            if (isLocalPlayer && NetworkClient.spawned.TryGetValue(bombId, out var identity) &&
+                identity.TryGetComponent<Bomb>(out var movingBomb) &&
+                kickPlayback.TryGetValue(movingBomb, out var playback) && playback.history?.predictedSoundPlayed == true) return;
+            GetComponent<BombKickAbility>()?.PlayNetworkKickSound();
+        }
+
         static void ApplyKickPosition(Bomb movingBomb, Vector2 position)
         {
             if (movingBomb.TryGetComponent<Rigidbody2D>(out var body)) body.position = position;
             movingBomb.transform.position = new Vector3(position.x, position.y, movingBomb.transform.position.z);
         }
 
-        void OnDisable() => kickPlayback.Clear();
+        void ClearKickPlayback()
+        {
+            foreach (var pair in kickPlayback)
+                if (pair.Value.unconfirmed) RollbackPrediction(pair.Key, pair.Value, "presenter_disabled");
+            kickPlayback.Clear(); rejectedStarts.Clear();
+        }
+
+        void OnDisable() => ClearKickPlayback();
 
         [Server]
         public void ServerEmit(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration)
