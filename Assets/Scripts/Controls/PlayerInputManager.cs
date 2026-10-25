@@ -53,6 +53,7 @@ public class PlayerInputManager : MonoBehaviour
     private readonly bool[,] rawDownCache = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly int[,] rawHeldCacheStamp = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly int[,] rawDownCacheStamp = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[,] syntheticExplicitEdges = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly bool[,] syntheticHeld = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly bool[,] syntheticPreviousHeld = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly int[,] syntheticTapFrame = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
@@ -249,7 +250,7 @@ public class PlayerInputManager : MonoBehaviour
         InvalidatePlayerStateCache();
     }
 
-    public void SetSyntheticHeld(int playerId, PlayerAction action, bool held)
+    public void SetSyntheticHeld(int playerId, PlayerAction action, bool held, bool explicitEdges = false)
     {
         playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
 
@@ -257,6 +258,7 @@ public class PlayerInputManager : MonoBehaviour
             return;
 
         syntheticHeld[playerId, actionIndex] = held;
+        syntheticExplicitEdges[playerId, actionIndex] = explicitEdges;
         anyHeldInputCacheStamp[playerId] = 0;
     }
 
@@ -278,6 +280,7 @@ public class PlayerInputManager : MonoBehaviour
         for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
         {
             syntheticHeld[playerId, actionIndex] = false;
+            syntheticExplicitEdges[playerId, actionIndex] = false;
             syntheticPreviousHeld[playerId, actionIndex] = false;
             syntheticTapFrame[playerId, actionIndex] = 0;
         }
@@ -566,7 +569,8 @@ public class PlayerInputManager : MonoBehaviour
             return false;
 
         return syntheticTapFrame[playerId, actionIndex] == Time.frameCount ||
-               (syntheticHeld[playerId, actionIndex] && !syntheticPreviousHeld[playerId, actionIndex]);
+               (!syntheticExplicitEdges[playerId, actionIndex] &&
+                syntheticHeld[playerId, actionIndex] && !syntheticPreviousHeld[playerId, actionIndex]);
     }
 
     private bool HasAnySyntheticHeld(int playerId)

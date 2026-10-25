@@ -494,17 +494,53 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [Test]
-    public void BatchedInputUsesLatestDirectionWithoutLosingActionEdges()
+    public void NetworkInputBudgetRecoversDeliveryGapsWithoutSpeedingUpForPacketFloods()
     {
-        var first = new NetworkInputFrame { tick = uint.MaxValue, held = 8, pressed = 16 };
-        var second = new NetworkInputFrame { tick = 0, held = 1, pressed = 512 };
-        var release = new NetworkInputFrame { tick = 1, held = 0, pressed = 0 };
-        var result = NetworkPlayerInput.MergeInputFrames(NetworkPlayerInput.MergeInputFrames(first, second), release);
-        Assert.AreEqual(1u, result.tick);
-        Assert.AreEqual(0, result.held, "The newest release takes effect immediately even after a network burst.");
-        Assert.AreEqual(528, result.pressed, "Bomb/stop edges survive merging older movement samples.");
-        Assert.IsTrue(NetworkPlayerInput.RetainHeldInput(0.05));
-        Assert.IsFalse(NetworkPlayerInput.RetainHeldInput(0.2), "An outage must not keep moving the player indefinitely.");
+        var budget = new NetworkInputStepBudget();
+        Assert.IsFalse(budget.TryConsume());
+        budget.Advance(); budget.Advance(); budget.Advance();
+        for (int tick = 0; tick < 3; tick++) Assert.IsTrue(budget.TryConsume());
+        Assert.IsFalse(budget.TryConsume(), "Only elapsed server steps may be recovered.");
+        int simulated = 0;
+        for (int serverTick = 0; serverTick < 100; serverTick++)
+        {
+            budget.Advance();
+            for (int packet = 0; packet < 100; packet++)
+                if (budget.TryConsume()) simulated++;
+        }
+        Assert.AreEqual(100, simulated, "Packet floods cannot select simulation time or sustained movement speed.");
+        for (int i = 0; i < 100; i++) budget.Advance();
+        int recovered = 0;
+        while (budget.TryConsume()) recovered++;
+        Assert.AreEqual(8, recovered, "Outage recovery must remain bounded.");
+        budget.Advance(); budget.Reset();
+        Assert.IsFalse(budget.TryConsume(), "Pause clears unused simulation credit.");
+    }
+
+    [Test]
+    public void NetworkHeldButtonCannotCreatePowerGlovePressWithoutAnExplicitEdge()
+    {
+        var input = PlayerInputManager.Instance;
+        var owned = input == null ? new GameObject("NetworkActionInputRegression") : null;
+        if (owned != null) input = owned.AddComponent<PlayerInputManager>();
+        const int player = 6;
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        try
+        {
+            input.ClearSyntheticPlayer(player);
+            var taps = (int[,])typeof(PlayerInputManager).GetField("syntheticTapFrame", flags).GetValue(input);
+            for (int i = 0; i < taps.GetLength(1); i++) taps[player, i] = -1;
+            input.SetSyntheticHeld(player, PlayerAction.ActionA, true, explicitEdges: true);
+            Assert.IsTrue(input.Get(player, PlayerAction.ActionA));
+            Assert.IsFalse(input.GetDown(player, PlayerAction.ActionA));
+            input.SetSyntheticHeld(player, PlayerAction.ActionA, false, explicitEdges: true);
+            typeof(PlayerInputManager).GetMethod("LateUpdate", flags).Invoke(input, null);
+            input.SetSyntheticHeld(player, PlayerAction.ActionA, true, explicitEdges: true);
+            Assert.IsFalse(input.GetDown(player, PlayerAction.ActionA), "Resuming held A after a message gap must not pick up the planted bomb.");
+            input.TapSynthetic(player, PlayerAction.ActionA);
+            Assert.IsTrue(input.GetDown(player, PlayerAction.ActionA), "A real second press must still activate the glove.");
+        }
+        finally { input.ClearSyntheticPlayer(player); if (owned != null) Object.DestroyImmediate(owned); }
     }
 
     [TestCase(NetSync.NetMode.Offline, false)]
@@ -583,8 +619,9 @@ public sealed class OnlineRoomEditModeTests
         Assert.AreEqual(0, history.Count);
     }
 
-    [Test]
-    public void PredictionRollbackReplaysTheMotorIncludingSubpixelProgressAndTurns()
+    [TestCase(true)]
+    [TestCase(false)]
+    public void PredictionRollbackReplaysTheMotorIncludingSubpixelProgressAndTurns(bool predict)
     {
         var previous = NetSync.Mode;
         var player = new GameObject("PredictionMotorRegression");
@@ -592,7 +629,7 @@ public sealed class OnlineRoomEditModeTests
         var obstacle = new GameObject("PredictionObstacleRegression");
         try
         {
-            NetSync.Mode = NetSync.NetMode.Client;
+            NetSync.Mode = predict ? NetSync.NetMode.Client : NetSync.NetMode.Host;
             player.tag = "Player";
             player.AddComponent<BoxCollider2D>();
             var body = player.AddComponent<Rigidbody2D>();
@@ -602,7 +639,7 @@ public sealed class OnlineRoomEditModeTests
             // avoid booting save/session singletons or changing the open scene.
             typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
             movement.SetNetworkTickDriven(true);
-            movement.SetPredictLocally(true);
+            movement.SetPredictLocally(predict);
             player.SetActive(true);
             var initial = new MovementController.NetworkMovementState
             {
@@ -668,6 +705,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 20, false)]
     [TestCase("0.5.0", 19, false)]
     [TestCase("0.5.0", 18, false)]
     [TestCase("0.5.0", 17, false)]

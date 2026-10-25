@@ -4828,7 +4828,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 quantized = QuantizeToPixelGrid(worldPos);
 
-        if (predictLocally && insideNetworkTick) SetNetworkPosition(quantized);
+        if (insideNetworkTick) SetNetworkPosition(quantized);
         else Rigidbody.MovePosition(quantized);
     }
 

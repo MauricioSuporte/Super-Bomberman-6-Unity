@@ -32,6 +32,22 @@ namespace Assets.Scripts.Netcode
         }
     }
 
+    // Credits accrue from server physics time, never from incoming packet count.
+    // Unused steps cover short delivery bursts; floods cannot increase sustained speed.
+    public sealed class NetworkInputStepBudget
+    {
+        const int MaxCredits = 8;
+        int credits;
+        public void Advance() => credits = Mathf.Min(MaxCredits, credits + 1);
+        public bool TryConsume()
+        {
+            if (credits == 0) return false;
+            credits--;
+            return true;
+        }
+        public void Reset() => credits = 0;
+    }
+
     /// <summary>Ticked owner prediction with authoritative movement rollback and input replay.</summary>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(NetworkIdentity), typeof(NetworkPlayerSetup))]
@@ -47,6 +63,7 @@ namespace Assets.Scripts.Netcode
         const int MaxQueuedTicks = 8;
         readonly Queue<(NetworkInputFrame frame, double receivedAt)> serverInputs = new(MaxQueuedTicks);
         readonly NetworkInputHistory pending = new();
+        readonly NetworkInputStepBudget serverStepBudget = new();
         NetworkPlayerSetup setup;
         MovementController movement;
         uint localTick, receivedTick, processedTick;
@@ -109,6 +126,7 @@ namespace Assets.Scripts.Netcode
             if (Blocked)
             {
                 serverInputs.Clear(); processedTick = receivedTick; serverHeldMask = 0;
+                serverStepBudget.Reset();
                 return;
             }
             ApplyServerControls(input, serverHeldMask, 0);
@@ -134,51 +152,55 @@ namespace Assets.Scripts.Netcode
                 }
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
-            int held = 0, pressed = 0;
-            bool consumedInput = false;
-            if (Blocked) { serverInputs.Clear(); processedTick = receivedTick; lastServerInputAt = double.NegativeInfinity; }
-            else if (serverInputs.Count > 0)
+            serverStepBudget.Advance();
+            if (Blocked)
             {
-                consumedInput = true;
-                // A packet can contain several sampled ticks. Apply the freshest held
-                // state once per physics step; preserve every action edge in the batch.
+                serverInputs.Clear(); processedTick = receivedTick; serverHeldMask = 0;
+                lastServerInputAt = double.NegativeInfinity;
+                serverStepBudget.Reset();
+                ApplyServerControls(PlayerInputManager.Instance, 0, 0);
+                return;
+            }
+            int actionEdges = 0, steps = 0;
+            while (steps < 4 && serverInputs.Count > 0 && serverStepBudget.TryConsume())
+            {
                 var queued = serverInputs.Dequeue();
-                var latest = queued.frame;
-                while (serverInputs.Count > 0)
-                {
-                    queued = serverInputs.Dequeue();
-                    latest = MergeInputFrames(latest, queued.frame);
-                }
+                var frame = queued.frame;
+                processedTick = frame.tick;
+                serverHeldMask = frame.held;
+                actionEdges |= frame.pressed;
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
-                var frame = latest;
-                processedTick = frame.tick; held = frame.held; pressed = frame.pressed;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
+                // Each acknowledged tick gets its complete motor step. Immediate
+                // motor positioning prevents MovePosition overwriting earlier steps
+                // when a packet batch is replayed before the physics solver runs.
+                ApplyServerControls(PlayerInputManager.Instance, serverHeldMask, 0);
+                movement.SimulateNetworkMovementTick(serverHeldMask);
+                steps++;
             }
-            if (!Blocked && !consumedInput && serverHeldMask != 0)
-            {
-                bool retainHeld = RetainHeldInput(Time.realtimeSinceStartupAsDouble - lastServerInputAt);
-                if (retainHeld) held = serverHeldMask & 15;
-                MotionDiagnosticProbe.QueueEvent(gameObject, retainHeld ? "empty_queue_retained_direction" :
-                    "empty_queue_input_timeout", processedTick);
-            }
-            serverHeldMask = held;
-            ApplyServerControls(PlayerInputManager.Instance, held, pressed);
-            // One simulation per server physics tick, regardless of packet count.
-            movement.SimulateNetworkMovementTick(held);
+            if (steps == 0 && !RetainHeldInput(Time.realtimeSinceStartupAsDouble - lastServerInputAt))
+                serverHeldMask = 0;
+            // Held buttons survive ordinary message gaps. Only transmitted action
+            // edges become GetDown, once for the gameplay Update in this render frame.
+            ApplyServerControls(PlayerInputManager.Instance, serverHeldMask, actionEdges);
         }
 
         public static bool RetainHeldInput(double ageSeconds) => ageSeconds >= 0 && ageSeconds <= HeldInputGraceSeconds;
 
-        public static NetworkInputFrame MergeInputFrames(NetworkInputFrame older, NetworkInputFrame newer) =>
-            new() { tick = newer.tick, held = newer.held, pressed = older.pressed | newer.pressed };
-
         void ApplyServerControls(PlayerInputManager input, int held, int pressed)
         {
             if (input == null) return;
+            if (pressed != 0 && GameplayLatencyDiagnostics.Enabled)
+            {
+                var entry = GameplayLatencyDiagnostics.For("network_action_edge", movement,
+                    detail: "explicit network press; held transitions never synthesize action edges");
+                entry.held = held; entry.pressed = pressed;
+                GameplayLatencyDiagnostics.Write(entry);
+            }
             for (int i = 0; i < Actions.Length; i++)
             {
-                input.SetSyntheticHeld(setup.PlayerId, Actions[i], (held & (1 << i)) != 0);
+                input.SetSyntheticHeld(setup.PlayerId, Actions[i], (held & (1 << i)) != 0, explicitEdges: true);
                 if (i >= 4 && (pressed & (1 << i)) != 0) input.TapSynthetic(setup.PlayerId, Actions[i]);
             }
         }
@@ -212,9 +234,8 @@ namespace Assets.Scripts.Netcode
             // LateUpdate captures the result AFTER the physics step, never an unexecuted MovePosition.
             var state = movement.CaptureNetworkMovementState();
             state.canPredict &= !Blocked;
-            // Held-direction grace is server extrapolation. Do not pair a newer
-            // extrapolated position with an unchanged acknowledgement: the client
-            // would replay the same pending ticks on top of it a second time.
+            // Acknowledgements advance only after complete input steps. Duplicate
+            // acknowledgements add no new predictable state to replay.
             if (state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
             sentSnapshot = true;
             lastSnapshotTick = processedTick;
@@ -246,6 +267,7 @@ namespace Assets.Scripts.Netcode
         {
             serverInputs.Clear();
             lastServerInputAt = double.NegativeInfinity;
+            serverStepBudget.Reset();
             sentSnapshot = false;
             if (setup != null) PlayerInputManager.Instance?.ClearSyntheticPlayer(setup.PlayerId);
             if (movement != null) movement.SetNetworkTickDriven(false);

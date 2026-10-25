@@ -195,3 +195,39 @@ Regression tests cover bounded continuation, stop messages, solid/trigger exits,
 input burst action preservation and held-input timeout. Two-peer manual QA still
 needs kicks against moving players, RubberBomb bounce, R stop, explosions, pause,
 water/holes, stage wrap and repeated rounds under RTT/jitter/loss.
+
+
+## Explicit action edges and complete movement steps (protocol 21)
+
+Client motion-20261025-041934-7bc49a82.jsonl (77fb7df Editor) was compared with
+server motion-20261025-041936-e9ced81d.jsonl (a0ff0be). Both had six transmitted
+A edges; held-only messages had pressed=0. Synthetic input nevertheless inferred
+GetDown from held transitions. Protocol 20 cleared action holds during message
+gaps; the next held message could therefore cause another pickup, followed by
+a release/throw on another gap. This was input reconstruction, not evidence of
+six duplicated network commands. The client also recorded 21 of 170 kick-window
+reconciliations above 0.1 world units (maximum 0.5625).
+
+Remote network synthetic input now requires explicit transmitted edges for
+GetDown. Held state survives ordinary gaps for all buttons. After 100 ms without
+input it releases safely; resumption without a new edge cannot activate the glove.
+COM/offline synthetic inputs retain their existing inferred-edge default.
+network_action_edge, power_glove_pickup and power_glove_release correlate these
+transitions in subsequent client/server captures.
+
+Supersedes protocol 20's latest-held batch merging. Every acknowledged input now
+gets its complete movement step, in order. Server-clock credits accrue once per
+physics tick, cap at eight, and allow up to four queued steps per physics tick.
+A delivery gap accumulates time to recover; packet floods cannot create time.
+Empty queues do not extrapolate movement then replay that time again. The motor
+uses immediate positioning inside server network ticks as it already did during
+owner prediction, so multiple steps before the physics solver do not overwrite
+one another's MovePosition. Normal offline and host-local loops remain unchanged.
+Actions are still exposed once per rendered gameplay frame, rather than running
+bomb placement/glove updates during each catch-up motor step.
+
+Regression coverage includes explicit edges versus held transitions, bounded
+server-time credit/floods, and server as well as client motor replay with turns,
+subpixels and walls. Two-peer latency/jitter gameplay remains a separate manual
+check: single A plants once; holding A does not pick up; a new A picks up and
+release throws; also test kick, R, pause, mount and repeated rounds.

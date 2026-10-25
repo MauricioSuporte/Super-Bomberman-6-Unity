@@ -264,6 +264,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!input.Get(pid, PlayerAction.ActionA))
         {
             Vector2 releaseDir = GetCurrentFacingDirection();
+            if (GameplayLatencyDiagnostics.Enabled)
+                GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("power_glove_release", movement, heldBomb));
             BeginRelease(releaseDir);
             return;
         }
@@ -528,6 +530,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         Vector2 pickupDir = GetCurrentFacingDirection();
 
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (GameplayLatencyDiagnostics.Enabled)
+            GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("power_glove_pickup", movement, bomb));
         pickupRoutine = StartCoroutine(PickupRoutine(bomb, pickupDir));
     }
 
