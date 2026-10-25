@@ -534,7 +534,10 @@ public sealed class OnlineRoomEditModeTests
             Assert.IsTrue(input.Get(player, PlayerAction.ActionA));
             Assert.IsFalse(input.GetDown(player, PlayerAction.ActionA));
             input.SetSyntheticHeld(player, PlayerAction.ActionA, false, explicitEdges: true);
-            typeof(PlayerInputManager).GetMethod("LateUpdate", flags).Invoke(input, null);
+            // EditMode does not initialize the unrelated directional dictionaries
+            // read by LateUpdate. Reproduce its action-history update directly.
+            var previousHeld = (bool[,])typeof(PlayerInputManager).GetField("syntheticPreviousHeld", flags).GetValue(input);
+            for (int i = 0; i < previousHeld.GetLength(1); i++) previousHeld[player, i] = false;
             input.SetSyntheticHeld(player, PlayerAction.ActionA, true, explicitEdges: true);
             Assert.IsFalse(input.GetDown(player, PlayerAction.ActionA), "Resuming held A after a message gap must not pick up the planted bomb.");
             input.TapSynthetic(player, PlayerAction.ActionA);
