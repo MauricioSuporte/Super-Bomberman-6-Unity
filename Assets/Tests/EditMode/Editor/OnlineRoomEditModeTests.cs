@@ -554,7 +554,9 @@ public sealed class OnlineRoomEditModeTests
         var clientState = typeof(NetworkClient).GetField("connectState", flags);
         var oldState = clientState.GetValue(null);
         var player = new GameObject("InitialKickPredictionOwner"); player.SetActive(false);
+        player.AddComponent<BoxCollider2D>();
         var bombObject = new GameObject("InitialKickPredictionBomb"); bombObject.SetActive(false);
+        bombObject.AddComponent<CircleCollider2D>();
         var blocker = new GameObject("InitialKickPredictionWall");
         const uint bombId = uint.MaxValue - 50;
         try
@@ -572,6 +574,7 @@ public sealed class OnlineRoomEditModeTests
             var identity = bombObject.AddComponent<NetworkIdentity>();
             typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, bombId);
             NetworkClient.spawned.Add(bombId, identity);
+            bombObject.SetActive(true);
             Vector2 origin = new Vector2(2000, 2000);
             bombObject.transform.position = origin;
             NetSync.Mode = NetSync.NetMode.Offline;
