@@ -115,6 +115,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility)
             return;
 
@@ -162,6 +163,26 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             return;
 
         routine = StartCoroutine(KickRoutine());
+    }
+
+    public void ConfigureNetworkMountAnimator(IYellowLouieDestructibleKickExternalAnimator animator, bool mounted)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
+        externalAnimator = animator; enabledAbility = mounted;
+    }
+
+    public Bomb FindNetworkBombCandidate(Vector2 direction)
+    {
+        if (!enabledAbility || movement == null || movement.isDead || movement.InputLocked) return null;
+        return TryGetBombAtCell(SnapToGrid(transform.position, movement.tileSize) + direction * movement.tileSize, out var target) ? target : null;
+    }
+
+    public void PresentNetworkKick(Vector2 direction, bool active, float progress = 0)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
+        if (active && !kickActive) { kickActive = true; externalAnimator?.Play(direction); }
+        if (!active && kickActive) { kickActive = false; externalAnimator?.Stop(); }
+        if (active && externalAnimator is YellowLouieKickAnimator yellow) yellow.PresentPredictedProgress(progress);
     }
 
     IEnumerator KickRoutine()
@@ -353,7 +374,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         void BeginTileMover(Vector3Int cell, TileBase tile)
         {
-            UnregisterActiveMovingTile(activeMovingTile);
+            UnregisterActiveMovingTile(activeMovingTile, currentTileCell);
             activeMovingTile = null;
 
             currentTileCell = cell;
@@ -442,7 +463,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 ghost = null;
             }
 
-            UnregisterActiveMovingTile(activeMovingTile);
+            UnregisterActiveMovingTile(activeMovingTile, currentTileCell);
             activeMovingTile = null;
 
             ClearActiveTileMoverState("settle-current-tile-complete");
@@ -476,7 +497,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     tileRemovedFromMap = false;
                     currentTile = null;
                     currentTileCell = activeMovingTile.cell;
-                    UnregisterActiveMovingTile(activeMovingTile);
+                    UnregisterActiveMovingTile(activeMovingTile, currentTileCell);
                     activeMovingTile = null;
                     ghost = null;
                     DestroyNextCellBlocker();
@@ -615,6 +636,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     nextCellBlocker = CreateCellBlocker(destructibleTilemap.GetCellCenterWorld(nextCell), "YellowKickBlock_NextCell");
 
                     float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+                    if (Assets.Scripts.Netcode.NetSync.IsServer && activeMovingTile != null && activeMovingTile.networkMotionId != 0 &&
+                        TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx))
+                        fx.ServerMoveTileMotion(activeMovingTile.networkMotionId, currentTileCell, nextCell, stepSeconds);
                     float tMove = 0f;
                     bool characterEnteredDestinationDuringMove = false;
 
@@ -672,7 +696,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         tileRemovedFromMap = false;
                         currentTile = null;
                         currentTileCell = activeMovingTile.cell;
-                        UnregisterActiveMovingTile(activeMovingTile);
+                        UnregisterActiveMovingTile(activeMovingTile, currentTileCell);
                         activeMovingTile = null;
                         ghost = null;
                         DestroyNextCellBlocker();
@@ -800,7 +824,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (destructibleTilemap != null)
                 ApplyShadowForCell(currentTileCell);
 
-            UnregisterActiveMovingTile(activeMovingTile);
+            UnregisterActiveMovingTile(activeMovingTile, currentTileCell);
             activeMovingTile = null;
 
             ClearActiveTileMoverState("mixed-chain-finally");
@@ -816,6 +840,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         public GameObject ghost;
         public Vector3Int cell;
         public bool destroyedByExplosion;
+        public uint networkMotionId;
     }
 
     bool TryGetBombAtCell(Vector2 worldCellCenter, out Bomb bomb)
@@ -958,6 +983,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     starts[i],
                     BombOriginBlockerSize,
                     BombOriginBlockerUseTrigger);
+                bomb.BindNetworkBombMotion(GetComponent<Assets.Scripts.Netcode.NetworkBombFx>(), Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Yellow);
+                bomb.ReportNetworkBombMotion(starts[i], ends[i], stepSeconds);
             }
 
             StartBombQueuePushedSkulls(transfer, frontDirection, tileSize, frontCollider, frontStart);
@@ -2198,7 +2225,10 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         foreach (Bomb bomb in yellowLouieMovingBombs)
         {
             if (bomb != null)
+            {
+                bomb.EndNetworkBombMotion(bomb.transform.position);
                 bomb.SetYellowLouieKickMovement(false);
+            }
         }
 
         yellowLouieMovingBombs.Clear();
@@ -2539,6 +2569,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             cell = cell,
         };
 
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx))
+            active.networkMotionId = fx.ServerBeginTileMotion(cell);
         ActiveMovingTiles.Add(active);
         return active;
     }
@@ -2554,11 +2586,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             active.cell = cell;
     }
 
-    static void UnregisterActiveMovingTile(ActiveMovingTile active)
+    static void UnregisterActiveMovingTile(ActiveMovingTile active, Vector3Int settledCell)
     {
         if (active == null)
             return;
 
+        if (Assets.Scripts.Netcode.NetSync.IsServer && active.networkMotionId != 0 && active.owner != null &&
+            active.owner.TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer)
+            fx.ServerEndTileMotion(active.networkMotionId, settledCell, active.destroyedByExplosion);
         ActiveMovingTiles.Remove(active);
     }
 

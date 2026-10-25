@@ -44,6 +44,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     private Vector2 lastFacingDir = Vector2.down;
     private Coroutine punchLockRoutine;
+    private Coroutine networkExternalPunch;
+    private bool networkBlueMount;
 
     private IBombPunchExternalAnimator externalAnimator;
 
@@ -110,6 +112,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     {
         using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
 
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility)
             return;
 
@@ -203,19 +206,67 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             obstacles,
             bombController != null ? bombController.destructibleTiles : null,
             visualStartYOffset: 0f,
-            logicalOriginOverride: bombLogicalPos
+            logicalOriginOverride: bombLogicalPos,
+            presenter: GetComponent<Assets.Scripts.Netcode.NetworkBombFx>()
         );
 
         if (!punched)
             return;
 
-        if (audioSource != null && cachedPunchClip != null)
-            GameAudioSettings.PlaySfx(audioSource, cachedPunchClip);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var networkFx) && networkFx.isServer && networkFx.netId != 0)
+            networkFx.ServerAbilitySound(bomb, PunchClipResourcesPath, 1);
+        else if (audioSource != null && cachedPunchClip != null) GameAudioSettings.PlaySfx(audioSource, cachedPunchClip);
 
         if (punchLockRoutine != null)
             StopCoroutine(punchLockRoutine);
 
         punchLockRoutine = StartCoroutine(PunchAnimLock(dir));
+    }
+
+    public void ConfigureNetworkMountAnimator(IBombPunchExternalAnimator animator, bool blue)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
+        externalAnimator = animator; networkBlueMount = blue;
+    }
+
+    public bool CanPredictNetworkPunch(bool pressed) => (enabledAbility || networkBlueMount) && NetworkMountAllowsPunch && !lockedByLouie && punchLockRoutine == null &&
+        (enableAutoPunchWhileHolding || pressed) && movement != null && !movement.isDead && !movement.InputLocked;
+
+    private bool NetworkMountAllowsPunch => !TryGetComponent<PlayerMountCompanion>(out var mount) ||
+        mount.GetMountedLouieType() == MountedType.None || mount.GetMountedLouieType() == MountedType.Blue;
+
+    public Bomb FindNetworkPunchCandidate(Vector2 direction)
+    {
+        if (movement == null || (!enabledAbility && !networkBlueMount) || !NetworkMountAllowsPunch) return null;
+        Vector2 position = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position;
+        position.x = Mathf.Round(position.x / movement.tileSize) * movement.tileSize;
+        position.y = Mathf.Round(position.y / movement.tileSize) * movement.tileSize;
+        return FindPunchableBombAhead(position, direction);
+    }
+
+    public void PresentNetworkPunch(Vector2 direction, bool active, float progress = 0)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || movement == null) return;
+        if (!active)
+        {
+            if (networkExternalPunch != null) { StopCoroutine(networkExternalPunch); networkExternalPunch = null; externalAnimator?.ForceStop(); }
+            SetPunchSprites(false); if (!movement.isDead && !movement.IsEndingStage) movement.EnableExclusiveFromState(); return;
+        }
+        if (externalAnimator != null)
+        {
+            if (networkExternalPunch == null) networkExternalPunch = StartCoroutine(externalAnimator.Play(direction, punchLockTime));
+            if (externalAnimator is BlueLouiePunchAnimator blue) blue.PresentPredictedProgress(progress);
+            return;
+        }
+        SetMoveSprites(false); SetPunchSprites(false);
+        var sprite = GetPunchSprite(direction);
+        if (sprite != null)
+        {
+            sprite.enabled = true; sprite.idle = false; sprite.loop = false;
+            sprite.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(progress * (sprite.animationSprite != null ? sprite.animationSprite.Length : 1)), 0,
+                Mathf.Max(0, (sprite.animationSprite != null ? sprite.animationSprite.Length : 1) - 1));
+            sprite.RefreshFrame();
+        }
     }
 
     private Bomb FindPunchableBombAhead(Vector2 playerSnappedPos, Vector2 dir)

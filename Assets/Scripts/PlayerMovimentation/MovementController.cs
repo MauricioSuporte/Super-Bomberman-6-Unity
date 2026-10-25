@@ -242,9 +242,13 @@ public class MovementController : MonoBehaviour, IKillable
     }
 
     public bool CanPredictNetworkMovement => !isDead && !inputLocked && !isEndingStage &&
-        !externalMovementOverride && !visualOverrideActive && !externalVisualSuppressed &&
+        !externalMovementOverride && !visualOverrideActive && (!externalVisualSuppressed || CanPredictGloveCarry) &&
         !IsSpriteLocked && !isMounted && !IsRidingPlaying() &&
         (stunReceiver == null || !stunReceiver.IsStunned);
+
+    private bool CanPredictGloveCarry =>
+        (TryGetComponent<PowerGloveAbility>(out var glove) && glove.IsHoldingForNet) ||
+        (TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.CarryingBombLocally);
 
     public void SetNetworkTickDriven(bool value) => networkTickDriven = value;
 
@@ -2831,7 +2835,7 @@ public class MovementController : MonoBehaviour, IKillable
 
             foreach (var bomb in Bomb.ActiveBombs)
             {
-                if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
+                if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.ClientMotionNonBlocking)
                     continue;
 
                 if (bomb.IsSolid || bomb.IsBeingPunched)
@@ -3065,7 +3069,7 @@ public class MovementController : MonoBehaviour, IKillable
             Bomb bomb = kv.Key;
             BombPlantTraversalState state = kv.Value;
 
-            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.IsSolid || IsKickMovingForMotor(bomb) || bomb.Owner != bombController)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.ClientMotionNonBlocking || bomb.IsSolid || IsKickMovingForMotor(bomb) || bomb.Owner != bombController)
             {
                 bombsToRemove ??= new List<Bomb>();
                 bombsToRemove.Add(bomb);

@@ -94,6 +94,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     // Estado host-autoritativo que o NetworkPlayerState replica ao cliente.
     public bool IsHoldingForNet => enabledAbility && holding && isHoldingBomb;
+    public float PickupDuration => Mathf.Max(0.01f, pickupLockTime);
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -180,6 +181,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     {
         using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
 
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (movement == null) return;
@@ -202,6 +204,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     {
         using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
 
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (GamePauseController.IsPaused) return;
@@ -487,6 +490,31 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
+    public Bomb FindNetworkPickupCandidate()
+    {
+        if (!CanPickupBombAtCurrentPosition()) return null;
+        Vector2 origin = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position;
+        origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
+        origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
+        var hit = Physics2D.OverlapBox(origin, Vector2.one * movement.tileSize * 0.6f, 0, LayerMask.GetMask("Bomb"));
+        return hit != null ? hit.GetComponent<Bomb>() : null;
+    }
+
+    public void PresentNetworkGlove(Vector2 direction, float progress, bool carry, bool throwing)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || movement == null) return;
+        SetAllPickupSprites(false); SetAllCarrySprites(false);
+        if (!carry && !throwing) { if (!movement.isDead && !movement.IsEndingStage) movement.EnableExclusiveFromState(); return; }
+        if (movement.isDead || movement.IsEndingStage) return;
+        SetMoveSprites(false);
+        var sprite = carry && progress >= 1 ? GetCarrySprite(direction) : GetPickupSprite(direction);
+        if (sprite == null) return;
+        sprite.enabled = true; sprite.loop = carry && progress >= 1; sprite.idle = carry && movement.Direction == Vector2.zero;
+        int frames = GetAnimFrames(sprite);
+        if (!sprite.loop) sprite.CurrentFrame = ClampFrame(sprite, Mathf.RoundToInt(Mathf.Clamp01(throwing ? 1 - progress : progress) * Mathf.Max(0, frames - 1)));
+        sprite.RefreshFrame();
+    }
+
     private void TryPickupInput()
     {
         if (animLocking) return;
@@ -584,6 +612,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
 
         AttachBombToPlayerAtGround();
+        bomb.BindNetworkBombMotion(GetComponent<Assets.Scripts.Netcode.NetworkBombFx>(), Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Lift);
+        bomb.ReportNetworkBombMotion(bomb.transform.position, (Vector2)transform.position + Vector2.up * movement.tileSize, PickupDuration, carryHeight: movement.tileSize);
 
         if (!IsHeldBombValid())
         {
@@ -652,6 +682,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         holding = true;
         isHoldingBomb = true;
+        bomb.BindNetworkBombMotion(GetComponent<Assets.Scripts.Netcode.NetworkBombFx>(), Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Carry);
+        bomb.ReportNetworkBombMotion(bomb.transform.position, bomb.transform.position, 0, carryHeight: movement.tileSize);
 
         SetBombSorting(CarryOrderInLayer);
 
@@ -1126,7 +1158,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             obstacles,
             bombController != null ? bombController.destructibleTiles : null,
             visualStartYOffset: movement.tileSize,
-            logicalOriginOverride: logicalOrigin
+            logicalOriginOverride: logicalOrigin,
+            presenter: GetComponent<Assets.Scripts.Netcode.NetworkBombFx>(),
+            motionKind: Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Throw
         );
     }
 
@@ -1218,7 +1252,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private void SetHeldBombPowerGloveHeld(bool held)
     {
         if (heldBomb != null)
+        {
+            if (!held) heldBomb.EndNetworkBombMotion(heldBomb.transform.position);
             heldBomb.SetPowerGloveHeld(held);
+        }
     }
 
     private void RestoreBombControllerInputModeIfNeeded(string reason)

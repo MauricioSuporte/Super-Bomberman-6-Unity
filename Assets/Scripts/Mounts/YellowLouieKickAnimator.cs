@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -70,6 +70,14 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         }
 
         playing = true;
+    }
+
+    public void PresentPredictedProgress(float progress)
+    {
+        if (activeKick == null) return;
+        int frames = activeKick.animationSprite != null ? activeKick.animationSprite.Length : 1;
+        activeKick.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * frames), 0, Mathf.Max(0, frames - 1));
+        activeKick.RefreshFrame();
     }
 
     public void Stop()

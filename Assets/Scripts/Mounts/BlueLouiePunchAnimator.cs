@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -52,6 +52,14 @@ public class BlueLouiePunchAnimator : MonoBehaviour, IBombPunchExternalAnimator
         yield return new WaitForSeconds(punchLockTime);
 
         ForceStop();
+    }
+
+    public void PresentPredictedProgress(float progress)
+    {
+        if (activePunch == null) return;
+        int frames = activePunch.animationSprite != null ? activePunch.animationSprite.Length : 1;
+        activePunch.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * frames), 0, Mathf.Max(0, frames - 1));
+        activePunch.RefreshFrame();
     }
 
     public void ForceStop()

@@ -318,3 +318,46 @@ Regression coverage extends initial prediction/confirmation/rollback with motor
 reference restoration, before-start checks, and historical/current stop behavior.
 Wire protocol remains 22; public builds still require matching build identities.
 Two-peer subjective gameplay validation remains required after publication.
+
+
+## Bomb abilities (protocol 23)
+
+NetworkBombFx now shares its presentation/confirmation/rollback path with punch,
+glove lift/carry/throw and Yellow Louie's bomb push. Only the owning client samples
+real input, once per Update; movement replay cannot fire an ability again. The
+existing input command still carries the original directional intent. The local
+motor history records the short offline animation lock independently.
+
+Pure clients no longer run the authoritative punch/glove/Yellow gameplay routines.
+Prediction moves the replica and renders its pose, without StartPunch, fuse pause,
+damage, random draws, terrain mutation or a client-created bomb. Rejection restores
+the buffered server position, collider and sorting. A per-bomb serial revision
+prevents an older presenter (for example the bomb owner after another player picks
+it up) from restoring stale motion. Holding is anchored to the carrier's current
+client position; ordinary walking can still predict while carrying.
+
+Punch and throw use the existing arc duration, height and pixel-grid sampling.
+Unknown stage bounds, wrapping and room seams wait for the authoritative segment.
+Search/Magnet selection and random RubberBomb landing bounces remain authoritative;
+approved segments bypass the additional NetworkTransform presentation buffer.
+Rubber wall reflections may continue for at most one cell / 150 ms against a known
+solid wall and a free return path. This does not predict random landing choices.
+Yellow's moving destructible blocks are visualized only after server approval and
+settle/destroy messages. Approved moving blocks reserve current/next cells with
+the same Stage collision size as the offline motor; no speculative terrain
+changes are performed.
+
+New client diagnostics: bomb_motion_prediction_begin/confirm/reject,
+bomb_motion_apply, bomb_motion_sample and rubber_bounce_prediction. Server
+bomb_motion_send records kind, input tick, duration and displacement. Existing
+kick-specific event names remain available for Kick comparisons. A local begin
+with durationMs=0 records presentation starting without a server response, not a
+claim of zero hardware/render latency. The supplied 213057 online / 213615 offline
+captures predate these per-ability events and use different action sequences.
+
+Regression tests cover arc/carry/reflection geometry, collision roles, immediate
+prediction, confirmation/rejection, movement while carrying, stale presenter
+messages, observer authority guards, Yellow tile settle/destruction and wire
+roundtrip. Manual host/owner/observer gameplay (including mounted actions, pause,
+water/holes/wrap, chain reactions and packet jitter) still needs post-deploy checks.
+No prefab or scene rewiring is required. Client and server must both use protocol23.

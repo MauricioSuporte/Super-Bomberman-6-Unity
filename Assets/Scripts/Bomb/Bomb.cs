@@ -53,6 +53,67 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private BombController owner;
     public BombController Owner => owner;
 
+    uint networkMotionRevision, clientMotionRevision;
+    bool hasClientMotionRevision;
+    Assets.Scripts.Netcode.NetworkBombFx clientPresentationOwner, networkMotionPresenter;
+    Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind networkMotionKind;
+    bool networkMotionActive;
+    public bool ClientMotionNonBlocking { get; set; }
+    public uint ClientMotionRevision => clientMotionRevision;
+    public bool HasPendingPresentationOtherThan(Assets.Scripts.Netcode.NetworkBombFx presenter) =>
+        clientPresentationOwner != null && clientPresentationOwner != presenter && clientPresentationOwner.HasUnconfirmedClientMotion(this);
+    public uint NextNetworkMotionRevision() => ++networkMotionRevision;
+
+    public bool ClaimClientPresentation(Assets.Scripts.Netcode.NetworkBombFx presenter, uint revision)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || presenter == null) return false;
+        if (hasClientMotionRevision && revision != clientMotionRevision &&
+            !Assets.Scripts.Netcode.NetworkInputHistory.IsNewer(revision, clientMotionRevision)) return false;
+        if (clientPresentationOwner != null && clientPresentationOwner != presenter) clientPresentationOwner.ForgetClientBomb(this);
+        clientPresentationOwner = presenter; clientMotionRevision = revision; hasClientMotionRevision = true;
+        return true;
+    }
+
+    public void BindNetworkBombMotion(Assets.Scripts.Netcode.NetworkBombFx presenter, Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind kind)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer) return;
+        var resolved = presenter != null ? presenter : owner != null ? owner.GetComponent<Assets.Scripts.Netcode.NetworkBombFx>() : null;
+        if (networkMotionActive && networkMotionPresenter == resolved && networkMotionKind == kind) return;
+        networkMotionPresenter = resolved;
+        networkMotionKind = kind; networkMotionActive = false;
+    }
+
+    public void ReportNetworkBombMotion(Vector2 start, Vector2 end, float duration, float arcHeight = 0, float carryHeight = 0)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || networkMotionPresenter == null || !networkMotionPresenter.isServer || networkMotionPresenter.netId == 0) return;
+        networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, start, end, duration, arcHeight, carryHeight, true, !networkMotionActive);
+        networkMotionActive = true;
+    }
+
+    public void EndNetworkBombMotion(Vector2 position)
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && networkMotionActive && networkMotionPresenter != null)
+            networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, position, position, 0, 0, 0, false, false);
+        networkMotionActive = false;
+    }
+
+    public bool TryPreviewNetworkPunch(Vector2 origin, Vector2 direction, float tile, int distance, out Vector2 end, out float duration)
+    {
+        end = origin; duration = GetPunchSegmentDuration(punchDuration, distance);
+        if (HasExploded || tile <= 0 || direction == Vector2.zero) return false;
+        ResolveStageBoundsTilemapIfNeeded();
+        // Wrapping/room seams are server decisions. Predict only a known interior arc.
+        if (stageBoundsTilemap == null) return false;
+        var room = StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(origin);
+        for (int i = 0; i < Mathf.Max(1, distance); i++)
+        {
+            end += direction.normalized * tile;
+            if (!stageBoundsTilemap.cellBounds.Contains(stageBoundsTilemap.WorldToCell(end))) return false;
+            if (room != null && !room.bounds.Contains(end)) return false;
+        }
+        return true;
+    }
+
     public bool HasExploded { get; private set; }
     public float PlacedTime { get; private set; }
     public bool IsControlBomb { get; set; }
@@ -213,6 +274,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private void OnDisable()
     {
         EndNetworkKickPresentation(transform.position);
+        EndNetworkBombMotion(transform.position);
         ActiveBombs.Remove(this);
     }
 
@@ -341,6 +403,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public void StopKickPunchMagnetRoutines()
     {
         EndNetworkKickPresentation(rb != null ? rb.position : (Vector2)transform.position);
+        EndNetworkBombMotion(rb != null ? rb.position : (Vector2)transform.position);
         if (kickRoutine != null) TraceKickDiagnostic("kick_cancelled", "external_stop", kickDirection);
         SuspendSearchPursuit();
         if (kickRoutine != null)
@@ -378,6 +441,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         StopCoroutine(magnetRoutine);
         magnetRoutine = null;
+        EndNetworkBombMotion(rb != null ? rb.position : (Vector2)transform.position);
         RemoveMagnetOriginBlocker();
     }
 
@@ -612,6 +676,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return true;
     }
 
+    public bool CanPredictRubberWallBounce(Vector2 target, float tileSize)
+    {
+        if (HasIndestructibleAt(target)) return true;
+        var map = GameManager.Instance != null ? GameManager.Instance.destructibleTilemap : null;
+        if (map != null && map.HasTile(map.WorldToCell(target))) return true;
+        var filter = new ContactFilter2D { useTriggers = false };
+        filter.SetLayerMask(LayerMask.GetMask("Stage"));
+        int count = Physics2D.OverlapBox(target, Vector2.one * (tileSize * 0.6f), 0, filter, kickPredictionHits);
+        for (int i = 0; i < count; i++)
+            if (kickPredictionHits[i] != null && kickPredictionHits[i].transform != transform && !kickPredictionHits[i].transform.IsChildOf(transform)) return true;
+        return false;
+    }
+
     private bool IsKickBlocked(Vector2 target)
     {
         Vector2 size = Vector2.one * (kickTileSize * 0.6f);
@@ -712,7 +789,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float visualStartYOffset = 0f,
         Vector2? logicalOriginOverride = null,
         float? arcHeightOverride = null,
-        float? bounceArcHeightOverride = null)
+        float? bounceArcHeightOverride = null,
+        Assets.Scripts.Netcode.NetworkBombFx presenter = null,
+        Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind motionKind = Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Punch)
     {
         bool canEarlyPunch = !HasExploded && !isKicked && !isPunched;
 
@@ -750,7 +829,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(punchRoutine);
 
         StopMagnetMovement();
+        EndNetworkKickPresentation(rb.position);
         RemoveKickOriginBlocker();
+        BindNetworkBombMotion(presenter, motionKind);
 
         WasMovedByKickOrPunch = true;
         isPunched = true;
@@ -980,6 +1061,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         DestroyPickupsAtWorld(cur, lastPickupImpactDirection);
         FinishKickPushedSkull(cur);
 
+        EndNetworkBombMotion(cur);
         isPunched = false;
         punchRoutine = null;
 
@@ -1210,6 +1292,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return Mathf.Max(baseDuration, punchMinSegmentDuration, distanceDuration, Time.fixedDeltaTime);
     }
 
+    public Vector2 SnapNetworkPunchPosition(Vector2 position) => SnapPunchArcPositionToPixelGrid(position);
+
     private Vector2 SnapPunchArcPositionToPixelGrid(Vector2 pos)
     {
         int ppu = Mathf.Max(1, punchPixelsPerUnit);
@@ -1223,6 +1307,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         duration = Mathf.Max(duration, Time.fixedDeltaTime);
 
         SetLogicalTileCenter(end);
+        ReportNetworkBombMotion(start, end, Mathf.Ceil(duration / Time.fixedDeltaTime) * Time.fixedDeltaTime, arcHeight);
 
         float t = 0f;
         float inv = 1f / Mathf.Max(0.0001f, duration);
@@ -1995,6 +2080,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             magnetRoutine = null;
         }
         RemoveMagnetOriginBlocker();
+        BindNetworkBombMotion(null, searchMovement ? Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Search : Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Magnet);
 
         magnetSpeedMultiplier = Mathf.Max(0.05f, speedMultiplier);
 
@@ -2073,6 +2159,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             float speed = Mathf.Max(0.0001f, baseSpeed * mult);
 
             float travelTime = kickTileSize / speed;
+            ReportNetworkBombMotion(start, next, Mathf.Ceil(travelTime / Time.fixedDeltaTime) * Time.fixedDeltaTime);
             float elapsed = 0f;
             bool cancelAndReturn = false;
             bool externalMovementInterrupted = false;
@@ -2146,6 +2233,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         RemoveMagnetOriginBlocker();
+        EndNetworkBombMotion(currentTileCenter);
 
         rb.position = currentTileCenter;
         transform.position = currentTileCenter;

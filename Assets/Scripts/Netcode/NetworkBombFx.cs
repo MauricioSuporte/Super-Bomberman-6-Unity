@@ -29,7 +29,7 @@ namespace Assets.Scripts.Netcode
     [DefaultExecutionOrder(100)]
     [RequireComponent(typeof(NetworkIdentity))]
     [RequireComponent(typeof(BombController))]
-    public class NetworkBombFx : NetworkBehaviour
+    public partial class NetworkBombFx : NetworkBehaviour
     {
         BombController bomb;
 
@@ -37,11 +37,13 @@ namespace Assets.Scripts.Netcode
 
         public struct KickMotion
         {
-            public uint bombId, inputTick;
+            public uint bombId, inputTick, revision;
+            public BombMotionKind kind;
+            public float arcHeight, carryHeight;
             public Vector2 start, end;
             public float duration;
             public double serverTime;
-            public bool moving, first;
+            public bool moving, first, rubber;
         }
 
         public sealed class KickInputHistory
@@ -70,8 +72,10 @@ namespace Assets.Scripts.Netcode
             public float elapsed, staleSeconds;
             public double endpointWaitAt = -1;
             public Vector2 presented, correction;
-            public bool predictedContinuation, unconfirmed;
+            public bool predictedContinuation, unconfirmed, predictedBounce;
             public uint startInputTick;
+            public bool colliderWasEnabled, colliderCaptured, sortingCaptured;
+            public int originalSorting;
             public double nextPresentationSample;
             public Vector2 sampledPresentation;
             public bool hasPresentationSample;
@@ -125,6 +129,7 @@ namespace Assets.Scripts.Netcode
                     moving = true, first = true, serverTime = KickServerNow }, elapsed = Time.fixedDeltaTime };
             playback.presented = SamplePlayback(movingBomb, playback);
             history.Remember(input.CurrentMovementTick, playback.presented);
+            movingBomb.ClaimClientPresentation(this, movingBomb.ClientMotionRevision);
             kickPlayback[movingBomb] = playback;
             ApplyKickPosition(movingBomb, playback.presented);
             if (TryGetComponent<BombKickAbility>(out var kickAbility))
@@ -172,7 +177,8 @@ namespace Assets.Scripts.Netcode
                 movingBomb == null || movingBomb.HasExploded || !movingBomb.isActiveAndEnabled ||
                 !kickPlayback.TryGetValue(movingBomb, out var playback)) return false;
             uint start = playback.history != null ? playback.history.startTick : playback.startInputTick;
-            return PredictionAcknowledged(tick, start) &&
+            return (playback.motion.kind == BombMotionKind.Kick || playback.motion.kind == BombMotionKind.Yellow) &&
+                PredictionAcknowledged(tick, start) &&
                 (playback.motion.moving || !PredictionAcknowledged(tick, playback.motion.inputTick));
         }
 
@@ -224,10 +230,12 @@ namespace Assets.Scripts.Netcode
             if (movingBomb == null || movingBomb.HasExploded) return;
             rejectedStarts[movingBomb] = (playback.motion.start, (playback.motion.end - playback.motion.start).normalized);
             playback.replicaPosition = LatestReplicaPosition(movingBomb, playback.replicaPosition);
+            RestoreMotionCollider(movingBomb, playback);
             ApplyKickPosition(movingBomb, playback.replicaPosition);
+            RestoreAbilityVisuals(playback.motion.kind);
             if (GameplayLatencyDiagnostics.Enabled)
             {
-                var entry = GameplayLatencyDiagnostics.For("kick_prediction_reject", GetComponent<MovementController>(), movingBomb, reason);
+                var entry = GameplayLatencyDiagnostics.For(playback.motion.kind == BombMotionKind.Kick ? "kick_prediction_reject" : "bomb_motion_prediction_reject", GetComponent<MovementController>(), movingBomb, reason + ";kind=" + playback.motion.kind);
                 entry.inputTick = playback.history.startTick; entry.authoritativeTick = acknowledgedTick;
                 entry.durationMs = (Time.realtimeSinceStartupAsDouble - playback.predictedAt) * 1000;
                 entry.delta = playback.replicaPosition - playback.presented;
@@ -254,17 +262,32 @@ namespace Assets.Scripts.Netcode
         Vector2 SamplePlayback(Bomb movingBomb, KickPlayback playback)
         {
             var motion = playback.motion;
+            if (!motion.moving) return motion.end;
             bool continueLocally = false;
-            if (motion.moving && playback.elapsed > motion.duration && motion.duration > 0)
+            if (motion.moving && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw &&
+                motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && playback.elapsed > motion.duration && motion.duration > 0)
             {
                 var step = motion.end - motion.start;
                 continueLocally = movingBomb.CanPredictKickContinuation(motion.end + step, step.magnitude);
+                if (!continueLocally && motion.rubber && movingBomb.CanPredictRubberWallBounce(motion.end + step, step.magnitude) &&
+                    movingBomb.CanPredictKickContinuation(motion.start, step.magnitude))
+                {
+                    if (!playback.predictedBounce && GameplayLatencyDiagnostics.Enabled)
+                        GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("rubber_bounce_prediction", GetComponent<MovementController>(), movingBomb));
+                    playback.predictedBounce = true;
+                    return SampleBoundedBounce(motion.start, motion.end, motion.duration, playback.elapsed);
+                }
                 if (continueLocally && !playback.predictedContinuation && GameplayLatencyDiagnostics.Enabled)
                     GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("kick_continuation_prediction",
                         GetComponent<MovementController>(), movingBomb));
                 playback.predictedContinuation |= continueLocally;
             }
-            return SampleKickContinuation(motion.start, motion.end, motion.duration, playback.elapsed, continueLocally);
+            if (motion.kind == BombMotionKind.Lift || motion.kind == BombMotionKind.Carry)
+                return SampleCarry(motion, transform.position, playback.elapsed);
+            if (motion.kind == BombMotionKind.Punch || motion.kind == BombMotionKind.Throw)
+                return movingBomb.SnapNetworkPunchPosition(SampleArc(motion.start, motion.end, motion.duration, playback.elapsed, motion.arcHeight));
+            return SampleKickContinuation(motion.start, motion.end, motion.duration, playback.elapsed,
+                continueLocally && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw);
         }
 
         [Server]
@@ -273,7 +296,7 @@ namespace Assets.Scripts.Netcode
             if (connectionToClient == null || connectionToClient == NetworkServer.localConnection || movingBomb == null ||
                 !movingBomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return;
             var motion = new KickMotion { bombId = identity.netId, start = start, end = end,
-                duration = duration, moving = moving, first = first, serverTime = NetworkTime.localTime,
+                duration = duration, moving = moving, first = first, serverTime = NetworkTime.localTime, revision = movingBomb.NextNetworkMotionRevision(), rubber = movingBomb.IsRubberBomb,
                 inputTick = TryGetComponent<NetworkPlayerInput>(out var input) ? input.CurrentInputTick : 0 };
             if (GameplayLatencyDiagnostics.Enabled)
             {
@@ -293,10 +316,17 @@ namespace Assets.Scripts.Netcode
 
         public void ReceiveKickMotion(KickMotion motion)
         {
-            if (!NetSync.IsOnline || isServer || !isLocalPlayer || !NetworkClient.active) return;
+            if (!NetSync.IsOnline || isServer || !NetworkClient.active || (motion.kind == BombMotionKind.Kick && !isLocalPlayer)) return;
             if (!NetworkClient.spawned.TryGetValue(motion.bombId, out var identity) ||
                 !identity.TryGetComponent<Bomb>(out var movingBomb)) return;
-            if (kickPlayback.TryGetValue(movingBomb, out var previous) && !previous.unconfirmed && previous.motion.serverTime > motion.serverTime) return;
+            // Another player's last search/kick stop can arrive while our action
+            // is in flight. Our own input acknowledgement resolves this prediction.
+            if (movingBomb.HasPendingPresentationOtherThan(this)) return;
+            kickPlayback.TryGetValue(movingBomb, out var previous);
+            if (previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
+                !NetworkInputHistory.IsNewer(motion.inputTick, previous.history.startTick)) return;
+            if (!movingBomb.ClaimClientPresentation(this, motion.revision)) return;
+            if (previous != null && !previous.unconfirmed && previous.motion.serverTime > motion.serverTime) return;
             if (previous != null && previous.endpointWaitAt >= 0 && GameplayLatencyDiagnostics.Enabled)
             {
                 var wait = GameplayLatencyDiagnostics.For("kick_endpoint_wait", GetComponent<MovementController>(), movingBomb,
@@ -306,22 +336,27 @@ namespace Assets.Scripts.Netcode
                 GameplayLatencyDiagnostics.Write(wait);
             }
             float age = GamePauseController.IsPaused ? 0 : Mathf.Max(0, (float)(KickServerNow - motion.serverTime));
-            var playback = new KickPlayback { motion = motion, elapsed = age,
+            var playback = new KickPlayback { motion = motion, elapsed = motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Magnet ? 0 : age,
                 nextPresentationSample = previous != null ? previous.nextPresentationSample : 0,
                 sampledPresentation = previous != null ? previous.sampledPresentation : Vector2.zero,
                 hasPresentationSample = previous != null && previous.hasPresentationSample,
+                colliderCaptured = previous != null && previous.colliderCaptured,
+                colliderWasEnabled = previous != null && previous.colliderWasEnabled,
+                sortingCaptured = previous != null && previous.sortingCaptured,
+                originalSorting = previous != null ? previous.originalSorting : 0,
                 startInputTick = previous != null && (previous.unconfirmed || !motion.first) ? previous.startInputTick : motion.inputTick,
                 history = previous != null && (previous.unconfirmed || !motion.first) ? previous.history : null };
             if (previous != null && previous.unconfirmed)
             {
-                playback.history.presentationLead = InitialKickPresentationLead(previous.presented, motion, age);
+                playback.history.presentationLead = motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
+                    Mathf.Clamp(previous.elapsed - age, 0, 0.15f);
                 rejectedStarts.Remove(movingBomb);
                 if (GameplayLatencyDiagnostics.Enabled)
                 {
-                    var confirmation = GameplayLatencyDiagnostics.For("kick_prediction_confirm", GetComponent<MovementController>(), movingBomb);
+                    var confirmation = GameplayLatencyDiagnostics.For(motion.kind == BombMotionKind.Kick ? "kick_prediction_confirm" : "bomb_motion_prediction_confirm", GetComponent<MovementController>(), movingBomb);
                     confirmation.inputTick = previous.history.startTick; confirmation.authoritativeTick = motion.inputTick;
                     confirmation.durationMs = (Time.realtimeSinceStartupAsDouble - previous.predictedAt) * 1000;
-                    confirmation.detail = "owner_input_timeline_lead_ms=" + playback.history.presentationLead * 1000;
+                    confirmation.detail = "kind=" + motion.kind + ";owner_input_timeline_lead_ms=" + playback.history.presentationLead * 1000;
                     confirmation.delta = SampleKickSegment(motion.start, motion.end, motion.duration, age) - previous.presented;
                     GameplayLatencyDiagnostics.Write(confirmation);
                 }
@@ -338,12 +373,12 @@ namespace Assets.Scripts.Netcode
                 playback.correction = previous.presented - targetPosition;
             playback.presented = targetPosition + playback.correction;
             kickPlayback[movingBomb] = playback;
-            if (motion.first || !motion.moving)
+            if (motion.kind == BombMotionKind.Kick && (motion.first || !motion.moving))
                 MotionDiagnosticProbe.KickFeedback(gameObject, movingBomb, motion.moving, motion.inputTick, age * 1000);
             if (GameplayLatencyDiagnostics.Enabled)
             {
-                var segment = GameplayLatencyDiagnostics.For("kick_segment_apply", GetComponent<MovementController>(), movingBomb,
-                    motion.first ? "first_segment" : motion.moving ? "continuation" : "stop");
+                var segment = GameplayLatencyDiagnostics.For(motion.kind == BombMotionKind.Kick ? "kick_segment_apply" : "bomb_motion_apply", GetComponent<MovementController>(), movingBomb,
+                    "kind=" + motion.kind + ";" + (motion.first ? "first_segment" : motion.moving ? "continuation" : "stop"));
                 segment.authoritativeTick = motion.inputTick;
                 segment.messageAgeMs = age * 1000;
                 segment.durationMs = motion.duration * 1000;
@@ -353,16 +388,21 @@ namespace Assets.Scripts.Netcode
             }
             // No global physics replay, no StartKick, no audio or gameplay effects.
             // The normal NetworkTransform remains enabled to receive/decode deltas.
+            ApplyMotionCollider(movingBomb, playback);
             ApplyKickPosition(movingBomb, playback.presented);
+            if (isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
+                motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet)
+                BeginConfirmedAbilityPose(motion, age);
         }
 
         void LateUpdate()
         {
-            if (!NetSync.IsOnline || isServer || !isLocalPlayer || !NetworkClient.active)
+            if (!NetSync.IsOnline || isServer || !NetworkClient.active)
             {
                 ClearKickPlayback();
                 return;
             }
+            UpdateTileMotionPresentation();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
             {
@@ -400,8 +440,8 @@ namespace Assets.Scripts.Netcode
                 double now = Time.realtimeSinceStartupAsDouble;
                 if (GameplayLatencyDiagnostics.Enabled && now >= playback.nextPresentationSample)
                 {
-                    var sample = GameplayLatencyDiagnostics.For("kick_presentation_sample", GetComponent<MovementController>(), movingBomb,
-                        "after presenter; delta=displayed displacement since previous presentation sample");
+                    var sample = GameplayLatencyDiagnostics.For(motion.kind == BombMotionKind.Kick ? "kick_presentation_sample" : "bomb_motion_sample", GetComponent<MovementController>(), movingBomb,
+                        "kind=" + motion.kind + ";after presenter; delta=displayed displacement since previous presentation sample");
                     sample.delta = playback.hasPresentationSample ? playback.presented - playback.sampledPresentation : Vector2.zero;
                     sample.durationMs = playback.hasPresentationSample ? (now - (playback.nextPresentationSample - 0.1)) * 1000 : -1;
                     GameplayLatencyDiagnostics.Write(sample);
@@ -414,7 +454,7 @@ namespace Assets.Scripts.Netcode
                     transformOffset = NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +
                         (sync.timelineOffset ? sync.sendIntervalMultiplier : 0));
                 bool caughtUp = !motion.moving && NetworkTime.time >= motion.serverTime + transformOffset;
-                if (caughtUp || playback.staleSeconds > 1f)
+                if (caughtUp || (playback.motion.kind != BombMotionKind.Carry && playback.motion.kind != BombMotionKind.Lift && playback.staleSeconds > 1f))
                 {
                     expiredKicks.Add(movingBomb);
                     if (GameplayLatencyDiagnostics.Enabled)
@@ -426,7 +466,13 @@ namespace Assets.Scripts.Netcode
                     }
                 }
             }
-            foreach (var movingBomb in expiredKicks) kickPlayback.Remove(movingBomb);
+            foreach (var movingBomb in expiredKicks)
+            {
+                if (movingBomb != null && kickPlayback.TryGetValue(movingBomb, out var oldPlayback))
+                    RestoreMotionCollider(movingBomb, oldPlayback);
+                kickPlayback.Remove(movingBomb);
+            }
+            UpdateLocalAbilityPresentation();
         }
 
         // Called before local movement/replay queries. Normal NetworkTransform may
@@ -473,7 +519,11 @@ namespace Assets.Scripts.Netcode
         {
             foreach (var pair in kickPlayback)
                 if (pair.Value.unconfirmed) RollbackPrediction(pair.Key, pair.Value, "presenter_disabled");
+            foreach (var pair in kickPlayback)
+                if (pair.Key != null) RestoreMotionCollider(pair.Key, pair.Value);
             kickPlayback.Clear(); rejectedStarts.Clear();
+            ResetLocalAbilityPresentation();
+            ClearTileMotionPresentation();
         }
 
         void OnDisable() => ClearKickPlayback();

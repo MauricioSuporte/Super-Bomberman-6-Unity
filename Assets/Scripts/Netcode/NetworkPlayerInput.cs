@@ -114,13 +114,15 @@ namespace Assets.Scripts.Netcode
             if (isLocalPlayer && !isServer && input != null)
             {
                 sampledHeld = 0;
+                int pressedNow = 0;
                 if (Blocked) pendingPressed = 0;
                 else for (int i = 0; i < Actions.Length; i++)
                 {
                     if (input.Get(1, Actions[i])) sampledHeld |= 1 << i;
-                    if (i >= 4 && input.GetDown(1, Actions[i])) pendingPressed |= 1 << i;
+                    if (i >= 4 && input.GetDown(1, Actions[i])) { pendingPressed |= 1 << i; pressedNow |= 1 << i; }
                 }
                 if (Blocked) movement.SetPredictLocally(false);
+                else GetComponent<NetworkBombFx>()?.PredictBombAbilityInput(sampledHeld, pressedNow, unchecked(localTick + 1));
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
             // Pause uses unscaled Update; stale gameplay inputs must not survive resume.
@@ -141,9 +143,12 @@ namespace Assets.Scripts.Netcode
                 var frame = new NetworkInputFrame { tick = ++localTick,
                     held = Blocked ? 0 : sampledHeld, pressed = Blocked ? 0 : pendingPressed };
                 pendingPressed = 0;
-                pending.Add(frame);
                 MotionDiagnosticProbe.NetworkInput(gameObject, "input_send", frame.held, frame.pressed);
                 CmdControls(frame);
+                // Keep directional intent on the wire; only the local motor/replay
+                // waits through the offline ability animation lock.
+                if (GetComponent<NetworkBombFx>()?.AbilityPredictionLocksMovement == true) frame.held &= ~15;
+                pending.Add(frame);
                 bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement;
                 movement.SetPredictLocally(predict);
                 if (predict)

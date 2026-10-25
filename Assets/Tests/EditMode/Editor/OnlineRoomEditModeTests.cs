@@ -683,16 +683,137 @@ public sealed class OnlineRoomEditModeTests
         finally { NetSync.Mode = previous; Object.DestroyImmediate(root); }
     }
 
+    [TestCase(NetworkBombFx.BombMotionKind.Kick, false)]
+    [TestCase(NetworkBombFx.BombMotionKind.Punch, true)]
+    [TestCase(NetworkBombFx.BombMotionKind.Throw, true)]
+    [TestCase(NetworkBombFx.BombMotionKind.Lift, true)]
+    [TestCase(NetworkBombFx.BombMotionKind.Carry, true)]
+    [TestCase(NetworkBombFx.BombMotionKind.Yellow, false)]
+    [TestCase(NetworkBombFx.BombMotionKind.Search, false)]
+    [TestCase(NetworkBombFx.BombMotionKind.Magnet, false)]
+    public void OnlyAirborneAndCarriedBombPresentationSuppressesCollision(NetworkBombFx.BombMotionKind kind, bool expected)
+        => Assert.AreEqual(expected, NetworkBombFx.NonBlockingMotion(kind));
+
+    [Test]
+    public void BombArcsCarryAndRubberBounceUseBoundedOfflineGeometry()
+    {
+        Assert.AreEqual(Vector2.zero, NetworkBombFx.SampleArc(Vector2.zero, Vector2.right * 3, 0.3f, 0, 1));
+        Assert.Less(Vector2.Distance(new Vector2(1.5f, 1), NetworkBombFx.SampleArc(Vector2.zero, Vector2.right * 3, 0.3f, 0.15f, 1)), 0.001f);
+        Assert.Less(Vector2.Distance(Vector2.right * 3, NetworkBombFx.SampleArc(Vector2.zero, Vector2.right * 3, 0.3f, 5, 1)), 0.001f);
+        var lift = new NetworkBombFx.KickMotion { kind = NetworkBombFx.BombMotionKind.Lift, carryHeight = 1, duration = 0.1f };
+        Assert.AreEqual(new Vector2(4, 2.5f), NetworkBombFx.SampleCarry(lift, new Vector2(4, 2), 0.05f));
+        lift.kind = NetworkBombFx.BombMotionKind.Carry;
+        Assert.AreEqual(new Vector2(7, 4), NetworkBombFx.SampleCarry(lift, new Vector2(7, 3), 0));
+        Assert.AreEqual(0.75f, NetworkBombFx.SampleBoundedBounce(Vector2.zero, Vector2.right, 0.1f, 0.125f).x, 0.001f);
+        Assert.AreEqual(0, NetworkBombFx.SampleBoundedBounce(Vector2.zero, Vector2.right, 0.1f, 100).x, 0.001f);
+    }
+
+    [Test]
+    public void BombAbilityPresentationConfirmsRollsBackCarriesAndRejectsStaleOwners()
+    {
+        var mode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldState = clientState.GetValue(null);
+        var actor = new GameObject("BombMotionOwner"); actor.SetActive(false); actor.AddComponent<BoxCollider2D>();
+        var replica = new GameObject("BombMotionReplica"); replica.SetActive(false); replica.AddComponent<CircleCollider2D>();
+        var observer = new GameObject("BombMotionObserver"); observer.SetActive(false); observer.AddComponent<BoxCollider2D>();
+        var grid = new GameObject("BombMotionGrid", typeof(Grid));
+        var mapObject = new GameObject("BombMotionMap", typeof(UnityEngine.Tilemaps.Tilemap), typeof(UnityEngine.Tilemaps.TilemapRenderer));
+        mapObject.transform.SetParent(grid.transform);
+        var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        const uint id = uint.MaxValue - 70;
+        try
+        {
+            clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected")); NetSync.Mode = NetSync.NetMode.Client;
+            var ownerId = actor.AddComponent<NetworkIdentity>();
+            var fx = actor.AddComponent<NetworkBombFx>();
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(ownerId, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(ownerId, true);
+            var otherId = observer.AddComponent<NetworkIdentity>();
+            var otherFx = observer.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(otherId, null);
+            var bomb = replica.AddComponent<Bomb>(); var bombId = replica.AddComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(bombId, id); NetworkClient.spawned.Add(id, bombId);
+            replica.SetActive(true);
+            var collider = replica.GetComponent<Collider2D>(); collider.enabled = true;
+            Vector2 origin = new Vector2(2000, 2000); actor.transform.position = origin; replica.transform.position = origin;
+            var punch = new NetworkBombFx.KickMotion { kind = NetworkBombFx.BombMotionKind.Punch, bombId = id, inputTick = 10,
+                start = origin, end = origin + Vector2.right * 3, duration = 0.3f, arcHeight = 1, moving = true, first = true };
+            Assert.IsTrue(fx.BeginAbilityPrediction(bomb, punch, Vector2.right, 0.1f));
+            Assert.Greater(replica.transform.position.x, origin.x, "Punch presentation starts before an RPC.");
+            Assert.IsFalse(collider.enabled); Assert.IsTrue(bomb.ClientMotionNonBlocking);
+            Assert.IsFalse(bomb.IsBeingPunched); Assert.IsFalse(bomb.IsFusePaused, "Client presentation must not pause the gameplay fuse.");
+            var immediatePunch = (Vector2)replica.transform.position;
+            otherFx.ReceiveKickMotion(new NetworkBombFx.KickMotion { bombId = id, revision = 1,
+                kind = NetworkBombFx.BombMotionKind.Search, moving = false, start = origin, end = origin, serverTime = NetworkBombFx.KickServerNow });
+            Assert.AreEqual(immediatePunch, (Vector2)replica.transform.position, "Another presenter's in-flight stop must not cancel our pending command.");
+            Assert.IsTrue(fx.HasUnconfirmedClientMotion(bomb));
+            fx.ReconcilePredictedKicks(10);
+            Assert.IsTrue(collider.enabled); Assert.IsFalse(bomb.ClientMotionNonBlocking); Assert.AreEqual(origin, (Vector2)replica.transform.position);
+            Assert.IsFalse(fx.AbilityPredictionLocksMovement);
+            fx.PrepareClientMovementTick(11, false, 1);
+            var lift = new NetworkBombFx.KickMotion { kind = NetworkBombFx.BombMotionKind.Lift, bombId = id, inputTick = 11,
+                start = origin, end = origin + Vector2.up, duration = 0.1f, carryHeight = 1, moving = true, first = true };
+            Assert.IsTrue(fx.BeginAbilityPrediction(bomb, lift, Vector2.up, 0.1f));
+            lift.revision = 1; lift.serverTime = NetworkBombFx.KickServerNow; fx.ReceiveKickMotion(lift); fx.ReconcilePredictedKicks(11);
+            Assert.IsTrue(fx.CarryingBombLocally);
+            var carry = new NetworkBombFx.KickMotion { kind = NetworkBombFx.BombMotionKind.Carry, bombId = id, inputTick = 12,
+                revision = 2, carryHeight = 1, moving = true, first = false, serverTime = NetworkBombFx.KickServerNow };
+            fx.ReceiveKickMotion(carry);
+            var motor = actor.GetComponent<MovementController>(); motor.SetExternalVisualSuppressed(true);
+            Assert.IsTrue(motor.CanPredictNetworkMovement, "Normal glove carry must retain movement prediction.");
+            actor.transform.position = origin + Vector2.right;
+            typeof(NetworkBombFx).GetMethod("LateUpdate", flags).Invoke(fx, null);
+            Assert.AreEqual(origin + Vector2.one, (Vector2)replica.transform.position, "Carry follows the client's current body, not its buffered server transform.");
+            var stop = new NetworkBombFx.KickMotion { kind = NetworkBombFx.BombMotionKind.Carry, bombId = id, inputTick = 15, revision = 3,
+                end = origin + Vector2.right, moving = false, serverTime = NetworkBombFx.KickServerNow + 0.01 };
+            fx.ReceiveKickMotion(stop); Assert.IsTrue(collider.enabled); Assert.IsFalse(bomb.ClientMotionNonBlocking);
+            var automatic = new NetworkBombFx.KickMotion { kind = NetworkBombFx.BombMotionKind.Search, bombId = id, inputTick = 16,
+                revision = 4, start = origin + Vector2.right, end = origin + Vector2.right * 2, duration = 0.3f, moving = true, first = true,
+                serverTime = NetworkBombFx.KickServerNow + 0.02 };
+            otherFx.ReceiveKickMotion(automatic);
+            Vector2 actual = replica.transform.position;
+            fx.ReceiveKickMotion(stop);
+            Assert.AreEqual(actual, (Vector2)replica.transform.position, "An old presenter/revision cannot overwrite a transferred bomb.");
+            Assert.IsFalse(otherFx.BeginAbilityPrediction(bomb, punch, Vector2.right, 0.1f), "Observers cannot predict player commands.");
+            var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            map.SetTile(Vector3Int.zero, tile);
+            otherFx.ReceiveTileStart(1, Vector3Int.zero, map); Assert.IsFalse(map.HasTile(Vector3Int.zero));
+            var reservedOrigin = Physics2D.OverlapPoint(map.GetCellCenterWorld(Vector3Int.zero), LayerMask.GetMask("Stage"));
+            Assert.IsNotNull(reservedOrigin, "The approved moving block must still block the local motor.");
+            otherFx.ReceiveTileMove(1, Vector3Int.zero, Vector3Int.right, 0.1f);
+            var reservedDestination = Physics2D.OverlapPoint(map.GetCellCenterWorld(Vector3Int.right), LayerMask.GetMask("Stage"));
+            Assert.IsNotNull(reservedDestination, "Match the server's destination-cell reservation.");
+            otherFx.ReceiveTileEnd(1, Vector3Int.right, false); Assert.AreSame(tile, map.GetTile(Vector3Int.right));
+            Assert.IsTrue(reservedOrigin == null && reservedDestination == null, "Settling must release temporary reservations.");
+            otherFx.ReceiveTileStart(2, Vector3Int.right, map);
+            otherFx.ReceiveTileEnd(2, Vector3Int.right, true); Assert.IsFalse(map.HasTile(Vector3Int.right), "Destroyed moving blocks must not be restored.");
+        }
+        finally
+        {
+            NetworkClient.spawned.Remove(id); clientState.SetValue(null, oldState); NetSync.Mode = mode;
+            Object.DestroyImmediate(replica); Object.DestroyImmediate(actor); Object.DestroyImmediate(observer);
+            Object.DestroyImmediate(grid); Object.DestroyImmediate(tile);
+        }
+    }
+
     [Test]
     public void KickMotionWireRoundTripPreservesSegmentAndAuthoritativeTick()
     {
         var motion = new NetworkBombFx.KickMotion { bombId = 123, inputTick = 49,
             start = Vector2.one, end = Vector2.one + Vector2.left, duration = 0.1f,
-            serverTime = 456.75, moving = true, first = true };
+            serverTime = 456.75, moving = true, first = true, kind = NetworkBombFx.BombMotionKind.Throw,
+            revision = 77, arcHeight = 0.9f, carryHeight = 1, rubber = true };
         using var writer = NetworkWriterPool.Get();
         writer.Write(motion);
         using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
         var result = reader.Read<NetworkBombFx.KickMotion>();
+        Assert.AreEqual(motion.kind, result.kind);
+        Assert.AreEqual(motion.revision, result.revision);
+        Assert.AreEqual(motion.arcHeight, result.arcHeight);
+        Assert.AreEqual(motion.carryHeight, result.carryHeight);
+        Assert.IsTrue(result.rubber);
         Assert.AreEqual(motion.bombId, result.bombId);
         Assert.AreEqual(motion.inputTick, result.inputTick);
         Assert.AreEqual(motion.start, result.start);
@@ -821,6 +942,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 22, false)]
     [TestCase("0.5.0", 21, false)]
     [TestCase("0.5.0", 20, false)]
     [TestCase("0.5.0", 19, false)]

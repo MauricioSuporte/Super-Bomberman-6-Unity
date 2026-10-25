@@ -50,6 +50,7 @@ namespace Assets.Scripts.Netcode
                 }
                 return;
             }
+            if (isLocalPlayer && TryGetComponent<NetworkBombFx>(out var bombFx) && bombFx.HasLocalMountAbilityPose) return;
             for (int i = 0; i < renderers.Length && i < frames.Count; i++)
             {
                 var animation = renderers[i];
@@ -89,6 +90,7 @@ namespace Assets.Scripts.Netcode
                     behaviour.StopAllCoroutines();
                     behaviour.enabled = false;
                 }
+            if (isLocalPlayer) GetComponent<NetworkBombFx>()?.ReapplyMountAbilityPose();
         }
     }
 }
