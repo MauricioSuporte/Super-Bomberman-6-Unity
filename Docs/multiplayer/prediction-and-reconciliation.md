@@ -131,3 +131,27 @@ Validar com dois peers e latência: chute de bomba própria/alheia, corredor blo
 parada com R, RubberBomb, movimento seguido de chute, pausa, explosão durante o
 chute e troca de rodada. A apresentação rápida remove o buffer adicional, mas
 não elimina o tempo que a rede e a validação do servidor exigem.
+
+
+### Captura do protocolo 19 e instrumentação adicional
+
+O client 7e1af3a registrou seis confirmações em 76–198 ms após contato previsto,
+com RTT de 68–84 ms. No servidor da mesma sessão, a fila de input amostrada
+teve média de 44 ms e máximo de 140 ms. Não são medidas isoladas da rede:
+contato candidato pode anteceder o alcance permitido pelo servidor.
+
+Logs adicionais (mesmo protocolo, sem alterar regras de jogo):
+- kick_segment_send agora registra cada trecho, duração, deslocamento e tick.
+- kick_segment_apply registra cada trecho recebido, idade estimada e correção
+  de posição aplicada à bomba (delta).
+- kick_endpoint_wait mede tempo de gameplay segurando o destino de um trecho
+  esgotado até receber outro; pausa não entra nessa duração.
+- kick_player_reconcile registra delta final após restore/replay por dois segundos
+  após contato candidato, além do tick confirmado e inputs pendentes.
+- network_input_queue distingue fila vazia que soltou input e descarte por fila
+  cheia; limitado a quatro eventos por segundo por player.
+
+Para predição imediata do kick, o client precisará manter estado especulativo da
+bomba e reconciliar/reexecutar junto ao jogador. Só acelerar o visual confirmado
+não remove a espera inicial. Comparar as novas capturas antes de alterar colisões,
+principalmente bomba própria/alheia, RubberBomb, parada com R e explosões.

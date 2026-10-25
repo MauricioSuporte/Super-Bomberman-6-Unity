@@ -127,15 +127,19 @@ namespace Assets.Scripts.Netcode
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
             int held = 0, pressed = 0;
+            bool consumedInput = false;
             if (Blocked) { serverInputs.Clear(); processedTick = receivedTick; }
             else if (serverInputs.Count > 0)
             {
+                consumedInput = true;
                 var queued = serverInputs.Dequeue();
                 var frame = queued.frame;
                 processedTick = frame.tick; held = frame.held; pressed = frame.pressed;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
             }
+            if (!Blocked && !consumedInput && serverHeldMask != 0)
+                MotionDiagnosticProbe.QueueEvent(gameObject, "empty_queue_released_previous_held_input", processedTick);
             serverHeldMask = held;
             ApplyServerControls(PlayerInputManager.Instance, held, pressed);
             // One input step per server physics tick: clients cannot select dt or speed.
@@ -164,7 +168,11 @@ namespace Assets.Scripts.Netcode
             frame.pressed &= ValidMask & ~15;
             // Bound queued time as well as memory after a network stall. Dropped ticks
             // are acknowledged only with the state of a later actually simulated tick.
-            if (serverInputs.Count == MaxQueuedTicks) serverInputs.Dequeue();
+            if (serverInputs.Count == MaxQueuedTicks)
+            {
+                var dropped = serverInputs.Dequeue();
+                MotionDiagnosticProbe.QueueEvent(gameObject, "queue_full_dropped_oldest_tick", dropped.frame.tick);
+            }
             serverInputs.Enqueue((frame, Time.realtimeSinceStartupAsDouble));
         }
 
@@ -183,6 +191,7 @@ namespace Assets.Scripts.Netcode
         void TargetReconcile(NetworkConnectionToClient target, uint acknowledgedTick, MovementController.NetworkMovementState state)
         {
             if (isServer || !isLocalPlayer || movement == null || movement.Rigidbody == null) return;
+            Vector2 before = movement.transform.position;
             receivedSnapshot = true;
             serverAllowsPrediction = state.canPredict;
             pending.DiscardThrough(acknowledgedTick);
@@ -193,8 +202,9 @@ namespace Assets.Scripts.Netcode
             bool predict = state.canPredict && completeHistory && !Blocked && movement.CanPredictNetworkMovement;
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
-            if (!predict) return;
-            for (int i = 0; i < pending.Count; i++) movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
+            if (predict)
+                for (int i = 0; i < pending.Count; i++) movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
+            MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
         }
 
         public override void OnStopServer()

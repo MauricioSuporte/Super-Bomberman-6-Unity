@@ -48,6 +48,7 @@ namespace Assets.Scripts.Netcode
         {
             public KickMotion motion;
             public float elapsed, staleSeconds;
+            public double endpointWaitAt = -1;
         }
 
         readonly Dictionary<Bomb, KickPlayback> kickPlayback = new();
@@ -68,11 +69,15 @@ namespace Assets.Scripts.Netcode
             var motion = new KickMotion { bombId = identity.netId, start = start, end = end,
                 duration = duration, moving = moving, first = first, serverTime = NetworkTime.localTime,
                 inputTick = TryGetComponent<NetworkPlayerInput>(out var input) ? input.CurrentInputTick : 0 };
-            if (first || !moving)
+            if (GameplayLatencyDiagnostics.Enabled)
             {
                 var entry = GameplayLatencyDiagnostics.For(moving ? "kick_segment_send" : "kick_stop_send",
                     GetComponent<MovementController>(), movingBomb);
-                if (GameplayLatencyDiagnostics.Enabled) GameplayLatencyDiagnostics.Write(entry);
+                entry.delta = end - start;
+                entry.durationMs = duration * 1000;
+                entry.authoritativeTick = motion.inputTick;
+                entry.detail = first ? "first_segment" : "continuation";
+                GameplayLatencyDiagnostics.Write(entry);
             }
             TargetKickMotion(connectionToClient, motion);
         }
@@ -84,10 +89,28 @@ namespace Assets.Scripts.Netcode
             if (!NetworkClient.spawned.TryGetValue(motion.bombId, out var identity) ||
                 !identity.TryGetComponent<Bomb>(out var movingBomb)) return;
             if (kickPlayback.TryGetValue(movingBomb, out var previous) && previous.motion.serverTime > motion.serverTime) return;
+            if (previous != null && previous.endpointWaitAt >= 0 && GameplayLatencyDiagnostics.Enabled)
+            {
+                var wait = GameplayLatencyDiagnostics.For("kick_endpoint_wait", GetComponent<MovementController>(), movingBomb,
+                    "previous approved segment exhausted before next confirmation; durationMs=unpaused hold");
+                wait.durationMs = (previous.staleSeconds - previous.endpointWaitAt) * 1000;
+                wait.authoritativeTick = motion.inputTick;
+                GameplayLatencyDiagnostics.Write(wait);
+            }
             float age = GamePauseController.IsPaused ? 0 : Mathf.Max(0, (float)(KickServerNow - motion.serverTime));
             kickPlayback[movingBomb] = new KickPlayback { motion = motion, elapsed = Mathf.Min(age, motion.duration) };
             if (motion.first || !motion.moving)
                 MotionDiagnosticProbe.KickFeedback(gameObject, movingBomb, motion.moving, motion.inputTick, age * 1000);
+            if (GameplayLatencyDiagnostics.Enabled)
+            {
+                var segment = GameplayLatencyDiagnostics.For("kick_segment_apply", GetComponent<MovementController>(), movingBomb,
+                    motion.first ? "first_segment" : motion.moving ? "continuation" : "stop");
+                segment.authoritativeTick = motion.inputTick;
+                segment.messageAgeMs = age * 1000;
+                segment.durationMs = motion.duration * 1000;
+                segment.delta = SampleKickSegment(motion.start, motion.end, motion.duration, age) - (Vector2)movingBomb.transform.position;
+                GameplayLatencyDiagnostics.Write(segment);
+            }
             // No global physics replay, no StartKick, no audio or gameplay effects.
             // The normal NetworkTransform remains enabled to receive/decode deltas.
             ApplyKickPosition(movingBomb, SampleKickSegment(motion.start, motion.end, motion.duration, age));
@@ -113,6 +136,8 @@ namespace Assets.Scripts.Netcode
                     playback.staleSeconds += Time.unscaledDeltaTime;
                 }
                 var motion = playback.motion;
+                if (motion.moving && playback.elapsed >= motion.duration && playback.endpointWaitAt < 0)
+                    playback.endpointWaitAt = playback.staleSeconds;
                 // The sender already checked the next tile. Never extrapolate beyond it.
                 ApplyKickPosition(movingBomb, SampleKickSegment(motion.start, motion.end, motion.duration, playback.elapsed));
                 double transformOffset = 0;

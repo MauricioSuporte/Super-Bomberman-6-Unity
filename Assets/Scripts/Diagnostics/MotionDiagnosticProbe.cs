@@ -15,7 +15,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
     readonly Dictionary<Bomb, SeenBomb> bombs = new();
     readonly List<Bomb> expiredBombs = new();
     readonly Dictionary<Bomb, (double at, Vector2 direction)> kickContacts = new();
-    double nextTickApply;
+    double nextTickApply, kickDiagnosticUntil, nextQueueEvent;
     MovementController movement;
     NetworkPlayerInput networkInput;
     NetworkTransformReliable positionSync;
@@ -198,6 +198,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         if (!GameplayLatencyDiagnostics.Enabled || !movement.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
         if (probe.kickContacts.TryGetValue(bomb, out var previous) && previous.direction == direction) return;
         probe.kickContacts[bomb] = (Time.realtimeSinceStartupAsDouble, direction);
+        probe.kickDiagnosticUntil = Time.realtimeSinceStartupAsDouble + 2;
         var entry = GameplayLatencyDiagnostics.For("kick_client_contact", movement, bomb,
             "candidate at predicted position; not permission to kick");
         entry.kickDistance = distance;
@@ -216,6 +217,28 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
             entry.durationMs = (Time.realtimeSinceStartupAsDouble - contact.at) * 1000;
             probe.kickContacts.Remove(bomb);
         }
+        GameplayLatencyDiagnostics.Write(entry);
+    }
+
+    public static void Reconciliation(GameObject player, Vector2 before, uint acknowledgedTick, bool replayed)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled || !player.TryGetComponent<MotionDiagnosticProbe>(out var probe) ||
+            Time.realtimeSinceStartupAsDouble > probe.kickDiagnosticUntil) return;
+        var entry = GameplayLatencyDiagnostics.For("kick_player_reconcile", probe.movement,
+            detail: replayed ? "after_restore_and_replay" : "authoritative_only");
+        entry.delta = (Vector2)player.transform.position - before;
+        entry.authoritativeTick = acknowledgedTick;
+        GameplayLatencyDiagnostics.Write(entry);
+    }
+
+    public static void QueueEvent(GameObject player, string reason, uint tick)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled || !player.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (now < probe.nextQueueEvent) return;
+        probe.nextQueueEvent = now + 0.25;
+        var entry = GameplayLatencyDiagnostics.For("network_input_queue", probe.movement, detail: reason);
+        entry.authoritativeTick = tick;
         GameplayLatencyDiagnostics.Write(entry);
     }
 
