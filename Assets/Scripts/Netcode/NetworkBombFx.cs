@@ -49,6 +49,8 @@ namespace Assets.Scripts.Netcode
             public KickMotion motion;
             public float elapsed, staleSeconds;
             public double endpointWaitAt = -1;
+            public Vector2 presented, correction;
+            public bool predictedContinuation;
         }
 
         readonly Dictionary<Bomb, KickPlayback> kickPlayback = new();
@@ -60,6 +62,31 @@ namespace Assets.Scripts.Netcode
 
         public static Vector2 SampleKickSegment(Vector2 start, Vector2 end, float duration, float elapsed) =>
             duration <= 0 ? end : Vector2.Lerp(start, end, Mathf.Clamp01(elapsed / duration));
+
+        // At most one tile beyond the last confirmation and 150 ms without a new
+        // segment. This bridges message jitter without predicting an entire corridor.
+        public static Vector2 SampleKickContinuation(Vector2 start, Vector2 end, float duration, float elapsed, bool exitClear)
+        {
+            if (!exitClear || duration <= 0) return SampleKickSegment(start, end, duration, elapsed);
+            float extra = Mathf.Min(duration, 0.15f);
+            return Vector2.LerpUnclamped(start, end, Mathf.Clamp(elapsed / duration, 0, 1 + extra / duration));
+        }
+
+        Vector2 SamplePlayback(Bomb movingBomb, KickPlayback playback)
+        {
+            var motion = playback.motion;
+            bool continueLocally = false;
+            if (motion.moving && playback.elapsed > motion.duration && motion.duration > 0)
+            {
+                var step = motion.end - motion.start;
+                continueLocally = movingBomb.CanPredictKickContinuation(motion.end + step, step.magnitude);
+                if (continueLocally && !playback.predictedContinuation && GameplayLatencyDiagnostics.Enabled)
+                    GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("kick_continuation_prediction",
+                        GetComponent<MovementController>(), movingBomb));
+                playback.predictedContinuation |= continueLocally;
+            }
+            return SampleKickContinuation(motion.start, motion.end, motion.duration, playback.elapsed, continueLocally);
+        }
 
         [Server]
         public void ServerEmitKickMotion(Bomb movingBomb, Vector2 start, Vector2 end, float duration, bool moving, bool first)
@@ -92,13 +119,22 @@ namespace Assets.Scripts.Netcode
             if (previous != null && previous.endpointWaitAt >= 0 && GameplayLatencyDiagnostics.Enabled)
             {
                 var wait = GameplayLatencyDiagnostics.For("kick_endpoint_wait", GetComponent<MovementController>(), movingBomb,
-                    "previous approved segment exhausted before next confirmation; durationMs=unpaused hold");
+                    previous.predictedContinuation ? "confirmation_gap_with_local_continuation" : "confirmation_gap_blocked_exit");
                 wait.durationMs = (previous.staleSeconds - previous.endpointWaitAt) * 1000;
                 wait.authoritativeTick = motion.inputTick;
                 GameplayLatencyDiagnostics.Write(wait);
             }
             float age = GamePauseController.IsPaused ? 0 : Mathf.Max(0, (float)(KickServerNow - motion.serverTime));
-            kickPlayback[movingBomb] = new KickPlayback { motion = motion, elapsed = Mathf.Min(age, motion.duration) };
+            var playback = new KickPlayback { motion = motion, elapsed = age };
+            var targetPosition = SamplePlayback(movingBomb, playback);
+            // The NetworkTransform may have written its older timeline this frame.
+            // Reconcile against our last displayed position, not that stale transform.
+            if (previous != null && !motion.first && motion.moving && previous.motion.moving &&
+                Vector2.Dot(motion.end - motion.start, previous.motion.end - previous.motion.start) > 0 &&
+                Vector2.Distance(previous.presented, targetPosition) < 0.75f * (motion.end - motion.start).magnitude)
+                playback.correction = previous.presented - targetPosition;
+            playback.presented = targetPosition + playback.correction;
+            kickPlayback[movingBomb] = playback;
             if (motion.first || !motion.moving)
                 MotionDiagnosticProbe.KickFeedback(gameObject, movingBomb, motion.moving, motion.inputTick, age * 1000);
             if (GameplayLatencyDiagnostics.Enabled)
@@ -113,7 +149,7 @@ namespace Assets.Scripts.Netcode
             }
             // No global physics replay, no StartKick, no audio or gameplay effects.
             // The normal NetworkTransform remains enabled to receive/decode deltas.
-            ApplyKickPosition(movingBomb, SampleKickSegment(motion.start, motion.end, motion.duration, age));
+            ApplyKickPosition(movingBomb, playback.presented);
         }
 
         void LateUpdate()
@@ -138,8 +174,13 @@ namespace Assets.Scripts.Netcode
                 var motion = playback.motion;
                 if (motion.moving && playback.elapsed >= motion.duration && playback.endpointWaitAt < 0)
                     playback.endpointWaitAt = playback.staleSeconds;
-                // The sender already checked the next tile. Never extrapolate beyond it.
-                ApplyKickPosition(movingBomb, SampleKickSegment(motion.start, motion.end, motion.duration, playback.elapsed));
+                // Decay small corrections over a few frames rather than jumping at
+                // every segment boundary. Stops/bounces still apply immediately.
+                if (!GamePauseController.IsPaused)
+                    playback.correction = Vector2.MoveTowards(playback.correction, Vector2.zero,
+                        Time.deltaTime * 0.5f * (motion.end - motion.start).magnitude / Mathf.Max(0.001f, motion.duration));
+                playback.presented = SamplePlayback(movingBomb, playback) + playback.correction;
+                ApplyKickPosition(movingBomb, playback.presented);
                 double transformOffset = 0;
                 if (movingBomb.TryGetComponent<NetworkTransformReliable>(out var sync))
                     transformOffset = NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +
@@ -154,6 +195,16 @@ namespace Assets.Scripts.Netcode
                 }
             }
             foreach (var movingBomb in expiredKicks) kickPlayback.Remove(movingBomb);
+        }
+
+        // Called before local movement/replay queries. Normal NetworkTransform may
+        // have restored the bomb's older buffered position earlier in the frame.
+        public void RestoreClientKickPositions()
+        {
+            if (!NetSync.IsOnline || isServer || !isLocalPlayer || !NetworkClient.active) return;
+            foreach (var pair in kickPlayback)
+                if (pair.Key != null && pair.Key.isActiveAndEnabled && !pair.Key.HasExploded)
+                    ApplyKickPosition(pair.Key, pair.Value.presented);
         }
 
         static void ApplyKickPosition(Bomb movingBomb, Vector2 position)

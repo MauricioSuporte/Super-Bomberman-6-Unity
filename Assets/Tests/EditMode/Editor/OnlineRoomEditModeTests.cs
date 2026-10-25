@@ -457,6 +457,62 @@ public sealed class OnlineRoomEditModeTests
         Assert.AreEqual(end, NetworkBombFx.SampleKickSegment(start, end, 0, elapsed), "Stop messages snap to the server position.");
     }
 
+    [TestCase(0.125f, true, 1.25f)]
+    [TestCase(0.2f, true, 2f)]
+    [TestCase(10f, true, 2f)]
+    [TestCase(0.125f, false, 1f)]
+    public void KickContinuationBridgesJitterButStopsAtOneExtraTile(float elapsed, bool clear, float progress)
+    {
+        var start = new Vector2(3, 4);
+        var end = start + Vector2.right;
+        Assert.AreEqual(progress, NetworkBombFx.SampleKickContinuation(start, end, 0.1f, elapsed, clear).x - start.x, 0.001f);
+        Assert.AreEqual(end, NetworkBombFx.SampleKickContinuation(start, end, 0, elapsed, clear));
+        Assert.AreEqual(1.15f, NetworkBombFx.SampleKickContinuation(Vector2.zero, Vector2.right, 1, 100, true).x, 0.001f,
+            "Long segments still predict no more than 150 ms.");
+    }
+
+    [TestCase("Stage", false)]
+    [TestCase("Water", true)]
+    [TestCase("Bomb", true)]
+    [TestCase("Player", false)]
+    public void KickContinuationStopsAtReplicatedObstacles(string layer, bool trigger)
+    {
+        var root = new GameObject("KickContinuationBomb");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        var obstacle = new GameObject("KickContinuationObstacle");
+        try
+        {
+            var bomb = root.AddComponent<Bomb>();
+            Vector2 target = new Vector2(1000, 1000);
+            obstacle.layer = LayerMask.NameToLayer(layer);
+            obstacle.transform.position = target;
+            var collider = obstacle.AddComponent<BoxCollider2D>();
+            collider.isTrigger = trigger;
+            Physics2D.SyncTransforms();
+            Assert.IsFalse(bomb.CanPredictKickContinuation(target, 1));
+            collider.enabled = false;
+            Physics2D.SyncTransforms();
+            Assert.IsTrue(bomb.CanPredictKickContinuation(target, 1));
+            Assert.IsFalse(bomb.IsBeingKicked, "Presentation queries must not start gameplay simulation.");
+        }
+        finally { Object.DestroyImmediate(obstacle); Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void BatchedInputUsesLatestDirectionWithoutLosingActionEdges()
+    {
+        var first = new NetworkInputFrame { tick = uint.MaxValue, held = 8, pressed = 16 };
+        var second = new NetworkInputFrame { tick = 0, held = 1, pressed = 512 };
+        var release = new NetworkInputFrame { tick = 1, held = 0, pressed = 0 };
+        var result = NetworkPlayerInput.MergeInputFrames(NetworkPlayerInput.MergeInputFrames(first, second), release);
+        Assert.AreEqual(1u, result.tick);
+        Assert.AreEqual(0, result.held, "The newest release takes effect immediately even after a network burst.");
+        Assert.AreEqual(528, result.pressed, "Bomb/stop edges survive merging older movement samples.");
+        Assert.IsTrue(NetworkPlayerInput.RetainHeldInput(0.05));
+        Assert.IsFalse(NetworkPlayerInput.RetainHeldInput(0.2), "An outage must not keep moving the player indefinitely.");
+    }
+
     [TestCase(NetSync.NetMode.Offline, false)]
     [TestCase(NetSync.NetMode.Host, false)]
     [TestCase(NetSync.NetMode.Client, true)]
@@ -618,6 +674,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 19, false)]
     [TestCase("0.5.0", 18, false)]
     [TestCase("0.5.0", 17, false)]
     [TestCase("0.5.0", 14, false)]

@@ -155,3 +155,43 @@ Para predição imediata do kick, o client precisará manter estado especulativo
 bomba e reconciliar/reexecutar junto ao jogador. Só acelerar o visual confirmado
 não remove a espera inicial. Comparar as novas capturas antes de alterar colisões,
 principalmente bomba própria/alheia, RubberBomb, parada com R e explosões.
+
+
+## Kick continuity and input bursts (protocol 20)
+
+Compared client motion-20261025-034120-50fba506.jsonl with server
+motion-20261025-034122-c32c9d2e.jsonl, both c5c5851/protocol 19.
+Six kick confirmations: median 97 ms, maximum 210 ms. The client recorded 46
+endpoint holds (median 47 ms, maximum 88 ms), and 13 of 311 post-replay corrections
+exceeded 0.1 world units (maximum 1 tile). Server input queue samples reached
+151 ms. Server segments arrived mostly every 117 ms, while the sent duration
+was 111 ms; catching up network age at every segment compounded the endpoint holds.
+
+Protocol 20 changes:
+- Server drains each received input batch, using latest held direction and merging
+  action edges; one simulation step per server physics tick remains the speed limit.
+  This trades intermediate movement samples in a burst for current input latency.
+- Empty input gaps retain direction only, for at most 100 ms. Pause clears the grace.
+  No action taps repeat. Predictable movement snapshots require a new acknowledged
+  tick, avoiding replaying pending ticks on top of server-extrapolated duplicate acks.
+- Kick messages report fixed-step-rounded segment duration. Offline kick physics,
+  authoritative tile effects, pickups, damage, fuse and bounce rules are unchanged.
+- A confirmed kick may continue locally at most one additional tile and 150 ms.
+  Read-only collision queries block occupied exits, Stage and Water triggers,
+  destructible and indestructible tiles. Stops, reversals and large differences
+  apply the authoritative state immediately; smaller forward corrections decay.
+- The local motor restores the presented bomb position before current/replayed
+  collision queries, preventing NetworkTransform's older timeline from temporarily
+  becoming the obstacle position. NetworkTransform remains enabled for decoding.
+- kick_continuation_prediction marks speculative continuation. kick_endpoint_wait
+  now labels confirmation gaps with local continuation versus blocked exits.
+
+This is bounded continuation prediction AFTER the first server confirmation.
+The first kick still waits for server validation; this change does not claim zero
+initial kick latency or full historical rollback of every moving world object.
+No scene/prefab changes. Rebuild client, server and supervisor together.
+
+Regression tests cover bounded continuation, stop messages, solid/trigger exits,
+input burst action preservation and held-input timeout. Two-peer manual QA still
+needs kicks against moving players, RubberBomb bounce, R stop, explosions, pause,
+water/holes, stage wrap and repeated rounds under RTT/jitter/loss.

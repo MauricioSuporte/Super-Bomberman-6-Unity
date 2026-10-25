@@ -52,6 +52,10 @@ namespace Assets.Scripts.Netcode
         uint localTick, receivedTick, processedTick;
         int sampledHeld, pendingPressed, serverHeldMask;
         float nextSnapshot;
+        uint lastSnapshotTick;
+        bool sentSnapshot;
+        double lastServerInputAt = double.NegativeInfinity;
+        const double HeldInputGraceSeconds = 0.1;
         bool receivedSnapshot, serverAllowsPrediction;
         public uint CurrentInputTick => isServer ? processedTick : localTick;
         public int PendingInputCount => pending.Count;
@@ -123,28 +127,51 @@ namespace Assets.Scripts.Netcode
                 CmdControls(frame);
                 bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement;
                 movement.SetPredictLocally(predict);
-                if (predict) movement.SimulateNetworkMovementTick(frame.held);
+                if (predict)
+                {
+                    GetComponent<NetworkBombFx>()?.RestoreClientKickPositions();
+                    movement.SimulateNetworkMovementTick(frame.held);
+                }
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
             int held = 0, pressed = 0;
             bool consumedInput = false;
-            if (Blocked) { serverInputs.Clear(); processedTick = receivedTick; }
+            if (Blocked) { serverInputs.Clear(); processedTick = receivedTick; lastServerInputAt = double.NegativeInfinity; }
             else if (serverInputs.Count > 0)
             {
                 consumedInput = true;
+                // A packet can contain several sampled ticks. Apply the freshest held
+                // state once per physics step; preserve every action edge in the batch.
                 var queued = serverInputs.Dequeue();
-                var frame = queued.frame;
+                var latest = queued.frame;
+                while (serverInputs.Count > 0)
+                {
+                    queued = serverInputs.Dequeue();
+                    latest = MergeInputFrames(latest, queued.frame);
+                }
+                lastServerInputAt = Time.realtimeSinceStartupAsDouble;
+                var frame = latest;
                 processedTick = frame.tick; held = frame.held; pressed = frame.pressed;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
             }
             if (!Blocked && !consumedInput && serverHeldMask != 0)
-                MotionDiagnosticProbe.QueueEvent(gameObject, "empty_queue_released_previous_held_input", processedTick);
+            {
+                bool retainHeld = RetainHeldInput(Time.realtimeSinceStartupAsDouble - lastServerInputAt);
+                if (retainHeld) held = serverHeldMask & 15;
+                MotionDiagnosticProbe.QueueEvent(gameObject, retainHeld ? "empty_queue_retained_direction" :
+                    "empty_queue_input_timeout", processedTick);
+            }
             serverHeldMask = held;
             ApplyServerControls(PlayerInputManager.Instance, held, pressed);
-            // One input step per server physics tick: clients cannot select dt or speed.
+            // One simulation per server physics tick, regardless of packet count.
             movement.SimulateNetworkMovementTick(held);
         }
+
+        public static bool RetainHeldInput(double ageSeconds) => ageSeconds >= 0 && ageSeconds <= HeldInputGraceSeconds;
+
+        public static NetworkInputFrame MergeInputFrames(NetworkInputFrame older, NetworkInputFrame newer) =>
+            new() { tick = newer.tick, held = newer.held, pressed = older.pressed | newer.pressed };
 
         void ApplyServerControls(PlayerInputManager input, int held, int pressed)
         {
@@ -171,6 +198,7 @@ namespace Assets.Scripts.Netcode
             if (serverInputs.Count == MaxQueuedTicks)
             {
                 var dropped = serverInputs.Dequeue();
+                frame.pressed |= dropped.frame.pressed;
                 MotionDiagnosticProbe.QueueEvent(gameObject, "queue_full_dropped_oldest_tick", dropped.frame.tick);
             }
             serverInputs.Enqueue((frame, Time.realtimeSinceStartupAsDouble));
@@ -184,6 +212,12 @@ namespace Assets.Scripts.Netcode
             // LateUpdate captures the result AFTER the physics step, never an unexecuted MovePosition.
             var state = movement.CaptureNetworkMovementState();
             state.canPredict &= !Blocked;
+            // Held-direction grace is server extrapolation. Do not pair a newer
+            // extrapolated position with an unchanged acknowledgement: the client
+            // would replay the same pending ticks on top of it a second time.
+            if (state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
+            sentSnapshot = true;
+            lastSnapshotTick = processedTick;
             TargetReconcile(connectionToClient, processedTick, state);
         }
 
@@ -195,6 +229,7 @@ namespace Assets.Scripts.Netcode
             receivedSnapshot = true;
             serverAllowsPrediction = state.canPredict;
             pending.DiscardThrough(acknowledgedTick);
+            GetComponent<NetworkBombFx>()?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
@@ -210,6 +245,8 @@ namespace Assets.Scripts.Netcode
         public override void OnStopServer()
         {
             serverInputs.Clear();
+            lastServerInputAt = double.NegativeInfinity;
+            sentSnapshot = false;
             if (setup != null) PlayerInputManager.Instance?.ClearSyntheticPlayer(setup.PlayerId);
             if (movement != null) movement.SetNetworkTickDriven(false);
             base.OnStopServer();

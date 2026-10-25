@@ -591,6 +591,27 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         item.TryExpelItem(direction, tileSize, ignoredCollider, 3);
     }
 
+    readonly Collider2D[] kickPredictionHits = new Collider2D[32];
+
+    // Presentation only: never starts a kick, changes the fuse, destroys pickups,
+    // invokes tile effects or applies damage. Unknown/occupied exits stop prediction.
+    public bool CanPredictKickContinuation(Vector2 target, float tileSize)
+    {
+        if (HasExploded || IsBeingHeldByPowerGlove || tileSize <= 0 || HasIndestructibleAt(target)) return false;
+        var destructibles = GameManager.Instance != null ? GameManager.Instance.destructibleTilemap : null;
+        if (destructibles != null && destructibles.HasTile(destructibles.WorldToCell(target))) return false;
+        var filter = new ContactFilter2D { useTriggers = true };
+        filter.SetLayerMask(LayerMask.GetMask("Stage", "Water", "Player", "Enemy", "Bomb", "Louie"));
+        int count = Physics2D.OverlapBox(target, Vector2.one * (tileSize * 0.6f), 0, filter, kickPredictionHits);
+        if (count == kickPredictionHits.Length) return false;
+        for (int i = 0; i < count; i++)
+        {
+            var hit = kickPredictionHits[i];
+            if (hit != null && hit.transform != transform && !hit.transform.IsChildOf(transform)) return false;
+        }
+        return true;
+    }
+
     private bool IsKickBlocked(Vector2 target)
     {
         Vector2 size = Vector2.one * (kickTileSize * 0.6f);
@@ -1610,7 +1631,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
             if (networkKickPresenter != null)
-                networkKickPresenter.ServerEmitKickMotion(this, start, next, travelTime, true, networkKickFirstSegment);
+                networkKickPresenter.ServerEmitKickMotion(this, start, next,
+                    Mathf.Ceil(travelTime / Time.fixedDeltaTime) * Time.fixedDeltaTime, true, networkKickFirstSegment);
             networkKickFirstSegment = false;
             StartKickPushedSkullSegment(start);
 
