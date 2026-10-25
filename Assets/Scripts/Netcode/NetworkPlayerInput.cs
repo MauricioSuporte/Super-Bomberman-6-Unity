@@ -45,7 +45,7 @@ namespace Assets.Scripts.Netcode
         };
         const int ValidMask = (1 << 10) - 1;
         const int MaxQueuedTicks = 8;
-        readonly Queue<NetworkInputFrame> serverInputs = new(MaxQueuedTicks);
+        readonly Queue<(NetworkInputFrame frame, double receivedAt)> serverInputs = new(MaxQueuedTicks);
         readonly NetworkInputHistory pending = new();
         NetworkPlayerSetup setup;
         MovementController movement;
@@ -53,6 +53,9 @@ namespace Assets.Scripts.Netcode
         int sampledHeld, pendingPressed, serverHeldMask;
         float nextSnapshot;
         bool receivedSnapshot, serverAllowsPrediction;
+        public uint CurrentInputTick => isServer ? processedTick : localTick;
+        public int PendingInputCount => pending.Count;
+        public int QueuedInputCount => serverInputs.Count;
 
         static bool Blocked => GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
             (BombermanNetworkManager.IsCoopStage && StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) ||
@@ -127,8 +130,11 @@ namespace Assets.Scripts.Netcode
             if (Blocked) { serverInputs.Clear(); processedTick = receivedTick; }
             else if (serverInputs.Count > 0)
             {
-                var frame = serverInputs.Dequeue();
+                var queued = serverInputs.Dequeue();
+                var frame = queued.frame;
                 processedTick = frame.tick; held = frame.held; pressed = frame.pressed;
+                MotionDiagnosticProbe.TickApplied(gameObject,
+                    (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
             }
             serverHeldMask = held;
             ApplyServerControls(PlayerInputManager.Instance, held, pressed);
@@ -159,7 +165,7 @@ namespace Assets.Scripts.Netcode
             // Bound queued time as well as memory after a network stall. Dropped ticks
             // are acknowledged only with the state of a later actually simulated tick.
             if (serverInputs.Count == MaxQueuedTicks) serverInputs.Dequeue();
-            serverInputs.Enqueue(frame);
+            serverInputs.Enqueue((frame, Time.realtimeSinceStartupAsDouble));
         }
 
         void LateUpdate()
@@ -188,7 +194,7 @@ namespace Assets.Scripts.Netcode
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
             if (!predict) return;
-            for (int i = 0; i < pending.Count; i++) movement.SimulateNetworkMovementTick(pending[i].held);
+            for (int i = 0; i < pending.Count; i++) movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
         }
 
         public override void OnStopServer()

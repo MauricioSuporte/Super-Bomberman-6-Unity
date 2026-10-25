@@ -108,6 +108,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private IIndestructibleKickedBombHandler[] kickIndestructibleHandlers;
 
     private Coroutine kickRoutine;
+    private Assets.Scripts.Netcode.NetworkBombFx networkKickPresenter;
+    private bool networkKickFirstSegment;
     private Coroutine punchRoutine;
 
     private Vector2 currentTileCenter;
@@ -210,6 +212,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void OnDisable()
     {
+        EndNetworkKickPresentation(transform.position);
         ActiveBombs.Remove(this);
     }
 
@@ -337,6 +340,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public void StopKickPunchMagnetRoutines()
     {
+        EndNetworkKickPresentation(rb != null ? rb.position : (Vector2)transform.position);
         if (kickRoutine != null) TraceKickDiagnostic("kick_cancelled", "external_stop", kickDirection);
         SuspendSearchPursuit();
         if (kickRoutine != null)
@@ -1307,7 +1311,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public float SearchMovementSpeed => Mathf.Max(0.0001f, magnetPullSpeed);
 
-    public Vector2 GetLogicalPosition() => lastPos;
+    public Vector2 GetLogicalPosition() => Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally
+        ? lastPos : (Vector2)transform.position;
 
     public void MarkMovedByKickOrPunch()
     {
@@ -1408,7 +1413,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         LayerMask blockMoveMask,
         float overlapBoxSize,
         float originBlockerSize,
-        bool originBlockerUseTrigger)
+        bool originBlockerUseTrigger,
+        Assets.Scripts.Netcode.NetworkBombFx kickPresenter = null)
     {
 
         if ((!CanBeKicked && !CanBeKickedEarly) || direction == Vector2.zero)
@@ -1466,9 +1472,20 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         diagnosticKickBeganAt = Time.realtimeSinceStartupAsDouble;
         TraceKickDiagnostic("kick_accepted", "speed=" + kickSpeed, direction);
+        networkKickPresenter = Assets.Scripts.Netcode.NetSync.IsServer && kickPresenter != null &&
+            kickPresenter.isServer && kickPresenter.netId != 0 ? kickPresenter : null;
+        networkKickFirstSegment = true;
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
         return true;
+    }
+
+    void EndNetworkKickPresentation(Vector2 position)
+    {
+        if (networkKickPresenter == null) return;
+        if (Assets.Scripts.Netcode.NetSync.IsServer)
+            networkKickPresenter.ServerEmitKickMotion(this, position, position, 0, false, false);
+        networkKickPresenter = null;
     }
 
     void TraceKickDiagnostic(string kind, string reason, Vector2 direction)
@@ -1592,6 +1609,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
+            if (networkKickPresenter != null)
+                networkKickPresenter.ServerEmitKickMotion(this, start, next, travelTime, true, networkKickFirstSegment);
+            networkKickFirstSegment = false;
             StartKickPushedSkullSegment(start);
 
             bool cancelAndReturn = false;
@@ -1699,6 +1719,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         lastPos = currentTileCenter;
         FinishKickPushedSkull(currentTileCenter);
 
+        EndNetworkKickPresentation(currentTileCenter);
         TraceKickDiagnostic("kick_stopped", "routine_end", kickDirection);
         isKicked = false;
         kickRoutine = null;
@@ -1745,6 +1766,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         transform.position = snapped;
+        EndNetworkKickPresentation(snapped);
         FinishKickPushedSkull(snapped);
 
         if (anim != null)

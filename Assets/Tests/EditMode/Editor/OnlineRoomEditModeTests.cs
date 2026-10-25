@@ -444,6 +444,63 @@ public sealed class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(instance); }
     }
 
+    [TestCase(-0.1f, 0f)]
+    [TestCase(0.025f, 0.25f)]
+    [TestCase(0.1f, 1f)]
+    [TestCase(5f, 1f)]
+    public void KickPresentationNeverLeavesTheServerApprovedSegment(float elapsed, float expectedProgress)
+    {
+        var start = new Vector2(3, 4);
+        var end = new Vector2(4, 4);
+        Assert.AreEqual(start + Vector2.right * expectedProgress,
+            NetworkBombFx.SampleKickSegment(start, end, 0.1f, elapsed));
+        Assert.AreEqual(end, NetworkBombFx.SampleKickSegment(start, end, 0, elapsed), "Stop messages snap to the server position.");
+    }
+
+    [TestCase(NetSync.NetMode.Offline, false)]
+    [TestCase(NetSync.NetMode.Host, false)]
+    [TestCase(NetSync.NetMode.Client, true)]
+    public void KickLogicalPositionUsesTheReplicaOnlyOnPureClients(NetSync.NetMode mode, bool replica)
+    {
+        var previous = NetSync.Mode;
+        var root = new GameObject("KickLogicalPositionRegression");
+        root.SetActive(false);
+        root.AddComponent<CircleCollider2D>();
+        try
+        {
+            var bomb = root.AddComponent<Bomb>();
+            var field = typeof(Bomb).GetField("lastPos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var authoritative = new Vector2(1, 2);
+            var received = new Vector2(5, 7);
+            field.SetValue(bomb, authoritative);
+            root.transform.position = received;
+            NetSync.Mode = mode;
+            Assert.AreEqual(replica ? received : authoritative, bomb.GetLogicalPosition());
+            Assert.AreEqual(authoritative, field.GetValue(bomb), "Reading a replica must not alter simulation state.");
+        }
+        finally { NetSync.Mode = previous; Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void KickMotionWireRoundTripPreservesSegmentAndAuthoritativeTick()
+    {
+        var motion = new NetworkBombFx.KickMotion { bombId = 123, inputTick = 49,
+            start = Vector2.one, end = Vector2.one + Vector2.left, duration = 0.1f,
+            serverTime = 456.75, moving = true, first = true };
+        using var writer = NetworkWriterPool.Get();
+        writer.Write(motion);
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+        var result = reader.Read<NetworkBombFx.KickMotion>();
+        Assert.AreEqual(motion.bombId, result.bombId);
+        Assert.AreEqual(motion.inputTick, result.inputTick);
+        Assert.AreEqual(motion.start, result.start);
+        Assert.AreEqual(motion.end, result.end);
+        Assert.AreEqual(motion.duration, result.duration);
+        Assert.AreEqual(motion.serverTime, result.serverTime);
+        Assert.IsTrue(result.moving);
+        Assert.IsTrue(result.first);
+    }
+
     [Test]
     public void PredictionHistoryAcknowledgesInputsAcrossSequenceRollover()
     {
@@ -561,6 +618,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 18, false)]
     [TestCase("0.5.0", 17, false)]
     [TestCase("0.5.0", 14, false)]
     [TestCase("0.5.0", 13, false)]

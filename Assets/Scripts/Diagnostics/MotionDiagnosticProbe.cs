@@ -10,10 +10,12 @@ using UnityEngine;
 public sealed class MotionDiagnosticProbe : MonoBehaviour
 {
     static readonly PlayerAction[] Actions = { PlayerAction.MoveUp, PlayerAction.MoveDown, PlayerAction.MoveLeft,
-        PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionB, PlayerAction.ActionC, PlayerAction.Select, PlayerAction.ActionR };
+        PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionB, PlayerAction.ActionC, PlayerAction.Select, PlayerAction.ActionL, PlayerAction.ActionR };
     struct SeenBomb { public Vector2 position; public double contactAt; public bool responded; }
     readonly Dictionary<Bomb, SeenBomb> bombs = new();
     readonly List<Bomb> expiredBombs = new();
+    readonly Dictionary<Bomb, (double at, Vector2 direction)> kickContacts = new();
+    double nextTickApply;
     MovementController movement;
     NetworkPlayerInput networkInput;
     NetworkTransformReliable positionSync;
@@ -37,7 +39,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
             sampling = true;
             previousPosition = transform.position;
             lastLocalHeld = lastNetworkHeld = lastAppliedHeld = -1;
-            receivedAt = -1; pending = false; bombs.Clear();
+            receivedAt = -1; pending = false; bombs.Clear(); kickContacts.Clear();
             GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("actor_start", movement));
         }
         bool local = NetSync.IsOnline ? networkInput != null && networkInput.isLocalPlayer :
@@ -152,7 +154,11 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         expiredBombs.Clear();
         foreach (var pair in bombs)
             if (pair.Key == null || Vector2.Distance(transform.position, pair.Key.transform.position) > 2.5f) expiredBombs.Add(pair.Key);
-        foreach (var bomb in expiredBombs) bombs.Remove(bomb);
+        foreach (var bomb in expiredBombs) { bombs.Remove(bomb); kickContacts.Remove(bomb); }
+        expiredBombs.Clear();
+        foreach (var pair in kickContacts)
+            if (pair.Key == null || now - pair.Value.at > 5) expiredBombs.Add(pair.Key);
+        foreach (var bomb in expiredBombs) kickContacts.Remove(bomb);
     }
 
     public static void NetworkInput(GameObject player, string kind, int held, int pressed = 0, bool blocked = false)
@@ -172,6 +178,44 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         probe.nextNetworkLog = now + 1;
         var entry = GameplayLatencyDiagnostics.For(kind, probe.movement, detail: "blocked=" + blocked);
         entry.held = held; entry.pressed = pressed;
+        GameplayLatencyDiagnostics.Write(entry);
+    }
+
+    public static void TickApplied(GameObject player, double queueMs)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled || !player.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (now < probe.nextTickApply) return;
+        probe.nextTickApply = now + 0.1;
+        var entry = GameplayLatencyDiagnostics.For("network_tick_apply", probe.movement,
+            detail: "durationMs=server_queue_wait; excludes network transit");
+        entry.durationMs = queueMs;
+        GameplayLatencyDiagnostics.Write(entry);
+    }
+
+    public static void KickContact(MovementController movement, Bomb bomb, Vector2 direction, float distance)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled || !movement.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
+        if (probe.kickContacts.TryGetValue(bomb, out var previous) && previous.direction == direction) return;
+        probe.kickContacts[bomb] = (Time.realtimeSinceStartupAsDouble, direction);
+        var entry = GameplayLatencyDiagnostics.For("kick_client_contact", movement, bomb,
+            "candidate at predicted position; not permission to kick");
+        entry.kickDistance = distance;
+        GameplayLatencyDiagnostics.Write(entry);
+    }
+
+    public static void KickFeedback(GameObject player, Bomb bomb, bool moving, uint authoritativeTick, double ageMs)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled || !player.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
+        var entry = GameplayLatencyDiagnostics.For(moving ? "kick_segment_receive" : "kick_stop_receive", probe.movement, bomb);
+        entry.authoritativeTick = authoritativeTick;
+        entry.messageAgeMs = ageMs;
+        entry.accepted = true;
+        if (moving && probe.kickContacts.TryGetValue(bomb, out var contact))
+        {
+            entry.durationMs = (Time.realtimeSinceStartupAsDouble - contact.at) * 1000;
+            probe.kickContacts.Remove(bomb);
+        }
         GameplayLatencyDiagnostics.Write(entry);
     }
 

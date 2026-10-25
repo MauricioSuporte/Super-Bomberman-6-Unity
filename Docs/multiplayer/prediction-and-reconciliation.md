@@ -41,7 +41,9 @@ comandos pendentes no servidor são descartados durante esses bloqueios.
 
 Esta implementação faz rollback **do movimento do dono**, não do mundo inteiro.
 Bombas, explosões, itens, dano, RNG, inimigos, vitória e alterações de tiles
-continuam autoritativos. Colocar/chutar/arremessar bombas ainda espera a rede.
+continuam autoritativos. Colocar/chutar/arremessar bombas ainda depende da autoridade do servidor.
+O chute já confirmado tem apresentação imediata no client de quem chutou,
+conforme o complemento abaixo; ainda não há predição especulativa do chute.
 A reconciliação consulta o mundo atualmente conhecido pelo cliente; não guarda
 histórico de tiles, bombas ou outros jogadores. Divergências podem gerar correções
 visíveis de posição, especialmente perto de obstáculos dinâmicos.
@@ -82,3 +84,50 @@ incluiu setup/teardown do Test Runner. O Test Runner foi cancelado ao solicitar
 salvamento da TitleScreen, que já estava modificada; a cena aberta foi preservada.
 Não foram executadas partidas entre dois peers, testes com latência/perda, nem
 validação visual das montarias/arenas. Essas validações continuam pendentes.
+
+
+## BombKick: resposta após confirmação e diagnóstico (protocolo 19)
+
+A caminhada é prevista, mas BombKickAbility continua sendo validada no servidor.
+Antes, além da ida/volta do input, o jogador esperava o buffer/timelineOffset do
+NetworkTransform da bomba. A posição lógica do client também continuava lendo
+lastPos, que só a simulação do servidor atualiza, mesmo depois de o transform
+replicado já ter avançado. Agora o client lê a posição replicada; offline/servidor
+continuam lendo lastPos.
+
+O servidor envia ao client de quem chutou cada segmento já aprovado (origem,
+destino de uma célula, duração, tempo e tick). NetworkBombFx apresenta esse trecho
+sem aguardar o buffer global. Usa o relógio estimado do servidor para recuperar a
+parte do trecho transcorrida durante a rede e limita a posição ao destino aprovado.
+Não chama StartKick no client, não decide colisão/dano, não repete sons e não
+extrapola o restante do corredor. Observadores e host mantêm a apresentação anterior.
+O relógio estimado é predictedTime menos meia RTT; não é medição exata de trânsito.
+
+NetworkTransform continua ativo, inclusive a descompressão dos snapshots. O
+presenter escreve depois da interpolação normal. No fim, mantém a posição confirmada
+até a timeline atrasada alcançar a parada e devolve a apresentação ao transform;
+se faltar um segmento por um segundo de gameplay, retorna à replicação normal.
+Durante pausa, o trecho fica congelado. A bomba destruída ou o player desativado
+liberam o estado. Chutes recusados continuam usando a posição autoritativa anterior.
+
+Os logs existentes em Diagnostics/Movement agora incluem:
+
+- kick_client_contact: candidato observado no tick predito atual; replay não gera outro contato.
+- network_tick_apply: duração em fila no servidor, inputTick e queuedInputs.
+- kick_result/kick_accepted/kick_rejected: decisão autoritativa e bloqueios.
+- kick_segment_send/kick_segment_receive: confirmação enviada/recebida;
+  durationMs no client mede contato local até feedback, authoritativeTick permite
+  correlacionar com o servidor e messageAgeMs é a idade estimada da mensagem.
+- kick_stop_send/kick_stop_receive e kick_transform_handoff: término e devolução
+  ao NetworkTransform. Entrada de controles: L=256 e R=512.
+
+Na captura local do protocolo 18 examinada, a RTT mediana era aproximadamente
+73 ms e o buffer de interpolação 40 ms. Seis deslocamentos de bombas observados
+após input próximo tiveram mediana de 120 ms; esse evento antigo não era um ack
+exato de chute. Os novos eventos separam candidato, processamento e confirmação.
+
+Cliente, servidor e supervisor precisam ser recompilados juntos no protocolo 19.
+Validar com dois peers e latência: chute de bomba própria/alheia, corredor bloqueado,
+parada com R, RubberBomb, movimento seguido de chute, pausa, explosão durante o
+chute e troca de rodada. A apresentação rápida remove o buffer adicional, mas
+não elimina o tempo que a rede e a validação do servidor exigem.

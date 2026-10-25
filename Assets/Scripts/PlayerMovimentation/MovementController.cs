@@ -226,6 +226,7 @@ public class MovementController : MonoBehaviour, IKillable
     private bool networkTickDriven;
     public bool NetworkTickDriven => networkTickDriven;
     private bool insideNetworkTick;
+    private bool replayingNetworkTick;
     private int networkHeldMask;
     private float predictedWorldSpeed;
 
@@ -290,17 +291,18 @@ public class MovementController : MonoBehaviour, IKillable
         transform.position = new Vector3(position.x, position.y, transform.position.z);
     }
 
-    public void SimulateNetworkMovementTick(int heldMask)
+    public void SimulateNetworkMovementTick(int heldMask, bool replay = false)
     {
         if (Rigidbody == null || !isActiveAndEnabled) return;
         networkHeldMask = heldMask;
+        replayingNetworkTick = replay;
         insideNetworkTick = true;
         try
         {
             Update();
             FixedUpdate();
         }
-        finally { insideNetworkTick = false; }
+        finally { insideNetworkTick = false; replayingNetworkTick = false; }
     }
 
     protected Vector2 facingDirection = Vector2.down;
@@ -5398,7 +5400,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
     {
-        if (predictLocally) return false;
+        // Diagnostics inspect the real current tick only; rollback must never
+        // issue kicks, mutate ability state, or report a second contact.
+        if (predictLocally && (replayingNetworkTick || !GameplayLatencyDiagnostics.Enabled)) return false;
         if (moveDir == Vector2.zero)
         {
             LogBombEscape($"[KickAdj] skip moveDir zero pos:{position}", verbose: true);
@@ -5420,7 +5424,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         for (int i = 0; i < movementAbilities.Length; i++)
         {
-            if (movementAbilities[i] is BombKickAbility kickAbility && kickAbility.IsEnabled)
+            if (!predictLocally && movementAbilities[i] is BombKickAbility kickAbility && kickAbility.IsEnabled)
                 kickAbility.NotifyOwnerDirectionChanged(dir);
         }
 
@@ -5522,6 +5526,13 @@ public class MovementController : MonoBehaviour, IKillable
                     $"perpendicularOffset:{perpendicularOffset:F3}",
                     verbose: true);
 
+                if (predictLocally)
+                {
+                    if (ability is BombKickAbility && playerToBombDist <= tileSize * 1.1f &&
+                        signedAxisOffset < 0 && perpendicularOffset <= tileSize * 0.25f)
+                        MotionDiagnosticProbe.KickContact(this, bomb, dir, playerToBombDist);
+                    continue;
+                }
                 bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);
 
                 LogBombEscape(

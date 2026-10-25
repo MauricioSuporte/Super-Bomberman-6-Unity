@@ -32,13 +32,6 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();
     private Vector2 _lastOwnerDirection = Vector2.zero;
 
-    // Rede: debounce do chute no cliente. O cliente re-detecta a bomba a cada frame
-    // enquanto empurra, mas não sabe que ela já está sendo chutada (IsBeingKicked é
-    // host-only, não replicado). Uma bomba chutada desliza sozinha até a parede
-    // (host), então basta 1 pedido por contato — sem isto o Command e o SOM spamam.
-    private readonly Dictionary<Bomb, float> _netKickCooldownUntil = new();
-    private const float NetKickResendCooldown = 0.6f;
-
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -308,30 +301,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 verbose: true);
         }
 
-        // Rede (client-auth): a bomba é networkada e host-autoritativa. No
-        // cliente-dono o movimento (e portanto ESTA detecção) roda localmente, mas
-        // o host NÃO simula o movimento do cliente → sem isto o host nunca detecta
-        // o chute e a bomba não desliza. Então pedimos ao host pra executar o
-        // StartKick de verdade; o deslize replica pela NetworkTransform da bomba.
-        // Tocamos o SFX/centralização localmente pro dono ter feedback imediato.
-        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.NetSync.IsServer)
-        {
-            // Debounce: não re-pedir/re-tocar o chute a cada frame enquanto empurra.
-            if (_netKickCooldownUntil.TryGetValue(bomb, out float until) && Time.time < until)
-                return true;
-
-            var npi = GetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>();
-            if (npi == null || !npi.TryClientKickBomb(bomb, direction, tileSize, obstacleMask))
-                return false;
-
-            _netKickCooldownUntil[bomb] = Time.time + NetKickResendCooldown;
-            kickedByMe.Add(bomb);
-            _bombPlantDirection.Remove(bomb);
-            _bombEarlyKickUnlocked.Remove(bomb);
-            movement?.CancelBombReentryCentering();
-            PlayKick_InterruptPrevious(cachedKickClip, 1f);
-            return true;
-        }
+        // Contact replay may inspect bombs, but only the server/offline path
+        // can start the actual kick. Confirmed segments are sent to the kicker.
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
 
@@ -350,7 +322,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
             0.60f,
             0.90f,
-            false
+            false,
+            GetComponent<Assets.Scripts.Netcode.NetworkBombFx>()
         );
 
         MotionDiagnosticProbe.KickResult(movement, bomb, kicked, playerToBombDist, signedAxisOffset, perpendicularOffset);

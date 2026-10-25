@@ -19,7 +19,9 @@ public static class GameplayLatencyDiagnostics
     {
         public string kind, detail, utc, scene, role, version, build, device;
         public int frame, player, entity, held, pressed, dropped, sentCommands, receivedCommands, protocol, bombEntity;
-        public uint netId, bombNetId;
+        public uint netId, bombNetId, inputTick, authoritativeTick;
+        public int pendingInputs, queuedInputs;
+        public double messageAgeMs;
         public Vector2 position, delta, direction, bombPosition;
         public bool accepted, localPlayer, physicsAuthority;
         public double realtime, timeline, rttMs, rttJitterMs, bufferMs, durationMs = -1;
@@ -72,9 +74,13 @@ public static class GameplayLatencyDiagnostics
     {
         var target = movement != null ? movement.gameObject : bomb != null ? bomb.gameObject : null;
         uint id = target != null && target.TryGetComponent<NetworkIdentity>(out var identity) ? identity.netId : 0;
+        var input = movement != null ? movement.GetComponent<NetworkPlayerInput>() : null;
         return new Entry
         {
             kind = kind, detail = detail, player = movement != null ? movement.PlayerId : 0,
+            inputTick = input != null ? input.CurrentInputTick : 0,
+            pendingInputs = input != null ? input.PendingInputCount : 0,
+            queuedInputs = input != null ? input.QueuedInputCount : 0,
             entity = target != null ? target.GetEntityId().GetHashCode() : 0, netId = id,
             position = target != null ? (Vector2)target.transform.position : Vector2.zero,
             direction = movement != null ? movement.Direction : Vector2.zero,
@@ -103,7 +109,7 @@ public static class GameplayLatencyDiagnostics
                 bytes = 0; started = now; flushAt = now + 1;
                 writer.WriteLine(JsonUtility.ToJson(new Entry { kind = "capture_start", utc = DateTime.UtcNow.ToString("O"),
                     version = Application.version, build = OnlineVersionAuthenticator.BuildIdentity, protocol = OnlineVersionAuthenticator.ProtocolVersion,
-                    detail = "Local elapsed durations are exact to the rendered frame; timeline is interpolated, not a shared wall clock. Input bits: Up=1 Down=2 Left=4 Right=8 A=16 B=32 C=64 Select=128 R=256.",
+                    detail = "Local elapsed durations are exact to the rendered frame; timeline is interpolated, not a shared wall clock. Input bits: Up=1 Down=2 Left=4 Right=8 A=16 B=32 C=64 Select=128 L=256 R=512. Contact-to-feedback durations use one local clock; authoritativeTick correlates kick feedback with the server input tick.",
                     device = Application.platform.ToString() }));
                 Debug.Log("[GameplayLatency] Capture: " + CurrentFile);
             }
