@@ -121,7 +121,7 @@ namespace Assets.Scripts.Netcode
                 passwordRoot.SetActive(false);
             }
             nameButton.gameObject.SetActive(idle && !incompatible);
-            updateButton.gameObject.SetActive(idle && incompatible);
+            updateButton.gameObject.SetActive(idle && incompatible && !Application.isEditor);
             updateButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.RunUpdater;
             roomScroll.gameObject.SetActive(!incompatible);
             nameButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.EditName;

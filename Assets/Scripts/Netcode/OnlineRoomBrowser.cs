@@ -61,7 +61,7 @@ namespace Assets.Scripts.Netcode
                 NetworkManager.singleton.StartClient(server);
                 return;
             }
-            if (!VersionBlocked) StartCoroutine(RefreshLoop());
+            if (Application.isEditor || !VersionBlocked) StartCoroutine(RefreshLoop());
         }
 
         bool Browsing => SceneManager.GetActiveScene().name == NetworkLobby.SceneName &&
@@ -70,7 +70,7 @@ namespace Assets.Scripts.Netcode
         IEnumerator RefreshLoop()
         {
             float next = 0;
-            while (!VersionBlocked)
+            while (Application.isEditor || !VersionBlocked)
             {
                 if (DirectoryConfigured && Browsing && !Creating && (RefreshRequested || Time.unscaledTime >= next))
                 {
@@ -79,7 +79,7 @@ namespace Assets.Scripts.Netcode
                     using var health = UnityWebRequest.Get(directoryUrl + "/health");
                     health.timeout = 5;
                     yield return health.SendWebRequest();
-                    if (VersionBlocked) break;
+                    if (VersionBlocked && !Application.isEditor) break;
                     OnlineDirectoryHealth version = null;
                     if (health.result == UnityWebRequest.Result.Success)
                     {
@@ -87,7 +87,13 @@ namespace Assets.Scripts.Netcode
                         catch (ArgumentException) { }
                     }
                     ApplyDirectoryHealth(version);
-                    if (VersionBlocked) break;
+                    if (VersionBlocked)
+                    {
+                        Rooms.Clear();
+                        if (!Application.isEditor) break;
+                        yield return new WaitForSecondsRealtime(0.5f);
+                        continue;
+                    }
                     if (!CompatibilityChecked)
                     {
                         DirectoryFailed = true;
@@ -121,9 +127,26 @@ namespace Assets.Scripts.Netcode
         {
             CompatibilityChecked = version != null && version.ok;
             if (!CompatibilityChecked) return;
+            #if UNITY_EDITOR
+            // Debug uses the deployed identity only after checking the wire protocol.
+            // Release players keep exact identity matching and the updater workflow.
+            bool compatible = version.protocol == OnlineVersionAuthenticator.ProtocolVersion &&
+                !string.IsNullOrEmpty(version.buildIdentity) && version.buildIdentity.Length <= 64;
+            BuildRejected = !compatible;
+            if (compatible)
+            {
+                if (OnlineVersionAuthenticator.ConnectionBuildIdentity != version.buildIdentity)
+                    Debug.LogWarning("[Online Editor] Debugging local build " + OnlineVersionAuthenticator.BuildIdentity +
+                        " against deployed build " + version.buildIdentity + "; protocol=" + version.protocol +
+                        ". Local gameplay changes still require compatible server logic.");
+                OnlineVersionAuthenticator.SetEditorServerBuildIdentity(version.buildIdentity);
+            }
+            return;
+#else
             // A rejection stays latched for this client session, including lobby returns.
             BuildRejected |= version.protocol != OnlineVersionAuthenticator.ProtocolVersion ||
                 !string.Equals(version.buildIdentity, OnlineVersionAuthenticator.BuildIdentity, StringComparison.Ordinal);
+#endif
         }
 
         static bool Valid(OnlineListedRoom room) => room != null && !string.IsNullOrEmpty(room.id) &&
@@ -148,7 +171,7 @@ namespace Assets.Scripts.Netcode
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
                 JsonUtility.ToJson(new OnlineRoomAllocation { protocol = OnlineVersionAuthenticator.ProtocolVersion,
                     mode = mode.ToString(), name = roomName, creator = OnlineVersionAuthenticator.PlayerName,
-                    maxPlayers = maxPlayers == 0 ? OnlineRoomRules.Capacity(mode) : Mathf.Clamp(maxPlayers, 2, OnlineRoomRules.Capacity(mode)), buildIdentity = OnlineVersionAuthenticator.BuildIdentity, password = password, isPrivate = !string.IsNullOrEmpty(password) })));
+                    maxPlayers = maxPlayers == 0 ? OnlineRoomRules.Capacity(mode) : Mathf.Clamp(maxPlayers, 2, OnlineRoomRules.Capacity(mode)), buildIdentity = OnlineVersionAuthenticator.ConnectionBuildIdentity, password = password, isPrivate = !string.IsNullOrEmpty(password) })));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.timeout = 10;

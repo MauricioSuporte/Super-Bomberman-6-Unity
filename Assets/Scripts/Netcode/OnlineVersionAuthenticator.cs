@@ -20,6 +20,29 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        // Editor debug can run local changes against the deployed build of the same
+        // wire protocol. Keep BuildIdentity local for diagnostic provenance.
+#if UNITY_EDITOR
+        static string editorServerBuildIdentity;
+        public static void SetEditorServerBuildIdentity(string identity)
+        {
+            editorServerBuildIdentity = identity;
+            VersionRejected = false;
+        }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetEditorServerBuildIdentity() => editorServerBuildIdentity = null;
+#endif
+        public static string ConnectionBuildIdentity
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (!NetworkServer.active && !string.IsNullOrEmpty(editorServerBuildIdentity)) return editorServerBuildIdentity;
+#endif
+                return BuildIdentity;
+            }
+        }
+
         public static string RoomPassword { get; set; } = "";
         public const int MaxPlayerNameLength = 16;
         public static string PlayerName
@@ -157,7 +180,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnClientAuthenticate() => NetworkClient.Send(new Request
         {
-            gameVersion = Application.version, protocol = ProtocolVersion, buildIdentity = BuildIdentity, password = RoomPassword, playerName = PlayerName
+            gameVersion = Application.version, protocol = ProtocolVersion, buildIdentity = ConnectionBuildIdentity, password = RoomPassword, playerName = PlayerName
         });
 
         void OnResponse(Response response)

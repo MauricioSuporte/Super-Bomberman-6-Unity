@@ -56,7 +56,8 @@ public sealed class OnlineRoomText
     public string PublicUnavailable => LanguageText("PUBLIC DIRECTORY UNAVAILABLE", "公開リストに接続できません", "LISTA PÚBLICA NO DISPONIBLE", "LISTA PÚBLICA INDISPONÍVEL");
     public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
     public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
-    public string VersionMismatch => LanguageText("INCOMPATIBLE VERSION: RUN GameUpdater.exe", "バージョンが異なります。GameUpdater.exe を実行してください", "VERSIÓN INCOMPATIBLE: EJECUTA GameUpdater.exe", "VERSÃO INCOMPATÍVEL: EXECUTE GameUpdater.exe");
+    public string VersionMismatch => UnityEngine.Application.isEditor ? LanguageText(
+        "EDITOR/SERVER PROTOCOL MISMATCH: WAIT FOR DEPLOY", "Editorとサーバーのプロトコルが異なります。デプロイを待ってください", "PROTOCOLO EDITOR/SERVIDOR DISTINTO: ESPERA EL DESPLIEGUE", "PROTOCOLO EDITOR/SERVIDOR DIFERENTE: AGUARDE O DEPLOY") : LanguageText("INCOMPATIBLE VERSION: RUN GameUpdater.exe", "バージョンが異なります。GameUpdater.exe を実行してください", "VERSIÓN INCOMPATIBLE: EJECUTA GameUpdater.exe", "VERSÃO INCOMPATÍVEL: EXECUTE GameUpdater.exe");
     public string YouJoined => LanguageText("YOU JOINED THE ROOM!", "ルームに参加しました！", "¡HAS ENTRADO EN LA SALA!", "VOCÊ ENTROU NA SALA!");
     public string StartingMatch => LanguageText("Starting the match!", "対戦を開始します！", "¡Comenzando la partida!", "Iniciando a partida!");
     public string PleaseWait => LanguageText("Please wait...", "お待ちください…", "Espera, por favor...", "Por favor, aguarde...");

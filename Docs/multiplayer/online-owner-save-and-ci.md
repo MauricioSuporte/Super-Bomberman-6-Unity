@@ -276,3 +276,16 @@ O resumo do Actions distingue servidor publicado de passos posteriores de upload
 A fila permanece serializada para não interromper uma troca de versão no meio.
 Execuções antigas #23/#24 foram canceladas durante a correção; nenhuma delas
 havia iniciado a transferência do servidor.
+
+
+### Editor debug compatibility
+
+Play Mode checks the deployed wire protocol and uses the directory build identity
+for allocation/authentication when the protocol matches. The local checkout identity
+remains in diagnostics. A warning identifies local versus deployed commits. This
+Editor-only path permits testing local changes; gameplay must remain compatible
+with the authoritative server. It cannot bridge different wire protocols.
+
+During deployment, the Editor polls again instead of permanently latching the
+mismatch. It shows a deployment message and hides the executable updater button.
+Release players retain exact build matching and the updater workflow.

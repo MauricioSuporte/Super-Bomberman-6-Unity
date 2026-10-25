@@ -114,38 +114,32 @@ public sealed class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(go); }
     }
 
-    [TestCase(true)]
-    [TestCase(false)]
-    public void IncompatibleDirectoryStopsBrowsingAndBlocksRoomActions(bool staleProtocol)
+    [Test]
+    public void EditorWaitsForCompatibleProtocolAndRecoversAfterDeployment()
     {
-        var go = new GameObject("VersionBlockedBrowser");
+        var go = new GameObject("VersionBlockedEditorBrowser");
         go.SetActive(false);
         try
         {
             var browser = go.AddComponent<OnlineRoomBrowser>();
-            Assert.IsFalse(browser.CanUseOnline, "No online actions before compatibility is checked");
+            Assert.IsFalse(browser.CanUseOnline);
             var apply = typeof(OnlineRoomBrowser).GetMethod("ApplyDirectoryHealth",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             apply.Invoke(browser, new object[] { new OnlineDirectoryHealth { ok = true,
-                protocol = OnlineVersionAuthenticator.ProtocolVersion - (staleProtocol ? 1 : 0),
-                buildIdentity = staleProtocol ? OnlineVersionAuthenticator.BuildIdentity : "different-build" } });
-            Assert.IsTrue(browser.VersionBlocked);
+                protocol = OnlineVersionAuthenticator.ProtocolVersion - 1, buildIdentity = "older-server" } });
+            Assert.IsTrue(browser.VersionBlocked, "Editor must still reject incompatible wire protocols.");
             Assert.IsFalse(browser.CanUseOnline);
-            browser.Rooms.Add(new OnlineListedRoom());
-            browser.RefreshRequested = true;
-            var loop = (System.Collections.IEnumerator)typeof(OnlineRoomBrowser).GetMethod("RefreshLoop",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(browser, null);
-            Assert.IsFalse(loop.MoveNext(), "Blocked browser must exit before creating any web request");
-            Assert.IsEmpty(browser.Rooms);
-            Assert.IsFalse(browser.RefreshRequested);
             browser.CreateRoom();
-            browser.JoinRoom(new OnlineListedRoom());
             Assert.IsFalse(browser.Creating);
             apply.Invoke(browser, new object[] { new OnlineDirectoryHealth { ok = true,
-                protocol = OnlineVersionAuthenticator.ProtocolVersion, buildIdentity = OnlineVersionAuthenticator.BuildIdentity } });
-            Assert.IsTrue(browser.VersionBlocked, "A rejection remains latched until the client is updated/restarted");
+                protocol = OnlineVersionAuthenticator.ProtocolVersion, buildIdentity = "deployed-build" } });
+            Assert.IsFalse(browser.VersionBlocked, "Editor can recover when deployment finishes.");
+            Assert.IsTrue(browser.CanUseOnline);
+            Assert.AreEqual("deployed-build", OnlineVersionAuthenticator.ConnectionBuildIdentity);
+            Assert.AreNotEqual("deployed-build", OnlineVersionAuthenticator.BuildIdentity,
+                "Diagnostics must retain the actual local checkout identity.");
         }
-        finally { Object.DestroyImmediate(go); }
+        finally { OnlineVersionAuthenticator.SetEditorServerBuildIdentity(null); Object.DestroyImmediate(go); }
     }
 
     [Test]
