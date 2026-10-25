@@ -149,7 +149,9 @@ namespace Assets.Scripts.Netcode
                 if (predict)
                 {
                     movementTick = frame.tick;
-                    GetComponent<NetworkBombFx>()?.PrepareClientMovementTick(frame.tick, false, frame.held);
+                    var kickFx = GetComponent<NetworkBombFx>();
+                    kickFx?.PrepareClientMovementTick(frame.tick, false, frame.held);
+                    movement.RestorePredictedKickReference(kickFx != null ? kickFx.LastKickForTick(frame.tick) : null);
                     movement.SimulateNetworkMovementTick(frame.held);
                 }
             }
@@ -267,6 +269,7 @@ namespace Assets.Scripts.Netcode
                 {
                     movementTick = pending[i].tick;
                     kickFx?.PrepareClientMovementTick(movementTick, true, pending[i].held);
+                    movement.RestorePredictedKickReference(kickFx != null ? kickFx.LastKickForTick(movementTick) : null);
                     movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
                 }
             kickFx?.RestoreClientKickPositions();

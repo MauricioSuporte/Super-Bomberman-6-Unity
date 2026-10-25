@@ -284,6 +284,17 @@ public class MovementController : MonoBehaviour, IKillable
         _ownedBombPlantTraversal.Clear();
     }
 
+    public void RestorePredictedKickReference(Bomb movingBomb)
+    {
+        if (predictLocally) _lastAdjKickedBomb = movingBomb;
+    }
+
+    private bool IsKickMovingForMotor(Bomb movingBomb) => movingBomb != null &&
+        (movingBomb.IsBeingKicked || (predictLocally &&
+            TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var kickFx) &&
+            TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var input) &&
+            kickFx.IsKickMovingForTick(movingBomb, input.CurrentMovementTick)));
+
     private void SetNetworkPosition(Vector2 position)
     {
         Rigidbody.linearVelocity = Vector2.zero;
@@ -1877,7 +1888,7 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
-            if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
+            if (_lastAdjKickedBomb != null && IsKickMovingForMotor(_lastAdjKickedBomb)
                 && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                 continue;
 
@@ -1923,7 +1934,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (ShouldSkipFixedUpdate())
             return;
 
-        if (_lastAdjKickedBomb != null && !_lastAdjKickedBomb.IsBeingKicked)
+        if (_lastAdjKickedBomb != null && !IsKickMovingForMotor(_lastAdjKickedBomb))
             _lastAdjKickedBomb = null;
 
         Vector2 position = Rigidbody.position;
@@ -2134,7 +2145,7 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 blockedTileCenter = currentTileCenter + dir * tileSize;
         bool nextBlocked = IsBlockedAtPosition(blockedTileCenter, dir, true);
 
-        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+        if (nextBlocked && _lastAdjKickedBomb != null && IsKickMovingForMotor(_lastAdjKickedBomb))
             nextBlocked = IsBlockedAtPositionIgnoringBomb(blockedTileCenter, dir, _lastAdjKickedBomb);
 
         if (!nextBlocked)
@@ -2290,7 +2301,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         bool nextBlocked = IsBlockedAtPosition(nextTileCenter, pendingDir, true);
 
-        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+        if (nextBlocked && _lastAdjKickedBomb != null && IsKickMovingForMotor(_lastAdjKickedBomb))
             nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, pendingDir, _lastAdjKickedBomb);
 
         if (!nextBlocked)
@@ -2767,7 +2778,7 @@ public class MovementController : MonoBehaviour, IKillable
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
                     continue;
 
-                if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
+                if (_lastAdjKickedBomb != null && IsKickMovingForMotor(_lastAdjKickedBomb)
                     && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                     continue;
 
@@ -2789,7 +2800,7 @@ public class MovementController : MonoBehaviour, IKillable
                         {
                             if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
                             {
-                                if (hitBomb != null && hitBomb.IsBeingKicked)
+                                if (IsKickMovingForMotor(hitBomb))
                                     _lastAdjKickedBomb = hitBomb;
 
                                 return IsBlockedAtPosition(targetPosition, dirForSize, false);
@@ -2878,7 +2889,7 @@ public class MovementController : MonoBehaviour, IKillable
                             {
                                 if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
                                 {
-                                    if (bomb.IsBeingKicked)
+                                    if (IsKickMovingForMotor(bomb))
                                         _lastAdjKickedBomb = bomb;
 
                                     return IsBlockedAtPosition(targetPosition, dirForSize, false);
@@ -2890,7 +2901,7 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
-                if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
+                if (bomb == _lastAdjKickedBomb && IsKickMovingForMotor(bomb))
                     continue;
 
                 if (ShouldAllowForwardTraversalThroughOwnTriggerBomb(
@@ -2942,7 +2953,7 @@ public class MovementController : MonoBehaviour, IKillable
                         {
                             if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
                             {
-                                if (bomb.IsBeingKicked)
+                                if (IsKickMovingForMotor(bomb))
                                     _lastAdjKickedBomb = bomb;
 
                                 if (!nearReentryKickEdge)
@@ -3054,7 +3065,7 @@ public class MovementController : MonoBehaviour, IKillable
             Bomb bomb = kv.Key;
             BombPlantTraversalState state = kv.Value;
 
-            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.IsSolid || IsKickMovingForMotor(bomb) || bomb.Owner != bombController)
             {
                 bombsToRemove ??= new List<Bomb>();
                 bombsToRemove.Add(bomb);
@@ -5332,7 +5343,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, true);
 
-        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+        if (nextBlocked && _lastAdjKickedBomb != null && IsKickMovingForMotor(_lastAdjKickedBomb))
             nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, dir, _lastAdjKickedBomb);
 
         if (!nextBlocked)
@@ -5464,7 +5475,7 @@ public class MovementController : MonoBehaviour, IKillable
                 continue;
             }
 
-            if (bomb.IsBeingKicked || bomb.IsBeingPunched)
+            if (IsKickMovingForMotor(bomb) || bomb.IsBeingPunched)
             {
                 LogBombEscape(
                     $"[KickAdj] skip moving bomb:{bomb.name} kicked:{bomb.IsBeingKicked} punched:{bomb.IsBeingPunched}",
@@ -5539,6 +5550,7 @@ public class MovementController : MonoBehaviour, IKillable
                         if (ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask))
                         {
                             GetComponent<Assets.Scripts.Netcode.NetworkBombFx>()?.MarkInitialMotorHold(bomb);
+                            _lastAdjKickedBomb = bomb;
                             return true;
                         }
                     }

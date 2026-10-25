@@ -281,3 +281,40 @@ water/holes/wrap, explosions and RTT/jitter/loss. No scene/prefab rewiring requi
 The first confirmation preserves a bounded owner-input timeline lead (maximum
 150 ms), rather than slowing the bomb back to server-now after immediate local
 feedback. Stop messages inherit no lead. A regression checks this alignment.
+
+
+## Recent-kick motor parity and presentation measurements
+
+Compared online motion-20261025-185743-31199fd6.jsonl and offline
+motion-20261025-185917-988ea9dd.jsonl, both 3dc021d/protocol 22.
+All 11 local kick predictions were confirmed, none rejected. Confirmation still
+took 61-93 ms, but no longer gated initial presentation. Median input-to-motion
+was 15.7 ms online versus 14.1 ms offline. These captures contain different input
+sequences; large waiting samples include blocked input and do not measure raw lag.
+
+The online capture still had ten kick-window player corrections above 0.125 world
+units, including one 0.75 correction with prediction disabled. An in-game frame
+also took 178 ms; that is a local frame hitch, not a measured network round trip.
+
+The motor previously checked Bomb.IsBeingKicked, which is never set on pure-client
+replicas, and cleared its recent-kick reference during every restore. It could
+therefore apply stationary-bomb reentry/centering rules while the server treated
+that same bomb as already kicked. The client now rebuilds that reference for each
+current/replayed input tick and queries the existing kick presentation history.
+Stop ticks restore ordinary collision rules; earlier replay ticks retain the
+historical moving state. Offline/server still consult their actual Bomb flag.
+No client gameplay coroutine, damage or terrain effects are introduced.
+
+Previous bomb_sample events run before NetworkBombFx's LateUpdate and can show
+the older NetworkTransform timeline. kick_endpoint_wait labels confirmation gaps,
+including gaps already bridged by prediction; it is not proof of a visible pause.
+New kick_presentation_sample events sample after presentation at 10 Hz.
+kick_segment_apply.delta now measures the immediate displayed correction;
+predictionError separately records target-minus-previous presentation. A large
+server-now difference is not automatically a visible correction on the owner's
+ahead-of-server presentation timeline.
+
+Regression coverage extends initial prediction/confirmation/rollback with motor
+reference restoration, before-start checks, and historical/current stop behavior.
+Wire protocol remains 22; public builds still require matching build identities.
+Two-peer subjective gameplay validation remains required after publication.

@@ -589,6 +589,17 @@ public sealed class OnlineRoomEditModeTests
             Assert.IsTrue(fx.TryPredictKick(movingBomb, Vector2.right, 1));
             Assert.Greater(bombObject.transform.position.x, origin.x, "The bomb moves inside the contact call, before any server response.");
             Assert.IsFalse(movingBomb.IsBeingKicked, "Prediction must not start the gameplay coroutine.");
+            Assert.IsFalse(fx.IsKickMovingForTick(movingBomb, 24));
+            Assert.IsTrue(fx.IsKickMovingForTick(movingBomb, 25));
+            Assert.AreSame(movingBomb, fx.LastKickForTick(25));
+            var motor = player.GetComponent<MovementController>();
+            motor.SetPredictLocally(true);
+            motor.RestorePredictedKickReference(fx.LastKickForTick(25));
+            var reference = typeof(MovementController).GetField("_lastAdjKickedBomb", System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+            Assert.AreSame(movingBomb, reference.GetValue(motor), "The client must recognize the same recent kick as the server motor.");
+            Assert.IsTrue((bool)typeof(MovementController).GetMethod("IsKickMovingForMotor", System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance).Invoke(motor, new object[] { movingBomb }));
             Assert.IsFalse(fx.TryPredictKick(movingBomb, Vector2.right, 1), "Repeated contacts must not restart a prediction.");
             fx.MarkInitialMotorHold(movingBomb);
             Assert.IsTrue(fx.ReplayInitialKick(25, Vector2.right));
@@ -608,6 +619,12 @@ public sealed class OnlineRoomEditModeTests
             fx.ReconcilePredictedKicks(26);
             Assert.Greater(bombObject.transform.position.y, origin.y, "A confirmed prediction must survive later acknowledgements.");
             Assert.IsFalse(movingBomb.IsBeingKicked);
+            fx.ReceiveKickMotion(new NetworkBombFx.KickMotion { bombId = bombId, inputTick = 30,
+                start = origin + Vector2.up, end = origin + Vector2.up, moving = false,
+                serverTime = NetworkBombFx.KickServerNow + 0.01 });
+            Assert.IsTrue(fx.IsKickMovingForTick(movingBomb, 29), "Replay before a stop still sees the moving bomb.");
+            Assert.IsFalse(fx.IsKickMovingForTick(movingBomb, 30));
+            Assert.IsNull(fx.LastKickForTick(30), "Stopped bombs regain ordinary collision behavior.");
         }
         finally
         {

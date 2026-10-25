@@ -22,7 +22,7 @@ public static class GameplayLatencyDiagnostics
         public uint netId, bombNetId, inputTick, authoritativeTick;
         public int pendingInputs, queuedInputs;
         public double messageAgeMs;
-        public Vector2 position, delta, direction, bombPosition;
+        public Vector2 position, delta, direction, bombPosition, predictionError;
         public bool accepted, localPlayer, physicsAuthority;
         public double realtime, timeline, rttMs, rttJitterMs, bufferMs, durationMs = -1;
         public float frameMs, fixedStepMs, sendIntervalMs;
