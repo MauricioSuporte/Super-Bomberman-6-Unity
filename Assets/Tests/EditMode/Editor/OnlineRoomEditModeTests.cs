@@ -958,10 +958,11 @@ public sealed class OnlineRoomEditModeTests
             { "MusicSelect", "musicSelectRoot" }, { "ItemSelect", "itemSelectRoot" },
             { "LouieSelect", "louieSelectRoot" }, { "HandicapSelect", "handicapSelectRoot" }
         };
+        // Received snapshots are immutable by reference; each changed message is a new object.
         foreach (var page in panels)
         {
             view.step = page.Key;
-            menu.ApplyOnlineMenuView(view);
+            menu.ApplyOnlineMenuView(JsonUtility.FromJson<BattleModeMenu.OnlineView>(JsonUtility.ToJson(view)));
             var panel = (Component)typeof(BattleModeMenu).GetField(page.Value,
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(menu);
             Assert.IsTrue(panel.gameObject.activeSelf, page.Key);
@@ -972,7 +973,7 @@ public sealed class OnlineRoomEditModeTests
         }
         view.step = "SkinSelect";
         view.characters = true;
-        menu.ApplyOnlineMenuView(view);
+        menu.ApplyOnlineMenuView(JsonUtility.FromJson<BattleModeMenu.OnlineView>(JsonUtility.ToJson(view)));
         foreach (var fieldName in panels.Values)
         {
             var panel = (Component)typeof(BattleModeMenu).GetField(fieldName,
@@ -984,7 +985,7 @@ public sealed class OnlineRoomEditModeTests
         view.fadeVisible = true;
         view.fadeAlpha = 0.6f;
         view.startCursorPosition = new Vector2(20f, 30f);
-        menu.ApplyOnlineMenuView(view);
+        menu.ApplyOnlineMenuView(JsonUtility.FromJson<BattleModeMenu.OnlineView>(JsonUtility.ToJson(view)));
         var transition = JsonUtility.FromJson<BattleModeMenu.OnlineView>(menu.CaptureOnlineView());
         Assert.IsTrue(transition.startConfirmed);
         Assert.IsTrue(transition.fadeVisible);
@@ -1098,7 +1099,9 @@ public sealed class OnlineRoomEditModeTests
         Assert.AreEqual(1, Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>().Length);
         Assert.AreEqual(1, Object.FindObjectsByType<AudioListener>().Length);
         BombermanNetworkManager.LeaveRoom();
-        yield return null;
+        timeout = Time.realtimeSinceStartup + 10f;
+        while (SceneManager.GetActiveScene().name != "TitleScreen" && Time.realtimeSinceStartup < timeout)
+            yield return null;
         Assert.AreEqual("TitleScreen", SceneManager.GetActiveScene().name);
         Assert.IsFalse(SaveSystem.HasOnlineBattleSettings);
         Assert.IsFalse(NetworkServer.active);
