@@ -1,0 +1,4 @@
+interface:
+  display_name: "SB6 Online Prediction"
+  short_description: "Responsive gameplay with prediction and rollback"
+  default_prompt: "Use $super-bomberman-6-online-prediction to bring this online interaction closer to offline gameplay."

@@ -37,6 +37,9 @@ conflicts against current code and the latest user requirements.
 - [Validation](references/validation.md): multiplayer reproduction, available
   tests, compilation limits and areas still needing polish.
 
+For input latency, rollback, bomb motion or tile-to-tile bounce presentation, use
+[the prediction companion](../super-bomberman-6-online-prediction/SKILL.md).
+
 ## Offline, host and client parity
 
 Every change to shared gameplay or presentation must preserve the same game

@@ -789,6 +789,67 @@ public sealed class OnlineRoomEditModeTests
             Assert.IsTrue(reservedOrigin == null && reservedDestination == null, "Settling must release temporary reservations.");
             otherFx.ReceiveTileStart(2, Vector3Int.right, map);
             otherFx.ReceiveTileEnd(2, Vector3Int.right, true); Assert.IsFalse(map.HasTile(Vector3Int.right), "Destroyed moving blocks must not be restored.");
+            // Short approved arcs queue in order, including the final stop. An
+            // early packet must not skip the current apex or introduce a jump.
+            var arc = new NetworkBombFx.KickMotion { bombId = id, revision = 5, kind = NetworkBombFx.BombMotionKind.Punch,
+                start = origin, end = origin + Vector2.right, duration = 0.1f, arcHeight = 0.5f,
+                moving = true, first = true, serverTime = automatic.serverTime + 0.01 };
+            otherFx.ReceiveKickMotion(arc); Vector2 firstArcPosition = replica.transform.position;
+            arc.revision = 6; arc.first = false; arc.start = arc.end; arc.end += Vector2.up;
+            otherFx.ReceiveKickMotion(arc); Assert.AreEqual(firstArcPosition, (Vector2)replica.transform.position);
+            arc.revision = 7; arc.moving = false; arc.start = arc.end; arc.duration = 0;
+            otherFx.ReceiveKickMotion(arc); Assert.AreEqual(firstArcPosition, (Vector2)replica.transform.position);
+            var playbackMap = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("kickPlayback", flags).GetValue(otherFx);
+            object playback = playbackMap[bomb];
+            playback.GetType().GetField("elapsed").SetValue(playback, 0.1f);
+            typeof(NetworkBombFx).GetMethod("PresentFrame", flags).Invoke(otherFx, new object[] { 0f, 0f });
+            Assert.Less(Vector2.Distance(origin + Vector2.right, replica.transform.position), 0.2f);
+            playback = playbackMap[bomb]; playback.GetType().GetField("elapsed").SetValue(playback, 0.1f);
+            typeof(NetworkBombFx).GetMethod("PresentFrame", flags).Invoke(otherFx, new object[] { 0f, 0f });
+            Assert.AreEqual(arc.end, (Vector2)replica.transform.position);
+            Assert.IsTrue(collider.enabled);
+
+            map.SetTile(new Vector3Int(1980, 1980), tile); map.SetTile(new Vector3Int(2020, 2020), tile);
+            bomb.SetStageBoundsTilemap(map);
+            var rubber = new NetworkBombFx.KickMotion { bombId = id, revision = 8, kind = NetworkBombFx.BombMotionKind.Throw,
+                start = origin, end = origin + Vector2.right, duration = 0.1f, arcHeight = 0.5f, rubber = true,
+                bounceSeed = 0, bounceIndex = -1, bounceDuration = 0.1f, bounceHeight = 0.5f,
+                first = true, moving = true, serverTime = automatic.serverTime + 0.02 };
+            otherFx.ReceiveKickMotion(rubber);
+            playback = playbackMap[bomb]; playback.GetType().GetField("elapsed").SetValue(playback, 0.15f);
+            typeof(NetworkBombFx).GetMethod("PresentFrame", flags).Invoke(otherFx, new object[] { 0f, 0f });
+            Vector2 anticipated = replica.transform.position;
+            Assert.Greater(anticipated.y, rubber.end.y, "A mandatory deterministic bounce starts before its next RPC.");
+            rubber.revision = 9; rubber.first = false; rubber.start = rubber.end; rubber.end += Vector2.up; rubber.bounceIndex = 0;
+            otherFx.ReceiveKickMotion(rubber);
+            Assert.Less(Vector2.Distance(anticipated, replica.transform.position), 0.07f, "Confirmation must preserve the predicted arc phase.");
+            playback = playbackMap[bomb]; Assert.That((float)playback.GetType().GetField("elapsed").GetValue(playback), Is.EqualTo(0.05f).Within(0.001f));
+            rubber.revision = 10; rubber.moving = false; otherFx.ReceiveKickMotion(rubber);
+            playback.GetType().GetField("elapsed").SetValue(playback, 0.1f);
+            typeof(NetworkBombFx).GetMethod("PresentFrame", flags).Invoke(otherFx, new object[] { 0f, 0f });
+            Assert.IsTrue(collider.enabled);
+
+            var playerCollider = actor.GetComponent<Collider2D>(); playerCollider.enabled = true;
+            var hop = new NetworkBombFx.PlayerBounceMotion { revision = 1, first = true, moving = true,
+                start = origin, end = origin + Vector2.right, duration = 0.1f, height = 0.35f };
+            fx.ReceivePlayerBounce(hop); Assert.IsTrue(fx.PlayerBounceActive); Assert.IsFalse(playerCollider.enabled);
+            hop.revision = 2; hop.first = false; hop.start = hop.end; hop.end += Vector2.up;
+            fx.ReceivePlayerBounce(hop); Assert.AreEqual(origin, (Vector2)actor.transform.position);
+            hop.revision = 3; hop.moving = false; hop.duration = 0;
+            fx.ReceivePlayerBounce(hop);
+            typeof(NetworkBombFx).GetField("bounceElapsed", flags).SetValue(fx, 0.1f);
+            typeof(NetworkBombFx).GetMethod("UpdatePlayerBouncePresentation", flags).Invoke(fx, new object[] { 0f, 0f });
+            Assert.IsTrue(fx.PlayerBounceActive);
+            Assert.Less(Vector2.Distance(origin + Vector2.right, actor.transform.position), 0.2f);
+            typeof(NetworkBombFx).GetField("bounceElapsed", flags).SetValue(fx, 0.1f);
+            typeof(NetworkBombFx).GetMethod("UpdatePlayerBouncePresentation", flags).Invoke(fx, new object[] { 0f, 0f });
+            Assert.IsFalse(fx.PlayerBounceActive); Assert.IsTrue(playerCollider.enabled);
+            Assert.AreEqual(hop.end, (Vector2)actor.transform.position);
+            hop.revision = 2; hop.moving = true; fx.ReceivePlayerBounce(hop);
+            Assert.IsFalse(fx.PlayerBounceActive, "Stale bounce messages must not restart a completed sequence.");
+            NetSync.Mode = NetSync.NetMode.Host; hop.revision = 4; fx.ReceivePlayerBounce(hop);
+            Assert.IsFalse(fx.PlayerBounceActive, "Host/offline gameplay must never use replica presentation.");
+            NetSync.Mode = NetSync.NetMode.Client;
         }
         finally
         {
@@ -799,12 +860,54 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [Test]
+    public void RubberBounceSequenceIsStableAndDoesNotConsumeGameplayRandom()
+    {
+        var saved = Random.state;
+        try
+        {
+            uint seed = RubberBombBounceSequence.Seed(new Vector2(-3, 7), 1, Vector2.right, 3);
+            var expected = new Vector2[64];
+            for (int i = 0; i < expected.Length; i++) expected[i] = RubberBombBounceSequence.Direction(seed, i);
+            Random.InitState(12345); var before = Random.state;
+            for (int i = 0; i < expected.Length; i++)
+            {
+                Assert.AreEqual(expected[i], RubberBombBounceSequence.Direction(seed, i));
+                Assert.AreEqual(1, Mathf.Abs(expected[i].x) + Mathf.Abs(expected[i].y));
+            }
+            Assert.AreEqual(before, Random.state, "Bounce prediction must not advance Unity's gameplay RNG.");
+            Assert.AreEqual(seed, RubberBombBounceSequence.Seed(new Vector2(-6, 14), 2, Vector2.right, 3));
+            Assert.AreNotEqual(seed, RubberBombBounceSequence.Seed(new Vector2(-3, 7), 1, Vector2.up, 3));
+            Assert.That(RubberBombBounceSequence.MinimumBounces(seed), Is.InRange(3, 5));
+            Assert.AreEqual(Vector2.up, RubberBombBounceSequence.Direction(0, 0));
+        }
+        finally { Random.state = saved; }
+    }
+
+    [Test]
+    public void PlayerBounceUsesOfflineParabolaAndClampedEndpoints()
+    {
+        Vector2 from = new(20, 30), to = from + Vector2.right;
+        Assert.AreEqual(from, NetworkBombFx.SamplePlayerBounce(from, to, 0.1f, -1, 0.35f));
+        Assert.AreEqual(to, NetworkBombFx.SamplePlayerBounce(from, to, 0.1f, 10, 0.35f));
+        Assert.Less(Vector2.Distance(from + new Vector2(0.5f, 0.35f),
+            NetworkBombFx.SamplePlayerBounce(from, to, 0.1f, 0.05f, 0.35f)), 0.0001f);
+        var motion = new NetworkBombFx.PlayerBounceMotion { revision = uint.MaxValue, start = from, end = to,
+            duration = 0.1f, curveDuration = 1f / 12, height = 0.35f, moving = true, first = true };
+        using var writer = NetworkWriterPool.Get(); writer.Write(motion);
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var received = reader.Read<NetworkBombFx.PlayerBounceMotion>();
+        Assert.AreEqual(motion.revision, received.revision); Assert.AreEqual(motion.start, received.start); Assert.AreEqual(motion.end, received.end);
+        Assert.AreEqual(motion.duration, received.duration); Assert.AreEqual(motion.curveDuration, received.curveDuration);
+        Assert.AreEqual(motion.height, received.height); Assert.IsTrue(received.first && received.moving);
+    }
+
+    [Test]
     public void KickMotionWireRoundTripPreservesSegmentAndAuthoritativeTick()
     {
         var motion = new NetworkBombFx.KickMotion { bombId = 123, inputTick = 49,
             start = Vector2.one, end = Vector2.one + Vector2.left, duration = 0.1f,
             serverTime = 456.75, moving = true, first = true, kind = NetworkBombFx.BombMotionKind.Throw,
-            revision = 77, arcHeight = 0.9f, carryHeight = 1, rubber = true };
+            revision = 77, arcHeight = 0.9f, carryHeight = 1, rubber = true,
+            bounceSeed = 1234, bounceIndex = 2, bounceDuration = 0.12f, bounceHeight = 0.9f, curveDuration = 0.11f };
         using var writer = NetworkWriterPool.Get();
         writer.Write(motion);
         using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
@@ -814,6 +917,9 @@ public sealed class OnlineRoomEditModeTests
         Assert.AreEqual(motion.arcHeight, result.arcHeight);
         Assert.AreEqual(motion.carryHeight, result.carryHeight);
         Assert.IsTrue(result.rubber);
+        Assert.AreEqual(motion.curveDuration, result.curveDuration);
+        Assert.AreEqual(motion.bounceSeed, result.bounceSeed); Assert.AreEqual(motion.bounceIndex, result.bounceIndex);
+        Assert.AreEqual(motion.bounceDuration, result.bounceDuration); Assert.AreEqual(motion.bounceHeight, result.bounceHeight);
         Assert.AreEqual(motion.bombId, result.bombId);
         Assert.AreEqual(motion.inputTick, result.inputTick);
         Assert.AreEqual(motion.start, result.start);
@@ -942,6 +1048,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 23, false)]
     [TestCase("0.5.0", 22, false)]
     [TestCase("0.5.0", 21, false)]
     [TestCase("0.5.0", 20, false)]

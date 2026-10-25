@@ -361,3 +361,46 @@ messages, observer authority guards, Yellow tile settle/destruction and wire
 roundtrip. Manual host/owner/observer gameplay (including mounted actions, pause,
 water/holes/wrap, chain reactions and packet jitter) still needs post-deploy checks.
 No prefab or scene rewiring is required. Client and server must both use protocol23.
+
+
+## Tile-to-tile bounce continuity (protocol 24)
+
+Short confirmed punch/throw landing arcs now queue on NetworkBombFx until the
+current arc finishes, including their final stop. Continuations retain only the
+fractional-frame remainder instead of starting at packet age or adding the initial
+prediction lead on every tile. This preserves short apexes and direction changes
+when multiple messages arrive together. Queues are bounded at 32 segments; a new
+first segment replaces the prior sequence. Rubber landing directions now use the
+shared deterministic sequence described below.
+
+PlayerPushedOutOfInvalidTile reports approved parabola segments, wraps and a final
+stop through NetworkBombFx's NetworkPlayerBounce partial. The client presents
+those segments continuously, disables its replica collision only for that motion,
+restores the active bounce position after owner reconciliation, and gives it pose
+priority over buffered player/mount animation. Curve duration and quantized fixed
+step completion time are distinct. No client runs the resolver's kill/hole/world
+logic; host/offline retain the existing coroutine. Initial external pushes still
+require the authority event; this is not prediction of hidden or random hazards.
+
+New player_bounce_send / player_bounce_apply events correlate segment revisions,
+durations and displacement. Manual checks should include pushers/spring/minecart
+landings, occupied landing tiles, mounts, holes, wrap, death, pause and disconnect.
+See the repository skill super-bomberman-6-online-prediction for reusable criteria.
+
+
+RubberBombBounceSequence computes a stable seed from launch cell, cardinal facing
+and throw/punch distance, using explicit uint arithmetic. Direction at an index
+and the minimum 3-5 bounces are pure functions of that seed, independent of
+UnityEngine.Random, frame time, netId or platform hash codes. Offline/server use
+the same function; a new launch resets its seed and index. Other gameplay RNG,
+such as expelling an item, is unchanged. Repeating the same launch now repeats
+its bounce directions by design.
+
+Motion messages include seed, ordinal, landing duration and height. Clients can
+anticipate at most one mandatory landing bounce / 150 ms, inside known stage/room
+bounds, then retain that phase on matching confirmation. After the deterministic
+minimum, the server still checks occupied landing tiles and decides whether to
+continue, stop, wrap, stun, explode or mutate the world. Wrap ordinals are sent
+by the server; clients do not speculate through a room seam. This avoids guessing
+when a hidden/moving actor would change termination while removing the per-tile
+wait for a known mandatory direction. rubber_landing_prediction logs seed/index.

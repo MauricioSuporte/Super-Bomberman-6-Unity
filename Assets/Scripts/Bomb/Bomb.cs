@@ -60,6 +60,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     bool networkMotionActive;
     public bool ClientMotionNonBlocking { get; set; }
     public uint ClientMotionRevision => clientMotionRevision;
+    public uint RubberBounceSeed { get; private set; }
+    public int RubberBounceIndex { get; private set; } = -1;
+    public float RubberBounceDuration { get; private set; }
+    public float RubberBounceHeight { get; private set; }
     public bool HasPendingPresentationOtherThan(Assets.Scripts.Netcode.NetworkBombFx presenter) =>
         clientPresentationOwner != null && clientPresentationOwner != presenter && clientPresentationOwner.HasUnconfirmedClientMotion(this);
     public uint NextNetworkMotionRevision() => ++networkMotionRevision;
@@ -83,10 +87,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         networkMotionKind = kind; networkMotionActive = false;
     }
 
-    public void ReportNetworkBombMotion(Vector2 start, Vector2 end, float duration, float arcHeight = 0, float carryHeight = 0)
+    public void ReportNetworkBombMotion(Vector2 start, Vector2 end, float duration, float arcHeight = 0, float carryHeight = 0, float curveDuration = 0)
     {
         if (!Assets.Scripts.Netcode.NetSync.IsServer || networkMotionPresenter == null || !networkMotionPresenter.isServer || networkMotionPresenter.netId == 0) return;
-        networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, start, end, duration, arcHeight, carryHeight, true, !networkMotionActive);
+        networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, start, end, duration, arcHeight, carryHeight, true, !networkMotionActive, curveDuration);
         networkMotionActive = true;
     }
 
@@ -852,6 +856,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             ? Mathf.Max(0f, bounceArcHeightOverride.Value)
             : arcHeight;
 
+        RubberBounceSeed = RubberBombBounceSequence.Seed(logicalOrigin, tileSize, kickDirection, distanceTiles);
+        RubberBounceIndex = -1;
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
             yOff,
@@ -879,6 +885,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float forwardDuration = GetPunchSegmentDuration(duration, steps);
         float bounceDuration = GetPunchSegmentDuration(duration, 1);
         float landingBounceDuration = bounceDuration / Mathf.Max(0.01f, punchLandingBounceSpeedMultiplier);
+        RubberBounceDuration = landingBounceDuration;
+        RubberBounceHeight = bounceArcHeight;
 
         bool wrapsDuringForward = false;
         {
@@ -977,8 +985,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (IsRubberBomb)
         {
-            int minBounces = Random.Range(3, 6);
+            int minBounces = RubberBombBounceSequence.MinimumBounces(RubberBounceSeed);
             int bouncesDone = 0;
+            int sequenceIndex = 0;
 
             for (int b = 0; b < extraLimit; b++)
             {
@@ -990,7 +999,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 if (bouncesDone >= minBounces && safeNow)
                     break;
 
-                Vector2 dir = RandomCardinalDir();
+                RubberBounceIndex = sequenceIndex++;
+                Vector2 dir = RubberBombBounceSequence.Direction(RubberBounceSeed, RubberBounceIndex);
 
                 if (!TryStepWithWrapDir(cur, dir, out var next, out var didWrap))
                     break;
@@ -1307,7 +1317,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         duration = Mathf.Max(duration, Time.fixedDeltaTime);
 
         SetLogicalTileCenter(end);
-        ReportNetworkBombMotion(start, end, Mathf.Ceil(duration / Time.fixedDeltaTime) * Time.fixedDeltaTime, arcHeight);
+        ReportNetworkBombMotion(start, end, Mathf.Ceil(duration / Time.fixedDeltaTime) * Time.fixedDeltaTime, arcHeight, curveDuration: duration);
 
         float t = 0f;
         float inv = 1f / Mathf.Max(0.0001f, duration);

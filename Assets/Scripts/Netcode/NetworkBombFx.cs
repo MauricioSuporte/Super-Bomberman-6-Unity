@@ -37,9 +37,11 @@ namespace Assets.Scripts.Netcode
 
         public struct KickMotion
         {
-            public uint bombId, inputTick, revision;
+            public uint bombId, inputTick, revision, bounceSeed;
+            public int bounceIndex;
+            public float bounceDuration, bounceHeight;
             public BombMotionKind kind;
-            public float arcHeight, carryHeight;
+            public float arcHeight, carryHeight, curveDuration;
             public Vector2 start, end;
             public float duration;
             public double serverTime;
@@ -72,7 +74,7 @@ namespace Assets.Scripts.Netcode
             public float elapsed, staleSeconds;
             public double endpointWaitAt = -1;
             public Vector2 presented, correction;
-            public bool predictedContinuation, unconfirmed, predictedBounce;
+            public bool predictedContinuation, unconfirmed, predictedBounce, predictedLandingBounce;
             public uint startInputTick;
             public bool colliderWasEnabled, colliderCaptured, sortingCaptured;
             public int originalSorting;
@@ -82,10 +84,13 @@ namespace Assets.Scripts.Netcode
             public Vector2 replicaPosition;
             public double predictedAt;
             public KickInputHistory history;
+            public Queue<KickMotion> pendingArcs = new();
         }
 
         readonly Dictionary<Bomb, KickPlayback> kickPlayback = new();
         readonly List<Bomb> expiredKicks = new();
+        readonly List<KickMotion> readyBombArcs = new();
+        bool applyingQueuedBombArc;
         readonly Dictionary<Bomb, (Vector2 origin, Vector2 direction)> rejectedStarts = new();
 
         public static float InitialKickPresentationLead(Vector2 presented, KickMotion motion, float serverAge)
@@ -284,8 +289,24 @@ namespace Assets.Scripts.Netcode
             }
             if (motion.kind == BombMotionKind.Lift || motion.kind == BombMotionKind.Carry)
                 return SampleCarry(motion, transform.position, playback.elapsed);
+            if (IsFlightArc(motion.kind) && motion.rubber && motion.bounceDuration > 0 && playback.elapsed > motion.duration &&
+                motion.bounceIndex + 1 < RubberBombBounceSequence.MinimumBounces(motion.bounceSeed))
+            {
+                Vector2 direction = RubberBombBounceSequence.Direction(motion.bounceSeed, motion.bounceIndex + 1);
+                float tile = TryGetComponent<MovementController>(out var actor) ? actor.tileSize : 1;
+                if (movingBomb.TryPreviewNetworkPunch(motion.end, direction, tile, 1, out var next, out _) &&
+                    movingBomb.CanPredictKickContinuation(next, tile))
+                {
+                    if (!playback.predictedLandingBounce && GameplayLatencyDiagnostics.Enabled)
+                        GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("rubber_landing_prediction", actor, movingBomb,
+                            "seed=" + motion.bounceSeed + ";index=" + (motion.bounceIndex + 1)));
+                    playback.predictedLandingBounce = true;
+                    float extra = Mathf.Clamp(playback.elapsed - motion.duration, 0, Mathf.Min(motion.bounceDuration, 0.15f));
+                    return movingBomb.SnapNetworkPunchPosition(SampleArc(motion.end, next, motion.bounceDuration, extra, motion.bounceHeight));
+                }
+            }
             if (motion.kind == BombMotionKind.Punch || motion.kind == BombMotionKind.Throw)
-                return movingBomb.SnapNetworkPunchPosition(SampleArc(motion.start, motion.end, motion.duration, playback.elapsed, motion.arcHeight));
+                return movingBomb.SnapNetworkPunchPosition(SampleArc(motion.start, motion.end, motion.curveDuration > 0 ? motion.curveDuration : motion.duration, playback.elapsed, motion.arcHeight));
             return SampleKickContinuation(motion.start, motion.end, motion.duration, playback.elapsed,
                 continueLocally && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw);
         }
@@ -322,9 +343,19 @@ namespace Assets.Scripts.Netcode
             // Another player's last search/kick stop can arrive while our action
             // is in flight. Our own input acknowledgement resolves this prediction.
             if (movingBomb.HasPendingPresentationOtherThan(this)) return;
+            if (motion.revision != movingBomb.ClientMotionRevision &&
+                !NetworkInputHistory.IsNewer(motion.revision, movingBomb.ClientMotionRevision)) return;
             kickPlayback.TryGetValue(movingBomb, out var previous);
             if (previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
                 !NetworkInputHistory.IsNewer(motion.inputTick, previous.history.startTick)) return;
+            bool arcContinuation = previous != null && !previous.unconfirmed && !motion.first &&
+                IsFlightArc(previous.motion.kind) && previous.motion.kind == motion.kind && previous.motion.moving;
+            if (arcContinuation && !applyingQueuedBombArc &&
+                (previous.elapsed < previous.motion.duration || previous.pendingArcs.Count > 0))
+            {
+                if (previous.pendingArcs.Count < 32) { previous.pendingArcs.Enqueue(motion); return; }
+                previous.pendingArcs.Clear(); // Bounded recovery after a long delivery stall.
+            }
             if (!movingBomb.ClaimClientPresentation(this, motion.revision)) return;
             if (previous != null && !previous.unconfirmed && previous.motion.serverTime > motion.serverTime) return;
             if (previous != null && previous.endpointWaitAt >= 0 && GameplayLatencyDiagnostics.Enabled)
@@ -336,7 +367,11 @@ namespace Assets.Scripts.Netcode
                 GameplayLatencyDiagnostics.Write(wait);
             }
             float age = GamePauseController.IsPaused ? 0 : Mathf.Max(0, (float)(KickServerNow - motion.serverTime));
-            var playback = new KickPlayback { motion = motion, elapsed = motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Magnet ? 0 : age,
+            var playback = new KickPlayback { motion = motion, elapsed = arcContinuation ?
+                (previous.predictedLandingBounce && motion.bounceSeed == previous.motion.bounceSeed && motion.bounceIndex == previous.motion.bounceIndex + 1 ?
+                    Mathf.Clamp(previous.elapsed - previous.motion.duration, 0, Mathf.Min(0.15f, motion.duration)) : ArcRemainder(previous.elapsed, previous.motion.duration)) :
+                motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Magnet ? 0 : age,
+                pendingArcs = arcContinuation ? previous.pendingArcs : new Queue<KickMotion>(),
                 nextPresentationSample = previous != null ? previous.nextPresentationSample : 0,
                 sampledPresentation = previous != null ? previous.sampledPresentation : Vector2.zero,
                 hasPresentationSample = previous != null && previous.hasPresentationSample,
@@ -363,7 +398,7 @@ namespace Assets.Scripts.Netcode
             }
             // Preserve the small lead of the owner's input timeline. Pulling the
             // bomb back to server-now on the first reply would recreate the hitch.
-            if (motion.moving && playback.history != null) playback.elapsed += playback.history.presentationLead;
+            if (motion.moving && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
             var targetPosition = SamplePlayback(movingBomb, playback);
             // The NetworkTransform may have written its older timeline this frame.
             // Reconcile against our last displayed position, not that stale transform.
@@ -395,7 +430,9 @@ namespace Assets.Scripts.Netcode
                 BeginConfirmedAbilityPose(motion, age);
         }
 
-        void LateUpdate()
+        void LateUpdate() => PresentFrame(Time.deltaTime, Time.unscaledDeltaTime);
+
+        void PresentFrame(float deltaTime, float unscaledDeltaTime)
         {
             if (!NetSync.IsOnline || isServer || !NetworkClient.active)
             {
@@ -403,6 +440,8 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             UpdateTileMotionPresentation();
+            UpdatePlayerBouncePresentation(deltaTime, unscaledDeltaTime);
+            readyBombArcs.Clear();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
             {
@@ -424,17 +463,20 @@ namespace Assets.Scripts.Netcode
                 }
                 if (!GamePauseController.IsPaused)
                 {
-                    playback.elapsed += Time.deltaTime;
-                    playback.staleSeconds += Time.unscaledDeltaTime;
+                    playback.elapsed += deltaTime;
+                    playback.staleSeconds += unscaledDeltaTime;
                 }
                 var motion = playback.motion;
+                bool hasReadyArc = playback.pendingArcs.Count > 0 && playback.elapsed >= motion.duration;
+                if (hasReadyArc)
+                    readyBombArcs.Add(playback.pendingArcs.Dequeue());
                 if (motion.moving && playback.elapsed >= motion.duration && playback.endpointWaitAt < 0)
                     playback.endpointWaitAt = playback.staleSeconds;
                 // Decay small corrections over a few frames rather than jumping at
                 // every segment boundary. Stops/bounces still apply immediately.
                 if (!GamePauseController.IsPaused)
                     playback.correction = Vector2.MoveTowards(playback.correction, Vector2.zero,
-                        Time.deltaTime * 0.5f * (motion.end - motion.start).magnitude / Mathf.Max(0.001f, motion.duration));
+                        deltaTime * 0.5f * (motion.end - motion.start).magnitude / Mathf.Max(0.001f, motion.duration));
                 playback.presented = SamplePlayback(movingBomb, playback) + playback.correction;
                 ApplyKickPosition(movingBomb, playback.presented);
                 double now = Time.realtimeSinceStartupAsDouble;
@@ -454,7 +496,8 @@ namespace Assets.Scripts.Netcode
                     transformOffset = NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +
                         (sync.timelineOffset ? sync.sendIntervalMultiplier : 0));
                 bool caughtUp = !motion.moving && NetworkTime.time >= motion.serverTime + transformOffset;
-                if (caughtUp || (playback.motion.kind != BombMotionKind.Carry && playback.motion.kind != BombMotionKind.Lift && playback.staleSeconds > 1f))
+                if (!hasReadyArc && (caughtUp || (playback.motion.kind != BombMotionKind.Carry && playback.motion.kind != BombMotionKind.Lift &&
+                    playback.staleSeconds > Mathf.Max(1f, motion.duration + 0.5f))))
                 {
                     expiredKicks.Add(movingBomb);
                     if (GameplayLatencyDiagnostics.Enabled)
@@ -472,8 +515,14 @@ namespace Assets.Scripts.Netcode
                     RestoreMotionCollider(movingBomb, oldPlayback);
                 kickPlayback.Remove(movingBomb);
             }
+            applyingQueuedBombArc = true;
+            try { foreach (var next in readyBombArcs) ReceiveKickMotion(next); }
+            finally { applyingQueuedBombArc = false; }
             UpdateLocalAbilityPresentation();
         }
+
+        public static bool IsFlightArc(BombMotionKind kind) => kind == BombMotionKind.Punch || kind == BombMotionKind.Throw;
+        public static float ArcRemainder(float elapsed, float duration) => Mathf.Clamp(elapsed - duration, 0, Time.unscaledDeltaTime);
 
         // Called before local movement/replay queries. Normal NetworkTransform may
         // have restored the bomb's older buffered position earlier in the frame.
@@ -524,6 +573,7 @@ namespace Assets.Scripts.Netcode
             kickPlayback.Clear(); rejectedStarts.Clear();
             ResetLocalAbilityPresentation();
             ClearTileMotionPresentation();
+            ClearPlayerBouncePresentation();
         }
 
         void OnDisable() => ClearKickPlayback();

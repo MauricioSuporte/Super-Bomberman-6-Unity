@@ -50,7 +50,7 @@ namespace Assets.Scripts.Netcode
                 }
                 return;
             }
-            if (isLocalPlayer && TryGetComponent<NetworkBombFx>(out var bombFx) && bombFx.HasLocalMountAbilityPose) return;
+            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose))) return;
             for (int i = 0; i < renderers.Length && i < frames.Count; i++)
             {
                 var animation = renderers[i];

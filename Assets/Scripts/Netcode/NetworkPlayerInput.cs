@@ -149,7 +149,7 @@ namespace Assets.Scripts.Netcode
                 // waits through the offline ability animation lock.
                 if (GetComponent<NetworkBombFx>()?.AbilityPredictionLocksMovement == true) frame.held &= ~15;
                 pending.Add(frame);
-                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement;
+                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.PlayerBounceActive != true;
                 movement.SetPredictLocally(predict);
                 if (predict)
                 {
@@ -263,10 +263,11 @@ namespace Assets.Scripts.Netcode
             kickFx?.ReconcilePredictedKicks(acknowledgedTick);
             kickFx?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
+            kickFx?.RestorePlayerBouncePosition();
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
-            bool predict = state.canPredict && completeHistory && !Blocked && movement.CanPredictNetworkMovement;
+            bool predict = state.canPredict && completeHistory && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.PlayerBounceActive != true;
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
             if (predict)

@@ -78,6 +78,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
     public void NotifyExternalPushed(Vector2 pushDir)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         pushDir = NormalizeCardinal(pushDir);
         if (pushDir == Vector2.zero)
             return;
@@ -99,6 +100,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private void ResetResolveState()
     {
         _resolveRoutine = null;
+        EmitNetworkBounce(transform.position, transform.position, 0, 0, false);
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
 
         ClearActiveBounceVisual(Vector2.zero);
 
@@ -114,6 +117,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
     private IEnumerator ResolveIfStuckRoutine(Vector2 pushDir)
     {
+        try
+        {
         yield return null;
 
         if (_move.isDead)
@@ -228,6 +233,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             _move.SetInputLocked(false, true);
 
         _resolveRoutine = null;
+        }
+        finally { EmitNetworkBounce(transform.position, transform.position, 0, 0, false); }
     }
 
     private IEnumerator MoveOneTile(Vector2 start, Vector2 end, float travelTime, Vector2 direction, float tileSize)
@@ -235,6 +242,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         float t = 0f;
         float arcHeight = Mathf.Max(0f, bounceArcHeightTiles) * Mathf.Max(0.0001f, tileSize);
         SetActiveBounceVisual(direction);
+        EmitNetworkBounce(start, end, travelTime, arcHeight, true);
 
         while (t < travelTime)
         {
@@ -256,9 +264,22 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
     private void TeleportWrappedBounce(Vector2 position, Vector2 direction)
     {
+        EmitNetworkBounce(position, position, 0, 0, true);
         SetActiveBounceVisual(direction);
         _rb.position = position;
         transform.position = position;
+    }
+
+    private void EmitNetworkBounce(Vector2 start, Vector2 end, float duration, float height, bool moving)
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer)
+            fx.ServerPlayerBounce(start, end, duration, height, moving);
+    }
+
+    public void PresentNetworkBounce(Vector2 direction, bool active)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
+        if (active) SetActiveBounceVisual(direction); else ClearActiveBounceVisual(direction);
     }
 
     private void SetActiveBounceVisual(Vector2 direction)

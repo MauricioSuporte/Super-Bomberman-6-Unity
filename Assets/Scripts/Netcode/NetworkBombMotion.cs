@@ -61,12 +61,14 @@ namespace Assets.Scripts.Netcode
 
         [Server]
         public void ServerEmitBombMotion(Bomb movingBomb, BombMotionKind kind, Vector2 start, Vector2 end,
-            float duration, float arcHeight, float carryHeight, bool moving, bool first)
+            float duration, float arcHeight, float carryHeight, bool moving, bool first, float curveDuration = 0)
         {
             if (movingBomb == null || !movingBomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return;
             var motion = new KickMotion { bombId = identity.netId, inputTick = TryGetComponent<NetworkPlayerInput>(out var input) ? input.CurrentInputTick : 0,
                 revision = movingBomb.NextNetworkMotionRevision(), kind = kind, rubber = movingBomb.IsRubberBomb, start = start, end = end,
-                duration = duration, arcHeight = arcHeight, carryHeight = carryHeight, moving = moving,
+                bounceSeed = movingBomb.RubberBounceSeed, bounceIndex = movingBomb.RubberBounceIndex,
+                bounceDuration = movingBomb.RubberBounceDuration, bounceHeight = movingBomb.RubberBounceHeight,
+                duration = duration, curveDuration = curveDuration, arcHeight = arcHeight, carryHeight = carryHeight, moving = moving,
                 first = first, serverTime = NetworkTime.localTime };
             if (GameplayLatencyDiagnostics.Enabled)
             {
