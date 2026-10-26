@@ -25,12 +25,16 @@ namespace Assets.Scripts.Netcode
     public struct CoopTileFrame
     {
         public Vector3Int cell; public int tile; public Color color; public Matrix4x4 matrix;
-        public bool Matches(CoopTileFrame other) => cell == other.cell && tile == other.tile && color == other.color && matrix == other.matrix;
+        public byte collisionType;
+        public int collisionSprite;
+        public bool Matches(CoopTileFrame other) => cell == other.cell && tile == other.tile && color == other.color && matrix == other.matrix &&
+            collisionType == other.collisionType && collisionSprite == other.collisionSprite;
     }
     public struct CoopTiles : NetworkMessage
     {
         public string scene, path;
-        public bool reset;
+        public bool reset, complete, collisionEnabled;
+        public Vector2 collisionOffset;
         public Vector3 position, scale;
         public Quaternion rotation;
         public Color color;
@@ -84,6 +88,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
             NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);
             NetworkClient.RegisterHandler<CoopStageStatus>(ApplyCoopStageStatus);
+            NetworkClient.RegisterHandler<CoopCollisions>(ApplyCoopCollisions);
         }
 
         void CoopSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -108,6 +113,8 @@ namespace Assets.Scripts.Netcode
             InitializeCoopCinematics();
             if (NetworkServer.active)
             {
+                Tilemap.tilemapTileChanged -= OnCoopTileChanged;
+                Tilemap.tilemapTileChanged += OnCoopTileChanged;
                 if (StageIntroTransition.Instance == null) GameMusicController.Instance?.PlayDefaultMusic();
                 return;
             }
@@ -143,7 +150,8 @@ namespace Assets.Scripts.Netcode
                 foreach (var sprite in root.GetComponentsInChildren<SpriteRenderer>(true))
                     if (!HasNetworkParent(sprite.transform)) sprite.forceRenderingOff = true;
             }
-            Debug.Log("[Coop] Client stage simulation disabled; awaiting server presentation: " + coopScene);
+            CreateCoopCollisionMaps();
+            Debug.Log("[Coop] Client stage simulation disabled; awaiting server presentation and query geometry: " + coopScene);
         }
 
         static bool KeepCoopPresentation(MonoBehaviour behaviour)
@@ -180,6 +188,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopWorld()
         {
+            ClearCoopCollisionWorld();
             ClearCoopSprites();
             coopLastSprites.Clear(); coopViews.Clear(); coopMaps.Clear(); coopLastTiles.Clear();
             coopTileScratch.Clear(); coopPeerBuffer.Clear(); coopChangedSprites.Clear();
@@ -202,6 +211,7 @@ namespace Assets.Scripts.Netcode
             if (Time.unscaledTime < coopNextFrame) return;
             using var scope = CoopPresentationMarker.Auto();
             coopNextFrame = Time.unscaledTime + 0.05f;
+            CaptureCoopCollisionState();
             var peers = coopPeerBuffer;
             peers.Clear();
             foreach (var peer in NetworkServer.connections.Values)
@@ -216,7 +226,8 @@ namespace Assets.Scripts.Netcode
                 SendCoopSprites(peer, new List<CoopSpriteFrame>(coopLastSprites.Values), Array.Empty<int>());
                 foreach (var map in coopMaps)
                     if (map.Value != null) SendCoopTiles(peer, map.Key, map.Value, true,
-                        coopLastTiles.TryGetValue(map.Key, out var cells) ? new List<CoopTileFrame>(cells.Values) : new());
+                        coopLastTiles.TryGetValue(map.Key, out var cells) ? new List<CoopTileFrame>(cells.Values) : ReadCoopTileFrames(map.Value));
+                SendCoopCollisionFrames(peer, new List<CoopColliderFrame>(coopLastCollisions.Values), Array.Empty<int>(), true);
             }
             if (Time.unscaledTime >= coopNextDiscover)
             {
@@ -279,11 +290,16 @@ namespace Assets.Scripts.Netcode
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
             foreach (int id in removed) coopLastSprites.Remove(id);
             SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
-            if (Time.unscaledTime >= coopNextTiles)
+            if (coopChangedCollisions.Count > 0 || coopRemovedCollisions.Count > 0)
+                foreach (var peer in peers) SendCoopCollisionFrames(peer, coopChangedCollisions, coopRemovedCollisions.ToArray(), false);
+            bool periodicTiles = Time.unscaledTime >= coopNextTiles;
+            if (periodicTiles) coopNextTiles = Time.unscaledTime + 0.25f;
+            foreach (var map in coopMaps)
             {
-                coopNextTiles = Time.unscaledTime + 0.25f;
-                foreach (var map in coopMaps) if (map.Value != null) CaptureCoopTiles(map.Key, map.Value, peers);
+                if (map.Value != null && (periodicTiles || coopDirtyMaps.Contains(map.Value) || CoopMapCollisionPoseChanged(map.Key, map.Value)))
+                    CaptureCoopTiles(map.Key, map.Value, peers);
             }
+            coopDirtyMaps.Clear();
         }
 
         int CatalogId<T>(T value, Dictionary<T, int> index) where T : UnityEngine.Object
@@ -334,8 +350,7 @@ namespace Assets.Scripts.Netcode
             {
                 var tile = map.GetTile(cell);
                 if (tile == null) continue;
-                var frame = new CoopTileFrame { cell = cell, tile = CatalogId(tile, coopTileIds),
-                    color = map.GetColor(cell), matrix = map.GetTransformMatrix(cell) };
+                var frame = ReadCoopTileFrame(map, cell);
                 current[cell] = frame;
                 if (!previous.TryGetValue(cell, out var old) || !frame.Matches(old)) changed.Add(frame);
             }
@@ -343,6 +358,7 @@ namespace Assets.Scripts.Netcode
                 if (!current.ContainsKey(cell)) changed.Add(new CoopTileFrame { cell = cell, tile = -1 });
             coopLastTiles[path] = current;
             coopTileScratch[path] = previous;
+            var pose = CaptureMapCollisionPose(map); coopMapCollisionPoses[path] = pose;
             // Map pose/color can change even without individual tile edits.
             const int batch = 48;
             for (int start = 0; start < Mathf.Max(1, changed.Count); start += batch)
@@ -352,7 +368,8 @@ namespace Assets.Scripts.Netcode
                 if (count > 0) changed.CopyTo(start, chunk, 0, count);
                 var message = new CoopTiles { scene = coopScene, path = path, reset = first && start == 0,
                     position = map.transform.position, rotation = map.transform.rotation, scale = map.transform.lossyScale,
-                    color = map.color, cells = chunk };
+                    color = map.color, cells = chunk, complete = start + count >= changed.Count,
+                    collisionEnabled = pose.enabled, collisionOffset = pose.offset };
                 foreach (var peer in peers) peer.Send(message);
             }
         }
@@ -360,10 +377,27 @@ namespace Assets.Scripts.Netcode
         void SendCoopTiles(NetworkConnectionToClient peer, string path, Tilemap map, bool reset, List<CoopTileFrame> cells)
         {
             const int batch = 48;
+            var pose = CaptureMapCollisionPose(map);
             for (int start = 0; start < Mathf.Max(1, cells.Count); start += batch)
                 peer.Send(new CoopTiles { scene = coopScene, path = path, reset = reset && start == 0,
                     position = map.transform.position, rotation = map.transform.rotation, scale = map.transform.lossyScale,
-                    color = map.color, cells = cells.GetRange(start, Mathf.Min(batch, cells.Count - start)).ToArray() });
+                    color = map.color, cells = cells.GetRange(start, Mathf.Min(batch, cells.Count - start)).ToArray(),
+                    complete = start + batch >= cells.Count, collisionEnabled = pose.enabled, collisionOffset = pose.offset });
+        }
+
+        CoopTileFrame ReadCoopTileFrame(Tilemap map, Vector3Int cell)
+        {
+            var type = map.GetColliderType(cell);
+            return new CoopTileFrame { cell = cell, tile = CatalogId(map.GetTile(cell), coopTileIds), color = map.GetColor(cell),
+                matrix = map.GetTransformMatrix(cell), collisionType = (byte)type,
+                collisionSprite = type == Tile.ColliderType.Sprite ? CoopSpriteId(map.GetSprite(cell)) : -1 };
+        }
+
+        List<CoopTileFrame> ReadCoopTileFrames(Tilemap map)
+        {
+            var frames = new List<CoopTileFrame>();
+            foreach (var cell in map.cellBounds.allPositionsWithin) if (map.HasTile(cell)) frames.Add(ReadCoopTileFrame(map, cell));
+            return frames;
         }
 
         bool CanApplyCoop(string scene) => !NetworkServer.active && IsCoopStage && coopCatalog != null && scene == coopScene;
@@ -378,6 +412,7 @@ namespace Assets.Scripts.Netcode
             }
             foreach (var view in coopViews.Values) if (view != null) Destroy(view.gameObject);
             coopViews.Clear();
+            coopCollisionObjectsReceived = false;
         }
 
         void ApplyCoopSprites(CoopSprites message)
@@ -431,6 +466,7 @@ namespace Assets.Scripts.Netcode
                 map.SetColor(cell.cell, cell.color);
                 map.SetTransformMatrix(cell.cell, cell.matrix);
             }
+            ApplyCoopCollisionTiles(message);
         }
 
         static T At<T>(T[] values, int index) where T : UnityEngine.Object => index >= 0 && index < values.Length ? values[index] : null;

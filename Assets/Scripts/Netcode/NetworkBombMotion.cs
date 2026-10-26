@@ -365,6 +365,7 @@ namespace Assets.Scripts.Netcode
             tileMotions[id] = new TileMotionView { map = map, tile = tile, visual = ghost, from = ghost.transform.position, to = ghost.transform.position,
                 originBlocker = CreateConfirmedTileBlocker(ghost.transform.position, map) };
             map.SetTile(cell, null);
+            BombermanNetworkManager.RefreshApprovedCoopCollisionCell(map, cell);
         }
 
         [ClientRpc]
@@ -387,7 +388,11 @@ namespace Assets.Scripts.Netcode
         public void ReceiveTileEnd(uint id, Vector3Int cell, bool destroyed)
         {
             if (isServer || !tileMotions.TryGetValue(id, out var state)) return;
-            if (!destroyed && state.map != null) state.map.SetTile(cell, state.tile);
+            if (!destroyed && state.map != null)
+            {
+                state.map.SetTile(cell, state.tile);
+                BombermanNetworkManager.RefreshApprovedCoopCollisionCell(state.map, cell);
+            }
             ReleaseTileView(state);
             tileMotions.Remove(id);
         }

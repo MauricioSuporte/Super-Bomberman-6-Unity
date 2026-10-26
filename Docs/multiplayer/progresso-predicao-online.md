@@ -17,8 +17,9 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 - Branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen sujos do usuário.
 - Última publicação concluída: `9a8dbca7c`, protocolo 28, CI 40272110810 sucesso.
-- A05 Black validado no diretório de trabalho, protocolo 29, a salvar com skip CI
-  antes de R02. Runner livre; não iniciar CI antes de preservar seus relatórios.
+- A05 Black salvo/enviado em `a9c426883` com skip CI, protocolo 29 não publicado.
+  R02 implementado no protocolo 30; suíte completa 169/169 passou.
+  Proteção final para sprite de colisão ausente validada: Coop 9/9.
 - C# final sem warnings/erros; C# alterados verificados em UTF-8/BOM e CRLF.
 - Unity mais recente: 162/162 na suíte completa com A05 Black e mudanças de NPI.
   C# incremental sem warnings/erros; Python 40/40 após protocolo 29.
@@ -101,7 +102,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - Próximo: salvar A05 com skip CI; R02 colisão conhecida no co-op antes da próxima
   publicação. Não afirmar que o plano inteiro terminou.
 
-## R02: pré-requisito de colisão do mundo co-op (investigação, sem código)
+## R02: pré-requisito de colisão do mundo co-op (código em desenvolvimento)
 
 - Confirmado por código e assets: CoopSceneLoaded desabilita colliders e bodies
   de objetos de cena sem NetworkIdentity. Stage_1-1, Stage_3-4 e Stage_3-6 têm
@@ -122,8 +123,29 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
   trigger/active), talvez offset; wire exige protocolo 30 ao implementar.
 - Verificar composites/figuras não Tilemap e evitar extrapolar sobre geometria
   não suportada. Busca por CompositeCollider2D nos Scenes atuais não retornou.
-- Próximo: helper de query, integração, testes de parede/pass, delta/pose/collider
-  habilitado e ausência de Startup/gameplay; compilar/Unity antes de publicar.
+- Novos helpers `CoopCollisionViews.cs` e `OnlineCoopCollision.cs`, com .meta.
+  Tilemaps de query usam Tiles simples com dados de colisão aprovados pelo servidor;
+  originais continuam desativados, sem renderer/Mono/gameObject Startup nos clones.
+- Wire 30: CoopTileFrame inclui tipo/sprite de colisão; CoopTiles inclui complete,
+  collisionEnabled e offset. Novo CoopCollisions transmite boxes/circles/capsules
+  de cenário (PilarBlock/Door encontrados em Stage_3-4/3-6), com deltas/remoção.
+- Predição aguarda mapas e snapshot completo de objetos; formas ativas não
+  suportadas/composites suspendem predição, mas inputs seguem para o servidor.
+- Server escuta Tilemap.tilemapTileChanged para enviar mudanças no tick de mundo
+  (20Hz) em vez de esperar a varredura periódica (4Hz). Pose/collider da map também
+  é verificada por tick. Inicial sem cache lê tiles reais, em vez de reset vazio.
+- Box props têm dados aprovados de pose/escala/offset/enabled; nenhum script
+  original reativado. Collider sem suporte ativo é fallback autoritativo.
+- Tile motions aprovados da Yellow atualizam a query imediatamente; blockers
+  de origem/destino existentes continuam responsáveis pelas reservas.
+- ClearCoopWorld remove views/tiles gerados e inscrição estática. Helpers sem
+  singleton/manager adicional. Manager existente coordena prontidão/stream.
+- C# passou (70547 só 6 warnings pré-existentes Mirror; 55973 incremental zero).
+  Último refactor extraiu ApplyCoopCollisionData/CoopGeometryStateReady para testar
+  carregamento completo e fallback. Ainda não houve testes Unity de R02.
+- Próximo: testes parede/pass e callbacks ausentes, primitivas/pose/enabled,
+  readiness full/reset/unsupported/remove, wire novo/protocolo 29; C#/UTF-8/Unity
+  e publicar 30 com A05 após validação. Não marcar R02 concluído.
 
 ## Checklist por ID
 
@@ -153,7 +175,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [ ] C09: mecanismos e tiles especiais.
 - [ ] C10: eventos FallingBomb/powder/roof/Sudden Death.
 - [ ] R01: observadores.
-- [ ] R02: mundo co-op.
+- [x] R02: geometria aprovada segura e stream; testes 169 + 9; manual/trajetórias C/R pendentes.
 - [ ] R03: apresentação de inimigos.
 - [ ] R04: forças impostas por inimigos.
 - [ ] R05: projéteis remotos.

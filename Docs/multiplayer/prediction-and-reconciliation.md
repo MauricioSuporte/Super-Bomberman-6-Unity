@@ -527,6 +527,31 @@ not start gameplay coroutines on clients. Other actors' pushes remain authority
 results and still need the R04 presentation audit.
 
 Validation: 162/162 Unity tests, 40 Python tests and C# compilation passed without
-introduced warnings. Two-peer validation is pending. The co-op world currently
-disables scene tilemap colliders; R02 must supply safe known-geometry queries
-before this milestone is published together with the next protocol.
+introduced warnings. Two-peer validation is pending. The co-op world disables original scene colliders; protocol 30 supplies separate
+server-approved query geometry before publishing this dash to co-op clients.
+
+## Co-op prediction collision geometry (protocol 30)
+
+Pure co-op clients keep original scene scripts, rigidbodies and colliders
+disabled. Separate native query shapes receive approved server geometry:
+TilemapCollider2D views use plain generated Tile assets, with no renderer,
+MonoBehaviour or TileBase Startup gameplay; boxes/circles/capsules mirror
+server-approved pose, size, offset, tag, layer and enabled state. Destructible
+pass keeps using acknowledged motor capabilities against those tags.
+
+Initial map chunks and collider snapshots must complete before owner prediction
+starts. Unknown active shapes or unsupported composites suspend prediction,
+while original inputs continue to the server. Scene changes dispose generated
+tiles/views and unsubscribe tile notifications. Original scene components never
+regain gameplay authority on clients.
+
+Server tile changes and collider/pose changes are captured on the 20 Hz world
+tick; periodic tile scans remain as a fallback. Approved Yellow tile-motion
+events update query cells immediately, preserving the existing motion blockers.
+This is current approved geometry, not speculation about future stage
+mechanisms, moving obstacles or destruction. Those trajectories still require
+the separate C/R audits and manual two-peer validation.
+
+Validation: 169/169 full online EditMode tests passed, followed by 9/9 co-op
+tests after the missing collision-sprite readiness guard. C# compiled with zero
+warnings/errors, and 40 Python tests passed. New two-peer captures remain pending.

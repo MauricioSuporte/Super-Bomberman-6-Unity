@@ -114,6 +114,18 @@ rejected actions need their appropriate explicit transition. Never let a queued
 stop terminate an unfinished arc, or let stale messages resurrect a completed
 sequence. Pause freezes motion; cancellation/death/scene changes release it.
 
+## Check collision geometry before predicting
+
+A co-op scene disables original client gameplay components. Never reactivate
+them to make Physics2D prediction work. Use server-approved native query views
+through the existing co-op world coordinator; preserve collider tags/layers for
+acknowledged pass capabilities. Do not clone original TileBase instances: tile
+Startup can spawn gameplay objects. Generate plain collision tiles instead.
+Wait for complete map/collider snapshots and fall back to authority for unknown
+active shapes, without dropping the real input command. Refresh queries from
+approved tile-motion events and remove them on scene exit. This establishes
+known geometry; it does not predict autonomous mechanisms or terrain destruction.
+
 ## Diagnose what is actually delayed
 
 Compare matching build/protocol captures and similar action sequences. Separate

@@ -257,7 +257,8 @@ public partial class MovementController : MonoBehaviour, IKillable
         externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
         externalVisualSuppressed && !CanPredictGloveCarry ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
         IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :
-        !MountedPredictionContextReady ? "mount_context_pending" : !NetworkConveyorContextReady ? "conveyor_context_pending" : null;
+        !MountedPredictionContextReady ? "mount_context_pending" : !Assets.Scripts.Netcode.BombermanNetworkManager.ClientPredictionGeometryReady ? "scene_geometry_pending" :
+        !NetworkConveyorContextReady ? "conveyor_context_pending" : null;
 
     private bool MountedPredictionContextReady
     {

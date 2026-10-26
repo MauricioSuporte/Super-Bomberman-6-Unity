@@ -3,12 +3,132 @@ using System.Collections.Generic;
 using Assets.Scripts.Netcode;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void CoopTileQueriesUseSafeTilesAndPreserveReplayPassAndApprovedPose()
+    {
+        var oldMode = NetSync.Mode;
+        var grid = new GameObject("SourceCollisionGrid", typeof(Grid)); grid.transform.position = new Vector3(20000, 20000);
+        var sourceObject = new GameObject("Destructibles", typeof(Tilemap), typeof(TilemapCollider2D)); sourceObject.transform.SetParent(grid.transform, false);
+        var sourcePrefab = new GameObject("TileStartupObject"); sourcePrefab.SetActive(false);
+        var sourceTile = ScriptableObject.CreateInstance<Tile>(); sourceTile.colliderType = Tile.ColliderType.Grid; sourceTile.gameObject = sourcePrefab;
+        var actor = new GameObject("CoopCollisionReplay"); actor.SetActive(false); CoopTileCollisionView view = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            sourceObject.layer = LayerMask.NameToLayer("Stage"); sourceObject.tag = "Destructibles";
+            var source = sourceObject.GetComponent<Tilemap>(); source.SetTile(Vector3Int.zero, sourceTile);
+            var sourceCollider = sourceObject.GetComponent<TilemapCollider2D>(); sourceCollider.enabled = false;
+            Assert.IsTrue(CoopTileCollisionView.TryCreate(source, null, out view));
+            view.SetCell(Vector3Int.zero, Tile.ColliderType.Grid, null, Matrix4x4.identity); view.SyncPose(true, Vector2.zero); view.Refresh(); Physics2D.SyncTransforms();
+            Vector2 center = source.GetCellCenterWorld(Vector3Int.zero);
+            Assert.AreSame(view.Collider, Physics2D.OverlapPoint(center, LayerMask.GetMask("Stage")));
+            Assert.IsFalse(sourceCollider.enabled); Assert.IsNull(view.Map.GetComponent<TilemapRenderer>());
+            Assert.IsEmpty(view.Map.GetComponentsInParent<MonoBehaviour>()); Assert.IsNull(view.Map.GetInstantiatedObject(Vector3Int.zero));
+            var copied = (Tile)view.Map.GetTile(Vector3Int.zero); Assert.AreNotSame(sourceTile, copied); Assert.IsNull(copied.gameObject);
+            view.SetCell(Vector3Int.right * 10, Tile.ColliderType.Sprite, null, Matrix4x4.identity);
+            Assert.IsFalse(view.Ready, "An unresolved approved collision sprite cannot silently become traversable ground.");
+            view.SetCell(Vector3Int.right * 10, Tile.ColliderType.None, null, Matrix4x4.identity); Assert.IsTrue(view.Ready);
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>(); var body = actor.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var movement = actor.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            movement.obstacleMask = LayerMask.GetMask("Stage"); movement.RefreshObstacleContactFilter();
+            actor.SetActive(true); movement.SetNetworkTickDriven(true); movement.SetPredictLocally(true);
+            var state = new MovementController.NetworkMovementState { position = center - Vector2.right, facing = Vector2.right,
+                worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 40; i++) movement.SimulateNetworkMovementTick(8, replay: true);
+            Assert.Less(body.position.x, center.x, "A hidden original collider cannot make predicted walking ignore the approved wall.");
+            state.movementCapabilities = 2; movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 40; i++) movement.SimulateNetworkMovementTick(8, replay: true);
+            Assert.Greater(body.position.x, center.x + 0.5f, "Query geometry keeps the source tag used by acknowledged destructible pass.");
+            grid.transform.position += Vector3.right * 3; view.SyncPose(true, Vector2.zero); Physics2D.SyncTransforms();
+            Assert.IsNull(Physics2D.OverlapPoint(center, LayerMask.GetMask("Stage")));
+            Assert.AreSame(view.Collider, Physics2D.OverlapPoint(center + Vector2.right * 3, LayerMask.GetMask("Stage")));
+            view.SetCell(Vector3Int.zero, Tile.ColliderType.None, null, Matrix4x4.identity); view.Refresh(); Physics2D.SyncTransforms();
+            Assert.IsNull(Physics2D.OverlapPoint(center + Vector2.right * 3, LayerMask.GetMask("Stage")));
+        }
+        finally
+        {
+            view?.Dispose(); NetSync.Mode = oldMode; Object.DestroyImmediate(actor); Object.DestroyImmediate(grid);
+            Object.DestroyImmediate(sourceTile); Object.DestroyImmediate(sourcePrefab);
+        }
+    }
+
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
+    public void CoopPrimitiveQueriesFollowApprovedPoseAndDisableWithoutSceneScripts(int kind)
+    {
+        var sourceObject = new GameObject("DoorQuerySource"); CoopColliderView view = null;
+        try
+        {
+            sourceObject.layer = LayerMask.NameToLayer("Stage"); sourceObject.tag = "Destructibles";
+            sourceObject.transform.position = new Vector3(21000 + kind * 5, 21000);
+            Collider2D source = kind == 1 ? sourceObject.AddComponent<BoxCollider2D>() : kind == 2 ? sourceObject.AddComponent<CircleCollider2D>() : sourceObject.AddComponent<CapsuleCollider2D>();
+            var body = sourceObject.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var frame = CoopColliderFrame.Capture(source); Assert.IsTrue(frame.enabled); Assert.AreEqual(kind, frame.kind);
+            source.enabled = false; view = new CoopColliderView(frame, null); Physics2D.SyncTransforms();
+            Assert.AreSame(view.Collider, Physics2D.OverlapPoint(frame.position, LayerMask.GetMask("Stage")));
+            Assert.IsEmpty(view.Collider.GetComponents<MonoBehaviour>()); Assert.IsNull(view.Collider.GetComponent<Rigidbody2D>());
+            Vector3 old = frame.position; sourceObject.transform.position += Vector3.right * 3; source.enabled = true;
+            frame = CoopColliderFrame.Capture(source); source.enabled = false; view.Apply(frame); Physics2D.SyncTransforms();
+            Assert.IsNull(Physics2D.OverlapPoint(old, LayerMask.GetMask("Stage")));
+            Assert.AreSame(view.Collider, Physics2D.OverlapPoint(frame.position, LayerMask.GetMask("Stage")));
+            body.simulated = false; source.enabled = true; frame = CoopColliderFrame.Capture(source); Assert.IsFalse(frame.enabled);
+            view.Apply(frame); Assert.IsFalse(view.Collider.enabled);
+        }
+        finally { view?.Dispose(); Object.DestroyImmediate(sourceObject); }
+    }
+
+    [Test]
+    public void CoopGeometryWaitsForCompleteSnapshotAndFallsBackForUnknownShapes()
+    {
+        var managerObject = new GameObject("GeometryStateRegression"); managerObject.SetActive(false);
+        var viewRoot = new GameObject("GeometryStateViews");
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            var manager = managerObject.AddComponent<BombermanNetworkManager>(); var type = typeof(BombermanNetworkManager);
+            type.GetField("coopViewRoot", flags).SetValue(manager, viewRoot); type.GetField("coopCollisionMapsSupported", flags).SetValue(manager, true);
+            var apply = type.GetMethod("ApplyCoopCollisionData", flags); var ready = type.GetProperty("CoopGeometryStateReady", flags);
+            var frame = new CoopColliderFrame { id = 1, kind = 1, layer = LayerMask.NameToLayer("Stage"), tag = "Untagged", enabled = true,
+                position = new Vector3(22000, 22000), scale = Vector3.one, rotation = Quaternion.identity, size = Vector2.one };
+            apply.Invoke(manager, new object[] { new CoopCollisions { reset = true, frames = new[] { frame } } }); Assert.IsFalse((bool)ready.GetValue(manager));
+            apply.Invoke(manager, new object[] { new CoopCollisions { complete = true } }); Assert.IsTrue((bool)ready.GetValue(manager));
+            var unsupported = frame; unsupported.id = 2; unsupported.kind = 0;
+            apply.Invoke(manager, new object[] { new CoopCollisions { complete = true, frames = new[] { unsupported } } }); Assert.IsFalse((bool)ready.GetValue(manager));
+            apply.Invoke(manager, new object[] { new CoopCollisions { complete = true, removed = new[] { 1, 2 } } }); Assert.IsTrue((bool)ready.GetValue(manager));
+            var views = (System.Collections.IDictionary)type.GetField("coopCollisionViews", flags).GetValue(manager); Assert.AreEqual(0, views.Count);
+            apply.Invoke(manager, new object[] { new CoopCollisions { reset = true } }); Assert.IsFalse((bool)ready.GetValue(manager));
+        }
+        finally { Object.DestroyImmediate(managerObject); if (viewRoot != null) Object.DestroyImmediate(viewRoot); }
+    }
+
+    [Test]
+    public void CoopTileGeometryAndPrimitiveFramesRoundTripWithCompletionAndShapeChanges()
+    {
+        var frame = new CoopTileFrame { cell = new Vector3Int(1, 2), tile = 7, collisionType = (byte)Tile.ColliderType.Grid,
+            collisionSprite = -1, matrix = Matrix4x4.identity };
+        var changed = frame; changed.collisionType = (byte)Tile.ColliderType.None; Assert.IsFalse(frame.Matches(changed));
+        var tiles = new CoopTiles { scene = "Stage_1-1", path = "Grid/Destructibles", reset = true, complete = true,
+            collisionEnabled = true, collisionOffset = Vector2.right * 0.1f, cells = new[] { frame } };
+        using var writer = NetworkWriterPool.Get(); writer.Write(tiles);
+        using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var copy = reader.Read<CoopTiles>();
+        Assert.IsTrue(copy.complete); Assert.IsTrue(copy.collisionEnabled); Assert.AreEqual(tiles.collisionOffset, copy.collisionOffset);
+        Assert.IsTrue(frame.Matches(copy.cells[0]));
+        var shape = new CoopColliderFrame { id = 12, kind = 3, enabled = true, scale = Vector3.one, rotation = Quaternion.identity, size = Vector2.one, tag = "Untagged" };
+        using var shapeWriter = NetworkWriterPool.Get(); shapeWriter.Write(new CoopCollisions { reset = true, complete = true, frames = new[] { shape } });
+        using var shapeReader = NetworkReaderPool.Get(shapeWriter.ToArraySegment()); var shapeCopy = shapeReader.Read<CoopCollisions>();
+        Assert.IsTrue(shapeCopy.complete); Assert.IsTrue(shape.Matches(shapeCopy.frames[0]));
+    }
+
     [Test]
     public void BlackDashPredictionIsBoundedConfirmsHoldAndReleasesThroughSnapshot()
     {
@@ -1711,6 +1831,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 29, false)]
     [TestCase("0.5.0", 28, false)]
     [TestCase("0.5.0", 27, false)]
     [TestCase("0.5.0", 26, false)]
