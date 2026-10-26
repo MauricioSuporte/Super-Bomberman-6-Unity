@@ -19,22 +19,22 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Servidor e atualizador publicados:** protocolo42, commit `a10595b74`, pipeline
-  [40413037189](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40413037189)
+- **Servidor e atualizador publicados:** protocolo43, commit `d993fe122`, pipeline
+  [40415169769](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40415169769)
   concluído com sucesso, incluindo deploy, updater e artefatos.
-- **Último lote publicado:** VFX de explosão já recebidos sobrevivem à inatividade
-  ou destruição do owner, usando prefab/dados no manager e cleanup de scene/client.
-  Inclui continuidade41. Validação325/325 Unity, C#0 erros/avisos novos,
-  Python40/40, UTF-8/BOM e diffcheck passaram. Eventos sem owner seguem pendentes.
-- **Lote43 validado, publicação pendente:** teto Battle8 e frames powder Battle3 aprovados na timeline;
-  gates impedem relógio/reset/ignição nativos no client. C#0/0, Python40/40; Unity332/332 passou.
-- **Próximos itens:** publicar43, demais R07, barco/contexto, forças no motor/replay,
+- **Último lote publicado:** teto Battle8 e frames powder Battle3 aprovados na
+  timeline, sem relógio/reset/ignição/hitboxes nativos no client. Inclui VFX42 e
+  continuidade41. Validação332/332 Unity, C#0 erros/avisos novos, Python40/40,
+  UTF-8/BOM/metas e diffcheck passaram. Eventos de bomba sem owner seguem pendentes.
+- **Lote44 validado, publicação pendente:** caminho e voz de SuddenDeath decididos só na autoridade,
+  espera de música aprovada no wire. C#0/0, Python40/40; Unity335/335 passou.
+- **Próximos itens:** concluir44, demais R07, barco/contexto, forças no motor/replay,
   blackout/tiles e demais C/R. A14 continua com matriz/manual pendentes.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote42 commitado em `a10595b74`, CI40413037189; alterações43 validadas, ainda sem commit.
+  do usuário e o Unity aberto. Lote42 commitado em `a10595b74`, CI40413037189; Lote43 em `d993fe122`, CI40415169769; alterações44 sem commit.
 
 ## Como acompanhar
 
@@ -43,6 +43,8 @@ implementação concluída de trabalho parcial. Validação manual fica separada
   abordagem de cada ID e riscos. O baseline de análise inicial é histórico.
 - **[Notas de implementação](prediction-and-reconciliation.md):** comportamento
   técnico e limites de cada solução efetivamente implementada.
+- **[Matriz de validação](matriz-validacao-predicao-online.md):** roteiro manual
+  por ID, critérios e evidências; cenários ainda não executados entre dois peers.
 - **[Pipelines](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions):**
   status de build/publicação. Código enviado não implica servidor já atualizado.
 
@@ -183,7 +185,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: parcial43: descoberta e fixtures COM corrigidas,332 testes combinados aprovados; matriz completa/manual pendentes.
+- [ ] A14: parcial44: descoberta e fixtures COM corrigidas,335 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
@@ -193,7 +195,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] C07: pusher.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: mecanismos e tiles especiais.
-- [ ] C10: parcial36 FallingBomb testado/publicado; teto e powder43 aprovados/testados (332 casos); SuddenDeath/manual pendentes.
+- [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
 - [ ] R03: apresentação de inimigos.
@@ -202,7 +204,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R06: bosses/bombers.
 - [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
 - [ ] R08: cenário móvel/ambiental.
-- [ ] Consolidar skill, notas e matriz de validação.
+- [ ] Consolidar skill e notas (atualizadas até44); matriz manual criada, execução e consolidação final pendentes.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
 registrar separadamente validação manual ainda não realizada. Hipóteses de
@@ -1094,3 +1096,54 @@ serialização, fase futura/pausa, revisão/scene/path/bounds, fim/cleanup e pis
 da pólvora restaurados sem ignição/hitboxes no client. Referências nativas
 confirmadas somente BattleMode_3 e BattleMode_8; nenhum YAML alterado.
 Próximo: commit/enviar43, confirmar CI. C10 continua parcial por SuddenDeath/manual.
+
+
+43 enviado: d993fe122 / CI40415169769 em andamento;42 é último deploy confirmado.
+44 C10 em implementação: client copia path aprovado de SuddenDeath sem sortear
+caminho/canto/rotação e não inicia cleanup nativo de Revenge. Voz continua sorteada
+só na autoridade; duração de espera de música é transmitida em BattleFeedback.
+Envio begin movido para a mesma coroutine de áudio após a escolha original da voz,
+preservando a ordem nativa dos sorteios. Client não sorteia voz para temporizar.
+Validação de begin/path/duração e drop somente após path recebido. Protocolo44.
+Três testes novos escritos + wire existente ampliado; ainda não executados Unity.
+C# exec61287 em andamento. Aguardar CI43 liberar runner antes de copiar44.
+Ainda não corrige timestamp/curva de queda, commit de terreno, late join, etc.
+C10 e contagem12 concluídos/13 parciais/8 pendentes permanecem iguais.
+
+
+44 C# inicial passou sem erros/avisos novos (rebuild mostrou6 avisos antigos
+Mirror). Wire de BattleFeedback também testa duration2.75. Testes esperados335
+(332 anteriores +3 novos). Resultado Unity44 não presumido; runner ocupado CI43.
+
+
+44 checagens locais finais: C#0/0 no incremental, Python40/40, UTF-8/BOM e
+diffcheck passaram; novo wire duration também testado por roundtrip existente.
+Ainda não executado Unity44. Auditoria C10: fall-start aprovado não comprova por
+si toda decisão de terreno no pouso; precisa evento de commit e timeline alinhada,
+sem deixar colisão/visual divergirem. Não implementar isso por inferência nem
+declarar o problema resolvido pela remoção do RNG client. CI43 ainda compilava.
+
+
+44 diagnósticos opt-in acrescentados: sudden_death_begin inclui path_count,
+hash estável de coordenadas (sem RNG/instanceId/hash de plataforma) e music_wait;
+sudden_death_drop_begin/finished incluem célula, posição e duração inicial.
+Role/build/protocolo/timeline já vêm do logger comum. Permitem futuras capturas;
+ainda não há comparação real de peers nem ganho de latência medido. Debug flow
+client indica path aprovado em vez de imprimir um padrão local inexistente.
+CI43 já concluiu builds e estava publicando servidor; aguardar job todo terminar.
+
+
+CI43 COMPLETO/sucesso confirmado. Copiados5 paths próprios44 ao runner livre.
+Executando OnlineRoom + COM: exec63361,
+Build/CI/PredictionSuddenDeath44Tests.xml e Logs/CI/PredictionSuddenDeath44Tests.log.
+Esperado335 (OnlineRoom243 + COM92), conferir XML; não presumir sucesso.
+44 ainda sem commit,43 é último deploy confirmado. Fontes/TitleScreen preservados.
+
+
+44 FINAL:335/335 Unity (OnlineRoom243 + COM92), C#0 erros/avisos novos,
+Python40/40 e UTF-8/BOM/diffcheck passaram. Três casos novos validam path sem
+RNG, wait de música aprovado sem sorteio client e begin inválido/drop sem path;
+wire existente preserva duration e campos de expulsão. Relatórios copiados em
+Logs/PredictionSuddenDeath44Tests.*;5 tracked próprios do runner restaurados.
+Matriz manual por33 IDs criada e ligada ao checkpoint/skill; nenhum cenário
+manual executado. Sem alteração de scene/prefab. Próximo: commit/enviar44 e CI.

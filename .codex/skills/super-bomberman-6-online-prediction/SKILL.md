@@ -53,6 +53,13 @@ the player transform timeline. A current-state heartbeat lets late observers
 recover even when the open state has null tiles. Do not start an ignition/damage
 routine merely to reproduce its animation; restore cached visual state on exit.
 
+Do not draw a client-side random result just to overwrite it with an approved
+path or to derive an audio wait. Copy the approved path and transmit the actual
+wait chosen by the authority. Preserve the authority's original RNG order when
+moving event publication. Diagnostic path fingerprints must use stable coordinate
+arithmetic, not Unity RNG, entity ids or platform hashes. An approved fall start
+alone does not establish its eventual terrain outcome or complete its timeline.
+
 ## Extend the existing owners
 
 - NetworkPlayerInput samples local hardware slot 1, independent of assigned P1-P6.
@@ -232,6 +239,11 @@ input tick, segment duration and displacement to useful events. Do not infer
 latency percentiles for an ability that the capture did not instrument.
 
 ## Validate the behavior and its limits
+
+Use the [manual validation matrix](../../../Docs/multiplayer/matriz-validacao-predicao-online.md)
+for per-ID scenarios and evidence. Its existence is not a completed test run;
+record actual roles/builds/captures in the progress checkpoint separately from
+implementation and automated results.
 
 Use the existing OnlineRoomEditModeTests fixtures for immediate presentation,
 confirmation/rejection, replay, uint revisions, stale presenters, early/late arc

@@ -11,6 +11,75 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void SuddenDeathClientCopiesApprovedPathWithoutDrawingGameplayRandom()
+    {
+        var oldMode = NetSync.Mode; var oldRandom = Random.state;
+        var actor = new GameObject("ApprovedSuddenDeathPath"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            var controller = actor.AddComponent<BattleSuddenDeathController>();
+            var path = new[] { new Vector3Int(2, 3), new Vector3Int(1, 3), new Vector3Int(1, 2) };
+            Random.InitState(418); float expectedNext = Random.value; Random.InitState(418);
+            var initialize = typeof(BattleSuddenDeathController).GetMethod("InitializeClosingPath", flags);
+            initialize.Invoke(controller, new object[] { path });
+            Assert.AreEqual(expectedNext, Random.value, "An approved path must not first draw another drop pattern/corner/direction on the client.");
+            var actual = (List<Vector3Int>)typeof(BattleSuddenDeathController).GetField("suddenDeathPath", flags).GetValue(controller);
+            CollectionAssert.AreEqual(path, actual); path[0] = Vector3Int.zero; Assert.AreEqual(new Vector3Int(2, 3), actual[0]);
+            initialize.Invoke(controller, new object[] { new[] { Vector3Int.left } }); CollectionAssert.AreEqual(new[] { Vector3Int.left }, actual);
+        }
+        finally { Object.DestroyImmediate(actor); NetSync.Mode = oldMode; Random.state = oldRandom; }
+    }
+
+    [Test]
+    public void SuddenDeathClientUsesApprovedMusicWaitWithoutDrawingAnotherVoice()
+    {
+        var oldMode = NetSync.Mode; var oldRandom = Random.state; var oldMusic = GameMusicController.Instance;
+        var actor = new GameObject("ApprovedSuddenDeathAudio"); actor.SetActive(false);
+        var musicObject = new GameObject("SuddenDeathAudioHost"); musicObject.SetActive(false);
+        var voice = AudioClip.Create("HurryUpTestVoice", 8000, 1, 8000, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        System.Collections.IEnumerator routine = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; GameMusicController.Instance = musicObject.AddComponent<GameMusicController>();
+            var controller = actor.AddComponent<BattleSuddenDeathController>();
+            typeof(BattleSuddenDeathController).GetField("hurryUpVoices", flags).SetValue(controller, new[] { voice, voice });
+            Random.InitState(623); float expectedNext = Random.value; Random.InitState(623);
+            routine = (System.Collections.IEnumerator)typeof(BattleSuddenDeathController).GetMethod("PlayHurryUpAndResumeMusic", flags)
+                .Invoke(controller, new object[] { 50f, 2.75f });
+            Assert.IsTrue(routine.MoveNext()); Assert.IsInstanceOf<WaitForSeconds>(routine.Current);
+            Assert.AreEqual(2.75f, (float)typeof(WaitForSeconds).GetField("m_Seconds", flags).GetValue(routine.Current));
+            Assert.AreEqual(expectedNext, Random.value, "Only the authority selects a hurry-up voice; clients use its sound event and approved music wait.");
+        }
+        finally
+        {
+            (routine as System.IDisposable)?.Dispose(); Object.DestroyImmediate(actor); Object.DestroyImmediate(musicObject); Object.DestroyImmediate(voice);
+            GameMusicController.Instance = oldMusic; NetSync.Mode = oldMode; Random.state = oldRandom;
+        }
+    }
+
+    [Test]
+    public void SuddenDeathClientRejectsIncompleteBeginAndDropBeforeApprovedPath()
+    {
+        var oldMode = NetSync.Mode;
+        var actor = new GameObject("SuddenDeathInvalidBegin"); actor.SetActive(false);
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; var controller = actor.AddComponent<BattleSuddenDeathController>();
+            controller.ApplyNetworkDrop(false, Vector3Int.zero, 0, null, 0);
+            controller.ApplyNetworkDrop(true, Vector3Int.zero, 50, null, 1);
+            controller.ApplyNetworkDrop(true, Vector3Int.zero, 50, new Vector3Int[1025], 1);
+            controller.ApplyNetworkDrop(true, Vector3Int.zero, float.NaN, new[] { Vector3Int.zero }, 1);
+            controller.ApplyNetworkDrop(true, Vector3Int.zero, 50, new[] { Vector3Int.zero }, float.NaN);
+            controller.ApplyNetworkDrop(true, Vector3Int.zero, 50, new[] { Vector3Int.zero }, -1);
+            Assert.IsFalse(controller.SuddenDeathStarted, "Invalid payloads must return before UI, coroutines, RNG or gameplay cleanup.");
+        }
+        finally { Object.DestroyImmediate(actor); NetSync.Mode = oldMode; }
+    }
+
+    [Test]
     public void PowderClientCannotIgniteOrSpawnNativeDamageHitboxes()
     {
         var oldMode = NetSync.Mode;
@@ -2255,7 +2324,7 @@ public sealed class OnlineRoomEditModeTests
         var path = new[] { new Vector3Int(-6, 4, 0), new Vector3Int(-5, 4, 0) };
         using var writer = NetworkWriterPool.Get();
         writer.Write(new BattleFeedback { scene = "BattleMode_1", kind = 6, netId = 42,
-            direction = Vector2.left, value = 1.25f, steps = 3, cell = path[0], path = path });
+            direction = Vector2.left, value = 1.25f, duration = 2.75f, steps = 3, cell = path[0], path = path });
         using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
         var result = reader.Read<BattleFeedback>();
         Assert.AreEqual("BattleMode_1", result.scene);
@@ -2263,6 +2332,7 @@ public sealed class OnlineRoomEditModeTests
         Assert.AreEqual(6, result.kind);
         Assert.AreEqual(Vector2.left, result.direction);
         Assert.AreEqual(1.25f, result.value);
+        Assert.AreEqual(2.75f, result.duration);
         Assert.AreEqual(3, result.steps);
         Assert.AreEqual(path[0], result.cell);
         CollectionAssert.AreEqual(path, result.path);

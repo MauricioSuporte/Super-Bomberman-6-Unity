@@ -435,19 +435,21 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return Mathf.Max(0f, GameManager.Instance.BattleTimeRemainingSeconds);
     }
 
-    public void ApplyNetworkDrop(bool begin, Vector3Int cell, float remaining, Vector3Int[] path)
+    public void ApplyNetworkDrop(bool begin, Vector3Int cell, float remaining, Vector3Int[] path, float musicDelay)
     {
         if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (begin)
         {
-            BeginSuddenDeath(remaining);
-            if (path != null) { suddenDeathPath.Clear(); suddenDeathPath.AddRange(path); }
+            if (suddenDeathStarted || path == null || path.Length > 1024 ||
+                float.IsNaN(remaining) || float.IsInfinity(remaining) || remaining < 0 ||
+                float.IsNaN(musicDelay) || float.IsInfinity(musicDelay) || musicDelay < 0) return;
+            BeginSuddenDeath(remaining, path, musicDelay);
             networkShadowStartedAt = Time.time;
         }
-        else StartCoroutine(DropTileRoutine(cell));
+        else if (suddenDeathStarted && suddenDeathPath.Contains(cell)) StartCoroutine(DropTileRoutine(cell));
     }
 
-    void BeginSuddenDeath(float remainingTimeAtStart)
+    void BeginSuddenDeath(float remainingTimeAtStart, Vector3Int[] approvedPath = null, float approvedMusicDelay = 0)
     {
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
@@ -489,20 +491,12 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 SuddenDeathEndTime + fallingDuration,
                 suddenDeathDropStartRemainingTime);
 
-        BattleRevengeBomberBlocker.Block();
-        StartCoroutine(RemoveAllRevengeBombersFromSceneRoutine());
-
-        selectedDropPattern = randomizeDropPattern
-            ? (SuddenDeathDropPattern)Random.Range(0, 3)
-            : dropPattern;
-
-        selectedStartCorner = randomizeStartCorner
-            ? (StartCorner)Random.Range(0, 4)
-            : StartCorner.TopLeft;
-
-        selectedClockwise = !randomizeRotationDirection || Random.value >= 0.5f;
-
-        BuildClosingPath();
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        {
+            BattleRevengeBomberBlocker.Block();
+            StartCoroutine(RemoveAllRevengeBombersFromSceneRoutine());
+        }
+        InitializeClosingPath(approvedPath);
 
         nextDropIndex = 0;
 
@@ -521,10 +515,41 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             $"pathCount={suddenDeathPath.Count}, " +
             $"existingSlots={existingIndestructibleSlotsInPath}, " +
             $"emptySlots={emptySlotsInPath}, " +
-            $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, randomizeDropPattern={randomizeDropPattern}");
+            (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally
+                ? $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, randomizeDropPattern={randomizeDropPattern}"
+                : "pathSource=approved, gameplayRng=disabled"));
 
-        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(0, value: remainingTimeAtStart, path: suddenDeathPath.ToArray());
-        StartCoroutine(PlayHurryUpAndResumeMusic());
+        StartCoroutine(PlayHurryUpAndResumeMusic(remainingTimeAtStart, approvedMusicDelay));
+    }
+
+    void InitializeClosingPath(Vector3Int[] approvedPath)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        {
+            suddenDeathPath.Clear(); scheduledOrPlacedCells.Clear();
+            existingIndestructibleSlotsInPath = emptySlotsInPath = 0;
+            if (approvedPath != null) suddenDeathPath.AddRange(approvedPath);
+            return;
+        }
+        selectedDropPattern = randomizeDropPattern ? (SuddenDeathDropPattern)Random.Range(0, 3) : dropPattern;
+        selectedStartCorner = randomizeStartCorner ? (StartCorner)Random.Range(0, 4) : StartCorner.TopLeft;
+        selectedClockwise = !randomizeRotationDirection || Random.value >= 0.5f;
+        BuildClosingPath();
+    }
+
+    static uint ClosingPathFingerprint(IReadOnlyList<Vector3Int> path)
+    {
+        unchecked
+        {
+            uint hash = 2166136261;
+            for (int i = 0; i < path.Count; i++)
+            {
+                hash = (hash ^ (uint)path[i].x) * 16777619;
+                hash = (hash ^ (uint)path[i].y) * 16777619;
+                hash = (hash ^ (uint)path[i].z) * 16777619;
+            }
+            return hash;
+        }
     }
 
     void ProcessTileDrops()
@@ -804,6 +829,13 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         float duration = Mathf.Max(0.01f, fallingDuration);
 
+        if (GameplayLatencyDiagnostics.Enabled)
+        {
+            var entry = GameplayLatencyDiagnostics.For("sudden_death_drop_begin",
+                detail: System.FormattableString.Invariant($"cell={cell.x},{cell.y},{cell.z};duration={duration:F3}"));
+            entry.position = worldCenter; GameplayLatencyDiagnostics.Write(entry);
+        }
+
         NotifyGameManagerIndestructibleDropStarted(cell);
         activeFallingCellApplyTimes[cell] = Time.time + duration;
 
@@ -894,6 +926,13 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         NotifyGameManagerIndestructibleDropFinished(cell);
         activeFallingCellApplyTimes.Remove(cell);
+
+        if (GameplayLatencyDiagnostics.Enabled)
+        {
+            var entry = GameplayLatencyDiagnostics.For("sudden_death_drop_finished",
+                detail: System.FormattableString.Invariant($"cell={cell.x},{cell.y},{cell.z}"));
+            entry.position = worldCenter; GameplayLatencyDiagnostics.Write(entry);
+        }
 
         if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) PlayFallingSfx();
         StartDamageOnCell(cell);
@@ -1396,7 +1435,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return louieMove.GetComponent<CharacterHealth>();
     }
 
-    IEnumerator PlayHurryUpAndResumeMusic()
+    IEnumerator PlayHurryUpAndResumeMusic(float remainingTimeAtStart, float approvedMusicDelay)
     {
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -1411,7 +1450,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogFlow($"HurryUp SFX tocado: {hurryUpSfx.name}");
         }
 
-        if (hurryUpVoices != null && hurryUpVoices.Length > 0 && GameMusicController.Instance != null)
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally &&
+            hurryUpVoices != null && hurryUpVoices.Length > 0 && GameMusicController.Instance != null)
         {
             int index = Random.Range(0, hurryUpVoices.Length);
             AudioClip voice = hurryUpVoices[index];
@@ -1425,7 +1465,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             }
         }
 
-        float wait = longestClip + resumeMusicDelayAfterHurryUp;
+        float wait = Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally
+            ? longestClip + resumeMusicDelayAfterHurryUp : approvedMusicDelay;
+        if (GameplayLatencyDiagnostics.Enabled)
+            GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("sudden_death_begin",
+                detail: System.FormattableString.Invariant($"path_count={suddenDeathPath.Count};path_hash={ClosingPathFingerprint(suddenDeathPath):X8};music_wait={wait:F3}")));
+        // The authority has now selected/played the real voice. Publish its wait
+        // instead of making clients draw another voice merely to time the music.
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(0,
+                value: remainingTimeAtStart, path: suddenDeathPath.ToArray(), duration: wait);
 
         yield return new WaitForSeconds(wait);
 

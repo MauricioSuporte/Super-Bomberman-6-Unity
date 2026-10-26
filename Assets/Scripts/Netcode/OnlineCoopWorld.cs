@@ -41,7 +41,7 @@ namespace Assets.Scripts.Netcode
         public Color color;
         public CoopTileFrame[] cells;
     }
-    public struct BattleFeedback : NetworkMessage { public string scene; public byte kind; public uint netId; public Vector3Int cell; public Vector2 direction; public float value; public int steps; public Vector3Int[] path; }
+    public struct BattleFeedback : NetworkMessage { public string scene; public byte kind; public uint netId; public Vector3Int cell; public Vector2 direction; public float value, duration; public int steps; public Vector3Int[] path; }
     public struct CoopSound : NetworkMessage { public string scene, resource; public int clip; public float volume, pitch; public bool voice, exclusiveExplosion; }
 
     /// <summary>
@@ -509,11 +509,11 @@ namespace Assets.Scripts.Netcode
 
         static T At<T>(T[] values, int index) where T : UnityEngine.Object => index >= 0 && index < values.Length ? values[index] : null;
 
-        public static void SendBattleFeedback(byte kind, GameObject target = null, Vector3Int cell = default, float value = 0, Vector2 direction = default, int steps = 0, Vector3Int[] path = null)
+        public static void SendBattleFeedback(byte kind, GameObject target = null, Vector3Int cell = default, float value = 0, Vector2 direction = default, int steps = 0, Vector3Int[] path = null, float duration = 0)
         {
             if (!NetworkServer.active || !NetSync.IsOnline) return;
             uint id = target != null && target.TryGetComponent<NetworkIdentity>(out var identity) ? identity.netId : 0;
-            NetworkServer.SendToReady(new BattleFeedback { scene = SceneManager.GetActiveScene().name, kind = kind, netId = id, cell = cell, value = value, direction = direction, steps = steps, path = path });
+            NetworkServer.SendToReady(new BattleFeedback { scene = SceneManager.GetActiveScene().name, kind = kind, netId = id, cell = cell, value = value, direction = direction, steps = steps, path = path, duration = duration });
         }
 
         void ApplyBattleFeedback(BattleFeedback message)
@@ -522,7 +522,7 @@ namespace Assets.Scripts.Netcode
             if (message.kind < 2)
             {
                 var suddenDeath = FindAnyObjectByType<BattleSuddenDeathController>();
-                if (suddenDeath != null) suddenDeath.ApplyNetworkDrop(message.kind == 0, message.cell, message.value, message.path);
+                if (suddenDeath != null) suddenDeath.ApplyNetworkDrop(message.kind == 0, message.cell, message.value, message.path, message.duration);
                 return;
             }
             if (!NetworkClient.spawned.TryGetValue(message.netId, out var identity) || !identity.TryGetComponent<ItemPickup>(out var item)) return;

@@ -958,3 +958,28 @@ confirmed phases, not speculative activation. SuddenDeath's timeline/authority
 audit and manual comparisons remain C10 work. Final validation passed332/332
 Unity cases (OnlineRoom240 + COM92), C#0 warnings/errors and Python40/40, plus
 strict UTF-8/BOM, metadata and diff checks. Reports:Logs/PredictionRoofPowder43Tests.*.
+
+## SuddenDeath's approved path and audio wait (protocol 44)
+
+The pure client copies the received closing path without first drawing a local
+pattern, corner or rotation. Native Revenge cleanup remains on the authority.
+Incomplete/oversized begin payloads and invalid timing are rejected before side
+effects; a drop requires the approved path to have started and contain its cell.
+
+The authority still selects and plays its voice in the original audio coroutine,
+then publishes the begin event with that coroutine's music wait in BattleFeedback.
+Clients use the existing approved sound event and this duration, rather than
+drawing another voice to calculate their wait. Native offline/host RNG ordering
+is preserved. Items retain their existing feedback semantics; the new field is
+default zero for their messages. Both peers require protocol44.
+
+This is not the complete C10 drop timeline. Begin/drop timestamps, late observers,
+landing outcomes and authoritative terrain commit still need separate work and
+manual validation. Do not infer that every approved fall-start already confirms
+all later terrain decisions. Final validation:335/335 Unity cases (OnlineRoom243
++ COM92), C#0 new warnings/errors, Python40/40 and strict UTF-8/BOM/diff checks.
+Reports:Logs/PredictionSuddenDeath44Tests.*. Opt-in diagnostics now record
+sudden_death_begin (stable path hash/count and approved music wait) and
+sudden_death_drop_begin/finished (cell/position, initial duration). These are
+instrumentation for future captures, not a measured latency gain. The per-ID
+manual matrix remains unexecuted.
