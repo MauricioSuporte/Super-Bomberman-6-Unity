@@ -115,7 +115,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         !networkInput.ServerAllowsMovementPrediction ? "server_authoritative" : movement.NetworkPredictionBlockReason ?? "none") +
         " mounted=" + movement.IsMounted + " speed=" + movement.speed + " locked=" + movement.InputLocked + " dead=" + movement.isDead +
         " paused=" + GamePauseController.IsPaused + " intro=" + (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) +
-        " kickAbility=" + (TryGetComponent<BombKickAbility>(out var kick) && kick.IsEnabled);
+        " kickAbility=" + (TryGetComponent<BombKickAbility>(out var kick) && kick.IsEnabled) + " conveyor=" + movement.NetworkConveyorDiagnosticState;
 
     void ObserveBombs(double now, bool sample)
     {

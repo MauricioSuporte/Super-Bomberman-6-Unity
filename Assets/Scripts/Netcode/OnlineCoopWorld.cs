@@ -79,6 +79,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
+            NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
             NetworkClient.RegisterHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
             NetworkClient.RegisterHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
             NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);

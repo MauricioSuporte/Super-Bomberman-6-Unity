@@ -11,18 +11,27 @@ import statistics
 
 def summarize(records, minimum_percentile_samples=20):
     groups = {}
-    build, protocol = "unknown", None
+    build, protocol, device = "unknown", None, "unknown"
+    current_capture = None
     for row in records:
+        capture = row.get("_capture", "memory")
+        if capture != current_capture:
+            build, protocol, device = "unknown", None, "unknown"
+            current_capture = capture
         kind = row.get("kind", "unknown")
         if kind == "capture_start":
             build, protocol = row.get("build", "unknown"), row.get("protocol")
+            device = row.get("device") or "unknown"
             continue
         detail = row.get("detail", "") or ""
         input_context = detail.split(";at_response:", 1)[0].removeprefix("at_input:")
         mounted = re.search(r"\bmounted=(True|False)\b", input_context, re.IGNORECASE)
         block = re.search(r"\bprediction_block=([^\s;]+)", input_context)
         context = "mounted" if mounted and mounted[1].lower() == "true" else "walking" if mounted else "unknown"
-        key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context)
+        conveyor = re.search(r"\bconveyor=(.+)$", input_context)
+        conveyor_context = conveyor[1].rsplit(":", 1)[0] if conveyor else "unknown"
+        key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context,
+               row.get("device") or device, row.get("player", 0), capture, conveyor_context)
         group = groups.setdefault(key, {"events": Counter(), "latencies": [], "blockedResponses": 0,
                                         "unclassifiedResponses": 0, "invalidDurations": 0, "hitchFrames": set()})
         group["events"][kind] += 1
@@ -42,10 +51,11 @@ def summarize(records, minimum_percentile_samples=20):
             group["latencies"].append(duration)
 
     result = []
-    for (identity, version, role, scene, context), group in groups.items():
+    for (identity, version, role, scene, context, platform, player, capture, conveyor), group in groups.items():
         samples = sorted(group["latencies"])
         count = len(samples)
         result.append({"build": identity, "protocol": version, "role": role, "scene": scene, "context": context,
+                       "device": platform, "player": player, "capture": capture, "conveyor": conveyor,
                        "freeInputToMotionSamples": count,
                        "medianMs": statistics.median(samples) if samples else None,
                        "p95Ms": samples[math.ceil(count * 0.95) - 1] if count >= minimum_percentile_samples else None,
@@ -81,7 +91,7 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     report = {"online": summarize(read_captures(args.online)), "offline": summarize(read_captures(args.offline)),
-              "notes": ["Compare the same scene, loadout and input sequence; builds and contexts are reported separately.",
+              "notes": ["Compare the same scene, loadout and input sequence; captures, builds, players and contexts are reported separately.",
                         "Input-to-motion is an observed rendered-frame interval, not raw network latency.",
                         "Old records without input context are counted but excluded from latency statistics.",
                         "Hitch counts describe observed logged frames, not every frame in the session.",

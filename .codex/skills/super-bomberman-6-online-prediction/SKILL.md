@@ -87,6 +87,15 @@ audio once; an action RPC plus GameAudioSettings' generic co-op broadcast can
 otherwise play the same sound twice. Preserve the original input tick and phase
 when confirming a pose, including when the visual has already completed.
 
+When composing moving ground with the motor, execute its displacement once per
+network input tick and skip that actor in the arena's separate physics loop.
+Replay must restore corner target/incoming direction and the acknowledged global
+phase, rather than mutating shared presentation back to an older phase. Include
+base speed, modifier and remaining simulated duration in speed context; batched
+replay cannot expire a modifier from the current rendered frame's wall clock.
+Keep autonomous bombs and global control tiles authoritative. Test a corner
+entered before its center, a newer global phase, blocked exits and double pushes.
+
 Do not smooth a direction change by projecting the previous direction through a
 wall. Small same-direction confirmation errors can decay; stops, wrapping and
 rejected actions need their appropriate explicit transition. Never let a queued

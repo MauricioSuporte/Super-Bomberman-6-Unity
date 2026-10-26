@@ -28,6 +28,14 @@ namespace Assets.Scripts.Netcode
         bool hasPlacementState;
         public int PlacementReservationCount => placements.Count;
 
+        public bool HasPredictedPlacementAt(Vector2 position, float tileSize, uint tick)
+        {
+            foreach (var pair in placements)
+                if (!pair.Value.confirmed && !NetworkInputHistory.IsNewer(pair.Key, tick) &&
+                    Vector2.Distance(position, pair.Value.position) < tileSize * 0.35f) return true;
+            return false;
+        }
+
         public PlacementState CapturePlacementState()
         {
             var controller = bomb != null ? bomb : GetComponent<BombController>();

@@ -16,7 +16,8 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 ## Estado atual
 
 Marcos 1-3 publicados com protocolo 25 (CI 40251770360 concluído com sucesso).
-A04/A06 validados automaticamente no lote de protocolo 26, aguardando publicação:
+A04/A06 validados e enviados no commit `ffed44e3f`, pipeline 40254308964
+concluído com sucesso (protocolo 26). C01 validado no protocolo 27, aguardando publicação:
 - A01: snapshot confirma montaria e o motor permite locomoção montada estável;
   presenter local da montaria usa pose/fase do proprietário, sem habilitar gameplay.
 - A13: replay usa velocidade confirmada e flags confirmadas de BombPass e
@@ -24,11 +25,11 @@ A04/A06 validados automaticamente no lote de protocolo 26, aguardando publicaç�
 - P0: diagnóstico registra contexto no input e na resposta; comparador em
   `Tools/Diagnostics/analyze_prediction.py` separa builds/contextos e exclui inputs
   bloqueados/sem classificação dos percentis. Capturas antigas não comprovam ganho.
-- Validação mais recente: 151/151 Unity EditMode para A04/A06; 37/37 Python.
+- Validação mais recente: 154/154 Unity EditMode com C01; 40/40 Python.
   C# sem warnings/erros; UTF-8/BOM dos C# alterados verificados.
   Relatórios: `Logs/PredictionPinkRedTests.xml` e `.log`.
-- Protocolo de trabalho: 26 (Pink/Red com novas RPCs). Servidor publicado: 25,
-  commit `9aa13fe06`; novos clientes 26 serão publicados após validação do lote.
+- Protocolo de trabalho: 27 (C01 wire em desenvolvimento). Servidor publicado: 26,
+  commit `ffed44e3f`; CI 40254308964 concluído com sucesso.
 - Próxima ação: A04 Pink jump; depois C01 e demais IDs na ordem do plano.
 - Partidas manuais com dois peers, contextos das nove montarias, redes degradadas
   e demais modos ainda não executadas; não declarar ganho percebido medido.
@@ -95,6 +96,35 @@ A04/A06 validados automaticamente no lote de protocolo 26, aguardando publicaç�
   A validação manual de ambos os peers continua pendente.
 - Skill e notas atualizadas com separação chão/arco, relógios e áudio de acerto.
 
+### Marco 6: C01 validado, aguardando publicação
+
+- Commit publicado de Pink/Red: `ffed44e3f`; 151/151 Unity e 37/37 Python,
+  relatórios finais preservados. Pipeline de publicação: 40254308964.
+- Esteiras encontradas uma vez por cena em BattleMode_5, Stage_3-4 e Stage_3-6.
+  Mundo co-op desabilita o controller client; Battle usa seu próprio loop.
+- Novos partials: `BattleMode5ConveyorController.Network.cs`,
+  `MovementController.NetworkConveyor.cs` e `OnlineConveyors.cs`.
+- C01 passa a compor push uma vez por input tick, snapshots levam fase/lock da
+  curva e contexto de velocidade com duração por tick. Offline/COM retêm loop.
+- Controller puro client não simula players/bombas/toggles. Mensagem aprovada
+  replica fase para observadores; owner usa a fase histórica do snapshot.
+- Mais de um controller na mesma cena suspende predição conservadoramente;
+  servidor mantém seu loop anterior nesse caso. Nenhuma cena atual tem dois.
+- Protocolo de trabalho 27, ainda NÃO publicado. Primeiro C# acusou SceneHandle
+  obsoleto; cache alterado para Scene. C# passou com zero warnings/erros.
+- Testes novos: curva/lock histórico, replay com fase global mais nova, ausência
+  de push duplicado, saída bloqueada, expiração de modificador por tick e wire.
+  Protocolo 26 rejeitado; C# passou; UTF-8 verificado.
+- Unity final: 154/154 passaram; relatórios preservados no checkout principal:
+  `Logs/PredictionConveyorTests.xml` e `.log`. C# sem erros/warnings novos.
+- P0: comparador separa captura, player, plataforma e fase da esteira;
+  cabeçalho ausente não herda build de outro arquivo. 40/40 Python passaram.
+- UTF-8/BOM verificados. Notas e skill atualizadas.
+- Próximo: commit/publicação C01; depois A08 Tank e demais IDs.
+- Manual pendente: dois peers nas três cenas, disputa de bombas, curva/saída,
+  toggles, press durante dash/pulo, desconexão, pausa e rede degradada.
+- Plano geral ainda incompleto; a checklist abaixo identifica pendências.
+
 ## Checklist por ID
 
 - [ ] P0: ferramenta e contexto implementados/testados; novas capturas comparáveis pendentes.
@@ -112,7 +142,7 @@ A04/A06 validados automaticamente no lote de protocolo 26, aguardando publicaç�
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: regressões dos caminhos existentes.
-- [ ] C01: esteiras e composição com o motor.
+- [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: molas/canhões/geysers.
 - [ ] C03: corda.
 - [ ] C04: carrinho.

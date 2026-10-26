@@ -10,6 +10,102 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void ConveyorMotorReplaysTurnLockAndHistoricalPhaseWithoutDoublePush()
+    {
+        var oldMode = NetSync.Mode;
+        var root = new GameObject("PredictionConveyor"); root.SetActive(false);
+        var grid = new GameObject("PredictionConveyorGrid", typeof(Grid)); grid.transform.position = new Vector3(12000, 12000);
+        var groundObject = new GameObject("PredictionConveyorGround", typeof(UnityEngine.Tilemaps.Tilemap)); groundObject.transform.SetParent(grid.transform, false);
+        var wallObject = new GameObject("PredictionConveyorWall", typeof(UnityEngine.Tilemaps.Tilemap)); wallObject.transform.SetParent(grid.transform, false);
+        var player = new GameObject("ConveyorOwner"); player.SetActive(false);
+        var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Host;
+            var conveyor = root.AddComponent<BattleMode5ConveyorController>();
+            var ground = groundObject.GetComponent<UnityEngine.Tilemaps.Tilemap>(); var walls = wallObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            typeof(BattleMode5ConveyorController).GetField("groundTilemap", flags).SetValue(conveyor, ground);
+            typeof(BattleMode5ConveyorController).GetField("indestructibleTilemap", flags).SetValue(conveyor, walls);
+            var segmentField = typeof(BattleMode5ConveyorController).GetField("directedSegments", flags);
+            var segmentType = segmentField.FieldType.GetElementType(); var segments = System.Array.CreateInstance(segmentType, 3);
+            void Segment(int index, Vector3Int start, Vector3Int end, string direction, string reverse)
+            {
+                var segment = System.Activator.CreateInstance(segmentType);
+                segmentType.GetField("startCell").SetValue(segment, start); segmentType.GetField("endCell").SetValue(segment, end);
+                var field = segmentType.GetField("direction"); field.SetValue(segment, System.Enum.Parse(field.FieldType, direction));
+                segmentType.GetField("reverseDirection").SetValue(segment, System.Enum.Parse(field.FieldType, reverse)); segments.SetValue(segment, index);
+            }
+            Segment(0, new Vector3Int(0, 0), new Vector3Int(1, 0), "Right", "Left");
+            Segment(1, new Vector3Int(2, 0), new Vector3Int(2, 0), "Down", "Left");
+            Segment(2, new Vector3Int(2, -1), new Vector3Int(2, -3), "Down", "Up");
+            segmentField.SetValue(conveyor, segments);
+            root.SetActive(true); typeof(BattleMode5ConveyorController).GetMethod("Awake", flags).Invoke(conveyor, null);
+            player.tag = "Player"; player.AddComponent<BoxCollider2D>();
+            var body = player.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var movement = player.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            player.SetActive(true); movement.SetNetworkTickDriven(true);
+            Vector2 origin = ground.GetCellCenterWorld(new Vector3Int(1, 0));
+            var state = new MovementController.NetworkMovementState { position = origin, facing = Vector2.right,
+                worldSpeed = 4, baseWorldSpeed = 4, speedMultiplier = 1, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true,
+                conveyor = conveyor.CaptureNetworkMotor(movement, default) };
+            NetSync.Mode = NetSync.NetMode.Client; movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(movement.CanPredictNetworkMovement);
+            for (int i = 0; i < 22; i++) movement.SimulateNetworkMovementTick(0);
+            var ack = movement.CaptureNetworkMovementState(); Assert.IsTrue(ack.conveyor.hasTarget);
+            Assert.AreEqual(new Vector3Int(2, 0), ack.conveyor.target);
+            Assert.AreEqual(Vector2.right, ack.conveyor.incoming);
+            for (int i = 0; i < 38; i++) movement.SimulateNetworkMovementTick(0);
+            var expected = movement.CaptureNetworkMovementState();
+            Assert.That(expected.position.x, Is.EqualTo(origin.x + 1).Within(0.01f)); Assert.Less(expected.position.y, origin.y);
+            conveyor.ApplyNetworkPhase(new ConveyorPhase { scene = root.scene.name, path = conveyor.NetworkPath, revision = 1, clockwise = false, fast = true });
+            movement.RestoreNetworkMovementState(ack);
+            for (int i = 0; i < 38; i++) movement.SimulateNetworkMovementTick(0, replay: true);
+            Assert.AreEqual(JsonUtility.ToJson(expected), JsonUtility.ToJson(movement.CaptureNetworkMovementState()), "A newer world phase cannot rewrite the historical turn during replay.");
+            Vector2 before = body.position;
+            NetSync.Mode = NetSync.NetMode.Host; typeof(BattleMode5ConveyorController).GetMethod("FixedUpdate", flags).Invoke(conveyor, null);
+            Assert.AreEqual(before, body.position, "The arena loop must not apply a second conveyor push to a tick-driven actor.");
+            NetSync.Mode = NetSync.NetMode.Client; walls.SetTile(new Vector3Int(2, 0), tile); movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 10; i++) movement.SimulateNetworkMovementTick(0);
+            Assert.AreEqual(origin, body.position, "Known blocked exits stop at the source center.");
+            state.conveyor = default; movement.RestoreNetworkMovementState(state);
+            Assert.AreEqual("conveyor_context_pending", movement.NetworkPredictionBlockReason);
+            using var writer = NetworkWriterPool.Get(); writer.Write(ack);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var received = reader.Read<MovementController.NetworkMovementState>();
+            Assert.AreEqual(ack.conveyor.path, received.conveyor.path); Assert.AreEqual(ack.conveyor.target, received.conveyor.target);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(player); Object.DestroyImmediate(root); Object.DestroyImmediate(grid); Object.DestroyImmediate(tile); }
+    }
+
+    [Test]
+    public void ReplayExpiresConfirmedSpeedBySimulationTicks()
+    {
+        var oldMode = NetSync.Mode; var player = new GameObject("SpeedExpiryReplay"); player.SetActive(false);
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; player.tag = "Player"; player.AddComponent<BoxCollider2D>();
+            var body = player.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var movement = player.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            typeof(MovementController).GetField("useIntegerPixelSteps", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(movement, false);
+            player.SetActive(true); movement.SetNetworkTickDriven(true); movement.SetPredictLocally(true);
+            var state = new MovementController.NetworkMovementState { position = new Vector2(13000, 13000), facing = Vector2.right,
+                worldSpeed = 2, baseWorldSpeed = 4, speedMultiplier = 0.5f, speedModifierRemaining = Time.fixedDeltaTime * 2,
+                animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 3; i++) movement.SimulateNetworkMovementTick(8);
+            var expected = movement.CaptureNetworkMovementState();
+            Assert.That(expected.position.x - state.position.x, Is.EqualTo(8 * Time.fixedDeltaTime).Within(0.005f));
+            Assert.AreEqual(0, expected.speedModifierRemaining); Assert.AreEqual(4, expected.worldSpeed);
+            movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 3; i++) movement.SimulateNetworkMovementTick(8, replay: true);
+            Assert.AreEqual(JsonUtility.ToJson(expected), JsonUtility.ToJson(movement.CaptureNetworkMovementState()));
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(player); }
+    }
+
+    [Test]
     public void BattleCountdownWaitsForBothSceneReadyAndPresentedScreens()
     {
         var first = new NetworkConnectionToClient(101) { isAuthenticated = true, isReady = true };
@@ -1375,6 +1471,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 26, false)]
     [TestCase("0.5.0", 25, false)]
     [TestCase("0.5.0", 24, false)]
     [TestCase("0.5.0", 23, false)]

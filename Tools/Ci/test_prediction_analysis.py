@@ -47,7 +47,37 @@ class PredictionAnalysisTests(unittest.TestCase):
             {"kind": "other", "frame": 1, "frameMs": 100, "_capture": "one"},
             {"kind": "sample", "frame": 1, "frameMs": 100, "_capture": "two"},
         ])
-        self.assertEqual(result[0]["observedHitchFramesOver50Ms"], 2)
+        self.assertEqual(sum(row["observedHitchFramesOver50Ms"] for row in result), 2)
+        self.assertEqual(len(result), 2)
+
+    def test_players_and_capture_platforms_do_not_mix(self):
+        result = analysis.summarize([
+            {"kind": "capture_start", "device": "WindowsEditor"},
+            {"kind": "input_to_motion", "player": 1, "durationMs": 10, "detail": "prediction_block=none mounted=False"},
+            {"kind": "input_to_motion", "player": 2, "durationMs": 100, "detail": "prediction_block=none mounted=False"},
+            {"kind": "capture_start", "device": "WindowsPlayer"},
+            {"kind": "input_to_motion", "player": 1, "durationMs": 20, "detail": "prediction_block=none mounted=False"},
+        ])
+        self.assertEqual([(r["device"], r["player"], r["medianMs"]) for r in result],
+                         [("WindowsEditor", 1, 10), ("WindowsEditor", 2, 100), ("WindowsPlayer", 1, 20)])
+
+    def test_missing_header_does_not_inherit_previous_capture_build(self):
+        result = analysis.summarize([
+            {"kind": "capture_start", "build": "one", "protocol": 27, "_capture": "complete"},
+            {"kind": "sample", "_capture": "complete"},
+            {"kind": "sample", "_capture": "truncated"},
+        ])
+        self.assertEqual([(r["capture"], r["build"], r["protocol"]) for r in result],
+                         [("complete", "one", 27), ("truncated", "unknown", None)])
+
+    def test_conveyor_phase_groups_exclude_per_cell_traversal_target(self):
+        result = analysis.summarize([
+            {"kind": "input_to_motion", "durationMs": 10, "detail": "at_input:prediction_block=none mounted=False conveyor=Level/Ground:cw:slow:(1, 0, 0);at_response:prediction_block=none"},
+            {"kind": "input_to_motion", "durationMs": 20, "detail": "prediction_block=none mounted=False conveyor=Level/Ground:cw:slow:(2, 0, 0)"},
+            {"kind": "input_to_motion", "durationMs": 100, "detail": "prediction_block=none mounted=False conveyor=Level/Ground:ccw:fast:free"},
+        ])
+        self.assertEqual([(r["conveyor"], r["medianMs"]) for r in result],
+                         [("Level/Ground:cw:slow", 15), ("Level/Ground:ccw:fast", 100)])
 
 
 if __name__ == "__main__":

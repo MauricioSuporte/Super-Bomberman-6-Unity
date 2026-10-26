@@ -8,7 +8,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(AbilitySystem))]
 [RequireComponent(typeof(StunReceiver))]
-public class MovementController : MonoBehaviour, IKillable
+public partial class MovementController : MonoBehaviour, IKillable
 {
     [Header("Debug Curva")]
     [SerializeField] private bool debugCurvas;
@@ -229,6 +229,8 @@ public class MovementController : MonoBehaviour, IKillable
     private bool replayingNetworkTick;
     private int networkHeldMask;
     private float predictedWorldSpeed;
+    private float predictedBaseWorldSpeed, predictedSpeedMultiplier, predictedSpeedModifierRemaining;
+    private bool hasSnapshotSpeedContext;
     private bool hasNetworkMovementContext;
     private byte networkMovementCapabilities;
     private MountedType networkMovementMount;
@@ -240,6 +242,8 @@ public class MovementController : MonoBehaviour, IKillable
         public Vector2 pendingTurn, lockedDirection, pendingSingle, lastMove;
         public Vector2 reentryStart, reentryTarget;
         public float dualTimer, alignCoordinate, accX, accY, reentryElapsed, worldSpeed;
+        public float baseWorldSpeed, speedMultiplier, speedModifierRemaining;
+        public BattleMode5ConveyorController.NetworkMotorState conveyor;
         public byte axis, alignAxis, movementCapabilities;
         public MountedType mount;
         public int animationSpeed;
@@ -251,7 +255,7 @@ public class MovementController : MonoBehaviour, IKillable
         externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
         externalVisualSuppressed && !CanPredictGloveCarry ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
         IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :
-        !MountedPredictionContextReady ? "mount_context_pending" : null;
+        !MountedPredictionContextReady ? "mount_context_pending" : !NetworkConveyorContextReady ? "conveyor_context_pending" : null;
 
     private bool MountedPredictionContextReady
     {
@@ -290,7 +294,10 @@ public class MovementController : MonoBehaviour, IKillable
         hasInput = hasInput, accX = accPixelsX, accY = accPixelsY,
         reentryActive = bombReentryCenteringActive, reentryStart = bombReentryCenterStart,
         reentryTarget = bombReentryCenterTarget, reentryElapsed = bombReentryCenterElapsed,
-        worldSpeed = speed * tileSize * GetExternalMovementSpeedMultiplier(),
+        worldSpeed = SnapshotBaseWorldSpeed * SnapshotSpeedMultiplier,
+        baseWorldSpeed = SnapshotBaseWorldSpeed, speedMultiplier = SnapshotSpeedMultiplier,
+        speedModifierRemaining = predictLocally ? predictedSpeedModifierRemaining : ExternalSpeedModifierRemaining,
+        conveyor = CaptureConveyorState(),
         animationSpeed = speedInternal, canPredict = CanPredictNetworkMovement,
         movementCapabilities = predictLocally && hasNetworkMovementContext ? networkMovementCapabilities : CurrentMovementCapabilities,
         mount = predictLocally && hasNetworkMovementContext ? networkMovementMount :
@@ -316,6 +323,11 @@ public class MovementController : MonoBehaviour, IKillable
         bombReentryCenteringActive = state.reentryActive;
         bombReentryCenterStart = state.reentryStart; bombReentryCenterTarget = state.reentryTarget;
         bombReentryCenterElapsed = state.reentryElapsed; predictedWorldSpeed = state.worldSpeed;
+        hasSnapshotSpeedContext = state.baseWorldSpeed > 0;
+        predictedBaseWorldSpeed = state.baseWorldSpeed;
+        predictedSpeedMultiplier = state.speedMultiplier;
+        predictedSpeedModifierRemaining = state.speedModifierRemaining;
+        RestoreConveyorState(state.conveyor);
         // Object references and traversal ownership are authoritative, never replayed.
         _lastAdjKickedBomb = null;
         _ownedBombPlantTraversal.Clear();
@@ -349,6 +361,9 @@ public class MovementController : MonoBehaviour, IKillable
         {
             Update();
             FixedUpdate();
+            if (predictLocally) predictedSpeedModifierRemaining = Mathf.Max(0, predictedSpeedModifierRemaining - Time.fixedDeltaTime);
+            else externalSpeedModifierTickRemaining = Mathf.Max(0, externalSpeedModifierTickRemaining - Time.fixedDeltaTime);
+            SimulateConveyorTick();
         }
         finally { insideNetworkTick = false; replayingNetworkTick = false; }
     }
@@ -424,6 +439,7 @@ public class MovementController : MonoBehaviour, IKillable
     public bool ExternalMovementAllowsHazardDamage => externalMovementAllowsHazardDamage;
     private float externalMovementSpeedMultiplier = 1f;
     private float externalMovementSpeedMultiplierUntil;
+    private float externalSpeedModifierTickRemaining;
 
     private void SetFacingDirection(Vector2 newFace, string reason)
     {
@@ -4798,23 +4814,44 @@ public class MovementController : MonoBehaviour, IKillable
     {
         float dt = Time.fixedDeltaTime;
         float speedWorldPerSecond = predictLocally && insideNetworkTick
-            ? predictedWorldSpeed : speed * tileSize * GetExternalMovementSpeedMultiplier();
+            ? hasSnapshotSpeedContext ? predictedBaseWorldSpeed * SnapshotSpeedMultiplier : predictedWorldSpeed
+            : speed * tileSize * GetExternalMovementSpeedMultiplier();
         return speedWorldPerSecond * dt;
     }
 
     public void ApplyExternalMovementSpeedMultiplier(float multiplier, float durationSeconds)
     {
+        if (predictLocally && insideNetworkTick)
+        {
+            if (!hasSnapshotSpeedContext) predictedBaseWorldSpeed = predictedWorldSpeed;
+            hasSnapshotSpeedContext = true;
+            predictedSpeedMultiplier = Mathf.Max(0, multiplier);
+            predictedSpeedModifierRemaining = Mathf.Max(0, durationSeconds);
+            return;
+        }
         externalMovementSpeedMultiplier = Mathf.Max(0f, multiplier);
         externalMovementSpeedMultiplierUntil = Time.time + Mathf.Max(0f, durationSeconds);
+        externalSpeedModifierTickRemaining = Mathf.Max(0f, durationSeconds);
     }
 
     private float GetExternalMovementSpeedMultiplier()
     {
-        if (externalMovementSpeedMultiplierUntil <= 0f || Time.time > externalMovementSpeedMultiplierUntil)
+        if (ExternalSpeedModifierRemaining <= 0)
             return 1f;
 
         return Mathf.Max(0f, externalMovementSpeedMultiplier);
     }
+
+    private float ExternalSpeedModifierRemaining => networkTickDriven
+        ? Mathf.Min(externalSpeedModifierTickRemaining, Mathf.Max(0, externalMovementSpeedMultiplierUntil - Time.time))
+        : Mathf.Max(0, externalMovementSpeedMultiplierUntil - Time.time);
+
+    private float SnapshotBaseWorldSpeed => predictLocally
+        ? hasSnapshotSpeedContext ? predictedBaseWorldSpeed : predictedWorldSpeed
+        : speed * tileSize;
+    private float SnapshotSpeedMultiplier => predictLocally
+        ? hasSnapshotSpeedContext && predictedSpeedModifierRemaining > 0 ? predictedSpeedMultiplier : 1
+        : GetExternalMovementSpeedMultiplier();
 
     private float GetQuantizedMoveWorldPerFixedFrame(Vector2 moveDir, float rawWorldStep)
     {
@@ -4886,6 +4923,7 @@ public class MovementController : MonoBehaviour, IKillable
         externalMovementOverride = active;
         externalMovementSpeedMultiplier = 1f;
         externalMovementSpeedMultiplierUntil = 0f;
+        externalSpeedModifierTickRemaining = 0f;
 
         if (active)
         {

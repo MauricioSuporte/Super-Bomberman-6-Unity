@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(GroundTileResolver))]
-public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHandler
+public sealed partial class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHandler
 {
     const string BattleMode5SceneName = "BattleMode_5";
 
@@ -178,6 +178,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
 
         if (!IsConveyorSceneActive())
@@ -185,10 +186,12 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
         ResolveReferences();
         HandleControlTiles();
+        PublishNetworkPhase();
     }
 
     void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
 
         if (!IsConveyorSceneActive())
@@ -322,6 +325,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
             if (mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy)
                 continue;
 
+            if (mover.ComposesConveyorInNetworkTick(this)) continue;
+
             int objectKey = GetObjectKey(mover.gameObject);
             if (ShouldIgnorePlayerConveyorEffect(mover))
             {
@@ -367,6 +372,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     {
         if (mover == null)
             return false;
+
+        if (mover.TryGetComponent<PinkLouieJumpAbility>(out var pinkJump) && pinkJump.JumpActive) return true;
 
         if (mover.TryGetComponent<GreenLouieDashAbility>(out var greenDash) &&
             greenDash != null &&
@@ -515,7 +522,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         out Vector3Int targetCell,
         out Vector3Int sourceCell,
         out Vector2 unityCenter,
-        out Vector2 cellToWorld)
+        out Vector2 cellToWorld,
+        bool? clockwiseOverride = null)
     {
         sourceCell = groundTilemap.WorldToCell(worldPos);
 
@@ -579,7 +587,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
             return false;
         }
 
-        Dictionary<Vector3Int, Vector3Int> map = clockwise ? clockwiseNextCell : counterClockwiseNextCell;
+        Dictionary<Vector3Int, Vector3Int> map = (clockwiseOverride ?? clockwise) ? clockwiseNextCell : counterClockwiseNextCell;
         if (!map.TryGetValue(sourceCell, out Vector3Int nextCell))
         {
             target = default;
@@ -594,7 +602,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         cellToWorld = groundTilemap.CellToWorld(nextCell);
         target = GetCellCenterWorld(nextCell);
         lockedTargetCellByObject[objectKey] = targetCell;
-        lockedIncomingDirectionByObject[objectKey] = GetConveyorDirection(sourceCell);
+        lockedIncomingDirectionByObject[objectKey] = GetConveyorDirection(sourceCell, clockwiseOverride);
         return true;
     }
 
@@ -616,7 +624,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     {
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb == ignoredBomb || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
+            if (bomb == null || bomb == ignoredBomb || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove ||
+                (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && bomb.ClientMotionNonBlocking))
                 continue;
 
             Vector3Int bombCell = groundTilemap.WorldToCell(bomb.GetLogicalPosition());
@@ -692,6 +701,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         clockwise = !clockwise;
         RefreshDirectionTileVisuals();
         RefreshConveyorAnimatedTileVisuals();
+        PublishNetworkPhase(force: true);
     }
 
     void ToggleSpeed()
@@ -699,6 +709,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         fast = !fast;
         RefreshSpeedTileVisuals();
         RefreshConveyorAnimatedTileVisuals();
+        PublishNetworkPhase(force: true);
     }
 
     void RefreshControlTileVisuals()
@@ -1050,12 +1061,12 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         return false;
     }
 
-    Vector2 GetConveyorDirection(Vector3Int sourceCell)
+    Vector2 GetConveyorDirection(Vector3Int sourceCell, bool? clockwiseOverride = null)
     {
         if (UsesTileDirectionOverrides && groundTilemap != null)
             return GetTileDirection(groundTilemap.GetTile(sourceCell));
 
-        Dictionary<Vector3Int, Vector3Int> map = clockwise ? clockwiseNextCell : counterClockwiseNextCell;
+        Dictionary<Vector3Int, Vector3Int> map = (clockwiseOverride ?? clockwise) ? clockwiseNextCell : counterClockwiseNextCell;
         if (!map.TryGetValue(sourceCell, out Vector3Int targetCell))
             return Vector2.zero;
 

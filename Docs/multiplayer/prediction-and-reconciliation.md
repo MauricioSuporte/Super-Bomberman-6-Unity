@@ -458,3 +458,27 @@ co-op sound broadcast. Observer punch poses retain authoritative mount frames.
 Automated pose/reconciliation tests complement, but do not replace, two-peer
 validation of mount transitions, pause, death, dynamic blockers and degraded
 networks. See the progress checkpoint for the reports and unfinished plan IDs.
+
+## Conveyor motor composition (protocol 27)
+
+For network-controlled players, Battle Mode 5 / Stage 3-4 / Stage 3-6 conveyor
+displacement runs once inside the same input tick as the walking motor. The
+arena loop skips those actors and pure clients do not move other players or
+bombs or trigger global controls. Offline and COM retain the existing loop.
+Pink jump is excluded from conveyor influence while airborne in both paths.
+
+Movement snapshots include the acknowledged conveyor phase and the target cell /
+incoming direction needed to finish a corner before turning. Replay restores
+that traversal context and does not use a newer global phase. Approved phase
+messages update world presentation, including observers. Speed modifiers carry
+base speed, multiplier and remaining simulated duration so batched replay does
+not depend on the current rendered frame's Time.time. Multiple controllers in
+one scene conservatively disable owner prediction; current conveyor scenes have
+one controller each. Dynamic creation/reparenting of controllers is not covered.
+
+Motion context now includes conveyor path/phase/traversal; phase changes have
+send/apply events. The comparison tool separates captures, players, platforms
+and conveyor phases, and a capture without a header cannot inherit the previous
+file's build. Automated coverage: 154 Unity tests and 40 Python tests passed for
+this milestone. Two-peer validation of all three scenes and degraded networks
+remains pending; no measured zero-latency or hitch-free claim follows from tests.
