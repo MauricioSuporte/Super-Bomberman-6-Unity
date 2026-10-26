@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
+using Assets.Scripts.Netcode;
 
 [DisallowMultipleComponent]
-public sealed class BattleMode7PortalController : MonoBehaviour
+public sealed partial class BattleMode7PortalController : MonoBehaviour
 {
     const string BattleMode7SceneName = "BattleMode_7";
     const string Stage34SceneName = "Stage_3-4";
@@ -73,6 +74,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     readonly Dictionary<MovementController, TeleportState> activeStates = new();
     readonly Dictionary<Bomb, Vector3Int> bombsWaitingForPortalExit = new();
     static Sprite fixedPortalMaskSprite;
+    readonly Dictionary<MovementController, List<PortalVisualSnapshot>> activePortalVisuals = new();
 
     sealed class TeleportState
     {
@@ -162,6 +164,14 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     void OnDisable()
     {
+        StopAllCoroutines();
+        ClearNetworkPortalStars();
+        foreach (var snapshots in activePortalVisuals.Values)
+        {
+            RestorePortalSinkVisual(snapshots);
+            DestroyFixedPortalMasks(snapshots);
+        }
+        activePortalVisuals.Clear();
         foreach (var pair in activeStates)
             RestoreTeleportState(pair.Key, pair.Value);
 
@@ -176,7 +186,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     {
         using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
 
-        if (!IsSupportedSceneActive())
+        if (NetSync.Mode == NetSync.NetMode.Client || !IsSupportedSceneActive())
             return;
 
         ResolveReferences();
@@ -193,6 +203,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     void TryHandleBombs()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         foreach (Bomb bomb in Bomb.ActiveBombs)
         {
             if (bomb == null ||
@@ -222,6 +233,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     IEnumerator TeleportAndPunchBombRoutine(Bomb bomb, int sourceIndex)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) yield break;
         if (bomb == null || portalCells == null || portalCells.Length < 2)
             yield break;
 
@@ -433,6 +445,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     void TryHandlePlayer(MovementController mover)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         if (mover == null || mover.Rigidbody == null || !mover.CompareTag("Player"))
             return;
 
@@ -482,9 +495,11 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     IEnumerator TeleportRoutine(MovementController mover, int sourceIndex, int destinationIndex)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) yield break;
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
+        using var authorityMotion = NetworkPlayerInput.PresentAuthorityMotion(mover);
         activeTeleporters.Add(mover);
 
         Vector3Int sourceCell = ToCell(portalCells[sourceIndex]);
@@ -574,6 +589,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 SpawnTeleportStarsAlongPath(source, destination, 1f, sinkSpawnedStars);
                 mover.Rigidbody.position = destination;
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
                 state.mountCompanion?.SetMountedLouieVisible(true);
                 RestoreRendererStates(
                     state.portalVisualRenderers,
@@ -618,6 +634,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
                 mover.Rigidbody.position = position;
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
                 spawnedStars = SpawnTeleportStarsAlongPath(source, destination, t, spawnedStars);
 
@@ -786,6 +803,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
             if (mover.Rigidbody != null)
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+            NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
             if (!mover.IsEndingStage)
             {
@@ -844,62 +862,73 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 snapshots.Add(new PortalVisualSnapshot(renderer));
         }
 
+        activePortalVisuals[mover] = snapshots;
         float duration = Mathf.Max(0.01f, phaseSeconds);
         startProgress = Mathf.Clamp01(startProgress);
-        float maskTravelDistance = useFixedPortalMaskVisual
-            ? CreateFixedPortalMasks(snapshots, portalWorld, mover.tileSize)
-            : 0f;
-        float elapsed = 0f;
-        if (useFixedPortalMaskVisual && appearing)
+        try
         {
-            mover.Rigidbody.position = portalWorld + Vector2.down *
-                (maskTravelDistance * (1f - startProgress));
-            mover.Rigidbody.linearVelocity = Vector2.zero;
-        }
-
-        while (elapsed < duration)
-        {
-            if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
-                yield break;
-
-            if (GamePauseController.IsPaused)
+            float maskTravelDistance = useFixedPortalMaskVisual
+                ? CreateFixedPortalMasks(snapshots, portalWorld, mover.tileSize)
+                : 0f;
+            float elapsed = 0f;
+            if (useFixedPortalMaskVisual && appearing)
             {
-                yield return null;
-                continue;
-            }
-
-            elapsed = Mathf.Min(duration, elapsed + Time.deltaTime);
-            onProgress?.Invoke(elapsed);
-            float t = Mathf.Lerp(startProgress, 1f, Mathf.Clamp01(elapsed / duration));
-            float visibleProgress = appearing ? t : 1f - t;
-            if (useFixedPortalMaskVisual)
-            {
-                float travelProgress = appearing ? 1f - visibleProgress : 1f - visibleProgress;
                 mover.Rigidbody.position = portalWorld + Vector2.down *
-                    (maskTravelDistance * travelProgress);
+                    (maskTravelDistance * (1f - startProgress));
+                mover.Rigidbody.linearVelocity = Vector2.zero;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
             }
-            else
+
+            while (elapsed < duration)
             {
-                ApplyPortalSinkVisual(
-                    snapshots,
-                    visibleProgress,
-                    !appearing && invertPortalEntryVisual);
-                float sinkOffset = (1f - visibleProgress) * -mover.tileSize * 0.5f;
-                mover.Rigidbody.position = portalWorld + Vector2.up * sinkOffset;
+                if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
+                    yield break;
+
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                elapsed = Mathf.Min(duration, elapsed + Time.deltaTime);
+                onProgress?.Invoke(elapsed);
+                float t = Mathf.Lerp(startProgress, 1f, Mathf.Clamp01(elapsed / duration));
+                float visibleProgress = appearing ? t : 1f - t;
+                if (useFixedPortalMaskVisual)
+                {
+                    float travelProgress = appearing ? 1f - visibleProgress : 1f - visibleProgress;
+                    mover.Rigidbody.position = portalWorld + Vector2.down *
+                        (maskTravelDistance * travelProgress);
+                }
+                else
+                {
+                    ApplyPortalSinkVisual(
+                        snapshots,
+                        visibleProgress,
+                        !appearing && invertPortalEntryVisual);
+                    float sinkOffset = (1f - visibleProgress) * -mover.tileSize * 0.5f;
+                    mover.Rigidbody.position = portalWorld + Vector2.up * sinkOffset;
+                }
+
+                mover.Rigidbody.linearVelocity = Vector2.zero;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
+                yield return null;
             }
 
-            mover.Rigidbody.linearVelocity = Vector2.zero;
-            yield return null;
+            if (mover != null && mover.Rigidbody != null)
+            {
+                mover.Rigidbody.position = portalWorld;
+                mover.Rigidbody.linearVelocity = Vector2.zero;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
+            }
         }
-
-        RestorePortalSinkVisual(snapshots);
-        DestroyFixedPortalMasks(snapshots);
-        if (mover != null && mover.Rigidbody != null)
+        finally
         {
-            mover.Rigidbody.position = portalWorld;
-            mover.Rigidbody.linearVelocity = Vector2.zero;
+            RestorePortalSinkVisual(snapshots);
+            DestroyFixedPortalMasks(snapshots);
+            if (mover != null && activePortalVisuals.TryGetValue(mover, out var current) && current == snapshots)
+                activePortalVisuals.Remove(mover);
         }
-
     }
 
     static void ApplyPortalSinkVisual(
@@ -997,6 +1026,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         // A single shared mask avoids intersecting four identical masks when
         // the directional player renderers rotate during the portal effect.
         snapshots[0].mask = mask;
+        Assets.Scripts.Netcode.BombermanNetworkManager.NotifyPortalMasksChanged();
         return travelDistance;
     }
 
@@ -1023,8 +1053,13 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 snapshot.renderer.maskInteraction = snapshot.maskInteraction;
 
             if (snapshot.mask != null)
-                Destroy(snapshot.mask.gameObject);
+            {
+                snapshot.mask.enabled = false;
+                if (Application.isPlaying) Destroy(snapshot.mask.gameObject);
+                else DestroyImmediate(snapshot.mask.gameObject);
+            }
         }
+        Assets.Scripts.Netcode.BombermanNetworkManager.NotifyPortalMasksChanged();
     }
 
     static void RestorePortalSinkVisual(List<PortalVisualSnapshot> snapshots)
@@ -1122,6 +1157,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     void SpawnTeleportStar(Vector2 position)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         Sprite sprite = GetRandomTeleportStarSprite();
         if (sprite == null)
             return;
@@ -1146,13 +1182,16 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
         Vector2 drift = driftDirection * Random.Range(minDrift, maxDrift);
         float spin = Random.Range(teleportStarSpinRange.x, teleportStarSpinRange.y);
+        activeNetworkPortalStars.Add(star);
+        PublishNetworkPortalStar(star.transform, sprite, drift, spin);
         StartCoroutine(AnimateTeleportStar(star.transform, renderer, drift, spin));
     }
 
-    IEnumerator AnimateTeleportStar(Transform star, SpriteRenderer renderer, Vector2 drift, float spin)
+    IEnumerator AnimateTeleportStar(Transform star, SpriteRenderer renderer, Vector2 drift, float spin,
+        float initialAge = 0, float lifetime = -1, float frameSeconds = -1)
     {
-        float duration = Mathf.Max(0.01f, teleportStarLifetime);
-        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, lifetime < 0 ? teleportStarLifetime : lifetime);
+        float elapsed = Mathf.Clamp(initialAge, 0, duration);
         Vector3 startScale = star != null ? star.localScale : Vector3.one;
 
         while (elapsed < duration)
@@ -1175,14 +1214,17 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             color.a = 1f - t;
             renderer.color = color;
 
-            UpdateTeleportStarSprite(renderer, elapsed);
+            UpdateTeleportStarSprite(renderer, elapsed, frameSeconds);
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
         if (star != null)
+        {
+            activeNetworkPortalStars.Remove(star.gameObject);
             Destroy(star.gameObject);
+        }
     }
 
     Sprite GetRandomTeleportStarSprite()
@@ -1200,12 +1242,12 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         return null;
     }
 
-    void UpdateTeleportStarSprite(SpriteRenderer renderer, float elapsed)
+    void UpdateTeleportStarSprite(SpriteRenderer renderer, float elapsed, float frameSeconds = -1)
     {
         if (renderer == null || teleportStarSprites == null || teleportStarSprites.Length <= 1)
             return;
 
-        int frame = Mathf.FloorToInt(elapsed / Mathf.Max(0.01f, teleportStarAnimationFrameTime)) % teleportStarSprites.Length;
+        int frame = Mathf.FloorToInt(elapsed / Mathf.Max(0.01f, frameSeconds < 0 ? teleportStarAnimationFrameTime : frameSeconds)) % teleportStarSprites.Length;
         Sprite sprite = teleportStarSprites[frame];
         if (sprite != null)
             renderer.sprite = sprite;

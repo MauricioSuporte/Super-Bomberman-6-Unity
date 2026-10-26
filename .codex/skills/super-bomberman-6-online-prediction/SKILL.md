@@ -229,3 +229,21 @@ A changed wire struct or new RPC requires matching authenticator and directory
 protocols plus compatible client/server builds. Follow the user's publication
 authorization; this skill does not supply it. Keep dirty scenes/fonts/recovery
 assets intact and do not close an Editor with unsaved work to run validation.
+
+
+## Preserve full render poses for portals and transport
+
+A runtime animation offset is not the full rendered transform: sink/rise may
+scale or move SpriteRenderer transforms directly, and mount ancestors may add
+offsets. Capture the pose relative to the replicated actor, including scale,
+rotation and mask interaction. Apply it after frame refresh only to presentation
+children; never rewind or scale a gameplay root. Restore the owner's original
+visual baseline when approved motion returns to prediction, and rebind it when
+the mount changes. Visibility and mask mode are discrete approved state.
+
+A SpriteMask is not a SpriteRenderer and is absent from the co-op sprite stream.
+Transport its approved render-only descriptor with bounded history, revision,
+scene/time guards and an explicit empty snapshot. Cleanup must cover disabled
+controllers as well as iterator disposal; stopping a coroutine alone is not a
+sufficient visual cleanup contract. Preserve approved particles before gating
+native portal routines, without running gameplay RNG again on clients.

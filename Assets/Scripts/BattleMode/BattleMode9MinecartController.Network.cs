@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Assets.Scripts.Netcode
 {
-    public struct CartPortalStar : NetworkMessage
+    public struct PortalStarView : NetworkMessage
     {
         public string scene, path;
         public uint revision;
@@ -37,7 +37,7 @@ public sealed partial class BattleMode9MinecartController
     void PublishNetworkStar(Transform star, Sprite sprite, Vector2 drift, float spin, bool clear = false)
     {
         if (!NetSync.IsServer || !NetworkServer.active || NetworkServer.isLoadingScene || BombermanNetworkManager.IsCoopStage || !IsSupportedSceneActive()) return;
-        NetworkServer.SendToReady(new CartPortalStar { scene = gameObject.scene.name, path = NetworkCartPath,
+        NetworkServer.SendToReady(new PortalStarView { scene = gameObject.scene.name, path = NetworkCartPath,
             revision = ++networkStarRevision, time = NetworkTime.localTime, clear = clear,
             position = star != null ? star.position : Vector3.zero, scale = star != null ? star.localScale : Vector3.one,
             angle = star != null ? star.eulerAngles.z : 0, drift = drift, spin = spin,
@@ -45,7 +45,7 @@ public sealed partial class BattleMode9MinecartController
             sprite = teleportStarSprites != null ? System.Array.IndexOf(teleportStarSprites, sprite) : -1, sorting = teleportStarSortingOrder });
     }
 
-    public void ReceiveNetworkStar(CartPortalStar view)
+    public void ReceiveNetworkStar(PortalStarView view)
     {
         if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || NetworkServer.active || BombermanNetworkManager.IsCoopStage ||
             !isActiveAndEnabled || view.scene != gameObject.scene.name || !IsSupportedScene(view.scene) || view.path != NetworkCartPath ||
@@ -56,7 +56,7 @@ public sealed partial class BattleMode9MinecartController
         StartCoroutine(PresentNetworkStar(view));
     }
 
-    System.Collections.IEnumerator PresentNetworkStar(CartPortalStar view)
+    System.Collections.IEnumerator PresentNetworkStar(PortalStarView view)
     {
         float pausedWait = 0;
         while (GamePauseController.IsPaused || NetworkTime.time < view.time + cartTimelineOffset)
@@ -74,12 +74,12 @@ public sealed partial class BattleMode9MinecartController
 
     uint lastStarClearRevision;
 
-    public GameObject CreateNetworkStarView(CartPortalStar view, float age)
+    public GameObject CreateNetworkStarView(PortalStarView view, float age)
     {
         if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || NetworkServer.active || view.clear ||
             view.scene != gameObject.scene.name || view.path != NetworkCartPath || teleportStarSprites == null ||
             view.sprite < 0 || view.sprite >= teleportStarSprites.Length || teleportStarSprites[view.sprite] == null) return null;
-        var star = new GameObject("ApprovedCartPortalStar"); star.transform.SetParent(transform, worldPositionStays: true);
+        var star = new GameObject("ApprovedPortalStarView"); star.transform.SetParent(transform, worldPositionStays: true);
         star.transform.SetPositionAndRotation(view.position + (Vector3)view.drift * age, Quaternion.Euler(0, 0, view.angle + view.spin * age));
         star.transform.localScale = view.scale;
         var renderer = star.AddComponent<SpriteRenderer>(); renderer.sprite = teleportStarSprites[view.sprite]; renderer.sortingOrder = view.sorting;

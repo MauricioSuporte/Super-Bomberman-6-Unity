@@ -35,6 +35,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] bool activeFlip;
         [SyncVar] byte activeFrame;
         [SyncVar] Vector3 activeOffset;
+        [SyncVar] NetworkVisualPose activePose;
         [SyncVar] int activeSortingLayer, activeSortingOrder;
         [SyncVar(hook = nameof(OnVisualTime))] double visualTime;
 
@@ -44,6 +45,7 @@ namespace Assets.Scripts.Netcode
             public byte index, frame;
             public bool idle, flip;
             public Vector3 offset;
+            public NetworkVisualPose pose;
             public int sortingLayer, sortingOrder;
         }
 
@@ -60,11 +62,19 @@ namespace Assets.Scripts.Netcode
                 adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
                     (positionSync.timelineOffset ? positionSync.sendIntervalMultiplier : 0));
             visualFrames.Add(new VisualFrame { time = current + adjustment, index = activeIndex,
-                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset, sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder });
+                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset, pose = activePose, sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder });
             if (visualFrames.Count > 64) visualFrames.RemoveAt(0);
         }
 
-        public void ClearOwnerVisualHistory() => visualFrames.Clear();
+        NetworkVisualPose.Baseline[] ownerVisualBaseline;
+        public void ClearOwnerVisualHistory()
+        {
+            visualFrames.Clear();
+            if (GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true)
+            { ownerVisualBaseline ??= NetworkVisualPose.CaptureBaseline(renderers, transform); }
+            else
+            { NetworkVisualPose.RestoreBaseline(ownerVisualBaseline); ownerVisualBaseline = null; }
+        }
 
         AnimatedSpriteRenderer[] renderers;
 
@@ -140,7 +150,8 @@ namespace Assets.Scripts.Netcode
             {
                 for (int i = 0; i < renderers.Length && i < NoRenderer; i++)
                 {
-                    if (renderers[i] != null && renderers[i].enabled)
+                    if (renderers[i] != null && renderers[i].enabled &&
+                        (!renderers[i].TryGetComponent<SpriteRenderer>(out var visibleSprite) || visibleSprite.enabled))
                     {
                         active = renderers[i];
                         idx = (byte)i;
@@ -166,6 +177,7 @@ namespace Assets.Scripts.Netcode
             if (flip != activeFlip) activeFlip = flip;
             if (frame != activeFrame) activeFrame = frame;
             activeOffset = active != null ? active.RuntimeBaseLocalOffset : Vector3.zero;
+            activePose = NetworkVisualPose.Capture(transform, active != null ? active.GetComponent<SpriteRenderer>() : null);
             activeSortingLayer = sortingLayer; activeSortingOrder = sortingOrder;
             visualTime = NetworkTime.localTime;
         }
@@ -175,19 +187,24 @@ namespace Assets.Scripts.Netcode
             byte activeIndex = this.activeIndex, activeFrame = this.activeFrame;
             bool activeIdle = this.activeIdle, activeFlip = this.activeFlip;
             Vector3 activeOffset = this.activeOffset;
+            NetworkVisualPose pose = activePose;
             int sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder;
             if ((!isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true) && visualFrames.Count > 0)
             {
                 while (visualFrames.Count > 1 && visualFrames[1].time <= NetworkTime.time) visualFrames.RemoveAt(0);
                 var sample = visualFrames[0];
                 activeIndex = sample.index; activeFrame = sample.frame;
-                activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset;
+                activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset; pose = sample.pose;
                 sortingLayer = sample.sortingLayer; sortingOrder = sample.sortingOrder;
                 if (visualFrames.Count > 1)
                 {
                     var next = visualFrames[1]; double interval = next.time - sample.time;
                     if (sample.index == next.index && interval > 0 && interval <= 0.25 && Vector3.Distance(sample.offset, next.offset) <= 4)
-                        activeOffset = Vector3.Lerp(sample.offset, next.offset, Mathf.Clamp01((float)((NetworkTime.time - sample.time) / interval)));
+                    {
+                        float t = Mathf.Clamp01((float)((NetworkTime.time - sample.time) / interval));
+                        activeOffset = Vector3.Lerp(sample.offset, next.offset, t);
+                        if (Vector3.Distance(sample.pose.position, next.pose.position) <= 4) pose = NetworkVisualPose.Interpolate(sample.pose, next.pose, t);
+                    }
                 }
             }
             if (diagnostics && Time.unscaledTime >= nextDiagnostic)
@@ -255,6 +272,7 @@ namespace Assets.Scripts.Netcode
             // Aplica o frame/idle atual (idle mostra idleSprite; senão o frame).
             if (dirty)
                 active.RefreshFrame();
+            if (active.TryGetComponent<SpriteRenderer>(out var posedSprite)) pose.Apply(transform, posedSprite);
         }
 
         static void SetEnabled(AnimatedSpriteRenderer r, bool on)

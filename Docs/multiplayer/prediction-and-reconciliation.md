@@ -792,3 +792,40 @@ Authored controller references were checked in BattleMode_9, BattleMode_12 and t
 three Stage_3-2 shuttles; no scene/prefab wiring was changed. Manual two-peer entry,
 exit, portal, pause, collision and loop-audio comparisons are still required before
 claiming offline parity. Boarding prediction is not introduced by this transport.
+
+
+## Portal renderer poses and masks (protocol 38)
+
+`NetworkVisualPose` captures position, rotation, scale and mask interaction relative
+to the replicated actor. It covers direct sprite transforms and inherited mount
+offsets that animation runtime offsets alone miss. Apply only to presentation
+children; a root renderer cannot move or scale its gameplay actor. Compatible
+approved samples interpolate transform pose, keeping mask/frame discrete. Owner
+authority scopes capture and restore original visual transforms before returning
+to predicted walking; mount replacement restores/rebinds this baseline.
+
+Portal7 native player and bomb entry points reject pure-client gameplay. Its
+server routine marks approved owner motion and synchronizes Transform after body
+writes. The existing short-segment presenter cuts cross-room jumps. Clients do
+not select destinations, lock colliders, grant invulnerability or punch bombs.
+Hidden sprite renderers now produce the absent player-animation index. Approved
+star descriptors share `PortalStarView` with cart portals; Battle clients render
+only sprite particles, while co-op retains its existing world sprite transport.
+
+Stage3-4 fixed portal masks have a bounded, scene/revision/time-checked full
+snapshot stream. Client views contain only SpriteMask and Transform. Empty
+snapshots remove prior views on the approved timeline; pause freezes playback.
+Co-op world sprites also carry their approved mask interaction. Native sink/rise
+restores its visual baseline/masks on iterator disposal and explicit controller
+disable, without teleporting an interrupted actor back to the portal.
+
+This is approved presentation, not speculative portal entry. Manual comparisons
+of entry/exit, mounted/held-bomb cases, audio, pause and packet delay remain.
+`SwapGroundTileBlackoutHandler` swaps terrain and blackout rather than a player;
+continue auditing it with C09. Do not mark the whole C05 plan complete yet.
+
+Validation:221/221 OnlineRoom Unity tests passed in the isolated runner, including
+relative hierarchy poses, hidden renderers, approved masks, particle authority and
+cleanup through iterator disposal/controller disable. C#0 new warnings/errors;
+Python40/40, strict UTF-8/BOM and diff checks passed. Manual two-peer comparison
+is still pending.

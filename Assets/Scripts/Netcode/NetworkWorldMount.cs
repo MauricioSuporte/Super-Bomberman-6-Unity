@@ -22,9 +22,10 @@ namespace Assets.Scripts.Netcode
             public int frame;
             public Color color;
             public Vector3 localPosition;
+            public NetworkVisualPose pose;
             public bool Equals(MountFrame other) => visible == other.visible && idle == other.idle &&
                 flipX == other.flipX && flipY == other.flipY && frame == other.frame &&
-                color.Equals(other.color) && localPosition.Equals(other.localPosition);
+                color.Equals(other.color) && localPosition.Equals(other.localPosition) && pose.Equals(other.pose);
         }
 
         MountWorldPickup source;
@@ -123,7 +124,7 @@ namespace Assets.Scripts.Netcode
                     idle = animation.idle, frame = animation.CurrentFrame,
                     flipX = sprite != null && sprite.flipX, flipY = sprite != null && sprite.flipY,
                     color = sprite != null ? sprite.color : Color.white,
-                    localPosition = animation.transform.localPosition
+                    localPosition = animation.transform.localPosition, pose = NetworkVisualPose.Capture(source.transform, sprite)
                 };
                 if (frames.Count <= i) frames.Add(frame);
                 else if (!frames[i].Equals(frame)) frames[i] = frame;
@@ -148,6 +149,7 @@ namespace Assets.Scripts.Netcode
                 sprite.enabled = frame.visible;
                 sprite.flipX = frame.flipX; sprite.flipY = frame.flipY;
                 sprite.color = frame.color;
+                frame.pose.Apply(transform, sprite);
             }
         }
     }

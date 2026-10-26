@@ -50,6 +50,7 @@ namespace Assets.Scripts.Netcode
             if (ownerAuthorityPresentation == value) return;
             ownerAuthorityPresentation = value;
             GetComponent<NetworkPlayerAnimation>()?.ClearOwnerVisualHistory();
+            GetComponent<NetworkMountAnimation>()?.OwnerAuthorityPresentationChanged(value);
             if (GameplayLatencyDiagnostics.Enabled)
                 GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For(value ? "authority_motion_begin" : "authority_motion_end",
                 movement, detail: "approved_snapshots_only"));

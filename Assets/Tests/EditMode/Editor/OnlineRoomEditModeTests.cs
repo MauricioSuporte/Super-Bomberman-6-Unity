@@ -10,8 +10,174 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase(false, false)]
+    [TestCase(true, false)]
+    [TestCase(false, true)]
+    [TestCase(true, true)]
+    public void InterruptedPortalPhaseRestoresVisualsAndMaskWithoutTeleportingActor(bool fixedMask, bool disableController)
+    {
+        var oldMode = NetSync.Mode; NetSync.Mode = NetSync.NetMode.Offline;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var actor = new GameObject("InterruptedPortalActor"); actor.SetActive(false);
+        var controllerObject = new GameObject("InterruptedPortal"); controllerObject.SetActive(false);
+        var texture = new Texture2D(8, 8); var sprite = Sprite.Create(texture, new Rect(0, 0, 8, 8), Vector2.one * 0.5f);
+        System.Collections.IEnumerator phase = null;
+        try
+        {
+            actor.AddComponent<BoxCollider2D>(); var movement = actor.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, actor.GetComponent<Rigidbody2D>());
+            var head = new GameObject("PortalHead"); head.transform.SetParent(actor.transform, false);
+            head.transform.localScale = new Vector3(0.9f, 1.1f, 1); head.transform.localPosition = Vector3.up * 0.2f;
+            var renderer = head.AddComponent<SpriteRenderer>(); renderer.sprite = sprite;
+            var portal = controllerObject.AddComponent<BattleMode7PortalController>();
+            foreach (var behaviour in actor.GetComponents<MonoBehaviour>()) behaviour.enabled = false;
+            actor.SetActive(true);
+            typeof(BattleMode7PortalController).GetField("useFixedPortalMaskVisual", flags).SetValue(portal, fixedMask);
+            var originalScale = head.transform.localScale; var originalPosition = head.transform.localPosition;
+            phase = (System.Collections.IEnumerator)typeof(BattleMode7PortalController).GetMethod("AnimatePortalSinkRise", flags)
+                .Invoke(portal, new object[] { movement, Vector2.one, false, 1f, null, 0f });
+            Assert.IsTrue(phase.MoveNext());
+            if (fixedMask) Assert.AreEqual(SpriteMaskInteraction.VisibleInsideMask, renderer.maskInteraction);
+            var interruptedPosition = new Vector2(30000, 30000); movement.Rigidbody.position = interruptedPosition;
+            Assert.AreEqual(interruptedPosition, movement.Rigidbody.position, "Fixture needs an active native body before testing cleanup.");
+            if (disableController) typeof(BattleMode7PortalController).GetMethod("OnDisable", flags).Invoke(portal, null);
+            else { (phase as System.IDisposable).Dispose(); phase = null; }
+            Assert.AreEqual(originalScale, head.transform.localScale); Assert.AreEqual(originalPosition, head.transform.localPosition);
+            Assert.AreEqual(SpriteMaskInteraction.None, renderer.maskInteraction);
+            Assert.AreEqual(interruptedPosition, movement.Rigidbody.position, "Cleanup must not send an interrupted actor back to the portal.");
+            foreach (var mask in Object.FindObjectsByType<SpriteMask>()) Assert.AreNotEqual("Stage34PortalFixedMask", mask.name);
+        }
+        finally
+        {
+            (phase as System.IDisposable)?.Dispose(); Object.DestroyImmediate(actor); Object.DestroyImmediate(controllerObject);
+            Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); NetSync.Mode = oldMode;
+        }
+    }
+
     [Test]
-    public void CartPortalStarViewIsRenderOnlyPreservesRngAndClearCancelsQueuedVisuals()
+    public void VisualPoseRoundTripsHierarchyAndBaselineNeverRewindsGameplayRoot()
+    {
+        var actor = new GameObject("VisualPoseActor"); actor.SetActive(false);
+        var copy = new GameObject("VisualPoseCopy"); copy.SetActive(false);
+        try
+        {
+            actor.transform.SetPositionAndRotation(new Vector3(3, 4), Quaternion.Euler(0, 0, 15));
+            actor.transform.localScale = Vector3.one * 2;
+            copy.transform.SetPositionAndRotation(actor.transform.position, actor.transform.rotation);
+            copy.transform.localScale = actor.transform.localScale;
+            var parent = new GameObject("MountOffset"); parent.transform.SetParent(actor.transform, false);
+            parent.transform.localPosition = Vector3.up; parent.transform.localScale = Vector3.one * 0.8f;
+            var visual = new GameObject("Head"); visual.transform.SetParent(parent.transform, false);
+            visual.transform.localPosition = Vector3.down * 0.3f; visual.transform.localScale = new Vector3(1, 0.4f, 1);
+            visual.transform.localRotation = Quaternion.Euler(0, 0, 35);
+            var source = visual.AddComponent<SpriteRenderer>(); source.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+            var target = new GameObject("RenderedHead"); target.transform.SetParent(copy.transform, false);
+            var sprite = target.AddComponent<SpriteRenderer>(); var animated = target.AddComponent<AnimatedSpriteRenderer>();
+            var baseline = NetworkVisualPose.CaptureBaseline(new[] { animated }, copy.transform);
+            var pose = NetworkVisualPose.Capture(actor.transform, source);
+            using (var writer = NetworkWriterPool.Get())
+            { writer.Write(pose); pose = new NetworkReader(writer.ToArray()).Read<NetworkVisualPose>(); }
+            pose.Apply(copy.transform, sprite);
+            Assert.Less(Vector3.Distance(source.transform.position, target.transform.position), 0.0001f);
+            Assert.Less(Vector3.Distance(source.transform.lossyScale, target.transform.lossyScale), 0.0001f);
+            Assert.Less(Quaternion.Angle(source.transform.rotation, target.transform.rotation), 0.001f);
+            Assert.AreEqual(source.maskInteraction, sprite.maskInteraction);
+            NetworkVisualPose.RestoreBaseline(baseline);
+            Assert.AreEqual(Vector3.zero, target.transform.localPosition); Assert.AreEqual(Vector3.one, target.transform.localScale);
+            Assert.AreEqual(SpriteMaskInteraction.None, sprite.maskInteraction);
+            var rootSprite = copy.AddComponent<SpriteRenderer>(); var rootAnimation = copy.AddComponent<AnimatedSpriteRenderer>();
+            baseline = NetworkVisualPose.CaptureBaseline(new[] { rootAnimation }, copy.transform);
+            copy.transform.position += Vector3.right * 7; var confirmedPosition = copy.transform.position;
+            pose.Apply(copy.transform, rootSprite); NetworkVisualPose.RestoreBaseline(baseline);
+            Assert.AreEqual(confirmedPosition, copy.transform.position, "Presentation cannot rewind a confirmed gameplay root.");
+            Assert.AreEqual(Vector3.one * 2, copy.transform.localScale);
+            var next = pose; next.position += Vector3.up; next.scale = Vector3.one; next.mask = (byte)SpriteMaskInteraction.None;
+            var middle = NetworkVisualPose.Interpolate(pose, next, 0.5f);
+            Assert.AreEqual(pose.mask, middle.mask); Assert.AreEqual(pose.position + Vector3.up * 0.5f, middle.position);
+            Assert.IsFalse(NetworkVisualPose.Interpolate(default, next, 1).valid);
+        }
+        finally { Object.DestroyImmediate(actor); Object.DestroyImmediate(copy); }
+    }
+
+    [Test]
+    public void PortalMasksUseApprovedTimelineAndEmptySnapshotRemovesOnlyViews()
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var actor = new GameObject("PortalMaskTestManager"); actor.SetActive(false);
+        BombermanNetworkManager manager = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            manager = actor.AddComponent<BombermanNetworkManager>();
+            var message = new PortalMaskSnapshot { scene = SceneManager.GetActiveScene().name, revision = 1, time = NetworkTime.time - 0.1,
+                masks = new[] { new PortalMaskView { id = 10, position = new Vector3(7, 8), scale = new Vector3(2, 3, 1),
+                    rotation = Quaternion.identity, cutoff = 0.01f, custom = true, backOrder = 3, frontOrder = 15 } } };
+            using (var writer = NetworkWriterPool.Get())
+            { writer.Write(message); message = new NetworkReader(writer.ToArray()).Read<PortalMaskSnapshot>(); }
+            manager.ApplyPortalMasks(message);
+            var present = typeof(BombermanNetworkManager).GetMethod("PresentPortalMaskViews", flags); present.Invoke(manager, null);
+            var views = (Dictionary<int, SpriteMask>)typeof(BombermanNetworkManager).GetField("portalMaskViews", flags).GetValue(manager);
+            Assert.AreEqual(1, views.Count); var mask = views[10];
+            Assert.AreEqual(message.masks[0].position, mask.transform.position); Assert.AreEqual(message.masks[0].scale, mask.transform.localScale);
+            Assert.IsTrue(mask.isCustomRangeActive); Assert.AreEqual(15, mask.frontSortingOrder);
+            Assert.IsNull(mask.GetComponent<Collider2D>()); Assert.IsNull(mask.GetComponent<Rigidbody2D>()); Assert.IsNull(mask.GetComponent<NetworkIdentity>());
+            Assert.AreEqual(0, mask.GetComponents<MonoBehaviour>().Length);
+            var empty = message; empty.revision = 2; empty.time = NetworkTime.time + 100; empty.masks = new PortalMaskView[0];
+            manager.ApplyPortalMasks(empty); present.Invoke(manager, null); Assert.AreEqual(1, views.Count, "Do not remove the current mask before its approved timeline.");
+            var history = (List<PortalMaskSnapshot>)typeof(BombermanNetworkManager).GetField("portalMaskHistory", flags).GetValue(manager);
+            empty.time = NetworkTime.time - 0.05; history[1] = empty;
+            present.Invoke(manager, null); Assert.AreEqual(0, views.Count);
+            manager.ApplyPortalMasks(message); Assert.AreEqual(1, history.Count, "An old snapshot cannot resurrect a mask.");
+            message.revision = 3; message.scene = "DifferentScene"; manager.ApplyPortalMasks(message); Assert.AreEqual(1, history.Count);
+        }
+        finally
+        {
+            if (manager != null) typeof(BombermanNetworkManager).GetMethod("ClearPortalMaskViews", flags).Invoke(manager, null);
+            Object.DestroyImmediate(actor); NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState);
+        }
+    }
+
+    [Test]
+    public void PortalClientCannotTeleportOrDrawGameplayRandomnessButCanPresentApprovedStars()
+    {
+        var oldMode = NetSync.Mode; var oldRandom = Random.state;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var actor = new GameObject("PortalAuthorityTest"); actor.SetActive(false);
+        var texture = new Texture2D(8, 8); var sprite = Sprite.Create(texture, new Rect(0, 0, 8, 8), Vector2.one * 0.5f);
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var portal = actor.AddComponent<BattleMode7PortalController>();
+            typeof(BattleMode7PortalController).GetField("teleportStarSprites", flags).SetValue(portal, new[] { sprite });
+            var random = Random.state;
+            var teleport = (System.Collections.IEnumerator)typeof(BattleMode7PortalController).GetMethod("TeleportRoutine", flags).Invoke(portal, new object[] { null, 0, 1 });
+            Assert.IsFalse(teleport.MoveNext()); (teleport as System.IDisposable)?.Dispose();
+            typeof(BattleMode7PortalController).GetMethod("SpawnTeleportStar", flags).Invoke(portal, new object[] { Vector2.zero });
+            Assert.AreEqual(0, actor.transform.childCount); Assert.AreEqual(random, Random.state);
+            var view = new PortalStarView { scene = actor.scene.name, path = portal.NetworkPortalPath, revision = 1,
+                position = Vector3.up * 5, scale = Vector3.one * 0.3f, drift = Vector2.right, sprite = 0, sorting = 90 };
+            var star = portal.CreateNetworkPortalStar(view, 0.1f); Assert.IsNotNull(star);
+            Assert.AreEqual(view.position + Vector3.right * 0.1f, star.transform.position);
+            Assert.AreEqual(0, star.GetComponents<MonoBehaviour>().Length); Assert.IsNull(star.GetComponent<Collider2D>());
+            Assert.IsNull(star.GetComponent<Rigidbody2D>()); Assert.IsNull(star.GetComponent<NetworkIdentity>()); Assert.AreEqual(random, Random.state);
+            typeof(BattleMode7PortalController).GetField("clearedPortalStarRevision", flags).SetValue(portal, 2u);
+            var queued = (System.Collections.IEnumerator)typeof(BattleMode7PortalController).GetMethod("PresentNetworkPortalStar", flags).Invoke(portal, new object[] { view });
+            Assert.IsFalse(queued.MoveNext()); (queued as System.IDisposable)?.Dispose();
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Random.state = oldRandom;
+        }
+    }
+
+    [Test]
+    public void PortalStarViewViewIsRenderOnlyPreservesRngAndClearCancelsQueuedVisuals()
     {
         var oldMode = NetSync.Mode; var oldRandom = Random.state;
         var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
@@ -26,11 +192,11 @@ public sealed class OnlineRoomEditModeTests
             NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
             var controller = actor.AddComponent<BattleMode9MinecartController>();
             typeof(BattleMode9MinecartController).GetField("teleportStarSprites", flags).SetValue(controller, new[] { sprite });
-            var view = new CartPortalStar { scene = "BattleMode_12", path = controller.NetworkCartPath, revision = 1, time = NetworkTime.time - 0.1,
+            var view = new PortalStarView { scene = "BattleMode_12", path = controller.NetworkCartPath, revision = 1, time = NetworkTime.time - 0.1,
                 position = new Vector3(34000, 34000), scale = Vector3.one * 0.25f, drift = Vector2.up * 0.5f,
                 angle = 30, spin = 100, life = 0.32f, frameSeconds = 0.1f, sprite = 0, sorting = 90 };
             using (var writer = NetworkWriterPool.Get())
-            { writer.Write(view); view = new NetworkReader(writer.ToArray()).Read<CartPortalStar>(); }
+            { writer.Write(view); view = new NetworkReader(writer.ToArray()).Read<PortalStarView>(); }
             var random = Random.state; star = controller.CreateNetworkStarView(view, 0.1f);
             Assert.IsNotNull(star); Assert.AreEqual(view.position + (Vector3)view.drift * 0.1f, star.transform.position);
             Assert.AreEqual(0, star.GetComponents<MonoBehaviour>().Length); Assert.IsNull(star.GetComponent<Collider2D>()); Assert.IsNull(star.GetComponent<Rigidbody2D>()); Assert.IsNull(star.GetComponent<NetworkIdentity>());
@@ -130,13 +296,17 @@ public sealed class OnlineRoomEditModeTests
             typeof(NetworkMountAnimation).GetMethod("Awake", flags).Invoke(animation, null);
             var revision = typeof(NetworkMountAnimation).GetField("frameRevision", flags); revision.SetValue(animation, 1u);
             typeof(NetworkMountAnimation).GetField("frameType", flags).SetValue(animation, MountedType.Pink);
-            var sample = new NetworkWorldMount.MountFrame { visible = true, idle = false, color = Color.white, frame = 1 };
+            var sample = new NetworkWorldMount.MountFrame { visible = true, idle = false, color = Color.white, frame = 1,
+                pose = new NetworkVisualPose { valid = true, position = Vector3.down * 0.2f, scale = new Vector3(1, 0.2f, 1), rotation = Quaternion.identity, mask = (byte)SpriteMaskInteraction.VisibleInsideMask } };
             animation.frames.Add(sample);
             var receive = typeof(NetworkMountAnimation).GetMethod("OnMountVisualTime", flags); receive.Invoke(animation, new object[] { 0d, 10d });
             sample.localPosition = Vector3.up * 2; sample.frame = 3; sample.flipX = true; sample.color = Color.red;
+            sample.pose = new NetworkVisualPose { valid = true, position = Vector3.zero, scale = Vector3.one, rotation = Quaternion.identity };
             animation.frames[0] = sample; receive.Invoke(animation, new object[] { 10d, 10.2d });
             Assert.IsTrue(animation.TrySampleMountFrame(10.1, MountedType.Pink, 0, out var displayed));
             Assert.AreEqual(1, displayed.localPosition.y, 0.001f); Assert.AreEqual(1, displayed.frame); Assert.IsFalse(displayed.flipX); Assert.AreEqual(Color.white, displayed.color);
+            Assert.AreEqual(0.6f, displayed.pose.scale.y, 0.001f); Assert.AreEqual(-0.1f, displayed.pose.position.y, 0.001f);
+            Assert.AreEqual((byte)SpriteMaskInteraction.VisibleInsideMask, displayed.pose.mask);
             Assert.IsFalse(animation.TrySampleMountFrame(10.1, MountedType.Yellow, 0, out _));
             revision.SetValue(animation, 2u); Assert.IsFalse(animation.TrySampleMountFrame(10.1, MountedType.Pink, 0, out _), "A new mount of the same type must not inherit old poses.");
             sample.localPosition = Vector3.up * 5; animation.frames[0] = sample; receive.Invoke(animation, new object[] { 10.2d, 11d });
@@ -167,7 +337,11 @@ public sealed class OnlineRoomEditModeTests
             typeof(NetworkPlayerAnimation).GetField("activeFrame", flags).SetValue(animation, (byte)1);
             typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 7);
             var receive = typeof(NetworkPlayerAnimation).GetMethod("OnVisualTime", flags); double now = NetworkTime.time;
+            typeof(NetworkPlayerAnimation).GetField("activePose", flags).SetValue(animation,
+                new NetworkVisualPose { valid = true, position = Vector3.down * 0.2f, scale = new Vector3(1, 0.2f, 1), rotation = Quaternion.identity, mask = (byte)SpriteMaskInteraction.VisibleInsideMask });
             receive.Invoke(animation, new object[] { 0d, now - 0.1 });
+            typeof(NetworkPlayerAnimation).GetField("activePose", flags).SetValue(animation,
+                new NetworkVisualPose { valid = true, position = Vector3.zero, scale = Vector3.one, rotation = Quaternion.identity });
             typeof(NetworkPlayerAnimation).GetField("activeOffset", flags).SetValue(animation, Vector3.up * 2);
             typeof(NetworkPlayerAnimation).GetField("activeFrame", flags).SetValue(animation, (byte)3);
             typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 19);
@@ -175,6 +349,11 @@ public sealed class OnlineRoomEditModeTests
             typeof(NetworkPlayerAnimation).GetMethod("ClientApply", flags).Invoke(animation, null);
             Assert.AreEqual(1, renderer.RuntimeBaseLocalOffset.y, 0.001f); Assert.AreEqual(1, renderer.CurrentFrame);
             Assert.AreEqual(7, renderer.GetComponent<SpriteRenderer>().sortingOrder);
+            Assert.AreEqual(0.6f, child.transform.localScale.y, 0.001f); Assert.AreEqual(-0.1f, child.transform.localPosition.y, 0.001f);
+            Assert.AreEqual(SpriteMaskInteraction.VisibleInsideMask, child.GetComponent<SpriteRenderer>().maskInteraction);
+            renderer.enabled = true; child.GetComponent<SpriteRenderer>().enabled = false;
+            typeof(NetworkPlayerAnimation).GetMethod("SampleOwned", flags).Invoke(animation, null);
+            Assert.AreEqual((byte)255, typeof(NetworkPlayerAnimation).GetField("activeIndex", flags).GetValue(animation), "A renderer hidden between portals must not remain visible on peers.");
         }
         finally { clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor); }
     }

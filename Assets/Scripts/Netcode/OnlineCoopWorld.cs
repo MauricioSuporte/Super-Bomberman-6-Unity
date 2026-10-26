@@ -17,9 +17,10 @@ namespace Assets.Scripts.Netcode
         public Quaternion rotation;
         public Color color;
         public bool flipX, flipY, visible;
+        public byte mask;
         public bool Matches(CoopSpriteFrame other) => animation == 0 && other.animation == 0 && id == other.id && sprite == other.sprite && material == other.material &&
             sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
-            rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible;
+            rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask;
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
     public struct CoopTileFrame
@@ -84,10 +85,12 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
-            NetworkClient.RegisterHandler<CartPortalStar>(message =>
+            NetworkClient.RegisterHandler<PortalMaskSnapshot>(ApplyPortalMasks);
+            NetworkClient.RegisterHandler<PortalStarView>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode9MinecartController>()) controller.ReceiveNetworkStar(message);
+                foreach (var controller in FindObjectsByType<BattleMode7PortalController>()) controller.ReceiveNetworkPortalStar(message);
             });
             NetworkClient.RegisterHandler<MinecartView>(message =>
             {
@@ -204,6 +207,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopWorld()
         {
+            ClearPortalMaskViews();
             ClearCoopCollisionWorld();
             ClearCoopSprites();
             coopLastSprites.Clear(); coopViews.Clear(); coopMaps.Clear(); coopLastTiles.Clear();
@@ -223,6 +227,8 @@ namespace Assets.Scripts.Netcode
 
         void TickCoopWorld()
         {
+            PublishPortalMasks();
+            PresentPortalMaskViews();
             if (!NetworkServer.active || !IsCoopStage || coopCatalog == null || NetworkServer.isLoadingScene) return;
             if (Time.unscaledTime < coopNextFrame) return;
             using var scope = CoopPresentationMarker.Auto();
@@ -286,7 +292,7 @@ namespace Assets.Scripts.Netcode
                     scale = renderer.transform.lossyScale, color = renderer.color,
                     sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
                     visible = renderer.enabled && active && !renderer.forceRenderingOff,
-                    flipX = renderer.flipX, flipY = renderer.flipY
+                    flipX = renderer.flipX, flipY = renderer.flipY, mask = (byte)renderer.maskInteraction
                 };
                 if (renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) && animation.isActiveAndEnabled)
                 {
@@ -461,7 +467,7 @@ namespace Assets.Scripts.Netcode
             var material = At(coopCatalog.materials, frame.material);
             if (material != null) view.sharedMaterial = material;
             view.enabled = frame.visible; view.color = frame.color;
-            view.flipX = frame.flipX; view.flipY = frame.flipY;
+            view.flipX = frame.flipX; view.flipY = frame.flipY; view.maskInteraction = (SpriteMaskInteraction)frame.mask;
             view.sortingLayerID = frame.sortingLayer; view.sortingOrder = frame.order;
         }
 

@@ -19,33 +19,24 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo36, commit `1b8dbb449`, pipeline
-  [40362231252](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40362231252) com sucesso.
-- **Último lote publicado:** apresentação de movimentos externos aprovados,
-  FallingBomb autoritativa e alinhamento de poses. Validado com206 testes Unity,
-  40 Python e compilação C# sem erros/avisos novos. Ovos foram publicados antes em35.
-- **Conteúdo36 concluído e publicado:**
-  C02/C03: apresentação contínua de movimentos aprovados em canhão, mola/geyser
-  e corda; gates impedem executar gameplay desses lançadores no client.
-  C10: FallingBomb usa alvo/tempo aprovados e spawn real em rede.
-  R01: histórico alinha pose da montaria/cabeça com posição, com geração por montaria.
-- **Validação36:** suíte final206/206 passou, incluindo a coerência
-  Rigidbody/Transform dos lançadores. C# final0 erros/avisos, Python40/40,
-  UTF-8/BOM e diffcheck passaram. Logs/PredictionPresentation36FinalTests.xml/.log.
-  Não declarar deploy36 até confirmar CI.
-- **Lote37 salvo/enviado:** commit `068d522ca`, pipeline
-  [40371185855](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40371185855) em andamento. C04 transporte do visual do
-  carrinho e passageiro, incluindo buffer, cantos, escala/sink, cortes de portal,
-  loop e estrelas aprovados, gates client e sorting confirmado sem sobrescrever
-  frame previsto. Suíte214/214 +5 testes focados após ajuste final de escala,
-  C#0, Python40/40, UTF-8/BOM e diffcheck passaram. Deploy37 ainda não confirmado.
-- **Próximos itens:** concluir validação37; concluir C04 transporte do visual do
-  carrinho e passageiro, C05 portais/swap, demais C/R e regressões A14.
+- **Publicado e confirmado:** protocolo37, commit `068d522ca`, pipeline
+  [40371185855](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40371185855) concluído com sucesso.
+- **Último lote publicado:** C04 transporte do visual do carrinho e passageiro,
+  incluindo buffer, cantos, escala/sink, cortes de portal, loop, estrelas e sorting
+  confirmados. Suíte214/214; depois do ajuste final de escala,5 testes focados;
+  C#0 erros/avisos novos e Python40/40. Validação manual com dois peers pendente.
+- **Validado, aguardando envio/publicação:** protocolo38, C05 portais.
+  Pose relativa de sprites, recuperação de pose ao retomar predição, máscaras
+  aprovadas, gates de autoridade do Portal7, apresentação contínua do owner e
+  estrelas aprovadas. Suíte final221/221 Unity, C#0 erros/avisos novos,
+  Python40/40, UTF-8/BOM e diffcheck passaram.
+- **Próximos itens:** validar/publicar38, demais C/R e regressões A14.
+  Swap troca terreno/blackout, não transporta player; acompanhar também em C09.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
-- **Workspace:** branch `v0.5.0`, checkout original; preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote36 salvo/enviado; arquivos novos37 e metas ainda no diretório.
+- **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
+  do usuário e o Unity aberto. Alterações38 ainda no diretório, sem commit.
 
 ## Como acompanhar
 
@@ -194,8 +185,8 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
-- [ ] C04: parcial37: transporte de cart/rider/loop/estrelas e gates implementados; confirmação de testes finais, boarding previsto e manual de entrada/saída/portais pendentes.
-- [ ] C05: portais/swap.
+- [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
+- [ ] C05: parcial38 validado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [ ] C06: correnteza/barco/plataforma.
 - [ ] C07: pusher.
 - [ ] C08: ímãs/redirecionamento.
@@ -732,3 +723,39 @@ sem reposicionar actor após uma transição de ending. TickCoopWorld é chamado
 OnlineRoomSession.Update para Battle também, mas retorna cedo fora de co-op; novo
 stream de máscaras precisa ocorrer antes desse return e limpar com ClearCoopWorld
 (+OnStopClient) em todos os fluxos. Não marcar C05 completo com só scope/gates.
+
+
+## Continuação38: Portal7 e poses completas (em validação)
+
+CI37 confirmado sucesso. Lote38 adiciona NetworkVisualPose relativo ao actor,
+com proteção do gameplay root e baseline para retorno do owner à predição.
+Pose da cabeça/montaria/world mount inclui escala/rotação/offset herdado/máscara.
+Portal7 passa a marcar movimento aprovado e recusar gameplay client; estrelas
+Battle usam PortalStarView compartilhado com cart, co-op conserva stream existente.
+Máscaras Stage34 possuem stream completo limitado/revisionado com empty-clear.
+Sink/rise limpa escala/máscara em Dispose e OnDisable sem reposicionar ator
+interrompido. Renderer oculto deixa de produzir frame visível de player.
+
+Primeira suíte Unity38:217/219. Duas falhas foram de fixture: Rigidbody de GO
+inativo não aceitou o posicionamento utilizado na assertiva de interrupção.
+Fixture corrigida para corpo ativo, com assertiva da pré-condição. Revisão também
+adicionou limpeza explícita OnDisable e rebind de baseline ao trocar mount.
+Rodada final ampliada em andamento: PredictionPortal38FinalTests.xml/.log.
+C#0 erros/avisos e Python40/40 passaram. NÃO declarar Unity38/publicação ainda.
+
+Auditoria preliminar C06 para próxima etapa: WaterCycleCurrent trava input e
+mantém override externo durante push (não é locomoção livre); apresentar caminho
+aprovado, preservar freio pelo input real e cleanup/pausa. FloatingPlatform trava
+input durante transporte, mantém múltiplos riders e centraliza Rigidbody em
+LateUpdate; precisa scopes por rider, cleanup e alinhamento com world stream.
+BoatRideZone deixa player dirigir, altera passTaggedObstacles/água e suprime o
+visual do corpo; esse contexto não está em NetworkMovementState. Não aplicar um
+scope de voo travado para fingir predição de barco: transportar contexto aprovado
+para motor/replay e apresentação do suporte, sem prever embarque/invulnerabilidade.
+
+
+Validação final38:221/221 Unity passaram na rodada ampliada, incluindo os quatro
+casos de interrupção/dispose/disable. C#0 erros/avisos novos, Python40/40 e
+UTF-8/BOM/diffcheck passaram. Relatórios preservados em Logs/PredictionPortal38FinalTests.xml
+e .log. Próximo: commit/envio/publicação38, confirmar CI e continuar C06.
+Nenhuma partida manual com dois peers foi realizada; plano completo segue aberto.

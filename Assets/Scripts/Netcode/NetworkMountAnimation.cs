@@ -54,7 +54,11 @@ namespace Assets.Scripts.Netcode
                 double interval = to.time - from.time;
                 if (interval > 0 && interval <= 0.25 && frame.visible && target.visible && frame.idle == target.idle &&
                     Vector3.Distance(frame.localPosition, target.localPosition) <= 4)
-                    frame.localPosition = Vector3.Lerp(frame.localPosition, target.localPosition, Mathf.Clamp01((float)((timeline - from.time) / interval)));
+                {
+                    float t = Mathf.Clamp01((float)((timeline - from.time) / interval));
+                    frame.localPosition = Vector3.Lerp(frame.localPosition, target.localPosition, t);
+                    if (Vector3.Distance(frame.pose.position, target.pose.position) <= 4) frame.pose = NetworkVisualPose.Interpolate(frame.pose, target.pose, t);
+                }
             }
             return true;
         }
@@ -96,7 +100,7 @@ namespace Assets.Scripts.Netcode
                         idle = animation.idle, frame = animation.CurrentFrame,
                         flipX = sprite != null && sprite.flipX, flipY = sprite != null && sprite.flipY,
                         color = sprite != null ? sprite.color : Color.white,
-                        localPosition = animation.transform.localPosition
+                        localPosition = animation.transform.localPosition, pose = NetworkVisualPose.Capture(transform, sprite)
                     };
                     if (i >= frames.Count) { frames.Add(frame); changed = true; }
                     else if (!frames[i].Equals(frame)) { frames[i] = frame; changed = true; }
@@ -129,13 +133,22 @@ namespace Assets.Scripts.Netcode
                 sprite.enabled = frame.visible;
                 sprite.flipX = frame.flipX; sprite.flipY = frame.flipY;
                 sprite.color = frame.color;
+                frame.pose.Apply(transform, sprite);
                 if (frame.visible && greenDash != null) greenDash.PresentNetworkAfterimage(animation);
                 if (frame.visible && blackDash != null) blackDash.PresentNetworkAfterimage(animation);
             }
         }
 
+        NetworkVisualPose.Baseline[] ownerVisualBaseline;
+        public void OwnerAuthorityPresentationChanged(bool active)
+        {
+            if (active) ownerVisualBaseline ??= NetworkVisualPose.CaptureBaseline(renderers, transform);
+            else { NetworkVisualPose.RestoreBaseline(ownerVisualBaseline); ownerVisualBaseline = null; }
+        }
+
         void Rebind(GameObject mount)
         {
+            NetworkVisualPose.RestoreBaseline(ownerVisualBaseline); ownerVisualBaseline = null;
             trackedMount = mount;
             ownerVisual = mount != null ? mount.GetComponentInChildren<MountVisualController>(true) : null;
             if (!isServer && isLocalPlayer && ownerVisual != null && TryGetComponent<MovementController>(out var movement))
@@ -160,6 +173,8 @@ namespace Assets.Scripts.Netcode
                     behaviour.StopAllCoroutines();
                     behaviour.enabled = false;
                 }
+            if (isLocalPlayer && GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true)
+                ownerVisualBaseline = NetworkVisualPose.CaptureBaseline(renderers, transform);
             if (isLocalPlayer) GetComponent<NetworkBombFx>()?.ReapplyMountAbilityPose();
         }
     }
