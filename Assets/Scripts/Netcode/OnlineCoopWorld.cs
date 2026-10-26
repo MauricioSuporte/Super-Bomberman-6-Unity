@@ -84,6 +84,16 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
+            NetworkClient.RegisterHandler<CartPortalStar>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var controller in FindObjectsByType<BattleMode9MinecartController>()) controller.ReceiveNetworkStar(message);
+            });
+            NetworkClient.RegisterHandler<MinecartView>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var controller in FindObjectsByType<BattleMode9MinecartController>()) controller.ReceiveNetworkCart(message);
+            });
             NetworkClient.RegisterHandler<FallingBombTarget>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;

@@ -7,7 +7,7 @@ using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AudioSource))]
-public sealed class BattleMode9MinecartController : MonoBehaviour
+public sealed partial class BattleMode9MinecartController : MonoBehaviour
 {
     const string BattleMode9SceneName = "BattleMode_9";
     const string BattleMode12SceneName = "BattleMode_12";
@@ -319,6 +319,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void OnDisable()
     {
+        if (Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client) StopAllCoroutines();
+        PublishNetworkCart(hidden: true);
+        ClearNetworkCart();
         foreach (var pair in activeStates)
             RestoreRideState(pair.Key, pair.Value);
 
@@ -346,6 +349,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
 
         if (!IsSupportedSceneActive())
@@ -378,6 +382,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     bool TryHandlePlayerAtStation(MovementController mover, Vector3Int station)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (mover == null || mover.Rigidbody == null || !mover.CompareTag("Player"))
             return false;
 
@@ -407,6 +412,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     IEnumerator RideRoutine(MovementController mover)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
@@ -653,6 +660,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void LateUpdate()
     {
+        if (Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client)
+        {
+            PresentNetworkCart(Mirror.NetworkTime.time);
+            SyncRideLoopSfxWithPause();
+            return;
+        }
+        PublishNetworkCart();
         if (!IsSupportedSceneActive())
             return;
 
@@ -1605,11 +1619,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         Vector2 drift = driftDirection * Random.Range(minDrift, maxDrift);
         float spin = Random.Range(teleportStarSpinRange.x, teleportStarSpinRange.y);
+        PublishNetworkStar(star.transform, sprite, drift, spin);
         StartCoroutine(AnimateTeleportStar(star.transform, renderer, drift, spin));
     }
 
     void ClearActiveTeleportStars()
     {
+        PublishNetworkStar(null, null, Vector2.zero, 0, clear: true);
         for (int i = activeTeleportStars.Count - 1; i >= 0; i--)
         {
             GameObject star = activeTeleportStars[i];
@@ -1620,10 +1636,11 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         activeTeleportStars.Clear();
     }
 
-    IEnumerator AnimateTeleportStar(Transform star, SpriteRenderer renderer, Vector2 drift, float spin)
+    IEnumerator AnimateTeleportStar(Transform star, SpriteRenderer renderer, Vector2 drift, float spin,
+        float initialAge = 0, float lifetime = -1, float frameSeconds = -1)
     {
-        float duration = Mathf.Max(0.01f, teleportStarLifetime);
-        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, lifetime > 0 ? lifetime : teleportStarLifetime);
+        float elapsed = Mathf.Max(0, initialAge);
         Vector3 startScale = star != null ? star.localScale : Vector3.one;
 
         while (elapsed < duration)
@@ -1646,7 +1663,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             color.a = 1f - t;
             renderer.color = color;
 
-            UpdateTeleportStarSprite(renderer, elapsed);
+            UpdateTeleportStarSprite(renderer, elapsed, frameSeconds);
 
             elapsed += Time.deltaTime;
             yield return null;
@@ -1671,12 +1688,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         return null;
     }
 
-    void UpdateTeleportStarSprite(SpriteRenderer renderer, float elapsed)
+    void UpdateTeleportStarSprite(SpriteRenderer renderer, float elapsed, float frameSeconds = -1)
     {
         if (renderer == null || teleportStarSprites == null || teleportStarSprites.Length <= 1)
             return;
 
-        int frame = Mathf.FloorToInt(elapsed / Mathf.Max(0.01f, teleportStarAnimationFrameTime)) % teleportStarSprites.Length;
+        int frame = Mathf.FloorToInt(elapsed / Mathf.Max(0.01f, frameSeconds > 0 ? frameSeconds : teleportStarAnimationFrameTime)) % teleportStarSprites.Length;
         Sprite sprite = teleportStarSprites[frame];
         if (sprite != null)
             renderer.sprite = sprite;
@@ -1719,6 +1736,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     public void OnSuddenDeathIndestructiblePlaced(Vector3Int cell)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (cartDestroyedBySuddenDeath)
             return;
 
@@ -3059,7 +3077,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             return;
 
         audioSource.loop = true;
-        GameAudioSettings.PlaySfxClip(audioSource, rideLoopSfx, sfxVolume);
+        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+        {
+            // Approved cart state owns the loop in Battle; the generic one-shot
+            // broadcast would otherwise double its first playback on clients.
+            audioSource.clip = rideLoopSfx; audioSource.volume = GameAudioSettings.ApplySfxVolume(sfxVolume); audioSource.Play();
+        }
+        else GameAudioSettings.PlaySfxClip(audioSource, rideLoopSfx, sfxVolume);
         rideLoopPausedForGamePause = false;
         SyncRideLoopSfxWithPause();
     }

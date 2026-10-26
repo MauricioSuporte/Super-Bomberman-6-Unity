@@ -192,6 +192,20 @@ and preserve the original hitbox states on the authority. The pure client must
 never restore gameplay hitboxes. Destruction presentation takes over explicitly.
 Static detached pickups need approved emotes, not invented extrapolation.
 
+A shared transport must present both the carrier and its rider before disabling
+native client boarding. Send approved render state and align it with rider time;
+keep end poses queued even when occupancy changes. Rail samples with an approved
+turn should follow their corner, not a diagonal. Cuts and hidden transitions need
+explicit handling. Treat looping audio separately from one-shot broadcasts to
+avoid duplicate starts. Confirm sorting independently of an owner's predicted
+frame so leaving a carrier does not leave stale head ordering.
+
+When native gameplay also creates particles, gating that gameplay must preserve
+its approved VFX. Publish chosen render parameters after the server's existing RNG
+draws, create renderer-only client views and reuse the visual curve. Do not start
+the boarding/teleport routine to get its particles. Revisioned clears and disable
+must cancel waiting visual coroutines as well as objects already instantiated.
+
 ## Diagnose what is actually delayed
 
 Compare matching build/protocol captures and similar action sequences. Separate

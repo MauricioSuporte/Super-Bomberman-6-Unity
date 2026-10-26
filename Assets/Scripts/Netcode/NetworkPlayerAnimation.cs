@@ -35,6 +35,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] bool activeFlip;
         [SyncVar] byte activeFrame;
         [SyncVar] Vector3 activeOffset;
+        [SyncVar] int activeSortingLayer, activeSortingOrder;
         [SyncVar(hook = nameof(OnVisualTime))] double visualTime;
 
         struct VisualFrame
@@ -43,6 +44,7 @@ namespace Assets.Scripts.Netcode
             public byte index, frame;
             public bool idle, flip;
             public Vector3 offset;
+            public int sortingLayer, sortingOrder;
         }
 
         readonly List<VisualFrame> visualFrames = new(64);
@@ -58,7 +60,7 @@ namespace Assets.Scripts.Netcode
                 adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
                     (positionSync.timelineOffset ? positionSync.sendIntervalMultiplier : 0));
             visualFrames.Add(new VisualFrame { time = current + adjustment, index = activeIndex,
-                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset });
+                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset, sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder });
             if (visualFrames.Count > 64) visualFrames.RemoveAt(0);
         }
 
@@ -106,7 +108,13 @@ namespace Assets.Scripts.Netcode
             }
             if (!isServer && GetComponent<NetworkBombFx>()?.RidingArcActive == true) return;
             if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.MoleStartupActive == true) return;
-            if (predicting) return;
+            if (predicting)
+            {
+                // Replicated ordering can change during an external ride. Keep
+                // confirmed sorting while the owner chooses its own pose/frame.
+                ApplyOwnerConfirmedSorting();
+                return;
+            }
             if (isServer)
             {
                 SampleOwned();
@@ -114,6 +122,14 @@ namespace Assets.Scripts.Netcode
             }
 
             if (!GamePauseController.IsPaused) ClientApply();
+        }
+
+        void ApplyOwnerConfirmedSorting()
+        {
+            if (renderers == null || activeIndex == NoRenderer || activeIndex >= renderers.Length) return;
+            var active = renderers[activeIndex];
+            if (active != null && active.TryGetComponent<SpriteRenderer>(out var sprite))
+            { sprite.sortingLayerID = activeSortingLayer; sprite.sortingOrder = activeSortingOrder; }
         }
 
         void SampleOwned()
@@ -135,12 +151,13 @@ namespace Assets.Scripts.Netcode
 
             bool idle = active == null || active.idle;
             bool flip = false;
+            int sortingLayer = 0, sortingOrder = 0;
             byte frame = 0;
             if (active != null)
             {
                 var sr = active.GetComponent<SpriteRenderer>();
                 if (sr != null)
-                    flip = sr.flipX;
+                { flip = sr.flipX; sortingLayer = sr.sortingLayerID; sortingOrder = sr.sortingOrder; }
                 frame = (byte)Mathf.Clamp(active.CurrentFrame, 0, 254);
             }
 
@@ -149,6 +166,7 @@ namespace Assets.Scripts.Netcode
             if (flip != activeFlip) activeFlip = flip;
             if (frame != activeFrame) activeFrame = frame;
             activeOffset = active != null ? active.RuntimeBaseLocalOffset : Vector3.zero;
+            activeSortingLayer = sortingLayer; activeSortingOrder = sortingOrder;
             visualTime = NetworkTime.localTime;
         }
 
@@ -157,12 +175,14 @@ namespace Assets.Scripts.Netcode
             byte activeIndex = this.activeIndex, activeFrame = this.activeFrame;
             bool activeIdle = this.activeIdle, activeFlip = this.activeFlip;
             Vector3 activeOffset = this.activeOffset;
+            int sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder;
             if ((!isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true) && visualFrames.Count > 0)
             {
                 while (visualFrames.Count > 1 && visualFrames[1].time <= NetworkTime.time) visualFrames.RemoveAt(0);
                 var sample = visualFrames[0];
                 activeIndex = sample.index; activeFrame = sample.frame;
                 activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset;
+                sortingLayer = sample.sortingLayer; sortingOrder = sample.sortingOrder;
                 if (visualFrames.Count > 1)
                 {
                     var next = visualFrames[1]; double interval = next.time - sample.time;
@@ -204,6 +224,8 @@ namespace Assets.Scripts.Netcode
             if (active == null)
                 return;
 
+            if (active.TryGetComponent<SpriteRenderer>(out var orderedSprite))
+            { orderedSprite.sortingLayerID = sortingLayer; orderedSprite.sortingOrder = sortingOrder; }
             bool dirty = false;
             if (active.RuntimeBaseLocalOffset != activeOffset) active.SetRuntimeBaseLocalOffset(activeOffset);
 

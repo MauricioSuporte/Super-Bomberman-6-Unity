@@ -11,6 +11,111 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void CartPortalStarViewIsRenderOnlyPreservesRngAndClearCancelsQueuedVisuals()
+    {
+        var oldMode = NetSync.Mode; var oldRandom = Random.state;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene(); scene.name = "BattleMode_12";
+        var actor = new GameObject("ApprovedCartStars"); SceneManager.MoveGameObjectToScene(actor, scene);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var texture = new Texture2D(8, 8); var sprite = Sprite.Create(texture, new Rect(0, 0, 8, 8), Vector2.one * 0.5f);
+        GameObject star = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var controller = actor.AddComponent<BattleMode9MinecartController>();
+            typeof(BattleMode9MinecartController).GetField("teleportStarSprites", flags).SetValue(controller, new[] { sprite });
+            var view = new CartPortalStar { scene = "BattleMode_12", path = controller.NetworkCartPath, revision = 1, time = NetworkTime.time - 0.1,
+                position = new Vector3(34000, 34000), scale = Vector3.one * 0.25f, drift = Vector2.up * 0.5f,
+                angle = 30, spin = 100, life = 0.32f, frameSeconds = 0.1f, sprite = 0, sorting = 90 };
+            using (var writer = NetworkWriterPool.Get())
+            { writer.Write(view); view = new NetworkReader(writer.ToArray()).Read<CartPortalStar>(); }
+            var random = Random.state; star = controller.CreateNetworkStarView(view, 0.1f);
+            Assert.IsNotNull(star); Assert.AreEqual(view.position + (Vector3)view.drift * 0.1f, star.transform.position);
+            Assert.AreEqual(0, star.GetComponents<MonoBehaviour>().Length); Assert.IsNull(star.GetComponent<Collider2D>()); Assert.IsNull(star.GetComponent<Rigidbody2D>()); Assert.IsNull(star.GetComponent<NetworkIdentity>());
+            Assert.AreEqual(sprite, star.GetComponent<SpriteRenderer>().sprite); Assert.AreEqual(90, star.GetComponent<SpriteRenderer>().sortingOrder);
+            Assert.AreEqual(random, Random.state); Assert.IsNull(controller.CurrentRider);
+            Object.DestroyImmediate(star); star = null;
+            var clear = view; clear.revision = 2; clear.clear = true; controller.ReceiveNetworkStar(clear);
+            var queued = (System.Collections.IEnumerator)typeof(BattleMode9MinecartController).GetMethod("PresentNetworkStar", flags).Invoke(controller, new object[] { view });
+            Assert.IsFalse(queued.MoveNext(), "An older scheduled particle must not reappear after the approved clear.");
+            (queued as System.IDisposable)?.Dispose(); Assert.AreEqual(random, Random.state);
+            view.sprite = 99; Assert.IsNull(controller.CreateNetworkStarView(view, 0));
+        }
+        finally
+        {
+            if (star != null) Object.DestroyImmediate(star);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Random.state = oldRandom;
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture);
+            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene);
+        }
+    }
+
+
+    [TestCase(0.25f, 0.5f, 0f)]
+    [TestCase(0.5f, 1f, 0f)]
+    [TestCase(0.75f, 1f, 0.5f)]
+    [TestCase(1f, 1f, 1f)]
+    public void ApprovedCartSamplesPreserveRailCorners(float progress, float x, float y)
+    {
+        var from = new MinecartView { time = 10, position = Vector3.zero, direction = Vector2.right };
+        var to = new MinecartView { time = 10.1, position = new Vector3(1, 1), direction = Vector2.up };
+        var sampled = BattleMode9MinecartController.SampleNetworkCartPosition(from, to, 10 + 0.1 * progress, 1);
+        Assert.AreEqual(x, sampled.x, 0.0001f); Assert.AreEqual(y, sampled.y, 0.0001f);
+        to.position = new Vector3(10, 0); to.direction = Vector2.right;
+        Assert.AreEqual(progress < 1 ? Vector3.zero : to.position, BattleMode9MinecartController.SampleNetworkCartPosition(from, to, 10 + 0.1 * progress, 1));
+    }
+
+    [Test]
+    public void CartClientPresentsApprovedPoseWithoutBoardingCollisionOrInvulnerability()
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene(); scene.name = "BattleMode_9";
+        var actor = new GameObject("ApprovedCart"); SceneManager.MoveGameObjectToScene(actor, scene);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var controller = actor.AddComponent<BattleMode9MinecartController>();
+            var collider = actor.AddComponent<BoxCollider2D>(); collider.enabled = false;
+            AnimatedSpriteRenderer Branch(string name)
+            {
+                var go = new GameObject(name); go.transform.SetParent(actor.transform, false);
+                go.AddComponent<SpriteRenderer>();
+                var animation = go.AddComponent<AnimatedSpriteRenderer>(); animation.animationSprite = new Sprite[3];
+                typeof(BattleMode9MinecartController).GetField(name, flags).SetValue(controller, animation); return animation;
+            }
+            var down = Branch("down"); Branch("up"); Branch("left"); var right = Branch("right");
+            var from = new MinecartView { scene = "BattleMode_9", path = controller.NetworkCartPath, revision = 1, time = 10, rider = 77,
+                position = new Vector3(33000, 33000), scale = Vector3.one, direction = Vector2.right, renderer = 0,
+                frame = new NetworkWorldMount.MountFrame { visible = true, idle = false, frame = 1, localPosition = Vector3.up * 0.5f, color = Color.white } };
+            using (var writer = NetworkWriterPool.Get())
+            { writer.Write(from); from = new NetworkReader(writer.ToArray()).Read<MinecartView>(); }
+            var to = from; to.revision = 2; to.time = 10.1; to.position += Vector3.right; to.renderer = 3; to.frame.frame = 2;
+            controller.ReceiveNetworkCart(from); controller.ReceiveNetworkCart(to); controller.ReceiveNetworkCart(from);
+            var present = typeof(BattleMode9MinecartController).GetMethod("PresentNetworkCart", flags); present.Invoke(controller, new object[] { 10.05d });
+            Assert.AreEqual(33000.5f, actor.transform.position.x, 0.001f); Assert.IsTrue(down.enabled); Assert.IsFalse(right.enabled); Assert.AreEqual(1, down.CurrentFrame);
+            Assert.AreEqual(actor.transform.position + Vector3.up * 0.5f, down.transform.position);
+            present.Invoke(controller, new object[] { 10.1d }); Assert.IsTrue(right.enabled); Assert.AreEqual(2, right.CurrentFrame);
+            var sink = to; sink.revision = 3; sink.time = 10.2; sink.scale = new Vector3(1, 0.5f, 1); sink.frame.localPosition = Vector3.zero;
+            controller.ReceiveNetworkCart(sink); present.Invoke(controller, new object[] { 10.15d });
+            Assert.AreEqual(0.75f, right.transform.localScale.y, 0.001f); Assert.AreEqual(actor.transform.position.y + 0.25f, right.transform.position.y, 0.001f);
+
+            var stop = sink; stop.revision = 4; stop.time = 10.3; stop.rider = 0; stop.renderer = 255;
+            controller.ReceiveNetworkCart(stop); present.Invoke(controller, new object[] { 10.25d }); Assert.IsTrue(right.enabled, "The buffered final pose survives release of the authoritative occupant.");
+            present.Invoke(controller, new object[] { 10.3d }); Assert.IsFalse(right.enabled); Assert.IsFalse(down.enabled);
+            to.revision = 5; to.scene = "BattleMode_12"; controller.ReceiveNetworkCart(to); present.Invoke(controller, new object[] { 10.3d }); Assert.IsFalse(right.enabled);
+            Assert.IsFalse(controller.RideActive); Assert.IsNull(controller.CurrentRider); Assert.IsFalse(collider.enabled); Assert.IsNull(actor.GetComponent<NetworkIdentity>());
+            controller.OnSuddenDeathIndestructiblePlaced(Vector3Int.zero); Assert.IsFalse(controller.CartDestroyedBySuddenDeath, "A client visual cannot apply sudden-death gameplay.");
+        }
+        finally { NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor); UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+
+    [Test]
     public void MountVisualHistoryInterpolatesApprovedOffsetsAndSeparatesMountGenerations()
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("MountObserverHistory"); actor.SetActive(false);
@@ -54,24 +159,28 @@ public sealed class OnlineRoomEditModeTests
         {
             clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
             actor.AddComponent<BoxCollider2D>(); var animation = actor.AddComponent<NetworkPlayerAnimation>();
-            var child = new GameObject("Head"); child.transform.SetParent(actor.transform); var renderer = child.AddComponent<AnimatedSpriteRenderer>(); renderer.animationSprite = new Sprite[4];
+            var child = new GameObject("Head"); child.transform.SetParent(actor.transform); child.AddComponent<SpriteRenderer>(); var renderer = child.AddComponent<AnimatedSpriteRenderer>(); renderer.animationSprite = new Sprite[4];
             typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(actor.GetComponent<NetworkIdentity>(), null);
             typeof(NetworkPlayerAnimation).GetMethod("Awake", flags).Invoke(animation, null);
             typeof(NetworkPlayerAnimation).GetField("activeIndex", flags).SetValue(animation, (byte)0);
             typeof(NetworkPlayerAnimation).GetField("activeIdle", flags).SetValue(animation, false);
             typeof(NetworkPlayerAnimation).GetField("activeFrame", flags).SetValue(animation, (byte)1);
+            typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 7);
             var receive = typeof(NetworkPlayerAnimation).GetMethod("OnVisualTime", flags); double now = NetworkTime.time;
             receive.Invoke(animation, new object[] { 0d, now - 0.1 });
             typeof(NetworkPlayerAnimation).GetField("activeOffset", flags).SetValue(animation, Vector3.up * 2);
             typeof(NetworkPlayerAnimation).GetField("activeFrame", flags).SetValue(animation, (byte)3);
+            typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 19);
             receive.Invoke(animation, new object[] { now - 0.1, now + 0.1 });
             typeof(NetworkPlayerAnimation).GetMethod("ClientApply", flags).Invoke(animation, null);
             Assert.AreEqual(1, renderer.RuntimeBaseLocalOffset.y, 0.001f); Assert.AreEqual(1, renderer.CurrentFrame);
+            Assert.AreEqual(7, renderer.GetComponent<SpriteRenderer>().sortingOrder);
         }
         finally { clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor); }
     }
 
 
+    [TestCase(typeof(BattleMode9MinecartController), "RideRoutine")]
     [TestCase(typeof(SpringLauncher), "SpringRoutine")]
     [TestCase(typeof(CannonLauncher), "FireRoutine")]
     [TestCase(typeof(CannonLauncher), "LaunchPlayerArc")]
@@ -207,6 +316,8 @@ public sealed class OnlineRoomEditModeTests
             typeof(NetworkPlayerInput).GetMethod("Awake", flags).Invoke(input, null);
             var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>();
             typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var head = new GameObject("LocalHead"); head.transform.SetParent(actor.transform, false); head.AddComponent<SpriteRenderer>();
+            var localAnimation = head.AddComponent<AnimatedSpriteRenderer>(); localAnimation.animationSprite = new Sprite[4];
             var animation = actor.AddComponent<NetworkPlayerAnimation>(); typeof(NetworkPlayerAnimation).GetMethod("Awake", flags).Invoke(animation, null);
             typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
             Vector3 origin = new(32000, 32000); actor.transform.position = origin; body.position = origin;
@@ -228,6 +339,15 @@ public sealed class OnlineRoomEditModeTests
             Assert.AreEqual(displayed, actor.transform.position); paused.SetValue(null, false);
             state.canPredict = true; state.continuousPresentation = false; input.ReceiveMovementState(3, state, default, default);
             Assert.IsFalse(input.OwnerUsesAuthorityPresentation); Assert.AreEqual(0, frames.Count); Assert.AreEqual(state.position, body.position);
+            typeof(NetworkIdentity).GetProperty("isClient").SetValue(identity, true);
+            localAnimation.CurrentFrame = 2;
+            typeof(NetworkPlayerAnimation).GetField("activeIndex", flags).SetValue(animation, (byte)0);
+            typeof(NetworkPlayerAnimation).GetField("activeFrame", flags).SetValue(animation, (byte)1);
+            typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 7);
+            typeof(NetworkPlayerAnimation).GetMethod("LateUpdate", flags).Invoke(animation, null);
+            Assert.AreEqual(7, head.GetComponent<SpriteRenderer>().sortingOrder); Assert.AreEqual(2, localAnimation.CurrentFrame, "Confirmed sorting must not replace a predicted walking frame.");
+            typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 2);
+            typeof(NetworkPlayerAnimation).GetMethod("LateUpdate", flags).Invoke(animation, null); Assert.AreEqual(2, head.GetComponent<SpriteRenderer>().sortingOrder, "Leaving a cart must not leave its head ordering behind.");
             fx.ReceivePlayerBounce(new NetworkBombFx.PlayerBounceMotion { revision = 1, first = true, moving = true, start = origin, end = origin + Vector3.up,
                 duration = 0.2f, curveDuration = 0.2f, height = 0.5f });
             state.canPredict = false; state.continuousPresentation = true; input.ReceiveMovementState(4, state, default, default);
@@ -2664,6 +2784,7 @@ public sealed class OnlineRoomEditModeTests
     [TestCase("0.5.0", 33, false)]
     [TestCase("0.5.0", 34, false)]
     [TestCase("0.5.0", 35, false)]
+    [TestCase("0.5.0", 36, false)]
     [TestCase("0.5.0", 32, false)]
     [TestCase("0.5.0", 31, false)]
     [TestCase("0.5.0", 30, false)]

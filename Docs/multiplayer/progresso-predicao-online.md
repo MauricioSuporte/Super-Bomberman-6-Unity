@@ -19,12 +19,12 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo35, commit `a70d3cd22`, pipeline
-  [40355636832](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40355636832) com sucesso.
-- **Último lote publicado:** apresentação dos ovos, visibilidade, direção/idle,
-  sorting, preservação de hitboxes e identidade oculta para novos observadores.
-  Validado com191 testes Unity,40 Python e compilação C# sem erros/avisos novos.
-- **Validado para publicação:** protocolo36 ainda no diretório, não publicado.
+- **Publicado e confirmado:** protocolo36, commit `1b8dbb449`, pipeline
+  [40362231252](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40362231252) com sucesso.
+- **Último lote publicado:** apresentação de movimentos externos aprovados,
+  FallingBomb autoritativa e alinhamento de poses. Validado com206 testes Unity,
+  40 Python e compilação C# sem erros/avisos novos. Ovos foram publicados antes em35.
+- **Conteúdo36 concluído e publicado:**
   C02/C03: apresentação contínua de movimentos aprovados em canhão, mola/geyser
   e corda; gates impedem executar gameplay desses lançadores no client.
   C10: FallingBomb usa alvo/tempo aprovados e spawn real em rede.
@@ -33,13 +33,18 @@ implementação concluída de trabalho parcial. Validação manual fica separada
   Rigidbody/Transform dos lançadores. C# final0 erros/avisos, Python40/40,
   UTF-8/BOM e diffcheck passaram. Logs/PredictionPresentation36FinalTests.xml/.log.
   Não declarar deploy36 até confirmar CI.
-- **Próximos itens:** concluir validação/publicação36; C04 transporte do visual do
+- **Lote37 validado para publicação:** C04 transporte do visual do
+  carrinho e passageiro, incluindo buffer, cantos, escala/sink, cortes de portal,
+  loop e estrelas aprovados, gates client e sorting confirmado sem sobrescrever
+  frame previsto. Suíte214/214 +5 testes focados após ajuste final de escala,
+  C#0, Python40/40, UTF-8/BOM e diffcheck passaram. Ainda não publicado.
+- **Próximos itens:** concluir validação37; concluir C04 transporte do visual do
   carrinho e passageiro, C05 portais/swap, demais C/R e regressões A14.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original; preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Novos scripts e metas36 ainda não salvos em commit.
+  do usuário e o Unity aberto. Lote36 salvo/enviado; arquivos novos37 e metas ainda no diretório.
 
 ## Como acompanhar
 
@@ -188,7 +193,7 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
-- [ ] C04: carrinho.
+- [ ] C04: parcial37: transporte de cart/rider/loop/estrelas e gates implementados; confirmação de testes finais, boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: portais/swap.
 - [ ] C06: correnteza/barco/plataforma.
 - [ ] C07: pusher.
@@ -619,3 +624,83 @@ Logs/PredictionPresentation36FinalTests.xml/.log. Runner liberado antes de push.
 Lote contém C02/C03 apresentação aprovada + gates, C10 FallingBomb e R01 poses.
 Todos os IDs continuam com limites e manuais registrados; não é o plano todo.
 Próximo: salvar/enviar36, conferir CI e continuar C04/C05 e outros pendentes.
+
+
+## Lote37 C04 em andamento
+
+36 salvo/enviado em1b8dbb449, CI40362231252 em andamento. Último deploy confirmado35.
+37: novo BattleMode9MinecartController.Network.cs/.meta, MinecartView com cena/path,
+revisão/time, riderId usado só para tempo NT, posição/dir, um frame visível e loop.
+Server Battle publica20Hz quando muda e heartbeat500ms idle; co-op mantém stream
+visual existente. Client buffer64, segue segmentos aprovados/cantos do trilho e
+corta wraps/lacunas; só modifica root/sprites/audio do cart, sem boarding/dano.
+Native Update/TryHandle/RideRoutine/SuddenDeath client gated; RideRoutine server
+usa scope NPI. Loop Battle tem transporte próprio (sem eco do one-shot genérico).
+OnDisable envia hidden no server e limpa view. Portal stars e comparações entre
+peers ainda pendentes C05/C04. Arquivos ainda não passaram Unity.
+NPA37 agora inclui sortingLayer/order na pose/histórico para cabeça do passageiro
+sobrepor corretamente o carrinho, sem aplicar a ordenação antes do timestamp.
+Protocolos37 alinhados. C# a conferir (exec16128). Próximo: testes C04 view/sampling/
+wiring, NPA sorting; aguardar CI36 liberar runner antes de copiar37.
+
+
+CI36 completed/success confirmado. Fontes37 copiadas ao runner livre para suíte
+completa213 testes esperados, PredictionMinecart37Tests.xml/.log (exec a conferir).
+C# final0; Python40/40, UTF-8/BOM e diffcheck passaram37. Ainda não declarar Unity.
+Novos testes: amostras preservam canto do trilho e cortam grande salto; view não
+concede boarding/dano/invulnerabilidade, conserva último frame até hide timestamp,
+recusa stale/cena, wire roundtrip, guard RideRoutine, sorting NPA e protocolo36
+incompatível. Portal stars/efeitos e manuais continuam pendentes C04/C05.
+Timeline do cart conserva o ajuste ao liberar rider (não descarta fim do percurso).
+
+
+37 suíte cart/sorting213/213 passou (PredictionMinecart37FinalTests). Depois disso
+foram adicionadas estrelas aprovadas do portal do carrinho: CartPortalStar com
+posição/escala/ângulo/drift/spin/lifetime/frameTime/índice de sprite e clear por
+revisão, sem RNG client nem componentes gameplay. Native servidor conserva draws
+RNG e defaults da animação; só publica propriedades já escolhidas. Client agenda
+no tempo do cart, cancela pendentes em clear/disable e usa rotina de render nativa
+com idade/lifetime/frameTime aprovados. Co-op continua no stream existente.
+Novo teste visual-only/RNG/wire/clear foi adicionado, ainda sem Unity. C# passou
+antes dos últimos guards de cancelamento (agora refazer). Próxima suite214 final
+precisa rodar antes de publicar37. Não usar213 como prova dessa adição de FX.
+C05 Portal7/swap/masks ainda pendentes; C04 ainda precisa manual de áudio e portais.
+
+
+37 última alteração ainda sem Unity: NPA aplica apenas sorting confirmado mesmo
+quando owner prevê locomoção. Isso evita deixar a cabeça na ordem do carrinho ao
+retomar caminhada, sem aplicar frame remoto no owner. Teste OwnerAuthorityMotion
+foi estendido para ordenar7->2 conservando frame local2 contra remoto1.
+C# exec48766 a conferir. Suite214 com estrelas ainda em runner (exec67248), MAS
+não inclui esse último ajuste NPA/fixture. Conferir e depois copiar NPA+testes para
+suite final214 consolidada antes de publicar. Não reusar213 como validação de FX.
+Somente C04 view e R01 sorting são alterações37; C05 ainda apenas auditado.
+
+
+37 suíte214 sem último sorting-owner passou; C# último sorting-owner0warnings/erros.
+Suite consolidada214 em runner: PredictionMinecart37CompleteTests.xml/.log,
+exec87841 a conferir. Inclui todo37, C04 view/FX e sorting-owner final.
+Depois disso não houve novas edições C#; apenas docs/skill. Wiring por GUID
+conferido BattleMode_9/_12 e 3 Stage_3-2. Sem mudanças de cenas/prefabs.
+Próximo: conferir214, preservar relatórios, UTF8/diffcheck, restaurar tracked do
+runner e salvar/publicar37. C05 ainda sem código: Portal7 Update faz gameplay no
+client, TeleportRoutine interpola raiz oculta em default e tem branch sink/mask.
+Reutilizar scope só após gate + preservação de estrelas/máscaras, sem adivinhar
+portal de saída. Star7 e Cart12 usam a mesma curva nativa de partícula, mas só
+Cart12 recebeu o transporte37 até aqui. C04 boarding ainda não é previsto.
+
+
+## Lote37 validado para salvar/publicar
+
+Suíte completa214/214 passou (PredictionMinecart37CompleteTests). Depois o payload
+MinecartView ganhou scale e interpolação de scale/localPosition no sink; C#0 e
+5/5 testes focados finais passaram (PredictionMinecart37ScaleFinalTests). Ambos
+relatórios xml/log preservados em Logs do checkout principal. Não declarar que a
+suíte214 foi rodada após esse ajuste final; o subset5 valida o trecho alterado.
+Python40/40 e UTF-8/BOM/diffcheck passaram. Nenhuma partida manual entre peers.
+SourceNativeC04 offline/servidor preserva algoritmo/RNG; gate só no client. C04
+continua com comparação manual e possível previsão de entrada em discussão após
+capturas; transporte de cart/rider/FX foi implementado. C05 Portal7/swap/masks e
+C06-C10 demais, R02-R08/A11/A12/A14/P0 permanecem conforme checklist.
+Próximo: enviar37 e acompanhar CI, continuar C05 com eventos aprovados/preservação
+de VFX e máscaras (não copiar cegamente corpo de carrinho para portal de player).

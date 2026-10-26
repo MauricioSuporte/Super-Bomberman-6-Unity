@@ -757,3 +757,38 @@ only display the warning; reaching its display deadline never spawns a bomb or
 triggers damage. The native server bomb now spawns through NetSpawn before its
 punch presentation starts, and failed launches despawn consistently. Offline uses
 the native lottery, timing and gameplay. Other C10 mechanisms remain separate.
+
+
+## Minecart presentation and approved portal particles (protocol 37)
+
+Battle arenas 9 and 12 now present the cart itself from `MinecartView`, in addition
+to the approved rider movement scope. A client does not board, collide, run the
+ride coroutine or destroy a cart from its own sudden-death simulation. The server
+sends the selected cart renderer/frame, relative visual position, root position,
+direction, loop state and rider identity for timeline alignment. Changed views
+sample at 20 Hz; idle views keep a 500 ms heartbeat for late observers. A bounded
+64-sample history follows approved rail corners and cuts room jumps or delivery
+gaps. Releasing the occupant preserves the final buffered pose and timeline offset.
+The cart's sink/rise also preserves approved scale and local offsets between compatible render samples.
+No rider ownership, invulnerability, item effect or collision is granted locally.
+
+The existing co-op world stream continues to draw Stage_3-2 carts; their riders use
+the same approved movement scope. Original disabled co-op controllers are not
+reactivated. Battle cart loops follow approved state, and their initial playback
+is not duplicated through the generic one-shot sound broadcast. Enter/exit sounds
+retain the existing server sound event. Player animation now replicates sorting
+with pose time; predicted owners accept only that confirmed ordering while keeping
+their immediate local frame, so head ordering can recover after leaving a cart.
+
+Cart portal stars also receive approved visual descriptors. The server keeps its
+original RNG draws and publishes the chosen sprite index, pose, scale, drift,
+spin and timing. Clients create Transform + SpriteRenderer only and reuse the
+native visual curve without gameplay RNG, physics, NetworkIdentity or ownership.
+Revisioned clear events cancel old queued particles; disable releases their
+coroutines and visuals. This is separate from damage/teleport eligibility. The
+BattleMode_7 portal, other swaps and fixed-mask/sink behavior remain under C05.
+
+Authored controller references were checked in BattleMode_9, BattleMode_12 and the
+three Stage_3-2 shuttles; no scene/prefab wiring was changed. Manual two-peer entry,
+exit, portal, pause, collision and loop-audio comparisons are still required before
+claiming offline parity. Boarding prediction is not introduced by this transport.
