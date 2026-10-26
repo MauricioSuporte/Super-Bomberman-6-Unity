@@ -10,7 +10,7 @@ namespace Assets.Scripts.Netcode
     public sealed class OnlineVersionAuthenticator : NetworkAuthenticator
     {
         // Bump when wire messages, network prefabs or gameplay content become incompatible.
-        public const int ProtocolVersion = 33;
+        public const int ProtocolVersion = 34;
         public static string BuildIdentity
         {
             get

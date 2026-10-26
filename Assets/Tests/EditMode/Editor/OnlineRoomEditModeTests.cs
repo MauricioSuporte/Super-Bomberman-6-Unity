@@ -11,6 +11,225 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void RejectedAbilityReplaysOriginalWalkingIntentInsteadOfStoredPoseZeros()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RejectedPoseMovementReplay"); actor.SetActive(false);
+        var mount = new GameObject("RejectedPoseMount"); mount.transform.SetParent(actor.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            var input = actor.AddComponent<NetworkPlayerInput>(); typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            typeof(NetworkPlayerInput).GetMethod("Awake", flags).Invoke(input, null);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.GetComponent<PlayerMountCompanion>() ?? actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Red);
+            actor.SetActive(true); movement.SetNetworkTickDriven(true); Vector2 origin = new(31000, 31000);
+            var state = new MovementController.NetworkMovementState { position = origin, mount = MountedType.Red, facing = Vector2.right,
+                worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true, serverTime = NetworkTime.localTime };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(fx.TryPredictRedPunch(8, 10));
+            var record = typeof(NetworkPlayerInput).GetMethod("RecordLocalFrame", flags);
+            for (uint tick = 10; tick <= 13; tick++)
+            {
+                var command = new NetworkInputFrame { tick = tick, held = 8, pressed = tick == 10 ? 64 : 0 };
+                var motor = (NetworkInputFrame)record.Invoke(input, new object[] { command }); Assert.AreEqual(0, motor.held & 15);
+            }
+            var history = (NetworkInputHistory)typeof(NetworkPlayerInput).GetField("pending", flags).GetValue(input);
+            Assert.AreEqual(8, history[1].held, "A temporary presentation lock cannot erase the command sent to authority.");
+            input.ReceiveMovementState(9, state, default, default); Assert.AreEqual(origin, body.position, "An unprocessed gesture still masks walking locally.");
+            input.ReceiveMovementState(10, state, default, default);
+            Assert.IsFalse(fx.RedPunchPoseActive); Assert.Greater(body.position.x, origin.x + 0.15f, "After rejection, pending walking inputs must be replayed immediately.");
+            Assert.AreEqual(3, history.Count); Assert.AreEqual(8, history[0].held);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearRedPunch", flags).Invoke(fx, new object[] { "test_cleanup" });
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void RidingOwnerPredictsDismountRejectsAndHandsLandingToQueuedBounce()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RidingOwner"); actor.SetActive(false);
+        var mount = new GameObject("RidingOwnerMount"); mount.transform.SetParent(actor.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        var paused = typeof(GamePauseController).GetProperty(nameof(GamePauseController.IsPaused)); bool wasPaused = GamePauseController.IsPaused;
+        AnimatedSpriteRenderer Animation(string name) { var go = new GameObject(name); go.transform.SetParent(actor.transform, false); return go.AddComponent<AnimatedSpriteRenderer>(); }
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; var collider = actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>(); typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Red);
+            var rider = actor.AddComponent<PlayerRidingController>(); rider.mountAscendDown = Animation("RidingOwnerAscend"); rider.mountDescendDown = Animation("RidingOwnerDescend");
+            actor.SetActive(true); movement.SetNetworkTickDriven(true); Vector2 origin = new(28000, 28000);
+            var state = new MovementController.NetworkMovementState { position = origin, mount = MountedType.Red, facing = Vector2.down,
+                worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true, serverTime = NetworkTime.localTime };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            var arc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Dismount, Vector2.down, origin, origin, 0.5f);
+            var actions = new NetworkBombFx.MountActionState { dismountEligible = true, dismountArc = arc };
+            fx.ReconcileRiding(0, state, actions); Assert.IsTrue(fx.TryPredictDismount(0, 10));
+            Assert.IsTrue(fx.RidingArcActive); Assert.IsFalse(rider.IsPlaying); Assert.IsFalse(movement.InputLocked); Assert.IsFalse(movement.explosionInvulnerable);
+            Assert.AreEqual(MountedType.Red, companion.GetMountedLouieType(), "A speculative dismount cannot transfer mount ownership.");
+            fx.ReconcileRiding(9, state, actions); Assert.IsTrue(fx.RidingArcActive);
+            fx.ReconcileRiding(10, state, actions); Assert.IsFalse(fx.RidingArcActive); Assert.AreEqual(origin, body.position);
+            Assert.IsTrue(fx.TryPredictDismount(0, 11));
+            var update = typeof(NetworkBombFx).GetMethod("UpdateRidingPresentation", flags); var elapsed = typeof(NetworkBombFx).GetField("ridingElapsed", flags);
+            update.Invoke(fx, new object[] { 0.1f, 0.1f }); float before = (float)elapsed.GetValue(fx);
+            paused.SetValue(null, true); update.Invoke(fx, new object[] { 1f, 1f }); Assert.AreEqual(before, elapsed.GetValue(fx)); paused.SetValue(null, false);
+            var motion = new NetworkBombFx.RidingMotion { revision = 1, inputTick = 11, arc = arc, active = true, serverTime = NetworkTime.localTime, sampleTime = NetworkTime.localTime };
+            fx.ReceiveRidingArc(motion); Assert.AreEqual(before, elapsed.GetValue(fx));
+            update.Invoke(fx, new object[] { 0.2f, 0.2f });
+            motion.revision = 2; motion.active = false; motion.completed = true; motion.endTime = motion.serverTime + arc.duration;
+            fx.ReceiveRidingArc(motion);
+            var bounce = new NetworkBombFx.PlayerBounceMotion { revision = 1, start = origin, end = origin + Vector2.right,
+                duration = 0.2f, curveDuration = 0.2f, height = 0.5f, first = true, moving = true };
+            fx.ReceivePlayerBounce(bounce); Assert.IsFalse(fx.PlayerBounceActive, "Landing recovery cannot cancel an unfinished approved riding arc.");
+            bounce.revision = 2; bounce.first = false; bounce.moving = false; fx.ReceivePlayerBounce(bounce);
+            update.Invoke(fx, new object[] { 0.25f, 0.25f }); Assert.IsFalse(fx.RidingArcActive); Assert.IsTrue(fx.PlayerBounceActive);
+            typeof(NetworkBombFx).GetMethod("UpdatePlayerBouncePresentation", flags).Invoke(fx, new object[] { 0.25f, 0.25f });
+            Assert.IsFalse(fx.PlayerBounceActive); Assert.IsTrue(collider.enabled); Assert.AreEqual(origin + Vector2.right, body.position);
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true); fx.ReconcileRiding(12, state, actions);
+            Assert.IsTrue(fx.TryPredictDismount(0, 12)); motion.revision = 3; motion.inputTick = 12; motion.active = true; motion.completed = false;
+            motion.serverTime = motion.sampleTime = NetworkTime.localTime; fx.ReceiveRidingArc(motion);
+            update.Invoke(fx, new object[] { 0.55f, 0.55f });
+            motion.revision = 4; motion.active = false; motion.completed = true; motion.endTime = NetworkTime.localTime + 0.1;
+            fx.ReceiveRidingArc(motion); fx.ReconcileRiding(12, state, actions); Assert.IsTrue(fx.RidingArcActive, "The final position bridges to a post-arc snapshot.");
+            state.serverTime = motion.endTime + 0.01; fx.ReconcileRiding(12, state, actions); Assert.IsFalse(fx.RidingArcActive);
+            Assert.IsTrue(fx.TryPredictDismount(0, 13)); movement.isDead = true; update.Invoke(fx, new object[] { 0.02f, 0.02f });
+            Assert.IsFalse(fx.RidingArcActive); Assert.IsFalse(rider.IsPlaying); Assert.IsFalse(movement.explosionInvulnerable);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearRidingPresentation", flags).Invoke(fx, new object[] { "test_cleanup" });
+            paused.SetValue(null, wasPaused); NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void RidingObserverStartsFromRetainedPausedPhaseAndRejectsStaleEvents()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RidingObserver"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        var paused = typeof(GamePauseController).GetProperty(nameof(GamePauseController.IsPaused)); bool wasPaused = GamePauseController.IsPaused;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var rider = actor.AddComponent<PlayerRidingController>(); actor.SetActive(true); Vector3 origin = new(29000, 29000); actor.transform.position = origin;
+            var arc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Mount, Vector2.down, origin, origin + Vector3.right * 2, 1);
+            var retained = new NetworkBombFx.RidingMotion { revision = 1, arc = arc, active = true, paused = true, elapsed = 0.25f,
+                serverTime = NetworkTime.time - 10, sampleTime = NetworkTime.time - 5 };
+            typeof(NetworkBombFx).GetField("serverRidingMotion", flags).SetValue(fx, retained); paused.SetValue(null, true); fx.OnStartClient();
+            Assert.IsTrue(fx.RidingArcActive); Assert.That(body.position.x, Is.EqualTo(origin.x + 0.5f).Within(0.01f));
+            var update = typeof(NetworkBombFx).GetMethod("UpdateRidingPresentation", flags);
+            update.Invoke(fx, new object[] { 0.5f, 0.5f }); Assert.That(body.position.x, Is.EqualTo(origin.x + 0.5f).Within(0.01f));
+            paused.SetValue(null, false); update.Invoke(fx, new object[] { 0.5f, 0.5f });
+            Assert.That(body.position.x, Is.EqualTo(origin.x + 0.5f).Within(0.01f), "Resume waits for a fresh approved unpaused sample.");
+            retained.paused = false; retained.sampleTime = NetworkTime.time; typeof(NetworkBombFx).GetField("serverRidingMotion", flags).SetValue(fx, retained);
+            update.Invoke(fx, new object[] { 0.25f, 0.25f }); Assert.That(body.position.x, Is.EqualTo(origin.x + 1).Within(0.01f));
+            var stop = retained; stop.revision = 2; stop.active = false; stop.completed = true; stop.endTime = NetworkTime.time - 0.01;
+            fx.ReceiveRidingArc(stop); update.Invoke(fx, new object[] { 0.6f, 0.6f }); Assert.IsFalse(fx.RidingArcActive);
+            Assert.That(body.position.x, Is.EqualTo(origin.x + 2).Within(0.01f));
+            fx.ReceiveRidingArc(retained); Assert.IsFalse(fx.RidingArcActive); Assert.IsFalse(movement.IsMounted); Assert.IsFalse(rider.IsPlaying);
+            using var writer = NetworkWriterPool.Get(); writer.Write(retained);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var copy = reader.Read<NetworkBombFx.RidingMotion>();
+            Assert.AreEqual(retained.elapsed, copy.elapsed); Assert.AreEqual(arc.peak, copy.arc.peak); Assert.AreEqual(arc.target, copy.arc.target);
+            Assert.AreEqual(retained.paused, copy.paused); Assert.AreEqual(retained.sampleTime, copy.sampleTime);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearRidingPresentation", flags).Invoke(fx, new object[] { "test_cleanup" });
+            paused.SetValue(null, wasPaused); NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void RidingServerBodyIsImmediatelyCoherentWithoutChangingOfflineVelocity()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RidingServerPosition"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); var fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, 124u); typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var rider = actor.AddComponent<PlayerRidingController>(); typeof(PlayerRidingController).GetField("movement", flags).SetValue(rider, movement);
+            // An inactive GameObject has no native physics body: velocity writes are ignored.
+            foreach (var behaviour in actor.GetComponents<MonoBehaviour>()) behaviour.enabled = false;
+            actor.SetActive(true);
+            body.linearVelocity = Vector2.right * 2; body.angularVelocity = 2;
+            Assert.AreEqual(Vector2.right * 2, body.linearVelocity, "Fixture needs a live physics body.");
+            Vector2 target = new(30000, 30000); actor.transform.position = target;
+            var sync = typeof(PlayerRidingController).GetMethod("SyncNetworkRidingBody", flags);
+            NetSync.Mode = NetSync.NetMode.Offline; sync.Invoke(rider, null); Assert.AreEqual(Vector2.right * 2, body.linearVelocity);
+            NetSync.Mode = NetSync.NetMode.Host; sync.Invoke(rider, null);
+            Assert.AreEqual(target, body.position); Assert.AreEqual(target, movement.CaptureNetworkMovementState().position);
+            Assert.AreEqual(Vector2.zero, body.linearVelocity); Assert.AreEqual(0, body.angularVelocity);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
+    public void RidingArcPresentationPreservesPixelCurveWithoutStartingGameplay()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RidingVisualOnly"); actor.SetActive(false);
+        AnimatedSpriteRenderer Animation(string name) { var go = new GameObject(name); go.transform.SetParent(actor.transform, false); return go.AddComponent<AnimatedSpriteRenderer>(); }
+        try
+        {
+            var collider = actor.AddComponent<BoxCollider2D>(); var movement = actor.AddComponent<MovementController>();
+            var rider = actor.AddComponent<PlayerRidingController>(); rider.ridingSeconds = 0.8f;
+            var up = Animation("RidingAscend"); var down = Animation("RidingDescend"); var idle = Animation("RidingIdle");
+            up.animationSprite = down.animationSprite = new Sprite[3]; up.animationTime = down.animationTime = 0.1f;
+            rider.mountAscendDown = up; rider.mountDescendDown = down; movement.spriteRendererDown = idle;
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(PlayerRidingController).GetField("mountEndHeightPixels", flags).SetValue(rider, 8);
+            typeof(PlayerRidingController).GetField("dismountStartHeightPixels", flags).SetValue(rider, 8);
+            Vector3 origin = new(27000, 27000); actor.transform.position = origin;
+            var arc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Mount, Vector2.down, origin, origin + new Vector3(2, 0, 9));
+            Assert.AreEqual(0.8f, arc.duration); Assert.AreEqual(origin.z, arc.target.z);
+            Assert.AreEqual(1.625f, PlayerRidingController.SampleNetworkArcHeight(arc, 0.25f));
+            Assert.AreEqual(2.25f, PlayerRidingController.SampleNetworkArcHeight(arc, 0.5f));
+            Assert.AreEqual(0.5f, PlayerRidingController.SampleNetworkArcHeight(arc, 1));
+            NetSync.Mode = NetSync.NetMode.Client; rider.PresentNetworkArc(arc, 0.2f);
+            Assert.IsTrue(up.enabled); Assert.IsFalse(down.enabled); Assert.IsFalse(idle.enabled);
+            Assert.AreEqual(2, up.CurrentFrame); Assert.AreEqual(1.625f, up.RuntimeBaseLocalOffset.y);
+            rider.PresentNetworkArc(arc, 0.2f); Assert.AreEqual(2, up.CurrentFrame);
+            rider.PresentNetworkArc(arc, 0.6f); Assert.IsFalse(up.enabled); Assert.IsTrue(down.enabled);
+            Assert.AreEqual(1.875f, down.RuntimeBaseLocalOffset.y); Assert.AreEqual(origin, actor.transform.position);
+            Assert.IsFalse(rider.IsPlaying); Assert.IsFalse(movement.InputLocked); Assert.IsFalse(movement.explosionInvulnerable); Assert.IsTrue(collider.enabled);
+            rider.StopNetworkArcVisual(); Assert.IsFalse(up.enabled); Assert.IsFalse(down.enabled);
+            Assert.AreEqual(Vector3.zero, up.RuntimeBaseLocalOffset); Assert.AreEqual(Vector3.zero, down.RuntimeBaseLocalOffset);
+            var exit = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Dismount, Vector2.down, origin, origin, 0.5f);
+            Assert.AreEqual(0.5f, exit.duration); Assert.AreEqual(0.5f, PlayerRidingController.SampleNetworkArcHeight(exit, 0));
+            Assert.AreEqual(0, PlayerRidingController.SampleNetworkArcHeight(exit, 1));
+            NetSync.Mode = NetSync.NetMode.Host; rider.PresentNetworkArc(arc, 0.2f); Assert.IsFalse(up.enabled);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
     public void ControlledBombDetonationCannotRunGameplayOnPureClient()
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("ControlDetonationClient"); actor.SetActive(false);
@@ -2115,6 +2334,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 33, false)]
     [TestCase("0.5.0", 32, false)]
     [TestCase("0.5.0", 31, false)]
     [TestCase("0.5.0", 30, false)]

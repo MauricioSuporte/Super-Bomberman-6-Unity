@@ -52,7 +52,7 @@ namespace Assets.Scripts.Netcode
                 movement == null || movement.isDead || movement.IsEndingStage || (TryGetComponent<CharacterHealth>(out var health) && health.life <= 0) ||
                 (!confirmed && (!isLocalPlayer || ClientPlayerMotionActive || !movement.CanPredictNetworkMovement ||
                     AbilityPredictionLocksMovement || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending))) return false;
-            if (confirmed) { ClearGreenDash("pink_jump"); ClearBlackDash("pink_jump"); ClearPlayerBouncePresentation(); }
+            if (confirmed) { ClearRidingPresentation("pink_jump"); ClearGreenDash("pink_jump"); ClearBlackDash("pink_jump"); ClearPlayerBouncePresentation(); }
             ResetLocalAbilityPresentation();
             pinkJumpMotion = motion; pinkJumpActive = true; pinkJumpConfirmed = confirmed; pinkJumpEndPending = false;
             pinkJumpElapsed = pinkJumpSilence = pinkJumpPauseOffset = 0; pinkJumpStartedLocal = Time.time;

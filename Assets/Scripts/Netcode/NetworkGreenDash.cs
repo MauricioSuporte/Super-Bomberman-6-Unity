@@ -11,7 +11,7 @@ namespace Assets.Scripts.Netcode
         Vector2 greenDashDirection, greenDashPosition, greenDashReplica, greenDashCorrection;
         GreenLouieDashAnimator greenDashVisual;
         public bool GreenDashActive => greenDashActive;
-        public bool ClientPlayerMotionActive => PlayerBounceActive || GreenDashActive || PinkJumpActive || BlackDashActive;
+        public bool ClientPlayerMotionActive => RidingArcActive || PlayerBounceActive || GreenDashActive || PinkJumpActive || BlackDashActive;
 
         public bool TryPredictGreenDash(int held, uint tick)
         {
@@ -34,6 +34,7 @@ namespace Assets.Scripts.Netcode
                 movement == null || movement.isDead || movement.IsEndingStage || direction == Vector2.zero || speed <= 0 ||
                 (!confirmed && (!movement.CanPredictNetworkMovement || AbilityPredictionLocksMovement))) return false;
             var ability = GetComponent<GreenLouieDashAbility>() ?? gameObject.AddComponent<GreenLouieDashAbility>();
+            if (confirmed) ClearRidingPresentation("green_dash");
             if (!confirmed && !ability.TryPreviewNetworkDashStep(position, direction, speed * Time.fixedDeltaTime, out _)) return false;
             ResetLocalAbilityPresentation();
             greenDashTick = tick; greenDashActive = true; greenDashConfirmed = confirmed; greenDashDirection = direction;

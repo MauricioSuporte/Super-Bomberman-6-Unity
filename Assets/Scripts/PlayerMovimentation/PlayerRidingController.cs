@@ -11,6 +11,65 @@ public sealed class PlayerRidingController : MonoBehaviour
         Dismount
     }
 
+    public struct NetworkArcState
+    {
+        public RidingArcType kind;
+        public Vector3 start, target;
+        public Vector2 facing;
+        public float duration, peak, startHeight, endHeight, pixelsPerUnit;
+        public bool quantize;
+    }
+
+    // Presentation only. It never runs the riding coroutine or completion hooks.
+    bool networkArcVisual;
+
+    public NetworkArcState CaptureNetworkArcState(RidingArcType kind, Vector2 facing, Vector3 start, Vector3 target, float duration = -1)
+    {
+        start.z = target.z = transform.position.z;
+        return new NetworkArcState { kind = kind, facing = facing, start = start, target = target,
+            duration = Mathf.Max(0.01f, duration < 0 ? ridingSeconds : duration), peak = JumpPeakWorld,
+            startHeight = GetStartHeightWorld(kind), endHeight = GetEndHeightWorld(kind),
+            pixelsPerUnit = Mathf.Max(1, pixelsPerUnit), quantize = quantizeToPixel };
+    }
+
+    public static float SampleNetworkArcHeight(NetworkArcState arc, float progress)
+    {
+        float t = Mathf.Clamp01(progress);
+        float height = Mathf.Lerp(arc.startHeight, arc.endHeight, t) + 4f * arc.peak * t * (1f - t);
+        return arc.quantize ? Mathf.Round(height * Mathf.Max(1, arc.pixelsPerUnit)) / Mathf.Max(1, arc.pixelsPerUnit) : height;
+    }
+
+    public void PresentNetworkArc(NetworkArcState arc, float elapsed)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || isPlaying) return;
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        if (movement == null || movement.isDead || movement.IsEndingStage) return;
+        if (!networkArcVisual)
+        {
+            networkArcVisual = true; CacheRenderers(); RebuildAllowedSets();
+            DisableAllRiding(); ClearAllRuntimeOffsets();
+        }
+        float t = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, arc.duration));
+        EnforceRidingOnly();
+        var active = PickRendererForPhase(arc.facing, t < 0.5f);
+        ApplyExclusiveRenderer(active);
+        if (active != null)
+        {
+            active.SetManualAnimationUpdate(true); active.idle = false; active.loop = false;
+            int count = active.animationSprite != null ? active.animationSprite.Length : 0;
+            float phaseTime = t < 0.5f ? elapsed : elapsed - arc.duration * 0.5f;
+            active.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Max(0, phaseTime) / Mathf.Max(0.0001f, active.animationTime)), 0, Mathf.Max(0, count - 1));
+        }
+        ApplyRendererArcOffset(active, SampleNetworkArcHeight(arc, t));
+    }
+
+    public void StopNetworkArcVisual()
+    {
+        if (!networkArcVisual) return;
+        networkArcVisual = false; DisableAllRiding(); ClearAllRuntimeOffsets();
+        if (movement != null && !movement.isDead && !movement.IsEndingStage) movement.EnableExclusiveFromState();
+    }
+
     [Header("Mount Ascend Sprites")]
     public AnimatedSpriteRenderer mountAscendUp;
     public AnimatedSpriteRenderer mountAscendDown;
@@ -105,7 +164,7 @@ public sealed class PlayerRidingController : MonoBehaviour
             onStart);
     }
 
-    public bool TryPlayDismount(Vector2 facing, System.Action onComplete = null, System.Action onStart = null)
+    public bool TryPlayDismount(Vector2 facing, System.Action onComplete = null, System.Action onStart = null, uint networkInputTick = 0)
     {
         Vector3 startWorldPos = transform.position;
         Vector3 targetWorldPos = transform.position;
@@ -116,7 +175,7 @@ public sealed class PlayerRidingController : MonoBehaviour
             startWorldPos,
             targetWorldPos,
             onComplete,
-            onStart);
+            onStart, networkInputTick);
     }
 
     public bool TryPlayMountArc(
@@ -157,7 +216,8 @@ public sealed class PlayerRidingController : MonoBehaviour
         Vector3 startWorldPos,
         Vector3 targetWorldPos,
         System.Action onComplete = null,
-        System.Action onStart = null)
+        System.Action onStart = null,
+        uint networkInputTick = 0)
     {
         if (isPlaying || movement == null)
             return false;
@@ -177,6 +237,8 @@ public sealed class PlayerRidingController : MonoBehaviour
         ClearAllRuntimeOffsets();
 
         onStart?.Invoke();
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerRidingArcStart(CaptureNetworkArcState(arcType, facing, startWorldPos, targetWorldPos), networkInputTick);
 
         routine = StartCoroutine(PlayMountArcRoutine(
             arcType,
@@ -204,6 +266,8 @@ public sealed class PlayerRidingController : MonoBehaviour
 
     void ResetRidingState(bool restoreMovementState)
     {
+        StopNetworkArcVisual();
+        ReportNetworkRidingStop(false);
         if (routine != null)
         {
             StopCoroutine(routine);
@@ -219,6 +283,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         {
             movement.EnableExclusiveFromState();
             movement.SetInputLocked(false, forceIdle: true);
+            ReconcileNetworkRidingNow();
         }
     }
 
@@ -243,6 +308,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         {
             if (GamePauseController.IsPaused)
             {
+                ReportNetworkRidingProgress(elapsed, true);
                 yield return null;
                 continue;
             }
@@ -267,6 +333,8 @@ public sealed class PlayerRidingController : MonoBehaviour
 
             flat.z = transform.position.z;
             transform.position = flat;
+            SyncNetworkRidingBody();
+            ReportNetworkRidingProgress(elapsed, false);
 
             yield return null;
         }
@@ -274,6 +342,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         Vector3 finalPos = targetWorldPos;
         finalPos.z = transform.position.z;
         transform.position = finalPos;
+        SyncNetworkRidingBody();
 
         AnimatedSpriteRenderer finalRenderer = PickRendererForPhase(facing, false);
         ApplyExclusiveRenderer(finalRenderer);
@@ -284,12 +353,39 @@ public sealed class PlayerRidingController : MonoBehaviour
 
         // Finalize the mounted visual after leaving the riding-only state.
         isPlaying = false;
+        ReportNetworkRidingStop(true);
         onComplete?.Invoke();
 
         movement.EnableExclusiveFromState();
         movement.SetInputLocked(false, forceIdle: true);
+        ReconcileNetworkRidingNow();
 
         routine = null;
+    }
+
+    void SyncNetworkRidingBody()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) || !fx.isServer || fx.netId == 0) return;
+        var body = movement != null ? movement.Rigidbody : null;
+        if (body != null) { body.position = transform.position; body.linearVelocity = Vector2.zero; body.angularVelocity = 0; }
+    }
+
+    void ReportNetworkRidingProgress(float elapsed, bool paused)
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerRidingArcProgress(elapsed, paused);
+    }
+
+    void ReportNetworkRidingStop(bool completed)
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerRidingArcStop(completed);
+    }
+
+    void ReconcileNetworkRidingNow()
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var input) && input.isServer && input.netId != 0)
+            input.ServerReconcileMovementNow();
     }
 
     float GetStartHeightWorld(RidingArcType arcType)

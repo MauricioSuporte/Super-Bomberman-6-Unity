@@ -34,8 +34,8 @@ namespace Assets.Scripts.Netcode
         public bool HasUnconfirmedClientMotion(Bomb target) => target != null &&
             kickPlayback.TryGetValue(target, out var state) && state.unconfirmed;
 
-        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
-        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
+        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || RidingArcActive || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
+        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || RidingArcActive || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
             (abilityPoseKind == BombMotionKind.Yellow || abilityPoseKind == BombMotionKind.Punch)));
         public static bool NonBlockingMotion(BombMotionKind kind) => kind == BombMotionKind.Punch ||
             kind == BombMotionKind.Throw || kind == BombMotionKind.Lift || kind == BombMotionKind.Carry;
@@ -87,6 +87,7 @@ namespace Assets.Scripts.Netcode
         {
             if (NetSync.Mode != NetSync.NetMode.Client || !isLocalPlayer || !NetworkClient.active) return;
             PrepareLocalMountAbilities();
+            if (RidingArcActive) { previousAbilityHeld = held; return; }
             var movement = GetComponent<MovementController>();
             if (movement == null || movement.isDead || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending)
             { previousAbilityHeld = held; return; }
@@ -166,6 +167,7 @@ namespace Assets.Scripts.Netcode
         public void ReapplyMountAbilityPose()
         {
             if (!HasLocalMountAbilityPose) return;
+            if (RidingArcActive) { PresentRidingArc(); return; }
             if (PurpleLinePoseActive) { PresentPurpleLineCast(); return; }
             if (MoleStartupActive) { PresentMoleStartup(); return; }
             if (GreenDashActive) { PresentGreenDash(0); return; }
@@ -265,6 +267,7 @@ namespace Assets.Scripts.Netcode
 
         void UpdateLocalAbilityPresentation()
         {
+            if (RidingArcActive) return;
             if (!isLocalPlayer || NetSync.Mode != NetSync.NetMode.Client) return;
             var movement = GetComponent<MovementController>();
             if (movement == null || movement.isDead || movement.IsEndingStage) { ResetLocalAbilityPresentation(); return; }

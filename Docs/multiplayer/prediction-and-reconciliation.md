@@ -649,3 +649,34 @@ Validation: 182/182 full online Unity EditMode tests passed with the authority
 guard regression, C# compiled without introduced warnings, and UTF-8 checks
 passed. New paired diagnostic captures and manual two-peer checks are pending.
 This instrumentation is held for the next gameplay publication.
+
+
+## Riding and manual dismount presentation (protocol 34)
+
+`NetworkRidingPresentation` extends the existing `NetworkBombFx` owner. Select
+starts a reversible dismount arc only with approved eligibility and arc geometry.
+The native riding coroutine remains on the authority: clients do not detach a
+mount, transfer eggs, grant protection, unlock gameplay or invoke its callbacks.
+Mounting itself starts from an approved event, because ownership may be disputed.
+
+The descriptor preserves the offline parabolic, pixel-quantized curve, heights,
+facing, start and target. A retained state includes elapsed phase and pause, so a
+late observer does not consume a long pause as flight time. Confirmation preserves
+the owner's phase; rejection restores the latest authoritative position. Root
+presentation survives NetworkTransform and movement reconciliation. Native online
+arcs keep Rigidbody and transform coherent before snapshots, without changing the
+offline velocity path.
+
+Approved landing recovery bounces wait for the unfinished riding arc and retain
+their final stop. Death, cancellation, timeout and a newer motion release the
+presenter. Completion bridges to an approved movement snapshot rather than
+granting speculative ownership or gameplay unlock. Diagnostic events
+`riding_prediction_begin`, `riding_prediction_confirm` and `riding_prediction_end`
+include the input tick, correction and endpoint `hold_ms`. Egg queue and detached
+mount presentation still require A11/R07 follow-up; this is not all of A11.
+
+The movement history now stores the original directional command sent to the
+server. Gesture locks mask only the current motor/replay copy while still active.
+After rejection or completion, pending movement can replay its real direction
+without firing ability edges again. Tests cover a rejected Red gesture with
+walking input retained through the lock. This does not close all A14 regressions.

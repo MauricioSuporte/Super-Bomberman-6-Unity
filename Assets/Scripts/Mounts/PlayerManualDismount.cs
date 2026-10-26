@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(PlayerMountCompanion))]
@@ -23,6 +23,21 @@ public sealed class PlayerManualDismount : MonoBehaviour
     MountEggQueue eggQueue;
 
     bool wasHeld;
+
+    public float NetworkDismountDuration => Mathf.Max(0.01f, manualDismountDuration);
+    public bool NetworkDismountEligible
+    {
+        get
+        {
+            movement = movement != null ? movement : GetComponent<MovementController>();
+            companion = companion != null ? companion : GetComponent<PlayerMountCompanion>();
+            rider = rider != null ? rider : GetComponent<PlayerRidingController>();
+            return isActiveAndEnabled && movement != null && companion != null && rider != null &&
+                movement.CompareTag("Player") && !movement.isDead && !movement.IsEndingStage &&
+                !GamePauseController.IsPaused && !IsExternalBlockingDismount() && !movement.InputLocked &&
+                !rider.IsPlaying && movement.IsMounted && companion.HasMountedLouie() && !IsPinkLouieJumpActive();
+        }
+    }
 
     void Awake()
     {
@@ -199,7 +214,8 @@ public sealed class PlayerManualDismount : MonoBehaviour
 
                 if (eggQueue != null)
                     eggQueue.SetIgnoreOwnerInvulnerability(false);
-            }
+            },
+            networkInputTick: TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var networkInput) ? networkInput.CurrentSelectTick : 0
         );
 
         if (!started)

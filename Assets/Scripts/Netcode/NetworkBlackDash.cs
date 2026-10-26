@@ -52,7 +52,7 @@ namespace Assets.Scripts.Netcode
             motion.direction = Mathf.Abs(motion.direction.x) > Mathf.Abs(motion.direction.y) ? new Vector2(Mathf.Sign(motion.direction.x), 0) : new Vector2(0, Mathf.Sign(motion.direction.y));
             motion.duration = Mathf.Max(0.01f, motion.duration);
             if (!confirmed && !ability.TryPreviewNetworkDashStep(motion.start, motion.direction, 0.05f, movement.AcknowledgedDestructiblePass, out _)) return false;
-            if (confirmed) { ClearGreenDash("black_dash"); ClearPinkJump("black_dash"); ClearPlayerBouncePresentation(); }
+            if (confirmed) { ClearRidingPresentation("black_dash"); ClearGreenDash("black_dash"); ClearPinkJump("black_dash"); ClearPlayerBouncePresentation(); }
             ResetLocalAbilityPresentation();
             blackMotion = motion; blackActive = true; blackConfirmed = confirmed; blackHolding = motion.holding; blackEnding = false;
             blackPosition = blackReplica = motion.position; blackCorrection = Vector2.zero;

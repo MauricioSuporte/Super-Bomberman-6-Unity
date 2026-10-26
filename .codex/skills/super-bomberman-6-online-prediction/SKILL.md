@@ -123,6 +123,17 @@ player-head presenter must respect that same ownership. EditMode fixtures adding
 abilities dynamically must initialize required Awake references explicitly; do
 not confuse an uninitialized fixture with a runtime prediction failure.
 
+For mounting/dismounting, separate the visual arc from ownership, egg transfer,
+protection and completion callbacks. Predict a known manual dismount gesture from
+approved eligibility/curve; mounting starts only with the approved actor/target.
+Retain phase and pause for late observers and preserve the offline pixel-quantized
+parabola. Queue approved landing bounces until the main arc ends, including their
+stop. Keep native Rigidbody/transform coherent before online snapshots, without
+changing offline velocity. Measure endpoint waits rather than granting gameplay
+unlock early. Store raw directional input in history and mask a motor/replay copy
+only while its gesture lock is still active; otherwise rejection loses the real
+walking intent. Never replay ability edges to recover movement.
+
 ## Check collision geometry before predicting
 
 A co-op scene disables original client gameplay components. Never reactivate

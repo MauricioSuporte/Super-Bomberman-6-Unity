@@ -15,37 +15,22 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-- Branch `v0.5.0`, checkout original; preservar fontes e TitleScreen do usuario.
-- R02 geometria e A05 publicados em d25c34734 /30/ CI40281389234 sucesso.
-- A07 publicado em cb971ee11 /31/ CI40283518599 sucesso (server e updater).
-- R02: Unity suite completa 169/169; depois Coop 9/9 com protecao final para
-  Sprite de colisao ausente. Relatorios Logs/PredictionCoopTests e
-  Logs/PredictionCoopGeometryFinal (.xml/.log). Python 40/40. C# zero warnings/erros.
-- A07 salvo/enviado em `cb971ee11`, protocolo31, CI40283518599 sucesso.
-  Unity completo171/171, C#0warnings/erros e Python40 passaram nesse lote.
-  Relatorios principais Logs/PredictionMoleTests.xml/.log.
-- A14 Tank salvo/enviado em `874b38956`, protocolo32, CI40285499924 sucesso (server e updater).
-- A14 parcial em32 validado: Tank eligibility separada de cooldown com projecao
-  pelo timestamp da autoridade. Suite Unity172/172, Python40 e C# zero warnings/
-  erros passaram. Relatorios Logs/PredictionTankCooldownTests.xml/.log.
-  Publicacao32 concluida; nao marcar A14 completo (faltam outras regressoes).
-- A09 salvo/enviado b18e91f08 / protocolo33 / CI40315969165 sucesso (server e updater).
-- A09 LineBomb/Purple publicado no protocolo33.
-  Suite completa176/176 e depois geometria5/5 (apenas novos testes adicionados).
-  C# zero warnings/erros, Python40 e UTF-8/BOM passaram.
-  Relatorios Logs/PredictionLineTests.xml/.log e PredictionLineGeometry.xml/.log.
-  Grupo por tick/acao/celula, estoque compartilhado, confirmacao/rejeicao parcial,
-  variantes, som deduplicado e pose Purple reversivel (inclusive estoque0).
-- Runner livre apos CI33; A10 copiado para suite completa182.
-- A10 no diretorio: logs Btick/control_detonation_validate e guards client nos
-  metodos oldest/all; teste novo adicionado. C# incremental final0warnings/erros;
-  Unity182/182 passou. Sem wire novo (continua33); salvar com skip CI para
-  publicar junto do proximo lote de gameplay. A11 helper ainda nao testado Unity.
-- Nenhuma validacao manual com dois peers nem novas capturas comparaveis feitas.
-  Nao declarar zero latencia nem o plano inteiro concluido.
-- Proximo: confirmar CI40315969165, validar A10 no runner livre e continuar
-  A11/A12, C02-C10 e R01-R08 pendentes.
-  Manter R02 e A14 parciais; preservar limites de autoridade e manual pendente.
+- Branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen do usuário.
+- Último servidor/updater confirmado: `b18e91f08`, protocolo33,
+  CI40315969165 sucesso. A09 LineBomb/Purple publicado.
+- A10 salvo/enviado em `ce7e27ada` com skip CI: guards de detonação e logs Btick,
+  validado em Unity182/182; será publicado junto do próximo lote de gameplay.
+- Lote34 pronto para salvar/publicar: A11 arco de montar aprovado + gesto de
+  desmontagem previsto, pausa/fase retida, ponte de posição e bounce de pouso.
+  A14 histórico guarda direção original; bloqueio só na cópia do motor/replay.
+- Validação34: Unity188/188, C# zero erros/avisos, Python40/40, UTF-8/BOM e
+  git diff --check passaram. Relatórios Logs/PredictionRidingFinalTests.xml/.log.
+  Primeiro suite187/188 falhou por fixture sem corpo físico ativo; corrigida a
+  configuração do teste, focused1/1 e suíte completa188/188 passaram.
+- A11 ainda parcial: fila/visibilidade dos ovos e montarias soltas (R07) pendentes.
+  R02 e A14 também continuam parciais. Nenhum teste manual com dois peers feito.
+- Próximo: publicar34, verificar CI, continuar A11/R07 e A12/C02-C10/R01-R08.
+  Não declarar zero latência nem conclusão do plano inteiro.
 
 ## Marcos concluídos e commits
 
@@ -177,7 +162,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
-- [ ] A11: montar/desmontar, posse e fila de ovos.
+- [ ] A11: parcial: arco aprovado e desmontagem prevista/testados em34; fila/visibilidade de ovos e montaria solta R07 pendentes.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: regressões dos caminhos existentes.
@@ -428,3 +413,73 @@ para evitar publicar builds completos apenas por instrumentacao; incluir no
 proximo lote. Ultima publicacao b18e91f08 /33/ CI40315969165 sucesso.
 PlayerRidingController.cs (A11helper) permanece fora desse commit e nao foi
 copiado ao runner182. Proximo: testes A11API/root/curve e implementar RPC+Select.
+
+A10 salvo/enviado ce7e27ada com skip CI (incluido no proximo lote); publicacao
+ativa continua b18e91f08/protocolo33. SuiteControl182 e C#0warnings passaram.
+A11 helper teste adicionado RidingArcPresentationPreservesPixelCurveWithoutStartingGameplay:
+parabola/quantizacao, ascend/descend, origem/Z/duracao, sem worldmove/inputlock/
+IsPlaying/invulnerabilidade, cleanup e host guard. Ainda nao rodou Unity.
+Runner livre; helper/teste copiados para PredictionRidingFoundation.
+Nao ha RPC ou Select prediction de A11 ainda. Proximo implementa-los apos helper.
+
+A11 em implementacao34: NetworkRidingPresentation.cs/.meta novos. RidingMotion
+com revisao/inputTick/arc/tempo/stop; ownerSelect128 preve somente gesto usando
+shape aprovado no MountActionState.dismountArc e dismountEligible. SenderNative
+TryPlayMountArcInternal confirma no mesmo Update antes do primeiro yield (evita
+ack rejeitar uma transicao aceita); fim enviado antes de onComplete para bounce.
+Server root Rigidbody/Transform sincronizados durante arco e snapshot forca
+no fim/cancel depois de unlock. TryPlayDismount ganhou networkInputTick opcional
+passado pelo PlayerManualDismount; CurrentSelectTick emNPI, sem ticks sinteticos.
+FX root/pose domina NPA/NMA/NT sem desligar decoder. Pending/reject/confirm phase,
+stop bridge ate snapshot, pause/timeout/death, queue de bounce landing32slots
+(somente apos stop completed; contato externo cancela), cleanup presentes.
+Guards de abilidades/carry enquanto riding; Black confirmado toma controle.
+Falta revisar takeover Green/Pink (nao feito ainda), teste owner/observer/queue
+rollback/death/pause/wire e snapshots; validar UTF8/C#/Python/Unity.
+Protocolos34 alinhados; NAO publicado. A11/R07 filaEgg ainda pendente.
+HelperRidingFoundation passou1/1, mas nao inclui esse novo presenter/glue34.
+
+A11 ainda em34, C# exec88786 a conferir. Retained RidingMotion virou SyncVar com
+hook+OnStartClient (late join/visibilidade); progresso aprovado e sampleTime
+atualizados a20Hz somente durante arco e em troca de pausa (sem spam parado),
+sem reiniciar presenter a cada sample pois revisao nao muda. PaiNative reporta
+progress/paused no loop, mantendo matematica offline intacta. Start confirma
+mesmoUpdate antes do yield para ack nao rejeitar gesto aceito. End revision/
+paused atualizados, nativeclock freezing honrado inclusive snapshot inicial
+recebido durante pausa. Pose/gravity/ownership ainda nunca simulados client.
+Novo TraceRiding inclui hold_ms para medir espera no endpoint. A ponte de fim
+aguarda estado aprovado; nao antecipar unlock de gameplay por supor uma
+completionFrame exata (coroutine libera input num frame posterior ao arco).
+Faltam testes end/handoff/owner/observer/late-join/paused/wire/nativePosition
+coerencia e takeover. Green/Pink confirmados agora limpam riding antigo.
+
+A14 novo ajuste junto de34: NPI guardava frame.held mascarado no pending durante
+pose; agora RecordLocalFrame guarda input original, retorna copia mascarada
+para motor e aplica mascara no replay somente se presenter ainda o exige.
+ReceiveMovementState extraido do corpo TargetRpc existente para testar fluxo
+real sem Command ficticio. Teste RejectedAbilityReplaysOriginalWalkingIntentInsteadOfStoredPoseZeros
+verifica que pre-ack conserva lock, rejeicao C recupera3ticks de movimento e
+nao apaga held original. Ainda NAO executado Unity. C# em verificacao.
+A11 testes owner/observer-paused/nativeCoherent foram adicionados (tambem
+ainda sem Unity), alem de RidingFoundation que ja passou1/1 antes do glue34.
+
+Lote34 copiado ao runner para primeira suite completa com Riding+RawHistory
+(expected188). C# incremental0warnings/erros passou. Testes owner/observer/
+paused-retained/bounce queue/bridge/native-position e rejeicaoRed-replayRaw
+adicionados; ainda NAO rodaram. PredictionRidingTests em exec a conferir.
+Nao declarar A11 completo: filaEggQueue/R07 ainda pendentes apos riding.
+
+
+## Retomada de 26/10: lote34 validado
+
+NetworkRidingPresentation e integração aprovados na suíte completa188/188.
+Predição manual Select preserva o tick, confirma sem reiniciar fase e rejeita
+restaurando snapshot. Montar depende do evento aprovado. Pausa/fase retida para
+observadores, propriedade/dano/invulnerabilidade e callbacks no servidor.
+Landing bounce/stop esperam a curva principal; root fica coerente no servidor e
+na reconciliação client. Diagnóstico hold_ms mede a espera na extremidade.
+Histórico de input agora preserva direção original durante poses; teste verifica
+rejeição de gesto Red seguida de replay real dos comandos pendentes.
+C# final zero warnings/erros; Python32+8, UTF-8/BOM e diffcheck passaram.
+Fontes e TitleScreen do usuário preservados. Protocolos34 alinhados; publicação
+pendente no momento deste registro. A11/R07 e A14 não estão completos.

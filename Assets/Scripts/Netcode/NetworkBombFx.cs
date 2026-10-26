@@ -441,6 +441,7 @@ namespace Assets.Scripts.Netcode
             }
             UpdateTileMotionPresentation();
             UpdatePlacementPresentation(unscaledDeltaTime);
+            UpdateRidingPresentation(deltaTime, unscaledDeltaTime);
             UpdatePlayerBouncePresentation(deltaTime, unscaledDeltaTime);
             UpdateGreenDash(deltaTime, unscaledDeltaTime);
             UpdatePinkJump(deltaTime, unscaledDeltaTime);
@@ -580,6 +581,7 @@ namespace Assets.Scripts.Netcode
                 if (pair.Key != null) RestoreMotionCollider(pair.Key, pair.Value);
             kickPlayback.Clear(); rejectedStarts.Clear();
             ResetLocalAbilityPresentation();
+            ClearRidingPresentation("clear_playback"); hasDismountState = false;
             ClearPurpleLineCast("clear_playback");
             ClearMoleStartup("clear_playback");
             ClearRedPunch("clear_playback");

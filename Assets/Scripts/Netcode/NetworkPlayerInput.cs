@@ -77,6 +77,7 @@ namespace Assets.Scripts.Netcode
         public bool ServerAllowsMovementPrediction => receivedSnapshot && serverAllowsPrediction;
         public uint CurrentActionATick { get; private set; }
         public uint CurrentActionBTick { get; private set; }
+        public uint CurrentSelectTick { get; private set; }
         public uint CurrentActionCTick { get; private set; }
         public uint CurrentInputTick => isServer ? processedTick : localTick;
         public uint CurrentMovementTick => isServer ? processedTick : movementTick;
@@ -131,6 +132,7 @@ namespace Assets.Scripts.Netcode
                     var fx = GetComponent<NetworkBombFx>();
                     fx?.PredictBombAbilityInput(sampledHeld, pressedNow, unchecked(localTick + 1));
                     if ((pressedNow & 16) != 0) fx?.TryPredictPlacement(unchecked(localTick + 1));
+                    if ((pressedNow & 128) != 0) fx?.TryPredictDismount(sampledHeld, unchecked(localTick + 1));
                     if ((pressedNow & 64) != 0)
                     {
                         fx?.TryPredictGreenDash(sampledHeld, unchecked(localTick + 1));
@@ -164,10 +166,9 @@ namespace Assets.Scripts.Netcode
                 pendingPressed = 0;
                 MotionDiagnosticProbe.NetworkInput(gameObject, "input_send", frame.held, frame.pressed);
                 CmdControls(frame);
-                // Keep directional intent on the wire; only the local motor/replay
-                // waits through the offline ability animation lock.
-                if (GetComponent<NetworkBombFx>()?.AbilityPredictionLocksMovement == true) frame.held &= ~15;
-                pending.Add(frame);
+                // History retains the command actually sent. Rejection/completion
+                // must be able to replay its original directional intent.
+                frame = RecordLocalFrame(frame);
                 bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
                 movement.SetPredictLocally(predict);
                 if (predict)
@@ -199,6 +200,7 @@ namespace Assets.Scripts.Netcode
                 actionEdges |= frame.pressed;
                 if ((frame.pressed & 16) != 0) CurrentActionATick = frame.tick;
                 if ((frame.pressed & 32) != 0) CurrentActionBTick = frame.tick;
+                if ((frame.pressed & 128) != 0) CurrentSelectTick = frame.tick;
                 if ((frame.pressed & 64) != 0) CurrentActionCTick = frame.tick;
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
                 MotionDiagnosticProbe.TickApplied(gameObject,
@@ -288,8 +290,18 @@ namespace Assets.Scripts.Netcode
             TargetReconcile(connectionToClient, processedTick, state, fx?.CapturePlacementState() ?? default, fx?.CaptureMountActionState() ?? default);
         }
 
+        NetworkInputFrame RecordLocalFrame(NetworkInputFrame frame)
+        {
+            pending.Add(frame);
+            if (GetComponent<NetworkBombFx>()?.AbilityPredictionLocksMovement == true) frame.held &= ~15;
+            return frame;
+        }
+
         [TargetRpc]
         void TargetReconcile(NetworkConnectionToClient target, uint acknowledgedTick, MovementController.NetworkMovementState state, NetworkBombFx.PlacementState placement, NetworkBombFx.MountActionState mountActions)
+            => ReceiveMovementState(acknowledgedTick, state, placement, mountActions);
+
+        public void ReceiveMovementState(uint acknowledgedTick, MovementController.NetworkMovementState state, NetworkBombFx.PlacementState placement, NetworkBombFx.MountActionState mountActions)
         {
             if (isServer || !isLocalPlayer || movement == null || movement.Rigidbody == null) return;
             Vector2 before = movement.transform.position;
@@ -312,6 +324,8 @@ namespace Assets.Scripts.Netcode
             kickFx?.ReconcileTankShot(acknowledgedTick, mountActions, state);
             kickFx?.ReconcileBlackDash(acknowledgedTick, state, mountActions);
             kickFx?.RestoreBlackDashPosition();
+            kickFx?.ReconcileRiding(acknowledgedTick, state, mountActions);
+            kickFx?.RestoreRidingPosition();
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
@@ -322,11 +336,14 @@ namespace Assets.Scripts.Netcode
                 for (int i = 0; i < pending.Count; i++)
                 {
                     movementTick = pending[i].tick;
-                    kickFx?.PrepareClientMovementTick(movementTick, true, pending[i].held);
+                    int replayHeld = pending[i].held;
+                    if (kickFx?.AbilityPredictionLocksMovement == true) replayHeld &= ~15;
+                    kickFx?.PrepareClientMovementTick(movementTick, true, replayHeld);
                     movement.RestorePredictedKickReference(kickFx != null ? kickFx.LastKickForTick(movementTick) : null);
-                    movement.SimulateNetworkMovementTick(pending[i].held, replay: true);
+                    movement.SimulateNetworkMovementTick(replayHeld, replay: true);
                 }
             kickFx?.RestoreClientKickPositions();
+            kickFx?.RestoreRidingPosition();
             MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
         }
 
