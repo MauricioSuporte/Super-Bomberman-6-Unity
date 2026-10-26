@@ -19,22 +19,25 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Servidor e atualizador publicados:** protocolo43, commit `d993fe122`, pipeline
-  [40415169769](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40415169769)
-  concluído com sucesso, incluindo deploy, updater e artefatos.
-- **Último lote publicado:** teto Battle8 e frames powder Battle3 aprovados na
-  timeline, sem relógio/reset/ignição/hitboxes nativos no client. Inclui VFX42 e
-  continuidade41. Validação332/332 Unity, C#0 erros/avisos novos, Python40/40,
-  UTF-8/BOM/metas e diffcheck passaram. Eventos de bomba sem owner seguem pendentes.
-- **Lote44 validado, publicação pendente:** caminho e voz de SuddenDeath decididos só na autoridade,
-  espera de música aprovada no wire. C#0/0, Python40/40; Unity335/335 passou.
-- **Próximos itens:** concluir44, demais R07, barco/contexto, forças no motor/replay,
-  blackout/tiles e demais C/R. A14 continua com matriz/manual pendentes.
+- **Servidor e atualizador publicados:** protocolo44, commit `9c6372abb`, pipeline
+  [40417871378](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40417871378)
+  concluído com sucesso, incluindo builds, deploy, updater e artefatos.
+- **Avanços desta retomada:** VFX recebidos independentes do owner42; fases
+  aprovadas de teto/pólvora43; caminho e espera de música SuddenDeath44 sem RNG
+  client e com diagnóstico de begin/queda. Nenhum desses avanços fecha R07/C10.
+- **Validação final:**335/335 Unity (OnlineRoom243 + COM92), C#0 erros/avisos novos,
+  Python40/40 e UTF-8/BOM/metas/diffcheck passaram. Relatórios preservados em Logs/.
+- **Documentação:** checklist por33 IDs revisado, skill/notas atualizadas e matriz
+  manual criada com cenários/evidências por ID; execução manual ainda pendente.
+- **Próximos itens:** C06 barco (auditoria detalhada ao fim deste arquivo), demais
+  R07/sem owner, forças no motor/replay, blackout/tiles e demais C/R. C10 continua
+  com timeline/commit de terreno/late join; A14 com matriz/manual pendentes.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
-- **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote42 commitado em `a10595b74`, CI40413037189; Lote43 em `d993fe122`, CI40415169769; alterações44 sem commit.
+- **Workspace:** branch `v0.5.0`, checkout original. Runtime44 commitado/publicado;
+  nenhum código incompleto no diretório. Preservar fontes e TitleScreen do usuário
+  e o Unity aberto com alterações não salvas. Não há implementação45 iniciada.
 
 ## Como acompanhar
 
@@ -1147,3 +1150,47 @@ wire existente preserva duration e campos de expulsão. Relatórios copiados em
 Logs/PredictionSuddenDeath44Tests.*;5 tracked próprios do runner restaurados.
 Matriz manual por33 IDs criada e ligada ao checkpoint/skill; nenhum cenário
 manual executado. Sem alteração de scene/prefab. Próximo: commit/enviar44 e CI.
+
+
+44 enviado:9c6372abb / CI40417871378 em andamento.43 é último deploy confirmado.
+Nenhuma alteração runtime45 iniciada. Consolidação de notas/skill e matriz manual
+incluída em44; checklist permanece12 implementados/testados,13 parciais,8 pendentes.
+
+Auditoria C06 barco para próxima implementação (NÃO implementado):
+- BoatRideZone permite caminhar livremente e usa SetPassTaggedObstacles(Water),
+  HidePlayer/HeadOnly e Physics2D.IgnoreCollision na autoridade. Não usar scope
+  de voo travado nem conceder invulnerabilidade/embarque no client.
+- NetworkMovementState ainda não contém canPassTaggedObstacles/passObstacleTag;
+  quatro queries do MovementController leem flags atuais. Primeiro transportar
+  contexto aprovado e usá-lo no motor/replay, sem mutar a permissão nativa client.
+  Só BoatRideZone chama o setter atualmente; Water existe no TagManager.
+- Bloqueio visual_suppressed impede predição de barco. Manter até ter presenter
+  owner de barco/cabeça e descriptor aprovado; liberar agora causaria divergência.
+- Original BoatRideZone/zonas são desabilitados no co-op; não reativar scripts,
+  colliders, IgnoreCollision ou coroutines nativos para obter o visual.
+- Projection precisa seguir raiz prevista, preservar quatro direções e offsets,
+  material/sorting/escala, pele da cabeça, pausa e cleanup/rebind. NPA tem caminho
+  próprio para owner e FX LateUpdate100; evitar disputar visibilidade/frame.
+- Stream co-op usa IDs de SpriteRenderer DO SERVIDOR. Não recomputar GetEntityId
+  no client para esconder duplicatas. Descriptor deve identificar os renderers
+  aprovados para suprimir só o barco projetado do owner; observers mantêm stream.
+- ASR oferece PlaybackState/PresentPlayback e campos visuais públicos; proxy pode
+  conter só SpriteRenderer/ASR com dados visuais, jamais BoatRideZone/NI/collider.
+- Pausa deve congelar pose em world space apesar de reconciliações; desfazer
+  projeção precisa restaurar baseline sem esconder/ressuscitar pose de outra ação.
+- BoatUnmountZone faz TryUnmount ANTES do SnapToWorldPoint final. Um reconcile
+  forçado tem de ocorrer depois da posição final, não no meio do desembarque.
+- Também auditar gates de TryMount/TryUnmount/CanMount e zonas ANTES do snap,
+  reentrada, troca de mount, morte/despawn e supressão de inatividade.
+Manual/curvas/contexto de barco permanecem C06 parcial; não há ganho medido novo.
+
+
+Fechamento desta retomada: CI40417871378 COMPLETO/sucesso. Protocolo44/9c6372abb
+publicado no servidor e updater, artefatos enviados.42 e43 também tiveram CI
+concluída com sucesso. Conferidos33 IDs únicos:12 implementados/testados,
+13 parciais,8 pendentes; consolidação/documentação é item separado. Sem nova
+captura real de peers ou teste manual. O plano completo segue em andamento.
+Próxima retomada: ler Estado atual/Checklist, notas44 e auditoria C06 acima;
+não presumir barco previsto nem C10/R07 completos. Nenhum teste/processo de
+validação próprio permanece em execução. Só fontes/TitleScreen do usuário
+ficam como alterações runtime locais após salvar este checkpoint.

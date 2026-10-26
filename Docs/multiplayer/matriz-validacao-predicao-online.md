@@ -26,6 +26,24 @@ Registrar cada execução com ID, builds, cenário, papéis, entrada, resultado,
 arquivos de evidência e falha observada. Uma evidência que falta continua pendente.
 Testes EditMode e compilação não substituem esta matriz.
 
+O pacote Windows inclui `Start-Online-Diagnostics.cmd`; o runtime também aceita
+`-gameplay-latency-logs` ou `-online-motion-logs`. JSONL fica em
+`Application.persistentDataPath/Diagnostics/Movement`. A captura para após10 minutos
+ou8MiB e tem orçamento de180 eventos/segundo; conferir `capture_limit`/`dropped`
+antes de interpretar uma ausência como falha de gameplay. Para um teste novo,
+iniciar uma captura nova com o mecanismo existente de ativação/reinício do jogo.
+
+O comparador existente aceita mais de um arquivo online, inclusive o servidor;
+mantém separados build, protocolo, papel, player e captura:
+
+```powershell
+python Tools/Diagnostics/analyze_prediction.py --online client.jsonl server.jsonl --offline offline.jsonl --output comparacao.json
+```
+
+Os nomes acima são exemplos. O resumo conta os eventos novos de SuddenDeath;
+ele não calcula automaticamente latência dessa habilidade nem substitui a
+correlação de células/hash e durações descrita abaixo.
+
 ## Cenários por ID
 
 Todos os critérios abaixo aguardam comparação manual. IDs parcialmente
