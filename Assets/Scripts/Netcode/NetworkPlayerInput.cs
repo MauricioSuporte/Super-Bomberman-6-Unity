@@ -138,6 +138,7 @@ namespace Assets.Scripts.Netcode
                         fx?.TryPredictTankShot(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictBlackDash(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictMoleStartup(sampledHeld, unchecked(localTick + 1));
+                        fx?.TryPredictLinePlacement(unchecked(localTick + 1), sampledHeld, true);
                     }
                 }
             }
@@ -296,6 +297,7 @@ namespace Assets.Scripts.Netcode
             var kickFx = GetComponent<NetworkBombFx>();
             kickFx?.ReconcilePredictedKicks(acknowledgedTick);
             kickFx?.ReconcilePlacement(acknowledgedTick, placement);
+            kickFx?.ReconcilePurpleLineCast(acknowledgedTick, state);
             kickFx?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
             kickFx?.RestorePlayerBouncePosition();

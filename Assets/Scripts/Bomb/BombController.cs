@@ -1080,18 +1080,19 @@ public partial class BombController : MonoBehaviour
     }
 
     private GameObject ResolvePlacementPrefab(out bool canUsePowerNow, out bool controlEnabled,
-        out bool pierceEnabled, out bool rubberEnabled, out bool shouldMakeBombMagnetic, out bool shouldMakeBombSearch)
+        out bool pierceEnabled, out bool rubberEnabled, out bool shouldMakeBombMagnetic, out bool shouldMakeBombSearch,
+        bool assumeActiveBomb = false)
     {
-        canUsePowerNow = CanUsePowerBombNow();
+        canUsePowerNow = !assumeActiveBomb && CanUsePowerBombNow();
 
         controlEnabled = !canUsePowerNow && IsControlEnabled();
         pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
         rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
         shouldMakeBombMagnetic = IsMagnetBombEnabled() &&
-            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
+            (specialBombsOnEveryPlacement || (!assumeActiveBomb && !HasAnyAliveBombOwnedByMe()));
         shouldMakeBombSearch = GetCachedComponent(ref cachedAbilitySystem) != null &&
             cachedAbilitySystem.IsEnabled(SearchBombAbility.AbilityId) &&
-            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
+            (specialBombsOnEveryPlacement || (!assumeActiveBomb && !HasAnyAliveBombOwnedByMe()));
 
         return
             (shouldMakeBombSearch ? (searchBombPrefab != null ? searchBombPrefab :
@@ -1106,6 +1107,10 @@ public partial class BombController : MonoBehaviour
     }
 
     public GameObject GetNetworkPlacementPrefab() => ResolvePlacementPrefab(out _, out _, out _, out _, out _, out _);
+    // Subsequent members of a line/pending group already have an active owner
+    // bomb. Resolve its appearance without spawning or touching real inventory.
+    public GameObject GetNetworkPlacementContinuationPrefab() =>
+        ResolvePlacementPrefab(out _, out _, out _, out _, out _, out _, assumeActiveBomb: true);
 
     public bool NetworkPlacementAllowed => bombsRemaining > 0 && !IsSkullBombPlacementBlocked() && !IsRidingTransitionActive() &&
         !GamePauseController.IsPaused && !ClownMaskBoss.BossIntroRunning &&
@@ -1115,8 +1120,13 @@ public partial class BombController : MonoBehaviour
     // Read-only geometry for a visual proxy. No fuse, stock or world mutation.
     public bool TryGetNetworkPlacementPosition(out Vector2 position)
     {
+        return TryPreviewNetworkPlacementAt(transform.position, out position);
+    }
+
+    public bool TryPreviewNetworkPlacementAt(Vector2 worldPosition, out Vector2 position)
+    {
         ResolveTilemaps();
-        position = SnapToTileCenter(GetSnapTilemapForGround(), transform.position, out _, out _);
+        position = SnapToTileCenter(GetSnapTilemapForGround(), worldPosition, out _, out _);
         return CanPlaceBombAt(position) && !TileHasBomb(position) && !HasDestructibleAt(position) && !HasActiveExplosionAt(position);
     }
 

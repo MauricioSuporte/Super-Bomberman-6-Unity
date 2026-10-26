@@ -10,6 +10,189 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
+    [TestCase(4)]
+    public void LineInputPreviewUsesApprovedGeometryAndNeverEditsWorldOrInventory(int obstruction)
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("LineGeometryOwner"); actor.SetActive(false);
+        var grid = new GameObject("LineGeometryGrid", typeof(Grid)); grid.transform.position = new Vector3(26000 - 0.5f, 26000 - 0.5f);
+        var blocker = new GameObject("LineGeometryBlocker");
+        var tile = ScriptableObject.CreateInstance<Tile>(); tile.colliderType = Tile.ColliderType.None;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); const uint prefabId = 19900001;
+        bool hadPrefab = NetworkClient.prefabs.TryGetValue(prefabId, out var oldPrefab); NetworkBombFx fx = null;
+        Tilemap Map(string name) { var go = new GameObject(name, typeof(Tilemap)); go.transform.SetParent(grid.transform, false); return go.GetComponent<Tilemap>(); }
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var controller = actor.GetComponent<BombController>(); var ground = Map("Ground"); var walls = Map("Indestructibles");
+            var water = Map("Water"); var holes = Map("Hole"); var destructible = Map("Destructibles");
+            controller.groundTiles = ground; controller.stageBoundsTiles = walls; controller.destructibleTiles = destructible;
+            typeof(BombController).GetField("waterTiles", flags).SetValue(controller, water); typeof(BombController).GetField("holeTiles", flags).SetValue(controller, holes);
+            for (int x = 0; x < 8; x++) ground.SetTile(new Vector3Int(x, 0), tile);
+            if (obstruction == 0) water.SetTile(new Vector3Int(3, 0), tile);
+            else if (obstruction == 1) holes.SetTile(new Vector3Int(3, 0), tile);
+            else if (obstruction == 2) walls.SetTile(new Vector3Int(3, 0), tile);
+            else { blocker.layer = LayerMask.NameToLayer(obstruction == 3 ? "Enemy" : "Explosion"); blocker.transform.position = new Vector3(26003, 26000); blocker.AddComponent<BoxCollider2D>(); }
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bombs/Bomb.prefab"); NetworkClient.prefabs[prefabId] = prefab;
+            actor.SetActive(true); movement.SetNetworkTickDriven(true); Vector2 origin = new(26000, 26000);
+            movement.RestoreNetworkMovementState(new MovementController.NetworkMovementState { position = origin, facing = Vector2.right,
+                worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true }); movement.SetPredictLocally(true); Physics2D.SyncTransforms();
+            var state = new NetworkBombFx.PlacementState { available = 5, allowed = true, lineAllowed = true, prefabAssetId = prefabId, continuationPrefabAssetId = prefabId };
+            fx.ReconcilePlacement(0, state); int bombs = Bomb.ActiveBombs.Count, stock = controller.BombsRemaining;
+            Assert.IsTrue(fx.BeginPlacementPrediction(1, origin, prefab));
+            Assert.IsTrue(fx.TryPredictPlacement(2), "A second A edge can preview a line from its pending first bomb.");
+            Assert.AreEqual(3, fx.PlacementReservationCount, "Seed plus two valid cells; the obstruction ends the preview.");
+            Assert.IsTrue(fx.HasPredictedPlacementAt(origin + Vector2.right, 1, 2));
+            Assert.IsTrue(fx.HasPredictedPlacementAt(origin + Vector2.right * 2, 1, 2));
+            Assert.IsFalse(fx.HasPredictedPlacementAt(origin + Vector2.right * 3, 1, 2));
+            Assert.AreEqual(bombs, Bomb.ActiveBombs.Count); Assert.AreEqual(stock, controller.BombsRemaining);
+            Assert.IsTrue(ground.HasTile(new Vector3Int(3, 0))); Assert.AreEqual(origin, body.position);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearPlacementPredictions", flags).Invoke(fx, null);
+            if (hadPrefab) NetworkClient.prefabs[prefabId] = oldPrefab; else NetworkClient.prefabs.Remove(prefabId);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(grid); Object.DestroyImmediate(blocker); Object.DestroyImmediate(tile);
+        }
+    }
+
+    [Test]
+    public void LinePlacementGroupsReserveTogetherAndConfirmEachCellIndependently()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("LinePlacementGroups"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bombs/Bomb.prefab");
+            var state = new NetworkBombFx.PlacementState { available = 3, allowed = true, prefabAssetId = 1,
+                continuationPrefabAssetId = 2, lineAllowed = true, purpleAllowed = true, purpleDuration = 0.25f };
+            fx.ReconcilePlacement(0, state); Vector2 origin = new(24000, 24000); int bombs = Bomb.ActiveBombs.Count;
+            Assert.IsTrue(fx.BeginPlacementPrediction(1, origin, prefab, 1, false));
+            Assert.IsTrue(fx.BeginPlacementPrediction(1, origin + Vector2.right, prefab, 1, false));
+            Assert.IsTrue(fx.BeginPlacementPrediction(2, origin + Vector2.right * 2, prefab, 2, false));
+            Assert.AreEqual(3, fx.PlacementReservationCount);
+            Assert.IsFalse(fx.BeginPlacementPrediction(3, origin + Vector2.right * 3, prefab), "All action groups share the approved inventory.");
+            var proxies = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("placements", flags).GetValue(fx);
+            var second = proxies[(1u, (byte)1, origin + Vector2.right)];
+            fx.ReceivePlacementConfirmed(1, 777, origin + Vector2.right, 2);
+            Assert.IsFalse((bool)second.GetType().GetField("confirmed").GetValue(second), "Another action cannot take the same tick's proxy.");
+            fx.ReceivePlacementConfirmed(1, 777, origin + Vector2.right, 1);
+            Assert.IsTrue((bool)second.GetType().GetField("confirmed").GetValue(second));
+            Assert.IsFalse((bool)proxies[(1u, (byte)1, origin)].GetType().GetField("confirmed").GetValue(proxies[(1u, (byte)1, origin)]));
+            Assert.AreEqual(3, fx.PlacementReservationCount, "Confirmed cells reserve old snapshot inventory until acknowledgement.");
+            fx.ReconcilePlacement(1, state); Assert.AreEqual(1, fx.PlacementReservationCount);
+            Assert.IsTrue(fx.HasPredictedPlacementAt(origin + Vector2.right * 2, 1, 2));
+            fx.ReconcilePlacement(2, state); Assert.AreEqual(0, fx.PlacementReservationCount);
+            Assert.AreEqual(bombs, Bomb.ActiveBombs.Count);
+            using var writer = NetworkWriterPool.Get(); writer.Write(state);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var copy = reader.Read<NetworkBombFx.PlacementState>();
+            Assert.AreEqual(state.continuationPrefabAssetId, copy.continuationPrefabAssetId); Assert.IsTrue(copy.purpleAllowed);
+            Assert.IsTrue(copy.lineAllowed); Assert.AreEqual(state.purpleDuration, copy.purpleDuration);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearPlacementPredictions", flags).Invoke(fx, null);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void PurpleLinePoseWithNoStockConfirmsWithoutRestartAndRestoresOnRejection()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("PurpleLineOwner"); actor.SetActive(false);
+        var mount = new GameObject("PurpleLineMount"); mount.transform.SetParent(actor.transform, false);
+        var phase = new GameObject("PurpleLineMagic"); phase.transform.SetParent(mount.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        var paused = typeof(GamePauseController).GetProperty(nameof(GamePauseController.IsPaused)); bool wasPaused = GamePauseController.IsPaused;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Purple);
+            var animator = mount.AddComponent<PurpleLouieBombLineAnimator>(); animator.magicDown = phase.AddComponent<AnimatedSpriteRenderer>();
+            actor.SetActive(true); movement.SetNetworkTickDriven(true);
+            var state = new MovementController.NetworkMovementState { position = new Vector2(25000, 25000), mount = MountedType.Purple,
+                facing = Vector2.down, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            fx.ReconcilePlacement(0, new NetworkBombFx.PlacementState { purpleAllowed = true, purpleDuration = 0.25f });
+            int bombs = Bomb.ActiveBombs.Count;
+            Assert.IsTrue(fx.TryPredictLinePlacement(10, 0, true)); Assert.IsTrue(fx.PurpleLinePoseActive);
+            Assert.IsTrue(fx.AbilityPredictionLocksMovement); Assert.AreEqual(0, fx.PlacementReservationCount);
+            Assert.IsTrue(animator.magicDown.enabled); Assert.IsFalse(movement.InputLocked);
+            animator.ForceStop(); animator.magicDown.enabled = false; fx.ReapplyMountAbilityPose(); Assert.IsTrue(animator.magicDown.enabled);
+            var update = typeof(NetworkBombFx).GetMethod("UpdatePurpleLineCast", flags);
+            var elapsed = typeof(NetworkBombFx).GetField("purpleLineElapsed", flags);
+            update.Invoke(fx, new object[] { 0.1f, 0.1f }); float before = (float)elapsed.GetValue(fx);
+            paused.SetValue(null, true); update.Invoke(fx, new object[] { 1f, 1f }); Assert.AreEqual(before, elapsed.GetValue(fx)); paused.SetValue(null, false);
+            fx.ReceivePurpleLineCast(10, Vector2.down, 0.25f, NetworkTime.time); Assert.AreEqual(before, elapsed.GetValue(fx));
+            state.canPredict = false; fx.ReconcilePurpleLineCast(10, state); Assert.IsTrue(fx.PurpleLinePoseActive);
+            update.Invoke(fx, new object[] { 0.2f, 0.2f }); Assert.IsFalse(fx.PurpleLinePoseActive);
+            fx.ReceivePurpleLineCast(10, Vector2.down, 0.25f, NetworkTime.time); Assert.IsFalse(fx.PurpleLinePoseActive);
+            state.canPredict = true; movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(fx.TryPredictLinePlacement(11, 0, true)); fx.ReconcilePurpleLineCast(11, state); Assert.IsFalse(fx.PurpleLinePoseActive);
+            Assert.IsTrue(fx.TryPredictLinePlacement(12, 0, true)); update.Invoke(fx, new object[] { 2f, 2f }); Assert.IsFalse(fx.PurpleLinePoseActive);
+            Assert.IsTrue(fx.TryPredictLinePlacement(13, 0, true)); movement.isDead = true;
+            update.Invoke(fx, new object[] { 0.01f, 0.01f }); Assert.IsFalse(fx.PurpleLinePoseActive);
+            Assert.AreEqual(bombs, Bomb.ActiveBombs.Count); Assert.AreEqual(state.position, body.position);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearPurpleLineCast", flags).Invoke(fx, new object[] { "test_cleanup" });
+            paused.SetValue(null, wasPaused); NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void LinePlacementContinuationPreviewRespectsFirstOnlyVariantsWithoutSpawning()
+    {
+        var actor = new GameObject("LineVariantPreview"); actor.SetActive(false);
+        var normal = new GameObject("NormalPreviewDefinition"); var special = new GameObject("SpecialPreviewDefinition");
+        var oldRandom = Random.state;
+        try
+        {
+            actor.AddComponent<BoxCollider2D>();
+            var controller = actor.AddComponent<BombController>(); var abilities = actor.GetComponent<AbilitySystem>() ?? actor.AddComponent<AbilitySystem>();
+            controller.bombPrefab = normal; controller.searchBombPrefab = special; controller.powerBombPrefab = special;
+            abilities.Enable(SearchBombAbility.AbilityId);
+            int count = Bomb.ActiveBombs.Count, stock = controller.BombsRemaining;
+            Random.InitState(202); float expected = Random.value; Random.InitState(202);
+            Assert.AreSame(special, controller.GetNetworkPlacementPrefab());
+            Assert.AreSame(normal, controller.GetNetworkPlacementContinuationPrefab());
+            typeof(BombController).GetField("specialBombsOnEveryPlacement", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(controller, true);
+            Assert.AreSame(special, controller.GetNetworkPlacementContinuationPrefab());
+            abilities.Enable(PowerBombAbility.AbilityId);
+            Assert.AreSame(special, controller.GetNetworkPlacementPrefab());
+            Assert.AreSame(normal, controller.GetNetworkPlacementContinuationPrefab(), "Power Bomb remains first-only even when Search/Magnet every-placement is configured.");
+            Assert.AreEqual(expected, Random.value); Assert.AreEqual(count, Bomb.ActiveBombs.Count); Assert.AreEqual(stock, controller.BombsRemaining);
+        }
+        finally { Random.state = oldRandom; Object.DestroyImmediate(actor); Object.DestroyImmediate(normal); Object.DestroyImmediate(special); }
+    }
+
     [Test]
     public void MoleStartupPredictsOnlyPoseConfirmsWithoutRestartAndRestoresOnEveryExit()
     {
@@ -1151,7 +1334,7 @@ public sealed class OnlineRoomEditModeTests
             Vector2 origin = new(7000, 7000); int bombsBefore = Bomb.ActiveBombs.Count;
             Assert.IsTrue(fx.BeginPlacementPrediction(1, origin, prefab));
             var proxies = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("placements", flags).GetValue(fx);
-            var proxy = (GameObject)proxies[1u].GetType().GetField("visual").GetValue(proxies[1u]);
+            var proxy = (GameObject)proxies[(1u, (byte)0, origin)].GetType().GetField("visual").GetValue(proxies[(1u, (byte)0, origin)]);
             Assert.IsNotNull(proxy.GetComponent<SpriteRenderer>());
             Assert.IsNull(proxy.GetComponent<Bomb>()); Assert.IsNull(proxy.GetComponent<Collider2D>());
             Assert.IsNull(proxy.GetComponent<Rigidbody2D>()); Assert.IsNull(proxy.GetComponent<NetworkIdentity>());
@@ -1914,6 +2097,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 32, false)]
     [TestCase("0.5.0", 31, false)]
     [TestCase("0.5.0", 30, false)]
     [TestCase("0.5.0", 29, false)]

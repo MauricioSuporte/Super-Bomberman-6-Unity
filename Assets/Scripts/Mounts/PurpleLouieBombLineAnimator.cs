@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -39,6 +39,13 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
 
     public IEnumerator Play(Vector2 dir, float lockSeconds)
     {
+        BeginCast(dir);
+        yield return new WaitForSeconds(lockSeconds);
+        ForceStop();
+    }
+
+    void BeginCast(Vector2 dir)
+    {
         if (playing)
             ForceStop();
 
@@ -71,10 +78,17 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         }
 
         playing = true;
+    }
 
-        yield return new WaitForSeconds(lockSeconds);
-
-        ForceStop();
+    public void PresentNetworkCast(Vector2 direction, float progress)
+    {
+        if (!playing) BeginCast(direction);
+        if (activeMagic == null) return;
+        activeMagic.SetManualAnimationUpdate(true); activeMagic.enabled = true;
+        if (activeMagic.TryGetComponent<SpriteRenderer>(out var sprite)) sprite.enabled = true;
+        int count = activeMagic.animationSprite != null ? activeMagic.animationSprite.Length : 0;
+        activeMagic.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * count), 0, Mathf.Max(0, count - 1));
+        activeMagic.RefreshFrame();
     }
 
     public void ForceStop()

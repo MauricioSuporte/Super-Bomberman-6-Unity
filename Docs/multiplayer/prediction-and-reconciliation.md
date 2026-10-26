@@ -601,3 +601,30 @@ Validation: 172/172 full online Unity EditMode tests passed, along with
 projected cooldown expiry without a new ready packet, lost eligibility,
 snapshot capture, confirmation/rejection and the existing projectile presenter.
 Two-peer cooldown-boundary and pause/resume gameplay checks remain pending.
+
+## LineBomb and Purple grouped placement (protocol 33)
+
+Predicted placement now uses the real input tick, action kind (plant/A-line/C-
+Purple) and cell position. Every proxy shares approved inventory reservations,
+including confirmed cells awaiting a snapshot. Server spawns confirm each cell
+independently; acknowledgement rejects unmatched cells. Ghosts contain only
+presentation components and never join Bomb.ActiveBombs, start fuses or mutate
+real stock. Known geometry queries stop at water, holes, walls, enemies and
+active explosions. The source line origin/seed rules are shared with authority.
+
+Server snapshots include the next placement prefab and continuation prefab.
+The latter resolves an already-active owner bomb without spawning one: Power
+remains first-only, while Search/Magnet respect their every-placement setting.
+The same continuation also applies to pending ordinary placements.
+
+Purple predicts its manual cast pose even with zero bombs, matching offline.
+Confirmation preserves phase; rejection, completion, mount loss, death, timeout
+and disable restore the pose. Pause freezes it; mount rebind reapplies progress.
+Its gameplay Update/coroutine does not run on clients. The server selects every
+real placement and the C tick is never confused with the player's A tick. Audio
+plays once per group and avoids both owner echo and the generic co-op broadcast.
+
+Validation: 176/176 full online Unity EditMode tests passed. Five additional
+geometry-entry tests then passed with no runtime changes between runs. C#
+compiled without warnings/errors, Python40 and strict UTF-8 checks passed.
+Manual two-peer checks remain pending; no measured latency gain is claimed.

@@ -143,6 +143,16 @@ credit snapshot age twice on confirmation. Zero cooldown must never grant lost
 eligibility, ownership or resources, and the server still validates every shot.
 Test expiry, aged snapshots, disable/mount changes, rejection and pause/resume.
 
+For multi-object commands, correlate proxies by the original input tick, action
+and cell; do not manufacture ticks per object or use A's tick for a C ability.
+Share stock reservations across ordinary and grouped placement until the
+authoritative snapshot acknowledges them. Confirm each spawn separately so
+partial rejection removes only unmatched presentation. Use shared read-only
+geometry and resolve first-only variants for subsequent reservations without
+spawning a temporary gameplay object. A cast may still have an offline gesture
+when zero objects fit; confirm that gesture independently of spawn count. Audio
+is once per command group and must not echo through co-op broadcast.
+
 ## Diagnose what is actually delayed
 
 Compare matching build/protocol captures and similar action sequences. Separate

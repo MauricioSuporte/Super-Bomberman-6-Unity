@@ -34,8 +34,8 @@ namespace Assets.Scripts.Netcode
         public bool HasUnconfirmedClientMotion(Bomb target) => target != null &&
             kickPlayback.TryGetValue(target, out var state) && state.unconfirmed;
 
-        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
-        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
+        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
+        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
             (abilityPoseKind == BombMotionKind.Yellow || abilityPoseKind == BombMotionKind.Punch)));
         public static bool NonBlockingMotion(BombMotionKind kind) => kind == BombMotionKind.Punch ||
             kind == BombMotionKind.Throw || kind == BombMotionKind.Lift || kind == BombMotionKind.Carry;
@@ -166,6 +166,7 @@ namespace Assets.Scripts.Netcode
         public void ReapplyMountAbilityPose()
         {
             if (!HasLocalMountAbilityPose) return;
+            if (PurpleLinePoseActive) { PresentPurpleLineCast(); return; }
             if (MoleStartupActive) { PresentMoleStartup(); return; }
             if (GreenDashActive) { PresentGreenDash(0); return; }
             if (BlackDashOwnsPose) { PresentBlackDash(true); return; }

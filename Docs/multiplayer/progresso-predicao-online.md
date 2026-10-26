@@ -24,13 +24,19 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - A07 salvo/enviado em `cb971ee11`, protocolo31, CI40283518599 sucesso.
   Unity completo171/171, C#0warnings/erros e Python40 passaram nesse lote.
   Relatorios principais Logs/PredictionMoleTests.xml/.log.
-- A14 Tank salvo/enviado em `874b38956`, protocolo32, CI40285499924 em andamento.
+- A14 Tank salvo/enviado em `874b38956`, protocolo32, CI40285499924 sucesso (server e updater).
 - A14 parcial em32 validado: Tank eligibility separada de cooldown com projecao
   pelo timestamp da autoridade. Suite Unity172/172, Python40 e C# zero warnings/
   erros passaram. Relatorios Logs/PredictionTankCooldownTests.xml/.log.
-  Publicacao32 pendente de CI; nao marcar A14 completo (faltam outras regressoes).
-- Runner agora ocupado pela CI32; fontes testadas e tracked restaurados.
-  Nao copiar fontes nem abrir outro Unity nesse runner enquanto CI estiver ativa.
+  Publicacao32 concluida; nao marcar A14 completo (faltam outras regressoes).
+- Runner livre apos CI32; base A09 copiada para teste direcionado.
+- A09 LineBomb/Purple implementado e validado no protocolo33, a salvar/publicar.
+  Suite completa176/176 e depois geometria5/5 (apenas novos testes adicionados).
+  C# zero warnings/erros, Python40 e UTF-8/BOM passaram.
+  Relatorios Logs/PredictionLineTests.xml/.log e PredictionLineGeometry.xml/.log.
+  Grupo por tick/acao/celula, estoque compartilhado, confirmacao/rejeicao parcial,
+  variantes, som deduplicado e pose Purple reversivel (inclusive estoque0).
+- Runner livre apos testes33; restaurar tracked de validacao antes de nova CI.
 - Nenhuma validacao manual com dois peers nem novas capturas comparaveis feitas.
   Nao declarar zero latencia nem o plano inteiro concluido.
 - Proximo: confirmar CI40285499924 e implementar A09/LineBomb/Purple pela
@@ -165,7 +171,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A06: Red Louie pose e áudio confirmado; stun autoritativo; manual pendente.
 - [x] A07: preparacao/pose Mole prevista; RNG/teleporte/protecao autoritativos; 171 testes, manual pendente.
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
-- [ ] A09: LineBomb/Purple cast e confirmação parcial.
+- [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [ ] A10: ControlBomb feedback.
 - [ ] A11: montar/desmontar, posse e fila de ovos.
 - [ ] A12: Revenge input e apresentação.
@@ -289,3 +295,66 @@ seguir A09 pela arquitetura registrada. Manual dois peers ainda pendente.
 Checkpoint apos envio32: commit874b38956, pipeline40285499924 em andamento.
 Ultima publicacao integral confirmada: cb971ee11 / protocolo31 / CI40283518599.
 Nenhum arquivo de usuario foi editado. Nao declarar32 publicado antes do CI.
+
+A09 fundacao iniciada (nao validada Unity/nao publicada): BombController agora
+expoe TryPreviewNetworkPlacementAt para geometria readonly compartilhada e
+GetNetworkPlacementContinuationPrefab para resolver variante apos reserva de
+outra bomba sem spawn/estoque. Resolver existente ganhou assumeActiveBomb=false
+opcional preservando chamadas server/offline. Search/Magnet respeitam flag
+every-placement; Power permanece first-only. Teste novo de variantes/RNG/estoque
+foi adicionado mas NAO rodou. Aguardar CI32 antes de usar runner. Ainda falta
+o grupo (tick,acao,celula), confirmacao parcial e pose Purple; nao marcar A09.
+
+A09 continuacao em33 (NAO completa): NetworkBombPlacement dictionary agora usa
+(tick, byte action, Vector2 cell), onde0=plantio simples,1=linha A,2=Purple C.
+BeginPlacementPrediction aceita action/playSound opcionais; reserva continua
+compartilhada; Single impede duas celulas no mesmo tick. Confirmacao RPC agora
+leva action e procura tile correspondente para grupo, mantendo Single com
+correcao de posicao. ServerConfirmPlacement escolhe tickC para action2.
+Ack/timeout/footprint atualizados para key.tick. Teste antigo lookup de proxy
+atualizado para tuple. Protocolos33 alinhados; testcase protocolo32 rejeitado.
+C# em exec71141, conferir resultado. NAO houve Unity dessa refatoracao.
+Runner ainda executa teste de fundacao32 com helper/teste de variantes SOMENTE
+(exec36760, PredictionLineFoundation.xml/.log). Nao copiar33 enquanto Unity roda.
+Ainda falta implementar campos PlacementState: continuationPrefabAssetId,
+lineAllowed/purpleAllowed/purpleDuration, capturados do servidor. Novo partial
+NetworkBombLinePlacement deve usar helpers readonly, estoque-reservas, blockers
+Stage/Enemy e mesma origem/cardinal de LineBombAbility; compartilhar origem via
+metodo puro para evitar desvio. action1 pede seed existente (ou proxy anterior),
+action2 inicia pose mesmo se estoque0, sem coroutine. Limite de grupo conservador.
+Confirmar cada tile depois de TryPlaceBombAtIgnoringInputLock no server, sem usar
+tickA para C. RPC confirma cast Purple mesmo se0bombas, com duracao/direcao/tempo.
+Som apenas1 por grupo, com helper direto+RPC e dedup; nao duplicar broadcast coop.
+Purple animator precisa Begin/Pose manual + ForceStop, sem coroutine client;
+rebind deve reaplicar progresso. Update real de Purple gated em client puro.
+Integrar C edge, AbilityPredictionLocksMovement/HasLocalMountAbilityPose, cleanup
+e ack/reject no existing FX/NPI. Nao marcar A09 completo antes de Unity e testes
+de grupo parcial, estoque, variantes, stale/morte/pausa/rebind e A02 regressao.
+
+A09 progresso adicional em33: PlacementState agora carrega next-prefab,
+lineAllowed/purpleAllowed/duracao do cast. NetworkBombLinePlacement novo
+(.meta criado) faz preview readonly da linha com reservas comuns e limite64,
+mesma origem/seed compartilhadas em LineBombAbility. Server PlaceLine confirma
+cada tile com action1/2. Som1/grupo via RPC deduplicado (sem broadcast co-op).
+Purple tem pose manual, C edge, RPC confirmacao preservando fase, ack/reject,
+pausa/morte/timeout/mountloss/cleanup e NMArebind via ReapplyMountAbilityPose;
+Update original client gated. AnimatorPlay extraiu BeginCast compartilhado.
+C# exec44108 a conferir. Nenhum Unity desse lote completo33 executado ainda.
+Teste de fundacao2 passou (exec21021), mas seu XML deve ser conferido/preservado.
+Ele cobria apenas helpers+refatoracao inicial, nao pose/linha completa.
+Falta testar grupo parcial/estoque/variantes/wire e Purplepose0bombas/rebind,
+confirm/reject/stale/pause/morte. Revisar canto de linha, tiles/water/hole e
+rollback; depois copiar33 para runner livre e rodar testes e suite completa.
+
+A09 lote final em33 validado: suite176/176 passou. Depois foram adicionados
+somente5 testes de entrada A real/seed previsto com agua/hole/wall/enemy/explosion;
+todos5 passaram. Nao declarar suite181/181 completa: esse total nao foi rodado
+junto. C# zero warnings/erros e Python40 passaram. Sem validacao manual2peers.
+Salvar/publicar33 e seguir A10/A11/A12, C02-C10, R01-R08, A14/P0 parciais.
+R02 geometria concluida, mas custo/curvas por familia ainda pendentes.
+
+A14 ponto a investigar (nao corrigido/reproduzido): NetworkPlayerInput agrega
+actionEdges com OR e sobrescreve CurrentActionATick/CTick a cada edge no lote
+antes de entregar uma unica Update de gameplay. Multiplas bordas iguais em
+inputs agrupados podem casar a primeira previsao com o ultimo tick; investigar
+sem reintroduzir dupla execucao de A/Glove. Nao presumir defeito medido.

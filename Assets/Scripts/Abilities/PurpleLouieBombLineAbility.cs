@@ -38,6 +38,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
         if (!enabledAbility)
             return;
 
@@ -99,6 +100,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
         dir = ToCardinal(dir);
 
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerPurpleLineCast(dir, lockSeconds);
         bool isControlLine = bomb != null && IsControlEnabled();
 
         bool placedAny = DropBombsInFrontLine(dir);
@@ -151,7 +154,11 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             return;
 
         if (bomb.playerAudioSource != null && bomb.placeBombSfx != null)
-            GameAudioSettings.PlaySfx(bomb.playerAudioSource, bomb.placeBombSfx);
+        {
+            if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+                fx.ServerLinePlacementSound(2);
+            else GameAudioSettings.PlaySfx(bomb.playerAudioSource, bomb.placeBombSfx);
+        }
     }
 
     bool DropBombsInFrontLine(Vector2 dir)
@@ -160,7 +167,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             movement,
             bomb,
             dir,
-            trackOwnerBombTraversal: false) > 0;
+            trackOwnerBombTraversal: false, networkAction: 2) > 0;
     }
 
     public void Enable() => enabledAbility = true;

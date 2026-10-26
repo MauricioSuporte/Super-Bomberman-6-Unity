@@ -30,10 +30,19 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
             movement.IsRidingPlaying() || GamePauseController.IsPaused)
             return false;
 
-        Vector2 origin = movement.Rigidbody != null
-            ? movement.Rigidbody.position : (Vector2)transform.position;
+        return HasLineSeed(movement, GetLineOrigin(movement));
+    }
+
+    public static Vector2 GetLineOrigin(MovementController movement)
+    {
+        Vector2 origin = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)movement.transform.position;
         origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
         origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
+        return origin;
+    }
+
+    public static bool HasLineSeed(MovementController movement, Vector2 origin)
+    {
         var hit = Physics2D.OverlapBox(origin, Vector2.one * (movement.tileSize * 0.6f),
             0f, LayerMask.GetMask("Bomb"));
         return hit != null && hit.TryGetComponent<Bomb>(out _) &&
@@ -56,7 +65,11 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
         int placed = PlaceLine(movement, bomb, dir, trackOwnerBombTraversal: false);
         if (placed > 0) SuccessfulCastVersion++;
         if (placed > 0 && bomb.playerAudioSource != null && bomb.placeBombSfx != null)
-            GameAudioSettings.PlaySfx(bomb.playerAudioSource, bomb.placeBombSfx);
+        {
+            if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+                fx.ServerLinePlacementSound(1);
+            else GameAudioSettings.PlaySfx(bomb.playerAudioSource, bomb.placeBombSfx);
+        }
         return true;
     }
 
@@ -65,14 +78,12 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
         MovementController movement,
         BombController bomb,
         Vector2 dir,
-        bool trackOwnerBombTraversal = true)
+        bool trackOwnerBombTraversal = true,
+        byte networkAction = 1)
     {
         if (movement == null || bomb == null) return 0;
         int count = bomb.BombsRemaining;
-        Vector2 origin = movement.Rigidbody != null
-            ? movement.Rigidbody.position : (Vector2)movement.transform.position;
-        origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
-        origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
+        Vector2 origin = GetLineOrigin(movement);
         Vector2 pos = origin + dir * movement.tileSize;
         int placed = 0;
         int blockers = LayerMask.GetMask("Stage", "Enemy");
@@ -81,13 +92,15 @@ public sealed class LineBombAbility : MonoBehaviour, IPlayerAbility
             if (Physics2D.OverlapBox(pos, Vector2.one * 0.4f, 0f, blockers) != null ||
                 !bomb.TryPlaceBombAtIgnoringInputLock(
                     pos,
-                    out _,
+                    out var spawned,
                     consumeBomb: true,
                     playSfx: false,
                     trackOwnerBombTraversal: trackOwnerBombTraversal))
             {
                 break;
             }
+            if (Assets.Scripts.Netcode.NetSync.IsServer && movement.TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+                fx.ServerConfirmPlacement(spawned, networkAction);
             placed++;
             pos += dir * movement.tileSize;
             if (bomb.BombsRemaining <= 0) break;
