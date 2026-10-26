@@ -18,7 +18,8 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - Branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen do usuário.
 - Último servidor/updater confirmado: `24b471911`, protocolo34,
   CI40328660226 sucesso. A10 e riding/raw-history publicados.
-- Lote35 validado para salvar/publicar: apresentação aprovada dos ovos com
+- Lote35 salvo/enviado em `a70d3cd22`; CI40355636832 em andamento.
+  Apresentação aprovada dos ovos com
   facing/idle, visibilidade, sorting e buffer32 no mesmo tempo do transform.
   Identidade oculta fica ativa para late observer; hitboxes preservam estado.
   Sem fila/posse/coleta ou trajeto especulativo no cliente; offline preservado.
@@ -28,7 +29,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - A11/R07 ainda parciais: seguir auditando transferência/continuidade da fila e
   trajetórias de itens/skull. WorldMount estático/emote foi auditado; não inventar
   extrapolação. R02 e A14 também parciais; nenhum teste manual de dois peers.
-- Próximo: publicar35, verificar CI; continuar A11/R07, A12 e C02-C10/R01-R08.
+- Próximo: verificar CI40355636832; continuar A11/R07, A12 e C02-C10/R01-R08.
   Não declarar zero latência nem conclusão do plano inteiro.
 
 ## Marcos concluídos e commits
@@ -522,3 +523,21 @@ linear+altura visual subida/hold/descida. Não copiar uma curva única para todo
 A12 ainda pendente; BattleRevengeController não tem presenter/spawn de rede próprio
 identificado na auditoria inicial: rastrear elegibilidade e transporte antes de
 prever input em um carrinho local sem contraparte aprovada.
+
+
+## Checkpoint após envio35
+
+Commit `a70d3cd22` enviado; CI40355636832 em andamento no último check, ainda na
+etapa Compile, test and build requested players. Não afirmar servidor35 instalado
+até completed/success. Último deploy confirmado continua34 (24b471911).
+Diretório principal só contém alterações originais do usuário em fontes/TitleScreen;
+nenhuma alteração C# pendente. Runner limpo dos tracked usados na validação antes
+do push, agora ocupado pelo CI35. Não copiar fontes até liberar.
+Relatório final191/191 preservado em Logs/PredictionEggQueueFinalTests.xml/.log.
+Próximos candidatos já investigados: C02 curvas distintas; A12 depende de
+transporte para carrinho e input sobrevivendo à eliminação (MovementController
+OnDeathSequenceEnded + NetworkPlayerState desativam o player/NPI). FallingBomb C10
+BattleMode2FallingBombController sorteia target em coroutine sem gate explícito
+NetSync; antes de prever qualquer telegraph, conferir/gatear origem autoritativa e
+replicar aviso alvo/tempo. Não tratar alvo local aleatório como confirmação.
+Plano permanece em andamento, nenhuma validação manual de dois peers realizada.
