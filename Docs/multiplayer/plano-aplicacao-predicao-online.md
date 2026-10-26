@@ -2,6 +2,10 @@
 
 Data: 25/10/2026. Baseline de código: `2e41c0c47`, protocolo 24, Unity 6000.6.0f1.
 
+**Acompanhamento atualizado:** consulte [Estado atual e checklist de execução](progresso-predicao-online.md).
+Este documento preserva o levantamento e os critérios iniciais; o checkpoint
+registra o que já foi implementado, validado, publicado e o que ainda falta.
+
 Objetivo: aproximar a resposta e a continuidade visual do online à experiência
 offline, usando a skill `super-bomberman-6-online-prediction` onde houver ganho
 real. Este documento é um plano de investigação e implementação futura; não

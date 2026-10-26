@@ -283,6 +283,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
 
     void TickPlayerImpulseTriggers()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         var input = PlayerInputManager.Instance;
         if (input == null || indestructibleTilemap == null)
         {
@@ -375,9 +376,11 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
 
     IEnumerator PlayerPreparingImpulseRoutine(MovementController player, Vector3Int ropeCell, Vector2 impactDirection)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         if (player == null || playersPreparingImpulse.Contains(player) || playersBeingImpulsed.Contains(player))
             yield break;
 
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(player);
         playersPreparingImpulse.Add(player);
         Vector2 launchDirection = -impactDirection;
         float tileSize = Mathf.Max(0.0001f, player.tileSize);

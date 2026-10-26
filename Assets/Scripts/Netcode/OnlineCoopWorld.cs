@@ -84,6 +84,12 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
+            NetworkClient.RegisterHandler<FallingBombTarget>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var controller in FindObjectsByType<BattleMode2FallingBombController>())
+                    controller.ReceiveNetworkTarget(message);
+            });
             NetworkClient.RegisterHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
             NetworkClient.RegisterHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
             NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);

@@ -15,22 +15,41 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-- Branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen do usuário.
-- Último servidor/updater confirmado: `24b471911`, protocolo34,
-  CI40328660226 sucesso. A10 e riding/raw-history publicados.
-- Lote35 salvo/enviado em `a70d3cd22`; CI40355636832 em andamento.
-  Apresentação aprovada dos ovos com
-  facing/idle, visibilidade, sorting e buffer32 no mesmo tempo do transform.
-  Identidade oculta fica ativa para late observer; hitboxes preservam estado.
-  Sem fila/posse/coleta ou trajeto especulativo no cliente; offline preservado.
-- Validação35: Unity191/191 (suíte final com timeline offset), C# zero erros/avisos,
-  Python40/40, UTF-8/BOM e diffcheck passaram. Relatórios no checkout principal:
-  Logs/PredictionEggQueueFinalTests.xml/.log. Lote34 passou188/188 anteriormente.
-- A11/R07 ainda parciais: seguir auditando transferência/continuidade da fila e
-  trajetórias de itens/skull. WorldMount estático/emote foi auditado; não inventar
-  extrapolação. R02 e A14 também parciais; nenhum teste manual de dois peers.
-- Próximo: verificar CI40355636832; continuar A11/R07, A12 e C02-C10/R01-R08.
-  Não declarar zero latência nem conclusão do plano inteiro.
+Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histórico
+abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
+implementação concluída de trabalho parcial. Validação manual fica separada.
+
+- **Publicado e confirmado:** protocolo35, commit `a70d3cd22`, pipeline
+  [40355636832](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40355636832) com sucesso.
+- **Último lote publicado:** apresentação dos ovos, visibilidade, direção/idle,
+  sorting, preservação de hitboxes e identidade oculta para novos observadores.
+  Validado com191 testes Unity,40 Python e compilação C# sem erros/avisos novos.
+- **Validado para publicação:** protocolo36 ainda no diretório, não publicado.
+  C02/C03: apresentação contínua de movimentos aprovados em canhão, mola/geyser
+  e corda; gates impedem executar gameplay desses lançadores no client.
+  C10: FallingBomb usa alvo/tempo aprovados e spawn real em rede.
+  R01: histórico alinha pose da montaria/cabeça com posição, com geração por montaria.
+- **Validação36:** suíte final206/206 passou, incluindo a coerência
+  Rigidbody/Transform dos lançadores. C# final0 erros/avisos, Python40/40,
+  UTF-8/BOM e diffcheck passaram. Logs/PredictionPresentation36FinalTests.xml/.log.
+  Não declarar deploy36 até confirmar CI.
+- **Próximos itens:** concluir validação/publicação36; C04 transporte do visual do
+  carrinho e passageiro, C05 portais/swap, demais C/R e regressões A14.
+- **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
+  capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
+  pendências descritas no checklist. Não declarar zero latência ou plano completo.
+- **Workspace:** branch `v0.5.0`, checkout original; preservar fontes e TitleScreen
+  do usuário e o Unity aberto. Novos scripts e metas36 ainda não salvos em commit.
+
+## Como acompanhar
+
+- **Este arquivo:** Estado atual e Checklist por ID são os resumos vivos.
+- **[Plano completo](plano-aplicacao-predicao-online.md):** escopo, critérios,
+  abordagem de cada ID e riscos. O baseline de análise inicial é histórico.
+- **[Notas de implementação](prediction-and-reconciliation.md):** comportamento
+  técnico e limites de cada solução efetivamente implementada.
+- **[Pipelines](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions):**
+  status de build/publicação. Código enviado não implica servidor já atualizado.
 
 ## Marcos concluídos e commits
 
@@ -167,16 +186,16 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: regressões dos caminhos existentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [ ] C02: molas/canhões/geysers.
-- [ ] C03: corda.
+- [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
+- [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
 - [ ] C04: carrinho.
 - [ ] C05: portais/swap.
 - [ ] C06: correnteza/barco/plataforma.
 - [ ] C07: pusher.
 - [ ] C08: ímãs/redirecionamento.
 - [ ] C09: mecanismos e tiles especiais.
-- [ ] C10: eventos FallingBomb/powder/roof/Sudden Death.
-- [ ] R01: observadores.
+- [ ] C10: parcial36 FallingBomb aviso/RNG/spawn corrigidos; powder/roof/SuddenDeath pendentes.
+- [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura implementada (169 + 9 testes); ainda auditar custo por familia e curvas no stream visual.
 - [ ] R03: apresentação de inimigos.
 - [ ] R04: forças impostas por inimigos.
@@ -541,3 +560,62 @@ BattleMode2FallingBombController sorteia target em coroutine sem gate explícito
 NetSync; antes de prever qualquer telegraph, conferir/gatear origem autoritativa e
 replicar aviso alvo/tempo. Não tratar alvo local aleatório como confirmação.
 Plano permanece em andamento, nenhuma validação manual de dois peers realizada.
+
+
+## Lote36 em andamento (não publicado)
+
+CI35 completed/success confirmado. Novo NetworkAuthorityMotion.cs/.meta partial
+NPI: lease marca trajetória nativa autoritativa, continuousPresentation no snapshot
+somente enquanto canPredict=false. Owner usa snapshots NT já recebidos (componente
+continua disabled, preservando baseline delta), sem RPC snap a cada pacote, no
+mesmo NetworkTime.time da pose NPA. Pausa congela, descontinuidades >1.5tile ou
+gap>.25s cortam em vez de interpolar pelo mapa; não extrapola. Rollback/replay
+normal retoma ao encerrar; presenters especializados têm prioridade. Logs
+bem delimitados authority_motion_begin/end. Sem input/posse/dano speculative.
+Wiring: Cannon, SpringLauncher/geyser, Battle4Spring, preparação+voo da corda11.
+Novo gate pureclient impede coroutines de gameplay duplicadas nesses mecanismos.
+198 Unity passaram ANTES dos gates+FallingBomb; não usar esse resultado para lote
+final. C# incremental final0. Suite final204 em runner: PredictionExternalAndTarget
+(exec64105 a conferir). Precisa Python/UTF-8/diffcheck e preservar relatórios.
+
+Carrinho9/12 foi retirado desse wiring: visual próprio não tinha transporte aprovado
+identificado e desativar rotina local esconderia seu trajeto. C04 continua pendente
+até apresentar posição/frame/visibilidade do carrinho sem atropelamento client.
+C02/C03 continuam parciais: não há descritor da curva inteira e faltam efeitos
+ambientais de mola/corda em Battle; montaria NMA ainda usa frame atual, requer R01.
+Não declarar todos lançadores/carrinhos prontos nem latência zero.
+
+C10 FallingBomb36: nativeclient não sorteia target/instancia bomba. Mensagem
+FallingBombTarget aprovada com revisão/time/remaining/fuse/radius/paused, envio100ms
+para late observer e eventos de start/stop, sem prever timer gameplay. Cliente só
+apresenta aviso; deadline não cria bomba. Bomba nativa agora NetSpawn antes do
+StartPunch; falha usa NetSpawn.Despawn. Novo partial BattleMode2...Network.cs/meta;
+handler no manager existente (InitializeCoopClient também usado em Battle).
+Testes de guards e alvo/RNG/pausa/stale/scene/wire adicionados (ainda conferir204).
+Demais C10 roof/powder/SuddenDeath pendentes. Protocolos36 alinhados.
+
+
+36 avançou: R01 montaria agora usa history64 de frame sets alterados, timestamp no
+tempo NT, tipo+geração para troca de montaria, interpolação de offsets locais com
+frames/flip/visible/cor discretos. NPA também interpola offset compatível e pausa
+congela views. C# final0. Suite completa206/206 passou incluindo fixtures corrigidas
+(pré-requisitos Collider no mecanismo e cena preview isolada no teste do aviso).
+Após isso, helper server de coerência Transform/Rigidbody Cannon/Battle4 foi
+adicionado e compilou0. Suite final206 em andamento PredictionPresentation36Final
+(exec23143 a conferir), não declarar versão final testada até conferir. Python40
+já passou36; UTF8/diffcheck passam mas refazer após últimas edições.
+NMA/R01 testes cobrem midpoint/tipo/geração/historycap e offset de cabeça sem
+adiantar frame. Capturas/manuais ainda pendentes. C02/C03/C10 continuam parciais.
+Próximo depois de validar36: salvar/publicar lote e continuar C04 (visual carrinho
+aprovado antes de gatear gameplay local), C05 e demais IDs. Nenhuma fonte/Title
+modificada por este trabalho. Arquivos novos têm metas; csproj de CLI é ignorado.
+
+
+## Lote36 pronto para publicação
+
+Suíte final206/206 passou; C# final0 warnings/erros, Python40/40, UTF-8/BOM e
+checagem do diff passaram. Relatórios preservados no checkout principal:
+Logs/PredictionPresentation36FinalTests.xml/.log. Runner liberado antes de push.
+Lote contém C02/C03 apresentação aprovada + gates, C10 FallingBomb e R01 poses.
+Todos os IDs continuam com limites e manuais registrados; não é o plano todo.
+Próximo: salvar/enviar36, conferir CI e continuar C04/C05 e outros pendentes.

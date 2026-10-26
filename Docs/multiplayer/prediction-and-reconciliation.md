@@ -706,3 +706,54 @@ stream and collider-free clone are appropriate for that static case. This does
 not establish that every R07 item/skull trajectory is complete, nor measure the
 latency of the owner-to-egg trail. Manual two-peer transfer/boat/death tests remain
 necessary to judge the resulting gameplay.
+
+
+## Approved external movement and aligned poses (protocol 36)
+
+A pure owner client normally disables NetworkTransform updates while using input
+prediction. Previously an unrecognized authoritative flight therefore moved its
+root only on reconciliation packets. `NetworkAuthorityMotion` extends the existing
+`NetworkPlayerInput`: a native server routine marks a finite motion scope, and its
+movement snapshots opt into continuous presentation while prediction is locked.
+The owner consumes the existing, still-decoded NetworkTransform snapshot buffer
+on the observer timeline, without toggling the component or resetting its delta
+baseline. Reconciliation restores motor context but preserves the displayed path
+between packets. Specialized riding/bounce/dash presenters retain priority.
+
+This is interpolation of approved samples, not a client launch coroutine, contact
+prediction or a descriptor of the whole future curve. It does not select a target,
+run collision outcomes, grant protection or replay action edges. Pause holds the
+view. Gaps over 250 ms or sample steps over 1.5 tiles use a cut rather than drawing
+a trip across the map; there is no extrapolation. Ending the scope returns to the
+existing authoritative reconciliation/replay path. Begin/end diagnostic events
+identify these waits as approved presentation. Cannon and arena spring update
+the server Transform after their Rigidbody writes so both packet sources agree;
+the offline velocity and routine remain on their original path.
+
+The touched entry points are Cannon, SpringLauncher (also used by geysers), arena
+4 spring and arena 11 rope preparation/flight. They reject client gameplay starts.
+This does not finish C02/C03: complete curve descriptors, some ambient arena visual
+phases and manual comparisons remain. Minecart was deliberately left for C04's
+own transport, because its cart visual must accompany the rider before client
+ride routines can be disabled. Enemy pulls that compose with normal walking need
+motor/replay composition; do not apply a locked-flight scope to them blindly.
+
+Player head offsets interpolate between compatible approved pose samples. Mounted
+observers now buffer changed frame sets on the transform timeline, including its
+send/timeline offset. A mount generation plus mounted type prevents a replacement
+from inheriting another mount's buffered pose. Only local offsets interpolate;
+frame indices, visibility, colors and flips remain at their approved sample.
+The bounded history holds 64 sets and unchanged server poses do not add timestamp
+traffic. Predicted owner locomotion and specialized ability poses keep precedence.
+Two-peer synchronization, bandwidth and frame hitch captures still need measuring.
+
+## FallingBomb warning and spawn authority (protocol 36)
+
+Arena 2 clients no longer run the local target lottery or instantiate a falling
+bomb. `FallingBombTarget` publishes approved target, remaining warning time, fuse,
+radius, pause and revision/time at start/stop plus 100 ms refresh while active.
+Scene and freshness checks prevent old events from reviving a warning. Clients
+only display the warning; reaching its display deadline never spawns a bomb or
+triggers damage. The native server bomb now spawns through NetSpawn before its
+punch presentation starts, and failed launches despawn consistently. Offline uses
+the native lottery, timing and gameplay. Other C10 mechanisms remain separate.

@@ -75,6 +75,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (busy || other == null || !other.CompareTag("Player"))
             return;
 
@@ -91,6 +92,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private IEnumerator FireRoutine(MovementController mover)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         busy = true;
 
         Vector2 dir = GetLaunchDirection();
@@ -290,10 +292,12 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private IEnumerator LaunchPlayerArc(MovementController mover, Vector2 dir)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
 
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         float tileSize = Mathf.Max(0.0001f, mover.tileSize);
 
         Rigidbody2D rb = mover.Rigidbody;
@@ -361,6 +365,7 @@ public sealed class CannonLauncher : MonoBehaviour
             Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
 
             rb.position = pos;
+            Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
             elapsed += Time.deltaTime;
             yield return null;
@@ -377,6 +382,7 @@ public sealed class CannonLauncher : MonoBehaviour
         }
 
         rb.position = finalPos;
+        Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
         rb.linearVelocity = Vector2.zero;
 
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
@@ -9,6 +10,55 @@ namespace Assets.Scripts.Netcode
     public class NetworkMountAnimation : NetworkBehaviour
     {
         public readonly SyncList<NetworkWorldMount.MountFrame> frames = new();
+        [SyncVar] MountedType frameType;
+        [SyncVar] uint frameRevision;
+        [SyncVar(hook = nameof(OnMountVisualTime))] double frameTime;
+        struct MountVisualSample
+        {
+            public double time;
+            public MountedType type;
+            public uint revision;
+            public NetworkWorldMount.MountFrame[] values;
+        }
+        readonly List<MountVisualSample> visualHistory = new(64);
+        NetworkTransformReliable positionSync;
+
+        void OnMountVisualTime(double previous, double current)
+        {
+            if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || isServer) return;
+            positionSync = positionSync != null ? positionSync : GetComponent<NetworkTransformReliable>();
+            double adjustment = positionSync != null ? NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
+                (positionSync.timelineOffset ? positionSync.sendIntervalMultiplier : 0)) : 0;
+            var copy = new NetworkWorldMount.MountFrame[frames.Count];
+            for (int i = 0; i < copy.Length; i++) copy[i] = frames[i];
+            visualHistory.Add(new MountVisualSample { time = current + adjustment, type = frameType, revision = frameRevision, values = copy });
+            if (visualHistory.Count > 64) visualHistory.RemoveAt(0);
+        }
+
+        public bool TrySampleMountFrame(double timeline, MountedType type, int index, out NetworkWorldMount.MountFrame frame)
+        {
+            frame = default;
+            int selected = -1, next = -1;
+            for (int i = 0; i < visualHistory.Count; i++)
+            {
+                var sample = visualHistory[i];
+                if (sample.type != type || sample.revision != frameRevision || index < 0 || index >= sample.values.Length) continue;
+                if (selected < 0 || sample.time <= timeline) selected = i;
+                if (sample.time > timeline) { next = i; break; }
+            }
+            if (selected < 0) return false;
+            var from = visualHistory[selected]; frame = from.values[index];
+            if (next > selected)
+            {
+                var to = visualHistory[next]; var target = to.values[index];
+                double interval = to.time - from.time;
+                if (interval > 0 && interval <= 0.25 && frame.visible && target.visible && frame.idle == target.idle &&
+                    Vector3.Distance(frame.localPosition, target.localPosition) <= 4)
+                    frame.localPosition = Vector3.Lerp(frame.localPosition, target.localPosition, Mathf.Clamp01((float)((timeline - from.time) / interval)));
+            }
+            return true;
+        }
+
         PlayerMountCompanion companion;
         GameObject trackedMount;
         AnimatedSpriteRenderer[] renderers;
@@ -35,6 +85,7 @@ namespace Assets.Scripts.Netcode
             {
                 if (Time.unscaledTime < nextSample) return;
                 nextSample = Time.unscaledTime + syncInterval;
+                bool changed = false;
                 for (int i = 0; i < renderers.Length; i++)
                 {
                     var animation = renderers[i];
@@ -47,11 +98,13 @@ namespace Assets.Scripts.Netcode
                         color = sprite != null ? sprite.color : Color.white,
                         localPosition = animation.transform.localPosition
                     };
-                    if (i >= frames.Count) frames.Add(frame);
-                    else if (!frames[i].Equals(frame)) frames[i] = frame;
+                    if (i >= frames.Count) { frames.Add(frame); changed = true; }
+                    else if (!frames[i].Equals(frame)) { frames[i] = frame; changed = true; }
                 }
+                if (changed) { frameType = companion.GetMountedLouieType(); frameTime = NetworkTime.localTime; }
                 return;
             }
+            if (GamePauseController.IsPaused) return;
             if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.RidingArcActive || bombFx.PlayerBounceActive || bombFx.PinkJumpVisualActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose))) return;
             if (isLocalPlayer && TryGetComponent<MovementController>(out var movement) && movement.PredictLocally && movement.IsMounted && ownerVisual != null)
             {
@@ -63,6 +116,8 @@ namespace Assets.Scripts.Netcode
                 var animation = renderers[i];
                 var sprite = sprites[i];
                 var frame = frames[i];
+                bool buffered = !isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true;
+                if (buffered && visualHistory.Count > 0 && !TrySampleMountFrame(NetworkTime.time, companion.GetMountedLouieType(), i, out frame)) continue;
                 if (frame.visible)
                     for (var branch = animation.transform; branch != null && branch != trackedMount.transform; branch = branch.parent)
                         if (!branch.gameObject.activeSelf) branch.gameObject.SetActive(true);
@@ -92,7 +147,7 @@ namespace Assets.Scripts.Netcode
             blackDash = mount != null ? mount.GetComponentInChildren<BlackLouieDashAnimator>(true) : null;
             renderers = mount != null ? mount.GetComponentsInChildren<AnimatedSpriteRenderer>(true) : null;
             sprites = renderers != null ? new SpriteRenderer[renderers.Length] : null;
-            if (isServer) frames.Clear();
+            if (isServer) { ++frameRevision; frames.Clear(); }
             if (renderers == null) return;
             for (int i = 0; i < renderers.Length; i++)
             {

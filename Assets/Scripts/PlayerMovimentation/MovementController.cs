@@ -247,7 +247,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         public byte axis, alignAxis, movementCapabilities;
         public MountedType mount;
         public int animationSpeed;
-        public bool hasInput, alignTarget, reentryActive, canPredict;
+        public bool hasInput, alignTarget, reentryActive, canPredict, continuousPresentation;
     }
 
     public bool CanPredictNetworkMovement => NetworkPredictionBlockReason == null;

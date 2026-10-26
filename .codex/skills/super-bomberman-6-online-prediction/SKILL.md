@@ -134,6 +134,26 @@ unlock early. Store raw directional input in history and mask a motor/replay cop
 only while its gesture lock is still active; otherwise rejection loses the real
 walking intent. Never replay ability edges to recover movement.
 
+When adding approved external movement, first check the owner transport: an
+owner that disables NetworkTransform updates can otherwise snap on every movement
+reconciliation packet. A finite native authority scope can opt into interpolation
+of already-decoded samples without enabling/resetting the component. Preserve the
+presented root across reconciliation, prioritize specialized presenters, freeze
+on pause and cut discontinuities instead of extrapolating through a wrap. Keep
+server Rigidbody/Transform coherent before their two snapshot sources sample.
+This is approved interpolation, not a whole-curve predictor; record that limit.
+
+Pose histories must share the transform timeline, including send/timeline offsets.
+Use mount type and generation to prevent buffered poses crossing replacements.
+Interpolate compatible local offsets; discrete frames, visibility, color and flips
+stay approved. Bound history and avoid timestamp traffic for unchanged mount poses.
+Before gating a native client routine, trace its separate world visual: a cart
+needs its own approved transport as well as the rider. A mechanism's local random
+telegraph is not authoritative; publish its approved target/deadline/pause and
+ensure the real gameplay object uses network spawn before motion events. Tests in
+EditMode must use native collider prerequisites and isolated preview scenes; do
+not create runtime scenes or require saving the user's open scene to test a view.
+
 ## Check collision geometry before predicting
 
 A co-op scene disables original client gameplay components. Never reactivate

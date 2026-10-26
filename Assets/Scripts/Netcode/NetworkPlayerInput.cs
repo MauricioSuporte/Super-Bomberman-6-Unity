@@ -51,7 +51,7 @@ namespace Assets.Scripts.Netcode
     /// <summary>Ticked owner prediction with authoritative movement rollback and input replay.</summary>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(NetworkIdentity), typeof(NetworkPlayerSetup))]
-    public class NetworkPlayerInput : NetworkBehaviour
+    public partial class NetworkPlayerInput : NetworkBehaviour
     {
         static readonly PlayerAction[] Actions =
         {
@@ -261,6 +261,7 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
+            UpdateOwnerAuthorityPresentation();
             if (!isServer || Time.unscaledTime < nextSnapshot) return;
             nextSnapshot = Time.unscaledTime + 1f / 30f;
             SendMovementSnapshot(false);
@@ -280,6 +281,7 @@ namespace Assets.Scripts.Netcode
             // LateUpdate captures the result AFTER the physics step, never an unexecuted MovePosition.
             var state = movement.CaptureNetworkMovementState();
             state.canPredict &= !Blocked;
+            state.continuousPresentation = authorityMotionToken != 0 && !state.canPredict;
             state.serverTime = NetworkTime.localTime;
             // Acknowledgements advance only after complete input steps. Duplicate
             // acknowledgements add no new predictable state to replay.
@@ -326,6 +328,8 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestoreBlackDashPosition();
             kickFx?.ReconcileRiding(acknowledgedTick, state, mountActions);
             kickFx?.RestoreRidingPosition();
+            SetOwnerAuthorityPresentation(state.continuousPresentation && !state.canPredict &&
+                !movement.isDead && !movement.IsEndingStage && kickFx?.ClientPlayerMotionActive != true);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
@@ -344,6 +348,15 @@ namespace Assets.Scripts.Netcode
                 }
             kickFx?.RestoreClientKickPositions();
             kickFx?.RestoreRidingPosition();
+            if (ownerAuthorityPresentation)
+            {
+                authorityPositionSync = authorityPositionSync != null ? authorityPositionSync : GetComponent<NetworkTransformReliable>();
+                if (authorityPositionSync != null && authorityPositionSync.clientSnapshots.Count > 0)
+                {
+                    movement.Rigidbody.position = before;
+                    transform.position = new Vector3(before.x, before.y, transform.position.z);
+                }
+            }
             MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
         }
 
@@ -360,6 +373,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient()
         {
+            SetOwnerAuthorityPresentation(false);
             pending.Clear();
             if (!isServer && movement != null)
             {

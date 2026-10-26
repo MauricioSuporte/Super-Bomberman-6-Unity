@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
-public sealed class BattleMode2FallingBombController : MonoBehaviour
+public sealed partial class BattleMode2FallingBombController : MonoBehaviour
 {
     const string BattleMode2SceneName = "BattleMode_2";
     const string TargetSpriteResourcesPath = "Sprites/MadBomber/target";
@@ -98,7 +98,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
 
     void OnEnable()
     {
-        if (loopRoutine == null && IsBattleMode2Active())
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && loopRoutine == null && IsBattleMode2Active())
             loopRoutine = StartCoroutine(FallingBombLoop());
     }
 
@@ -123,7 +123,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
     {
         yield return WaitGameplaySeconds(initialDelaySeconds);
 
-        while (IsBattleMode2Active() && !HasSuddenDeathStarted())
+        while (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && IsBattleMode2Active() && !HasSuddenDeathStarted())
         {
             ResolveReferences();
 
@@ -175,6 +175,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
         targetWarningActive = true;
         targetWarningWorldPosition = worldPosition;
         targetWarningSecondsRemaining = Mathf.Max(0f, seconds);
+        PublishTarget(changed: true);
 
         if (targetRenderer != null)
         {
@@ -202,6 +203,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
                 }
             }
 
+            PublishTarget();
             yield return null;
         }
 
@@ -210,6 +212,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
 
     Bomb LaunchBomb(Vector2 targetWorld)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return null;
         GameObject bombPrefab = ResolveBombPrefab();
         if (bombPrefab == null || bombOwner == null)
             return null;
@@ -251,6 +254,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
             ? ownerMovement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player")
             : LayerMask.GetMask("Stage", "Enemy", "Bomb", "Player");
 
+        Assets.Scripts.Netcode.NetSpawn.Server(bombObject);
         bool launched = bomb.StartPunch(
             Vector2.down,
             tileSize,
@@ -262,7 +266,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
 
         if (!launched)
         {
-            Destroy(bombObject);
+            Assets.Scripts.Netcode.NetSpawn.Despawn(bombObject);
             return null;
         }
 
@@ -271,6 +275,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
 
     Vector3Int PickTargetCell()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return default;
         for (int i = 0; i < 24; i++)
         {
             Vector3Int candidate = new(
@@ -379,6 +384,7 @@ public sealed class BattleMode2FallingBombController : MonoBehaviour
     {
         targetWarningActive = false;
         targetWarningSecondsRemaining = 0f;
+        PublishTarget(changed: true);
 
         if (targetRenderer == null)
             return;

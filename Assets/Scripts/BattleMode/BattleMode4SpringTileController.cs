@@ -110,6 +110,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
     void TryLaunchIfStandingOnSpring(MovementController mover)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (mover == null || mover.Rigidbody == null || activeJumpers.Contains(mover))
             return;
 
@@ -164,9 +165,11 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
     IEnumerator SpringJumpRoutine(MovementController mover, Vector3Int springCell, Vector3Int landingCell)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         activeJumpers.Add(mover);
         StartSpringTileSwap(springCell);
 
@@ -403,6 +406,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             float t = Mathf.Clamp01(elapsed / total);
             Vector2 ground = Vector2.Lerp(start, end, t);
             rb.position = ground;
+            Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
             if (shadow != null)
                 shadow.transform.position = new Vector3(ground.x, ground.y, shadow.transform.position.z);
@@ -428,6 +432,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         }
 
         rb.position = end;
+        Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
         if (shadow != null)
             shadow.transform.position = new Vector3(end.x, end.y, shadow.transform.position.z);
 

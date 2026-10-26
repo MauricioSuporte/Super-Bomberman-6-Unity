@@ -71,6 +71,7 @@ public sealed class SpringLauncher : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other == null)
             return;
 
@@ -96,6 +97,8 @@ public sealed class SpringLauncher : MonoBehaviour
 
     private IEnumerator SpringRoutine(MovementController mover)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         SetSpringIdle(false);
 
         Rigidbody2D rb = mover.Rigidbody;

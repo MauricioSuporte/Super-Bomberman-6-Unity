@@ -52,7 +52,7 @@ namespace Assets.Scripts.Netcode
 
         void OnVisualTime(double previous, double current)
         {
-            if (isServer || isLocalPlayer) return;
+            if (isServer || (isLocalPlayer && GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation != true)) return;
             double adjustment = 0;
             if (positionSync != null)
                 adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
@@ -61,6 +61,8 @@ namespace Assets.Scripts.Netcode
                 frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset });
             if (visualFrames.Count > 64) visualFrames.RemoveAt(0);
         }
+
+        public void ClearOwnerVisualHistory() => visualFrames.Clear();
 
         AnimatedSpriteRenderer[] renderers;
 
@@ -111,7 +113,7 @@ namespace Assets.Scripts.Netcode
                 return;
             }
 
-            ClientApply();
+            if (!GamePauseController.IsPaused) ClientApply();
         }
 
         void SampleOwned()
@@ -155,12 +157,18 @@ namespace Assets.Scripts.Netcode
             byte activeIndex = this.activeIndex, activeFrame = this.activeFrame;
             bool activeIdle = this.activeIdle, activeFlip = this.activeFlip;
             Vector3 activeOffset = this.activeOffset;
-            if (visualFrames.Count > 0)
+            if ((!isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true) && visualFrames.Count > 0)
             {
                 while (visualFrames.Count > 1 && visualFrames[1].time <= NetworkTime.time) visualFrames.RemoveAt(0);
                 var sample = visualFrames[0];
                 activeIndex = sample.index; activeFrame = sample.frame;
                 activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset;
+                if (visualFrames.Count > 1)
+                {
+                    var next = visualFrames[1]; double interval = next.time - sample.time;
+                    if (sample.index == next.index && interval > 0 && interval <= 0.25 && Vector3.Distance(sample.offset, next.offset) <= 4)
+                        activeOffset = Vector3.Lerp(sample.offset, next.offset, Mathf.Clamp01((float)((NetworkTime.time - sample.time) / interval)));
+                }
             }
             if (diagnostics && Time.unscaledTime >= nextDiagnostic)
             {
