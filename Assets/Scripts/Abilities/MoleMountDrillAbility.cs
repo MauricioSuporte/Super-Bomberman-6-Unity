@@ -56,6 +56,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     AudioSource audioSource;
 
     bool running;
+    bool networkStartupPose;
+    MoleMountDrillAnimator networkStartupAnimator;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -161,6 +163,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
         if (!enabledAbility)
             return;
 
@@ -218,7 +221,10 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             eggQueueHiddenByThisAbility = false;
         }
 
-        if (drillSfx != null && audioSource != null)
+        var networkFx = GetComponent<Assets.Scripts.Netcode.NetworkBombFx>();
+        bool publishStartup = Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Host &&
+            networkFx != null && networkFx.isServer && networkFx.netId != 0;
+        if (!publishStartup && drillSfx != null && audioSource != null)
             GameAudioSettings.PlaySfx(audioSource, drillSfx, drillVolume);
 
         if (movement == null || rb == null)
@@ -265,7 +271,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             BeginGlobalSuppression();
 
             externalAnimator?.PlayPhase(1, dir);
+            if (publishStartup) networkFx.ServerMoleStartup(dir, p1);
             yield return new WaitForSeconds(p1);
+            if (publishStartup) networkFx.ServerMoleStartupEnd();
 
             if (invulnerableDuringDrill)
                 SetDrillExplosionInvulnerability(true);
@@ -296,6 +304,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
         finally
         {
+            if (publishStartup) networkFx.ServerMoleStartupEnd();
             ApplyPhase1HeadOnlyDownDelta(false);
 
             if (!deathCancelInProgress)
@@ -321,6 +330,33 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             routine = null;
             deathCancelInProgress = false;
         }
+    }
+
+    // Reversible owner pose only: no drill coroutine, RNG, teleport or protection.
+    public void PresentNetworkStartup(Vector2 direction, float elapsed)
+    {
+        if (running || movement == null || movement.isDead) return;
+        if (networkStartupAnimator == null)
+            networkStartupAnimator = GetComponentInChildren<MoleMountDrillAnimator>(true);
+        if (!networkStartupPose)
+        {
+            networkStartupPose = true; BeginGlobalSuppression();
+            networkStartupAnimator?.PlayPhase(1, direction);
+        }
+        ApplyPhase1HeadOnlyDownDelta(true);
+        movement.SetExternalVisualSuppressed(false);
+        movement.SetInactivityMountedDownOverride(true);
+        EnforceGlobalSuppression();
+        networkStartupAnimator?.PresentNetworkStartup(elapsed);
+    }
+
+    public void StopNetworkStartup()
+    {
+        if (!networkStartupPose) return;
+        networkStartupPose = false; networkStartupAnimator?.Stop(); networkStartupAnimator = null;
+        ApplyPhase1HeadOnlyDownDelta(false); EndGlobalSuppression();
+        if (cachedMountVisual != null) cachedMountVisual.enabled = false;
+        movement?.SetInactivityMountedDownOverride(false);
     }
 
     void RefreshMountedLouieMovement()
@@ -352,6 +388,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     void Cancel()
     {
+        StopNetworkStartup();
+        var networkFx = GetComponent<Assets.Scripts.Netcode.NetworkBombFx>();
+        if (networkFx != null && networkFx.isServer && networkFx.netId != 0) networkFx.ServerMoleStartupEnd();
         if (routine != null)
         {
             StopCoroutine(routine);

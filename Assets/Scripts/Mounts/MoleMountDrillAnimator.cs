@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnimator
@@ -65,6 +65,16 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
             active.CurrentFrame = 0;
             active.RefreshFrame();
         }
+    }
+
+    public void PresentNetworkStartup(float elapsed)
+    {
+        if (!playing || active == null) return;
+        active.SetManualAnimationUpdate(true);
+        active.enabled = true;
+        int count = active.animationSprite != null ? active.animationSprite.Length : 0;
+        active.CurrentFrame = count > 0 ? Mathf.FloorToInt(Mathf.Max(0, elapsed) / Mathf.Max(0.0001f, active.animationTime)) % count : 0;
+        active.RefreshFrame();
     }
 
     public void Stop()

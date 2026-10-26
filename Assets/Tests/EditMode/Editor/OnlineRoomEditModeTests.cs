@@ -11,6 +11,75 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void MoleStartupPredictsOnlyPoseConfirmsWithoutRestartAndRestoresOnEveryExit()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("MoleStartupOwner"); actor.SetActive(false);
+        var mount = new GameObject("MoleStartupMount"); mount.transform.SetParent(actor.transform, false);
+        var phase = new GameObject("MoleStartupPhase"); phase.transform.SetParent(mount.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); var oldRandom = Random.state; NetworkBombFx fx = null;
+        var paused = typeof(GamePauseController).GetProperty(nameof(GamePauseController.IsPaused)); bool wasPaused = GamePauseController.IsPaused;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Mole);
+            var animator = mount.AddComponent<MoleMountDrillAnimator>(); animator.phase1 = phase.AddComponent<AnimatedSpriteRenderer>();
+            actor.SetActive(true); movement.SetNetworkTickDriven(true); Vector2 origin = new(23000, 23000);
+            var state = new MovementController.NetworkMovementState { position = origin, mount = MountedType.Mole,
+                facing = Vector2.down, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            fx.PredictBombAbilityInput(0, 0, 10); var ability = actor.GetComponent<MoleMountDrillAbility>(); Assert.IsNotNull(ability);
+            typeof(MoleMountDrillAbility).GetMethod("Awake", flags).Invoke(ability, null);
+            Random.InitState(135); float expectedRandom = Random.value; Random.InitState(135);
+            Assert.IsTrue(fx.TryPredictMoleStartup(0, 10)); Assert.AreEqual(expectedRandom, Random.value);
+            Assert.IsTrue(fx.MoleStartupActive); Assert.IsTrue(fx.HasLocalMountAbilityPose); Assert.IsTrue(fx.AbilityPredictionLocksMovement);
+            Assert.IsFalse(ability.Running); Assert.IsFalse(ability.IsProtectingFromStun); Assert.IsFalse(movement.explosionInvulnerable);
+            Assert.AreEqual(origin, body.position); Assert.IsTrue(animator.phase1.enabled);
+            Assert.AreSame(animator, typeof(MoleMountDrillAbility).GetField("networkStartupAnimator", flags).GetValue(ability));
+            Assert.IsTrue((bool)typeof(MoleMountDrillAnimator).GetField("playing", flags).GetValue(animator));
+            animator.phase1.enabled = false; fx.ReapplyMountAbilityPose(); Assert.IsTrue(animator.phase1.enabled, "Mount rebind cannot disable the active owner startup pose.");
+            fx.ReconcileMoleStartup(9, state); Assert.IsTrue(fx.MoleStartupActive);
+            fx.ReconcileMoleStartup(10, state); Assert.IsFalse(fx.MoleStartupActive); Assert.IsFalse(movement.InputLocked);
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true); Assert.IsTrue(fx.TryPredictMoleStartup(0, 11));
+            var update = typeof(NetworkBombFx).GetMethod("UpdateMoleStartup", flags);
+            update.Invoke(fx, new object[] { 0.2f, 0.2f });
+            var elapsed = typeof(NetworkBombFx).GetField("moleStartupElapsed", flags); float before = (float)elapsed.GetValue(fx);
+            paused.SetValue(null, true); update.Invoke(fx, new object[] { 1f, 1f });
+            Assert.AreEqual(before, (float)elapsed.GetValue(fx)); Assert.IsTrue(fx.MoleStartupActive); paused.SetValue(null, false);
+            var motion = new NetworkBombFx.MoleStartupMotion { revision = 1, inputTick = 11, direction = Vector2.down,
+                duration = 1, active = true, serverTime = NetworkTime.time };
+            fx.ReceiveMoleStartup(motion); Assert.AreEqual(before, (float)elapsed.GetValue(fx));
+            state.canPredict = false; fx.ReconcileMoleStartup(11, state); Assert.IsTrue(fx.MoleStartupActive);
+            motion.revision = 2; motion.active = false; fx.ReceiveMoleStartup(motion);
+            Assert.IsFalse(fx.MoleStartupActive); Assert.IsFalse(animator.phase1.enabled); Assert.IsFalse(fx.AbilityPredictionLocksMovement);
+            motion.revision = 1; motion.active = true; fx.ReceiveMoleStartup(motion); Assert.IsFalse(fx.MoleStartupActive, "Stale startup cannot resurrect after authority hands presentation to the next phase.");
+            state.canPredict = true; movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(fx.TryPredictMoleStartup(0, 12)); update.Invoke(fx, new object[] { 2f, 2f }); Assert.IsFalse(fx.MoleStartupActive);
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true); Assert.IsTrue(fx.TryPredictMoleStartup(0, 13));
+            movement.isDead = true; update.Invoke(fx, new object[] { 0.02f, 0.02f }); Assert.IsFalse(fx.MoleStartupActive);
+            Assert.AreEqual(origin, body.position); Assert.IsFalse(ability.Running); Assert.IsFalse(movement.explosionInvulnerable);
+            using var writer = NetworkWriterPool.Get(); writer.Write(motion);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var copy = reader.Read<NetworkBombFx.MoleStartupMotion>();
+            Assert.AreEqual(motion.inputTick, copy.inputTick); Assert.AreEqual(motion.duration, copy.duration); Assert.IsTrue(copy.active);
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.TryPredictMoleStartup(0, 14));
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearMoleStartup", flags).Invoke(fx, new object[] { "test_cleanup" });
+            paused.SetValue(null, wasPaused); Random.state = oldRandom; NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
     public void CoopTileQueriesUseSafeTilesAndPreserveReplayPassAndApprovedPose()
     {
         var oldMode = NetSync.Mode;
@@ -1831,6 +1900,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 30, false)]
     [TestCase("0.5.0", 29, false)]
     [TestCase("0.5.0", 28, false)]
     [TestCase("0.5.0", 27, false)]

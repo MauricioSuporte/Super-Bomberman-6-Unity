@@ -444,6 +444,7 @@ namespace Assets.Scripts.Netcode
             UpdatePlayerBouncePresentation(deltaTime, unscaledDeltaTime);
             UpdateGreenDash(deltaTime, unscaledDeltaTime);
             UpdatePinkJump(deltaTime, unscaledDeltaTime);
+            UpdateMoleStartup(deltaTime, unscaledDeltaTime);
             UpdateRedPunch(deltaTime);
             UpdateTankPrediction(deltaTime);
             UpdateBlackDash(deltaTime, unscaledDeltaTime);
@@ -578,6 +579,7 @@ namespace Assets.Scripts.Netcode
                 if (pair.Key != null) RestoreMotionCollider(pair.Key, pair.Value);
             kickPlayback.Clear(); rejectedStarts.Clear();
             ResetLocalAbilityPresentation();
+            ClearMoleStartup("clear_playback");
             ClearRedPunch("clear_playback");
             ClearTankPrediction("clear_playback"); hasMountActionState = false;
             ClearTileMotionPresentation();

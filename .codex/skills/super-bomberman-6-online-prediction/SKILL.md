@@ -114,6 +114,15 @@ rejected actions need their appropriate explicit transition. Never let a queued
 stop terminate an unfinished arc, or let stale messages resurrect a completed
 sequence. Pause freezes motion; cancellation/death/scene changes release it.
 
+For an ability whose destination depends on random or hidden server state,
+predict only its known preparation. Mole's startup gesture is correlated with
+the C input tick and handed back at the authoritative next phase; it does not
+start the real drill coroutine or protection. A manual presenter must re-enable
+its active animation after mount rebind disables client behaviours, and the
+player-head presenter must respect that same ownership. EditMode fixtures adding
+abilities dynamically must initialize required Awake references explicitly; do
+not confuse an uninitialized fixture with a runtime prediction failure.
+
 ## Check collision geometry before predicting
 
 A co-op scene disables original client gameplay components. Never reactivate

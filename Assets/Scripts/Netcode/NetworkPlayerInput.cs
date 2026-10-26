@@ -137,6 +137,7 @@ namespace Assets.Scripts.Netcode
                         fx?.TryPredictRedPunch(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictTankShot(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictBlackDash(sampledHeld, unchecked(localTick + 1));
+                        fx?.TryPredictMoleStartup(sampledHeld, unchecked(localTick + 1));
                     }
                 }
             }
@@ -302,6 +303,7 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestoreGreenDashPosition();
             kickFx?.ReconcilePinkJump(acknowledgedTick, state);
             kickFx?.RestorePinkJumpPosition();
+            kickFx?.ReconcileMoleStartup(acknowledgedTick, state);
             kickFx?.ReconcileRedPunch(acknowledgedTick, state);
             kickFx?.ReconcileTankShot(acknowledgedTick, mountActions);
             kickFx?.ReconcileBlackDash(acknowledgedTick, state, mountActions);

@@ -34,8 +34,8 @@ namespace Assets.Scripts.Netcode
         public bool HasUnconfirmedClientMotion(Bomb target) => target != null &&
             kickPlayback.TryGetValue(target, out var state) && state.unconfirmed;
 
-        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || RedPunchPoseActive || TankShotPoseLocksMovement;
-        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
+        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
+        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
             (abilityPoseKind == BombMotionKind.Yellow || abilityPoseKind == BombMotionKind.Punch)));
         public static bool NonBlockingMotion(BombMotionKind kind) => kind == BombMotionKind.Punch ||
             kind == BombMotionKind.Throw || kind == BombMotionKind.Lift || kind == BombMotionKind.Carry;
@@ -154,6 +154,9 @@ namespace Assets.Scripts.Netcode
             if (type == MountedType.Yellow && yellow == null) yellow = gameObject.AddComponent<YellowLouieKickAbility>();
             yellow?.ConfigureNetworkMountAnimator(visual != null ? visual.GetComponentInChildren<Assets.Scripts.Interface.IYellowLouieDestructibleKickExternalAnimator>(true) : null,
                 type == MountedType.Yellow);
+            var mole = GetComponent<MoleMountDrillAbility>();
+            if (type == MountedType.Mole && mole == null) mole = gameObject.AddComponent<MoleMountDrillAbility>();
+            mole?.SetExternalAnimator(type == MountedType.Mole && visual != null ? visual.GetComponentInChildren<MoleMountDrillAnimator>(true) : null);
             var punch = GetComponent<BombPunchAbility>();
             if (type == MountedType.Blue && punch == null) punch = gameObject.AddComponent<BombPunchAbility>();
             punch?.ConfigureNetworkMountAnimator(type == MountedType.Blue && visual != null ? visual.GetComponentInChildren<IBombPunchExternalAnimator>(true) : null,
@@ -163,6 +166,7 @@ namespace Assets.Scripts.Netcode
         public void ReapplyMountAbilityPose()
         {
             if (!HasLocalMountAbilityPose) return;
+            if (MoleStartupActive) { PresentMoleStartup(); return; }
             if (GreenDashActive) { PresentGreenDash(0); return; }
             if (BlackDashOwnsPose) { PresentBlackDash(true); return; }
             if (PinkJumpActive) { PresentPinkJump(0, true); return; }

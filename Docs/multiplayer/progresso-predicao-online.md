@@ -15,19 +15,20 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-- Branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen sujos do usuário.
-- Última publicação concluída: `9a8dbca7c`, protocolo 28, CI 40272110810 sucesso.
-- A05 Black salvo/enviado em `a9c426883` com skip CI, protocolo 29 não publicado.
-  R02 implementado no protocolo 30; suíte completa 169/169 passou.
-  Proteção final para sprite de colisão ausente validada: Coop 9/9.
-- C# final sem warnings/erros; C# alterados verificados em UTF-8/BOM e CRLF.
-- Unity mais recente: 162/162 na suíte completa com A05 Black e mudanças de NPI.
-  C# incremental sem warnings/erros; Python 40/40 após protocolo 29.
-- Python: 40/40 passaram (32 Tools/Ci + 8 Tools/RoomDirectory).
-- Relatórios mais recentes no checkout principal: `Logs/PredictionBlackTests.xml`
-  e `.log`. Também mantidos os relatórios Tank/Conveyor anteriores; são ignorados.
-- Não foi realizada validação manual com dois peers nem comprovado ganho por
-  novas capturas. Não afirmar zero latência nem que o plano inteiro terminou.
+- Branch `v0.5.0`, checkout original; preservar fontes e TitleScreen do usuario.
+- R02 e A05 publicados: `d25c34734`, protocolo 30, CI 40281389234 sucesso.
+  Server e canal do updater confirmados pelo CI. A07 agora em testes no runner.
+- R02: Unity suite completa 169/169; depois Coop 9/9 com protecao final para
+  Sprite de colisao ausente. Relatorios Logs/PredictionCoopTests e
+  Logs/PredictionCoopGeometryFinal (.xml/.log). Python 40/40. C# zero warnings/erros.
+- A07: startup/pose Mole validado em protocolo 31, pronto para salvar/publicar.
+  Unity completo 171/171; C# zero warnings/erros e Python 40/40. Teste cobre handoff/rebind, sem rotina
+  ou RNG, confirmacao/rejeicao, pausa, stale, timeout e morte.
+- Runner livre apos CI30; fontes A07 copiadas para validacao.
+- Nenhuma validacao manual com dois peers nem novas capturas comparaveis feitas.
+  Nao declarar zero latencia nem o plano inteiro concluido.
+- Proximo: terminar teste A07 no runner, corrigir, salvar/publicar lote31
+  e continuar A09/A10/A11/A12 e C/R restantes pela matriz.
 
 ## Marcos concluídos e commits
 
@@ -78,7 +79,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - A05 já começou; ver seção seguinte. Linha cp1252 confirmada foi convertida
   isoladamente para UTF-8; arquivo completo agora decodifica estritamente.
 
-## Marco 8: A05 Black validado, a salvar antes de R02
+## Marco 8: A05 Black validado e salvo em a9c426883
 
 - `NetworkBlackDash.cs` prevê owner dash/pose/som; máximo 150ms sem estado novo e
   range finito. Confirmação, hold de impacto, parada, rejeição e timeout/morte/
@@ -99,10 +100,9 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
   Nenhum teste em execução agora. Relatórios copiados para Logs/ do checkout.
 - Manual pendente: dash/contato/hold/variações de pass/cancel em dois peers,
   pausas, diagonal, cooldown e rede degradada. Pushes externos seguem para R04.
-- Próximo: salvar A05 com skip CI; R02 colisão conhecida no co-op antes da próxima
-  publicação. Não afirmar que o plano inteiro terminou.
+- A05 foi salvo com skip CI e incluido na publicacao 30 com R02.
 
-## R02: pré-requisito de colisão do mundo co-op (código em desenvolvimento)
+## R02: pré-requisito de colisão do mundo co-op (validado e enviado em d25c34734)
 
 - Confirmado por código e assets: CoopSceneLoaded desabilita colliders e bodies
   de objetos de cena sem NetworkIdentity. Stage_1-1, Stage_3-4 e Stage_3-6 têm
@@ -140,12 +140,12 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
   de origem/destino existentes continuam responsáveis pelas reservas.
 - ClearCoopWorld remove views/tiles gerados e inscrição estática. Helpers sem
   singleton/manager adicional. Manager existente coordena prontidão/stream.
-- C# passou (70547 só 6 warnings pré-existentes Mirror; 55973 incremental zero).
-  Último refactor extraiu ApplyCoopCollisionData/CoopGeometryStateReady para testar
-  carregamento completo e fallback. Ainda não houve testes Unity de R02.
-- Próximo: testes parede/pass e callbacks ausentes, primitivas/pose/enabled,
-  readiness full/reset/unsupported/remove, wire novo/protocolo 29; C#/UTF-8/Unity
-  e publicar 30 com A05 após validação. Não marcar R02 concluído.
+- Validacao retomada: suite Unity 169/169; depois Coop 9/9 com a protecao
+  final de readiness para Sprite de colisao ausente. C# zero warnings/erros;
+  Python40 e UTF-8/BOM passaram. Teste wire inicialmente usava Quaternion zero
+  invalido, corrigido para identity. Relatorios preservados no checkout principal.
+- R02 agora cobre geometria de consulta aprovada; trajetorias dinamicas e atores
+  continuam nos C/R correspondentes. Dois peers/manual ainda pendentes.
 
 ## Checklist por ID
 
@@ -156,7 +156,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A04: Pink Louie jump e teste; manual e ovos A11/R07 pendentes.
 - [x] A05: owner dash/pose e testes; efeitos de contato autoritativos, manual/R04 pendentes.
 - [x] A06: Red Louie pose e áudio confirmado; stun autoritativo; manual pendente.
-- [ ] A07: Mole drill.
+- [x] A07: preparacao/pose Mole prevista; RNG/teleporte/protecao autoritativos; 171 testes, manual pendente.
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [ ] A09: LineBomb/Purple cast e confirmação parcial.
 - [ ] A10: ControlBomb feedback.
@@ -202,3 +202,35 @@ principal antes de disparar publicação, pois o pipeline limpa saídas do runne
 
 Não prometer retomada automática baseada em créditos. Este registro permite
 continuar em uma próxima mensagem/sessão quando o acesso estiver disponível.
+
+## A07: preparacao da Mole validada
+
+NetworkMoleStartup prevê somente a preparação inicial, pose/som por tick C;
+confirmação conserva fase; ack sem início rejeita; revisões descartam eventos
+antigos. Timeout/pausa/morte/troca de mount/disable limpam apresentação.
+MoleMountDrillAbility no client não executa Update de gameplay; API de pose
+reutiliza suppression/head offset/animador sem rotina, RNG ou invulnerabilidade.
+Server publica início e passagem para fase 2, deduplicando áudio co-op. Demais
+fases continuam via NetworkMountAnimation e teleporte continua inteiramente
+autoritativo, pois o destino depende de RNG/alvos vivos. Não extrapolar saída.
+NetworkPlayerAnimation e NetworkMountAnimation respeitam pose local ativa.
+Teste novo cobre preparo, RNG preservado, rejeicao, confirmacao sem reinicio,
+pausa, stale/end, rebind, timeout e morte. Suite completa 171/171 passou.
+Próximo: após CI30 terminar, copiar arquivos A07 + metas para runner; executar
+OnlineRoomEditModeTests.Mole, depois suíte completa, Python40 e UTF-8. Revisar
+handoff das poses no fim da preparação. Não publicar 31 antes dessas validações.
+
+A07 teste direcionado: primeiras falhas estavam na fixture EditMode, que nao
+executa Awake da habilidade adicionada em runtime. Fixture agora inicializa
+Awake explicitamente antes de validar o presenter. Nao remover o teste de
+rebind: ele protege active.enabled no presenter manual apos NetworkMountAnimation.
+PredictionMoleFocused3 passou 1/1 e PredictionMoleTests passou 171/171.
+Relatorios preservados em Logs/PredictionMoleTests.xml e .log.
+
+Proxima implementacao A09: placements atuais sao Dictionary<uint,Prediction>,
+um unico tile por tick A. Linha requer grupo identificado por tick+acao A/C
+e celula, reserva por tile e confirmacao parcial. TryPlaceBombAtIgnoringInputLock
+nao chama ServerConfirmPlacement; nao reutilizar CurrentActionATick para Purple
+(C), nem inventar ticks por tile. Extrair preview de geometria readonly de
+BombController, preservar variantes/water/hole/ground e snapshot do estoque.
+Nao iniciar bombas/fuses ou coroutines Purple no client.

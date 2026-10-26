@@ -102,6 +102,7 @@ namespace Assets.Scripts.Netcode
                 foreach (var renderer in renderers)
                     if (renderer != null) renderer.SetManualAnimationUpdate(!predicting);
             }
+            if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.MoleStartupActive == true) return;
             if (predicting) return;
             if (isServer)
             {

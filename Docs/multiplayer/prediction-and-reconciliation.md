@@ -509,7 +509,7 @@ diagnostic-only adjustment; C# compiled without warnings/errors and 40 Python
 tests passed. Manual two-peer checks of directions, nearby/moving obstacles,
 cooldown tint, mount changes, pause/death, network gaps and impacts remain pending.
 
-## Black Louie owner dash (protocol 29, not yet published)
+## Black Louie owner dash (introduced in 29, published with 30)
 
 Black predicts only the owner's finite dash/pose and sound. Shared read-only
 blocker checks use acknowledged destructible-pass state; they never kick a bomb,
@@ -527,8 +527,9 @@ not start gameplay coroutines on clients. Other actors' pushes remain authority
 results and still need the R04 presentation audit.
 
 Validation: 162/162 Unity tests, 40 Python tests and C# compilation passed without
-introduced warnings. Two-peer validation is pending. The co-op world disables original scene colliders; protocol 30 supplies separate
-server-approved query geometry before publishing this dash to co-op clients.
+introduced warnings. Two-peer validation is pending. Co-op keeps original scene
+colliders disabled; protocol 30 supplies separate approved query geometry.
+Black dash and co-op queries were published together in d25c34734 (CI 40281389234).
 
 ## Co-op prediction collision geometry (protocol 30)
 
@@ -555,3 +556,27 @@ the separate C/R audits and manual two-peer validation.
 Validation: 169/169 full online EditMode tests passed, followed by 9/9 co-op
 tests after the missing collision-sprite readiness guard. C# compiled with zero
 warnings/errors, and 40 Python tests passed. New two-peer captures remain pending.
+
+## Mole startup presentation (protocol 31)
+
+The owner's C edge presents phase 1 immediately through the existing drill
+animator, down-facing head offset and reversible sprite suppression. The server
+confirms the input tick without restarting elapsed phase; it signals phase-1
+completion before enabling the drill's real protection. Subsequent burrow and
+emergence frames remain server presentation. The random exit destination is
+never guessed and no client drill coroutine, teleport, RNG or invulnerability
+is started. Observers continue through authoritative mount frames.
+
+Processed input without a start rejects the gesture. Monotonic revisions reject
+stale starts after phase completion. Pause freezes elapsed presentation; bounded
+timeout, mount loss, death, disable and phase handoff restore the local pose.
+The original directional input and C edge still reach server validation; motor
+replay does not activate drilling or play audio again. Owner sound is correlated
+with confirmation, while server co-op broadcast is avoided for this gesture.
+
+Only the known preparation is predicted. This deliberately does not infer
+underground safety, future collisions or the teleport target from a local scene.
+
+Validation: 171/171 online Unity EditMode tests, 40 Python tests and C#
+compilation with zero warnings/errors passed. Manual two-peer checks of phase
+handoff, head offset, sound, cancellation and teleport remain pending.
