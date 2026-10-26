@@ -19,22 +19,21 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo40, commit `3712ec468`, pipeline
-  [40405577413](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40405577413) concluído com sucesso.
-- **Último lote publicado:** campo magnético aprovado/gates client e descoberta
-  da suíte COM corrigida. Validação combinada321/321 Unity (229 online +92 COM),
+- **Publicado e confirmado:** protocolo41, commit `218428e33`, pipeline
+  [40409435598](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40409435598) concluído com sucesso.
+- **Último lote publicado:** motion de bomba confirmado sobrevive ao owner inativo,
+  com cancelamento de predição e cleanup de collider. Validação323/323 Unity,
   C#0 erros/avisos novos, Python40/40, UTF-8/BOM e diffcheck passaram.
-- **Lote41 validado, aguardando envio/publicação:** continuidade de motion de bomba confirmado quando owner
-  desativa, com helper render-only no manager existente. Previsões/poses canceladas;
-  sem simular input/abilities do personagem. Suíte323/323 Unity, C#0 erros/avisos
-  novos, Python40/40 e UTF-8/BOM/diffcheck passaram.
-- **Próximos itens:** validar41, demais R07 (sem owner/VFX), barco/contexto de água,
-  demais C/R e regressões A14. Swap é terreno/blackout C09.
+- **Lote42 validado, publicação pendente:** VFX de explosão aprovados aguardam no manager ativo,
+  retendo só prefab/dados (não o owner); cleanup em scene/disconnect.
+  Unity325/325, C#0 erros/avisos, Python40/40. Bomba sem owner ainda é etapa separada.
+- **Próximos itens:** publicar42, demais R07, barco/contexto, forças no motor/replay,
+  blackout/tiles e demais C/R. A14 continua com matriz/manual pendentes.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote40 commitado/publicado; alterações41 ainda no diretório, sem commit.
+  do usuário e o Unity aberto. Lote41 commitado/publicado; alterações42 ainda no diretório, sem commit.
 
 ## Como acompanhar
 
@@ -200,7 +199,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R04: forças impostas por inimigos.
 - [ ] R05: projéteis remotos.
 - [ ] R06: bosses/bombers.
-- [ ] R07: parcial: ovos35/poses38 e motion de bomba com owner inativo41 testados; VFX, bombas sem owner, itens/transferência e manual pendentes.
+- [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
 - [ ] R08: cenário móvel/ambiental.
 - [ ] Consolidar skill, notas e matriz de validação.
 
@@ -991,3 +990,52 @@ pausa congela, stop ordenado/handoff limpa corretamente. Nenhuma rotina de playe
 é executada no helper. Relatórios finais copiados em Logs/PredictionBombLifetime41FinalTests.*.
 Runner restaurado nos tracked de validação. Próximo: commit/enviar41, confirmar CI,
 prosseguir R07 VFX/sem owner ou demais itens. Último deploy confirmado40.
+
+
+Após envio41:218428e33 / CI40409435598 em andamento. Último deploy confirmado40.
+42 R07 em implementação: RpcPlay agenda espera de VFX no helper ativo do manager,
+mesmo quando o owner ainda está ativo (não perder coroutine ao desativar depois).
+Fallback só usa owner ativo; nunca StartCoroutine em GO inativo. Clear do helper
+cancela esperas em scene/client stop; espera também termina se BombController morre.
+VFX continuam no método existente PlayNetworkExplosionVisual com collider de dano
+desativado, nenhum dano/terreno é previsto. Native host não duplica explosão.
+Teste de seleção do host/owner inativo/fallback/role escrito; C# em andamento.
+Não validado Unity42. Bomba SEM owner e comparação manual de VFX continuam pendentes.
+
+
+42 VFX agora captura prefab/dados aprovados antes de agendar, sem manter BombController
+ou NetworkBombFx no enumerator (PlayOnTimeline estático). Isso permite que evento
+já recebido sobreviva até à destruição do owner, não só à inatividade. O método
+PlayApprovedExplosionVisual é comum ao presenter/fluxo existente e mantém collider
+sem dano. Acrescentado teste da espera que continua após destruir owner e termina
+na desconexão, sem iniciar física/coroutine Unity em Edit Mode. Ainda aguardar
+compilação/testes42; nenhum resultado presumido. Não resolve RPC emitido sem owner
+ou endpoint já removido antes da recepção, nem escolhe dano/terreno no client.
+
+Auditoria C09/R08: WorldBlackoutRenderer usa MeshRenderer e roomBounds Collider
+(que o co-op desativa), além de player/torch circles. Não está no sprite stream nem
+whitelist. StageBlackout pode ficar ativo sob Canvas mas não atualizar overlay
+inativo; SwapGroundTileBlackoutHandler não transporta estado por si. Precisa
+apresentação aprovada de alpha/room bounds/luzes, sem reativar física nem confiar
+em bounds de collider desativado. Nenhuma implementação blackout foi feita.
+
+
+Auditoria C07: PusherPatrolAndPush NÃO trava input nem usa uma coroutine de voo.
+Ele faz Collider.Cast, filtra normal/overlap e soma delta via MovePosition ao
+mesmo tempo que a caminhada continua; depois notifica PlayerPushedOutOfInvalidTile
+para eventual bounce. Não aplicar scope de voo travado. Precisa compor força no
+motor/replay, com contato/fase aprovados e sem double-apply no FixedUpdate, mantendo
+bounce de recuperação separado. Nenhuma implementação pusher foi feita.
+
+
+CI41 confirmado sucesso. Runner liberado e copiados só arquivos próprios42.
+Rodando OnlineRoom + COM em PredictionBombVisual42Tests.xml/.log; resultado
+pendente. Não declarar325/325 nem publicação42 antes de verificar.
+
+
+42 validado:325/325 Unity (OnlineRoom233 + COM92), C#0 erros/avisos, Python40/40.
+Relatórios preservados em Logs/PredictionBombVisual42Tests.*; tracked próprios
+do runner restaurados. Espera VFX conserva prefab/dados após destruir owner e
+termina em disconnect; helper cancela esperas no cleanup. Nenhum resultado de dano
+é previsto. R07 segue parcial para eventos sem owner/endpoint removido e manual.
+Próximo: commit/publicação42 e auditoria das demais lacunas do plano.

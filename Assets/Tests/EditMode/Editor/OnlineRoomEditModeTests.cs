@@ -10,11 +10,75 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void ApprovedExplosionWaitKeepsPrefabDataAfterOwnerIsDestroyedAndStopsOnDisconnect()
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldClientState = clientState.GetValue(null);
+        var actor = new GameObject("ExplosionDataOwner"); actor.SetActive(false); actor.AddComponent<BoxCollider2D>();
+        var definition = new GameObject("ApprovedExplosionDefinition"); definition.SetActive(false);
+        System.Collections.IEnumerator wait = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var owner = actor.AddComponent<BombController>(); var prefab = definition.AddComponent<BombExplosion>(); owner.explosionPrefab = prefab;
+            var approvedPrefab = owner.GetNetworkExplosionVisualPrefab(); Assert.AreSame(prefab, approvedPrefab);
+            var parts = new[] { new ExplosionFx { pos = new Vector2(7000, 7000), part = 0, dir = Vector2.up } };
+            wait = (System.Collections.IEnumerator)typeof(NetworkBombFx).GetMethod("PlayOnTimeline", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(null, new object[] { approvedPrefab, Vector2.zero, parts, false, 0.3f, NetworkTime.time + 100 });
+            Assert.IsTrue(wait.MoveNext()); Object.DestroyImmediate(actor); actor = null;
+            Assert.IsTrue(wait.MoveNext(), "An already-approved timeline wait must survive its owner's destruction without dereferencing gameplay components.");
+            clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Disconnected")); Assert.IsFalse(wait.MoveNext());
+        }
+        finally
+        {
+            (wait as System.IDisposable)?.Dispose(); if (actor != null) Object.DestroyImmediate(actor); Object.DestroyImmediate(definition);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState);
+        }
+    }
+
+    [Test]
+    public void ApprovedExplosionTimelineUsesActiveManagerEvenWhenOwnerIsInactive()
+    {
+        var oldMode = NetSync.Mode; var oldNetworkedScene = NetSync.IsNetworkedScene;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldClientState = clientState.GetValue(null);
+        var singleton = typeof(NetworkManager).GetProperty("singleton"); var oldManager = singleton.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var managerObject = new GameObject("ApprovedVisualManager"); managerObject.SetActive(false);
+        var actor = new GameObject("InactiveExplosionOwner"); actor.SetActive(false); actor.AddComponent<BoxCollider2D>();
+        const uint id = uint.MaxValue - 180;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var manager = managerObject.AddComponent<BombermanNetworkManager>(); manager.enabled = false; singleton.SetValue(null, manager);
+            var identity = actor.AddComponent<NetworkIdentity>(); var fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, id); NetworkClient.spawned.Add(id, identity);
+            managerObject.SetActive(true);
+            var host = NetworkBombMotionLifetime.ApprovedVisualHost(fx);
+            Assert.IsInstanceOf<NetworkBombMotionLifetime>(host); Assert.IsTrue(host.isActiveAndEnabled); Assert.IsFalse(actor.activeSelf);
+            managerObject.SetActive(false); Assert.IsNull(NetworkBombMotionLifetime.ApprovedVisualHost(fx), "Never start a coroutine on an inactive fallback.");
+            foreach (var behaviour in actor.GetComponents<MonoBehaviour>()) behaviour.enabled = false;
+            fx.enabled = true; actor.SetActive(true);
+            Assert.AreSame(fx, NetworkBombMotionLifetime.ApprovedVisualHost(fx), "An active owner remains a fallback when no active manager host is available.");
+            managerObject.SetActive(true); Assert.AreSame(host, NetworkBombMotionLifetime.ApprovedVisualHost(fx), "Use the independent timeline host even before the owner deactivates.");
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsNull(NetworkBombMotionLifetime.ApprovedVisualHost(fx), "The server/host must not duplicate its native explosion.");
+        }
+        finally
+        {
+            NetworkClient.spawned.Remove(id); Object.DestroyImmediate(actor);
+            singleton.SetValue(null, oldManager); Object.DestroyImmediate(managerObject);
+            NetSync.IsNetworkedScene = oldNetworkedScene; NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState);
+        }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void InactiveOwnerKeepsApprovedBombMotionAndCancelsOnlyUnconfirmedActions(bool stopClient)
     {
-        var oldMode = NetSync.Mode;
+        var oldMode = NetSync.Mode; var oldNetworkedScene = NetSync.IsNetworkedScene;
         var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
         var oldClientState = clientState.GetValue(null);
         var timeline = typeof(NetworkClient).GetField("localTimeline", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
@@ -84,7 +148,7 @@ public sealed class OnlineRoomEditModeTests
             NetworkClient.spawned.Remove(actorId); NetworkClient.spawned.Remove(approvedId); NetworkClient.spawned.Remove(predictedId);
             Object.DestroyImmediate(actor); foreach (var go in replicas) Object.DestroyImmediate(go);
             singleton.SetValue(null, oldManager); Object.DestroyImmediate(managerObject);
-            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); paused.SetValue(null, wasPaused); timeline.SetValue(null, oldTimeline);
+            NetSync.IsNetworkedScene = oldNetworkedScene; NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); paused.SetValue(null, wasPaused); timeline.SetValue(null, oldTimeline);
         }
     }
 

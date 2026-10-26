@@ -916,3 +916,22 @@ identity-removal cleanup while a bomb still has a captured collider. Manual peer
 and reactivation timing remain to compare. Ownerless bomb transport and explosion
 VFX scheduled on an inactive owner remain separate R07 work; do not claim them
 solved by retaining motion alone.
+
+## Received explosion VFX outlives its owner (protocol 42)
+
+RpcPlay now schedules an approved visual wait on the existing manager's active
+NetworkBombMotionLifetime helper. It captures the explosion prefab and event data,
+not the BombController or NetworkBombFx, so an already-received event survives
+owner deactivation or destruction. An active owner is only a fallback when the
+manager helper cannot host it; an inactive owner is never a coroutine host.
+
+Scene/client cleanup cancels the helper's visual waits; disconnect also ends the
+wait. The shared static visual spawn keeps explosion collision disabled and does
+not calculate damage, terrain changes or chain reactions. Hosts keep native VFX.
+This does not transport an event emitted without an owner or recover an RPC whose
+endpoint disappeared before reception. Those cases and manual parity remain R07.
+
+Validation:325/325 combined Unity cases passed (OnlineRoom233 + COM92), C#0
+warnings/errors, Python40/40, UTF-8/BOM and diff checks. New cases exercise active
+host selection, inactive fallback rejection, host exclusion, owner destruction
+during the wait and disconnect cancellation. Reports:Logs/PredictionBombVisual42Tests.*.

@@ -21,13 +21,28 @@ namespace Assets.Scripts.Netcode
                 identity.netId != 0 && NetworkClient.spawned.TryGetValue(identity.netId, out var spawned) && spawned == identity;
         }
 
-        public static bool Retain(NetworkBombFx presenter)
+        static NetworkBombMotionLifetime GetOrCreate(NetworkBombFx presenter)
         {
-            if (!CanRetain(presenter) || NetworkManager.singleton is not BombermanNetworkManager manager) return false;
+            if (!CanRetain(presenter) || NetworkManager.singleton is not BombermanNetworkManager manager) return null;
             var lifetime = manager.GetComponent<NetworkBombMotionLifetime>();
             if (lifetime == null) lifetime = manager.gameObject.AddComponent<NetworkBombMotionLifetime>();
+            return lifetime;
+        }
+
+        public static bool Retain(NetworkBombFx presenter)
+        {
+            var lifetime = GetOrCreate(presenter);
+            if (lifetime == null) return false;
             lifetime.retained.Add(presenter);
             return true;
+        }
+
+        public static MonoBehaviour ApprovedVisualHost(NetworkBombFx presenter)
+        {
+            if (!CanRetain(presenter)) return null;
+            var lifetime = GetOrCreate(presenter);
+            if (lifetime != null && lifetime.isActiveAndEnabled) return lifetime;
+            return presenter.isActiveAndEnabled ? presenter : null;
         }
 
         public static void Forget(NetworkBombFx presenter)
@@ -57,6 +72,7 @@ namespace Assets.Scripts.Netcode
 
         public void Clear()
         {
+            StopAllCoroutines(); // Only approved visual timeline waits are hosted here.
             foreach (var presenter in retained)
                 if (presenter != null) presenter.ClearRetainedBombMotions();
             retained.Clear(); expired.Clear();

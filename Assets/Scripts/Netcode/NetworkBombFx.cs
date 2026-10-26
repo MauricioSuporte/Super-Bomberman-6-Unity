@@ -625,15 +625,16 @@ namespace Assets.Scripts.Netcode
             if (isServer || bomb == null || BombermanNetworkManager.IsCoopStage)
                 return;
 
-            StartCoroutine(PlayOnTimeline(origin, parts, pierce, duration, time));
+            var visualHost = NetworkBombMotionLifetime.ApprovedVisualHost(this);
+            if (visualHost != null) visualHost.StartCoroutine(PlayOnTimeline(bomb.GetNetworkExplosionVisualPrefab(), origin, parts, pierce, duration, time));
         }
 
-        IEnumerator PlayOnTimeline(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration, double time)
+        static IEnumerator PlayOnTimeline(BombExplosion prefab, Vector2 origin, ExplosionFx[] parts, bool pierce, float duration, double time)
         {
-            while (NetworkClient.active && NetworkTime.time < time) yield return null;
-            if (!NetworkClient.active || bomb == null) yield break;
+            while (NetworkClient.active && prefab != null && NetworkTime.time < time) yield return null;
+            if (!NetworkClient.active || prefab == null) yield break;
             for (int i = 0; i < parts.Length; i++)
-                bomb.PlayNetworkExplosionVisual(parts[i].pos, parts[i].part, parts[i].dir, origin, duration, pierce);
+                BombController.PlayApprovedExplosionVisual(prefab, parts[i].pos, parts[i].part, parts[i].dir, origin, duration, pierce);
 
             // Som da explosão (o VFX acima é mudo; o áudio era host-only).
             // Explosion audio arrives through the shared server sound event.

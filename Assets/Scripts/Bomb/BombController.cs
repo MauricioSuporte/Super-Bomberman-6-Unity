@@ -590,13 +590,19 @@ public partial class BombController : MonoBehaviour
 
     // Chamado no CLIENTE (via NetworkBombFx) para recriar o visual da explosão
     // sem dano (o dano é resolvido só no host).
-    public void PlayNetworkExplosionVisual(Vector2 position, byte part, Vector2 direction, Vector2 origin, float duration, bool pierce)
+    public BombExplosion GetNetworkExplosionVisualPrefab()
     {
         ResolveExplosionPrefab();
-        if (explosionPrefab == null)
-            return;
+        return explosionPrefab;
+    }
 
-        BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
+    public void PlayNetworkExplosionVisual(Vector2 position, byte part, Vector2 direction, Vector2 origin, float duration, bool pierce)
+        => PlayApprovedExplosionVisual(GetNetworkExplosionVisualPrefab(), position, part, direction, origin, duration, pierce);
+
+    public static void PlayApprovedExplosionVisual(BombExplosion prefab, Vector2 position, byte part, Vector2 direction, Vector2 origin, float duration, bool pierce)
+    {
+        if (prefab == null) return;
+        BombExplosion explosion = BombExplosion.Spawn(prefab, position, Quaternion.identity);
         if (explosion == null)
             return;
 

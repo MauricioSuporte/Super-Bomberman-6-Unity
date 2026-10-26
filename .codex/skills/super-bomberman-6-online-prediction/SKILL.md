@@ -38,6 +38,13 @@ Prediction changes presentation, not who decides game rules. Do not start bomb
 fuse/damage/world coroutines, draw gameplay RNG, spawn duplicate bombs or edit
 terrain speculatively on a pure client. Offline and host retain their normal path.
 
+For an approved effect scheduled in the future, its coroutine host must outlive
+the actor that caused it. Use the existing manager's presentation helper and
+capture prefab/event data instead of owner gameplay components. Cancel waits on
+scene/client cleanup, reject inactive coroutine hosts and preserve host-native
+effects. This protects received events only; a removed RPC endpoint needs a
+separate authoritative transport. Never infer missing explosion gameplay.
+
 ## Extend the existing owners
 
 - NetworkPlayerInput samples local hardware slot 1, independent of assigned P1-P6.
