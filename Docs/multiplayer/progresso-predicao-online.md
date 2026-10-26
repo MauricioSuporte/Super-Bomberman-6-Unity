@@ -24,15 +24,18 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - A07 salvo/enviado em `cb971ee11`, protocolo31, CI40283518599 sucesso.
   Unity completo171/171, C#0warnings/erros e Python40 passaram nesse lote.
   Relatorios principais Logs/PredictionMoleTests.xml/.log.
+- A14 Tank salvo/enviado em `874b38956`, protocolo32, CI40285499924 em andamento.
 - A14 parcial em32 validado: Tank eligibility separada de cooldown com projecao
   pelo timestamp da autoridade. Suite Unity172/172, Python40 e C# zero warnings/
   erros passaram. Relatorios Logs/PredictionTankCooldownTests.xml/.log.
-  Pronto para salvar/publicar; nao marcar A14 completo (faltam outras regressoes).
-- Runner livre; fontes32 testadas e tracked restaurados antes da CI.
+  Publicacao32 pendente de CI; nao marcar A14 completo (faltam outras regressoes).
+- Runner agora ocupado pela CI32; fontes testadas e tracked restaurados.
+  Nao copiar fontes nem abrir outro Unity nesse runner enquanto CI estiver ativa.
 - Nenhuma validacao manual com dois peers nem novas capturas comparaveis feitas.
   Nao declarar zero latencia nem o plano inteiro concluido.
-- Proximo: confirmar CI31, testar/salvar Tank32 e seguir A09/A10/A11/A12
-  e C/R restantes pela matriz. Nao publicar32 antes da validacao Unity.
+- Proximo: confirmar CI40285499924 e implementar A09/LineBomb/Purple pela
+  arquitetura abaixo; depois A10/A11/A12, C02-C10 e R01-R08 pendentes.
+  Manter R02 e A14 parciais; preservar limites de autoridade e manual pendente.
 
 ## Marcos concluídos e commits
 
@@ -282,3 +285,7 @@ Tank32 validado: suite completa172/172 passou incluindo Captura/Disable,
 projecao de cooldown, wire32 e regressao dos presenters anteriores. C# final
 zero warnings/erros, Python40/40 e UTF-8/BOM passaram. Publicar este lote e
 seguir A09 pela arquitetura registrada. Manual dois peers ainda pendente.
+
+Checkpoint apos envio32: commit874b38956, pipeline40285499924 em andamento.
+Ultima publicacao integral confirmada: cb971ee11 / protocolo31 / CI40283518599.
+Nenhum arquivo de usuario foi editado. Nao declarar32 publicado antes do CI.
