@@ -10,6 +10,84 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [TestCase(false)]
+    [TestCase(true)]
+    public void InactiveOwnerKeepsApprovedBombMotionAndCancelsOnlyUnconfirmedActions(bool stopClient)
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldClientState = clientState.GetValue(null);
+        var timeline = typeof(NetworkClient).GetField("localTimeline", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldTimeline = timeline.GetValue(null);
+        var singleton = typeof(NetworkManager).GetProperty("singleton"); var oldManager = singleton.GetValue(null);
+        var paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        bool wasPaused = (bool)paused.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var managerObject = new GameObject("RetainedBombManager"); managerObject.SetActive(false);
+        var actor = new GameObject("InactiveBombOwner"); actor.SetActive(false); actor.AddComponent<BoxCollider2D>();
+        var replicas = new List<GameObject>();
+        const uint actorId = uint.MaxValue - 170, approvedId = actorId - 1, predictedId = actorId - 2;
+        NetworkBombMotionLifetime lifetime = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected")); paused.SetValue(null, false);
+            var manager = managerObject.AddComponent<BombermanNetworkManager>(); singleton.SetValue(null, manager);
+            var identity = actor.AddComponent<NetworkIdentity>(); var fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, actorId); typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            NetworkClient.spawned.Add(actorId, identity);
+            Bomb Replica(uint id, Vector2 position)
+            {
+                var go = new GameObject("RetainedBomb" + id); go.SetActive(false); go.AddComponent<CircleCollider2D>(); replicas.Add(go);
+                var bomb = go.AddComponent<Bomb>(); var bombIdentity = go.AddComponent<NetworkIdentity>();
+                typeof(NetworkIdentity).GetProperty("netId").SetValue(bombIdentity, id); NetworkClient.spawned.Add(id, bombIdentity);
+                go.SetActive(true); go.transform.position = position; go.GetComponent<Collider2D>().enabled = true;
+                return bomb;
+            }
+            Vector2 origin = new(3000, 3000);
+            var approved = Replica(approvedId, origin); var predicted = Replica(predictedId, origin + Vector2.up * 2);
+            var motion = new NetworkBombFx.KickMotion { bombId = approvedId, revision = 1, inputTick = 20,
+                kind = NetworkBombFx.BombMotionKind.Punch, start = origin, end = origin + Vector2.right, duration = 1,
+                moving = true, first = true, serverTime = NetworkBombFx.KickServerNow };
+            fx.ReceiveKickMotion(motion); Assert.IsFalse(approved.GetComponent<Collider2D>().enabled);
+            var pending = motion; pending.bombId = predictedId; pending.inputTick = 21; pending.revision = 0;
+            pending.start = predicted.transform.position; pending.end = pending.start + Vector2.right;
+            Assert.IsTrue(fx.BeginAbilityPrediction(predicted, pending, Vector2.right, 0.25f));
+            Assert.IsTrue(fx.HasUnconfirmedClientMotion(predicted));
+            typeof(NetworkBombFx).GetMethod("OnDisable", flags).Invoke(fx, null);
+            lifetime = managerObject.GetComponent<NetworkBombMotionLifetime>(); Assert.IsNotNull(lifetime);
+            Assert.IsFalse(fx.HasUnconfirmedClientMotion(predicted)); Assert.IsTrue(predicted.GetComponent<Collider2D>().enabled);
+            Assert.IsFalse(fx.AbilityPredictionLocksMovement); Assert.IsFalse(approved.GetComponent<Collider2D>().enabled);
+            float before = approved.transform.position.x;
+            lifetime.Present(0.1f, 0.1f); Assert.Greater(approved.transform.position.x, before + 0.05f);
+            Assert.IsFalse(approved.IsBeingPunched); Assert.IsFalse(approved.IsFusePaused); Assert.IsFalse(actor.activeSelf);
+            Vector3 held = approved.transform.position; paused.SetValue(null, true); lifetime.Present(0.2f, 0.2f); Assert.AreEqual(held, approved.transform.position);
+            paused.SetValue(null, false);
+            motion.revision = 2; motion.moving = false; motion.first = false; motion.start = motion.end;
+            motion.serverTime += 0.1; timeline.SetValue(null, motion.serverTime + 1);
+            fx.ReceiveKickMotion(motion);
+            Assert.IsFalse(approved.GetComponent<Collider2D>().enabled, "An approved stop waits behind the retained in-flight arc.");
+            lifetime.Present(1f, 1f); lifetime.Present(0.1f, 0.1f);
+            Assert.IsTrue(approved.GetComponent<Collider2D>().enabled); Assert.IsFalse(approved.ClientMotionNonBlocking);
+            var playback = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("kickPlayback", flags).GetValue(fx); Assert.AreEqual(0, playback.Count);
+            motion.revision = 3; motion.moving = true; motion.first = true; motion.start = origin; motion.serverTime += 0.1;
+            fx.ReceiveKickMotion(motion); Assert.IsFalse(approved.GetComponent<Collider2D>().enabled);
+            if (stopClient) fx.OnStopClient(); else NetworkClient.spawned.Remove(actorId);
+            lifetime.Present(0.1f, 0.1f);
+            Assert.IsTrue(approved.GetComponent<Collider2D>().enabled, "Disconnect/despawn must restore an in-flight bomb's captured collider.");
+            Assert.AreEqual(0, playback.Count);
+            Assert.AreEqual(0, ((HashSet<NetworkBombFx>)typeof(NetworkBombMotionLifetime).GetField("retained", flags).GetValue(lifetime)).Count);
+        }
+        finally
+        {
+            if (lifetime != null) lifetime.Clear();
+            NetworkClient.spawned.Remove(actorId); NetworkClient.spawned.Remove(approvedId); NetworkClient.spawned.Remove(predictedId);
+            Object.DestroyImmediate(actor); foreach (var go in replicas) Object.DestroyImmediate(go);
+            singleton.SetValue(null, oldManager); Object.DestroyImmediate(managerObject);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); paused.SetValue(null, wasPaused); timeline.SetValue(null, oldTimeline);
+        }
+    }
+
     [Test]
     public void MagnetClientReadsInitialTilesAndPresentsOnlyFreshApprovedDirections()
     {

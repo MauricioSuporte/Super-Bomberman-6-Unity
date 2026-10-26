@@ -269,7 +269,7 @@ namespace Assets.Scripts.Netcode
             var motion = playback.motion;
             if (!motion.moving) return motion.end;
             bool continueLocally = false;
-            if (motion.moving && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw &&
+            if (!presentationOwnerSuspended && motion.moving && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw &&
                 motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && playback.elapsed > motion.duration && motion.duration > 0)
             {
                 var step = motion.end - motion.start;
@@ -425,12 +425,17 @@ namespace Assets.Scripts.Netcode
             // The normal NetworkTransform remains enabled to receive/decode deltas.
             ApplyMotionCollider(movingBomb, playback);
             ApplyKickPosition(movingBomb, playback.presented);
-            if (isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
+            if (!presentationOwnerSuspended && isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
                 motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet)
                 BeginConfirmedAbilityPose(motion, age);
         }
 
-        void LateUpdate() => PresentFrame(Time.deltaTime, Time.unscaledDeltaTime);
+        int lastNativeBombPresentationFrame = -1;
+        void LateUpdate()
+        {
+            lastNativeBombPresentationFrame = Time.frameCount;
+            PresentFrame(Time.deltaTime, Time.unscaledDeltaTime);
+        }
 
         void PresentFrame(float deltaTime, float unscaledDeltaTime)
         {
@@ -450,6 +455,12 @@ namespace Assets.Scripts.Netcode
             UpdateRedPunch(deltaTime);
             UpdateTankPrediction(deltaTime);
             UpdateBlackDash(deltaTime, unscaledDeltaTime);
+            PresentBombMotions(deltaTime, unscaledDeltaTime);
+            UpdateLocalAbilityPresentation();
+        }
+
+        void PresentBombMotions(float deltaTime, float unscaledDeltaTime)
+        {
             readyBombArcs.Clear();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
@@ -527,7 +538,6 @@ namespace Assets.Scripts.Netcode
             applyingQueuedBombArc = true;
             try { foreach (var next in readyBombArcs) ReceiveKickMotion(next); }
             finally { applyingQueuedBombArc = false; }
-            UpdateLocalAbilityPresentation();
         }
 
         public static bool IsFlightArc(BombMotionKind kind) => kind == BombMotionKind.Punch || kind == BombMotionKind.Throw;
@@ -580,6 +590,11 @@ namespace Assets.Scripts.Netcode
             foreach (var pair in kickPlayback)
                 if (pair.Key != null) RestoreMotionCollider(pair.Key, pair.Value);
             kickPlayback.Clear(); rejectedStarts.Clear();
+            ClearPlayerActionPresentations();
+        }
+
+        void ClearPlayerActionPresentations()
+        {
             ResetLocalAbilityPresentation();
             ClearRidingPresentation("clear_playback"); hasDismountState = false;
             ClearPurpleLineCast("clear_playback");
@@ -594,7 +609,6 @@ namespace Assets.Scripts.Netcode
             ClearPinkJump("presenter_disabled");
         }
 
-        void OnDisable() => ClearKickPlayback();
 
         [Server]
         public void ServerEmit(Vector2 origin, ExplosionFx[] parts, bool pierce, float duration)

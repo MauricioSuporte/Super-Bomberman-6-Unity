@@ -101,6 +101,7 @@ namespace Assets.Scripts.Netcode
         public override void OnStartClient()
         {
             base.OnStartClient();
+            StartBombMotionLifetime();
             if (!isServer && serverRidingMotion.active) ReceiveRidingArc(serverRidingMotion);
         }
 

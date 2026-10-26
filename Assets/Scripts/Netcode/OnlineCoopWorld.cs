@@ -212,6 +212,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopWorld()
         {
+            GetComponent<NetworkBombMotionLifetime>()?.Clear();
             ClearPortalMaskViews();
             ClearCoopCollisionWorld();
             ClearCoopSprites();

@@ -19,23 +19,22 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo39, commit `b9635e4e3`, pipeline
-  [40381560929](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40381560929) concluído com sucesso.
-- **Último lote publicado:** correnteza com continuidade aprovada/pausa/cleanup e
-  barrier de saída no replay; plataforma multi-rider; relógio visual do co-op
-  alinhado ao passageiro. Suíte227/227 Unity, C#0 erros/avisos novos, Python40/40,
-  UTF-8/BOM e diffcheck passaram. Portais38 já publicados antes.
-- **Lote40 validado, aguardando envio/publicação:** ímãs/redirecionadores e guards dos entrypoints de
-  movimento de bomba. Direção magnética aprovada com buffer/revisão, sem scan client.
-  Suíte final321/321 Unity (229 online +92 COM), C#0 erros/avisos novos,
-  Python40/40, UTF-8/BOM e diffcheck passaram.
-- **Próximos itens:** validar40, completar transporte independente do owner/R07,
-  barco/contexto de água, demais C/R e regressões A14. Swap é terreno/blackout C09.
+- **Publicado e confirmado:** protocolo40, commit `3712ec468`, pipeline
+  [40405577413](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40405577413) concluído com sucesso.
+- **Último lote publicado:** campo magnético aprovado/gates client e descoberta
+  da suíte COM corrigida. Validação combinada321/321 Unity (229 online +92 COM),
+  C#0 erros/avisos novos, Python40/40, UTF-8/BOM e diffcheck passaram.
+- **Lote41 validado, aguardando envio/publicação:** continuidade de motion de bomba confirmado quando owner
+  desativa, com helper render-only no manager existente. Previsões/poses canceladas;
+  sem simular input/abilities do personagem. Suíte323/323 Unity, C#0 erros/avisos
+  novos, Python40/40 e UTF-8/BOM/diffcheck passaram.
+- **Próximos itens:** validar41, demais R07 (sem owner/VFX), barco/contexto de água,
+  demais C/R e regressões A14. Swap é terreno/blackout C09.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote38 commitado/enviado; Lote39 commitado/enviado; início40 C08 ainda no diretório, sem commit.
+  do usuário e o Unity aberto. Lote40 commitado/publicado; alterações41 ainda no diretório, sem commit.
 
 ## Como acompanhar
 
@@ -201,7 +200,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R04: forças impostas por inimigos.
 - [ ] R05: projéteis remotos.
 - [ ] R06: bosses/bombers.
-- [ ] R07: parcial: ovos35 e poses de montarias38 implementados/testados; itens, transferência e apresentação sem owner ativo pendentes.
+- [ ] R07: parcial: ovos35/poses38 e motion de bomba com owner inativo41 testados; VFX, bombas sem owner, itens/transferência e manual pendentes.
 - [ ] R08: cenário móvel/ambiental.
 - [ ] Consolidar skill, notas e matriz de validação.
 
@@ -932,3 +931,63 @@ Logs/PredictionMagnet40FinalTests.*. Runner restaurado nos tracked de validaçã
 fixture temporária antiga Editor/BattleModeComEditModeTests.* não existe mais.
 Commit/enviar40 e confirmar CI; último deploy confirmado39. C08/A14 seguem parciais:
 manual, lifecycle de bombas sem presenter e matriz completa ainda pendentes.
+
+
+Após envio40:3712ec468 / CI40405577413. Último deploy confirmado39 até conferir CI.
+Próximo41 R07, escopo inicial: preservar motions de bomba já confirmados quando
+owner-clone desativa. Extrair loop de bomb motions de PresentFrame; helper de
+apresentação anexado ao manager existente em ordem200 ticka somente FX inativos,
+sem rodar input/ability/gameplay. OnDisable cancela previsões/poses do player mas
+conserva motion confirmado se NI ainda consta em NetworkClient.spawned. Limpar
+em OnStopClient/scene/despawn e evitar duplo tick se desativar após LateUpdate.
+Não transferir posse/tick de input nem recriar actor/physics. Bomba sem owner é
+etapa posterior de transporte, não ficará resolvida por esse helper. Ainda sem código41.
+
+
+41 implementado em andamento, não validado: NetworkBombMotionLifetime é helper
+render-only no manager existente (ordem200 após NetworkTransform). Owner inativo
+com NI ainda spawned conserva só motion confirmado; previsões/poses de player
+canceladas. Loop de bombas extraído sem rodar rotinas/input do player. OnStopClient,
+scene/NI despawn/destroy limpam e devolvem colliders; reativação retoma LateUpdate
+nativo, sem tick duplo no mesmo frame. Suspensão explícita evita pose/bridge local
+após desativação, preservando fixtures que invocam apresentação diretamente.
+Protocolos41 alinhados. C# em execução; testes lifecycle ainda precisam ser escritos/
+executados. Aguardar CI40 liberar runner. Bomba sem owner continua pendente.
+
+
+41 C# passou0 erros/avisos novos após integrar StartBombMotionLifetime no
+OnStartClient já existente da Riding presentation (não duplicar override entre
+partials). Novo teste de owner inativo + confirmado/predito/pausa/stop/despawn
+escrito, ainda não executado Unity. Bomba sem owner e VFX de explosão com owner
+inativo (RpcPlay inicia coroutine no owner) continuam pendentes R07; este lote
+preserva somente a continuidade de motion aprovado. Nenhuma nova posse/tick.
+
+
+CI40 confirmado sucesso. Runner livre, copiados somente arquivos próprios41.
+Executando OnlineRoom + COM em PredictionBombLifetime41Tests.xml/.log. Nenhum
+resultado Unity41 presumido; não publicar antes de terminar.
+
+
+41 primeira suíte321/322: único novo teste esperava stop antes do arco terminar;
+fixture corrigida para completar arco. Focado seguinte ainda rejeitava stop por
+serverTime artificialmente ANTIGO. Corrigida fixture para timestamp crescente e
+avanço explícito do relógio Mirror, com restauração no finally. Executando foco
+PredictionBombLifetime41ClockTests.xml/.log, exec87770. Runtime não precisou mudar
+para essas assertivas. Acrescentados eventos diagnósticos opt-in owner_inactive/
+owner_reactivated; copiar helper atualizado ao runner após o foco, antes da suíte final.
+
+
+Foco41 corrigido passou1/1 com relógio/timestamps coerentes. Suíte final ampliada
+agora inclui duas variantes do novo caso (OnStopClient e NI despawn restaurando
+collider ainda em voo): PredictionBombLifetime41FinalTests.xml/.log, exec64831.
+Helper atualizado com diagnósticos copiado antes dessa rodada. Não presumir
+323/323 até conferir XML. A compilação C# e Python/UTF-8 estão sendo concluídos.
+
+
+Final41:323/323 Unity passaram (OnlineRoom231 + COM92), C#0 erros/avisos novos,
+Python40/40, UTF-8/BOM/diffcheck passaram. Novos casos cobrem OnStopClient e NI
+removido com collider ainda em voo; confirmado continua, predito é cancelado,
+pausa congela, stop ordenado/handoff limpa corretamente. Nenhuma rotina de player
+é executada no helper. Relatórios finais copiados em Logs/PredictionBombLifetime41FinalTests.*.
+Runner restaurado nos tracked de validação. Próximo: commit/enviar41, confirmar CI,
+prosseguir R07 VFX/sem owner ou demais itens. Último deploy confirmado40.

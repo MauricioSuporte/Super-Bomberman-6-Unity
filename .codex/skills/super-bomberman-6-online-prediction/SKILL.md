@@ -267,3 +267,12 @@ read-only cache. For magnetic tiles, gate native scan/pull/rotation first and se
 revisioned field phases with a late-observer heartbeat. Apply approved tile views
 without resurrecting a cell already replaced by sudden death. Transporting the
 field does not authorize the client to choose a target or simulate a real pull.
+
+
+Do not tie confirmed world presentation to an owner's enabled state. Cancel that
+player's unconfirmed commands/poses on disable, but retain approved bomb motion
+while its network identity remains spawned. Tick only the presentation loop from
+the existing manager's helper after NetworkTransform, never input or abilities.
+Clean up on scene/identity/client stop and guard against advancing twice in one
+frame during a disable/reactivate transition. This alone does not provide an
+ownerless transport or make owner-hosted VFX coroutines survive deactivation.

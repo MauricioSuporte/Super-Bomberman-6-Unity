@@ -892,3 +892,27 @@ now supply concrete colliders, initialize Edit Mode caches/input profiles and
 activate the tilemap used by native coordinate queries; all original assertions
 remain. Full CI selects both suites, while quick still builds without running
 tests. C#0 new warnings/errors, Python40/40 and UTF-8/diff checks passed.
+
+
+## Confirmed bomb motion outlives an inactive owner (protocol 41)
+
+NetworkBombMotionLifetime is a presentation helper on the existing manager,
+ordered200 after NetworkTransform. A pure-client owner whose identity remains
+spawned retains confirmed bomb playback while cancellation rolls back unconfirmed
+commands and clears player ability/placement poses. The helper ticks only the
+extracted bomb-motion loop, never the player's input, abilities or gameplay.
+Inactive owners do not predict another endpoint or begin a new local ability pose.
+
+Reactivation delegates to the original LateUpdate. A frame guard prevents a second
+presentation advance if deactivation followed that LateUpdate. Scene clear,
+OnStopClient, identity removal and destruction release playback/captured collider
+state. Integration extends the existing OnStartClient in Riding presentation.
+Opt-in diagnostics record bomb_motion_owner_inactive/owner_reactivated.
+
+Final validation:323/323 combined Unity cases passed (OnlineRoom231 + COM92),
+C#0 new warnings/errors, Python40/40 and strict UTF-8/BOM/diff checks. Tests include
+pending-command rollback, confirmed movement, pause, ordered stop, disconnect and
+identity-removal cleanup while a bomb still has a captured collider. Manual peers
+and reactivation timing remain to compare. Ownerless bomb transport and explosion
+VFX scheduled on an inactive owner remain separate R07 work; do not claim them
+solved by retaining motion alone.

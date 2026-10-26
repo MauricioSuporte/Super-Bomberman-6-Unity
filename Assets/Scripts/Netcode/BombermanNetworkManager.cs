@@ -289,6 +289,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient()
         {
+            GetComponent<NetworkBombMotionLifetime>()?.Clear();
             if (!NetworkServer.active) ClearPortalMaskViews();
             base.OnStopClient();
             if (!NetworkServer.active)
