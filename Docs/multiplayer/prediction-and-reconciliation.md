@@ -829,3 +829,37 @@ relative hierarchy poses, hidden renderers, approved masks, particle authority a
 cleanup through iterator disposal/controller disable. C#0 new warnings/errors;
 Python40/40, strict UTF-8/BOM and diff checks passed. Manual two-peer comparison
 is still pending.
+
+
+## Water currents and platform riders (protocol 39)
+
+WaterCycleCurrent uses the approved owner-motion scope during its native locked
+push. Entry points reject pure clients; they never choose contact, obstacles,
+hazard results or a stop. Pauses freeze progression and explicit disable/disposal
+restores the previous lock/override/hazard flags. Online remote player steps write
+body and transform consistently; offline keeps native MovePosition. The existing
+server input path still handles braking; input is not replaced by the presenter.
+
+The native exit barrier is also part of NetworkMovementState. Owner motor/replay
+queries and releases its own approved copy. Reconciliation restores that copy;
+predicted retreat cannot remove a barrier from the server's static dictionary.
+Without that state, resuming normal prediction at a blocked exit would repeatedly
+walk forward and be corrected even if the push itself looked smooth.
+
+FloatingPlatform holds an approved presentation scope for each rider, disposing
+it on confirmed unmount/disable. Centered riders suspend walking prediction even
+at a stop: native LateUpdate owns their pose there. This does not lock real inputs
+or change offline boarding. Unmount applies the final destination before forcing
+reconciliation. Client native transport/boarding routines are gated and pause
+freezes platform simulation. Existing co-op sprite views present the support.
+
+World co-op poses and animation playback now use the local player's transform
+send/timeline offset, so support and rider sample the same server time. Bombs
+retain their own identity's offset. This is not boat prediction: BoatRideZone's
+water-tag collision permission, owner head-only pose and support projection still
+need approved context and a dedicated presentation path before enabling it.
+
+No manual two-peer, braking/pause, multiple-rider or water-boundary comparisons
+have been completed for this batch. Final Unity suite227/227 passed; C#0 new
+warnings/errors, Python40/40, strict UTF-8/BOM and diff checks passed. Reports:
+Logs/PredictionWaterPlatform39FinalTests.xml and .log.

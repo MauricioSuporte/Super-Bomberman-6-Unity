@@ -19,24 +19,24 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo37, commit `068d522ca`, pipeline
-  [40371185855](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40371185855) concluído com sucesso.
-- **Último lote publicado:** C04 transporte do visual do carrinho e passageiro,
-  incluindo buffer, cantos, escala/sink, cortes de portal, loop, estrelas e sorting
-  confirmados. Suíte214/214; depois do ajuste final de escala,5 testes focados;
-  C#0 erros/avisos novos e Python40/40. Validação manual com dois peers pendente.
-- **Validado, aguardando envio/publicação:** protocolo38, C05 portais.
-  Pose relativa de sprites, recuperação de pose ao retomar predição, máscaras
-  aprovadas, gates de autoridade do Portal7, apresentação contínua do owner e
-  estrelas aprovadas. Suíte final221/221 Unity, C#0 erros/avisos novos,
-  Python40/40, UTF-8/BOM e diffcheck passaram.
-- **Próximos itens:** validar/publicar38, demais C/R e regressões A14.
-  Swap troca terreno/blackout, não transporta player; acompanhar também em C09.
+- **Publicado e confirmado:** protocolo38, commit `179b6e185`, pipeline
+  [40377824543](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40377824543) concluído com sucesso.
+- **Último lote publicado:** C05 Portal7 com movimento aprovado, poses completas,
+  máscaras/estrelas e gates client. Suíte221/221 Unity, C#0 erros/avisos novos,
+  Python40/40, UTF-8/BOM e diffcheck passaram. Manual com dois peers pendente.
+- **Lote39 validado, aguardando envio/publicação:** correnteza com continuidade aprovada/pausa/cleanup,
+  barrier de saída no replay; plataforma com scopes por rider/cleanup/gates;
+  world stream co-op e playback alinhados ao offset do passageiro.
+  Suíte227/227 Unity passou; C#0 erros/avisos novos, Python40/40 e
+  UTF-8/BOM/diffcheck passaram. Não declarar39 publicado antes do CI.
+- **Próximos itens:** concluir validação/publicação39, barco/contexto de água,
+  demais C/R e regressões A14. Swap troca terreno/blackout, não transporta player;
+  acompanhar também em C09.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Alterações38 ainda no diretório, sem commit.
+  do usuário e o Unity aberto. Lote38 commitado/enviado; lote39 ainda no diretório, sem commit.
 
 ## Como acompanhar
 
@@ -187,7 +187,7 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 validado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
-- [ ] C06: correnteza/barco/plataforma.
+- [ ] C06: parcial39 validado: correnteza/saída/replay e plataforma multi-rider aprovados; barco/contexto/poses e manual pendentes.
 - [ ] C07: pusher.
 - [ ] C08: ímãs/redirecionamento.
 - [ ] C09: mecanismos e tiles especiais.
@@ -759,3 +759,89 @@ casos de interrupção/dispose/disable. C#0 erros/avisos novos, Python40/40 e
 UTF-8/BOM/diffcheck passaram. Relatórios preservados em Logs/PredictionPortal38FinalTests.xml
 e .log. Próximo: commit/envio/publicação38, confirmar CI e continuar C06.
 Nenhuma partida manual com dois peers foi realizada; plano completo segue aberto.
+
+
+## Após envio38 / início39 correnteza
+
+Commit179b6e185 enviado; CI40377824543 em andamento. Não usar runner enquanto
+CI estiver ativo. Última publicação confirmada ainda37.
+Implementação39 em andamento: WaterCycleCurrent owner com scope aprovado,
+gates pureclient, pausa e cleanup de push em Dispose/OnDisable. Servidor mantém
+freio pelo input real; posição Rigidbody/Transform coerente na rede, mantendo
+MovePosition offline. Barrier de saída foi incluído no NetworkMovementState:
+owner avalia e libera uma cópia histórica durante motor/replay, sem mutar o mapa
+estático do servidor. ProtocolVersion/supervisor39 alinhados. Ainda sem testes
+novos/Unity39/publicação. C# em execução12696. Boats/plataformas continuam pendentes.
+
+
+39 também cobre a plataforma flutuante: scope por rider até desembarque/disable,
+poses Rigidbody/Transform coerentes e gates de simulação client. Quando a plataforma
+centraliza o rider, o servidor suspende a predição de caminhada inclusive na parada;
+isso não trava inputs no servidor nem altera o embarque offline. A última posição
+de desembarque é aplicada antes do reconcile final. Stream visual co-op existente
+continua responsável pelo suporte. Pausa congela a plataforma.
+Novos testes de barrier/replay, correnteza pausa/cleanup e plataforma multi-rider
+adicionados; C# passou sem erros/avisos novos. Ainda sem Unity39, aguardando CI38
+liberar runner. Boat e composição/contexto de água seguem pendentes.
+
+
+39 R02/C06 alinhamento temporal: o world stream co-op agora usa o mesmo offset
+de NetworkTransform do local player para selecionar/interpolar poses e avançar
+playback; bombas conservam seu offset próprio. Corrige suporte desenhado adiantado
+em relação ao rider. Teste novo cobre multiplier/timelineOffset/fallback sem player.
+C# final passou0 erros/avisos. Ainda sem Unity39 (CI38 usa runner).
+
+
+CI38 confirmado sucesso. Runner liberado, iniciada suíte OnlineRoom completa39
+PredictionWaterPlatform39Tests.xml/.log. Novos testes ainda sem resultado.
+
+
+Auditoria C08/A14 próxima: Bomb.StartKick / TryRedirectKick / StartMagnetPull não
+possuem guard de autoridade no próprio entrypoint; dependem dos callers. Handler
+MagnetIndestructibleTileHandler inicia ScanRoutine no client, sem gate explícito;
+co-op desativa scripts depois do carregamento, mas não confiar só nisso. Analisar
+gates e transporte da direção visual antes de mudar handler/tile. Motion Search/
+Magnet já usa BindNetworkBombMotion e segmentos aprovados; reutilizar presenter.
+Não presumir que esta auditoria identifica um bug reproduzido nos testes do usuário.
+
+
+C08 handler de ímã ocorre em BattleMode_14 e Stage_2-1 (GUID conferido nas cenas).
+Não basta desativar ScanRoutine: direção visual/célula aprovada precisa transporte
+Battle14 e baseline/refresh para observadores; co-op já usa tile stream. ResetDirection
+atual reescreve tiles no OnEnable; no client deve apenas ler estado aprovado.
+Aguardar39 passar antes de ampliar o lote; nenhuma implementação C08 foi feita.
+
+
+Unity39 primeira rodada223/227: faltavam NetworkIdentity e MovementController
+nas fixtures novas que adicionavam somente NetworkPlayerInput (este componente
+não os adiciona automaticamente). Identidade corrigida: clock1/1 passou; as três
+fixtures restantes ainda precisavam do MovementController/corpo. Corrigido e
+executando quatro casos focados em PredictionWaterPlatform39FocusedReadyTests.xml/.log,
+exec36726. Nenhum resultado final39 presumido. Uma rodada focada intermediária
+usou cópia antiga após erro de caminho; não usar seu relatório como validação.
+Depois dos focados, rodar suíte completa39 e copiar relatório/log para Logs raiz.
+
+
+Focados39: clock e plataforma passaram após fixtures completas. Correnteza
+validou pausa/avanço/scope, mas encontrou bug real na restauração: o setter
+SetExternalMovementOverride limpa hazardDamage. FinishPush agora restaura override
+ANTES de hazardDamage. Executando suíte completa final39 em
+PredictionWaterPlatform39FinalTests.xml/.log, exec61224. C# final precisa repetir
+após essa troca de ordem. Não publicar39 antes de terminar.
+
+Auditoria R07/C08 adicional: Bomb.BindNetworkBombMotion(null, kind) resolve só o
+owner.NetworkBombFx, sem fallback para bomba sem owner. ReportNetworkBombMotion
+não emite sem presenter/NI. Se owner-clone fica inativo após morte, RPC pode chegar,
+mas LateUpdate desse presenter não roda. Avaliar transporte/apresentador existente
+com lifetime independente do owner antes de declarar movimentos ambientais/world
+bombs completos. Não transferir tick/posse de input para outro jogador por conveniência.
+C05 bomba segurada no portal também precisa auditar visibilidade do carry presenter,
+pois ocultar o SR nativo no servidor não implica ocultar um proxy de bomb motion.
+
+
+Final39:227/227 Unity passaram, incluindo restauração de hazard na ordem correta,
+clock/offset, barrier independente no replay e plataforma multi-rider. C#0 erros/
+avisos novos, Python40/40, UTF-8/BOM/diffcheck passaram. Relatórios finais copiados
+para Logs raiz. Runner restaurado nos arquivos tracked de validação. Próximo:
+commit/enviar39, confirmar CI e continuar C08/A14 ou barco com as limitações acima.
+Nenhum manual dois peers realizado; plano permanece em andamento.

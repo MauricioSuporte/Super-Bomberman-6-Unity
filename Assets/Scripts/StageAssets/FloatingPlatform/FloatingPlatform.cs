@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Netcode;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider2D))]
@@ -53,6 +54,13 @@ public sealed class FloatingPlatform : MonoBehaviour
     private int _lastUnmountFrame = -999;
 
     private readonly List<MovementController> _riders = new();
+    private readonly Dictionary<MovementController, NetworkPlayerInput.AuthorityMotionScope> networkRiderPresentations = new();
+    public bool RequiresAuthorityRiderPose => snapRiderToCenterOnMount;
+
+    private void EndNetworkRiderPresentation(MovementController rider)
+    {
+        if (networkRiderPresentations.Remove(rider, out var presentation)) presentation.Dispose();
+    }
     private readonly Dictionary<MovementController, Rigidbody2D> _riderRb = new();
 
     private static readonly HashSet<MovementController> ridersOnPlatforms = new();
@@ -135,7 +143,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_riders.Count == 0)
+        if (NetSync.Mode == NetSync.NetMode.Client || GamePauseController.IsPaused || _riders.Count == 0)
             return;
 
         if (snapRiderToCenterOnMount)
@@ -144,6 +152,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client || GamePauseController.IsPaused) return;
         if (_isStopping)
         {
             TickStopState();
@@ -288,6 +297,7 @@ public sealed class FloatingPlatform : MonoBehaviour
             {
                 rb.linearVelocity = Vector2.zero;
                 rb.position = target;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(mc);
             }
             else
             {
@@ -337,6 +347,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     public bool CanMount(MovementController mc)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return false;
         if (mc == null) return false;
         if (mc.isDead) return false;
         if (!mc.CompareTag("Player")) return false;
@@ -358,6 +369,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riders.Add(mc);
         _riderRb[mc] = mc.Rigidbody;
+        networkRiderPresentations[mc] = NetworkPlayerInput.PresentAuthorityMotion(mc);
 
         ridersOnPlatforms.Add(mc);
         riderToPlatform[mc] = this;
@@ -378,6 +390,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     public bool TryUnmount(MovementController mover)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return false;
         if (mover == null) return false;
         if (!_riders.Contains(mover)) return false;
         if (!IsIdleAtStop) return false;
@@ -391,21 +404,21 @@ public sealed class FloatingPlatform : MonoBehaviour
         Vector2 basePos = GetSharedRiderTargetWorldPos();
         Vector2 targetPos = QuantizeToPixelGrid(basePos + offset);
 
-        ForceUnmountInternal(mover);
+        ForceUnmountInternal(mover, finishPresentation: false);
 
         _lastUnmountFrame = Time.frameCount;
         _nextAllowedMountTime = Time.time + Mathf.Max(0f, remountBlockSeconds);
 
         mover.SnapToWorldPoint(targetPos, roundRiderToGridOnSnap);
+        EndNetworkRiderPresentation(mover);
         return true;
     }
 
-    private void ForceUnmountInternal(MovementController mc)
+    private void ForceUnmountInternal(MovementController mc, bool finishPresentation = true)
     {
-        if (mc == null)
-            return;
+        if (ReferenceEquals(mc, null)) return;
 
-        if (lockInputWhileMoving)
+        if (mc != null && lockInputWhileMoving)
             mc.SetInputLocked(false);
 
         ridersOnPlatforms.Remove(mc);
@@ -413,6 +426,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riderRb.Remove(mc);
         _riders.Remove(mc);
+        if (finishPresentation) EndNetworkRiderPresentation(mc);
     }
 
     private void ForceUnmountAllInternal()
@@ -423,11 +437,13 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riders.Clear();
         _riderRb.Clear();
+        foreach (var presentation in networkRiderPresentations.Values) presentation.Dispose();
+        networkRiderPresentations.Clear();
     }
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (other == null)
+        if (NetSync.Mode == NetSync.NetMode.Client || other == null)
             return;
 
         var mc = other.GetComponentInParent<MovementController>();

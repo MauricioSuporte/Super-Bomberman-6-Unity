@@ -247,3 +247,16 @@ scene/time guards and an explicit empty snapshot. Cleanup must cover disabled
 controllers as well as iterator disposal; stopping a coroutine alone is not a
 sufficient visual cleanup contract. Preserve approved particles before gating
 native portal routines, without running gameplay RNG again on clients.
+
+
+A forced-motion exit can leave constraints that normal walking/replay still needs.
+Transport that approved context (for example WaterCycleCurrent's exit barrier)
+in NetworkMovementState and keep a separate owner copy; speculative queries must
+not mutate the server's static world state. Restore the context on reconciliation.
+For supports that center a rider even while stopped, keep approved pose ownership
+until confirmed unmount; do not re-enable walking prediction merely because the
+native input lock cleared. Keep one scope per rider and dispose after the final
+unmount destination is applied. Use the same transform timeline offset for support
+world poses and animation playback. Preserve each bomb's own timeline offset.
+When restoring coupled flags, inspect setters: SetExternalMovementOverride clears
+hazard damage, so restore the override before its saved hazard setting.

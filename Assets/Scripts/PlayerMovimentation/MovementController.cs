@@ -234,6 +234,9 @@ public partial class MovementController : MonoBehaviour, IKillable
     private bool hasNetworkMovementContext;
     private byte networkMovementCapabilities;
     private MountedType networkMovementMount;
+    private WaterCycleCurrent.NetworkBarrier networkWaterBarrier;
+    public bool UsesAcknowledgedWaterBarrier => predictLocally && hasNetworkMovementContext;
+    public bool BlocksAcknowledgedWaterBarrier(Vector2 target) => WaterCycleCurrent.BlocksNetworkBarrier(ref networkWaterBarrier, target);
 
     public struct NetworkMovementState
     {
@@ -244,6 +247,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         public float dualTimer, alignCoordinate, accX, accY, reentryElapsed, worldSpeed;
         public float baseWorldSpeed, speedMultiplier, speedModifierRemaining;
         public BattleMode5ConveyorController.NetworkMotorState conveyor;
+        public WaterCycleCurrent.NetworkBarrier waterBarrier;
         public byte axis, alignAxis, movementCapabilities;
         public MountedType mount;
         public int animationSpeed;
@@ -253,8 +257,10 @@ public partial class MovementController : MonoBehaviour, IKillable
     public bool CanPredictNetworkMovement => NetworkPredictionBlockReason == null;
     public bool AcknowledgedDestructiblePass => hasNetworkMovementContext ? (networkMovementCapabilities & 2) != 0 :
         (CurrentMovementCapabilities & 2) != 0;
+    private bool NetworkPlatformControlsPose => Assets.Scripts.Netcode.NetSync.IsOnline &&
+        FloatingPlatform.TryGetPlatformForRider(this, out var platform) && platform.RequiresAuthorityRiderPose;
     public string NetworkPredictionBlockReason => isDead ? "dead" : inputLocked ? "input_locked" : isEndingStage ? "stage_ending" :
-        externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
+        NetworkPlatformControlsPose ? "platform_transport" : externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
         externalVisualSuppressed && !CanPredictGloveCarry ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
         IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :
         !MountedPredictionContextReady ? "mount_context_pending" : !Assets.Scripts.Netcode.BombermanNetworkManager.ClientPredictionGeometryReady ? "scene_geometry_pending" :
@@ -301,6 +307,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         baseWorldSpeed = SnapshotBaseWorldSpeed, speedMultiplier = SnapshotSpeedMultiplier,
         speedModifierRemaining = predictLocally ? predictedSpeedModifierRemaining : ExternalSpeedModifierRemaining,
         conveyor = CaptureConveyorState(),
+        waterBarrier = UsesAcknowledgedWaterBarrier ? networkWaterBarrier : WaterCycleCurrent.CaptureNetworkBarrier(this),
         animationSpeed = speedInternal, canPredict = CanPredictNetworkMovement,
         movementCapabilities = predictLocally && hasNetworkMovementContext ? networkMovementCapabilities : CurrentMovementCapabilities,
         mount = predictLocally && hasNetworkMovementContext ? networkMovementMount :
@@ -310,6 +317,7 @@ public partial class MovementController : MonoBehaviour, IKillable
     public void RestoreNetworkMovementState(NetworkMovementState state)
     {
         SetNetworkPosition(state.position);
+        networkWaterBarrier = state.waterBarrier;
         hasNetworkMovementContext = true; networkMovementCapabilities = state.movementCapabilities; networkMovementMount = state.mount;
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && isMounted != (state.mount != MountedType.None))
             SetMountedOnLouie(state.mount != MountedType.None);

@@ -195,7 +195,7 @@ namespace Assets.Scripts.Netcode
                 animation.loopRestartDelay = clip.restartDelay; animation.pingPong = clip.pingPong;
                 coopViewClips[frame.id] = frame.animation;
             }
-            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, NetworkTime.time - frame.time), false);
+            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, CoopVisualClock - frame.time), false);
             if (clip.offsets != null && clip.offsets.Length > 0)
             {
                 Vector2 offset = clip.offsets[Mathf.Clamp(animation.CurrentFrame, 0, clip.offsets.Length - 1)];
@@ -205,10 +205,15 @@ namespace Assets.Scripts.Netcode
 
         readonly Dictionary<int, int> coopViewClips = new();
 
+        // Align world props/supports with the approved player transform timeline.
+        // Sampling on packet time while the rider uses NT's offset makes the
+        // platform appear ahead of its passenger even when both are smooth.
+        static double CoopVisualClock => NetworkTime.time - TransformVisualOffset(NetworkClient.localPlayer);
+
         void PresentOnlineSprites()
         {
             if (!NetworkClient.active || NetworkServer.active) return;
-            double clock = NetworkTime.time;
+            double clock = CoopVisualClock;
             if (coopCatalog != null && coopViewRoot != null)
             {
                 coopExpiredViews.Clear();
@@ -237,6 +242,7 @@ namespace Assets.Scripts.Netcode
                 }
                 foreach (int id in coopExpiredViews) { coopVisualSamples.Remove(id); coopVisualRemovals.Remove(id); }
             }
+            clock = NetworkTime.time;
             expiredBombViews.Clear();
             foreach (var pair in bombVisualSamples)
             {
@@ -246,7 +252,7 @@ namespace Assets.Scripts.Netcode
                     continue;
                 }
                 var samples = pair.Value;
-                double bombClock = clock - BombVisualOffset(identity);
+                double bombClock = clock - TransformVisualOffset(identity);
                 while (samples.Count > 1 && samples[1].time <= bombClock) samples.RemoveAt(0);
                 if (samples.Count == 0 || samples[0].time > bombClock || !identity.TryGetComponent<AnimatedSpriteRenderer>(out var animation)) continue;
                 var frame = samples[0];
@@ -257,9 +263,9 @@ namespace Assets.Scripts.Netcode
             foreach (uint id in expiredBombViews) bombVisualSamples.Remove(id);
         }
 
-        static double BombVisualOffset(NetworkIdentity identity)
+        static double TransformVisualOffset(NetworkIdentity identity)
         {
-            if (!identity.TryGetComponent<NetworkTransformReliable>(out var sync)) return 0;
+            if (identity == null || !identity.TryGetComponent<NetworkTransformReliable>(out var sync)) return 0;
             return NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +
                 (sync.timelineOffset ? sync.sendIntervalMultiplier : 0));
         }

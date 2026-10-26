@@ -10,6 +10,177 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void CoopWorldAndAnimationClockFollowApprovedRiderTransformOffset()
+    {
+        var actor = new GameObject("CoopRiderClock"); actor.SetActive(false);
+        var localPlayer = typeof(NetworkClient).GetProperty("localPlayer"); var previous = localPlayer.GetValue(null);
+        try
+        {
+            actor.AddComponent<NetworkIdentity>();
+            var sync = actor.AddComponent<NetworkTransformReliable>(); sync.syncInterval = (float)NetworkServer.sendInterval * 3; sync.timelineOffset = true;
+            Assert.AreEqual(3u, sync.sendIntervalMultiplier);
+            localPlayer.SetValue(null, actor.GetComponent<NetworkIdentity>());
+            var clock = typeof(BombermanNetworkManager).GetProperty("CoopVisualClock", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            double expected = NetworkClient.sendInterval * 5;
+            Assert.AreEqual(expected, NetworkTime.time - (double)clock.GetValue(null), 0.01);
+            sync.timelineOffset = false;
+            Assert.AreEqual(NetworkClient.sendInterval * 2, NetworkTime.time - (double)clock.GetValue(null), 0.01);
+            localPlayer.SetValue(null, null);
+            Assert.AreEqual(0, NetworkTime.time - (double)clock.GetValue(null), 0.01);
+        }
+        finally { localPlayer.SetValue(null, previous); Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
+    public void PlatformOwnsEachRiderPresentationUntilApprovedUnmountOrDisable()
+    {
+        var oldMode = NetSync.Mode;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var platformObject = new GameObject("ApprovedPlatform"); platformObject.SetActive(false);
+        var actors = new List<GameObject>();
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Host;
+            var platform = platformObject.AddComponent<FloatingPlatform>();
+            platform.enabled = false; platformObject.SetActive(true);
+            typeof(FloatingPlatform).GetMethod("Awake", flags).Invoke(platform, null);
+            MovementController CreateRider(uint id)
+            {
+                var actor = new GameObject("PlatformRider" + id); actor.SetActive(false); actor.tag = "Player"; actors.Add(actor);
+                actor.AddComponent<BoxCollider2D>(); actor.AddComponent<NetworkIdentity>(); actor.AddComponent<MovementController>(); actor.AddComponent<NetworkPlayerInput>();
+                var identity = actor.GetComponent<NetworkIdentity>(); typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+                foreach (var behaviour in actor.GetComponents<MonoBehaviour>()) behaviour.enabled = false;
+                actor.SetActive(true);
+                typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, true); typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, id);
+                var movement = actor.GetComponent<MovementController>();
+                typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, actor.GetComponent<Rigidbody2D>());
+                return movement;
+            }
+            var first = CreateRider(85); var second = CreateRider(86);
+            Assert.IsTrue(platform.TryMount(first)); Assert.IsTrue(platform.TryMount(second));
+            var token = typeof(NetworkPlayerInput).GetField("authorityMotionToken", flags);
+            Assert.AreNotEqual(0u, token.GetValue(first.GetComponent<NetworkPlayerInput>())); Assert.AreNotEqual(0u, token.GetValue(second.GetComponent<NetworkPlayerInput>()));
+            Assert.AreEqual("platform_transport", first.NetworkPredictionBlockReason, "Even at a stop the native platform owns the centered rider pose.");
+            Vector2 previousPosition = first.Rigidbody.position;
+            platformObject.transform.position += Vector3.down; Physics2D.SyncTransforms();
+            typeof(FloatingPlatform).GetMethod("SnapAllRidersToPlatformCenter", flags).Invoke(platform, null);
+            Assert.AreNotEqual(previousPosition, first.Rigidbody.position, "Fixture must move the actual platform bounds.");
+            Assert.AreEqual(first.Rigidbody.position, second.Rigidbody.position);
+            Assert.AreEqual(first.Rigidbody.position.x, first.transform.position.x, 0.0001f); Assert.AreEqual(first.Rigidbody.position.y, first.transform.position.y, 0.0001f);
+            Assert.IsTrue(platform.TryUnmount(first)); Assert.IsFalse(FloatingPlatform.IsRidingPlatform(first));
+            Assert.AreEqual(0u, token.GetValue(first.GetComponent<NetworkPlayerInput>())); Assert.AreNotEqual(0u, token.GetValue(second.GetComponent<NetworkPlayerInput>()));
+            typeof(FloatingPlatform).GetMethod("OnDisable", flags).Invoke(platform, null);
+            Assert.IsFalse(FloatingPlatform.IsRidingPlatform(second)); Assert.AreEqual(0u, token.GetValue(second.GetComponent<NetworkPlayerInput>()));
+            Assert.IsFalse(second.InputLocked);
+            NetSync.Mode = NetSync.NetMode.Client;
+            Assert.IsFalse(platform.TryMount(first)); Assert.IsFalse(platform.TryUnmount(second));
+        }
+        finally
+        {
+            Object.DestroyImmediate(platformObject);
+            foreach (var actor in actors)
+            {
+                if (actor.TryGetComponent<NetworkIdentity>(out var identity)) typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, false);
+                Object.DestroyImmediate(actor);
+            }
+            NetSync.Mode = oldMode;
+        }
+    }
+
+    [Test]
+    public void WaterBarrierReconciliationReplaysIndependentApprovedCopy()
+    {
+        var actor = new GameObject("WaterBarrierReplay"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+        var oldMode = NetSync.Mode;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Offline;
+            actor.AddComponent<BoxCollider2D>(); var movement = actor.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, actor.GetComponent<Rigidbody2D>());
+            var origin = new Vector2(30000, 30000);
+            typeof(WaterCycleCurrent).GetMethod("RegisterObstacleBarrier", flags).Invoke(null, new object[] { movement, origin, Vector2.right, 1f });
+            var state = movement.CaptureNetworkMovementState(); Assert.IsTrue(state.waterBarrier.active);
+            using (var writer = NetworkWriterPool.Get())
+            { writer.Write(state); state = new NetworkReader(writer.ToArray()).Read<MovementController.NetworkMovementState>(); }
+            NetSync.Mode = NetSync.NetMode.Client; movement.SetPredictLocally(true); movement.RestoreNetworkMovementState(state);
+            Assert.IsTrue(WaterCycleCurrent.BlocksPlayerForwardMovement(movement, origin + Vector2.right * 0.125f));
+            Assert.IsFalse(WaterCycleCurrent.BlocksPlayerForwardMovement(movement, origin + Vector2.up));
+            Assert.IsFalse(WaterCycleCurrent.BlocksPlayerForwardMovement(movement, origin + Vector2.left * 0.5f));
+            Assert.IsFalse(movement.CaptureNetworkMovementState().waterBarrier.active);
+            Assert.IsTrue(WaterCycleCurrent.CaptureNetworkBarrier(movement).active, "Predicted retreat must not mutate the native server barrier.");
+            movement.RestoreNetworkMovementState(state);
+            Assert.IsTrue(WaterCycleCurrent.BlocksPlayerForwardMovement(movement, origin + Vector2.right * 0.125f), "Reconciliation restores the barrier before replay.");
+        }
+        finally
+        {
+            movementCleanup(); NetSync.Mode = oldMode; Object.DestroyImmediate(actor);
+        }
+        void movementCleanup()
+        {
+            var barriers = (System.Collections.IDictionary)typeof(WaterCycleCurrent).GetField("obstacleBarriers", flags).GetValue(null);
+            if (actor != null && actor.TryGetComponent<MovementController>(out var movement)) barriers.Remove(movement);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void WaterPushApprovesContinuousMotionFreezesPauseAndRestoresPreviousLock(bool previouslyLocked)
+    {
+        var oldMode = NetSync.Mode;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        bool wasPaused = (bool)paused.GetValue(null);
+        var actor = new GameObject("WaterPushOwner"); actor.SetActive(false);
+        var currentObject = new GameObject("WaterPushCurrent"); currentObject.SetActive(false);
+        NetworkIdentity identity = null; System.Collections.IEnumerator push = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Host;
+            actor.AddComponent<BoxCollider2D>(); actor.AddComponent<NetworkIdentity>(); actor.AddComponent<MovementController>(); var input = actor.AddComponent<NetworkPlayerInput>();
+            identity = actor.GetComponent<NetworkIdentity>(); typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>();
+            foreach (var behaviour in actor.GetComponents<MonoBehaviour>()) behaviour.enabled = false;
+            actor.SetActive(true); typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, true); typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, 84u);
+            movement.SetNetworkTickDriven(true); movement.SetInputLocked(previouslyLocked, false); movement.SetExternalMovementAllowsHazardDamage(true);
+            Vector2 origin = new(30000, 30000); body.position = origin; actor.transform.position = origin;
+            var current = currentObject.AddComponent<WaterCycleCurrent>();
+            paused.SetValue(null, true);
+            push = (System.Collections.IEnumerator)typeof(WaterCycleCurrent).GetMethod("PushPlayerRoutine", flags).Invoke(current, new object[] { movement, true });
+            Assert.IsTrue(push.MoveNext()); Assert.AreEqual(origin, body.position); Assert.IsTrue(movement.InputLocked); Assert.IsTrue(movement.ExternalMovementOverride);
+            var token = typeof(NetworkPlayerInput).GetField("authorityMotionToken", flags); Assert.AreNotEqual(0u, token.GetValue(input));
+            paused.SetValue(null, false); Assert.IsTrue(push.MoveNext()); Assert.Greater(body.position.x, origin.x);
+            Assert.AreEqual(body.position.x, actor.transform.position.x, 0.0001f, "Both snapshot sources must agree on the approved step.");
+            typeof(WaterCycleCurrent).GetMethod("OnDisable", flags).Invoke(current, null);
+            Assert.AreEqual(previouslyLocked, movement.InputLocked); Assert.IsFalse(movement.ExternalMovementOverride);
+            Assert.IsTrue(movement.ExternalMovementAllowsHazardDamage); Assert.AreEqual(0u, token.GetValue(input));
+        }
+        finally
+        {
+            (push as System.IDisposable)?.Dispose();
+            if (identity != null) typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, false);
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(currentObject); NetSync.Mode = oldMode; paused.SetValue(null, wasPaused);
+        }
+    }
+
+    [Test]
+    public void WaterClientCannotStartNativePushOrApplyHazardProtection()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("WaterClientGate"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            var current = actor.AddComponent<WaterCycleCurrent>();
+            var push = (System.Collections.IEnumerator)typeof(WaterCycleCurrent).GetMethod("PushPlayerRoutine", flags).Invoke(current, new object[] { null, true });
+            Assert.IsFalse(push.MoveNext()); (push as System.IDisposable)?.Dispose();
+            Assert.AreEqual(0, ((System.Collections.IDictionary)typeof(WaterCycleCurrent).GetField("activePushes", flags).GetValue(current)).Count);
+        }
+        finally { Object.DestroyImmediate(actor); NetSync.Mode = oldMode; }
+    }
+
     [TestCase(false, false)]
     [TestCase(true, false)]
     [TestCase(false, true)]

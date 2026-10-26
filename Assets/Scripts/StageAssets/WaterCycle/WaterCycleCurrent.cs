@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Assets.Scripts.Netcode;
 
 /// <summary>
 /// A directional current inside a rotating water cycle. Only players are
@@ -25,6 +26,56 @@ public sealed class WaterCycleCurrent : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float pushSfxVolume = 1f;
 
     readonly HashSet<MovementController> pushedPlayers = new();
+    readonly Dictionary<MovementController, PushState> activePushes = new();
+    sealed class PushState
+    {
+        public bool inputLocked, externalMotion, hazardDamage;
+        public NetworkPlayerInput.AuthorityMotionScope presentation;
+    }
+
+    public struct NetworkBarrier
+    {
+        public Vector2 safePosition, direction;
+        public float tileSize;
+        public bool active;
+    }
+
+    public static NetworkBarrier CaptureNetworkBarrier(MovementController player) =>
+        player != null && obstacleBarriers.TryGetValue(player, out var barrier)
+            ? new NetworkBarrier { active = true, safePosition = barrier.safePosition, direction = barrier.direction, tileSize = barrier.tileSize } : default;
+
+    public static bool BlocksNetworkBarrier(ref NetworkBarrier barrier, Vector2 targetPosition)
+    {
+        if (!barrier.active) return false;
+        Vector2 offset = targetPosition - barrier.safePosition;
+        float forwardDistance = Vector2.Dot(offset, barrier.direction);
+        if (forwardDistance < -barrier.tileSize * 0.25f) { barrier.active = false; return false; }
+        if (forwardDistance <= 0.0001f) return false;
+        return (offset - barrier.direction * forwardDistance).magnitude <= barrier.tileSize * 0.45f;
+    }
+
+    void OnDisable()
+    {
+        StopAllCoroutines();
+        foreach (var player in new List<MovementController>(activePushes.Keys)) FinishPush(player);
+        pushedPlayers.Clear();
+    }
+
+    void FinishPush(MovementController player)
+    {
+        if (!activePushes.Remove(player, out var state)) return;
+        if (player != null)
+        {
+            player.SetExternalMovementOverride(state.externalMotion);
+            player.SetExternalMovementAllowsHazardDamage(state.hazardDamage);
+            if (!player.isDead && !player.IsEndingStage)
+            {
+                player.SetInputLocked(state.inputLocked, forceIdle: false);
+                player.ApplyDirectionFromVector(Vector2.zero);
+            }
+        }
+        state.presentation.Dispose();
+    }
     static readonly Dictionary<MovementController, ObstacleBarrier> obstacleBarriers = new();
     Tilemap destructibleTilemap;
     Tilemap indestructibleTilemap;
@@ -51,7 +102,7 @@ public sealed class WaterCycleCurrent : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other == null)
+        if (NetSync.Mode == NetSync.NetMode.Client || other == null)
             return;
 
         MovementController player = other.GetComponentInParent<MovementController>();
@@ -73,6 +124,7 @@ public sealed class WaterCycleCurrent : MonoBehaviour
 
     IEnumerator PushPlayerRoutine(MovementController player, bool enteredWithCurrent)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client || player == null || player.Rigidbody == null) yield break;
         float size = GetTileSize(player.tileSize);
         // Keep the player's actual tile-relative position. Rounding to the
         // global tile grid can move an entering player across a cell boundary
@@ -88,82 +140,75 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         if (IsBlockedAhead(current, currentDirection, size, player.gameObject, out _, out _))
             yield break;
 
-        CancelActiveMountMovementAbilities(player);
-        player.SetInputLocked(true, forceIdle: true, idleFacing: currentDirection);
-        player.SetExternalMovementOverride(true);
-        player.SetExternalMovementAllowsHazardDamage(true);
-        player.ApplyDirectionFromVector(currentDirection);
-        PlayPushSfx(player.GetComponent<AudioSource>() ?? player.GetComponentInChildren<AudioSource>(true));
-
-        while (player != null && !player.isDead && !player.IsEndingStage)
+        activePushes[player] = new PushState { inputLocked = player.InputLocked,
+            externalMotion = player.ExternalMovementOverride, hazardDamage = player.ExternalMovementAllowsHazardDamage,
+            presentation = NetworkPlayerInput.PresentAuthorityMotion(player) };
+        try
         {
-            if (IsOpposingDirectionHeld(player.PlayerId, currentDirection))
+            CancelActiveMountMovementAbilities(player);
+            player.SetInputLocked(true, forceIdle: true, idleFacing: currentDirection);
+            player.SetExternalMovementOverride(true);
+            player.SetExternalMovementAllowsHazardDamage(true);
+            player.ApplyDirectionFromVector(currentDirection);
+            PlayPushSfx(player.GetComponent<AudioSource>() ?? player.GetComponentInChildren<AudioSource>(true));
+
+            while (player != null && !player.isDead && !player.IsEndingStage)
             {
-                float deceleration = enteredWithCurrent
-                    ? withCurrentBrakeDeceleration
-                    : brakeDeceleration;
-                speed = Mathf.MoveTowards(speed, 0f, deceleration * Time.fixedDeltaTime);
-            }
-
-            if (speed <= 0.001f)
-                break;
-
-            float step = Mathf.Min(speed * Time.fixedDeltaTime, remainingDistance);
-            Vector2 next = QuantizeToPixelGrid(current + currentDirection * step);
-
-            if (TryGetPassableBombStopPosition(current, next, currentDirection, size, player.gameObject, out Vector2 bombStopPosition))
-            {
-                MovePlayer(player, bombStopPosition);
-                current = bombStopPosition;
-                break;
-            }
-
-            if (IsBlockedAhead(
-                    next,
-                    currentDirection,
-                    size,
-                    player.gameObject,
-                    out Vector2 safeTileCenter,
-                    out bool hasSafeTileCenter))
-            {
-                if (hasSafeTileCenter)
+                if (GamePauseController.IsPaused) { yield return new WaitForFixedUpdate(); continue; }
+                if (IsOpposingDirectionHeld(player.PlayerId, currentDirection))
                 {
-                    MovePlayer(player, safeTileCenter);
-                    current = safeTileCenter;
-                    RegisterObstacleBarrier(player, current, currentDirection, size);
+                    float deceleration = enteredWithCurrent
+                        ? withCurrentBrakeDeceleration
+                        : brakeDeceleration;
+                    speed = Mathf.MoveTowards(speed, 0f, deceleration * Time.fixedDeltaTime);
                 }
 
-                break;
-            }
-
-            MovePlayer(player, next);
-            current = next;
-
-            if (!float.IsPositiveInfinity(remainingDistance))
-            {
-                remainingDistance -= step;
-                if (remainingDistance <= 0.001f)
+                if (speed <= 0.001f)
                     break;
+
+                float step = Mathf.Min(speed * Time.fixedDeltaTime, remainingDistance);
+                Vector2 next = QuantizeToPixelGrid(current + currentDirection * step);
+
+                if (TryGetPassableBombStopPosition(current, next, currentDirection, size, player.gameObject, out Vector2 bombStopPosition))
+                {
+                    MovePlayer(player, bombStopPosition);
+                    current = bombStopPosition;
+                    break;
+                }
+
+                if (IsBlockedAhead(
+                        next,
+                        currentDirection,
+                        size,
+                        player.gameObject,
+                        out Vector2 safeTileCenter,
+                        out bool hasSafeTileCenter))
+                {
+                    if (hasSafeTileCenter)
+                    {
+                        MovePlayer(player, safeTileCenter);
+                        current = safeTileCenter;
+                        RegisterObstacleBarrier(player, current, currentDirection, size);
+                    }
+
+                    break;
+                }
+
+                MovePlayer(player, next);
+                current = next;
+
+                if (!float.IsPositiveInfinity(remainingDistance))
+                {
+                    remainingDistance -= step;
+                    if (remainingDistance <= 0.001f)
+                        break;
+                }
+
+                yield return new WaitForFixedUpdate();
             }
 
-            yield return new WaitForFixedUpdate();
         }
-
-        if (player != null)
-        {
-            player.SetExternalMovementAllowsHazardDamage(false);
-            player.SetExternalMovementOverride(false);
-
-            // A lethal hit can end the push loop on the same frame that the
-            // death sequence selects its renderer. Do not restore the idle
-            // movement visual in that case, otherwise it replaces the death
-            // animation before it can be shown.
-            if (!player.isDead)
-            {
-                player.SetInputLocked(false, forceIdle: false);
-                player.ApplyDirectionFromVector(Vector2.zero);
-            }
-        }
+        finally { FinishPush(player); }
     }
 
     bool EnteredWithCurrent(MovementController player)
@@ -348,23 +393,12 @@ public sealed class WaterCycleCurrent : MonoBehaviour
     /// </summary>
     public static bool BlocksPlayerForwardMovement(MovementController player, Vector2 targetPosition)
     {
-        if (player == null || !obstacleBarriers.TryGetValue(player, out ObstacleBarrier barrier))
-            return false;
-
-        Vector2 offset = targetPosition - barrier.safePosition;
-        float forwardDistance = Vector2.Dot(offset, barrier.direction);
-
-        if (forwardDistance < -barrier.tileSize * 0.25f)
-        {
-            obstacleBarriers.Remove(player);
-            return false;
-        }
-
-        if (forwardDistance <= 0.0001f)
-            return false;
-
-        Vector2 lateral = offset - barrier.direction * forwardDistance;
-        return lateral.magnitude <= barrier.tileSize * 0.45f;
+        if (player == null) return false;
+        if (player.UsesAcknowledgedWaterBarrier) return player.BlocksAcknowledgedWaterBarrier(targetPosition);
+        var barrier = CaptureNetworkBarrier(player);
+        bool blocked = BlocksNetworkBarrier(ref barrier, targetPosition);
+        if (!barrier.active) obstacleBarriers.Remove(player);
+        return blocked;
     }
 
     void ResolveReferences()
@@ -406,7 +440,8 @@ public sealed class WaterCycleCurrent : MonoBehaviour
         if (player.Rigidbody != null)
         {
             player.Rigidbody.linearVelocity = Vector2.zero;
-            player.Rigidbody.MovePosition(position);
+            if (NetSync.IsServer && player.NetworkTickDriven) player.Rigidbody.position = position;
+            else player.Rigidbody.MovePosition(position);
         }
 
         player.transform.position = position;
