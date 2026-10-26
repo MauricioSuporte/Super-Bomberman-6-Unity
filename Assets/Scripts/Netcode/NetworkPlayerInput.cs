@@ -305,7 +305,7 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestorePinkJumpPosition();
             kickFx?.ReconcileMoleStartup(acknowledgedTick, state);
             kickFx?.ReconcileRedPunch(acknowledgedTick, state);
-            kickFx?.ReconcileTankShot(acknowledgedTick, mountActions);
+            kickFx?.ReconcileTankShot(acknowledgedTick, mountActions, state);
             kickFx?.ReconcileBlackDash(acknowledgedTick, state, mountActions);
             kickFx?.RestoreBlackDashPosition();
             // If an outage exceeded history, wait until the server catches up rather

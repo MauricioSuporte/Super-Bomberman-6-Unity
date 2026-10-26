@@ -336,8 +336,8 @@ public sealed class OnlineRoomEditModeTests
                 facing = Vector2.right, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
             movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
             Assert.IsFalse(fx.TryPredictTankShot(8, 10), "A confirmed ready state is required after mounting.");
-            var ready = new NetworkBombFx.MountActionState { tankReady = true };
-            fx.ReconcileTankShot(0, ready); Assert.IsTrue(fx.TryPredictTankShot(8, 10));
+            var ready = new NetworkBombFx.MountActionState { tankReady = true, tankEligible = true };
+            fx.ReconcileTankShot(0, ready, state); Assert.IsTrue(fx.TryPredictTankShot(8, 10));
             var proxy = (SpriteRenderer)typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx);
             Assert.IsNotNull(proxy); Assert.AreEqual(2, proxy.GetComponents<Component>().Length);
             Assert.IsNull(proxy.GetComponent<TankShot>()); Assert.IsNull(proxy.GetComponent<Collider2D>());
@@ -348,20 +348,34 @@ public sealed class OnlineRoomEditModeTests
             var update = typeof(NetworkBombFx).GetMethod("UpdateTankPrediction", flags);
             for (int i = 0; i < 10; i++) update.Invoke(fx, new object[] { 0.02f });
             Assert.Greater(proxy.transform.position.x, start.x); Assert.LessOrEqual(proxy.transform.position.x, start.x + 1.21f);
-            fx.ReconcileTankShot(10, ready); Assert.IsNull(typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx));
+            fx.ReconcileTankShot(10, ready, state); Assert.IsNull(typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx));
             Assert.IsFalse(fx.TankShotPoseActive); Assert.IsTrue(fx.TryPredictTankShot(8, 11));
             update.Invoke(fx, new object[] { 0.1f }); float before = (float)typeof(NetworkBombFx).GetField("tankAge", flags).GetValue(fx);
             fx.ReceiveTankShot(11, 999, Vector2.right, 0.25f, 10, NetworkBombFx.KickServerNow);
             Assert.AreEqual(before, typeof(NetworkBombFx).GetField("tankAge", flags).GetValue(fx));
-            fx.ReconcileTankShot(11, new NetworkBombFx.MountActionState { tankCooldown = 10 });
+            fx.ReconcileTankShot(11, new NetworkBombFx.MountActionState { tankCooldown = 10 }, state);
             Assert.IsFalse(fx.TryPredictTankShot(8, 12)); update.Invoke(fx, new object[] { 1.1f });
             Assert.IsNull(typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx), "A missing spawn cannot leave a confirmed proxy forever.");
+            var cooling = new NetworkBombFx.MountActionState { tankEligible = true, tankCooldown = 0.3f };
+            state.serverTime = NetworkTime.predictedTime - 0.2; fx.ReconcileTankShot(12, cooling, state);
+            float delay = (float)typeof(NetworkBombFx).GetField("tankNextAllowed", flags).GetValue(fx) - Time.time;
+            Assert.That(delay, Is.InRange(0.08f, 0.12f), "Snapshot age must not be added again to the cooldown.");
+            Assert.IsFalse(fx.TryPredictTankShot(8, 12));
+            state.serverTime = NetworkTime.predictedTime - 0.4; fx.ReconcileTankShot(12, cooling, state);
+            Assert.IsTrue(fx.TryPredictTankShot(8, 12), "An eligible Tank can preview when the confirmed cooldown expires, without waiting for another ready packet.");
+            fx.ReconcileTankShot(12, default, state);
+            Assert.IsFalse(fx.TryPredictTankShot(8, 13), "Zero cooldown alone cannot grant eligibility lost through disable, cast or mount transition.");
+            var tank = actor.GetComponent<TankMountShootAbility>();
+            typeof(TankMountShootAbility).GetField("cooldownUntil", flags).SetValue(tank, Time.time + 0.3f);
+            var captured = fx.CaptureMountActionState(); Assert.IsTrue(captured.tankEligible); Assert.IsFalse(captured.tankReady);
+            tank.Disable(); Assert.IsFalse(fx.CaptureMountActionState().tankEligible);
             actor.GetComponent<CharacterHealth>().life = 0;
             fx.ReceiveTankShot(12, 999, Vector2.right, 0.25f, 10, NetworkBombFx.KickServerNow);
             Assert.IsFalse(fx.TankShotPoseActive, "A late receipt cannot resurrect the dead owner's firing pose.");
             NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.TryPredictTankShot(8, 13));
             using var writer = NetworkWriterPool.Get(); writer.Write(ready);
-            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); Assert.IsTrue(reader.Read<NetworkBombFx.MountActionState>().tankReady);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var restored = reader.Read<NetworkBombFx.MountActionState>();
+            Assert.IsTrue(restored.tankReady); Assert.IsTrue(restored.tankEligible);
         }
         finally
         {
@@ -1900,6 +1914,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 31, false)]
     [TestCase("0.5.0", 30, false)]
     [TestCase("0.5.0", 29, false)]
     [TestCase("0.5.0", 28, false)]

@@ -16,19 +16,23 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 ## Estado atual
 
 - Branch `v0.5.0`, checkout original; preservar fontes e TitleScreen do usuario.
-- R02 e A05 publicados: `d25c34734`, protocolo 30, CI 40281389234 sucesso.
-  Server e canal do updater confirmados pelo CI. A07 agora em testes no runner.
+- R02 geometria e A05 publicados em d25c34734 /30/ CI40281389234 sucesso.
+- A07 publicado em cb971ee11 /31/ CI40283518599 sucesso (server e updater).
 - R02: Unity suite completa 169/169; depois Coop 9/9 com protecao final para
   Sprite de colisao ausente. Relatorios Logs/PredictionCoopTests e
   Logs/PredictionCoopGeometryFinal (.xml/.log). Python 40/40. C# zero warnings/erros.
-- A07: startup/pose Mole validado em protocolo 31, pronto para salvar/publicar.
-  Unity completo 171/171; C# zero warnings/erros e Python 40/40. Teste cobre handoff/rebind, sem rotina
-  ou RNG, confirmacao/rejeicao, pausa, stale, timeout e morte.
-- Runner livre apos CI30; fontes A07 copiadas para validacao.
+- A07 salvo/enviado em `cb971ee11`, protocolo31, CI40283518599 sucesso.
+  Unity completo171/171, C#0warnings/erros e Python40 passaram nesse lote.
+  Relatorios principais Logs/PredictionMoleTests.xml/.log.
+- A14 parcial em32 validado: Tank eligibility separada de cooldown com projecao
+  pelo timestamp da autoridade. Suite Unity172/172, Python40 e C# zero warnings/
+  erros passaram. Relatorios Logs/PredictionTankCooldownTests.xml/.log.
+  Pronto para salvar/publicar; nao marcar A14 completo (faltam outras regressoes).
+- Runner livre; fontes32 testadas e tracked restaurados antes da CI.
 - Nenhuma validacao manual com dois peers nem novas capturas comparaveis feitas.
   Nao declarar zero latencia nem o plano inteiro concluido.
-- Proximo: terminar teste A07 no runner, corrigir, salvar/publicar lote31
-  e continuar A09/A10/A11/A12 e C/R restantes pela matriz.
+- Proximo: confirmar CI31, testar/salvar Tank32 e seguir A09/A10/A11/A12
+  e C/R restantes pela matriz. Nao publicar32 antes da validacao Unity.
 
 ## Marcos concluídos e commits
 
@@ -175,7 +179,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [ ] C09: mecanismos e tiles especiais.
 - [ ] C10: eventos FallingBomb/powder/roof/Sudden Death.
 - [ ] R01: observadores.
-- [x] R02: geometria aprovada segura e stream; testes 169 + 9; manual/trajetórias C/R pendentes.
+- [ ] R02: parcial: geometria aprovada segura implementada (169 + 9 testes); ainda auditar custo por familia e curvas no stream visual.
 - [ ] R03: apresentação de inimigos.
 - [ ] R04: forças impostas por inimigos.
 - [ ] R05: projéteis remotos.
@@ -216,9 +220,9 @@ autoritativo, pois o destino depende de RNG/alvos vivos. Não extrapolar saída.
 NetworkPlayerAnimation e NetworkMountAnimation respeitam pose local ativa.
 Teste novo cobre preparo, RNG preservado, rejeicao, confirmacao sem reinicio,
 pausa, stale/end, rebind, timeout e morte. Suite completa 171/171 passou.
-Próximo: após CI30 terminar, copiar arquivos A07 + metas para runner; executar
-OnlineRoomEditModeTests.Mole, depois suíte completa, Python40 e UTF-8. Revisar
-handoff das poses no fim da preparação. Não publicar 31 antes dessas validações.
+A07 foi validado (171/171 Unity, Python40, C# zero warnings/erros e UTF-8),
+salvo/enviado em cb971ee11. CI40283518599 em andamento. Quando terminar,
+registrar conclusao e validar o ajuste Tank em32 usando o runner livre.
 
 A07 teste direcionado: primeiras falhas estavam na fixture EditMode, que nao
 executa Awake da habilidade adicionada em runtime. Fixture agora inicializa
@@ -234,3 +238,47 @@ nao chama ServerConfirmPlacement; nao reutilizar CurrentActionATick para Purple
 (C), nem inventar ticks por tile. Extrair preview de geometria readonly de
 BombController, preservar variantes/water/hole/ground e snapshot do estoque.
 Nao iniciar bombas/fuses ou coroutines Purple no client.
+
+A14 Tank em32: MountActionState adiciona tankEligible, Capture usa
+NetworkShotEligible (mesmos guards de CanStartShot menos cooldown). Owner
+reconcilia deadline pela idade do snapshot; confirmacao nao soma novamente RTT.
+Teste Tank existente estendido para cooldown0.3/snapshot0.2, limite vencido
+sem ready novo e elegibilidade falsa com cooldown0. Protocolos32 alinhados.
+C# em verificacao; Unity/Python32 ainda pendentes. Aguardar CI31 para testar.
+
+Precisao da matriz: R02 originalmente inclui tambem custo por familia e perda
+de curvas por interpolacao linear (OnlineCoopSprites). Geometria esta concluida,
+mas isso e somente um pre-requisito; manter R02 parcial ate o restante da auditoria.
+Nao marcar R03/R05/R06/R08 completos apenas por existir o stream generico: ainda
+conferir arcos curtos, teleports, discontinuidades e projeteis de cada familia.
+
+A14 Tank32: C# incremental passou sem warnings/erros; Python40/40 passou.
+Unity ainda NAO executado. Aguardar CI40283518599 terminar; copiar os 6 C#
+modificados, testes e supervisor para runner. Rodar OnlineRoomEditModeTests.Tank
+(e depois suite completa, esperado172 com caso de protocolo31). Preservar
+Logs/PredictionTankCooldownTests.xml/.log no checkout principal. Conferir que
+snapshot antigo do cooldown nao adia deadline e que tankEligible=false bloqueia
+preview mesmo com cooldown0. Depois salvar32; nao publicar sem validacao Unity.
+
+Desenho A09 adicional (nao implementado): identificar cada proxy por
+(tick, acao A/C, celula), sem ticks sinteticos. Reserva conta todos os tiles,
+inclusive confirmados aguardando ack para nao subestimar estoque antigo.
+Reconciliacao remove rejeicoes parciais; RPC por tile confirma netId/posicao.
+Purple precisa confirmar pose mesmo quando nenhuma bomba cabe; linha A sem
+bombas extras nao cria efeito que nao existe offline. Som uma vez por grupo,
+com audio co-op genereco deduplicado. Preview readonly deve rejeitar agua/hole,
+explosao e blockers e usar a mesma origem/direcao de LineBombAbility.PlaceLine.
+Resolver variante por ordinal/estado aprovado: nao repetir Power/Rubber/etc
+de primeiro spawn em todos os proxies se specialBombsOnEveryPlacement=false.
+Purple animator precisa API visual manual; Update real no client fica gated.
+Nao consumir estoque real nem executar TryPlaceBombAtIgnoringInputLock client.
+
+Tank32: testes direcionados 4/4 passaram. Fixture ampliada para testar
+CaptureMountActionState durante cooldown e apos Disable (antes somente estado
+recebido simulado). Suite completa172 em andamento, sessao exec15831.
+C# final sessao11421 deve ser conferido; nenhum resultado Unity presumido.
+
+Tank32 validado: suite completa172/172 passou incluindo Captura/Disable,
+projecao de cooldown, wire32 e regressao dos presenters anteriores. C# final
+zero warnings/erros, Python40/40 e UTF-8/BOM passaram. Publicar este lote e
+seguir A09 pela arquitetura registrada. Manual dois peers ainda pendente.

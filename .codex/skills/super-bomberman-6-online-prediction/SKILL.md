@@ -135,6 +135,14 @@ active shapes, without dropping the real input command. Refresh queries from
 approved tile-motion events and remove them on scene exit. This establishes
 known geometry; it does not predict autonomous mechanisms or terrain destruction.
 
+Separate an ability's confirmed eligibility from its cooldown. If the only
+remaining restriction is a known timer, project its deadline using the approved
+snapshot timestamp and the estimated validation time of the next input; waiting
+for another ready=true packet adds avoidable latency at the boundary. Do not
+credit snapshot age twice on confirmation. Zero cooldown must never grant lost
+eligibility, ownership or resources, and the server still validates every shot.
+Test expiry, aged snapshots, disable/mount changes, rejection and pause/resume.
+
 ## Diagnose what is actually delayed
 
 Compare matching build/protocol captures and similar action sequences. Separate

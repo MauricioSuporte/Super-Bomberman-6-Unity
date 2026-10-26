@@ -580,3 +580,24 @@ underground safety, future collisions or the teleport target from a local scene.
 Validation: 171/171 online Unity EditMode tests, 40 Python tests and C#
 compilation with zero warnings/errors passed. Manual two-peer checks of phase
 handoff, head offset, sound, cancellation and teleport remain pending.
+
+## Tank cooldown boundary (protocol 32)
+
+Tank eligibility is distinct from cooldown readiness. MountActionState confirms
+that the ability is enabled, mounted and otherwise available even during its
+cooldown. The owner projects remaining cooldown using the movement snapshot's
+server timestamp and NetworkTime.predictedTime, the estimated validation time
+of the next input. It need not wait for a later ready=true packet at expiry.
+
+Shot confirmation uses that same projected time for the cooldown deadline,
+without adding the confirmation's age again. It preserves the already displayed
+pose. Processed pending inputs retain rejection/spawn handling, and eligibility
+loss continues to block previews even when remaining cooldown is zero. Real
+shooting, inventory, impact and damage remain server validated. This is a partial
+A14 regression improvement; it does not complete the remaining prediction audit.
+
+Validation: 172/172 full online Unity EditMode tests passed, along with
+40 Python tests and C# compilation with zero warnings/errors. Tests cover
+projected cooldown expiry without a new ready packet, lost eligibility,
+snapshot capture, confirmation/rejection and the existing projectile presenter.
+Two-peer cooldown-boundary and pause/resume gameplay checks remain pending.

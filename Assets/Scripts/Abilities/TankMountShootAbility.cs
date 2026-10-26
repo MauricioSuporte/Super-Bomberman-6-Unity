@@ -81,14 +81,14 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             mask = projectileHitMask.value != 0 ? projectileHitMask.value : LayerMask.GetMask("Bomb", "Stage", "Enemy", "Player", "Water", "Explosion") };
         return true;
     }
-    public bool CanStartShot =>
+    public bool CanStartShot => NetworkShotEligible && Time.time >= cooldownUntil;
+    public bool NetworkShotEligible =>
         enabledAbility &&
         !running &&
         routine == null &&
         movement != null &&
         !movement.isDead &&
         !movement.InputLocked &&
-        Time.time >= cooldownUntil &&
         IsMountedOnTank();
 
     private void Awake()

@@ -5,7 +5,7 @@ namespace Assets.Scripts.Netcode
 {
     public partial class NetworkBombFx
     {
-        bool hasMountActionState, tankReady, tankHasAction, tankPending, tankSoundPlayed, tankLocksMovement;
+        bool hasMountActionState, tankEligible, tankHasAction, tankPending, tankSoundPlayed, tankLocksMovement;
         uint tankTick, receivedTankTick;
         float tankAge, tankDuration, tankNextAllowed;
         TankMountShootAbility.NetworkShotPreview tankPreview;
@@ -22,7 +22,7 @@ namespace Assets.Scripts.Netcode
         public bool TryPredictTankShot(int held, uint tick)
         {
             if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || isServer || !isLocalPlayer ||
-                !hasMountActionState || !tankReady || tankPending || Time.time < tankNextAllowed || AbilityPredictionLocksMovement || ClientPlayerMotionActive ||
+                !hasMountActionState || !tankEligible || tankPending || Time.time < tankNextAllowed || AbilityPredictionLocksMovement || ClientPlayerMotionActive ||
                 GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
                 !TryGetComponent<MovementController>(out var movement) || !movement.CanPredictNetworkMovement ||
                 (TryGetComponent<NetworkPlayerInput>(out var input) && !input.ServerAllowsMovementPrediction) ||
@@ -86,7 +86,8 @@ namespace Assets.Scripts.Netcode
                 tankPreview.direction = direction; tankLocksMovement = false;
             }
             tankDuration = duration; tankPending = false; tankSoundPlayed = true;
-            tankNextAllowed = Mathf.Max(tankNextAllowed, Time.time + Mathf.Max(0, duration + cooldown - age));
+            float projectedAge = Mathf.Max(0, (float)(NetworkTime.predictedTime - serverTime));
+            tankNextAllowed = Time.time + Mathf.Max(0, duration + cooldown - projectedAge);
             if (NetworkClient.spawned.TryGetValue(shotId, out var identity) && identity.TryGetComponent<NetworkTankShot>(out var shot)) ReceiveTankShotSpawn(shot);
             TraceTankPrediction("tank_prediction_confirm", "server_spawn");
         }
@@ -100,12 +101,13 @@ namespace Assets.Scripts.Netcode
             tankReplica = shot; tankPending = false; ReleaseTankProxy();
         }
 
-        public void ReconcileTankShot(uint acknowledgedTick, MountActionState state)
+        public void ReconcileTankShot(uint acknowledgedTick, MountActionState state, MovementController.NetworkMovementState movementState)
         {
-            hasMountActionState = true; tankReady = state.tankReady;
+            hasMountActionState = true; tankEligible = state.tankEligible;
             if (tankHasAction && NetworkInputHistory.IsNewer(tankTick, acknowledgedTick)) return;
             if (tankPending) ClearTankPrediction("input_processed_without_shot");
-            tankNextAllowed = state.tankReady ? Time.time : Mathf.Max(tankNextAllowed, Time.time + state.tankCooldown);
+            float projectedRemaining = Mathf.Max(0, state.tankCooldown - Mathf.Max(0, (float)(NetworkTime.predictedTime - movementState.serverTime)));
+            tankNextAllowed = state.tankReady ? Time.time : Time.time + projectedRemaining;
             if (TryGetComponent<PlayerMountCompanion>(out var companion) && companion.GetMountedLouieType() == MountedType.Tank)
             {
                 var ability = GetComponent<TankMountShootAbility>() ?? gameObject.AddComponent<TankMountShootAbility>();
