@@ -67,6 +67,7 @@ namespace Assets.Scripts.Netcode
                 entry.durationMs = motion.duration * 1000; entry.delta = motion.end - motion.start;
                 GameplayLatencyDiagnostics.Write(entry);
             }
+            if (motion.moving) ClearGreenDash("external_bounce");
             playerBounce = motion; bounceElapsed = remainder;
             bouncePosition = motion.start;
             if (!motion.moving)

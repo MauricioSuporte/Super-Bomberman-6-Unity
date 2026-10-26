@@ -406,6 +406,67 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [Test]
+    public void GreenDashPredictionIsBoundedConfirmsAndReleasesToAuthority()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("GreenDashPredictionOwner"); actor.SetActive(false);
+        var mount = new GameObject("GreenDashPredictionMount"); mount.transform.SetParent(actor.transform);
+        var wall = new GameObject("GreenDashPredictionWall");
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; var collider = actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Green);
+            actor.SetActive(true); movement.SetNetworkTickDriven(true);
+            Vector2 origin = new(9000, 9000);
+            var state = new MovementController.NetworkMovementState { position = origin, mount = MountedType.Green,
+                facing = Vector2.right, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(fx.BeginGreenDashPrediction(10, Vector2.right, 10, origin));
+            Assert.IsTrue(fx.ClientPlayerMotionActive);
+            var step = typeof(NetworkBombFx).GetMethod("UpdateGreenDash", flags);
+            for (int i = 0; i < 10; i++) step.Invoke(fx, new object[] { 0.02f, 0.02f });
+            Assert.Greater(body.position.x, origin.x);
+            Assert.LessOrEqual(body.position.x, origin.x + 1.51f, "Unconfirmed dash continuation is bounded to 150 ms.");
+            Assert.IsFalse(actor.GetComponent<GreenLouieDashAbility>().DashActive, "Client presentation must not run the gameplay dash coroutine.");
+            movement.RestoreNetworkMovementState(state); fx.ReconcileGreenDash(10, state);
+            Assert.IsFalse(fx.GreenDashActive); Assert.AreEqual(origin, body.position);
+            movement.SetPredictLocally(true);
+            Assert.IsTrue(fx.BeginGreenDashPrediction(11, Vector2.right, 10, origin));
+            step.Invoke(fx, new object[] { 0.02f, 0.02f }); Vector2 beforeReply = body.position;
+            fx.ReceiveGreenDash(11, true, Vector2.right, 10, origin, NetworkBombFx.KickServerNow);
+            Assert.AreEqual(beforeReply, body.position, "First acceptance must not pull the owner back to the initial server position.");
+            fx.ReceiveGreenDash(10, false, Vector2.right, 10, origin, NetworkBombFx.KickServerNow);
+            Assert.IsTrue(fx.GreenDashActive, "A previous dash cannot stop a newer action.");
+            fx.ReceiveGreenDash(11, false, Vector2.right, 10, origin + Vector2.right, NetworkBombFx.KickServerNow);
+            Assert.IsFalse(fx.GreenDashActive); Assert.AreEqual(origin + Vector2.right, body.position); Assert.IsTrue(collider.enabled);
+            Assert.IsFalse(movement.InputLocked, "Presentation must not own the authoritative input lock.");
+            wall.layer = LayerMask.NameToLayer("Stage"); wall.transform.position = origin + Vector2.right * 1.5f;
+            wall.AddComponent<BoxCollider2D>(); Physics2D.SyncTransforms();
+            var ability = actor.GetComponent<GreenLouieDashAbility>();
+            Assert.IsTrue(ability.TryPreviewNetworkDashStep(origin, Vector2.right, 5, out var end));
+            Assert.Less(end.x, origin.x + 1, "The read-only dash must stop before known geometry.");
+            NetSync.Mode = NetSync.NetMode.Host;
+            Assert.IsFalse(fx.TryPredictGreenDash(8, 12));
+            Assert.IsFalse(fx.BeginGreenDashPrediction(12, Vector2.right, 10, origin));
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearGreenDash", flags).Invoke(fx, new object[] { "test_cleanup" });
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor); Object.DestroyImmediate(wall);
+        }
+    }
+
+    [Test]
     public void PlacementProxyIsVisualOnlyAndReservesCapacityUntilAcknowledged()
     {
         var mode = NetSync.Mode; var actor = new GameObject("PlacementPredictionOwner"); actor.SetActive(false);

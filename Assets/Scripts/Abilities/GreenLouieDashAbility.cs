@@ -62,6 +62,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility)
             return;
 
@@ -156,8 +157,16 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
+    void ReportNetworkDashStop()
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && rb != null &&
+            TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerGreenDash(false, Vector2.zero, 0, rb.position);
+    }
+
     void CancelDash()
     {
+        ReportNetworkDashStop();
         if (routine != null)
         {
             StopCoroutine(routine);
@@ -184,6 +193,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     public void CancelDashForDeath()
     {
+        ReportNetworkDashStop();
         deathCancelInProgress = true;
 
         if (routine != null)
@@ -286,6 +296,24 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
         var targetMovement = hit.GetComponentInParent<MovementController>();
         return targetMovement != null && targetMovement.CompareTag("Player");
+    }
+
+    // Shares the server's obstacle rules, without running the dash coroutine.
+    public bool TryPreviewNetworkDashStep(Vector2 from, Vector2 dir, float distance, out Vector2 end)
+    {
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        bombLayer = LayerMask.NameToLayer("Bomb"); playerLayer = LayerMask.NameToLayer("Player");
+        end = from;
+        if (movement == null || distance <= 0 || dir == Vector2.zero) return false;
+        float remaining = Mathf.Min(distance, Mathf.Max(0.1f, movement.tileSize) * 2);
+        float step = Mathf.Max(0.01f, movement.tileSize * 0.1f);
+        for (int i = 0; i < 128 && remaining > 0.0001f; i++)
+        {
+            float amount = Mathf.Min(remaining, step); Vector2 candidate = end + dir * amount;
+            if (IsBlocked(candidate, dir)) break;
+            end = candidate; remaining -= amount;
+        }
+        return end != from;
     }
 
     bool CanStartDash(Vector2 dir, float dashSpeed)

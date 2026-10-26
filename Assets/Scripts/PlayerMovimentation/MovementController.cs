@@ -235,6 +235,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public struct NetworkMovementState
     {
+        public double serverTime;
         public Vector2 position, direction, facing, dualPrimary, dualSecondary;
         public Vector2 pendingTurn, lockedDirection, pendingSingle, lastMove;
         public Vector2 reentryStart, reentryTarget;

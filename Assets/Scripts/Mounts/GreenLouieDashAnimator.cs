@@ -111,6 +111,14 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         }
     }
 
+    public void PresentPredictedDash(Vector2 direction, float deltaTime)
+    {
+        if (!dashing) Play(direction);
+        if (active == null) return;
+        active.AdvanceAnimation(deltaTime, deltaTime);
+        PresentNetworkAfterimage(active);
+    }
+
     public void PresentNetworkAfterimage(AnimatedSpriteRenderer renderer)
     {
         if (renderer == null || (renderer != rollUp && renderer != rollDown && renderer != rollLeft && renderer != rollRight) ||

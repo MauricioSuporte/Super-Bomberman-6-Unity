@@ -76,6 +76,7 @@ namespace Assets.Scripts.Netcode
         bool receivedSnapshot, serverAllowsPrediction;
         public bool ServerAllowsMovementPrediction => receivedSnapshot && serverAllowsPrediction;
         public uint CurrentActionATick { get; private set; }
+        public uint CurrentActionCTick { get; private set; }
         public uint CurrentInputTick => isServer ? processedTick : localTick;
         public uint CurrentMovementTick => isServer ? processedTick : movementTick;
         public int PendingInputCount => pending.Count;
@@ -129,6 +130,7 @@ namespace Assets.Scripts.Netcode
                     var fx = GetComponent<NetworkBombFx>();
                     fx?.PredictBombAbilityInput(sampledHeld, pressedNow, unchecked(localTick + 1));
                     if ((pressedNow & 16) != 0) fx?.TryPredictPlacement(unchecked(localTick + 1));
+                    if ((pressedNow & 64) != 0) fx?.TryPredictGreenDash(sampledHeld, unchecked(localTick + 1));
                 }
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
@@ -156,7 +158,7 @@ namespace Assets.Scripts.Netcode
                 // waits through the offline ability animation lock.
                 if (GetComponent<NetworkBombFx>()?.AbilityPredictionLocksMovement == true) frame.held &= ~15;
                 pending.Add(frame);
-                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.PlayerBounceActive != true;
+                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
                 movement.SetPredictLocally(predict);
                 if (predict)
                 {
@@ -186,6 +188,7 @@ namespace Assets.Scripts.Netcode
                 serverHeldMask = frame.held;
                 actionEdges |= frame.pressed;
                 if ((frame.pressed & 16) != 0) CurrentActionATick = frame.tick;
+                if ((frame.pressed & 64) != 0) CurrentActionCTick = frame.tick;
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
@@ -251,6 +254,7 @@ namespace Assets.Scripts.Netcode
             // LateUpdate captures the result AFTER the physics step, never an unexecuted MovePosition.
             var state = movement.CaptureNetworkMovementState();
             state.canPredict &= !Blocked;
+            state.serverTime = NetworkTime.localTime;
             // Acknowledgements advance only after complete input steps. Duplicate
             // acknowledgements add no new predictable state to replay.
             if (state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
@@ -273,10 +277,12 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
             kickFx?.RestorePlayerBouncePosition();
+            kickFx?.ReconcileGreenDash(acknowledgedTick, state);
+            kickFx?.RestoreGreenDashPosition();
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
-            bool predict = state.canPredict && completeHistory && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.PlayerBounceActive != true;
+            bool predict = state.canPredict && completeHistory && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
             if (predict)

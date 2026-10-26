@@ -404,3 +404,34 @@ continue, stop, wrap, stun, explode or mutate the world. Wrap ordinals are sent
 by the server; clients do not speculate through a room seam. This avoids guessing
 when a hidden/moving actor would change termination while removing the per-tile
 wait for a known mandatory direction. rubber_landing_prediction logs seed/index.
+
+
+## Plan milestones 1-3 (protocol 25)
+
+Mounted owner walking now uses the same tick/replay motor with confirmed mount
+context, speed and pass capabilities. The local mount presenter drives only
+walking visuals; ride transitions, external movement, stun and special poses
+retain authority. A mount visual mismatch suspends prediction until its context
+matches. BombPass/DestructiblePass queries during replay use acknowledged flags,
+not a newer SyncVar ability update.
+
+Bomb placement has a reversible SpriteRenderer-only proxy and per-input stock
+reservation. The server selects the permitted prefab asset, validates placement,
+spawns the real bomb and confirms the explicit A tick. Rejection/timeout releases
+the proxy/virtual footprint; confirmation hands rendering to the spawn while
+stock remains reserved until the movement acknowledgement. Dedicated placement
+audio suppresses the predicting owner's duplicate. Line casts still use their
+existing authority path and do not create speculative gameplay bombs.
+
+Green Louie starts local dash presentation without running its gameplay routine.
+Its read-only obstacle probe uses the existing dash collision rules. A revisioned
+server event confirms the C tick; movement snapshots correct the displayed path.
+Continuation without fresh authority is bounded to 150 ms and cancels on timeout.
+The server retains dash collisions, damage, invulnerability and stop decisions.
+
+Motion captures label context at input and response. Run
+`python Tools/Diagnostics/analyze_prediction.py --online ONLINE.jsonl --offline OFFLINE.jsonl --output REPORT.json`
+for build/context-separated statistics. Blocked or unclassified response samples
+are excluded; older captures need recapture for classified comparisons. Observed
+frame hitches are not network latency. See `progresso-predicao-online.md` for the
+remaining plan and the exact automated/manual validation boundary.

@@ -15,7 +15,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-Marco 1 implementado e validado automaticamente (publicação ainda pendente):
+Marcos 1-3 implementados e validados automaticamente; publicação em preparação:
 - A01: snapshot confirma montaria e o motor permite locomoção montada estável;
   presenter local da montaria usa pose/fase do proprietário, sem habilitar gameplay.
 - A13: replay usa velocidade confirmada e flags confirmadas de BombPass e
@@ -27,8 +27,7 @@ Marco 1 implementado e validado automaticamente (publicação ainda pendente):
   warnings/erros. Relatórios: `Logs/PredictionMountedTests.xml` e `.log`.
 - Protocolo de trabalho: 25 (wire de contexto alterado); servidor publicado ainda
   permanece na versão anterior enquanto este lote não for enviado ao pipeline.
-- Próxima ação: A02, proxy visual de colocação com confirmação/rejeição por tick,
-  capacidade confirmada e substituição pelo spawn autoritativo.
+- Próxima ação: A04 Pink jump; depois C01 e demais IDs na ordem do plano.
 - Partidas manuais com dois peers, contextos das nove montarias, redes degradadas
   e demais modos ainda não executadas; não declarar ganho percebido medido.
 
@@ -50,12 +49,24 @@ Marco 1 implementado e validado automaticamente (publicação ainda pendente):
 - Manual pendente: spawn/áudio em dois peers, press rápido com lote de inputs,
   variantes de bomba, glove/line/dash, água/buracos e disputa da célula.
 
+### Marco 3: A03 validado
+
+- `NetworkGreenDash.cs`: predição de início do proprietário, janela de 150 ms
+  sem autoridade, confirmação sem voltar ao início, snapshots com correção e
+  parada por tick de C/revisão. Não executa coroutine de gameplay no client.
+- Green respeita geometria conhecida, cancela em morte/interrupção e preserva
+  áudio/afterimages. FX arbitra dash vs bounce; motor comum não disputa o corpo.
+- Validação: 148/148 Unity EditMode; `Logs/PredictionGreenTests.xml` e `.log`.
+- Próximo: A04 Pink (posição de chão separada do arco visual), depois C01.
+- Manual pendente: input C em dois peers, alvo dinâmico, pausa/desmontagem/morte,
+  plantio durante dash, speed debuff, áudio/afterimages e condições de rede.
+
 ## Checklist por ID
 
 - [ ] P0: ferramenta e contexto implementados/testados; novas capturas comparáveis pendentes.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
-- [ ] A03: Green Louie dash.
+- [x] A03: predição/autoridade de dash e testes; manual pendente.
 - [ ] A04: Pink Louie jump.
 - [ ] A05: Black Louie dash/push.
 - [ ] A06: Red Louie pose/áudio; stun autoritativo.

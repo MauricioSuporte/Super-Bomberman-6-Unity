@@ -442,6 +442,7 @@ namespace Assets.Scripts.Netcode
             UpdateTileMotionPresentation();
             UpdatePlacementPresentation(unscaledDeltaTime);
             UpdatePlayerBouncePresentation(deltaTime, unscaledDeltaTime);
+            UpdateGreenDash(deltaTime, unscaledDeltaTime);
             readyBombArcs.Clear();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
@@ -576,6 +577,7 @@ namespace Assets.Scripts.Netcode
             ClearTileMotionPresentation();
             ClearPlayerBouncePresentation();
             ClearPlacementPredictions();
+            ClearGreenDash("presenter_disabled");
         }
 
         void OnDisable() => ClearKickPlayback();
