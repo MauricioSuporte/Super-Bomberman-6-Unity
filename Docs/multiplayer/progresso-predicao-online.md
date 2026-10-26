@@ -16,20 +16,19 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 ## Estado atual
 
 - Branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen do usuário.
-- Último servidor/updater confirmado: `b18e91f08`, protocolo33,
-  CI40315969165 sucesso. A09 LineBomb/Purple publicado.
-- A10 salvo/enviado em `ce7e27ada` com skip CI: guards de detonação e logs Btick,
-  validado em Unity182/182; será publicado junto do próximo lote de gameplay.
-- Lote34 pronto para salvar/publicar: A11 arco de montar aprovado + gesto de
-  desmontagem previsto, pausa/fase retida, ponte de posição e bounce de pouso.
-  A14 histórico guarda direção original; bloqueio só na cópia do motor/replay.
-- Validação34: Unity188/188, C# zero erros/avisos, Python40/40, UTF-8/BOM e
-  git diff --check passaram. Relatórios Logs/PredictionRidingFinalTests.xml/.log.
-  Primeiro suite187/188 falhou por fixture sem corpo físico ativo; corrigida a
-  configuração do teste, focused1/1 e suíte completa188/188 passaram.
-- A11 ainda parcial: fila/visibilidade dos ovos e montarias soltas (R07) pendentes.
-  R02 e A14 também continuam parciais. Nenhum teste manual com dois peers feito.
-- Próximo: publicar34, verificar CI, continuar A11/R07 e A12/C02-C10/R01-R08.
+- Último servidor/updater confirmado: `24b471911`, protocolo34,
+  CI40328660226 sucesso. A10 e riding/raw-history publicados.
+- Lote35 validado para salvar/publicar: apresentação aprovada dos ovos com
+  facing/idle, visibilidade, sorting e buffer32 no mesmo tempo do transform.
+  Identidade oculta fica ativa para late observer; hitboxes preservam estado.
+  Sem fila/posse/coleta ou trajeto especulativo no cliente; offline preservado.
+- Validação35: Unity191/191 (suíte final com timeline offset), C# zero erros/avisos,
+  Python40/40, UTF-8/BOM e diffcheck passaram. Relatórios no checkout principal:
+  Logs/PredictionEggQueueFinalTests.xml/.log. Lote34 passou188/188 anteriormente.
+- A11/R07 ainda parciais: seguir auditando transferência/continuidade da fila e
+  trajetórias de itens/skull. WorldMount estático/emote foi auditado; não inventar
+  extrapolação. R02 e A14 também parciais; nenhum teste manual de dois peers.
+- Próximo: publicar35, verificar CI; continuar A11/R07, A12 e C02-C10/R01-R08.
   Não declarar zero latência nem conclusão do plano inteiro.
 
 ## Marcos concluídos e commits
@@ -162,7 +161,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
-- [ ] A11: parcial: arco aprovado e desmontagem prevista/testados em34; fila/visibilidade de ovos e montaria solta R07 pendentes.
+- [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: regressões dos caminhos existentes.
@@ -483,3 +482,43 @@ rejeição de gesto Red seguida de replay real dos comandos pendentes.
 C# final zero warnings/erros; Python32+8, UTF-8/BOM e diffcheck passaram.
 Fontes e TitleScreen do usuário preservados. Protocolos34 alinhados; publicação
 pendente no momento deste registro. A11/R07 e A14 não estão completos.
+
+
+## Lote35 em andamento: ovos aprovados (ainda não validado Unity/publicado)
+
+34 salvo/enviado em24b471911, CI40328660226 em andamento; não afirmar deploy.
+35 está no diretório: NetworkEggFollower recebe QueuePresentation com timestamp,
+facing/idle/visibilidade/sorting. Buffer32 no tempo interpolado; sem mover root,
+conceder posse, criar fila ou prever captura. MountEggQueue publica após mover,
+freeze, sorting/visibilidade; transporte fica ativo para late observer com sprites
+ocultos e hitboxes preservados durante forcedHidden. Offline usa SetActive nativo.
+Direction helper é só visual; VFX de destruição deixa de receber overrides.
+Protocolos35 alinhados, testes novos adicionados (ainda não rodaram); C# final
+zero warnings/erros. Build completa anterior mostrou6 avisos já existentes Mirror.
+Runner ocupado pelo CI34: não copiar fontes35 até CI terminar. Próximo: validar
+EggQueue testes + suíte completa, Python/UTF-8; só depois salvar/publicar35.
+WorldMount auditado: pickup estático e emote alternativo (RNG só no servidor),
+clone sem collider/simulação; não justifica extrapolação de posição sem evidência.
+A11/R07 ainda parciais; sem medir atraso real de fila nem fazer dois peers.
+
+
+CI34 confirmado completed/success. Runner livre; fontes35 copiadas e suíte
+OnlineRoomEditModeTests iniciada: PredictionEggQueueTests.xml/.log. Esperados191
+(188 anteriores +2 testes de ovo + rejeição protocolo34). Ainda conferir resultado.
+C#0, Python40 e UTF-8/BOM passaram em35; sem publicação35 até Unity passar.
+
+
+## Lote35 final validado
+
+PredictionEggQueueFinalTests:191/191 passou incluindo ajuste de timelineOffset
+igual ao NetworkTransform. C# final0warnings/erros; Python40/40 e UTF-8/BOM/
+diffcheck passaram. Logs/xml preservados no checkout principal antes de liberar
+runner para CI. Publicar35 com cliente+servidor compatíveis; depois conferir CI.
+Fontes/TitleScreen preservados. A11/R07 continuam parciais (nenhuma medição real
+ou validação de transferência entre dois peers). C02 auditoria preliminar:
+Cannon usa parábola no root e sprites de fase, SpringLauncher pode wrap/clamp por
+sala (helper SetFlightPosition já mantém body/transform), BattleMode4 usa chão
+linear+altura visual subida/hold/descida. Não copiar uma curva única para todos.
+A12 ainda pendente; BattleRevengeController não tem presenter/spawn de rede próprio
+identificado na auditoria inicial: rastrear elegibilidade e transporte antes de
+prever input em um carrinho local sem contraparte aprovada.

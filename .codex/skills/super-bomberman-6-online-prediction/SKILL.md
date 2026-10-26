@@ -164,6 +164,14 @@ spawning a temporary gameplay object. A cast may still have an offline gesture
 when zero objects fit; confirm that gesture independently of spawn count. Audio
 is once per command group and must not echo through co-op broadcast.
 
+For authoritative followers, do not infer queue state or ownership from an
+interpolated position. Send approved visibility, idle/facing and sorting on the
+same observer timeline as their transform, including its timeline offset. Keep a
+hidden network identity active for late observers, hide presentation separately,
+and preserve the original hitbox states on the authority. The pure client must
+never restore gameplay hitboxes. Destruction presentation takes over explicitly.
+Static detached pickups need approved emotes, not invented extrapolation.
+
 ## Diagnose what is actually delayed
 
 Compare matching build/protocol captures and similar action sequences. Separate

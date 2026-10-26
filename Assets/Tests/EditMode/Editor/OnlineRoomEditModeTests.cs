@@ -11,6 +11,105 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void EggQueuePresentationUsesApprovedTimelineWithoutMovingOrCollecting()
+    {
+        var oldMode = NetSync.Mode;
+        var actor = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/EggFollower.prefab"));
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var network = actor.GetComponent<NetworkEggFollower>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(actor.GetComponent<NetworkIdentity>(), null);
+            typeof(NetworkEggFollower).GetMethod("Awake", flags).Invoke(network, null);
+            network.OnStartClient(); actor.transform.position = new Vector3(31000, 31000);
+            var directional = actor.GetComponentInChildren<EggFollowerDirectionalVisual>();
+            var sample = new NetworkEggFollower.QueuePresentation { valid = true, time = 10, facing = Vector2.right, visible = true, idle = false, sortingOrder = 7 };
+            using (var writer = NetworkWriterPool.Get())
+            {
+                writer.Write(sample); var reader = new NetworkReader(writer.ToArray());
+                var copy = reader.Read<NetworkEggFollower.QueuePresentation>();
+                Assert.AreEqual(sample.facing, copy.facing); Assert.AreEqual(sample.time, copy.time);
+                Assert.AreEqual(sample.visible, copy.visible); Assert.AreEqual(sample.sortingOrder, copy.sortingOrder);
+            }
+            network.ReceiveQueuePresentation(sample);
+            var positionSync = actor.GetComponent<NetworkTransformReliable>();
+            double adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
+                (positionSync.timelineOffset ? positionSync.sendIntervalMultiplier : 0));
+            var pending = (List<NetworkEggFollower.QueuePresentation>)typeof(NetworkEggFollower).GetField("pendingPresentation", flags).GetValue(network);
+            Assert.AreEqual(10 + adjustment, pending[0].time, 0.000001, "Pose must use the NetworkTransform timeline offset.");
+            sample.time = 11; sample.facing = Vector2.up; sample.idle = true; sample.visible = false; sample.sortingOrder = 9;
+            network.ReceiveQueuePresentation(sample);
+            var present = typeof(NetworkEggFollower).GetMethod("ApplyQueuePresentation", flags);
+            present.Invoke(network, new object[] { 10.5 + adjustment });
+            Assert.AreEqual(Vector2.right, directional.facing); Assert.IsFalse(directional.IsIdle);
+            foreach (var sprite in actor.GetComponentsInChildren<SpriteRenderer>(true))
+            { Assert.IsFalse(sprite.forceRenderingOff); Assert.AreEqual(7, sprite.sortingOrder); }
+            present.Invoke(network, new object[] { 11d + adjustment });
+            Assert.AreEqual(Vector2.up, directional.facing); Assert.IsTrue(directional.IsIdle);
+            foreach (var sprite in actor.GetComponentsInChildren<SpriteRenderer>(true))
+            { Assert.IsTrue(sprite.forceRenderingOff); Assert.AreEqual(9, sprite.sortingOrder); }
+            sample.time = 10.9; sample.visible = true; network.ReceiveQueuePresentation(sample);
+            present.Invoke(network, new object[] { 12d + adjustment });
+            foreach (var sprite in actor.GetComponentsInChildren<SpriteRenderer>(true)) Assert.IsTrue(sprite.forceRenderingOff, "Stale visibility must not resurrect an egg.");
+            sample.time = 13; sample.visible = true; sample.idle = false; network.ReceiveQueuePresentation(sample);
+            present.Invoke(network, new object[] { 13d + adjustment }); Assert.IsFalse(directional.IsIdle);
+            Assert.AreEqual(new Vector3(31000, 31000), actor.transform.position);
+            foreach (var collider in actor.GetComponentsInChildren<Collider2D>(true)) Assert.IsFalse(collider.enabled);
+            Assert.IsNull(actor.GetComponent<MountEggQueue>(), "Presentation must not create queue ownership.");
+            typeof(NetworkEggFollower).GetField("destroyKind", flags).SetValue(network, (byte)1);
+            sample.time = 14; sample.visible = false; network.ReceiveQueuePresentation(sample);
+            present.Invoke(network, new object[] { 14d + adjustment });
+            foreach (var sprite in actor.GetComponentsInChildren<SpriteRenderer>(true)) Assert.IsFalse(sprite.forceRenderingOff, "The approved destroy visual owns renderers after destruction starts.");
+        }
+        finally { NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
+    public void EggQueueHiddenIdentityRemainsSpawnableAndRestoresExactHitboxState()
+    {
+        var oldMode = NetSync.Mode;
+        var actor = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/EggFollower.prefab"));
+        var owner = new GameObject("EggVisibilityQueue"); owner.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        NetworkIdentity identity = null;
+        try
+        {
+            identity = actor.GetComponent<NetworkIdentity>(); var network = actor.GetComponent<NetworkEggFollower>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, 126u); typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, true);
+            var original = actor.GetComponent<Collider2D>(); original.enabled = true;
+            var disabledObject = new GameObject("AlreadyDisabledHitbox"); disabledObject.transform.SetParent(actor.transform);
+            var disabled = disabledObject.AddComponent<BoxCollider2D>(); disabled.enabled = false;
+            var queue = owner.AddComponent<MountEggQueue>();
+            var entryType = typeof(MountEggQueue).GetNestedType("EggEntry", System.Reflection.BindingFlags.NonPublic);
+            var entry = System.Activator.CreateInstance(entryType);
+            entryType.GetField("rootTr").SetValue(entry, actor.transform);
+            entryType.GetField("directional").SetValue(entry, actor.GetComponentInChildren<EggFollowerDirectionalVisual>());
+            var eggs = (System.Collections.IList)typeof(MountEggQueue).GetField("_eggs", flags).GetValue(queue); eggs.Add(entry);
+            NetSync.Mode = NetSync.NetMode.Host; queue.ForceVisible(false);
+            Assert.IsTrue(actor.activeSelf, "Mirror must still spawn the hidden identity for a late observer.");
+            Assert.IsFalse(original.enabled); Assert.IsFalse(disabled.enabled);
+            foreach (var sprite in actor.GetComponentsInChildren<SpriteRenderer>(true)) Assert.IsTrue(sprite.forceRenderingOff);
+            var state = (NetworkEggFollower.QueuePresentation)typeof(NetworkEggFollower).GetField("queuePresentation", flags).GetValue(network);
+            Assert.IsTrue(state.valid); Assert.IsFalse(state.visible);
+            queue.ForceVisible(true); Assert.IsTrue(original.enabled); Assert.IsFalse(disabled.enabled);
+            state = (NetworkEggFollower.QueuePresentation)typeof(NetworkEggFollower).GetField("queuePresentation", flags).GetValue(network); Assert.IsTrue(state.visible);
+            NetSync.Mode = NetSync.NetMode.Offline; queue.ForceVisible(false); Assert.IsFalse(actor.activeSelf, "Offline keeps its native visibility lifecycle.");
+            queue.ForceVisible(true); Assert.IsTrue(actor.activeSelf);
+            eggs.Clear();
+        }
+        finally
+        {
+            if (identity != null) typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, false);
+            NetSync.Mode = oldMode; Object.DestroyImmediate(owner); Object.DestroyImmediate(actor);
+        }
+    }
+
+
+    [Test]
     public void RejectedAbilityReplaysOriginalWalkingIntentInsteadOfStoredPoseZeros()
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("RejectedPoseMovementReplay"); actor.SetActive(false);
@@ -2335,6 +2434,7 @@ public sealed class OnlineRoomEditModeTests
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
     [TestCase("0.5.0", 33, false)]
+    [TestCase("0.5.0", 34, false)]
     [TestCase("0.5.0", 32, false)]
     [TestCase("0.5.0", 31, false)]
     [TestCase("0.5.0", 30, false)]

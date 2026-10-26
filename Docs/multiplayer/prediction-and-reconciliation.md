@@ -680,3 +680,29 @@ server. Gesture locks mask only the current motor/replay copy while still active
 After rejection or completion, pending movement can replay its real direction
 without firing ability edges again. Tests cover a rejected Red gesture with
 walking input retained through the lock. This does not close all A14 regressions.
+
+
+## Approved egg queue presentation (protocol 35)
+
+`MountEggQueue` continues to own the travelled route, membership, freeze/transfer,
+collection and destruction on the authority. `NetworkTransformReliable` continues
+to interpolate follower positions; no client queue is constructed or simulated.
+`NetworkEggFollower.QueuePresentation` supplies the confirmed facing, moving/idle,
+visibility and sorting with a timestamp. A bounded 32-state buffer selects them on
+the transform's observer timeline, including its send-interval/timeline offset.
+This prevents an interpolated stationary frame from inventing an idle transition
+and makes boat suppression, forced hiding and frozen queues visible on clients.
+
+A forced-hidden online follower keeps its identity active so Mirror can spawn it
+for a late observer. Its sprites are hidden and its hitboxes disabled; showing it
+restores only the hitboxes that were enabled before hiding. Offline retains its
+native SetActive lifecycle. Client hiding never disables the network root; client
+colliders remain disabled. Once approved destruction starts, its existing VFX owns
+the renderers and queue presentation stops overriding them.
+
+The detached `NetworkWorldMount` pickup was also audited: its native inactivity
+loop alternates approved emotes and does not move the pickup. Its existing frame
+stream and collider-free clone are appropriate for that static case. This does
+not establish that every R07 item/skull trajectory is complete, nor measure the
+latency of the owner-to-egg trail. Manual two-peer transfer/boat/death tests remain
+necessary to judge the resulting gameplay.

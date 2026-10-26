@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public sealed class EggFollowerDirectionalVisual : MonoBehaviour
 {
@@ -68,6 +68,13 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
             facing = NormalizeCardinal(face);
 
         ApplyState(facing, idle: true, force: true);
+    }
+
+    // Approved presentation only; does not move the follower or run its queue.
+    public void PresentNetworkState(Vector2 face, bool idle)
+    {
+        if (face != Vector2.zero) facing = NormalizeCardinal(face);
+        ApplyState(facing, idle, force: false);
     }
 
     void ApplyState(Vector2 face, bool idle, bool force)

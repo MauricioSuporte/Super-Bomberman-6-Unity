@@ -133,6 +133,7 @@ public sealed class MountEggQueue : MonoBehaviour
             _lastRouteDirection = direction != Vector2.zero ? direction : (Vector2)delta;
         }
         _lastOwnerPos = owner;
+        PublishNetworkPresentation();
     }
 
     [SerializeField, Range(0.00001f, 0.05f)] float jitterIgnoreDelta = 0.0005f;
@@ -353,6 +354,14 @@ public sealed class MountEggQueue : MonoBehaviour
         }
     }
 
+    void PublishNetworkPresentation()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Assets.Scripts.Netcode.NetworkEggFollower.ReplicationEnabled) return;
+        foreach (var egg in _eggs)
+            if (egg.rootTr != null && egg.rootTr.TryGetComponent<Assets.Scripts.Netcode.NetworkEggFollower>(out var network))
+                network.CaptureQueuePresentation(!_forcedHidden && !_suppressedByRedBoat);
+    }
+
     void SetEggVisualRenderersEnabled(bool enabled)
     {
         _suppressedByRedBoat = !enabled;
@@ -386,6 +395,7 @@ public sealed class MountEggQueue : MonoBehaviour
             if (enabled)
                 ForceEggVisualToNormalIdle(e.rootTr, e.directional);
         }
+        PublishNetworkPresentation();
     }
 
     #endregion
@@ -716,6 +726,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
             _eggs[i] = e;
         }
+        PublishNetworkPresentation();
     }
 
     #endregion
@@ -834,9 +845,12 @@ public sealed class MountEggQueue : MonoBehaviour
             var e = _eggs[i];
             if (e.rootTr == null) continue;
 
+            if (e.rootTr.TryGetComponent<Assets.Scripts.Netcode.NetworkEggFollower>(out var network) &&
+                network.SetServerQueueVisibility(active)) continue;
             if (e.rootTr.gameObject.activeSelf != active)
                 e.rootTr.gameObject.SetActive(active);
         }
+        PublishNetworkPresentation();
     }
 
     void PostQueueChanged(bool animateShift)
