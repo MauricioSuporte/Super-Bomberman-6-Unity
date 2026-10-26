@@ -23,6 +23,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
     double pendingAt, receivedAt = -1, nextSample, nextSimulation, nextNetworkLog, nextKickDetail, nextKickResult;
     int lastLocalHeld = -1, lastNetworkHeld = -1, lastAppliedHeld = -1, sentCount, receivedCount;
     bool pending, noMotionReported, sampling;
+    string pendingContext;
 
     void Awake()
     {
@@ -64,6 +65,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         pendingDirection = DirectionFromMask(held);
         pending = pendingDirection != Vector2.zero;
         pendingAt = Time.realtimeSinceStartupAsDouble;
+        pendingContext = State();
         noMotionReported = false;
     }
 
@@ -80,7 +82,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         previousPosition = position;
         if (pending && Vector2.Dot(delta, pendingDirection) > 0.001f)
         {
-            var response = GameplayLatencyDiagnostics.For("input_to_motion", movement);
+            var response = GameplayLatencyDiagnostics.For("input_to_motion", movement, detail: "at_input:" + pendingContext + ";at_response:" + State());
             response.durationMs = (now - pendingAt) * 1000;
             response.delta = delta;
             response.held = lastLocalHeld >= 0 ? lastLocalHeld : lastNetworkHeld;
@@ -109,7 +111,8 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         ObserveBombs(now, sample);
     }
 
-    string State() => "locked=" + movement.InputLocked + " dead=" + movement.isDead +
+    string State() => "prediction_block=" + (movement.NetworkPredictionBlockReason ?? "none") +
+        " mounted=" + movement.IsMounted + " speed=" + movement.speed + " locked=" + movement.InputLocked + " dead=" + movement.isDead +
         " paused=" + GamePauseController.IsPaused + " intro=" + (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) +
         " kickAbility=" + (TryGetComponent<BombKickAbility>(out var kick) && kick.IsEnabled);
 

@@ -1,0 +1,97 @@
+"""Summarize motion captures without mixing builds or treating blocked input as lag."""
+
+import argparse
+from collections import Counter
+import json
+import math
+from pathlib import Path
+import re
+import statistics
+
+
+def summarize(records, minimum_percentile_samples=20):
+    groups = {}
+    build, protocol = "unknown", None
+    for row in records:
+        kind = row.get("kind", "unknown")
+        if kind == "capture_start":
+            build, protocol = row.get("build", "unknown"), row.get("protocol")
+            continue
+        detail = row.get("detail", "") or ""
+        input_context = detail.split(";at_response:", 1)[0].removeprefix("at_input:")
+        mounted = re.search(r"\bmounted=(True|False)\b", input_context, re.IGNORECASE)
+        block = re.search(r"\bprediction_block=([^\s;]+)", input_context)
+        context = "mounted" if mounted and mounted[1].lower() == "true" else "walking" if mounted else "unknown"
+        key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context)
+        group = groups.setdefault(key, {"events": Counter(), "latencies": [], "blockedResponses": 0,
+                                        "unclassifiedResponses": 0, "invalidDurations": 0, "hitchFrames": set()})
+        group["events"][kind] += 1
+        frame_ms = row.get("frameMs", 0)
+        if isinstance(frame_ms, (int, float)) and math.isfinite(frame_ms) and frame_ms > 50:
+            group["hitchFrames"].add((row.get("_capture", "memory"), row.get("frame")))
+        if kind != "input_to_motion":
+            continue
+        duration = row.get("durationMs")
+        if not isinstance(duration, (int, float)) or not math.isfinite(duration) or duration < 0:
+            group["invalidDurations"] += 1
+        elif not block:
+            group["unclassifiedResponses"] += 1
+        elif block[1] != "none":
+            group["blockedResponses"] += 1
+        else:
+            group["latencies"].append(duration)
+
+    result = []
+    for (identity, version, role, scene, context), group in groups.items():
+        samples = sorted(group["latencies"])
+        count = len(samples)
+        result.append({"build": identity, "protocol": version, "role": role, "scene": scene, "context": context,
+                       "freeInputToMotionSamples": count,
+                       "medianMs": statistics.median(samples) if samples else None,
+                       "p95Ms": samples[math.ceil(count * 0.95) - 1] if count >= minimum_percentile_samples else None,
+                       "percentileMinimumSamples": minimum_percentile_samples,
+                       "blockedResponsesExcluded": group["blockedResponses"],
+                       "unclassifiedResponsesExcluded": group["unclassifiedResponses"],
+                       "invalidDurationsExcluded": group["invalidDurations"],
+                       "observedHitchFramesOver50Ms": len(group["hitchFrames"]),
+                       "events": dict(sorted(group["events"].items()))})
+    return result
+
+
+def read_captures(paths):
+    for filename in paths:
+        path = Path(filename)
+        for line_number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as error:
+                raise ValueError(f"{path}:{line_number}: invalid JSON capture record") from error
+            if not isinstance(row, dict):
+                raise ValueError(f"{path}:{line_number}: capture record must be an object")
+            row["_capture"] = str(path.resolve())
+            yield row
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--online", nargs="+", required=True, help="Online JSONL captures")
+    parser.add_argument("--offline", nargs="+", required=True, help="Matching offline JSONL captures")
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    report = {"online": summarize(read_captures(args.online)), "offline": summarize(read_captures(args.offline)),
+              "notes": ["Compare the same scene, loadout and input sequence; builds and contexts are reported separately.",
+                        "Input-to-motion is an observed rendered-frame interval, not raw network latency.",
+                        "Old records without input context are counted but excluded from latency statistics.",
+                        "Hitch counts describe observed logged frames, not every frame in the session.",
+                        "Capture flags, hardware and network conditions must be recorded with the reproduction."]}
+    text = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    if args.output:
+        args.output.write_text(text, encoding="utf-8")
+    else:
+        print(text, end="")
+
+
+if __name__ == "__main__":
+    main()

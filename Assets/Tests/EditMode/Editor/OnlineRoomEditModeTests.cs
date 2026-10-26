@@ -1020,6 +1020,91 @@ public sealed class OnlineRoomEditModeTests
         finally { NetSync.Mode = previous; Object.DestroyImmediate(player); Object.DestroyImmediate(obstacle); }
     }
 
+    [TestCase(MountedType.Blue)]
+    [TestCase(MountedType.Black)]
+    [TestCase(MountedType.Purple)]
+    [TestCase(MountedType.Green)]
+    [TestCase(MountedType.Yellow)]
+    [TestCase(MountedType.Pink)]
+    [TestCase(MountedType.Red)]
+    [TestCase(MountedType.Mole)]
+    [TestCase(MountedType.Tank)]
+    public void ConfirmedMountedMovementReplaysAndWaitsForMatchingVisual(MountedType type)
+    {
+        var oldMode = NetSync.Mode; var player = new GameObject("MountedPredictionRegression"); player.SetActive(false);
+        var visual = new GameObject("MountedPredictionVisual"); visual.transform.SetParent(player.transform);
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; player.tag = "Player"; player.AddComponent<BoxCollider2D>();
+            var body = player.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var movement = player.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = player.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, visual);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, type);
+            movement.SetNetworkTickDriven(true); player.SetActive(true);
+            var state = new MovementController.NetworkMovementState { position = new Vector2(3000, 3000),
+                facing = Vector2.down, worldSpeed = 4.1f, animationSpeed = PlayerPersistentStats.BaseSpeedNormal,
+                mount = type, movementCapabilities = 3, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(movement.IsMounted); Assert.IsTrue(movement.CanPredictNetworkMovement);
+            for (int i = 0; i < 4; i++) movement.SimulateNetworkMovementTick(8);
+            var ack = movement.CaptureNetworkMovementState(); ack.worldSpeed = state.worldSpeed;
+            for (int i = 0; i < 4; i++) movement.SimulateNetworkMovementTick(1);
+            Vector2 predicted = body.position;
+            movement.RestoreNetworkMovementState(ack);
+            for (int i = 0; i < 4; i++) movement.SimulateNetworkMovementTick(1, replay: true);
+            Assert.AreEqual(predicted, body.position);
+            Assert.Greater(predicted.x, state.position.x); Assert.Greater(predicted.y, state.position.y);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.None);
+            Assert.AreEqual("mount_context_pending", movement.NetworkPredictionBlockReason);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, type);
+            movement.SetInputLocked(true, false); Assert.IsFalse(movement.CanPredictNetworkMovement);
+            movement.SetInputLocked(false, false); movement.SetExternalMovementOverride(true);
+            Assert.IsFalse(movement.CanPredictNetworkMovement, "Mounted launchers must retain authoritative presentation.");
+            movement.SetExternalMovementOverride(false);
+            state.mount = MountedType.None; movement.RestoreNetworkMovementState(state);
+            Assert.IsFalse(movement.IsMounted);
+            using var writer = NetworkWriterPool.Get(); writer.Write(ack);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var wire = reader.Read<MovementController.NetworkMovementState>();
+            Assert.AreEqual(type, wire.mount); Assert.AreEqual(3, wire.movementCapabilities);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void ReplayUsesAcknowledgedPassCapabilitiesInsteadOfNewerAbilityFlags()
+    {
+        var oldMode = NetSync.Mode; var player = new GameObject("MovementCapabilityRegression"); player.SetActive(false);
+        var wall = new GameObject("MovementCapabilityWall");
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; player.tag = "Player"; player.AddComponent<BoxCollider2D>();
+            var body = player.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var movement = player.AddComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var abilities = player.GetComponent<AbilitySystem>();
+            typeof(MovementController).GetField("abilitySystem", flags).SetValue(movement, abilities);
+            var pass = player.AddComponent<DestructiblePassAbility>(); abilities.RebuildCache();
+            player.SetActive(true); movement.SetNetworkTickDriven(true); movement.SetPredictLocally(true);
+            wall.layer = LayerMask.NameToLayer("Stage"); wall.tag = "Destructibles";
+            wall.transform.position = new Vector2(4002, 4000); wall.AddComponent<BoxCollider2D>(); Physics2D.SyncTransforms();
+            movement.obstacleMask = LayerMask.GetMask("Stage"); movement.RefreshObstacleContactFilter();
+            var state = new MovementController.NetworkMovementState { position = new Vector2(4000, 4000), facing = Vector2.right,
+                worldSpeed = 4.1f, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, movementCapabilities = 2, canPredict = true };
+            movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 40; i++) movement.SimulateNetworkMovementTick(8, replay: true);
+            Assert.Greater(body.position.x, 4002, "The acknowledged pass state remains valid even before the visual ability flag arrives.");
+            typeof(DestructiblePassAbility).GetField("enabledAbility", flags).SetValue(pass, true);
+            state.movementCapabilities = 0; movement.RestoreNetworkMovementState(state);
+            for (int i = 0; i < 40; i++) movement.SimulateNetworkMovementTick(8, replay: true);
+            Assert.LessOrEqual(body.position.x, 4001, "A newer pass ability cannot rewrite older movement history.");
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(player); Object.DestroyImmediate(wall); }
+    }
+
     [TestCase(NetSync.NetMode.Offline, true)]
     [TestCase(NetSync.NetMode.Host, true)]
     [TestCase(NetSync.NetMode.Client, false)]
@@ -1048,6 +1133,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 24, false)]
     [TestCase("0.5.0", 23, false)]
     [TestCase("0.5.0", 22, false)]
     [TestCase("0.5.0", 21, false)]

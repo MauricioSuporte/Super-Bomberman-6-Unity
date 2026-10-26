@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 using System.Collections.Generic;
 
@@ -456,6 +456,23 @@ public class MountVisualController : MonoBehaviour
                 SequenceDuration = renderer.sequenceDuration
             });
         }
+    }
+
+    // Presentation only, explicitly driven by the owner's network presenter.
+    // Keep this component disabled so no independent gameplay/lifecycle loop runs.
+    public void PresentNetworkLocomotion()
+    {
+        if (owner == null || owner.isDead || owner.IsEndingStage) return;
+        ApplyCurrentLocalOffset();
+        if (useHeadOnlyPlayerVisual) ApplyHeadOnlyOffsetsIfNeeded(force: false);
+        else ClearHeadOnlyOffsetsIfNeeded();
+        bool idle = owner.Direction == Vector2.zero;
+        Vector2 face = idle ? owner.FacingDirection : owner.Direction;
+        ApplyDirection(face, idle);
+        if (scaleWalkAnimationWithOwnerSpeed) AdvanceManualWalkAnimation();
+        ApplyPinkRidingHorizontalFlipOverride(face);
+        if (isPinkLouieVisual && !IsPinkRidingAnimationActive()) ForceDisableRightRenderer();
+        ApplyBlinkSyncFromOwnerIfNeeded(); ApplyExternalTintIfNeeded(); ApplyPlayerEffectTintIfNeeded();
     }
 
     private void LateUpdate()

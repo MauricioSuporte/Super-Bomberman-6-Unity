@@ -229,6 +229,9 @@ public class MovementController : MonoBehaviour, IKillable
     private bool replayingNetworkTick;
     private int networkHeldMask;
     private float predictedWorldSpeed;
+    private bool hasNetworkMovementContext;
+    private byte networkMovementCapabilities;
+    private MountedType networkMovementMount;
 
     public struct NetworkMovementState
     {
@@ -236,15 +239,38 @@ public class MovementController : MonoBehaviour, IKillable
         public Vector2 pendingTurn, lockedDirection, pendingSingle, lastMove;
         public Vector2 reentryStart, reentryTarget;
         public float dualTimer, alignCoordinate, accX, accY, reentryElapsed, worldSpeed;
-        public byte axis, alignAxis;
+        public byte axis, alignAxis, movementCapabilities;
+        public MountedType mount;
         public int animationSpeed;
         public bool hasInput, alignTarget, reentryActive, canPredict;
     }
 
-    public bool CanPredictNetworkMovement => !isDead && !inputLocked && !isEndingStage &&
-        !externalMovementOverride && !visualOverrideActive && (!externalVisualSuppressed || CanPredictGloveCarry) &&
-        !IsSpriteLocked && !isMounted && !IsRidingPlaying() &&
-        (stunReceiver == null || !stunReceiver.IsStunned);
+    public bool CanPredictNetworkMovement => NetworkPredictionBlockReason == null;
+    public string NetworkPredictionBlockReason => isDead ? "dead" : inputLocked ? "input_locked" : isEndingStage ? "stage_ending" :
+        externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
+        externalVisualSuppressed && !CanPredictGloveCarry ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
+        IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :
+        !MountedPredictionContextReady ? "mount_context_pending" : null;
+
+    private bool MountedPredictionContextReady
+    {
+        get
+        {
+            if (!isMounted) return true;
+            if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return true;
+            return hasNetworkMovementContext && networkMovementMount != MountedType.None &&
+                TryGetComponent<PlayerMountCompanion>(out var mount) && mount.GetMountedLouieType() == networkMovementMount;
+        }
+    }
+
+    private byte CurrentMovementCapabilities => (byte)(
+        ((abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId)) ? 1 : 0) |
+        ((abilitySystem != null && abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId)) ? 2 : 0));
+    private bool UseSnapshotMovementCapabilities => predictLocally && insideNetworkTick && hasNetworkMovementContext;
+    private bool MovementCanPassBombs => UseSnapshotMovementCapabilities ? (networkMovementCapabilities & 1) != 0 :
+        abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+    private bool MovementCanPassDestructibles => UseSnapshotMovementCapabilities ? (networkMovementCapabilities & 2) != 0 :
+        abilitySystem != null && abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
     private bool CanPredictGloveCarry =>
         (TryGetComponent<PowerGloveAbility>(out var glove) && glove.IsHoldingForNet) ||
@@ -264,12 +290,18 @@ public class MovementController : MonoBehaviour, IKillable
         reentryActive = bombReentryCenteringActive, reentryStart = bombReentryCenterStart,
         reentryTarget = bombReentryCenterTarget, reentryElapsed = bombReentryCenterElapsed,
         worldSpeed = speed * tileSize * GetExternalMovementSpeedMultiplier(),
-        animationSpeed = speedInternal, canPredict = CanPredictNetworkMovement
+        animationSpeed = speedInternal, canPredict = CanPredictNetworkMovement,
+        movementCapabilities = predictLocally && hasNetworkMovementContext ? networkMovementCapabilities : CurrentMovementCapabilities,
+        mount = predictLocally && hasNetworkMovementContext ? networkMovementMount :
+            isMounted && TryGetComponent<PlayerMountCompanion>(out var mount) ? mount.GetMountedLouieType() : MountedType.None
     };
 
     public void RestoreNetworkMovementState(NetworkMovementState state)
     {
         SetNetworkPosition(state.position);
+        hasNetworkMovementContext = true; networkMovementCapabilities = state.movementCapabilities; networkMovementMount = state.mount;
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && isMounted != (state.mount != MountedType.None))
+            SetMountedOnLouie(state.mount != MountedType.None);
         if (speedInternal != state.animationSpeed) ApplySpeedInternalUnclamped(state.animationSpeed);
         direction = state.direction; facingDirection = state.facing;
         dualPrimary = state.dualPrimary; dualSecondary = state.dualSecondary;
@@ -1870,8 +1902,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (hitCount <= 0)
             return false;
 
-        bool canPassDestructibles = abilitySystem != null &&
-                                   abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+        bool canPassDestructibles = MovementCanPassDestructibles;
 
         for (int i = 0; i < hitCount; i++)
         {
@@ -2678,8 +2709,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (hitCount <= 0)
             return false;
 
-        bool canPassDestructibles = abilitySystem != null &&
-                                   abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+        bool canPassDestructibles = MovementCanPassDestructibles;
 
         for (int i = 0; i < hitCount; i++)
         {
@@ -2752,8 +2782,7 @@ public class MovementController : MonoBehaviour, IKillable
         int hitCount = GetObstacleHitCount(targetPosition, size);
         if (hitCount > 0)
         {
-            bool canPassDestructibles = abilitySystem != null &&
-                                       abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+            bool canPassDestructibles = MovementCanPassDestructibles;
 
             for (int h = 0; h < hitCount; h++)
             {
@@ -2828,7 +2857,7 @@ public class MovementController : MonoBehaviour, IKillable
             }
         }
 
-        bool hasBombPass = abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+        bool hasBombPass = MovementCanPassBombs;
         if (!hasBombPass)
         {
             Vector2 myPos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
@@ -3164,8 +3193,7 @@ public class MovementController : MonoBehaviour, IKillable
         int hitCount = GetObstacleHitCount(targetPosition, size);
         if (hitCount > 0)
         {
-            bool canPassDestructibles = abilitySystem != null &&
-                                       abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+            bool canPassDestructibles = MovementCanPassDestructibles;
 
             for (int h = 0; h < hitCount; h++)
             {
@@ -3197,7 +3225,7 @@ public class MovementController : MonoBehaviour, IKillable
             }
         }
 
-        bool hasBombPass = abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+        bool hasBombPass = MovementCanPassBombs;
         if (!hasBombPass)
         {
             Vector2 myPos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;

@@ -15,6 +15,7 @@ namespace Assets.Scripts.Netcode
         SpriteRenderer[] sprites;
         float nextSample;
         GreenLouieDashAnimator greenDash;
+        MountVisualController ownerVisual;
 
         void Awake()
         {
@@ -51,6 +52,11 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose))) return;
+            if (isLocalPlayer && TryGetComponent<MovementController>(out var movement) && movement.PredictLocally && movement.IsMounted && ownerVisual != null)
+            {
+                ownerVisual.PresentNetworkLocomotion();
+                return;
+            }
             for (int i = 0; i < renderers.Length && i < frames.Count; i++)
             {
                 var animation = renderers[i];
@@ -74,6 +80,12 @@ namespace Assets.Scripts.Netcode
         void Rebind(GameObject mount)
         {
             trackedMount = mount;
+            ownerVisual = mount != null ? mount.GetComponentInChildren<MountVisualController>(true) : null;
+            if (!isServer && isLocalPlayer && ownerVisual != null && TryGetComponent<MovementController>(out var movement))
+            {
+                movement.SetUseHeadOnlyWhenMounted(ownerVisual.useHeadOnlyPlayerVisual);
+                movement.SetMountedSpritesLocalYOverride(companion.GetMountedLouieType() == MountedType.Pink, movement.pinkMountedSpritesLocalY);
+            }
             greenDash = mount != null ? mount.GetComponentInChildren<GreenLouieDashAnimator>(true) : null;
             renderers = mount != null ? mount.GetComponentsInChildren<AnimatedSpriteRenderer>(true) : null;
             sprites = renderers != null ? new SpriteRenderer[renderers.Length] : null;
