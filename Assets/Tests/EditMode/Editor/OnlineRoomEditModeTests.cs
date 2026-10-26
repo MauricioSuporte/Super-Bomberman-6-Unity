@@ -10,6 +10,133 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void TankPredictionUsesVisualProxyBoundsTravelConfirmsPhaseAndRejects()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("TankPredictionOwner"); actor.SetActive(false);
+        var mount = new GameObject("TankPredictionMount"); mount.transform.SetParent(actor.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Tank);
+            actor.SetActive(true); movement.SetNetworkTickDriven(true);
+            var state = new MovementController.NetworkMovementState { position = new Vector2(15000, 15000), mount = MountedType.Tank,
+                facing = Vector2.right, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsFalse(fx.TryPredictTankShot(8, 10), "A confirmed ready state is required after mounting.");
+            var ready = new NetworkBombFx.MountActionState { tankReady = true };
+            fx.ReconcileTankShot(0, ready); Assert.IsTrue(fx.TryPredictTankShot(8, 10));
+            var proxy = (SpriteRenderer)typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx);
+            Assert.IsNotNull(proxy); Assert.AreEqual(2, proxy.GetComponents<Component>().Length);
+            Assert.IsNull(proxy.GetComponent<TankShot>()); Assert.IsNull(proxy.GetComponent<Collider2D>());
+            Assert.IsNull(proxy.GetComponent<NetworkIdentity>()); Assert.IsNull(proxy.GetComponent<Rigidbody2D>());
+            Vector2 start = proxy.transform.position; Assert.IsTrue(fx.AbilityPredictionLocksMovement); Assert.IsFalse(movement.InputLocked);
+            Assert.AreEqual("ability_pose", MotionDiagnosticProbe.ClassifyPredictionBlock(movement, null, fx), "Intentional owner pose waits are not free movement latency.");
+            Assert.IsFalse(actor.GetComponent<TankMountShootAbility>().Running);
+            var update = typeof(NetworkBombFx).GetMethod("UpdateTankPrediction", flags);
+            for (int i = 0; i < 10; i++) update.Invoke(fx, new object[] { 0.02f });
+            Assert.Greater(proxy.transform.position.x, start.x); Assert.LessOrEqual(proxy.transform.position.x, start.x + 1.21f);
+            fx.ReconcileTankShot(10, ready); Assert.IsNull(typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx));
+            Assert.IsFalse(fx.TankShotPoseActive); Assert.IsTrue(fx.TryPredictTankShot(8, 11));
+            update.Invoke(fx, new object[] { 0.1f }); float before = (float)typeof(NetworkBombFx).GetField("tankAge", flags).GetValue(fx);
+            fx.ReceiveTankShot(11, 999, Vector2.right, 0.25f, 10, NetworkBombFx.KickServerNow);
+            Assert.AreEqual(before, typeof(NetworkBombFx).GetField("tankAge", flags).GetValue(fx));
+            fx.ReconcileTankShot(11, new NetworkBombFx.MountActionState { tankCooldown = 10 });
+            Assert.IsFalse(fx.TryPredictTankShot(8, 12)); update.Invoke(fx, new object[] { 1.1f });
+            Assert.IsNull(typeof(NetworkBombFx).GetField("tankProxy", flags).GetValue(fx), "A missing spawn cannot leave a confirmed proxy forever.");
+            actor.GetComponent<CharacterHealth>().life = 0;
+            fx.ReceiveTankShot(12, 999, Vector2.right, 0.25f, 10, NetworkBombFx.KickServerNow);
+            Assert.IsFalse(fx.TankShotPoseActive, "A late receipt cannot resurrect the dead owner's firing pose.");
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.TryPredictTankShot(8, 13));
+            using var writer = NetworkWriterPool.Get(); writer.Write(ready);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); Assert.IsTrue(reader.Read<NetworkBombFx.MountActionState>().tankReady);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearTankPrediction", flags).Invoke(fx, new object[] { "test_cleanup" });
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void TankTravelPreviewStopsAtKnownGeometryWithoutImpactOrWorldSimulation()
+    {
+        var owner = new GameObject("TankPreviewOwner"); var wall = new GameObject("TankPreviewWall");
+        try
+        {
+            Vector2 start = new(16000, 16000); owner.transform.position = start;
+            owner.layer = wall.layer = LayerMask.NameToLayer("Stage"); owner.AddComponent<BoxCollider2D>();
+            wall.transform.position = start + Vector2.right; wall.AddComponent<BoxCollider2D>(); Physics2D.SyncTransforms();
+            int shots = Object.FindObjectsByType<TankShot>().Length;
+            var result = TankShot.PreviewNetworkTravel(start, start + Vector2.right * 3, Vector2.one * 0.25f,
+                LayerMask.GetMask("Stage"), owner, new RaycastHit2D[16]);
+            Assert.Greater(result.x, start.x); Assert.Less(result.x, start.x + 0.5f);
+            Assert.AreEqual(start.y, result.y); Assert.AreEqual(shots, Object.FindObjectsByType<TankShot>().Length);
+            Assert.IsFalse(wall.GetComponent<BoxCollider2D>() == null);
+        }
+        finally { Object.DestroyImmediate(owner); Object.DestroyImmediate(wall); }
+    }
+
+    [Test]
+    public void TankConfirmedPresentationMovesOnlyChildAndFreezesAcrossRootUpdatesDuringPause()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("TankVisualOwner"); actor.SetActive(false);
+        var projectile = new GameObject("TankVisualProjectile"); projectile.SetActive(false);
+        var child = new GameObject("TankVisualSprite", typeof(SpriteRenderer)); child.transform.SetParent(projectile.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        var paused = typeof(GamePauseController).GetProperty(nameof(GamePauseController.IsPaused)); bool wasPaused = GamePauseController.IsPaused;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); var fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            projectile.AddComponent<BoxCollider2D>(); var projectileIdentity = projectile.AddComponent<NetworkIdentity>();
+            var shot = projectile.AddComponent<NetworkTankShot>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(projectileIdentity, null);
+            typeof(NetworkTankShot).GetField("ownerFx", flags).SetValue(shot, fx);
+            typeof(NetworkTankShot).GetField("direction", flags).SetValue(shot, Vector2.right);
+            typeof(NetworkTankShot).GetField("launchSpeed", flags).SetValue(shot, 8f);
+            typeof(NetworkTankShot).GetField("launchTime", flags).SetValue(shot, NetworkBombFx.KickServerNow);
+            Assert.IsNotNull(shot.netIdentity, "Projectile fixture identity must be bound before presentation.");
+            Assert.IsNotNull(fx.netIdentity, "Player fixture identity must be bound before presentation.");
+            Assert.IsFalse(shot.isServer); Assert.AreEqual(NetSync.NetMode.Client, NetSync.Mode);
+            Assert.IsTrue(NetworkClient.active); Assert.IsTrue(fx.isLocalPlayer);
+            Assert.AreSame(fx, typeof(NetworkTankShot).GetField("ownerFx", flags).GetValue(shot));
+            Assert.AreSame(child.GetComponent<SpriteRenderer>(), shot.GetComponentInChildren<SpriteRenderer>(true));
+            Assert.IsTrue(shot.AdoptOwnerPresentation(Vector2.right * 0.8f));
+            Assert.AreEqual(Vector3.zero, projectile.transform.position); Assert.That(child.transform.position.x, Is.EqualTo(0.8f).Within(0.001f));
+            Vector3 displayed = child.transform.position; paused.SetValue(null, true); projectile.transform.position = Vector3.right * 10;
+            Assert.AreEqual("paused", MotionDiagnosticProbe.ClassifyPredictionBlock(actor.GetComponent<MovementController>(), null, fx));
+            typeof(NetworkTankShot).GetMethod("LateUpdate", flags).Invoke(shot, null);
+            Assert.Less(Vector3.Distance(displayed, child.transform.position), 0.00001f); Assert.AreEqual(Vector3.right * 10, projectile.transform.position);
+            paused.SetValue(null, false); typeof(NetworkTankShot).GetField("launchTime", flags).SetValue(shot, NetworkBombFx.KickServerNow - 2);
+            typeof(NetworkTankShot).GetMethod("LateUpdate", flags).Invoke(shot, null);
+            Assert.IsTrue(shot.OwnerPresentationActive, "Resuming a long pause waits for a fresh approved sample instead of treating the pause as packet loss.");
+            Assert.Less(Vector3.Distance(displayed, child.transform.position), 0.00001f);
+            shot.ReleaseOwnerPresentation(); Assert.AreEqual(Vector3.zero, child.transform.localPosition); Assert.IsFalse(shot.OwnerPresentationActive);
+        }
+        finally
+        {
+            paused.SetValue(null, wasPaused); NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState);
+            Object.DestroyImmediate(projectile); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
     public void ConveyorMotorReplaysTurnLockAndHistoricalPhaseWithoutDoublePush()
     {
         var oldMode = NetSync.Mode;
@@ -1471,6 +1598,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 27, false)]
     [TestCase("0.5.0", 26, false)]
     [TestCase("0.5.0", 25, false)]
     [TestCase("0.5.0", 24, false)]

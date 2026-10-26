@@ -48,6 +48,15 @@ public sealed class TankMountShootAnimator : MonoBehaviour, ITankMountShootExter
         }
     }
 
+    public void PresentPredictedProgress(float progress)
+    {
+        if (!playing || active == null) return;
+        active.SetManualAnimationUpdate(true);
+        int count = active.animationSprite != null ? active.animationSprite.Length : 0;
+        active.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * count), 0, Mathf.Max(0, count - 1));
+        active.RefreshFrame();
+    }
+
     public void Stop()
     {
         playing = false;

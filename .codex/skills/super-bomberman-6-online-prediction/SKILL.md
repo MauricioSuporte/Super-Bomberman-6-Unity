@@ -96,6 +96,18 @@ replay cannot expire a modifier from the current rendered frame's wall clock.
 Keep autonomous bombs and global control tiles authoritative. Test a corner
 entered before its center, a newer global phase, blocked exits and double pushes.
 
+For an owner-fired projectile, correlate its real spawn with owner netId + the
+original action tick. A speculative proxy must contain presentation components
+only. Hand off to the real object's child visual where available, preserving
+displayed position while NetworkTransform keeps owning the root. Use approved
+snapshot age to bound continuation and read-only sweeps for known geometry;
+never call impact/explosion/chain logic from prediction. Pause must freeze the
+visual in world space despite buffered root changes, and resume must distinguish
+an old pre-pause sample from a fresh one. Classify local presenter locks as
+intentional waits in motion diagnostics, rather than counting them as free input
+latency. In tests, construct required player colliders before dependent FX and
+use a small tolerance for child world positions after changing a parent's pose.
+
 Do not smooth a direction change by projecting the previous direction through a
 wall. Small same-direction confirmation errors can decay; stops, wrapping and
 rejected actions need their appropriate explicit transition. Never let a queued

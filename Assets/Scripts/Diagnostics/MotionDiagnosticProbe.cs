@@ -111,8 +111,21 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         ObserveBombs(now, sample);
     }
 
-    string State() => "prediction_block=" + (NetSync.Mode == NetSync.NetMode.Client && networkInput != null && networkInput.isLocalPlayer &&
-        !networkInput.ServerAllowsMovementPrediction ? "server_authoritative" : movement.NetworkPredictionBlockReason ?? "none") +
+    public static string ClassifyPredictionBlock(MovementController motor, NetworkPlayerInput input, NetworkBombFx fx)
+    {
+        if (GamePauseController.IsPaused) return "paused";
+        if (NetSync.Mode == NetSync.NetMode.Client && input != null && input.isLocalPlayer && !input.ServerAllowsMovementPrediction) return "server_authoritative";
+        if (motor == null) return "missing_motor";
+        if (motor.NetworkPredictionBlockReason != null) return motor.NetworkPredictionBlockReason;
+        if (NetSync.Mode == NetSync.NetMode.Client && fx != null && fx.isLocalPlayer)
+        {
+            if (fx.ClientPlayerMotionActive) return "ability_motion";
+            if (fx.AbilityPredictionLocksMovement) return "ability_pose";
+        }
+        return "none";
+    }
+
+    string State() => "prediction_block=" + ClassifyPredictionBlock(movement, networkInput, GetComponent<NetworkBombFx>()) +
         " mounted=" + movement.IsMounted + " speed=" + movement.speed + " locked=" + movement.InputLocked + " dead=" + movement.isDead +
         " paused=" + GamePauseController.IsPaused + " intro=" + (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) +
         " kickAbility=" + (TryGetComponent<BombKickAbility>(out var kick) && kick.IsEnabled) + " conveyor=" + movement.NetworkConveyorDiagnosticState;

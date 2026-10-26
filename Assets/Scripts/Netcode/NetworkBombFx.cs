@@ -445,6 +445,7 @@ namespace Assets.Scripts.Netcode
             UpdateGreenDash(deltaTime, unscaledDeltaTime);
             UpdatePinkJump(deltaTime, unscaledDeltaTime);
             UpdateRedPunch(deltaTime);
+            UpdateTankPrediction(deltaTime);
             readyBombArcs.Clear();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
@@ -577,6 +578,7 @@ namespace Assets.Scripts.Netcode
             kickPlayback.Clear(); rejectedStarts.Clear();
             ResetLocalAbilityPresentation();
             ClearRedPunch("clear_playback");
+            ClearTankPrediction("clear_playback"); hasMountActionState = false;
             ClearTileMotionPresentation();
             ClearPlayerBouncePresentation();
             ClearPlacementPredictions();

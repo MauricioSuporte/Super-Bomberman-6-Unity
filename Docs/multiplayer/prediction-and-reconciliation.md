@@ -482,3 +482,29 @@ and conveyor phases, and a capture without a header cannot inherit the previous
 file's build. Automated coverage: 154 Unity tests and 40 Python tests passed for
 this milestone. Two-peer validation of all three scenes and degraded networks
 remains pending; no measured zero-latency or hitch-free claim follows from tests.
+
+## Tank shot presentation (protocol 28)
+
+The owner starts Tank's pose, sound and a SpriteRenderer-only projectile proxy
+on its real C edge, after receiving a confirmed ready state. The proxy has no
+TankShot, collider, Rigidbody or NetworkIdentity and advances at most 150 ms
+without the authoritative spawn. Confirmation preserves its phase and the
+server controls readiness/cooldown. Rejection, missing spawn, death and timeout
+clear reversible presentation. Confirmed audio does not duplicate the owner's
+predicted sound or the generic co-op sound broadcast.
+
+The real NetworkTankShot carries its launch owner/input tick, geometry and time.
+On matching spawn, presentation transfers to the projectile's child visual,
+leaving NetworkTransform, root position and collision authority intact. Latest
+approved snapshots bound short extrapolation; a read-only sweep respects known
+geometry without invoking impact, damage, explosion or bomb-chain callbacks.
+Pause keeps the displayed world position even if the buffered root moves. After
+a long pause, presentation waits for a fresh approved sample, with a bounded
+one-second fallback rather than treating the pause as packet loss immediately.
+
+Diagnostic input context classifies predicted ability poses/motion and pause as
+blocked, keeping intentional waits out of free movement latency percentiles.
+Validation: 158/158 Unity tests, then 4/4 targeted Tank tests after the final
+diagnostic-only adjustment; C# compiled without warnings/errors and 40 Python
+tests passed. Manual two-peer checks of directions, nearby/moving obstacles,
+cooldown tint, mount changes, pause/death, network gaps and impacts remain pending.

@@ -36,7 +36,25 @@ public sealed class TankShot : MonoBehaviour
     public float Speed => speed;
     public GameObject Owner => _owner;
     public bool ImpactHandled => _impactHandled;
+    public int HitMask => hitMask.value;
     public int ShotId => GetEntityId().GetHashCode();
+
+    // A read-only sweep for presentation. It never invokes impact/explosion code.
+    public static Vector2 PreviewNetworkTravel(Vector2 start, Vector2 target, Vector2 size, int mask, GameObject owner, RaycastHit2D[] hits)
+    {
+        Vector2 delta = target - start;
+        if (delta.sqrMagnitude < 0.000001f) return target;
+        float distance = delta.magnitude;
+        var filter = new ContactFilter2D { useLayerMask = true, layerMask = mask, useTriggers = true };
+        int count = Physics2D.BoxCast(start, size, 0, delta / distance, filter, hits, distance);
+        for (int i = 0; i < count; i++)
+        {
+            var collider = hits[i].collider;
+            if (collider == null || (owner != null && collider.transform.IsChildOf(owner.transform))) continue;
+            distance = Mathf.Min(distance, Mathf.Max(0, hits[i].distance - 0.001f));
+        }
+        return start + delta.normalized * distance;
+    }
 
     public void Init(Vector2 dir, float projectileSpeed, LayerMask mask, GameObject owner)
     {

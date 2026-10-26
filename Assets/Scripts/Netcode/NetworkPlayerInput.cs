@@ -135,6 +135,7 @@ namespace Assets.Scripts.Netcode
                         fx?.TryPredictGreenDash(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictPinkJump(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictRedPunch(sampledHeld, unchecked(localTick + 1));
+                        fx?.TryPredictTankShot(sampledHeld, unchecked(localTick + 1));
                     }
                 }
             }
@@ -265,11 +266,12 @@ namespace Assets.Scripts.Netcode
             if (state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
             sentSnapshot = true;
             lastSnapshotTick = processedTick;
-            TargetReconcile(connectionToClient, processedTick, state, GetComponent<NetworkBombFx>()?.CapturePlacementState() ?? default);
+            var fx = GetComponent<NetworkBombFx>();
+            TargetReconcile(connectionToClient, processedTick, state, fx?.CapturePlacementState() ?? default, fx?.CaptureMountActionState() ?? default);
         }
 
         [TargetRpc]
-        void TargetReconcile(NetworkConnectionToClient target, uint acknowledgedTick, MovementController.NetworkMovementState state, NetworkBombFx.PlacementState placement)
+        void TargetReconcile(NetworkConnectionToClient target, uint acknowledgedTick, MovementController.NetworkMovementState state, NetworkBombFx.PlacementState placement, NetworkBombFx.MountActionState mountActions)
         {
             if (isServer || !isLocalPlayer || movement == null || movement.Rigidbody == null) return;
             Vector2 before = movement.transform.position;
@@ -287,6 +289,7 @@ namespace Assets.Scripts.Netcode
             kickFx?.ReconcilePinkJump(acknowledgedTick, state);
             kickFx?.RestorePinkJumpPosition();
             kickFx?.ReconcileRedPunch(acknowledgedTick, state);
+            kickFx?.ReconcileTankShot(acknowledgedTick, mountActions);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);

@@ -15,115 +15,68 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-Marcos 1-3 publicados com protocolo 25 (CI 40251770360 concluído com sucesso).
-A04/A06 validados e enviados no commit `ffed44e3f`, pipeline 40254308964
-concluído com sucesso (protocolo 26). C01 validado no protocolo 27, aguardando publicação:
-- A01: snapshot confirma montaria e o motor permite locomoção montada estável;
-  presenter local da montaria usa pose/fase do proprietário, sem habilitar gameplay.
-- A13: replay usa velocidade confirmada e flags confirmadas de BombPass e
-  DestructiblePass, independentemente de atualizações mais recentes da habilidade.
-- P0: diagnóstico registra contexto no input e na resposta; comparador em
-  `Tools/Diagnostics/analyze_prediction.py` separa builds/contextos e exclui inputs
-  bloqueados/sem classificação dos percentis. Capturas antigas não comprovam ganho.
-- Validação mais recente: 154/154 Unity EditMode com C01; 40/40 Python.
-  C# sem warnings/erros; UTF-8/BOM dos C# alterados verificados.
-  Relatórios: `Logs/PredictionPinkRedTests.xml` e `.log`.
-- Protocolo de trabalho: 27 (C01 wire em desenvolvimento). Servidor publicado: 26,
-  commit `ffed44e3f`; CI 40254308964 concluído com sucesso.
-- Próxima ação: A04 Pink jump; depois C01 e demais IDs na ordem do plano.
-- Partidas manuais com dois peers, contextos das nove montarias, redes degradadas
-  e demais modos ainda não executadas; não declarar ganho percebido medido.
+- Branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen sujos do usuário.
+- Última publicação concluída: `b18c25d43`, protocolo 27, CI 40269127808 sucesso.
+- A08 Tank validado no diretório de trabalho, protocolo 28, aguardando commit/push.
+- C# final sem warnings/erros; C# alterados verificados em UTF-8/BOM e CRLF.
+- Unity: 158/158 na suíte completa antes do ajuste final de classificação dos
+  logs. Após esse ajuste exclusivamente diagnóstico: 4/4 testes Tank passaram,
+  incluindo classificação de pose/pausa, e Unity recompilou as fontes finais.
+- Python: 40/40 passaram (32 Tools/Ci + 8 Tools/RoomDirectory).
+- Relatórios no checkout principal: `Logs/PredictionTankTests.xml` e `.log`,
+  `Logs/PredictionTankDiagnosticsTests.xml` e `.log`. São ignorados pelo Git.
+- Não foi realizada validação manual com dois peers nem comprovado ganho por
+  novas capturas. Não afirmar zero latência nem que o plano inteiro terminou.
 
-### Marco 2: A02 validado, ainda sem publicação
+## Marcos concluídos e commits
 
-- `NetworkBombPlacement.cs` (partial do NetworkBombFx) cria apenas SpriteRenderer;
-  reserva por tick/capacidade, confirma após spawn, rejeita por ack/timeout e usa
-  footprint virtual para sair/reentrar na célula prevista sem collider de gameplay.
-- `BombController` usa um resolvedor único de variantes nos dois caminhos de
-  plantio; geometria de preview não altera fuse, estoque ou cenário.
-- `NetworkPlayerInput` replica stock/prefab permitido e conserva o tick específico
-  do press A mesmo quando processa vários ticks. Áudio dedicado evita duplicação.
-- Teste: `PlacementProxyIsVisualOnlyAndReservesCapacityUntilAcknowledged`.
-- Validação: 147/147 Unity EditMode; C# compilou sem warnings/erros introduzidos.
-  Relatórios copiados para `Logs/PredictionPlacementTests.xml` e `.log`.
-- Protocolo de trabalho permanece 25 (não publicado).
-- Próxima ação: A03 Green Louie (pose + movimento limitado do proprietário,
-  confirmação e snapshots do dash); depois A04 Pink e C01.
-- Manual pendente: spawn/áudio em dois peers, press rápido com lote de inputs,
-  variantes de bomba, glove/line/dash, água/buracos e disputa da célula.
+1. `1ac51b037`: A01/A13 e infraestrutura P0. Montaria/contexto/pass confirmados,
+   motor e replay, diagnóstico com contexto, comparador e testes. 146 Unity.
+2. `818c209de`: A02 proxy de plantio sem gameplay, reserva de estoque, confirmação
+   por tick A, rejeição/timeout e footprint virtual. 147 Unity.
+3. `9aa13fe06`: A03 Green dash, geometria readonly, apresentação do owner com
+   ponte limitada de 150 ms, confirmação/reconciliação e áudio. 148 Unity.
+   Marcos 1-3 publicados no protocolo 25 (CI 40251770360 sucesso).
+4. `ffed44e3f`: A04 Pink e A06 Red. Pink separa chão/arco/sombra, owner e observer,
+   sem coroutine/invulnerabilidade client. Red prevê pose, confirma cooldown e
+   som de acerto; stun/item drop continuam no servidor. 151 Unity, 37 Python.
+   Publicado no protocolo 26 (CI 40254308964 sucesso).
+5. `b18c25d43`: C01 esteiras nas cenas BattleMode_5, Stage_3-4 e Stage_3-6.
+   Push composto uma vez no tick do motor, lock de curva e fase históricos,
+   velocidade/modificador/duração por tick, fases aprovadas para observadores.
+   Client não simula bombas/toggles/movimento de terceiros. Offline/COM conservam
+   loop anterior. Mais de um controller suspende predição conservadoramente;
+   cenas atuais têm um cada. 154 Unity, 40 Python. Publicado no protocolo 27.
 
-### Marco 3: A03 validado
+## Lote atual: A08 Tank (validado, aguardando commit)
 
-- `NetworkGreenDash.cs`: predição de início do proprietário, janela de 150 ms
-  sem autoridade, confirmação sem voltar ao início, snapshots com correção e
-  parada por tick de C/revisão. Não executa coroutine de gameplay no client.
-- Green respeita geometria conhecida, cancela em morte/interrupção e preserva
-  áudio/afterimages. FX arbitra dash vs bounce; motor comum não disputa o corpo.
-- Validação: 148/148 Unity EditMode; `Logs/PredictionGreenTests.xml` e `.log`.
-- Próximo: A04 Pink (posição de chão separada do arco visual), depois C01.
-- Manual pendente: input C em dois peers, alvo dinâmico, pausa/desmontagem/morte,
-  plantio durante dash, speed debuff, áudio/afterimages e condições de rede.
-
-### Marco 4: A04 validado, aguardando commit do lote
-
-- Novo `NetworkPinkJump.cs`: gesto/arco previsto do proprietário, confirmação de
-  geometria por C/revisão, rejeição, cooldown, parada/interrupção e apresentação
-  remota no relógio de interpolação. Posição de chão e altura visual separadas.
-- `PinkLouieJumpAbility` compartilha a resolução de destino entre server/offline
-  e preview. Client puro não inicia rotina nem invulnerabilidade; APIs de pose
-  preservam/restauram collider e offsets. Shadow e animator têm apresentação manual.
-- Protocolo de trabalho passou a 26 para impedir Editor com RPCs novos de conectar
-  ao build 25 em publicação. Pipeline 25: run 40251770360, commit 9aa13fe06.
-- C# passou sem warnings/erros; Unity passou 150/150. Relatórios preservados em
-  `Logs/PredictionPinkTests.xml` e `.log`. Teste de arco/chão/sombra, confirmação
-  sem reinício, parada antecipada, rejeição/restore e bloqueio da coroutine client.
-- Manual pendente: pausa, desmontagem/morte, perdas/latência, observador e ovos.
-  Sincronismo dos ovos será tratado em A11/R07, ainda pendente.
-
-### Marco 5: A06 validado, aguardando publicação com A04
-
-- `NetworkRedPunch.cs`: pose do soco prevista apenas no proprietário; confirmação
-  por tick C preserva fase, cooldown maior confirmado, rejeição por ack, pausa e
-  interrupção restauram a pose. Sem hit test, stun ou item drop no client.
-- Som é de acerto no offline; por isso só é emitido nos clients após confirmação
-  do servidor. Observadores continuam com frames de montaria autoritativos.
-- `RedLouiePunchStunAbility.Update` bloqueia execução de gameplay em client puro.
-- Novo teste cobre fase, confirmação/rejeição, pausa, cooldown, morte e host guard.
-- C#/Unity aprovados: 151/151, incluindo observador Pink. 37/37 Python passaram.
-  O teste de observador inicialmente usava o relógio do proprietário; foi corrigido
-  para NetworkTime.time, correspondente à interpolação, e a suíte repetida passou.
-- Próximo: commit/publicação do lote 26; depois A08 Tank/A05/C01 e demais IDs.
-  A validação manual de ambos os peers continua pendente.
-- Skill e notas atualizadas com separação chão/arco, relógios e áudio de acerto.
-
-### Marco 6: C01 validado, aguardando publicação
-
-- Commit publicado de Pink/Red: `ffed44e3f`; 151/151 Unity e 37/37 Python,
-  relatórios finais preservados. Pipeline de publicação: 40254308964.
-- Esteiras encontradas uma vez por cena em BattleMode_5, Stage_3-4 e Stage_3-6.
-  Mundo co-op desabilita o controller client; Battle usa seu próprio loop.
-- Novos partials: `BattleMode5ConveyorController.Network.cs`,
-  `MovementController.NetworkConveyor.cs` e `OnlineConveyors.cs`.
-- C01 passa a compor push uma vez por input tick, snapshots levam fase/lock da
-  curva e contexto de velocidade com duração por tick. Offline/COM retêm loop.
-- Controller puro client não simula players/bombas/toggles. Mensagem aprovada
-  replica fase para observadores; owner usa a fase histórica do snapshot.
-- Mais de um controller na mesma cena suspende predição conservadoramente;
-  servidor mantém seu loop anterior nesse caso. Nenhuma cena atual tem dois.
-- Protocolo de trabalho 27, ainda NÃO publicado. Primeiro C# acusou SceneHandle
-  obsoleto; cache alterado para Scene. C# passou com zero warnings/erros.
-- Testes novos: curva/lock histórico, replay com fase global mais nova, ausência
-  de push duplicado, saída bloqueada, expiração de modificador por tick e wire.
-  Protocolo 26 rejeitado; C# passou; UTF-8 verificado.
-- Unity final: 154/154 passaram; relatórios preservados no checkout principal:
-  `Logs/PredictionConveyorTests.xml` e `.log`. C# sem erros/warnings novos.
-- P0: comparador separa captura, player, plataforma e fase da esteira;
-  cabeçalho ausente não herda build de outro arquivo. 40/40 Python passaram.
-- UTF-8/BOM verificados. Notas e skill atualizadas.
-- Próximo: commit/publicação C01; depois A08 Tank e demais IDs.
-- Manual pendente: dois peers nas três cenas, disputa de bombas, curva/saída,
-  toggles, press durante dash/pulo, desconexão, pausa e rede degradada.
-- Plano geral ainda incompleto; a checklist abaixo identifica pendências.
+- `TankMountShootAbility` tem preview readonly e gate de Update em client puro.
+  Spawn recebe owner/tick antes de NetSpawn. RPC confirma com áudio deduplicado;
+  ready/cooldown são confirmados por MountActionState no TargetReconcile.
+- `NetworkTankPrediction.cs` prevê pose/som e proxy somente SpriteRenderer.
+  Sem TankShot/collider/Rigidbody/NetworkIdentity no proxy. Avanço até 150 ms sem
+  spawn; confirmação conserva fase, rejeição/timeout/morte restauram apresentação.
+- `NetworkTankShot` transfere a apresentação ao filho visual; o root fica sob
+  NetworkTransform e não ganha simulação client. Snapshots limitam extrapolação
+  a 150 ms. Sweep readonly consulta geometria conhecida; impacto/explosão/dano e
+  cadeia seguem no servidor. Pausa congela posição visual; retomada longa espera
+  amostra nova por até um segundo, com fallback autoritativo.
+- Tint de cooldown tem API client de apresentação. Confirmação tardia após morte
+  não ressuscita a pose. OnStopClient limpa o presenter do projétil.
+- P0 final: MotionDiagnosticProbe.ClassifyPredictionBlock distingue pose prevista,
+  movimento de habilidade e pausa; comparador exclui esses bloqueios. Comparador
+  também separa captura, player, plataforma e fase da esteira, e não herda build
+  entre arquivos sem cabeçalho. Não há novas capturas de ganho medido.
+- Testes corrigidos: fixture de handoff precisava do collider existente no prefab
+  real; posição do filho após mover pai exige tolerância de ponto flutuante.
+  Ambos corrigidos, suíte completa passou. Nenhum teste pendente executando agora.
+- Manual pendente: Tank em dois peers, quatro direções, cooldown/tint, obstáculo
+  próximo/móvel, posse/transição, pausa, morte, perdas/jitter e impacto/chain.
+- Próximo imediato: revisar diff/check UTF-8, notas/skill e checkpoint; commit e
+  publicar protocolo 28. Depois A05 Black, A07 Mole, A09-A12 e famílias C/R.
+- A05: leitura confirmou só uma linha não UTF-8 em BlackLouieDashPushAbility.cs
+  (comentário 253, bytes cp1252 e9/fa/ed). Ao tocar, converter somente essa linha
+  para UTF-8, preservando resto/CRLF. Ainda não houve edição de A05.
 
 ## Checklist por ID
 
@@ -135,7 +88,7 @@ concluído com sucesso (protocolo 26). C01 validado no protocolo 27, aguardando 
 - [ ] A05: Black Louie dash/push.
 - [x] A06: Red Louie pose e áudio confirmado; stun autoritativo; manual pendente.
 - [ ] A07: Mole drill.
-- [ ] A08: Tank shot visual previsto.
+- [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [ ] A09: LineBomb/Purple cast e confirmação parcial.
 - [ ] A10: ControlBomb feedback.
 - [ ] A11: montar/desmontar, posse e fila de ovos.

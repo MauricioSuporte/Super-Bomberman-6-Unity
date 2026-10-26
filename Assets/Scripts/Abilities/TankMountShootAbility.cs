@@ -56,6 +56,31 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
     public bool Running => running;
     public float CooldownSeconds => cooldownSeconds;
     public float CooldownRemainingSeconds => Mathf.Max(0f, cooldownUntil - Time.time);
+    public struct NetworkShotPreview
+    {
+        public GameObject prefab;
+        public Vector2 start, direction, castSize;
+        public float speed, poseDuration, cooldown;
+        public int mask;
+        public bool locksMovement;
+    }
+
+    public bool TryPreviewNetworkShot(Vector2 facing, out NetworkShotPreview preview)
+    {
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        TryAutoLoadProjectilePrefab();
+        preview = default;
+        if (movement == null || projectilePrefab == null) return false;
+        var box = projectilePrefab.GetComponent<BoxCollider2D>();
+        if (box == null) return false;
+        var direction = Cardinalize(facing != Vector2.zero ? facing : movement.FacingDirection);
+        preview = new NetworkShotPreview { prefab = projectilePrefab,
+            start = (movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position) + direction * Mathf.Max(0.1f, movement.tileSize) + projectileLocalOffset,
+            direction = direction, castSize = Vector2.Scale(box.size, projectilePrefab.transform.lossyScale), speed = projectileSpeed,
+            poseDuration = Mathf.Max(0, shootLockSeconds), cooldown = cooldownSeconds, locksMovement = lockInputWhileShooting,
+            mask = projectileHitMask.value != 0 ? projectileHitMask.value : LayerMask.GetMask("Bomb", "Stage", "Enemy", "Player", "Water", "Explosion") };
+        return true;
+    }
     public bool CanStartShot =>
         enabledAbility &&
         !running &&
@@ -113,6 +138,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility)
             return;
 
@@ -194,7 +220,11 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             {
                 var src = audioSource != null ? audioSource : FindAnyPlayerAudioSource();
                 if (src != null)
-                    GameAudioSettings.PlaySfx(src, shotSfx, shotVolume);
+                {
+                    if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+                        src.PlayOneShot(shotSfx, GameAudioSettings.ApplySfxVolume(shotVolume));
+                    else GameAudioSettings.PlaySfx(src, shotSfx, shotVolume);
+                }
             }
 
             float t = Mathf.Max(0f, shootLockSeconds);
@@ -248,6 +278,14 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
         float normalized = 1f - Mathf.Clamp01(remaining / cooldownSeconds);
         v.SetExternalTint(true, cooldownTintColor, normalized);
+    }
+
+    public void PresentNetworkCooldown(float remaining)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || !tintTankOnCooldown) return;
+        var visual = ResolveTankVisual();
+        if (visual != null) visual.SetExternalTint(remaining > 0 && cooldownSeconds > 0, cooldownTintColor,
+            cooldownSeconds > 0 ? 1 - Mathf.Clamp01(remaining / cooldownSeconds) : 1);
     }
 
     private MountVisualController ResolveTankVisual()
@@ -318,7 +356,10 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             proj = go.AddComponent<TankShot>();
 
         proj.Init(dir, projectileSpeed, projectileHitMask, gameObject);
+        if (go.TryGetComponent<Assets.Scripts.Netcode.NetworkTankShot>(out var networkShot)) networkShot.SetLaunch(gameObject);
         Assets.Scripts.Netcode.NetSpawn.Server(go);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerTankShot(go, dir, shootLockSeconds, cooldownSeconds);
     }
 
     private bool IsMountedOnTank()

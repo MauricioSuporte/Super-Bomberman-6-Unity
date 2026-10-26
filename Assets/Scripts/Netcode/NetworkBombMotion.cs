@@ -34,8 +34,8 @@ namespace Assets.Scripts.Netcode
         public bool HasUnconfirmedClientMotion(Bomb target) => target != null &&
             kickPlayback.TryGetValue(target, out var state) && state.unconfirmed;
 
-        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || RedPunchPoseActive;
-        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || RedPunchPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
+        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || RedPunchPoseActive || TankShotPoseLocksMovement;
+        public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
             (abilityPoseKind == BombMotionKind.Yellow || abilityPoseKind == BombMotionKind.Punch)));
         public static bool NonBlockingMotion(BombMotionKind kind) => kind == BombMotionKind.Punch ||
             kind == BombMotionKind.Throw || kind == BombMotionKind.Lift || kind == BombMotionKind.Carry;
@@ -166,6 +166,7 @@ namespace Assets.Scripts.Netcode
             if (GreenDashActive) { PresentGreenDash(0); return; }
             if (PinkJumpActive) { PresentPinkJump(0, true); return; }
             if (RedPunchPoseActive) { PresentRedPunch(true); return; }
+            if (TankShotPoseActive) { PresentTankPose(true); return; }
             float progress = 1 - abilityPoseRemaining / Mathf.Max(0.001f, abilityPoseDuration);
             if (abilityPoseKind == BombMotionKind.Yellow && TryGetComponent<YellowLouieKickAbility>(out var yellow))
             { yellow.PresentNetworkKick(abilityPoseDirection, false); yellow.PresentNetworkKick(abilityPoseDirection, true, progress); }
