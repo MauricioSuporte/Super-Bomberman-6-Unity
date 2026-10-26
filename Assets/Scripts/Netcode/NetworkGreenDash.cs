@@ -11,7 +11,7 @@ namespace Assets.Scripts.Netcode
         Vector2 greenDashDirection, greenDashPosition, greenDashReplica, greenDashCorrection;
         GreenLouieDashAnimator greenDashVisual;
         public bool GreenDashActive => greenDashActive;
-        public bool ClientPlayerMotionActive => PlayerBounceActive || GreenDashActive || PinkJumpActive;
+        public bool ClientPlayerMotionActive => PlayerBounceActive || GreenDashActive || PinkJumpActive || BlackDashActive;
 
         public bool TryPredictGreenDash(int held, uint tick)
         {
@@ -30,7 +30,7 @@ namespace Assets.Scripts.Netcode
         {
             var movement = GetComponent<MovementController>();
             if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || !isLocalPlayer || isServer ||
-                greenDashActive || PlayerBounceActive || PinkJumpActive || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
+                greenDashActive || PlayerBounceActive || PinkJumpActive || BlackDashActive || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
                 movement == null || movement.isDead || movement.IsEndingStage || direction == Vector2.zero || speed <= 0 ||
                 (!confirmed && (!movement.CanPredictNetworkMovement || AbilityPredictionLocksMovement))) return false;
             var ability = GetComponent<GreenLouieDashAbility>() ?? gameObject.AddComponent<GreenLouieDashAbility>();

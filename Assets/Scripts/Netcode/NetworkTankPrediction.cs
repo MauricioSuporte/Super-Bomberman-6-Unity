@@ -5,7 +5,6 @@ namespace Assets.Scripts.Netcode
 {
     public partial class NetworkBombFx
     {
-        public struct MountActionState { public bool tankReady; public float tankCooldown; }
         bool hasMountActionState, tankReady, tankHasAction, tankPending, tankSoundPlayed, tankLocksMovement;
         uint tankTick, receivedTankTick;
         float tankAge, tankDuration, tankNextAllowed;
@@ -19,12 +18,6 @@ namespace Assets.Scripts.Netcode
         readonly RaycastHit2D[] tankPreviewHits = new RaycastHit2D[16];
         public bool TankShotPoseActive => tankHasAction && tankAge < tankDuration;
         bool TankShotPoseLocksMovement => TankShotPoseActive && tankLocksMovement;
-
-        public MountActionState CaptureMountActionState()
-        {
-            return TryGetComponent<TankMountShootAbility>(out var ability)
-                ? new MountActionState { tankReady = ability.CanStartShot, tankCooldown = ability.CooldownRemainingSeconds } : default;
-        }
 
         public bool TryPredictTankShot(int held, uint tick)
         {

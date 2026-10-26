@@ -251,6 +251,8 @@ public partial class MovementController : MonoBehaviour, IKillable
     }
 
     public bool CanPredictNetworkMovement => NetworkPredictionBlockReason == null;
+    public bool AcknowledgedDestructiblePass => hasNetworkMovementContext ? (networkMovementCapabilities & 2) != 0 :
+        (CurrentMovementCapabilities & 2) != 0;
     public string NetworkPredictionBlockReason => isDead ? "dead" : inputLocked ? "input_locked" : isEndingStage ? "stage_ending" :
         externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
         externalVisualSuppressed && !CanPredictGloveCarry ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :

@@ -136,6 +136,7 @@ namespace Assets.Scripts.Netcode
                         fx?.TryPredictPinkJump(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictRedPunch(sampledHeld, unchecked(localTick + 1));
                         fx?.TryPredictTankShot(sampledHeld, unchecked(localTick + 1));
+                        fx?.TryPredictBlackDash(sampledHeld, unchecked(localTick + 1));
                     }
                 }
             }
@@ -254,16 +255,29 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
-            if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection ||
-                movement == null || movement.Rigidbody == null || Time.unscaledTime < nextSnapshot) return;
+            if (!isServer || Time.unscaledTime < nextSnapshot) return;
             nextSnapshot = Time.unscaledTime + 1f / 30f;
+            SendMovementSnapshot(false);
+        }
+
+        [Server]
+        public void ServerReconcileMovementNow()
+        {
+            nextSnapshot = Time.unscaledTime + 1f / 30f;
+            SendMovementSnapshot(true);
+        }
+
+        void SendMovementSnapshot(bool force)
+        {
+            if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection ||
+                movement == null || movement.Rigidbody == null) return;
             // LateUpdate captures the result AFTER the physics step, never an unexecuted MovePosition.
             var state = movement.CaptureNetworkMovementState();
             state.canPredict &= !Blocked;
             state.serverTime = NetworkTime.localTime;
             // Acknowledgements advance only after complete input steps. Duplicate
             // acknowledgements add no new predictable state to replay.
-            if (state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
+            if (!force && state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
             sentSnapshot = true;
             lastSnapshotTick = processedTick;
             var fx = GetComponent<NetworkBombFx>();
@@ -290,6 +304,8 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestorePinkJumpPosition();
             kickFx?.ReconcileRedPunch(acknowledgedTick, state);
             kickFx?.ReconcileTankShot(acknowledgedTick, mountActions);
+            kickFx?.ReconcileBlackDash(acknowledgedTick, state, mountActions);
+            kickFx?.RestoreBlackDashPosition();
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);

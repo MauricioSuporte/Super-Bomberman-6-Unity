@@ -174,6 +174,25 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         emitAfterimages = false;
     }
 
+    public void PresentPredictedDash(Vector2 direction, float progress, bool holding)
+    {
+        if (!playing || activeDash != GetDashSprite(direction)) Play(direction);
+        if (activeDash == null) return;
+        activeDash.SetManualAnimationUpdate(true); activeDash.idle = false;
+        int count = activeDash.animationSprite != null ? activeDash.animationSprite.Length : 0;
+        activeDash.CurrentFrame = holding ? Mathf.Max(0, count - 1) : Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * count), 0, Mathf.Max(0, count - 1));
+        activeDash.RefreshFrame();
+        if (!holding) PresentNetworkAfterimage(activeDash);
+    }
+
+    public void PresentNetworkAfterimage(AnimatedSpriteRenderer renderer)
+    {
+        if (GamePauseController.IsPaused || renderer == null ||
+            (renderer != dashUp && renderer != dashDown && renderer != dashLeft && renderer != dashRight) || Time.time < nextAfterimageTime) return;
+        var previous = activeDash; activeDash = renderer; SpawnAfterimage(); activeDash = previous;
+        nextAfterimageTime = Time.time + Mathf.Max(0.01f, afterimageInterval);
+    }
+
     void LateUpdate()
     {
         if (!playing || !emitAfterimages || activeDash == null)

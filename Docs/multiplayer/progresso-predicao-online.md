@@ -16,15 +16,15 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 ## Estado atual
 
 - Branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen sujos do usuário.
-- Última publicação concluída: `b18c25d43`, protocolo 27, CI 40269127808 sucesso.
-- A08 Tank validado no diretório de trabalho, protocolo 28, aguardando commit/push.
+- Última publicação concluída: `9a8dbca7c`, protocolo 28, CI 40272110810 sucesso.
+- A05 Black validado no diretório de trabalho, protocolo 29, a salvar com skip CI
+  antes de R02. Runner livre; não iniciar CI antes de preservar seus relatórios.
 - C# final sem warnings/erros; C# alterados verificados em UTF-8/BOM e CRLF.
-- Unity: 158/158 na suíte completa antes do ajuste final de classificação dos
-  logs. Após esse ajuste exclusivamente diagnóstico: 4/4 testes Tank passaram,
-  incluindo classificação de pose/pausa, e Unity recompilou as fontes finais.
+- Unity mais recente: 162/162 na suíte completa com A05 Black e mudanças de NPI.
+  C# incremental sem warnings/erros; Python 40/40 após protocolo 29.
 - Python: 40/40 passaram (32 Tools/Ci + 8 Tools/RoomDirectory).
-- Relatórios no checkout principal: `Logs/PredictionTankTests.xml` e `.log`,
-  `Logs/PredictionTankDiagnosticsTests.xml` e `.log`. São ignorados pelo Git.
+- Relatórios mais recentes no checkout principal: `Logs/PredictionBlackTests.xml`
+  e `.log`. Também mantidos os relatórios Tank/Conveyor anteriores; são ignorados.
 - Não foi realizada validação manual com dois peers nem comprovado ganho por
   novas capturas. Não afirmar zero latência nem que o plano inteiro terminou.
 
@@ -48,7 +48,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
    loop anterior. Mais de um controller suspende predição conservadoramente;
    cenas atuais têm um cada. 154 Unity, 40 Python. Publicado no protocolo 27.
 
-## Lote atual: A08 Tank (validado, aguardando commit)
+## Marco 7: A08 Tank (validado e enviado)
 
 - `TankMountShootAbility` tem preview readonly e gate de Update em client puro.
   Spawn recebe owner/tick antes de NetSpawn. RPC confirma com áudio deduplicado;
@@ -72,11 +72,58 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
   Ambos corrigidos, suíte completa passou. Nenhum teste pendente executando agora.
 - Manual pendente: Tank em dois peers, quatro direções, cooldown/tint, obstáculo
   próximo/móvel, posse/transição, pausa, morte, perdas/jitter e impacto/chain.
-- Próximo imediato: revisar diff/check UTF-8, notas/skill e checkpoint; commit e
-  publicar protocolo 28. Depois A05 Black, A07 Mole, A09-A12 e famílias C/R.
-- A05: leitura confirmou só uma linha não UTF-8 em BlackLouieDashPushAbility.cs
-  (comentário 253, bytes cp1252 e9/fa/ed). Ao tocar, converter somente essa linha
-  para UTF-8, preservando resto/CRLF. Ainda não houve edição de A05.
+- Commit `9a8dbca7c` enviado; próximo: A05 Black, A07 Mole, A09-A12 e famílias C/R.
+  Protocolo ainda de trabalho 28; ao adicionar RPCs A05, incrementar para 29.
+- A05 já começou; ver seção seguinte. Linha cp1252 confirmada foi convertida
+  isoladamente para UTF-8; arquivo completo agora decodifica estritamente.
+
+## Marco 8: A05 Black validado, a salvar antes de R02
+
+- `NetworkBlackDash.cs` prevê owner dash/pose/som; máximo 150ms sem estado novo e
+  range finito. Confirmação, hold de impacto, parada, rejeição e timeout/morte/
+  montaria/bounce conservam autoridade. Não prevê push/stun/kick/invulnerabilidade.
+- `BlackLouieDashPushAbility` compartilha cast readonly com pass acknowledged;
+  gate bloqueia coroutine em client. Dash de rede escreve body/transform de forma
+  imediata e zera velocidades; offline usa MovePosition como antes.
+- End/Cancel liberam seu lock antes de reportar parada; NPI envia snapshot imediato
+  forçado. Client segura posição final até o snapshot liberar motor, evitando NT
+  antigo. Report só força snapshot se havia dash Black ativo no servidor.
+- Cooldown usa elegibilidade separada de duração; projeta remanescente para
+  NetworkTime.predictedTime, sem esperar ida/volta extra na borda do cooldown.
+- MountActionState/Capture extraídos para partial comum; Tank preservado. Flags
+  acknowledged estão disponíveis fora do tick para previews. NMA cobre pose,
+  rebind e afterimage Black; Pink/bounce cancelam e FX limpa na saída.
+- Só o comentário cp1252 confirmado de Black foi convertido; arquivo agora UTF-8.
+- Validação: 162 Unity, 40 Python, C# 0 warnings/erros e UTF-8/BOM corretos.
+  Nenhum teste em execução agora. Relatórios copiados para Logs/ do checkout.
+- Manual pendente: dash/contato/hold/variações de pass/cancel em dois peers,
+  pausas, diagonal, cooldown e rede degradada. Pushes externos seguem para R04.
+- Próximo: salvar A05 com skip CI; R02 colisão conhecida no co-op antes da próxima
+  publicação. Não afirmar que o plano inteiro terminou.
+
+## R02: pré-requisito de colisão do mundo co-op (investigação, sem código)
+
+- Confirmado por código e assets: CoopSceneLoaded desabilita colliders e bodies
+  de objetos de cena sem NetworkIdentity. Stage_1-1, Stage_3-4 e Stage_3-6 têm
+  TilemapCollider2D não trigger em Ground/Destructibles/Indestructibles (layer 6),
+  sem NetworkIdentity nos YAMLs. Motor, Green/Black e Tank consultam Physics2D;
+  sem geometria client, podem prever atravessando parede até correção do servidor.
+- Preferir geometria query-only separada, sem reativar scripts/corpos originais:
+  replicar pose/tiles aprovados em Tilemap + TilemapCollider2D sem renderer, Mono
+  de gameplay, NetworkIdentity ou Rigidbody dinâmico. Preservar tags para pass.
+- Não copiar TileBase original diretamente para o clone (poderia executar Startup
+  ou instanciar gameObjects). Gerar Tiles simples a partir de GetSprite/
+  GetColliderType e matrizes computadas, com gameObject=null; destruir cache
+  desses assets e proxies ao limpar/trocar cena.
+- Integrar criação após loop que desabilita mundo, atualizar em ApplyCoopTiles e
+  limpar em ClearCoopWorld. Proxy Tilemap deve se chamar CollisionShape (não
+  Ground/Destructibles) para não ser escolhido pelos resolvers por nome.
+- CoopTiles precisa informar collisionEnabled (estado server de collider/body/
+  trigger/active), talvez offset; wire exige protocolo 30 ao implementar.
+- Verificar composites/figuras não Tilemap e evitar extrapolar sobre geometria
+  não suportada. Busca por CompositeCollider2D nos Scenes atuais não retornou.
+- Próximo: helper de query, integração, testes de parede/pass, delta/pose/collider
+  habilitado e ausência de Startup/gameplay; compilar/Unity antes de publicar.
 
 ## Checklist por ID
 
@@ -85,7 +132,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
 - [x] A03: predição/autoridade de dash e testes; manual pendente.
 - [x] A04: Pink Louie jump e teste; manual e ovos A11/R07 pendentes.
-- [ ] A05: Black Louie dash/push.
+- [x] A05: owner dash/pose e testes; efeitos de contato autoritativos, manual/R04 pendentes.
 - [x] A06: Red Louie pose e áudio confirmado; stun autoritativo; manual pendente.
 - [ ] A07: Mole drill.
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.

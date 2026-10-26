@@ -15,6 +15,7 @@ namespace Assets.Scripts.Netcode
         SpriteRenderer[] sprites;
         float nextSample;
         GreenLouieDashAnimator greenDash;
+        BlackLouieDashAnimator blackDash;
         MountVisualController ownerVisual;
 
         void Awake()
@@ -74,6 +75,7 @@ namespace Assets.Scripts.Netcode
                 sprite.flipX = frame.flipX; sprite.flipY = frame.flipY;
                 sprite.color = frame.color;
                 if (frame.visible && greenDash != null) greenDash.PresentNetworkAfterimage(animation);
+                if (frame.visible && blackDash != null) blackDash.PresentNetworkAfterimage(animation);
             }
         }
 
@@ -87,6 +89,7 @@ namespace Assets.Scripts.Netcode
                 movement.SetMountedSpritesLocalYOverride(companion.GetMountedLouieType() == MountedType.Pink, movement.pinkMountedSpritesLocalY);
             }
             greenDash = mount != null ? mount.GetComponentInChildren<GreenLouieDashAnimator>(true) : null;
+            blackDash = mount != null ? mount.GetComponentInChildren<BlackLouieDashAnimator>(true) : null;
             renderers = mount != null ? mount.GetComponentsInChildren<AnimatedSpriteRenderer>(true) : null;
             sprites = renderers != null ? new SpriteRenderer[renderers.Length] : null;
             if (isServer) frames.Clear();

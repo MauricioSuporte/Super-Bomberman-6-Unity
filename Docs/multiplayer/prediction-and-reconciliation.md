@@ -508,3 +508,25 @@ Validation: 158/158 Unity tests, then 4/4 targeted Tank tests after the final
 diagnostic-only adjustment; C# compiled without warnings/errors and 40 Python
 tests passed. Manual two-peer checks of directions, nearby/moving obstacles,
 cooldown tint, mount changes, pause/death, network gaps and impacts remain pending.
+
+## Black Louie owner dash (protocol 29, not yet published)
+
+Black predicts only the owner's finite dash/pose and sound. Shared read-only
+blocker checks use acknowledged destructible-pass state; they never kick a bomb,
+push/stun another actor or grant invulnerability. Movement without fresh authority
+is bounded to 150 ms and the validated total range. Server events confirm the C
+tick, contact hold and stop; snapshots correct or reject presentation. Readiness
+is distinct from cooldown, whose remaining duration is projected to the next
+input's estimated server validation time.
+
+The network path writes validated dash positions immediately, keeping root,
+Rigidbody and stop snapshots coherent. Offline retains MovePosition. A stop keeps
+root presentation until the post-dash snapshot releases the motor; the server
+sends that snapshot after restoring the input lock. Afterimages/manual hold do
+not start gameplay coroutines on clients. Other actors' pushes remain authority
+results and still need the R04 presentation audit.
+
+Validation: 162/162 Unity tests, 40 Python tests and C# compilation passed without
+introduced warnings. Two-peer validation is pending. The co-op world currently
+disables scene tilemap colliders; R02 must supply safe known-geometry queries
+before this milestone is published together with the next protocol.

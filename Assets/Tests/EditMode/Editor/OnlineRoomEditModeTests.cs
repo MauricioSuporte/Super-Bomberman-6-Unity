@@ -10,6 +10,119 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void BlackDashPredictionIsBoundedConfirmsHoldAndReleasesThroughSnapshot()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("BlackPredictionOwner"); actor.SetActive(false);
+        var mount = new GameObject("BlackPredictionMount"); mount.transform.SetParent(actor.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Black);
+            actor.SetActive(true); movement.SetNetworkTickDriven(true); Vector2 origin = new(17000, 17000);
+            var state = new MovementController.NetworkMovementState { position = origin, mount = MountedType.Black,
+                facing = Vector2.right, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true,
+                serverTime = NetworkTime.predictedTime };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            var actions = new NetworkBombFx.MountActionState { blackEligible = true };
+            fx.ReconcileBlackDash(0, state, actions); Assert.IsTrue(fx.TryPredictBlackDash(8, 10));
+            Assert.AreEqual("ability_motion", MotionDiagnosticProbe.ClassifyPredictionBlock(movement, null, fx));
+            var update = typeof(NetworkBombFx).GetMethod("UpdateBlackDash", flags);
+            for (int i = 0; i < 10; i++) update.Invoke(fx, new object[] { 0.02f, 0.02f });
+            Assert.Greater(body.position.x, origin.x); Assert.LessOrEqual(body.position.x, origin.x + 0.92f);
+            Assert.IsFalse(actor.GetComponent<BlackLouieDashPushAbility>().DashActive); Assert.IsFalse(actor.GetComponent<CharacterHealth>().IsInvulnerable);
+            movement.RestoreNetworkMovementState(state); fx.ReconcileBlackDash(10, state, actions); Assert.IsFalse(fx.BlackDashActive);
+            movement.SetPredictLocally(true); Assert.IsTrue(fx.TryPredictBlackDash(8, 11));
+            update.Invoke(fx, new object[] { 0.02f, 0.02f }); Vector2 before = body.position;
+            var motion = new NetworkBombFx.BlackDashMotion { revision = 1, inputTick = 11, start = origin, position = origin,
+                direction = Vector2.right, distance = 3, duration = 0.5f, cooldown = 0.6f, serverTime = NetworkBombFx.KickServerNow, active = true, first = true };
+            fx.ReceiveBlackDash(motion); Assert.AreEqual(before, body.position, "First acceptance preserves the owner's phase.");
+            motion.revision = 2; motion.holding = true; motion.first = false; motion.position = origin + Vector2.right * 0.4f;
+            fx.ReceiveBlackDash(motion); update.Invoke(fx, new object[] { 0.1f, 0.1f }); Assert.AreEqual(motion.position, body.position);
+            Assert.IsTrue(fx.BlackDashOwnsPose); motion.revision = 3; motion.active = false; fx.ReceiveBlackDash(motion);
+            Assert.IsTrue(fx.BlackDashActive, "Keep the final position until a post-dash snapshot hands control back to the motor.");
+            Assert.IsFalse(fx.BlackDashOwnsPose);
+            state.position = motion.position; movement.RestoreNetworkMovementState(state); fx.ReconcileBlackDash(11, state, actions);
+            Assert.IsFalse(fx.BlackDashActive); Assert.AreEqual(motion.position, body.position); Assert.IsFalse(movement.InputLocked);
+            state.serverTime = NetworkTime.predictedTime - 0.2; actions.blackCooldown = 0.3f;
+            fx.ReconcileBlackDash(12, state, actions);
+            float delay = (float)typeof(NetworkBombFx).GetField("blackNextAllowed", flags).GetValue(fx) - Time.time;
+            Assert.That(delay, Is.InRange(0.08f, 0.12f), "Cooldown readiness is projected to the next input's estimated server validation time.");
+            var shortDash = motion; shortDash.inputTick = 20; shortDash.active = true; shortDash.holding = false;
+            shortDash.position = shortDash.start = origin; shortDash.distance = 0.25f; shortDash.duration = 0.1f; shortDash.serverTime = NetworkBombFx.KickServerNow;
+            Assert.IsTrue(fx.BeginBlackDashPrediction(shortDash, true));
+            for (int i = 0; i < 20; i++) update.Invoke(fx, new object[] { 0.02f, 0.02f });
+            Assert.That(body.position.x, Is.EqualTo(origin.x + 0.25f).Within(0.01f), "A confirmed finite dash cannot drift beyond its validated range.");
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.TryPredictBlackDash(8, 13));
+            using var writer = NetworkWriterPool.Get(); writer.Write(motion);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var wire = reader.Read<NetworkBombFx.BlackDashMotion>();
+            Assert.AreEqual(motion.inputTick, wire.inputTick); Assert.AreEqual(motion.position, wire.position); Assert.IsTrue(wire.holding);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearBlackDash", flags).Invoke(fx, new object[] { "test_cleanup" });
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void BlackDashPreviewUsesConfirmedPassAndNeverPushesOrStunsTargets()
+    {
+        var actor = new GameObject("BlackPreviewActor"); actor.SetActive(false); var wall = new GameObject("BlackPreviewWall");
+        var enemy = new GameObject("BlackPreviewEnemy"); enemy.SetActive(false);
+        try
+        {
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>(); var ability = actor.AddComponent<BlackLouieDashPushAbility>();
+            actor.GetComponent<MovementController>().obstacleMask = LayerMask.GetMask("Stage");
+            Vector2 origin = new(18000, 18000); actor.transform.position = origin;
+            wall.layer = LayerMask.NameToLayer("Stage"); wall.tag = "Destructibles"; wall.transform.position = origin + Vector2.right * 1.5f;
+            wall.AddComponent<BoxCollider2D>(); Physics2D.SyncTransforms();
+            Assert.IsTrue(ability.TryPreviewNetworkDashStep(origin, Vector2.right, 5, false, out var blocked));
+            Assert.Less(blocked.x, origin.x + 1.1f);
+            Assert.IsTrue(ability.TryPreviewNetworkDashStep(origin, Vector2.right, 5, true, out var passed));
+            Assert.Greater(passed.x, origin.x + 1.5f); Assert.LessOrEqual(passed.x, origin.x + 2.01f);
+            enemy.layer = LayerMask.NameToLayer("Enemy"); enemy.transform.position = origin + Vector2.right * 1.5f;
+            enemy.AddComponent<BoxCollider2D>(); var body = enemy.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            var receiver = enemy.AddComponent<StunReceiver>(); enemy.SetActive(true); Physics2D.SyncTransforms();
+            ability.TryPreviewNetworkDashStep(origin, Vector2.right, 5, true, out blocked);
+            Assert.Less(blocked.x, origin.x + 1.1f); Assert.IsFalse(receiver.IsStunned);
+            Assert.AreEqual(origin + Vector2.right * 1.5f, body.position); Assert.IsFalse(ability.DashActive);
+        }
+        finally { Object.DestroyImmediate(actor); Object.DestroyImmediate(wall); Object.DestroyImmediate(enemy); }
+    }
+
+    [Test]
+    public void NetworkBlackDashPositionIsImmediatelyCoherentWithMovementSnapshot()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("BlackAuthoritativePosition"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Host; actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, 123u);
+            var ability = actor.AddComponent<BlackLouieDashPushAbility>(); var movement = actor.GetComponent<MovementController>();
+            var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            typeof(BlackLouieDashPushAbility).GetField("rb", flags).SetValue(ability, body);
+            body.linearVelocity = Vector2.right * 2; Vector2 target = new(19000, 19000);
+            typeof(BlackLouieDashPushAbility).GetMethod("MoveDashBody", flags).Invoke(ability, new object[] { target });
+            Assert.AreEqual(target, body.position); Assert.AreEqual(target, (Vector2)actor.transform.position);
+            Assert.AreEqual(target, movement.CaptureNetworkMovementState().position); Assert.AreEqual(Vector2.zero, body.linearVelocity);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
     public void TankPredictionUsesVisualProxyBoundsTravelConfirmsPhaseAndRejects()
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("TankPredictionOwner"); actor.SetActive(false);
@@ -1598,6 +1711,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 28, false)]
     [TestCase("0.5.0", 27, false)]
     [TestCase("0.5.0", 26, false)]
     [TestCase("0.5.0", 25, false)]

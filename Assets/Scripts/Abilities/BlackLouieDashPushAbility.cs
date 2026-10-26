@@ -56,6 +56,9 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
     public bool DashActive => routine != null;
+    public float NetworkCooldownRemaining => Mathf.Max(0, nextAllowedTime - Time.time);
+    public bool NetworkDashEligible => enabledAbility && isActiveAndEnabled && routine == null && movement != null && !movement.isDead && !movement.InputLocked &&
+        louieCompanion != null && louieCompanion.GetMountedLouieType() == MountedType.Black;
     bool deathCancelInProgress;
 
     void Awake()
@@ -96,6 +99,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (movement == null || movement.isDead || movement.InputLocked) return;
@@ -151,7 +155,9 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         externalAnimator?.Play(dir);
         movement.SetInputLocked(true, false);
 
-        if (audioSource != null && dashSfx != null)
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerBlackDashStart(rb.position, dir, Mathf.Max(1, dashTiles) * Mathf.Max(0.01f, movement.tileSize), dashMoveSeconds, Mathf.Max(0.01f, dashCooldownSeconds));
+        else if (audioSource != null && dashSfx != null)
             GameAudioSettings.PlaySfx(audioSource, dashSfx, dashSfxVolume);
 
         float duration = Mathf.Max(0.01f, dashMoveSeconds);
@@ -209,7 +215,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
                 }
             }
 
-            rb.MovePosition(desired);
+            MoveDashBody(desired);
 
             elapsed += Time.deltaTime;
             yield return null;
@@ -227,7 +233,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
                 if (!TryGetFirstBlockerAlongPath(current, castDir, dist, out var hitFinal))
                 {
-                    rb.MovePosition(endPos);
+                    MoveDashBody(endPos);
                 }
                 else
                 {
@@ -249,8 +255,10 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     IEnumerator HoldImpactThenEnd()
     {
         float hold = Mathf.Max(0f, impactHoldSeconds);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerBlackDashHold(rb != null ? rb.position : (Vector2)transform.position);
 
-        // Mantém o último frame visível no local do impacto.
+        // MantÃ©m o Ãºltimo frame visÃ­vel no local do impacto.
         if (hold > 0f)
         {
             if (externalAnimator is BlackLouieDashAnimator anim)
@@ -287,6 +295,48 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
         routine = null;
         deathCancelInProgress = false;
+        ReportNetworkDashStop();
+    }
+
+    void MoveDashBody(Vector2 position)
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Mirror.NetworkIdentity>(out var identity) && identity.netId != 0)
+        {
+            rb.linearVelocity = Vector2.zero; rb.angularVelocity = 0;
+            rb.position = position;
+            transform.position = new Vector3(position.x, position.y, transform.position.z);
+        }
+        else rb.MovePosition(position);
+    }
+
+    void ReportNetworkDashStop()
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0 && fx.ServerHasBlackDash)
+        {
+            fx.ServerBlackDashStop(rb != null ? rb.position : (Vector2)transform.position);
+            if (movement != null && !movement.isDead && (!TryGetComponent<CharacterHealth>(out var health) || health.life > 0))
+                GetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>()?.ServerReconcileMovementNow();
+        }
+    }
+
+    public bool TryPreviewNetworkDashStep(Vector2 from, Vector2 dir, float distance, bool canPassDestructibles, out Vector2 end)
+    {
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        myCollider = myCollider != null ? myCollider : GetComponent<Collider2D>();
+        enemyLayer = LayerMask.NameToLayer("Enemy"); playerLayer = LayerMask.NameToLayer("Player");
+        bombLayer = LayerMask.NameToLayer("Bomb"); playerLayerMask = LayerMask.GetMask("Player");
+        end = from;
+        if (movement == null || dir == Vector2.zero || distance <= 0) return false;
+        dir = NormalizeCardinal(dir);
+        float remaining = Mathf.Min(distance, Mathf.Max(0.1f, movement.tileSize) * 2);
+        float step = Mathf.Max(0.01f, movement.tileSize * 0.1f);
+        for (int i = 0; i < 128 && remaining > 0.0001f; i++)
+        {
+            float amount = Mathf.Min(step, remaining);
+            if (TryGetFirstBlockerAlongPath(end, dir, amount, out _, canPassDestructibles)) break;
+            end += dir * amount; remaining -= amount;
+        }
+        return end != from;
     }
 
     bool TryKickBomb(Collider2D hit, Vector2 dir)
@@ -387,7 +437,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         enemyRb.MovePosition(to);
     }
 
-    bool TryGetFirstBlockerAlongPath(Vector2 origin, Vector2 dir, float distance, out Collider2D blocker)
+    bool TryGetFirstBlockerAlongPath(Vector2 origin, Vector2 dir, float distance, out Collider2D blocker, bool? canPassOverride = null)
     {
         blocker = null;
 
@@ -405,7 +455,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         if (hits == null || hits.Length == 0)
             return false;
 
-        bool canPassDestructibles = CanPassDestructiblesNow();
+        bool canPassDestructibles = canPassOverride ?? CanPassDestructiblesNow();
 
         float bestDist = float.MaxValue;
         Collider2D best = null;
@@ -531,6 +581,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null)
             movement.SetInputLocked(false);
+        ReportNetworkDashStop();
     }
 
     public void CancelDashForExternalInterruption()
@@ -579,5 +630,6 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
             movement.SetInputLocked(false);
 
         externalAnimator = null;
+        ReportNetworkDashStop();
     }
 }

@@ -446,6 +446,7 @@ namespace Assets.Scripts.Netcode
             UpdatePinkJump(deltaTime, unscaledDeltaTime);
             UpdateRedPunch(deltaTime);
             UpdateTankPrediction(deltaTime);
+            UpdateBlackDash(deltaTime, unscaledDeltaTime);
             readyBombArcs.Clear();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
@@ -583,6 +584,7 @@ namespace Assets.Scripts.Netcode
             ClearPlayerBouncePresentation();
             ClearPlacementPredictions();
             ClearGreenDash("presenter_disabled");
+            ClearBlackDash("presenter_disabled");
             ClearPinkJump("presenter_disabled");
         }
 
