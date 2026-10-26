@@ -1079,6 +1079,47 @@ public partial class BombController : MonoBehaviour
             : GetPlannedExplosionRadius();
     }
 
+    private GameObject ResolvePlacementPrefab(out bool canUsePowerNow, out bool controlEnabled,
+        out bool pierceEnabled, out bool rubberEnabled, out bool shouldMakeBombMagnetic, out bool shouldMakeBombSearch)
+    {
+        canUsePowerNow = CanUsePowerBombNow();
+
+        controlEnabled = !canUsePowerNow && IsControlEnabled();
+        pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
+        rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
+        shouldMakeBombMagnetic = IsMagnetBombEnabled() &&
+            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
+        shouldMakeBombSearch = GetCachedComponent(ref cachedAbilitySystem) != null &&
+            cachedAbilitySystem.IsEnabled(SearchBombAbility.AbilityId) &&
+            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
+
+        return
+            (shouldMakeBombSearch ? (searchBombPrefab != null ? searchBombPrefab :
+                Resources.Load<GameObject>("Bombs/SearchBomb")) : null) ??
+            ((shouldMakeBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
+            (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
+            (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
+            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
+            (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
+            bombPrefab);
+
+    }
+
+    public GameObject GetNetworkPlacementPrefab() => ResolvePlacementPrefab(out _, out _, out _, out _, out _, out _);
+
+    public bool NetworkPlacementAllowed => bombsRemaining > 0 && !IsSkullBombPlacementBlocked() && !IsRidingTransitionActive() &&
+        !GamePauseController.IsPaused && !ClownMaskBoss.BossIntroRunning &&
+        !(StageIntroTransition.Instance != null && (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)) &&
+        GetMovement() != null && !GetMovement().isDead && !GetMovement().IsEndingStage && (!GetMovement().InputLocked || IsDashActive());
+
+    // Read-only geometry for a visual proxy. No fuse, stock or world mutation.
+    public bool TryGetNetworkPlacementPosition(out Vector2 position)
+    {
+        ResolveTilemaps();
+        position = SnapToTileCenter(GetSnapTilemapForGround(), transform.position, out _, out _);
+        return CanPlaceBombAt(position) && !TileHasBomb(position) && !HasDestructibleAt(position) && !HasActiveExplosionAt(position);
+    }
+
     private void PlaceBomb()
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -1128,27 +1169,8 @@ public partial class BombController : MonoBehaviour
         if (HasDestructibleAt(position))
             return;
 
-        bool canUsePowerNow = CanUsePowerBombNow();
-
-        bool controlEnabled = !canUsePowerNow && IsControlEnabled();
-        bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
-        bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
-        bool shouldMakeBombMagnetic = IsMagnetBombEnabled() &&
-            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
-        bool shouldMakeBombSearch = GetCachedComponent(ref cachedAbilitySystem) != null &&
-            cachedAbilitySystem.IsEnabled(SearchBombAbility.AbilityId) &&
-            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
-
-        GameObject prefabToUse =
-            (shouldMakeBombSearch ? (searchBombPrefab != null ? searchBombPrefab :
-                Resources.Load<GameObject>("Bombs/SearchBomb")) : null) ??
-            ((shouldMakeBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
-            (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
-            (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
-            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
-            (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
-            bombPrefab);
-
+        GameObject prefabToUse = ResolvePlacementPrefab(out bool canUsePowerNow, out bool controlEnabled,
+            out bool pierceEnabled, out bool rubberEnabled, out bool shouldMakeBombMagnetic, out bool shouldMakeBombSearch);
         if (prefabToUse == null)
             return;
 
@@ -1208,6 +1230,8 @@ public partial class BombController : MonoBehaviour
 
         // Online (host): replica a bomba para os clientes. No-op offline.
         Assets.Scripts.Netcode.NetSpawn.Server(bomb);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var placementFx) && placementFx.isServer)
+            placementFx.ServerConfirmPlacement(bomb);
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -2442,7 +2466,9 @@ public partial class BombController : MonoBehaviour
         if (src == null)
             return;
 
-        GameAudioSettings.PlaySfx(src, placeBombSfx);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerPlacementSound();
+        else GameAudioSettings.PlaySfx(src, placeBombSfx);
     }
 
     private void PlayWaterDestroySfx()
@@ -3288,27 +3314,8 @@ public partial class BombController : MonoBehaviour
         if (HasDestructibleAt(position))
             return false;
 
-        bool canUsePowerNow = CanUsePowerBombNow();
-
-        bool controlEnabled = !canUsePowerNow && IsControlEnabled();
-        bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
-        bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
-        bool shouldMakeBombMagnetic = IsMagnetBombEnabled() &&
-            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
-        bool shouldMakeBombSearch = GetCachedComponent(ref cachedAbilitySystem) != null &&
-            cachedAbilitySystem.IsEnabled(SearchBombAbility.AbilityId) &&
-            (specialBombsOnEveryPlacement || !HasAnyAliveBombOwnedByMe());
-
-        GameObject prefabToUse =
-            (shouldMakeBombSearch ? (searchBombPrefab != null ? searchBombPrefab :
-                Resources.Load<GameObject>("Bombs/SearchBomb")) : null) ??
-            ((shouldMakeBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
-            (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
-            (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
-            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
-            (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
-            bombPrefab);
-
+        GameObject prefabToUse = ResolvePlacementPrefab(out bool canUsePowerNow, out bool controlEnabled,
+            out bool pierceEnabled, out bool rubberEnabled, out bool shouldMakeBombMagnetic, out bool shouldMakeBombSearch);
         if (prefabToUse == null)
             return false;
 

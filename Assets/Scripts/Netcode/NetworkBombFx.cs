@@ -440,6 +440,7 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             UpdateTileMotionPresentation();
+            UpdatePlacementPresentation(unscaledDeltaTime);
             UpdatePlayerBouncePresentation(deltaTime, unscaledDeltaTime);
             readyBombArcs.Clear();
             expiredKicks.Clear();
@@ -574,6 +575,7 @@ namespace Assets.Scripts.Netcode
             ResetLocalAbilityPresentation();
             ClearTileMotionPresentation();
             ClearPlayerBouncePresentation();
+            ClearPlacementPredictions();
         }
 
         void OnDisable() => ClearKickPlayback();

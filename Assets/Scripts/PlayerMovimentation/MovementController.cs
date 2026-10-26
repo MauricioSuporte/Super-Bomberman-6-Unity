@@ -2862,6 +2862,10 @@ public class MovementController : MonoBehaviour, IKillable
         {
             Vector2 myPos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
 
+            if (predictLocally && insideNetworkTick && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var placementFx) &&
+                TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var placementInput) &&
+                placementFx.BlocksPredictedPlacement(myPos, targetPosition, tileSize, placementInput.CurrentMovementTick)) return true;
+
             foreach (var bomb in Bomb.ActiveBombs)
             {
                 if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.ClientMotionNonBlocking)

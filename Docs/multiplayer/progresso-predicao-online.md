@@ -32,11 +32,29 @@ Marco 1 implementado e validado automaticamente (publicação ainda pendente):
 - Partidas manuais com dois peers, contextos das nove montarias, redes degradadas
   e demais modos ainda não executadas; não declarar ganho percebido medido.
 
+### Marco 2: A02 validado, ainda sem publicação
+
+- `NetworkBombPlacement.cs` (partial do NetworkBombFx) cria apenas SpriteRenderer;
+  reserva por tick/capacidade, confirma após spawn, rejeita por ack/timeout e usa
+  footprint virtual para sair/reentrar na célula prevista sem collider de gameplay.
+- `BombController` usa um resolvedor único de variantes nos dois caminhos de
+  plantio; geometria de preview não altera fuse, estoque ou cenário.
+- `NetworkPlayerInput` replica stock/prefab permitido e conserva o tick específico
+  do press A mesmo quando processa vários ticks. Áudio dedicado evita duplicação.
+- Teste: `PlacementProxyIsVisualOnlyAndReservesCapacityUntilAcknowledged`.
+- Validação: 147/147 Unity EditMode; C# compilou sem warnings/erros introduzidos.
+  Relatórios copiados para `Logs/PredictionPlacementTests.xml` e `.log`.
+- Protocolo de trabalho permanece 25 (não publicado).
+- Próxima ação: A03 Green Louie (pose + movimento limitado do proprietário,
+  confirmação e snapshots do dash); depois A04 Pink e C01.
+- Manual pendente: spawn/áudio em dois peers, press rápido com lote de inputs,
+  variantes de bomba, glove/line/dash, água/buracos e disputa da célula.
+
 ## Checklist por ID
 
 - [ ] P0: ferramenta e contexto implementados/testados; novas capturas comparáveis pendentes.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
-- [ ] A02: colocação prevista de bomba.
+- [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
 - [ ] A03: Green Louie dash.
 - [ ] A04: Pink Louie jump.
 - [ ] A05: Black Louie dash/push.

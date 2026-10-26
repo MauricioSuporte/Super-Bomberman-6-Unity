@@ -111,7 +111,8 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         ObserveBombs(now, sample);
     }
 
-    string State() => "prediction_block=" + (movement.NetworkPredictionBlockReason ?? "none") +
+    string State() => "prediction_block=" + (NetSync.Mode == NetSync.NetMode.Client && networkInput != null && networkInput.isLocalPlayer &&
+        !networkInput.ServerAllowsMovementPrediction ? "server_authoritative" : movement.NetworkPredictionBlockReason ?? "none") +
         " mounted=" + movement.IsMounted + " speed=" + movement.speed + " locked=" + movement.InputLocked + " dead=" + movement.isDead +
         " paused=" + GamePauseController.IsPaused + " intro=" + (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) +
         " kickAbility=" + (TryGetComponent<BombKickAbility>(out var kick) && kick.IsEnabled);

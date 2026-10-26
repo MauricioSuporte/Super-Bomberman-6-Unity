@@ -74,6 +74,8 @@ namespace Assets.Scripts.Netcode
         double lastServerInputAt = double.NegativeInfinity;
         const double HeldInputGraceSeconds = 0.1;
         bool receivedSnapshot, serverAllowsPrediction;
+        public bool ServerAllowsMovementPrediction => receivedSnapshot && serverAllowsPrediction;
+        public uint CurrentActionATick { get; private set; }
         public uint CurrentInputTick => isServer ? processedTick : localTick;
         public uint CurrentMovementTick => isServer ? processedTick : movementTick;
         public int PendingInputCount => pending.Count;
@@ -122,7 +124,12 @@ namespace Assets.Scripts.Netcode
                     if (i >= 4 && input.GetDown(1, Actions[i])) { pendingPressed |= 1 << i; pressedNow |= 1 << i; }
                 }
                 if (Blocked) movement.SetPredictLocally(false);
-                else GetComponent<NetworkBombFx>()?.PredictBombAbilityInput(sampledHeld, pressedNow, unchecked(localTick + 1));
+                else
+                {
+                    var fx = GetComponent<NetworkBombFx>();
+                    fx?.PredictBombAbilityInput(sampledHeld, pressedNow, unchecked(localTick + 1));
+                    if ((pressedNow & 16) != 0) fx?.TryPredictPlacement(unchecked(localTick + 1));
+                }
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
             // Pause uses unscaled Update; stale gameplay inputs must not survive resume.
@@ -178,6 +185,7 @@ namespace Assets.Scripts.Netcode
                 processedTick = frame.tick;
                 serverHeldMask = frame.held;
                 actionEdges |= frame.pressed;
+                if ((frame.pressed & 16) != 0) CurrentActionATick = frame.tick;
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
@@ -248,11 +256,11 @@ namespace Assets.Scripts.Netcode
             if (state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
             sentSnapshot = true;
             lastSnapshotTick = processedTick;
-            TargetReconcile(connectionToClient, processedTick, state);
+            TargetReconcile(connectionToClient, processedTick, state, GetComponent<NetworkBombFx>()?.CapturePlacementState() ?? default);
         }
 
         [TargetRpc]
-        void TargetReconcile(NetworkConnectionToClient target, uint acknowledgedTick, MovementController.NetworkMovementState state)
+        void TargetReconcile(NetworkConnectionToClient target, uint acknowledgedTick, MovementController.NetworkMovementState state, NetworkBombFx.PlacementState placement)
         {
             if (isServer || !isLocalPlayer || movement == null || movement.Rigidbody == null) return;
             Vector2 before = movement.transform.position;
@@ -261,6 +269,7 @@ namespace Assets.Scripts.Netcode
             pending.DiscardThrough(acknowledgedTick);
             var kickFx = GetComponent<NetworkBombFx>();
             kickFx?.ReconcilePredictedKicks(acknowledgedTick);
+            kickFx?.ReconcilePlacement(acknowledgedTick, placement);
             kickFx?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
             kickFx?.RestorePlayerBouncePosition();

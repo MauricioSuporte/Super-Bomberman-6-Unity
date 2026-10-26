@@ -405,6 +405,61 @@ public sealed class OnlineRoomEditModeTests
         Assert.IsFalse(frame.Equals(hidden));
     }
 
+    [Test]
+    public void PlacementProxyIsVisualOnlyAndReservesCapacityUntilAcknowledged()
+    {
+        var mode = NetSync.Mode; var actor = new GameObject("PlacementPredictionOwner"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var previousClientState = clientState.GetValue(null);
+        NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bombs/Bomb.prefab");
+            var state = new NetworkBombFx.PlacementState { available = 1, allowed = true, prefabAssetId = 123 };
+            fx.ReconcilePlacement(0, state);
+            Vector2 origin = new(7000, 7000); int bombsBefore = Bomb.ActiveBombs.Count;
+            Assert.IsTrue(fx.BeginPlacementPrediction(1, origin, prefab));
+            var proxies = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("placements", flags).GetValue(fx);
+            var proxy = (GameObject)proxies[1u].GetType().GetField("visual").GetValue(proxies[1u]);
+            Assert.IsNotNull(proxy.GetComponent<SpriteRenderer>());
+            Assert.IsNull(proxy.GetComponent<Bomb>()); Assert.IsNull(proxy.GetComponent<Collider2D>());
+            Assert.IsNull(proxy.GetComponent<Rigidbody2D>()); Assert.IsNull(proxy.GetComponent<NetworkIdentity>());
+            Assert.AreEqual(bombsBefore, Bomb.ActiveBombs.Count, "A visual proxy cannot join the gameplay bomb registry.");
+            Assert.IsFalse(fx.BeginPlacementPrediction(1, origin, prefab));
+            Assert.IsFalse(fx.BeginPlacementPrediction(2, origin + Vector2.right, prefab), "Reserve predicted stock until the server processes it.");
+            Assert.IsFalse(fx.BlocksPredictedPlacement(origin, origin + Vector2.right, 1, 1), "The planting player can leave its bomb.");
+            Assert.IsTrue(fx.BlocksPredictedPlacement(origin + Vector2.right, origin, 1, 1), "Returning to a pending planted bomb must still query the predicted footprint.");
+            Assert.IsFalse(fx.BlocksPredictedPlacement(origin + Vector2.right, origin, 1, 0), "A placement cannot affect an earlier replay tick.");
+            state.available = 2; fx.ReconcilePlacement(0, state);
+            Assert.IsFalse(fx.BeginPlacementPrediction(2, origin, prefab));
+            Assert.IsTrue(fx.BeginPlacementPrediction(2, origin + Vector2.right, prefab));
+            fx.ReconcilePlacement(1, state); Assert.AreEqual(1, fx.PlacementReservationCount);
+            Assert.IsFalse(fx.BlocksPredictedPlacement(origin + Vector2.right, origin, 1, 2), "Rejection releases the footprint.");
+            fx.ReceivePlacementConfirmed(2, 777, origin + Vector2.right);
+            Assert.AreEqual(1, fx.PlacementReservationCount, "Confirmation hides the proxy but stock waits for the authoritative snapshot.");
+            Assert.IsFalse(fx.BlocksPredictedPlacement(origin + Vector2.right * 2, origin + Vector2.right, 1, 2));
+            fx.ReconcilePlacement(2, state); Assert.AreEqual(0, fx.PlacementReservationCount);
+            state.allowed = false; fx.ReconcilePlacement(2, state); Assert.IsFalse(fx.BeginPlacementPrediction(3, origin, prefab));
+            state.allowed = true; fx.ReconcilePlacement(2, state); Assert.IsTrue(fx.BeginPlacementPrediction(3, origin, prefab));
+            typeof(NetworkBombFx).GetMethod("UpdatePlacementPresentation", flags).Invoke(fx, new object[] { 1.1f });
+            Assert.AreEqual(0, fx.PlacementReservationCount); Assert.IsFalse(fx.BeginPlacementPrediction(4, origin, prefab));
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.BeginPlacementPrediction(4, origin, prefab));
+            using var writer = NetworkWriterPool.Get(); writer.Write(state);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var result = reader.Read<NetworkBombFx.PlacementState>();
+            Assert.AreEqual(state.available, result.available); Assert.AreEqual(state.prefabAssetId, result.prefabAssetId); Assert.IsTrue(result.allowed);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearPlacementPredictions", flags).Invoke(fx, null);
+            NetSync.Mode = mode; clientState.SetValue(null, previousClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
     [TestCase(MountedType.Mole)]
     [TestCase(MountedType.Tank)]
     [TestCase(MountedType.Blue)]
