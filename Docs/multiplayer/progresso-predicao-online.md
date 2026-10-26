@@ -19,24 +19,23 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo38, commit `179b6e185`, pipeline
-  [40377824543](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40377824543) concluído com sucesso.
-- **Último lote publicado:** C05 Portal7 com movimento aprovado, poses completas,
-  máscaras/estrelas e gates client. Suíte221/221 Unity, C#0 erros/avisos novos,
-  Python40/40, UTF-8/BOM e diffcheck passaram. Manual com dois peers pendente.
-- **Lote39 validado, aguardando envio/publicação:** correnteza com continuidade aprovada/pausa/cleanup,
-  barrier de saída no replay; plataforma com scopes por rider/cleanup/gates;
-  world stream co-op e playback alinhados ao offset do passageiro.
-  Suíte227/227 Unity passou; C#0 erros/avisos novos, Python40/40 e
-  UTF-8/BOM/diffcheck passaram. Não declarar39 publicado antes do CI.
-- **Próximos itens:** concluir validação/publicação39, barco/contexto de água,
-  demais C/R e regressões A14. Swap troca terreno/blackout, não transporta player;
-  acompanhar também em C09.
+- **Publicado e confirmado:** protocolo39, commit `b9635e4e3`, pipeline
+  [40381560929](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40381560929) concluído com sucesso.
+- **Último lote publicado:** correnteza com continuidade aprovada/pausa/cleanup e
+  barrier de saída no replay; plataforma multi-rider; relógio visual do co-op
+  alinhado ao passageiro. Suíte227/227 Unity, C#0 erros/avisos novos, Python40/40,
+  UTF-8/BOM e diffcheck passaram. Portais38 já publicados antes.
+- **Lote40 validado, aguardando envio/publicação:** ímãs/redirecionadores e guards dos entrypoints de
+  movimento de bomba. Direção magnética aprovada com buffer/revisão, sem scan client.
+  Suíte final321/321 Unity (229 online +92 COM), C#0 erros/avisos novos,
+  Python40/40, UTF-8/BOM e diffcheck passaram.
+- **Próximos itens:** validar40, completar transporte independente do owner/R07,
+  barco/contexto de água, demais C/R e regressões A14. Swap é terreno/blackout C09.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote38 commitado/enviado; lote39 ainda no diretório, sem commit.
+  do usuário e o Unity aberto. Lote38 commitado/enviado; Lote39 commitado/enviado; início40 C08 ainda no diretório, sem commit.
 
 ## Como acompanhar
 
@@ -167,6 +166,10 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 
 ## Checklist por ID
 
+Resumo: **12 de33 IDs concluídos em implementação/testes,13 parciais e8 pendentes**.
+Esta contagem não representa percentual de esforço; validação manual com dois peers
+continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
+
 - [ ] P0: ferramenta e contexto implementados/testados; novas capturas comparáveis pendentes.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
@@ -181,24 +184,24 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: regressões dos caminhos existentes.
+- [ ] A14: parcial40: descoberta e fixtures COM corrigidas,321 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
-- [ ] C05: parcial38 validado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
-- [ ] C06: parcial39 validado: correnteza/saída/replay e plataforma multi-rider aprovados; barco/contexto/poses e manual pendentes.
+- [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
+- [ ] C06: parcial39 publicado: correnteza/saída/replay e plataforma multi-rider aprovados; barco/contexto/poses e manual pendentes.
 - [ ] C07: pusher.
-- [ ] C08: ímãs/redirecionamento.
+- [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: mecanismos e tiles especiais.
 - [ ] C10: parcial36 FallingBomb aviso/RNG/spawn corrigidos; powder/roof/SuddenDeath pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
-- [ ] R02: parcial: geometria aprovada segura implementada (169 + 9 testes); ainda auditar custo por familia e curvas no stream visual.
+- [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
 - [ ] R03: apresentação de inimigos.
 - [ ] R04: forças impostas por inimigos.
 - [ ] R05: projéteis remotos.
 - [ ] R06: bosses/bombers.
-- [ ] R07: itens/ovos/montarias remotos.
+- [ ] R07: parcial: ovos35 e poses de montarias38 implementados/testados; itens, transferência e apresentação sem owner ativo pendentes.
 - [ ] R08: cenário móvel/ambiental.
 - [ ] Consolidar skill, notas e matriz de validação.
 
@@ -845,3 +848,87 @@ avisos novos, Python40/40, UTF-8/BOM/diffcheck passaram. Relatórios finais copi
 para Logs raiz. Runner restaurado nos arquivos tracked de validação. Próximo:
 commit/enviar39, confirmar CI e continuar C08/A14 ou barco com as limitações acima.
 Nenhum manual dois peers realizado; plano permanece em andamento.
+
+
+Após envio39: b9635e4e3 / CI40381560929 em andamento. Último deploy confirmado38.
+Início40 C08 ainda não validado: Bomb StartKick/TryRedirectKick/StartMagnetPull
+recusam gameplay puro client no próprio entrypoint; redirecionador6 gateado.
+Magnet handler client não inicia scan nem muda direção por explosão; startup lê
+tiles sem resetá-los. Novo MagnetFieldPhase publica cena/path/revisão/time e
+células/direções aprovadas Battle14, limitado256 com heartbeat500ms, buffer32 e
+pausa. Client usa só aplicação visual/read-only cache; não reativa coroutine.
+Não restaura magnet sobre pedra de SuddenDeath. Co-op conserva tile stream.
+Protocolo40 alinhado. C# em execução; nenhum teste Unity40 ainda. Completar testes
+wire/fase/rejeição/autoridade e aguardar CI39 liberar runner antes de copiar40.
+Bomba ambiental sem presenter/owner inativo continua pendente R07; não declarar
+C08 completo nem prever escolha do alvo/efeito magnético.
+
+
+Retomada após crédito: CI39 confirmado sucesso (b9635e4e3/40381560929). Checklists
+atualizados:12 IDs completos em código/testes,13 parciais,8 pendentes. Lote40 ainda
+não testado Unity. Runner agora livre; copiar apenas arquivos próprios de40 e metas,
+rodar suíte OnlineRoom e testes BattleModeCom que cobrem Magnet, sem tocar Editor raiz.
+
+
+Unity40 em execução no runner isolado: filtro OnlineRoomEditModeTests +
+BattleModeComEditModeTests, PredictionMagnet40Tests.xml/.log, exec74136. Não copiar
+mais arquivos enquanto roda. C#0 erros/avisos novos passou. Novos testes cobrem
+fase/revisão/tempo/pausa/stone replacement e entrypoints puros client. Nenhum
+resultado Unity40 presumido. Preservar fonte/TitleScreen do usuário na raiz.
+
+R07 proposta para próxima etapa (ainda sem código): reutilizar kickPlayback e o
+presenter existente com vida de apresentação independente do player. OnDisable
+atual apaga motions confirmados e LateUpdate para. Separar cancelamento de ações
+previstas do player de motion confirmado de bombas; manager existente pode tickar
+presenters inativos explicitamente até handoff/despawn. Sem transferir input/posse.
+Bomba sem owner ainda precisa transporte de evento aprovado via manager existente;
+resolver junto com lifecycle, com testes morte/scene/timeout antes de marcar R07.
+
+
+40 OnlineRoom229/229 passou. O filtro combinado NÃO descobriu BattleModeCom,
+pois a classe está no assembly runtime (fora de Editor). Não declarar suíte COM
+executada com esse XML. Para validá-la sem alterar source layout da raiz, movidos
+SOMENTE NO RUNNER os arquivos Assets/Tests/EditMode/BattleModeComEditModeTests.cs
+E .cs.meta para Assets/Tests/EditMode/Editor/ (mesmo nome/GUID). Rodando COM separado
+PredictionMagnet40ComTests.xml/.log, exec16113. Resultado pendente.
+IMPORTANTE ao terminar: copiar relatório/log para Logs raiz; remover somente os
+dois arquivos temporários Editor/BattleModeComEditModeTests.cs +.meta no runner,
+e git restore nos originais tracked mais demais arquivos de validação. Não iniciar
+CI40 com a fixture movida. Não mover nem limpar nada no checkout raiz do usuário.
+C#0 erros/avisos novos e Python40/40/UTF-8/BOM/diffcheck passaram.
+
+
+A14 descoberta COM40: mover a classe antiga para Editor temporariamente revelou
+que ela usa helpers internos do assembly runtime, então a execução temporária não
+compilou. Arquivos originais restaurados no RUNNER; temporários antigos removidos.
+Solução em código (ainda validando): base BattleModeComEditModeTests torna-se
+abstrata no mesmo arquivo/assembly; wrapper concreto BattleModeComEditorTests em
+Editor herda os testes, sem mover código nem expor helpers de gameplay. Perfil
+full do pipeline inclui wrapper; quick permanece rápido/sem executar suíte.
+Rodando OnlineRoom + wrapper em PredictionMagnet40CompleteTests.xml/.log,
+exec66372; resultado pendente. Não declarar COM executado até conferir XML.
+
+
+A14 execução real COM: wrapper descobriu92 casos;75 passaram,17 falharam.
+OnlineRoom229/229 continuou passando. Falhas antigas majoritariamente fixtures
+sem Collider2D concreto (RequireComponent abstrato impedia criar componentes),
+Awake/caches não inicializados em Edit Mode, profiles de input vazios e Tilemap
+inativo no teste de bounds. Corrigida preparação das fixtures, preservadas todas
+as assertivas; nenhum gameplay COM/Search foi alterado para satisfazer testes.
+Executando COM92 novamente em PredictionMagnet40ComReadyTests.xml/.log,
+exec21942. C# em57497. Não declarar suíte completa321 aprovada ainda.
+
+
+COM40 corrigido:92/92 passaram; nenhuma alteração de gameplay necessária para
+consertar os17 casos antigos. Root C#0 erros/avisos novos passou. Agora rodando
+OnlineRoom229 + COM92 juntos: PredictionMagnet40FinalTests.xml/.log. Não presumir
+321/321 até conferir resultado. Perfil full seleciona ambos; Python32+8 passou.
+Fixture COM original permanece em seu caminho/assembly; wrapper Editor herda casos.
+
+
+Final40:321/321 Unity passaram juntos (OnlineRoom229 + COM92), C#0 erros/avisos
+novos, Python40/40 e UTF-8/BOM/diffcheck passaram. Logs/XML finais preservados em
+Logs/PredictionMagnet40FinalTests.*. Runner restaurado nos tracked de validação;
+fixture temporária antiga Editor/BattleModeComEditModeTests.* não existe mais.
+Commit/enviar40 e confirmar CI; último deploy confirmado39. C08/A14 seguem parciais:
+manual, lifecycle de bombas sem presenter e matriz completa ainda pendentes.

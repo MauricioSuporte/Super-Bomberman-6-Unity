@@ -1495,6 +1495,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public bool TryRedirectKick(Vector2 direction)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (HasExploded || !isKicked || direction == Vector2.zero)
             return false;
 
@@ -1532,7 +1533,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         bool originBlockerUseTrigger,
         Assets.Scripts.Netcode.NetworkBombFx kickPresenter = null)
     {
-
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if ((!CanBeKicked && !CanBeKickedEarly) || direction == Vector2.zero)
         {
             TraceKickDiagnostic("kick_rejected", "unavailable_or_zero_direction", direction);
@@ -2079,6 +2080,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         bool originBlockerUseTrigger,
         bool searchMovement = false)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (IsBlockedFromMagnetMovement || (!searchMovement && TryGetComponent<SearchBomb>(out _)))
             return false;
 

@@ -11,6 +11,82 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void MagnetClientReadsInitialTilesAndPresentsOnlyFreshApprovedDirections()
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldClientState = clientState.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        bool wasPaused = (bool)paused.GetValue(null);
+        var actor = new GameObject("ApprovedMagnetField"); actor.SetActive(false);
+        var grid = new GameObject("MagnetGrid", typeof(Grid));
+        var mapObject = new GameObject("Indestructible", typeof(Tilemap)); mapObject.transform.SetParent(grid.transform, false);
+        var map = mapObject.GetComponent<Tilemap>();
+        var tiles = new Tile[5]; for (int i = 0; i < tiles.Length; i++) tiles[i] = ScriptableObject.CreateInstance<Tile>();
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected")); paused.SetValue(null, false);
+            var handler = actor.AddComponent<MagnetIndestructibleTileHandler>();
+            typeof(MagnetIndestructibleTileHandler).GetField("indestructibleTilemap", flags).SetValue(handler, map);
+            string[] names = { "magnetLeft", "magnetUp", "magnetRight", "magnetDown" };
+            for (int i = 0; i < names.Length; i++) typeof(MagnetIndestructibleTileHandler).GetField(names[i], flags).SetValue(handler, tiles[i]);
+            var cell = new Vector3Int(3, 4); map.SetTile(cell, tiles[2]);
+            typeof(MagnetIndestructibleTileHandler).GetMethod("Awake", flags).Invoke(handler, null);
+            Assert.AreEqual(tiles[2], map.GetTile(cell), "A client startup must not reset a magnet to the left.");
+            var scan = (System.Collections.IEnumerator)typeof(MagnetIndestructibleTileHandler).GetMethod("ScanRoutine", flags).Invoke(handler, null);
+            Assert.IsFalse(scan.MoveNext()); (scan as System.IDisposable)?.Dispose();
+            var phase = new MagnetFieldPhase { scene = actor.scene.name, path = handler.NetworkFieldPath, revision = 1,
+                time = NetworkTime.time - 0.1, cells = new[] { cell }, directions = new byte[] { 1 } };
+            using (var writer = NetworkWriterPool.Get()) { writer.Write(phase); phase = new NetworkReader(writer.ToArray()).Read<MagnetFieldPhase>(); }
+            handler.ReceiveNetworkField(phase);
+            var present = typeof(MagnetIndestructibleTileHandler).GetMethod("PresentNetworkField", flags); present.Invoke(handler, null);
+            Assert.AreEqual(tiles[1], map.GetTile(cell));
+            Assert.IsFalse(handler.HandleExplosionHit(null, Vector2.zero, cell, tiles[1])); Assert.AreEqual(tiles[1], map.GetTile(cell));
+            var future = phase; future.revision = 2; future.time = NetworkTime.time + 100; future.directions = new byte[] { 3 };
+            handler.ReceiveNetworkField(future); present.Invoke(handler, null); Assert.AreEqual(tiles[1], map.GetTile(cell));
+            var history = (List<MagnetFieldPhase>)typeof(MagnetIndestructibleTileHandler).GetField("networkFieldHistory", flags).GetValue(handler);
+            future.time = NetworkTime.time - 0.05; history[1] = future;
+            paused.SetValue(null, true); present.Invoke(handler, null); Assert.AreEqual(tiles[1], map.GetTile(cell));
+            paused.SetValue(null, false); present.Invoke(handler, null); Assert.AreEqual(tiles[3], map.GetTile(cell));
+            handler.ReceiveNetworkField(phase); present.Invoke(handler, null); Assert.AreEqual(tiles[3], map.GetTile(cell), "An old direction cannot rewind a confirmed field.");
+            phase.revision = 3; phase.directions = new byte[] { 9 }; handler.ReceiveNetworkField(phase); Assert.AreEqual(1, history.Count);
+            phase.directions = new byte[] { 0 }; phase.scene = "WrongScene"; handler.ReceiveNetworkField(phase); Assert.AreEqual(1, history.Count);
+            map.SetTile(cell, tiles[4]); present.Invoke(handler, null);
+            Assert.AreEqual(tiles[4], map.GetTile(cell), "Buffered magnet phases must not restore a tile replaced by sudden death.");
+            Assert.IsFalse(handler.IsMagnetCell(new Vector2Int(cell.x, cell.y)));
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(grid);
+            foreach (var tile in tiles) Object.DestroyImmediate(tile);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); paused.SetValue(null, wasPaused);
+        }
+    }
+
+    [Test]
+    public void BombClientEntryPointsCannotStartOrRedirectNativeMotion()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("ClientBombMotionGate"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            actor.AddComponent<BoxCollider2D>(); var bomb = actor.AddComponent<Bomb>();
+            typeof(Bomb).GetField("isKicked", flags).SetValue(bomb, true);
+            typeof(Bomb).GetField("kickDirection", flags).SetValue(bomb, Vector2.right);
+            Assert.IsFalse(bomb.TryRedirectKick(Vector2.up));
+            Assert.AreEqual(Vector2.right, typeof(Bomb).GetField("kickDirection", flags).GetValue(bomb));
+            typeof(Bomb).GetField("isKicked", flags).SetValue(bomb, false);
+            Assert.IsFalse(bomb.StartKick(Vector2.up, 1, 0, null));
+            Assert.IsFalse(bomb.StartMagnetPull(Vector2.up, 1, 3, 0, null, 1));
+            Assert.AreEqual(Vector2.right, typeof(Bomb).GetField("kickDirection", flags).GetValue(bomb));
+            Assert.IsFalse(bomb.IsBeingMagnetPulled); Assert.IsFalse(bomb.IsBeingKicked);
+        }
+        finally { Object.DestroyImmediate(actor); NetSync.Mode = oldMode; }
+    }
+
+    [Test]
     public void CoopWorldAndAnimationClockFollowApprovedRiderTransformOffset()
     {
         var actor = new GameObject("CoopRiderClock"); actor.SetActive(false);

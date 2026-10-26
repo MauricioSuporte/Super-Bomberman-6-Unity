@@ -260,3 +260,10 @@ unmount destination is applied. Use the same transform timeline offset for suppo
 world poses and animation playback. Preserve each bomb's own timeline offset.
 When restoring coupled flags, inspect setters: SetExternalMovementOverride clears
 hazard damage, so restore the override before its saved hazard setting.
+
+
+Client startup must not reset authored/approved field directions just to build a
+read-only cache. For magnetic tiles, gate native scan/pull/rotation first and send
+revisioned field phases with a late-observer heartbeat. Apply approved tile views
+without resurrecting a cell already replaced by sudden death. Transporting the
+field does not authorize the client to choose a target or simulate a real pull.

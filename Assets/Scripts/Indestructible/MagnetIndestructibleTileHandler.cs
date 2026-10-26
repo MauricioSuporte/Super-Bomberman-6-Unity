@@ -1,9 +1,10 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Assets.Scripts.Netcode;
 
-public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestructibleTileHandler
+public sealed partial class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestructibleTileHandler
 {
     public readonly struct BombPullPrediction
     {
@@ -56,7 +57,8 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
         out BombPullPrediction prediction)
     {
         prediction = default;
-        if (!isActiveAndEnabled || indestructibleTilemap == null)
+        if (!isActiveAndEnabled || indestructibleTilemap == null ||
+            (NetSync.Mode == NetSync.NetMode.Client && !networkFieldReady))
             return false;
 
         Vector3Int sourceCell = new(sourceTile.x, sourceTile.y, 0);
@@ -124,7 +126,7 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
         if (_scanRoutine != null)
             StopCoroutine(_scanRoutine);
 
-        _scanRoutine = StartCoroutine(ScanRoutine());
+        if (NetSync.Mode != NetSync.NetMode.Client) _scanRoutine = StartCoroutine(ScanRoutine());
     }
 
     void OnDisable()
@@ -133,11 +135,12 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
             StopCoroutine(_scanRoutine);
 
         _scanRoutine = null;
+        networkFieldHistory.Clear(); networkFieldReady = false;
     }
 
     public bool HandleExplosionHit(BombController source, Vector2 hitWorldPos, Vector3Int cell, TileBase tile)
     {
-        if (!IsAnyMagnetTile(tile))
+        if (NetSync.Mode == NetSync.NetMode.Client || !IsAnyMagnetTile(tile))
             return false;
 
         _dirIndexByCell.TryGetValue(cell, out int idx);
@@ -146,11 +149,13 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
         _dirIndexByCell[cell] = idx;
 
         ApplyDirectionTile(cell, idx);
+        PublishNetworkField(force: true);
         return true;
     }
 
     private IEnumerator ScanRoutine()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) yield break;
         var wait = new WaitForSeconds(scanEverySeconds);
 
         while (true)
@@ -162,6 +167,7 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
 
     private void PullPullables()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client || GamePauseController.IsPaused) return;
         for (int i = 0; i < _magnetCells.Count; i++)
         {
             Vector3Int magnetCell = _magnetCells[i];
@@ -364,8 +370,8 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
                     continue;
 
                 _magnetCells.Add(c);
-                _dirIndexByCell[c] = 0;
-                ApplyDirectionTile(c, 0);
+                _dirIndexByCell[c] = NetSync.Mode == NetSync.NetMode.Client ? DirectionIndex(t) : 0;
+                if (NetSync.Mode != NetSync.NetMode.Client) ApplyDirectionTile(c, 0);
             }
         }
     }

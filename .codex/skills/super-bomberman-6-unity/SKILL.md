@@ -81,6 +81,13 @@ prefab, Resources, save, and player-count integration.
 
 - Inspect and extend `Assets/Tests/EditMode/BattleModeComEditModeTests.cs` when
   changing covered COM, danger, diagnostic, or synthetic-input behavior.
+  Execute it through `BattleModeComEditorTests`, the concrete Editor discovery
+  wrapper; the abstract base stays beside its internal runtime helpers. Confirm
+  the fixture/count in the result XML instead of treating an empty filter as success.
+- Edit Mode fixtures must supply a concrete Collider2D before adding components
+  that require the abstract Collider2D type. Initialize ordinary MonoBehaviour
+  caches explicitly when Awake has not run; native body/tilemap coordinate tests
+  need active native objects and an asserted initial condition.
 - Do not claim that tests, compilation, or a Unity scene passed unless they were
   actually run.
 - For C# or Unity-content edits, run available C# and Unity compilation checks

@@ -5,7 +5,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public sealed class BattleModeComEditModeTests
+public abstract class BattleModeComEditModeTests
 {
     [TestCase(1, -1, 0, 6)]
     [TestCase(1, 1, 0, 8)]
@@ -71,10 +71,13 @@ public sealed class BattleModeComEditModeTests
     public void SearchBombAwareness_PredictionPreservesTrailTurns(float until, int x, int y)
     {
         var player = new GameObject("Search prediction player");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         var bombObject = new GameObject("Search prediction bomb");
+        if (!bombObject.TryGetComponent<Collider2D>(out _)) bombObject.AddComponent<BoxCollider2D>();
         try
         {
             var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            InitializeAwake(awareness);
             var bomb = bombObject.AddComponent<Bomb>();
             var flags = BindingFlags.NonPublic | BindingFlags.Instance;
             var type = typeof(BattleModeComSearchBombAwarenessAbility).GetNestedType("Threat", BindingFlags.NonPublic);
@@ -97,7 +100,9 @@ public sealed class BattleModeComEditModeTests
     public void SearchBombAwareness_PredictionStopsAtBlockedTrailTile()
     {
         var player = new GameObject("Search prediction player");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         var bombObject = new GameObject("Search prediction bomb");
+        if (!bombObject.TryGetComponent<Collider2D>(out _)) bombObject.AddComponent<BoxCollider2D>();
         var obstacle = new GameObject("Search prediction wall");
         try
         {
@@ -106,6 +111,7 @@ public sealed class BattleModeComEditModeTests
             obstacle.AddComponent<BoxCollider2D>();
             Physics2D.SyncTransforms();
             var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            InitializeAwake(awareness);
             var bomb = bombObject.AddComponent<Bomb>();
             var type = typeof(BattleModeComSearchBombAwarenessAbility).GetNestedType("Threat", BindingFlags.NonPublic);
             object threat = System.Activator.CreateInstance(type);
@@ -130,10 +136,13 @@ public sealed class BattleModeComEditModeTests
     public void SearchBombAwareness_PlantedBarrierStopsPredictedPursuit(bool planted, int x, int y)
     {
         var player = new GameObject("Search barrier player");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         var bombObject = new GameObject("Search pursuing bomb");
+        if (!bombObject.TryGetComponent<Collider2D>(out _)) bombObject.AddComponent<BoxCollider2D>();
         try
         {
             var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            InitializeAwake(awareness);
             var bomb = bombObject.AddComponent<Bomb>();
             var flags = BindingFlags.NonPublic | BindingFlags.Instance;
             typeof(BattleModeComSearchBombAwarenessAbility).GetField("predictionBlockadeActive", flags)
@@ -160,13 +169,17 @@ public sealed class BattleModeComEditModeTests
     public void SearchBombAwareness_ConfirmedBarrierKeepsEscapeWithoutPlantingAgain()
     {
         var player = new GameObject("Search blockade escape");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         var bombObject = new GameObject("Confirmed blockade bomb");
+        if (!bombObject.TryGetComponent<Collider2D>(out _)) bombObject.AddComponent<BoxCollider2D>();
         bombObject.SetActive(false);
         try
         {
             var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            InitializeAwake(awareness);
             var controller = player.AddComponent<BattleModeComController>();
+            InitializeAwake(controller);
             var bomb = bombObject.AddComponent<Bomb>();
             var flags = BindingFlags.NonPublic | BindingFlags.Instance;
             var type = typeof(BattleModeComSearchBombAwarenessAbility);
@@ -200,11 +213,14 @@ public sealed class BattleModeComEditModeTests
     public void SearchBombAwareness_FailedPlacementReleasesCommittedEscape()
     {
         var player = new GameObject("Search failed blockade");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         try
         {
             var awareness = player.AddComponent<BattleModeComSearchBombAwarenessAbility>();
+            InitializeAwake(awareness);
             var controller = player.AddComponent<BattleModeComController>();
+            InitializeAwake(controller);
             var flags = BindingFlags.NonPublic | BindingFlags.Instance;
             var type = typeof(BattleModeComSearchBombAwarenessAbility);
             type.GetField("blockadePending", flags).SetValue(awareness, true);
@@ -326,6 +342,7 @@ public sealed class BattleModeComEditModeTests
         var wall = ScriptableObject.CreateInstance<Tile>();
         try
         {
+            grid.SetActive(true);
             var map = mapObject.GetComponent<Tilemap>();
             map.SetTile(new Vector3Int(-2, -2, 0), wall);
             map.SetTile(new Vector3Int(2, 2, 0), wall);
@@ -391,6 +408,7 @@ public sealed class BattleModeComEditModeTests
     public void SearchBomb_EnemyOwnerOnlyPursuesPlayers(string candidateLayer, bool expected)
     {
         var owner = new GameObject("Search bomb enemy owner");
+        if (!owner.TryGetComponent<Collider2D>(out _)) owner.AddComponent<BoxCollider2D>();
         owner.SetActive(false);
         owner.layer = LayerMask.NameToLayer("Enemy");
         var root = new GameObject("Search bomb targeting");
@@ -439,6 +457,7 @@ public sealed class BattleModeComEditModeTests
     public void SearchBomb_AbilityReplacesOtherBombTypesAndCanBeReplaced()
     {
         var player = new GameObject("Search bomb exclusivity");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         try
         {
@@ -530,6 +549,7 @@ public sealed class BattleModeComEditModeTests
     public void LineBombCom_MountedItemAndPurpleSourcesSurviveIndependentRemoval()
     {
         var player = new GameObject("LineBomb COM sources");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         try
@@ -567,6 +587,7 @@ public sealed class BattleModeComEditModeTests
     public void LineBombCom_ItemPlanReservesSeedAndIncludesItsBlast()
     {
         var player = new GameObject("LineBomb COM plan");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         try
@@ -654,6 +675,7 @@ public sealed class BattleModeComEditModeTests
     public void LineBomb_ItemSwapsPreservePurpleLouieAbility()
     {
         var player = new GameObject("LineBomb exclusivity test");
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         try
         {
@@ -831,10 +853,12 @@ public sealed class BattleModeComEditModeTests
     public void DisabledItemPrioritySummary_DoesNotProbeSceneOrRequireSettings()
     {
         var owner = new GameObject("DisabledSummary_Test");
+        if (!owner.TryGetComponent<Collider2D>(out _)) owner.AddComponent<BoxCollider2D>();
         owner.SetActive(false);
         try
         {
             var controller = owner.AddComponent<BattleModeComController>();
+            InitializeAwake(controller);
             MethodInfo summary = typeof(BattleModeComController).GetMethod(
                 "BuildItemPrioritySummary", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(summary);
@@ -912,8 +936,10 @@ public sealed class BattleModeComEditModeTests
     public void EasyBombAwareness_LiveThreatKeepsMovementAndProtectsOwnBombs()
     {
         var player = new GameObject("Easy awareness player", typeof(CircleCollider2D));
+        if (!player.TryGetComponent<Collider2D>(out _)) player.AddComponent<BoxCollider2D>();
         player.SetActive(false);
         var bombObject = new GameObject("Easy awareness enemy bomb");
+        if (!bombObject.TryGetComponent<Collider2D>(out _)) bombObject.AddComponent<BoxCollider2D>();
         bombObject.SetActive(false);
         bombObject.AddComponent<CircleCollider2D>();
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -922,6 +948,7 @@ public sealed class BattleModeComEditModeTests
             player.transform.position = new Vector2(1000.5f, 1000.5f);
             var owner = player.AddComponent<BombController>();
             var controller = player.AddComponent<BattleModeComController>();
+            InitializeAwake(controller);
             typeof(BattleModeComController).GetField("bombController", flags).SetValue(controller, owner);
             var bomb = bombObject.AddComponent<Bomb>();
             typeof(Bomb).GetField("lastPos", flags).SetValue(bomb, new Vector2(1001.5f, 1000.5f));
@@ -1066,25 +1093,32 @@ public sealed class BattleModeComEditModeTests
         var go = new GameObject("PlayerInputManager_Test");
         var input = go.AddComponent<PlayerInputManager>();
 
-        input.SetSyntheticHeld(2, heldAction, true);
+        // Edit Mode does not run Awake on ordinary MonoBehaviours.
+        typeof(PlayerInputManager).GetMethod("EnsureProfilesForPlayerCount", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(input, null);
+        try
+        {
+            input.SetSyntheticHeld(2, heldAction, true);
 
-        Assert.IsTrue(input.Get(2, heldAction));
-        Assert.IsTrue(input.GetDown(2, heldAction));
+            Assert.IsTrue(input.Get(2, heldAction));
+            Assert.IsTrue(input.GetDown(2, heldAction));
 
-        InvokeLateUpdate(input);
+            InvokeLateUpdate(input);
 
-        Assert.IsTrue(input.Get(2, heldAction));
-        Assert.IsFalse(input.GetDown(2, heldAction));
+            Assert.IsTrue(input.Get(2, heldAction));
+            Assert.IsFalse(input.GetDown(2, heldAction));
 
-        input.TapSynthetic(2, PlayerAction.ActionB);
+            input.TapSynthetic(2, PlayerAction.ActionB);
 
-        Assert.IsTrue(input.Get(2, PlayerAction.ActionB));
-        Assert.IsTrue(input.GetDown(2, PlayerAction.ActionB));
+            Assert.IsTrue(input.Get(2, PlayerAction.ActionB));
+            Assert.IsTrue(input.GetDown(2, PlayerAction.ActionB));
 
-        input.ClearSyntheticPlayer(2);
+            input.ClearSyntheticPlayer(2);
 
-        Assert.IsFalse(input.Get(2, heldAction));
-        Assert.IsFalse(input.Get(2, PlayerAction.ActionB));
+            Assert.IsFalse(input.Get(2, heldAction));
+            Assert.IsFalse(input.Get(2, PlayerAction.ActionB));
+        }
+        finally { Object.DestroyImmediate(go); }
+
     }
 
     [Test]
@@ -1141,6 +1175,12 @@ public sealed class BattleModeComEditModeTests
         StringAssert.Contains("playerId:3", summary);
         StringAssert.Contains("action:CombatPlant", summary);
         StringAssert.Contains("reason:target in blast line", summary);
+    }
+
+    private static void InitializeAwake(Component component)
+    {
+        Assert.IsNotNull(component, "Fixture must supply concrete required colliders before adding gameplay components.");
+        component.GetType().GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(component, null);
     }
 
     private static void InvokeLateUpdate(PlayerInputManager input)

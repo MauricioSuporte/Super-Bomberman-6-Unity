@@ -863,3 +863,32 @@ No manual two-peer, braking/pause, multiple-rider or water-boundary comparisons
 have been completed for this batch. Final Unity suite227/227 passed; C#0 new
 warnings/errors, Python40/40, strict UTF-8/BOM and diff checks passed. Reports:
 Logs/PredictionWaterPlatform39FinalTests.xml and .log.
+
+
+## Magnetic field authority (protocol 40)
+
+Native Bomb.StartKick, TryRedirectKick and StartMagnetPull now reject pure-client
+simulation at their entry points. Client prediction keeps using the existing
+render-only previews/presenter; it never calls these gameplay starts. Arena6's
+OnBombAt likewise cannot redirect a real client bomb.
+
+MagnetIndestructibleTileHandler no longer scans/pulls or rotates a tile because
+of a local explosion on a client. Startup reads the authored/approved direction
+without resetting the tile. Battle14 receives MagnetFieldPhase with scene/path,
+revision/time and bounded cell/direction arrays. Fields are polled at10Hz, sent immediately on rotation
+and refreshed with an idle500ms heartbeat; received phases buffer up to32 and apply on the
+player transform timeline, preserving pause. A buffered phase cannot replace a
+confirmed sudden-death stone with a magnet. Stage2-1 keeps its co-op tile stream.
+
+This does not predict target selection or extend a pull beyond approved motion
+segments. Bombs without a live presentation owner remain part of R07's lifecycle
+work, and two-peer magnetic-field/chain-reaction comparisons are still pending.
+
+
+Validation40: the final combined run passed321/321 Unity cases (OnlineRoom229 and
+COM92). The COM definitions stay in their runtime assembly to access internal
+helpers, with an abstract base and a concrete Editor discovery wrapper. Fixtures
+now supply concrete colliders, initialize Edit Mode caches/input profiles and
+activate the tilemap used by native coordinate queries; all original assertions
+remain. Full CI selects both suites, while quick still builds without running
+tests. C#0 new warnings/errors, Python40/40 and UTF-8/diff checks passed.

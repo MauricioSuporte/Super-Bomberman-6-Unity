@@ -156,7 +156,7 @@ def build():
     tests = REPORTS / "online-tests.xml"
     tests.unlink(missing_ok=True)
     if profile == "full":
-        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests", "-testResults", tests], logs / "tests.log")
+        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests;BattleModeComEditorTests", "-testResults", tests], logs / "tests.log")
         result = ET.parse(tests).getroot()
         if result.get("result") != "Passed" or int(result.get("failed", "1")):
             raise RuntimeError("online tests failed; release left unchanged")

@@ -113,7 +113,7 @@ public sealed class BattleMode6RedirectionController : MonoBehaviour, IGroundTil
         TileBase groundTile,
         GameObject bombGo)
     {
-        if (!IsBattleMode6Active() || bombGo == null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || !IsBattleMode6Active() || bombGo == null)
             return;
 
         RebuildArrowMap();

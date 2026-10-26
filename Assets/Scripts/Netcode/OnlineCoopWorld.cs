@@ -86,6 +86,11 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
             NetworkClient.RegisterHandler<PortalMaskSnapshot>(ApplyPortalMasks);
+            NetworkClient.RegisterHandler<MagnetFieldPhase>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var handler in FindObjectsByType<MagnetIndestructibleTileHandler>()) handler.ReceiveNetworkField(message);
+            });
             NetworkClient.RegisterHandler<PortalStarView>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
