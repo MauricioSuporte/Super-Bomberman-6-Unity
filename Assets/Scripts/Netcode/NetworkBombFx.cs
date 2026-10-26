@@ -443,6 +443,8 @@ namespace Assets.Scripts.Netcode
             UpdatePlacementPresentation(unscaledDeltaTime);
             UpdatePlayerBouncePresentation(deltaTime, unscaledDeltaTime);
             UpdateGreenDash(deltaTime, unscaledDeltaTime);
+            UpdatePinkJump(deltaTime, unscaledDeltaTime);
+            UpdateRedPunch(deltaTime);
             readyBombArcs.Clear();
             expiredKicks.Clear();
             foreach (var pair in kickPlayback)
@@ -574,10 +576,12 @@ namespace Assets.Scripts.Netcode
                 if (pair.Key != null) RestoreMotionCollider(pair.Key, pair.Value);
             kickPlayback.Clear(); rejectedStarts.Clear();
             ResetLocalAbilityPresentation();
+            ClearRedPunch("clear_playback");
             ClearTileMotionPresentation();
             ClearPlayerBouncePresentation();
             ClearPlacementPredictions();
             ClearGreenDash("presenter_disabled");
+            ClearPinkJump("presenter_disabled");
         }
 
         void OnDisable() => ClearKickPlayback();

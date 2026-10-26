@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class PinkLouieShadowController : MonoBehaviour
 {
@@ -140,6 +140,13 @@ public class PinkLouieShadowController : MonoBehaviour
 
         jumpGroundPos = groundPos;
         hasJumpGroundPos = true;
+    }
+
+    public void PresentNetworkJumpGround(Vector2 groundPosition)
+    {
+        SetJumpGroundPosition(groundPosition);
+        transform.position = new Vector3(groundPosition.x, groundPosition.y + localY, worldZ);
+        SyncAnimatorState();
     }
 
     public void EndJump()

@@ -406,6 +406,132 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [Test]
+    public void RedPunchPredictsOnlyGestureConfirmsPhaseRejectsAndRespectsCooldown()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RedPredictionOwner"); actor.SetActive(false);
+        var mount = new GameObject("RedPredictionMount"); mount.transform.SetParent(actor.transform, false);
+        var frames = new GameObject("Punch"); frames.transform.SetParent(mount.transform, false);
+        frames.AddComponent<SpriteRenderer>(); var animation = frames.AddComponent<AnimatedSpriteRenderer>(); animation.animationSprite = new Sprite[4];
+        var animator = mount.AddComponent<RedLouiePunchAnimator>(); animator.punchRight = animation;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        var paused = typeof(GamePauseController).GetProperty(nameof(GamePauseController.IsPaused)); bool wasPaused = GamePauseController.IsPaused;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Red);
+            actor.SetActive(true); movement.SetNetworkTickDriven(true);
+            var state = new MovementController.NetworkMovementState { position = new Vector2(11000, 11000), mount = MountedType.Red,
+                facing = Vector2.right, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            Assert.IsTrue(fx.TryPredictRedPunch(8, 10)); Assert.IsTrue(fx.AbilityPredictionLocksMovement);
+            Assert.IsFalse(movement.InputLocked, "The presentation does not own the server's gameplay lock.");
+            Assert.IsNull(typeof(RedLouiePunchStunAbility).GetField("routine", flags).GetValue(actor.GetComponent<RedLouiePunchStunAbility>()));
+            var update = typeof(NetworkBombFx).GetMethod("UpdateRedPunch", flags);
+            update.Invoke(fx, new object[] { 0.1f }); int frame = animation.CurrentFrame; Assert.Greater(frame, 0);
+            paused.SetValue(null, true); update.Invoke(fx, new object[] { 1f }); Assert.AreEqual(frame, animation.CurrentFrame);
+            paused.SetValue(null, false);
+            fx.ReceiveRedPunch(10, Vector2.right, 0.25f, 2f, false, NetworkBombFx.KickServerNow);
+            Assert.AreEqual(frame, animation.CurrentFrame, "Confirmation cannot restart the predicted gesture.");
+            fx.ReceiveRedPunch(9, Vector2.left, 1, 0, false, NetworkBombFx.KickServerNow);
+            update.Invoke(fx, new object[] { 0.16f }); Assert.IsFalse(fx.RedPunchPoseActive); Assert.IsFalse(fx.AbilityPredictionLocksMovement);
+            Assert.IsFalse(fx.TryPredictRedPunch(8, 11), "Success cooldown is confirmed by the server.");
+            typeof(NetworkBombFx).GetField("redPunchNextAllowed", flags).SetValue(fx, 0f);
+            Assert.IsTrue(fx.TryPredictRedPunch(8, 11)); fx.ReconcileRedPunch(11, state);
+            Assert.IsFalse(fx.RedPunchPoseActive); Assert.IsFalse(fx.AbilityPredictionLocksMovement);
+            Assert.IsTrue(fx.TryPredictRedPunch(8, 12)); actor.GetComponent<CharacterHealth>().life = 0;
+            update.Invoke(fx, new object[] { 0.01f }); Assert.IsFalse(fx.RedPunchPoseActive);
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.TryPredictRedPunch(8, 13));
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearRedPunch", flags).Invoke(fx, new object[] { "test_cleanup" });
+            paused.SetValue(null, wasPaused); NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void PinkJumpPredictionSeparatesGroundArcAndShadowWithoutGrantingInvulnerability()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("PinkPredictionOwner"); actor.SetActive(false);
+        var mount = new GameObject("PinkPredictionMount"); mount.transform.SetParent(actor.transform, false);
+        var shadowObject = new GameObject("PinkPredictionShadow"); shadowObject.transform.SetParent(mount.transform, false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.tag = "Player"; var collider = actor.AddComponent<BoxCollider2D>();
+            var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, MountedType.Pink);
+            var shadow = shadowObject.AddComponent<PinkLouieShadowController>(); shadow.followTarget = mount.transform;
+            actor.SetActive(true); movement.SetNetworkTickDriven(true);
+            Vector2 origin = new(10000, 10000);
+            var state = new MovementController.NetworkMovementState { position = origin, mount = MountedType.Pink,
+                facing = Vector2.right, worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true };
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true);
+            var jump = new NetworkBombFx.PinkJumpMotion { inputTick = 10, start = origin, end = origin + Vector2.right * 2,
+                facing = Vector2.right, duration = 0.8f, height = 1, cooldown = 0.1f, active = true };
+            Assert.IsTrue(fx.BeginPinkJumpPrediction(jump));
+            var advance = typeof(NetworkBombFx).GetMethod("UpdatePinkJump", flags);
+            advance.Invoke(fx, new object[] { 0.4f, 0.4f });
+            Assert.Less(Vector2.Distance(origin + Vector2.right, body.position), 0.01f, "Physics stays on the ground trajectory.");
+            Assert.That(mount.transform.localPosition.y, Is.EqualTo(1).Within(0.001f));
+            Assert.That(shadow.transform.position.y, Is.EqualTo(origin.y + shadow.localY).Within(0.001f), "Shadow stays on ground after the parent arc offset.");
+            Assert.IsFalse(collider.enabled); Assert.IsFalse(actor.GetComponent<CharacterHealth>().IsInvulnerable);
+            Assert.IsFalse(actor.GetComponent<PinkLouieJumpAbility>().JumpActive);
+            jump.revision = 1; jump.serverTime = NetworkBombFx.KickServerNow;
+            Vector2 before = body.position; fx.ReceivePinkJump(jump);
+            Assert.AreEqual(before, body.position, "Acceptance preserves already displayed jump progress.");
+            var stop = jump; stop.revision = 2; stop.active = false; stop.completed = true;
+            fx.ReceivePinkJump(stop); Assert.IsTrue(fx.PinkJumpActive, "An early stop waits for the approved arc to finish.");
+            advance.Invoke(fx, new object[] { 0.4f, 0.4f });
+            Assert.IsFalse(fx.PinkJumpActive); Assert.IsTrue(collider.enabled); Assert.AreEqual(jump.end, body.position);
+            Assert.That(mount.transform.localPosition.y, Is.EqualTo(0).Within(0.001f));
+            Assert.That(shadow.transform.position.y, Is.EqualTo(origin.y + shadow.localY).Within(0.001f));
+            movement.RestoreNetworkMovementState(state); movement.SetPredictLocally(true); jump.inputTick = 11;
+            Assert.IsTrue(fx.BeginPinkJumpPrediction(jump));
+            movement.RestoreNetworkMovementState(state); fx.ReconcilePinkJump(11, state);
+            Assert.IsFalse(fx.PinkJumpActive); Assert.IsTrue(collider.enabled); Assert.AreEqual(origin, body.position);
+            Assert.IsFalse(actor.GetComponent<PinkLouieJumpAbility>().TryStartExternalJump(Vector2.right), "Clients cannot execute the authoritative jump coroutine.");
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, false);
+            jump.inputTick = 12; jump.revision = 3; jump.serverTime = NetworkTime.time - 0.4;
+            fx.ReceivePinkJump(jump); advance.Invoke(fx, new object[] { 0.01f, 0.01f });
+            Assert.IsTrue(fx.PinkJumpVisualActive);
+            Assert.AreEqual(origin, body.position, "An observer renders the approved arc without taking over NetworkTransform's ground position.");
+            Assert.That(mount.transform.localPosition.y, Is.EqualTo(1).Within(0.02f));
+            stop = jump; stop.revision = 4; stop.active = false; stop.completed = false;
+            fx.ReceivePinkJump(stop); Assert.IsFalse(fx.PinkJumpActive); Assert.IsTrue(collider.enabled);
+            NetSync.Mode = NetSync.NetMode.Host; Assert.IsFalse(fx.BeginPinkJumpPrediction(jump));
+            using var writer = NetworkWriterPool.Get(); writer.Write(jump);
+            using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); var received = reader.Read<NetworkBombFx.PinkJumpMotion>();
+            Assert.AreEqual(jump.inputTick, received.inputTick); Assert.AreEqual(jump.serverTime, received.serverTime);
+            Assert.AreEqual(jump.start, received.start); Assert.AreEqual(jump.end, received.end); Assert.AreEqual(jump.height, received.height);
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearPinkJump", flags).Invoke(fx, new object[] { "test_cleanup" });
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
     public void GreenDashPredictionIsBoundedConfirmsAndReleasesToAuthority()
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("GreenDashPredictionOwner"); actor.SetActive(false);
@@ -1249,6 +1375,7 @@ public sealed class OnlineRoomEditModeTests
     }
 
     [TestCase("0.5.0", OnlineVersionAuthenticator.ProtocolVersion, true)]
+    [TestCase("0.5.0", 25, false)]
     [TestCase("0.5.0", 24, false)]
     [TestCase("0.5.0", 23, false)]
     [TestCase("0.5.0", 22, false)]

@@ -71,6 +71,15 @@ public class RedLouiePunchAnimator : MonoBehaviour, IRedLouiePunchExternalAnimat
         playing = true;
     }
 
+    public void PresentPredictedProgress(float progress)
+    {
+        if (!playing || activePunch == null) return;
+        activePunch.SetManualAnimationUpdate(true);
+        int count = activePunch.animationSprite != null ? activePunch.animationSprite.Length : 0;
+        activePunch.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * count), 0, Mathf.Max(0, count - 1));
+        activePunch.RefreshFrame();
+    }
+
     public void Stop()
     {
         if (!playing && activePunch == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)

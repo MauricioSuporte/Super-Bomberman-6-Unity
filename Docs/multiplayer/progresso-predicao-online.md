@@ -15,7 +15,8 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-Marcos 1-3 implementados e validados automaticamente; publicação em preparação:
+Marcos 1-3 publicados com protocolo 25 (CI 40251770360 concluído com sucesso).
+A04/A06 validados automaticamente no lote de protocolo 26, aguardando publicação:
 - A01: snapshot confirma montaria e o motor permite locomoção montada estável;
   presenter local da montaria usa pose/fase do proprietário, sem habilitar gameplay.
 - A13: replay usa velocidade confirmada e flags confirmadas de BombPass e
@@ -23,10 +24,11 @@ Marcos 1-3 implementados e validados automaticamente; publicação em preparaç�
 - P0: diagnóstico registra contexto no input e na resposta; comparador em
   `Tools/Diagnostics/analyze_prediction.py` separa builds/contextos e exclui inputs
   bloqueados/sem classificação dos percentis. Capturas antigas não comprovam ganho.
-- Validação: 146/146 Unity EditMode, 37/37 Python; compilação C# incremental sem
-  warnings/erros. Relatórios: `Logs/PredictionMountedTests.xml` e `.log`.
-- Protocolo de trabalho: 25 (wire de contexto alterado); servidor publicado ainda
-  permanece na versão anterior enquanto este lote não for enviado ao pipeline.
+- Validação mais recente: 151/151 Unity EditMode para A04/A06; 37/37 Python.
+  C# sem warnings/erros; UTF-8/BOM dos C# alterados verificados.
+  Relatórios: `Logs/PredictionPinkRedTests.xml` e `.log`.
+- Protocolo de trabalho: 26 (Pink/Red com novas RPCs). Servidor publicado: 25,
+  commit `9aa13fe06`; novos clientes 26 serão publicados após validação do lote.
 - Próxima ação: A04 Pink jump; depois C01 e demais IDs na ordem do plano.
 - Partidas manuais com dois peers, contextos das nove montarias, redes degradadas
   e demais modos ainda não executadas; não declarar ganho percebido medido.
@@ -61,15 +63,47 @@ Marcos 1-3 implementados e validados automaticamente; publicação em preparaç�
 - Manual pendente: input C em dois peers, alvo dinâmico, pausa/desmontagem/morte,
   plantio durante dash, speed debuff, áudio/afterimages e condições de rede.
 
+### Marco 4: A04 validado, aguardando commit do lote
+
+- Novo `NetworkPinkJump.cs`: gesto/arco previsto do proprietário, confirmação de
+  geometria por C/revisão, rejeição, cooldown, parada/interrupção e apresentação
+  remota no relógio de interpolação. Posição de chão e altura visual separadas.
+- `PinkLouieJumpAbility` compartilha a resolução de destino entre server/offline
+  e preview. Client puro não inicia rotina nem invulnerabilidade; APIs de pose
+  preservam/restauram collider e offsets. Shadow e animator têm apresentação manual.
+- Protocolo de trabalho passou a 26 para impedir Editor com RPCs novos de conectar
+  ao build 25 em publicação. Pipeline 25: run 40251770360, commit 9aa13fe06.
+- C# passou sem warnings/erros; Unity passou 150/150. Relatórios preservados em
+  `Logs/PredictionPinkTests.xml` e `.log`. Teste de arco/chão/sombra, confirmação
+  sem reinício, parada antecipada, rejeição/restore e bloqueio da coroutine client.
+- Manual pendente: pausa, desmontagem/morte, perdas/latência, observador e ovos.
+  Sincronismo dos ovos será tratado em A11/R07, ainda pendente.
+
+### Marco 5: A06 validado, aguardando publicação com A04
+
+- `NetworkRedPunch.cs`: pose do soco prevista apenas no proprietário; confirmação
+  por tick C preserva fase, cooldown maior confirmado, rejeição por ack, pausa e
+  interrupção restauram a pose. Sem hit test, stun ou item drop no client.
+- Som é de acerto no offline; por isso só é emitido nos clients após confirmação
+  do servidor. Observadores continuam com frames de montaria autoritativos.
+- `RedLouiePunchStunAbility.Update` bloqueia execução de gameplay em client puro.
+- Novo teste cobre fase, confirmação/rejeição, pausa, cooldown, morte e host guard.
+- C#/Unity aprovados: 151/151, incluindo observador Pink. 37/37 Python passaram.
+  O teste de observador inicialmente usava o relógio do proprietário; foi corrigido
+  para NetworkTime.time, correspondente à interpolação, e a suíte repetida passou.
+- Próximo: commit/publicação do lote 26; depois A08 Tank/A05/C01 e demais IDs.
+  A validação manual de ambos os peers continua pendente.
+- Skill e notas atualizadas com separação chão/arco, relógios e áudio de acerto.
+
 ## Checklist por ID
 
 - [ ] P0: ferramenta e contexto implementados/testados; novas capturas comparáveis pendentes.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
 - [x] A03: predição/autoridade de dash e testes; manual pendente.
-- [ ] A04: Pink Louie jump.
+- [x] A04: Pink Louie jump e teste; manual e ovos A11/R07 pendentes.
 - [ ] A05: Black Louie dash/push.
-- [ ] A06: Red Louie pose/áudio; stun autoritativo.
+- [x] A06: Red Louie pose e áudio confirmado; stun autoritativo; manual pendente.
 - [ ] A07: Mole drill.
 - [ ] A08: Tank shot visual previsto.
 - [ ] A09: LineBomb/Purple cast e confirmação parcial.

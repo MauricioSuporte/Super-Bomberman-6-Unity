@@ -75,6 +75,18 @@ Queue approved continuations and their final stop until the current arc ends,
 carry only the bounded fractional-frame remainder, and avoid adding the initial
 prediction lead again at every tile. Bound queues and recover after stalls.
 
+Mounted jumps keep a ground trajectory separate from visual height. Apply parent
+offsets before setting the shadow's world position, and restore both on every
+exit. Owner progress and observer interpolation use different clocks; tests must
+use the clock of the role they exercise. Presentation helpers must not grant the
+jump's authoritative invulnerability or start its world/gameplay coroutine.
+
+Trace an action sound's meaning before predicting it. Red Louie's punch sound
+signals a hit offline, so only the gesture starts speculatively. Confirm hit
+audio once; an action RPC plus GameAudioSettings' generic co-op broadcast can
+otherwise play the same sound twice. Preserve the original input tick and phase
+when confirming a pose, including when the visual has already completed.
+
 Do not smooth a direction change by projecting the previous direction through a
 wall. Small same-direction confirmation errors can decay; stops, wrapping and
 rejected actions need their appropriate explicit transition. Never let a queued

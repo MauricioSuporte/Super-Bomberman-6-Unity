@@ -62,6 +62,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility)
             return;
 
@@ -109,11 +110,16 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         bool stunnedSomeone = TryHitTarget(dir, out bool stunnedBattlePlayer);
+        var networkFx = Assets.Scripts.Netcode.NetSync.IsServer ? GetComponent<Assets.Scripts.Netcode.NetworkBombFx>() : null;
+        bool publishPunch = networkFx != null && networkFx.isServer && networkFx.netId != 0;
 
         if (stunnedSomeone)
         {
             if (audioSource != null && punchSfx != null)
-                GameAudioSettings.PlaySfx(audioSource, punchSfx, punchSfxVolume);
+            {
+                if (publishPunch) audioSource.PlayOneShot(punchSfx, GameAudioSettings.ApplySfxVolume(punchSfxVolume));
+                else GameAudioSettings.PlaySfx(audioSource, punchSfx, punchSfxVolume);
+            }
 
             float cooldownSeconds = stunnedBattlePlayer
                 ? battlePlayerSuccessCooldownSeconds
@@ -127,6 +133,9 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
             float baseCd = Mathf.Max(0.01f, punchCooldownSeconds);
             nextAllowedTime = Mathf.Max(nextAllowedTime, Time.time + baseCd);
         }
+
+        if (publishPunch)
+            networkFx.ServerRedPunch(dir, Mathf.Max(0.01f, punchCooldownSeconds), Mathf.Max(0, nextAllowedTime - Time.time), stunnedSomeone);
 
         float end = Time.time + Mathf.Max(0.01f, punchCooldownSeconds);
         while (Time.time < end)

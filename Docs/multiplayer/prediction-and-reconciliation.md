@@ -435,3 +435,26 @@ for build/context-separated statistics. Blocked or unclassified response samples
 are excluded; older captures need recapture for classified comparisons. Observed
 frame hitches are not network latency. See `progresso-predicao-online.md` for the
 remaining plan and the exact automated/manual validation boundary.
+
+## Pink and Red Louie presentation (protocol 26)
+
+Pink jump geometry is shared with the offline/server landing resolver. The owner
+starts a bounded jump presentation on its C edge, with ground position separate
+from the sine height. The client never runs the jump coroutine or grants
+invulnerability. Confirmation keeps the owner's displayed phase; rejection,
+death, mount loss and timeout restore presentation/colliders. A normal early stop
+waits for the approved arc to finish. Observers render the approved arc on their
+interpolation timeline without taking over NetworkTransform's ground position.
+Apply the parent arc before positioning the shadow in world space. Egg followers
+still require the separate ownership/presentation work in A11/R07.
+
+Red predicts the owner's punch pose and local motor wait. It does not test hits,
+apply stun or expel items. The server confirms the original C tick, the longer
+success cooldown and the hit sound. A confirmed pose never restarts at frame zero.
+The offline sound is hit feedback, so a speculative punch does not play it. The
+server's local audio and the single action RPC avoid duplicating the generic
+co-op sound broadcast. Observer punch poses retain authoritative mount frames.
+
+Automated pose/reconciliation tests complement, but do not replace, two-peer
+validation of mount transitions, pause, death, dynamic blockers and degraded
+networks. See the progress checkpoint for the reports and unfinished plan IDs.

@@ -51,7 +51,7 @@ namespace Assets.Scripts.Netcode
                 }
                 return;
             }
-            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose))) return;
+            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || bombFx.PinkJumpVisualActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose))) return;
             if (isLocalPlayer && TryGetComponent<MovementController>(out var movement) && movement.PredictLocally && movement.IsMounted && ownerVisual != null)
             {
                 ownerVisual.PresentNetworkLocomotion();

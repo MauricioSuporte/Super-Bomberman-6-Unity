@@ -11,7 +11,7 @@ namespace Assets.Scripts.Netcode
         Vector2 greenDashDirection, greenDashPosition, greenDashReplica, greenDashCorrection;
         GreenLouieDashAnimator greenDashVisual;
         public bool GreenDashActive => greenDashActive;
-        public bool ClientPlayerMotionActive => PlayerBounceActive || GreenDashActive;
+        public bool ClientPlayerMotionActive => PlayerBounceActive || GreenDashActive || PinkJumpActive;
 
         public bool TryPredictGreenDash(int held, uint tick)
         {
@@ -30,7 +30,7 @@ namespace Assets.Scripts.Netcode
         {
             var movement = GetComponent<MovementController>();
             if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || !isLocalPlayer || isServer ||
-                greenDashActive || PlayerBounceActive || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
+                greenDashActive || PlayerBounceActive || PinkJumpActive || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
                 movement == null || movement.isDead || movement.IsEndingStage || direction == Vector2.zero || speed <= 0 ||
                 (!confirmed && (!movement.CanPredictNetworkMovement || AbilityPredictionLocksMovement))) return false;
             var ability = GetComponent<GreenLouieDashAbility>() ?? gameObject.AddComponent<GreenLouieDashAbility>();
@@ -157,10 +157,13 @@ namespace Assets.Scripts.Netcode
             greenDashVisual = null;
         }
 
-        bool PlayGreenDashSound()
+        bool PlayGreenDashSound() => PlayMountAbilitySound(MountedType.Green);
+
+        bool PlayMountAbilitySound(MountedType type)
         {
             if (!TryGetComponent<PlayerMountCompanion>(out var companion)) return false;
-            var mount = companion.GetMountedLouieObject() ?? companion.GetMountPrefabForType(MountedType.Green);
+            var mount = companion.GetMountedLouieType() == type ? companion.GetMountedLouieObject() : null;
+            mount = mount != null ? mount : companion.GetMountPrefabForType(type);
             var config = mount != null ? mount.GetComponentInChildren<MountAbilitySfxConfig>(true) : null;
             if (config == null || config.abilitySfx == null || !TryGetComponent<AudioSource>(out var audio)) return false;
             audio.PlayOneShot(config.abilitySfx, GameAudioSettings.ApplySfxVolume(config.abilityVolume)); return true;

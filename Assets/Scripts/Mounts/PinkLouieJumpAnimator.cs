@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -92,6 +92,14 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         }
 
         playing = true;
+    }
+
+    public void PresentPredictedProgress(float progress)
+    {
+        if (active == null) return;
+        int count = active.animationSprite != null ? active.animationSprite.Length : 0;
+        active.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Clamp01(progress) * count), 0, Mathf.Max(0, count - 1));
+        active.RefreshFrame();
     }
 
     public void Stop()

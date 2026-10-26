@@ -67,6 +67,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     public bool JumpActive => routine != null;
 
     bool deathCancelInProgress;
+    bool networkJumpPresenting;
 
     void Awake()
     {
@@ -117,6 +118,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     public bool TryStartExternalJump(Vector2 direction)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (!enabledAbility)
             return false;
 
@@ -151,6 +153,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enabledAbility)
             return;
 
@@ -181,27 +184,19 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         routine = StartCoroutine(JumpRoutine());
     }
 
-    IEnumerator JumpRoutine()
+    public struct JumpGeometry
     {
-        if (movement == null || rb == null)
-        {
-            routine = null;
-            yield break;
-        }
+        public Vector2 start, end, direction, facing;
+        public Vector3Int startCell;
+        public Tilemap destructible, indestructible, ground;
+    }
 
-        bool wasMountedAtStart = movement.IsMounted;
-        var mountedLouieHealth = wasMountedAtStart ? GetMountedLouieHealth() : null;
-
-        CacheMountedPlayerBaseLocalY();
-
-        Vector2 heldInputDir = hasExternalJumpDirection
-            ? externalJumpDirection
-            : GetHeldDirectionalInputCardinal();
-        hasExternalJumpDirection = false;
-        externalJumpDirection = Vector2.zero;
-
-        Vector2 inputDir = heldInputDir != Vector2.zero
-            ? heldInputDir
+    public JumpGeometry ResolveJumpGeometry(Vector2 heldDirection)
+    {
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        rb = rb != null ? rb : GetComponent<Rigidbody2D>();
+        Vector2 inputDir = heldDirection != Vector2.zero
+            ? heldDirection
             : movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
         Vector2 faceDir = movement.FacingDirection != Vector2.zero ? movement.FacingDirection : Vector2.down;
 
@@ -220,8 +215,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         var ground = gm != null ? gm.groundTilemap : null;
 
         Vector3Int startCell = destructible != null
-            ? destructible.WorldToCell(rb.position)
-            : new Vector3Int(Mathf.RoundToInt(rb.position.x), Mathf.RoundToInt(rb.position.y), 0);
+            ? destructible.WorldToCell((rb != null ? rb.position : (Vector2)transform.position))
+            : new Vector3Int(Mathf.RoundToInt((rb != null ? rb.position : (Vector2)transform.position).x), Mathf.RoundToInt((rb != null ? rb.position : (Vector2)transform.position).y), 0);
 
         Vector3Int targetCell = startCell;
 
@@ -244,6 +239,43 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         Vector3 startPos = CellCenter(startCell, destructible, indestructible, ground);
         Vector3 endPos = CellCenter(targetCell, destructible, indestructible, ground);
+
+        return new JumpGeometry { start = startPos, end = endPos, direction = dir, facing = faceDir,
+            startCell = startCell, destructible = destructible, indestructible = indestructible, ground = ground };
+    }
+
+    public bool TryPreviewNetworkJump(Vector2 heldDirection, out JumpGeometry geometry)
+    {
+        geometry = ResolveJumpGeometry(heldDirection);
+        return geometry.ground != null && geometry.ground.HasTile(geometry.startCell);
+    }
+
+    IEnumerator JumpRoutine()
+    {
+        try
+        {
+        if (movement == null || rb == null)
+        {
+            routine = null;
+            yield break;
+        }
+
+        bool wasMountedAtStart = movement.IsMounted;
+        var mountedLouieHealth = wasMountedAtStart ? GetMountedLouieHealth() : null;
+
+        CacheMountedPlayerBaseLocalY();
+
+        Vector2 heldInputDir = hasExternalJumpDirection
+            ? externalJumpDirection
+            : GetHeldDirectionalInputCardinal();
+        hasExternalJumpDirection = false;
+        externalJumpDirection = Vector2.zero;
+
+        var geometry = ResolveJumpGeometry(heldInputDir);
+        Vector2 dir = geometry.direction, faceDir = geometry.facing;
+        var destructible = geometry.destructible; var indestructible = geometry.indestructible; var ground = geometry.ground;
+        Vector3Int startCell = geometry.startCell;
+        Vector3 startPos = geometry.start, endPos = geometry.end;
 
         if (dir != Vector2.zero)
             movement.ForceFacingDirection(dir);
@@ -269,7 +301,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (invulnerableDuringJump)
             StartJumpInvulnerabilityOnly(mountedLouieHealth);
 
-        if (audioSource != null && jumpSfx != null)
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerPinkJump(geometry.start, geometry.end, dir != Vector2.zero ? dir : faceDir, jumpDurationSeconds, jumpArcHeight, jumpCooldownSeconds);
+        else if (audioSource != null && jumpSfx != null)
             GameAudioSettings.PlaySfx(audioSource, jumpSfx, jumpSfxVolume);
 
         StartJumpVisuals(dir != Vector2.zero ? dir : faceDir);
@@ -351,9 +385,48 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
                 movement.SetInputLocked(false);
         }
 
+        ReportNetworkJumpStop(movement != null && !movement.isDead);
         routine = null;
         deathCancelInProgress = false;
         StartJumpCooldown();
+        }
+        finally { ReportNetworkJumpStop(false); }
+    }
+
+    void ReportNetworkJumpStop(bool completed)
+    {
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+            fx.ServerPinkJumpStop(rb != null ? rb.position : (Vector2)transform.position, completed);
+    }
+
+    public void PresentNetworkJump(Vector2 direction, Vector2 groundPosition, float progress, float height, bool restart = false)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client) return;
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        if (movement == null || movement.isDead || movement.IsEndingStage) { StopNetworkJumpPresentation(); return; }
+        if (restart) StopNetworkJumpPresentation();
+        if (!networkJumpPresenting)
+        {
+            companion = companion != null ? companion : GetComponent<PlayerMountCompanion>();
+            var mount = companion != null ? companion.GetMountedLouieObject() : null;
+            if (mount == null) return;
+            shadow = mount.GetComponentInChildren<PinkLouieShadowController>(true);
+            externalAnimator = mount.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true);
+            BindShadowToPinkLouie(); CacheJumpVisualRoot(true); CacheMountedPlayerBaseLocalY();
+            shadow?.BeginJump(groundPosition); StartJumpVisuals(direction); DisablePlayerCollisionsForJump();
+            networkJumpPresenting = true;
+        }
+        float arc = Mathf.Sin(Mathf.Clamp01(progress) * Mathf.PI) * Mathf.Max(0, height);
+        ApplyJumpVisualOffset(arc); ApplyMountedPlayerJumpArc(arc);
+        shadow?.PresentNetworkJumpGround(groundPosition);
+        if (externalAnimator is PinkLouieJumpAnimator animator) animator.PresentPredictedProgress(progress);
+    }
+
+    public void StopNetworkJumpPresentation()
+    {
+        if (!networkJumpPresenting) return;
+        StopJumpVisuals(); shadow?.PresentNetworkJumpGround(transform.position); shadow?.EndJump();
+        RestorePlayerCollisionsAfterJump(); networkJumpPresenting = false;
     }
 
     void StartJumpCooldown()
@@ -742,6 +815,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     void CancelJump()
     {
+        ReportNetworkJumpStop(false);
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) { StopNetworkJumpPresentation(); return; }
         if (routine != null)
         {
             StopCoroutine(routine);
@@ -791,6 +866,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     public void CancelJumpForDeath()
     {
+        ReportNetworkJumpStop(false);
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) { StopNetworkJumpPresentation(); return; }
         deathCancelInProgress = true;
 
         if (routine != null)

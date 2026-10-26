@@ -64,7 +64,7 @@ namespace Assets.Scripts.Netcode
             if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || !isLocalPlayer || isServer ||
                 !hasPlacementState || !placementState.allowed || placements.Count >= Mathf.Max(0, placementState.available) ||
                 placements.ContainsKey(tick) || prefab == null || GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
-                AbilityPredictionLocksMovement || CarryingBombLocally || PlayerBounceActive) return false;
+                AbilityPredictionLocksMovement || CarryingBombLocally || PlayerBounceActive || PinkJumpActive) return false;
             var movement = GetComponent<MovementController>();
             if (movement == null || movement.isDead || movement.IsEndingStage || movement.InputLocked || movement.IsRidingPlaying()) return false;
             foreach (var pending in placements.Values)

@@ -130,7 +130,12 @@ namespace Assets.Scripts.Netcode
                     var fx = GetComponent<NetworkBombFx>();
                     fx?.PredictBombAbilityInput(sampledHeld, pressedNow, unchecked(localTick + 1));
                     if ((pressedNow & 16) != 0) fx?.TryPredictPlacement(unchecked(localTick + 1));
-                    if ((pressedNow & 64) != 0) fx?.TryPredictGreenDash(sampledHeld, unchecked(localTick + 1));
+                    if ((pressedNow & 64) != 0)
+                    {
+                        fx?.TryPredictGreenDash(sampledHeld, unchecked(localTick + 1));
+                        fx?.TryPredictPinkJump(sampledHeld, unchecked(localTick + 1));
+                        fx?.TryPredictRedPunch(sampledHeld, unchecked(localTick + 1));
+                    }
                 }
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;
@@ -279,6 +284,9 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestorePlayerBouncePosition();
             kickFx?.ReconcileGreenDash(acknowledgedTick, state);
             kickFx?.RestoreGreenDashPosition();
+            kickFx?.ReconcilePinkJump(acknowledgedTick, state);
+            kickFx?.RestorePinkJumpPosition();
+            kickFx?.ReconcileRedPunch(acknowledgedTick, state);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
