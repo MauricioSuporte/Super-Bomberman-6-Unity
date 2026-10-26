@@ -33,11 +33,12 @@ implementação concluída de trabalho parcial. Validação manual fica separada
   Rigidbody/Transform dos lançadores. C# final0 erros/avisos, Python40/40,
   UTF-8/BOM e diffcheck passaram. Logs/PredictionPresentation36FinalTests.xml/.log.
   Não declarar deploy36 até confirmar CI.
-- **Lote37 validado para publicação:** C04 transporte do visual do
+- **Lote37 salvo/enviado:** commit `068d522ca`, pipeline
+  [40371185855](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40371185855) em andamento. C04 transporte do visual do
   carrinho e passageiro, incluindo buffer, cantos, escala/sink, cortes de portal,
   loop e estrelas aprovados, gates client e sorting confirmado sem sobrescrever
   frame previsto. Suíte214/214 +5 testes focados após ajuste final de escala,
-  C#0, Python40/40, UTF-8/BOM e diffcheck passaram. Ainda não publicado.
+  C#0, Python40/40, UTF-8/BOM e diffcheck passaram. Deploy37 ainda não confirmado.
 - **Próximos itens:** concluir validação37; concluir C04 transporte do visual do
   carrinho e passageiro, C05 portais/swap, demais C/R e regressões A14.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
@@ -704,3 +705,30 @@ capturas; transporte de cart/rider/FX foi implementado. C05 Portal7/swap/masks e
 C06-C10 demais, R02-R08/A11/A12/A14/P0 permanecem conforme checklist.
 Próximo: enviar37 e acompanhar CI, continuar C05 com eventos aprovados/preservação
 de VFX e máscaras (não copiar cegamente corpo de carrinho para portal de player).
+
+
+## Checkpoint após envio37 / auditoria C05
+
+37 salvo/enviado068d522ca, CI40371185855 em andamento. Último confirmado36
+(1b8dbb449 / CI40362231252 sucesso). Runner usado pelo CI37; não copiar fontes.
+Diretório só com fontes/TitleScreen do usuário e este checkpoint ainda não salvo.
+Relatórios214 +5 preservados na raiz Logs. Próximo implementar C05, ainda sem código.
+
+Auditoria C05: SwapGroundTileBlackoutHandler troca tileA/tileB e blackout; não é um
+teleporte de player. Tratar a parte de tile/evento como C09. Portal7 Update/TryHandle
+faz gameplay no client sem gate explícito. TeleportRoutine tem default corpo oculto
+movido por Lerp e ramo sink; marcar scope aprovado só depois de preservar VFX.
+Stars7 têm mesma curva que Cart12, mas ainda não receberam mensagens aprovadas.
+Stage_3-4 usa CreateFixedPortalMasks: SpriteMask branco1x1 chamado
+Stage34PortalFixedMask, posição/scale mundos, sorting/layers/cutoff e sprites com
+VisibleInsideMask. Mask não é SpriteRenderer e não é capturado pelo stream co-op.
+Também faltam scale/mask da pose de player/NMA (NPA hoje só runtimeOffset + sorting;
+transform.localPosition de sink não é igual ao runtimeOffset). Para C05 completo,
+transportar máscara e pose reais sem ativar scripts/física de cena no client.
+NativeMaskSprite usa Texture2D.whiteTexture Rect(0,0,1,1), PPU1; pode criar view
+nativa sem collider/GameObject de gameplay. Native AnimatePortalSinkRise pode
+sair cedo por ending sem passar no cleanup de snapshots/masks: revisar try/finally
+sem reposicionar actor após uma transição de ending. TickCoopWorld é chamado por
+OnlineRoomSession.Update para Battle também, mas retorna cedo fora de co-op; novo
+stream de máscaras precisa ocorrer antes desse return e limpar com ClearCoopWorld
+(+OnStopClient) em todos os fluxos. Não marcar C05 completo com só scope/gates.
