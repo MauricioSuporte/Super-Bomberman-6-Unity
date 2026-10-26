@@ -2654,6 +2654,7 @@ public partial class BombController : MonoBehaviour
 
     public bool TryExplodeOldestControlledBomb()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         CleanupNullBombs();
 
         for (int i = 0; i < plantedBombs.Count; i++)
@@ -2676,12 +2677,22 @@ public partial class BombController : MonoBehaviour
             if (bombComp.IsBeingPunched)
                 continue;
 
+            TraceControlledDetonation(bombComp, "oldest", true);
             plantedBombs.RemoveAt(i);
             ExplodeBomb(b);
             return true;
         }
 
+        TraceControlledDetonation(null, "oldest_empty", false);
         return false;
+    }
+
+    void TraceControlledDetonation(Bomb target, string selection, bool accepted)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled) return;
+        var entry = GameplayLatencyDiagnostics.For("control_detonation_validate", GetMovement(), target, selection);
+        entry.inputTick = TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var input) ? input.CurrentActionBTick : 0;
+        entry.pressed = 32; entry.accepted = accepted; GameplayLatencyDiagnostics.Write(entry);
     }
 
     public void ClearPlantedBombsOnStageEnd(bool explodeInstead = false)
@@ -3590,6 +3601,7 @@ public partial class BombController : MonoBehaviour
 
     public bool TryExplodeAllControlledBombs()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         CleanupNullBombs();
 
         bool any = false;
@@ -3614,11 +3626,13 @@ public partial class BombController : MonoBehaviour
             if (bombComp.IsBeingPunched)
                 continue;
 
+            TraceControlledDetonation(bombComp, "all", true);
             plantedBombs.RemoveAt(i);
             ExplodeBomb(b);
             any = true;
         }
 
+        if (!any) TraceControlledDetonation(null, "all_empty", false);
         return any;
     }
 

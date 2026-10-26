@@ -29,18 +29,22 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
   pelo timestamp da autoridade. Suite Unity172/172, Python40 e C# zero warnings/
   erros passaram. Relatorios Logs/PredictionTankCooldownTests.xml/.log.
   Publicacao32 concluida; nao marcar A14 completo (faltam outras regressoes).
-- Runner livre apos CI32; base A09 copiada para teste direcionado.
-- A09 LineBomb/Purple implementado e validado no protocolo33, a salvar/publicar.
+- A09 salvo/enviado b18e91f08 / protocolo33 / CI40315969165 sucesso (server e updater).
+- A09 LineBomb/Purple publicado no protocolo33.
   Suite completa176/176 e depois geometria5/5 (apenas novos testes adicionados).
   C# zero warnings/erros, Python40 e UTF-8/BOM passaram.
   Relatorios Logs/PredictionLineTests.xml/.log e PredictionLineGeometry.xml/.log.
   Grupo por tick/acao/celula, estoque compartilhado, confirmacao/rejeicao parcial,
   variantes, som deduplicado e pose Purple reversivel (inclusive estoque0).
-- Runner livre apos testes33; restaurar tracked de validacao antes de nova CI.
+- Runner livre apos CI33; A10 copiado para suite completa182.
+- A10 no diretorio: logs Btick/control_detonation_validate e guards client nos
+  metodos oldest/all; teste novo adicionado. C# incremental final0warnings/erros;
+  Unity182/182 passou. Sem wire novo (continua33); salvar com skip CI para
+  publicar junto do proximo lote de gameplay. A11 helper ainda nao testado Unity.
 - Nenhuma validacao manual com dois peers nem novas capturas comparaveis feitas.
   Nao declarar zero latencia nem o plano inteiro concluido.
-- Proximo: confirmar CI40285499924 e implementar A09/LineBomb/Purple pela
-  arquitetura abaixo; depois A10/A11/A12, C02-C10 e R01-R08 pendentes.
+- Proximo: confirmar CI40315969165, validar A10 no runner livre e continuar
+  A11/A12, C02-C10 e R01-R08 pendentes.
   Manter R02 e A14 parciais; preservar limites de autoridade e manual pendente.
 
 ## Marcos concluídos e commits
@@ -172,7 +176,7 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 - [x] A07: preparacao/pose Mole prevista; RNG/teleporte/protecao autoritativos; 171 testes, manual pendente.
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
-- [ ] A10: ControlBomb feedback.
+- [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: montar/desmontar, posse e fila de ovos.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
@@ -358,3 +362,69 @@ actionEdges com OR e sobrescreve CurrentActionATick/CTick a cada edge no lote
 antes de entregar uma unica Update de gameplay. Multiplas bordas iguais em
 inputs agrupados podem casar a primeira previsao com o ultimo tick; investigar
 sem reintroduzir dupla execucao de A/Glove. Nao presumir defeito medido.
+
+A09 salvo/enviado b18e91f08 / protocolo33 / CI40315969165 sucesso (server e updater).
+176 full +5 geometry passaram; nao afirmar CI33 concluido antes de consultar.
+A10 auditoria iniciada: ControlBomb offline nao tem gesto/lock de cast; botao
+de touch responde no input existente. Nao prever explosao/dano. Logs novos
+control_detonation_validate incluem Btick real, modo oldest/all/empty, bombNetId
+e accepted; fontes client input_send ja registram pressed32/tick. NPI adicionou
+CurrentActionBTick, sem wire novo. Guard em TryExplodeOldest/All impede gameplay
+em client puro. Novo teste ControlledBombDetonationCannotRunGameplayOnPureClient
+ainda nao executado Unity. C# em verificacao. Aguardar CI33 liberar runner.
+
+A10 fixture corrigida previamente: Bomb requer Collider2D concreto; adicionar
+BoxCollider2D antes de AddComponent<Bomb>. Limpar lista planted da fixture antes
+de destruir objetos. C# full so6warnings conhecidosMirror; incremental final
+a conferir. Proximo teste, quando CI33 terminar: suite completa OnlineRoomEditModeTests
+(expected182) com A10 e os5casos geometry da A09 juntos, sem copiar enquanto CIativa.
+Logs A10 sao selecao validada, nao confirmacao visual da explosao; nao inferir
+input-to-explosion apenas desses eventos. MobileButton.OnPointerDown ja chama
+ApplyPressedVisual sem depender de servidor; nao adicionar cast/lock inexistente.
+
+A11 proxima investigacao: PlayerManualDismount Select128 permite previsao de
+preparacao/arco no mesmo lugar, com elegibilidade confirmada. PlayerRidingController
+usa parabola quantizada + alturas inicial/final e sprites ascend/descend (nao
+curva seno de bomba). Montar por pickup/ovo deve aguardar alvo/posse aprobados.
+Cogitar descritor autoritativo de RidingArcType,start,target,duracao,alturas,peak,
+ppu,quantize,direcao,tempo/revisao e SelectTick. API visual no controller sem
+coroutine/isPlaying/inputLock/invulnerabilidade; FX controla root/presenter e
+bridge ate snapshot. NPA/NMA devem respeitar presenter owner e observer.
+ServerStart/Stop em TryPlayMountArcInternal/routine/Cancel; Stop antes de
+onComplete para permitir handoff ao bounce de recovery existente. Posse,
+invulnerabilidade, detachWorldPickup e filaEggQueue continuam servidor.
+Ainda nao implementado A11. EggFollower tem somente NetworkTransform/facing,
+sem ownerId/indice; precisa auditoria separada de fila e fase/visibilidade.
+
+A11 detalhes de desenho ainda nao implementados: mounted visual pode permanecer
+no chao durante a previa local de desmontar (root flat nao muda), sem criar
+MountWorldPickup nem trocar posse. Confirmacao entrega renderer ao objeto de
+mundo aprovado; dano/kill cancela pose e restore. Arcos aprovados de pickup
+precisam de bloqueio do NPA e NMA em owner/observer e root restored apos NPI
+e depois do NetworkTransform; manter NT decodificando snapshots. Preparar
+bridge de termino ate snapshot pos-arc e handoff explicito para bounce de
+recuperacao (nao cancelar apex de arco recebido tarde). Nao usar rotina real
+PlayerRidingController no client: ela desbloqueia input e chama onComplete.
+FilaEggQueue/NetworkEggFollower permanece pendente A11/R07, nao declarar A11
+inteiro concluido ao terminar apenas riding/dismount.
+
+CI40315969165 concluiu com sucesso; ultima publicacao b18e91f08 / protocolo33.
+A10 agora em teste Unity completo182 no runner (PredictionControlTests).
+Nao presumir resultado antes de XML. C# incremental final0warnings/erros.
+
+A11 fundacao iniciada no diretorio (NAO usada em runtime ainda/NAO testada Unity):
+PlayerRidingController ganhou NetworkArcState/CaptureNetworkArcState, funcao pura
+SampleNetworkArcHeight (mesma parabola/pixel quantization do offline) e
+PresentNetworkArc/StopNetworkArcVisual. API somente sprites/offset; isPlaying,
+rotina, callbacks, inputLock e invulnerabilidade nao alterados. Reset limpa
+networkArcVisual quando usado. Loop offline ainda intacto. Faltam RPC/Select
+prediction/eligibilidade/handoff/root/queue. Nao adicionar fields mortos: flag
+networkArcVisual lida por reset e presenter. Nao marcar A11 concluido.
+A10 ainda em Unity (exec94975); A11 NAO foi copiado ao runner nessa suite.
+
+A10 validado: PredictionControlTests182/182 passou (inclui A09+5geometry juntos).
+C# final0warnings/erros e UTF-8/BOM passaram. Sem wire novo. Salvar com skip CI
+para evitar publicar builds completos apenas por instrumentacao; incluir no
+proximo lote. Ultima publicacao b18e91f08 /33/ CI40315969165 sucesso.
+PlayerRidingController.cs (A11helper) permanece fora desse commit e nao foi
+copiado ao runner182. Proximo: testes A11API/root/curve e implementar RPC+Select.

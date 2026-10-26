@@ -10,6 +10,24 @@ using Mirror;
 
 public sealed class OnlineRoomEditModeTests
 {
+    [Test]
+    public void ControlledBombDetonationCannotRunGameplayOnPureClient()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("ControlDetonationClient"); actor.SetActive(false);
+        var bombObject = new GameObject("ControlDetonationTarget"); bombObject.SetActive(false);
+        try
+        {
+            actor.AddComponent<BoxCollider2D>(); var controller = actor.AddComponent<BombController>();
+            bombObject.AddComponent<BoxCollider2D>(); var target = bombObject.AddComponent<Bomb>(); target.IsControlBomb = true;
+            var planted = (List<GameObject>)typeof(BombController).GetField("plantedBombs", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(controller);
+            planted.Add(bombObject); NetSync.Mode = NetSync.NetMode.Client;
+            Assert.IsFalse(controller.TryExplodeOldestControlledBomb()); Assert.IsFalse(controller.TryExplodeAllControlledBombs());
+            Assert.AreEqual(1, planted.Count); Assert.AreSame(bombObject, planted[0]); Assert.IsFalse(target.HasExploded);
+            planted.Clear();
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(actor); Object.DestroyImmediate(bombObject); }
+    }
+
     [TestCase(0)]
     [TestCase(1)]
     [TestCase(2)]

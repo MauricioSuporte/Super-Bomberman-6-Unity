@@ -628,3 +628,24 @@ Validation: 176/176 full online Unity EditMode tests passed. Five additional
 geometry-entry tests then passed with no runtime changes between runs. C#
 compiled without warnings/errors, Python40 and strict UTF-8 checks passed.
 Manual two-peer checks remain pending; no measured latency gain is claimed.
+
+## Controlled detonation audit and diagnostics (wire remains 33)
+
+ControlBomb has no offline cast animation or movement lock to anticipate. The
+mobile button already applies its pressed scale/sprite/icon locally in
+MobileButton.OnPointerDown. Preserve that immediate input feedback and wait for
+authority to select and explode a bomb. No speculative blast or extra cast
+was added.
+
+The existing client input_send event records B's real pressed bit/tick. The
+server now records control_detonation_validate with CurrentActionBTick, the
+selected bomb id, oldest/all/empty and accepted. Tick zero is expected for
+paths without a remote input tick. This event confirms selection, not when the
+client displayed an explosion; it cannot establish end-to-end explosion
+latency on its own. Both public player detonation methods reject pure-client
+gameplay before editing the planted list.
+
+Validation: 182/182 full online Unity EditMode tests passed with the authority
+guard regression, C# compiled without introduced warnings, and UTF-8 checks
+passed. New paired diagnostic captures and manual two-peer checks are pending.
+This instrumentation is held for the next gameplay publication.

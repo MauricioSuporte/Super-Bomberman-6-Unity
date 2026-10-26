@@ -76,6 +76,7 @@ namespace Assets.Scripts.Netcode
         bool receivedSnapshot, serverAllowsPrediction;
         public bool ServerAllowsMovementPrediction => receivedSnapshot && serverAllowsPrediction;
         public uint CurrentActionATick { get; private set; }
+        public uint CurrentActionBTick { get; private set; }
         public uint CurrentActionCTick { get; private set; }
         public uint CurrentInputTick => isServer ? processedTick : localTick;
         public uint CurrentMovementTick => isServer ? processedTick : movementTick;
@@ -197,6 +198,7 @@ namespace Assets.Scripts.Netcode
                 serverHeldMask = frame.held;
                 actionEdges |= frame.pressed;
                 if ((frame.pressed & 16) != 0) CurrentActionATick = frame.tick;
+                if ((frame.pressed & 32) != 0) CurrentActionBTick = frame.tick;
                 if ((frame.pressed & 64) != 0) CurrentActionCTick = frame.tick;
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
                 MotionDiagnosticProbe.TickApplied(gameObject,
