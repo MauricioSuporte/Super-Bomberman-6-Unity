@@ -11,6 +11,210 @@ using Mirror;
 public sealed class OnlineRoomEditModeTests
 {
     [Test]
+    public void PowderClientCannotIgniteOrSpawnNativeDamageHitboxes()
+    {
+        var oldMode = NetSync.Mode;
+        var actor = new GameObject("PowderAuthorityGate"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        System.Collections.IEnumerator routine = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            var controller = actor.AddComponent<BattleMode3PowderTrailController>();
+            typeof(BattleMode3PowderTrailController).GetMethod("BuildTrailCells", flags).Invoke(controller, null);
+            controller.OnExplosionHit(null, Vector2.zero, new Vector3Int(-4, 2), null);
+            typeof(BattleMode3PowderTrailController).GetMethod("Ignite", flags).Invoke(controller, new object[] { null, Vector2.zero });
+            routine = (System.Collections.IEnumerator)typeof(BattleMode3PowderTrailController).GetMethod("IgniteRoutine", flags).Invoke(controller, new object[] { null, Vector2.zero });
+            Assert.IsFalse(routine.MoveNext()); Assert.IsFalse(controller.IgnitionRunning);
+            typeof(BattleMode3PowderTrailController).GetMethod("SpawnHitboxes", flags).Invoke(controller, new object[] { null, Vector2.zero });
+            var hitboxes = (List<BombExplosion>)typeof(BattleMode3PowderTrailController).GetField("activeHitboxes", flags).GetValue(controller);
+            Assert.IsEmpty(hitboxes); Assert.IsNull(typeof(BattleMode3PowderTrailController).GetField("explosionPrefab", flags).GetValue(controller), "The client gate must return before resolving a gameplay explosion.");
+        }
+        finally { (routine as System.IDisposable)?.Dispose(); Object.DestroyImmediate(actor); NetSync.Mode = oldMode; }
+    }
+
+    [Test]
+    public void PowderApprovedFramesRespectTimelinePauseAndEndWithoutDamageOrLocalIgnition()
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldClientState = clientState.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        bool wasPaused = (bool)paused.GetValue(null);
+        var actor = new GameObject("ApprovedPowder"); actor.SetActive(false);
+        var grid = new GameObject("PowderGrid", typeof(Grid));
+        var mapObject = new GameObject("Ground", typeof(UnityEngine.Tilemaps.Tilemap)); mapObject.transform.SetParent(grid.transform, false);
+        var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+        var floor = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        var texture = new Texture2D(1, 1);
+        var sprites = new[] { Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.zero), Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.zero) };
+        BattleMode3PowderTrailController controller = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected")); paused.SetValue(null, false);
+            controller = actor.AddComponent<BattleMode3PowderTrailController>();
+            typeof(BattleMode3PowderTrailController).GetField("groundTilemap", flags).SetValue(controller, map);
+            typeof(BattleMode3PowderTrailController).GetField("horizontalExplosionSprites", flags).SetValue(controller, sprites);
+            var cell = new Vector3Int(-4, 2); var matrix = Matrix4x4.Translate(new Vector3(0.1f, 0.2f));
+            map.SetTile(cell, floor); map.SetTileFlags(cell, UnityEngine.Tilemaps.TileFlags.None); map.SetTransformMatrix(cell, matrix);
+            var state = new PowderTrailFrame { scene = actor.scene.name, path = controller.NetworkPowderPath,
+                revision = 1, time = NetworkTime.time - 0.1, frame = 0 };
+            using (var writer = NetworkWriterPool.Get()) { writer.Write(state); state = new NetworkReader(writer.ToArray()).Read<PowderTrailFrame>(); }
+            var present = typeof(BattleMode3PowderTrailController).GetMethod("PresentNetworkPowder", flags);
+            controller.ReceiveNetworkPowder(state); present.Invoke(controller, null);
+            Assert.AreSame(sprites[0], map.GetSprite(cell)); Assert.IsFalse(controller.IgnitionRunning);
+            Assert.IsEmpty((List<BombExplosion>)typeof(BattleMode3PowderTrailController).GetField("activeHitboxes", flags).GetValue(controller));
+            var future = state; future.revision = 2; future.time = NetworkTime.time + 100; future.frame = 1;
+            controller.ReceiveNetworkPowder(future); present.Invoke(controller, null); Assert.AreSame(sprites[0], map.GetSprite(cell));
+            var history = (List<PowderTrailFrame>)typeof(BattleMode3PowderTrailController).GetField("networkPowderHistory", flags).GetValue(controller);
+            future.time = NetworkTime.time - 0.05; history[1] = future;
+            paused.SetValue(null, true); present.Invoke(controller, null); Assert.AreSame(sprites[0], map.GetSprite(cell));
+            paused.SetValue(null, false); present.Invoke(controller, null); Assert.AreSame(sprites[1], map.GetSprite(cell));
+            state.revision = 3; state.frame = -1; controller.ReceiveNetworkPowder(state); present.Invoke(controller, null);
+            Assert.AreSame(floor, map.GetTile(cell)); Assert.AreEqual(matrix, map.GetTransformMatrix(cell));
+            controller.ReceiveNetworkPowder(future); present.Invoke(controller, null); Assert.AreSame(floor, map.GetTile(cell));
+            state.revision = 4; state.frame = 99; controller.ReceiveNetworkPowder(state); Assert.AreEqual(1, history.Count);
+            state.frame = 0; state.path = "WrongPath"; controller.ReceiveNetworkPowder(state); Assert.AreEqual(1, history.Count);
+            state.path = controller.NetworkPowderPath; state.time = double.NaN; controller.ReceiveNetworkPowder(state); Assert.AreEqual(1, history.Count);
+            state.time = NetworkTime.time - 0.01; controller.ReceiveNetworkPowder(state); present.Invoke(controller, null); Assert.AreSame(sprites[0], map.GetSprite(cell));
+            typeof(BattleMode3PowderTrailController).GetMethod("OnDisable", flags).Invoke(controller, null);
+            Assert.AreSame(floor, map.GetTile(cell)); Assert.AreEqual(matrix, map.GetTransformMatrix(cell)); Assert.IsEmpty(history);
+        }
+        finally
+        {
+            if (controller != null)
+                foreach (string name in new[] { "horizontalExplosionTiles", "horizontalExplosionTilesFlippedY", "verticalExplosionTiles", "verticalExplosionTilesFlippedX", "cornerExplosionTiles" })
+                    if (typeof(BattleMode3PowderTrailController).GetField(name, flags).GetValue(controller) is UnityEngine.Tilemaps.Tile[] tiles)
+                        foreach (var tile in tiles) if (tile != null) Object.DestroyImmediate(tile);
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(grid); Object.DestroyImmediate(floor);
+            foreach (var sprite in sprites) Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); paused.SetValue(null, wasPaused);
+        }
+    }
+
+    [Test]
+    public void RoofAuthoritySnapshotRetainsClearedCellsForLateObserversAndClosing()
+    {
+        var oldMode = NetSync.Mode;
+        var actor = new GameObject("RoofSnapshot"); actor.SetActive(false);
+        var grid = new GameObject("RoofSnapshotGrid", typeof(Grid));
+        var mapObject = new GameObject("Roof", typeof(UnityEngine.Tilemaps.Tilemap)); mapObject.transform.SetParent(grid.transform, false);
+        var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+        var closed = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Offline;
+            var controller = actor.AddComponent<BattleMode8RoofController>();
+            typeof(BattleMode8RoofController).GetField("roofTilemap", flags).SetValue(controller, map);
+            typeof(BattleMode8RoofController).GetField("roofTiles", flags).SetValue(controller,
+                new[] { new BattleMode8RoofController.RoofTileSwap { closedTile = closed } });
+            var cell = new Vector3Int(1, 2); map.SetTile(cell, closed);
+            typeof(BattleMode8RoofController).GetField("closed", flags).SetValue(controller, false);
+            typeof(BattleMode8RoofController).GetMethod("ApplyCurrentState", flags).Invoke(controller, null); Assert.IsNull(map.GetTile(cell));
+            var capture = typeof(BattleMode8RoofController).GetMethod("CaptureNetworkRoofTiles", flags);
+            Assert.IsTrue((bool)capture.Invoke(controller, null));
+            var cells = (List<Vector3Int>)typeof(BattleMode8RoofController).GetField("networkRoofCellBuffer", flags).GetValue(controller);
+            var indices = (List<int>)typeof(BattleMode8RoofController).GetField("networkRoofTileBuffer", flags).GetValue(controller);
+            CollectionAssert.AreEqual(new[] { cell }, cells); CollectionAssert.AreEqual(new[] { -1 }, indices);
+            typeof(BattleMode8RoofController).GetField("closed", flags).SetValue(controller, true);
+            typeof(BattleMode8RoofController).GetMethod("ApplyCurrentState", flags).Invoke(controller, null);
+            Assert.AreSame(closed, map.GetTile(cell)); Assert.IsTrue((bool)capture.Invoke(controller, null));
+            CollectionAssert.AreEqual(new[] { 0 }, indices);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(grid); Object.DestroyImmediate(closed); NetSync.Mode = oldMode;
+        }
+    }
+
+    [TestCase(NetSync.NetMode.Offline)]
+    [TestCase(NetSync.NetMode.Host)]
+    [TestCase(NetSync.NetMode.Client)]
+    public void RoofNativeStateChangesRequireSimulationAuthority(NetSync.NetMode mode)
+    {
+        var oldMode = NetSync.Mode;
+        var actor = new GameObject("RoofAuthority"); actor.SetActive(false);
+        var grid = new GameObject("RoofAuthorityGrid", typeof(Grid));
+        var mapObject = new GameObject("Roof", typeof(UnityEngine.Tilemaps.Tilemap)); mapObject.transform.SetParent(grid.transform, false);
+        var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+        var closed = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        var opened = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            NetSync.Mode = mode;
+            var controller = actor.AddComponent<BattleMode8RoofController>();
+            typeof(BattleMode8RoofController).GetField("roofTilemap", flags).SetValue(controller, map);
+            typeof(BattleMode8RoofController).GetField("roofTiles", flags).SetValue(controller,
+                new[] { new BattleMode8RoofController.RoofTileSwap { closedTile = closed, openTile = opened } });
+            map.SetTile(Vector3Int.zero, opened);
+            typeof(BattleMode8RoofController).GetMethod("Awake", flags).Invoke(controller, null);
+            typeof(BattleMode8RoofController).GetMethod("OnEnable", flags).Invoke(controller, null);
+            typeof(BattleMode8RoofController).GetMethod("ApplyCurrentState", flags).Invoke(controller, null);
+            Assert.AreSame(mode == NetSync.NetMode.Client ? opened : closed, map.GetTile(Vector3Int.zero),
+                "Client startup/context-menu paths must not reset an approved roof phase; offline/host retain the native path.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(grid); Object.DestroyImmediate(closed); Object.DestroyImmediate(opened); NetSync.Mode = oldMode;
+        }
+    }
+
+    [Test]
+    public void RoofClientPresentsApprovedNullAndTransitionTilesOnTimelineWithBoundedHistory()
+    {
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var oldClientState = clientState.GetValue(null);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        bool wasPaused = (bool)paused.GetValue(null);
+        var actor = new GameObject("ApprovedRoof"); actor.SetActive(false);
+        var grid = new GameObject("ApprovedRoofGrid", typeof(Grid));
+        var mapObject = new GameObject("Roof", typeof(UnityEngine.Tilemaps.Tilemap)); mapObject.transform.SetParent(grid.transform, false);
+        var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+        var tiles = new UnityEngine.Tilemaps.Tile[3]; for (int i = 0; i < tiles.Length; i++) tiles[i] = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected")); paused.SetValue(null, false);
+            var controller = actor.AddComponent<BattleMode8RoofController>();
+            typeof(BattleMode8RoofController).GetField("roofTilemap", flags).SetValue(controller, map);
+            typeof(BattleMode8RoofController).GetField("roofTiles", flags).SetValue(controller, new[] {
+                new BattleMode8RoofController.RoofTileSwap { closedTile = tiles[0], firstTransitionTile = tiles[1], secondTransitionTile = tiles[2] } });
+            var cell = new Vector3Int(2, 3); map.SetTile(cell, tiles[0]);
+            var state = new RoofTileState { scene = actor.scene.name, path = controller.NetworkRoofPath, revision = 1,
+                time = NetworkTime.time - 0.1, cells = new[] { cell }, tiles = new[] { 1 } };
+            using (var writer = NetworkWriterPool.Get()) { writer.Write(state); state = new NetworkReader(writer.ToArray()).Read<RoofTileState>(); }
+            var present = typeof(BattleMode8RoofController).GetMethod("PresentNetworkRoof", flags);
+            controller.ReceiveNetworkRoof(state); present.Invoke(controller, null); Assert.AreSame(tiles[1], map.GetTile(cell));
+            var future = state; future.revision = 2; future.time = NetworkTime.time + 100; future.tiles = new[] { -1 };
+            controller.ReceiveNetworkRoof(future); present.Invoke(controller, null); Assert.AreSame(tiles[1], map.GetTile(cell));
+            var history = (List<RoofTileState>)typeof(BattleMode8RoofController).GetField("networkRoofHistory", flags).GetValue(controller);
+            future.time = NetworkTime.time - 0.05; history[1] = future;
+            paused.SetValue(null, true); present.Invoke(controller, null); Assert.AreSame(tiles[1], map.GetTile(cell));
+            paused.SetValue(null, false); present.Invoke(controller, null); Assert.IsNull(map.GetTile(cell), "An approved open roof can clear tiles even for a late observer.");
+            controller.ReceiveNetworkRoof(state); present.Invoke(controller, null); Assert.IsNull(map.GetTile(cell), "A stale phase must not rewind the roof.");
+            state.revision = 3; state.tiles = new[] { 99 }; controller.ReceiveNetworkRoof(state); Assert.AreEqual(1, history.Count);
+            state.tiles = new[] { 3 }; controller.ReceiveNetworkRoof(state); Assert.AreEqual(1, history.Count, "Reject null catalog entries; clearing is explicit -1.");
+            state.tiles = new[] { 0 }; state.path = "WrongPath"; controller.ReceiveNetworkRoof(state); Assert.AreEqual(1, history.Count);
+            state.path = controller.NetworkRoofPath; state.scene = "WrongScene"; controller.ReceiveNetworkRoof(state); Assert.AreEqual(1, history.Count);
+            state.scene = actor.scene.name; state.time = double.NaN; controller.ReceiveNetworkRoof(state); Assert.AreEqual(1, history.Count);
+            state.time = NetworkTime.time + 100;
+            state.cells = new Vector3Int[513]; state.tiles = new int[513]; controller.ReceiveNetworkRoof(state); Assert.AreEqual(1, history.Count);
+            state.cells = new[] { cell }; state.tiles = new[] { 0 };
+            for (uint i = 3; i < 50; i++) { state.revision = i; controller.ReceiveNetworkRoof(state); }
+            Assert.AreEqual(32, history.Count);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(grid); foreach (var tile in tiles) Object.DestroyImmediate(tile);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); paused.SetValue(null, wasPaused);
+        }
+    }
+
+    [Test]
     public void ApprovedExplosionWaitKeepsPrefabDataAfterOwnerIsDestroyedAndStopsOnDisconnect()
     {
         var oldMode = NetSync.Mode;

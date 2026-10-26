@@ -19,21 +19,22 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Publicado e confirmado:** protocolo41, commit `218428e33`, pipeline
-  [40409435598](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40409435598) concluído com sucesso.
-- **Último lote publicado:** motion de bomba confirmado sobrevive ao owner inativo,
-  com cancelamento de predição e cleanup de collider. Validação323/323 Unity,
-  C#0 erros/avisos novos, Python40/40, UTF-8/BOM e diffcheck passaram.
-- **Lote42 validado, publicação pendente:** VFX de explosão aprovados aguardam no manager ativo,
-  retendo só prefab/dados (não o owner); cleanup em scene/disconnect.
-  Unity325/325, C#0 erros/avisos, Python40/40. Bomba sem owner ainda é etapa separada.
-- **Próximos itens:** publicar42, demais R07, barco/contexto, forças no motor/replay,
+- **Servidor e atualizador publicados:** protocolo42, commit `a10595b74`, pipeline
+  [40413037189](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40413037189)
+  concluído com sucesso, incluindo deploy, updater e artefatos.
+- **Último lote publicado:** VFX de explosão já recebidos sobrevivem à inatividade
+  ou destruição do owner, usando prefab/dados no manager e cleanup de scene/client.
+  Inclui continuidade41. Validação325/325 Unity, C#0 erros/avisos novos,
+  Python40/40, UTF-8/BOM e diffcheck passaram. Eventos sem owner seguem pendentes.
+- **Lote43 validado, publicação pendente:** teto Battle8 e frames powder Battle3 aprovados na timeline;
+  gates impedem relógio/reset/ignição nativos no client. C#0/0, Python40/40; Unity332/332 passou.
+- **Próximos itens:** publicar43, demais R07, barco/contexto, forças no motor/replay,
   blackout/tiles e demais C/R. A14 continua com matriz/manual pendentes.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes e TitleScreen
-  do usuário e o Unity aberto. Lote41 commitado/publicado; alterações42 ainda no diretório, sem commit.
+  do usuário e o Unity aberto. Lote42 commitado em `a10595b74`, CI40413037189; alterações43 validadas, ainda sem commit.
 
 ## Como acompanhar
 
@@ -182,7 +183,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: parcial40: descoberta e fixtures COM corrigidas,321 testes combinados aprovados; matriz completa/manual pendentes.
+- [ ] A14: parcial43: descoberta e fixtures COM corrigidas,332 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
@@ -192,7 +193,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] C07: pusher.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: mecanismos e tiles especiais.
-- [ ] C10: parcial36 FallingBomb aviso/RNG/spawn corrigidos; powder/roof/SuddenDeath pendentes.
+- [ ] C10: parcial36 FallingBomb testado/publicado; teto e powder43 aprovados/testados (332 casos); SuddenDeath/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
 - [ ] R03: apresentação de inimigos.
@@ -1039,3 +1040,57 @@ do runner restaurados. Espera VFX conserva prefab/dados após destruir owner e
 termina em disconnect; helper cancela esperas no cleanup. Nenhum resultado de dano
 é previsto. R07 segue parcial para eventos sem owner/endpoint removido e manual.
 Próximo: commit/publicação42 e auditoria das demais lacunas do plano.
+
+
+Retomada43: confirmado325/325 no XML42, Python40/40 e C#0/0; commit42
+a10595b74 enviado, CI40413037189 ainda em build/publicação. Fontes/TitleScreen
+do usuário preservados. C10 teto Battle8 tinha relógio client independente.
+Implementado RoofTileState com snapshots completos limitados512 células, catálogo
+local de tiles, revisão/scene/path, buffer32 e timeline offset do player.
+Awake/OnEnable/Apply/Update nativos não mudam teto no client; host/offline mantidos.
+Inclui null explícito para células abertas/late join e heartbeat500ms.
+Cinco novos casos Unity escritos (3 roles, buffer/timeline/pausa/validação e
+captura de células abertas), ainda NÃO executados. C# passou sem erros novos;
+rebuild exibiu6 avisos preexistentes de dependências Mirror. Aguardar CI42 liberar
+runner antes de copiar43. C10 permanece parcial; powder/SuddenDeath/manual pendentes.
+
+
+43 revisão: catálogo real da arena8 tem8 Tiles simples, sem prefab instanciado
+nem collider (m_ColliderType0); não reativa scripts/colisão. Compilação C#
+final0 erros/0 avisos, Python40/40. Cenário/prefab não precisaram de mudança.
+Ainda aguardar Unity43; CI42 estava compilando cliente após servidor.
+Auditoria C10 restante: powder não tem transporte aprovado de ignição/frames;
+SuddenDeath tem feedback sem timestamp e Begin também sorteia caminho/voz no
+client antes de substituir pelo path recebido. Não implementados neste lote.
+
+
+43 ampliado para powder Battle3 enquanto CI42 usa runner: PowderTrailFrame
+transporta somente frame/fim aprovado, revisão/scene/path/tempo, heartbeat500ms
+e buffer32. Client usa tiles visuais gerados com Collider.None, conserva e
+restaura piso/matrizes; não chama IgniteRoutine nem SpawnHitboxes. Gates explícitos
+nessas entradas. Pausa/timeline comuns ao player, cleanup OnDisable. Dois novos
+testes escritos (total esperado332 com roof), ainda NÃO executados Unity.
+Novos partials/meta e protocolo43; C# recompilando. Nada43 publicado ainda.
+
+
+43 final antes de Unity: C#0 erros/0 avisos, Python40/40, UTF-8/BOM/metas
+verificados. Runner ainda ocupado por CI42; NÃO copiar enquanto build/deploy ativo.
+Total esperado332 casos (325 anteriores +5 roof +2 powder), conferir XML.
+Relatório planejado: PredictionRoofPowder43Tests.xml/.log. Nenhum33 ID mudou
+de classificação; P0/manual e demais C/R continuam conforme checklist.
+
+
+CI42 confirmado COMPLETO/sucesso. Copiados10 paths próprios43 ao runner livre.
+Suíte OnlineRoom + COM em execução: exec44804,
+Build/CI/PredictionRoofPowder43Tests.xml e Logs/CI/PredictionRoofPowder43Tests.log.
+Conferir XML (esperado332, não presumir). Nenhum43 commitado/publicado ainda.
+
+
+43 FINAL validado:332/332 Unity (OnlineRoom240 + COM92), C#0 erros/avisos,
+Python40/40, UTF-8/BOM/metas/diffcheck passaram. Relatórios preservados em
+Logs/PredictionRoofPowder43Tests.*. Tracked próprios restaurados no runner.
+Novos casos validam roles offline/host/client, captura de teto aberto/fechado,
+serialização, fase futura/pausa, revisão/scene/path/bounds, fim/cleanup e piso/matriz
+da pólvora restaurados sem ignição/hitboxes no client. Referências nativas
+confirmadas somente BattleMode_3 e BattleMode_8; nenhum YAML alterado.
+Próximo: commit/enviar43, confirmar CI. C10 continua parcial por SuddenDeath/manual.

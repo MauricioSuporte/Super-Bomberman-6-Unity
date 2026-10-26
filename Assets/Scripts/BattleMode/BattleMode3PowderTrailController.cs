@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Assets.Scripts.Netcode;
 
 [RequireComponent(typeof(GroundTileResolver))]
-public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTileHandler, IGroundTileExplosionHitHandler
+public sealed partial class BattleMode3PowderTrailController : MonoBehaviour, IGroundTileHandler, IGroundTileExplosionHitHandler
 {
     [System.Serializable]
     private struct HorizontalTrailSegment
@@ -139,6 +140,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
     private void OnDisable()
     {
         StopIgnition(restoreTiles: true);
+        ClearNetworkPowderHistory();
         UnregisterResolverTiles();
     }
 
@@ -156,6 +158,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         Vector3Int cell,
         TileBase groundTile)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         if (!IsTrailCell(cell))
             return;
 
@@ -164,6 +167,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
 
     private void Ignite(BombController source, Vector2 origin)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         ResolveReferences();
         BuildTrailCells();
         BuildExplosionTiles();
@@ -180,6 +184,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
 
     private IEnumerator IgniteRoutine(BombController source, Vector2 origin)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) yield break;
         ignitionRunning = true;
         CacheOriginalTiles(captureStableState: stableTrailTiles.Count == 0);
         SpawnHitboxes(source, origin);
@@ -221,6 +226,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         igniteRoutine = null;
         ignitionRunning = false;
         ignitionEndsAt = 0f;
+        ReportNetworkPowderFrame(-1);
     }
 
     private void StopIgnition(bool restoreTiles)
@@ -246,6 +252,7 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         originalTransforms.Clear();
         ignitionRunning = false;
         ignitionEndsAt = 0f;
+        ReportNetworkPowderFrame(-1);
     }
 
     private void CacheOriginalTiles(bool captureStableState)
@@ -327,10 +334,12 @@ public sealed class BattleMode3PowderTrailController : MonoBehaviour, IGroundTil
         }
 
         // SetTile/SetTransformMatrix invalidate the changed cells; no full-map refresh.
+        ReportNetworkPowderFrame(frame);
     }
 
     private void SpawnHitboxes(BombController source, Vector2 origin)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         ResolveExplosionPrefab();
 
         if (groundTilemap == null || explosionPrefab == null)

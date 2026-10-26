@@ -86,6 +86,16 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
             NetworkClient.RegisterHandler<PortalMaskSnapshot>(ApplyPortalMasks);
+            NetworkClient.RegisterHandler<RoofTileState>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var controller in FindObjectsByType<BattleMode8RoofController>()) controller.ReceiveNetworkRoof(message);
+            });
+            NetworkClient.RegisterHandler<PowderTrailFrame>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var controller in FindObjectsByType<BattleMode3PowderTrailController>()) controller.ReceiveNetworkPowder(message);
+            });
             NetworkClient.RegisterHandler<MagnetFieldPhase>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;

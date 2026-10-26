@@ -3,9 +3,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
+using Assets.Scripts.Netcode;
 
 [DisallowMultipleComponent]
-public sealed class BattleMode8RoofController : MonoBehaviour
+public sealed partial class BattleMode8RoofController : MonoBehaviour
 {
     const string BattleMode8SceneName = "BattleMode_8";
 
@@ -38,6 +39,7 @@ public sealed class BattleMode8RoofController : MonoBehaviour
 
     void Awake()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         closed = startClosed;
         ResolveReferences();
         RebuildTileMaps();
@@ -46,6 +48,7 @@ public sealed class BattleMode8RoofController : MonoBehaviour
 
     void OnEnable()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         elapsed = 0f;
         closed = startClosed;
         ResolveReferences();
@@ -62,6 +65,9 @@ public sealed class BattleMode8RoofController : MonoBehaviour
     void Update()
     {
         using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
+        if (NetSync.Mode == NetSync.NetMode.Client) { PresentNetworkRoof(); return; }
+        PublishNetworkRoof();
 
         if (!IsBattleMode8Active())
             return;
@@ -84,6 +90,7 @@ public sealed class BattleMode8RoofController : MonoBehaviour
     [ContextMenu("Apply Current Roof State")]
     void ApplyCurrentState()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         ResolveReferences();
         RebuildTileMaps();
 
@@ -104,6 +111,7 @@ public sealed class BattleMode8RoofController : MonoBehaviour
 
         if (changed)
             roofTilemap.RefreshAllTiles();
+        PublishNetworkRoof(force: true);
     }
 
     IEnumerator TransitionRoutine(bool opening)
@@ -147,6 +155,7 @@ public sealed class BattleMode8RoofController : MonoBehaviour
 
     void ApplyPhase(RoofTilePhase phase)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         ResolveReferences();
         RebuildTileMaps();
 
@@ -167,6 +176,7 @@ public sealed class BattleMode8RoofController : MonoBehaviour
 
         if (changed)
             roofTilemap.RefreshAllTiles();
+        PublishNetworkRoof(force: true);
     }
 
     bool TryGetReplacementTile(Vector3Int cell, TileBase currentTile, RoofTilePhase targetPhase, out TileBase replacementTile)

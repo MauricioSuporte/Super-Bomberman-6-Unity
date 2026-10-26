@@ -935,3 +935,26 @@ Validation:325/325 combined Unity cases passed (OnlineRoom233 + COM92), C#0
 warnings/errors, Python40/40, UTF-8/BOM and diff checks. New cases exercise active
 host selection, inactive fallback rejection, host exclusion, owner destruction
 during the wait and disconnect cancellation. Reports:Logs/PredictionBombVisual42Tests.*.
+
+## Approved arena roof and powder frames (protocol 43)
+
+BattleMode8RoofController no longer resets or advances its native roof clock on
+a pure client. RoofTileState carries a complete bounded snapshot of decorative
+cells, using indices into the existing authored swaps and explicit -1 clears.
+The authority publishes each transition plus a500ms heartbeat for late observers.
+The eight actual roof assets are plain Tiles with no collider or spawned prefab;
+the original controller remains in place and no scene wiring changes are needed.
+
+BattleMode3PowderTrailController publishes approved frame/end events with the same
+heartbeat. Clients present its existing generated, collider-free tiles and restore
+the original floor/matrices at the approved end or disable. Local explosion hooks,
+Ignite, its coroutine and SpawnHitboxes reject client gameplay. Client presentation
+does not set native ignitionRunning, grant damage or choose a chain reaction.
+
+Both histories are revisioned, limited to32 samples, scoped by scene/path and
+sampled on the player's transform timeline. Future frames wait; pause freezes
+presentation; malformed or stale messages are rejected. This is presentation of
+confirmed phases, not speculative activation. SuddenDeath's timeline/authority
+audit and manual comparisons remain C10 work. Final validation passed332/332
+Unity cases (OnlineRoom240 + COM92), C#0 warnings/errors and Python40/40, plus
+strict UTF-8/BOM, metadata and diff checks. Reports:Logs/PredictionRoofPowder43Tests.*.

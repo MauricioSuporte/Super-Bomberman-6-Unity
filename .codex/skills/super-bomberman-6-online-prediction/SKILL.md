@@ -45,6 +45,14 @@ scene/client cleanup, reject inactive coroutine hosts and preserve host-native
 effects. This protects received events only; a removed RPC endpoint needs a
 separate authoritative transport. Never infer missing explosion gameplay.
 
+For periodic or triggered arena tile visuals, gate the client's native clock and
+gameplay entry points before replacing them with approved phase/frame histories.
+Reuse only audited decorative tiles or generated tiles without colliders/prefabs.
+Use scene/path/revision guards, explicit end/clear states, a bounded history and
+the player transform timeline. A current-state heartbeat lets late observers
+recover even when the open state has null tiles. Do not start an ignition/damage
+routine merely to reproduce its animation; restore cached visual state on exit.
+
 ## Extend the existing owners
 
 - NetworkPlayerInput samples local hardware slot 1, independent of assigned P1-P6.
