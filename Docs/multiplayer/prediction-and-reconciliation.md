@@ -1189,3 +1189,25 @@ offset/pose entre amostras compatíveis até esse limite aprovado, inclusive na
 fronteira de retorno ao repouso. O root continua com seu corte de teleport/gap,
 sem aprovação de direção/destino/hazard. Isso trata o degrau causado pelo limite
 fixo4; ainda não transporta a curva futura inteira nem mede ganho de latência.
+
+## C09 /48: caldeira e blackout aprovados
+
+Boiler usa BombMotionKind.Environment para seu puxão nativo80ms. O client apresenta
+um segmento recebido antes de seu stop, sem inventar próxima célula ou bounce Rubber,
+sem pose de habilidade e sem alterar o collider. Captura, fuse, ignição e explosão
+continuam nativos no servidor. Finally/disable limpam o presenter quando há endpoint
+válido; owner removido ainda depende da auditoria R07.
+
+BlackoutView leva alpha,36 spotlights lógicos,16 room lights, visão e roomActive.
+O coordenador inclui componentes inativos e apresenta na timeline aprovada. A
+inicialização visual é idempotente e pode reativar o próprio Image GO. Fading mantém
+o unscaled do offline durante pausa; nunca inicia timer de gameplay client. O mesh
+render-only usa matemática Box no client e mantém bounds/OverlapPoint offline.
+
+CoopSpriteFrame.blackout é opcional e contém receita do material de olhos, paleta8,
+região e oclusão de barrel. Cada view possui clone isolado; não há fallback que
+revele o sprite inteiro se faltar template/occluder. Material/cópias saem em remoção,
+clear e troca de papel. Arrays8 são enviados desde a primeira configuração, evitando
+o limite de crescimento da API Unity. Templates World3 já constam dos catálogos.
+Nenhuma cena/prefab foi editada. Provas de renderização e custo real permanecem na
+matriz manual; testes de estado/material não provam a imagem final no jogo.

@@ -33,12 +33,62 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
     private Mesh mesh;
     private MeshRenderer overlayRenderer;
     private bool visible;
+    private Vector4[] approvedRoomLights;
+    private bool approvedRoomActive;
+    private readonly System.Collections.Generic.List<Vector4> networkRoomLightBuffer = new(16);
 
     public Material SourceMaterial => sourceMaterial;
     public string SortingLayerName => sortingLayerName;
     public int SortingOrder => sortingOrder;
-    public Bounds RoomWorldBounds => roomBounds != null ? roomBounds.bounds : default;
+    public Bounds RoomWorldBounds
+    {
+        get
+        {
+            if (roomBounds == null) return default;
+            if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || roomBounds.enabled && roomBounds.gameObject.activeInHierarchy) return roomBounds.bounds;
+            Vector2 half = roomBounds.size * .5f;
+            Bounds result = new(roomBounds.transform.TransformPoint(roomBounds.offset - half), Vector3.zero);
+            result.Encapsulate(roomBounds.transform.TransformPoint(roomBounds.offset + half));
+            result.Encapsulate(roomBounds.transform.TransformPoint(roomBounds.offset + new Vector2(half.x, -half.y)));
+            result.Encapsulate(roomBounds.transform.TransformPoint(roomBounds.offset + new Vector2(-half.x, half.y)));
+            return result;
+        }
+    }
     public bool IsVisible => visible && isActiveAndEnabled && roomBounds != null;
+
+    private bool RoomContains(Vector2 position)
+    {
+        if (roomBounds == null) return false;
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return roomBounds.OverlapPoint(position);
+        Vector2 local = roomBounds.transform.InverseTransformPoint(new Vector3(position.x, position.y, roomBounds.transform.position.z));
+        Vector2 delta = local - roomBounds.offset, half = roomBounds.size * .5f;
+        return Mathf.Abs(delta.x) <= half.x && Mathf.Abs(delta.y) <= half.y;
+    }
+
+    public Vector4[] CaptureNetworkRoomLights()
+    {
+        var values = networkRoomLightBuffer; values.Clear();
+        foreach (var light in roomLights)
+        {
+            if (light == null || !light.gameObject.activeInHierarchy || !RoomContains(light.position)) continue;
+            light.TryGetComponent<BlackoutTorch>(out var torch);
+            if (torch != null && !torch.isActiveAndEnabled) continue;
+            values.Add(new Vector4(light.position.x, light.position.y, torch != null ? torch.LightRadius : roomLightRadius, 0));
+            if (values.Count == 16) break;
+        }
+        return values.ToArray();
+    }
+
+    public Vector3 NetworkVision => new(playerRadius, playerForwardOffset, playerLightTurnSeconds);
+    public bool NetworkRoomActive => roomBounds != null && roomBounds.enabled && roomBounds.gameObject.activeInHierarchy;
+    public void ApplyNetworkRoomLights(Vector4[] lights, Vector3 vision, bool roomActive)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || !Mirror.NetworkClient.active || Mirror.NetworkServer.active) return;
+        approvedRoomLights = lights;
+        approvedRoomActive = roomActive;
+        playerRadius = vision.x; playerForwardOffset = vision.y; playerLightTurnSeconds = vision.z;
+    }
 
     public void Initialize(Material material)
     {
@@ -87,10 +137,11 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
             pixelsPerUnit = Mathf.Max(1, pixelCamera.assetsPPU);
         foreach (PlayerIdentity player in PlayerIdentity.ActivePlayers)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && !approvedRoomActive) continue;
             if (player == null || !player.CompareTag("Player")) continue;
             if (!player.TryGetComponent<MovementController>(out var movement) || movement.isDead) continue;
             Vector2 position = BattleMode7PortalController.GetRoomPresencePosition(movement);
-            if (!roomBounds.OverlapPoint(position)) continue;
+            if (!RoomContains(position)) continue;
             float tileSize = Mathf.Max(0.01f, movement.tileSize);
             Vector2 facing = movement.FacingDirection;
             if (facing.sqrMagnitude < 0.0001f) facing = Vector2.down;
@@ -130,6 +181,20 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
 
     private void UpdateRoomLights(float pixelsPerUnit)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        {
+            int length = Mathf.Min(approvedRoomLights?.Length ?? 0, roomLightCircles.Length);
+            for (int i = 0; i < length; i++)
+            {
+                var light = approvedRoomLights[i];
+                Vector2 center = ClampToRoom(new Vector2(Mathf.Round(light.x * pixelsPerUnit) / pixelsPerUnit,
+                    Mathf.Round(light.y * pixelsPerUnit) / pixelsPerUnit));
+                roomLightCircles[i] = new Vector4(center.x, center.y, light.z, 0);
+            }
+            runtimeMaterial.SetInt(RoomLightCountId, length);
+            runtimeMaterial.SetVectorArray(RoomLightCirclesId, roomLightCircles);
+            return;
+        }
         int count = 0;
         foreach (Transform light in roomLights)
         {
@@ -137,7 +202,7 @@ public sealed class WorldBlackoutRenderer : MonoBehaviour
             light.TryGetComponent<BlackoutTorch>(out var torch);
             if (torch != null && !torch.isActiveAndEnabled) continue;
             Vector2 center = light.position;
-            if (!roomBounds.OverlapPoint(center))
+            if (!RoomContains(center))
             {
                 continue;
             }

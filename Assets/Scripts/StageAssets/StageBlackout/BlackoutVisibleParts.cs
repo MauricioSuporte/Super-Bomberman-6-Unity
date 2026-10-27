@@ -51,6 +51,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         WorldBlackoutRenderer darkness = StageBlackout.Instance != null
             ? StageBlackout.Instance.ActiveWorldOverlay : null;
         var barrels = darkness != null && darkness.IsVisible
@@ -107,11 +108,12 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             part.material.SetInt("_VisibleColorCount", colorCount);
             part.material.SetVectorArray("_VisibleColors", colorBuffer);
             part.material.SetFloat("_ColorTolerance", part.EffectiveTolerance);
-            ApplyBarrelOcclusion(part.material, source, barrels);
+            var occluder = ApplyBarrelOcclusion(part.material, source, barrels);
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopRegisterBlackoutMask(overlay, maskMaterial, part.material, occluder);
         }
     }
 
-    private static void ApplyBarrelOcclusion(Material material, SpriteRenderer source,
+    private static SpriteRenderer ApplyBarrelOcclusion(Material material, SpriteRenderer source,
         StageAssets.BarrelPillarTrap[] barrels)
     {
         SpriteRenderer occluder = null;
@@ -133,7 +135,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
         }
 
         material.SetFloat("_BarrelOcclusion", occluder != null ? 1f : 0f);
-        if (occluder == null) return;
+        if (occluder == null) return null;
 
         Sprite sprite = occluder.sprite;
         Bounds bounds = sprite.bounds;
@@ -143,6 +145,7 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
         material.SetVector("_BarrelUV", UnityEngine.Sprites.DataUtility.GetOuterUV(sprite));
         material.SetVector("_BarrelFlip", new Vector4(occluder.flipX ? -1f : 1f, occluder.flipY ? -1f : 1f, 0f, 0f));
         material.SetFloat("_BarrelAlpha", occluder.color.a);
+        return occluder;
     }
 
     private void OnDisable()

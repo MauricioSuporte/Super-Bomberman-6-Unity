@@ -92,6 +92,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopSprites()
         {
+            ClearCoopBlackoutMasks();
             foreach (var sprite in coopDynamicSprites.Values) if (sprite != null) Destroy(sprite);
             foreach (var texture in coopDynamicTextures.Values) if (texture != null) Destroy(texture);
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
@@ -222,6 +223,7 @@ namespace Assets.Scripts.Netcode
                     int id = pair.Key;
                     if (coopVisualRemovals.TryGetValue(id, out double removed) && clock >= removed)
                     {
+                        ReleaseCoopMaskMaterial(id, null);
                         if (coopViews.Remove(id, out var view) && view != null) Destroy(view.gameObject);
                         coopViewSpriteIds.Remove(id); coopViewClips.Remove(id);
                         coopExpiredViews.Add(id); continue;

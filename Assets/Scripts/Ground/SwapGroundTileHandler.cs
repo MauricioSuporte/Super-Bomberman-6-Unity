@@ -28,6 +28,7 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
 
     private void Awake()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!autoCollectAllTileAOnStart)
             return;
 
@@ -103,6 +104,7 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
         Vector3Int cell,
         TileBase groundTile)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (source == null)
             return;
 

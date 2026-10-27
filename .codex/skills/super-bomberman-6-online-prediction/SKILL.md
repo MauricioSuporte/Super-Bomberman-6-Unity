@@ -363,3 +363,25 @@ coordinator and exclude NetworkIdentity descendants. This still cannot capture
 an effect born and destroyed between two visual ticks; use an approved event
 for that case. Guard shared contact helpers as well as expression-bodied trigger
 adapters: native sweeps can call the helper directly.
+
+For an autonomous short bomb pull, use approved environment presentation rather
+than masquerading as a kick or a player ability. Preserve the segment before an
+already-arrived stop, start its visible clock at receipt, never extrapolate a new
+cell or Rubber bounce and do not grant an ability gesture or change its collider.
+Keep the native capture/fuse/damage/tile edits authoritative; emit a clear in both
+iterator cleanup and explicit disable. This does not solve a removed RPC owner.
+
+A shader-driven overlay needs its approved uniforms, not only its sprite and
+material asset id. Blackout recipes include region/palette, room bounds and barrel
+texture/UV/transform; clone material per view and hide when required data is unknown.
+Submit fixed-capacity color arrays from the first update (Unity cannot later grow
+them). Cache immutable material snapshots so changes are visible to delta checks.
+Do not mutate templates or reconstruct local enemy gameplay to produce eyes.
+
+A blackout may deactivate the GameObject hosting its own UI component. Keep an
+external approved-state presenter with inactive references and idempotent visual
+initialization; do not depend on its Update resuming itself. Preserve the native
+clock: blackout alpha fades in unscaled time even during pause. Send logical world
+lights rather than camera-dependent shader coordinates from a headless server.
+Client room geometry can use Box transform/offset/size without enabling a collider,
+but keep offline physics semantics and transport the server room's active status.

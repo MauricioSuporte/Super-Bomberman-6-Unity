@@ -18,28 +18,29 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo46, commit `509cb70d2`, pipeline
-  [40485513422](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40485513422).
+- **Servidor e atualizador publicados:** protocolo47, commit `026d88302`, pipeline
+  [40489646611](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40489646611).
   concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
-  confirmados. C07/R04 introduziram novo contexto no wire46.
+  confirmados. C03 corda, C02 lift e R05 registro/gates estão no47.
 - **Avanço46 validado e enviado:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
   implementados/testados. Forças confirmadas compõem com caminhada/replay por até
   150ms na célula/fase aprovada; IA, captura inicial, dano e bounce são do servidor.
-- **Validação local47:**439/439 Unity (OnlineRoom347 + COM92), C#0 erros/avisos novos,
+- **Validação local48:**445/445 Unity (OnlineRoom353 + COM92), C#0 erros/avisos novos,
   Python44/44 (36 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
-  Logs/PredictionPresentation47FinalTests.*; C07/R04 e tentativas anteriores preservados.
+  Logs/PredictionEnvironment48FinalTests.*;47/444 e tentativas anteriores preservados.
 - **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
   fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
   física; manuais/capturas e custo real continuam pendentes.
-- **Checklist:**15 IDs implementados/testados,13 parciais e5 pendentes. Execução
+- **Checklist:**15 IDs implementados/testados,14 parciais e4 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo:** continuar os demais
-  C/R/A/P0 até encerrar o checklist, como solicitado. Nenhuma alteração C09 foi
-  feita: auditoria encontrou blackout/materiais de máscara fora do stream.
-- **Workspace:** branch `v0.5.0`, checkout original. Lote46 enviado/publicado,
-  C07 `04189e84d` e R04 `509cb70d2`. Lote47 validado localmente: C03 corda,
-  C02 lift Battle4 e R05 registro/gates de projéteis. Publicar os dois commits locais.
-  Curvas completas C02/C03 e demais famílias R05 permanecem pendentes. Preservar fontes/TitleScreen e Editor do usuário.
+- **Próximo:** concluir validação48/C09 e continuar C/R/A/P0 até encerrar o checklist.
+  Blackout e caldeira48 validados; publicar48 e confirmar pipeline antes de chamar deploy concluído.
+- **Workspace:** branch `v0.5.0`, checkout original.47 publicado em927c4bac7 +
+  026d88302.48 sem commit: caldeira, gates de tiles, foguete e transporte de
+  blackout/materiais. Suite conjunta445/445 passou; preparar commit e envio48.
+  Último código48 inclui aprovação roomActive, preserva bounds/OverlapPoint offline
+  e elimina arrays por frame na aplicação da paleta. Preservar fontes/TitleScreen
+  do usuário e Editor aberto. Nenhuma cena/prefab foi editada neste lote.
 
 ## Como acompanhar
 
@@ -199,7 +200,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); publicação e manual pendentes.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
-- [ ] C09: mecanismos e tiles especiais.
+- [ ] C09: parcial48: caldeira/pull ordenado sem previsão/lead, gates de swap/dinamite/foguete, blackout/room lights e materiais de máscara aprovados,445 testes combinados; fases/tile Startup/capturas/render gráfico ainda pendentes.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
@@ -1520,3 +1521,97 @@ Suite conjunta PredictionPresentation47FinalTests passou439/439 (OnlineRoom347 +
 COM92); C# incremental final0 erros/avisos, Python44/44 e skill validator passaram.
 Última publicação continua46/509cb70d2;47 pronto para envio. C03 está salvo em
 927c4bac7; salvar R05/C02 no próximo commit. Preservar fontes/TitleScreen do usuário.
+
+
+## Em trabalho: C09 / protocolo48 (não publicar ainda)
+
+47 foi enviado em927c4bac7 +026d88302, pipeline40489646611 em andamento
+(build/test Linux/Windows). Último deploy confirmado ainda46/509cb70d2.
+439/439 Unity47 e44/44 Python estão preservados; não confundir com48.
+
+C09 local48: enum Environment em BombMotionKind, início em elapsed0, stop e
+continuação aprovados enfileirados como segmentos curtos, sem extrapolar próxima
+célula nem antecipar pose de habilidade ou bounce Rubber. Boiler publica só o
+movimento nativo80ms via NetworkBombFx existente; finally + OnDisable emitem stop.
+Não muda fuse/dano/ignição, nem resolve o endpoint RPC de owner destruído (R07).
+Gates nativos em Boiler/Swap/SwapBlackout/Dynamite/Rocket; query de raio PowerGround
+continua readonly. DestructibleRocket registra rocket/target no stream e envia
+SFX de explosão via GameAudioSettings. Ainda NÃO testado no Unity; runner ocupado
+pelo CI47, nenhuma fonte48 copiada para lá. C#48 + novos testes compilaram0/0.
+Novos testes em OnlineRoomEnvironmentBombTests.cs + meta: pull/stop tardio, pausa,
+sem pose/collider alterado/extrapolação/Rubber, gates de mutação/RNG e query Power.
+
+IMPORTANTE: não publicar48 só com esses gates. Blackout precisa transporte
+aprovado antes: StageBlackout/WorldBlackoutRenderer mesh e materiais instanciados
+BlackoutVisibleParts estão fora do stream atual. Primeiro implementar/testar a
+apresentação dessas partes. Main renderer é puramente visual mas usa Collider.bounds
+/OverlapPoint: no client o collider fica desabilitado, calcular bounds/contém a
+partir de BoxCollider.transform/offset/size sem reativá-lo. StageBlackout pode
+estar inativo no próprio Image GO; coordenador precisa referência IncludeInactive
+e aplicar estado sem coroutine nativa. Fade usa unscaledDelta, não congelar só
+por pausa. Enviar active/alpha e spotlights lógicos36 + room lights16; não replicar
+valores dependentes de câmera headless. Olhos precisam material isolado no proxy
+com região/paleta8/tolerância/bounds e barrel occlusion aprovada; fallback ao shader
+padrão revela pixels indevidos. Não reativar enemy gameplay para conseguir olhos.
+
+Progresso por ID não mudou com trabalho48 ainda não validado:15/13/5.
+Preservar fontes e TitleScreen do usuário, Editor aberto e runner em CI.
+
+
+## Continuação C09 blackout48 (implementado localmente, aguardando suíte final)
+
+CI47/40489646611 concluiu com sucesso. Native48 já foi copiado ao runner somente
+após esse término. Primeira tentativa Environment48:1/2 (pull passou; fixture
+BombController sem BoxCollider ficou null); corrigido pré-requisito. Reports em
+Logs/PredictionEnvironment48AttemptTests.*. Focados completos seguintes passaram
+5/5 (PredictionBlackout48FocusedTests.* preservados): pull e stop juntos/pausa/sem
+bounce, gates de tiles e RNG, bounds math no client com collider desabilitado,
+receita de material wire/isolamento/capacidade8/barrel desconhecido, UI inativa
+retomada, fade aprovado durante pausa, sem timer local e revisões inválidas.
+
+Runtime48 agora inclui:
+- BlackoutView: cena/caminho/revisão/histórico64, active/alpha,36 spotlights lógicos
+  (sem depender de câmera dedicada),16 room lights, vision e roomActive aprovados.
+  Coordenador mantém refs IncludeInactive, publica20Hz por mudança/heartbeat500ms,
+  apresenta na timeline dos sprites. Fade acompanha unscaled do servidor. Awake
+  visual idempotente permite reativar o próprio Image GO; timers/spotlights nativos
+  client são gated. Clear de destroy retém o último contexto para tolerar ordem de
+  destruição dos filhos. Nenhuma coroutine nativa é iniciada no client.
+- WorldBlackoutRenderer permanece render-only na whitelist. Client usa Box offset/
+  size/transform matemáticos sem reativar collider; offline/host preservam bounds
+  e OverlapPoint nativos inclusive quando desabilitados. RoomActive é aprovado:
+  impedir que desligar o collider da sala no servidor conceda visão local extra.
+  Luz do próprio jogador acompanha seu root/facing apresentado, com raio aprovado.
+- CoopSpriteFrame.blackout opcional (null compacto) transporta template, região,
+  paleta8, tolerância, sprite/room bounds, barrel sprite/UV/flip/alpha/matriz. Material
+  clonado por view; nunca altera template. Se máscara/occluder inválido ou ausente,
+  esconde em vez de usar shader padrão que revelaria pixels. Cleanup em remoção/
+  troca/clear de cena. Captura snapshots imutáveis; buffer8 de aplicação reutilizado.
+  BlackoutVisibleParts só simula no servidor/offline e registra overlay prontamente.
+  Template está nos catálogos Stage_3-1..3-6 (não em2-5, que usa UI legado).
+
+Últimas revisões48 (roomActive/offline/clear) já na suíte combinada
+PredictionEnvironment48FinalTests em execução; esperar XML. C# e Python44/44 já
+passaram, mas rodar/confirmar o incremental final após os últimos C#.
+Não afirmar imagem final ou ganho medido: render visual/manual ainda pendente.
+Próximo após sucesso: docs/skill, UTF8/BOM/metas, commit/publicar48, confirmarCI,
+seguir restante. C09 ainda parcial até auditoria de fases/tile Startup/capturas;
+não marcar checklist completo só porque a suíte passa.
+
+
+##48 pronto para publicação / correção final de herança de lead
+
+PredictionEnvironment48FinalTests passou445/445 (OnlineRoom353 + COM92).
+445 inclui duas variantes do pull: sem comando anterior e após Search previsto
+pendente. Environment agora rejeita BeginAbilityPrediction e nunca herda o lead
+do histórico anterior: a trajetória80ms começa em0 mesmo na substituição de ação.
+Início/stop juntos e Rubber continuam cobertos. Suite444 anterior preservada em
+Logs/PredictionEnvironment48Full444Tests.*; final445 em Logs/PredictionEnvironment48FinalTests.*.
+C# incremental0/0, Python44/44, skill validator e diffcheck passaram; conferirUTF8/
+BOM e metas antes do commit.48 ainda não enviado neste ponto do histórico.
+C09 parcial, checklist15/14/4. C05/C02/C03/R05 demais auditorias seguem pendentes;
+não marcar um deles concluído só com as melhorias parciais atuais.
+Próximos auditados sem novas alterações: R03 Frog/Hop/SnowMan/Korobokkuru usam
+stream20Hz mas sombras plain podem esperar descoberta250ms; falta gate nas overrides
+Start/Fixed (base não basta). A12 exige input sobrevivendo ao player inativo e
+transporte/predição próprios do cart; smoke_public_client cobre só lobby, sem partida.

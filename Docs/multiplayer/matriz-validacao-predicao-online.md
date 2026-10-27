@@ -154,3 +154,18 @@ também portal/teleport (root deve cortar). Para R05 comparar nascimento, voo,
 impacto, trilha e cleanup de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen,
 incluindo dono morto, homing e pausa. Capturar efeitos de100 ms e verificar o
 limite ainda existente para efeitos menores que50 ms. Demais famílias pendentes.
+
+### Continuação C09 /48 — caldeira, tiles e blackout
+
+Validar online/offline2P: bomba capturada no boiler,80ms de puxão, freeze/unfreeze de
+animação, porta/ignição/explosão, interrupção e dono morto; Rubber não deve saltar
+após o pull. Validar swap/puzzle/plataforma, dinamite e foguete (alvo, fase, SFX e
+impacto) sem RNG/edição local de terreno. Conferir colisão do owner enquanto a
+apresentação da bomba termina.
+
+World3: blackout ao entrar/trocar sala, luz P1/P2 seguindo movimento/facing, raio
+aprovado, torches ligando/desligando, explosões, olhos com paleta, barrel em frente,
+flip e mudança de sprite. Pausar durante fade: alpha continua como no offline,
+movimento não. Legacy2-5: Image GO desativado deve reaparecer por estado aprovado.
+Sair/reentrar e observar durante blackout ligado/desligado; não sobrar materiais ou
+luzes. Confirmar num cliente gráfico: EditMode/headless não comprova pixels finais.

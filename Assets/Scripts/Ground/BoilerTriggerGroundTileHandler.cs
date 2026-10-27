@@ -34,6 +34,8 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
     private Coroutine routine;
     private Coroutine doorAllRoutine;
+    private Assets.Scripts.Netcode.NetworkBombFx networkPullFx;
+    private Bomb networkPullBomb;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
     private static FieldInfo bombLastPosField;
@@ -62,6 +64,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
     private void OnDisable()
     {
+        EndNetworkPull();
         if (routine != null)
         {
             StopCoroutine(routine);
@@ -85,6 +88,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         TileBase groundTile,
         GameObject bombGo)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (triggeredOnce)
             return;
 
@@ -221,6 +225,27 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         GameAudioSettings.PlaySfx(bombMoveSfxSource, bombMoveClip, Mathf.Clamp01(bombMoveVolume));
     }
 
+    private void BeginNetworkPull(BombController source, Bomb bomb, Vector2 from, Vector2 to, float duration)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || source == null || bomb == null) return;
+        var fx = source.GetComponent<Assets.Scripts.Netcode.NetworkBombFx>();
+        if (fx == null || !fx.isServer || fx.netId == 0) return;
+        EndNetworkPull();
+        networkPullFx = fx; networkPullBomb = bomb;
+        fx.ServerEmitBombMotion(bomb, Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Environment,
+            from, to, duration, 0, 0, true, true);
+    }
+
+    private void EndNetworkPull()
+    {
+        var fx = networkPullFx; var bomb = networkPullBomb;
+        networkPullFx = null; networkPullBomb = null;
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || fx == null || bomb == null || bomb.HasExploded) return;
+        Vector2 position = bomb.TryGetComponent<Rigidbody2D>(out var body) ? body.position : (Vector2)bomb.transform.position;
+        fx.ServerEmitBombMotion(bomb, Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Environment,
+            position, position, 0, 0, 0, false, false);
+    }
+
     private void FinalizeBoilerOnce()
     {
         if (finalizedOnce)
@@ -289,41 +314,49 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
             PlayBombMoveSfx();
 
-            float t = 0f;
-
-            while (t < dur)
+            BeginNetworkPull(source, bomb, from, to, dur);
+            try
             {
-                if (source == null)
+                float t = 0f;
+
+                while (t < dur)
                 {
-                    RestoreAnimIfNeeded();
-                    FinalizeBoilerOnce();
-                    yield break;
+                    if (source == null)
+                    {
+                        RestoreAnimIfNeeded();
+                        FinalizeBoilerOnce();
+                        yield break;
+                    }
+
+                    if (bomb == null || bombGo == null || bomb.HasExploded)
+                    {
+                        RestoreAnimIfNeeded();
+                        FinalizeBoilerOnce();
+                        yield break;
+                    }
+
+                    t += Time.fixedDeltaTime;
+                    float a = Mathf.Clamp01(t / dur);
+
+                    Vector2 p = Vector2.Lerp(from, to, a);
+
+                    bombLastPosField?.SetValue(bomb, p);
+
+                    rb.MovePosition(p);
+                    bombGo.transform.position = p;
+
+                    yield return waitFixed;
                 }
 
-                if (bomb == null || bombGo == null || bomb.HasExploded)
-                {
-                    RestoreAnimIfNeeded();
-                    FinalizeBoilerOnce();
-                    yield break;
-                }
+                bombLastPosField?.SetValue(bomb, to);
 
-                t += Time.fixedDeltaTime;
-                float a = Mathf.Clamp01(t / dur);
-
-                Vector2 p = Vector2.Lerp(from, to, a);
-
-                bombLastPosField?.SetValue(bomb, p);
-
-                rb.MovePosition(p);
-                bombGo.transform.position = p;
-
-                yield return waitFixed;
+                rb.position = to;
+                bombGo.transform.position = to;
             }
-
-            bombLastPosField?.SetValue(bomb, to);
-
-            rb.position = to;
-            bombGo.transform.position = to;
+            finally
+            {
+                EndNetworkPull();
+            }
         }
         else
         {

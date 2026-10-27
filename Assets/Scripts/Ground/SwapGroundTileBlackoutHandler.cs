@@ -18,6 +18,7 @@ public sealed class SwapGroundTileBlackoutHandler : MonoBehaviour, IGroundTileEx
 
     private void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!syncBlackoutOnStart)
             return;
 
@@ -82,6 +83,7 @@ public sealed class SwapGroundTileBlackoutHandler : MonoBehaviour, IGroundTileEx
         Vector3Int cell,
         TileBase groundTile)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (source == null)
             return;
 

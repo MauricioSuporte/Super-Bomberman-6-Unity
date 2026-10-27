@@ -35,6 +35,7 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     public bool HandleHit(BombController source, Vector2 worldPos, Vector3Int cell)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (source == null)
             return false;
 

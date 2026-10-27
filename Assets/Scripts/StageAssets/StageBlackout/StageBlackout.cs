@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public sealed class StageBlackout : MonoBehaviour
+public sealed partial class StageBlackout : MonoBehaviour
 {
     public static StageBlackout Instance { get; private set; }
     public WorldBlackoutRenderer ActiveWorldOverlay => _active ? worldOverlay : null;
@@ -58,6 +58,7 @@ public sealed class StageBlackout : MonoBehaviour
     float _currentA;
     float _targetA;
     bool _active;
+    bool visualInitialized;
 
     readonly Dictionary<int, ExplosionSpotlightData> _activeExplosionSpotlights = new();
 
@@ -76,10 +77,12 @@ public sealed class StageBlackout : MonoBehaviour
 
     void Awake()
     {
+        if (visualInitialized) return;
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
         if (!blackoutImage && !worldOverlay) { enabled = false; return; }
+        visualInitialized = true;
 
         maxExplosionSpotlights = Mathf.Clamp(maxExplosionSpotlights, 1, ShaderMaxSpotlights);
 
@@ -127,6 +130,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!startActive)
         {
             SetBlackoutActive(false);
@@ -145,6 +149,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!_active || _matInstance == null) return;
 
         if (fadeInSeconds > 0f && _currentA < _targetA)
@@ -166,6 +171,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     public void SetBlackoutActive(bool active)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (blackoutImage == null && worldOverlay == null) return;
 
         if (onlyForWorldStage && !IsTargetStage())
@@ -218,6 +224,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     public void StartOrRenewTimedBlackout(float durationSeconds)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (_timedBlackoutRoutine != null)
             StopCoroutine(_timedBlackoutRoutine);
 
@@ -253,6 +260,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition, Vector2 halfSizeInTiles)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!enableExplosionSpotlights || !_active || _matInstance == null) return;
 
         _activeExplosionSpotlights[id] = new ExplosionSpotlightData
@@ -270,6 +278,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     public void UpdateExplosionSpotlight(int id, float intensity)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!_activeExplosionSpotlights.TryGetValue(id, out var data)) return;
 
         float clamped = Mathf.Clamp01(intensity);
@@ -281,6 +290,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     public void UnregisterExplosionSpotlight(int id)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (_activeExplosionSpotlights.Remove(id))
             _spotlightsDirty = true;
     }
@@ -442,6 +452,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     void OnDestroy()
     {
+        PublishNetworkBlackoutClear();
         if (Instance == this) Instance = null;
         if (_matInstance != null) Destroy(_matInstance);
     }

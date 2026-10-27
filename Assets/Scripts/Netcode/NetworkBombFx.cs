@@ -270,7 +270,8 @@ namespace Assets.Scripts.Netcode
             if (!motion.moving) return motion.end;
             bool continueLocally = false;
             if (!presentationOwnerSuspended && motion.moving && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw &&
-                motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && playback.elapsed > motion.duration && motion.duration > 0)
+                motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && motion.kind != BombMotionKind.Environment &&
+                playback.elapsed > motion.duration && motion.duration > 0)
             {
                 var step = motion.end - motion.start;
                 continueLocally = movingBomb.CanPredictKickContinuation(motion.end + step, step.magnitude);
@@ -349,7 +350,7 @@ namespace Assets.Scripts.Netcode
             if (previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
                 !NetworkInputHistory.IsNewer(motion.inputTick, previous.history.startTick)) return;
             bool arcContinuation = previous != null && !previous.unconfirmed && !motion.first &&
-                IsFlightArc(previous.motion.kind) && previous.motion.kind == motion.kind && previous.motion.moving;
+                PreservesSegmentOrder(previous.motion.kind) && previous.motion.kind == motion.kind && previous.motion.moving;
             if (arcContinuation && !applyingQueuedBombArc &&
                 (previous.elapsed < previous.motion.duration || previous.pendingArcs.Count > 0))
             {
@@ -370,7 +371,7 @@ namespace Assets.Scripts.Netcode
             var playback = new KickPlayback { motion = motion, elapsed = arcContinuation ?
                 (previous.predictedLandingBounce && motion.bounceSeed == previous.motion.bounceSeed && motion.bounceIndex == previous.motion.bounceIndex + 1 ?
                     Mathf.Clamp(previous.elapsed - previous.motion.duration, 0, Mathf.Min(0.15f, motion.duration)) : ArcRemainder(previous.elapsed, previous.motion.duration)) :
-                motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Magnet ? 0 : age,
+                motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Magnet || motion.kind == BombMotionKind.Environment ? 0 : age,
                 pendingArcs = arcContinuation ? previous.pendingArcs : new Queue<KickMotion>(),
                 nextPresentationSample = previous != null ? previous.nextPresentationSample : 0,
                 sampledPresentation = previous != null ? previous.sampledPresentation : Vector2.zero,
@@ -383,7 +384,7 @@ namespace Assets.Scripts.Netcode
                 history = previous != null && (previous.unconfirmed || !motion.first) ? previous.history : null };
             if (previous != null && previous.unconfirmed)
             {
-                playback.history.presentationLead = motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
+                playback.history.presentationLead = motion.kind == BombMotionKind.Environment ? 0 : motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
                     Mathf.Clamp(previous.elapsed - age, 0, 0.15f);
                 rejectedStarts.Remove(movingBomb);
                 if (GameplayLatencyDiagnostics.Enabled)
@@ -398,7 +399,7 @@ namespace Assets.Scripts.Netcode
             }
             // Preserve the small lead of the owner's input timeline. Pulling the
             // bomb back to server-now on the first reply would recreate the hitch.
-            if (motion.moving && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
+            if (motion.moving && motion.kind != BombMotionKind.Environment && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
             var targetPosition = SamplePlayback(movingBomb, playback);
             // The NetworkTransform may have written its older timeline this frame.
             // Reconcile against our last displayed position, not that stale transform.
@@ -426,7 +427,7 @@ namespace Assets.Scripts.Netcode
             ApplyMotionCollider(movingBomb, playback);
             ApplyKickPosition(movingBomb, playback.presented);
             if (!presentationOwnerSuspended && isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
-                motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet)
+                motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet && motion.kind != BombMotionKind.Environment)
                 BeginConfirmedAbilityPose(motion, age);
         }
 
@@ -542,6 +543,7 @@ namespace Assets.Scripts.Netcode
         }
 
         public static bool IsFlightArc(BombMotionKind kind) => kind == BombMotionKind.Punch || kind == BombMotionKind.Throw;
+        public static bool PreservesSegmentOrder(BombMotionKind kind) => IsFlightArc(kind) || kind == BombMotionKind.Environment;
         public static float ArcRemainder(float elapsed, float duration) => Mathf.Clamp(elapsed - duration, 0, Time.unscaledDeltaTime);
 
         // Called before local movement/replay queries. Normal NetworkTransform may

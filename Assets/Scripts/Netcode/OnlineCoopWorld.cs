@@ -18,9 +18,11 @@ namespace Assets.Scripts.Netcode
         public Color color;
         public bool flipX, flipY, visible;
         public byte mask;
+        public CoopBlackoutMask blackout;
         public bool Matches(CoopSpriteFrame other) => animation == 0 && other.animation == 0 && id == other.id && sprite == other.sprite && material == other.material &&
             sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
-            rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask;
+            rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask &&
+            (blackout == null ? other.blackout == null : blackout.Equals(other.blackout));
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
     public struct CoopTileFrame
@@ -98,6 +100,7 @@ namespace Assets.Scripts.Netcode
         readonly HashSet<int> coopInitializedPeers = new();
         readonly HashSet<string> coopMissingAssets = new();
         SpriteRenderer[] coopRenderers = Array.Empty<SpriteRenderer>();
+        StageBlackout[] coopBlackoutSources = Array.Empty<StageBlackout>();
         float coopNextDiscover, coopNextFrame, coopNextTiles;
         string coopScene;
         GameObject coopViewRoot;
@@ -121,6 +124,11 @@ namespace Assets.Scripts.Netcode
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode11ImpulseRopeController>()) controller.ReceiveNetworkRope(message);
+            });
+            NetworkClient.RegisterHandler<BlackoutView>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var blackout in coopBlackoutSources) if (blackout != null) blackout.ReceiveNetworkBlackout(message);
             });
             NetworkClient.RegisterHandler<PowderTrailFrame>(message =>
             {
@@ -171,6 +179,10 @@ namespace Assets.Scripts.Netcode
             IndexCatalog(coopCatalog.tiles, coopTileIds);
             IndexCatalog(coopCatalog.materials, coopMaterialIds);
             IndexCatalog(coopCatalog.sounds, coopSoundIds);
+            var blackouts = new List<StageBlackout>();
+            foreach (var blackout in FindObjectsByType<StageBlackout>(FindObjectsInactive.Include))
+                if (blackout.gameObject.scene == scene) blackouts.Add(blackout);
+            coopBlackoutSources = blackouts.ToArray();
             foreach (var map in FindObjectsByType<Tilemap>(FindObjectsInactive.Include))
                 if (map.gameObject.scene == scene) coopMaps[CoopPath(map.transform)] = map;
             foreach (var health in FindObjectsByType<CharacterHealth>(FindObjectsInactive.Include))
@@ -224,7 +236,7 @@ namespace Assets.Scripts.Netcode
             Type type = behaviour.GetType();
             if (type.Assembly != typeof(GameManager).Assembly || behaviour.GetComponentInParent<Canvas>(true) != null) return true;
             string name = type.Name;
-            return behaviour is BombermanNetworkManager or OnlineLobbyMenu or OnlineRoomBrowser or GamePauseController ||
+            return behaviour is BombermanNetworkManager or OnlineLobbyMenu or OnlineRoomBrowser or GamePauseController or StageBlackout or WorldBlackoutRenderer ||
                 name.Contains("Camera", StringComparison.Ordinal) || name.Contains("Hud", StringComparison.Ordinal) ||
                 name.Contains("HUD", StringComparison.Ordinal) || name.Contains("Viewport", StringComparison.Ordinal) ||
                 name.StartsWith("Localized", StringComparison.Ordinal) || name == "PlayerInputManager" ||
@@ -268,6 +280,7 @@ namespace Assets.Scripts.Netcode
             coopSpotlightImage = null;
             coopSceneHealth.Clear(); coopServerHealth = Array.Empty<CharacterHealth>(); coopNextStatus = 0;
             coopRenderers = Array.Empty<SpriteRenderer>();
+            coopBlackoutSources = Array.Empty<StageBlackout>();
             coopCatalog = null; coopScene = null; coopHasMusic = false;
             if (coopViewRoot != null) Destroy(coopViewRoot);
             coopViewRoot = null;
@@ -278,6 +291,12 @@ namespace Assets.Scripts.Netcode
         {
             PublishPortalMasks();
             PresentPortalMaskViews();
+            foreach (var blackout in coopBlackoutSources)
+                if (blackout != null)
+                {
+                    if (NetworkServer.active) blackout.PublishNetworkBlackout();
+                    else blackout.PresentNetworkBlackout(CoopVisualClock);
+                }
             if (!NetworkServer.active || !IsCoopStage || coopCatalog == null || NetworkServer.isLoadingScene) return;
             if (Time.unscaledTime < coopNextFrame) return;
             using var scope = CoopPresentationMarker.Auto();
@@ -336,7 +355,7 @@ namespace Assets.Scripts.Netcode
                 var frame = new CoopSpriteFrame
                 {
                     id = id, sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
-                    material = CatalogId(renderer.sharedMaterial, coopMaterialIds),
+                    material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(id),
                     position = renderer.transform.position, rotation = renderer.transform.rotation,
                     scale = renderer.transform.lossyScale, color = renderer.color,
                     sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
@@ -359,7 +378,7 @@ namespace Assets.Scripts.Netcode
             var removed = coopRemovedSprites;
             removed.Clear();
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
-            foreach (int id in removed) coopLastSprites.Remove(id);
+            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); }
             SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
             if (coopChangedCollisions.Count > 0 || coopRemovedCollisions.Count > 0)
                 foreach (var peer in peers) SendCoopCollisionFrames(peer, coopChangedCollisions, coopRemovedCollisions.ToArray(), false);
@@ -507,17 +526,24 @@ namespace Assets.Scripts.Netcode
                 var go = new GameObject("ServerActor " + frame.id, typeof(SpriteRenderer));
                 go.transform.SetParent(coopViewRoot.transform, false);
                 view = go.GetComponent<SpriteRenderer>(); coopViews[frame.id] = view;
+                coopDefaultSpriteMaterial = coopDefaultSpriteMaterial != null ? coopDefaultSpriteMaterial : view.sharedMaterial;
             }
             view.transform.SetPositionAndRotation(frame.position, frame.rotation);
             view.transform.localScale = frame.scale;
             coopViewSpriteIds[frame.id] = frame.sprite;
             view.sprite = CoopSpriteAt(frame.sprite);
             PresentCoopAnimation(view, frame);
-            var material = At(coopCatalog.materials, frame.material);
-            if (material != null) view.sharedMaterial = material;
+            bool materialReady = true;
+            if (frame.blackout != null) materialReady = ApplyCoopBlackoutMask(frame.id, view, frame.blackout);
+            else
+            {
+                ReleaseCoopMaskMaterial(frame.id, view);
+                var material = At(coopCatalog.materials, frame.material);
+                if (material != null) view.sharedMaterial = material;
+            }
             bool ownerBoatHidden = coopOwnerBoatSprites.ContainsKey(frame.id);
             if (ownerBoatHidden) coopOwnerBoatVisibility[frame.id] = frame.visible;
-            view.enabled = frame.visible && !ownerBoatHidden; view.color = frame.color;
+            view.enabled = frame.visible && !ownerBoatHidden && materialReady; view.color = frame.color;
             view.flipX = frame.flipX; view.flipY = frame.flipY; view.maskInteraction = (SpriteMaskInteraction)frame.mask;
             view.sortingLayerID = frame.sortingLayer; view.sortingOrder = frame.order;
         }

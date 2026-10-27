@@ -9,6 +9,7 @@ public sealed class RocketTileHandler : MonoBehaviour, IDestructibleTileHandler
 
     public bool HandleHit(BombController source, Vector2 worldPos, Vector3Int cell)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (source == null || flightPrefab == null || source.destructibleTiles == null)
             return false;
         if (!source.destructibleTiles.HasTile(cell))

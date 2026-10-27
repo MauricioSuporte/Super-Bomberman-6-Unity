@@ -30,6 +30,7 @@ namespace StageAssets
 
         public void Launch(Vector3 destination, float height, Collider2D roomBounds)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             origin = transform.position;
             impact = destination;
             tileHeight = height;
@@ -38,11 +39,14 @@ namespace StageAssets
             rocket.sprite = ascentSprite;
             target.enabled = false;
             launched = true;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(rocket);
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(target);
             GameAudioSettings.PlaySfx(audioSource, launchSfx);
         }
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!launched)
                 return;
             if (audioPaused != GamePauseController.IsPaused)
@@ -85,7 +89,7 @@ namespace StageAssets
                 target.enabled = false;
                 rocket.transform.position = impact + Vector3.up * (0.25f * tileHeight);
                 audioSource.Stop();
-                audioSource.PlayOneShot(explosionSfx, 2f * GameAudioSettings.ApplySfxVolume(1f));
+                GameAudioSettings.PlaySfx(audioSource, explosionSfx, 2f);
                 // Resolve at impact: the player who launched it may have died during flight.
                 BombController damageSource = FindAnyObjectByType<BombController>();
                 if (damageSource != null)
