@@ -19,28 +19,28 @@ Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histór
 abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
 implementação concluída de trabalho parcial. Validação manual fica separada.
 
-- **Servidor e atualizador publicados:** protocolo44, commit `9c6372abb`, pipeline
-  [40417871378](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40417871378)
+- **Servidor e atualizador publicados:** protocolo45, commit `14b6f5cac`, pipeline
+  [40442915878](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40442915878)
   concluído com sucesso, incluindo builds, deploy, updater e artefatos.
-- **Avanços desta retomada:** VFX recebidos independentes do owner42; fases
-  aprovadas de teto/pólvora43; caminho e espera de música SuddenDeath44 sem RNG
-  client e com diagnóstico de begin/queda. Nenhum desses avanços fecha R07/C10.
-- **Validação final:**335/335 Unity (OnlineRoom243 + COM92), C#0 erros/avisos novos,
-  Python40/40 e UTF-8/BOM/metas/diffcheck passaram. Relatórios preservados em Logs/.
-- **Documentação:** checklist por33 IDs revisado, skill/notas atualizadas e matriz
-  manual criada com cenários/evidências por ID; execução manual ainda pendente.
-- **Lote45 validado, publicação pendente:** barco/cabeça acompanham movimento
-  previsto após embarque confirmado, água histórica no replay e cleanup de views.
-  Unity347/347, C#0/0, Python42/42 e UTF-8/BOM/metas/diffcheck passaram.
-- **Próximos itens:** publicar45, C07/forças no motor/replay, demais
-  R07/sem owner, forças no motor/replay, blackout/tiles e demais C/R. C10 continua
+- **Avanço desta retomada:** C06 barco/Submarine implementado e testado: movimento
+  owner após embarque confirmado, permissão de água histórica no replay, barco/
+  cabeça com direção local, pausa, handoff e cleanup sem ocupar/proteger no client.
+- **Validação final:**347/347 Unity (OnlineRoom255 + COM92), C#0 erros/avisos novos,
+  Python42/42 (34 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Relatórios
+  preservados em Logs/PredictionBoat45DiagnosticsTests.* (342/346 intermediários também).
+- **P0:** logs/comparador distinguem barco, barco com mount e caminhada; nenhuma
+  captura real nova ou ganho medido de latência foi declarado.
+- **Documentação:** checklist agora13 IDs implementados/testados,12 parciais,8
+  pendentes; notas/skill/matriz atualizadas até45. Execução manual segue pendente.
+- **Próximos itens:** C07 pusher/composição de força no motor/replay (auditoria ao
+  fim), demais R07/sem owner, forças R04, blackout/tiles e demais C/R. C10 continua
   com timeline/commit de terreno/late join; A14 com matriz/manual pendentes.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
-- **Workspace:** branch `v0.5.0`, checkout original. Runtime44 publicado; lote45
-  de barco/contexto/owner view em implementação, ainda sem commit. Preservar
-  fontes/TitleScreen do usuário e o Unity aberto com alterações não salvas.
+- **Workspace:** branch `v0.5.0`, checkout original. Runtime45 commitado/publicado;
+  nenhum código incompleto local. Preservar fontes/TitleScreen do usuário e o
+  Unity aberto com alterações não salvas. Não há implementação46 iniciada.
 
 ## Como acompanhar
 
@@ -1260,3 +1260,41 @@ checkout normal do CI. Nenhuma scene/prefab alterada. C06 marcado implementado/
 testado, com manual explícito pendente como os demais IDs concluídos. Contagem
 agora13 implementados/testados,12 parciais,8 pendentes. A classificação P0 de barco
 foi validada sem nova captura real. Próximo: commit/enviar45 e confirmar CI.
+
+
+45 commitado/enviado:14b6f5cac, CI40442915878 em andamento;44 último deploy
+confirmado. Tracked runtime locais só fontes/TitleScreen do usuário. Aguardar
+CI antes de usar runner para novo teste/copiar arquivos. Não presumir deploy45.
+
+Auditoria adicional C07/R04 (nenhum código46 implementado):
+- PusherPatrolAndPush.FixedUpdate calcula delta até pointA/B (speed*fixedDelta),
+  inverte direção com uma parada ao alcançar arriveDistance, faz Collider.Cast
+  com useTriggers=true e filtra normal/overlap antes de MovePosition no player.
+- A lista de hits pode conter mais de um collider do mesmo Rigidbody. No código
+  nativo o MovePosition repetido usa a mesma posição física; uma migração para
+  posição imediata/tick precisa deduplicar ator antes de aplicar o delta, para
+  não introduzir push duplo. Contato inicial permanece validado pelo servidor.
+- NotifyExternalPushed reinicia uma coroutine e só no frame seguinte avalia tile
+  inválido/hole/SuddenDeath/bounce; não prever essa decisão de dano/recuperação.
+- Não usar scope de voo travado: input continua permitido durante push. Compor
+  uma vez no tick/replay e impedir aplicação paralela no FixedUpdate nativo para
+  esse ator; checar catch-up de inputs versus fase de mundo/turno do pusher.
+- R02 já captura shapes Box/Circle/Capsule com Rigidbody simulado e atualiza views
+  a20Hz. A pose de query é aplicada diretamente; isso não é história temporal de
+  força. Não inventar que todos os corpos móveis são unsupported no código atual.
+- Hurricane quando o player foge já aplica multiplicador0.5 com prazo curto,
+  coberto pela infraestrutura histórica A13; no outro ramo ainda usa MovePosition.
+  Magnet e Bubble também têm MovePosition direto; Bubble tem distância finita de
+  um tile, mas não trava input. Nenhum desses ramos foi alterado nesta retomada.
+- Próximos testes C07: caminhada simultânea/contato parcial, atores com múltiplos
+  colliders, troca de sentido/endpoint, pause, muro/hole e bounce autoritativo;
+  validar offline/COM e owner/observador sem reativar o mundo client.
+
+
+Fechamento45: CI40442915878 COMPLETO/sucesso confirmado, incluindo servidor,
+updater e artefatos. Runtime14b6f5cac/protocolo45 publicado; nenhum código46
+iniciado. Nenhum processo próprio de teste ficou em execução. Checklist conferido:
+33 IDs únicos,13 implementados/testados,12 parciais,8 pendentes; manual não realizado.
+Próxima retomada: C07, ler auditoria acima e preservar offline/COM/inputs simultâneos;
+não presumir que force composition ou R04 foi implementado. Tracked runtime locais
+restantes são só as três alterações do usuário (duas fontes e TitleScreen).
