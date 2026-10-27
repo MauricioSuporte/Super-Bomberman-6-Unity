@@ -457,6 +457,7 @@ namespace Assets.Scripts.Netcode
             UpdateBlackDash(deltaTime, unscaledDeltaTime);
             PresentBombMotions(deltaTime, unscaledDeltaTime);
             UpdateLocalAbilityPresentation();
+            UpdateOwnerBoat(deltaTime, unscaledDeltaTime);
         }
 
         void PresentBombMotions(float deltaTime, float unscaledDeltaTime)
@@ -595,6 +596,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearPlayerActionPresentations()
         {
+            ClearOwnerBoat();
             ResetLocalAbilityPresentation();
             ClearRidingPresentation("clear_playback"); hasDismountState = false;
             ClearPurpleLineCast("clear_playback");

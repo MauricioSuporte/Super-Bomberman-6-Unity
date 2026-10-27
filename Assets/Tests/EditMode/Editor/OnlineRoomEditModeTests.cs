@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Mirror;
 
-public sealed class OnlineRoomEditModeTests
+public sealed partial class OnlineRoomEditModeTests
 {
     [Test]
     public void SuddenDeathClientCopiesApprovedPathWithoutDrawingGameplayRandom()

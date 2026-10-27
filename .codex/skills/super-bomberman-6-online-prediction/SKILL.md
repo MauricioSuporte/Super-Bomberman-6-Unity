@@ -288,6 +288,17 @@ world poses and animation playback. Preserve each bomb's own timeline offset.
 When restoring coupled flags, inspect setters: SetExternalMovementOverride clears
 hazard damage, so restore the override before its saved hazard setting.
 
+A support that allows free walking needs approved collision context in the motor
+and replay, not a locked-flight scope. A boat's owner view can follow the predicted
+root using renderer-only proxies and current head assets without granting native
+water permission, occupancy or protection. Coordinate player/mount presenters,
+freeze root/idle/frame on pause and yield to approved transport scopes. Hide the
+duplicate co-op view using server renderer IDs with owner-scoped claims, restoring
+its last approved visibility on release. Cache a definition key before native
+anchoring/following; fail closed on missing or ambiguous definitions. Encode an
+absent support compactly, and classify its diagnostic samples separately from
+walking so new statistics do not mix unrelated motion contexts.
+
 
 Client startup must not reset authored/approved field directions just to build a
 read-only cache. For magnetic tiles, gate native scan/pull/rotation first and send

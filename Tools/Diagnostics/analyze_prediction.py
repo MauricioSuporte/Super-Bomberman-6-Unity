@@ -28,6 +28,9 @@ def summarize(records, minimum_percentile_samples=20):
         mounted = re.search(r"\bmounted=(True|False)\b", input_context, re.IGNORECASE)
         block = re.search(r"\bprediction_block=([^\s;]+)", input_context)
         context = "mounted" if mounted and mounted[1].lower() == "true" else "walking" if mounted else "unknown"
+        boat = re.search(r"\bboat=(True|False)\b", input_context, re.IGNORECASE)
+        if boat and boat[1].lower() == "true":
+            context = "boat_mounted" if context == "mounted" else "boat" if mounted else "boat_unknown_mount"
         conveyor = re.search(r"\bconveyor=(.+)$", input_context)
         conveyor_context = conveyor[1].rsplit(":", 1)[0] if conveyor else "unknown"
         key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context,

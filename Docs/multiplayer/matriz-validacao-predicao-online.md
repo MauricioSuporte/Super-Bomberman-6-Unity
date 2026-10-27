@@ -98,6 +98,12 @@ não autoriza considerar essas lacunas resolvidas.
 - **Pólvora:** uma ignição, nova ignição durante a anterior, término, pausa e
   desativação. Piso/matrizes devem voltar ao original; client não cria hitboxes
   nem inicia o estado nativo IgnitionRunning.
+- **Barco/Submarine:** após embarque confirmado, caminhar/virar nas quatro
+  direções, com e sem Louie, comparar owner/observador e repetir pausa, scope de
+  portal/transporte, desembarque, nova cena e desconexão. Conferir cabeça, sombra,
+  ausência de barco duplicado, perda da permissão de água no tick correto e
+  posição final do desembarque. Capturas45 incluem boat=True/False; o comparador
+  separa boat/boat_mounted. Capturas antigas sem esse campo não isolam barco.
 - **Sudden Death:** comparar `sudden_death_begin` (`path_count`, `path_hash` e
   `music_wait`) e `sudden_death_drop_begin/finished` por célula e papel. Esses
   eventos ajudam a investigar a timeline; não confirmam por si o commit de

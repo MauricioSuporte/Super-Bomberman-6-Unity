@@ -85,6 +85,11 @@ namespace Assets.Scripts.Netcode
             var mount = companion != null ? companion.GetMountedLouieObject() : null;
             if (mount != trackedMount) Rebind(mount);
             if (renderers == null) return;
+            if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.OwnerBoatPredictionReady == true)
+            {
+                foreach (var sprite in sprites) if (sprite != null) sprite.enabled = false;
+                return;
+            }
             if (isServer)
             {
                 if (Time.unscaledTime < nextSample) return;

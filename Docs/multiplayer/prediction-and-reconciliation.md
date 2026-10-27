@@ -983,3 +983,54 @@ sudden_death_begin (stable path hash/count and approved music wait) and
 sudden_death_drop_begin/finished (cell/position, initial duration). These are
 instrumentation for future captures, not a measured latency gain. The per-ID
 manual matrix remains unexecuted.
+
+## Boat owner movement and presentation (protocol 45)
+
+After the authority confirms a BoatRideZone attachment, walking keeps using the
+owner's existing movement motor and input replay. NetworkMovementState now carries
+the approved tagged-obstacle permission and tag; all four motor queries use that
+historical context inside predicted ticks. Reconciliation does not mutate the
+client's native water permission, occupancy, ignored collision pairs or protection.
+
+The boat descriptor identifies the authored definition by cached hierarchy/local
+position, and carries server renderer IDs, follow/head offsets and render flags.
+The key is cached before native anchoring/following; a moving boat does not change
+its definition key. Missing, ambiguous or malformed definitions suspend boat
+prediction and keep authority. An optional codec writes only one presence byte
+for a player outside a boat, rather than sending empty poses on every snapshot.
+
+NetworkBombFx owns the local boat view: only SpriteRenderer/AnimatedSpriteRenderer
+children, using the existing authored clips/materials and the current player's
+head renderers. Position follows the predicted Rigidbody; direction changes do
+not wait for a new server frame. Native body suppression/protection are not granted
+by this view. The head and mount network presenters yield their visual ownership
+while the boat view is active; mounted sprites/shadow remain hidden as offline.
+
+Co-op stream suppression uses the server's approved renderer IDs, not client
+GetEntityId values. Claims have an owner, so cleanup of an older presenter cannot
+unhide a newer one. Releasing a claim restores the last approved visibility
+immediately. Observers keep the existing approved co-op stream. Pause preserves
+the presented root, direction, idle and animation phase; death, source removal,
+scene/client stop and confirmed detach release the projection. Approved continuous
+transport scopes, including portals, take over through their existing presenters.
+
+Native client anchoring/following/mounting and zone triggers are gated before a
+snap or gameplay side effect. Native offline/host behavior remains; server-only
+reconciliation is guarded by an initialized server identity. The unmount zone
+forces reconciliation after its final snap, not halfway through the transition.
+No scene/prefab changes were needed; RedBoat, Submarine and authored BoatRideZone
+references remain the existing integration points.
+
+Diagnostics label boat=True/False from native authority or acknowledged client
+context. The comparator separates boat and boat_mounted from walking/mounted,
+uses the context at input and excludes boat_context_pending from free input
+latency. Older captures without this flag cannot isolate boat movement.
+
+Final validation:347/347 Unity (OnlineRoom255 + COM92), C#0 new warnings/errors,
+Python42/42 and UTF-8/BOM/meta/diff checks. Reports:Logs/PredictionBoat45DiagnosticsTests.*.
+Earlier342 and346 reports were retained before the diagnostics extension. New
+cases cover conflicting native versus historical water permissions, offline/host
+and client gates, owner direction/root/pause, pure visual structure, source loss,
+stop cleanup, wire presence/roundtrip, claim transfer and NPA/NMA integration.
+The per-ID manual matrix, real two-peer captures and a measured latency gain
+remain pending; automated cases do not prove offline-identical feel in every scene.

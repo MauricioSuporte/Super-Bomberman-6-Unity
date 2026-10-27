@@ -9,6 +9,26 @@ spec.loader.exec_module(analysis)
 
 
 class PredictionAnalysisTests(unittest.TestCase):
+    def test_boat_motion_is_not_mixed_with_walking_or_mounted_boats(self):
+        result = analysis.summarize([
+            {"kind": "input_to_motion", "durationMs": 10, "detail": "prediction_block=none mounted=False boat=False"},
+            {"kind": "input_to_motion", "durationMs": 30, "detail": "prediction_block=none mounted=False boat=True"},
+            {"kind": "input_to_motion", "durationMs": 50, "detail": "prediction_block=none mounted=True boat=True"},
+        ])
+        self.assertEqual([(row["context"], row["medianMs"]) for row in result],
+                         [("walking", 10), ("boat", 30), ("boat_mounted", 50)])
+
+    def test_boat_transition_uses_input_context_and_excludes_pending_permission(self):
+        result = analysis.summarize([
+            {"kind": "input_to_motion", "durationMs": 10, "detail": "at_input:prediction_block=none mounted=False boat=False;at_response:prediction_block=none mounted=False boat=True"},
+            {"kind": "input_to_motion", "durationMs": 300, "detail": "at_input:prediction_block=boat_context_pending mounted=False boat=True;at_response:prediction_block=none mounted=False boat=True"},
+        ])
+        self.assertEqual(result[0]["context"], "walking")
+        self.assertEqual(result[0]["medianMs"], 10)
+        self.assertEqual(result[1]["context"], "boat")
+        self.assertIsNone(result[1]["medianMs"])
+        self.assertEqual(result[1]["blockedResponsesExcluded"], 1)
+
     def test_blocked_and_unclassified_input_never_become_latency_samples(self):
         result = analysis.summarize([
             {"kind": "input_to_motion", "durationMs": 500, "detail": "at_input:prediction_block=input_locked mounted=True;at_response:prediction_block=none"},

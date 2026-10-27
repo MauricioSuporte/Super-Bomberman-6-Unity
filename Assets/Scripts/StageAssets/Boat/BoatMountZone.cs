@@ -51,6 +51,7 @@ public sealed class BoatMountZone : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other == null) return;
 
         var mc = other.GetComponentInParent<MovementController>();
@@ -81,6 +82,7 @@ public sealed class BoatMountZone : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other == null) return;
 
         var mc = other.GetComponentInParent<MovementController>();

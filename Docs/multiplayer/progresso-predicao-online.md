@@ -29,15 +29,18 @@ implementação concluída de trabalho parcial. Validação manual fica separada
   Python40/40 e UTF-8/BOM/metas/diffcheck passaram. Relatórios preservados em Logs/.
 - **Documentação:** checklist por33 IDs revisado, skill/notas atualizadas e matriz
   manual criada com cenários/evidências por ID; execução manual ainda pendente.
-- **Próximos itens:** C06 barco (auditoria detalhada ao fim deste arquivo), demais
+- **Lote45 validado, publicação pendente:** barco/cabeça acompanham movimento
+  previsto após embarque confirmado, água histórica no replay e cleanup de views.
+  Unity347/347, C#0/0, Python42/42 e UTF-8/BOM/metas/diffcheck passaram.
+- **Próximos itens:** publicar45, C07/forças no motor/replay, demais
   R07/sem owner, forças no motor/replay, blackout/tiles e demais C/R. C10 continua
   com timeline/commit de terreno/late join; A14 com matriz/manual pendentes.
 - **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
   capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
   pendências descritas no checklist. Não declarar zero latência ou plano completo.
-- **Workspace:** branch `v0.5.0`, checkout original. Runtime44 commitado/publicado;
-  nenhum código incompleto no diretório. Preservar fontes e TitleScreen do usuário
-  e o Unity aberto com alterações não salvas. Não há implementação45 iniciada.
+- **Workspace:** branch `v0.5.0`, checkout original. Runtime44 publicado; lote45
+  de barco/contexto/owner view em implementação, ainda sem commit. Preservar
+  fontes/TitleScreen do usuário e o Unity aberto com alterações não salvas.
 
 ## Como acompanhar
 
@@ -170,11 +173,11 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 
 ## Checklist por ID
 
-Resumo: **12 de33 IDs concluídos em implementação/testes,13 parciais e8 pendentes**.
+Resumo: **13 de33 IDs concluídos em implementação/testes,12 parciais e8 pendentes**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
-- [ ] P0: ferramenta e contexto implementados/testados; novas capturas comparáveis pendentes.
+- [ ] P0: ferramenta/contexto implementados/testados, incluindo classificação de barco45; novas capturas comparáveis pendentes.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
 - [x] A03: predição/autoridade de dash e testes; manual pendente.
@@ -188,13 +191,13 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: parcial44: descoberta e fixtures COM corrigidas,335 testes combinados aprovados; matriz completa/manual pendentes.
+- [ ] A14: parcial45: descoberta e fixtures COM corrigidas,347 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
-- [ ] C06: parcial39 publicado: correnteza/saída/replay e plataforma multi-rider aprovados; barco/contexto/poses e manual pendentes.
+- [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [ ] C07: pusher.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: mecanismos e tiles especiais.
@@ -207,7 +210,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R06: bosses/bombers.
 - [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
 - [ ] R08: cenário móvel/ambiental.
-- [ ] Consolidar skill e notas (atualizadas até44); matriz manual criada, execução e consolidação final pendentes.
+- [ ] Consolidar skill e notas (atualizadas até45); matriz manual criada, execução e consolidação final pendentes.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
 registrar separadamente validação manual ainda não realizada. Hipóteses de
@@ -1194,3 +1197,66 @@ Próxima retomada: ler Estado atual/Checklist, notas44 e auditoria C06 acima;
 não presumir barco previsto nem C10/R07 completos. Nenhum teste/processo de
 validação próprio permanece em execução. Só fontes/TitleScreen do usuário
 ficam como alterações runtime locais após salvar este checkpoint.
+
+
+Retomada45 C06 em implementação: NetworkMovementState inclui taggedPass/passTag
+históricos e descriptor aprovado do barco. Quatro queries do motor usam contexto
+acknowledged durante tick/replay sem alterar flags nativas client. BoatRideZone
+cacheia chave por hierarquia + posição local authored antes do autoanchor/follow,
+para distinguir múltiplos barcos com mesmo nome. Captura IDs de SR do servidor,
+flags/offsets/escala/rotação/follow para owner, sem conceder proteção/ocupação.
+Native client Awake/Late/TryMount/TryUnmount e triggers de zonas têm gates;
+reconcile do desembarque ocorre após snap final. Guard Server/NI evita chamada
+[Server] em prefab offline não inicializado. FX owner cria só SR/ASR de barco,
+usa cabeças atuais da skin e suprime somente views co-op dos IDs aprovados.
+NPA/NMA respeitam posse de pose do barco; pausa restaura raiz antes da renderização.
+C# inicial passou0 erros/avisos novos (6 avisos antigos de dependências no rebuild).
+Revisão/testes ainda em andamento, nada45 publicado.44 é último deploy confirmado.
+Contagem permanece12 implementados/testados/13 parciais/8 pendentes. Próximo:
+finalizar fixtures de motor/pass, gates, owner view/pausa/cleanup e wire; executar
+OnlineRoom+COM no runner somente se nenhum CI estiver ativo. Nenhum teste45 rodou.
+
+
+45 testes em execução no runner livre: exec31556, PredictionBoat45Tests.xml/.log
+(Build/CI e Logs/CI). Esperado342 casos (335 anteriores +7 barco), conferir XML.
+Novas fixtures foram separadas em partial da MESMA OnlineRoomEditModeTests, sem
+alterar descoberta/filtro CI. C# inicial e final intermediário passaram0 erros/
+avisos novos; compilação final/Python em execução. Client view NÃO altera flag
+externalVisualSuppressed, nem proteção/ocupação; usa só SR/ASR e cabeças atuais.
+Pausa preserva direction/idle/frame e root antes da renderização. Scope contínuo
+autoritativo (portal/transporte) desativa projeção para os presenters existentes.
+Views do stream são restauradas imediatamente com a última visibilidade aprovada,
+com dono por ID para cleanup antigo não liberar a claim nova. Source morto/view
+removido também limpam. Testes ainda não tiveram resultado; não publicar45 agora.
+
+
+45 primeira rodada342/342 PASSOU (250 OnlineRoom +92 COM), relatórios iniciais
+preservados em Logs/PredictionBoat45Tests.*. Após essa rodada, acrescentado codec
+opcional do descriptor (fora do barco só1 byte) e testes de handoff de claim,
+cedência a transporte aprovado e NPA/NMA com mount. C# final0/0 passou; Python40/40.
+Rodada FINAL agora em execução: exec90776, PredictionBoat45FinalTests.xml/.log;
+esperado346 (OnlineRoom254 +COM92), conferir XML. Não extrapolar342 ao código novo.
+NativeAssets verificados: RedBoat.prefab, Submarine.prefab e componentes em cena
+Stage_2-3; Source também usado como prefab nas demais fases. Nenhuma scene/prefab
+precisou ser alterada. Código45 ainda sem commit/publicação. Último deploy44.
+
+
+45 segunda rodada346/346 PASSOU (OnlineRoom254 +COM92), incluindo codec1 byte,
+claim transfer, retorno de scope aprovado e NPA/NMA sem reaparecer Louie/sombra.
+Relatórios preservados em Logs/PredictionBoat45FinalTests.*. Acréscimo P0 necessário:
+MotionDiagnosticProbe agora informa boat=True/False via contexto aprovado, sem
+registrar ocupação nativa client. Comparador separa boat/boat_mounted de walking/
+mounted e usa contexto NA ENTRADA, excluindo boat_context_pending da latência.
+Dois testes Python novos e1 Unity de formatter/contexto; código do barco não mudou
+após346. Rodada completa atual exec55137, PredictionBoat45DiagnosticsTests.xml/.log,
+esperado347 (255 OnlineRoom +92 COM). Ainda conferir XML, não presumir resultado.
+
+
+45 FINAL:347/347 Unity (255 OnlineRoom +92 COM), C#0 erros/avisos novos,
+Python42/42 (34 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
+Logs/PredictionBoat45DiagnosticsTests.*;342/346 intermediários também preservados.
+15 tracked próprios do runner restaurados; novos arquivos/metas ficarão para
+checkout normal do CI. Nenhuma scene/prefab alterada. C06 marcado implementado/
+testado, com manual explícito pendente como os demais IDs concluídos. Contagem
+agora13 implementados/testados,12 parciais,8 pendentes. A classificação P0 de barco
+foi validada sem nova captura real. Próximo: commit/enviar45 e confirmar CI.

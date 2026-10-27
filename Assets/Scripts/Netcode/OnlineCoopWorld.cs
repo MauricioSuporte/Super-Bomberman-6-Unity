@@ -61,6 +61,32 @@ namespace Assets.Scripts.Netcode
         readonly Dictionary<AudioClip, int> coopSoundIds = new();
         readonly Dictionary<int, CoopSpriteFrame> coopLastSprites = new();
         readonly Dictionary<int, SpriteRenderer> coopViews = new();
+        readonly Dictionary<int, NetworkBombFx> coopOwnerBoatSprites = new();
+        readonly Dictionary<int, bool> coopOwnerBoatVisibility = new();
+
+        public static void SetOwnerBoatSpriteSuppression(NetworkBombFx owner, int[] ids, bool hidden)
+        {
+            if (NetworkServer.active || singleton is not BombermanNetworkManager manager || ids == null) return;
+            foreach (int id in ids)
+            {
+                if (id == 0) continue;
+                if (hidden)
+                {
+                    manager.coopOwnerBoatSprites[id] = owner;
+                    if (manager.coopViews.TryGetValue(id, out var view) && view != null)
+                    {
+                        if (!manager.coopOwnerBoatVisibility.ContainsKey(id)) manager.coopOwnerBoatVisibility[id] = view.enabled;
+                        view.enabled = false;
+                    }
+                }
+                else if (manager.coopOwnerBoatSprites.TryGetValue(id, out var current) && current == owner)
+                {
+                    manager.coopOwnerBoatSprites.Remove(id);
+                    if (manager.coopOwnerBoatVisibility.Remove(id, out bool visible) && manager.coopViews.TryGetValue(id, out var view) && view != null)
+                        view.enabled = visible;
+                }
+            }
+        }
         readonly Dictionary<string, Tilemap> coopMaps = new();
         readonly Dictionary<string, Dictionary<Vector3Int, CoopTileFrame>> coopLastTiles = new();
         readonly Dictionary<string, Dictionary<Vector3Int, CoopTileFrame>> coopTileScratch = new();
@@ -222,6 +248,8 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopWorld()
         {
+            coopOwnerBoatSprites.Clear();
+            coopOwnerBoatVisibility.Clear();
             GetComponent<NetworkBombMotionLifetime>()?.Clear();
             ClearPortalMaskViews();
             ClearCoopCollisionWorld();
@@ -482,7 +510,9 @@ namespace Assets.Scripts.Netcode
             PresentCoopAnimation(view, frame);
             var material = At(coopCatalog.materials, frame.material);
             if (material != null) view.sharedMaterial = material;
-            view.enabled = frame.visible; view.color = frame.color;
+            bool ownerBoatHidden = coopOwnerBoatSprites.ContainsKey(frame.id);
+            if (ownerBoatHidden) coopOwnerBoatVisibility[frame.id] = frame.visible;
+            view.enabled = frame.visible && !ownerBoatHidden; view.color = frame.color;
             view.flipX = frame.flipX; view.flipY = frame.flipY; view.maskInteraction = (SpriteMaskInteraction)frame.mask;
             view.sortingLayerID = frame.sortingLayer; view.sortingOrder = frame.order;
         }

@@ -29,6 +29,7 @@ public sealed class BoatUnmountZone : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other == null)
             return;
 
@@ -49,6 +50,7 @@ public sealed class BoatUnmountZone : MonoBehaviour
             return;
 
         mc.SnapToWorldPoint(center, roundToGrid: true);
+        BoatRideZone.ReconcileNetworkRider(mc);
     }
 
     private BoatRideZone ResolveBoatForUnmount(MovementController mc)

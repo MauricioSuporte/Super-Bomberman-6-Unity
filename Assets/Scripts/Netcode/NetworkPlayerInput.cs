@@ -316,6 +316,7 @@ namespace Assets.Scripts.Netcode
             kickFx?.ReconcilePurpleLineCast(acknowledgedTick, state);
             kickFx?.RestoreClientKickPositions();
             movement.RestoreNetworkMovementState(state);
+            kickFx?.ReconcileOwnerBoat(state);
             kickFx?.RestorePlayerBouncePosition();
             kickFx?.ReconcileGreenDash(acknowledgedTick, state);
             kickFx?.RestoreGreenDashPosition();
@@ -357,6 +358,7 @@ namespace Assets.Scripts.Netcode
                     transform.position = new Vector3(before.x, before.y, transform.position.z);
                 }
             }
+            kickFx?.RestorePausedBoatPosition(before);
             MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
         }
 

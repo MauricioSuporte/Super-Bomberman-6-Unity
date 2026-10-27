@@ -85,6 +85,7 @@ namespace Assets.Scripts.Netcode
 
         MovementController move;
         bool wasPredicting;
+        public void InvalidateOwnerPose() { appliedIndex = -2; appliedFrame = -1; visualFrames.Clear(); }
 
         void Awake()
         {
@@ -118,6 +119,7 @@ namespace Assets.Scripts.Netcode
             }
             if (!isServer && GetComponent<NetworkBombFx>()?.RidingArcActive == true) return;
             if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.MoleStartupActive == true) return;
+            if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.OwnerBoatPredictionReady == true) return;
             if (predicting)
             {
                 // Replicated ordering can change during an external ride. Keep

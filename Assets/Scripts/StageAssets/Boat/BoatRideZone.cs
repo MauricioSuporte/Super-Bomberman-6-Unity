@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Netcode;
 
 [RequireComponent(typeof(BoxCollider2D))]
-public sealed class BoatRideZone : MonoBehaviour
+public sealed partial class BoatRideZone : MonoBehaviour
 {
     [Header("Boat Visuals (children)")]
     [SerializeField] private AnimatedSpriteRenderer down;
@@ -94,6 +95,8 @@ public sealed class BoatRideZone : MonoBehaviour
 
     private void Awake()
     {
+        _ = NetworkBoatPath; // Cache the authored location before native anchoring/following.
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         boatCollider = GetComponent<BoxCollider2D>();
         boatCollider.isTrigger = true;
 
@@ -111,6 +114,7 @@ public sealed class BoatRideZone : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return;
         if (rider == null || riderRb == null)
         {
             if (autoAnchorSnapWhenIdle && Time.time >= nextAutoAnchorTime)
@@ -134,9 +138,11 @@ public sealed class BoatRideZone : MonoBehaviour
     {
         if (rider != null)
         {
+            var previousRider = rider;
             ridersOnBoats.Remove(rider);
             riderToBoat.Remove(rider);
             ForceUnmount();
+            ReconcileNetworkRider(previousRider);
         }
     }
 
@@ -179,6 +185,7 @@ public sealed class BoatRideZone : MonoBehaviour
 
     public bool CanMount(MovementController mc)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return false;
         if (mc == null) return false;
         if (HasRider) return false;
         if (mc.isDead) return false;
@@ -249,11 +256,13 @@ public sealed class BoatRideZone : MonoBehaviour
         ForceOnly(currentVisual);
         ApplyIdleToAll(true);
 
+        ReconcileNetworkRider(mc);
         return true;
     }
 
     public bool TryUnmount(MovementController mc)
     {
+        if (NetSync.Mode == NetSync.NetMode.Client) return false;
         if (mc == null) return false;
         if (rider == null) return false;
         if (mc != rider) return false;

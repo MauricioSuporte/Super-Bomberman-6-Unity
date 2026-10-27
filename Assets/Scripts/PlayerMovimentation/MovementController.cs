@@ -234,6 +234,11 @@ public partial class MovementController : MonoBehaviour, IKillable
     private bool hasNetworkMovementContext;
     private byte networkMovementCapabilities;
     private MountedType networkMovementMount;
+    private bool networkTaggedPass;
+    private string networkPassTag;
+    private BoatRideZone.NetworkRideState networkBoat;
+    public bool HasBoatMovementContext => Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally
+        ? BoatRideZone.IsRidingBoat(this) : !string.IsNullOrEmpty(networkBoat.path);
     private WaterCycleCurrent.NetworkBarrier networkWaterBarrier;
     public bool UsesAcknowledgedWaterBarrier => predictLocally && hasNetworkMovementContext;
     public bool BlocksAcknowledgedWaterBarrier(Vector2 target) => WaterCycleCurrent.BlocksNetworkBarrier(ref networkWaterBarrier, target);
@@ -248,6 +253,9 @@ public partial class MovementController : MonoBehaviour, IKillable
         public float baseWorldSpeed, speedMultiplier, speedModifierRemaining;
         public BattleMode5ConveyorController.NetworkMotorState conveyor;
         public WaterCycleCurrent.NetworkBarrier waterBarrier;
+        public BoatRideZone.NetworkRideState boat;
+        public bool taggedPass;
+        public string passTag;
         public byte axis, alignAxis, movementCapabilities;
         public MountedType mount;
         public int animationSpeed;
@@ -261,7 +269,8 @@ public partial class MovementController : MonoBehaviour, IKillable
         FloatingPlatform.TryGetPlatformForRider(this, out var platform) && platform.RequiresAuthorityRiderPose;
     public string NetworkPredictionBlockReason => isDead ? "dead" : inputLocked ? "input_locked" : isEndingStage ? "stage_ending" :
         NetworkPlatformControlsPose ? "platform_transport" : externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
-        externalVisualSuppressed && !CanPredictGloveCarry ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
+        !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && !string.IsNullOrEmpty(networkBoat.path) && !CanPredictBoatRide ? "boat_context_pending" :
+        externalVisualSuppressed && !CanPredictGloveCarry && !CanPredictBoatRide ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
         IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :
         !MountedPredictionContextReady ? "mount_context_pending" : !Assets.Scripts.Netcode.BombermanNetworkManager.ClientPredictionGeometryReady ? "scene_geometry_pending" :
         !NetworkConveyorContextReady ? "conveyor_context_pending" : null;
@@ -290,6 +299,15 @@ public partial class MovementController : MonoBehaviour, IKillable
         (TryGetComponent<PowerGloveAbility>(out var glove) && glove.IsHoldingForNet) ||
         (TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.CarryingBombLocally);
 
+    private bool CanPredictBoatRide => Assets.Scripts.Netcode.NetSync.IsOnline &&
+        (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally
+            ? Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && BoatRideZone.TryGetBoatForRider(this, out var boat) && boat.CanProjectNetworkRide
+            : TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.OwnerBoatPredictionReady);
+
+    private bool MovementPassesTaggedObstacle(Collider2D hit) => hit != null &&
+        (UseSnapshotMovementCapabilities ? networkTaggedPass && !string.IsNullOrEmpty(networkPassTag) && hit.CompareTag(networkPassTag)
+            : canPassTaggedObstacles && hit.CompareTag(passObstacleTag));
+
     public void SetNetworkTickDriven(bool value) => networkTickDriven = value;
 
     public NetworkMovementState CaptureNetworkMovementState() => new()
@@ -308,6 +326,9 @@ public partial class MovementController : MonoBehaviour, IKillable
         speedModifierRemaining = predictLocally ? predictedSpeedModifierRemaining : ExternalSpeedModifierRemaining,
         conveyor = CaptureConveyorState(),
         waterBarrier = UsesAcknowledgedWaterBarrier ? networkWaterBarrier : WaterCycleCurrent.CaptureNetworkBarrier(this),
+        boat = predictLocally && hasNetworkMovementContext ? networkBoat : BoatRideZone.CaptureNetworkRide(this),
+        taggedPass = predictLocally && hasNetworkMovementContext ? networkTaggedPass : canPassTaggedObstacles,
+        passTag = predictLocally && hasNetworkMovementContext ? networkPassTag : passObstacleTag,
         animationSpeed = speedInternal, canPredict = CanPredictNetworkMovement,
         movementCapabilities = predictLocally && hasNetworkMovementContext ? networkMovementCapabilities : CurrentMovementCapabilities,
         mount = predictLocally && hasNetworkMovementContext ? networkMovementMount :
@@ -318,6 +339,7 @@ public partial class MovementController : MonoBehaviour, IKillable
     {
         SetNetworkPosition(state.position);
         networkWaterBarrier = state.waterBarrier;
+        networkBoat = state.boat; networkTaggedPass = state.taggedPass; networkPassTag = state.passTag;
         hasNetworkMovementContext = true; networkMovementCapabilities = state.movementCapabilities; networkMovementMount = state.mount;
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && isMounted != (state.mount != MountedType.None))
             SetMountedOnLouie(state.mount != MountedType.None);
@@ -1945,7 +1967,7 @@ public partial class MovementController : MonoBehaviour, IKillable
 
             if (hit.isTrigger) continue;
 
-            if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+            if (MovementPassesTaggedObstacle(hit))
                 continue;
 
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
@@ -2759,7 +2781,7 @@ public partial class MovementController : MonoBehaviour, IKillable
 
             if (hit.isTrigger) continue;
 
-            if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+            if (MovementPassesTaggedObstacle(hit))
                 continue;
 
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
@@ -2833,7 +2855,7 @@ public partial class MovementController : MonoBehaviour, IKillable
 
                 if (hit.isTrigger) continue;
 
-                if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                if (MovementPassesTaggedObstacle(hit))
                     continue;
 
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
@@ -3240,7 +3262,7 @@ public partial class MovementController : MonoBehaviour, IKillable
 
                 if (hit.isTrigger) continue;
 
-                if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                if (MovementPassesTaggedObstacle(hit))
                     continue;
 
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
