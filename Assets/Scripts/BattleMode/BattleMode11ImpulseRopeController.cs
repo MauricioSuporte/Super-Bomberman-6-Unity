@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
-public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestructibleKickedBombHandler
+public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestructibleKickedBombHandler
 {
     const string BattleMode11SceneName = "BattleMode_11";
 
@@ -130,6 +130,11 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             return;
 
         ResolveReferences();
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+        {
+            PresentNetworkRope();
+            return;
+        }
         TickPlayerImpulseTriggers();
     }
 
@@ -147,7 +152,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         bounceSfx = null;
         bounceSfxVolume = 1f;
 
-        if (!IsBattleMode11Active() || bomb == null || blockedTile == null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || !IsBattleMode11Active() || bomb == null || blockedTile == null)
             return false;
 
         Vector2 dir = ToCardinal(kickDirection);
@@ -168,7 +173,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         RopeTileAnimationType animationType,
         float durationSeconds)
     {
-        if (tilemap == null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || tilemap == null)
             return;
 
         if (!TryGetImpulseRopeSegment(hitCell, impactDirection, out Vector3Int startCell, out Vector3Int endCell))

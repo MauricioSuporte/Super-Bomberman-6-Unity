@@ -342,3 +342,11 @@ the existing manager's helper after NetworkTransform, never input or abilities.
 Clean up on scene/identity/client stop and guard against advancing twice in one
 frame during a disable/reactivate transition. This alone does not provide an
 ownerless transport or make owner-hosted VFX coroutines survive deactivation.
+
+For decorative tile deformation on collision tilemaps, keep the native collision
+source intact. Sprite-collider animation frames can otherwise change the client
+query geometry. Use generated plain visual tiles without prefabs/colliders, hide
+only the source cell color, restore its flags/color on clear and retire overlays
+immediately when terrain is replaced. Native TileBase assets may run gameplay
+Startup; never reuse them in the visual layer. Publish approved frames after the
+native coroutine step, with revisions, full late-observer state and explicit clear.

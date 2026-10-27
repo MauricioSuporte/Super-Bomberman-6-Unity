@@ -135,3 +135,13 @@ comportamento offline preservado e ausência de dano/posse/terreno especulativos
 Se houver falha, registrar o ID e o evento de início/fim/correção, corrigir a
 causa e repetir o cenário afetado. Atualizar o checkpoint com o resultado real;
 não marcar todos os cenários como aprovados por uma única partida sem sintomas.
+
+### Continuação C03 / protocolo 47 — corda
+
+Automação cobre wire, frame aprovado, collider original intacto, overlay sem
+collider/prefab, pausa, ordenação temporal, revisão/cena/caminho, entrada inválida,
+histórico limitado, repouso, clear, disable e substituição de terreno. A execução
+com dois peers ainda deve confirmar: preparação -> deformação -> impulso -> pouso,
+soltar direção antes do disparo, acionamento simultâneo nas duas pontas, bomba
+contra a corda, montado/desmontado, pausa durante preparação e fim por Sudden Death.
+Capturar logs correspondentes e vídeo online/offline para avaliar a sensação.

@@ -1153,3 +1153,25 @@ Coverage includes all three native/owner paths, actual physics commit, input
 catch-up, walking/flee, replay/RNG, pause, walls/holes, scene/stale phase, source
 conflicts, heartbeat/clear, time/cell budgets and22shapes across two bodies.
 Matching real captures and the two-peer matrix remain pending.
+
+## C03: deformação aprovada da corda (protocolo 47)
+
+BattleMode11ImpulseRopeController publica snapshots completos dos frames de
+repouso, preparação e impulso em LateUpdate, após as coroutines nativas. Deltas
+visuais são enviados quando o conteúdo muda; heartbeat de 500 ms atende observadores
+que chegam depois. O histórico de 64 snapshots usa a timeline do transform do
+jogador, com revisão, cena e caminho do controller. Pausa congela apresentação;
+clear vazio desfaz a camada, e mensagens antigas não podem ressuscitá-la.
+
+O client não chama StartRopeDeformation nem a rotina de impulso ao tocar a corda.
+O caminho de movimento existente continua usando as posições aprovadas e as poses
+do servidor. Não há antecipação de contato, escolha local do lançamento nem
+rollback de ativação concorrente. O destino interrompido por obstáculo continua
+autoritativo; esta mudança não envia uma curva futura completa do jogador.
+
+Os 32 assets de tile referenciados na cena foram auditados: sem prefab e com
+collider de sprite. Por isso os frames usam Tiles simples gerados, sem prefab ou
+collider, numa Tilemap de apresentação. A tilemap original mantém o tile e seu
+collider: só a cor da célula fica oculta durante a sobreposição. Cor e flags são
+restauradas no repouso/clear/disable. Substituição por Sudden Death remove a
+sobreposição imediatamente, sem recriar o tile antigo. Nenhuma cena foi editada.

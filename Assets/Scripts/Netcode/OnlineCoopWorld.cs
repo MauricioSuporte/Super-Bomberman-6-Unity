@@ -117,6 +117,11 @@ namespace Assets.Scripts.Netcode
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode8RoofController>()) controller.ReceiveNetworkRoof(message);
             });
+            NetworkClient.RegisterHandler<RopeTileView>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                foreach (var controller in FindObjectsByType<BattleMode11ImpulseRopeController>()) controller.ReceiveNetworkRope(message);
+            });
             NetworkClient.RegisterHandler<PowderTrailFrame>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;

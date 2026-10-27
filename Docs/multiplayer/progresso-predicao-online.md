@@ -18,11 +18,11 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo45, commit `ecc3caa4f`, pipeline
-  [40448262003](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40448262003).
+- **Servidor e atualizador publicados:** protocolo46, commit `509cb70d2`, pipeline
+  [40485513422](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40485513422).
   concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
-  confirmados. Sem novo wire/RPC neste lote.
-- **Avanço local validado46:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
+  confirmados. C07/R04 introduziram novo contexto no wire46.
+- **Avanço46 validado e enviado:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
   implementados/testados. Forças confirmadas compõem com caminhada/replay por até
   150ms na célula/fase aprovada; IA, captura inicial, dano e bounce são do servidor.
 - **Validação46:**423/423 Unity (OnlineRoom331 + COM92), C#0 erros/avisos novos,
@@ -33,13 +33,13 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
   física; manuais/capturas e custo real continuam pendentes.
 - **Checklist:**15 IDs implementados/testados,12 parciais e6 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo:** publicar46 agrupando C07+R04, confirmar CI e continuar os demais
+- **Próximo:** continuar os demais
   C/R/A/P0 até encerrar o checklist, como solicitado. Nenhuma alteração C09 foi
   feita: auditoria encontrou blackout/materiais de máscara fora do stream.
-- **Workspace:** branch `v0.5.0`, checkout original. Lote46 ainda local, com novo wire
-  (Authenticator/Directory46); última publicação confirmada continua45/ecc3caa4f. Preservar fontes/TitleScreen do usuário
-  e o Editor aberto. O runner encerrou os testes e mantém fontes próprias46
-  copiadas para a próxima validação; não restaurar a base45 sem recopiá-las.
+- **Workspace:** branch `v0.5.0`, checkout original. Lote46 enviado/publicado,
+  C07 `04189e84d` e R04 `509cb70d2`. C03 em implementação local no protocolo47:
+  frames aprovados da corda em camada visual sem colisores; validado 427/427 Unity.
+  C02 permanece em auditoria. Preservar fontes/TitleScreen e Editor do usuário.
 
 ## Como acompanhar
 
@@ -193,7 +193,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
-- [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
+- [ ] C03: parcial47: preparação/voo36 e deformação ambiental47 aprovadas/testadas; auditoria final do voo/devolução ao motor e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
@@ -1478,3 +1478,17 @@ voltam à autoridade; dano continua servidor.
 Próximo: restaurar APENAS tracked próprios do runner após preservar reports,
 commit R04, enviarC07+R04juntos, confirmar publicação46 e continuar próximosIDs.
 Contagem15implementados/testados,12parciais,6pendentes; manual não realizado.
+
+
+## Continuação autorizada: C03 / protocolo 47 (27/10/2026)
+
+CI46/40485513422 concluiu com sucesso em 509cb70d2 (C07 + R04). Artefatos de
+validação e Windows disponíveis. Novo trabalho C03 ainda local: frames de corda
+aprovados em overlay sem collider, gates de deformação/contato, revisão/histórico,
+heartbeat/clear e restauração. Auditoria dos 32 tiles da cena não encontrou prefab;
+todos usam collider de sprite, preservado na tilemap original. Sem cena alterada.
+Focados Unity 4/4 passaram; C# incremental 0 erros/avisos e Python 44/44 passaram.
+Suite combinada PredictionRope47FinalTests passou 427/427 (OnlineRoom335 +
+COM92), XML e log preservados em Logs/. C03 permanece parcial: comparações manuais e auditoria
+final do voo/devolução ao motor ainda pendentes. Novo message requer protocolo47
+no Authenticator e Directory, ambos locais. C02 permanece só em auditoria.
