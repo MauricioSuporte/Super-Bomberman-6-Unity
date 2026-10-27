@@ -23,24 +23,6 @@ TextureImporter:
   - first:
       213: 77860031263128288
     second: Checker93_6
-  - first:
-      213: 8998384085271132980
-    second: Checker93_7
-  - first:
-      213: 4170715663281690705
-    second: Checker93_8
-  - first:
-      213: 7598680326600079935
-    second: Checker93_9
-  - first:
-      213: 5365801106718506446
-    second: Checker93_10
-  - first:
-      213: 6780130481225930790
-    second: Checker93_11
-  - first:
-      213: -4248380898826576175
-    second: Checker93_12
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -155,9 +137,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 18
-        width: 16
-        height: 16
+        y: 0
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -176,10 +158,10 @@ TextureImporter:
       name: Checker93_1
       rect:
         serializedVersion: 2
-        x: 18
-        y: 18
-        width: 16
-        height: 16
+        x: 22
+        y: 0
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -198,10 +180,10 @@ TextureImporter:
       name: Checker93_2
       rect:
         serializedVersion: 2
-        x: 36
-        y: 18
-        width: 16
-        height: 16
+        x: 44
+        y: 0
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -220,10 +202,10 @@ TextureImporter:
       name: Checker93_3
       rect:
         serializedVersion: 2
-        x: 54
-        y: 18
-        width: 16
-        height: 16
+        x: 66
+        y: 0
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -242,10 +224,10 @@ TextureImporter:
       name: Checker93_4
       rect:
         serializedVersion: 2
-        x: 72
-        y: 18
-        width: 16
-        height: 16
+        x: 88
+        y: 0
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -264,10 +246,10 @@ TextureImporter:
       name: Checker93_5
       rect:
         serializedVersion: 2
-        x: 90
-        y: 18
-        width: 16
-        height: 16
+        x: 110
+        y: 0
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -286,10 +268,10 @@ TextureImporter:
       name: Checker93_6
       rect:
         serializedVersion: 2
-        x: 0
+        x: 132
         y: 0
-        width: 16
-        height: 16
+        width: 22
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -304,143 +286,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Checker93_7
-      rect:
-        serializedVersion: 2
-        x: 18
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 43b3d1b66aea0ec70800000000000000
-      internalID: 8998384085271132980
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Checker93_8
-      rect:
-        serializedVersion: 2
-        x: 36
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 15810116ccb51e930800000000000000
-      internalID: 4170715663281690705
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Checker93_9
-      rect:
-        serializedVersion: 2
-        x: 54
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f3a3fbc5f7fe37960800000000000000
-      internalID: 7598680326600079935
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Checker93_10
-      rect:
-        serializedVersion: 2
-        x: 72
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ecdba556da7277a40800000000000000
-      internalID: 5365801106718506446
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Checker93_11
-      rect:
-        serializedVersion: 2
-        x: 90
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 628154000ccd71e50800000000000000
-      internalID: 6780130481225930790
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Checker93_12
-      rect:
-        serializedVersion: 2
-        x: 108
-        y: 0
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1de13e6d418ba05c0800000000000000
-      internalID: -4248380898826576175
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c58e472f6b7ec154b8d980fc79cd2626
+    spriteID: 566f570e79eff7b4db8d939ff0cd277b
     internalID: 0
     vertices: []
     indices: 
@@ -450,21 +300,15 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":2.0,"y":2.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":22.0,"y":22.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Checker93_0: 2284471078207530045
       Checker93_1: -2146866955523544699
-      Checker93_10: 5365801106718506446
-      Checker93_11: 6780130481225930790
-      Checker93_12: -4248380898826576175
       Checker93_2: 1998675732833303020
       Checker93_3: 4315536999262621222
       Checker93_4: 2392464627368208872
       Checker93_5: -7726968235557113056
       Checker93_6: 77860031263128288
-      Checker93_7: 8998384085271132980
-      Checker93_8: 4170715663281690705
-      Checker93_9: 7598680326600079935
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
