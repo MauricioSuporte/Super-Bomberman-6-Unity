@@ -395,3 +395,12 @@ from blackout's unscaled alpha. Restrict wrap/gap cuts to audited motion ranges;
 a blanket distance threshold can break fast projectiles or large custom arcs.
 Derived Start/Fixed/callback overrides need their own authority gates when they
 bypass the base; checking only the base loop is insufficient.
+
+
+For a dead player's projectile, inspect the spawn call before debugging its arc.
+A registered prefab is insufficient: spawn the authoritative instance before its
+first motion event so receivers can resolve its netId, and replicate a failure
+removal. Distinguish approved Revenge launch from a living player's Punch pose;
+it must not grant return eligibility or inherit an unrelated input prediction lead.
+An inactive owner's retained presenter does not itself supply cart input, carrier
+transport or confirmed player reactivation. Keep those checklist items explicit.

@@ -3205,6 +3205,9 @@ public partial class BombController : MonoBehaviour
 
     public bool LaunchRevengeBomb(Vector2 launchWorldPos, Vector2 direction, int distanceTiles, int forcedRadius)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            return false;
+
         ResolveTilemaps();
 
         GameObject prefabToUse = revengeBombPrefab != null
@@ -3268,6 +3271,9 @@ public partial class BombController : MonoBehaviour
             distanceT) * launchTileSize;
         float launchBounceArcHeight = RevengeLaunchBounceArcHeightTiles * launchTileSize;
 
+        // Spawn must precede the first arc RPC: receivers resolve it by netId.
+        Assets.Scripts.Netcode.NetSpawn.Server(bomb);
+
         if (!bombComponent.StartPunch(
             direction,
             launchTileSize,
@@ -3275,9 +3281,10 @@ public partial class BombController : MonoBehaviour
             launchObstacleMask,
             destructibleTiles,
             arcHeightOverride: launchArcHeight,
-            bounceArcHeightOverride: launchBounceArcHeight))
+            bounceArcHeightOverride: launchBounceArcHeight,
+            motionKind: Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Revenge))
         {
-            Destroy(bomb);
+            Assets.Scripts.Netcode.NetSpawn.Despawn(bomb);
 
             if (lastPlacedBomb == bomb)
                 lastPlacedBomb = null;

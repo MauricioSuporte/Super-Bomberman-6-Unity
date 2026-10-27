@@ -1221,3 +1221,14 @@ Pausa mantém a pose/frame já exibidos; não bloqueia recebimento nem clear. O 
 não se aplica indiscriminadamente a projéteis/bosses de alta velocidade. Valores
 atuais foram auditados nos prefabs; configurações futuras de arco maior exigem
 revisão. Não prevê alvo, colisão, morte ou nova direção de NPC.
+
+
+## Revenge Bomber: transporte da bomba (protocolo50)
+
+LaunchRevengeBomb só executa em autoridade/offline e registra o spawn antes do
+primeiro StartPunch. O motion kind Revenge reaproveita a curva nativa e a fila
+ordenada de arcos/stop, inclusive quando o owner já está desativado; não inicia
+pose de BombPunch/PowerGlove nem predição de retorno, continuação ou Rubber.
+Falha após spawn usa despawn replicado. A compatibilidade exige client/server50.
+Isso corrige o caminho da bomba; não implementa input/transporte do carrinho ou
+reativação do jogador. A12 permanece parcial e requer validação real entre peers.

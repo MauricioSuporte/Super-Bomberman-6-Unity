@@ -8,7 +8,7 @@ namespace Assets.Scripts.Netcode
     // Shares the Player's existing NetworkBombFx behaviour/index; no new manager.
     public partial class NetworkBombFx
     {
-        public enum BombMotionKind : byte { Kick, Punch, Throw, Lift, Carry, Yellow, Search, Magnet, Environment }
+        public enum BombMotionKind : byte { Kick, Punch, Throw, Lift, Carry, Yellow, Search, Magnet, Environment, Revenge }
         float abilityLockRemaining, abilityPoseRemaining, abilityPoseDuration;
         int abilityPoseFrame = -1;
         BombMotionKind abilityPoseKind;
@@ -38,7 +38,7 @@ namespace Assets.Scripts.Netcode
         public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || RidingArcActive || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
             (abilityPoseKind == BombMotionKind.Yellow || abilityPoseKind == BombMotionKind.Punch)));
         public static bool NonBlockingMotion(BombMotionKind kind) => kind == BombMotionKind.Punch ||
-            kind == BombMotionKind.Throw || kind == BombMotionKind.Lift || kind == BombMotionKind.Carry;
+            kind == BombMotionKind.Throw || kind == BombMotionKind.Revenge || kind == BombMotionKind.Lift || kind == BombMotionKind.Carry;
 
         public static Vector2 SampleBoundedBounce(Vector2 start, Vector2 end, float duration, float elapsed)
         {
@@ -195,7 +195,7 @@ namespace Assets.Scripts.Netcode
 
         public bool BeginAbilityPrediction(Bomb target, KickMotion motion, Vector2 direction, float lockTime)
         {
-            if (motion.kind == BombMotionKind.Environment || NetSync.Mode != NetSync.NetMode.Client || !isLocalPlayer || !NetworkClient.active || GamePauseController.IsPaused ||
+            if (motion.kind == BombMotionKind.Environment || motion.kind == BombMotionKind.Revenge || NetSync.Mode != NetSync.NetMode.Client || !isLocalPlayer || !NetworkClient.active || GamePauseController.IsPaused ||
                 target == null || target.HasExploded || !target.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return false;
             if (kickPlayback.TryGetValue(target, out var previous) && previous.unconfirmed) return false;
             if (rejectedStarts.TryGetValue(target, out var rejected) && rejected.direction == direction &&

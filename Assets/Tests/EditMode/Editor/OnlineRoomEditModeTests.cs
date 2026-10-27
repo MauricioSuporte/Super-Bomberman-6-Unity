@@ -347,9 +347,11 @@ public sealed partial class OnlineRoomEditModeTests
         }
     }
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public void InactiveOwnerKeepsApprovedBombMotionAndCancelsOnlyUnconfirmedActions(bool stopClient)
+    [TestCase(false, NetworkBombFx.BombMotionKind.Punch)]
+    [TestCase(true, NetworkBombFx.BombMotionKind.Punch)]
+    [TestCase(false, NetworkBombFx.BombMotionKind.Revenge)]
+    [TestCase(true, NetworkBombFx.BombMotionKind.Revenge)]
+    public void InactiveOwnerKeepsApprovedBombMotionAndCancelsOnlyUnconfirmedActions(bool stopClient, NetworkBombFx.BombMotionKind kind)
     {
         var oldMode = NetSync.Mode; var oldNetworkedScene = NetSync.IsNetworkedScene;
         var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
@@ -384,10 +386,15 @@ public sealed partial class OnlineRoomEditModeTests
             Vector2 origin = new(3000, 3000);
             var approved = Replica(approvedId, origin); var predicted = Replica(predictedId, origin + Vector2.up * 2);
             var motion = new NetworkBombFx.KickMotion { bombId = approvedId, revision = 1, inputTick = 20,
-                kind = NetworkBombFx.BombMotionKind.Punch, start = origin, end = origin + Vector2.right, duration = 1,
+                kind = kind, start = origin, end = origin + Vector2.right, duration = 1,
                 moving = true, first = true, serverTime = NetworkBombFx.KickServerNow };
+            using (var writer = NetworkWriterPool.Get())
+            { writer.Write(motion); motion = new NetworkReader(writer.ToArray()).Read<NetworkBombFx.KickMotion>(); }
+            if (kind == NetworkBombFx.BombMotionKind.Revenge)
+                Assert.IsFalse(fx.BeginAbilityPrediction(approved, motion, Vector2.right, .25f), "Eligibility to return to the arena is never speculative.");
             fx.ReceiveKickMotion(motion); Assert.IsFalse(approved.GetComponent<Collider2D>().enabled);
-            var pending = motion; pending.bombId = predictedId; pending.inputTick = 21; pending.revision = 0;
+            Assert.IsFalse(fx.AbilityPredictionLocksMovement);
+            var pending = motion; pending.kind = NetworkBombFx.BombMotionKind.Punch; pending.bombId = predictedId; pending.inputTick = 21; pending.revision = 0;
             pending.start = predicted.transform.position; pending.end = pending.start + Vector2.right;
             Assert.IsTrue(fx.BeginAbilityPrediction(predicted, pending, Vector2.right, 0.25f));
             Assert.IsTrue(fx.HasUnconfirmedClientMotion(predicted));

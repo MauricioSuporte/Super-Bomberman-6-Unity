@@ -269,7 +269,7 @@ namespace Assets.Scripts.Netcode
             var motion = playback.motion;
             if (!motion.moving) return motion.end;
             bool continueLocally = false;
-            if (!presentationOwnerSuspended && motion.moving && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw &&
+            if (!presentationOwnerSuspended && motion.moving && !IsFlightArc(motion.kind) &&
                 motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && motion.kind != BombMotionKind.Environment &&
                 playback.elapsed > motion.duration && motion.duration > 0)
             {
@@ -290,7 +290,7 @@ namespace Assets.Scripts.Netcode
             }
             if (motion.kind == BombMotionKind.Lift || motion.kind == BombMotionKind.Carry)
                 return SampleCarry(motion, transform.position, playback.elapsed);
-            if (IsFlightArc(motion.kind) && motion.rubber && motion.bounceDuration > 0 && playback.elapsed > motion.duration &&
+            if (IsFlightArc(motion.kind) && motion.kind != BombMotionKind.Revenge && motion.rubber && motion.bounceDuration > 0 && playback.elapsed > motion.duration &&
                 motion.bounceIndex + 1 < RubberBombBounceSequence.MinimumBounces(motion.bounceSeed))
             {
                 Vector2 direction = RubberBombBounceSequence.Direction(motion.bounceSeed, motion.bounceIndex + 1);
@@ -306,7 +306,7 @@ namespace Assets.Scripts.Netcode
                     return movingBomb.SnapNetworkPunchPosition(SampleArc(motion.end, next, motion.bounceDuration, extra, motion.bounceHeight));
                 }
             }
-            if (motion.kind == BombMotionKind.Punch || motion.kind == BombMotionKind.Throw)
+            if (IsFlightArc(motion.kind))
                 return movingBomb.SnapNetworkPunchPosition(SampleArc(motion.start, motion.end, motion.curveDuration > 0 ? motion.curveDuration : motion.duration, playback.elapsed, motion.arcHeight));
             return SampleKickContinuation(motion.start, motion.end, motion.duration, playback.elapsed,
                 continueLocally && motion.kind != BombMotionKind.Punch && motion.kind != BombMotionKind.Throw);
@@ -384,7 +384,7 @@ namespace Assets.Scripts.Netcode
                 history = previous != null && (previous.unconfirmed || !motion.first) ? previous.history : null };
             if (previous != null && previous.unconfirmed)
             {
-                playback.history.presentationLead = motion.kind == BombMotionKind.Environment ? 0 : motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
+                playback.history.presentationLead = motion.kind == BombMotionKind.Environment || motion.kind == BombMotionKind.Revenge ? 0 : motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
                     Mathf.Clamp(previous.elapsed - age, 0, 0.15f);
                 rejectedStarts.Remove(movingBomb);
                 if (GameplayLatencyDiagnostics.Enabled)
@@ -399,7 +399,7 @@ namespace Assets.Scripts.Netcode
             }
             // Preserve the small lead of the owner's input timeline. Pulling the
             // bomb back to server-now on the first reply would recreate the hitch.
-            if (motion.moving && motion.kind != BombMotionKind.Environment && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
+            if (motion.moving && motion.kind != BombMotionKind.Environment && motion.kind != BombMotionKind.Revenge && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
             var targetPosition = SamplePlayback(movingBomb, playback);
             // The NetworkTransform may have written its older timeline this frame.
             // Reconcile against our last displayed position, not that stale transform.
@@ -427,7 +427,7 @@ namespace Assets.Scripts.Netcode
             ApplyMotionCollider(movingBomb, playback);
             ApplyKickPosition(movingBomb, playback.presented);
             if (!presentationOwnerSuspended && isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
-                motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet && motion.kind != BombMotionKind.Environment)
+                motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet && motion.kind != BombMotionKind.Environment && motion.kind != BombMotionKind.Revenge)
                 BeginConfirmedAbilityPose(motion, age);
         }
 
@@ -542,7 +542,7 @@ namespace Assets.Scripts.Netcode
             finally { applyingQueuedBombArc = false; }
         }
 
-        public static bool IsFlightArc(BombMotionKind kind) => kind == BombMotionKind.Punch || kind == BombMotionKind.Throw;
+        public static bool IsFlightArc(BombMotionKind kind) => kind == BombMotionKind.Punch || kind == BombMotionKind.Throw || kind == BombMotionKind.Revenge;
         public static bool PreservesSegmentOrder(BombMotionKind kind) => IsFlightArc(kind) || kind == BombMotionKind.Environment;
         public static float ArcRemainder(float elapsed, float duration) => Mathf.Clamp(elapsed - duration, 0, Time.unscaledDeltaTime);
 

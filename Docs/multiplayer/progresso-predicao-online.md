@@ -18,28 +18,25 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo48, commit `4d364cc85`, pipeline
-  [40508017471](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40508017471).
-  concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
-  confirmados. C09 caldeira/blackout está no48;47 e46 permanecem incorporados.
-- **Avanço46 validado e enviado:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
-  implementados/testados. Forças confirmadas compõem com caminhada/replay por até
-  150ms na célula/fase aprovada; IA, captura inicial, dano e bounce são do servidor.
-- **Validação local49:**452/452 Unity (OnlineRoom360 + COM92), C#0 erros/avisos novos,
-  Python44/44 (36 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
-  Logs/PredictionEnemy49FinalTests.*;48/47/444 e tentativas anteriores preservados.
+- **Servidor e atualizador publicados:** protocolo49, commit `d1b2b3ef5`, pipeline
+  [40514393076](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40514393076)
+  concluído com sucesso. R03 está publicado;48/47/46 permanecem incorporados.
+- **Última suíte completa publicada:**452/452 Unity (OnlineRoom360 + COM92),
+  C#0 erros/avisos novos, Python44/44. Reports em Logs/PredictionEnemy49FinalTests.*.
+- **Avanço50 local/A12:** spawn da bomba Revenge antes do primeiro arco de rede,
+  despawn replicado na falha, gate client e motion kind próprio sem pose/predição
+  da habilidade do player. Seis testes direcionados passaram, C#0/0 e Python44/44;
+  suíte completa456/456 passou. Ainda sem commit/publicação50.
 - **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
   fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
   física; manuais/capturas e custo real continuam pendentes.
-- **Checklist:**15 IDs implementados/testados,15 parciais e3 pendentes. Execução
+- **Checklist:**15 IDs implementados/testados,16 parciais e2 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo:** salvar/publicar49/R03, confirmar CI e continuar A12/R06/R08 e
-  os parciais C/R/A/P0 até encerrar o checklist. Sem confirmação de49 publicado.
-- **Workspace:** branch `v0.5.0`, checkout original.48 publicado em4d364cc85;
-  49/R03 ainda sem commit: gates base/overrides prioritárias, sombras/ripples
-  registradas e apresentação limitada/pausa/wrap. Focados7/7 e suite452/452 passaram.
-  Preservar fontes/TitleScreen do usuário e Editor aberto. Nenhuma cena/prefab
-  foi editada. Comparação gráfica real e custo/latência medidos seguem pendentes.
+- **Próximo:** validar/publicar50 e continuar A12: transporte/apresentação/input do
+  carrinho após eliminação e retorno confirmado do player; depois R06/R08 e parciais.
+- **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen
+  do usuário e Editor aberto. Nenhuma cena/prefab editada neste lote. Comparação
+  gráfica real e custo/latência medidos seguem pendentes.
 
 ## Como acompanhar
 
@@ -188,7 +185,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
-- [ ] A12: Revenge input e apresentação.
+- [ ] A12: parcial50 local: spawn/arco Revenge, gate client e apresentação com owner inativo testados (6 focados); carrinho/input/reconciliação/retorno confirmado e manual pendentes.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
@@ -1648,3 +1645,35 @@ sincronizado de Revenge. Precisa tratar conjuntamente input sobrevivente, cart
 aprovado/predição de perímetro, bomba real, geração/ack e respawn confirmado. Native
 cart move/charge/cooldown/recoil/enter/exit usam unscaled; input para em pausa, mas
 coroutines enter/exit/recoil continuam. Não assumir clock de Time.deltaTime.
+
+## Retomada em27/10:49 publicado e A12/bomba em50
+
+CI40514393076 confirmado success para d1b2b3ef5/protocolo49. Workspace continha
+somente as três alterações do usuário preservadas. Nenhum novo agente/worktree.
+
+A12: MadBomberBomb.prefab já possui NetworkIdentity/NetworkTransform ServerToClient
+e está nos spawnPrefabs de OnlineLobby; Player aponta para ele. O lançamento
+nativo não chamava NetSpawn.Server, portanto o primeiro arco saía com netId0 e não
+era enviado. Agora o spawn ocorre antes de StartPunch; falha usa NetSpawn.Despawn.
+Client puro retorna antes de resolver tilemaps/instanciar/fuse. Novo kind Revenge
+é arco aprovado: não faz previsão de elegibilidade/retorno, pose de soco/luva,
+continuação de corredor, bounce Rubber nem herda lead de ação anterior.
+O mesmo presenter ordena seus segmentos/stop e funciona com owner inativo.
+Autenticador/Directory passam a50 por compatibilidade desse novo valor de wire.
+
+6/6 focados passaram: cliente não cria bomba nem consome RNG; wiring real do
+prefab/registro em preview scene sem salvar a cena aberta; Punch/Revenge com
+owner inativo, pausa, stop enfileirado, cancelamento de previsão e cleanup por
+OnStopClient/despawn. C# incremental0/0, Python44/44. Relatórios focados copiados
+para Logs/PredictionRevenge50FocusedTests.*. Suíte completa50 passou456/456 (OnlineRoom364+COM92); reports preservados em
+Logs/PredictionRevenge50FinalTests.*. UTF-8/BOM/metas/diff/skill passaram.
+
+A12 continua parcial. Não há transporte novo de carrinho ou input após morte,
+nem reativação confirmada do player; ServerMarkEliminated continua só true.
+Não aplicar gates na criação client do carrinho até existir seu visual substituto.
+Seu movimento usa unscaledDeltaTime e cooldown/charge usam unscaledTime; entrada,
+saída e recoil continuam em pausa offline. Um timeout de input deve CANCELAR a
+carga, nunca fabricar release que lança bomba. Novas mensagens devem autenticar
+owner via conexão, separar geração/seq do cart do tick vivo e limitar fila/budget.
+Amostragem local usa slot1, independentemente do P1-P6 atribuído. Não conceder
+swap/retorno/eliminação por previsão. See roteiro detalhado na auditoria anterior.
