@@ -33,12 +33,15 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 - **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 IDs
   iniciados. Isso não representa conclusão das pendências. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **A12/51 validado, ainda sem publicação:** input do cart autenticado independente
+- **A12/51 validado e enviado (`b6a886569`):** input do cart autenticado independente
   do player inativo, motor previsto/replay puro, poses aprovadas e retorno confirmado.
   25 focados, host2rodadas e500/500 Unity finais passaram (OnlineRoom408+COM92).
   C#0/0, Python44/44, UTF-8/metas/diff/skill aprovados. Reports em
   Logs/PredictionRevengeCart51FinalTests.*; tentativas anteriores preservadas.
-- **Próximo:** salvar/publicar51, conferir CI; continuar preview de lançamento/recoil/
+- **Publicação51 em execução:**
+  [40558343289](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40558343289).
+  Na última consulta, compilação/build em andamento. Último deploy confirmado50.
+- **Próximo:** confirmar CI51; continuar preview de lançamento/recoil/
   aim/muzzle, handoff/capturas e os demais parciais. Não declarar A12 completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen
   do usuário e Editor aberto. Nenhuma cena/prefab editada neste lote. Comparação
@@ -1834,3 +1837,16 @@ C# final0 erros/0 avisos, Python44/44; byte/BOM/metas/diff e skill passaram.
 Runner restaurado somente nos caminhos rastreados próprios antes do envio.
 Nenhuma cena/prefab editada, nenhum Editor do usuário fechado/salvo. Próximo:
 salvar/enviar e confirmar CI51. A12 parcial e checklist15 implementados/18 parciais.
+
+
+Commit b6a886569 salvo e enviado. CI40558343289 em execução; não usar/copiar fontes
+no runner enquanto o job estiver ativo. Workspace contém somente os três arquivos
+modificados pelo usuário (duas fontes e TitleScreen). Sem Unity/test/.NET próprios
+rodando fora do CI. Próximo ponto A12: antecipação visual de carga/recoil/aim/muzzle,
+conservando elegibilidade/cooldown/célula/tick confirmados, e handoff/manual.
+Auditoria de input detectou ainda uma pendência de ciclo de vida para o próximo
+lote: registrar atividade de sala em input de cart remoto aceito (o NPI do morto
+não executa CmdControls). TickRoomTimeout já cobre hardware do host, mas o novo
+ReceiveRevengeInput não chama RegisterRoomActivity; isso deve ser alinhado antes
+de homologar cenários longos com todos os humanos eliminados e só COM na arena.
+Não misturar essa pendência com confirmação do build/deploy deste lote.
