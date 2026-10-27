@@ -412,3 +412,25 @@ can be called outside the normal loop. Audit explicit combat/kill/orbit/phase
 entry points as well as Update. Do not alter global Physics2D layer collision rules
 from a decorative client clone. Preserve the authority/offline RNG and phase clock;
 these gates alone do not replicate missing telegraphs, intro masks or looping audio.
+
+
+A dead owner's input cannot depend on that inactive Player's Update/FixedUpdate.
+Dispatch through the existing manager, authenticate connection slot and identity,
+and bind commands to cart id/generation/scene. Packet count grants no simulation
+time. Bound the queue and cancel charge on overflow/timeout rather than fabricating
+an A release. Keep raw input and each tick's dt; replay only the shared perimeter
+motor, never charge, sounds or launch. Predict no further when approvals go stale.
+
+A confirmed Revenge return is a separate presentation phase from being alive.
+Reactivate rendering/approved Riding while keeping life0/dead/input/physics locked;
+only a confirmed arc can bypass its visual death guards at both begin and update.
+The final approved stats/position/ack reset old input and player poses before the
+next bounce. Do not run LoadInto on the client and import the machine's base stats.
+Apply role/identity/serial guards, initial late-observer phase and victim elimination.
+Retain unrelated approved bomb motion through return cleanup.
+
+Keep fixed world targets separate from a predicted carrier root: a landing marker
+must stay on its approved cell rather than slide with the cart. Separate paused
+root/frame state from already-approved unscaled child recoil. Exclude localConnection
+from remote-only view messages: the host retains native actors and may intentionally
+have no handler. Test the real host round/reload path, not only pure helpers.

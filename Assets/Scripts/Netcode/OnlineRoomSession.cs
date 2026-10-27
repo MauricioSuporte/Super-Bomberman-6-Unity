@@ -167,6 +167,7 @@ namespace Assets.Scripts.Netcode
         void InitializeRoomServer()
         {
             InitializeBattleStartServer();
+            InitializeRevengeServer();
             roomPresentationByConnection.Clear();
             roomStarted = false;
             roomDeadline = Time.unscaledTime + 300f;
@@ -212,6 +213,7 @@ namespace Assets.Scripts.Netcode
             global::SaveSystem.BeginOnlineBattleSettings();
             global::SaveSystem.BeginOnlineCoopSettings();
             InitializeCoopSessionClient();
+            InitializeRevengeClient();
             NetworkClient.RegisterHandler<OnlineRoomMessage>(ReceiveRoom);
             NetworkClient.RegisterHandler<OnlinePauseMessage>(message => GamePauseController.Instance?.ApplyOnlinePause(message.state));
         }
@@ -304,6 +306,7 @@ namespace Assets.Scripts.Netcode
             base.LateUpdate();
             TickCoopWorld();
             TickBombAnimations();
+            TickRevengePresentation();
             PresentOnlineSprites();
             TickOnlinePauseBroadcast();
             if (NetworkServer.active && Time.unscaledTime >= nextRoomBroadcast)
@@ -318,6 +321,7 @@ namespace Assets.Scripts.Netcode
         {
             base.Update();
             TickBattleStart();
+            TickRevengeUpdate();
             TickDedicatedProcess();
             TickRoomTimeout();
 #if UNITY_EDITOR || DEBUG

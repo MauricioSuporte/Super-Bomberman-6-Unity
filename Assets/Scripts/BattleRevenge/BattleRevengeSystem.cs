@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
-public sealed class BattleRevengeSystem : MonoBehaviour
+public sealed partial class BattleRevengeSystem : MonoBehaviour
 {
     private static readonly bool EnableSurgicalLogs = false;
 
@@ -107,6 +107,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     public void HandlePlayerDeathCompleted(MovementController deadPlayer)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
         {
             SLogDeath(deadPlayer, "DEATH_SKIP_BLOCKED", "revenge bomber creation is blocked");
@@ -161,6 +162,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     public bool TryHandleLethalRevengeHit(MovementController victim, Collider2D hazard)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
             return false;
 
@@ -322,6 +324,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             yield break;
         }
 
+        if (Assets.Scripts.Netcode.NetSync.IsServer && respawningPlayer.TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerState>(out var networkState) && networkState.isServer)
+            networkState.ServerBeginRevengeReturn(startWorldPos);
+
         PlayerRidingController riding = respawningPlayer.GetComponent<PlayerRidingController>();
         if (riding == null)
         {
@@ -400,6 +405,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     public bool TryLaunchBombFromCart(BattleRevengeController cart, int distanceTiles)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (!IsRuntimeEnabled || cart == null)
             return false;
 

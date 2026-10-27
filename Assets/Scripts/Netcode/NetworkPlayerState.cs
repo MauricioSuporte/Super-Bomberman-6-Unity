@@ -18,7 +18,7 @@ namespace Assets.Scripts.Netcode
     /// </summary>
     [RequireComponent(typeof(NetworkIdentity))]
     [RequireComponent(typeof(NetworkPlayerSetup))]
-    public class NetworkPlayerState : NetworkBehaviour
+    public partial class NetworkPlayerState : NetworkBehaviour
     {
         [SyncVar] byte life = 1;
         [SyncVar] byte bombAmount = 1;
@@ -136,6 +136,8 @@ namespace Assets.Scripts.Netcode
         [Server]
         public void ServerMarkEliminated()
         {
+            revengeReturning = false;
+            revengeReturnRevision++;
             if (!eliminated)
                 eliminated = true;
         }
@@ -149,13 +151,15 @@ namespace Assets.Scripts.Netcode
         public override void OnStartClient()
         {
             base.OnStartClient();
-            if (eliminated && !isServer && gameObject.activeSelf)
+            RefreshConfirmedSkin();
+            if (revengeReturning) ActivateConfirmedReturn();
+            if (eliminated && !revengeReturning && !isServer && gameObject.activeSelf)
                 gameObject.SetActive(false);
         }
 
         void OnEliminatedChanged(bool _, bool now)
         {
-            if (now && !isServer)
+            if (now && !revengeReturning && !isServer)
             {
                 // Predição (Etapa 1): segurança extra — garante que a predição para
                 // e o input sintético é limpo ao eliminar.
@@ -165,7 +169,7 @@ namespace Assets.Scripts.Netcode
                     setup != null ? setup.PlayerId : GameSession.MinPlayerId);
             }
 
-            if (now && !isServer && gameObject.activeSelf)
+            if (now && !revengeReturning && !isServer && gameObject.activeSelf)
                 gameObject.SetActive(false);
         }
 
@@ -254,6 +258,17 @@ namespace Assets.Scripts.Netcode
 
             bool gh = glove != null && glove.IsHoldingForNet;
             if (gh != gloveHolding) gloveHolding = gh;
+        }
+
+        public void RefreshConfirmedSkin()
+        {
+            if (!NetSync.IsOnline || netIdentity == null || !isClient || isServer) return;
+            if (skinController == null) skinController = GetComponentInChildren<PlayerBomberSkinController>(true);
+            if ((skin != appliedSkin || character != appliedCharacter) && skinController != null)
+            {
+                skinController.Apply((BomberCharacter)character, (BomberSkin)skin);
+                appliedCharacter = character; appliedSkin = skin;
+            }
         }
 
         void ClientApply()

@@ -43,7 +43,7 @@ public sealed class PlayerRidingController : MonoBehaviour
     {
         if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || isPlaying) return;
         movement = movement != null ? movement : GetComponent<MovementController>();
-        if (movement == null || movement.isDead || movement.IsEndingStage) return;
+        if (movement == null || (movement.isDead && GetComponent<Assets.Scripts.Netcode.NetworkPlayerState>()?.HasApprovedRevengeReturn != true) || movement.IsEndingStage) return;
         if (!networkArcVisual)
         {
             networkArcVisual = true; CacheRenderers(); RebuildAllowedSets();

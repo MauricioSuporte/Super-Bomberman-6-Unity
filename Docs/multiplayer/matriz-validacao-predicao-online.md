@@ -178,3 +178,21 @@ ascend/descend e conferir que nenhum buffer avança/rebobina a pose já exibida;
 blackout continua seu fade unscaled. Testar wrap e entrega interrompida: corte no
 ponto aprovado, sem atravessar a sala. Testar morte, stun e saída de cena, olhos
 e barrel. Cenas/prefabs personalizados com jump maior precisam nova calibração.
+
+
+## A12 adicional em51 (ainda não executado entre dois peers)
+
+- Atribuir ao owner um slot diferente de1, morrer e controlar o carrinho com o
+  hardware local1. Repetir teclado, controle e mobile; testar C, oito segmentos,
+  cantos, direções opostas e troca rápida. Observar o mesmo cart no outro client.
+- Apertar/soltar A rapidamente e manter carga; simular atraso somente em ambiente
+  de teste. Timeout/overflow devem cancelar, nunca disparar bomba por release falso.
+- Pausar em caminhada, entrada/saída e recoil. Caminhada/frame ficam parados;
+  entrada/saída/recoil unscaled seguem a regra offline. Cursor não deriva do tile.
+- Fazer uma eliminação Revenge: retorno começa visualmente ainda com life0/dead e
+  collider bloqueado; fim confirmado restaura posição/stats corretos e permite o
+  bounce seguinte. Não repetir A antigo/PowerGlove após reativar o Player.
+- Usar loadout offline diferente do servidor; confirmar estatísticas recebidas,
+  vítima indo para seu cart, troca de dono, nova geração, nova rodada e disconnect.
+- Capturar os eventos revenge_cart_authority e revenge_cart_present com protocolo51
+  dos peers. Não inferir input-to-first-motion exato com amostragem visual de10Hz.

@@ -18,11 +18,11 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo50, commit `1677fb50b`, pipeline
-  [40517686471](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40517686471)
-  concluído com sucesso. Revenge/bomba publicado; R03/48/47/46 incorporados.
-- **Última suíte completa publicada:**456/456 Unity (OnlineRoom364 + COM92),
-  C#0 erros/avisos novos, Python44/44. Reports em Logs/PredictionRevenge50FinalTests.*.
+- **Servidor e atualizador publicados:** protocolo50, commit `913518a53`, pipeline
+  [40520719676](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40520719676)
+  concluído com sucesso. R06/R08, Revenge/bomba e lotes anteriores incorporados.
+- **Última suíte completa publicada:**475/475 Unity (OnlineRoom383 + COM92),
+  C#0 erros/avisos novos, Python44/44. Reports em Logs/PredictionBossEnvironment50FinalTests.*.
 - **Avanço50 publicado/A12:** spawn da bomba Revenge antes do primeiro arco de rede,
   despawn replicado na falha, gate client e motion kind próprio sem pose/predição
   da habilidade do player. Seis testes direcionados passaram, C#0/0 e Python44/44;
@@ -33,12 +33,13 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 - **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 IDs
   iniciados. Isso não representa conclusão das pendências. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **R06/R08 validados e enviados:** commit `913518a53`, protocolo50, pipeline
-  [40520719676](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40520719676)
-  na fila na última consulta; não presumir deploy.475/475 Unity passaram
-  (OnlineRoom383+COM92),19 focados, C#0/0, byte/metas/diff/skill aprovados.
-- **Próximo:** conferir CI40520719676; continuar A12: carrinho/input após eliminação,
-  reconciliação e retorno confirmado. Depois resolver as pendências de cada parcial.
+- **A12/51 validado, ainda sem publicação:** input do cart autenticado independente
+  do player inativo, motor previsto/replay puro, poses aprovadas e retorno confirmado.
+  25 focados, host2rodadas e500/500 Unity finais passaram (OnlineRoom408+COM92).
+  C#0/0, Python44/44, UTF-8/metas/diff/skill aprovados. Reports em
+  Logs/PredictionRevengeCart51FinalTests.*; tentativas anteriores preservadas.
+- **Próximo:** salvar/publicar51, conferir CI; continuar preview de lançamento/recoil/
+  aim/muzzle, handoff/capturas e os demais parciais. Não declarar A12 completo.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen
   do usuário e Editor aberto. Nenhuma cena/prefab editada neste lote. Comparação
   gráfica real e custo/latência medidos seguem pendentes.
@@ -190,7 +191,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
-- [ ] A12: parcial50 publicado: spawn/arco Revenge, gate client e apresentação com owner inativo testados (6 focados); carrinho/input/reconciliação/retorno confirmado e manual pendentes.
+- [ ] A12: parcial51 local: motor de cart previsto, replay dt histórico, input autenticado após eliminação, roster/poses e retorno confirmado;25 focados passaram. Host2rodadas e suite500/500 passaram; lançamento/recoil/aim/handoff/capturas e manual pendentes.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
@@ -1753,3 +1754,83 @@ Workspace voltou a conter somente os três arquivos alterados pelo usuário.
 Próxima implementação prioritária é A12/carrinho + input após eliminação + retorno
 confirmado, conforme auditoria registrada; faltam também partes dos demais18
 parciais e execução manual/capturas. Não declarar o checklist completo.
+
+
+## A12 carrinho/retorno em51: implementação local, ainda sem Unity
+
+CI40520719676/913518a53 confirmado completed/success nesta retomada. Baseline
+publicado50 contém R06/R08 e475 testes. Preservadas as três alterações do usuário.
+
+Código local51 (ainda sem commit/publicação/testes Unity): OnlineRevengeCarts
+transporta roster scene/revision/time/id/generation, frames/poses/indicadores e
+input autenticado pela conexão/slot/identity. Manager recebe input mesmo com o
+player inativo. Queue8 só usa créditos do FixedUpdate, suporta uint wrap e cancela
+carga por timeout/overflow sem inventar release. Slot de hardware sempre1.
+Controller nativo foi separado em motor/ação; motor previsto/replay não dispara
+bombas/carga/som. Predição limita lacuna a250ms; história128 retém dt de cada tick;
+observadores interpolam perímetro pelos8segmentos, sem diagonal entre paredes.
+Frames/sorting/recoil/HUD são visuais; clone não executa gameplay/physics.
+Native entry/exit continuam em unscaled durante pausa, como offline. Pausa do
+motor retém pose já apresentada. Novo valor51 no autenticador e Directory.
+
+NetworkRevengeReturn: início confirmado reativa apenas a apresentação do player
+eliminado e bloqueia input/collider; Riding pode mostrar o arco aprovado apesar de
+life0/isDead. Fim confirmado transporta stats/posição/ack, limpa histórico/ações,
+restaura movimento e aplica ClientApply sem LoadInto do loadout base da máquina.
+ServerMarkEliminated reseta fase/revisão; hooks e RPCs têm guards de papel/serial.
+Callback final é publicado antes do bounce seguinte. Gameplay de swap/eligibilidade
+continua nativo do servidor. Novas SyncVars/RPCs exigem builds51 compatíveis.
+
+24 casos focados adicionados em OnlineRoomRevengeCartTests (ainda NÃO executados):
+queue/budget/overflow/quicktap/wrap; política de sender; paridade de motor nativo
+com previsão nos cantos/C; replay com dt histórico; wire/pose/clone visual;
+retorno confirmado com stats e guards offline/unspawned. C# anterior0/0 passou;
+C# final com testes ainda em execução. Próximo: focados, corrigir falhas reais de
+fixture/implementação, suite completa esperada499, Python44, UTF8/metas/diff/skill;
+revisar pausas/roster/limites/late join antes de publicar. Não marcar A12 completo.
+
+
+A12/51: focados25/25 passaram (Logs/PredictionRevengeCart51FocusedTests.*).
+Tentativas iniciais preservadas (Attempt/SecondAttempt/Core24). Fixtures corrigidas:
+Health Awake para renderer cache; cart ativo em preview scene para capturar poses;
+ASRs permitidos somente em atualização manual; base e stage distintos no teste
+para comprovar que LoadInto não traz o loadout antigo ao respawn. Guard real
+netIdentity!=null foi adicionado às entradas de retorno/unspawned.
+
+Revisão detectou e corrigiu o início do Riding: só um arco CONFIRMADO pode
+bypassar life0/isDead quando HasApprovedRevengeReturn está ativo. O teste25 prova
+que um gesto não confirmado continua rejeitado e que a apresentação não dá vida.
+Também foi adicionado ServerMarkEliminated ao victim removido pelo swap (o fluxo
+antecipado não passava pelo OnDeathSequenceEnded normal). Cliente não autoriza
+TryHandleLethalRevengeHit. Cursor de pouso permanece na célula mundial aprovada,
+sem ser arrastado pelo root previsto. Diagnostics incluem revenge_cart_authority
+no servidor e revenge_cart_present após apresentar, com cart/gen/tick/ack/pending.
+
+Suíte completa500:499 passaram/1 falhou no UnityTest real
+EarlyDeathIsEvaluatedWithoutAnotherDeathAfterRoundReload. Causa: host não registra
+handlers de views remotas por usar o caminho nativo, mas o novo SendToReady incluía
+localConnection (Unknown message59196). Corrigido para enviar somente a peers
+remotos ready/autenticados. Logs/PredictionRevengeCart51FullAttemptTests.* guardados.
+Teste host em execução: PredictionRevengeCart51HostTests. Depois repetir suite500.
+Ainda SEM commit/publicação51; último servidor confirmado é913518a53/protocolo50.
+
+
+Host51 corrigido passou1/1, cobrindo duas rodadas reais no Unity PlayMode
+(Logs/PredictionRevengeCart51HostTests.*). Suíte completa500 em repetição no runner.
+Recoil aprovado agora pode terminar unscaled durante pausa sem mover root/frame;
+regressão de pose também verifica cursor mundial e offset. Código congelado para
+validação final. C# final ainda em execução40797; Python44/44 já passaram.
+Manual entre peers não foi realizado; A12 permanece parcial (preview de carga,
+recoil/aim/muzzle e handoff/capturas ainda não concluídos). Sem publicação51.
+
+
+A12/51 lote FINAL validado:500/500 Unity (OnlineRoom408 + COM92),25 focados e
+host de duas rodadas. Reports finais em Logs/PredictionRevengeCart51FinalTests.*;
+Initial500/Speed500 preservam as duas suítes aprovadas intermediárias. A última
+execução inclui velocidade aprovada restaurada antes da predição, reset de luva,
+uint inicial por ack, recoil em pausa e budget pausado sem crédito acumulado.
+Pause preserva A held sem gerar release, mas descarta fila/créditos ignorados.
+C# final0 erros/0 avisos, Python44/44; byte/BOM/metas/diff e skill passaram.
+Runner restaurado somente nos caminhos rastreados próprios antes do envio.
+Nenhuma cena/prefab editada, nenhum Editor do usuário fechado/salvo. Próximo:
+salvar/enviar e confirmar CI51. A12 parcial e checklist15 implementados/18 parciais.

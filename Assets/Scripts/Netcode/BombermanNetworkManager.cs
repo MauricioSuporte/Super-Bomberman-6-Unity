@@ -289,6 +289,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient()
         {
+            ClearRevengeCarts(true);
             GetComponent<NetworkBombMotionLifetime>()?.Clear();
             if (!NetworkServer.active) ClearPortalMaskViews();
             base.OnStopClient();
@@ -327,6 +328,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopServer()
         {
+            ClearRevengeCarts(true);
             roomPresentationByConnection.Clear();
             ClearDedicatedAdminInput();
             base.OnStopServer();

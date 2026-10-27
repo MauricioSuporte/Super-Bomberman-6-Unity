@@ -117,6 +117,7 @@ namespace Assets.Scripts.Netcode
         void Update()
         {
             if (!NetSync.IsOnline || setup == null || movement == null) return;
+            if (GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true) { sampledHeld = pendingPressed = 0; movement.SetPredictLocally(false); return; }
             var input = PlayerInputManager.Instance;
             if (isLocalPlayer && !isServer && input != null)
             {
@@ -160,7 +161,7 @@ namespace Assets.Scripts.Netcode
 
         void FixedUpdate()
         {
-            if (!NetSync.IsOnline || movement == null || movement.Rigidbody == null) return;
+            if (!NetSync.IsOnline || movement == null || movement.Rigidbody == null || GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true) return;
             if (isLocalPlayer && !isServer && NetworkClient.ready)
             {
                 var frame = new NetworkInputFrame { tick = ++localTick,
@@ -221,6 +222,20 @@ namespace Assets.Scripts.Netcode
             ApplyServerControls(PlayerInputManager.Instance, serverHeldMask, actionEdges);
         }
 
+        public uint ResetForConfirmedRevengeReturn(uint acknowledged = 0)
+        {
+            serverInputs.Clear(); pending.Clear(); serverStepBudget.Reset();
+            sampledHeld = pendingPressed = serverHeldMask = 0;
+            CurrentActionATick = CurrentActionBTick = CurrentActionCTick = CurrentSelectTick = 0;
+            lastServerInputAt = double.NegativeInfinity; receivedSnapshot = serverAllowsPrediction = false;
+            sentSnapshot = false;
+            if (isServer) processedTick = receivedTick;
+            else if (NetworkInputHistory.IsNewer(acknowledged, localTick)) localTick = acknowledged;
+            movement?.SetPredictLocally(false);
+            PlayerInputManager.Instance?.ClearSyntheticPlayer(setup != null ? setup.PlayerId : 1);
+            return isServer ? receivedTick : localTick;
+        }
+
         public static bool RetainHeldInput(double ageSeconds) => ageSeconds >= 0 && ageSeconds <= HeldInputGraceSeconds;
 
         void ApplyServerControls(PlayerInputManager input, int held, int pressed)
@@ -246,6 +261,7 @@ namespace Assets.Scripts.Netcode
             MotionDiagnosticProbe.NetworkInput(gameObject, "input_receive", frame.held, frame.pressed, Blocked);
             if (!NetworkInputHistory.IsNewer(frame.tick, receivedTick)) return;
             receivedTick = frame.tick;
+            if (movement == null || movement.isDead || GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true) { processedTick = receivedTick; return; }
             if (((frame.held | frame.pressed) & ValidMask) != 0) BombermanNetworkManager.RegisterRoomActivity();
             if (Blocked) { processedTick = frame.tick; return; }
             frame.held &= ValidMask;

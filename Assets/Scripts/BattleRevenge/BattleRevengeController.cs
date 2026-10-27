@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-public sealed class BattleRevengeController : MonoBehaviour
+public sealed partial class BattleRevengeController : MonoBehaviour
 {
     private enum CartEdge
     {
@@ -254,6 +254,18 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     void Update()
     {
+        if (NetworkTickControlled || !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        var input = PlayerInputManager.Instance;
+        if (input == null) return;
+        int held = 0;
+        foreach (var action in NetworkCartActions)
+            if (input.Get(ownerPlayerId, action)) held |= 1 << (int)action;
+        SimulateNetworkCartInput(held, Time.unscaledDeltaTime);
+    }
+
+    public void SimulateNetworkCartInput(int held, float deltaTime)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isAnimating)
             return;
 
@@ -263,42 +275,13 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (!system.IsRuntimeEnabled || GamePauseController.IsPaused)
             return;
 
-        PlayerInputManager input = PlayerInputManager.Instance;
-        if (input == null)
-            return;
-
-        bool hasMovementInput = TryGetTargetWallFromInput(input, out CartEdge targetWall);
-        bool holdingActionC = input.Get(ownerPlayerId, PlayerAction.ActionC);
-
-        if (hasMovementInput)
-        {
-            if (!lastInputTargetWall.HasValue || lastInputTargetWall.Value != targetWall)
-            {
-                currentTilt = 0f;
-                tiltHoldTimer = 0f;
-                lastInputTargetWall = targetWall;
-            }
-
-            Vector3 beforeMove = transform.position;
-            MoveTowardWallMidpoint(targetWall, holdingActionC);
-            Vector3 afterMove = transform.position;
-
-            UpdateMovementTilt(afterMove - beforeMove, true);
-        }
-        else
-        {
-            lastInputTargetWall = null;
-            UpdateMovementTilt(Vector3.zero, false);
-        }
-
-        RefreshVisualByEdge();
-        ApplyTiltToActiveVisuals();
+        StepNetworkMotor(held, deltaTime);
 
         UpdateRechargeIndicator();
 
         bool canLaunchBomb = CanLaunchBombNow();
 
-        bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
+        bool holdingActionA = (held & 16) != 0;
         DebugActionALaunchState(holdingActionA, canLaunchBomb, isChargingLaunch, "Read");
 
         if (!canLaunchBomb)
@@ -354,6 +337,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
                     if (system.TryLaunchBombFromCart(this, chargedLaunchDistanceTiles))
                     {
+                        NetworkLaunchSerial++;
                         nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
                         PlayLaunchRecoil();
 
@@ -372,8 +356,41 @@ public sealed class BattleRevengeController : MonoBehaviour
         }
     }
 
+    public void StepNetworkMotor(int held, float deltaTime)
+    {
+        if (deltaTime <= 0 || !float.IsFinite(deltaTime)) return;
+        bool hasMovementInput = TryGetTargetWallFromMask(held, out CartEdge targetWall);
+        bool holdingActionC = (held & 64) != 0;
+
+        if (hasMovementInput)
+        {
+            if (!lastInputTargetWall.HasValue || lastInputTargetWall.Value != targetWall)
+            {
+                currentTilt = 0f;
+                tiltHoldTimer = 0f;
+                lastInputTargetWall = targetWall;
+            }
+
+            Vector3 beforeMove = transform.position;
+            MoveTowardWallMidpoint(targetWall, holdingActionC, deltaTime);
+            Vector3 afterMove = transform.position;
+
+            UpdateMovementTilt(afterMove - beforeMove, true, deltaTime);
+        }
+        else
+        {
+            lastInputTargetWall = null;
+            UpdateMovementTilt(Vector3.zero, false, deltaTime);
+        }
+
+        RefreshVisualByEdge();
+        ApplyTiltToActiveVisuals();
+
+    }
+
     void OnDisable()
     {
+        NetworkTickControlled = false; CancelNetworkCharge(); Assets.Scripts.Netcode.BombermanNetworkManager.RevengeCartChanged();
         HideTopHudOverlayImages();
         HideLandingIndicator();
         HideRechargeIndicator();
@@ -597,6 +614,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         Vector2 startPosition,
         Vector2 inwardDirection)
     {
+        NetworkGeneration++; CancelNetworkCharge(); BindNetworkControlOwner(sourceVisuals);
         system = ownerSystem;
         ownerPlayerId = Mathf.Clamp(newOwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
         nextBombAllowedAt = 0f;
@@ -643,6 +661,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         Vector2 startPosition,
         Vector2 inwardDirection)
     {
+        NetworkGeneration++; CancelNetworkCharge(); BindNetworkControlOwner(newOwnerVisuals);
         ownerPlayerId = Mathf.Clamp(newOwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
         nextBombAllowedAt = 0f;
 
@@ -672,6 +691,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     public void RebindOwner(int newOwnerPlayerId, MovementController sourceVisuals)
     {
+        NetworkGeneration++; CancelNetworkCharge(); BindNetworkControlOwner(sourceVisuals);
         ownerPlayerId = Mathf.Clamp(newOwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
         nextBombAllowedAt = Time.unscaledTime + 0.1f;
 
@@ -1412,6 +1432,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     void LateUpdate()
     {
+        if (networkView) return;
         SyncTopHudOverlayImages();
 
         if (!debugCornerTransition || isAnimating)
@@ -1615,7 +1636,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             : counterClockwise;
     }
 
-    private void MoveTowardWallMidpoint(CartEdge targetWall, bool speedBoostActive)
+    private void MoveTowardWallMidpoint(CartEdge targetWall, bool speedBoostActive, float deltaTime)
     {
         float beforePerimeter = perimeterPosition;
         Vector3 beforePosition = transform.position;
@@ -1631,7 +1652,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         float speedMultiplier = speedBoostActive
             ? Mathf.Max(1f, actionCSpeedMultiplier)
             : 1f;
-        float step = moveSpeed * speedMultiplier * Time.unscaledDeltaTime;
+        float step = moveSpeed * speedMultiplier * deltaTime;
         float move = Mathf.Clamp(delta, -step, step);
 
         perimeterPosition = NormalizePerimeterPosition(perimeterPosition + move);
@@ -1668,12 +1689,12 @@ public sealed class BattleRevengeController : MonoBehaviour
         }
     }
 
-    private bool TryGetTargetWallFromInput(PlayerInputManager input, out CartEdge targetWall)
+    private bool TryGetTargetWallFromMask(int held, out CartEdge targetWall)
     {
-        bool holdUp = input.Get(ownerPlayerId, PlayerAction.MoveUp);
-        bool holdDown = input.Get(ownerPlayerId, PlayerAction.MoveDown);
-        bool holdLeft = input.Get(ownerPlayerId, PlayerAction.MoveLeft);
-        bool holdRight = input.Get(ownerPlayerId, PlayerAction.MoveRight);
+        bool holdUp = (held & 1) != 0;
+        bool holdDown = (held & 2) != 0;
+        bool holdLeft = (held & 4) != 0;
+        bool holdRight = (held & 8) != 0;
 
         bool canUp = holdUp && !holdDown;
         bool canDown = holdDown && !holdUp;
@@ -1718,7 +1739,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         }
     }
 
-    private void UpdateMovementTilt(Vector3 movementDelta, bool hasInput)
+    private void UpdateMovementTilt(Vector3 movementDelta, bool hasInput, float deltaTime)
     {
         if (!useMovementTilt)
         {
@@ -1735,7 +1756,7 @@ public sealed class BattleRevengeController : MonoBehaviour
             currentTilt = Mathf.MoveTowards(
                 currentTilt,
                 targetTilt,
-                (tiltAngle / tiltOutDuration) * Time.unscaledDeltaTime);
+                (tiltAngle / tiltOutDuration) * deltaTime);
 
             return;
         }
@@ -1749,7 +1770,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         else
             sign = dir.y > 0f ? 1f : -1f;
 
-        tiltHoldTimer += Time.unscaledDeltaTime;
+        tiltHoldTimer += deltaTime;
 
         targetTilt = sign * tiltAngle;
 
@@ -1758,7 +1779,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         currentTilt = Mathf.MoveTowards(
             currentTilt,
             targetTilt,
-            speed * Time.unscaledDeltaTime);
+            speed * deltaTime);
 
         if (tiltHoldTimer >= tiltHoldDelay)
             currentTilt = targetTilt;

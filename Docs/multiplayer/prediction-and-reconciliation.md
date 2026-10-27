@@ -1251,3 +1251,44 @@ permanecem no stream aprovado existente. Não se prevê terreno ou contato futur
 19 testes focados passaram, com corpo físico ativo separado na fixture e estado
 inicial assertado. Isso não cobre todos os bosses, máscaras de intro, áudio em loop,
 curvas completas ou sensação/render/custo entre peers; R06/R08 continuam parciais.
+
+
+## A12: carrinho Revenge e retorno confirmado (protocolo51, validado localmente)
+
+O manager transporta input mesmo com o player eliminado/inativo. Comandos levam
+cena/id/generation/tick; servidor valida slot atribuído pela conexão e identity.
+Fila8 usa créditos do relógio de física e não de pacotes, normaliza máscaras e
+trata wrap. Sem pacote, a carga pode manter seu relógio nativo mas não há passo
+extra de movimento; atraso de150ms/overflow cancela carga sem inventar release.
+Host/COM/offline mantêm o Update nativo. Client usa hardware1 para seu P1-P6.
+
+O motor nativo compartilha seleção de parede, distâncias, boost e8segmentos com
+a predição. Replay guarda dt por tick (história128), sem executar carga/bomba/som.
+A fração renderizada responde antes da próxima confirmação; previsão para após
+250ms sem aprovação. Roster20Hz (vazio500ms, mudanças acordam envio) tem cena/revisão,
+owner/id/generation e poses/sorting/frames/indicadores aprovados; o clone não tem
+simulação/colisores. Fonte e destino das poses usam o relógio do transform. Não há
+extrapolação de decisões de lançamento, transferência ou elegibilidade.
+
+Durante pausa, caminhada/frames já apresentados ficam imóveis. Entrada/saída
+nativas continuam unscaled, assim como o offset visual aprovado do recoil. Cursor
+de pouso fica na posição mundial confirmada, separado do root previsto. Som de
+lançamento é confirmado por serial e omitido ao criar uma view inicial/late join.
+Muzzle e preview de carga/recoil/aim ainda precisam auditoria/antecipação própria.
+
+ServerBeginRevengeReturn abre fase de apresentação: reativa clone/corpo visual,
+mantém life0/isDead e bloqueia input/collider. Riding aceita somente arco confirmado
+nessa fase. O fim envia stats/posição/ack, limpa input/poses antigos e aplica o estado
+sem LoadInto da base local. Eliminação é resetada somente pela autoridade, e o
+victim do swap também recebe eliminação explícita. O término é enviado antes do
+bounce seguinte. Bombas aprovadas do owner continuam sendo apresentadas.
+
+Diagnostics têm revenge_cart_authority (servidor) e revenge_cart_present (depois da
+apresentação client), até10Hz, com cart/gen/owner/tick/ack/pending/posição/idade.
+Esses samples não medem sozinhos latência desde o hardware; o comparador ainda não
+calcula percentis específicos de Revenge. Requer capturas e validação entre peers.
+
+25 focados passaram. A primeira suíte500 revelou envio do roster ao host, que não
+registra views remotas; o envio agora exclui localConnection. O UnityTest real de
+duas rodadas passou após o fix. Suíte completa final500/500 passou, incluindo budget pausado sem créditos e
+velocidade confirmada no retorno. A12 segue parcial; publicação ainda separada.

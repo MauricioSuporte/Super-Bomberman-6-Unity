@@ -47,8 +47,10 @@ namespace Assets.Scripts.Netcode
 
         bool BeginRidingPresentation(RidingMotion motion, bool confirmed)
         {
+            bool revengeReturn = confirmed && GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true;
             if (!TryGetComponent<PlayerRidingController>(out ridingVisual) || !TryGetComponent<MovementController>(out var movement) ||
-                movement.isDead || movement.IsEndingStage || (TryGetComponent<CharacterHealth>(out var health) && health.life <= 0)) return false;
+                (!revengeReturn && movement.isDead) || movement.IsEndingStage ||
+                (!revengeReturn && TryGetComponent<CharacterHealth>(out var health) && health.life <= 0)) return false;
             ClearGreenDash("riding"); ClearPinkJump("riding"); ClearBlackDash("riding"); ClearPlayerBouncePresentation();
             ClearPurpleLineCast("riding"); ClearMoleStartup("riding"); ClearRedPunch("riding"); ClearTankPrediction("riding");
             ResetLocalAbilityPresentation();
@@ -162,11 +164,14 @@ namespace Assets.Scripts.Netcode
             transform.position = ridingPosition;
         }
 
+        public void FinishConfirmedRevengeReturnPresentation() => ClearPlayerActionPresentations();
+
         void UpdateRidingPresentation(float deltaTime, float unscaledDeltaTime)
         {
             if (!ridingActive) return;
-            if (!TryGetComponent<MovementController>(out var movement) || movement.isDead || movement.IsEndingStage ||
-                ridingVisual == null || (TryGetComponent<CharacterHealth>(out var health) && health.life <= 0))
+            bool revengeReturn = GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true;
+            if (!TryGetComponent<MovementController>(out var movement) || (!revengeReturn && movement.isDead) || movement.IsEndingStage ||
+                ridingVisual == null || (!revengeReturn && TryGetComponent<CharacterHealth>(out var health) && health.life <= 0))
             { RollbackRiding("interrupted"); return; }
             bool authorityPaused = !ridingPending && (serverRidingMotion.revision == ridingMotion.revision ?
                 serverRidingMotion.active && serverRidingMotion.paused : ridingMotion.paused);

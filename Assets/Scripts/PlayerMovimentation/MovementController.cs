@@ -3794,10 +3794,12 @@ public partial class MovementController : MonoBehaviour, IKillable
 
         transform.localScale = Vector3.one;
         SetAllSpritesVisible(false);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerState>(out var networkState) && networkState.isServer)
+            networkState.ServerMarkEliminated();
         gameObject.SetActive(false);
     }
 
-    public void RespawnFromBattleRevenge(Vector2 worldPosition, float invulnerabilitySeconds, float blinkInterval)
+    public void RespawnFromBattleRevenge(Vector2 worldPosition, float invulnerabilitySeconds, float blinkInterval, bool confirmedNetworkPresentation = false)
     {
         CancelInvoke(nameof(OnDeathSequenceEnded));
         holeDeathInProgress = false;
@@ -3827,10 +3829,16 @@ public partial class MovementController : MonoBehaviour, IKillable
             TryGetComponent(out cachedCompanion);
 
         if (cachedCompanion != null)
-            cachedCompanion.ClearMountedStateForForcedArenaRemoval();
+        {
+            if (confirmedNetworkPresentation) { cachedCompanion.HideMountVisualClient(); SetMountedOnLouie(false); }
+            else cachedCompanion.ClearMountedStateForForcedArenaRemoval();
+        }
 
         if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
-            glove.DestroyHeldBombIfHolding();
+        {
+            if (confirmedNetworkPresentation) glove.NetVisualHardStop();
+            else glove.DestroyHeldBombIfHolding();
+        }
 
         if (Rigidbody != null)
         {
@@ -3855,12 +3863,12 @@ public partial class MovementController : MonoBehaviour, IKillable
         if (bombController != null)
         {
             bombController.enabled = true;
-            PlayerPersistentStats.LoadInto(playerId, this, bombController);
+            if (!confirmedNetworkPresentation) PlayerPersistentStats.LoadInto(playerId, this, bombController);
             bombController.ResetRuntimeStateAfterRespawn();
         }
 
         CacheMovementAbilities();
-        SyncMountedFromPersistent();
+        if (!confirmedNetworkPresentation) SyncMountedFromPersistent();
         ApplySpeedInternal(speedInternal);
         SetExplosionInvulnerable(false);
         SetExternalVisualSuppressed(false);
@@ -3870,6 +3878,8 @@ public partial class MovementController : MonoBehaviour, IKillable
             cachedHealth.StartSpawnInvulnerability(invulnerabilitySeconds, blinkInterval);
 
         NotifyHudPortraitRespawnIfPlayer();
+        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerState>(out var networkState) && networkState.isServer)
+            networkState.ServerFinishRevengeReturn();
     }
 
     public void SetBattleRevengeJumpInvulnerabilityNoBlink(bool enabled)
