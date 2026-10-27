@@ -18,29 +18,28 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo47, commit `026d88302`, pipeline
-  [40489646611](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40489646611).
+- **Servidor e atualizador publicados:** protocolo48, commit `4d364cc85`, pipeline
+  [40508017471](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40508017471).
   concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
-  confirmados. C03 corda, C02 lift e R05 registro/gates estão no47.
+  confirmados. C09 caldeira/blackout está no48;47 e46 permanecem incorporados.
 - **Avanço46 validado e enviado:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
   implementados/testados. Forças confirmadas compõem com caminhada/replay por até
   150ms na célula/fase aprovada; IA, captura inicial, dano e bounce são do servidor.
-- **Validação local48:**445/445 Unity (OnlineRoom353 + COM92), C#0 erros/avisos novos,
+- **Validação local49:**452/452 Unity (OnlineRoom360 + COM92), C#0 erros/avisos novos,
   Python44/44 (36 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
-  Logs/PredictionEnvironment48FinalTests.*;47/444 e tentativas anteriores preservados.
+  Logs/PredictionEnemy49FinalTests.*;48/47/444 e tentativas anteriores preservados.
 - **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
   fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
   física; manuais/capturas e custo real continuam pendentes.
-- **Checklist:**15 IDs implementados/testados,14 parciais e4 pendentes. Execução
+- **Checklist:**15 IDs implementados/testados,15 parciais e3 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo:** concluir validação48/C09 e continuar C/R/A/P0 até encerrar o checklist.
-  Blackout e caldeira48 validados; publicar48 e confirmar pipeline antes de chamar deploy concluído.
-- **Workspace:** branch `v0.5.0`, checkout original.47 publicado em927c4bac7 +
-  026d88302.48 sem commit: caldeira, gates de tiles, foguete e transporte de
-  blackout/materiais. Suite conjunta445/445 passou; preparar commit e envio48.
-  Último código48 inclui aprovação roomActive, preserva bounds/OverlapPoint offline
-  e elimina arrays por frame na aplicação da paleta. Preservar fontes/TitleScreen
-  do usuário e Editor aberto. Nenhuma cena/prefab foi editada neste lote.
+- **Próximo:** salvar/publicar49/R03, confirmar CI e continuar A12/R06/R08 e
+  os parciais C/R/A/P0 até encerrar o checklist. Sem confirmação de49 publicado.
+- **Workspace:** branch `v0.5.0`, checkout original.48 publicado em4d364cc85;
+  49/R03 ainda sem commit: gates base/overrides prioritárias, sombras/ripples
+  registradas e apresentação limitada/pausa/wrap. Focados7/7 e suite452/452 passaram.
+  Preservar fontes/TitleScreen do usuário e Editor aberto. Nenhuma cena/prefab
+  foi editada. Comparação gráfica real e custo/latência medidos seguem pendentes.
 
 ## Como acompanhar
 
@@ -204,7 +203,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
-- [ ] R03: apresentação de inimigos.
+- [ ] R03: parcial49: Frog/Hop/SnowMan/Korobokkuru, corpo/sombra/ondas, pausa/wrap/cut e gates nativos testados em452 casos; demais famílias/curvas/capturas ainda pendentes.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); publicação e manual pendentes.
 - [ ] R05: parcial47 local: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
 - [ ] R06: bosses/bombers.
@@ -1615,3 +1614,37 @@ Próximos auditados sem novas alterações: R03 Frog/Hop/SnowMan/Korobokkuru usa
 stream20Hz mas sombras plain podem esperar descoberta250ms; falta gate nas overrides
 Start/Fixed (base não basta). A12 exige input sobrevivendo ao player inativo e
 transporte/predição próprios do cart; smoke_public_client cobre só lobby, sem partida.
+
+
+## R03/49 validado localmente
+
+48/4d364cc85/40508017471 foi publicado com sucesso.49 local, sem commit neste
+ponto: proteção de Start/Fixed em base/Junction/Frog/Hop/Snow/Korobokkuru, callbacks
+base de dano/fim/Kill e Snow bomb reaction não simulam client. Isso não audita as
+125 overrides de todas as especializações; co-op continua desabilitando gameplay
+de cena como barreira principal. Offline/host retêm caminho nativo.
+
+CoopSpriteFrame.enemyStepLimit identifica as quatro famílias prioritárias e seus
+visuais auxiliares registrados. Corpo e sombra usam a mesma timeline; gap>250ms
+ou salto>1.5tile faz cut aprovado, sem cruzar a sala por interpolação. Durante
+pausa, mantém pose/frame já apresentados; mensagens/remoções continuam recebidas.
+O campo não é autorização de extrapolação/IA/dano. Não aplica esse limite a
+projéteis/bosses desconhecidos. Prefabs atuais: tile1; Hop jump0.5s/height1;
+Korobokkuru jump1s; Frog/Snow usam constantes. Configurações novas com arcos muito
+maiores precisam revisar o limite e/ou fornecer curva explícita.
+
+Sombras Frog/Hop e ondas/gotas Frog registram renderer logo após configurar;
+Korobokkuru registra sombras existentes. Sprite dinâmico Frog é16x16 legível;
+ondas32x32 também cabem no transporte. Máscaras de olhos dessas famílias recebem
+mesmo perfil de movimento. Player/blackout alpha unscaled não foi congelado.
+Focados7/7 e suíte PredictionEnemy49FinalTests452/452 (OnlineRoom360 + COM92)
+passaram; reports preservados em Logs. C#0/0; concluir Python/skill/UTF8 antescommit.
+Checklist15/15/3. R03 parcial, não afirmar validação gráfica nem ganho medido.
+
+A12 auditado (ainda SEM alterações): NPI para quando player GO é eliminado; cart
+não tem transporte dedicado; BombController.LaunchRevengeBomb não faz NetSpawn
+antes de StartPunch; NetworkPlayerState.eliminated só vai true e não há retorno
+sincronizado de Revenge. Precisa tratar conjuntamente input sobrevivente, cart
+aprovado/predição de perímetro, bomba real, geração/ack e respawn confirmado. Native
+cart move/charge/cooldown/recoil/enter/exit usam unscaled; input para em pausa, mas
+coroutines enter/exit/recoil continuam. Não assumir clock de Time.deltaTime.

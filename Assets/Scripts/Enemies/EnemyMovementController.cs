@@ -148,6 +148,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
         ChooseInitialDirection();
         UpdateSpriteDirection(direction);
@@ -170,6 +171,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -209,6 +211,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -237,6 +240,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     public void Kill()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         foreach (var attachment in GetComponentsInChildren<AttachedCoreMechanismsController>())
             attachment.Detach();
         Die();
@@ -244,6 +248,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void OnHitInvulnerabilityStarted(float seconds)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (health == null || !health.playDamagedLoopInsteadOfBlink)
             return;
 
@@ -266,6 +271,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void OnHitInvulnerabilityEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isInDamagedLoop)
             return;
 
@@ -289,6 +295,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -398,6 +405,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected void ChooseInitialDirection()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         direction = Dirs[Random.Range(0, Dirs.Length)];
     }
 

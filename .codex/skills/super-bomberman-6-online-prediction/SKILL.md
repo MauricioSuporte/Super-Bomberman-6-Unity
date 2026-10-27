@@ -385,3 +385,13 @@ clock: blackout alpha fades in unscaled time even during pause. Send logical wor
 lights rather than camera-dependent shader coordinates from a headless server.
 Client room geometry can use Box transform/offset/size without enabling a collider,
 but keep offline physics semantics and transport the server room's active status.
+
+For approved NPC jumps, keep body and ground shadow on one transform timeline.
+Register detached shadows/ripples promptly and propagate the audited motion profile
+to their eye masks. Keep an already presented pose/frame during gameplay pause;
+reapplying an old animation sample can rewind it even when local advancement is
+paused. Continue receiving bounded history and confirmed clears. Distinguish this
+from blackout's unscaled alpha. Restrict wrap/gap cuts to audited motion ranges;
+a blanket distance threshold can break fast projectiles or large custom arcs.
+Derived Start/Fixed/callback overrides need their own authority gates when they
+bypass the base; checking only the base loop is insufficient.

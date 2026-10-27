@@ -1211,3 +1211,13 @@ clear e troca de papel. Arrays8 são enviados desde a primeira configuração, e
 o limite de crescimento da API Unity. Templates World3 já constam dos catálogos.
 Nenhuma cena/prefab foi editada. Provas de renderização e custo real permanecem na
 matriz manual; testes de estado/material não provam a imagem final no jogo.
+
+## R03/49: famílias prioritárias de salto
+
+Frog/Hop/SnowMan/Korobokkuru continuam IA servidor. Suas poses aprovadas carregam
+limite1.5tile para interpolação de amostras próximas; wrap e gap>250ms são cortes.
+Sombras e ondas/gotas compartilham timeline e perfil (inclusive máscaras de olhos).
+Pausa mantém a pose/frame já exibidos; não bloqueia recebimento nem clear. O perfil
+não se aplica indiscriminadamente a projéteis/bosses de alta velocidade. Valores
+atuais foram auditados nos prefabs; configurações futuras de arco maior exigem
+revisão. Não prevê alvo, colisão, morte ou nova direção de NPC.

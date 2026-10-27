@@ -44,6 +44,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
         ChooseInitialDirection();
         UpdateSpriteDirection(direction);
@@ -53,6 +54,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isInDamagedLoop || (TryGetComponent(out StunReceiver stun) && stun.IsStunned))
         {
             StopMotion();
@@ -181,6 +183,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
             renderer.sortingOrder = body.sortingOrder - 1;
         }
         SetShadowVisible(false);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer, this);
     }
 
     private void UpdateShadow()

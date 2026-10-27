@@ -54,6 +54,7 @@ public class JunctionTurningEnemyMovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
 
         if (!hasInitialDirection)

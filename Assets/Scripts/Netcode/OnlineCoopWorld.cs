@@ -18,11 +18,12 @@ namespace Assets.Scripts.Netcode
         public Color color;
         public bool flipX, flipY, visible;
         public byte mask;
+        public float enemyStepLimit;
         public CoopBlackoutMask blackout;
         public bool Matches(CoopSpriteFrame other) => animation == 0 && other.animation == 0 && id == other.id && sprite == other.sprite && material == other.material &&
             sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
             rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask &&
-            (blackout == null ? other.blackout == null : blackout.Equals(other.blackout));
+            enemyStepLimit == other.enemyStepLimit && (blackout == null ? other.blackout == null : blackout.Equals(other.blackout));
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
     public struct CoopTileFrame
@@ -356,6 +357,7 @@ namespace Assets.Scripts.Netcode
                 {
                     id = id, sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
                     material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(id),
+                    enemyStepLimit = CoopEnemyVisualLimit(renderer),
                     position = renderer.transform.position, rotation = renderer.transform.rotation,
                     scale = renderer.transform.lossyScale, color = renderer.color,
                     sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
@@ -378,7 +380,7 @@ namespace Assets.Scripts.Netcode
             var removed = coopRemovedSprites;
             removed.Clear();
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
-            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); }
+            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); }
             SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
             if (coopChangedCollisions.Count > 0 || coopRemovedCollisions.Count > 0)
                 foreach (var peer in peers) SendCoopCollisionFrames(peer, coopChangedCollisions, coopRemovedCollisions.ToArray(), false);

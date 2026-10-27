@@ -57,6 +57,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         ResolveTilemaps();
         state = MovementState.Walking;
         base.Start();
@@ -74,6 +75,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
 
@@ -358,6 +360,8 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         smallShadow = FindChild("SmallShadow") ?? FindChild("SmalShadow");
         bigShadowRenderer = bigShadow != null ? bigShadow.GetComponent<SpriteRenderer>() : null;
         smallShadowRenderer = smallShadow != null ? smallShadow.GetComponent<SpriteRenderer>() : null;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(bigShadowRenderer, this);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(smallShadowRenderer, this);
     }
 
     private AnimatedSpriteRenderer FindChildAnimatedSprite(string childName)

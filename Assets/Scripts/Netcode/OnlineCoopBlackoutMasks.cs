@@ -49,12 +49,15 @@ namespace Assets.Scripts.Netcode
         readonly Vector4[] coopMaskColorBuffer = new Vector4[8];
         Material coopDefaultSpriteMaterial;
 
-        public static void CoopRegisterBlackoutMask(SpriteRenderer overlay, Material template, Material instance, SpriteRenderer barrel)
+        public static void CoopRegisterBlackoutMask(SpriteRenderer overlay, Material template, Material instance, SpriteRenderer barrel,
+            EnemyMovementController motionOwner = null)
         {
             if (overlay == null || !NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager ||
                 manager.coopCatalog == null || overlay.gameObject.scene.name != manager.coopScene || HasNetworkParent(overlay.transform)) return;
             int id = overlay.GetEntityId().GetHashCode();
             if (!manager.coopBlackoutMasks.ContainsKey(id)) manager.TrackCoopRenderer(overlay);
+            float limit = EnemyVisualLimit(motionOwner);
+            if (limit > 0) manager.coopEnemyVisualLimits[id] = limit;
             manager.coopBlackoutMasks[id] = (template, instance, barrel != null ? barrel.sprite : null);
         }
 

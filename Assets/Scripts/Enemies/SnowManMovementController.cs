@@ -54,6 +54,7 @@ public sealed class SnowManMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         tilemaps = FindObjectsByType<Tilemap>();
         ground = GameManager.Instance != null ? GameManager.Instance.groundTilemap : null;
@@ -64,6 +65,7 @@ public sealed class SnowManMovementController : JunctionTurningEnemyMovementCont
 
     private void OnBombDetonating(Vector2 origin, int radius)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!CanBeginJump)
             return;
 
@@ -83,6 +85,7 @@ public sealed class SnowManMovementController : JunctionTurningEnemyMovementCont
 
     private bool TryBeginJump()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         Vector2 gridStart = new(
             Mathf.Round(rb.position.x / tileSize) * tileSize,
             Mathf.Round(rb.position.y / tileSize) * tileSize);
@@ -168,6 +171,7 @@ public sealed class SnowManMovementController : JunctionTurningEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!jumping)
         {
             // Inspect the actual navigation target before the base controller

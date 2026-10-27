@@ -109,7 +109,8 @@ public sealed class BlackoutVisibleParts : MonoBehaviour
             part.material.SetVectorArray("_VisibleColors", colorBuffer);
             part.material.SetFloat("_ColorTolerance", part.EffectiveTolerance);
             var occluder = ApplyBarrelOcclusion(part.material, source, barrels);
-            Assets.Scripts.Netcode.BombermanNetworkManager.CoopRegisterBlackoutMask(overlay, maskMaterial, part.material, occluder);
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopRegisterBlackoutMask(overlay, maskMaterial, part.material, occluder,
+                source.GetComponentInParent<EnemyMovementController>(true));
         }
     }
 

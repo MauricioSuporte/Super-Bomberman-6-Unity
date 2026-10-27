@@ -98,6 +98,7 @@ namespace Assets.Scripts.Netcode
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
             coopVisualRemovals.Clear(); coopViewClips.Clear(); bombVisualSamples.Clear();
             coopExpiredViews.Clear(); expiredBombViews.Clear(); coopPendingRenderers.Clear(); nextBombAnimation = 0;
+            coopEnemyVisualLimits.Clear();
             coopDynamicIds.Clear(); coopDynamicVersions.Clear(); coopDefinitions.Clear();
             coopDynamicSprites.Clear(); coopDynamicTextures.Clear(); coopViewSpriteIds.Clear();
         }
@@ -229,6 +230,9 @@ namespace Assets.Scripts.Netcode
                         coopExpiredViews.Add(id); continue;
                     }
                     var samples = pair.Value;
+                    // Keep the already displayed enemy pose/frame in world space.
+                    // Buffered pre-pause samples must not advance or rewind it.
+                    if (GamePauseController.IsPaused && samples.Count > 0 && samples[^1].enemyStepLimit > 0 && coopViews.ContainsKey(id)) continue;
                     while (samples.Count > 1 && samples[1].time <= clock) samples.RemoveAt(0);
                     if (samples.Count == 0 || samples[0].time > clock) continue;
                     var frame = samples[0];
@@ -236,9 +240,14 @@ namespace Assets.Scripts.Netcode
                     {
                         var next = samples[1];
                         float t = Mathf.Clamp01((float)((clock - frame.time) / (next.time - frame.time)));
-                        frame.position = Vector3.Lerp(frame.position, next.position, t);
-                        frame.rotation = Quaternion.Slerp(frame.rotation, next.rotation, t);
-                        frame.scale = Vector3.Lerp(frame.scale, next.scale, t);
+                        bool discontinuity = frame.enemyStepLimit > 0 &&
+                            (next.time - frame.time > .25 || Vector3.Distance(frame.position, next.position) > frame.enemyStepLimit);
+                        if (!discontinuity)
+                        {
+                            frame.position = Vector3.Lerp(frame.position, next.position, t);
+                            frame.rotation = Quaternion.Slerp(frame.rotation, next.rotation, t);
+                            frame.scale = Vector3.Lerp(frame.scale, next.scale, t);
+                        }
                     }
                     PresentCoopSprite(frame);
                 }
@@ -273,6 +282,14 @@ namespace Assets.Scripts.Netcode
         }
 
         readonly HashSet<SpriteRenderer> coopPendingRenderers = new();
+        readonly Dictionary<int, float> coopEnemyVisualLimits = new();
+
+        static float EnemyVisualLimit(EnemyMovementController actor) =>
+            actor is FrogEnemyMovementController or HopRobotMovementController or SnowManMovementController or KorobokkuruMovementController
+                ? Mathf.Max(.01f, actor.tileSize) * 1.5f : 0;
+
+        float CoopEnemyVisualLimit(SpriteRenderer renderer) => coopEnemyVisualLimits.TryGetValue(renderer.GetEntityId().GetHashCode(), out float limit)
+            ? limit : EnemyVisualLimit(renderer.GetComponentInParent<EnemyMovementController>(true));
 
         public static void CoopTrackAnimation(AnimatedSpriteRenderer animation)
         {
@@ -281,16 +298,19 @@ namespace Assets.Scripts.Netcode
 
         // Plain projectile/particle renderers have no AnimatedSpriteRenderer.OnEnable
         // hook. Register once after configuring them, before the discovery interval.
-        public static void CoopTrackRenderer(SpriteRenderer renderer)
+        public static void CoopTrackRenderer(SpriteRenderer renderer, EnemyMovementController motionOwner = null)
         {
             if (!NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager) return;
-            manager.TrackCoopRenderer(renderer);
+            if (!manager.TrackCoopRenderer(renderer)) return;
+            float limit = EnemyVisualLimit(motionOwner);
+            if (limit > 0) manager.coopEnemyVisualLimits[renderer.GetEntityId().GetHashCode()] = limit;
         }
 
-        void TrackCoopRenderer(SpriteRenderer renderer)
+        bool TrackCoopRenderer(SpriteRenderer renderer)
         {
-            if (renderer == null || coopCatalog == null || renderer.gameObject.scene.name != coopScene || HasNetworkParent(renderer.transform)) return;
+            if (renderer == null || coopCatalog == null || renderer.gameObject.scene.name != coopScene || HasNetworkParent(renderer.transform)) return false;
             coopPendingRenderers.Add(renderer);
+            return true;
         }
 
         void TickBombAnimations()

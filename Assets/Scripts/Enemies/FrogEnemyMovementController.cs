@@ -64,6 +64,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
         ResolveLandingTilemaps();
         EnsureWaterSubmersion();
@@ -76,6 +77,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
 
@@ -489,6 +491,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
         shadowRenderer.sprite = GetJumpShadowSprite();
         shadowRenderer.color = new Color(0f, 0f, 0f, 0.45f);
         shadowRenderer.sortingOrder = 4;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(shadowRenderer, this);
     }
 
     private void UpdateJumpShadow(Vector2 position)
@@ -541,7 +544,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
             sortingLayerId = groundRenderer.sortingLayerID;
 
         FrogWaterJumpEffect effect = effectObject.AddComponent<FrogWaterJumpEffect>();
-        effect.Initialize(effectType, sortingLayerId, sortingOrder: 4);
+        effect.Initialize(effectType, sortingLayerId, sortingOrder: 4, motionOwner: this);
     }
 
     private void TrySpawnJokeRipple()

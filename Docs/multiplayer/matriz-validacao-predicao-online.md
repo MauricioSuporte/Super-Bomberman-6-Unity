@@ -169,3 +169,12 @@ flip e mudança de sprite. Pausar durante fade: alpha continua como no offline,
 movimento não. Legacy2-5: Image GO desativado deve reaparecer por estado aprovado.
 Sair/reentrar e observar durante blackout ligado/desligado; não sobrar materiais ou
 luzes. Confirmar num cliente gráfico: EditMode/headless não comprova pixels finais.
+
+### R03/49 — salto e pausa das famílias prioritárias
+
+Comparar Frog/Hop/SnowMan/Korobokkuru: sombra no chão desde o início, corpo no arco,
+ondas/gotas no mesmo relógio, frame/facing de pouso, água e obstáculos. Pausar em
+ascend/descend e conferir que nenhum buffer avança/rebobina a pose já exibida;
+blackout continua seu fade unscaled. Testar wrap e entrega interrompida: corte no
+ponto aprovado, sem atravessar a sala. Testar morte, stun e saída de cena, olhos
+e barrel. Cenas/prefabs personalizados com jump maior precisam nova calibração.

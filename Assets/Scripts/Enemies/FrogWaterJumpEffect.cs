@@ -18,9 +18,11 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
     private SpriteRenderer firstRing;
     private SpriteRenderer secondRing;
     private SpriteRenderer[] droplets;
+    private EnemyMovementController motionOwner;
 
-    public void Initialize(EffectType type, int sortingLayerId, int sortingOrder)
+    public void Initialize(EffectType type, int sortingLayerId, int sortingOrder, EnemyMovementController motionOwner = null)
     {
+        this.motionOwner = motionOwner;
         effectType = type;
 
         firstRing = CreateRenderer("Ring", GetRingSprite(), sortingLayerId, sortingOrder);
@@ -111,6 +113,7 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
         renderer.sprite = sprite;
         renderer.sortingLayerID = sortingLayerId;
         renderer.sortingOrder = sortingOrder;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer, motionOwner);
         return renderer;
     }
 
