@@ -22,24 +22,24 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
   [40448262003](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40448262003).
   concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
   confirmados. Sem novo wire/RPC neste lote.
-- **Avanço desta retomada:** C07 parcial: snapshot não suprime mudança de posição
-  quando o ack de input se repete; cast do pusher deduplica corpos e mantém a
-  física nativa, com gates de client/pausa e diagnóstico de força/snap/reconciliação.
-- **Validação final:**359/359 Unity (OnlineRoom267 + COM92), incluindo12 casos
-  específicos C07; C#0 erros/avisos novos, Python42/42 (34 CI +8 Directory),
-  UTF-8/BOM/meta/diffcheck passaram. Reports preservados em
-  Logs/PredictionPusherFinal45Tests.* e PredictionPusherFocused45Tests.*.
-- **Limite de C07:** a continuação prevista do contato e seu histórico no replay
-  ainda faltam. A centralização nativa na grade e o bounce são transições
-  autoritativas separadas; nenhum ganho real de latência foi medido neste lote.
-- **Checklist:**13 IDs implementados/testados,13 parciais e7 pendentes. Validação
+- **Avanço local validado:** C07 implementado/testado no protocolo46 ainda NÃO
+  publicado: continuação de contato aprovado por até150ms e na célula segura,
+  caminhada/replay, prazo/endpoint/pausa, wall/hole, contato perdido e clear.
+- **Validação46:**378/378 Unity (OnlineRoom286 + COM92), C#0 erros/avisos novos,
+  Python43/43 (35 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
+  Logs/PredictionPusher46FinalTests.*;374 intermediários preservados.
+- **Limites de C07:** não escolhe novo contato/direção nem prevê dano/bounce;
+  múltiplas fontes, forma não suportada, célula seguinte e pacote antigo voltam
+  à autoridade. O pusher no mundo continua na apresentação aprovada existente.
+- **Checklist:**14 IDs implementados/testados,12 parciais e7 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximos itens:** concluir contato/continuação owner de C07; R07 sem owner,
-  forças R04 e demais C/R descritos no checklist. C10 ainda precisa da timeline,
-  commit de terreno e late join; A14 da matriz completa/manual.
-- **Workspace:** branch `v0.5.0`, checkout original. Lote C07 commitado/publicado;
-  sem novo wire/RPC (protocolo45 permanece). Preservar fontes/TitleScreen do usuário
-  e o Editor aberto. O runner encerrou os testes; seus tracked próprios foram restaurados.
+- **Próximo grupo:** R04 Hurricane/Magnet/bolhas Submarine, reutilizando contexto
+  de força no motor; captura/alvo, IA, dano e decisões globais seguem no servidor.
+  Continuar os demais C/R/A/P0 até encerrar o checklist, como solicitado.
+- **Workspace:** branch `v0.5.0`, checkout original. Lote46 ainda local, com novo wire
+  (Authenticator/Directory46); última publicação confirmada continua45/ecc3caa4f. Preservar fontes/TitleScreen do usuário
+  e o Editor aberto. O runner encerrou os testes e mantém fontes próprias46
+  copiadas para a próxima validação; não restaurar a base45 sem recopiá-las.
 
 ## Como acompanhar
 
@@ -172,7 +172,7 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 
 ## Checklist por ID
 
-Resumo: **13 de33 IDs concluídos em implementação/testes,13 parciais e7 pendentes**.
+Resumo: **14 de33 IDs concluídos em implementação/testes,12 parciais e7 pendentes**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -197,7 +197,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
-- [ ] C07: parcial: ack repetido com posição nova, deduplicação de contato, gates e logs;12 testes específicos passaram. Continuação owner/replay do contato e manual pendentes.
+- [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); publicação e manual pendentes.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: mecanismos e tiles especiais.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
@@ -1376,3 +1376,42 @@ Próxima retomada: implementar a continuação owner de C07 sem duplicar a forç
 mundo em cada input do servidor, incluindo contato histórico, endpoint/reversão,
 saída de contato e entrega ao snap/bounce autoritativo. Não presumir que os logs
 ou o envio de posição com ack repetido já implementaram essa predição.
+
+
+Retomada autorizada27/10: usuário pediu seguir ATÉ TERMINAR checklist, sem parar
+só ao terminar um lote. NÃO marcar o plano completo enquanto IDs/validação real
+faltarem. Trabalhar serialmente: não há autorização de delegação nesta sessão.
+
+C07 continuação owner46 em implementação, ainda NÃO publicada:
+- Novos parciais PusherPatrolAndPush.Network.cs e MovementController.NetworkPusher.cs
+  com metas; snapshots levam geometria/velocidade/filtros/célula segura/remaining.
+- Só contato confirmado no passo atual do mundo, box alinhado sem edgeRadius;
+  endpoint/reversão, multi-source e perda de contato falham conservadoramente.
+- Owner compõe após motor/esteira por no máximo150ms e dentro da célula confirmada;
+  restore/replay não move a fonte global, não chama resolvedor nem concede dano.
+  Servidor conserva MovePosition uma vez no mundo, NUNCA aplica de novo no motor.
+- DTO/wire mudou: Authenticator e Directory locais agora46 (último deploy45).
+  NPI publica contato/clear mesmo com ack e posição repetidos.
+- Logs/contexto pusher=True; comparador separa pusher_walking/mounted e usa entrada.
+- C#0 erros/avisos novos passou (6 avisos Mirror existentes na primeira compilação).
+  Teste novo OnlineRoomPusherContinuationTests.cs parcial da mesma fixture; Unity
+  ainda NÃO executado para46. Python ainda falta rodar após novo caso do comparador.
+- Runner estava livre, CI40448262003 concluído/sucesso. Fontes próprias copiadas.
+  Próximo: rodada focada Pusher46, corrigir casos, suite completa e seguir IDs.
+  Nenhum código46 foi commitado/enviado. User dirt3arquivos intacto; não fechar Editor.
+
+
+C07 implementação46 VALIDADA:378/378 Unity (286+92), incluindo novos casos de
+contato/filtros/circle/Box, replay/budget, caminhada relativa ao mesmo motor,
+limite de célula, muro/hole, pausa, stop/bounce-lock, fonte ambígua/expirada,
+endpoint, heartbeat/clear com ack/posição iguais e pacotes antigos/futuros.
+A falha de caminhada era expectativa incorreta: o motor centraliza a linha
+perpendicular. Comparar força com o MESMO passo sem força; SyncTransforms global
+extra foi removido por não corrigir nem ser necessário.374/374 intermediários
+preservados,378 finais em Logs/PredictionPusher46FinalTests.*. Python43/43 e
+C#final0/0 passaram; integridade UTF-8/BOM/metas/diffcheck conferida.
+Próximo: commit LOCAL de C07, depois R04 no mesmo protocolo46 ainda não publicado;
+agrupar a publicação para evitar duas builds completas seguidas. Runner contém
+fontes próprias C07 copiadas/dirty e novos arquivos/metas; NÃO restaurar para45
+antes de copiar também a base C07 na próxima validação. Nenhum CI46 disparado.
+User dirt3arquivos preservado. Continuar até checklist, não parar neste lote.

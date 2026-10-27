@@ -436,6 +436,15 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             sr.enabled = enabled;
     }
 
+    public bool CanProjectNetworkPushCell(Vector2 worldPosition, Vector2 pushDirection)
+    {
+        // Read-only authority approval; never starts recovery, grants protection or
+        // lets a client run the native resolver to obtain prediction geometry.
+        return Assets.Scripts.Netcode.NetSync.IsServer && _move != null && !_move.isDead &&
+            !IsOnHole(worldPosition) && !IsActiveSuddenDeathIndestructibleAt(worldPosition) &&
+            !IsBlockedAtPosition(worldPosition, pushDirection);
+    }
+
     private bool IsOnHole(Vector2 worldPos)
     {
         Collider2D hit = Physics2D.OverlapBox(worldPos, Vector2.one * 0.45f, 0f, holeLayerMask);

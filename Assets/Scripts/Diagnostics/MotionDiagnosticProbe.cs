@@ -126,7 +126,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
     }
 
     string State() => "prediction_block=" + ClassifyPredictionBlock(movement, networkInput, GetComponent<NetworkBombFx>()) +
-        " mounted=" + movement.IsMounted + " boat=" + movement.HasBoatMovementContext + " speed=" + movement.speed + " locked=" + movement.InputLocked + " dead=" + movement.isDead +
+        " mounted=" + movement.IsMounted + " boat=" + movement.HasBoatMovementContext + " pusher=" + movement.HasPusherMovementContext + " speed=" + movement.speed + " locked=" + movement.InputLocked + " dead=" + movement.isDead +
         " paused=" + GamePauseController.IsPaused + " intro=" + (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning) +
         " kickAbility=" + (TryGetComponent<BombKickAbility>(out var kick) && kick.IsEnabled) + " conveyor=" + movement.NetworkConveyorDiagnosticState;
 

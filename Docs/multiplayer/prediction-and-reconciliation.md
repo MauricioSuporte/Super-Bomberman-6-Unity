@@ -1078,3 +1078,39 @@ kinematic circle as well as multiple shapes. Coordinates710 are used: the initia
 71000-unit cast fixture found no contacts and its failed reports were retained.
 Final reports:Logs/PredictionPusherFinal45Tests.* and PredictionPusherFocused45Tests.*.
 No scene, prefab or player body-type change was made. C07 remains partial.
+
+
+## C07 confirmed owner continuation (protocol46, locally validated)
+
+Native pusher contact records an authority-only receipt for the current world
+physics step. Its pending MovePosition stays native. Owner movement snapshots now
+carry an optional aligned, unrounded Box descriptor: post-physics source bounds,
+velocity, filters, source identity, remaining phase and an approved safe cell.
+Absence costs one byte. More than one force source, missing/disabled source,
+unsupported shape and an expired world receipt publish no continuation.
+
+Only the owner composes this force after its motor/conveyor tick. It casts the
+approved source shape against its own actual body, preserving normal/overlap
+filters and walking. It never moves the native source or calls recovery/damage.
+Reconciliation restores that owner's source phase/budget before input replay.
+The server does not apply this context in its zero-to-four input catch-up steps:
+its autonomous source already pushes once in world FixedUpdate.
+
+Continuation stops on lost contact, unknown/blocked exit, hole, safe-cell boundary,
+phase endpoint or150ms budget. It does not invent a reversal or another contact.
+Source phase advances only with simulated owner ticks, never again from packet
+age. Old/future confirmations beyond150ms of estimated server-now cannot restart
+it. Pause freezes it; an approved clear, bounce lock, death or network shutdown
+releases it. Contact heartbeats and clears are sent even with unchanged input ack
+and root position. Observers retain approved world/player interpolation.
+
+The native grid snap and recovery arc remain authoritative. Horizontal walking
+can recenter its perpendicular row; force tests compare with the same no-force
+motor step instead of assuming total vertical displacement equals the push.
+Input remains free. Same-cell/phase limits intentionally fall back to authority
+for uncertainty; this is not whole-world deterministic physics rollback.
+
+Validation:378/378 Unity (OnlineRoom286 + COM92), C#0 new warnings/errors,
+Python43/43 (including pusher motion classification), UTF-8/BOM/meta/diff checks.
+Reports:Logs/PredictionPusher46FinalTests.*. Manual two-peer feel, latency captures
+and performance measurements remain pending; no zero-latency claim is made.

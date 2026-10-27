@@ -185,6 +185,13 @@ publish changed authority positions even when their input acknowledgement repeat
 A native grid snap before bounce/hole checks is a separate transition; force
 telemetry and snapshot fixes alone do not implement owner force prediction.
 
+For bounded confirmed forces, restore the owner's own source geometry, phase and
+budget before replay. Do not rewind the global mechanism. Expire stale approvals,
+revoke contact even when actor position/input ack are unchanged, and bound exits
+before unknown terrain or a phase reversal. A walking motor may recenter the
+perpendicular row; compare its force contribution with the identical motor step
+without force rather than assuming net displacement is additive across centering.
+
 In native cast tests, assert actual contact/count/normal before testing motion,
 advance physics explicitly and restore its simulation mode. Use coordinates close
 to gameplay scale: the pusher fixture at71000 units found no hits while the nearby

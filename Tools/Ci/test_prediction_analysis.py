@@ -9,6 +9,15 @@ spec.loader.exec_module(analysis)
 
 
 class PredictionAnalysisTests(unittest.TestCase):
+    def test_pusher_context_is_separate_and_uses_the_input_side(self):
+        result = analysis.summarize([
+            {"kind": "input_to_motion", "durationMs": 10, "detail": "at_input:prediction_block=none mounted=False pusher=False;at_response:prediction_block=none pusher=True"},
+            {"kind": "input_to_motion", "durationMs": 40, "detail": "prediction_block=none mounted=False pusher=True"},
+            {"kind": "input_to_motion", "durationMs": 70, "detail": "prediction_block=none mounted=True pusher=True"},
+        ])
+        self.assertEqual([(r["context"], r["medianMs"]) for r in result],
+                         [("walking", 10), ("pusher_walking", 40), ("pusher_mounted", 70)])
+
     def test_boat_motion_is_not_mixed_with_walking_or_mounted_boats(self):
         result = analysis.summarize([
             {"kind": "input_to_motion", "durationMs": 10, "detail": "prediction_block=none mounted=False boat=False"},

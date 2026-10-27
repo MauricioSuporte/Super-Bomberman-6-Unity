@@ -71,6 +71,7 @@ namespace Assets.Scripts.Netcode
         float nextSnapshot;
         uint lastSnapshotTick;
         Vector2 lastSnapshotPosition;
+        int lastSnapshotPusherSource;
         bool sentSnapshot;
         double lastServerInputAt = double.NegativeInfinity;
         const double HeldInputGraceSeconds = 0.1;
@@ -287,7 +288,7 @@ namespace Assets.Scripts.Netcode
             // A world force or its resolver can move a player without consuming
             // another input. Publish that state even when its acknowledgement repeats.
             if (!force && state.canPredict && sentSnapshot && processedTick == lastSnapshotTick &&
-                state.position == lastSnapshotPosition) return;
+                state.position == lastSnapshotPosition && state.pusher.sourceId == 0 && lastSnapshotPusherSource == 0) return;
             if (sentSnapshot && processedTick == lastSnapshotTick && state.position != lastSnapshotPosition && GameplayLatencyDiagnostics.Enabled)
             {
                 var entry = GameplayLatencyDiagnostics.For("movement_world_snapshot", movement,
@@ -298,6 +299,7 @@ namespace Assets.Scripts.Netcode
             sentSnapshot = true;
             lastSnapshotTick = processedTick;
             lastSnapshotPosition = state.position;
+            lastSnapshotPusherSource = state.pusher.sourceId;
             var fx = GetComponent<NetworkBombFx>();
             TargetReconcile(connectionToClient, processedTick, state, fx?.CapturePlacementState() ?? default, fx?.CaptureMountActionState() ?? default);
         }

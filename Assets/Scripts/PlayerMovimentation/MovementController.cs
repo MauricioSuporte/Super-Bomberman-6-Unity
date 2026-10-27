@@ -254,6 +254,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         public BattleMode5ConveyorController.NetworkMotorState conveyor;
         public WaterCycleCurrent.NetworkBarrier waterBarrier;
         public BoatRideZone.NetworkRideState boat;
+        public PusherPatrolAndPush.NetworkPushState pusher;
         public bool taggedPass;
         public string passTag;
         public byte axis, alignAxis, movementCapabilities;
@@ -308,7 +309,11 @@ public partial class MovementController : MonoBehaviour, IKillable
         (UseSnapshotMovementCapabilities ? networkTaggedPass && !string.IsNullOrEmpty(networkPassTag) && hit.CompareTag(networkPassTag)
             : canPassTaggedObstacles && hit.CompareTag(passObstacleTag));
 
-    public void SetNetworkTickDriven(bool value) => networkTickDriven = value;
+    public void SetNetworkTickDriven(bool value)
+    {
+        networkTickDriven = value;
+        if (!value) ClearNetworkPusher();
+    }
 
     public NetworkMovementState CaptureNetworkMovementState() => new()
     {
@@ -325,6 +330,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         baseWorldSpeed = SnapshotBaseWorldSpeed, speedMultiplier = SnapshotSpeedMultiplier,
         speedModifierRemaining = predictLocally ? predictedSpeedModifierRemaining : ExternalSpeedModifierRemaining,
         conveyor = CaptureConveyorState(),
+        pusher = CapturePusherState(),
         waterBarrier = UsesAcknowledgedWaterBarrier ? networkWaterBarrier : WaterCycleCurrent.CaptureNetworkBarrier(this),
         boat = predictLocally && hasNetworkMovementContext ? networkBoat : BoatRideZone.CaptureNetworkRide(this),
         taggedPass = predictLocally && hasNetworkMovementContext ? networkTaggedPass : canPassTaggedObstacles,
@@ -361,6 +367,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         predictedSpeedMultiplier = state.speedMultiplier;
         predictedSpeedModifierRemaining = state.speedModifierRemaining;
         RestoreConveyorState(state.conveyor);
+        RestorePusherState(state.pusher, state.serverTime);
         // Object references and traversal ownership are authoritative, never replayed.
         _lastAdjKickedBomb = null;
         _ownedBombPlantTraversal.Clear();
@@ -397,6 +404,7 @@ public partial class MovementController : MonoBehaviour, IKillable
             if (predictLocally) predictedSpeedModifierRemaining = Mathf.Max(0, predictedSpeedModifierRemaining - Time.fixedDeltaTime);
             else externalSpeedModifierTickRemaining = Mathf.Max(0, externalSpeedModifierTickRemaining - Time.fixedDeltaTime);
             SimulateConveyorTick();
+            SimulatePusherTick();
         }
         finally { insideNetworkTick = false; replayingNetworkTick = false; }
     }

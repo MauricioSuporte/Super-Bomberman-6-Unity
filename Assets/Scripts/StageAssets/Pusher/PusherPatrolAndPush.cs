@@ -6,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(AnimatedSpriteRenderer))]
-public sealed class PusherPatrolAndPush : MonoBehaviour
+public sealed partial class PusherPatrolAndPush : MonoBehaviour
 {
     [Header("Path (A <-> B)")]
     [SerializeField] private Vector2 pointA;
@@ -167,6 +167,7 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
             var movement = playerRb.GetComponent<MovementController>();
             Vector2 before = playerRb.position;
             playerRb.MovePosition(before + pushDelta);
+            movement?.RegisterNetworkPusherContact(this);
             LogPushStep(movement, before, pushDelta);
 
             var resolver = hit.collider.GetComponentInParent<PlayerPushedOutOfInvalidTile>();
