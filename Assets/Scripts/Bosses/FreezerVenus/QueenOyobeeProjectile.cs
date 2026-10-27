@@ -36,6 +36,7 @@ public sealed class QueenOyobeeProjectile : MonoBehaviour
 
     public static QueenOyobeeProjectile Create(QueenOyobeeController owner, bool crown, int index, Vector2[] path = null, float flightSeconds = 0f)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return null;
         var go = new GameObject(crown ? "Queen crown" : "Queen snowflake");
         go.layer = LayerMask.NameToLayer("Projectile");
         var p = go.AddComponent<QueenOyobeeProjectile>();
@@ -74,11 +75,13 @@ public sealed class QueenOyobeeProjectile : MonoBehaviour
         p.hitbox.enabled = crown;
         p.rb.position = FreezerVenusArena.Snap(p.position);
         go.transform.position = p.rb.position;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(p.visual);
         return p;
     }
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused) return;
         if (owner == null || !owner.Boss.CombatActive) { Destroy(gameObject); return; }
         float dt = Time.fixedDeltaTime;
@@ -291,6 +294,7 @@ public sealed class QueenOyobeeProjectile : MonoBehaviour
     private void OnTriggerStay2D(Collider2D other) => Contact(other);
     private void Contact(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (spent || !hitbox.enabled || GamePauseController.IsPaused) return;
         if (crown)
         {
@@ -370,6 +374,7 @@ public sealed class QueenOyobeePixelTrail : MonoBehaviour
         visual.sortingLayerID = owner.Boss.body.sortingLayerID;
         visual.sortingOrder = owner.Boss.body.sortingOrder - 1;
         transform.position = min;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(visual);
     }
 
     private void Update()

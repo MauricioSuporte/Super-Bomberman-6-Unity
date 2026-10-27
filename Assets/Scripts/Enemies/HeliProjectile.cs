@@ -14,6 +14,7 @@ public sealed class HeliProjectile : MonoBehaviour
 
     public static void Create(Vector2 position, Vector2 direction, GameObject owner, Sprite projectileSprite, Sprite impactSprite, Sprite impactEndSprite)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         GameObject projectile = new("Heli Projectile") { layer = LayerMask.NameToLayer("Enemy") };
         projectile.transform.position = position;
         Rigidbody2D body = projectile.AddComponent<Rigidbody2D>();
@@ -25,6 +26,7 @@ public sealed class HeliProjectile : MonoBehaviour
         SpriteRenderer renderer = projectile.AddComponent<SpriteRenderer>();
         renderer.sprite = projectileSprite;
         renderer.sortingOrder = 6;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
         HeliProjectile behaviour = projectile.AddComponent<HeliProjectile>();
         behaviour.direction = direction.normalized;
         behaviour.owner = owner;
@@ -37,16 +39,18 @@ public sealed class HeliProjectile : MonoBehaviour
         body = GetComponent<Rigidbody2D>();
         projectileCollider = GetComponent<Collider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        StartCoroutine(ExpireAfterLifetime());
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) StartCoroutine(ExpireAfterLifetime());
     }
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!impacted) body.MovePosition(body.position + direction * 5f * Time.fixedDeltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted || other == null || (owner != null && other.transform.IsChildOf(owner.transform))) return;
         PlayerIdentity player = other.GetComponentInParent<PlayerIdentity>();
         bool blocksShot = other.GetComponentInParent<Bomb>() != null || other.gameObject.layer == LayerMask.NameToLayer("Stage");

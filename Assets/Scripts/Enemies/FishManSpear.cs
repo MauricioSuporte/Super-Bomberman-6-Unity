@@ -25,6 +25,7 @@ public sealed class FishManSpear : MonoBehaviour
         direction = travelDirection == Vector2.zero ? Vector2.down : travelDirection.normalized;
         owner = spearOwner;
         ApplyDirectionSprite();
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(spriteRenderer);
     }
 
     private void Awake()
@@ -38,17 +39,19 @@ public sealed class FishManSpear : MonoBehaviour
         hitCollider.isTrigger = true;
         if (spriteRenderer == null)
             spriteRenderer = GetComponent<SpriteRenderer>();
-        Invoke(nameof(Expire), lifetime);
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) Invoke(nameof(Expire), lifetime);
     }
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!impacted)
             body.MovePosition(body.position + direction * speed * Time.fixedDeltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted || other == null || other.transform.IsChildOf(owner != null ? owner.transform : transform))
             return;
 

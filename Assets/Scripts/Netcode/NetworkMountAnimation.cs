@@ -52,12 +52,13 @@ namespace Assets.Scripts.Netcode
             {
                 var to = visualHistory[next]; var target = to.values[index];
                 double interval = to.time - from.time;
+                float offsetLimit = NetworkVisualPose.ApprovedOffsetLimit(frame.pose, target.pose);
                 if (interval > 0 && interval <= 0.25 && frame.visible && target.visible && frame.idle == target.idle &&
-                    Vector3.Distance(frame.localPosition, target.localPosition) <= 4)
+                    Vector3.Distance(frame.localPosition, target.localPosition) <= offsetLimit)
                 {
                     float t = Mathf.Clamp01((float)((timeline - from.time) / interval));
                     frame.localPosition = Vector3.Lerp(frame.localPosition, target.localPosition, t);
-                    if (Vector3.Distance(frame.pose.position, target.pose.position) <= 4) frame.pose = NetworkVisualPose.Interpolate(frame.pose, target.pose, t);
+                    if (Vector3.Distance(frame.pose.position, target.pose.position) <= offsetLimit) frame.pose = NetworkVisualPose.Interpolate(frame.pose, target.pose, t);
                 }
             }
             return true;

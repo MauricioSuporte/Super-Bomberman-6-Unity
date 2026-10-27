@@ -201,11 +201,12 @@ namespace Assets.Scripts.Netcode
                 if (visualFrames.Count > 1)
                 {
                     var next = visualFrames[1]; double interval = next.time - sample.time;
-                    if (sample.index == next.index && interval > 0 && interval <= 0.25 && Vector3.Distance(sample.offset, next.offset) <= 4)
+                    float offsetLimit = NetworkVisualPose.ApprovedOffsetLimit(sample.pose, next.pose);
+                    if (sample.index == next.index && interval > 0 && interval <= 0.25 && Vector3.Distance(sample.offset, next.offset) <= offsetLimit)
                     {
                         float t = Mathf.Clamp01((float)((NetworkTime.time - sample.time) / interval));
                         activeOffset = Vector3.Lerp(sample.offset, next.offset, t);
-                        if (Vector3.Distance(sample.pose.position, next.pose.position) <= 4) pose = NetworkVisualPose.Interpolate(sample.pose, next.pose, t);
+                        if (Vector3.Distance(sample.pose.position, next.pose.position) <= offsetLimit) pose = NetworkVisualPose.Interpolate(sample.pose, next.pose, t);
                     }
                 }
             }

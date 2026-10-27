@@ -9,9 +9,10 @@ namespace Assets.Scripts.Netcode
         public Quaternion rotation;
         public byte mask;
         public bool valid;
+        public float offsetLimit;
 
         public bool Equals(NetworkVisualPose other) => valid == other.valid && mask == other.mask &&
-            position.Equals(other.position) && scale.Equals(other.scale) && rotation.Equals(other.rotation);
+            position.Equals(other.position) && scale.Equals(other.scale) && rotation.Equals(other.rotation) && offsetLimit.Equals(other.offsetLimit);
 
         static Vector3 Divide(Vector3 value, Vector3 divisor) => new(
             Mathf.Abs(divisor.x) > 0.000001f ? value.x / divisor.x : 0,
@@ -23,7 +24,18 @@ namespace Assets.Scripts.Netcode
             if (actor == null || renderer == null) return default;
             return new NetworkVisualPose { valid = true, position = actor.InverseTransformPoint(renderer.transform.position),
                 rotation = Quaternion.Inverse(actor.rotation) * renderer.transform.rotation,
-                scale = Divide(renderer.transform.lossyScale, actor.lossyScale), mask = (byte)renderer.maskInteraction };
+                scale = Divide(renderer.transform.lossyScale, actor.lossyScale), mask = (byte)renderer.maskInteraction,
+                offsetLimit = actor.TryGetComponent<NetworkPlayerInput>(out var input) ? input.AuthorityVisualOffsetLimit : 4f };
+        }
+
+        public static float ApprovedOffsetLimit(NetworkVisualPose from, NetworkVisualPose to)
+        {
+            // The authority can approve a large, rapid lift of presentation children.
+            // Root teleports still use their separate discontinuity rule. Retain the
+            // boundary's approval when interpolating the final return to rest.
+            float a = from.valid && !float.IsNaN(from.offsetLimit) && !float.IsInfinity(from.offsetLimit) ? from.offsetLimit : 4f;
+            float b = to.valid && !float.IsNaN(to.offsetLimit) && !float.IsInfinity(to.offsetLimit) ? to.offsetLimit : 4f;
+            return Mathf.Clamp(Mathf.Max(a, b), 4f, 128f);
         }
 
         public static NetworkVisualPose Interpolate(NetworkVisualPose from, NetworkVisualPose to, float t)

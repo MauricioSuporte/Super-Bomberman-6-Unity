@@ -169,7 +169,8 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
-        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(
+            mover, heightTiles * Mathf.Max(0.0001f, mover.tileSize));
         activeJumpers.Add(mover);
         StartSpringTileSwap(springCell);
 

@@ -22,6 +22,7 @@ public sealed class MatangoProjectile : MonoBehaviour
         float radius,
         AnimatedSpriteRenderer animationTemplate)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return null;
         GameObject projectileObject = animationTemplate != null
             ? Instantiate(animationTemplate.gameObject)
             : new GameObject("Matango Projectile");
@@ -38,6 +39,7 @@ public sealed class MatangoProjectile : MonoBehaviour
 
         renderer.enabled = true;
         renderer.sortingOrder = 6;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
         if (projectileObject.TryGetComponent(out AnimatedSpriteRenderer animation))
         {
@@ -72,6 +74,7 @@ public sealed class MatangoProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (stopped || Time.time >= expiresAt)
         {
             Destroy(gameObject);
@@ -91,6 +94,7 @@ public sealed class MatangoProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         HandleCollision(other);
     }
 

@@ -6,9 +6,11 @@ namespace Assets.Scripts.Netcode
     public partial class NetworkPlayerInput
     {
         uint authorityMotionSequence, authorityMotionToken;
+        float authorityVisualOffsetLimit = 4f;
         bool ownerAuthorityPresentation;
         NetworkTransformReliable authorityPositionSync;
         public bool OwnerUsesAuthorityPresentation => ownerAuthorityPresentation;
+        public float AuthorityVisualOffsetLimit => authorityMotionToken != 0 ? authorityVisualOffsetLimit : 4f;
 
         // A native authoritative routine marks its lifetime; this never starts it
         // on a client, chooses a destination or changes movement eligibility.
@@ -27,13 +29,15 @@ namespace Assets.Scripts.Netcode
             }
         }
 
-        public static AuthorityMotionScope PresentAuthorityMotion(MovementController actor)
+        public static AuthorityMotionScope PresentAuthorityMotion(MovementController actor, float visualOffsetLimit = 4f)
         {
             if (!NetSync.IsServer || actor == null || !actor.TryGetComponent<NetworkPlayerInput>(out var input) ||
                 !input.isServer || input.netId == 0) return default;
             uint token = ++input.authorityMotionSequence;
             if (token == 0) token = ++input.authorityMotionSequence;
             input.authorityMotionToken = token;
+            input.authorityVisualOffsetLimit = float.IsNaN(visualOffsetLimit) || float.IsInfinity(visualOffsetLimit)
+                ? 4f : Mathf.Clamp(visualOffsetLimit, 4f, 128f);
             return new AuthorityMotionScope(input, token);
         }
 

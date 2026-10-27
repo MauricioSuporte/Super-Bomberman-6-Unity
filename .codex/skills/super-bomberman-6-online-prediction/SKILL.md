@@ -350,3 +350,16 @@ only the source cell color, restore its flags/color on clear and retire overlays
 immediately when terrain is replaced. Native TileBase assets may run gameplay
 Startup; never reuse them in the visual layer. Publish approved frames after the
 native coroutine step, with revisions, full late-observer state and explicit clear.
+
+Audit interpolation cut thresholds against the native curve: Battle4 lifts a
+visual20 tiles in100 ms, exceeding the normal4-unit pose cut between samples.
+Use an authority-scoped, bounded limit recorded in each historical visual pose;
+keep root teleport cuts, renderer/frame changes and delivery-gap guards separate.
+Do not globally relax transform discontinuities to fix a fast sprite lift.
+
+Plain SpriteRenderers need the same prompt discovery hook as animated visuals.
+Register after their spawn is configured, deduplicate in the existing world
+coordinator and exclude NetworkIdentity descendants. This still cannot capture
+an effect born and destroyed between two visual ticks; use an approved event
+for that case. Guard shared contact helpers as well as expression-bodied trigger
+adapters: native sweeps can call the helper directly.

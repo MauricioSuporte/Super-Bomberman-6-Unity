@@ -40,6 +40,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
     public static FreezerVenusProjectile Create(FreezerVenusBoss owner, AttackKind kind,
         Sprite[] frames, Vector3 position, Vector2 direction)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return null;
         var go = new GameObject("FreezerVenus " + kind);
         go.layer = LayerMask.NameToLayer("Projectile");
         position = kind == AttackKind.Tornado ? owner.Arena.Center(owner.Arena.NearestFloor(position)) :
@@ -53,6 +54,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         visual.sortingLayerID = owner.body.sortingLayerID;
         visual.sortingOrder = owner.body.sortingOrder + (kind == AttackKind.Tornado ? -1 : 1);
         if (frames.Length > 0) visual.sprite = frames[kind == AttackKind.Tornado ? Mathf.Min(3, frames.Length - 1) : 0];
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(visual);
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.gravityScale = 0f;
@@ -84,6 +86,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (spent || GamePauseController.IsPaused) return;
         if (owner == null || !owner.CombatActive) { Despawn(); return; }
         elapsed += Time.fixedDeltaTime;
@@ -258,6 +261,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         for (int i = 2; i >= 0; i--)
         {
             renderer.sprite = frames[Mathf.Min(i, frames.Length - 1)];
+            if (i == 2) Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
             float time = 0f;
             while (time < 0.1f)
             {
@@ -303,6 +307,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
 
     private void HandleContact(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (spent || GamePauseController.IsPaused) return;
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
         {

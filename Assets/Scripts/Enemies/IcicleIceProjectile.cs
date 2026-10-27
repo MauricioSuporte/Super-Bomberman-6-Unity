@@ -35,6 +35,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
         Sprite[] projectileAnimationFrames = null,
         float projectileAnimationTime = 0.1f)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         GameObject projectile = new("IcicleIceProjectile");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         if (enemyLayer >= 0)
@@ -57,6 +58,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
             ? projectileAnimationFrames[0]
             : projectileSprite;
         renderer.sortingOrder = 6;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
         if (projectileAnimationFrames != null && projectileAnimationFrames.Length > 0)
         {
@@ -77,11 +79,12 @@ public sealed class IcicleIceProjectile : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         projectileCollider = GetComponent<Collider2D>();
-        Invoke(nameof(Expire), lifetimeSeconds);
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) Invoke(nameof(Expire), lifetimeSeconds);
     }
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted)
             return;
 
@@ -97,6 +100,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted || other == null || other.transform.IsChildOf(owner != null ? owner.transform : transform))
             return;
 
@@ -166,6 +170,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
         SpriteRenderer renderer = particle.AddComponent<SpriteRenderer>();
         renderer.sprite = particleSprite;
         renderer.sortingOrder = 7;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
         Destroy(particle, particleLifetimeSeconds);
     }

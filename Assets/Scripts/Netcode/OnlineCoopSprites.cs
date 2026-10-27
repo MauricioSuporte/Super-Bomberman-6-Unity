@@ -274,10 +274,21 @@ namespace Assets.Scripts.Netcode
 
         public static void CoopTrackAnimation(AnimatedSpriteRenderer animation)
         {
-            if (!NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager ||
-                manager.coopCatalog == null || HasNetworkParent(animation.transform) ||
-                !animation.TryGetComponent<SpriteRenderer>(out var renderer)) return;
-            manager.coopPendingRenderers.Add(renderer);
+            if (NetworkServer.active && animation != null && animation.TryGetComponent<SpriteRenderer>(out var renderer)) CoopTrackRenderer(renderer);
+        }
+
+        // Plain projectile/particle renderers have no AnimatedSpriteRenderer.OnEnable
+        // hook. Register once after configuring them, before the discovery interval.
+        public static void CoopTrackRenderer(SpriteRenderer renderer)
+        {
+            if (!NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager) return;
+            manager.TrackCoopRenderer(renderer);
+        }
+
+        void TrackCoopRenderer(SpriteRenderer renderer)
+        {
+            if (renderer == null || coopCatalog == null || renderer.gameObject.scene.name != coopScene || HasNetworkParent(renderer.transform)) return;
+            coopPendingRenderers.Add(renderer);
         }
 
         void TickBombAnimations()

@@ -1175,3 +1175,17 @@ collider, numa Tilemap de apresentação. A tilemap original mantém o tile e se
 collider: só a cor da célula fica oculta durante a sobreposição. Cor e flags são
 restauradas no repouso/clear/disable. Substituição por Sudden Death remove a
 sobreposição imediatamente, sem recriar o tile antigo. Nenhuma cena foi editada.
+
+## R05 / C02: renderers curtos e limite de lift (47)
+
+CoopTrackRenderer insere renderers plain na fila de captura20 Hz; as factories
+registram o renderer configurado. Isso evita a descoberta250 ms, mas efeitos que
+vivam menos que o intervalo50 ms ainda precisam de evento/descritor próprio. Não
+se deve reduzir a descoberta global nem ativar gameplay client para fazê-los surgir.
+
+Battle4 tem lift20 tiles em100 ms. NetworkVisualPose carrega offsetLimit da
+AuthorityMotionScope: valor padrão4, finito e no máximo128. NPA e NMA interpolam
+offset/pose entre amostras compatíveis até esse limite aprovado, inclusive na
+fronteira de retorno ao repouso. O root continua com seu corte de teleport/gap,
+sem aprovação de direção/destino/hazard. Isso trata o degrau causado pelo limite
+fixo4; ainda não transporta a curva futura inteira nem mede ganho de latência.

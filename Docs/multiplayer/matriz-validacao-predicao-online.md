@@ -145,3 +145,12 @@ com dois peers ainda deve confirmar: preparação -> deformação -> impulso -> 
 soltar direção antes do disparo, acionamento simultâneo nas duas pontas, bomba
 contra a corda, montado/desmontado, pausa durante preparação e fim por Sudden Death.
 Capturar logs correspondentes e vídeo online/offline para avaliar a sensação.
+
+### Continuação C02/R05 /47
+
+Comparar Battle4 montado/desmontado, ascend/hold/descend, pausa e devolução ao
+motor; aprovação de20 unidades vale apenas para apresentação de filhos. Testar
+também portal/teleport (root deve cortar). Para R05 comparar nascimento, voo,
+impacto, trilha e cleanup de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen,
+incluindo dono morto, homing e pausa. Capturar efeitos de100 ms e verificar o
+limite ainda existente para efeitos menores que50 ms. Demais famílias pendentes.

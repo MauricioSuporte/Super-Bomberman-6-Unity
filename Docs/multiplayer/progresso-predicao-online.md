@@ -25,21 +25,21 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 - **Avanço46 validado e enviado:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
   implementados/testados. Forças confirmadas compõem com caminhada/replay por até
   150ms na célula/fase aprovada; IA, captura inicial, dano e bounce são do servidor.
-- **Validação46:**423/423 Unity (OnlineRoom331 + COM92), C#0 erros/avisos novos,
+- **Validação local47:**439/439 Unity (OnlineRoom347 + COM92), C#0 erros/avisos novos,
   Python44/44 (36 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
-  Logs/PredictionEnemyForce46FinalTests.*; C07/rodadas anteriores preservados.
+  Logs/PredictionPresentation47FinalTests.*; C07/R04 e tentativas anteriores preservados.
 - **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
   fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
   física; manuais/capturas e custo real continuam pendentes.
-- **Checklist:**15 IDs implementados/testados,12 parciais e6 pendentes. Execução
+- **Checklist:**15 IDs implementados/testados,13 parciais e5 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
 - **Próximo:** continuar os demais
   C/R/A/P0 até encerrar o checklist, como solicitado. Nenhuma alteração C09 foi
   feita: auditoria encontrou blackout/materiais de máscara fora do stream.
 - **Workspace:** branch `v0.5.0`, checkout original. Lote46 enviado/publicado,
-  C07 `04189e84d` e R04 `509cb70d2`. C03 em implementação local no protocolo47:
-  frames aprovados da corda em camada visual sem colisores; validado 427/427 Unity.
-  C02 permanece em auditoria. Preservar fontes/TitleScreen e Editor do usuário.
+  C07 `04189e84d` e R04 `509cb70d2`. Lote47 validado localmente: C03 corda,
+  C02 lift Battle4 e R05 registro/gates de projéteis. Publicar os dois commits locais.
+  Curvas completas C02/C03 e demais famílias R05 permanecem pendentes. Preservar fontes/TitleScreen e Editor do usuário.
 
 ## Como acompanhar
 
@@ -192,7 +192,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
+- [ ] C02: parcial47 local: base36 + limite visual aprovado para salto alto Battle4; suíte conjunta439/439 passou. Curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial47: preparação/voo36 e deformação ambiental47 aprovadas/testadas; auditoria final do voo/devolução ao motor e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
@@ -205,7 +205,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
 - [ ] R03: apresentação de inimigos.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); publicação e manual pendentes.
-- [ ] R05: projéteis remotos.
+- [ ] R05: parcial47 local: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
 - [ ] R06: bosses/bombers.
 - [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
 - [ ] R08: cenário móvel/ambiental.
@@ -1492,3 +1492,31 @@ Suite combinada PredictionRope47FinalTests passou 427/427 (OnlineRoom335 +
 COM92), XML e log preservados em Logs/. C03 permanece parcial: comparações manuais e auditoria
 final do voo/devolução ao motor ainda pendentes. Novo message requer protocolo47
 no Authenticator e Directory, ambos locais. C02 permanece só em auditoria.
+
+
+## R05 e continuação C02 locais / protocolo47
+
+CoopTrackRenderer reutiliza o registro pendente de renderers da sincronização
+existente (20 Hz), evitando aguardar a descoberta de 250 ms em Heli, Icicle e suas
+partículas, FishMan, fallback Matango, FreezerVenus e suas trilhas, Queen e trilha
+pixel. Não garante efeito que nasça e morra entre dois ticks de 50 ms. Não há
+extrapolação de alvo/homing, impacto ou dano no cliente. Factories e loops/contatos
+nativos dessas famílias têm gates; clientes recebem apenas a apresentação.
+Primeira suíte434:430 passaram,4 falharam (2 fixtures sem collider concreto e2
+callbacks expression-bodied que delegavam contatos sem gate). Corrigidos; focados
+PredictionProjectile47FocusedTests8/8 passaram, incluindo registro/dedup/cleanup.
+Tentativa e resultado focado preservados em Logs/. Não declarar as demais famílias
+Star/Heart/rockets/spear variantes ou todas as curvas R05 auditadas.
+
+C02 auditou Battle4: lift20 tiles/0.1s excede o corte de4 unidades na interpolação
+visual. AuthorityMotionScope agora aprova o limite apenas dos filhos visuais e o
+transporta em NetworkVisualPose; player/mount usam a mesma aprovação histórica.
+Default4, cap128, validação finita, fronteiras de início/fim e geração preservadas.
+Cortes do transform root, renderer/frame discreto e gap>250 ms continuam separados.
+Não é curva completa nem previsão de pouso. Testes de história de player/mount
+foram ampliados para20 unidades com/sem aprovação e scope stale/nan/cap/cleanup.
+
+Suite conjunta PredictionPresentation47FinalTests passou439/439 (OnlineRoom347 +
+COM92); C# incremental final0 erros/avisos, Python44/44 e skill validator passaram.
+Última publicação continua46/509cb70d2;47 pronto para envio. C03 está salvo em
+927c4bac7; salvar R05/C02 no próximo commit. Preservar fontes/TitleScreen do usuário.

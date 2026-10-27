@@ -943,8 +943,10 @@ public sealed partial class OnlineRoomEditModeTests
     }
 
 
-    [Test]
-    public void MountVisualHistoryInterpolatesApprovedOffsetsAndSeparatesMountGenerations()
+    [TestCase(2f, 4f, true)]
+    [TestCase(20f, 4f, false)]
+    [TestCase(20f, 20f, true)]
+    public void MountVisualHistoryInterpolatesApprovedOffsetsAndSeparatesMountGenerations(float offset, float limit, bool interpolates)
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("MountObserverHistory"); actor.SetActive(false);
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
@@ -959,15 +961,15 @@ public sealed partial class OnlineRoomEditModeTests
             var revision = typeof(NetworkMountAnimation).GetField("frameRevision", flags); revision.SetValue(animation, 1u);
             typeof(NetworkMountAnimation).GetField("frameType", flags).SetValue(animation, MountedType.Pink);
             var sample = new NetworkWorldMount.MountFrame { visible = true, idle = false, color = Color.white, frame = 1,
-                pose = new NetworkVisualPose { valid = true, position = Vector3.down * 0.2f, scale = new Vector3(1, 0.2f, 1), rotation = Quaternion.identity, mask = (byte)SpriteMaskInteraction.VisibleInsideMask } };
+                pose = new NetworkVisualPose { valid = true, offsetLimit = limit, position = Vector3.down * 0.2f, scale = new Vector3(1, 0.2f, 1), rotation = Quaternion.identity, mask = (byte)SpriteMaskInteraction.VisibleInsideMask } };
             animation.frames.Add(sample);
             var receive = typeof(NetworkMountAnimation).GetMethod("OnMountVisualTime", flags); receive.Invoke(animation, new object[] { 0d, 10d });
-            sample.localPosition = Vector3.up * 2; sample.frame = 3; sample.flipX = true; sample.color = Color.red;
-            sample.pose = new NetworkVisualPose { valid = true, position = Vector3.zero, scale = Vector3.one, rotation = Quaternion.identity };
+            sample.localPosition = Vector3.up * offset; sample.frame = 3; sample.flipX = true; sample.color = Color.red;
+            sample.pose = new NetworkVisualPose { valid = true, offsetLimit = limit, position = Vector3.up * (offset - 2), scale = Vector3.one, rotation = Quaternion.identity };
             animation.frames[0] = sample; receive.Invoke(animation, new object[] { 10d, 10.2d });
             Assert.IsTrue(animation.TrySampleMountFrame(10.1, MountedType.Pink, 0, out var displayed));
-            Assert.AreEqual(1, displayed.localPosition.y, 0.001f); Assert.AreEqual(1, displayed.frame); Assert.IsFalse(displayed.flipX); Assert.AreEqual(Color.white, displayed.color);
-            Assert.AreEqual(0.6f, displayed.pose.scale.y, 0.001f); Assert.AreEqual(-0.1f, displayed.pose.position.y, 0.001f);
+            Assert.AreEqual(interpolates ? offset * .5f : 0, displayed.localPosition.y, 0.001f); Assert.AreEqual(1, displayed.frame); Assert.IsFalse(displayed.flipX); Assert.AreEqual(Color.white, displayed.color);
+            Assert.AreEqual(interpolates ? .6f : .2f, displayed.pose.scale.y, 0.001f); Assert.AreEqual(interpolates ? (offset - 2.2f) * .5f : -.2f, displayed.pose.position.y, 0.001f);
             Assert.AreEqual((byte)SpriteMaskInteraction.VisibleInsideMask, displayed.pose.mask);
             Assert.IsFalse(animation.TrySampleMountFrame(10.1, MountedType.Yellow, 0, out _));
             revision.SetValue(animation, 2u); Assert.IsFalse(animation.TrySampleMountFrame(10.1, MountedType.Pink, 0, out _), "A new mount of the same type must not inherit old poses.");
@@ -980,8 +982,10 @@ public sealed partial class OnlineRoomEditModeTests
         finally { NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor); }
     }
 
-    [Test]
-    public void PlayerObserverInterpolatesApprovedOffsetWithoutAdvancingDiscretePoseEarly()
+    [TestCase(2f, 4f, true)]
+    [TestCase(20f, 4f, false)]
+    [TestCase(20f, 20f, true)]
+    public void PlayerObserverInterpolatesApprovedOffsetWithoutAdvancingDiscretePoseEarly(float offset, float limit, bool interpolates)
     {
         var actor = new GameObject("PlayerObserverOffset"); actor.SetActive(false);
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
@@ -1000,18 +1004,18 @@ public sealed partial class OnlineRoomEditModeTests
             typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 7);
             var receive = typeof(NetworkPlayerAnimation).GetMethod("OnVisualTime", flags); double now = NetworkTime.time;
             typeof(NetworkPlayerAnimation).GetField("activePose", flags).SetValue(animation,
-                new NetworkVisualPose { valid = true, position = Vector3.down * 0.2f, scale = new Vector3(1, 0.2f, 1), rotation = Quaternion.identity, mask = (byte)SpriteMaskInteraction.VisibleInsideMask });
+                new NetworkVisualPose { valid = true, offsetLimit = limit, position = Vector3.down * 0.2f, scale = new Vector3(1, 0.2f, 1), rotation = Quaternion.identity, mask = (byte)SpriteMaskInteraction.VisibleInsideMask });
             receive.Invoke(animation, new object[] { 0d, now - 0.1 });
             typeof(NetworkPlayerAnimation).GetField("activePose", flags).SetValue(animation,
-                new NetworkVisualPose { valid = true, position = Vector3.zero, scale = Vector3.one, rotation = Quaternion.identity });
-            typeof(NetworkPlayerAnimation).GetField("activeOffset", flags).SetValue(animation, Vector3.up * 2);
+                new NetworkVisualPose { valid = true, offsetLimit = limit, position = Vector3.up * (offset - 2), scale = Vector3.one, rotation = Quaternion.identity });
+            typeof(NetworkPlayerAnimation).GetField("activeOffset", flags).SetValue(animation, Vector3.up * offset);
             typeof(NetworkPlayerAnimation).GetField("activeFrame", flags).SetValue(animation, (byte)3);
             typeof(NetworkPlayerAnimation).GetField("activeSortingOrder", flags).SetValue(animation, 19);
             receive.Invoke(animation, new object[] { now - 0.1, now + 0.1 });
             typeof(NetworkPlayerAnimation).GetMethod("ClientApply", flags).Invoke(animation, null);
-            Assert.AreEqual(1, renderer.RuntimeBaseLocalOffset.y, 0.001f); Assert.AreEqual(1, renderer.CurrentFrame);
+            Assert.AreEqual(interpolates ? offset * .5f : 0, renderer.RuntimeBaseLocalOffset.y, 0.001f); Assert.AreEqual(1, renderer.CurrentFrame);
             Assert.AreEqual(7, renderer.GetComponent<SpriteRenderer>().sortingOrder);
-            Assert.AreEqual(0.6f, child.transform.localScale.y, 0.001f); Assert.AreEqual(-0.1f, child.transform.localPosition.y, 0.001f);
+            Assert.AreEqual(interpolates ? .6f : .2f, child.transform.localScale.y, 0.001f); Assert.AreEqual(interpolates ? (offset - 2.2f) * .5f : -.2f, child.transform.localPosition.y, 0.001f);
             Assert.AreEqual(SpriteMaskInteraction.VisibleInsideMask, child.GetComponent<SpriteRenderer>().maskInteraction);
             renderer.enabled = true; child.GetComponent<SpriteRenderer>().enabled = false;
             typeof(NetworkPlayerAnimation).GetMethod("SampleOwned", flags).Invoke(animation, null);
@@ -1129,10 +1133,13 @@ public sealed partial class OnlineRoomEditModeTests
             NetSync.Mode = NetSync.NetMode.Offline;
             using (NetworkPlayerInput.PresentAuthorityMotion(movement)) Assert.AreEqual(0u, token.GetValue(input));
             NetSync.Mode = NetSync.NetMode.Host;
-            var first = NetworkPlayerInput.PresentAuthorityMotion(movement); uint firstToken = (uint)token.GetValue(input); Assert.AreNotEqual(0u, firstToken);
-            var second = NetworkPlayerInput.PresentAuthorityMotion(movement); uint secondToken = (uint)token.GetValue(input); Assert.AreNotEqual(firstToken, secondToken);
-            first.Dispose(); Assert.AreEqual(secondToken, token.GetValue(input));
-            second.Dispose(); Assert.AreEqual(0u, token.GetValue(input)); Assert.IsFalse(movement.InputLocked);
+            var first = NetworkPlayerInput.PresentAuthorityMotion(movement, 20); uint firstToken = (uint)token.GetValue(input); Assert.AreNotEqual(0u, firstToken);
+            Assert.AreEqual(20, input.AuthorityVisualOffsetLimit);
+            var second = NetworkPlayerInput.PresentAuthorityMotion(movement, 10); uint secondToken = (uint)token.GetValue(input); Assert.AreNotEqual(firstToken, secondToken);
+            first.Dispose(); Assert.AreEqual(secondToken, token.GetValue(input)); Assert.AreEqual(10, input.AuthorityVisualOffsetLimit);
+            second.Dispose(); Assert.AreEqual(0u, token.GetValue(input)); Assert.AreEqual(4, input.AuthorityVisualOffsetLimit); Assert.IsFalse(movement.InputLocked);
+            using (NetworkPlayerInput.PresentAuthorityMotion(movement, float.NaN)) Assert.AreEqual(4, input.AuthorityVisualOffsetLimit);
+            using (NetworkPlayerInput.PresentAuthorityMotion(movement, 300)) Assert.AreEqual(128, input.AuthorityVisualOffsetLimit);
             Assert.IsFalse(movement.explosionInvulnerable);
         }
         finally { if (identity != null) typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, false); NetSync.Mode = oldMode; Object.DestroyImmediate(actor); }
