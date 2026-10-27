@@ -18,34 +18,25 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo50, commit `913518a53`, pipeline
-  [40520719676](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40520719676)
-  concluído com sucesso. R06/R08, Revenge/bomba e lotes anteriores incorporados.
-- **Última suíte completa publicada:**475/475 Unity (OnlineRoom383 + COM92),
-  C#0 erros/avisos novos, Python44/44. Reports em Logs/PredictionBossEnvironment50FinalTests.*.
-- **Avanço50 publicado/A12:** spawn da bomba Revenge antes do primeiro arco de rede,
-  despawn replicado na falha, gate client e motion kind próprio sem pose/predição
-  da habilidade do player. Seis testes direcionados passaram, C#0/0 e Python44/44;
-  suíte completa456/456 passou. Commit1677fb50b publicado; CI40517686471 success.
-- **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
-  fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
-  física; manuais/capturas e custo real continuam pendentes.
-- **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 IDs
-  iniciados. Isso não representa conclusão das pendências. Execução
-  manual com dois peers segue pendente inclusive nos IDs marcados.
-- **A12/51 validado e enviado (`b6a886569`):** input do cart autenticado independente
-  do player inativo, motor previsto/replay puro, poses aprovadas e retorno confirmado.
-  25 focados, host2rodadas e500/500 Unity finais passaram (OnlineRoom408+COM92).
-  C#0/0, Python44/44, UTF-8/metas/diff/skill aprovados. Reports em
-  Logs/PredictionRevengeCart51FinalTests.*; tentativas anteriores preservadas.
-- **Publicação51 em execução:**
-  [40558343289](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40558343289).
-  Na última consulta, compilação/build em andamento. Último deploy confirmado50.
-- **Próximo:** confirmar CI51; continuar preview de lançamento/recoil/
-  aim/muzzle, handoff/capturas e os demais parciais. Não declarar A12 completo.
-- **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen
-  do usuário e Editor aberto. Nenhuma cena/prefab editada neste lote. Comparação
-  gráfica real e custo/latência medidos seguem pendentes.
+- **Servidor e atualizador publicados:** protocolo51, commit `b6a886569`, pipeline
+  [40558343289](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40558343289)
+  completed/success: builds Linux/Windows, deploy, updater e artefatos confirmados.
+- **Validação final:**500/500 Unity (OnlineRoom408+COM92),25 focados, host real com
+  duas rodadas, C#0 erros/0 avisos novos, Python44/44, UTF-8/BOM/metas/diff/skill
+  aprovados. Reports em Logs/PredictionRevengeCart51FinalTests.*; tentativas guardadas.
+- **A12/51:** input autenticado após eliminação, motor do cart previsto/replay puro,
+  dt histórico, roster/poses/som aprovados, cursor fixo mundial e retorno confirmado.
+  Troca/vida/carga/lançamento/dano são do servidor. Sem LoadInto local no retorno.
+- **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 iniciados.
+  Manual com dois peers continua pendente inclusive nos IDs marcados como feitos.
+- **Próximo:** alinhar RegisterRoomActivity em input de cart remoto aceito; continuar
+  preview de lançamento/carga/recoil/aim/muzzle, handoff/capturas e demais parciais.
+  A12 continua parcial. Não há percentis/zero input lag medidos de Revenge.
+- **Limites:** previsão até250ms sem amostra para o cart, fila8/história128;
+  decisões desconhecidas permanecem autoritativas. Não é rollback de toda a física.
+- **Workspace:** branch `v0.5.0`, checkout original; código51 salvo/publicado.
+  Preservar fontes/TitleScreen do usuário e Editor aberto. Nenhuma cena/prefab
+  editada no lote. Runner deve ser conferido antes de novas cópias/testes.
 
 ## Como acompanhar
 
@@ -194,7 +185,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
-- [ ] A12: parcial51 local: motor de cart previsto, replay dt histórico, input autenticado após eliminação, roster/poses e retorno confirmado;25 focados passaram. Host2rodadas e suite500/500 passaram; lançamento/recoil/aim/handoff/capturas e manual pendentes.
+- [ ] A12: parcial51 publicado: motor de cart previsto, replay dt histórico, input autenticado após eliminação, roster/poses e retorno confirmado;25 focados passaram. Host2rodadas e suite500/500 passaram; lançamento/recoil/aim/handoff/capturas e manual pendentes.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
@@ -1850,3 +1841,17 @@ não executa CmdControls). TickRoomTimeout já cobre hardware do host, mas o nov
 ReceiveRevengeInput não chama RegisterRoomActivity; isso deve ser alinhado antes
 de homologar cenários longos com todos os humanos eliminados e só COM na arena.
 Não misturar essa pendência com confirmação do build/deploy deste lote.
+
+
+CI40558343289 confirmado completed/success para b6a886569/protocolo51. Builds
+Linux235MB/Windows972MB sem erros, deploy do servidor, canal do updater e artefatos
+concluídos. Documentação de fechamento salva separadamente com skip ci. Última
+suíte final500/500 e C#0/0 correspondem ao código publicado, com correção de host,
+velocidade confirmada e pause budget incluídos. Não há processos próprios Unity/
+testes/.NET pendentes; apenas a cópia de trabalho do usuário permaneceu alterada.
+
+Retomar pelo RegisterRoomActivity dos comandos remotos válidos do carrinho e depois
+pela antecipação visual de A12. Antes de alterar wire/RPC/SyncVars, subir protocolo
+para52 em authenticator e Directory e compilar ambos os players. Se só alterar
+atividade de sala/diagnóstico sem wire, protocolo51 continua compatível, mas builds
+podem exigir identidade de commit igual. Não reabrir testes já aprovados sem mudança.

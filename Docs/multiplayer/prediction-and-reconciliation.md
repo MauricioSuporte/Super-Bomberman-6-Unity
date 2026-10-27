@@ -1253,7 +1253,7 @@ inicial assertado. Isso não cobre todos os bosses, máscaras de intro, áudio e
 curvas completas ou sensação/render/custo entre peers; R06/R08 continuam parciais.
 
 
-## A12: carrinho Revenge e retorno confirmado (protocolo51, validado localmente)
+## A12: carrinho Revenge e retorno confirmado (protocolo51, publicado em b6a886569)
 
 O manager transporta input mesmo com o player eliminado/inativo. Comandos levam
 cena/id/generation/tick; servidor valida slot atribuído pela conexão e identity.
@@ -1292,3 +1292,9 @@ calcula percentis específicos de Revenge. Requer capturas e validação entre p
 registra views remotas; o envio agora exclui localConnection. O UnityTest real de
 duas rodadas passou após o fix. Suíte completa final500/500 passou, incluindo budget pausado sem créditos e
 velocidade confirmada no retorno. A12 segue parcial; publicação ainda separada.
+
+
+Publicação51 confirmada no CI40558343289 (completed/success), client/server/updater.
+Validação final500/500 inclui velocidade do retorno aplicada antes da predição e
+pause do budget sem crédito acumulado nem release de A fabricado. Não substitui
+manual de dois peers nem encerra os previews visuais pendentes de A12.
