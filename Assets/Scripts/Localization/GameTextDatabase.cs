@@ -884,6 +884,7 @@ public static partial class GameTextDatabase
         TimeLimit = "Time Limit",
         SuddenDeath = "Sudden Death",
         RevengeBomber = "Revenge Bomber",
+        ShufflePlayers = "Shuffle Players",
         Easy = "Easy",
         Normal = "Normal",
         Hard = "Hard",
@@ -926,6 +927,7 @@ public static partial class GameTextDatabase
         TimeLimit = "制限時間",
         SuddenDeath = "サドンデス",
         RevengeBomber = "リベンジボンバー",
+        ShufflePlayers = "プレイヤーシャッフル",
         Easy = "イージー",
         Normal = "ノーマル",
         Hard = "ハード",
@@ -968,6 +970,7 @@ public static partial class GameTextDatabase
         TimeLimit = "Límite de Tiempo",
         SuddenDeath = "Muerte Súbita",
         RevengeBomber = "Bomber Vengador",
+        ShufflePlayers = "Mezclar Jugadores",
         Easy = "Fácil",
         Normal = "Normal",
         Hard = "Difícil",
@@ -1010,6 +1013,7 @@ public static partial class GameTextDatabase
         TimeLimit = "Tempo Limite",
         SuddenDeath = "Morte Súbita",
         RevengeBomber = "Bomber Vingança",
+        ShufflePlayers = "Embaralhar Jogadores",
         Easy = "Fácil",
         Normal = "Normal",
         Hard = "Difícil",
@@ -1404,6 +1408,7 @@ public sealed class BattleModeMenuText
     public string TimeLimit;
     public string SuddenDeath;
     public string RevengeBomber;
+    public string ShufflePlayers;
     public string Easy;
     public string Normal;
     public string Hard;

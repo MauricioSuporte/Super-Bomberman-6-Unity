@@ -33,6 +33,7 @@ public static partial class SaveSystem
             battleModeRoundTimerMode = value.battleModeRoundTimerMode,
             battleModeSuddenDeath = value.battleModeSuddenDeath,
             battleModeRevengeBomber = value.battleModeRevengeBomber,
+            battleModeShufflePlayers = value.battleModeShufflePlayers,
             battleModeStageIndex = value.battleModeStageIndex,
             battleModeMusicSelectionMask = value.battleModeMusicSelectionMask,
             battleModePlayerControlModes = value.battleModePlayerControlModes,
@@ -69,6 +70,7 @@ public static partial class SaveSystem
         public int battleModeRoundTimerMode;
         public int battleModeSuddenDeath;
         public bool battleModeRevengeBomber;
+        public int battleModeShufflePlayers;
         public int battleModeStageIndex;
         public int battleModeMusicSelectionMask;
         public int[] battleModePlayerControlModes;

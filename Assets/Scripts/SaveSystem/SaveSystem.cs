@@ -535,6 +535,22 @@ public static partial class SaveSystem
         SaveBattleConfiguration();
     }
 
+    // 0: no, 1: yes, 2: randomly decide once per round.
+    public static int GetBattleModeShufflePlayers()
+    {
+        EnsureLoaded();
+        return Mathf.Clamp(BattleData.battleModeShufflePlayers, 0, 2);
+    }
+
+    public static void SetBattleModeShufflePlayers(int setting)
+    {
+        EnsureLoaded();
+        setting = Mathf.Clamp(setting, 0, 2);
+        if (BattleData.battleModeShufflePlayers == setting) return;
+        BattleData.battleModeShufflePlayers = setting;
+        SaveBattleConfiguration();
+    }
+
     public static int GetBattleModeStageIndex()
     {
         EnsureLoaded();
@@ -1019,6 +1035,7 @@ public static partial class SaveSystem
         d.battleModeBattlesToWin = Mathf.Clamp(d.battleModeBattlesToWin, 1, 5);
         d.battleModeRoundTimerMode = (int)NormalizeBattleModeRoundTimerMode(d.battleModeRoundTimerMode);
         d.battleModeSuddenDeath = (int)NormalizeBattleModeSuddenDeathSetting(d.battleModeSuddenDeath);
+        d.battleModeShufflePlayers = Mathf.Clamp(d.battleModeShufflePlayers, 0, 2);
         d.battleModeStageIndex = Mathf.Clamp(d.battleModeStageIndex, 1, 15);
         d.battleModeMusicSelectionMask = NormalizeBattleModeMusicSelectionMask(d.battleModeMusicSelectionMask);
         EnsureBattleModePlayerControlModes(d);

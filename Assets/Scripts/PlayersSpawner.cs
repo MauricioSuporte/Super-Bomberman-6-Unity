@@ -26,6 +26,7 @@ public sealed class PlayersSpawner : MonoBehaviour
     public bool IsBossStage => isBossStage;
 
     bool spawned;
+    int[] battleSpawnIndices;
     readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
 
     static readonly Vector2[] NormalStagePositions =
@@ -172,7 +173,7 @@ public sealed class PlayersSpawner : MonoBehaviour
             }
 
             int index = playerId - 1;
-            Vector3 spawnPos = ResolveSpawnPosition(index, preset);
+            Vector3 spawnPos = ResolveSpawnPosition(ResolveBattleSpawnIndex(index), preset);
 
             var go = Instantiate(playerPrefab, spawnPos, Quaternion.identity, stagingRoot.transform);
             if (!go.TryGetComponent<PlayerIdentity>(out var id))
@@ -301,6 +302,32 @@ public sealed class PlayersSpawner : MonoBehaviour
         return Vector3.zero;
     }
 
+    int ResolveBattleSpawnIndex(int index)
+    {
+        if (!IsBattleModeScene() || (Assets.Scripts.Netcode.NetSync.IsOnline && !Mirror.NetworkServer.active))
+            return index;
+        if (battleSpawnIndices == null)
+        {
+            battleSpawnIndices = new[] { 0, 1, 2, 3, 4, 5 };
+            int setting = SaveSystem.GetBattleModeShufflePlayers();
+            bool shuffle = setting == 1 || (setting == 2 && UnityEngine.Random.value >= 0.5f);
+            if (shuffle)
+            {
+                var active = new List<int>();
+                for (int i = 0; i < battleSpawnIndices.Length; i++)
+                    if (SaveSystem.GetBattleModePlayerControlMode(i + 1) != BattleModePlayerControlMode.Off)
+                        active.Add(i);
+                for (int i = active.Count - 1; i > 0; i--)
+                {
+                    int j = UnityEngine.Random.Range(0, i + 1);
+                    (battleSpawnIndices[active[i]], battleSpawnIndices[active[j]]) =
+                        (battleSpawnIndices[active[j]], battleSpawnIndices[active[i]]);
+                }
+            }
+        }
+        return battleSpawnIndices[index];
+    }
+
     bool TryGetOverridePosition(int playerIndex, out Vector3 pos)
     {
         pos = default;
@@ -320,7 +347,7 @@ public sealed class PlayersSpawner : MonoBehaviour
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
-        Vector3 pos = ResolveSpawnPosition(idx, preset);
+        Vector3 pos = ResolveSpawnPosition(ResolveBattleSpawnIndex(idx), preset);
         return (Vector2)pos;
     }
 

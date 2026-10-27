@@ -41,7 +41,7 @@ namespace Assets.Scripts.Netcode
                 nameLabel.rectTransform.sizeDelta = new Vector2(100, 12);
                 nameLabel.font = Resources.Load<TMP_FontAsset>("Fonts/Retro Gaming SDF");
                 nameLabel.fontSize = 6; nameLabel.alignment = TextAlignmentOptions.Center;
-                nameLabel.color = new Color(1, 1, 1, .6f); nameLabel.outlineColor = new Color32(95, 95, 95, 255);
+                nameLabel.color = new Color(1, 1, 1, .8f); nameLabel.outlineColor = new Color32(95, 95, 95, 255);
                 nameLabel.outlineWidth = .25f; nameLabel.richText = false; nameLabel.raycastTarget = false;
                 LocalizedTmpFontFallback.Apply(nameLabel);
             }

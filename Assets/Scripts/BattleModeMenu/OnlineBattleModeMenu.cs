@@ -19,6 +19,7 @@ public sealed partial class BattleModeMenu
         public int difficulty;
         public int suddenDeath;
         public bool revenge;
+        public int shuffle;
         public int[] items;
         public int[] louies;
         public SaveData.BattleModeHandicapSave handicap;
@@ -47,7 +48,7 @@ public sealed partial class BattleModeMenu
         return JsonUtility.ToJson(new OnlineView { step = state.ToString(), characters = OnlineCharacterSelectionActive,
             matchMode = (int)SelectedMatchMode, modes = playerModes, selectedPlayer = selectedPlayerIndex + 1,
             stage = selectedStageIndex, wins = ruleBattlesToWin, timer = (int)ruleTimerMode,
-            difficulty = (int)ruleComputerLevel, suddenDeath = (int)ruleSuddenDeath, revenge = ruleRevengeBomber,
+            difficulty = (int)ruleComputerLevel, suddenDeath = (int)ruleSuddenDeath, revenge = ruleRevengeBomber, shuffle = ruleShufflePlayers,
             items = workingBattleItemAmounts, louies = workingBattleLouieAmounts,
             handicap = workingBattleHandicap, teams = workingTeams, teamAssigned = teamAssigned,
             teamPlayer = currentTeamPlayerIndex, teamIndex = selectedTeamIndex, ruleIndex = selectedRuleIndex,
@@ -157,6 +158,7 @@ public sealed partial class BattleModeMenu
         ruleTimerMode = (BattleModeRules.RoundTimerMode)view.timer;
         ruleSuddenDeath = (BattleModeSuddenDeathSetting)view.suddenDeath;
         ruleRevengeBomber = view.revenge;
+        ruleShufflePlayers = Mathf.Clamp(view.shuffle, 0, 2);
         selectedStageIndex = view.stage;
         stageCarouselFromIndex = view.carouselFrom;
         stageCarouselDirection = view.carouselDirection;

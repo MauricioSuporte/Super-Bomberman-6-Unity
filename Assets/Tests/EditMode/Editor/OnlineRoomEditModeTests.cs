@@ -11,6 +11,45 @@ using Mirror;
 public sealed partial class OnlineRoomEditModeTests
 {
     [Test]
+    public void BattleShuffleRoundUsesOnlyActiveSpawnsAndRetainsItsPermutation()
+    {
+        bool hadSettings = SaveSystem.HasOnlineBattleSettings;
+        string saved = SaveSystem.CaptureOnlineBattleSettings();
+        var previousScene = SceneManager.GetActiveScene();
+        var scene = SceneManager.CreateScene("BattleMode_ShuffleTest");
+        var random = Random.state; var mode = NetSync.Mode;
+        GameObject actor = null;
+        try
+        {
+            SceneManager.SetActiveScene(scene); NetSync.Mode = NetSync.NetMode.Offline;
+            SaveSystem.BeginOnlineBattleSettings();
+            Assert.AreEqual(0, new SaveData().battleModeShufflePlayers);
+            for (int i = 1; i <= 6; i++)
+                SaveSystem.SetBattleModePlayerControlMode(i, i == 1 || i == 3 || i == 6 ? BattleModePlayerControlMode.Man : BattleModePlayerControlMode.Off);
+            SaveSystem.SetBattleModeShufflePlayers(1);
+            var snapshot = SaveSystem.CaptureOnlineBattleSettings();
+            SaveSystem.SetBattleModeShufflePlayers(0);
+            SaveSystem.ApplyOnlineBattleSettings(snapshot);
+            Assert.AreEqual(1, SaveSystem.GetBattleModeShufflePlayers());
+            actor = new GameObject("ShuffleSpawner");
+            var spawner = actor.AddComponent<PlayersSpawner>();
+            var resolve = typeof(PlayersSpawner).GetMethod("ResolveBattleSpawnIndex", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var actual = new List<int>();
+            foreach (int i in new[] { 0, 2, 5 }) actual.Add((int)resolve.Invoke(spawner, new object[] { i }));
+            CollectionAssert.AreEquivalent(new[] { 0, 2, 5 }, actual);
+            foreach (int i in new[] { 1, 3, 4 }) Assert.AreEqual(i, resolve.Invoke(spawner, new object[] { i }));
+            for (int i = 0; i < 3; i++) Assert.AreEqual(actual[i], resolve.Invoke(spawner, new object[] { new[] { 0, 2, 5 }[i] }));
+        }
+        finally
+        {
+            if (actor != null) Object.DestroyImmediate(actor);
+            SceneManager.SetActiveScene(previousScene); UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
+            SaveSystem.ApplyOnlineBattleSettings(saved); if (!hadSettings) SaveSystem.EndOnlineBattleSettings();
+            Random.state = random; NetSync.Mode = mode;
+        }
+    }
+
+    [Test]
     public void SuddenDeathClientCopiesApprovedPathWithoutDrawingGameplayRandom()
     {
         var oldMode = NetSync.Mode; var oldRandom = Random.state;

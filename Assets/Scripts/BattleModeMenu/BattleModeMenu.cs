@@ -513,6 +513,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
     private BattleModeRules.RoundTimerMode ruleTimerMode;
     private BattleModeSuddenDeathSetting ruleSuddenDeath;
     private bool ruleRevengeBomber;
+    private int ruleShufflePlayers;
     private bool ruleConfigReturnedToSkinSelect;
     private bool ruleConfigReturnedToTeamSelect;
     private RectTransform stageSelectRoot;
@@ -2298,7 +2299,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         ruleConfigRoot.SetAsLastSibling();
 
         ruleRows.Clear();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 6; i++)
             ruleRows.Add(CreateRuleRow(i));
 
         CreateRuleCursor();
@@ -2413,6 +2414,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         ruleTimerMode = SaveSystem.GetBattleModeRoundTimerMode();
         ruleSuddenDeath = SaveSystem.GetBattleModeSuddenDeathSetting();
         ruleRevengeBomber = SaveSystem.GetBattleModeRevengeBomberEnabled();
+        ruleShufflePlayers = SaveSystem.GetBattleModeShufflePlayers();
     }
 
     private void SaveRuleConfig()
@@ -2422,6 +2424,7 @@ public sealed partial class BattleModeMenu : MonoBehaviour
         SaveSystem.SetBattleModeRoundTimerMode(ruleTimerMode);
         SaveSystem.SetBattleModeSuddenDeathSetting(ruleSuddenDeath);
         SaveSystem.SetBattleModeRevengeBomberEnabled(ruleRevengeBomber);
+        SaveSystem.SetBattleModeShufflePlayers(ruleShufflePlayers);
     }
 
     private void UpdateRuleConfigVisuals()
@@ -2437,7 +2440,8 @@ public sealed partial class BattleModeMenu : MonoBehaviour
             GameTextDatabase.BattleModeMenu.BattlesToWin,
             GameTextDatabase.BattleModeMenu.TimeLimit,
             GameTextDatabase.BattleModeMenu.SuddenDeath,
-            GameTextDatabase.BattleModeMenu.RevengeBomber
+            GameTextDatabase.BattleModeMenu.RevengeBomber,
+            GameTextDatabase.BattleModeMenu.ShufflePlayers
         };
 
         string[] values =
@@ -2446,7 +2450,8 @@ public sealed partial class BattleModeMenu : MonoBehaviour
             ColorizeRuleValue(ruleBattlesToWin.ToString(), ruleGreenHex),
             ColorizeRuleValue(GetTimerModeDisplayName(ruleTimerMode), ruleGreenHex),
             ColorizeRuleValue(GetSuddenDeathDisplayName(ruleSuddenDeath), GetSuddenDeathColor(ruleSuddenDeath)),
-            ColorizeRuleValue(ruleRevengeBomber ? GameTextDatabase.Common.On : GameTextDatabase.Common.Off, ruleRevengeBomber ? ruleGreenHex : ruleBlueHex)
+            ColorizeRuleValue(ruleRevengeBomber ? GameTextDatabase.Common.On : GameTextDatabase.Common.Off, ruleRevengeBomber ? ruleGreenHex : ruleBlueHex),
+            ColorizeRuleValue(ruleShufflePlayers == 0 ? GameTextDatabase.BattleModeMenu.No : ruleShufflePlayers == 1 ? GameTextDatabase.BattleModeMenu.Yes : GameTextDatabase.Common.Random, GetSuddenDeathColor((BattleModeSuddenDeathSetting)ruleShufflePlayers))
         };
 
         for (int i = 0; i < ruleRows.Count; i++)
@@ -2510,6 +2515,9 @@ public sealed partial class BattleModeMenu : MonoBehaviour
                 break;
             case 4:
                 ruleRevengeBomber = !ruleRevengeBomber;
+                break;
+            case 5:
+                ruleShufflePlayers = WrapIndex(ruleShufflePlayers + direction, 3);
                 break;
         }
     }

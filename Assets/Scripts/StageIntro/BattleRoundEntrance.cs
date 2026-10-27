@@ -134,7 +134,7 @@ public partial class StageIntroTransition
                     Vector2 position = Vector2.Lerp(cursorOrigin, destination, Mathf.Clamp01(cursorElapsed / 0.37f));
                     cursor.rectTransform.anchoredPosition = new Vector2(Mathf.Round(position.x), Mathf.Round(position.y));
                 }
-                cursor.GetComponent<CanvasGroup>().alpha = cursorElapsed < 0.37f || (cursorElapsed < 1.37f && Mathf.Repeat(cursorElapsed - 0.37f, 0.2f) < 0.12f) ? 1f : 0f;
+                cursor.GetComponent<CanvasGroup>().alpha = 1f;
             }
             yield return null;
         }
@@ -207,7 +207,7 @@ public partial class StageIntroTransition
         RefreshControllers(includeInactive: false);
         foreach (var movement in movementControllers)
             if (movement != null && movement.GetComponent<PlayerIdentity>() != null)
-                movement.SetInputLocked(true, true);
+                movement.SetInputLocked(true, true, Vector2.down);
     }
 
     static TextMeshProUGUI BattleEntranceText(Transform parent, string name, float y)
