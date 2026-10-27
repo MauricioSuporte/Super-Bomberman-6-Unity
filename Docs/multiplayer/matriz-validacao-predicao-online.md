@@ -64,7 +64,7 @@ não autoriza considerar essas lacunas resolvidas.
 | A09 | Line/Purple, estoque parcial e variantes de bomba | Cada célula confirma separadamente; comando não duplica som/estoque nem usa tick de outra ação. |
 | A10 | ControlBomb com seleção e detonação, inclusive bomba ausente | Feedback responde ao comando correto; servidor decide detonação e não há ativação por replay. |
 | A11 | Montar/desmontar, disputar pickup, fila de ovos e trocar posse | Arcos e seguidores mantêm fase, visibilidade e sorting; posse/ovo não são concedidos por previsão. |
-| A12 | Revenge: entrada permitida, mira, movimento, lançamento e retorno | Validar primeiro transporte de input e elegibilidade; apresentação não reativa player eliminado. |
+| A12 | Revenge: entrada permitida, mira, movimento, lançamento e retorno | Confirmar spawn/netId antes do arco Revenge, pausa/stop e visual com owner eliminado; depois transporte de input/elegibilidade/carrinho. Apresentação não reativa player eliminado. |
 | A13 | Alterar velocidade/debuff/pass com inputs ainda pendentes | Replay usa contexto histórico confirmado; rejeição não apaga intenção direcional real. |
 | A14 | Kick, punch, glove, Yellow/Blue, Search/Magnet, Rubber e bounce | Início contínuo, sem A duplicado, término ordenado e rollback completo em rejeição/interrupção. |
 | C01 | Esteira reta/curva, mudança de fase e saída bloqueada | Força aplicada uma vez por tick; replay não altera fase global nem empurra duas vezes. |
@@ -82,9 +82,9 @@ não autoriza considerar essas lacunas resolvidas.
 | R03 | Frog/hop/snowman/korobokkuru: caminhada, salto e avanço | Trajeto aprovado contínuo sem prever alvo, pathfinding ou morte. |
 | R04 | Hurricane, Magnet e bolha: captura/puxão/liberação com input | Força compõe com o motor quando caminhar é permitido; captura/dano/libertação são autoritativos. |
 | R05 | Spear, rocket, ice, star e heart: spawn, curva/homing e impacto | Só percurso aprovado é apresentado; impacto encerra explicitamente sem collider de dano client. |
-| R06 | SunMask, ClownMask, FreezerVenus e Mecha: telegraph/ataques | Pose, trajetória e som se alinham; client não anuncia área segura por adivinhar ataque. |
+| R06 | SunMask, ClownMask, FreezerVenus e Mecha: telegraph/ataques | Pose, trajetória, sombra e som se alinham; Heart/Star não escolhem alvo/orbit/contato no client. Confirmar intro/transformação/telegraph e matriz de colisões; client não adivinha ataque. |
 | R07 | Bomba em voo com owner inativo/destruído; itens, ovos e transferências | Motion confirmado continua, previsão cancela; VFX recebido sobrevive ao owner e cleanup devolve estado. Eventos sem owner são caso separado. |
-| R08 | Barris, snowballs, bubbles e cenário móvel de World3 | Movimento visual não promete geometria diferente da aprovada; saída de cena limpa objetos e esperas. |
+| R08 | Barris, snowballs, bubbles e cenário móvel de World3 | Penguin escolhe alvo/fase no servidor; neve e barril não iniciam sweep/queda no client. Medir trajetória/sombra/áudio e pausa; visual não promete geometria diferente da aprovada. Limpar ao sair. |
 
 ## Verificações específicas dos últimos lotes
 

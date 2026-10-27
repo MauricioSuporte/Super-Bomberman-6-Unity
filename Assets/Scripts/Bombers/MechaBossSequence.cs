@@ -127,6 +127,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         initialized = true;
 
         EnsurePlayersRefs();
@@ -148,6 +149,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void TryStartSequence()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (initialized && !sequenceStarted)
         {
             sequenceStarted = true;

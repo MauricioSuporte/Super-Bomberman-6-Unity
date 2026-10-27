@@ -68,6 +68,7 @@ namespace StageAssets
 
         internal void NotifyPillarDestroyed(BarrelPillarTrapPillar pillar)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (fallStarted)
                 return;
 
@@ -362,6 +363,7 @@ namespace StageAssets
 
         public bool TryDestroyByExplosion(BombExplosion.ExplosionPart explosionPart)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
             if (explosionPart != BombExplosion.ExplosionPart.Start)
                 return false;
 

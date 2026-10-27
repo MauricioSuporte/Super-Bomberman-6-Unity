@@ -404,3 +404,11 @@ removal. Distinguish approved Revenge launch from a living player's Punch pose;
 it must not grant return eligibility or inherit an unrelated input prediction lead.
 An inactive owner's retained presenter does not itself supply cart input, carrier
 transport or confirmed player reactivation. Keep those checklist items explicit.
+
+
+Scene suppression is not a replacement for native authority guards: OnEnable can
+start a boss intro or lifetime before suppression runs, and shared contact helpers
+can be called outside the normal loop. Audit explicit combat/kill/orbit/phase
+entry points as well as Update. Do not alter global Physics2D layer collision rules
+from a decorative client clone. Preserve the authority/offline RNG and phase clock;
+these gates alone do not replicate missing telegraphs, intro masks or looping audio.

@@ -214,6 +214,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         ScanAndDestroyPunchedBombsTouchingBoss();
     }
 
@@ -373,6 +374,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         isDead = false;
         inWinkAttack = false;
         inAngry = false;
@@ -471,6 +473,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         TryDestroyBombOnTouch(other);
         TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
@@ -478,6 +481,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void OnTriggerStay2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         TryDestroyBombOnTouch(other);
         TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
@@ -567,6 +571,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void OnDamaged(int amount)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -830,6 +835,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     public void Kill()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

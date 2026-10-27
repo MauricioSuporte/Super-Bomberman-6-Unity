@@ -42,6 +42,7 @@ public class ClownMaskMovement : MonoBehaviour
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         nextDecisionTime = Time.time;
         hitStopTimer = 0f;
         currentDirection = Vector2.zero;
@@ -70,6 +71,7 @@ public class ClownMaskMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused)
         {
             rb.linearVelocity = Vector2.zero;
@@ -212,6 +214,7 @@ public class ClownMaskMovement : MonoBehaviour
 
     public void OnHit(float duration = -1f)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (duration <= 0f)
             duration = defaultHitStopDuration;
 

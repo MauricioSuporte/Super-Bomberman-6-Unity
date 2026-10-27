@@ -236,6 +236,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (introRoutine != null)
             StopCoroutine(introRoutine);
 
@@ -998,6 +999,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnHealthDamaged(int amount)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || !bossSpawned || !introFinished)
             return;
 
@@ -1362,11 +1364,13 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnHealthDied()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         Kill();
     }
 
     public void Kill()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -1585,12 +1589,14 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
     }
 
     void OnTriggerStay2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
     }

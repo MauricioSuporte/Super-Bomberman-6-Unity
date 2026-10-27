@@ -82,6 +82,7 @@ namespace StageAssets
 
         private void OnEnable()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!configurationValid)
                 return;
             ResetVisuals();
@@ -98,6 +99,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!configurationValid)
                 return;
             if (audioPaused != GamePauseController.IsPaused)
@@ -157,6 +159,7 @@ namespace StageAssets
 
         private void LateUpdate()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (GamePauseController.IsPaused || !IsReadyToLaunch() || roomLaunchCooldown > 0f)
                 return;
 
@@ -191,6 +194,7 @@ namespace StageAssets
 
         private bool BeginShot()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
             Tilemap ground = GameManager.Instance != null ? GameManager.Instance.groundTilemap : null;
             Tilemap walls = GameManager.Instance != null ? GameManager.Instance.indestructibleTilemap : null;
             availableTargets.Clear();
@@ -359,6 +363,7 @@ namespace StageAssets
 
         private void ScheduleNextShot()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             waitRemaining = Random.Range(Mathf.Max(0.1f, Mathf.Min(minimumRepeatSeconds, maximumRepeatSeconds)),
                 Mathf.Max(0.1f, Mathf.Max(minimumRepeatSeconds, maximumRepeatSeconds)));
         }

@@ -34,6 +34,7 @@ public class StarProjectile : MonoBehaviour
 
     public void Initialize(Vector2 dir, float customSpeed, float customLifetime)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         direction = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector2.right;
 
         if (customSpeed > 0f)
@@ -48,6 +49,7 @@ public class StarProjectile : MonoBehaviour
 
     public void InitializeCurved(Vector2 dir, float customSpeed, float customLifetime, float angularSpeedDegrees)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         curvedAngularSpeedDegrees = angularSpeedDegrees;
         Initialize(dir, customSpeed, customLifetime);
     }
@@ -65,6 +67,7 @@ public class StarProjectile : MonoBehaviour
         int linksPerArm,
         float deployRetractDuration)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         orbiting = true;
         orbitCenter = center;
         orbitRadius = 0f;
@@ -94,6 +97,8 @@ public class StarProjectile : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         orbitVisuals = GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (var sprite in orbitVisuals)
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(sprite);
         orbitColliders = GetComponentsInChildren<Collider2D>(true);
         if (rb != null)
         {
@@ -118,6 +123,7 @@ public class StarProjectile : MonoBehaviour
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!initialized)
             return;
 
@@ -147,6 +153,7 @@ public class StarProjectile : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         int layer = other.gameObject.layer;
 
         if (layer == LayerMask.NameToLayer("Player") || other.CompareTag("Player"))
@@ -166,6 +173,7 @@ public class StarProjectile : MonoBehaviour
 
     void RestartLifetime()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isActiveAndEnabled || lifeTime <= 0f)
             return;
 
@@ -267,6 +275,7 @@ public class StarProjectile : MonoBehaviour
 
     bool TryApplyPlayerHit(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (!other.TryGetComponent<MovementController>(out var movement) || movement == null)
             return false;
 

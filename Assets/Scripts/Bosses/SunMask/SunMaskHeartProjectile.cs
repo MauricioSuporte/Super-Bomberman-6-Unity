@@ -53,6 +53,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     public void Initialize(float speed, float lifeTime, float floatAmplitude, float floatFrequency)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (speed > 0f) this.speed = speed;
         if (lifeTime > 0f) this.lifeTime = lifeTime;
         if (floatAmplitude >= 0f) this.floatAmplitude = floatAmplitude;
@@ -82,6 +83,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     void ApplyLayerIgnores()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         int myLayer = gameObject.layer;
 
         if (ignorePlayerLayer)
@@ -101,6 +103,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         dying = false;
         startTime = Time.time;
         nextRetargetTime = 0f;
@@ -155,6 +158,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (dying || !initialized)
             return;
 
@@ -336,6 +340,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (dying) return;
         if (other == null) return;
 
@@ -346,6 +351,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     public void TriggerDestroy(Collider2D explosionCollider = null)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (dying) return;
         dying = true;
 

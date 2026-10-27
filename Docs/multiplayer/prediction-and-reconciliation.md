@@ -1232,3 +1232,22 @@ pose de BombPunch/PowerGlove nem predição de retorno, continuação ou Rubber.
 Falha após spawn usa despawn replicado. A compatibilidade exige client/server50.
 Isso corrige o caminho da bomba; não implementa input/transporte do carrinho ou
 reativação do jogador. A12 permanece parcial e requer validação real entre peers.
+
+
+## R06/R08: proteção das entradas nativas (protocolo50, lote seguinte)
+
+SunMask/ClownMask não iniciam movimento, reação, morte ou intro pelo OnEnable
+no client puro. FreezerVenus mantém combate, seleção de ataques, movimento,
+transformação e contato no servidor; Mecha não inicia sua sequência nativa.
+Heart/Star não escolhem alvo/orbit, lifetime ou dano no client. Heart também não
+muda a matriz global Physics2D.IgnoreLayerCollision. Offline/host conservam as
+regras e chamadas RNG nativas. Star registra seus renderers plain prontamente;
+Freezer registra corpo/sombra no coordenador existente.
+
+RocketPenguin mantém arbitragem/target/reload no servidor; SnowBall não avança
+sweep e o barril não consome pilares nem inicia queda no client. Seus visuais
+permanecem no stream aprovado existente. Não se prevê terreno ou contato futuro.
+
+19 testes focados passaram, com corpo físico ativo separado na fixture e estado
+inicial assertado. Isso não cobre todos os bosses, máscaras de intro, áudio em loop,
+curvas completas ou sensação/render/custo entre peers; R06/R08 continuam parciais.

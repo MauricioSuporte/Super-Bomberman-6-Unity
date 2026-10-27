@@ -90,6 +90,8 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
         Arena = new FreezerVenusArena(FindAnyObjectByType<GameManager>());
         if (shadow != null) shadow.enabled = false;
         SetFrame(closedFrames, 0);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(body);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(shadow);
     }
 
     private void ApplyCampaignDifficultyModifiers()
@@ -109,6 +111,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     public void BeginCombat()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (dead || CombatActive) return;
         CombatActive = true;
         initialFightLife = health.life;
@@ -138,6 +141,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!CombatActive || dead || transforming || GamePauseController.IsPaused) return;
         RefreshLowHealthTint();
         animationTime += Time.deltaTime;
@@ -156,6 +160,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!CombatActive || dead || GamePauseController.IsPaused) return;
         float floatOffset = 0f;
         if (queen != null && queen.Active)
@@ -457,6 +462,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     private void OnDamaged(int amount)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (dead) return;
         RefreshLowHealthTint();
         if (hardCampaign && queen != null && !queen.Active && !transforming &&
@@ -501,6 +507,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     private void HandleContact(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!CombatActive || dead || GamePauseController.IsPaused) return;
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
             health.TakeDamage(1, fromExplosion: true);
@@ -510,6 +517,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     public static bool TryHitPlayer(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         var player = other.GetComponentInParent<MovementController>();
         if (player == null || !player.CompareTag("Player") || player.isDead || player.IsEndingStage ||
             player.InputLocked || player.explosionInvulnerable) return false;
@@ -526,6 +534,7 @@ public sealed class FreezerVenusBoss : MonoBehaviour, IKillable
 
     public void Kill()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (dead) return;
         dead = true;
         CombatActive = false;

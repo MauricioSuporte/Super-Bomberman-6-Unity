@@ -18,22 +18,23 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo49, commit `d1b2b3ef5`, pipeline
-  [40514393076](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40514393076)
-  concluído com sucesso. R03 está publicado;48/47/46 permanecem incorporados.
-- **Última suíte completa publicada:**452/452 Unity (OnlineRoom360 + COM92),
-  C#0 erros/avisos novos, Python44/44. Reports em Logs/PredictionEnemy49FinalTests.*.
-- **Avanço50 local/A12:** spawn da bomba Revenge antes do primeiro arco de rede,
+- **Servidor e atualizador publicados:** protocolo50, commit `1677fb50b`, pipeline
+  [40517686471](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40517686471)
+  concluído com sucesso. Revenge/bomba publicado; R03/48/47/46 incorporados.
+- **Última suíte completa publicada:**456/456 Unity (OnlineRoom364 + COM92),
+  C#0 erros/avisos novos, Python44/44. Reports em Logs/PredictionRevenge50FinalTests.*.
+- **Avanço50 publicado/A12:** spawn da bomba Revenge antes do primeiro arco de rede,
   despawn replicado na falha, gate client e motion kind próprio sem pose/predição
   da habilidade do player. Seis testes direcionados passaram, C#0/0 e Python44/44;
-  suíte completa456/456 passou. Ainda sem commit/publicação50.
+  suíte completa456/456 passou. Commit1677fb50b publicado; CI40517686471 success.
 - **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
   fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
   física; manuais/capturas e custo real continuam pendentes.
-- **Checklist:**15 IDs implementados/testados,16 parciais e2 pendentes. Execução
+- **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 IDs
+  iniciados. Isso não representa conclusão das pendências. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo:** validar/publicar50 e continuar A12: transporte/apresentação/input do
-  carrinho após eliminação e retorno confirmado do player; depois R06/R08 e parciais.
+- **Próximo:** salvar/publicar R06/R08 (19 focados e475/475 completos passaram);
+  continuar A12: carrinho/input após eliminação, reconciliação e retorno confirmado.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen
   do usuário e Editor aberto. Nenhuma cena/prefab editada neste lote. Comparação
   gráfica real e custo/latência medidos seguem pendentes.
@@ -185,28 +186,28 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
-- [ ] A12: parcial50 local: spawn/arco Revenge, gate client e apresentação com owner inativo testados (6 focados); carrinho/input/reconciliação/retorno confirmado e manual pendentes.
+- [ ] A12: parcial50 publicado: spawn/arco Revenge, gate client e apresentação com owner inativo testados (6 focados); carrinho/input/reconciliação/retorno confirmado e manual pendentes.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [ ] C02: parcial47 local: base36 + limite visual aprovado para salto alto Battle4; suíte conjunta439/439 passou. Curvas completas/ambientais/manuais pendentes.
+- [ ] C02: parcial47 publicado: base36 + limite visual aprovado para salto alto Battle4; suíte conjunta439/439 passou. Curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial47: preparação/voo36 e deformação ambiental47 aprovadas/testadas; auditoria final do voo/devolução ao motor e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
-- [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); publicação e manual pendentes.
+- [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: parcial48: caldeira/pull ordenado sem previsão/lead, gates de swap/dinamite/foguete, blackout/room lights e materiais de máscara aprovados,445 testes combinados; fases/tile Startup/capturas/render gráfico ainda pendentes.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
 - [ ] R03: parcial49: Frog/Hop/SnowMan/Korobokkuru, corpo/sombra/ondas, pausa/wrap/cut e gates nativos testados em452 casos; demais famílias/curvas/capturas ainda pendentes.
-- [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); publicação e manual pendentes.
-- [ ] R05: parcial47 local: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
-- [ ] R06: bosses/bombers.
+- [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
+- [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
+- [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
 - [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
-- [ ] R08: cenário móvel/ambiental.
-- [ ] Consolidar skill e notas (atualizadas até C07 parcial45); matriz manual criada, execução e consolidação final pendentes.
+- [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
+- [ ] Consolidar skill e notas (atualizadas até R03/49 e A12/R06/R08 parciais50); matriz manual criada, execução e consolidação final pendentes.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
 registrar separadamente validação manual ainda não realizada. Hipóteses de
@@ -1677,3 +1678,65 @@ carga, nunca fabricar release que lança bomba. Novas mensagens devem autenticar
 owner via conexão, separar geração/seq do cart do tick vivo e limitar fila/budget.
 Amostragem local usa slot1, independentemente do P1-P6 atribuído. Não conceder
 swap/retorno/eliminação por previsão. See roteiro detalhado na auditoria anterior.
+
+
+## Trabalho local seguinte: R06/R08 (ainda sem Unity/sem commit)
+
+50/bomba Revenge foi salvo em1677fb50b e enviado. CI40517686471 está construindo;
+não copiar fontes para o checkout do runner enquanto ele executa.
+
+R06: gates de OnEnable/FixedUpdate/callbacks/kill de SunMask e ClownMask;
+FreezerVenus não inicia combate/ataque/movimento/dano/morte no client puro;
+MechaBossSequence não inicia sequência nativa pelo Start/OnEnable. Heart/Star
+não iniciam lifetime/alvo/orbit/contact no client. Star registra renderers plain
+na criação e Freezer registra corpo/sombra, reutilizando CoopTrackRenderer.
+Não foi criado predictor de IA ou escolhido alvo no client. A cena co-op já
+suprime simulação; estes gates protegem entradas e callbacks antes/fora desse
+passo. Não é auditoria de todos os bosses/intro/curvas/sons/eventos de ataque.
+
+R08: gates em RocketPenguin (OnEnable/Update/LateUpdate/BeginShot/Schedule),
+SnowBallTrap (Update/ApplySweep), BarrelPillarTrap (NotifyPillarDestroyed) e
+BarrelPillarTrapPillar.TryDestroyByExplosion. Os renderers continuam pelo stream
+aprovado existente; não foi adicionado forecast de colisão/terreno. Loops de áudio,
+ambientação por câmera, demais mecanismos e qualidade visual continuam pendentes.
+
+Novo OnlineRoomBossAuthorityTests.cs +meta contém19 casos planejados para entradas
+nativas/RNG/contatos/ambiente e regra RNG offline. A contagem é de casos adicionados,
+NÃO executados. C# incremental0/0 passou. Arquivos locais ainda sem commit.
+Próximo: aguardar CI50 terminar, copiar somente Assets/Scripts e Assets/Tests
+alterados ao runner, rodar focados e suíte completa, guardar XML/log em Logs,
+validar UTF-8/metas/diff, atualizar contagem/estado e salvar/publicar lote.
+Checklist mantém15/16/2 até validação efetiva; R06/R08 ainda não marcados parciais.
+
+
+CI40517686471/1677fb50b finalizado success: build client/server, publicação do
+servidor, canal do updater e artefatos confirmados. Runner liberado e fontes
+R06/R08 copiadas. Focados em execução: PredictionBossEnvironment50FocusedTests;
+conferir XML e total19 antes de declarar sucesso. Depois suíte completa esperada475.
+Nenhum teste executado no Editor original, nenhuma cena/fonte do usuário alterada.
+
+
+R06/R08 primeira execução focada19:9 passaram/10 falharam. Todas as10 falhas
+vinham da pré-condição da fixture: um Rigidbody inativo ignorou position20,21 e
+continuou0,0. Não alterar gameplay para compensar isso. Fixture corrigida usa um
+Rigidbody ativo separado, ligado ao cache rb/bossRb nativo, e ASSERTA posição/
+velocidade iniciais antes de invocar a entrada. Tentativa preservada em
+Logs/PredictionBossEnvironment50AttemptTests.*. Segunda execução focada em
+andamento (PredictionBossEnvironment50FocusedTests), ainda sem resultado confirmado.
+
+
+R06/R08 corrigido:19/19 focados passaram. Report em
+Logs/PredictionBossEnvironment50FocusedTests.*. Suíte completa em execução
+PredictionBossEnvironment50FinalTests (esperado475=OnlineRoom383+COM92).
+Checklist agora15 implementados/testados +18 parciais=33 IDs iniciados, sem
+confundir início com conclusão. R06/R08 ainda sem commit/publicação. Nenhum novo
+wire após o enum Revenge já publicado: compatibilidade permanece protocolo50.
+
+
+R06/R08 lote validado:475/475 Unity completos (OnlineRoom383+COM92), incluindo
+os19 focados novos, offline RNG e global collision regression. XML/log em
+Logs/PredictionBossEnvironment50FinalTests.*. C# final0 erros/0 avisos novos;
+UTF-8/BOM/metas/diff e skill passaram; Python44/44 já executados neste protocolo
+(arquivos Python não mudaram neste lote). Runner restaurado somente nos fontes
+rastreados próprios; não limpar fontes/cenas/settings gerados alheios. Próximo:
+salvar/enviar lote; protocolo permanece50, sem novo wire. Manual/capturas não feitos.

@@ -51,6 +51,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             bool paused = GamePauseController.IsPaused || Time.timeScale <= 0f;
             if (rolling)
             {
@@ -103,6 +104,7 @@ namespace StageAssets
 
         private void ApplySweep(Vector3 previous, Vector3 current)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             // Query the entire segment so a slow frame cannot skip a target.
             foreach (CharacterHealth health in FindObjectsByType<CharacterHealth>())
             {

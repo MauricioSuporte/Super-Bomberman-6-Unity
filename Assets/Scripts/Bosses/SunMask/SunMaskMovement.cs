@@ -55,6 +55,7 @@ public class SunMaskMovement : MonoBehaviour
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         hitStopTimer = 0f;
         pixelAccumulatorX = 0f;
         pixelAccumulatorY = 0f;
@@ -74,6 +75,7 @@ public class SunMaskMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused)
         {
             rb.linearVelocity = Vector2.zero;
@@ -164,6 +166,7 @@ public class SunMaskMovement : MonoBehaviour
 
     private void PickInitialDirection()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (randomizeStartDirection)
         {
             int sx = Random.value < 0.5f ? -1 : 1;
@@ -189,6 +192,7 @@ public class SunMaskMovement : MonoBehaviour
 
     public void OnHit(float duration = -1f)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (duration <= 0f)
             duration = defaultHitStopDuration;
 
