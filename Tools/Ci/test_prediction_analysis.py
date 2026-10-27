@@ -9,6 +9,16 @@ spec.loader.exec_module(analysis)
 
 
 class PredictionAnalysisTests(unittest.TestCase):
+    def test_enemy_forces_do_not_mix_with_free_walking_or_each_other(self):
+        result = analysis.summarize([
+            {"kind": "input_to_motion", "durationMs": 10, "detail": "prediction_block=none mounted=False enemy_force=None"},
+            {"kind": "input_to_motion", "durationMs": 20, "detail": "prediction_block=none mounted=False enemy_force=Hurricane"},
+            {"kind": "input_to_motion", "durationMs": 30, "detail": "prediction_block=none mounted=False enemy_force=Magnet"},
+            {"kind": "input_to_motion", "durationMs": 40, "detail": "prediction_block=none mounted=False enemy_force=Bubble"},
+        ])
+        self.assertEqual([(r["context"], r["medianMs"]) for r in result],
+                         [("walking", 10), ("force_hurricane_walking", 20), ("force_magnet_walking", 30), ("force_bubble_walking", 40)])
+
     def test_pusher_context_is_separate_and_uses_the_input_side(self):
         result = analysis.summarize([
             {"kind": "input_to_motion", "durationMs": 10, "detail": "at_input:prediction_block=none mounted=False pusher=False;at_response:prediction_block=none pusher=True"},

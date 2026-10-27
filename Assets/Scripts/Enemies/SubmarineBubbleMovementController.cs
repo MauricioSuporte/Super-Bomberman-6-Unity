@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Assets.Scripts.Netcode;
 using UnityEngine;
 using StageAssets;
 
@@ -7,7 +8,7 @@ using StageAssets;
 /// Junction-turning submarine that periodically stops to fire a three-tile
 /// bubble stream toward the nearest player.
 /// </summary>
-public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMovementController
+public sealed partial class SubmarineBubbleMovementController : JunctionTurningEnemyMovementController, INetworkEnemyForceSource
 {
     private const float WalkDuration = 7f;
     private const float AttackDuration = 5f;
@@ -69,6 +70,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
 
     protected override void FixedUpdate()
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         if (isDead)
             return;
 
@@ -115,6 +117,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
 
     private IEnumerator BubbleAttackRoutine()
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) yield break;
         state = BubbleState.Attacking;
         rb.linearVelocity = Vector2.zero;
         SnapToGrid();
@@ -188,6 +191,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
 
     private void PushTargetsAtTile(Vector2 tile, Vector2 attackDirection)
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         GameManager gameManager = FindAnyObjectByType<GameManager>();
         LayerMask targetMask = LayerMask.GetMask("Player", "Bomb");
 
@@ -219,13 +223,14 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
 
     private IEnumerator PushPlayerRoutine(MovementController player, Vector2 pushDirection)
     {
+        if (!NetSync.ShouldSimulateLocally) yield break;
         float remainingDistance = tileSize;
         float speed = Mathf.Max(0.1f, playerPushSpeed);
 
         while (!isDead && player != null && !player.isDead && !player.IsEndingStage && remainingDistance > 0.001f)
         {
-            if (player.Rigidbody == null)
-                break;
+            if (!NetSync.ShouldSimulateLocally || player.Rigidbody == null) break;
+            if (GamePauseController.IsPaused) { yield return new WaitForFixedUpdate(); continue; }
 
             float step = Mathf.Min(speed * Time.fixedDeltaTime, remainingDistance);
             Vector2 next = player.Rigidbody.position + pushDirection * step;
@@ -236,6 +241,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
             // at a time, instead of changing the player's Transform instantly.
             player.Rigidbody.MovePosition(next);
             remainingDistance -= step;
+            player.RegisterNetworkEnemyForce(this, NetworkEnemyForceKind.Bubble, next, speed, pushDirection, remainingDistance);
             yield return new WaitForFixedUpdate();
         }
 
@@ -245,6 +251,7 @@ public sealed class SubmarineBubbleMovementController : JunctionTurningEnemyMove
 
     private void SpawnBubbleBurstAt(Vector2 tilePosition, Vector2 attackDirection)
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         Vector2 perpendicular = new(-attackDirection.y, attackDirection.x);
         int count = Random.Range(MinimumBubblesPerTile, MaximumBubblesPerTile + 1);
 

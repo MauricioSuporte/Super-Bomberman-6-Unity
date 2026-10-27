@@ -263,14 +263,18 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         }
     }
 
-    float GetCurrentFrameDuration()
+    public float RemainingCurrentFrameSeconds => Mathf.Max(0, GetCurrentFrameDuration() - frameTimer);
+
+    float GetCurrentFrameDuration() => FrameDurationAt(animationFrame);
+
+    public float FrameDurationAt(int frame)
     {
         if (frameDurations != null &&
             frameDurations.Length == animationSprite?.Length &&
-            animationFrame >= 0 &&
-            animationFrame < frameDurations.Length)
+            frame >= 0 &&
+            frame < frameDurations.Length)
         {
-            return Mathf.Max(0.0001f, frameDurations[animationFrame]);
+            return Mathf.Max(0.0001f, frameDurations[frame]);
         }
 
         return Mathf.Max(0.0001f, animationTime);

@@ -34,6 +34,9 @@ def summarize(records, minimum_percentile_samples=20):
         pusher = re.search(r"\bpusher=(True|False)\b", input_context, re.IGNORECASE)
         if pusher and pusher[1].lower() == "true":
             context = "pusher_" + context
+        enemy_force = re.search(r"\benemy_force=(Hurricane|Magnet|Bubble)\b", input_context)
+        if enemy_force:
+            context = "force_" + enemy_force[1].lower() + "_" + context
         conveyor = re.search(r"\bconveyor=(.+)$", input_context)
         conveyor_context = conveyor[1].rsplit(":", 1)[0] if conveyor else "unknown"
         key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context,

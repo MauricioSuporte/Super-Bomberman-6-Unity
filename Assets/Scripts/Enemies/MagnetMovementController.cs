@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Netcode;
 using UnityEngine;
 
-public sealed class MagnetMovementController : EnemyMovementController
+public sealed partial class MagnetMovementController : EnemyMovementController, INetworkEnemyForceSource
 {
     [Header("Magnet Ability Sprite")]
     public AnimatedSpriteRenderer spriteAbility;
@@ -12,7 +13,8 @@ public sealed class MagnetMovementController : EnemyMovementController
     public LayerMask magnetBlockMask;
     public LayerMask playerLayerMask;
 
-    private readonly Collider2D[] _playerHits = new Collider2D[8];
+    private readonly List<Collider2D> playerHits = new(16);
+    private readonly List<Rigidbody2D> visiblePlayerBuffer = new(6);
     private bool _isMagnetActive;
 
     private static readonly Vector2[] CardinalDirs =
@@ -50,6 +52,7 @@ public sealed class MagnetMovementController : EnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         if (isDead)
             return;
 
@@ -112,7 +115,7 @@ public sealed class MagnetMovementController : EnemyMovementController
         origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
         origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
 
-        var found = new List<Rigidbody2D>(4);
+        var found = visiblePlayerBuffer; found.Clear();
 
         int max = Mathf.Max(1, visionTiles);
 
@@ -123,16 +126,12 @@ public sealed class MagnetMovementController : EnemyMovementController
             if (IsBlockedForMagnet(tileCenter))
                 break;
 
-            Collider2D[] hits = Physics2D.OverlapBoxAll(
-                tileCenter,
-                Vector2.one * (tileSize * 0.75f),
-                0f,
-                playerLayerMask
-            );
-
-            for (int h = 0; h < hits.Length; h++)
+            var filter = new ContactFilter2D { useLayerMask = true, layerMask = playerLayerMask, useTriggers = Physics2D.queriesHitTriggers };
+            playerHits.Clear();
+            Physics2D.OverlapBox(tileCenter, Vector2.one * (tileSize * 0.75f), 0, filter, playerHits);
+            for (int h = 0; h < playerHits.Count; h++)
             {
-                var col = hits[h];
+                var col = playerHits[h];
                 if (col == null)
                     continue;
 
@@ -238,6 +237,7 @@ public sealed class MagnetMovementController : EnemyMovementController
 
     private void PullPlayers(List<Rigidbody2D> players, Vector2 dir)
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         Vector2 magnetTile = rb.position;
         magnetTile.x = Mathf.Round(magnetTile.x / tileSize) * tileSize;
         magnetTile.y = Mathf.Round(magnetTile.y / tileSize) * tileSize;
@@ -260,6 +260,7 @@ public sealed class MagnetMovementController : EnemyMovementController
 
             Vector2 next = Vector2.MoveTowards(prb.position, stopTile, step);
             prb.MovePosition(next);
+            prb.GetComponent<MovementController>()?.RegisterNetworkEnemyForce(this, NetworkEnemyForceKind.Magnet, next, pullSpeed, dir);
         }
     }
 

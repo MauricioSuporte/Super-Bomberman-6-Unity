@@ -22,20 +22,20 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
   [40448262003](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40448262003).
   concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
   confirmados. Sem novo wire/RPC neste lote.
-- **Avanço local validado:** C07 implementado/testado no protocolo46 ainda NÃO
-  publicado: continuação de contato aprovado por até150ms e na célula segura,
-  caminhada/replay, prazo/endpoint/pausa, wall/hole, contato perdido e clear.
-- **Validação46:**378/378 Unity (OnlineRoom286 + COM92), C#0 erros/avisos novos,
-  Python43/43 (35 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
-  Logs/PredictionPusher46FinalTests.*;374 intermediários preservados.
-- **Limites de C07:** não escolhe novo contato/direção nem prevê dano/bounce;
-  múltiplas fontes, forma não suportada, célula seguinte e pacote antigo voltam
-  à autoridade. O pusher no mundo continua na apresentação aprovada existente.
-- **Checklist:**14 IDs implementados/testados,12 parciais e7 pendentes. Execução
+- **Avanço local validado46:** C07 pusher e R04 Hurricane/Magnet/bolhas Submarine
+  implementados/testados. Forças confirmadas compõem com caminhada/replay por até
+  150ms na célula/fase aprovada; IA, captura inicial, dano e bounce são do servidor.
+- **Validação46:**423/423 Unity (OnlineRoom331 + COM92), C#0 erros/avisos novos,
+  Python44/44 (36 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Reports em
+  Logs/PredictionEnemyForce46FinalTests.*; C07/rodadas anteriores preservados.
+- **Limites:** fallback autoritativo para outra cena, pacote antigo, fase encerrada,
+  fonte ambígua, alvo não confirmado e próximo terreno. Não é rollback de toda a
+  física; manuais/capturas e custo real continuam pendentes.
+- **Checklist:**15 IDs implementados/testados,12 parciais e6 pendentes. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo grupo:** R04 Hurricane/Magnet/bolhas Submarine, reutilizando contexto
-  de força no motor; captura/alvo, IA, dano e decisões globais seguem no servidor.
-  Continuar os demais C/R/A/P0 até encerrar o checklist, como solicitado.
+- **Próximo:** publicar46 agrupando C07+R04, confirmar CI e continuar os demais
+  C/R/A/P0 até encerrar o checklist, como solicitado. Nenhuma alteração C09 foi
+  feita: auditoria encontrou blackout/materiais de máscara fora do stream.
 - **Workspace:** branch `v0.5.0`, checkout original. Lote46 ainda local, com novo wire
   (Authenticator/Directory46); última publicação confirmada continua45/ecc3caa4f. Preservar fontes/TitleScreen do usuário
   e o Editor aberto. O runner encerrou os testes e mantém fontes próprias46
@@ -172,7 +172,7 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 
 ## Checklist por ID
 
-Resumo: **14 de33 IDs concluídos em implementação/testes,12 parciais e7 pendentes**.
+Resumo: **15 de33 IDs concluídos em implementação/testes,12 parciais e6 pendentes**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -190,7 +190,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: parcial45: descoberta e fixtures COM corrigidas,359 testes combinados aprovados; matriz completa/manual pendentes.
+- [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
@@ -204,7 +204,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
 - [ ] R03: apresentação de inimigos.
-- [ ] R04: forças impostas por inimigos.
+- [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); publicação e manual pendentes.
 - [ ] R05: projéteis remotos.
 - [ ] R06: bosses/bombers.
 - [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
@@ -1415,3 +1415,66 @@ agrupar a publicação para evitar duas builds completas seguidas. Runner conté
 fontes próprias C07 copiadas/dirty e novos arquivos/metas; NÃO restaurar para45
 antes de copiar também a base C07 na próxima validação. Nenhum CI46 disparado.
 User dirt3arquivos preservado. Continuar até checklist, não parar neste lote.
+
+
+C07 commit LOCAL04189e84d (378/378 Unity,43 Python) AINDA NÃO enviado. Usuário pediu
+continuar até checklist, portanto seguir R04 antes de agrupar publicação46.
+
+R04 em implementação46, NÃO validado no Unity ainda:
+- Novos NetworkEnemyForceState + interface e3 source partials, motor partial.
+  NativeHurricane/Magnet/Bubble registram recibo; só o owner projeta força após
+  motor, sem rodar IA/captura/dano. NativeMovePosition continua uma vez no mundo.
+- Hurricane flee usa regra compartilhada e setter histórico de velocidade já
+  existente; receipt só de slow NÃO concede pull não confirmado ao soltar input.
+- Budget150ms/mesma célula/LOS/alinhamento/próximo wall/hole, fase dos frames de
+  Hurricane, bubble remainingDistance; rejeitar outra cena ou confirmação velha.
+  Scene também foi adicionada ao DTO de pusher46 (46 nunca publicado ainda).
+- Recibo só vira continuidade quando posição física concorda com target esperado;
+  fonte desativada/morta, contato/prazo expirado, fonte ambígua e pusher+enemy
+  descartam forecast. Nenhuma força é somada duas vezes nos inputs servercatch-up.
+- Pause/client gates Native; Hurricane eMagnet usam listas reaproveitadas sem
+  hardcap de collider, teste cobre22shapes/2bodies e limpeza ao sair da visão.
+- C#0/0 passou antes do último ajuste de Clear em listas. Novos testes em
+  OnlineRoomEnemyForcePredictionTests.cs (mesma fixture parcial). Python comparador
+  novo distingue enemy_force por espécie; ainda precisa rodar após novo teste.
+- Runner mantém baseC07dirty própria+R04 copiado; não copiar fonte45 sobre esse
+  conjunto. Próximo: rodada focadaEnemyForce, suite completa, checks, reports,
+  commit R04 e publicar46 agrupado (sem interromper plano depois desse lote).
+- Último deploy confirmado45/ecc3caa4f/CI40448262003sucesso. MainEditor/userdirt3
+  arquivos preservados. Nenhum trabalho R03/R05/R06/R08 ou C09 foi implementado;
+  C09 auditoria achou blackout MeshRenderer e instanced eye shader fora do stream.
+
+
+R04 validação em andamento: primeira rodada38=4/34 falhou no guard de cena porque
+UnityEditMode sem cena salva tem nome vazio válido. DTO rejeita null, mas aceita
+stringvazia SOMENTE se igual à cena ativa; nada de renomear/salvar a cena do usuário.
+Rodada isolada4/4 passou após isso. Suite422=421/1: apenas teste de caminhada
+perpendicular Hurricane assumia pull; regra offline dot>0.01 considera fuga e
+aplica slow0.5. Teste corrigido para a regra compartilhada, sem mudar gameplay.
+Addedcaso de fase12→13ativa vsfim13→0 para não estender outro ciclo. Próxima rodada
+final423 esperados (331OnlineRoom+92COM), relatório PredictionEnemyForce46FinalTests.*
+no runner. C#final0/0 e Python44/44 (36+8) passaram no código antes do último teste.
+Persistir reports finais, atualizar checklist/skill/docs e seguir publicação46
+agrupada comC07local04189e84d, depois continuar os demais IDs como usuário pediu.
+
+
+R04 FINAL:423/423 Unity(331OnlineRoom+92COM),44/44 Python(36+8), C#final0/0,
+UTF-8/BOM/metas/diffcheck passaram. Reports finais em
+Logs/PredictionEnemyForce46FinalTests.*. C07base04189e84d local, não enviado;
+R04 ainda no workspace, protocolo46 nunca publicado. Source scene permite nome
+vazio de cenaUnitynão salva, mas null/outra cena são rejeitados; mesma proteção
+foi aplicada ao pusher. Nada foi renomeado/salvo no Editor principal.
+Hurricane: preview usa a mesma fuga radial dot>0.01 do offline, inclusive lateral;
+slow só no contexto histórico do owner. Slow confirmado não autoriza pull novo.
+Fase12→13 pode continuar se ambas ativas; não projeta outro ciclo. Magnet mantém
+raio aprovado; Bubble mantém distância restante. Registry de fonte só lê estado,
+nenhum alvo/captura/RNG/gameplay nativo roda no client.
+Listas das consultasHurricane/Magnet reutilizadas sem truncar:22shapes/2bodies e
+saída da visão testados; não declarar zeroGC ou ganho medido sem profile real.
+C07+enemy simultâneos e duas fontes diferentes descartam forecast; servidor mantém
+seu último MovePosition nativo, sem somar por pacote. Stops/heartbeats revogam
+contexto com posição/ack repetidos. Fontes desaparecidas e phase packets velhos
+voltam à autoridade; dano continua servidor.
+Próximo: restaurar APENAS tracked próprios do runner após preservar reports,
+commit R04, enviarC07+R04juntos, confirmar publicação46 e continuar próximosIDs.
+Contagem15implementados/testados,12parciais,6pendentes; manual não realizado.

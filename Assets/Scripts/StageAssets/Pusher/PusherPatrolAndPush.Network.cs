@@ -9,11 +9,12 @@ public sealed partial class PusherPatrolAndPush
     public struct NetworkPushState
     {
         public int sourceId, playerMask;
+        public string scene;
         public Vector2 center, size, velocity, safeCell;
         public float remaining, skin, minNormal, maxSide, minOverlap, tileSize;
         public bool horizontal;
 
-        public readonly bool IsValid => sourceId != 0 && Finite(center) && Finite(size) && Finite(velocity) && Finite(safeCell) &&
+        public readonly bool IsValid => sourceId != 0 && scene != null && scene.Length <= 128 && Finite(center) && Finite(size) && Finite(velocity) && Finite(safeCell) &&
             size.x > 0 && size.y > 0 && float.IsFinite(remaining) && remaining > 0 && remaining <= NetworkContinuationSeconds &&
             float.IsFinite(skin) && skin >= 0 && float.IsFinite(tileSize) && tileSize > 0 &&
             float.IsFinite(minNormal) && minNormal >= 0 && minNormal <= 1 &&
@@ -55,7 +56,7 @@ public sealed partial class PusherPatrolAndPush
         if (!float.IsFinite(tile) || tile <= 0) return default;
         Vector2 cell = new(Mathf.Round(actor.Rigidbody.position.x / tile) * tile, Mathf.Round(actor.Rigidbody.position.y / tile) * tile);
         if (actor.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) && !resolver.CanProjectNetworkPushCell(cell, pushHorizontallyInsteadOfVertically ? Vector2.right : Vector2.up)) return default;
-        var state = new NetworkPushState { sourceId = GetEntityId().GetHashCode(), playerMask = playerLayerMask,
+        var state = new NetworkPushState { sourceId = GetEntityId().GetHashCode(), playerMask = playerLayerMask, scene = gameObject.scene.name,
             center = box.bounds.center, size = box.bounds.size,
             velocity = ((_toB ? pointB : pointA) - _rb.position).normalized * speed,
             safeCell = cell, tileSize = tile, horizontal = pushHorizontallyInsteadOfVertically,
@@ -75,7 +76,7 @@ namespace Assets.Scripts.Netcode
         {
             writer.WriteBool(state.sourceId != 0);
             if (state.sourceId == 0) return;
-            writer.WriteInt(state.sourceId); writer.WriteInt(state.playerMask);
+            writer.WriteInt(state.sourceId); writer.WriteInt(state.playerMask); writer.WriteString(state.scene);
             writer.WriteVector2(state.center); writer.WriteVector2(state.size); writer.WriteVector2(state.velocity); writer.WriteVector2(state.safeCell);
             writer.WriteFloat(state.remaining); writer.WriteFloat(state.skin); writer.WriteFloat(state.minNormal);
             writer.WriteFloat(state.maxSide); writer.WriteFloat(state.minOverlap); writer.WriteFloat(state.tileSize); writer.WriteBool(state.horizontal);
@@ -84,7 +85,7 @@ namespace Assets.Scripts.Netcode
         public static PusherPatrolAndPush.NetworkPushState ReadPusher(this NetworkReader reader)
         {
             if (!reader.ReadBool()) return default;
-            return new PusherPatrolAndPush.NetworkPushState { sourceId = reader.ReadInt(), playerMask = reader.ReadInt(),
+            return new PusherPatrolAndPush.NetworkPushState { sourceId = reader.ReadInt(), playerMask = reader.ReadInt(), scene = reader.ReadString(),
                 center = reader.ReadVector2(), size = reader.ReadVector2(), velocity = reader.ReadVector2(), safeCell = reader.ReadVector2(),
                 remaining = reader.ReadFloat(), skin = reader.ReadFloat(), minNormal = reader.ReadFloat(), maxSide = reader.ReadFloat(),
                 minOverlap = reader.ReadFloat(), tileSize = reader.ReadFloat(), horizontal = reader.ReadBool() };

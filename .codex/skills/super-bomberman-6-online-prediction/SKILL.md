@@ -192,6 +192,13 @@ before unknown terrain or a phase reversal. A walking motor may recenter the
 perpendicular row; compare its force contribution with the identical motor step
 without force rather than assuming net displacement is additive across centering.
 
+An enemy pull recipe must retain the native conditional input rule: Hurricane's
+radial flee dot can classify sideways movement as fleeing. Project its known
+historical modifier without granting a pull that a slow-only receipt did not
+confirm. Bound known active animation frames and finite push distance, and never
+sample AI/RNG to extend the phase. Preserve pending world targets across source
+queries; conflicting world forces need authority rather than summed forecasts.
+
 In native cast tests, assert actual contact/count/normal before testing motion,
 advance physics explicitly and restore its simulation mode. Use coordinates close
 to gameplay scale: the pusher fixture at71000 units found no hits while the nearby

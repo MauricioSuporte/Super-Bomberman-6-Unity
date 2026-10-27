@@ -255,6 +255,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         public WaterCycleCurrent.NetworkBarrier waterBarrier;
         public BoatRideZone.NetworkRideState boat;
         public PusherPatrolAndPush.NetworkPushState pusher;
+        public NetworkEnemyForceState enemyForce;
         public bool taggedPass;
         public string passTag;
         public byte axis, alignAxis, movementCapabilities;
@@ -312,7 +313,7 @@ public partial class MovementController : MonoBehaviour, IKillable
     public void SetNetworkTickDriven(bool value)
     {
         networkTickDriven = value;
-        if (!value) ClearNetworkPusher();
+        if (!value) { ClearNetworkPusher(); ClearNetworkEnemyForce(); }
     }
 
     public NetworkMovementState CaptureNetworkMovementState() => new()
@@ -331,6 +332,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         speedModifierRemaining = predictLocally ? predictedSpeedModifierRemaining : ExternalSpeedModifierRemaining,
         conveyor = CaptureConveyorState(),
         pusher = CapturePusherState(),
+        enemyForce = CaptureEnemyForceState(),
         waterBarrier = UsesAcknowledgedWaterBarrier ? networkWaterBarrier : WaterCycleCurrent.CaptureNetworkBarrier(this),
         boat = predictLocally && hasNetworkMovementContext ? networkBoat : BoatRideZone.CaptureNetworkRide(this),
         taggedPass = predictLocally && hasNetworkMovementContext ? networkTaggedPass : canPassTaggedObstacles,
@@ -368,6 +370,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         predictedSpeedModifierRemaining = state.speedModifierRemaining;
         RestoreConveyorState(state.conveyor);
         RestorePusherState(state.pusher, state.serverTime);
+        RestoreEnemyForceState(state.enemyForce, state.serverTime);
         // Object references and traversal ownership are authoritative, never replayed.
         _lastAdjKickedBomb = null;
         _ownedBombPlantTraversal.Clear();
@@ -405,6 +408,7 @@ public partial class MovementController : MonoBehaviour, IKillable
             else externalSpeedModifierTickRemaining = Mathf.Max(0, externalSpeedModifierTickRemaining - Time.fixedDeltaTime);
             SimulateConveyorTick();
             SimulatePusherTick();
+            SimulateEnemyForceTick();
         }
         finally { insideNetworkTick = false; replayingNetworkTick = false; }
     }

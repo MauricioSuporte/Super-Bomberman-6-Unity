@@ -1114,3 +1114,42 @@ Validation:378/378 Unity (OnlineRoom286 + COM92), C#0 new warnings/errors,
 Python43/43 (including pusher motion classification), UTF-8/BOM/meta/diff checks.
 Reports:Logs/PredictionPusher46FinalTests.*. Manual two-peer feel, latency captures
 and performance measurements remain pending; no zero-latency claim is made.
+
+
+## R04 approved enemy forces (protocol46)
+
+Hurricane, Magnet and Submarine Bubble record the native pending force target;
+only a matching physics result and current world-step receipt can publish owner
+continuation. The three audited sources expose read-only recipes through
+INetworkEnemyForceSource. Their AI, target selection, randomness, capture, native
+coroutines and damage remain server-only. Offline/host/COM keep their native force.
+Source callbacks do not reapply displacement during the server's input batch.
+
+Movement snapshots add a compact optional recipe: source/kind, scene, anchor or
+direction, speed, remaining phase/distance, corridor/range and safe cell. The owner
+composes it after walking/conveyor, restoring its phase and budget before replay.
+Known boundaries, holes, lost alignment, source ambiguity, a different scene,
+phase end and150ms budget revoke it. A pusher plus an enemy never sum forecasts.
+Receipts are scoped to the current physics step and stops/heartbeats are sent even
+without a changed input ack or position. Null scene is invalid; an empty untitled
+Editor scene name is allowed only when it matches the active scene exactly.
+
+Hurricane uses the same radial flee predicate as offline, including a sideways
+step with positive outward dot. Its confirmed phase may project the historical
+half-speed modifier after the motor; it never edits native stats during replay.
+A receipt that only confirmed slow cannot grant a new pull when input releases.
+Adjacent known active frames can bridge as one phase; another cycle/AI decision
+requires approval. Magnet preserves its approved ray; Bubble clips both phase and
+remaining one-tile distance. Native Bubble pause does not spend push distance.
+
+Pure clients cannot start these native force/attack paths or draw bubble RNG.
+Queries in Hurricane/Magnet reuse lists with explicit clears, retaining all hits
+and body deduplication rather than a fixed collider cap. This removes recurring
+allocation sites, not a measured claim of zero GC or zero input latency.
+
+Validation:423/423 Unity(OnlineRoom331+COM92), C#0 new errors/warnings,
+Python44/44, UTF-8/BOM/meta/diff checks. Reports:Logs/PredictionEnemyForce46FinalTests.*.
+Coverage includes all three native/owner paths, actual physics commit, input
+catch-up, walking/flee, replay/RNG, pause, walls/holes, scene/stale phase, source
+conflicts, heartbeat/clear, time/cell budgets and22shapes across two bodies.
+Matching real captures and the two-peer matrix remain pending.

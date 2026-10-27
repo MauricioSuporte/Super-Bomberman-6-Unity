@@ -119,6 +119,15 @@ não autoriza considerar essas lacunas resolvidas.
   por até150ms; saída de contato, nova célula, endpoint/reversão e pacote antigo
   precisam encerrar/renovar o contexto corretamente. Bounce e dano são do servidor.
 
+- **Forças de inimigos/R04 (46):** Hurricane, Magnet e bolhas de Submarine:
+  contato parado, caminhar junto/contra/lateral, fugir e soltar direção. Hurricane
+  deve manter a redução0.5 do offline; sair de um slow não pode inventar pull.
+  Incluir fim de frames12/13, saída de corredor/range, distância final da bolha,
+  pause, wall/hole, source morto/desativado, duas fontes e pusher simultâneos,
+  Scene/client stop e atraso maior que150ms. Conferir actor/owner/observador e COM.
+  Capturas46 distinguem enemy_force; comparar a contribuição da força com o mesmo
+  motor sem força quando houver centralização. Sem dano/captura/IA/RNG client.
+
 ## Critério de fechamento
 
 Uma execução aprovada precisa de evidência dos papéis e interrupções relevantes,

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Assets.Scripts.Netcode;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -6,7 +7,7 @@ using UnityEngine.Tilemaps;
 /// A junction-turning enemy that can move through destructible blocks and
 /// intermittently pulls aligned players while its cyclone is fully expanded.
 /// </summary>
-public sealed class HurricaneMovementController : JunctionTurningEnemyMovementController
+public sealed partial class HurricaneMovementController : JunctionTurningEnemyMovementController, INetworkEnemyForceSource
 {
     [Header("Destructibles Pass Through")]
     [SerializeField] private string destructiblesTag = "Destructibles";
@@ -18,6 +19,8 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
     [SerializeField] private int[] activeMovementSequenceFrames = { 12, 13 };
     [SerializeField, Min(0.0001f)] private float rapidMovementFrameDuration = 0.1f;
 
+    private readonly List<Collider2D> playerHits = new(16);
+    private readonly HashSet<Rigidbody2D> pulledBodies = new();
     private Collider2D selfCollider;
     private Tilemap destructibleTilemap;
     private Tilemap indestructibleTilemap;
@@ -40,6 +43,7 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
 
     protected override void FixedUpdate()
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         base.FixedUpdate();
 
         if (isDead || rb == null || !IsPullFrame())
@@ -117,7 +121,12 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
         if (activeSprite == null || activeMovementSequenceFrames == null)
             return false;
 
-        int currentFrame = activeSprite.CurrentFrame;
+        return IsPullFrame(activeSprite.CurrentFrame);
+    }
+
+    private bool IsPullFrame(int currentFrame)
+    {
+        if (activeMovementSequenceFrames == null) return false;
         for (int i = 0; i < activeMovementSequenceFrames.Length; i++)
         {
             if (currentFrame == activeMovementSequenceFrames[i])
@@ -129,16 +138,15 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
 
     private void PullAlignedPlayers()
     {
-        Collider2D[] playerHits = Physics2D.OverlapCircleAll(
-            rb.position,
-            visionTiles * tileSize,
-            playerLayerMask);
-
-        var pulledBodies = new HashSet<Rigidbody2D>();
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
+        var filter = new ContactFilter2D { useLayerMask = true, layerMask = playerLayerMask, useTriggers = Physics2D.queriesHitTriggers };
+        playerHits.Clear();
+        Physics2D.OverlapCircle(rb.position, visionTiles * tileSize, filter, playerHits);
+        pulledBodies.Clear();
         float alignmentTolerance = tileSize * 0.15f;
         const float stopDistance = 0.01f;
 
-        for (int i = 0; i < playerHits.Length; i++)
+        for (int i = 0; i < playerHits.Count; i++)
         {
             Collider2D playerCollider = playerHits[i];
 
@@ -161,15 +169,15 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
             float pullStep = pullSpeedTilesPerSecond * tileSize * Time.fixedDeltaTime;
 
             Vector2 playerDirection = playerMovement != null ? playerMovement.Direction : playerBody.linearVelocity.normalized;
-            bool isFleeing = playerDirection != Vector2.zero &&
-                            Vector2.Dot(playerDirection.normalized, offset.normalized) > 0.01f;
+            bool isFleeing = NetworkEnemyForceState.IsFleeing(playerDirection, offset);
 
             if (isFleeing && playerMovement != null)
             {
                 // Let the player move away at half of their own speed instead
                 // of overwriting their movement target with a pull MovePosition.
                 playerMovement.ApplyExternalMovementSpeedMultiplier(0.5f, Time.fixedDeltaTime * 2f);
-
+                playerMovement.RegisterNetworkEnemyForce(this, NetworkEnemyForceKind.Hurricane, playerBody.position,
+                    pullSpeedTilesPerSecond * tileSize, Vector2.zero, allowPull: false);
                 continue;
             }
 
@@ -185,6 +193,8 @@ public sealed class HurricaneMovementController : JunctionTurningEnemyMovementCo
                 continue;
 
             playerBody.MovePosition(nextPosition);
+            playerMovement?.RegisterNetworkEnemyForce(this, NetworkEnemyForceKind.Hurricane, nextPosition,
+                pullSpeedTilesPerSecond * tileSize, Vector2.zero);
         }
     }
 
