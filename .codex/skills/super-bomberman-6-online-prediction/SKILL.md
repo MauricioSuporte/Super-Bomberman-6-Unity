@@ -176,6 +176,20 @@ ensure the real gameplay object uses network spawn before motion events. Tests i
 EditMode must use native collider prerequisites and isolated preview scenes; do
 not create runtime scenes or require saving the user's open scene to test a view.
 
+For an autonomous contact force, trace its clock before copying conveyor replay.
+The server may consume zero to four player input steps before one world physics
+step. Preserve the native pending MovePosition while other mechanisms still cast:
+immediate body writes change their contacts, and summing forces changes native
+last-target behavior. Deduplicate attached bodies before notifying recovery, and
+publish changed authority positions even when their input acknowledgement repeats.
+A native grid snap before bounce/hole checks is a separate transition; force
+telemetry and snapshot fixes alone do not implement owner force prediction.
+
+In native cast tests, assert actual contact/count/normal before testing motion,
+advance physics explicitly and restore its simulation mode. Use coordinates close
+to gameplay scale: the pusher fixture at71000 units found no hits while the nearby
+kinematic fixture did. Do not infer a runtime body-type bug from that failed setup.
+
 ## Check collision geometry before predicting
 
 A co-op scene disables original client gameplay components. Never reactivate

@@ -18,9 +18,10 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Última publicação confirmada:** protocolo45, commit `14b6f5cac`, pipeline
-  [40442915878](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40442915878)
-  com builds/deploy/updater/artefatos concluídos. O lote C07 abaixo ainda é local.
+- **Servidor e atualizador publicados:** protocolo45, commit `ecc3caa4f`, pipeline
+  [40448262003](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40448262003).
+  concluído com sucesso: builds Linux/Windows, deploy, updater e artefatos
+  confirmados. Sem novo wire/RPC neste lote.
 - **Avanço desta retomada:** C07 parcial: snapshot não suprime mudança de posição
   quando o ack de input se repete; cast do pusher deduplica corpos e mantém a
   física nativa, com gates de client/pausa e diagnóstico de força/snap/reconciliação.
@@ -36,7 +37,7 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 - **Próximos itens:** concluir contato/continuação owner de C07; R07 sem owner,
   forças R04 e demais C/R descritos no checklist. C10 ainda precisa da timeline,
   commit de terreno e late join; A14 da matriz completa/manual.
-- **Workspace:** branch `v0.5.0`, checkout original. Lote C07 ainda não commitado;
+- **Workspace:** branch `v0.5.0`, checkout original. Lote C07 commitado/publicado;
   sem novo wire/RPC (protocolo45 permanece). Preservar fontes/TitleScreen do usuário
   e o Editor aberto. O runner encerrou os testes; seus tracked próprios foram restaurados.
 
@@ -175,7 +176,7 @@ Resumo: **13 de33 IDs concluídos em implementação/testes,13 parciais e7 pende
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
-- [ ] P0: ferramenta/contexto implementados/testados, incluindo classificação de barco45; novas capturas comparáveis pendentes.
+- [ ] P0: ferramenta/contexto implementados/testados, incluindo barco45 e logs de força/snap/reconciliação C07; novas capturas comparáveis pendentes.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
 - [x] A03: predição/autoridade de dash e testes; manual pendente.
@@ -208,7 +209,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R06: bosses/bombers.
 - [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
 - [ ] R08: cenário móvel/ambiental.
-- [ ] Consolidar skill e notas (atualizadas até45); matriz manual criada, execução e consolidação final pendentes.
+- [ ] Consolidar skill e notas (atualizadas até C07 parcial45); matriz manual criada, execução e consolidação final pendentes.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
 registrar separadamente validação manual ainda não realizada. Hipóteses de
@@ -1345,3 +1346,33 @@ Restaurados somente os4 tracked próprios do runner; novos testes/metas ficam pa
 checkout normal do CI. Nenhuma scene/prefab foi alterada. C07 permanece parcial,
 contagem13 implementados/testados,13 parciais,7 pendentes. Sem wire novo, mantém45.
 Próximo: commit/push deste lote e confirmação do pipeline; não presumir deploy.
+
+
+C07 enviado:commit ecc3caa4f (protocolo45, sem mudança de wire), pipeline
+40448262003 em andamento.359/359 Unity e42/42 Python foram executados ANTES do
+push. Último deploy confirmado ainda14b6f5cac; confirmar jobs de servidor e
+updater antes de dizer que o lote C07 já está disponível. Runtime local restante
+é só o user dirt (duas fontes e TitleScreen); checkpoint é o único diff próprio.
+
+
+Publicação C07 confirmada em40448262003: builds Linux/Windows, deploy do servidor
+Linux e canal do updater concluíram com sucesso. Upload dos artefatos em andamento
+na última verificação; aguardar conclusão geral antes de registrar CI completo.
+Skill de predição recebeu a distinção entre relógio de mundo e lote de inputs,
+MovePosition pendente/contato de outro pusher e prerequisitos de testes de cast.
+Validador quick_validate da skill passou; dependência PyYAML ficou isolada em
+Logs/SkillValidationDeps (ignorado), sem alterar dependências do projeto/sistema.
+C07 segue parcial; próxima etapa é contato/continuação owner com histórico de
+replay e handoff ao snap/bounce. Nenhum teste manual dois peers foi realizado.
+
+
+Fechamento C07 parcial45:CI40448262003 COMPLETO/sucesso confirmado, incluindo
+servidor, updater, cliente Windows e reports/manifestos/artefatos. Runtime
+publicado ecc3caa4f; protocolo45 permanece.359/359 Unity (267+92),42/42 Python,
+C#0 avisos/erros novos e skill validada. Checklist13 implementados/testados,
+13 parciais,7 pendentes; manual segue pendente. Nenhum processo próprio de teste
+ficou em execução. Nenhuma scene/prefab foi alterada, Editor principal preservado.
+Próxima retomada: implementar a continuação owner de C07 sem duplicar a força de
+mundo em cada input do servidor, incluindo contato histórico, endpoint/reversão,
+saída de contato e entrega ao snap/bounce autoritativo. Não presumir que os logs
+ou o envio de posição com ack repetido já implementaram essa predição.
