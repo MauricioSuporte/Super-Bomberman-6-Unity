@@ -15,6 +15,7 @@ public sealed class BomberPortraitSelectionCursor : MonoBehaviour
     Image number;
     Image suffix;
     Texture2D palette;
+    Texture2D kamikazePalette;
     float animationTime;
 
     public void Initialize(int playerId)
@@ -28,6 +29,7 @@ public sealed class BomberPortraitSelectionCursor : MonoBehaviour
         controls[1] = CreatePart("Plus");
         controls[2] = CreatePart("R");
         palette = Resources.Load<Texture2D>(ResourcesRoot + "SelectionPalette");
+        kamikazePalette = Resources.Load<Texture2D>(ResourcesRoot + "KamikazeSelectionPalette");
     }
 
     Image CreatePart(string name)
@@ -43,18 +45,23 @@ public sealed class BomberPortraitSelectionCursor : MonoBehaviour
 
     void OnEnable() => animationTime = 0f;
 
-    public void Refresh(BomberSkin skin, Vector2 portraitSize)
+    public void Refresh(BomberCharacter character, BomberSkin skin, Vector2 portraitSize)
     {
         if (number == null) return;
         animationTime = (animationTime + Time.unscaledDeltaTime) % (FrameSeconds * ExpansionFrames.Length);
         int expansion = ExpansionFrames[Mathf.FloorToInt(animationTime / FrameSeconds)];
         Vector2 pixel = portraitSize / 32f;
         Color tint = Color.white;
-        if (palette != null)
+        string characterFolder = BomberSkinResourceCatalog.GetCharacterFolderName(character);
+        bool usesKamikazePalette = characterFolder == "KamikazeBomber" || characterFolder == "Bookworm";
+        Texture2D selectedPalette = usesKamikazePalette ? kamikazePalette : palette;
+        if (selectedPalette != null)
         {
             int column = BomberSkinResourceCatalog.GetPaletteNumber(skin);
-            tint = column < palette.width ? palette.GetPixel(column, palette.height - 1) : Color.clear;
-            if (tint.a == 0) tint = palette.GetPixel(0, palette.height - 1);
+            // These characters share white helmets across many skins; the suit carries their main color.
+            int row = selectedPalette.height - 1 - (usesKamikazePalette ? 8 : 0);
+            tint = column < selectedPalette.width ? selectedPalette.GetPixel(column, row) : Color.clear;
+            if (tint.a == 0) tint = selectedPalette.GetPixel(0, row);
         }
         for (int i = 0; i < corners.Length; i++)
         {

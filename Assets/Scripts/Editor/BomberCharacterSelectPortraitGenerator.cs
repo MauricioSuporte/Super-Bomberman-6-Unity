@@ -176,9 +176,20 @@ public static class BomberCharacterSelectPortraitGenerator
     {
         string character = Path.GetFileNameWithoutExtension(sourcePath);
         Texture2D source = null;
+        Texture2D characterPalette = null;
 
         try
         {
+            if (character == "KamikazeBomber" || character == "Bookworm")
+            {
+                const string sharedPalettePath = OutputRoot + "/KamikazeSelectionPalette.png";
+                characterPalette = BomberSkinSheetGenerator.LoadTexture(sharedPalettePath);
+                if (characterPalette == null || characterPalette.width != 44 || characterPalette.height != 18)
+                    throw new InvalidDataException($"Invalid selection palette: {sharedPalettePath}");
+                palette = characterPalette;
+                skinCount = Mathf.Min(palette.width - 1, BomberSkinResourceCatalog.BombermanSkins.Length);
+            }
+
             source = BomberSkinSheetGenerator.LoadTexture(sourcePath);
             if (source == null)
             {
@@ -266,6 +277,8 @@ public static class BomberCharacterSelectPortraitGenerator
         {
             if (source != null)
                 UnityEngine.Object.DestroyImmediate(source);
+            if (characterPalette != null)
+                UnityEngine.Object.DestroyImmediate(characterPalette);
         }
     }
 
@@ -533,7 +546,8 @@ sealed class BomberCharacterSelectPortraitImportProcessor : AssetPostprocessor
         importer.textureCompression = TextureImporterCompression.Uncompressed;
         importer.mipmapEnabled = false;
         importer.alphaIsTransparency = true;
-        importer.isReadable = assetPath.EndsWith("/SelectionPalette.png", StringComparison.Ordinal);
+        importer.isReadable = assetPath.EndsWith("/SelectionPalette.png", StringComparison.Ordinal) ||
+            assetPath.EndsWith("/KamikazeSelectionPalette.png", StringComparison.Ordinal);
         foreach (string platform in new[] { "Standalone", "Android", "iPhone", "WebGL" })
             importer.ClearPlatformTextureSettings(platform);
     }

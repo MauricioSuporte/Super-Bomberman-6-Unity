@@ -2687,7 +2687,7 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.pivot = new Vector2(0.5f, 0.5f);
             ps.cursorRt.anchoredPosition = Vector2.zero;
             ps.cursorRt.sizeDelta = slotRt.rect.size;
-            ps.portraitCursor.Refresh(GetCursorPalette(ps), slotRt.rect.size);
+            ps.portraitCursor.Refresh(GetCharacterAtSlot(idx), GetCursorPalette(ps), slotRt.rect.size);
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
         }
