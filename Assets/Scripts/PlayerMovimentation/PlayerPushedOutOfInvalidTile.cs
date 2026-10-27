@@ -43,6 +43,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private BattleSuddenDeathController _suddenDeathController;
 
     private Coroutine _resolveRoutine;
+    private double nextSnapDiagnostic;
     private SpriteRenderer _bouncingLeftSpriteRenderer;
     private bool _bouncingLeftOriginalFlipX;
     private bool _usingMountBounceVisual;
@@ -133,6 +134,15 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         if (snapToGridBeforeResolve)
             pos = SnapToGrid(pos, tileSize);
 
+        if (GameplayLatencyDiagnostics.Enabled && (pos - _rb.position).sqrMagnitude > 0.000001f &&
+            Time.realtimeSinceStartupAsDouble >= nextSnapDiagnostic)
+        {
+            nextSnapDiagnostic = Time.realtimeSinceStartupAsDouble + 0.1;
+            var entry = GameplayLatencyDiagnostics.For("pusher_resolve_grid_snap", _move,
+                detail: "native_grid_snap_before_hole_and_blocked_checks");
+            entry.position = _rb.position; entry.delta = pos - _rb.position;
+            GameplayLatencyDiagnostics.Write(entry);
+        }
         _rb.position = pos;
         transform.position = pos;
 

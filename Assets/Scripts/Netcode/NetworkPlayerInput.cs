@@ -70,6 +70,7 @@ namespace Assets.Scripts.Netcode
         int sampledHeld, pendingPressed, serverHeldMask;
         float nextSnapshot;
         uint lastSnapshotTick;
+        Vector2 lastSnapshotPosition;
         bool sentSnapshot;
         double lastServerInputAt = double.NegativeInfinity;
         const double HeldInputGraceSeconds = 0.1;
@@ -283,11 +284,20 @@ namespace Assets.Scripts.Netcode
             state.canPredict &= !Blocked;
             state.continuousPresentation = authorityMotionToken != 0 && !state.canPredict;
             state.serverTime = NetworkTime.localTime;
-            // Acknowledgements advance only after complete input steps. Duplicate
-            // acknowledgements add no new predictable state to replay.
-            if (!force && state.canPredict && sentSnapshot && processedTick == lastSnapshotTick) return;
+            // A world force or its resolver can move a player without consuming
+            // another input. Publish that state even when its acknowledgement repeats.
+            if (!force && state.canPredict && sentSnapshot && processedTick == lastSnapshotTick &&
+                state.position == lastSnapshotPosition) return;
+            if (sentSnapshot && processedTick == lastSnapshotTick && state.position != lastSnapshotPosition && GameplayLatencyDiagnostics.Enabled)
+            {
+                var entry = GameplayLatencyDiagnostics.For("movement_world_snapshot", movement,
+                    detail: "changed_position_with_same_input_ack");
+                entry.delta = state.position - lastSnapshotPosition; entry.authoritativeTick = processedTick;
+                GameplayLatencyDiagnostics.Write(entry);
+            }
             sentSnapshot = true;
             lastSnapshotTick = processedTick;
+            lastSnapshotPosition = state.position;
             var fx = GetComponent<NetworkBombFx>();
             TargetReconcile(connectionToClient, processedTick, state, fx?.CapturePlacementState() ?? default, fx?.CaptureMountActionState() ?? default);
         }
@@ -360,6 +370,7 @@ namespace Assets.Scripts.Netcode
             }
             kickFx?.RestorePausedBoatPosition(before);
             MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
+            MotionDiagnosticProbe.MovementReconciliation(gameObject, before, state.position, acknowledgedTick, predict);
         }
 
         public override void OnStopServer()

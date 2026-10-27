@@ -15,32 +15,30 @@ alterações do usuário em TitleScreen e nos dois assets de fonte.
 
 ## Estado atual
 
-Atualizado em 26/10/2026. Este é o resumo para acompanhar o trabalho; o histórico
-abaixo preserva decisões e resultados anteriores. O checklist por ID distingue
-implementação concluída de trabalho parcial. Validação manual fica separada.
+Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
+manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo45, commit `14b6f5cac`, pipeline
+- **Última publicação confirmada:** protocolo45, commit `14b6f5cac`, pipeline
   [40442915878](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40442915878)
-  concluído com sucesso, incluindo builds, deploy, updater e artefatos.
-- **Avanço desta retomada:** C06 barco/Submarine implementado e testado: movimento
-  owner após embarque confirmado, permissão de água histórica no replay, barco/
-  cabeça com direção local, pausa, handoff e cleanup sem ocupar/proteger no client.
-- **Validação final:**347/347 Unity (OnlineRoom255 + COM92), C#0 erros/avisos novos,
-  Python42/42 (34 CI +8 Directory), UTF-8/BOM/metas/diffcheck passaram. Relatórios
-  preservados em Logs/PredictionBoat45DiagnosticsTests.* (342/346 intermediários também).
-- **P0:** logs/comparador distinguem barco, barco com mount e caminhada; nenhuma
-  captura real nova ou ganho medido de latência foi declarado.
-- **Documentação:** checklist agora13 IDs implementados/testados,12 parciais,8
-  pendentes; notas/skill/matriz atualizadas até45. Execução manual segue pendente.
-- **Próximos itens:** C07 pusher/composição de força no motor/replay (auditoria ao
-  fim), demais R07/sem owner, forças R04, blackout/tiles e demais C/R. C10 continua
-  com timeline/commit de terreno/late join; A14 com matriz/manual pendentes.
-- **Pendências de verificação:** nenhuma partida manual com dois peers nem novas
-  capturas comparáveis. P0, A11/R07, A14, R01/R02 e mecanismos C continuam com
-  pendências descritas no checklist. Não declarar zero latência ou plano completo.
-- **Workspace:** branch `v0.5.0`, checkout original. Runtime45 commitado/publicado;
-  nenhum código incompleto local. Preservar fontes/TitleScreen do usuário e o
-  Unity aberto com alterações não salvas. Não há implementação46 iniciada.
+  com builds/deploy/updater/artefatos concluídos. O lote C07 abaixo ainda é local.
+- **Avanço desta retomada:** C07 parcial: snapshot não suprime mudança de posição
+  quando o ack de input se repete; cast do pusher deduplica corpos e mantém a
+  física nativa, com gates de client/pausa e diagnóstico de força/snap/reconciliação.
+- **Validação final:**359/359 Unity (OnlineRoom267 + COM92), incluindo12 casos
+  específicos C07; C#0 erros/avisos novos, Python42/42 (34 CI +8 Directory),
+  UTF-8/BOM/meta/diffcheck passaram. Reports preservados em
+  Logs/PredictionPusherFinal45Tests.* e PredictionPusherFocused45Tests.*.
+- **Limite de C07:** a continuação prevista do contato e seu histórico no replay
+  ainda faltam. A centralização nativa na grade e o bounce são transições
+  autoritativas separadas; nenhum ganho real de latência foi medido neste lote.
+- **Checklist:**13 IDs implementados/testados,13 parciais e7 pendentes. Validação
+  manual com dois peers segue pendente inclusive nos IDs marcados.
+- **Próximos itens:** concluir contato/continuação owner de C07; R07 sem owner,
+  forças R04 e demais C/R descritos no checklist. C10 ainda precisa da timeline,
+  commit de terreno e late join; A14 da matriz completa/manual.
+- **Workspace:** branch `v0.5.0`, checkout original. Lote C07 ainda não commitado;
+  sem novo wire/RPC (protocolo45 permanece). Preservar fontes/TitleScreen do usuário
+  e o Editor aberto. O runner encerrou os testes; seus tracked próprios foram restaurados.
 
 ## Como acompanhar
 
@@ -173,7 +171,7 @@ implementação concluída de trabalho parcial. Validação manual fica separada
 
 ## Checklist por ID
 
-Resumo: **13 de33 IDs concluídos em implementação/testes,12 parciais e8 pendentes**.
+Resumo: **13 de33 IDs concluídos em implementação/testes,13 parciais e7 pendentes**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -191,14 +189,14 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
 - [ ] A12: Revenge input e apresentação.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: parcial45: descoberta e fixtures COM corrigidas,347 testes combinados aprovados; matriz completa/manual pendentes.
+- [ ] A14: parcial45: descoberta e fixtures COM corrigidas,359 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial36: interpolação owner aprovada + gates nativos Cannon/Spring/geyser/Battle4; curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial36: preparação/voo aprovada no owner; deformação ambiental e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
-- [ ] C07: pusher.
+- [ ] C07: parcial: ack repetido com posição nova, deduplicação de contato, gates e logs;12 testes específicos passaram. Continuação owner/replay do contato e manual pendentes.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
 - [ ] C09: mecanismos e tiles especiais.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
@@ -1298,3 +1296,52 @@ iniciado. Nenhum processo próprio de teste ficou em execução. Checklist confe
 Próxima retomada: C07, ler auditoria acima e preservar offline/COM/inputs simultâneos;
 não presumir que force composition ou R04 foi implementado. Tracked runtime locais
 restantes são só as três alterações do usuário (duas fontes e TitleScreen).
+
+
+Retomada27/10 — C07 em implementação (ainda NÃO publicado):
+- Baseline publicado segue14b6f5cac/protocolo45/CI40442915878 sucesso.
+- NetworkPlayerInput agora distingue ack repetido com posição inalterada de um
+  deslocamento autoritativo sem novo input. Forças/resolvedor não ficam esperando
+  outro comando para enviar a posição; mesma cadência periódica30Hz.
+- Pusher deduplica Rigidbody entre hits do mesmo cast e explicita gates de client
+  puro/pausa. Mantém MovePosition pendente e queries no relógio de mundo original.
+  Não mover posição imediatamente: isso altera os contatos do próximo pusher.
+- Logs opcionais: pusher_step, pusher_resolve_grid_snap, movement_world_snapshot
+  e movement_reconcile; correção depois de replay distinta de erro bruto aprovado.
+  Gates/rate limit existentes; novos eventos limitados por ator/tempo.
+- A primeira exploração com escrita imediata foi descartada na revisão. Seu XML
+ 360=359/1 está preservado em Logs/PredictionPusherExploratory45Tests.* e NÃO
+  valida o código final. Cast sem contato também ocorreu na rodada nativa com
+  Dynamic (358=349/9). Player.prefab real usa Kinematic/Circle radius0.2 offset
+  Y-0.1; não presumir Dynamic. Rodada focada seguinte volta a Kinematic, avança
+  física uma vez na montagem e verifica bounds/count/normal antes do push.
+- Sem novo wire/RPC: protocolo permanece45. C#0/0 passou antes do último evento
+  diagnóstico; Python42/42 passou. A rodada nativa falhou358=349/9, reports em
+  Logs/PredictionPusherNativeAttempt45Tests.*. Agora session77025: filtro
+  PusherCastWithTwoPlayerShapesNotifiesTheActorOnlyOnce, relatório
+  PredictionPusherContact45Tests.xml/.log; conferir falha de prerequisito da física.
+  NÃO copiar sobre runner enquanto esse processo estiver executando.
+- Código próprio não commitado. User dirt permanece só fontes/TitleScreen além
+  dos arquivos próprios. C07 será PARCIAL: predição/continuação owner, replay do
+  contato e handoff ao snap/bounce nativo ainda não implementados. Nenhum ganho
+  de latência/manual foi medido. Próximo: resolver testes, compilar/checks, salvar
+  reports, restaurar APENAS tracked próprios no runner, commit/push e confirmar CI.
+
+
+C07 atualização da fixture: a falha não demonstrava diferença entre Dynamic e
+Kinematic. A montagem a71000 unidades não produzia hits; a mesma montagem perto
+(710 unidades), com corpo Kinematic real e caso Circle(radius0.2,offsetY-0.1),
+passou12/12. Não atribuir a causa só ao bodyType. Física nativa é avançada
+explicitamente na fixture e o contato/count/normal são pré-condições verificadas.
+Nenhuma alteração de bodyType/collider foi aplicada ao Player.prefab ou ao jogo.
+Suíte combinada atual session67093, esperado359=267 OnlineRoom+92 COM; C#final0/0.
+
+
+C07 FINAL desta etapa:359/359 Unity (267 OnlineRoom +92 COM),12/12 específicos,
+C#final0/0, Python42/42; UTF-8/BOM/meta/diffcheck passaram. Reports finais
+preservados em Logs/PredictionPusherFinal45Tests.* e PredictionPusherFocused45Tests.*.
+Tentativas anteriores com falhas foram preservadas e não são a validação final.
+Restaurados somente os4 tracked próprios do runner; novos testes/metas ficam para
+checkout normal do CI. Nenhuma scene/prefab foi alterada. C07 permanece parcial,
+contagem13 implementados/testados,13 parciais,7 pendentes. Sem wire novo, mantém45.
+Próximo: commit/push deste lote e confirmação do pipeline; não presumir deploy.

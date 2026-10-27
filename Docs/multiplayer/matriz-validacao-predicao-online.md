@@ -109,6 +109,15 @@ não autoriza considerar essas lacunas resolvidas.
   eventos ajudam a investigar a timeline; não confirmam por si o commit de
   terreno nem encerram a auditoria das quedas.
 
+- **Pusher/C07 (parcial):** Stage_2-4 e demais instâncias configuradas; caminhar
+  durante contato, soltar o direcional, entrada lateral/parcial, duas shapes no
+  mesmo corpo e dois pushers. Repetir endpoint/troca de sentido, pausa, parede,
+  hole e bounce. Comparar pusher_step com pusher_resolve_grid_snap, depois
+  movement_world_snapshot e movement_reconcile pelo mesmo player/tick/build.
+  Conferir que posição muda mesmo sem ack novo e que a física continua aplicando
+  uma força por passo de mundo. Não há continuação prevista do owner neste lote;
+  os eventos ajudam a separar empurrão, snap nativo e correção da rede.
+
 ## Critério de fechamento
 
 Uma execução aprovada precisa de evidência dos papéis e interrupções relevantes,

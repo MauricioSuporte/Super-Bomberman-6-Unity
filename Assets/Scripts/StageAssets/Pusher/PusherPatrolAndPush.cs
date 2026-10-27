@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using Assets.Scripts.Netcode;
+using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
@@ -42,6 +44,8 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
     private bool _toB;
 
     private readonly RaycastHit2D[] _hits = new RaycastHit2D[8];
+    private readonly HashSet<Rigidbody2D> pushedBodies = new();
+    private readonly Dictionary<MovementController, double> nextPushDiagnostic = new();
 
     private void Awake()
     {
@@ -67,6 +71,7 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         Vector2 pos = _rb.position;
 
         Vector2 target = _toB ? pointB : pointA;
@@ -93,6 +98,8 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
 
     private void PushPlayersIfValidContact(Vector2 delta)
     {
+        if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
+        pushedBodies.Clear();
         float moveDist = delta.magnitude;
         if (moveDist <= 0.00001f)
             return;
@@ -154,7 +161,13 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
                 continue;
 
             Vector2 pushDelta = horizontal ? new Vector2(pushAmount, 0f) : new Vector2(0f, pushAmount);
-            playerRb.MovePosition(playerRb.position + pushDelta);
+            // Keep the native pending physics target: immediate positioning here
+            // would change what another pusher's cast sees in this same world step.
+            if (!pushedBodies.Add(playerRb)) continue;
+            var movement = playerRb.GetComponent<MovementController>();
+            Vector2 before = playerRb.position;
+            playerRb.MovePosition(before + pushDelta);
+            LogPushStep(movement, before, pushDelta);
 
             var resolver = hit.collider.GetComponentInParent<PlayerPushedOutOfInvalidTile>();
             if (resolver != null)
@@ -236,6 +249,27 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
 
         float overlapPercent2 = overlapX / denom2;
         return overlapPercent2 >= minXOverlapPercent;
+    }
+
+    private void OnDisable()
+    {
+        pushedBodies.Clear();
+        nextPushDiagnostic.Clear();
+    }
+
+    private void LogPushStep(MovementController movement, Vector2 before, Vector2 delta)
+    {
+        if (movement == null || !GameplayLatencyDiagnostics.Enabled) return;
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (nextPushDiagnostic.TryGetValue(movement, out double next) && now < next) return;
+        if (nextPushDiagnostic.Count >= 32) nextPushDiagnostic.Clear();
+        nextPushDiagnostic[movement] = now + 0.1;
+        var entry = GameplayLatencyDiagnostics.For("pusher_step", movement,
+            detail: "source=" + GetEntityId().GetHashCode() + ";network_tick_driven=" + movement.NetworkTickDriven +
+                ";world_step=" + Time.fixedTimeAsDouble.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+        entry.position = before;
+        entry.delta = delta;
+        GameplayLatencyDiagnostics.Write(entry);
     }
 
     private void ApplyAnimationPolicy()

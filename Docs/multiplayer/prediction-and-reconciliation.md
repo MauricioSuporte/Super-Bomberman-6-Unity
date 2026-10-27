@@ -1034,3 +1034,47 @@ and client gates, owner direction/root/pause, pure visual structure, source loss
 stop cleanup, wire presence/roundtrip, claim transfer and NPA/NMA integration.
 The per-ID manual matrix, real two-peer captures and a measured latency gain
 remain pending; automated cases do not prove offline-identical feel in every scene.
+
+
+## C07 foundation: world-clock push and diagnostics (protocol45)
+
+Pusher contact still uses its native world FixedUpdate and pending MovePosition.
+A remote player's zero-to-four input catch-up ticks run before that one force.
+Applying the push inside every server motor tick would multiply it; writing its
+position immediately would change the geometry seen by a second pusher before
+physics. The cast now deduplicates attached bodies, so multiple player shapes
+produce one push target and one resolver notification. Axis, normal/overlap
+filters, patrol phase and offline last-target semantics are retained. Native
+entry points reject pure clients and pause. No client world simulation is enabled.
+
+Movement snapshots no longer discard an authoritative position change merely
+because its input acknowledgement repeats. The unchanged-position duplicate
+optimization and30Hz scheduling remain. This covers pusher motion, its later
+resolver snap and other world forces without introducing a new wire structure.
+The client restores the approved state and replays its existing pending inputs.
+This does NOT yet replay a speculative pusher force or predict its contact.
+
+Optional motion capture distinguishes pusher_step (source, world step, requested
+delta), pusher_resolve_grid_snap (actual native correction before hole/blocked
+checks), movement_world_snapshot (position changed with same acknowledgement)
+and movement_reconcile (approved position, raw error and visible root correction
+after replay). Events are sampled/rate-limited, so their counts are not every
+physics contact. Correlate build, scene, player/netId and authoritative input tick;
+realtime clocks on different machines cannot be subtracted as round-trip delay.
+The existing comparator counts these event kinds, without claiming pusher latency
+percentiles from them. New matching captures and two-peer testing remain pending.
+
+The next C07 implementation must carry approved contact/phase into a separate
+owner history, bound continuation before endpoint/reversal and restore it on
+replay without advancing the global source. The native resolver first snaps to
+the grid before checking whether bounce/hole recovery is required; this is a
+separate authoritative transition and must not be replaced by a free-flight lock.
+
+Validation for this foundation:359/359 Unity (OnlineRoom267 + COM92), including12
+pusher cases; C#0 new errors/warnings, Python42/42, UTF-8/BOM/meta/diff checks.
+The focused fixture verifies actual native cast contact before asserting motion,
+advances Physics2D explicitly, restores its simulation mode and covers the authored
+kinematic circle as well as multiple shapes. Coordinates710 are used: the initial
+71000-unit cast fixture found no contacts and its failed reports were retained.
+Final reports:Logs/PredictionPusherFinal45Tests.* and PredictionPusherFocused45Tests.*.
+No scene, prefab or player body-type change was made. C07 remains partial.

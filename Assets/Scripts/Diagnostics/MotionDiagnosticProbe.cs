@@ -15,7 +15,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
     readonly Dictionary<Bomb, SeenBomb> bombs = new();
     readonly List<Bomb> expiredBombs = new();
     readonly Dictionary<Bomb, (double at, Vector2 direction)> kickContacts = new();
-    double nextTickApply, kickDiagnosticUntil, nextQueueEvent;
+    double nextTickApply, kickDiagnosticUntil, nextQueueEvent, nextMovementReconcile;
     MovementController movement;
     NetworkPlayerInput networkInput;
     NetworkTransformReliable positionSync;
@@ -245,6 +245,23 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
             detail: replayed ? "after_restore_and_replay" : "authoritative_only");
         entry.delta = (Vector2)player.transform.position - before;
         entry.authoritativeTick = acknowledgedTick;
+        GameplayLatencyDiagnostics.Write(entry);
+    }
+
+    public static void MovementReconciliation(GameObject player, Vector2 before, Vector2 approved, uint tick, bool replayed)
+    {
+        if (!GameplayLatencyDiagnostics.Enabled || !player.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
+        Vector2 correction = (Vector2)player.transform.position - before;
+        if (correction.sqrMagnitude < 0.000001f) return;
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (now < probe.nextMovementReconcile) return;
+        probe.nextMovementReconcile = now + 0.1;
+        var entry = GameplayLatencyDiagnostics.For("movement_reconcile", probe.movement,
+            detail: replayed ? "after_restore_and_replay" : "authoritative_only");
+        entry.position = approved;
+        entry.delta = correction;
+        entry.predictionError = approved - before;
+        entry.authoritativeTick = tick;
         GameplayLatencyDiagnostics.Write(entry);
     }
 
