@@ -33,8 +33,12 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 - **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 IDs
   iniciados. Isso não representa conclusão das pendências. Execução
   manual com dois peers segue pendente inclusive nos IDs marcados.
-- **Próximo:** salvar/publicar R06/R08 (19 focados e475/475 completos passaram);
-  continuar A12: carrinho/input após eliminação, reconciliação e retorno confirmado.
+- **R06/R08 validados e enviados:** commit `913518a53`, protocolo50, pipeline
+  [40520719676](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40520719676)
+  na fila na última consulta; não presumir deploy.475/475 Unity passaram
+  (OnlineRoom383+COM92),19 focados, C#0/0, byte/metas/diff/skill aprovados.
+- **Próximo:** conferir CI40520719676; continuar A12: carrinho/input após eliminação,
+  reconciliação e retorno confirmado. Depois resolver as pendências de cada parcial.
 - **Workspace:** branch `v0.5.0`, checkout original. Preservar fontes/TitleScreen
   do usuário e Editor aberto. Nenhuma cena/prefab editada neste lote. Comparação
   gráfica real e custo/latência medidos seguem pendentes.
@@ -1740,3 +1744,12 @@ UTF-8/BOM/metas/diff e skill passaram; Python44/44 já executados neste protocol
 (arquivos Python não mudaram neste lote). Runner restaurado somente nos fontes
 rastreados próprios; não limpar fontes/cenas/settings gerados alheios. Próximo:
 salvar/enviar lote; protocolo permanece50, sem novo wire. Manual/capturas não feitos.
+
+
+Lote R06/R08 salvo/enviado em913518a53. CI40520719676 na fila na última consulta;
+não copiar nem testar no runner enquanto esse job estiver ativo. Último servidor/
+updater integralmente confirmado continua1677fb50b/protocolo50/CI40517686471.
+Workspace voltou a conter somente os três arquivos alterados pelo usuário.
+Próxima implementação prioritária é A12/carrinho + input após eliminação + retorno
+confirmado, conforme auditoria registrada; faltam também partes dos demais18
+parciais e execução manual/capturas. Não declarar o checklist completo.
