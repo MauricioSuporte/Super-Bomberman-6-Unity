@@ -115,8 +115,9 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             if (GamePauseController.IsPaused) return;
-            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.RidingArcActive || bombFx.PlayerBounceActive || bombFx.PinkJumpVisualActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose))) return;
-            if (isLocalPlayer && TryGetComponent<MovementController>(out var movement) && movement.PredictLocally && movement.IsMounted && ownerVisual != null)
+            // Riding presents only the player arc; keep the ground mount on its approved timeline.
+            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || bombFx.PinkJumpVisualActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose && !bombFx.RidingArcActive))) return;
+            if (bombFx?.RidingArcActive != true && isLocalPlayer && TryGetComponent<MovementController>(out var movement) && movement.PredictLocally && movement.IsMounted && ownerVisual != null)
             {
                 ownerVisual.PresentNetworkLocomotion();
                 return;

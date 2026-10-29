@@ -163,6 +163,7 @@ namespace Assets.Scripts.Netcode
                 if (message.heartbeat) state.buffer.Heartbeat(Time.realtimeSinceStartupAsDouble);
                 else if (!state.buffer.Push(message.tick, message.held, Time.realtimeSinceStartupAsDouble))
                 { if (state.buffer.Overflowed) cart.CancelNetworkCharge(); }
+                else if ((message.held & RevengeCartInputBuffer.ValidMask) != 0) RegisterRoomActivity();
                 return;
             }
         }
@@ -203,7 +204,7 @@ namespace Assets.Scripts.Netcode
             var input = PlayerInputManager.Instance;
             revengeHeld = 0;
             foreach (var action in RevengeActions)
-                if (input != null && input.Get(1, action)) revengeHeld |= 1 << (int)action;
+                if (input != null && input.Get(1, action)) revengeHeld |= BattleRevengeController.NetworkCartActionMask(action);
             if (input != null && input.GetDown(1, PlayerAction.ActionA)) revengePressed |= 16;
             if (Time.unscaledTime >= revengeNextHeartbeat)
             {

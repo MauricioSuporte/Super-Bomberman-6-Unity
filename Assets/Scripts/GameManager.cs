@@ -1959,7 +1959,8 @@ public class GameManager : MonoBehaviour
                 continue;
 
             Vector3 worldPosition = groundTilemap.GetCellCenterWorld(cell);
-            Instantiate(prefab, worldPosition, Quaternion.identity);
+            var droppedItem = Instantiate(prefab, worldPosition, Quaternion.identity);
+            Assets.Scripts.Netcode.NetSpawn.Server(droppedItem.gameObject);
         }
     }
 

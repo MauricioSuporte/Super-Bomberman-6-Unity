@@ -12,6 +12,30 @@ public sealed partial class OnlineRoomEditModeTests
     const BindingFlags RevengeFields = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [Test]
+    public void ApprovedKickProgressRetainsForwardPresentationWithoutPredictingAnotherCell()
+    {
+        Assert.AreEqual(.08f, NetworkBombFx.PreserveApprovedKickProgress(new Vector2(.8f, 0), Vector2.zero, Vector2.right, .1f, .02f), .0001f);
+        Assert.AreEqual(.1f, NetworkBombFx.PreserveApprovedKickProgress(Vector2.right * 3, Vector2.zero, Vector2.right, .1f, .02f), .0001f);
+        Assert.AreEqual(.17f, NetworkBombFx.PreserveApprovedKickProgress(Vector2.right, Vector2.zero, Vector2.right, 1, .02f), .0001f);
+        Assert.AreEqual(.07f, NetworkBombFx.PreserveApprovedKickProgress(Vector2.left, Vector2.zero, Vector2.right, .1f, .07f), .0001f);
+        Assert.AreEqual(.2f, NetworkBombFx.PreserveApprovedKickProgress(Vector2.zero, Vector2.zero, Vector2.right, .1f, .2f), .0001f);
+        Assert.AreEqual(.08f, NetworkBombFx.PreserveApprovedKickProgress(new Vector2(0, -.8f), Vector2.zero, Vector2.down, .1f, .02f), .0001f);
+    }
+
+    [TestCase(PlayerAction.ActionA, 16)]
+    [TestCase(PlayerAction.ActionC, 64)]
+    [TestCase(PlayerAction.MoveUp, 1)]
+    [TestCase(PlayerAction.MoveDown, 2)]
+    [TestCase(PlayerAction.MoveLeft, 4)]
+    [TestCase(PlayerAction.MoveRight, 8)]
+    [TestCase(PlayerAction.Start, 0)]
+    [TestCase(PlayerAction.ActionB, 0)]
+    public void RevengeCartHardwareActionsUseTheCartProtocolMask(PlayerAction action, int expected)
+    {
+        Assert.AreEqual(expected, BattleRevengeController.NetworkCartActionMask(action));
+    }
+
+    [Test]
     public void RevengePacketsCannotBuySimulationTimeAndOverflowCancelsInsteadOfReleasingA()
     {
         var queue = new RevengeCartInputBuffer();

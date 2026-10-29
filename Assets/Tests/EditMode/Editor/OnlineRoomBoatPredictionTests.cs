@@ -249,6 +249,43 @@ public sealed partial class OnlineRoomEditModeTests
         }
     }
 
+    [Test]
+    public void RidingPlayerArcDoesNotSuppressApprovedGroundMountFrames()
+    {
+        using var fixture = new OwnerBoatFixture();
+        var actor = fixture.fx.gameObject;
+        var animation = actor.AddComponent<NetworkMountAnimation>();
+        var companion = actor.GetComponent<PlayerMountCompanion>();
+        var mount = new GameObject("RidingGroundLouie"); mount.transform.SetParent(actor.transform, false);
+        try
+        {
+            var visual = fixture.MakeAnimation(mount.transform, "ApprovedGroundFrame");
+            var sprite = visual.GetComponent<SpriteRenderer>();
+            typeof(PlayerMountCompanion).GetField("currentLouie", BoatFlags).SetValue(companion, mount);
+            typeof(NetworkMountAnimation).GetField("companion", BoatFlags).SetValue(animation, companion);
+            typeof(NetworkMountAnimation).GetField("trackedMount", BoatFlags).SetValue(animation, mount);
+            typeof(NetworkMountAnimation).GetField("renderers", BoatFlags).SetValue(animation, new[] { visual });
+            typeof(NetworkMountAnimation).GetField("sprites", BoatFlags).SetValue(animation, new[] { sprite });
+            var identity = actor.GetComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", BoatFlags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isClient").SetValue(identity, true);
+            typeof(NetworkBombFx).GetField("ridingActive", BoatFlags).SetValue(fixture.fx, true);
+            animation.frames.IsWritable = () => true; // Simulate receiving the server-owned list in this client fixture.
+            animation.frames.Add(new NetworkWorldMount.MountFrame { visible = true, idle = true, color = Color.white,
+                pose = NetworkVisualPose.Capture(actor.transform, sprite) });
+            sprite.enabled = false;
+            typeof(NetworkMountAnimation).GetMethod("LateUpdate", BoatFlags).Invoke(animation, null);
+            Assert.IsTrue(sprite.enabled, "A confirmed player jump must not skip its independent ground mount presentation.");
+            Assert.IsTrue(fixture.fx.RidingArcActive);
+        }
+        finally
+        {
+            typeof(NetworkBombFx).GetField("ridingActive", BoatFlags).SetValue(fixture.fx, false);
+            typeof(PlayerMountCompanion).GetField("currentLouie", BoatFlags).SetValue(companion, null);
+            UnityEngine.Object.DestroyImmediate(mount);
+        }
+    }
+
     sealed class OwnerBoatFixture : System.IDisposable
     {
         public static readonly FieldInfo Paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);

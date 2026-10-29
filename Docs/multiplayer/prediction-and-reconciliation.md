@@ -1298,3 +1298,23 @@ Publicação51 confirmada no CI40558343289 (completed/success), client/server/up
 Validação final500/500 inclui velocidade do retorno aplicada antes da predição e
 pause do budget sem crédito acumulado nem release de A fabricado. Não substitui
 manual de dois peers nem encerra os previews visuais pendentes de A12.
+
+
+### Correções de Battle Mode após protocolo52
+
+A máscara compacta de RevengeCartInput é direções1/2/4/8, A16 e C64.
+Não usar `1 << (int)PlayerAction`: Start ocupa o ordinal4 e desloca as ações.
+O sampler nativo e o cliente usam NetworkCartActionMask; o replay continua apenas
+motor. Inputs aceitos não vazios renovam atividade da sala; heartbeat não renova.
+A carga, alcance, indicador e disparo permanecem aprovados pelo servidor.
+
+RidingArcActive controla o arco do jogador. Não deve bloquear os frames da
+montaria no chão em NetworkMountAnimation, inclusive do owner; durante esse arco
+não substituir os frames aprovados por locomotion local. Outros presenters que
+realmente possuem a montaria (boat/dash/bounce/Pink) preservam suas guardas.
+
+Um novo segmento reto aprovado de Kick retém o progresso exibido dentro dele,
+limitado150ms e ao endpoint. Isso evita reduzir a velocidade visual ao decair
+um offset longitudinal; não prevê novo trecho, colisão, troca de direção nem
+um primeiro lançamento sem predição anterior. A validação subjetiva entre peers
+continua separada dos testes dos helpers.

@@ -259,7 +259,7 @@ public sealed partial class BattleRevengeController : MonoBehaviour
         if (input == null) return;
         int held = 0;
         foreach (var action in NetworkCartActions)
-            if (input.Get(ownerPlayerId, action)) held |= 1 << (int)action;
+            if (input.Get(ownerPlayerId, action)) held |= NetworkCartActionMask(action);
         SimulateNetworkCartInput(held, Time.unscaledDeltaTime);
     }
 

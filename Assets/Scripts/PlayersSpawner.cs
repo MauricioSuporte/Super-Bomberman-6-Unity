@@ -306,6 +306,12 @@ public sealed class PlayersSpawner : MonoBehaviour
     {
         if (!IsBattleModeScene() || (Assets.Scripts.Netcode.NetSync.IsOnline && !Mirror.NetworkServer.active))
             return index;
+        InitializeBattleSpawnIndices();
+        return battleSpawnIndices[index];
+    }
+
+    void InitializeBattleSpawnIndices()
+    {
         if (battleSpawnIndices == null)
         {
             battleSpawnIndices = new[] { 0, 1, 2, 3, 4, 5 };
@@ -325,7 +331,6 @@ public sealed class PlayersSpawner : MonoBehaviour
                 }
             }
         }
-        return battleSpawnIndices[index];
     }
 
     bool TryGetOverridePosition(int playerIndex, out Vector3 pos)

@@ -12,6 +12,14 @@ public sealed partial class BattleRevengeController
     public int NetworkCartId => GetEntityId().GetHashCode();
     static readonly PlayerAction[] NetworkCartActions = { PlayerAction.MoveUp, PlayerAction.MoveDown,
         PlayerAction.MoveLeft, PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionC };
+    // Cart wire masks predate PlayerAction's Start entry; never shift its enum ordinal.
+    public static int NetworkCartActionMask(PlayerAction action) => action switch
+    {
+        PlayerAction.MoveUp => 1, PlayerAction.MoveDown => 2,
+        PlayerAction.MoveLeft => 4, PlayerAction.MoveRight => 8,
+        PlayerAction.ActionA => 16, PlayerAction.ActionC => 64,
+        _ => 0
+    };
     bool networkView;
     SpriteRenderer[] networkSprites;
     AnimatedSpriteRenderer[] networkAnimations;

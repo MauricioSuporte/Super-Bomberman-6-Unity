@@ -252,6 +252,16 @@ namespace Assets.Scripts.Netcode
         // adding the snapshot interpolation buffer to an already confirmed kick.
         public static double KickServerNow => NetworkTime.predictedTime - NetworkTime.rtt * 0.5;
 
+        public static float PreserveApprovedKickProgress(Vector2 presented, Vector2 start, Vector2 end, float duration, float elapsed)
+        {
+            Vector2 segment = end - start;
+            if (duration <= 0 || segment.sqrMagnitude < 0.000001f || elapsed >= duration) return elapsed;
+            float progress = Vector2.Dot(presented - start, segment) / segment.sqrMagnitude;
+            float projected = Mathf.Clamp01(progress) * duration;
+            // Never invent another cell or erase authoritative elapsed time.
+            return Mathf.Max(elapsed, Mathf.Min(projected, elapsed + 0.15f));
+        }
+
         public static Vector2 SampleKickSegment(Vector2 start, Vector2 end, float duration, float elapsed) =>
             duration <= 0 ? end : Vector2.Lerp(start, end, Mathf.Clamp01(elapsed / duration));
 
@@ -400,6 +410,11 @@ namespace Assets.Scripts.Netcode
             // Preserve the small lead of the owner's input timeline. Pulling the
             // bomb back to server-now on the first reply would recreate the hitch.
             if (motion.moving && motion.kind != BombMotionKind.Environment && motion.kind != BombMotionKind.Revenge && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
+            // Preserve forward progress across approved straight kick segments instead
+            // of converting it into an offset that slows the bomb while it decays.
+            if (motion.kind == BombMotionKind.Kick && motion.moving && previous != null && (!motion.first || previous.unconfirmed) && previous.motion.moving &&
+                Vector2.Dot(motion.end - motion.start, previous.motion.end - previous.motion.start) > 0)
+                playback.elapsed = PreserveApprovedKickProgress(previous.presented, motion.start, motion.end, motion.duration, playback.elapsed);
             var targetPosition = SamplePlayback(movingBomb, playback);
             // The NetworkTransform may have written its older timeline this frame.
             // Reconcile against our last displayed position, not that stale transform.

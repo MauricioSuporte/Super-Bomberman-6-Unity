@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -32,12 +32,25 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = true;
 
+        if (!isActiveAndEnabled) return;
         ApplyIgnoreToCurrentDestructibles();
 
         if (refreshRoutine != null)
             StopCoroutine(refreshRoutine);
 
         refreshRoutine = StartCoroutine(RefreshLoop());
+    }
+
+    private void OnEnable()
+    {
+        if (enabledAbility) Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (refreshRoutine != null) StopCoroutine(refreshRoutine);
+        refreshRoutine = null;
+        RestoreIgnoredCollisions();
     }
 
     public void Disable()

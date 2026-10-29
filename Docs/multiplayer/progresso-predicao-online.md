@@ -13,6 +13,34 @@ Baseline inicial: `2e41c0c47`, protocolo 24, branch `v0.5.0` no checkout origina
 Não criar worktree nem fechar o Editor com alterações não salvas. Preservar as
 alterações do usuário em TitleScreen e nos dois assets de fonte.
 
+## Retomada em 28/10/2026 — correções reportadas em Battle Mode
+
+Os ajustes de Rule Config/embaralhamento, alpha80%, direção inicial para baixo e
+cursor até o fim da contagem estão no commit3267ab200 (protocolo52). O checkout
+retomado está em1c590671e, sem alterações pendentes do usuário. Último Actions
+consultado40596044890: completed/success. O histórico51 abaixo é a validação
+anterior de predição, não a última versão do repositório.
+
+Lote atual em validação (ainda não publicado):
+- A12: corrigida conversão de hardware para máscara compacta do cart. PlayerAction
+  inclui Start antes de ActionA; deslocar seu ordinal gerava A32/C128, mas o motor
+  espera A16/C64. Host/offline e cliente agora usam o mesmo mapeamento explícito.
+  A carrega, soltar A dispara, C acelera. O indicador confirmado acompanha a carga.
+- A12: atividade de sala renovada somente por input válido/aceito/não vazio do cart;
+  heartbeat/duplicata/overflow não renovam o prazo.
+- Montaria: o arco Riding apresenta o jogador, não a montaria no chão. Sua presença
+  não pode interromper a aplicação dos frames aprovados de NetworkMountAnimation.
+- Drops: TryDropBattleItemsForDeadPlayer chama NetSpawn.Server após Instantiate,
+  como outros spawns de itens; criação/coleta continuam autoritativas.
+- Bombas/Kick: preservar progresso já exibido dentro de um trecho aprovado evita
+  convertê-lo em offset que desacelera ao decair. Limite150ms e fim do trecho;
+  não prevê outra célula, mudança de direção, colisão ou novo lançamento.
+
+Testes/regressões e publicação serão registrados ao concluir. Não houve captura
+manual com dois peers neste lote. Checklist continua15 implementados/18 parciais;
+A12 ainda parcial (preview imediato de carga/recoil/muzzle e métricas pendentes).
+Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
+
 ## Estado atual
 
 Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
@@ -1855,3 +1883,27 @@ pela antecipação visual de A12. Antes de alterar wire/RPC/SyncVars, subir prot
 para52 em authenticator e Directory e compilar ambos os players. Se só alterar
 atividade de sala/diagnóstico sem wire, protocolo51 continua compatível, mas builds
 podem exigir identidade de commit igual. Não reabrir testes já aprovados sem mudança.
+
+
+28/10 — primeira execução deste lote:505/510 (Logs/PredictionBattlePolish52Attempt.*).
+As cinco falhas: teste de shuffle anterior usava SceneManager.CreateScene fora de
+Play Mode (corrigido para EditorSceneManager.NewScene Additive); quatro cenários
+COM habilitavam DestructiblePass num ator inativo. Ability agora conserva a flag
+sem iniciar coroutine inativa, inicia/reaplica em OnEnable e restaura colisões/
+encerra refresh em OnDisable. Sem suprimir erros. Nova repetição inclui regressão
+real do presenter de montaria durante Riding e guarda contra herdar progresso de
+um lançamento novo não previsto. C#0/0 e Python44/44 já passaram antes desta última
+correção; execução final e publicação ainda pendentes.
+
+
+28/10 — lote corrigido e validado:511/511 Unity (OnlineRoom419 + COM92), C#0 erros/
+0 avisos, Python44/44 e UTF8/BOM/diff aprovados. Reports finais:
+Logs/PredictionBattlePolish52Verified.xml/.log. A segunda tentativa509/511 está
+preservada em Logs/PredictionBattlePolish52SecondAttempt.*. Shuffle agora testa a
+inicialização da permutação diretamente, sem criar/salvar cenas. Regressão de
+montaria simula o recebimento da SyncList do servidor (não escrita pelo cliente).
+Runner restaurado somente nos caminhos C# próprios antes da publicação.
+Nenhuma cena/prefab foi editada. Sem validação manual entre dois peers nem nova
+medição de atraso neste lote. A12 e os18 IDs parciais continuam em andamento.
+Próximo: publicar este lote52, validar carga/indicador/C/visibilidade entre peers,
+continuar preview imediato de A12 com elegibilidade/cooldown/tick aprovados.
