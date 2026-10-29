@@ -266,3 +266,19 @@ Usar --presenter-removal com NormalGame/Stage_1-1 e --diagnostics para repetir o
 Development. Não executar essa fixture como partida normal ou comparar seus inputs
 suspensos com latência humana. Orçamento --seconds inclui lobby/carregamento; o campo
 seconds deRun1 deste probe está inválido, corrigido emRun2. Nenhum vídeo/GPU foi medido.
+
+
+## A12 — integração automática de input em29/10 (manual continua pendente)
+
+PredictionRevengeInputs55Run2/result.json registra2clientes Mirror reais com
+inputs sintéticos no hardware local1: morte nativa, entrada do kart, avanço comC,
+indicador carregado até7tiles e3releases A porowner. Cada release teve um único
+input/first_visual/confirm correlacionado por cart/generation/tick; zero reject,
+timeout, erros ou avisos. Cada cliente apresentou os2carts. As3capturas foram
+copiadas somente após encerrar/flush dos clientes e incluem hash do binário.
+
+Medianas do presenter CPU0,4232ms/P1 e0,5697ms/P2; confirmações132,8546ms e132,8911ms.
+Três amostras porowner não permitem p95. Headless/atores duráveis/local loopback;
+não equivale à verificação visual/offline, teclado/controle/mobile ou rede adversa
+listada acima. Run1 não aprovado: cópia de arquivo ainda aberto cortou a última
+linha; o encerramento gracioso da fixture foi corrigido e Run2 repetido com sucesso.

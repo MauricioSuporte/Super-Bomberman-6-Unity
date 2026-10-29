@@ -46,13 +46,15 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo55, commit `a1e0e9e48`, pipeline
-  [40850586608](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40850586608)
-  completed/success: servidor, cliente e atualizador; inclui26fdda131, Clown/esteira/ovos.
-  Continuidade após destruição do presenter é o próximo lote local, ainda não publicado.
-- **Validação local mais recente:**887/887 Unity, sem skips;2focados posteriores
-  de metadados de esteira; C#0/0 e Python47/47. Reports PredictionCoopCorrections55
-  e PredictionConveyorMetadata55. Lote seguinte ao deploy11c1bdf55, ainda sem envio.
+- **Publicado:** protocolo55, commit `76f2a948c`, pipeline
+  [40868952214](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40868952214)
+  completed/success: servidor, cliente e atualizador; inclui R07/continuidade de
+  trajetórias após destruição do presenter e as correções anteriores de co-op.
+- **Validação local mais recente:**894/894 Unity, sem skips, R07; C#0/0 e Python47/47.
+  Reports PredictionPresenterPose55Full; smoke2clients PredictionPresenterClients55Run2
+  mantém8amostras de movimento porpeer após transferência, sem novo evento.
+  A12 seguinte validado com2clientes e6disparos: C#0/0 e Python53/53.
+  Relatórios PredictionRevengeInputs55Full e PredictionRevengeInputs55Run2.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
   itens em movimento e desmontagem Mole/Tank; co-op Stage_1-1 por90s com captura.
   Ambos sem erros/avisos. Headless; não comprova renderização nem input lag zero.
@@ -63,10 +65,11 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:**16 IDs implementados/testados e17 parciais; todos os33 iniciados.
+- **Checklist:**17 IDs implementados/testados e16 parciais; todos os33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** integração de ClownMask/SunMask/Stage_3-6 e envio do fix de referência;
-  continuar C02/C03 (curvas e entrega ao motor), A12/capturas e demais parciais. Não marcar melhorias percebidas sem teste.
+- **Próximo:** continuar C02/C03 (curvas e entrega ao motor) e demais parciais.
+  A12 já teve integração de morte nativa, C e3cargas/releases porcliente. ClownMask/SunMask/
+  Stage_3-6 já tiveram integração real documentada abaixo; manual visual pendente.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -201,7 +204,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo: **16 de33 IDs concluídos em implementação/testes e17 parciais**.
+Resumo: **17 de33 IDs concluídos em implementação/testes e16 parciais**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -217,7 +220,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial55 local: riding/dismount, fila visual e defer de remoção da montaria no arco vivo testados; smoke2peers Mole/Tank detectou teardown, corrigido em suíte878. Repetição e manual visual pendentes.
-- [ ] A12: parcial54 publicado: motor/replay, carga/mira, recoil/muzzle, release tick e métricas testados. Handoff aguarda também fim da fase apresentada no55 local (suíte878). Capturas de latência e manual2peers pendentes.
+- [x] A12: motor/replay, carga/mira, recoil/muzzle, release tick, retorno confirmado e handoff testados; integração55 com2clientes, C e3cargas/releases porowner,6confirmações sem rejeição/timeout. Comparação visual/offline, rede adversa e hardware físico pendentes na matriz manual.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
@@ -2395,3 +2398,57 @@ sem inventar endpoint/continuar Carry desconhecido. Validação manual permanece
 Próximo imediato: salvar/push do lote validado (ainda local), liberar runner paraCI,
 acompanhar publicação; continuar A12 (prova de input/carga/boost em2clients) e
 C02/C03. Não repetir a suíte894 sem nova alteração ou falha que justifique.
+
+
+## Retomada A12 em29/10 — integração de input do Revenge Kart (em desenvolvimento)
+
+R07 salvo/enviado em76f2a948c; Actions40868952214 em compilação, sem confirmação
+de deploy nesta consulta.894/894 Unity e smoke real Run2 preservados acima.
+
+Nova fixture somente Development em LocalServerLoadTest: habilita a regra Revenge,
+executa morte nativa dos2owners, envia direção/C e3cargas/releases A pelo hardware
+sintético local1 e transporte normal. Exige indicador de carga, avanço do cart comC
+no servidor e3disparos nativos porowner; não chama RPC de disparo para simular input.
+Parser exige correlação cart/generation/tick nos3inputs/first_visual/confirm, sem
+duplicatas/reject/timeout e presença dos2carts em cada cliente.6regressões do parser;
+Python53/53 passou (45CI+8Directory). C# passou:0erros,6avisos preexistentes de Mirror.
+Ainda NÃO executado no Unity/binário: runner reservado ao pipeline76f2. Não marcar
+A12 concluído nem inferir renderização/latência física; checklist permanece16/17.
+
+A12: pipeline76f2 concluído/success; runner liberado. Suíte completa
+PredictionRevengeInputs55Full em execução, seguida do Development build e smoke
+BattleMode_15/90s com2clientes reais. Não há resultado desse teste ainda.
+
+
+## A12 — integração aprovada em29/10, protocolo55
+
+Lote runtime publicado continua76f2a948c/Actions40868952214 completed/success.
+Este lote adiciona somente fixture DEBUG/Editor, parser, testes e documentação;
+nenhuma alteração de wire, cena/prefab ou regra de produção. Ainda sem envio.
+
+-894/894 Unity,0falhas/0skips, reports PredictionRevengeInputs55Full. Posteriormente
+  o encerramento da fixture DEBUG foi corrigido e compilado/testado no binário Run2.
+- C# final0erros/0avisos; Python53/53 (45CI+8Directory), incluindo6casos de validação
+  de correlação/duplicação/ausência de observador/rejeição/NaN/boost de dois owners.
+- Development Run2 build aprovado; Logs/PredictionRevengeInputs55Run2DevelopmentBuild.log.
+- Logs/PredictionRevengeInputs55Run2/result.json,config.json,analysis.json e3capturas:
+  servidor+2clientes Mirror reais, BattleMode_15,90s solicitados/113,219s totais
+  incluindo startup/shutdown; atores duráveis, headless, inputs sintéticos local1.
+  Os2owners morreram nativamente, entraram no cart, tiveram C aceito com avanço,
+  carregaram A até7tiles e3disparos confirmados cada. Ambos apresentaram os2carts.
+  Zero erros/avisos, reject/timeout/duplicatas. SHA256 Assembly-CSharp.dll:
+  7947243e092a1ff5c937b091d67ab3dc292ed57ea964d9a7b4aa2452cb7ca37e.
+- Primeira resposta visual CPU: medianas0,4232ms/P1 e0,5697ms/P2 após o release
+  amostrado; confirmação132,8546ms/P1 e132,8911ms/P2. São3amostras porowner,
+  insuficientes para p95; não medem GPU, hardware físico nem input-to-photon.
+- Run1 preservado: checkpoints de gameplay passaram, mas a cópia da captura ainda
+  aberta cortou uma linha ao final. Não é uma execução aprovada. Nova flag local
+  -load-test-client encerra Development após disconnect e Application.quitting
+  fecha o StreamWriter; Python aguarda os processos antes de copiar os logs.
+
+A12 marcado concluído em implementação/testes, como os demais IDs[x]; comparação
+manual/offline, cantos/pausa em rede adversa e troca/retorno visual continuam na
+matriz manual e não foram executados neste smoke. Checklist17concluídos/16parciais.
+Próximo: C02/C03 curvas e devolução ao motor. Runner deve ser restaurado somente
+no tracked próprio LocalServerLoadTest.cs antes de eventual push; sem processo
+próprio ativo após o Run2. Não publicar debug harness como conteúdo do release.

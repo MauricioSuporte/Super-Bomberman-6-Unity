@@ -65,6 +65,16 @@ Track sent revisions and excluded owners by the actual connection instance;
 a reconnect can reuse a connection id. Prune disconnected peers so idle object
 caches stay bounded, and test replacement of an excluded connection too.
 
+For actual-client diagnostic smokes, finish the writer before copying its JSONL.
+A live buffered StreamWriter can expose a partial final line even when gameplay
+succeeded. Development-only clients can quit after the test server disconnects;
+await their normal exit and Application.quitting flush before reading captures.
+Keep incomplete attempts as failures rather than silently dropping their tail.
+For Revenge input, use the existing local-slot-1 synthetic path and production
+transport after native death; require two distinct authoritative boost owners,
+both cart views, and release/first_visual/confirm correlated by cart/generation/
+tick. Never describe CPU presenter observations as GPU or hardware latency.
+
 For expelled items, use ItemPickup's approved segments/poses. Preserve the
 native curve and ordered short segments, drain intermediate stops without an
 extra frame, freeze presented progress during pause and recover late observers

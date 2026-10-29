@@ -13,7 +13,9 @@ from benchmark_local import host_memory
 
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False):
+    if revenge_input and (mode != 'BattleMode' or not diagnostics or mount_input):
+        raise ValueError('revenge input requires BattleMode diagnostics without the mount input fixture')
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     owned, handles = [], []
@@ -27,7 +29,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 raise RuntimeError('the durable actor smoke requires Development players')
             assembly_hashes[role] = hashlib.sha256(assembly).hexdigest()
         (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
-            assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
+            revengeInput=revenge_input, assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
         env = dict(os.environ, SB6_ROOM_ID='spawn-regression', SB6_ROOM_TOKEN=secrets.token_hex(32),
                    SB6_ROOM_STATUS=str(output/'status.json'))
         def launch(binary, name, arguments, environment=None):
@@ -46,6 +48,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                         (['-load-test-scene', scene] if scene else []) +
                         (['-online-motion-logs'] if diagnostics else []) +
                         (['-load-test-presenter-removal'] if presenter_removal else []) +
+                        (['-load-test-revenge-input'] if revenge_input else []) +
                         (['-load-test-full-input'] if mount_input else []) +
                         (['-load-test-item-motion'] if prediction_items else []), env)
         for _ in range(60):
@@ -61,17 +64,28 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         for index in range(2):
             if host_memory()['availableMiB'] < 1536: raise RuntimeError('RAM reserve reached before client launch')
             launch(client, 'client-'+str(index+1), ['-online-join', 'kcp://127.0.0.1:'+str(port)] +
+                   ['-load-test-client'] +
                    (['-online-motion-logs'] if diagnostics else []) +
                    (['-load-test-presenter-removal'] if presenter_removal else []) +
+                   (['-load-test-revenge-input'] if revenge_input else []) +
                    (['-load-test-real-input'] if mount_input else []) +
                    (['-load-test-item-motion'] if prediction_items else []) +
                    ['-local-diagnostic-name', 'SB6Smoke'+str(index+1)])
             time.sleep(1)
         while time.monotonic() < deadline and room.poll() is None:
-            if any(process.poll() is not None for process in owned[1:]): raise RuntimeError('client exited unexpectedly')
+            if any(process.poll() is not None for process in owned[1:]):
+                # The server disconnects peers before its own Unity process exits.
+                # A Development client can therefore flush and quit just before it.
+                try: room.wait(timeout=10)
+                except subprocess.TimeoutExpired: raise RuntimeError('client exited unexpectedly while server remained active')
+                break
             time.sleep(1)
         if room.poll() is None: raise RuntimeError('development server did not finish within the bound')
         if room.returncode != 0: raise RuntimeError('development server failed')
+        for process in owned[1:]:
+            try: process.wait(timeout=15)
+            except subprocess.TimeoutExpired: raise RuntimeError('client did not close its capture after server shutdown')
+            if process.returncode != 0: raise RuntimeError('development client failed during shutdown')
         server_text = (output/'server.log').read_text(encoding='utf-8-sig', errors='replace')
         markers = ['[LoadTest] completed']
         if mode == 'BattleMode':
@@ -84,6 +98,11 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         for marker in markers:
             if marker not in server_text: raise RuntimeError('missing server checkpoint: '+marker)
         removed_bomb = None
+        if revenge_input:
+            if '[LoadTest] revenge-input completed players=2' not in server_text:
+                raise RuntimeError('server did not confirm three native shots and boost from both owners')
+            if len(set(re.findall(r'\[LoadTest\] revenge-input confirmed player=(\d+) shots=3', server_text))) != 2:
+                raise RuntimeError('revenge shots were not confirmed for two distinct players')
         if presenter_removal:
             match = re.search(r'presenter-removal started bomb=(\d+)', server_text)
             if not match: raise RuntimeError('missing presenter removal start')
@@ -109,6 +128,11 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                         raise RuntimeError('client did not present approved item motion '+item_type+': '+path.name)
             if presenter_removal and path.name.startswith('client-') and not any('presenter-removal input suspended' in line for line in lines):
                 raise RuntimeError('client input was not suspended before synthetic presenter removal: '+path.name)
+            if revenge_input and path.name.startswith('client-'):
+                if not any('revenge-input shot acknowledged' in line and 'shots=3' in line for line in lines):
+                    raise RuntimeError('client did not acknowledge three native revenge shots: '+path.name)
+                if sum('revenge-input charged release' in line for line in lines) != 3:
+                    raise RuntimeError('client did not exercise exactly three charged releases: '+path.name)
             errors = [line for line in lines if any(marker.lower() in line.lower() for marker in (
                 'Exception', '[NetSpawn]', 'Could not spawn', 'Failed to spawn', 'Spawn prefab not found',
                 'has another NetworkIdentity', 'Spawn scene object not found', 'no receiver', 'invalid Command',
@@ -146,6 +170,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 captures[path.stem] = dict(file=destination.name, unlockedPlayers=unlocked,
                     presenterTransferMovingSamples=transfer_samples,
                     familyCostReports=sum(row.get('kind') == 'coop_family_cost' for row in rows))
+                if revenge_input:
+                    from validate_revenge_smoke import validate_revenge_capture
+                    captures[path.stem]['revenge'] = validate_revenge_capture(rows, path.stem == 'server')
         if diagnostics and mode != 'BattleMode' and not captures['server']['familyCostReports']:
             raise RuntimeError('cooperative server produced no family cost reports')
         events = output/'events.jsonl'
@@ -158,7 +185,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         result = dict(actualMirrorClients=2, simulatedClients=False, rendered=False,
                       mode=mode, scene=scene, captures=captures, assemblySha256=assembly_hashes, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
                       spawnCheckpoints=mode == 'BattleMode', arenaLoadRequests=round_reloads,
-                      syntheticHardwareInput=mount_input, approvedItemMotion=prediction_items,
+                      syntheticHardwareInput=mount_input or revenge_input, revengeInput=revenge_input, approvedItemMotion=prediction_items,
                       serverDevelopmentDurableActors=True, requestedSeconds=seconds,
                       serverWarningEvents=len(warning_events), serverWarnings=list(dict.fromkeys(warning_events)),
                       errors=failures, seconds=time.monotonic()-started)
@@ -190,6 +217,7 @@ if __name__ == '__main__':
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
     parser.add_argument('--mount-input', action='store_true', help='Development client supplies Select through the normal input path')
+    parser.add_argument('--revenge-input', action='store_true', help='Development Battle fixture exercises C boost and three charged A releases per owner')
     parser.add_argument('--seconds', type=int, default=210, help='At least 180 also requires a round reload checkpoint')
     args = parser.parse_args()
     if os.name != 'nt': parser.error('Windows binaries required')
@@ -201,8 +229,10 @@ if __name__ == '__main__':
         parser.error('--require-unlocked requires cooperative --diagnostics')
     if args.presenter_removal and (not args.diagnostics or args.mode != 'NormalGame' or args.scene != 'Stage_1-1'):
         parser.error('--presenter-removal requires NormalGame/Stage_1-1 and --diagnostics')
+    if args.revenge_input and (args.mode != 'BattleMode' or not args.diagnostics or args.mount_input):
+        parser.error('--revenge-input requires BattleMode/--diagnostics without --mount-input')
     if args.scene and (args.mode == 'BattleMode' or not args.scene.startswith('Stage_') or
                        any(character in args.scene for character in '/\\')):
         parser.error('scene must be a cooperative Stage_* name')
     run(args.server.resolve(), args.client.resolve(), args.output, args.port, args.mount_input, args.seconds,
-        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal)
+        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input)

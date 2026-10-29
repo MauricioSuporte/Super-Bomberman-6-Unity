@@ -12,7 +12,7 @@ namespace Assets.Scripts.Netcode
     // Development-only command-line harness. No remote message can enable it.
     public partial class BombermanNetworkManager
     {
-        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked;
+        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked;
         readonly HashSet<int> loadTestPresenterReady = new();
         int loadTestPlayers;
         float loadTestStart, loadTestDuration, loadTestNextHealth;
@@ -60,6 +60,7 @@ namespace Assets.Scripts.Netcode
                 else
                 {
                     PlayerPersistentStats.ResetToDefaultsAll();
+                    if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
                     bool fillCom = HasArg("-load-test-com");
                     if (fillCom) global::SaveSystem.SetBattleModeComputerLevel(BattleModeComputerLevel.Hard);
@@ -81,6 +82,11 @@ namespace Assets.Scripts.Netcode
                     loadTestSpawnsChecked = true;
                     StartCoroutine(CheckLoadTestSpawns());
                 }
+                if (!loadTestRevengeChecked && HasArg("-load-test-revenge-input") && !IsCoopRoom && Time.timeSinceLevelLoad > 12)
+                {
+                    loadTestRevengeChecked = true;
+                    StartCoroutine(CheckLoadTestRevengeInput());
+                }
                 if (!loadTestPresenterChecked && HasArg("-load-test-presenter-removal") && IsCoopRoom &&
                     Time.timeSinceLevelLoad > 12 && OnlineCoopPlayersReady && loadTestPresenterReady.Count >= loadTestPlayers &&
                     NetworkServer.connections.Count >= loadTestPlayers)
@@ -88,6 +94,104 @@ namespace Assets.Scripts.Netcode
                     loadTestPresenterChecked = true;
                     StartCoroutine(CheckLoadTestPresenterRemoval());
                 }
+            }
+        }
+
+        System.Collections.IEnumerator CheckLoadTestRevengeInput()
+        {
+            var owners = new HashSet<int>();
+            foreach (var peer in NetworkServer.connections.Values)
+            {
+                var player = peer.identity;
+                if (player == null || !player.TryGetComponent<CharacterHealth>(out var health) ||
+                    !player.TryGetComponent<NetworkPlayerSetup>(out var setup))
+                    throw new InvalidOperationException("Revenge fixture requires connected player identities");
+                health.TakeDamage(health.life);
+                if (!health.IsDead) throw new InvalidOperationException("Revenge fixture could not perform native player death");
+                owners.Add(setup.PlayerId);
+                Debug.Log("[LoadTest] revenge-input native death player=" + setup.PlayerId);
+            }
+            var boosted = new HashSet<int>();
+            var completed = new HashSet<int>();
+            var positions = new Dictionary<int, Vector3>();
+            float deadline = Time.unscaledTime + 55;
+            while (Time.unscaledTime < deadline && completed.Count < owners.Count)
+            {
+                RefreshRevengeCarts();
+                foreach (var cart in revengeCarts)
+                {
+                    if (!owners.Contains(cart.OwnerPlayerId)) continue;
+                    var buffer = GetRevengeServerInput(cart).buffer;
+                    if (positions.TryGetValue(cart.OwnerPlayerId, out var previous) && (buffer.Held & 64) != 0 &&
+                        Vector3.Distance(previous, cart.transform.position) > .0001f && boosted.Add(cart.OwnerPlayerId))
+                        Debug.Log("[LoadTest] revenge-input boost accepted player=" + cart.OwnerPlayerId);
+                    positions[cart.OwnerPlayerId] = cart.transform.position;
+                    if (cart.NetworkLaunchSerial >= 3 && boosted.Contains(cart.OwnerPlayerId) && completed.Add(cart.OwnerPlayerId))
+                        Debug.Log("[LoadTest] revenge-input confirmed player=" + cart.OwnerPlayerId + " shots=" + cart.NetworkLaunchSerial);
+                }
+                yield return null;
+            }
+            if (owners.Count != loadTestPlayers || completed.Count != owners.Count)
+                throw new InvalidOperationException("Revenge input fixture did not confirm boost and three native shots for every client");
+            Debug.Log("[LoadTest] revenge-input completed players=" + completed.Count);
+        }
+
+        int localRevengeSmokePhase, localRevengeSmokeShots;
+        float localRevengeSmokeDeadline;
+        uint localRevengeSmokeLaunch;
+
+        // Called only by the explicit Development client flag. Inputs use the
+        // same hardware slot and production transport as keyboard/controller.
+        internal void TickLocalRevengeInputSmoke()
+        {
+            if (NetworkServer.active || !InRevengeArena || localRevengeSmokePhase == 5) return;
+            var input = PlayerInputManager.Instance;
+            if (input == null) return;
+            foreach (var view in revengeViews.Values)
+            {
+                if (view.current.owner != LocalRoomPlayerId || view.cart == null) continue;
+                if (localRevengeSmokePhase == 0 && CanPredictRevenge(view))
+                {
+                    input.SetSyntheticHeld(1, PlayerAction.MoveUp, true);
+                    input.SetSyntheticHeld(1, PlayerAction.ActionC, true);
+                    localRevengeSmokeDeadline = Time.unscaledTime + 3;
+                    localRevengeSmokePhase = 1;
+                    Debug.Log("[LoadTest] revenge-input boost sent player=" + LocalRoomPlayerId);
+                }
+                else if (localRevengeSmokePhase == 1 && Time.unscaledTime >= localRevengeSmokeDeadline)
+                {
+                    input.SetSyntheticHeld(1, PlayerAction.MoveUp, false);
+                    input.SetSyntheticHeld(1, PlayerAction.ActionC, false);
+                    localRevengeSmokePhase = 2;
+                }
+                else if (localRevengeSmokePhase == 2 && CanPredictRevenge(view) && view.current.chargeReady &&
+                    Vector3.Distance(view.cart.transform.position, view.current.position) <= .125f)
+                {
+                    int distance = view.current.minCharge;
+                    for (int i = 0; i < view.current.chargeTargets.Length; i++)
+                        if (view.current.chargeTargets[i].z > 0) distance = i + 3;
+                    if (distance <= view.current.minCharge) continue;
+                    localRevengeSmokeLaunch = view.current.launchSerial;
+                    localRevengeSmokeDeadline = Time.unscaledTime + (distance - view.current.minCharge + 1) * view.current.chargeStep;
+                    input.SetSyntheticHeld(1, PlayerAction.ActionA, true);
+                    localRevengeSmokePhase = 3;
+                }
+                else if (localRevengeSmokePhase == 3 && Time.unscaledTime >= localRevengeSmokeDeadline)
+                {
+                    if (!view.charge.Active || view.charge.Distance <= view.current.minCharge ||
+                        view.cart.CaptureApprovedLandingPosition() == null)
+                        throw new InvalidOperationException("Revenge input did not present the charged landing indicator");
+                    Debug.Log("[LoadTest] revenge-input charged release player=" + LocalRoomPlayerId + " distance=" + view.charge.Distance);
+                    input.SetSyntheticHeld(1, PlayerAction.ActionA, false);
+                    localRevengeSmokePhase = 4;
+                }
+                else if (localRevengeSmokePhase == 4 && NetworkInputHistory.IsNewer(view.current.launchSerial, localRevengeSmokeLaunch))
+                {
+                    localRevengeSmokeShots++;
+                    Debug.Log("[LoadTest] revenge-input shot acknowledged player=" + LocalRoomPlayerId + " shots=" + localRevengeSmokeShots);
+                    localRevengeSmokePhase = localRevengeSmokeShots >= 3 ? 5 : 2;
+                }
+                break;
             }
         }
 
@@ -221,14 +325,15 @@ namespace Assets.Scripts.Netcode
         bool sent, completed;
         readonly HashSet<ItemType> observedMovingItems = new();
         float nextItemCheck;
-        bool checkItemMotion, runRealInput, suspendPresenterInputs;
+        bool checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
         {
             var args = Environment.GetCommandLineArgs();
             if (!Debug.isDebugBuild || (Array.IndexOf(args, "-load-test-real-input") < 0 &&
-                Array.IndexOf(args, "-load-test-item-motion") < 0 && Array.IndexOf(args, "-load-test-presenter-removal") < 0)) return;
+                Array.IndexOf(args, "-load-test-item-motion") < 0 && Array.IndexOf(args, "-load-test-presenter-removal") < 0 &&
+                Array.IndexOf(args, "-load-test-revenge-input") < 0 && Array.IndexOf(args, "-load-test-client") < 0)) return;
             Application.runInBackground = true;
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 0;
@@ -238,10 +343,27 @@ namespace Assets.Scripts.Netcode
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
             smoke.suspendPresenterInputs = Array.IndexOf(args, "-load-test-presenter-removal") >= 0;
+            smoke.revengeInput = Array.IndexOf(args, "-load-test-revenge-input") >= 0;
+            smoke.quitAfterDisconnect = Array.IndexOf(args, "-load-test-client") >= 0;
         }
 
         void Update()
         {
+            if (quitAfterDisconnect)
+            {
+                if (NetworkClient.isConnected) sawConnection = true;
+                else if (sawConnection)
+                {
+                    // Let Application.quitting flush diagnostics before the smoke
+                    // copies the file. A live StreamWriter can expose half a line.
+                    Debug.Log("[LoadTest] client disconnected; closing capture");
+                    enabled = false;
+                    Application.Quit();
+                    return;
+                }
+            }
+            if (revengeInput && NetworkManager.singleton is BombermanNetworkManager manager && manager != null)
+                manager.TickLocalRevengeInputSmoke();
             if (checkItemMotion && NetworkClient.isConnected && Time.unscaledTime >= nextItemCheck)
             {
                 nextItemCheck = Time.unscaledTime + .05f;
@@ -282,6 +404,13 @@ namespace Assets.Scripts.Netcode
                     Debug.Log("[LoadTest] full-input dismount acknowledged type=" + observedMount);
                 }
             }
+        }
+
+        void OnDisable()
+        {
+            if (!revengeInput || PlayerInputManager.Instance == null) return;
+            foreach (var action in new[] { PlayerAction.MoveUp, PlayerAction.ActionA, PlayerAction.ActionC })
+                PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
         }
     }
 
