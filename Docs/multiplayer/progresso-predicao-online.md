@@ -1913,3 +1913,30 @@ Publicação acionada: commit4822c318e, protocolo52. Actions40801957603 confirma
 in_progress: https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40801957603
 Ainda não confirmar deploy/updater até completed/success. Código congelado e
 workspace limpo após envio. Ao retomar, consultar esse run antes de usar o runner.
+
+
+## Continuação A12 — prévia de carga53 (em validação)
+
+Actions40801957603 do commit4822c318e confirmado completed/success antes de usar
+novamente o runner. Cliente/servidor/updater52 publicados. Próximo lote53 adiciona
+somente apresentação imediata de carga/mira do owner, sem prever spawn/disparo.
+O servidor envia até5 destinos validados (3..7tiles), limites/intervalo nativos e
+prontidão de cooldown. Owner usa hardware A local, mantém alvo em coordenada mundial
+e apaga indicador ao soltar mesmo com snapshot antigo. Uma atualização longa não
+compra vários passos de carga; pausa congela o relógio. Amostra>250ms, cart em
+animação ou distância>0.125 da posição aprovada cancelam a prévia. O motor/replay
+não executa carga. A versão53 é necessária pelo novo conteúdo de RevengeCartState.
+
+A12 continua parcial: recoil/muzzle antecipados, correlação de release tick e
+validação manual/métricas ainda pendentes. Checklist15 implementados/18 parciais.
+Suíte Unity completa em execução no runner; não iniciar CI nem copiar fontes nele
+até terminar. Registrar resultado de PredictionCharge53 e restaurar só os caminhos
+próprios antes de publicar. Python44/44 já passaram. Sem cenas/prefabs alterados.
+
+
+A12/53 validado:512/512 Unity (OnlineRoom420+COM92), C#0/0, Python44/44,
+UTF8/BOM/diff aprovados. Reports em Logs/PredictionCharge53.xml/.log. Runner
+restaurado só nos caminhos próprios. Prévia de carga/mira pronta para homologação;
+não há prova de sensação/latência renderizada nem recoil/muzzle previsto. Próximo:
+publicar53 e conferir indicador durante carga, pausa, movimento e soltura com dois
+peers; depois release tick/recoil/muzzle. Checklist permanece15/18 parciais.

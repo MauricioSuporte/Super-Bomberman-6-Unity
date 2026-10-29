@@ -63,6 +63,11 @@ public sealed partial class BattleRevengeController
                     frame = animation != null ? animation.CurrentFrame : 0, color = sprite.color,
                     flipX = sprite.flipX, flipY = sprite.flipY, pose = NetworkVisualPose.Capture(transform, sprite) } });
         }
+        var targets = new Vector3[5];
+        if (system != null && IsInLaunchableSegment)
+            for (int distance = 3; distance <= 7; distance++)
+                if (system.TryGetPredictedLandingPosition(this, distance, out var target))
+                    targets[distance - 3] = new Vector3(target.x, target.y, 1);
         return new RevengeCartState { id = NetworkCartId, generation = NetworkGeneration, owner = ownerPlayerId,
             playerNetId = playerNetId, acknowledged = acknowledged, launchSerial = NetworkLaunchSerial,
             spawnPerimeter = spawnPerimeterPosition, suppressSpawnCorner = suppressCornerVisualAtSpawn,
@@ -70,6 +75,8 @@ public sealed partial class BattleRevengeController
             position = transform.position, recoilOffset = visualRoot != null ? visualRoot.localPosition : Vector3.zero, perimeter = perimeterPosition, animating = isAnimating,
             geometry = new[] { horizontalWallMinX, horizontalWallMaxX, verticalWallMinY, verticalWallMaxY,
                 topWallY, bottomWallY, leftWallX, rightWallX, moveSpeed, actionCSpeedMultiplier },
+            chargeTargets = targets, chargeStep = chargeStepSeconds, minCharge = minLaunchDistanceTiles,
+            maxCharge = maxLaunchDistanceTiles, chargeReady = system != null && system.IsRuntimeEnabled && !isAnimating && Time.unscaledTime >= nextBombAllowedAt && targets[Mathf.Clamp(minLaunchDistanceTiles, 3, 7) - 3].z > 0,
             sprites = poses.ToArray(), rechargeSprite = rechargeSprites != null && rechargeIndicatorRenderer != null ?
                 System.Array.IndexOf(rechargeSprites, rechargeIndicatorRenderer.sprite) : -1 };
     }
@@ -170,6 +177,21 @@ public sealed partial class BattleRevengeController
     public void RestoreApprovedLandingPosition(Vector3? position)
     {
         if (position.HasValue && landingIndicatorRenderer != null) landingIndicatorRenderer.transform.position = position.Value;
+    }
+
+    public void PresentNetworkChargePreview(RevengeCartState state, RevengeChargePreview preview, bool held)
+    {
+        if (!networkView || NetSync.Mode != NetSync.NetMode.Client || GamePauseController.IsPaused) return;
+        // Release hides an older buffered marker immediately; no launch or gameplay is predicted.
+        if (!held) { HideLandingIndicator(); return; }
+        if (!preview.Active || state.chargeTargets == null || state.chargeTargets.Length != 5 || landingIndicatorRenderer == null) return;
+        var target = state.chargeTargets[Mathf.Clamp(preview.Distance, 3, 7) - 3];
+        if (target.z <= 0 || !float.IsFinite(target.x) || !float.IsFinite(target.y)) { HideLandingIndicator(); return; }
+        landingIndicatorRenderer.gameObject.SetActive(true);
+        landingIndicatorRenderer.transform.position = new Vector3(target.x, target.y, landingIndicatorRenderer.transform.position.z);
+        var color = landingIndicatorRenderer.color;
+        color.a = Mathf.Lerp(indicatorMinAlpha, indicatorMaxAlpha, Mathf.PingPong(Time.unscaledTime * indicatorBlinkSpeed, 1));
+        landingIndicatorRenderer.color = color; landingIndicatorRenderer.enabled = true;
     }
 
     public void PlayConfirmedNetworkLaunchSound()

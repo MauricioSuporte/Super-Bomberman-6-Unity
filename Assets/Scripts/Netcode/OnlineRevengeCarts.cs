@@ -15,6 +15,10 @@ namespace Assets.Scripts.Netcode
         public float perimeter, spawnPerimeter;
         public bool animating, suppressSpawnCorner;
         public float[] geometry;
+        public Vector3[] chargeTargets; // x/y: approved destination; z: valid.
+        public float chargeStep;
+        public int minCharge, maxCharge;
+        public bool chargeReady;
         public RevengeCartSprite[] sprites;
     }
     public struct RevengeCartRoster : NetworkMessage
@@ -68,6 +72,23 @@ namespace Assets.Scripts.Netcode
         public void Cancel() { frames.Clear(); Held = 0; Acknowledged = received; budget.Reset(); }
     }
 
+    // Presentation only: one charge step per rendered update, like the native cart.
+    public sealed class RevengeChargePreview
+    {
+        public int Distance { get; private set; }
+        public bool Active { get; private set; }
+        float elapsed;
+        public void Step(bool held, bool eligible, float dt, float interval, int min, int max)
+        {
+            min = Mathf.Clamp(min, 3, 7); max = Mathf.Clamp(max, min, 7);
+            if (!held || !eligible || !float.IsFinite(dt) || !float.IsFinite(interval) || interval <= 0)
+            { Active = false; Distance = min; elapsed = 0; return; }
+            if (!Active) { Active = true; Distance = min; elapsed = 0; return; }
+            elapsed += Mathf.Max(0, dt);
+            if (elapsed >= interval) { Distance = Mathf.Min(max, Distance + 1); elapsed = 0; }
+        }
+    }
+
     public sealed class RevengeCartPredictionHistory
     {
         readonly List<(uint tick, int held, float dt)> frames = new();
@@ -101,6 +122,7 @@ namespace Assets.Scripts.Netcode
             public readonly RevengeCartPredictionHistory inputs = new();
             public uint tick;
             public float predicted;
+            public readonly RevengeChargePreview charge = new();
             public double receivedAt;
             public bool presented, presentedAnimating;
             public double nextDiagnostic;
@@ -206,6 +228,11 @@ namespace Assets.Scripts.Netcode
             foreach (var action in RevengeActions)
                 if (input != null && input.Get(1, action)) revengeHeld |= BattleRevengeController.NetworkCartActionMask(action);
             if (input != null && input.GetDown(1, PlayerAction.ActionA)) revengePressed |= 16;
+            foreach (var view in revengeViews.Values)
+                if (view.current.owner == LocalRoomPlayerId && !GamePauseController.IsPaused)
+                    view.charge.Step((revengeHeld & 16) != 0, CanPredictRevenge(view) && view.current.chargeReady &&
+                        Vector2.Distance(view.cart.transform.position, view.current.position) <= .125f,
+                        Time.unscaledDeltaTime, view.current.chargeStep, view.current.minCharge, view.current.maxCharge);
             if (Time.unscaledTime >= revengeNextHeartbeat)
             {
                 revengeNextHeartbeat = Time.unscaledTime + .05f;
@@ -314,6 +341,8 @@ namespace Assets.Scripts.Netcode
                     if (CanPredictRevenge(view))
                         view.cart.StepNetworkMotor(revengeHeld, Mathf.Clamp(Time.unscaledTime - Time.fixedUnscaledTime, 0, Time.fixedUnscaledDeltaTime));
                     view.cart.RestoreApprovedLandingPosition(landing);
+                    if (CanPredictRevenge(view))
+                        view.cart.PresentNetworkChargePreview(view.current, view.charge, (revengeHeld & 16) != 0);
                 }
                 view.cart.PresentNetworkCartHud();
                 if (GameplayLatencyDiagnostics.Enabled && Time.realtimeSinceStartupAsDouble >= view.nextDiagnostic)

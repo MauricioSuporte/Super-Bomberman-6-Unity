@@ -12,6 +12,20 @@ public sealed partial class OnlineRoomEditModeTests
     const BindingFlags RevengeFields = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [Test]
+    public void RevengeChargePreviewIsImmediateBoundedAndCancelsOnReleaseOrStaleApproval()
+    {
+        var preview = new RevengeChargePreview();
+        preview.Step(true, true, .02f, .12f, 3, 7); Assert.IsTrue(preview.Active); Assert.AreEqual(3, preview.Distance);
+        preview.Step(true, true, .12f, .12f, 3, 7); Assert.AreEqual(4, preview.Distance);
+        preview.Step(true, true, 1, .12f, 3, 7); Assert.AreEqual(5, preview.Distance, "A stalled frame cannot buy several native charge steps.");
+        for (int i = 0; i < 10; i++) preview.Step(true, true, .12f, .12f, 3, 7);
+        Assert.AreEqual(7, preview.Distance);
+        preview.Step(false, true, .02f, .12f, 3, 7); Assert.IsFalse(preview.Active);
+        preview.Step(true, false, .02f, .12f, 3, 7); Assert.IsFalse(preview.Active);
+        preview.Step(true, true, .02f, float.NaN, 3, 7); Assert.IsFalse(preview.Active);
+    }
+
+    [Test]
     public void ApprovedKickProgressRetainsForwardPresentationWithoutPredictingAnotherCell()
     {
         Assert.AreEqual(.08f, NetworkBombFx.PreserveApprovedKickProgress(new Vector2(.8f, 0), Vector2.zero, Vector2.right, .1f, .02f), .0001f);
