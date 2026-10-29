@@ -128,7 +128,7 @@ namespace Assets.Scripts.Netcode
             public uint tick;
             public float predicted;
             public readonly RevengeChargePreview charge = new();
-            public bool launchPreview, previousChargeHeld;
+            public bool launchPreview, previousChargeHeld, launchVisualSampled, launchResponseSampled;
             public uint releaseTick;
             public double previewStarted;
             public RevengeCartState previewState;
@@ -246,6 +246,8 @@ namespace Assets.Scripts.Netcode
                     {
                         view.launchPreview = true; view.releaseTick = view.tick + 1;
                         view.previewStarted = Time.realtimeSinceStartupAsDouble; view.previewState = view.current;
+                        view.launchVisualSampled = view.launchResponseSampled = false;
+                        TraceRevengeLaunch(view, "revenge_launch_input");
                     }
                     view.previousChargeHeld = held;
                     view.charge.Step((revengeHeld & 16) != 0, CanPredictRevenge(view) && view.current.chargeReady &&
@@ -384,11 +386,27 @@ namespace Assets.Scripts.Netcode
         static void PresentRevengeLaunch(RevengeClientView view)
         {
             view.cart.HideNetworkMuzzle();
-            if (view.launchPreview && Time.realtimeSinceStartupAsDouble - view.previewStarted > .5) view.launchPreview = false;
+            if (view.launchPreview && Time.realtimeSinceStartupAsDouble - view.previewStarted > .5)
+            { TraceRevengeLaunch(view, "revenge_launch_timeout"); view.launchPreview = false; }
             if (view.launchPreview)
-                view.cart.PresentNetworkLaunchVisual(view.previewState, (float)(Time.realtimeSinceStartupAsDouble - view.previewStarted), true);
+            {
+                bool visible = view.cart.PresentNetworkLaunchVisual(view.previewState, (float)(Time.realtimeSinceStartupAsDouble - view.previewStarted), true);
+                if (visible && !view.launchVisualSampled)
+                { view.launchVisualSampled = true; TraceRevengeLaunch(view, "revenge_launch_first_visual"); }
+            }
             else if (view.current.launchSerial != 0)
                 view.cart.PresentNetworkLaunchVisual(view.current, Mathf.Max(0, (float)(NetworkBombFx.KickServerNow - view.current.launchTime)), false);
+        }
+
+        static void TraceRevengeLaunch(RevengeClientView view, string kind, uint acknowledged = 0)
+        {
+            if (!GameplayLatencyDiagnostics.Enabled) return;
+            var entry = GameplayLatencyDiagnostics.For(kind, null,
+                detail: "cart=" + view.current.id + ";generation=" + view.current.generation + ";after_presenter_observation");
+            entry.player = view.current.owner; entry.localPlayer = true;
+            entry.inputTick = view.releaseTick; entry.authoritativeTick = acknowledged;
+            entry.durationMs = Math.Max(0, (Time.realtimeSinceStartupAsDouble - view.previewStarted) * 1000);
+            entry.position = view.cart.transform.position; GameplayLatencyDiagnostics.Write(entry);
         }
 
         public static bool RevengeReleaseAcknowledged(uint acknowledged, uint release) =>
@@ -430,6 +448,11 @@ namespace Assets.Scripts.Netcode
                 if (view.launchPreview && RevengeReleaseAcknowledged(state.acknowledged, view.releaseTick))
                 {
                     bool accepted = state.launchTick == view.releaseTick;
+                    if (!view.launchResponseSampled)
+                    {
+                        view.launchResponseSampled = true;
+                        TraceRevengeLaunch(view, accepted ? "revenge_launch_confirm" : "revenge_launch_reject", state.acknowledged);
+                    }
                     if (!accepted || NetworkBombFx.KickServerNow - state.launchTime > Mathf.Max(state.recoilDuration, state.muzzleDuration))
                         view.launchPreview = false;
                 }

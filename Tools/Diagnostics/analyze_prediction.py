@@ -39,14 +39,29 @@ def summarize(records, minimum_percentile_samples=20):
             context = "force_" + enemy_force[1].lower() + "_" + context
         conveyor = re.search(r"\bconveyor=(.+)$", input_context)
         conveyor_context = conveyor[1].rsplit(":", 1)[0] if conveyor else "unknown"
+        if kind.startswith("revenge_launch_"):
+            context = "revenge_cart"
         key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context,
                row.get("device") or device, row.get("player", 0), capture, conveyor_context)
         group = groups.setdefault(key, {"events": Counter(), "latencies": [], "blockedResponses": 0,
-                                        "unclassifiedResponses": 0, "invalidDurations": 0, "hitchFrames": set()})
+                                        "unclassifiedResponses": 0, "invalidDurations": 0, "hitchFrames": set(),
+                                        "revengeInputs": set(), "revengeSeen": set(), "revengeMetrics": {}})
         group["events"][kind] += 1
         frame_ms = row.get("frameMs", 0)
         if isinstance(frame_ms, (int, float)) and math.isfinite(frame_ms) and frame_ms > 50:
             group["hitchFrames"].add((row.get("_capture", "memory"), row.get("frame")))
+        if kind.startswith("revenge_launch_"):
+            cart = re.search(r"\bcart=(-?\d+);generation=(\d+)", detail)
+            tick = row.get("inputTick")
+            identity = (cart[1], cart[2], tick) if cart and type(tick) is int and 0 <= tick <= 0xffffffff else None
+            if kind == "revenge_launch_input" and identity is not None:
+                group["revengeInputs"].add(identity)
+            elif kind in ("revenge_launch_first_visual", "revenge_launch_confirm", "revenge_launch_reject", "revenge_launch_timeout"):
+                duration = row.get("durationMs")
+                metric_key = (kind, identity)
+                if identity in group["revengeInputs"] and metric_key not in group["revengeSeen"] and type(duration) in (int, float) and math.isfinite(duration) and duration >= 0:
+                    group["revengeSeen"].add(metric_key)
+                    group["revengeMetrics"].setdefault(kind.removeprefix("revenge_launch_"), []).append(duration)
         if kind != "input_to_motion":
             continue
         duration = row.get("durationMs")
@@ -73,7 +88,10 @@ def summarize(records, minimum_percentile_samples=20):
                        "unclassifiedResponsesExcluded": group["unclassifiedResponses"],
                        "invalidDurationsExcluded": group["invalidDurations"],
                        "observedHitchFramesOver50Ms": len(group["hitchFrames"]),
-                       "events": dict(sorted(group["events"].items()))})
+                       "events": dict(sorted(group["events"].items())),
+                       "revengeLaunch": {name: {"samples": len(values), "medianMs": statistics.median(values),
+                           "p95Ms": sorted(values)[math.ceil(len(values) * .95) - 1] if len(values) >= minimum_percentile_samples else None}
+                           for name, values in sorted(group["revengeMetrics"].items())}})
     return result
 
 
@@ -103,6 +121,7 @@ def main():
               "notes": ["Compare the same scene, loadout and input sequence; captures, builds, players and contexts are reported separately.",
                         "Input-to-motion is an observed rendered-frame interval, not raw network latency.",
                         "Old records without input context are counted but excluded from latency statistics.",
+                        "Revenge first_visual measures CPU presenter observation after sampled A release, not GPU display or raw hardware latency.",
                         "Hitch counts describe observed logged frames, not every frame in the session.",
                         "Capture flags, hardware and network conditions must be recorded with the reproduction."]}
     text = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"

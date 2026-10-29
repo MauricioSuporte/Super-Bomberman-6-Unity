@@ -213,7 +213,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
-- [ ] A12: parcial51 publicado: motor de cart previsto, replay dt histórico, input autenticado após eliminação, roster/poses e retorno confirmado;25 focados passaram. Host2rodadas e suite500/500 passaram; lançamento/recoil/aim/handoff/capturas e manual pendentes.
+- [ ] A12: parcial54 publicado (d89ea1e94/40805386795 success): motor/replay, carga/mira, recoil/muzzle e release tick implementados/testados em522 casos; diagnósticos de primeira apresentação e confirmação em validação. Capturas, handoff e manual2peers pendentes.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
@@ -1977,3 +1977,28 @@ capturas com métricas de input/render e verificar handoff/entrada/saída visual
 Não há medição de zero lag nem simulação/rollback completo da partida.
 Próximo: confirmar publicação54; depois capturas/manuais de A12 e demais IDs.
 Checklist15 implementados/18 parciais. Código congelado para publicação.
+
+
+## P0/A12 — métricas de resposta do lançamento (em validação)
+
+Protocolo54 d89ea1e94 / Actions40805386795 confirmado completed/success. Lote
+atual não muda wire nem protocolo. Novos eventos revenge_launch_input,
+first_visual, confirm, reject e timeout carregam cart/geração/tick e duração desde
+A release amostrado. First_visual só é registrado depois de aplicar recoil não
+nulo a sprites visíveis ou muzzle com sprite/branch ativo; não representa GPU/
+monitor nem hardware bruto. Confirmação e apresentação são métricas diferentes.
+Analisador mantém contexto revenge_cart separado, exige input correspondente,
+deduplica e mantém captura/build/role/player separados. p95 exige20 amostras.
+Sem novos logs reais capturados; não inferir números de latência deste trabalho.
+Unity PredictionRevengeMetrics54 em execução. Registrar resultado antes de
+publicar/restaurar runner. A12 continua parcial e checklist15/18 parciais.
+
+
+P0/A12 métricas54 validadas:522/522 Unity, C#0/0, Python46/46 (CI38+Directory8),
+UTF8/BOM/diff aprovados. Reports Logs/PredictionRevengeMetrics54.xml/.log.
+Nenhum valor de latência de partida foi coletado. Primeira apresentação, confirmação,
+rejeição e timeout possuem estatísticas separadas; input ausente/duplicado/outra
+geração/captura não vira amostra. p95 somente20+. Checklist15/18 parciais mantido.
+Runner restaurado somente nos C# próprios. Sem cenas/prefabs alterados.
+Próximo: confirmar publicação deste lote54, coletar logs2peers e continuar auditoria
+R07 de apresentação independente de owner/transferência, seguida de demais IDs.

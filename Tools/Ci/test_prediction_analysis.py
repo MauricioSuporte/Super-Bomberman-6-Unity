@@ -9,6 +9,33 @@ spec.loader.exec_module(analysis)
 
 
 class PredictionAnalysisTests(unittest.TestCase):
+    def test_revenge_percentiles_require_twenty_samples_and_captures_stay_separate(self):
+        rows = []
+        for tick in range(20):
+            common = {"inputTick": tick, "detail": "cart=7;generation=1", "_capture": "online"}
+            rows.extend([dict(common, kind="revenge_launch_input"),
+                         dict(common, kind="revenge_launch_first_visual", durationMs=tick + 1)])
+        rows.append({"kind": "revenge_launch_first_visual", "inputTick": 0, "durationMs": 999,
+                     "detail": "cart=7;generation=1", "_capture": "another"})
+        result = analysis.summarize(rows)
+        self.assertEqual(19, result[0]["revengeLaunch"]["first_visual"]["p95Ms"])
+        self.assertEqual({}, result[1]["revengeLaunch"])
+
+    def test_revenge_metrics_require_matching_input_and_deduplicate_by_cart_generation_tick(self):
+        def row(kind, duration=0, tick=0, generation=1):
+            return {"kind": "revenge_launch_" + kind, "durationMs": duration, "inputTick": tick,
+                    "detail": f"cart=7;generation={generation};after_presenter_observation"}
+        result = analysis.summarize([row("confirm", 999), row("input"), row("first_visual", 2),
+            row("first_visual", 50), row("confirm", 80), row("reject", -1), row("timeout", float("nan")),
+            row("first_visual", 30, generation=2), row("input", tick=1), row("reject", 100, tick=1)])
+        metrics = result[0]["revengeLaunch"]
+        self.assertEqual("revenge_cart", result[0]["context"])
+        self.assertEqual({"samples": 1, "medianMs": 2, "p95Ms": None}, metrics["first_visual"])
+        self.assertEqual(80, metrics["confirm"]["medianMs"])
+        self.assertEqual(100, metrics["reject"]["medianMs"])
+        self.assertNotIn("timeout", metrics)
+        self.assertEqual(0, result[0]["freeInputToMotionSamples"])
+
     def test_enemy_forces_do_not_mix_with_free_walking_or_each_other(self):
         result = analysis.summarize([
             {"kind": "input_to_motion", "durationMs": 10, "detail": "prediction_block=none mounted=False enemy_force=None"},

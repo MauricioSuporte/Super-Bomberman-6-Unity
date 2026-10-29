@@ -205,19 +205,22 @@ public sealed partial class BattleRevengeController
     public static float SampleNetworkRecoil(float elapsed, float duration) =>
         duration <= 0 || elapsed < 0 || elapsed >= duration ? 0 : Mathf.Sin(Mathf.Clamp01(elapsed / duration) * Mathf.PI);
 
-    public void PresentNetworkLaunchVisual(RevengeCartState state, float elapsed, bool predicted)
+    public bool PresentNetworkLaunchVisual(RevengeCartState state, float elapsed, bool predicted)
     {
-        if (!networkView || NetSync.Mode != NetSync.NetMode.Client || !float.IsFinite(elapsed)) return;
+        if (!networkView || NetSync.Mode != NetSync.NetMode.Client || !float.IsFinite(elapsed)) return false;
+        bool recoilVisible = predicted && visualRoot != null && state.recoilDistance * SampleNetworkRecoil(elapsed, state.recoilDuration) > .001f &&
+            System.Array.Exists(networkSprites, sprite => sprite != null && sprite.enabled && sprite.gameObject.activeInHierarchy);
         if (predicted && visualRoot != null)
             visualRoot.localPosition = -state.launchDirection * (state.recoilDistance * SampleNetworkRecoil(elapsed, state.recoilDuration));
-        if (networkMuzzle == null || networkMuzzleFrames == null || networkMuzzleFrames.Length == 0) return;
+        if (networkMuzzle == null || networkMuzzleFrames == null || networkMuzzleFrames.Length == 0) return recoilVisible;
         networkMuzzle.enabled = elapsed >= 0 && elapsed < state.muzzleDuration;
-        if (!networkMuzzle.enabled) return;
+        if (!networkMuzzle.enabled) return recoilVisible;
         networkMuzzle.sprite = networkMuzzleFrames[Mathf.Clamp(Mathf.FloorToInt(elapsed / Mathf.Max(.0001f, networkMuzzleFrameTime)), 0, networkMuzzleFrames.Length - 1)];
         networkMuzzle.sortingOrder = state.muzzleOrder;
         networkMuzzle.transform.position = (Vector2)transform.position + (predicted ? state.muzzleOffset : state.shotOffset);
         var direction = predicted ? state.launchDirection : state.shotDirection;
         networkMuzzle.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+        return recoilVisible || (networkMuzzle.sprite != null && networkMuzzle.gameObject.activeInHierarchy);
     }
 
     public void PresentNetworkChargePreview(RevengeCartState state, RevengeChargePreview preview, bool held)
