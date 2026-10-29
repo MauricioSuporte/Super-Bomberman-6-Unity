@@ -37,7 +37,11 @@ public sealed partial class OnlineRoomEditModeTests
             .Invoke(cannon, method == "LaunchPlayerArc" ? new object[] { movement, Vector2.right } : new object[] { movement });
 
         public void Enter() => typeof(CannonLauncher).GetMethod("OnTriggerEnter2D", Private).Invoke(cannon, new object[] { collider });
-        public void Disable() => mechanism.SetActive(false);
+        public void Disable(bool componentOnly = false)
+        {
+            if (componentOnly) cannon.enabled = false;
+            else mechanism.SetActive(false);
+        }
         public void SkipWarmup()
         {
             foreach (var field in new[] { "warmupSeconds", "smokeSeconds" })
@@ -99,18 +103,20 @@ public sealed partial class OnlineRoomEditModeTests
         // Use the engine lifecycle: EditMode objects do not receive ordinary
         // MonoBehaviour OnDisable just because their GameObject is toggled.
         yield return new EnterPlayMode();
-        foreach (bool flight in new[] { false, true })
+        foreach (var phase in new[] { (flight: false, component: false), (flight: true, component: false),
+            (flight: false, component: true), (flight: true, component: true) })
         {
             using var fixture = new CannonLifetimeFixture();
-            if (flight) fixture.SkipWarmup();
+            if (phase.flight) fixture.SkipWarmup();
             fixture.Enter(); Assert.IsTrue(fixture.movement.InputLocked);
-            if (flight)
+            if (phase.flight)
             {
                 float deadline = Time.realtimeSinceStartup + 2;
                 while (fixture.collider.enabled && Time.realtimeSinceStartup < deadline) yield return null;
                 Assert.IsFalse(fixture.collider.enabled, "Native flight must begin before testing interruption.");
             }
-            fixture.Disable();
+            fixture.Disable(phase.component);
+            fixture.Enter(); // A disabled trigger must not acquire the actor again.
             Assert.IsFalse(fixture.movement.InputLocked); Assert.IsFalse(fixture.movement.VisualOverrideActive);
             Assert.IsTrue(fixture.collider.enabled); Assert.IsTrue(fixture.bombs.enabled);
             Assert.IsFalse(fixture.movement.explosionInvulnerable);

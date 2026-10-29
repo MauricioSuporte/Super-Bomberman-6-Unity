@@ -76,7 +76,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        if (!isActiveAndEnabled || !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (busy || other == null || !other.CompareTag("Player"))
             return;
 

@@ -46,12 +46,12 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo55, commit `76f2a948c`, pipeline
-  [40868952214](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40868952214)
-  completed/success: servidor, cliente e atualizador; inclui R07/continuidade de
-  trajetórias após destruição do presenter e as correções anteriores de co-op.
-- **Validação local mais recente:**901/901 Unity, sem skips, C02/lifetime do canhão;
-  C#0/0 e Python53/53. Report PredictionCannonLifetime55Full. A12 validado com2clientes
+- **Publicado:** protocolo55, commit `5619659d9`, pipeline
+  [40875720038](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40875720038)
+  completed/success: servidor, cliente e atualizador; inclui o lifetime do canhão
+  e os commits anteriores de R07/co-op. A12 teve captura real validada no lote.
+- **Validação local mais recente:**902/902 Unity, sem skips, C02/lifetime de mola/canhão;
+  C#0/0 e Python53/53. Report PredictionSpringLifetime55Full. A12 validado com2clientes
   e6disparos em PredictionRevengeInputs55Run2. R07 em PredictionPresenterClients55Run2
   manteve8amostras de movimento porpeer após transferência, sem novo evento.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
@@ -66,7 +66,8 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:**17 IDs implementados/testados e16 parciais; todos os33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** continuar C02/C03 (curvas e entrega ao motor) e demais parciais.
+- **Próximo:** auditar cancelamento/curvas da corda C03; continuar curvas e entrega
+  ao motor de C02 e demais parciais.
   A12 já teve integração de morte nativa, C e3cargas/releases porcliente. ClownMask/SunMask/
   Stage_3-6 já tiveram integração real documentada abaixo; manual visual pendente.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
@@ -223,7 +224,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [ ] C02: parcial47 publicado: base36 + limite visual aprovado para salto alto Battle4; suíte conjunta439/439 passou. Curvas completas/ambientais/manuais pendentes.
+- [ ] C02: parcial55: base/limite de salto alto e canhão/mola com cleanup de preparação/voo/handoff;902/902 testes. Curvas completas/ambientais/manuais pendentes.
 - [ ] C03: parcial47: preparação/voo36 e deformação ambiental47 aprovadas/testadas; auditoria final do voo/devolução ao motor e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
@@ -2491,3 +2492,68 @@ Nenhuma cena/prefab alterada. Native offline e scope servidor cobertos nos teste
 comparação gráfica offline/2peers para o canhão ainda não executada. C02 parcial;
 não é a implementação final das curvas. Pronto para commit/envio com c0cf7232e.
 Runner restaurar somente CannonLauncher.cs e LocalServerLoadTest.cs antes de push.
+
+
+## Próxima retomada — mola C02 candidata local, pipeline do canhão ativo
+
+5619659d9 (inclui c0cf7232e) enviado ao origin/v0.5.0. Actions40875720038 em andamento,
+ainda sem confirmação de publicação. Último deploy totalmente confirmado76f2a948c.
+901/901 Unity+C#0/0 do canhão e A12 dois peers preservados no checkout principal.
+
+SpringLauncher.cs agora tem alterações LOCAIS ainda sem Unity/teste/commit:
+HashSet virou mapa actor→IEnumerator; OnDisable para/descarta rotinas rastreadas;
+finally restaura collider/BombController/proteção anterior e limpa offsets/sprites/
+shadow/mount jump próprios antes de devolver controle. Flags de morte/end-stage
+não são reabilitadas. Geometria/duração/room wrap permanecem nativos. Gate de
+isActiveAndEnabled impede começar outra rotina num launcher desabilitado.
+C# compilou0erros,6avisos preexistentes de Mirror; conferir final incremental.
+
+Novo OnlineRoomSpringLifetimeTests.cs/.meta ainda NÃO executado: UnityTest real
+PlayMode/TitleScreen, preparação10s e voo10s com proteção inicialfalse/true.
+Actor ativa Awake antes da tagPlayer para não carregar o loadout persistente;
+Movement fica disabled; evento de trigger nativo por reflection; verifica cleanup
+após desativar mecanismo. Fixture pode precisar ajuste; não presumir aprovação.
+
+Runner reservado ao CI. Depois de confirmar completed/success:
+1. Copiar SOMENTE teste/metas novos para rodar baseline SEM copiar Spring modificado.
+2. Preservar resultados na raiz Logs, corrigir fixture se preciso.
+3. Copiar Spring modificado e validar focado, depois suíte completa esperada902.
+4. C#final/UTF8/BOM/diff/flags/sprites; atualizar docs/skill e publicar só com checks.
+5. Auditar corda C03: PlayerPreparingImpulseRoutine/PlayerImpulseRoutine também não
+   têm finally; OnDisable atual só restaura tiles. Ainda sem alteração nesses arquivos.
+
+Nenhum processo próprio de teste/build ativo nesta etapa; somente pipeline.
+Não criar worktree, não fechar Editor, não limpar cenas/fontes/recovery do usuário.
+Checklist17concluídos/16parciais; C02/C03 continuam parciais e curva completa pendente.
+
+Pipeline5619659d9 confirmado completed/success. Baseline da mola em execução
+PredictionSpringLifetime55Baseline; ainda SEM copiar Spring modificado ao runner.
+Cannon candidato seguinte ganhou gate isActiveAndEnabled e teste PlayMode ampliado
+para desativar GO ou só componente e impedir reinício via trigger desativado.
+Essas últimas mudanças também ainda NÃO foram executadas no Unity. C# anterior
+da mola passou0/0 no incremental; não há publicação de Spring neste checkpoint.
+
+
+Mola: baseline PredictionSpringLifetime55Baseline falhou em PlayMode no primeiro
+cenário, InputLocked permaneceu true após desativar o mecanismo. Com fix, dois
+UnityTests focados passaram em PredictionSpringLifetime55Focused (mola3cenários,
+canhão4cenários: preparação/voo, GO/componente, trigger repetido desativado).
+Spring mantém proteção inicialfalse/true e devolve collider/BombController/input.
+Suíte completa PredictionSpringLifetime55Full em execução,902casos esperados.
+C# final em execução85130. Nada deste lote de mola foi publicado ainda.
+
+
+## Mola C02 validada — lote pronto para envio
+
+PredictionSpringLifetime55Full:902/902 aprovados,0falhas/0skips. C#final0erros/0avisos;
+Python53/53 já aprovado, sem alteração posterior nas ferramentas Python. UTF8/BOM,
+metas e diff check aprovados. Testes nativos de desativação GO/componente em PlayMode
+passaram para mola/canhão; cola anterior de collider/BombController/input/proteção
+foi removida sem mudar a curva, duração ou room wrap. Nenhuma cena/prefab alterada.
+Sem nova comparação gráfica entre peers para o launcher; A12 real está documentado.
+Protocolo55 mantido; nenhum wire/RPC/SyncVar novo. Checklist17concluídos/16parciais.
+
+Próximo: auditar C03 PlayerPreparingImpulseRoutine/PlayerImpulseRoutine e integração
+OnDisable da corda (hoje só restaura tiles); ainda NÃO há alterações nessas rotinas.
+C02/C03 trajetórias completas/handoff, P0 comparativos e demais IDs continuam abertos.
+Runner restaurado só nos fontes próprios antes de push; relatórios na raiz Logs.

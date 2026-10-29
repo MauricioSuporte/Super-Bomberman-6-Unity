@@ -27,7 +27,7 @@ public sealed class SpringLauncher : MonoBehaviour
     [Header("Safety")]
     [SerializeField, Min(0f)] private float rearmSeconds = 0.05f;
 
-    private readonly HashSet<MovementController> active = new();
+    private readonly Dictionary<MovementController, IEnumerator> active = new();
 
     public void Configure(
         AnimatedSpriteRenderer visual,
@@ -71,7 +71,7 @@ public sealed class SpringLauncher : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        if (!isActiveAndEnabled || !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other == null)
             return;
 
@@ -89,10 +89,22 @@ public sealed class SpringLauncher : MonoBehaviour
         if (powerGlove != null && powerGlove.IsEnabled && powerGlove.IsHoldingBomb)
             powerGlove.DestroyHeldBombIfHolding();
 
-        if (!active.Add(mover))
+        if (active.ContainsKey(mover))
             return;
 
-        StartCoroutine(SpringRoutine(mover));
+        var routine = SpringRoutine(mover);
+        active.Add(mover, routine);
+        StartCoroutine(routine);
+    }
+
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        // Disposing mutates the active map; snapshot before releasing actors.
+        foreach (var routine in new List<IEnumerator>(active.Values))
+            (routine as System.IDisposable)?.Dispose();
+        active.Clear();
+        SetSpringIdle(true);
     }
 
     private IEnumerator SpringRoutine(MovementController mover)
@@ -105,6 +117,7 @@ public sealed class SpringLauncher : MonoBehaviour
         float tileSize = Mathf.Max(0.0001f, mover.tileSize);
 
         bool prevInputLocked = mover.InputLocked;
+        bool prevExplosionInvulnerable = mover.explosionInvulnerable;
 
         var playerCol = mover.GetComponent<Collider2D>();
         bool prevColliderEnabled = (playerCol != null) && playerCol.enabled;
@@ -114,6 +127,10 @@ public sealed class SpringLauncher : MonoBehaviour
 
         var audio = mover.GetComponent<AudioSource>();
         var riding = mover.GetComponent<PlayerRidingController>();
+        MountVisualController mountVisual = null;
+        PinkLouieShadowController pinkShadow = null;
+        bool useMountJumpVisual = false;
+        Vector2 jumpFaceDir = Vector2.down;
 
         int playerId = mover.PlayerId;
         var inputManager = PlayerInputManager.Instance;
@@ -264,10 +281,10 @@ public sealed class SpringLauncher : MonoBehaviour
                 }
                 else
                 {
-                    MountVisualController mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
-                    bool useMountJumpVisual = mountVisual != null && mountVisual.HasJumpVisuals();
+                    mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
+                    useMountJumpVisual = mountVisual != null && mountVisual.HasJumpVisuals();
 
-                    PinkLouieShadowController pinkShadow = null;
+                    pinkShadow = null;
                     if (mountVisual != null)
                     {
                         pinkShadow = mountVisual.GetComponentInChildren<PinkLouieShadowController>(true);
@@ -275,7 +292,7 @@ public sealed class SpringLauncher : MonoBehaviour
                             pinkShadow.BindToPinkLouieRoot(mountVisual.transform);
                     }
 
-                    Vector2 jumpFaceDir = heldDir != Vector2.zero ? heldDir : mover.FacingDirection;
+                    jumpFaceDir = heldDir != Vector2.zero ? heldDir : mover.FacingDirection;
                     if (jumpFaceDir == Vector2.zero)
                         jumpFaceDir = Vector2.down;
 
@@ -348,7 +365,7 @@ public sealed class SpringLauncher : MonoBehaviour
                 if (bombController != null)
                     bombController.enabled = prevBombEnabled;
 
-                mover.SetExplosionInvulnerable(false);
+                mover.SetExplosionInvulnerable(prevExplosionInvulnerable);
 
                 Vector2 afterHeld = ReadHeldCardinal(mover);
 
@@ -367,11 +384,19 @@ public sealed class SpringLauncher : MonoBehaviour
             if (inputManager != null)
                 inputManager.SetSpringLauncherInputGate(playerId, false);
 
-            if (mover != null)
+            if (mover != null && !mover.isDead && !mover.IsEndingStage)
             {
+                if (playerCol != null) playerCol.enabled = prevColliderEnabled;
+                if (bombController != null) bombController.enabled = prevBombEnabled;
+                if (rb != null) rb.linearVelocity = Vector2.zero;
+                if (pinkShadow != null) pinkShadow.EndJump();
+                if (useMountJumpVisual && mountVisual != null) mountVisual.SetJumpVisual(false, jumpFaceDir);
+                DisableAllUnmountedSpringArcSprites(riding);
+                ClearAllUnmountedSpringArcOffsets(riding);
                 mover.ClearSpringLauncherLookUp();
                 mover.SetVisualOverrideActive(false);
                 mover.SetInputLocked(prevInputLocked, forceIdle: false);
+                mover.SetExplosionInvulnerable(prevExplosionInvulnerable);
                 mover.EnableExclusiveFromState();
             }
 

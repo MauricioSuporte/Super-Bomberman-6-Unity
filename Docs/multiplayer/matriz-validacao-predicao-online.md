@@ -282,3 +282,14 @@ Três amostras porowner não permitem p95. Headless/atores duráveis/local loopb
 não equivale à verificação visual/offline, teclado/controle/mobile ou rede adversa
 listada acima. Run1 não aprovado: cópia de arquivo ainda aberto cortou a última
 linha; o encerramento gracioso da fixture foi corrigido e Run2 repetido com sucesso.
+
+
+## C02 — cancelamento automático de lançadores em29/10
+
+PredictionCannonLifetime55Full901/901 e PredictionSpringLifetime55Full902/902
+passaram. Os casos novos incluem PlayMode real, desativação de GO ou componente
+na preparação/voo, trigger repetido com mecanismo desativado e restauração de
+input/collider/BombController/proteção inicial. Canhão também cobre descarte do
+iterator aninhado, reutilização e cancelamento de dash Louie antes de capturar o
+lock anterior. Nenhum desses testes prova curva/pixels/hardware ou comparação
+visual entre peers. C02/C03 continuam parciais; os cenários manuais acima permanecem.

@@ -73,6 +73,10 @@ flight too, so cancellation cannot leave its resource cleanup behind. Death and
 end-stage retain ownership of their new state. Cancel an old Louie dash before
 capturing the input lock to restore. Exercise real GameObject disable in PlayMode:
 ordinary EditMode objects do not provide the same MonoBehaviour lifecycle.
+For a launcher handling several actors, snapshot the iterator map before
+disposing entries whose finally blocks remove themselves. A disabled launcher's
+trigger entry must not reacquire the actor. Restore spring-only sprite offsets,
+mount jump/shadow state and the input gate along with the physics flags.
 
 For actual-client diagnostic smokes, finish the writer before copying its JSONL.
 A live buffered StreamWriter can expose a partial final line even when gameplay

@@ -1433,3 +1433,17 @@ controle, permitindo ao snapshot final representar o estado já liberado.
 Isso corrige lifetime/interrupção; trajetória/duração/distância/colisão continuam
 na simulação nativa. C02/C03 ainda precisam completar a auditoria de curvas e
 handoff entre apresentação aprovada e motor, além da matriz manual/offline.
+
+
+## C02: interrupção de mola/geyser (protocolo55)
+
+SpringLauncher rastreia cada IEnumerator por ator; OnDisable interrompe e descarta
+as rotinas usando uma cópia do mapa, pois seus finally removem entradas. A saída
+limpa o gate de input da mola e restaura collider, BombController, proteção e
+input anteriores para um ator vivo. Também limpa offsets/sprites de salto e
+fase de montaria/sombra; morte/end-stage preservam seus novos estados. A proteção
+anterior é mantida entre bounces nativos em vez de ser sempre desligada ao pousar.
+O trigger de SpringLauncher e CannonLauncher rejeita mecanismos desativados.
+Curva, duração, geometria e room wrap continuam nativos; não há destino/dano novo
+escolhido pelo client nem alteração de wire/cena/prefab. Comparação visual entre
+peers e curvas completas permanecem na matriz e nos itens C02/C03 parciais.
