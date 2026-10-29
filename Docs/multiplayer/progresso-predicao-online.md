@@ -50,6 +50,8 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   [40878816406](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40878816406)
   completed/success: servidor, cliente e atualizador; inclui cleanup de mola/canhão,
   R07/co-op e a implementação A12 anteriormente validada em integração.
+  Lote seguinte `0ddcf872d` enviado; [pipeline40910624716](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40910624716)
+  em andamento; publicação do updater/C03 ainda não confirmada.
 - **Validação local mais recente:**903/903 Unity, sem skips, C03/lifetime da corda;
   C#0/0 e Python58/58. Report PredictionRopeLifetime55Final. Updater13/13 nativos
   aprovados, compilado com warnings-as-errors. A12 validado com2clientes
@@ -2636,3 +2638,24 @@ Timers CharacterHealth e gameplay/ease/collision/quantização continuam nativos
 Protocolo55 mantido, sem wire/RPC/SyncVar novo. Próximo: publicação, conferir CI e
 seguir curvas/handoff C02/C03 e demais parciais. Runner deve ser restaurado apenas
 nos2sources C03 após preservar reports; fonts sujos do usuário não entram no commit.
+
+
+## Checkpoint após envio do updater/C03 em29/10
+
+Commit0ddcf872d enviado; Actions40910624716 em compilação. Último deploy concluído
+confirmado8b3841929. Não anunciar publicação de0dd antes de completed/success.
+Updater local pronto em Build/CI/GameUpdater.exe; no pacote público passa a valer
+após o sucesso do CI. Um updater antigo já em execução usa sua cópia antiga emTemp;
+para ver o novo progresso nesse primeiro update, usar o executável novo na pasta
+do jogo antes de iniciar, ou aguardar a próxima execução do updater instalado.
+
+903/903 Unity FINAL (PredictionRopeLifetime55Final),0falhas/0skips; C#0/0 e Python58/58.
+Sources/metas próprios salvos e tracked C03 do runner restaurados; reports em Logs.
+Só continuam sujos os3assets de fonte do usuário. Não limpar nem incluí-los emcommits.
+Nenhum processo próprio de teste/build ativo; runner pertence ao pipeline.
+A12 concluído por aceite expresso2clientes; checklist17/33 e16parciais.
+
+Próximo: conferir CI e continuar descritores de curva/phase e handoff C02/C03;
+C03 já tem cleanup/reuso/first-frame cobertos, mas descritores/visual2peers ainda
+não foram implementados/validados por este lote. Não repetir suíte903 sem nova
+mudança/falha. Continuar demais IDs a partir do checklist vivo, preservando offline.
