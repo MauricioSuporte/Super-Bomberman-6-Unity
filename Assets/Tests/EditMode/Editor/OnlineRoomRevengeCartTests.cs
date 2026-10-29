@@ -12,6 +12,49 @@ public sealed partial class OnlineRoomEditModeTests
     const BindingFlags RevengeFields = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [Test]
+    public void RevengeMuzzleIsRendererOnlyAndExpiresWithoutAnExplosionInstance()
+    {
+        using var fixture = new RevengeCartFixture();
+        var source = new GameObject("RevengeMuzzleSource"); source.SetActive(false); source.AddComponent<BoxCollider2D>();
+        var oldMode = NetSync.Mode;
+        try
+        {
+            source.AddComponent<BombController>();
+            fixture.cart.InitializeNetworkView(null, source.GetComponent<MovementController>());
+            NetSync.Mode = NetSync.NetMode.Client;
+            var state = new RevengeCartState { recoilDuration = .1f, recoilDistance = .2f, launchDirection = Vector2.right,
+                muzzleDuration = .16f, muzzleOffset = Vector2.right, muzzleOrder = 11 };
+            fixture.cart.PresentNetworkLaunchVisual(state, .05f, true);
+            var muzzle = (SpriteRenderer)typeof(BattleRevengeController).GetField("networkMuzzle", RevengeFields).GetValue(fixture.cart);
+            Assert.IsNotNull(muzzle); Assert.IsTrue(muzzle.enabled); Assert.IsNotNull(muzzle.sprite);
+            Assert.AreEqual(0, muzzle.GetComponents<MonoBehaviour>().Length); Assert.AreEqual(0, muzzle.GetComponents<Collider2D>().Length);
+            Assert.AreEqual(0, fixture.cart.GetComponentsInChildren<BombExplosion>(true).Length);
+            fixture.cart.PresentNetworkLaunchVisual(state, .2f, true); Assert.IsFalse(muzzle.enabled);
+            Assert.AreEqual(0u, fixture.cart.NetworkLaunchSerial);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(source); }
+    }
+
+    [TestCase(10u, 11u, false)]
+    [TestCase(11u, 11u, true)]
+    [TestCase(12u, 11u, true)]
+    [TestCase(0u, uint.MaxValue, true)]
+    [TestCase(uint.MaxValue, 0u, false)]
+    public void RevengeReleaseConfirmationUsesCartTickWithUnsignedWrap(uint acknowledged, uint release, bool expected)
+    {
+        Assert.AreEqual(expected, BombermanNetworkManager.RevengeReleaseAcknowledged(acknowledged, release));
+    }
+
+    [TestCase(0f, 0f)]
+    [TestCase(.05f, 1f)]
+    [TestCase(.1f, 0f)]
+    [TestCase(.2f, 0f)]
+    public void RevengeRecoilUsesNativeUnscaledSineWithoutRepeating(float elapsed, float expected)
+    {
+        Assert.AreEqual(expected, BattleRevengeController.SampleNetworkRecoil(elapsed, .1f), .0001f);
+    }
+
+    [Test]
     public void RevengeChargePreviewIsImmediateBoundedAndCancelsOnReleaseOrStaleApproval()
     {
         var preview = new RevengeChargePreview();

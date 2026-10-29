@@ -1940,3 +1940,40 @@ restaurado só nos caminhos próprios. Prévia de carga/mira pronta para homolog
 não há prova de sensação/latência renderizada nem recoil/muzzle previsto. Próximo:
 publicar53 e conferir indicador durante carga, pausa, movimento e soltura com dois
 peers; depois release tick/recoil/muzzle. Checklist permanece15/18 parciais.
+
+
+## A12/54 — release tick, recoil e muzzle (em desenvolvimento)
+
+Pedido: concluir próximas pendências de A12. Wire54 acrescenta tick/hora do último
+lançamento e parâmetros aprovados de recoil/muzzle. O servidor carimba o tick
+consumido do cart. Owner prevê só apresentação ao soltar A após carga válida e um
+frame held enviado; ack sem lançamento correspondente cancela. Timeout500ms.
+Direção/offset do tiro são congelados no lançamento, distintos da mira atual.
+Prévia usa curva senoidal unscaled nativa; som somente confirmado. Muzzle é um
+SpriteRenderer usando os frames End do prefab de explosão, sem scripts/colisores.
+Pausa mantém atualização unscaled desse efeito; release não cria bomba/dano.
+Ainda NÃO validado/publicado54. Pipeline53 b614ef48e/40803559380 ainda em execução;
+não alterar runner até terminar. C# inicial passou; após ajuste de offset houve
+2 erros de conversão ambígua Vector2/3, corrigidos com cast explícito. Recompilar.
+Próximo: validar C#, testes Unity, revisão de confirmação/rejeição/cleanup e
+publicar só após aprovado. A12 permanece parcial, manual entre peers pendente.
+
+
+A12/54 lote validado:522/522 Unity (OnlineRoom430+COM92), C#0 erros/0 avisos,
+Python44/44, UTF8/BOM/diff aprovados. Reports Logs/PredictionRevengeLaunch54.*.
+Inclui testes de uint wrap/ack, curva de recoil e muzzle realmente renderer-only
+com frames carregados por Resources (Player.prefab não referencia a explosão).
+Protocolo53/Actions40803559380 confirmado completed/success antes dos testes.
+Runner restaurado só nos caminhos próprios; nenhuma cena/prefab alterada.
+
+Implementados: release tick no servidor, preview imediato de recoil/muzzle do
+owner, cancelamento por ack sem lançamento/timeout, confirmação sem reiniciar
+prévia, muzzle confirmado para observadores com relógio do servidor. Som permanece
+confirmado. Sem spawn/dano/eligibilidade especulativos. Recoil/muzzle unscaled
+podem terminar durante pausa como nativo. Direção/offset congelados por tiro.
+A12 permanece parcial: validar manualmente2peers (owner+observador), rejeição,
+pausa, canto/cooldown, retorno/remoção do cart e efeito em latência alta; obter
+capturas com métricas de input/render e verificar handoff/entrada/saída visual.
+Não há medição de zero lag nem simulação/rollback completo da partida.
+Próximo: confirmar publicação54; depois capturas/manuais de A12 e demais IDs.
+Checklist15 implementados/18 parciais. Código congelado para publicação.

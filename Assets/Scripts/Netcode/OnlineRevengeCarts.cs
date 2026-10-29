@@ -19,6 +19,11 @@ namespace Assets.Scripts.Netcode
         public float chargeStep;
         public int minCharge, maxCharge;
         public bool chargeReady;
+        public uint launchTick;
+        public double launchTime;
+        public Vector2 launchDirection, muzzleOffset, shotDirection, shotOffset;
+        public float recoilDistance, recoilDuration, muzzleDuration;
+        public int muzzleOrder;
         public RevengeCartSprite[] sprites;
     }
     public struct RevengeCartRoster : NetworkMessage
@@ -123,6 +128,10 @@ namespace Assets.Scripts.Netcode
             public uint tick;
             public float predicted;
             public readonly RevengeChargePreview charge = new();
+            public bool launchPreview, previousChargeHeld;
+            public uint releaseTick;
+            public double previewStarted;
+            public RevengeCartState previewState;
             public double receivedAt;
             public bool presented, presentedAnimating;
             public double nextDiagnostic;
@@ -230,9 +239,19 @@ namespace Assets.Scripts.Netcode
             if (input != null && input.GetDown(1, PlayerAction.ActionA)) revengePressed |= 16;
             foreach (var view in revengeViews.Values)
                 if (view.current.owner == LocalRoomPlayerId && !GamePauseController.IsPaused)
+                {
+                    bool held = (revengeHeld & 16) != 0;
+                    if (!view.launchPreview && !held && view.previousChargeHeld && view.charge.Active && CanPredictRevenge(view) && view.current.chargeReady &&
+                        view.inputs.Count > 0 && (view.inputs[view.inputs.Count - 1].held & 16) != 0)
+                    {
+                        view.launchPreview = true; view.releaseTick = view.tick + 1;
+                        view.previewStarted = Time.realtimeSinceStartupAsDouble; view.previewState = view.current;
+                    }
+                    view.previousChargeHeld = held;
                     view.charge.Step((revengeHeld & 16) != 0, CanPredictRevenge(view) && view.current.chargeReady &&
                         Vector2.Distance(view.cart.transform.position, view.current.position) <= .125f,
                         Time.unscaledDeltaTime, view.current.chargeStep, view.current.minCharge, view.current.maxCharge);
+                }
             if (Time.unscaledTime >= revengeNextHeartbeat)
             {
                 revengeNextHeartbeat = Time.unscaledTime + .05f;
@@ -258,7 +277,7 @@ namespace Assets.Scripts.Netcode
                     if (Time.realtimeSinceStartupAsDouble - buffer.HeardAt > .15)
                     { buffer.Cancel(); cart.CancelNetworkCharge(); cart.SimulateNetworkCartInput(0, dt); continue; }
                     int steps = 0;
-                    while (steps < 4 && buffer.Consume(out int held)) { cart.SimulateNetworkCartInput(held, dt); steps++; }
+                    while (steps < 4 && buffer.Consume(out int held)) { cart.NetworkInputTick = buffer.Acknowledged; cart.SimulateNetworkCartInput(held, dt); steps++; }
                     if (steps == 0) cart.SimulateNetworkCartInput(buffer.Held, 0);
                 }
                 return;
@@ -330,7 +349,7 @@ namespace Assets.Scripts.Netcode
                 {
                     // Native recoil continues unscaled; walking/frame/HUD pose stays frozen.
                     view.cart.PresentPausedNetworkRecoil(Vector3.Lerp(a.state.recoilOffset, b.state.recoilOffset, t));
-                    view.cart.PresentNetworkCartHud(); continue;
+                    PresentRevengeLaunch(view); view.cart.PresentNetworkCartHud(); continue;
                 }
                 view.cart.PresentNetworkCart(a.state, b.state, t);
                 view.presented = true; view.presentedAnimating = a.state.animating || b.state.animating;
@@ -344,6 +363,7 @@ namespace Assets.Scripts.Netcode
                     if (CanPredictRevenge(view))
                         view.cart.PresentNetworkChargePreview(view.current, view.charge, (revengeHeld & 16) != 0);
                 }
+                PresentRevengeLaunch(view);
                 view.cart.PresentNetworkCartHud();
                 if (GameplayLatencyDiagnostics.Enabled && Time.realtimeSinceStartupAsDouble >= view.nextDiagnostic)
                 {
@@ -360,6 +380,19 @@ namespace Assets.Scripts.Netcode
                 }
             }
         }
+
+        static void PresentRevengeLaunch(RevengeClientView view)
+        {
+            view.cart.HideNetworkMuzzle();
+            if (view.launchPreview && Time.realtimeSinceStartupAsDouble - view.previewStarted > .5) view.launchPreview = false;
+            if (view.launchPreview)
+                view.cart.PresentNetworkLaunchVisual(view.previewState, (float)(Time.realtimeSinceStartupAsDouble - view.previewStarted), true);
+            else if (view.current.launchSerial != 0)
+                view.cart.PresentNetworkLaunchVisual(view.current, Mathf.Max(0, (float)(NetworkBombFx.KickServerNow - view.current.launchTime)), false);
+        }
+
+        public static bool RevengeReleaseAcknowledged(uint acknowledged, uint release) =>
+            acknowledged == release || NetworkInputHistory.IsNewer(acknowledged, release);
 
         static bool CanPredictRevenge(RevengeClientView view) => !view.current.animating && !GamePauseController.IsPaused &&
             Time.realtimeSinceStartupAsDouble - view.receivedAt <= .25;
@@ -394,6 +427,12 @@ namespace Assets.Scripts.Netcode
                 else if (NetworkInputHistory.IsNewer(state.launchSerial, view.current.launchSerial)) view.cart.PlayConfirmedNetworkLaunchSound();
                 revengeRemoved.Remove(state.id);
                 bool keepPaused = !replaced && GamePauseController.IsPaused && !state.animating && !view.current.animating;
+                if (view.launchPreview && RevengeReleaseAcknowledged(state.acknowledged, view.releaseTick))
+                {
+                    bool accepted = state.launchTick == view.releaseTick;
+                    if (!accepted || NetworkBombFx.KickServerNow - state.launchTime > Mathf.Max(state.recoilDuration, state.muzzleDuration))
+                        view.launchPreview = false;
+                }
                 view.current = state; view.receivedAt = Time.realtimeSinceStartupAsDouble;
                 if (replaced || NetworkInputHistory.IsNewer(state.acknowledged, view.tick)) view.tick = state.acknowledged;
                 if (!view.cart.RestoreNetworkMotor(state, false)) continue;

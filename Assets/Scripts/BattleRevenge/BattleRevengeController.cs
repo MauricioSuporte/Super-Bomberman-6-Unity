@@ -338,6 +338,9 @@ public sealed partial class BattleRevengeController : MonoBehaviour
                     if (system.TryLaunchBombFromCart(this, chargedLaunchDistanceTiles))
                     {
                         NetworkLaunchSerial++;
+                        networkLaunchTick = NetworkInputTick; networkLaunchTime = Mirror.NetworkTime.localTime;
+                        networkShotDirection = LaunchDirection;
+                        networkShotOffset = (LaunchStartWorldPosition - (Vector2)transform.position) + system.NetworkMuzzleOffset(LaunchDirection);
                         nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
                         PlayLaunchRecoil();
 

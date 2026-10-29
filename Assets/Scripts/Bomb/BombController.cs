@@ -3068,6 +3068,13 @@ public partial class BombController : MonoBehaviour
         return Vector2.up;
     }
 
+    // Asset-only lookup for renderer-only network presentation; never spawns an explosion.
+    public AnimatedSpriteRenderer GetRevengeMuzzleVisualTemplate()
+    {
+        ResolveExplosionPrefab();
+        return explosionPrefab != null ? explosionPrefab.end : null;
+    }
+
     public bool SpawnRevengeLaunchMuzzleVisual(
         Vector2 launchWorldPos,
         Vector2 direction,

@@ -8,6 +8,13 @@ public sealed partial class BattleRevengeController
     public bool NetworkTickControlled { get; set; }
     public uint NetworkGeneration { get; private set; }
     public uint NetworkLaunchSerial { get; private set; }
+    public uint NetworkInputTick { get; set; }
+    uint networkLaunchTick;
+    double networkLaunchTime;
+    Vector2 networkShotDirection, networkShotOffset;
+    SpriteRenderer networkMuzzle;
+    Sprite[] networkMuzzleFrames;
+    float networkMuzzleFrameTime;
     public float NetworkPerimeter => perimeterPosition;
     public int NetworkCartId => GetEntityId().GetHashCode();
     static readonly PlayerAction[] NetworkCartActions = { PlayerAction.MoveUp, PlayerAction.MoveDown,
@@ -36,7 +43,7 @@ public sealed partial class BattleRevengeController
     void CacheNetworkSprites()
     {
         if (networkSprites != null) return;
-        networkSprites = GetComponentsInChildren<SpriteRenderer>(true);
+        networkSprites = System.Array.FindAll(GetComponentsInChildren<SpriteRenderer>(true), sprite => sprite != networkMuzzle);
         networkAnimations = new AnimatedSpriteRenderer[networkSprites.Length];
         for (int i = 0; i < networkSprites.Length; i++)
             networkAnimations[i] = networkSprites[i].GetComponent<AnimatedSpriteRenderer>();
@@ -75,6 +82,12 @@ public sealed partial class BattleRevengeController
             position = transform.position, recoilOffset = visualRoot != null ? visualRoot.localPosition : Vector3.zero, perimeter = perimeterPosition, animating = isAnimating,
             geometry = new[] { horizontalWallMinX, horizontalWallMaxX, verticalWallMinY, verticalWallMaxY,
                 topWallY, bottomWallY, leftWallX, rightWallX, moveSpeed, actionCSpeedMultiplier },
+            launchTick = networkLaunchTick, launchTime = networkLaunchTime, launchDirection = LaunchDirection,
+            shotDirection = networkShotDirection, shotOffset = networkShotOffset,
+            recoilDistance = launchRecoilDistance, recoilDuration = launchRecoilDuration,
+            muzzleOffset = (LaunchStartWorldPosition - (Vector2)transform.position) + (system != null ? system.NetworkMuzzleOffset(LaunchDirection) : Vector2.zero),
+            muzzleDuration = system != null ? system.NetworkMuzzleDuration : 0,
+            muzzleOrder = system != null ? system.NetworkMuzzleOrder : 0,
             chargeTargets = targets, chargeStep = chargeStepSeconds, minCharge = minLaunchDistanceTiles,
             maxCharge = maxLaunchDistanceTiles, chargeReady = system != null && system.IsRuntimeEnabled && !isAnimating && Time.unscaledTime >= nextBombAllowedAt && targets[Mathf.Clamp(minLaunchDistanceTiles, 3, 7) - 3].z > 0,
             sprites = poses.ToArray(), rechargeSprite = rechargeSprites != null && rechargeIndicatorRenderer != null ?
@@ -84,6 +97,14 @@ public sealed partial class BattleRevengeController
     public void InitializeNetworkView(BattleRevengeSystem ownerSystem, MovementController source)
     {
         networkView = true; system = ownerSystem;
+        var template = source != null ? source.GetComponent<BombController>()?.GetRevengeMuzzleVisualTemplate() : null;
+        if (template != null)
+        {
+            networkMuzzleFrames = template.animationSprite;
+            networkMuzzleFrameTime = template.animationTime;
+            networkMuzzle = new GameObject("RevengeMuzzleView", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            networkMuzzle.transform.SetParent(transform, false); networkMuzzle.enabled = false;
+        }
         EnsureVisualRoot();
         CacheCartSpriteRenderers();
         ConfigureHeadVisuals(source);
@@ -177,6 +198,26 @@ public sealed partial class BattleRevengeController
     public void RestoreApprovedLandingPosition(Vector3? position)
     {
         if (position.HasValue && landingIndicatorRenderer != null) landingIndicatorRenderer.transform.position = position.Value;
+    }
+
+    public void HideNetworkMuzzle() { if (networkMuzzle != null) networkMuzzle.enabled = false; }
+
+    public static float SampleNetworkRecoil(float elapsed, float duration) =>
+        duration <= 0 || elapsed < 0 || elapsed >= duration ? 0 : Mathf.Sin(Mathf.Clamp01(elapsed / duration) * Mathf.PI);
+
+    public void PresentNetworkLaunchVisual(RevengeCartState state, float elapsed, bool predicted)
+    {
+        if (!networkView || NetSync.Mode != NetSync.NetMode.Client || !float.IsFinite(elapsed)) return;
+        if (predicted && visualRoot != null)
+            visualRoot.localPosition = -state.launchDirection * (state.recoilDistance * SampleNetworkRecoil(elapsed, state.recoilDuration));
+        if (networkMuzzle == null || networkMuzzleFrames == null || networkMuzzleFrames.Length == 0) return;
+        networkMuzzle.enabled = elapsed >= 0 && elapsed < state.muzzleDuration;
+        if (!networkMuzzle.enabled) return;
+        networkMuzzle.sprite = networkMuzzleFrames[Mathf.Clamp(Mathf.FloorToInt(elapsed / Mathf.Max(.0001f, networkMuzzleFrameTime)), 0, networkMuzzleFrames.Length - 1)];
+        networkMuzzle.sortingOrder = state.muzzleOrder;
+        networkMuzzle.transform.position = (Vector2)transform.position + (predicted ? state.muzzleOffset : state.shotOffset);
+        var direction = predicted ? state.launchDirection : state.shotDirection;
+        networkMuzzle.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
     }
 
     public void PresentNetworkChargePreview(RevengeCartState state, RevengeChargePreview preview, bool held)
