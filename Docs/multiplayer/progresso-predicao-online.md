@@ -50,11 +50,10 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   [40868952214](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40868952214)
   completed/success: servidor, cliente e atualizador; inclui R07/continuidade de
   trajetórias após destruição do presenter e as correções anteriores de co-op.
-- **Validação local mais recente:**894/894 Unity, sem skips, R07; C#0/0 e Python47/47.
-  Reports PredictionPresenterPose55Full; smoke2clients PredictionPresenterClients55Run2
-  mantém8amostras de movimento porpeer após transferência, sem novo evento.
-  A12 seguinte validado com2clientes e6disparos: C#0/0 e Python53/53.
-  Relatórios PredictionRevengeInputs55Full e PredictionRevengeInputs55Run2.
+- **Validação local mais recente:**901/901 Unity, sem skips, C02/lifetime do canhão;
+  C#0/0 e Python53/53. Report PredictionCannonLifetime55Full. A12 validado com2clientes
+  e6disparos em PredictionRevengeInputs55Run2. R07 em PredictionPresenterClients55Run2
+  manteve8amostras de movimento porpeer após transferência, sem novo evento.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
   itens em movimento e desmontagem Mole/Tank; co-op Stage_1-1 por90s com captura.
   Ambos sem erros/avisos. Headless; não comprova renderização nem input lag zero.
@@ -2452,3 +2451,43 @@ matriz manual e não foram executados neste smoke. Checklist17concluídos/16parc
 Próximo: C02/C03 curvas e devolução ao motor. Runner deve ser restaurado somente
 no tracked próprio LocalServerLoadTest.cs antes de eventual push; sem processo
 próprio ativo após o Run2. Não publicar debug harness como conteúdo do release.
+
+
+## Continuação C02 — lifetime do canhão (em validação, sem commit)
+
+A12 salvo no commit LOCAL c0cf7232e, ainda não enviado; runtime publicado76f2a948c.
+Checklist17concluídos/16parciais. Não presumir deploy de alterações locais.
+
+CannonLauncher tem cleanup explícito no OnDisable de seu IEnumerator rastreado,
+finally da preparação e do voo e IDisposable para o voo aninhado. Preserva os
+estados anteriores de input/collider/BombController/proteção e não restaura flags
+sobre morte/end-stage. A scope de autoridade cobre agora FireRoutine inteira e
+termina depois da restauração de controle; antes terminava dentro do arco com
+input ainda bloqueado. Curva/duração/distância/colisões continuam nativas.
+
+6casos novos em OnlineRoomLauncherLifetimeTests.cs/.meta. Baseline inicial falhou
+na fixture (faltava BoxCollider antes do RequireComponent abstrato). BaselineFixedFixture:
+4casos,1pass/3fail; warmup e collider não restaurados. O caso de GameObject disable
+em EditMode foi posteriormente convertido para UnityTest em PlayMode porque
+MonoBehaviour sem ExecuteInEditMode não recebe OnDisable nesse ambiente.
+Focused com fix:5/6pass, esse único caso ainda com fixture EditMode incorreta.
+Novo PredictionCannonLifetime55Lifecycle em execução no runner, incluindo disable
+nativo em preparação/voo. Depois: corrigir falhas, suíte completa900esperados,
+C#final/UTF8/diff, docs/skill, restaurar tracked próprios no runner antes de push.
+
+Runner nesta etapa contém fontes próprias CannonLauncher.cs, LocalServerLoadTest.cs
+(c0cf7232e) e teste/metas novos. Nenhuma mudança do usuário removida. Não copiar fontes
+nem iniciar outra instância Unity enquanto a execução atual estiver ativa.
+Mola SpringLauncher e corda também precisam auditoria de cancelamento; ainda SEM
+alterações nesses arquivos. C02/C03 permanecem parciais; não foram enviadas curvas.
+
+
+C02/canhão validado: PredictionCannonLifetime55Lifecycle6/6 passou, incluindo
+UnityTest em PlayMode com desativação real durante preparação e voo. Posterior
+review preservou a ordem nativa: cancelar dash antes de capturar InputLocked.
+Regressão específica GreenLouie acrescentada. Suíte FINAL901/901,0falhas/0skips,
+Logs/PredictionCannonLifetime55Full.*; C#final0erros/0avisos. UTF8/BOM/diff OK.
+Nenhuma cena/prefab alterada. Native offline e scope servidor cobertos nos testes;
+comparação gráfica offline/2peers para o canhão ainda não executada. C02 parcial;
+não é a implementação final das curvas. Pronto para commit/envio com c0cf7232e.
+Runner restaurar somente CannonLauncher.cs e LocalServerLoadTest.cs antes de push.

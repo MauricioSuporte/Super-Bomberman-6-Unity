@@ -43,6 +43,7 @@ public sealed class CannonLauncher : MonoBehaviour
     [SerializeField, Min(0f)] private float rearmSeconds = 0.1f;
 
     private bool busy;
+    private IEnumerator activeFireRoutine;
     private AudioSource audioSource;
     private BoxCollider2D boxCollider;
 
@@ -80,68 +81,95 @@ public sealed class CannonLauncher : MonoBehaviour
             return;
 
         var mover = other.GetComponent<MovementController>();
-        if (mover == null || mover.Rigidbody == null)
+        if (mover == null || mover.Rigidbody == null || mover.isDead || mover.IsEndingStage)
             return;
 
         var powerGlove = other.GetComponent<PowerGloveAbility>();
         if (powerGlove != null && powerGlove.IsEnabled && powerGlove.IsHoldingBomb)
             powerGlove.DestroyHeldBombIfHolding();
 
-        StartCoroutine(FireRoutine(mover));
+        activeFireRoutine = FireRoutine(mover);
+        StartCoroutine(activeFireRoutine);
+    }
+
+    private void OnDisable()
+    {
+        // Unity stops coroutines on an inactive GameObject; explicitly dispose
+        // the tracked iterator too so nested flight cleanup is guaranteed.
+        var routine = activeFireRoutine;
+        activeFireRoutine = null;
+        StopAllCoroutines();
+        (routine as System.IDisposable)?.Dispose();
+        busy = false;
+        SetCannonIdle(true);
     }
 
     private IEnumerator FireRoutine(MovementController mover)
     {
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || mover == null || mover.Rigidbody == null ||
+            mover.isDead || mover.IsEndingStage) yield break;
         busy = true;
-
         Vector2 dir = GetLaunchDirection();
-        if (dir.sqrMagnitude < 0.0001f)
-            dir = Vector2.right;
+        if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
         dir.Normalize();
-
+        // A cancelled dash restores its own input lock first, as in the native
+        // flow; retaining the dash's temporary lock would strand the player.
         CancelActiveMountMovementAbilities(mover);
-
+        // The final approved snapshot must follow restoration of actor control,
+        // including cancellation during warmup, rather than end inside the arc.
+        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         bool prevInputLocked = mover.InputLocked;
-        mover.SetInputLocked(true, forceIdle: false);
-
+        bool controlRestored = false, mountHidden = false;
         var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
         GameObject louieGameObject = mountVisual != null ? mountVisual.gameObject : null;
+        bool mountWasActive = louieGameObject != null && louieGameObject.activeSelf;
+        try
+        {
+            mover.SetInputLocked(true, forceIdle: false);
+            if (mountWasActive)
+            {
+                louieGameObject.SetActive(false);
+                mountHidden = true;
+            }
+            Vector2 forcedVisualDir = fireToLeft ? Vector2.left : Vector2.right;
+            mover.ApplyDirectionFromVector(forcedVisualDir);
+            mover.ApplyDirectionFromVector(Vector2.zero);
+            CenterPlayerOnCannon(mover);
+            mover.SetVisualOverrideActive(true);
+            mover.SetAllSpritesVisible(false);
 
-        if (louieGameObject != null)
-            louieGameObject.SetActive(false);
+            float warm = Mathf.Max(0f, warmupSeconds);
+            float smoke = Mathf.Max(0f, smokeSeconds);
+            StartCoroutine(PlayFireSfxWithDelay());
+            yield return PlayCannonFire(warm + smoke, warm);
+            if (mover == null || mover.isDead || mover.IsEndingStage) yield break;
+            if (mountHidden && louieGameObject != null) louieGameObject.SetActive(mountWasActive);
+            mountHidden = false;
+            mover.SetVisualOverrideActive(false);
+            mover.EnableExclusiveFromState();
 
-        Vector2 forcedVisualDir = fireToLeft ? Vector2.left : Vector2.right;
-        mover.ApplyDirectionFromVector(forcedVisualDir);
-        mover.ApplyDirectionFromVector(Vector2.zero);
-
-        CenterPlayerOnCannon(mover);
-
-        mover.SetVisualOverrideActive(true);
-        mover.SetAllSpritesVisible(false);
-
-        float warm = Mathf.Max(0f, warmupSeconds);
-        float smoke = Mathf.Max(0f, smokeSeconds);
-        float totalFire = warm + smoke;
-
-        StartCoroutine(PlayFireSfxWithDelay());
-
-        yield return PlayCannonFire(totalFire, warm);
-
-        if (louieGameObject != null)
-            louieGameObject.SetActive(true);
-
-        mover.SetVisualOverrideActive(false);
-        mover.EnableExclusiveFromState();
-
-        yield return LaunchPlayerArc(mover, dir);
-
-        mover.SetInputLocked(prevInputLocked, forceIdle: false);
-
-        if (rearmSeconds > 0f)
-            yield return new WaitForSeconds(rearmSeconds);
-
-        busy = false;
+            // Disposing this outer iterator also disposes the yielded flight.
+            var flight = LaunchPlayerArc(mover, dir);
+            using var flightCleanup = flight as System.IDisposable;
+            yield return flight;
+            if (mover == null || mover.isDead || mover.IsEndingStage) yield break;
+            mover.SetInputLocked(prevInputLocked, forceIdle: false);
+            controlRestored = true;
+            if (rearmSeconds > 0f) yield return new WaitForSeconds(rearmSeconds);
+        }
+        finally
+        {
+            if (!controlRestored && mover != null && !mover.isDead && !mover.IsEndingStage)
+            {
+                if (mountHidden && louieGameObject != null) louieGameObject.SetActive(mountWasActive);
+                mover.SetVisualOverrideActive(false);
+                mover.SetInputLocked(prevInputLocked, forceIdle: false);
+                mover.EnableExclusiveFromState();
+            }
+            activeFireRoutine = null;
+            busy = false;
+            SetCannonIdle(true);
+        }
     }
 
     private static void CancelActiveMountMovementAbilities(MovementController mover)
@@ -297,7 +325,6 @@ public sealed class CannonLauncher : MonoBehaviour
             yield break;
 
 
-        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         float tileSize = Mathf.Max(0.0001f, mover.tileSize);
 
         Rigidbody2D rb = mover.Rigidbody;
@@ -307,6 +334,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
         bool prevColliderEnabled = playerCol != null && playerCol.enabled;
         bool prevBombEnabled = bombController != null && bombController.enabled;
+        bool prevExplosionInvulnerable = mover.explosionInvulnerable;
 
         mover.SetExplosionInvulnerable(true);
 
@@ -341,68 +369,72 @@ public sealed class CannonLauncher : MonoBehaviour
         if (useBallVisual)
             mover.SetExternalArcVisual(dir, descending: false);
 
-        float duration = Mathf.Max(0.05f, flightSeconds);
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        try
         {
-            if (GamePauseController.IsPaused)
+            float duration = Mathf.Max(0.05f, flightSeconds);
+            float elapsed = 0f;
+
+            while (elapsed < duration)
             {
+                if (mover == null || mover.isDead || mover.IsEndingStage || rb == null) yield break;
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                float t = Mathf.Clamp01(elapsed / duration);
+                bool descendingNow = t >= 0.5f;
+
+                if (useMountJumpVisual && mountVisual != null)
+                    mountVisual.SetJumpPhase(descendingNow);
+                else if (useBallVisual)
+                    mover.SetExternalArcVisual(dir, descendingNow);
+
+                Vector2 flat = Vector2.Lerp(start, end, t);
+                float parabola = 4f * t * (1f - t);
+                Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
+
+                rb.position = pos;
+                Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
+
+                elapsed += Time.deltaTime;
                 yield return null;
-                continue;
             }
 
-            float t = Mathf.Clamp01(elapsed / duration);
-            bool descendingNow = t >= 0.5f;
+            if (mover == null || mover.isDead || mover.IsEndingStage || rb == null) yield break;
+            Vector2 finalPos = end;
 
-            if (useMountJumpVisual && mountVisual != null)
-                mountVisual.SetJumpPhase(descendingNow);
-            else if (useBallVisual)
-                mover.SetExternalArcVisual(dir, descendingNow);
+            if (roundEndToGrid)
+            {
+                finalPos = new Vector2(
+                    Mathf.Round(finalPos.x / tileSize) * tileSize,
+                    Mathf.Round(finalPos.y / tileSize) * tileSize
+                );
+            }
 
-            Vector2 flat = Vector2.Lerp(start, end, t);
-            float parabola = 4f * t * (1f - t);
-            Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
-
-            rb.position = pos;
+            rb.position = finalPos;
             Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
-
-            elapsed += Time.deltaTime;
-            yield return null;
+            rb.linearVelocity = Vector2.zero;
         }
-
-        Vector2 finalPos = end;
-
-        if (roundEndToGrid)
+        finally
         {
-            finalPos = new Vector2(
-                Mathf.Round(finalPos.x / tileSize) * tileSize,
-                Mathf.Round(finalPos.y / tileSize) * tileSize
-            );
+            // Death/end-stage own their colliders and visual state from here on.
+            if (mover != null && !mover.isDead && !mover.IsEndingStage)
+            {
+                if (playerCol != null) playerCol.enabled = prevColliderEnabled;
+                if (bombController != null) bombController.enabled = prevBombEnabled;
+                if (rb != null) rb.linearVelocity = Vector2.zero;
+                if (useBallVisual)
+                {
+                    mover.SetVisualOverrideActive(false);
+                    mover.EnableExclusiveFromState();
+                    mover.ClearExternalArcVisual();
+                }
+                if (useMountJumpVisual && mountVisual != null) mountVisual.SetJumpVisual(false, dir);
+                mover.SetExplosionInvulnerable(prevExplosionInvulnerable);
+            }
         }
-
-        rb.position = finalPos;
-        Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
-        rb.linearVelocity = Vector2.zero;
-
-
-        if (playerCol != null)
-            playerCol.enabled = prevColliderEnabled;
-
-        if (bombController != null)
-            bombController.enabled = prevBombEnabled;
-
-        if (useBallVisual)
-        {
-            mover.SetVisualOverrideActive(false);
-            mover.EnableExclusiveFromState();
-            mover.ClearExternalArcVisual();
-        }
-
-        if (useMountJumpVisual && mountVisual != null)
-            mountVisual.SetJumpVisual(false, dir);
-
-        mover.SetExplosionInvulnerable(false);
     }
 
     private static void ShowBallOnly(MovementController mover, AnimatedSpriteRenderer ball)

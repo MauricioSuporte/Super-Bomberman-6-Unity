@@ -65,6 +65,15 @@ Track sent revisions and excluded owners by the actual connection instance;
 a reconnect can reuse a connection id. Prune disconnected peers so idle object
 caches stay bounded, and test replacement of an excluded connection too.
 
+For native launchers, end the authority-motion scope after restoring actor
+control, rather than inside a yielded flight with input still locked. Preserve
+the collider, bomb controller and protection states that existed before launch.
+Track the outer iterator and explicitly dispose it on disable; dispose a nested
+flight too, so cancellation cannot leave its resource cleanup behind. Death and
+end-stage retain ownership of their new state. Cancel an old Louie dash before
+capturing the input lock to restore. Exercise real GameObject disable in PlayMode:
+ordinary EditMode objects do not provide the same MonoBehaviour lifecycle.
+
 For actual-client diagnostic smokes, finish the writer before copying its JSONL.
 A live buffered StreamWriter can expose a partial final line even when gameplay
 succeeded. Development-only clients can quit after the test server disconnects;

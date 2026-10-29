@@ -1418,3 +1418,18 @@ input com ack/drenagem antes da remoção; mensagem de teste só existe em DEBUG
 e é proibida na DLL release pelo CI. Dados em PredictionPresenterClients55Run2.
 O seconds deRun1 é inválido por variável de contador sobrescrita; não usar como
 métrica. Run2 registra96,656s do processo; orçamento90inclui lobby/carregamento.
+
+
+## C02: interrupção do canhão e devolução do controle (protocolo55)
+
+CannonLauncher rastreia a IEnumerator da ação e a descarta explicitamente no
+OnDisable, incluindo o voo aninhado. Preparação e voo têm finally próprios;
+controle, collider, BombController e proteção recuperam os estados anteriores.
+A limpeza não reabilita colisão/controle sobre morte ou fim de fase. Cancelar
+um dash de Louie precede a captura do lock que o canhão restaurará ao terminar.
+A autoridade de apresentação acompanha a ação inteira e termina após restaurar
+controle, permitindo ao snapshot final representar o estado já liberado.
+
+Isso corrige lifetime/interrupção; trajetória/duração/distância/colisão continuam
+na simulação nativa. C02/C03 ainda precisam completar a auditoria de curvas e
+handoff entre apresentação aprovada e motor, além da matriz manual/offline.
