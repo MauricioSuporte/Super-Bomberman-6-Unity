@@ -48,7 +48,10 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 - **Publicado:** protocolo56, commit `bf111acca`,
   [Actions40922400063](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40922400063)
-  completed/success confirmado. C02/protocolo57 em implementação e validação local.
+  completed/success confirmado. **C02/protocolo57 implementado/testado no commit
+  `97d88c4f7`**; publicação conjunta em andamento no
+  [Actions40964582861](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40964582861).
+  Ainda não declarar57 disponível no servidor até confirmar sucesso do deployment.
 - **Validação local mais recente (C02/protocolo57):**971/971Unity,0skips,
   incluindo43casosLaunch; C#runtime/Editor0erros/0avisos; Python68/68(60CI+8Directory).
   Cannon2(Stage_2-3),Geyser2(Stage_3-3) eArena2(Battle4):2clientesMirror reais,
@@ -227,7 +230,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 a confirmar.
+- [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 em andamento no Actions40964582861.
 - [ ] C03: parcial55: preparação/voo/deformação aprovados; cancelamento, pose/proteção, reutilização e início no frame de input testados (903/903). Descritores de curva/handoff completo e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
@@ -2966,3 +2969,27 @@ BOM/meta passaram, diff--check limpo. Fonts do usuário preservados. Checklist19
 implementados/testados,14parciais. Próximo: restaurar SOMENTE paths tracked em
 Logs/C02-57-owned-paths.json no runner,commit/push conjunto cliente+servidor57 e
 conferir Actions; não executar build/teste local no runner durante CI.
+
+
+## Checkpoint de publicação C02 — 29/10/2026
+
+Commit runtime/assets/testes/skill/docs:97d88c4f7c2573cae37a136758416a6e14389760,
+branchv0.5.0, push confirmado. Actions40964582861(build-and-deploy123765680748)
+Homologation both/quick emandamento; checkout emcurso na última consulta pelo
+connectorGitHub. Runner devolvido: somente20trackedpaths próprios restaurados
+antes dopush; fontes/settings anteriores preservados. NenhumaUnity/SB6 própria
+ativa na conferência anterior ao push. NÃO iniciar teste/build local nesse runner
+atéCI concluir. Root ficou somente comas3fontes do usuário sujas.
+
+C02 marcado[x], checklist19/33 e14parciais. Últimas evidências finais:
+- Logs/PredictionLaunch57Full4.xml:971/971,0skips;43Launch.
+- C#runtime/Editor0/0;Python68/68;20C# strictUTF8/BOM/meta e diffcheck limpos.
+- Cannon2,Geyser2,Arena2/result.json:2clientesreais,90s cada,0erros/avisos,
+  owner/observer semrecuo econtroledevolvido. Cannon2mesmoassembly daDevelopment4.
+- Catálogo Stage_3-3com48sprites adicionais resolve47warnings doGeyser1.
+- CapturasURP inspecionadas; não mede WAN/inputlaghumano, HUD/áudio completo ou
+  todas as montarias. Aceite manual continua namatriz geral.
+
+Próxima retomada: consultar Actions40964582861; emfalha inspecionar logs e corrigir,
+emsuccess registrar publicação57/commit97d88c4f7 e seguir IDs ainda parciais do plano.
+Não refazer estes testes sem nova mudança/falha relevante. Não reverter fontes.
