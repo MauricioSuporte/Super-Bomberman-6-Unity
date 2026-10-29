@@ -1447,3 +1447,22 @@ O trigger de SpringLauncher e CannonLauncher rejeita mecanismos desativados.
 Curva, duração, geometria e room wrap continuam nativos; não há destino/dano novo
 escolhido pelo client nem alteração de wire/cena/prefab. Comparação visual entre
 peers e curvas completas permanecem na matriz e nos itens C02/C03 parciais.
+
+
+## C03: lifetime da preparação/impulso da corda (protocolo55)
+
+BattleMode11ImpulseRopeController registra um PlayerImpulseScope porator,
+compartilhado entre preparação e voo. O scope captura flags de controle/visual,
+proteção anterior, renderers/poses de preparação e dash e token de apresentação
+autoritativa. OnDisable para as corrotinas e libera uma cópia dos scopes; o descarte
+do iterator externo também os libera, de forma idempotente. O core descarta seu
+voo aninhado. A saída remove registros, restaura pose e flags anteriores de atores
+vivos e só depois encerra a autoridade; cancelamento não conclui o voo no destino.
+Morte/fim usam os helpers nativos sem liberar input nem reativar o jogador.
+
+O wrapper avança o core na própria chamada para preservar o primeiro frame de
+preparação. Os bindings visuais capturados pelo scope são reutilizados pelo core,
+evita-se buscar duas vezes os mesmos filhos. Geometria/ease/pixel grid/colisão,
+sons e timers de CharacterHealth continuam nativos; não se cancela a proteção de
+outras fontes. O client puro continua sem executar essa simulação. C03 ainda é
+parcial por descritores de curva/handoff completo e comparação visual entre peers.

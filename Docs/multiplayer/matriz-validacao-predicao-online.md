@@ -293,3 +293,20 @@ input/collider/BombController/proteção inicial. Canhão também cobre descarte
 iterator aninhado, reutilização e cancelamento de dash Louie antes de capturar o
 lock anterior. Nenhum desses testes prova curva/pixels/hardware ou comparação
 visual entre peers. C02/C03 continuam parciais; os cenários manuais acima permanecem.
+
+
+## Aceite A12 em29/10/2026
+
+O usuário confirmou validação do A12 com2clientes reais e solicitou sua conclusão.
+A12 está concluído no checklist. As capturas e testes automáticos anteriores são
+evidência separada desse aceite; os demais roteiros continuam como regressões.
+
+
+## C03 — interrupção da corda,29/10/2026
+
+PredictionRopeLifetime55Focused passou em PlayMode, cena isolada BattleMode_11:
+preparação/voo, GO/componente, flags/pose/proteção anterior, cancelamento sem
+teleporte ao destino e reutilização. A baseline com a mesma fixture corrigida
+falhou no input preso após desativar. PredictionRopeLifetime55Immediate também
+exige preparação no frame da chamada. Isso verifica código nativo e lifetime;
+não substitui curva/renderização/2peers em uma arena completa.

@@ -46,14 +46,13 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo55, commit `5619659d9`, pipeline
-  [40875720038](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40875720038)
-  completed/success: servidor, cliente e atualizador; inclui o lifetime do canhão
-  e os commits anteriores de R07/co-op. A12 teve captura real validada no lote.
-  Lote da mola `8b3841929` enviado; [pipeline40878816406](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40878816406)
-  em andamento, publicação ainda não confirmada.
-- **Validação local mais recente:**902/902 Unity, sem skips, C02/lifetime de mola/canhão;
-  C#0/0 e Python53/53. Report PredictionSpringLifetime55Full. A12 validado com2clientes
+- **Publicado:** protocolo55, commit `8b3841929`, pipeline
+  [40878816406](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40878816406)
+  completed/success: servidor, cliente e atualizador; inclui cleanup de mola/canhão,
+  R07/co-op e a implementação A12 anteriormente validada em integração.
+- **Validação local mais recente:**903/903 Unity, sem skips, C03/lifetime da corda;
+  C#0/0 e Python58/58. Report PredictionRopeLifetime55Final. Updater13/13 nativos
+  aprovados, compilado com warnings-as-errors. A12 validado com2clientes
   e6disparos em PredictionRevengeInputs55Run2. R07 em PredictionPresenterClients55Run2
   manteve8amostras de movimento porpeer após transferência, sem novo evento.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
@@ -222,12 +221,12 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
 - [ ] A11: parcial55 local: riding/dismount, fila visual e defer de remoção da montaria no arco vivo testados; smoke2peers Mole/Tank detectou teardown, corrigido em suíte878. Repetição e manual visual pendentes.
-- [x] A12: motor/replay, carga/mira, recoil/muzzle, release tick, retorno confirmado e handoff testados; integração55 com2clientes, C e3cargas/releases porowner,6confirmações sem rejeição/timeout. Comparação visual/offline, rede adversa e hardware físico pendentes na matriz manual.
+- [x] A12: concluído. Motor/replay, carga/mira, recoil/muzzle, release tick, retorno confirmado e handoff testados; integração55 com2clientes, C e3cargas/releases porowner,6confirmações. Usuário confirmou validação com2clientes reais e conclusão em29/10/2026.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [ ] C02: parcial55: base/limite de salto alto e canhão/mola com cleanup de preparação/voo/handoff;902/902 testes. Curvas completas/ambientais/manuais pendentes.
-- [ ] C03: parcial47: preparação/voo36 e deformação ambiental47 aprovadas/testadas; auditoria final do voo/devolução ao motor e comparação manual pendentes.
+- [ ] C03: parcial55: preparação/voo/deformação aprovados; cancelamento, pose/proteção, reutilização e início no frame de input testados (903/903). Descritores de curva/handoff completo e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
@@ -2576,3 +2575,64 @@ nome para isolar sem carregar uma arena completa. OnDisable na partial Network s
 restaura tiles; faltam tracking/dispose de outer+nested e restauração de flags/poses.
 C02 curvas completas/handoff e os demais parciais continuam abertos. Checklist17/33
 concluídos em implementação/testes,16parciais; matriz visual/manual permanece pendente.
+
+
+## Retomada em29/10 — updater e C03 (em desenvolvimento)
+
+Usuário confirmou A12 validado com2clientes reais e pediu marcar concluído. A12 já
+estava[x]; registrado aceite humano na linha atual. Checklist permanece17/33 e16parciais.
+Pipeline40878816406 de8b3841929 confirmado completed/success nesta retomada.
+
+Updater agora mostra percentual independente por etapa,100% apenas após sucesso,
+ETA da própria etapa e velocidade média de download emB/s/KiB/s/MiB/s/GiB/s.
+Tamanho desconhecido fica indeterminado até EOF; download truncado/hash inválido/
+estrutura inválida/extraction manifest errado/rollback não exibem100%. Checking e
+etapas rápidas usam estimativa indeterminada quando não há dados suficientes.
+Native updater compilado com warnings-as-errors;13testes updater passaram, conjunto
+Python58/58 (50CI+8Directory). Binário local Build/CI/GameUpdater.exe gerado; sem deploy.
+
+C03: nova fixture OnlineRoomRopeLifetimeTests.cs/.meta, PlayMode com cena isolada
+BattleMode_11, preparação/voo, GO/componente, pose/proteção e reutilização. Primeira
+baseline falhou na fixture por SpriteRenderer ausente; corrigido explicitamente.
+BaselineFixedFixture em execução no runner SEM copiar runtime C03 alterado.
+
+Código C03 LOCAL candidato: PlayerImpulseScope registra recursos/flags e guarda
+IEnumerator core; rotina externa usa scope, Core descarta flight aninhado. OnDisable
+interrompe e libera scopes, incluindo input/override/hazard/supressão/poses/proteção
+anterior e token de autoridade, sem completar o voo/teleportar ao destino. Estados
+nativos de morte/fim continuam com seus helpers e não recebem unlock. Mantidos
+curva/ease/grid/colisão e timers nativos de CharacterHealth, que não são cancelados
+para evitar apagar proteção de outras fontes. Ainda NÃO validado em Unity.
+
+Root ganhou alterações alheias do Editor em3fonts: PressStart2P-Regular SDF,
+Retro Gaming SDF e Resources/Fonts/PressStart2P-Regular SDF. Preservar e excluir dos
+commits próprios. C# raiz precisou restore dos assets NuGet Temp/obj regenerados;
+dotnet build em execução60926. Runner tem só teste/metas da baseline nesta etapa.
+Depois: confirmar falha de runtime, copiar C03 e rodar focado/full903esperados;
+C#final/UTF8/diff, docs/skill, restaurar tracked próprios e publicar com updater.
+
+
+C03: baseline corrigida falhou por InputLocked true após desativar a corda. Com fix,
+PredictionRopeLifetime55Focused1/1 e suíte PredictionRopeLifetime55Full903/903 passaram.
+Depois da revisão, bindings visuais são reutilizados e o wrapper avança o core na
+chamada, sem scheduler yield extra; teste Immediate1/1 passou com assert imediato.
+Suíte final PredictionRopeLifetime55Final em execução (95989),903esperados. C#final0/0.
+Depois: confirmar full final, validar UTF8/BOM/diffs, atualizar estado/checklist C03,
+restaurar APENAS tracked C03 do runner e publicar junto ao updater validado58Python.
+Preservar3fonts sujos do usuário; não incluí-los no commit. Nenhuma cena/prefab alterada.
+
+
+## C03 e updater validados — pronto para publicação
+
+PredictionRopeLifetime55Final:903/903,0falhas/0skips. Immediate1/1 confirma preparação
+no frame da chamada, cancelamento de preparação/voo em GO/componente, restauração
+de flags/poses/proteção e reutilização sem completar trajeto. C#final0erros/0avisos.
+Python58/58 (50CI+8Directory), updater13/13; binário Build/CI/GameUpdater.exe compilado.
+UTF8/BOM, metas, campos privados lidos e diff próprios revisados. Sem cena/prefab.
+
+A12[x] recebeu o aceite expresso do usuário com2clientes reais; checklist17/33 e
+16parciais permanece. C03 não foi marcado completo: curvas/handoff/manuais faltam.
+Timers CharacterHealth e gameplay/ease/collision/quantização continuam nativos.
+Protocolo55 mantido, sem wire/RPC/SyncVar novo. Próximo: publicação, conferir CI e
+seguir curvas/handoff C02/C03 e demais parciais. Runner deve ser restaurado apenas
+nos2sources C03 após preservar reports; fonts sujos do usuário não entram no commit.

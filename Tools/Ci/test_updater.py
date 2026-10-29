@@ -1,9 +1,11 @@
 """Validate the actual standalone updater without network access or touching a game installation."""
 import hashlib
+import http.server
 import os
 from pathlib import Path
 import subprocess
 import tempfile
+import threading
 import unittest
 import zipfile
 
@@ -30,6 +32,27 @@ if (args[1] == "progress") {
  type.GetField("language", flags).SetValue(null, int.Parse(args[2]));
  Console.WriteLine(type.GetMethod("ProgressText", flags).Invoke(null, new object[] {
  double.Parse(args[3], CultureInfo.InvariantCulture), double.Parse(args[4], CultureInfo.InvariantCulture) }));
+} else if (args[1] == "speed") {
+ type.GetField("language", flags).SetValue(null, int.Parse(args[2]));
+ Console.WriteLine(type.GetMethod("DownloadSpeedText", flags).Invoke(null, new object[] {
+ long.Parse(args[3]), double.Parse(args[4], CultureInfo.InvariantCulture) }));
+} else if (args[1] == "sequence") {
+ type.GetField("progressEnabled", flags).SetValue(null, true);
+ var report = type.GetMethod("Report", flags);
+ var complete = type.GetMethod("CompleteProgress", flags);
+ foreach (var stage in new [] { "Checking", "Downloading", "Verifying", "Extracting", "Installing" }) {
+  report.Invoke(null, new object[] { stage, 0L, 1L, stage == "Downloading" });
+  if (stage == "Downloading") System.Threading.Thread.Sleep(600);
+  report.Invoke(null, new object[] { stage, 50L, 100L, stage == "Downloading" });
+  report.Invoke(null, new object[] { stage, 100L, 100L, stage == "Downloading" });
+  complete.Invoke(null, null);
+ }
+} else if (args[1] == "download" || args[1] == "validate" || args[1] == "extract" || args[1] == "install-progress") {
+ type.GetField("progressEnabled", flags).SetValue(null, true);
+ if (args[1] == "download") type.GetMethod("Download", flags).Invoke(null, new object[] { new Uri(args[2]), args[3] });
+ else if (args[1] == "validate") type.GetMethod("ValidatePackage", flags).Invoke(null, new object[] { args[2], args[3], args[4] });
+ else if (args[1] == "extract") type.GetMethod("Extract", flags).Invoke(null, new object[] { args[2], args[3], args[4], args[5] });
+ else type.GetMethod("Install", flags).Invoke(null, new object[] { args[2], args[3], args[4] });
 } else if (args[1] == "language") {
  Console.WriteLine(type.GetMethod("ReadLanguage", flags).Invoke(null, new object[] { args[2] }));
 } else {
@@ -71,6 +94,77 @@ if (args[1] == "progress") {
                 self.assertEqual(0, result.returncode)
                 self.assertEqual(str(expected), result.stdout.decode("utf-8-sig").strip())
 
+    def test_each_stage_starts_at_zero_and_completes_independently(self):
+        result = self.run_native([self.probe, self.executable, "sequence"])
+        self.assertEqual(0, result.returncode)
+        output = result.stdout.decode("utf-8-sig")
+        self.assertEqual(5, output.count("100% | ETA: 00:00"))
+        self.assertEqual(5, output.count(" 0% | ETA: estimating..."))
+        # The new stage must not inherit the preceding download's elapsed time.
+        verify = output.split("Verifying", 1)[1].split("Extracting", 1)[0]
+        self.assertIn("50% | ETA: estimating...", verify)
+        self.assertNotIn("B/s", verify)
+        self.assertIn("B/s", output.split("Downloading", 1)[1].split("Verifying", 1)[0])
+
+    def test_download_speed_uses_bytes_per_stage_second_in_all_languages(self):
+        for language in range(4):
+            result = self.run_native([self.probe, self.executable, "speed", language, 2097152, 2])
+            self.assertEqual(0, result.returncode)
+            self.assertIn(" | 1.0 MiB/s", result.stdout.decode("utf-8-sig"))
+        result = self.run_native([self.probe, self.executable, "speed", 0, 1024, 0])
+        self.assertIn(" | estimating...", result.stdout.decode("utf-8-sig"))
+
+    def test_download_completes_with_known_or_unknown_size_but_not_when_truncated(self):
+        payload = b"download fixture" * 10000
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                if self.path != "/unknown":
+                    self.send_header("Content-Length", str(len(payload) + (1 if self.path == "/truncated" else 0)))
+                self.end_headers()
+                self.wfile.write(payload)
+            def log_message(self, *args):
+                pass
+        with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler) as server:
+            worker = threading.Thread(target=server.serve_forever, daemon=True)
+            worker.start()
+            try:
+                for scenario in ("known", "unknown", "truncated"):
+                    target = self.root / (scenario + ".download")
+                    result = self.run_native([self.probe, self.executable, "download",
+                        f"http://127.0.0.1:{server.server_port}/{scenario}", target], timeout=15)
+                    output = result.stdout.decode("utf-8-sig")
+                    if scenario == "truncated":
+                        self.assertNotEqual(0, result.returncode)
+                        self.assertNotIn("100%", output)
+                    else:
+                        self.assertEqual(0, result.returncode)
+                        self.assertEqual(payload, target.read_bytes())
+                        self.assertIn("100% | ETA: 00:00", output)
+                        if scenario == "unknown": self.assertIn("?%", output)
+            finally:
+                server.shutdown()
+                worker.join(timeout=5)
+
+    def test_verification_only_completes_after_digest_and_structure_are_valid(self):
+        folder = "Game"
+        archive, digest = self.package({folder + "/Super Bomberman 6.exe": b"game", folder + "/build-info.json": b"{}"})
+        for expected, success in ((digest, True), ("0" * 64, False)):
+            result = self.run_native([self.probe, self.executable, "validate", archive, expected, folder])
+            self.assertEqual(success, result.returncode == 0)
+            self.assertEqual(success, "100% | ETA: 00:00" in result.stdout.decode("utf-8-sig"))
+        archive, digest = self.package({folder + "/Super Bomberman 6.exe": b"game"})
+        result = self.run_native([self.probe, self.executable, "validate", archive, digest, folder])
+        self.assertNotEqual(0, result.returncode)
+        self.assertNotIn("100%", result.stdout.decode("utf-8-sig"))
+
+    def test_extraction_only_completes_after_manifest_matches_the_release(self):
+        archive, _ = self.package({"Game/Super Bomberman 6.exe": b"game", "Game/build-info.json": b'{"sourceCommit":"approved"}'})
+        for expected in ("approved", "wrong"):
+            result = self.run_native([self.probe, self.executable, "extract", archive, self.root / ("stage-" + expected), "Game", expected])
+            self.assertEqual(expected == "approved", result.returncode == 0)
+            self.assertEqual(expected == "approved", "100% | ETA: 00:00" in result.stdout.decode("utf-8-sig"))
+
     def package(self, entries):
         archive = self.root / (self.id().split(".")[-1] + ".zip")
         with zipfile.ZipFile(archive, "w") as package:
@@ -105,8 +199,9 @@ if (args[1] == "progress") {
             (target / "a.txt").write_text("old", encoding="utf-8")
             (target / "b.txt").mkdir()
             (target / "OnlineMotion.log").write_text("keep", encoding="utf-8")
-            result = self.run_native([self.probe, self.executable, source, target, backup])
+            result = self.run_native([self.probe, self.executable, "install-progress", source, target, backup])
             self.assertNotEqual(0, result.returncode)
+            self.assertNotIn("100%", result.stdout.decode("utf-8-sig"))
             self.assertEqual("old", (target / "a.txt").read_text(encoding="utf-8"))
             self.assertEqual("keep", (target / "OnlineMotion.log").read_text(encoding="utf-8"))
 
@@ -119,7 +214,9 @@ if (args[1] == "progress") {
             (target / "old.dll").write_bytes(b"old")
             (target / "personal.txt").write_bytes(b"keep")
             (target / "client-files.json").write_text('["old.dll"]', encoding="utf-8")
-            self.assertEqual(0, self.run_native([self.probe, self.executable, source, target, backup]).returncode)
+            result = self.run_native([self.probe, self.executable, "install-progress", source, target, backup])
+            self.assertEqual(0, result.returncode)
+            self.assertIn("100% | ETA: 00:00", result.stdout.decode("utf-8-sig"))
             self.assertFalse((target / "old.dll").exists())
             self.assertEqual(b"old", (backup / "old.dll").read_bytes())
             self.assertEqual(b"keep", (target / "personal.txt").read_bytes())

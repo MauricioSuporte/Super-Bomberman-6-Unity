@@ -43,6 +43,7 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
     readonly Dictionary<MovementController, PlayerRopeHoldState> playerHoldStates = new();
     readonly HashSet<MovementController> playersPreparingImpulse = new();
     readonly HashSet<MovementController> playersBeingImpulsed = new();
+    readonly Dictionary<MovementController, PlayerImpulseScope> playerImpulseScopes = new();
     readonly Collider2D[] bombHitBuffer = new Collider2D[8];
 
     sealed class RunningTileSwap
@@ -56,6 +57,34 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
     {
         Impulse,
         Preparing
+    }
+
+    // Owns only the native rope's presentation/control resources. Both normal
+    // completion and explicit component/GameObject teardown release the scope.
+    sealed class PlayerImpulseScope : System.IDisposable
+    {
+        readonly BattleMode11ImpulseRopeController owner;
+        public readonly MovementController player;
+        public readonly MountMovementController mount;
+        public readonly bool inputLocked, externalMovement, hazardDamage, visualSuppressed, protection, mountProtection;
+        public readonly PlayerPreparingVisualState preparing;
+        public readonly PlayerDashVisualState dash;
+        public readonly Assets.Scripts.Netcode.NetworkPlayerInput.AuthorityMotionScope authority;
+        public IEnumerator routine;
+        public bool released;
+
+        public PlayerImpulseScope(BattleMode11ImpulseRopeController owner, MovementController player)
+        {
+            this.owner = owner; this.player = player;
+            mount = player.GetComponentInChildren<MountMovementController>(true);
+            inputLocked = player.InputLocked; externalMovement = player.ExternalMovementOverride;
+            hazardDamage = player.ExternalMovementAllowsHazardDamage; visualSuppressed = player.ExternalVisualSuppressed;
+            protection = player.explosionInvulnerable; mountProtection = mount != null && mount.explosionInvulnerable;
+            preparing = GetPlayerPreparingVisualState(player); dash = GetPlayerDashVisualState(player);
+            authority = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(player);
+        }
+
+        public void Dispose() => owner.ReleasePlayerImpulse(this);
     }
 
     sealed class PlayerRopeHoldState
@@ -352,7 +381,8 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
 
     bool CanStartPlayerImpulse(MovementController player)
     {
-        return player != null &&
+        return isActiveAndEnabled && player != null &&
+               !playerImpulseScopes.ContainsKey(player) &&
                !player.isDead &&
                !player.IsEndingStage &&
                !player.InputLocked &&
@@ -379,13 +409,71 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
         return indestructibleTilemap.GetTile(ropeCell) != null;
     }
 
+    void ReleasePlayerImpulse(PlayerImpulseScope scope)
+    {
+        if (scope.released) return;
+        scope.released = true;
+        try
+        {
+            (scope.routine as System.IDisposable)?.Dispose();
+            HidePlayerPreparingVisual(scope.preparing);
+            HidePlayerDashVisual(scope.dash);
+            var player = scope.player;
+            if (player != null)
+            {
+                if (player.IsEndingStage) CancelPlayerImpulseForEndStage(player);
+                else if (player.isDead) RestoreDeadPlayerAfterInterruptedImpulse(player, scope.mount);
+                else
+                {
+                    player.SetExternalMovementOverride(scope.externalMovement);
+                    player.SetExternalMovementAllowsHazardDamage(scope.hazardDamage);
+                    player.SetExternalVisualSuppressed(scope.visualSuppressed);
+                    player.SetExplosionInvulnerable(scope.protection);
+                    player.SetInputLocked(scope.inputLocked, forceIdle: false);
+                    if (player.Rigidbody != null) player.Rigidbody.linearVelocity = Vector2.zero;
+                    if (scope.mount != null) scope.mount.SetExplosionInvulnerable(scope.mountProtection);
+                }
+            }
+        }
+        finally
+        {
+            playersPreparingImpulse.Remove(scope.player);
+            playersBeingImpulsed.Remove(scope.player);
+            playerImpulseScopes.Remove(scope.player);
+            // Reconcile the released state, never the old input-locked pose.
+            scope.authority.Dispose();
+        }
+    }
+
+    void CancelPlayerImpulses()
+    {
+        var scopes = new List<PlayerImpulseScope>(playerImpulseScopes.Values);
+        StopAllCoroutines();
+        foreach (var scope in scopes) scope.Dispose();
+        playerImpulseScopes.Clear();
+        playersPreparingImpulse.Clear(); playersBeingImpulsed.Clear(); playerHoldStates.Clear();
+    }
+
     IEnumerator PlayerPreparingImpulseRoutine(MovementController player, Vector3Int ropeCell, Vector2 impactDirection)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || !CanStartPlayerImpulse(player)) yield break;
+        var scope = new PlayerImpulseScope(this, player);
+        playerImpulseScopes.Add(player, scope);
+        using (scope)
+        {
+            scope.routine = PlayerPreparingImpulseCore(player, ropeCell, impactDirection, scope);
+            // Enter preparation in this call, preserving the native first input
+            // frame and propagating core faults through the cleanup scope.
+            while (scope.routine.MoveNext()) yield return scope.routine.Current;
+        }
+    }
+
+    IEnumerator PlayerPreparingImpulseCore(MovementController player, Vector3Int ropeCell, Vector2 impactDirection, PlayerImpulseScope scope)
     {
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         if (player == null || playersPreparingImpulse.Contains(player) || playersBeingImpulsed.Contains(player))
             yield break;
 
-        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(player);
         playersPreparingImpulse.Add(player);
         Vector2 launchDirection = -impactDirection;
         float tileSize = Mathf.Max(0.0001f, player.tileSize);
@@ -394,9 +482,9 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
         player.SetExternalMovementOverride(true);
         player.SetExternalMovementAllowsHazardDamage(true);
 
-        MountMovementController mountMovement = player.GetComponentInChildren<MountMovementController>(true);
+        MountMovementController mountMovement = scope.mount;
 
-        PlayerPreparingVisualState preparingVisual = GetPlayerPreparingVisualState(player);
+        PlayerPreparingVisualState preparingVisual = scope.preparing;
         player.SetExternalVisualSuppressed(true);
         ShowPlayerPreparingVisual(preparingVisual, launchDirection);
 
@@ -437,7 +525,9 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
 
         StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection, RopeTileAnimationType.Impulse, ropeDeformationSeconds);
         PlayPlayerImpulseSfx(player);
-        yield return PlayerImpulseRoutine(player, impactDirection, launchDirection, mountMovement);
+        var flight = PlayerImpulseRoutine(player, impactDirection, launchDirection, mountMovement, scope.dash);
+        using var flightCleanup = flight as System.IDisposable;
+        yield return flight;
     }
 
     void PlayPlayerImpulseSfx(MovementController player)
@@ -457,7 +547,8 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
         MovementController player,
         Vector2 impactDirection,
         Vector2 launchDirection,
-        MountMovementController mountMovement)
+        MountMovementController mountMovement,
+        PlayerDashVisualState dashVisual)
     {
         playersBeingImpulsed.Add(player);
 
@@ -484,7 +575,6 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
         if (mountMovement != null)
             mountMovement.SetExplosionInvulnerable(true);
 
-        PlayerDashVisualState dashVisual = GetPlayerDashVisualState(player);
         player.SetExternalVisualSuppressed(true);
         ShowPlayerDashVisual(dashVisual, launchDirection);
 

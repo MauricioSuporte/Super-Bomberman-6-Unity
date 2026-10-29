@@ -77,6 +77,11 @@ For a launcher handling several actors, snapshot the iterator map before
 disposing entries whose finally blocks remove themselves. A disabled launcher's
 trigger entry must not reacquire the actor. Restore spring-only sprite offsets,
 mount jump/shadow state and the input gate along with the physics flags.
+When wrapping an existing native IEnumerator, preserve its first-frame work:
+advance the core in the wrapper before yielding its current instruction. Cache
+its visual bindings once and release the scope on both coroutine disposal and
+explicit teardown. Test immediate preparation, pose restoration, stopping at the
+current position and reuse, rather than only eventual input unlock.
 
 For actual-client diagnostic smokes, finish the writer before copying its JSONL.
 A live buffered StreamWriter can expose a partial final line even when gameplay

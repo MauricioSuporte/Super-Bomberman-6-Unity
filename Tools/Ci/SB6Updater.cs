@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Globalization;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
@@ -18,9 +19,12 @@ internal static class SB6Updater
 
     static int language;
     static bool progressEnabled;
-    static readonly Stopwatch UpdateTimer = new Stopwatch();
+    static readonly Stopwatch StageTimer = new Stopwatch();
     static string progressStage;
     static double lastProgressAt;
+    static bool progressIsDownload;
+    static long progressBytes;
+    static long progressTotal;
 
     static string Text(string en, string ja, string es, string pt)
     {
@@ -59,20 +63,52 @@ internal static class SB6Updater
             (fraction < 0 ? "?" : percent.ToString()) + "% | " + Text("ETA: ", "残り時間: ", "Restante: ", "Tempo restante: ") + estimate;
     }
 
-    static void Report(string stage, double start, double span, long done, long total)
+    static string DownloadSpeedText(long bytes, double elapsed)
+    {
+        string speed = Text("estimating...", "計算中...", "calculando...", "calculando...");
+        if (bytes > 0 && elapsed >= .5)
+        {
+            double value = bytes / elapsed;
+            string[] units = { "B/s", "KiB/s", "MiB/s", "GiB/s" };
+            int unit = 0;
+            while (value >= 1024 && unit < units.Length - 1) { value /= 1024; unit++; }
+            speed = value.ToString("0.0", CultureInfo.InvariantCulture) + " " + units[unit];
+        }
+        return " | " + speed;
+    }
+
+    static void Report(string stage, long done, long total, bool downloading = false)
     {
         if (!progressEnabled) return;
-        double now = UpdateTimer.Elapsed.TotalSeconds;
-        if (stage != progressStage)
+        bool changed = stage != progressStage;
+        if (changed)
         {
             FinishProgress();
             progressStage = stage;
+            StageTimer.Restart();
             Console.WriteLine(stage);
         }
-        else if (done != total && now - lastProgressAt < .1) return;
+        double now = StageTimer.Elapsed.TotalSeconds;
+        bool totalChanged = progressTotal != total;
+        progressTotal = total;
+        progressIsDownload = downloading;
+        progressBytes = done;
+        if (!changed && !totalChanged && done != total && now - lastProgressAt < .1) return;
         lastProgressAt = now;
-        double fraction = total > 0 ? start + span * Math.Min(1, (double)done / total) : -1;
-        Console.Write("\r" + ProgressText(fraction, now).PadRight(78));
+        // Reaching the byte count does not guarantee that flush, hash or package
+        // validation succeeded. Only CompleteProgress may print 100%.
+        double fraction = total > 0 ? Math.Max(0, Math.Min(.999, (double)done / total)) : -1;
+        Console.Write("\r" + (ProgressText(fraction, now) +
+            (downloading ? DownloadSpeedText(done, now) : "")).PadRight(78));
+    }
+
+    static void CompleteProgress()
+    {
+        if (!progressEnabled || progressStage == null) return;
+        double elapsed = StageTimer.Elapsed.TotalSeconds;
+        Console.Write("\r" + (ProgressText(1, elapsed) +
+            (progressIsDownload ? DownloadSpeedText(progressBytes, elapsed) : "")).PadRight(78));
+        FinishProgress();
     }
 
     static void FinishProgress()
@@ -80,12 +116,13 @@ internal static class SB6Updater
         if (progressStage == null) return;
         Console.WriteLine();
         progressStage = null;
+        StageTimer.Reset();
     }
 
     static void Download(Uri url, string archive)
     {
         string stage = Text("Downloading update...", "更新をダウンロード中...", "Descargando actualización...", "Baixando atualização...");
-        Report(stage, .01, .74, 0, 1);
+        Report(stage, 0, 1, true);
         using (var client = Client())
         using (var input = client.OpenRead(url))
         using (var output = File.Create(archive))
@@ -99,11 +136,11 @@ internal static class SB6Updater
             {
                 output.Write(buffer, 0, count);
                 received += count;
-                Report(stage, .01, .74, received, total);
+                Report(stage, received, total, true);
             }
             if (total > 0 && received != total) throw new IOException(Text("Incomplete download.", "ダウンロードが不完全です。", "Descarga incompleta.", "Download incompleto."));
-            Report(stage, .01, .74, 1, 1);
         }
+        CompleteProgress();
     }
 
     static int Main(string[] args)
@@ -174,9 +211,8 @@ internal static class SB6Updater
     static void Update(string install)
     {
         progressEnabled = true;
-        UpdateTimer.Restart();
         if (!File.Exists(Path.Combine(install, Game))) throw new IOException(Text("Invalid game folder.", "ゲームのフォルダーが無効です。", "Carpeta del juego inválida.", "Pasta do jogo inválida."));
-        Console.WriteLine(Text("Checking the published online version...", "公開中のオンラインバージョンを確認中...", "Comprobando la versión online publicada...", "Verificando a versão online publicada..."));
+        Report(Text("Checking the published online version...", "公開中のオンラインバージョンを確認中...", "Comprobando la versión online publicada...", "Verificando a versão online publicada..."), 0, 1);
         Dictionary<string, object> release;
         using (var client = Client()) release = Json.Deserialize<Dictionary<string, object>>(
             client.DownloadString("https://api.github.com/repos/" + Repository + "/releases/tags/online-v0.5.0"));
@@ -189,7 +225,7 @@ internal static class SB6Updater
         string commit = (string)update["sourceCommit"];
         string info = Path.Combine(install, "build-info.json");
         if (File.Exists(info) && (string)Json.Deserialize<Dictionary<string, object>>(File.ReadAllText(info, Encoding.UTF8))["sourceCommit"] == commit)
-        { Console.WriteLine(Text("The game is already up to date.", "ゲームは最新です。", "El juego ya está actualizado.", "O jogo já está na versão online mais recente.")); return; }
+        { CompleteProgress(); Console.WriteLine(Text("The game is already up to date.", "ゲームは最新です。", "El juego ya está actualizado.", "O jogo já está na versão online mais recente.")); return; }
         foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(Game)))
             using (process)
                 if (string.Equals(process.MainModule.FileName, Path.Combine(install, Game), StringComparison.OrdinalIgnoreCase))
@@ -197,18 +233,30 @@ internal static class SB6Updater
         var url = new Uri((string)update["url"]);
         if (url.Scheme != "https" || url.Host != "github.com" || !url.AbsolutePath.StartsWith("/" + Repository + "/releases/download/", StringComparison.Ordinal))
             throw new IOException(Text("Invalid package URL.", "パッケージのURLが無効です。", "Dirección del paquete inválida.", "Endereço do pacote inválido."));
+        CompleteProgress();
         string work = AppDomain.CurrentDomain.BaseDirectory;
         string archive = Path.Combine(work, "download.zip");
         Download(url, archive);
         string folder = (string)update["folder"];
         ValidatePackage(archive, (string)update["sha256"], folder);
-        string stage = Path.Combine(work, "stage"); Directory.CreateDirectory(stage);
+        string stage = Path.Combine(work, "stage");
+        Extract(archive, stage, folder, commit);
+        string source = SafePath(stage, folder);
+        Install(source, install, Path.Combine(work, "backup"));
+        FinishProgress();
+        Console.WriteLine(Text("Game updated successfully. Version ", "更新が完了しました。バージョン ", "Juego actualizado. Versión ", "Jogo atualizado com sucesso. Versão ") + update["version"] + ".");
+        Console.WriteLine(Text("Backup and temporary files: ", "バックアップと一時ファイル: ", "Copia de seguridad y archivos temporales: ", "Backup e arquivos temporários: ") + work);
+    }
+
+    static void Extract(string archive, string stage, string folder, string commit)
+    {
+        Directory.CreateDirectory(stage);
         using (var zip = ZipFile.OpenRead(archive))
         {
             long total = zip.Entries.Sum(entry => entry.Length);
             long extracted = 0;
             string extracting = Text("Extracting files...", "ファイルを展開中...", "Extrayendo archivos...", "Extraindo arquivos...");
-            Report(extracting, .82, .10, 0, Math.Max(1, total));
+            Report(extracting, 0, Math.Max(1, total));
             foreach (var entry in zip.Entries)
             {
                 string destination = SafePath(stage, entry.FullName);
@@ -218,18 +266,15 @@ internal static class SB6Updater
                     Directory.CreateDirectory(Path.GetDirectoryName(destination));
                     using (var input = entry.Open())
                     using (var output = File.Create(destination))
-                        CopyWithProgress(input, output, extracting, .82, .10, ref extracted, Math.Max(1, total));
+                        CopyWithProgress(input, output, extracting, ref extracted, Math.Max(1, total));
                 }
-                Report(extracting, .82, .10, extracted, Math.Max(1, total));
+                Report(extracting, extracted, Math.Max(1, total));
             }
         }
         string source = SafePath(stage, folder);
         var downloaded = Json.Deserialize<Dictionary<string, object>>(File.ReadAllText(Path.Combine(source, "build-info.json"), Encoding.UTF8));
         if ((string)downloaded["sourceCommit"] != commit) throw new IOException(Text("Package does not match the release.", "パッケージがリリースと一致しません。", "El paquete no corresponde a la publicación.", "O pacote não corresponde à publicação."));
-        Install(source, install, Path.Combine(work, "backup"));
-        FinishProgress();
-        Console.WriteLine(Text("Game updated successfully. Version ", "更新が完了しました。バージョン ", "Juego actualizado. Versión ", "Jogo atualizado com sucesso. Versão ") + update["version"] + ".");
-        Console.WriteLine(Text("Backup and temporary files: ", "バックアップと一時ファイル: ", "Copia de seguridad y archivos temporales: ", "Backup e arquivos temporários: ") + work);
+        CompleteProgress();
     }
 
     static string SafePath(string root, string relative)
@@ -247,13 +292,13 @@ internal static class SB6Updater
         using (var stream = File.OpenRead(path))
         {
             string verifying = Text("Verifying download...", "ダウンロードを検証中...", "Verificando descarga...", "Verificando download...");
-            Report(verifying, .75, .07, 0, Math.Max(1, stream.Length));
+            Report(verifying, 0, Math.Max(1, stream.Length));
             byte[] buffer = new byte[65536];
             int count;
             while ((count = stream.Read(buffer, 0, buffer.Length)) > 0)
             {
                 sha.TransformBlock(buffer, 0, count, buffer, 0);
-                Report(verifying, .75, .07, stream.Position, Math.Max(1, stream.Length));
+                Report(verifying, stream.Position, Math.Max(1, stream.Length));
             }
             sha.TransformFinalBlock(buffer, 0, 0);
             if (!string.Equals(BitConverter.ToString(sha.Hash).Replace("-", ""), expected, StringComparison.OrdinalIgnoreCase))
@@ -273,9 +318,10 @@ internal static class SB6Updater
                 manifest |= target == Path.Combine(package, "build-info.json");
             }
         if (!executable || !manifest) throw new IOException(Text("Package is incomplete.", "パッケージが不完全です。", "El paquete está incompleto.", "O pacote está incompleto."));
+        CompleteProgress();
     }
 
-    static void CopyWithProgress(Stream input, Stream output, string stage, double start, double span, ref long done, long total)
+    static void CopyWithProgress(Stream input, Stream output, string stage, ref long done, long total)
     {
         byte[] buffer = new byte[65536];
         int count;
@@ -283,7 +329,7 @@ internal static class SB6Updater
         {
             output.Write(buffer, 0, count);
             done += count;
-            Report(stage, start, span, done, total);
+            Report(stage, done, total);
         }
     }
 
@@ -302,7 +348,7 @@ internal static class SB6Updater
         string installing = Text("Installing update...", "更新をインストール中...", "Instalando actualización...", "Instalando atualização...");
         long installed = 0;
         long installSize = Math.Max(1, incoming.Sum(file => new FileInfo(SafePath(source, file)).Length) + obsolete.Length);
-        Report(installing, .92, .08, 0, installSize);
+        Report(installing, 0, installSize);
         try
         {
             foreach (string relative in files)
@@ -320,16 +366,16 @@ internal static class SB6Updater
                     Directory.CreateDirectory(Path.GetDirectoryName(destination));
                     using (var input = File.OpenRead(SafePath(source, relative)))
                     using (var output = File.Create(destination))
-                        CopyWithProgress(input, output, installing, .92, .08, ref installed, installSize);
+                        CopyWithProgress(input, output, installing, ref installed, installSize);
                 }
                 else
                 {
                     if (File.Exists(destination)) File.Delete(destination);
                     installed++;
                 }
-                Report(installing, .92, .08, installed, installSize);
+                Report(installing, installed, installSize);
             }
-            Report(installing, .92, .08, 1, 1);
+            CompleteProgress();
         }
         catch (Exception installError)
         {

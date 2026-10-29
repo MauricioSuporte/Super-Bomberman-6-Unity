@@ -222,7 +222,7 @@ Validação local: compilação C# e compilação Unity concluídas; 17 casos di
 
 ## Atualizador: progresso e idioma
 
-GameUpdater.exe mostra uma barra com percentual e tempo restante estimado durante download, verificação SHA-256, extração e instalação. O cálculo acompanha o trabalho concluído e pode variar com a velocidade da conexão e do disco; sem tamanho conhecido, informa que está calculando. Extração e instalação atualizam o progresso durante a cópia dos arquivos grandes.
+GameUpdater.exe mostra progresso independente de0a100% e tempo restante estimado por etapa: consulta, download, verificação SHA-256, extração e instalação. O download também mostra a velocidade média emB/s, KiB/s, MiB/s ou GiB/s. O relógio da estimativa reinicia em cada etapa; sem tamanho conhecido ou dados suficientes, informa que está calculando. Extração e instalação atualizam o progresso durante a cópia de arquivos grandes.100% só aparece após concluir com sucesso a etapa, incluindo flush, integridade e validações aplicáveis; download incompleto, pacote inválido ou instalação com rollback não são anunciados como concluídos.
 
 Ao iniciar pelo lobby, o jogo passa --language com o idioma selecionado; o processo auxiliar conserva esse argumento. Ao abrir diretamente, o atualizador lê language no SaveData/save.dat local (ou em SB6_SAVE_DIRECTORY). Inglês, japonês, espanhol e português são suportados. Save ausente ou inválido usa inglês.
 

@@ -202,6 +202,7 @@ public sealed partial class BattleMode11ImpulseRopeController
 
     void OnDisable()
     {
+        CancelPlayerImpulses();
         RestoreNetworkRopeCells(); ropeViewHistory.Clear(); appliedRopeViewRevision = 0;
         foreach (var pair in runningSwaps)
         {
