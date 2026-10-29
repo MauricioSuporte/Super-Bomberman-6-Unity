@@ -1907,3 +1907,9 @@ Nenhuma cena/prefab foi editada. Sem validação manual entre dois peers nem nov
 medição de atraso neste lote. A12 e os18 IDs parciais continuam em andamento.
 Próximo: publicar este lote52, validar carga/indicador/C/visibilidade entre peers,
 continuar preview imediato de A12 com elegibilidade/cooldown/tick aprovados.
+
+
+Publicação acionada: commit4822c318e, protocolo52. Actions40801957603 confirmado
+in_progress: https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40801957603
+Ainda não confirmar deploy/updater até completed/success. Código congelado e
+workspace limpo após envio. Ao retomar, consultar esse run antes de usar o runner.
