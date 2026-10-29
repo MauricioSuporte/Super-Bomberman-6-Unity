@@ -1362,3 +1362,12 @@ a ordem elevada e flips nativos durante roll/push, sem mudar o collider.
 Validação de integração55: Run2 de Battle com2clientes reais passou por2cargas da
 arena e encerramento, sem erros/avisos. A execução é headless e usa atores duráveis
 de Development; não é comparação de fluidez com offline nem aprovação gráfica.
+
+
+Revisão A14/R07 após55: o FX de apresentação escolhido pelo manager não representa
+necessariamente o ator que chutou. IsKickMovingForTick pode informar que uma bomba
+compartilhada está em movimento, mas LastKickForTick não deve elegê-la como comando
+adjacente do owner para replay. Preservar a referência de chutes próprios aprovados.
+Correção local validada em4/4focados Unity após publicação55; inclui2novos casos
+owner/observer e preservação do comando próprio. Build/smokes seguintes em andamento;
+o fix ainda não está publicado.

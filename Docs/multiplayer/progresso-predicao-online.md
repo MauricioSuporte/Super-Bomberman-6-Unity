@@ -48,7 +48,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 - **Publicado:** protocolo54, commit `0b2f10852`, pipeline
   [40808356205](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40808356205)
-  completed/success. Protocolo55 validado localmente, publicação ainda pendente.
+  completed/success. Protocolo55 publicado em11c1bdf55/Actions40843901315 (completed/success).
 - **Validação55:**881/881 Unity, sem skips; C#0 erros/0 avisos; Python47/47;
   UTF8/BOM/diff conferidos. Reports em Logs/PredictionRecovery55.*.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
@@ -236,7 +236,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
 - [ ] R07: parcial55 local: ovos/poses e VFX independente do owner, WorldBombMotion sem endpoint original, itens expulsos e histórico root/frames de montaria testados (suíte878). Smoke Battle/co-op2peers passou; manual gráfico/transferências e curvas pendentes.
 - [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
-- [ ] Consolidar skill e notas (atualizadas até R03/49 e A12/R06/R08 parciais50); matriz manual criada, execução e consolidação final pendentes.
+- [ ] Consolidar skill e notas (atualizadas até55: motion independente do ator, itens/montaria, custos, reconexão e teardown); matriz atualizada com integração automática2peers. Manual gráfico e consolidação dos IDs parciais pendentes.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
 registrar separadamente validação manual ainda não realizada. Hipóteses de
@@ -2163,3 +2163,41 @@ Não inferir aspecto gráfico/fluidez/manual de logs headless. Checklist15/18 ma
 Runner liberado após a suíte; restaurar somente fontes próprias antes de Actions.
 Próximo: commit55 e envio conjunto client/server, acompanhar build/deploy, então
 retomar C02/C03 e outros IDs parciais. Publicação ainda não confirmada neste ponto.
+
+
+##55 enviado / continuação A14–R07
+
+Commit11c1bdf55 enviado junto com000410840 e80afbd484. Actions40843901315 iniciado,
+preflight aprovado, builds em execução; não confirmar deploy antes do resultado.
+Runner pertence ao CI; não copiar fontes nem iniciar outro Unity nele agora.
+
+Próximo defeito identificado no review: LastKickForTick também elegia motion.worldMotion
+como último chute adjacente do owner quando o manager roteava a apresentação pelo
+seu FX. Isso poderia trocar a referência usada pelo replay por um chute de COM/outro
+ator. Correção local exclui somente motion compartilhado dessa referência, mantendo
+IsKickMovingForTick para a consulta de obstáculo móvel. Duas regressões novas
+preparadas (owner/observer, stop, comando próprio preservado); ainda NÃO validadas
+Unity, NÃO commitadas, NÃO no CI11c1bdf55. Aguardar runner, executar focados e compilar.
+
+
+Publicação55 CONFIRMADA: Actions40843901315 completed/success em todos os passos,
+commit11c1bdf55, builds Linux/Windows, deploy e updater. Não inclui a nova correção
+local LastKickForTick. Após liberar o runner, fontes desse ajuste sincronizadas;
+focados4casos (owner/observer e arco/stop) em execução em PredictionSharedKick55.
+Se aprovados, script já encadeia BuildPerformancePlayer para validar fases com
+chefes em dois clientes reais. Nenhum processo do usuário encerrado/cena editada.
+
+
+Expansão preparada da integração após os focados: Stage_1-7 contém ClownMask;
+Stage_2-7 contém SunMask; Stage_3-6 contém16prefabs de inimigos (inclui Heli,
+MechaBombSB3, BirdRobotRed, Penguin não está nessa cena). Prefabs conferidos por
+GUID do m_SourcePrefab, não por suposição de nomes. Rodar smokes sequenciais para
+não exceder memória, usando2clientes reais e --diagnostics; não concluir curvas,
+input ou renderização somente por smoke. Fases ainda não executadas nesta etapa.
+
+
+Fix LastKickForTick VALIDADO: Logs/PredictionSharedKick55.xml/.log,4/4focados
+passaram (2novos +2regressões existentes). C# sem erros/avisos novos;6avisos já
+existentes no Mirror após rebuild de dependências. A suíte completa881 precede
+esse fix; não afirmar883/883. Build Development seguinte em andamento. Ainda não
+publicado. Não copiar/restaurar runner até terminar build e smokes próprios.

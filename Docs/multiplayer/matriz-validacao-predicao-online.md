@@ -196,3 +196,35 @@ e barrel. Cenas/prefabs personalizados com jump maior precisam nova calibração
   vítima indo para seu cart, troca de dono, nova geração, nova rodada e disconnect.
 - Capturar os eventos revenge_cart_authority e revenge_cart_present com protocolo51
   dos peers. Não inferir input-to-first-motion exato com amostragem visual de10Hz.
+
+
+## Integração automática em29/10 — protocolo55
+
+Executados em processos separados: servidor dedicado e2clientes Mirror reais,
+com Development, atores duráveis e renderização desativada. Isso cobre fluxo de
+rede/erros, não substitui a comparação manual dos critérios acima.
+
+| Evidência | Cenário/entrada | Resultado observado | Limite |
+| --- | --- | --- | --- |
+| Logs/PredictionFullClients55Run2/result.json | BattleMode_15,210s, Select pelo caminho de input normal |2cargas de arena; Skull/LineBomb apresentados nos2clientes; dismount Mole/Tank confirmado;0erros/avisos | Não mede pixels, hardware físico ou latência percebida; fixtures de Development |
+| Logs/PredictionCoopClients55Run1/result.json | NormalGame/Stage_1-1,90s,2clientes sem input | Cena nos3logs;0erros/avisos;82reports de custo no servidor | Só essa cena/família; sem movimento humano nem comparação offline |
+| Logs/PredictionCoopClients55Run1/analysis.json | Agregação por captura/build/protocolo/papel |23025 amostras de EnemyMovementController,121,3574ms CPU de captura e2788125bytes de frames | Inclui aquecimento; exclui envelopes, assets, fanout, transporte, diagnóstico e GPU |
+| Logs/PredictionRecovery55.xml | EditMode881casos |881aprovados,0falhas/0skips; inclui sorting, reconexão e teardown | Últimos3casos posteriores aos binários dos smokes; sem validação gráfica |
+
+Run1 de Battle falhou por limpeza após destruição do manager e envio após parada
+do servidor. Corrigido e repetido no Run2: preservar ambas as tentativas como
+histórico, não somar Run1 às execuções aprovadas.
+
+Os smokes usam fontes locais modificadas com o stamp0b2f10852 do runner; o hash
+real da DLL está em binary-provenance.json. Não usar o stamp como prova de deploy.
+O script passa a gravar hashes em config.json antes de iniciar os processos.
+
+Para repetir com um player Development criado por BuildPerformancePlayer:
+
+```powershell
+python Tools/RoomDirectory/smoke_full_clients.py --server <SB6.exe> --client <SB6.exe> --output <nova-pasta> --mount-input --prediction-items --seconds 210
+python Tools/RoomDirectory/smoke_full_clients.py --server <SB6.exe> --client <SB6.exe> --output <nova-pasta-coop> --mode NormalGame --scene Stage_1-1 --diagnostics --seconds 90
+```
+
+A ferramenta só encerra seus
+próprios processos. Libere o runner antes de compilar/substituir o executável.

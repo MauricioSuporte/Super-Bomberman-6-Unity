@@ -158,6 +158,25 @@ public sealed partial class OnlineRoomEditModeTests
         Assert.IsFalse(fixture.fx.AbilityPredictionLocksMovement);
     }
 
+    [TestCase(false)] [TestCase(true)]
+    public void SharedKickCannotReplaceTheOwnersAdjacentKickReference(bool local)
+    {
+        using var fixture = new WorldBombFixture(local);
+        var motion = fixture.Motion(1, NetworkBombFx.BombMotionKind.Kick);
+        fixture.Receive(motion);
+        Assert.IsNull(fixture.fx.LastKickForTick(10), "A shared kick is not this owner's command.");
+        Assert.AreEqual(local, fixture.fx.IsKickMovingForTick(fixture.bomb, 10), "The local motor still queries shared moving obstacle state.");
+        var stop = motion; stop.revision = 2; stop.moving = false; stop.first = false; stop.duration = 0;
+        fixture.Receive(stop);
+        Assert.IsFalse(fixture.fx.IsKickMovingForTick(fixture.bomb, 10));
+        if (local)
+        {
+            motion.worldMotion = false; motion.revision = 3; motion.inputTick = 10;
+            fixture.fx.ReceiveKickMotion(motion);
+            Assert.AreSame(fixture.bomb, fixture.fx.LastKickForTick(10), "A genuinely owned command retains its replay reference.");
+        }
+    }
+
     [Test]
     public void WorldBombMotionCanTransferToAnotherSpawnedPresenterAfterItsOriginalActorIsRemoved()
     {

@@ -194,7 +194,9 @@ namespace Assets.Scripts.Netcode
             uint latestTick = 0;
             foreach (var pair in kickPlayback)
             {
-                if (!IsKickMovingForTick(pair.Key, tick)) continue;
+                // Shared approved motion is an obstacle state, never the owner's
+                // adjacent-kick command reference used by movement replay.
+                if (pair.Value.motion.worldMotion || !IsKickMovingForTick(pair.Key, tick)) continue;
                 uint start = pair.Value.history != null ? pair.Value.history.startTick : pair.Value.startInputTick;
                 if (latest == null || NetworkInputHistory.IsNewer(start, latestTick))
                 { latest = pair.Key; latestTick = start; }

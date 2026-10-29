@@ -58,6 +58,9 @@ Keep the remote kick owner's targeted prediction path, exclude it from the
 observer broadcast, and route observers to an existing valid presenter.
 World motion must not inherit another action's input tick, lead or ability
 pose. Cache entries require scene, identity and revision checks and cleanup.
+The FX chosen to display shared motion is not necessarily the actor that kicked
+the bomb. Keep shared moving-obstacle queries separate from LastKickForTick,
+which restores the local owner's adjacent-kick command reference during replay.
 Track sent revisions and excluded owners by the actual connection instance;
 a reconnect can reuse a connection id. Prune disconnected peers so idle object
 caches stay bounded, and test replacement of an excluded connection too.
