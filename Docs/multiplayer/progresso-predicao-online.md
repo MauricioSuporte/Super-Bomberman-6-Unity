@@ -2791,3 +2791,40 @@ Próximo: UTF8/diff finais; preservar reports; restaurar só os17tracked própri
 runner listados em Logs/A11-56-owned-paths.json; salvar/publicar todos os22paths
 próprios, sem os3fonts do usuário. Protocolo56 alinhado no jogo/directory; builds
 cliente e servidor devem ser publicados juntos. Ainda NÃO houve push56 neste ponto.
+
+
+## A11 salvo e enviado — publicação56 iniciada
+
+Commit `bf111acca` enviado a origin/v0.5.0. Actions40922400063 em andamento:
+https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40922400063
+Build/publicação conjunto cliente+servidor (sem server-only), perfilquick; testes
+já executados localmente928/928Unity,30/30foco,64/64Python. Não usar o runner enquanto
+esse job estiver ativo. Seus17tracked próprios foram restaurados antes do push,
+com reports preservados em Logs; root só tem os3fonts do usuário fora do commit.
+A11[x],18/33implementados/testados e15parciais. Não presumir deploy56 até consultar
+conclusão completed/success; último deploy confirmado permanece0ddcf872d/protocolo55.
+Continuar C02/C03 e demais parciais pelo checklist após conferir a publicação.
+
+
+## Próximo C02 — auditoria retomada durante o CI56 (sem código novo)
+
+AuthorityMotionScope em NetworkAuthorityMotion.cs cobre o lifetime nativo e owner
+interpola apenas snapshots aprovados. Isso NÃO é um descritor de trajetória inteira.
+CannonLauncher.LaunchPlayerArc põe a parábola no Rigidbody/root, com end opcionalmente
+arredondado; SpringLauncher alterna3caminhos: sem riding (altura no root), montado
+(altura no root + jump/shadow da montaria) e desmontado com riding (root plano e
+altura somente no renderer). Spring ainda faz wrap horizontal contínuo, vertical
+para tile interno e clamp do arco pelos bounds de sala em World3. Não generalizar
+bounce de player para esses caminhos: ele assume altura no root e pose de bounce.
+
+Próxima implementação deve extrair sampler nativo compartilhado (root/ground/
+altura separados) sem alterar regras offline; enviar receita aprovada e fase/pausa
+pelo proprietário existente. Observer e owner devem usar o mesmo tempo aprovado
+com ajuste de NetworkTransform/NetworkPlayerAnimation/NetworkMountAnimation.
+Priorizar Riding/bounce e cancelar por morte/disable/cena. Final da curva arredondado
+ou wrap precisa stop/handoff aprovado; não liberar input por extrapolação. Retenção
+SyncVar para late observers e cleanup com token da AuthorityMotionScope. Há testes
+existentes de geometria Spring e lifetime Cannon/Spring em
+OnlineRoomLauncherLifetimeTests.cs; manter assinaturas privadas refletidas por eles.
+Nenhum sampler/receita C02 novo foi escrito neste lote. Não marcar C02 completo.
+CI40922400063 ainda em build na última consulta; runner reservado a ele.
