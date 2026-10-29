@@ -43,28 +43,30 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 
 ## Estado atual
 
-Atualizado em27/10/2026. O checklist distingue implementação/testes de validação
-manual; o histórico abaixo preserva decisões, resultados e tentativas anteriores.
+Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
+manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Servidor e atualizador publicados:** protocolo51, commit `b6a886569`, pipeline
-  [40558343289](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40558343289)
-  completed/success: builds Linux/Windows, deploy, updater e artefatos confirmados.
-- **Validação final:**500/500 Unity (OnlineRoom408+COM92),25 focados, host real com
-  duas rodadas, C#0 erros/0 avisos novos, Python44/44, UTF-8/BOM/metas/diff/skill
-  aprovados. Reports em Logs/PredictionRevengeCart51FinalTests.*; tentativas guardadas.
-- **A12/51:** input autenticado após eliminação, motor do cart previsto/replay puro,
-  dt histórico, roster/poses/som aprovados, cursor fixo mundial e retorno confirmado.
-  Troca/vida/carga/lançamento/dano são do servidor. Sem LoadInto local no retorno.
+- **Publicado:** protocolo54, commit `0b2f10852`, pipeline
+  [40808356205](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40808356205)
+  completed/success. Protocolo55 validado localmente, publicação ainda pendente.
+- **Validação55:**881/881 Unity, sem skips; C#0 erros/0 avisos; Python47/47;
+  UTF8/BOM/diff conferidos. Reports em Logs/PredictionRecovery55.*.
+- **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
+  itens em movimento e desmontagem Mole/Tank; co-op Stage_1-1 por90s com captura.
+  Ambos sem erros/avisos. Headless; não comprova renderização nem input lag zero.
+  Sorting/reconexão posteriores a esses binários validados na suíte881.
+- **R07/A11:** trajetórias de bombas sem endpoint original, rolagem/push de itens,
+  recuperação de peers, poses de montaria no mesmo histórico e continuidade do
+  dismount. **A12:** handoff espera fim da fase apresentada; métricas já testadas.
+- **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
+  EnemyMovementController registrada sem baseline comparativo; guardas nativas e
+  pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 iniciados.
-  Manual com dois peers continua pendente inclusive nos IDs marcados como feitos.
-- **Próximo:** alinhar RegisterRoomActivity em input de cart remoto aceito; continuar
-  preview de lançamento/carga/recoil/aim/muzzle, handoff/capturas e demais parciais.
-  A12 continua parcial. Não há percentis/zero input lag medidos de Revenge.
-- **Limites:** previsão até250ms sem amostra para o cart, fila8/história128;
-  decisões desconhecidas permanecem autoritativas. Não é rollback de toda a física.
-- **Workspace:** branch `v0.5.0`, checkout original; código51 salvo/publicado.
-  Preservar fontes/TitleScreen do usuário e Editor aberto. Nenhuma cena/prefab
-  editada no lote. Runner deve ser conferido antes de novas cópias/testes.
+  Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
+- **Próximo:** publicar55 após liberar o runner; continuar C02/C03 (curvas e entrega
+  ao motor), A12/capturas e demais parciais. Não marcar melhorias percebidas sem teste.
+- **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
+  lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
 ## Como acompanhar
 
@@ -197,7 +199,7 @@ manual; o histórico abaixo preserva decisões, resultados e tentativas anterior
 
 ## Checklist por ID
 
-Resumo: **15 de33 IDs concluídos em implementação/testes,12 parciais e6 pendentes**.
+Resumo: **15 de33 IDs concluídos em implementação/testes e18 parciais**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -212,8 +214,8 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
-- [ ] A11: parcial: riding/dismount34 e fila visual35 testados; continuidade/transferência e dois peers ainda requerem auditoria R07.
-- [ ] A12: parcial54 publicado (d89ea1e94/40805386795 success): motor/replay, carga/mira, recoil/muzzle e release tick implementados/testados em522 casos; diagnósticos de primeira apresentação e confirmação em validação. Capturas, handoff e manual2peers pendentes.
+- [ ] A11: parcial55 local: riding/dismount, fila visual e defer de remoção da montaria no arco vivo testados; smoke2peers Mole/Tank detectou teardown, corrigido em suíte878. Repetição e manual visual pendentes.
+- [ ] A12: parcial54 publicado: motor/replay, carga/mira, recoil/muzzle, release tick e métricas testados. Handoff aguarda também fim da fase apresentada no55 local (suíte878). Capturas de latência e manual2peers pendentes.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
@@ -227,12 +229,12 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] C09: parcial48: caldeira/pull ordenado sem previsão/lead, gates de swap/dinamite/foguete, blackout/room lights e materiais de máscara aprovados,445 testes combinados; fases/tile Startup/capturas/render gráfico ainda pendentes.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
-- [ ] R02: parcial: geometria aprovada segura e clock visual39 alinhados/testados; custo por família e curvas ainda pendentes.
-- [ ] R03: parcial49: Frog/Hop/SnowMan/Korobokkuru, corpo/sombra/ondas, pausa/wrap/cut e gates nativos testados em452 casos; demais famílias/curvas/capturas ainda pendentes.
+- [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
+- [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
 - [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
 - [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
-- [ ] R07: parcial: ovos35/poses38, motion com owner inativo41 e VFX já recebido independente do owner42 testados; bombas sem owner, itens/transferência e manual pendentes.
+- [ ] R07: parcial55 local: ovos/poses e VFX independente do owner, WorldBombMotion sem endpoint original, itens expulsos e histórico root/frames de montaria testados (suíte878). Smoke Battle/co-op2peers passou; manual gráfico/transferências e curvas pendentes.
 - [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
 - [ ] Consolidar skill e notas (atualizadas até R03/49 e A12/R06/R08 parciais50); matriz manual criada, execução e consolidação final pendentes.
 
@@ -2050,3 +2052,114 @@ montaria enquanto o rider vivo ainda apresenta arco de Riding. Não adiar estado
 real nem morte/troca para outra montaria. Cinco testes puros novos preparados;
 repetir suíte com essa mudança antes de commit/publicação. NPS/método de teste
 adicional ainda não fazem parte do lote validado857. Nenhum push55 realizado.
+
+
+## Retomada29/10 — trabalho contínuo, sem publicação55 ainda
+
+Commits locais:000410840 (R07 itens/montaria) e80afbd484 (auditoria nativa).
+Origin/publicado continua0b2f10852/protocolo54; não confundir commit local com deploy.
+Lote seguinte em workspace: transporte WorldBombMotion pelo manager para motion
+sem endpoint do ator, cache256 por netId/revisão/scene, exclusão do owner do kick
+remoto (mantém Target/predição), roteamento a FX válido já spawnado no client e
+retry limitado para ordem spawn/evento. worldMotion não concede habilidade nem
+herda input lead/histórico de outra ação. Cleanup e recuperação de late observer
+não dependem de manter o jogador original. Também há guard de entrada/saída visual
+de Revenge antes do motor e defer de remoção de montaria durante Riding vivo.
+Validação:15/15 focados e872/872 suíte completa. Reports
+Logs/PredictionWorldBomb55Focused.* e PredictionWorldBomb55Full.*. Esses resultados
+correspondem a antes das adições de métricas/harness abaixo.
+
+R02/P0 em validação: OnlinePresentationMetrics agrega frames amostrados/alterados,
+bytes serializados dos frames e CPU do bloco de captura por família, somente com
+diagnóstico ligado. Não inclui envelopes, definições de assets, multiplicação por
+peers, transporte nem overhead do próprio diagnóstico. Analyzer separa o contexto,
+valida números e agrega famílias; PythonCI39/39 passou. Não são medições de uma
+partida nova. Additive JSON de log, sem novo wire além do protocolo55 já local.
+
+Próximo fluxo já preparado mas NÃO executado: BuildPerformancePlayer no runner,
+3-process smoke com2clientes Mirror reais e flag --prediction-items, além de
+--mount-input para Mole/Tank. LocalNetworkInputSmoke observa item em fase de
+movimento aprovado. Fixture server cria Skull/LineBomb e expulsa via gameplay
+nativo. Nomes exclusivos passados só por flag Development/Editor, sem PlayerPrefs;
+release continua usando nome salvo. Smoke usa CREATE_NO_WINDOW e só encerra seus
+próprios processos. Headless NÃO comprova aspecto gráfico/sensação nem latência.
+Nova suíte final deve incluir diagnóstico de família e helper de nome (874 casos
+esperados). Depois compilar Development e executar smoke antes de fechar este lote.
+Não iniciar CI com runner em uso. Há fontes não commitadas e arquivos novos nele.
+
+
+## Retomada29/10 — falha de encerramento reproduzida e correção em validação
+
+Suíte consolidada antes do smoke:874/874 passou, C#0 avisos/0 erros e Python47/47.
+Development player compilou (PredictionDevelopment55Build.log). O smoke real
+Logs/PredictionFullClients55Run1 confirmou nos2clientes a apresentação aprovada de
+Skull/LineBomb e desmontagem Mole/Tank, mas FALHOU no encerramento por NullReference
+em NetworkBombMotionLifetime.Forget. O singleton destruído passa no pattern C#;
+adicionado check Unity-null antes do acesso. Três avisos de publish após shutdown
+(Mole/Pink/Green) corrigidos consultando NetworkServer.active também após yields.
+Novo smoke agora falha explicitamente nesses avisos. Não classificar Run1 como
+sucesso; tampouco comprova gráficos, sensação de input ou custo co-op.
+
+Próximo: suíte PredictionLifecycle55 (878 casos esperados) já iniciada no runner;
+se aprovada, rebuild Development e repetir smoke em pasta Run2. C# desta correção
+já compilou0/0. Skill e notas atualizadas com transporte independente de ator,
+continuidade de item/montaria e teardown. Nenhum push/deploy55 realizado.
+
+
+Atualização da retomada: PredictionLifecycle55 final878/878 passou, sem skips;
+relatórios copiados para Logs/. Build Development corrigido em andamento.
+Pipeline anterior40808356205 confirmado completed/success (0b2f10852, protocolo54).
+Smoke ganhou opção co-op/Stage e cópia explícita dos três motion logs para medir
+R02 por família com2clientes reais. Essa modalidade ainda não foi executada.
+
+
+Enquanto os smokes55 corrigidos rodam: auditoria R07 identificou diferença de
+sorting dos itens em roll/push. Client agora captura/eleva/restaura a mesma ordem
+visual do caminho offline, preservando flip e ordens já altas; restaura também
+em OnDisable. Uma regressão nova preparada (879 esperados). Esta mudança AINDA
+não foi sincronizada no runner nem está no binário dos smokes em andamento.
+Repetir Unity/C# antes de commit/publicação; não atribuir validação gráfica ao smoke.
+
+
+Smoke55 Run2 APROVADO: Logs/PredictionFullClients55Run2/result.json.2clientes
+Mirror reais,210s de gameplay solicitado,2cargas de arena, roll de Skull/LineBomb
+e dismount Mole/Tank confirmados;0erros e0avisos de servidor. Headless/rendered=false:
+não comprova aspecto gráfico nem sensação de latência. Corrige a falha de Run1.
+Co-op NormalGame Stage_1-1 com2clientes e diagnósticos está em execução em
+Logs/PredictionCoopClients55Run1; não iniciado outro Unity enquanto usa o binário.
+
+Revisão adicional R07: caches de revisão de item e world bomb agora identificam a
+conexão real, removem peers desconectados e não excluem um novo cliente por herdar
+connectionId de um owner anterior. Duas regressões com envio Mirror e reconexão
+preparadas. Junto ao sorting, são881 casos esperados na próxima suíte; mudanças
+posteriores ao build dos smokes, ainda exigem sincronização/Unity antes de publicar.
+
+
+Co-op55 APROVADO: Logs/PredictionCoopClients55Run1/result.json.2clientes reais,
+NormalGame/Stage_1-1,90s,0erros/avisos. Logs dos3processos copiados e analisados em
+analysis.json.82reports válidos de EnemyMovementController:23025 amostras,
+22305 frames alterados,2788125bytes de payload de frame e121,3574ms de captura
+agregada (~5,27us/amostra). Inclui aquecimento, não tem baseline offline/anterior,
+exclui envelopes/definições/fanout/transporte/diagnóstico/GPU. Uma família/cena só;
+não concluir custo de todos inimigos/bosses nem melhoria comparativa.
+Build stamp do Development ainda0b2f10852 do runner, protocolo55 com fontes locais
+modificadas: não identifica deploy. binary-provenance.json registra SHA256 da DLL
+de ambos os smokes antes de outro build; script agora registra hashes no início.
+
+Suíte PredictionRecovery55 iniciada após os smokes com sorting/reconexão (881
+esperados). C#0/0 passou. Aguardar relatório, corrigir falhas se houver e salvar
+lote somente após a validação. Nenhum processo de smoke continua rodando.
+
+
+## Lote55 validado para salvar e publicar
+
+PredictionRecovery55:881/881 Unity,0falhas,0skips (29/10 08:38:39–08:39:00Z).
+Inclui sorting/restauração do item e recuperação de peers reconectados com o mesmo
+connectionId, além das regressões de teardown. C# final0/0; Python47/47; py_compile
+smoke passou. Sem mudanças de cenas/prefabs. Reports copiados para Logs/.
+Os smokes Battle Run2 e Co-op Run1 usam o Development anterior ao sorting/reconnect,
+registrado por hash da DLL; os últimos3casos cobrem essas alterações na suíte881.
+Não inferir aspecto gráfico/fluidez/manual de logs headless. Checklist15/18 mantido.
+Runner liberado após a suíte; restaurar somente fontes próprias antes de Actions.
+Próximo: commit55 e envio conjunto client/server, acompanhar build/deploy, então
+retomar C02/C03 e outros IDs parciais. Publicação ainda não confirmada neste ponto.

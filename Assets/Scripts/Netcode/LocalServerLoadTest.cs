@@ -94,6 +94,22 @@ namespace Assets.Scripts.Netcode
                 spawned.Add(instance);
                 Debug.Log("[LoadTest] spawn regression revealed=" + prefabs[i].name);
             }
+            if (HasArg("-load-test-item-motion"))
+            {
+                AutoItemDatabase.BuildIfNeeded();
+                var player = FindAnyObjectByType<PlayerIdentity>();
+                if (player == null) throw new InvalidOperationException("Item motion fixture requires a player");
+                int offset = 1;
+                foreach (var itemType in new[] { ItemType.Skull, ItemType.LineBomb })
+                {
+                    var prefab = AutoItemDatabase.Get(itemType);
+                    if (prefab == null) throw new InvalidOperationException("Item motion fixture missing " + itemType);
+                    Vector3 position = player.transform.position + Vector3.right * offset++;
+                    var item = Instantiate(prefab, position, Quaternion.identity); NetSpawn.Server(item.gameObject);
+                    if (!item.TryExpelItem(Vector2.right, 1, null, 3)) throw new InvalidOperationException("Item expel rejected " + itemType);
+                    spawned.Add(item.gameObject); Debug.Log("[LoadTest] item-motion launched type=" + itemType);
+                }
+            }
             if (HasArg("-load-test-full-input"))
             {
                 yield return new WaitForSecondsRealtime(7);
@@ -159,21 +175,32 @@ namespace Assets.Scripts.Netcode
         MountedType observedMount;
         float mountedAt, releaseTime;
         bool sent, completed;
+        readonly HashSet<ItemType> observedMovingItems = new();
+        float nextItemCheck;
+        bool checkItemMotion;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
         {
-            if (!Debug.isDebugBuild || Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-real-input") < 0) return;
+            if (!Debug.isDebugBuild || (Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-real-input") < 0 &&
+                Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-item-motion") < 0)) return;
             Application.runInBackground = true;
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 0;
             var root = new GameObject("LocalNetworkInputSmoke");
             DontDestroyOnLoad(root);
-            root.AddComponent<LocalNetworkInputSmoke>();
+            root.AddComponent<LocalNetworkInputSmoke>().checkItemMotion = Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-item-motion") >= 0;
         }
 
         void Update()
         {
+            if (checkItemMotion && NetworkClient.isConnected && Time.unscaledTime >= nextItemCheck)
+            {
+                nextItemCheck = Time.unscaledTime + .05f;
+                foreach (var identity in NetworkClient.spawned.Values)
+                    if (identity != null && identity.TryGetComponent<ItemPickup>(out var item) && item.HasPresentedApprovedItemMotion && observedMovingItems.Add(item.type))
+                        Debug.Log("[LoadTest] item-motion presented type=" + item.type);
+            }
             if (completed || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
             var companion = NetworkClient.localPlayer.GetComponent<PlayerMountCompanion>();
             var input = PlayerInputManager.Instance;

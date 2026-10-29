@@ -11,6 +11,17 @@ public sealed partial class OnlineRoomEditModeTests
 {
     const BindingFlags RevengeFields = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    [TestCase(false, false, false, .25, true)]
+    [TestCase(false, true, false, .01, false)]
+    [TestCase(true, false, false, .01, false)]
+    [TestCase(false, false, true, .01, false)]
+    [TestCase(false, false, false, .251, false)]
+    [TestCase(false, false, false, -1, false)]
+    public void RevengeMotorWaitsForThePresentedEntryOrExitPhase(bool approvedAnimating, bool presentedAnimating, bool paused, double age, bool expected)
+    {
+        Assert.AreEqual(expected, BombermanNetworkManager.CanPredictRevengePhase(approvedAnimating, presentedAnimating, paused, age));
+    }
+
     [Test]
     public void RevengeMuzzleIsRendererOnlyAndExpiresWithoutAnExplosionInstance()
     {

@@ -9,6 +9,22 @@ spec.loader.exec_module(analysis)
 
 
 class PredictionAnalysisTests(unittest.TestCase):
+    def test_world_presentation_cost_aggregates_families_without_becoming_input_latency(self):
+        result = analysis.summarize([
+            {"kind": "coop_family_cost", "detail": "family=Frog;sampled=20;changed=4;frame_payload_bytes=200;capture_cpu_ms=0.4"},
+            {"kind": "coop_family_cost", "detail": "family=Frog;sampled=20;changed=2;frame_payload_bytes=100;capture_cpu_ms=0.2"},
+            {"kind": "coop_family_cost", "detail": "family=Rocket;sampled=10;changed=10;frame_payload_bytes=500;capture_cpu_ms=0.5"},
+            {"kind": "coop_family_cost", "detail": "family=Invalid;sampled=0;changed=1;frame_payload_bytes=1;capture_cpu_ms=1"},
+            {"kind": "coop_family_cost", "detail": "family=Invalid;sampled=1;changed=1;frame_payload_bytes=1;capture_cpu_ms=1e999"},
+        ])[0]
+        self.assertEqual("world_presentation_cost", result["context"])
+        metric = result["presentationCost"]["Frog"]
+        self.assertEqual(40, metric["sampledFrames"]); self.assertEqual(6, metric["changedFrames"])
+        self.assertEqual(300, metric["serializedFramePayloadBytes"])
+        self.assertAlmostEqual(15, metric["captureCpuUsPerSample"])
+        self.assertEqual(2, result["presentationCostInvalidReports"])
+        self.assertEqual(0, result["freeInputToMotionSamples"])
+
     def test_revenge_percentiles_require_twenty_samples_and_captures_stay_separate(self):
         rows = []
         for tick in range(20):

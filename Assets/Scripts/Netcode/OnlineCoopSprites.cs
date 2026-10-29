@@ -92,7 +92,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopSprites()
         {
-            ClearCoopBlackoutMasks();
+            ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics();
             foreach (var sprite in coopDynamicSprites.Values) if (sprite != null) Destroy(sprite);
             foreach (var texture in coopDynamicTextures.Values) if (texture != null) Destroy(texture);
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();

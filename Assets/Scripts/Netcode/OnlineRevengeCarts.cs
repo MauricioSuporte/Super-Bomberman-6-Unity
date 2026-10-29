@@ -355,7 +355,7 @@ namespace Assets.Scripts.Netcode
                 }
                 view.cart.PresentNetworkCart(a.state, b.state, t);
                 view.presented = true; view.presentedAnimating = a.state.animating || b.state.animating;
-                if (view.current.owner == LocalRoomPlayerId && !view.current.animating)
+                if (view.current.owner == LocalRoomPlayerId && !view.current.animating && !view.presentedAnimating)
                 {
                     var landing = view.cart.CaptureApprovedLandingPosition();
                     view.cart.RestoreNetworkMotor(view.current); view.cart.SetNetworkPerimeter(view.predicted);
@@ -412,8 +412,11 @@ namespace Assets.Scripts.Netcode
         public static bool RevengeReleaseAcknowledged(uint acknowledged, uint release) =>
             acknowledged == release || NetworkInputHistory.IsNewer(acknowledged, release);
 
-        static bool CanPredictRevenge(RevengeClientView view) => !view.current.animating && !GamePauseController.IsPaused &&
-            Time.realtimeSinceStartupAsDouble - view.receivedAt <= .25;
+        public static bool CanPredictRevengePhase(bool approvedAnimating, bool presentedAnimating, bool paused, double approvalAge) =>
+            !approvedAnimating && !presentedAnimating && !paused && approvalAge >= 0 && approvalAge <= .25;
+
+        static bool CanPredictRevenge(RevengeClientView view) => CanPredictRevengePhase(view.current.animating,
+            view.presentedAnimating, GamePauseController.IsPaused, Time.realtimeSinceStartupAsDouble - view.receivedAt);
 
         void ReceiveRevengeRoster(RevengeCartRoster message)
         {

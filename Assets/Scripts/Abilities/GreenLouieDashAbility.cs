@@ -159,7 +159,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     void ReportNetworkDashStop()
     {
-        if (Assets.Scripts.Netcode.NetSync.IsServer && rb != null &&
+        if (Mirror.NetworkServer.active && Assets.Scripts.Netcode.NetSync.IsServer && rb != null &&
             TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
             fx.ServerGreenDash(false, Vector2.zero, 0, rb.position);
     }

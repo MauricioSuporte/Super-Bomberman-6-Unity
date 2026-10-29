@@ -173,6 +173,9 @@ namespace Assets.Scripts.Netcode
                 gameObject.SetActive(false);
         }
 
+        public static bool DeferMountVisualRemoval(int approvedType, int displayedType, bool ridingArc, bool alive) =>
+            approvedType == 0 && displayedType > 0 && ridingArc && alive;
+
         void LateUpdate()
         {
             // The shared Player prefab also runs in local modes. SyncVar defaults
@@ -357,7 +360,8 @@ namespace Assets.Scripts.Netcode
 
             // F6 — mostra/esconde o visual do Louie conforme o tipo replicado.
             // (Passo A: o Louie aparece; a animação/facing dele é o Passo B.)
-            if (mountType != appliedMountType && mountCompanion != null && (move == null || !move.IsEndingStage))
+            if (mountType != appliedMountType && mountCompanion != null && (move == null || !move.IsEndingStage) &&
+                !DeferMountVisualRemoval(mountType, appliedMountType, GetComponent<NetworkBombFx>()?.RidingArcActive == true, life > 0 && (move == null || !move.isDead)))
             {
                 // "Montando agora" = de nenhuma montaria (0/desconhecido) para X. Nesse
                 // caso o DONO reproduz o hop de montar localmente (o NetworkPlayerAnimation

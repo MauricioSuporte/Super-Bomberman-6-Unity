@@ -214,6 +214,7 @@ namespace Assets.Scripts.Netcode
             global::SaveSystem.BeginOnlineCoopSettings();
             InitializeCoopSessionClient();
             InitializeRevengeClient();
+            InitializeWorldBombClient();
             NetworkClient.RegisterHandler<NetworkItemMotion>(message =>
             {
                 if (!NetworkServer.active && message.scene == SceneManager.GetActiveScene().name &&

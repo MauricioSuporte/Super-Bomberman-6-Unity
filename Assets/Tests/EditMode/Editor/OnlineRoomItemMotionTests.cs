@@ -8,6 +8,16 @@ using Object = UnityEngine.Object;
 
 public sealed partial class OnlineRoomEditModeTests
 {
+    [TestCase(0, 1, true, true, true)]
+    [TestCase(0, 1, false, true, false)]
+    [TestCase(0, 1, true, false, false)]
+    [TestCase(2, 1, true, true, false)]
+    [TestCase(0, 0, true, true, false)]
+    public void MountRemovalWaitsOnlyForAnAliveRiderAlreadyPresentingItsExit(int approved, int displayed, bool arc, bool alive, bool deferred)
+    {
+        Assert.AreEqual(deferred, NetworkPlayerState.DeferMountVisualRemoval(approved, displayed, arc, alive));
+    }
+
     [Test]
     public void WorldMountBuffersRootAndFramesTogetherAndCutsLargeDiscontinuities()
     {
@@ -79,6 +89,26 @@ public sealed partial class OnlineRoomEditModeTests
         stop = fixture.Motion(2, 2, 2); stop.duration = 0; stop.moving = false; item.ReceiveNetworkItemMotion(stop);
         item.PresentNetworkItemMotion(.3f); Assert.AreEqual(2, item.transform.position.x, .0001f);
         item.ReceiveNetworkItemMotion(first); item.PresentNetworkItemMotion(.1f); Assert.AreEqual(2, item.transform.position.x, .0001f);
+        Assert.IsTrue(item.GetComponent<Collider2D>().enabled);
+    }
+
+    [Test]
+    public void ApprovedItemRollRestoresNativeSortingOnStopAndDisable()
+    {
+        using var fixture = new ItemMotionFixture(); var item = fixture.item;
+        var low = item.GetComponent<SpriteRenderer>(); low.sortingOrder = 2; low.flipX = true;
+        var child = new GameObject("HighItemSprite", typeof(SpriteRenderer)); child.transform.SetParent(item.transform, false);
+        var high = child.GetComponent<SpriteRenderer>(); high.sortingOrder = 5;
+        item.ReceiveNetworkItemMotion(fixture.Motion(1, 0, 1)); item.PresentNetworkItemMotion(.03f);
+        Assert.AreEqual(3, low.sortingOrder); Assert.AreEqual(5, high.sortingOrder);
+        item.PresentNetworkItemMotion(.01f);
+        var stop = fixture.Motion(2, 1, 1); stop.moving = false; stop.duration = 0;
+        item.ReceiveNetworkItemMotion(stop); item.PresentNetworkItemMotion(.2f);
+        Assert.AreEqual(2, low.sortingOrder); Assert.AreEqual(5, high.sortingOrder); Assert.IsTrue(low.flipX);
+        item.ReceiveNetworkItemMotion(fixture.Motion(3, 1, 2)); item.PresentNetworkItemMotion(.03f);
+        Assert.AreEqual(3, low.sortingOrder);
+        typeof(ItemPickup).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(item, null);
+        Assert.AreEqual(2, low.sortingOrder); Assert.AreEqual(5, high.sortingOrder);
         Assert.IsTrue(item.GetComponent<Collider2D>().enabled);
     }
 

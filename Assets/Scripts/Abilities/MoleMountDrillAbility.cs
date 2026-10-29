@@ -273,7 +273,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             externalAnimator?.PlayPhase(1, dir);
             if (publishStartup) networkFx.ServerMoleStartup(dir, p1);
             yield return new WaitForSeconds(p1);
-            if (publishStartup) networkFx.ServerMoleStartupEnd();
+            if (publishStartup && Mirror.NetworkServer.active && networkFx != null) networkFx.ServerMoleStartupEnd();
 
             if (invulnerableDuringDrill)
                 SetDrillExplosionInvulnerability(true);
@@ -304,7 +304,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
         finally
         {
-            if (publishStartup) networkFx.ServerMoleStartupEnd();
+            if (publishStartup && Mirror.NetworkServer.active && networkFx != null) networkFx.ServerMoleStartupEnd();
             ApplyPhase1HeadOnlyDownDelta(false);
 
             if (!deathCancelInProgress)
@@ -390,7 +390,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     {
         StopNetworkStartup();
         var networkFx = GetComponent<Assets.Scripts.Netcode.NetworkBombFx>();
-        if (networkFx != null && networkFx.isServer && networkFx.netId != 0) networkFx.ServerMoleStartupEnd();
+        if (Mirror.NetworkServer.active && networkFx != null && networkFx.isServer && networkFx.netId != 0) networkFx.ServerMoleStartupEnd();
         if (routine != null)
         {
             StopCoroutine(routine);

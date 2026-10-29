@@ -66,6 +66,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public float RubberBounceHeight { get; private set; }
     public bool HasPendingPresentationOtherThan(Assets.Scripts.Netcode.NetworkBombFx presenter) =>
         clientPresentationOwner != null && clientPresentationOwner != presenter && clientPresentationOwner.HasUnconfirmedClientMotion(this);
+    public Assets.Scripts.Netcode.NetworkBombFx ClientBombMotionPresenter => clientPresentationOwner;
     public uint NextNetworkMotionRevision() => ++networkMotionRevision;
 
     public bool ClaimClientPresentation(Assets.Scripts.Netcode.NetworkBombFx presenter, uint revision)
@@ -89,15 +90,23 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public void ReportNetworkBombMotion(Vector2 start, Vector2 end, float duration, float arcHeight = 0, float carryHeight = 0, float curveDuration = 0)
     {
-        if (!Assets.Scripts.Netcode.NetSync.IsServer || networkMotionPresenter == null || !networkMotionPresenter.isServer || networkMotionPresenter.netId == 0) return;
-        networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, start, end, duration, arcHeight, carryHeight, true, !networkMotionActive, curveDuration);
-        networkMotionActive = true;
+        if (!Assets.Scripts.Netcode.NetSync.IsServer) return;
+        if (networkMotionPresenter != null && networkMotionPresenter.isServer && networkMotionPresenter.netId != 0)
+        {
+            networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, start, end, duration, arcHeight, carryHeight, true, !networkMotionActive, curveDuration);
+            networkMotionActive = true;
+        }
+        else networkMotionActive = Assets.Scripts.Netcode.BombermanNetworkManager.SendWorldBombMotion(this, networkMotionKind,
+            start, end, duration, true, !networkMotionActive, arcHeight, carryHeight, curveDuration);
     }
 
     public void EndNetworkBombMotion(Vector2 position)
     {
-        if (Assets.Scripts.Netcode.NetSync.IsServer && networkMotionActive && networkMotionPresenter != null)
-            networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, position, position, 0, 0, 0, false, false);
+        if (Assets.Scripts.Netcode.NetSync.IsServer && networkMotionActive)
+        {
+            if (networkMotionPresenter != null && networkMotionPresenter.isServer && networkMotionPresenter.netId != 0) networkMotionPresenter.ServerEmitBombMotion(this, networkMotionKind, position, position, 0, 0, 0, false, false);
+            else Assets.Scripts.Netcode.BombermanNetworkManager.SendWorldBombMotion(this, networkMotionKind, position, position, 0, false, false);
+        }
         networkMotionActive = false;
     }
 
@@ -174,6 +183,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private Coroutine kickRoutine;
     private Assets.Scripts.Netcode.NetworkBombFx networkKickPresenter;
+    bool networkKickReported;
     private bool networkKickFirstSegment;
     private Coroutine punchRoutine;
 
@@ -1591,7 +1601,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         TraceKickDiagnostic("kick_accepted", "speed=" + kickSpeed, direction);
         networkKickPresenter = Assets.Scripts.Netcode.NetSync.IsServer && kickPresenter != null &&
             kickPresenter.isServer && kickPresenter.netId != 0 ? kickPresenter : null;
-        networkKickFirstSegment = true;
+        networkKickFirstSegment = true; networkKickReported = false;
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
         return true;
@@ -1599,10 +1609,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     void EndNetworkKickPresentation(Vector2 position)
     {
-        if (networkKickPresenter == null) return;
-        if (Assets.Scripts.Netcode.NetSync.IsServer)
-            networkKickPresenter.ServerEmitKickMotion(this, position, position, 0, false, false);
-        networkKickPresenter = null;
+        if (Assets.Scripts.Netcode.NetSync.IsServer && networkKickReported)
+        {
+            if (networkKickPresenter != null) networkKickPresenter.ServerEmitKickMotion(this, position, position, 0, false, false);
+            else Assets.Scripts.Netcode.BombermanNetworkManager.SendWorldBombMotion(this,
+                Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Kick, position, position, 0, false, false);
+        }
+        networkKickPresenter = null; networkKickReported = false;
     }
 
     void TraceKickDiagnostic(string kind, string reason, Vector2 direction)
@@ -1726,9 +1739,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
+            float networkDuration = Mathf.Ceil(travelTime / Time.fixedDeltaTime) * Time.fixedDeltaTime;
             if (networkKickPresenter != null)
-                networkKickPresenter.ServerEmitKickMotion(this, start, next,
-                    Mathf.Ceil(travelTime / Time.fixedDeltaTime) * Time.fixedDeltaTime, true, networkKickFirstSegment);
+            {
+                networkKickPresenter.ServerEmitKickMotion(this, start, next, networkDuration, true, networkKickFirstSegment);
+                networkKickReported = true;
+            }
+            else networkKickReported = Assets.Scripts.Netcode.BombermanNetworkManager.SendWorldBombMotion(this,
+                Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Kick, start, next, networkDuration, true, networkKickFirstSegment);
             networkKickFirstSegment = false;
             StartKickPushedSkullSegment(start);
 

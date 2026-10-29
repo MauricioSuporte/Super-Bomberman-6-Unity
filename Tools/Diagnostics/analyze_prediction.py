@@ -41,15 +41,29 @@ def summarize(records, minimum_percentile_samples=20):
         conveyor_context = conveyor[1].rsplit(":", 1)[0] if conveyor else "unknown"
         if kind.startswith("revenge_launch_"):
             context = "revenge_cart"
+        if kind == "coop_family_cost":
+            context = "world_presentation_cost"
         key = (build, protocol, row.get("role", "unknown"), row.get("scene", ""), context,
                row.get("device") or device, row.get("player", 0), capture, conveyor_context)
         group = groups.setdefault(key, {"events": Counter(), "latencies": [], "blockedResponses": 0,
                                         "unclassifiedResponses": 0, "invalidDurations": 0, "hitchFrames": set(),
-                                        "revengeInputs": set(), "revengeSeen": set(), "revengeMetrics": {}})
+                                        "revengeInputs": set(), "revengeSeen": set(), "revengeMetrics": {}, "presentationCost": {}, "invalidCostReports": 0})
         group["events"][kind] += 1
         frame_ms = row.get("frameMs", 0)
         if isinstance(frame_ms, (int, float)) and math.isfinite(frame_ms) and frame_ms > 50:
             group["hitchFrames"].add((row.get("_capture", "memory"), row.get("frame")))
+        if kind == "coop_family_cost":
+            cost = re.search(r"family=([^;]+);sampled=(\d+);changed=(\d+);frame_payload_bytes=(\d+);capture_cpu_ms=([0-9eE+.-]+)", detail)
+            try:
+                family, sampled, changed, payload, cpu = (cost[1], int(cost[2]), int(cost[3]), int(cost[4]), float(cost[5])) if cost else (None, 0, 0, 0, float("nan"))
+            except ValueError:
+                family, sampled, changed, payload, cpu = None, 0, 0, 0, float("nan")
+            if family and sampled > 0 and changed <= sampled and math.isfinite(cpu) and cpu >= 0:
+                metric = group["presentationCost"].setdefault(family, {"reports": 0, "sampledFrames": 0, "changedFrames": 0, "serializedFramePayloadBytes": 0, "captureCpuMs": 0})
+                metric["reports"] += 1; metric["sampledFrames"] += sampled; metric["changedFrames"] += changed
+                metric["serializedFramePayloadBytes"] += payload; metric["captureCpuMs"] += cpu
+            else:
+                group["invalidCostReports"] += 1
         if kind.startswith("revenge_launch_"):
             cart = re.search(r"\bcart=(-?\d+);generation=(\d+)", detail)
             tick = row.get("inputTick")
@@ -89,6 +103,9 @@ def summarize(records, minimum_percentile_samples=20):
                        "invalidDurationsExcluded": group["invalidDurations"],
                        "observedHitchFramesOver50Ms": len(group["hitchFrames"]),
                        "events": dict(sorted(group["events"].items())),
+                       "presentationCostInvalidReports": group["invalidCostReports"],
+                       "presentationCost": {name: dict(metric, captureCpuUsPerSample=metric["captureCpuMs"] * 1000 / metric["sampledFrames"])
+                           for name, metric in sorted(group["presentationCost"].items())},
                        "revengeLaunch": {name: {"samples": len(values), "medianMs": statistics.median(values),
                            "p95Ms": sorted(values)[math.ceil(len(values) * .95) - 1] if len(values) >= minimum_percentile_samples else None}
                            for name, values in sorted(group["revengeMetrics"].items())}})
@@ -122,6 +139,7 @@ def main():
                         "Input-to-motion is an observed rendered-frame interval, not raw network latency.",
                         "Old records without input context are counted but excluded from latency statistics.",
                         "Revenge first_visual measures CPU presenter observation after sampled A release, not GPU display or raw hardware latency.",
+                        "World presentation payload counts exclude message envelopes, asset definitions, peer fanout and transport overhead; capture CPU excludes diagnostic overhead.",
                         "Hitch counts describe observed logged frames, not every frame in the session.",
                         "Capture flags, hardware and network conditions must be recorded with the reproduction."]}
     text = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"

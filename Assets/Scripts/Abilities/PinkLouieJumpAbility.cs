@@ -301,7 +301,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (invulnerableDuringJump)
             StartJumpInvulnerabilityOnly(mountedLouieHealth);
 
-        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+        if (Mirror.NetworkServer.active && Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
             fx.ServerPinkJump(geometry.start, geometry.end, dir != Vector2.zero ? dir : faceDir, jumpDurationSeconds, jumpArcHeight, jumpCooldownSeconds);
         else if (audioSource != null && jumpSfx != null)
             GameAudioSettings.PlaySfx(audioSource, jumpSfx, jumpSfxVolume);
@@ -395,7 +395,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     void ReportNetworkJumpStop(bool completed)
     {
-        if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
+        if (Mirror.NetworkServer.active && Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
             fx.ServerPinkJumpStop(rb != null ? rb.position : (Vector2)transform.position, completed);
     }
 

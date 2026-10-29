@@ -21,10 +21,12 @@ namespace Assets.Scripts.Netcode
 public partial class ItemPickup
 {
     uint itemMotionRevision, receivedItemRevision;
-    bool hasItemRevision, itemPresentationActive;
+    bool hasItemRevision, itemPresentationActive, itemMotionWasPresented, itemPresentationSortingCaptured;
+    public bool HasPresentedApprovedItemMotion => itemMotionWasPresented;
     NetworkItemMotion serverItemMotion, clientItemMotion;
     readonly Queue<NetworkItemMotion> itemMotionQueue = new();
-    readonly Dictionary<int, uint> itemMotionPeers = new();
+    readonly Dictionary<int, (NetworkConnectionToClient peer, uint revision)> itemMotionPeers = new();
+    readonly List<int> expiredItemMotionPeers = new();
     float itemPresentationElapsed, itemHeartbeatAt, itemPushSampleAt, serverItemStartedAt;
     Vector2 itemPushOrigin;
     Quaternion itemPushRotation, presentedItemRotation;
@@ -66,17 +68,22 @@ public partial class ItemPickup
 
     void SendNetworkItemToNewPeers()
     {
+        expiredItemMotionPeers.Clear();
+        foreach (var pair in itemMotionPeers)
+            if (!NetworkServer.connections.TryGetValue(pair.Key, out var current) || current != pair.Value.peer)
+                expiredItemMotionPeers.Add(pair.Key);
+        foreach (int id in expiredItemMotionPeers) itemMotionPeers.Remove(id);
         foreach (var peer in NetworkServer.connections.Values)
         {
             if (peer == null || peer == NetworkServer.localConnection || !peer.isReady || !peer.isAuthenticated ||
-                (itemMotionPeers.TryGetValue(peer.connectionId, out uint revision) && revision == serverItemMotion.revision)) continue;
+                (itemMotionPeers.TryGetValue(peer.connectionId, out var sent) && sent.peer == peer && sent.revision == serverItemMotion.revision)) continue;
             var motion = serverItemMotion;
             if (!itemMotionPeers.ContainsKey(peer.connectionId))
             {
                 motion.recovering = true;
                 motion.elapsed = motion.pushed ? motion.duration : Mathf.Clamp(Time.time - serverItemStartedAt, 0, motion.duration);
             }
-            peer.Send(motion); itemMotionPeers[peer.connectionId] = serverItemMotion.revision;
+            peer.Send(motion); itemMotionPeers[peer.connectionId] = (peer, serverItemMotion.revision);
         }
     }
 
@@ -119,6 +126,7 @@ public partial class ItemPickup
             BeginNetworkItemMotion(itemMotionQueue.Dequeue()); itemPresentationElapsed = Mathf.Max(itemPresentationElapsed, remainder);
         }
         var motion = clientItemMotion;
+        SetNetworkItemMotionSorting(motion.moving);
         float progress = motion.duration <= 0 ? 1 : Mathf.Clamp01(itemPresentationElapsed / motion.duration);
         Vector2 position = !motion.moving ? motion.end : motion.pushed ? Vector2.Lerp(itemPushOrigin, motion.end, progress) :
             SampleNetworkItemSegment(motion.start, motion.end, motion.direction, progress);
@@ -128,14 +136,23 @@ public partial class ItemPickup
             progress >= 1 ? Quaternion.identity : horizontal ? Quaternion.Euler(0, (motion.direction.x >= 0 ? -1 : 1) * progress * 360, 0) :
             Quaternion.Euler((motion.direction.y >= 0 ? 1 : -1) * progress * 360, 0, 0);
         presentedItemPosition = position; presentedItemRotation = transform.rotation;
+        if (motion.moving && progress > 0 && progress < 1) itemMotionWasPresented = true;
     }
     bool TickNetworkItemPresentation()
     {
         if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || !TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return false;
         PresentNetworkItemMotion(Time.deltaTime); return true;
     }
+    void SetNetworkItemMotionSorting(bool moving)
+    {
+        if (moving == itemPresentationSortingCaptured) return;
+        if (moving) CacheSkullBounceFlipState();
+        else RestoreSkullBounceFlipState();
+        itemPresentationSortingCaptured = moving;
+    }
     void OnDisable()
     {
-        itemMotionQueue.Clear(); itemMotionPeers.Clear(); itemPresentationActive = false; hasItemRevision = false;
+        SetNetworkItemMotionSorting(false);
+        itemMotionQueue.Clear(); itemMotionPeers.Clear(); expiredItemMotionPeers.Clear(); itemPresentationActive = false; hasItemRevision = false; itemMotionWasPresented = false;
     }
 }

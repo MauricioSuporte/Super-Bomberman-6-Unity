@@ -23,7 +23,7 @@ namespace Assets.Scripts.Netcode
 
         static NetworkBombMotionLifetime GetOrCreate(NetworkBombFx presenter)
         {
-            if (!CanRetain(presenter) || NetworkManager.singleton is not BombermanNetworkManager manager) return null;
+            if (!CanRetain(presenter) || NetworkManager.singleton is not BombermanNetworkManager manager || manager == null) return null;
             var lifetime = manager.GetComponent<NetworkBombMotionLifetime>();
             if (lifetime == null) lifetime = manager.gameObject.AddComponent<NetworkBombMotionLifetime>();
             return lifetime;
@@ -47,7 +47,7 @@ namespace Assets.Scripts.Netcode
 
         public static void Forget(NetworkBombFx presenter)
         {
-            if (NetworkManager.singleton is BombermanNetworkManager manager && manager.TryGetComponent<NetworkBombMotionLifetime>(out var lifetime))
+            if (NetworkManager.singleton is BombermanNetworkManager manager && manager != null && manager.TryGetComponent<NetworkBombMotionLifetime>(out var lifetime))
                 lifetime.retained.Remove(presenter);
         }
 

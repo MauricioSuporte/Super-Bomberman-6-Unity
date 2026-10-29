@@ -1318,3 +1318,47 @@ limitado150ms e ao endpoint. Isso evita reduzir a velocidade visual ao decair
 um offset longitudinal; não prevê novo trecho, colisão, troca de direção nem
 um primeiro lançamento sem predição anterior. A validação subjetiva entre peers
 continua separada dos testes dos helpers.
+
+
+### Lote55: continuidade aprovada e diagnóstico de custo (local)
+
+NetworkItemMotion identifica cena/netId/revisão e entrega segmentos de rolagem
+ou poses de push. ItemPickup bloqueia as entradas nativas no client e apresenta
+SmoothStep/rotação, wrap discreto e paradas em ordem, com fila32. A pausa congela
+progresso; peers tardios recebem a fase aprovada. Não altera colisores, landing,
+coleta nem RNG. NetworkWorldMount guarda root e frames na mesma amostra, com
+histórico32 e corte de descontinuidade; a montaria exibida acompanha o mesmo tempo.
+
+WorldBombMotion usa o manager quando o endpoint do ator original não existe.
+Cache256 e retry limitado cobrem ordem de spawn/evento e observador tardio. O owner
+remoto de Kick mantém Target/predição, sem receber a duplicata de observador.
+worldMotion não herda inputTick/lead/pose de outra ação nem concede habilidade.
+A fonte precisa existir apenas para aprovar a ação; o presenter atual pode mudar.
+
+A11 adia somente a remoção visual de uma montaria durante o arco de saída de um
+rider vivo. Estado, morte e propriedade continuam imediatos e autoritativos.
+A12 não devolve o motor previsto antes do término da fase de entrada/saída já
+apresentada. Isso evita pular o final do histórico visual.
+
+coop_family_cost agrega CPU de captura e bytes serializados de frames por família
+somente com diagnóstico habilitado. Não mede custo GPU nem pacote completo: exclui
+envelopes, definições, fanout por peer, transporte e overhead do diagnóstico.
+analyze_prediction separa esse contexto das latências de ações. Capturas reais
+co-op ainda são necessárias; o smoke headless Battle não comprova custo ou fluidez.
+
+O primeiro smoke55 com servidor e dois clientes reais apresentou Skull/LineBomb e
+confirmou desmontagem Mole/Tank em ambos, mas falhou no encerramento: singleton
+Unity destruído ainda passava no pattern C#, e callbacks tentavam enviar RPC após
+NetworkServer parar. Guards corrigidos; nova suíte e repetição em andamento.
+Não confundir esse resultado com validação gráfica/manual ou deploy do55.
+
+
+R07: não usar apenas connectionId para excluir owner ou marcar revisão entregue.
+Uma reconexão pode reutilizar esse id: o cache guarda a instância da conexão e
+remove peers desconectados. Isso permite recuperar a trajetória sem reenviar
+heartbeats idênticos aos clientes ainda conectados. Item também captura/restaura
+a ordem elevada e flips nativos durante roll/push, sem mudar o collider.
+
+Validação de integração55: Run2 de Battle com2clientes reais passou por2cargas da
+arena e encerramento, sem erros/avisos. A execução é headless e usa atores duráveis
+de Development; não é comparação de fluidez com offline nem aprovação gráfica.

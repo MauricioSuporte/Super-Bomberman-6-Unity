@@ -195,7 +195,7 @@ namespace Assets.Scripts.Netcode
 
         public bool BeginAbilityPrediction(Bomb target, KickMotion motion, Vector2 direction, float lockTime)
         {
-            if (motion.kind == BombMotionKind.Environment || motion.kind == BombMotionKind.Revenge || NetSync.Mode != NetSync.NetMode.Client || !isLocalPlayer || !NetworkClient.active || GamePauseController.IsPaused ||
+            if (motion.worldMotion || motion.kind == BombMotionKind.Environment || motion.kind == BombMotionKind.Revenge || NetSync.Mode != NetSync.NetMode.Client || !isLocalPlayer || !NetworkClient.active || GamePauseController.IsPaused ||
                 target == null || target.HasExploded || !target.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return false;
             if (kickPlayback.TryGetValue(target, out var previous) && previous.unconfirmed) return false;
             if (rejectedStarts.TryGetValue(target, out var rejected) && rejected.direction == direction &&

@@ -178,10 +178,28 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient() => NetworkClient.UnregisterHandler<Response>();
 
-        public override void OnClientAuthenticate() => NetworkClient.Send(new Request
+        public override void OnClientAuthenticate()
         {
-            gameVersion = Application.version, protocol = ProtocolVersion, buildIdentity = ConnectionBuildIdentity, password = RoomPassword, playerName = PlayerName
-        });
+            string name = PlayerName;
+#if UNITY_EDITOR || DEBUG
+            name = ResolveDiagnosticPlayerName(name, System.Environment.GetCommandLineArgs(), Debug.isDebugBuild);
+#endif
+            NetworkClient.Send(new Request
+            {
+                gameVersion = Application.version, protocol = ProtocolVersion, buildIdentity = ConnectionBuildIdentity, password = RoomPassword, playerName = name
+            });
+        }
+
+#if UNITY_EDITOR || DEBUG
+        // Local development harness only; never persists a test identity to PlayerPrefs.
+        public static string ResolveDiagnosticPlayerName(string savedName, string[] args, bool development)
+        {
+            if (!development || args == null) return savedName;
+            int index = System.Array.IndexOf(args, "-local-diagnostic-name");
+            if (index < 0 || index + 1 >= args.Length || !ValidPlayerName(args[index + 1])) return savedName;
+            return NormalizePlayerName(args[index + 1]);
+        }
+#endif
 
         void OnResponse(Response response)
         {

@@ -45,6 +45,31 @@ scene/client cleanup, reject inactive coroutine hosts and preserve host-native
 effects. This protects received events only; a removed RPC endpoint needs a
 separate authoritative transport. Never infer missing explosion gameplay.
 
+During teardown, a destroyed Unity component still passes a C# type pattern.
+Check the matched manager with Unity's `manager != null` before accessing its
+components. Server ability cleanup must also check `NetworkServer.active` at
+the time of publication; cached `isServer`, mode or a pre-yield boolean can
+outlive the transport. Exercise manager-first destruction and an actual
+server/two-client disconnect, not only normal owner-first fixture disposal.
+
+For approved bomb motion that must survive removal of the source actor, use
+the existing manager's WorldBombMotion transport and bounded per-bomb cache.
+Keep the remote kick owner's targeted prediction path, exclude it from the
+observer broadcast, and route observers to an existing valid presenter.
+World motion must not inherit another action's input tick, lead or ability
+pose. Cache entries require scene, identity and revision checks and cleanup.
+Track sent revisions and excluded owners by the actual connection instance;
+a reconnect can reuse a connection id. Prune disconnected peers so idle object
+caches stay bounded, and test replacement of an excluded connection too.
+
+For expelled items, use ItemPickup's approved segments/poses. Preserve the
+native curve and ordered short segments, drain intermediate stops without an
+extra frame, freeze presented progress during pause and recover late observers
+at the approved phase. Do not invoke native landing/collision/fuse routines to
+produce the visual. Buffer a world mount's root and sprite frames together.
+Preserve the native item's raised sorting order during movement and restore
+its cached sorting/flips on stop and disable, without touching its collider.
+
 For periodic or triggered arena tile visuals, gate the client's native clock and
 gameplay entry points before replacing them with approved phase/frame histories.
 Reuse only audited decorative tiles or generated tiles without colliders/prefabs.

@@ -39,6 +39,7 @@ namespace Assets.Scripts.Netcode
         {
             public uint bombId, inputTick, revision, bounceSeed;
             public int bounceIndex;
+            public bool worldMotion;
             public float bounceDuration, bounceHeight;
             public BombMotionKind kind;
             public float arcHeight, carryHeight, curveDuration;
@@ -325,8 +326,10 @@ namespace Assets.Scripts.Netcode
         [Server]
         public void ServerEmitKickMotion(Bomb movingBomb, Vector2 start, Vector2 end, float duration, bool moving, bool first)
         {
-            if (connectionToClient == null || connectionToClient == NetworkServer.localConnection || movingBomb == null ||
-                !movingBomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return;
+            if (movingBomb == null || !movingBomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0) return;
+            if (connectionToClient == null || connectionToClient == NetworkServer.localConnection)
+            { BombermanNetworkManager.SendWorldBombMotion(movingBomb, BombMotionKind.Kick, start, end, duration, moving, first); return; }
+            BombermanNetworkManager.SendWorldBombMotion(movingBomb, BombMotionKind.Kick, start, end, duration, moving, first, exclude: connectionToClient);
             var motion = new KickMotion { bombId = identity.netId, start = start, end = end,
                 duration = duration, moving = moving, first = first, serverTime = NetworkTime.localTime, revision = movingBomb.NextNetworkMotionRevision(), rubber = movingBomb.IsRubberBomb,
                 inputTick = TryGetComponent<NetworkPlayerInput>(out var input) ? input.CurrentInputTick : 0 };
@@ -348,7 +351,7 @@ namespace Assets.Scripts.Netcode
 
         public void ReceiveKickMotion(KickMotion motion)
         {
-            if (!NetSync.IsOnline || isServer || !NetworkClient.active || (motion.kind == BombMotionKind.Kick && !isLocalPlayer)) return;
+            if (!NetSync.IsOnline || isServer || !NetworkClient.active || (motion.kind == BombMotionKind.Kick && !isLocalPlayer && !motion.worldMotion)) return;
             if (!NetworkClient.spawned.TryGetValue(motion.bombId, out var identity) ||
                 !identity.TryGetComponent<Bomb>(out var movingBomb)) return;
             // Another player's last search/kick stop can arrive while our action
@@ -356,8 +359,9 @@ namespace Assets.Scripts.Netcode
             if (movingBomb.HasPendingPresentationOtherThan(this)) return;
             if (motion.revision != movingBomb.ClientMotionRevision &&
                 !NetworkInputHistory.IsNewer(motion.revision, movingBomb.ClientMotionRevision)) return;
+            if (motion.worldMotion) rejectedStarts.Remove(movingBomb);
             kickPlayback.TryGetValue(movingBomb, out var previous);
-            if (previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
+            if (!motion.worldMotion && previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
                 !NetworkInputHistory.IsNewer(motion.inputTick, previous.history.startTick)) return;
             bool arcContinuation = previous != null && !previous.unconfirmed && !motion.first &&
                 PreservesSegmentOrder(previous.motion.kind) && previous.motion.kind == motion.kind && previous.motion.moving;
@@ -390,11 +394,11 @@ namespace Assets.Scripts.Netcode
                 colliderWasEnabled = previous != null && previous.colliderWasEnabled,
                 sortingCaptured = previous != null && previous.sortingCaptured,
                 originalSorting = previous != null ? previous.originalSorting : 0,
-                startInputTick = previous != null && (previous.unconfirmed || !motion.first) ? previous.startInputTick : motion.inputTick,
-                history = previous != null && (previous.unconfirmed || !motion.first) ? previous.history : null };
-            if (previous != null && previous.unconfirmed)
+                startInputTick = motion.worldMotion ? 0 : previous != null && (previous.unconfirmed || !motion.first) ? previous.startInputTick : motion.inputTick,
+                history = !motion.worldMotion && previous != null && (previous.unconfirmed || !motion.first) ? previous.history : null };
+            if (!motion.worldMotion && previous != null && previous.unconfirmed)
             {
-                playback.history.presentationLead = motion.kind == BombMotionKind.Environment || motion.kind == BombMotionKind.Revenge ? 0 : motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
+                playback.history.presentationLead = motion.worldMotion || motion.kind == BombMotionKind.Environment || motion.kind == BombMotionKind.Revenge ? 0 : motion.kind == BombMotionKind.Kick ? InitialKickPresentationLead(previous.presented, motion, age) :
                     Mathf.Clamp(previous.elapsed - age, 0, 0.15f);
                 rejectedStarts.Remove(movingBomb);
                 if (GameplayLatencyDiagnostics.Enabled)
@@ -409,16 +413,16 @@ namespace Assets.Scripts.Netcode
             }
             // Preserve the small lead of the owner's input timeline. Pulling the
             // bomb back to server-now on the first reply would recreate the hitch.
-            if (motion.moving && motion.kind != BombMotionKind.Environment && motion.kind != BombMotionKind.Revenge && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
+            if (!motion.worldMotion && motion.moving && motion.kind != BombMotionKind.Environment && motion.kind != BombMotionKind.Revenge && playback.history != null && !arcContinuation) playback.elapsed += playback.history.presentationLead;
             // Preserve forward progress across approved straight kick segments instead
             // of converting it into an offset that slows the bomb while it decays.
-            if (motion.kind == BombMotionKind.Kick && motion.moving && previous != null && (!motion.first || previous.unconfirmed) && previous.motion.moving &&
+            if (motion.kind == BombMotionKind.Kick && motion.moving && previous != null && (!motion.worldMotion || !previous.unconfirmed) && (!motion.first || previous.unconfirmed) && previous.motion.moving &&
                 Vector2.Dot(motion.end - motion.start, previous.motion.end - previous.motion.start) > 0)
                 playback.elapsed = PreserveApprovedKickProgress(previous.presented, motion.start, motion.end, motion.duration, playback.elapsed);
             var targetPosition = SamplePlayback(movingBomb, playback);
             // The NetworkTransform may have written its older timeline this frame.
             // Reconcile against our last displayed position, not that stale transform.
-            if (previous != null && (!motion.first || previous.unconfirmed) && motion.moving && previous.motion.moving &&
+            if (previous != null && (!motion.worldMotion || !previous.unconfirmed) && (!motion.first || previous.unconfirmed) && motion.moving && previous.motion.moving &&
                 Vector2.Dot(motion.end - motion.start, previous.motion.end - previous.motion.start) > 0 &&
                 Vector2.Distance(previous.presented, targetPosition) < 0.75f * (motion.end - motion.start).magnitude)
                 playback.correction = previous.presented - targetPosition;
@@ -441,7 +445,7 @@ namespace Assets.Scripts.Netcode
             // The normal NetworkTransform remains enabled to receive/decode deltas.
             ApplyMotionCollider(movingBomb, playback);
             ApplyKickPosition(movingBomb, playback.presented);
-            if (!presentationOwnerSuspended && isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
+            if (!motion.worldMotion && !presentationOwnerSuspended && isLocalPlayer && previous?.unconfirmed != true && motion.first && motion.moving && motion.kind != BombMotionKind.Kick &&
                 motion.kind != BombMotionKind.Search && motion.kind != BombMotionKind.Magnet && motion.kind != BombMotionKind.Environment && motion.kind != BombMotionKind.Revenge)
                 BeginConfirmedAbilityPose(motion, age);
         }

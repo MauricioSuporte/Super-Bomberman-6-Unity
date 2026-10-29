@@ -266,6 +266,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopWorld()
         {
+            ClearWorldBombMotions();
             coopOwnerBoatSprites.Clear();
             coopOwnerBoatVisibility.Clear();
             GetComponent<NetworkBombMotionLifetime>()?.Clear();
@@ -290,6 +291,7 @@ namespace Assets.Scripts.Netcode
 
         void TickCoopWorld()
         {
+            TickWorldBombMotions();
             PublishPortalMasks();
             PresentPortalMaskViews();
             foreach (var blackout in coopBlackoutSources)
@@ -353,6 +355,7 @@ namespace Assets.Scripts.Netcode
                 // Send the visible -> hidden transition once. Sleeping pool objects
                 // need no repeated transform/material/sprite reads or initial clone.
                 if (!active && (!coopLastSprites.TryGetValue(id, out var sleeping) || !sleeping.visible)) continue;
+                long metricStarted = GameplayLatencyDiagnostics.Enabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
                 var frame = new CoopSpriteFrame
                 {
                     id = id, sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
@@ -375,13 +378,16 @@ namespace Assets.Scripts.Netcode
                     Vector2 offset = animation.CurrentSpriteOffset;
                     frame.position -= frame.offsetRight * offset.x + frame.offsetUp * offset.y;
                 }
-                if (!coopLastSprites.TryGetValue(id, out var previous) || !frame.Matches(previous)) changed.Add(frame);
+                bool frameChanged = !coopLastSprites.TryGetValue(id, out var previous) || !frame.Matches(previous);
+                if (frameChanged) changed.Add(frame);
+                RecordCoopPresentationMetric(renderer, frame, frameChanged, metricStarted);
                 coopLastSprites[id] = frame;
             }
+            FlushCoopPresentationMetrics();
             var removed = coopRemovedSprites;
             removed.Clear();
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
-            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); coopPhysicsPause.Remove(id); }
+            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); coopPhysicsPause.Remove(id); coopMetricFamilies.Remove(id); }
             SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
             if (coopChangedCollisions.Count > 0 || coopRemovedCollisions.Count > 0)
                 foreach (var peer in peers) SendCoopCollisionFrames(peer, coopChangedCollisions, coopRemovedCollisions.ToArray(), false);
