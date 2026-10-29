@@ -2002,3 +2002,31 @@ geração/captura não vira amostra. p95 somente20+. Checklist15/18 parciais man
 Runner restaurado somente nos C# próprios. Sem cenas/prefabs alterados.
 Próximo: confirmar publicação deste lote54, coletar logs2peers e continuar auditoria
 R07 de apresentação independente de owner/transferência, seguida de demais IDs.
+
+
+## Execução contínua solicitada — R07/55 e auditoria de famílias
+
+O usuário pediu implementar o plano completo sem encerrar a cada lote. Não publicar
+cada alteração pequena nem dar manual como concluído sem prova. Protocolo54 de
+métricas / Actions40808356205: job completed (conferir conclusion no fechamento).
+R07/55 implementado: ItemPickup recebe segmentos/poses revisionados pelo netId,
+independentes de owner, guarda client nas entradas de expulsão/bounce/push,
+paradas e continuidades em ordem sem frame extra, wrap como corte, pausa e estado
+para observador tardio. Cliente não escolhe terreno/landing nem altera collider.
+Removido feedback6/7 que executava expulsão nativa client-side. Mundo/montarias:
+pose e root no mesmo histórico32, corte4units/250ms, pose congelada durante pausa,
+buffer reutilizado e limpeza no stop. Snapshot temporal altera wire: protocolo55.
+Validação R07: focados6/7 inicialmente (fixture SyncList sem inicialização de NI),
+fixado fixture; suíte completa530/530 passou incluindo recuperação tardia. Reports
+Logs/PredictionItem55Focused.* e PredictionItem55Full.*; C#0/0 no último build.
+Sem validação manual entre peers. R07 continua parcial enquanto auditoria/transfer/
+ownerless e capturas não terminarem. Não concluir manual de nenhuma família.
+
+Em paralelo de leitura foi feita auditoria de overrides nativos de inimigos,
+Bosses e Bombers: guards inseridos em258 entry points antes de Start/Update/Fixed,
+contato/morte/Init/Expire etc. Guardar base não protege código após base retorna.
+Essas alterações amplas ainda NÃO têm validação Unity; manter separadas do lote
+R07 e executar regressão parametrizada antes de commit/publicação. JellyFishShot
+não agenda Expire no client; Speeder não sorteia preferLeftTurn em Awake client.
+Próximo: regressões parametrizadas, suíte completa e seguir demais IDs. O runner
+está livre após a suíte530, mas fontes R07 nele ainda diferem de HEAD.

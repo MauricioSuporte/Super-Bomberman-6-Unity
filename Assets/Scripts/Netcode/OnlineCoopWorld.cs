@@ -595,8 +595,7 @@ namespace Assets.Scripts.Netcode
                 case 3: item.DestroyWithExplosionAnimation(); break;
                 case 4: item.DestroySilently(); break;
                 case 5: item.DestroyFromMovingBombImpact(); break;
-                case 6: item.TryExpelItem(message.direction, message.value, null, message.steps); break;
-                case 7: item.ApplyNetworkLanding(message.direction); break;
+                // Item motion uses approved revisioned segments, never client terrain decisions.
             }
         }
 

@@ -214,6 +214,12 @@ namespace Assets.Scripts.Netcode
             global::SaveSystem.BeginOnlineCoopSettings();
             InitializeCoopSessionClient();
             InitializeRevengeClient();
+            NetworkClient.RegisterHandler<NetworkItemMotion>(message =>
+            {
+                if (!NetworkServer.active && message.scene == SceneManager.GetActiveScene().name &&
+                    NetworkClient.spawned.TryGetValue(message.netId, out var identity) && identity.TryGetComponent<ItemPickup>(out var item))
+                    item.ReceiveNetworkItemMotion(message);
+            });
             NetworkClient.RegisterHandler<OnlineRoomMessage>(ReceiveRoom);
             NetworkClient.RegisterHandler<OnlinePauseMessage>(message => GamePauseController.Instance?.ApplyOnlinePause(message.state));
         }

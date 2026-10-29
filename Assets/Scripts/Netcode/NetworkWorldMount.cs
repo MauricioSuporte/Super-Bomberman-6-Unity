@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
@@ -15,6 +16,47 @@ namespace Assets.Scripts.Netcode
         [SyncVar] Quaternion worldRotation;
         [SyncVar] Vector3 worldScale;
         public readonly SyncList<MountFrame> frames = new();
+        [SyncVar(hook = nameof(OnWorldMountTime))] double sampleTime;
+        struct WorldMountSample
+        {
+            public double time;
+            public Vector3 position, scale;
+            public Quaternion rotation;
+            public MountFrame[] frames;
+        }
+        readonly List<WorldMountSample> worldHistory = new(32);
+        bool worldPresented;
+        MountFrame[] sampledWorldFrames;
+
+        void OnWorldMountTime(double previous, double current)
+        {
+            if (isServer || NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || !double.IsFinite(current)) return;
+            if (worldHistory.Count > 0 && current <= worldHistory[worldHistory.Count - 1].time) return;
+            var copy = new MountFrame[frames.Count];
+            for (int i = 0; i < copy.Length; i++) copy[i] = frames[i];
+            worldHistory.Add(new WorldMountSample { time = current, position = worldPosition, rotation = worldRotation, scale = worldScale, frames = copy });
+            if (worldHistory.Count > 32) worldHistory.RemoveAt(0);
+        }
+
+        public bool SampleWorldMount(double timeline, out Vector3 position, out Quaternion rotation, out Vector3 scale, out MountFrame[] values)
+        {
+            position = worldPosition; rotation = worldRotation; scale = worldScale; values = null;
+            if (worldHistory.Count == 0) return false;
+            var a = worldHistory[0]; var b = a;
+            for (int i = 1; i < worldHistory.Count; i++) { b = worldHistory[i]; if (b.time >= timeline) break; a = b; }
+            if (b.time - a.time > .25 || Vector3.Distance(a.position, b.position) > 4) { a = b; }
+            float t = b.time > a.time ? Mathf.Clamp01((float)((timeline - a.time) / (b.time - a.time))) : 0;
+            position = Vector3.Lerp(a.position, b.position, t); rotation = Quaternion.Slerp(a.rotation, b.rotation, t); scale = Vector3.Lerp(a.scale, b.scale, t);
+            if (sampledWorldFrames == null || sampledWorldFrames.Length != a.frames.Length) sampledWorldFrames = new MountFrame[a.frames.Length];
+            values = sampledWorldFrames;
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = a.frames[i];
+                if (i < b.frames.Length && values[i].visible && b.frames[i].visible)
+                { var value = values[i]; value.pose = NetworkVisualPose.Interpolate(value.pose, b.frames[i].pose, t); values[i] = value; }
+            }
+            return true;
+        }
 
         public struct MountFrame : IEquatable<MountFrame>
         {
@@ -79,7 +121,16 @@ namespace Assets.Scripts.Netcode
             foreach (var body in visual.GetComponentsInChildren<Rigidbody2D>(true)) body.simulated = false;
             BindAnimations(visual);
             foreach (var animation in animations) animation.SetManualAnimationUpdate(true);
+            OnWorldMountTime(0, sampleTime);
             Apply();
+        }
+
+        public override void OnStopClient()
+        {
+            worldHistory.Clear(); worldPresented = false; sampledWorldFrames = null;
+            if (!isServer && visual != null) Destroy(visual);
+            visual = null;
+            base.OnStopClient();
         }
 
         public override void OnStopServer()
@@ -129,17 +180,20 @@ namespace Assets.Scripts.Netcode
                 if (frames.Count <= i) frames.Add(frame);
                 else if (!frames[i].Equals(frame)) frames[i] = frame;
             }
+            sampleTime = NetworkTime.localTime;
         }
 
         void Apply()
         {
-            transform.SetPositionAndRotation(worldPosition, worldRotation);
-            transform.localScale = worldScale;
+            if (GamePauseController.IsPaused && worldPresented) return;
+            SampleWorldMount(NetworkTime.time, out var position, out var rotation, out var scale, out var buffered);
+            transform.SetPositionAndRotation(position, rotation);
+            transform.localScale = scale; worldPresented = true;
             for (int i = 0; i < animations.Length && i < frames.Count; i++)
             {
                 var animation = animations[i];
                 var sprite = sprites[i];
-                var frame = frames[i];
+                var frame = buffered != null && i < buffered.Length ? buffered[i] : frames[i];
                 if (frame.visible && !animation.gameObject.activeSelf) animation.gameObject.SetActive(true);
                 animation.idle = frame.idle;
                 animation.CurrentFrame = frame.frame;

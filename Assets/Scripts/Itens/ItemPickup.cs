@@ -6,7 +6,8 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(AnimatedSpriteRenderer))]
-public class ItemPickup : MonoBehaviour
+[DefaultExecutionOrder(200)]
+public partial class ItemPickup : MonoBehaviour
 {
     [Header("SFX")]
     public AudioClip collectSfx;
@@ -107,6 +108,8 @@ public class ItemPickup : MonoBehaviour
 
     void LateUpdate()
     {
+        if (TickNetworkItemPresentation()) return;
+        PublishNetworkItemHeartbeat();
         EnforceSkullBouncePositionLock();
     }
 
@@ -750,6 +753,7 @@ public class ItemPickup : MonoBehaviour
 
     public bool TryBounceSkull(Vector2 direction, float tileSize, Collider2D ignoredCollider, float protectionSeconds)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (type != ItemType.Skull)
             return false;
 
@@ -804,7 +808,8 @@ public class ItemPickup : MonoBehaviour
 
     public bool TryExpelItem(Vector2 direction, float tileSize, Collider2D ignoredCollider, int distanceTiles)
     {
-        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(6, gameObject, value: tileSize, direction: direction, steps: distanceTiles);
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
+
         if (isBeingDestroyed || skullBounceMoving)
             return true;
 
@@ -872,6 +877,7 @@ public class ItemPickup : MonoBehaviour
         float progress,
         int distanceTilesFromBomb = 1)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (type != ItemType.Skull)
             return false;
 
@@ -904,6 +910,7 @@ public class ItemPickup : MonoBehaviour
         int distanceTilesFromBomb,
         bool finishPush)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (type != ItemType.Skull)
             return false;
 
@@ -922,6 +929,7 @@ public class ItemPickup : MonoBehaviour
         int distanceTiles = Mathf.Max(1, distanceTilesFromBomb);
         Vector2 front = bombWorldCenter + direction * (tileSize * distanceTiles);
         SetSkullWorldPosition(front, syncPhysics: true);
+        SendNetworkItemPushPose();
 
         if (!finishPush)
             return true;
@@ -993,6 +1001,7 @@ public class ItemPickup : MonoBehaviour
 
         if (progress >= 1f)
             transform.localRotation = Quaternion.identity;
+        if (skullKickedBombPushActive) SendNetworkItemPushPose();
     }
 
     static bool IsSkullWrappedSegment(Vector2 start, Vector2 end, bool horizontal)
@@ -1072,6 +1081,7 @@ public class ItemPickup : MonoBehaviour
 
     void FinishKickedBombPush(Vector2 finalPosition)
     {
+        SendNetworkItemStop(finalPosition);
         transform.localRotation = Quaternion.identity;
         RestoreSkullBounceFlipState();
         SetSkullWorldPosition(finalPosition, syncPhysics: true);
@@ -1272,13 +1282,14 @@ public class ItemPickup : MonoBehaviour
             $"expel finish item:{GetDebugIdentity()} origin:{FormatVec(origin)} " +
             $"final:{FormatVec(current)} landed:{landed}");
 
-        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(7, gameObject, direction: current);
+        SendNetworkItemStop(current);
         skullBounceMoving = false;
         skullBounceRoutine = null;
     }
 
     IEnumerator SkullBounceSegment(Vector2 start, Vector2 end, Vector2 direction)
     {
+        SendNetworkItemSegment(start, end, direction, SkullBounceSecondsPerTile);
         bool horizontal = Mathf.Abs(direction.x) >= Mathf.Abs(direction.y);
 
         bool wrapped = horizontal
@@ -1299,6 +1310,7 @@ public class ItemPickup : MonoBehaviour
 
             SetSkullWorldPosition(end, syncPhysics: true);
             transform.localRotation = Quaternion.identity;
+            SendNetworkItemStop(end);
             yield break;
         }
 
@@ -1332,6 +1344,7 @@ public class ItemPickup : MonoBehaviour
 
         SetSkullWorldPosition(end);
         transform.localRotation = Quaternion.identity;
+        SendNetworkItemStop(end);
     }
 
     public void DestroyWithAnimation()
