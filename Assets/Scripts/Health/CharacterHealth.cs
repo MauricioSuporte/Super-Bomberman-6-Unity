@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -44,6 +44,7 @@ public class CharacterHealth : MonoBehaviour
     public bool InvulnerabilityBlinks { get; private set; }
     public bool IsDead => isDead;
     private bool externalInvulnerability;
+    public bool HasExternalInvulnerability => externalInvulnerability;
 
     private int _blinkOverrideToken;
     private Coroutine _restoreBlinkIntervalRoutine;

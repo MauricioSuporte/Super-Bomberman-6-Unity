@@ -112,6 +112,9 @@ public sealed class SpringLauncher : MonoBehaviour
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
         SetSpringIdle(false);
+        if (mover.TryGetComponent<GreenLouieDashAbility>(out var green) && green.DashActive) green.CancelDashForExternalInterruption();
+        if (mover.TryGetComponent<BlackLouieDashPushAbility>(out var black) && black.DashActive) black.CancelDashForExternalInterruption();
+        IEnumerator activeFlight = null;
 
         Rigidbody2D rb = mover.Rigidbody;
         float tileSize = Mathf.Max(0.0001f, mover.tileSize);
@@ -165,6 +168,8 @@ public sealed class SpringLauncher : MonoBehaviour
 
                 while (Time.time < tEnd)
                 {
+                    if (mover == null || rb == null || mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy) yield break;
+                    if (GamePauseController.IsPaused) { yield return null; continue; }
                     heldDir = ReadHeldCardinal(mover);
 
                     if (heldDir != Vector2.zero)
@@ -249,7 +254,7 @@ public sealed class SpringLauncher : MonoBehaviour
 
                     if (isIdleBounce)
                     {
-                        yield return JumpArcUnmountedWithMountSprites(
+                        activeFlight = JumpArcUnmountedWithMountSprites(
                             mover,
                             riding,
                             rb,
@@ -260,10 +265,13 @@ public sealed class SpringLauncher : MonoBehaviour
                             visualDir,
                             launchRoomBounds,
                             tileSize);
+                        yield return activeFlight;
+                        activeFlight = null;
+                        if (mover == null || mover.isDead || mover.IsEndingStage) break;
                     }
                     else
                     {
-                        yield return JumpArcUnmountedWithMountSprites(
+                        activeFlight = JumpArcUnmountedWithMountSprites(
                             mover,
                             riding,
                             rb,
@@ -274,6 +282,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             visualDir,
                             launchRoomBounds,
                             tileSize);
+                        yield return activeFlight;
+                        activeFlight = null;
+                        if (mover == null || mover.isDead || mover.IsEndingStage) break;
                     }
 
                     mover.SetVisualOverrideActive(false);
@@ -304,7 +315,7 @@ public sealed class SpringLauncher : MonoBehaviour
 
                     if (isIdleBounce)
                     {
-                        yield return JumpArcMountedWithJumpSprites(
+                        activeFlight = JumpArcMountedWithJumpSprites(
                             mover,
                             mountVisual,
                             useMountJumpVisual,
@@ -317,10 +328,13 @@ public sealed class SpringLauncher : MonoBehaviour
                             jumpFaceDir,
                             launchRoomBounds,
                             tileSize);
+                        yield return activeFlight;
+                        activeFlight = null;
+                        if (mover == null || mover.isDead || mover.IsEndingStage) break;
                     }
                     else
                     {
-                        yield return JumpArcMountedWithJumpSprites(
+                        activeFlight = JumpArcMountedWithJumpSprites(
                             mover,
                             mountVisual,
                             useMountJumpVisual,
@@ -333,6 +347,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             jumpFaceDir,
                             launchRoomBounds,
                             tileSize);
+                        yield return activeFlight;
+                        activeFlight = null;
+                        if (mover == null || mover.isDead || mover.IsEndingStage) break;
                     }
 
                     if (pinkShadow != null)
@@ -381,6 +398,7 @@ public sealed class SpringLauncher : MonoBehaviour
         }
         finally
         {
+            (activeFlight as System.IDisposable)?.Dispose();
             if (inputManager != null)
                 inputManager.SetSpringLauncherInputGate(playerId, false);
 
@@ -452,16 +470,18 @@ public sealed class SpringLauncher : MonoBehaviour
         }
 
         float elapsed = 0f;
+        var arc = new PlayerLaunchArc { start = start, end = end, duration = duration, height = arcWorld, tileSize = tileSize,
+            bounded = launchRoomBounds != null, room = PlayerLaunchArc.Room(launchRoomBounds), rootCarriesHeight = true, quantizeVisual = false };
+        using var launch = Assets.Scripts.Netcode.NetworkPlayerInput.PresentApprovedLaunch(mover, arc);
 
         while (elapsed < duration)
         {
-            float t = elapsed / duration;
-
-            Vector2 flat = WrapFlightPosition(
-                Vector2.Lerp(start, end, t), launchRoomBounds, tileSize);
-            float parabola = 4f * t * (1f - t);
-            float arcY = ClampArcHeightToRoom(
-                flat.y, arcWorld * parabola, launchRoomBounds, tileSize);
+            if (mover == null || rb == null || mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy) yield break;
+            arc.bounded = launchRoomBounds != null; arc.room = PlayerLaunchArc.Room(launchRoomBounds);
+            if (GamePauseController.IsPaused) { launch.Progress(arc, elapsed, true); yield return null; continue; }
+            launch.Progress(arc, elapsed, false);
+            Vector2 flat = arc.Ground(elapsed);
+            float arcY = arc.Height(elapsed);
 
             Vector2 pos = flat + Vector2.up * arcY;
 
@@ -497,24 +517,28 @@ public sealed class SpringLauncher : MonoBehaviour
         }
 
         float elapsed = 0f;
+        var arc = new PlayerLaunchArc { start = start, end = end, duration = duration, height = arcWorld, tileSize = tileSize,
+            bounded = launchRoomBounds != null, room = PlayerLaunchArc.Room(launchRoomBounds), rootCarriesHeight = true, quantizeVisual = false };
+        using var launch = Assets.Scripts.Netcode.NetworkPlayerInput.PresentApprovedLaunch(mover, arc);
 
         while (elapsed < duration)
         {
+            if (mover == null || rb == null || mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy) yield break;
+            arc.bounded = launchRoomBounds != null; arc.room = PlayerLaunchArc.Room(launchRoomBounds);
+            if (GamePauseController.IsPaused) { launch.Progress(arc, elapsed, true); yield return null; continue; }
+            launch.Progress(arc, elapsed, false);
             float t = Mathf.Clamp01(elapsed / duration);
             bool descendingNow = t >= 0.5f;
 
             if (useMountJumpVisual && mountVisual != null)
                 mountVisual.SetJumpPhase(descendingNow);
 
-            Vector2 flat = WrapFlightPosition(
-                Vector2.Lerp(start, end, t), launchRoomBounds, tileSize);
+            Vector2 flat = arc.Ground(elapsed);
 
             if (pinkShadow != null)
                 pinkShadow.SetJumpGroundPosition(flat);
 
-            float parabola = 4f * t * (1f - t);
-            float arcY = ClampArcHeightToRoom(
-                flat.y, arcWorld * parabola, launchRoomBounds, tileSize);
+            float arcY = arc.Height(elapsed);
             Vector2 pos = flat + Vector2.up * arcY;
 
             SetFlightPosition(rb, pos);
@@ -564,16 +588,20 @@ public sealed class SpringLauncher : MonoBehaviour
         ClearAllUnmountedSpringArcOffsets(riding);
 
         float elapsed = 0f;
+        var arc = new PlayerLaunchArc { start = start, end = end, duration = duration, height = arcWorld, tileSize = tileSize,
+            bounded = launchRoomBounds != null, room = PlayerLaunchArc.Room(launchRoomBounds), rootCarriesHeight = false, quantizeVisual = true };
+        using var launch = Assets.Scripts.Netcode.NetworkPlayerInput.PresentApprovedLaunch(mover, arc);
 
         while (elapsed < duration)
         {
+            if (mover == null || rb == null || mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy) yield break;
+            arc.bounded = launchRoomBounds != null; arc.room = PlayerLaunchArc.Room(launchRoomBounds);
+            if (GamePauseController.IsPaused) { launch.Progress(arc, elapsed, true); yield return null; continue; }
+            launch.Progress(arc, elapsed, false);
             float t = Mathf.Clamp01(elapsed / duration);
 
-            Vector2 flat = WrapFlightPosition(
-                Vector2.Lerp(start, end, t), launchRoomBounds, tileSize);
-            float parabola = 4f * t * (1f - t);
-            float arcY = ClampArcHeightToRoom(
-                flat.y, arcWorld * parabola, launchRoomBounds, tileSize);
+            Vector2 flat = arc.Ground(elapsed);
+            float arcY = arc.Height(elapsed);
 
             AnimatedSpriteRenderer activeRenderer = PickUnmountedSpringArcRenderer(
                 riding,
@@ -752,45 +780,7 @@ public sealed class SpringLauncher : MonoBehaviour
         Collider2D roomBounds,
         float tileSize)
     {
-        if (roomBounds == null)
-            return position;
-
-        Bounds bounds = roomBounds.bounds;
-
-        // The flight position is continuous, unlike a bomb's discrete tile
-        // center. Wrap only after crossing the actual collider edge so the
-        // player does not jump early to a point outside the opposite edge.
-        float minX = bounds.min.x;
-        float maxX = bounds.max.x;
-        float minY = bounds.min.y;
-        float maxY = bounds.max.y;
-
-        float width = bounds.size.x;
-        float safeTileSize = Mathf.Max(0.0001f, tileSize);
-
-        if (width > 0f)
-        {
-            while (position.x < minX)
-                position.x += width;
-            while (position.x > maxX)
-                position.x -= width;
-        }
-
-        if (bounds.size.y > safeTileSize)
-        {
-            // The room collider includes the top and bottom indestructible
-            // wall tiles. A vertical wrap must land one tile inside those
-            // walls, not on the wall tile itself.
-            float bottomLandingY = Mathf.Ceil((minY + safeTileSize) / safeTileSize) * safeTileSize;
-            float topLandingY = Mathf.Floor((maxY - safeTileSize) / safeTileSize) * safeTileSize;
-
-            if (position.y < minY)
-                position.y = topLandingY;
-            else if (position.y > maxY)
-                position.y = bottomLandingY;
-        }
-
-        return position;
+        return PlayerLaunchArc.Wrap(position, roomBounds != null, PlayerLaunchArc.Room(roomBounds), tileSize);
     }
 
     private static void SetFlightPosition(Rigidbody2D body, Vector2 position)
@@ -812,15 +802,7 @@ public sealed class SpringLauncher : MonoBehaviour
         Collider2D roomBounds,
         float tileSize)
     {
-        if (roomBounds == null)
-            return requestedArcY;
-
-        Bounds bounds = roomBounds.bounds;
-        float safeTileSize = Mathf.Max(0.0001f, tileSize);
-        float minVisibleY = bounds.min.y + safeTileSize;
-        float maxVisibleY = bounds.max.y - safeTileSize;
-        float clampedY = Mathf.Clamp(groundY + requestedArcY, minVisibleY, maxVisibleY);
-        return clampedY - groundY;
+        return PlayerLaunchArc.ClampHeight(groundY, requestedArcY, roomBounds != null, PlayerLaunchArc.Room(roomBounds), tileSize);
     }
 
     private void QueueInvalidWrappedLandingBounce(

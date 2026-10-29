@@ -1,4 +1,5 @@
 using UnityEngine;
+using Mirror;
 
 namespace Assets.Scripts.Netcode
 {
@@ -10,9 +11,12 @@ namespace Assets.Scripts.Netcode
         public byte mask;
         public bool valid;
         public float offsetLimit;
+        public uint launchSequence;
+        public float launchLift;
+        public sbyte launchLiftMode;
 
         public bool Equals(NetworkVisualPose other) => valid == other.valid && mask == other.mask &&
-            position.Equals(other.position) && scale.Equals(other.scale) && rotation.Equals(other.rotation) && offsetLimit.Equals(other.offsetLimit);
+            position.Equals(other.position) && scale.Equals(other.scale) && rotation.Equals(other.rotation) && offsetLimit.Equals(other.offsetLimit) && launchSequence == other.launchSequence && launchLift.Equals(other.launchLift) && launchLiftMode == other.launchLiftMode;
 
         static Vector3 Divide(Vector3 value, Vector3 divisor) => new(
             Mathf.Abs(divisor.x) > 0.000001f ? value.x / divisor.x : 0,
@@ -22,10 +26,13 @@ namespace Assets.Scripts.Netcode
         public static NetworkVisualPose Capture(Transform actor, SpriteRenderer renderer)
         {
             if (actor == null || renderer == null) return default;
-            return new NetworkVisualPose { valid = true, position = actor.InverseTransformPoint(renderer.transform.position),
+            var pose = new NetworkVisualPose { valid = true, position = actor.InverseTransformPoint(renderer.transform.position),
                 rotation = Quaternion.Inverse(actor.rotation) * renderer.transform.rotation,
                 scale = Divide(renderer.transform.lossyScale, actor.lossyScale), mask = (byte)renderer.maskInteraction,
                 offsetLimit = actor.TryGetComponent<NetworkPlayerInput>(out var input) ? input.AuthorityVisualOffsetLimit : 4f };
+            if (actor.TryGetComponent<NetworkPlayerInput>(out var launch))
+                launch.CaptureLaunchLift(renderer, out pose.launchSequence, out pose.launchLift, out pose.launchLiftMode);
+            return pose;
         }
 
         public static float ApprovedOffsetLimit(NetworkVisualPose from, NetworkVisualPose to)
@@ -42,6 +49,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!from.valid || !to.valid) return from;
             from.position = Vector3.Lerp(from.position, to.position, t);
+            if (from.launchSequence == to.launchSequence && from.launchLiftMode == to.launchLiftMode) from.launchLift = Mathf.Lerp(from.launchLift, to.launchLift, t);
             from.scale = Vector3.Lerp(from.scale, to.scale, t);
             from.rotation = Quaternion.Slerp(from.rotation, to.rotation, t);
             return from; // The mask mode is discrete, just like the selected frame.
@@ -52,7 +60,10 @@ namespace Assets.Scripts.Netcode
             if (!valid || actor == null || renderer == null) return;
             renderer.maskInteraction = (SpriteMaskInteraction)mask;
             if (renderer.transform == actor) return; // Never move/scale a gameplay root.
-            renderer.transform.SetPositionAndRotation(actor.TransformPoint(position), actor.rotation * rotation);
+            Vector3 world = actor.TransformPoint(position);
+            if (launchSequence != 0 && actor.TryGetComponent<NetworkPlayerInput>(out var launch) && launch.TryApprovedLaunchLift(launchSequence, launchLiftMode, out float height))
+                world.y += height - launchLift;
+            renderer.transform.SetPositionAndRotation(world, actor.rotation * rotation);
             var parentScale = renderer.transform.parent != null ? renderer.transform.parent.lossyScale : Vector3.one;
             renderer.transform.localScale = Divide(Vector3.Scale(actor.lossyScale, scale), parentScale);
         }
@@ -98,4 +109,23 @@ namespace Assets.Scripts.Netcode
             }
         }
     }
+    public static class NetworkVisualPoseSerialization
+    {
+        public static void WriteNetworkVisualPose(this NetworkWriter writer, NetworkVisualPose value)
+        {
+            writer.WriteVector3(value.position); writer.WriteVector3(value.scale); writer.WriteQuaternion(value.rotation);
+            writer.WriteByte(value.mask); writer.WriteBool(value.valid); writer.WriteFloat(value.offsetLimit);
+            writer.WriteBool(value.launchSequence != 0);
+            if (value.launchSequence == 0) return;
+            writer.WriteUInt(value.launchSequence); writer.WriteFloat(value.launchLift); writer.WriteSByte(value.launchLiftMode);
+        }
+        public static NetworkVisualPose ReadNetworkVisualPose(this NetworkReader reader)
+        {
+            var value = new NetworkVisualPose { position = reader.ReadVector3(), scale = reader.ReadVector3(), rotation = reader.ReadQuaternion(),
+                mask = reader.ReadByte(), valid = reader.ReadBool(), offsetLimit = reader.ReadFloat() };
+            if (reader.ReadBool()) { value.launchSequence = reader.ReadUInt(); value.launchLift = reader.ReadFloat(); value.launchLiftMode = reader.ReadSByte(); }
+            return value;
+        }
+    }
+
 }

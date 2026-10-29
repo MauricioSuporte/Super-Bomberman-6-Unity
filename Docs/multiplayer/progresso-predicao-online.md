@@ -46,17 +46,17 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo55, commit `0ddcf872d`,
-  [Actions40910624716](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40910624716)
-  completed/success confirmado, incluindo updater/C03. Lote A11/protocolo56
-  validado localmente e pronto para publicação conjunta de cliente/servidor.
-- **Validação local mais recente:**928/928 Unity sem skips (PredictionMountContact56Full),
-  foco30/30, C#0/0; Python64/64 (56CI+8Directory). Três ciclos de remontagem nativa,
-  quatro Select por owner e1ovo porplayer em2clientes Mirror reais, com câmera URP.
-  Cada cliente confirmou3Mount e4Dismount previstos sem reiniciar fase nem rollback
-  indevido (PredictionMountContact56CyclesRendered3/riding-review.json).
-  Capturas da câmera gameplay inspecionadas; não medem latência humana nem validam
-  a saída completa de HUD/barras. A12 mantém o aceite expresso com2clientes reais.
+- **Publicado:** protocolo56, commit `bf111acca`,
+  [Actions40922400063](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40922400063)
+  completed/success confirmado. C02/protocolo57 em implementação e validação local.
+- **Validação local mais recente (C02/protocolo57):**971/971Unity,0skips,
+  incluindo43casosLaunch; C#runtime/Editor0erros/0avisos; Python68/68(60CI+8Directory).
+  Cannon2(Stage_2-3),Geyser2(Stage_3-3) eArena2(Battle4):2clientesMirror reais,
+  90s porcenário, owner/observer com fase contínua sem recuo, begin/end e controle
+  desbloqueado após o salto;0erros/avisosservidor. Voos a pé/montados e cancelamento
+  montado emCannon/Geyser. CâmeraURP capturada e imagens inspecionadas; não medem
+  latência humana nem equivalem a comparação manual completa com offline.
+  A11 mantém928/928 +3remount/4Select porowner e câmeraURP; A12 mantém aceite humano.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
   itens em movimento e desmontagem Mole/Tank; co-op Stage_1-1 por90s com captura.
   Ambos sem erros/avisos. Headless; não comprova renderização nem input lag zero.
@@ -67,7 +67,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:**18 IDs implementados/testados e15 parciais; todos os33 iniciados.
+- **Checklist:**19 IDs implementados/testados e14 parciais; todos os33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
 - **Próximo:** publicar A11/56 e conferir o CI; continuar curvas e entrega ao motor
   de C02/C03 e os demais IDs parciais.
@@ -227,7 +227,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [ ] C02: parcial55: base/limite de salto alto e canhão/mola com cleanup de preparação/voo/handoff;902/902 testes. Curvas completas/ambientais/manuais pendentes.
+- [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 a confirmar.
 - [ ] C03: parcial55: preparação/voo/deformação aprovados; cancelamento, pose/proteção, reutilização e início no frame de input testados (903/903). Descritores de curva/handoff completo e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
@@ -2828,3 +2828,141 @@ existentes de geometria Spring e lifetime Cannon/Spring em
 OnlineRoomLauncherLifetimeTests.cs; manter assinaturas privadas refletidas por eles.
 Nenhum sampler/receita C02 novo foi escrito neste lote. Não marcar C02 completo.
 CI40922400063 ainda em build na última consulta; runner reservado a ele.
+
+
+## C02 em implementação — protocolo57 local, NÃO validado
+
+Pedido explícito atual: implementar C02. Confirmado Actions40922400063 completed/
+success para bf111acca/A11/protocolo56; runner livre na última consulta.
+Três fonts sujos do usuário continuam preservados. Nenhum commit57/push novo.
+
+Novos arquivos PlayerLaunchArc.cs e NetworkLaunchPresentation.cs (+metas), ainda
+sem testes Unity: sampler nativo compartilhado para parábola/platô, root vs visual,
+wrap/clamp de sala; receita SyncVar retida no NetworkPlayerInput com revision/seq,
+phase/time/paused, owner timeline previsto e observer interpolado. Root restaurado
+após reconciliação/LateUpdate via FX existente. Handoff usa replay só de movimento;
+nenhuma proteção/input/posse concedida no client. RecipeLastStatecancel/timeout/pose
+precisam revisão/testes. NPA/NMA agora consultam o clock de receita para o owner.
+
+NetworkVisualPose carrega metadata condicional de lift porlaunch (sequence/mode/
+lift), correção da altura entre poses aprovadas; sombra Pink ancorada ao solo tem
+lift negativo quando altura no root. Serializador custom economiza:1byte extra
+sem receita,9mais com receita; precisa testar Weaver/roundtrip real. Novo getter
+PinkShadow.HasGroundedJump só lê apresentação. ProtocolVersion/supervisor57 alinhados.
+
+Cannon e3variantes Spring/geyser usam sampler/LaunchScope; flightProgress paused
+explícito. Spring outer guarda/dispose nested flight e cancela dash antes do lock.
+Battle4 usa platô compartilhado; está sendo corrigido teardown: dictionary de
+iterators, nested disposal, manter posição no cancel, preservar proteção prévia e
+não gerar bounce em cancel/death/end-stage. Getter CharacterHealth.HasExternalInvulnerability
+novo para restaurar o flag externo prévio; revisar finally e warnings.
+
+Exec70639 dotnet build em andamento/resultado a conferir. csproj gerado foi ajustado
+só para incluir os2sources novos no check terminal; não commitar csproj.
+Próximo: conferir compilação, adicionar testes geometry/phase/pausa/handback/late
+observer/cancel/Weaver/lifetime Battle4, copiar sources/metas ao runner livre e rodar
+foco/full antes de build+smoke2peers. Código57 ainda não comprova C02 concluído.
+
+
+## C02 — checkpoint de validação57
+
+PredictionLaunch57Focused4:38/38 Unity passaram,0skips. Inclui geometria nativa,
+serialização condicional47/56bytes, owner/observer, pausa, late state/revisions,
+correção de lift, sombra gerada sem collider, cancel/death, replay só de caminhada,
+bounce+stop aguardando o salto e disable real de GO/componente Battle4 em PlayMode.
+TentativaFocused3 teve36/37 porfixture com motor desabilitado; corrigida habilitando
+o motor e repetida noFocused4. C# incremental0erros/0avisos.
+PredictionLaunch57Full em execução; buildDevelopment e smokes ainda não executados.
+
+Harness Development ganhou --launchers arena|spring|cannon: duas conexões reais,
+primeiro player sem montaria e segundoPink; salto nativo completo e cancelamento
+no segundo spring/cannon, com restauração do controle. Câmera URP captura após os
+presenters. Validator exige begin/sample/end de owner e observer emcada cliente,
+além de movimento desbloqueado posterior. Ainda não há evidência dos smokes57.
+Novo helperTools/RoomDirectory/validate_launcher_smoke.py precisa commit.
+Próximo: conferir suíte completa, buildDevelopment57 e3smokes nas cenas Battle4,
+Stage_2-3/cannon eStage_3-3/geyser. Não marcar C02 concluído antes da validação.
+
+
+Checkpoint seguinte: PredictionLaunch57Full966/966 passou,0skips. Python56CI+8Directory
+passaram. Integridade strictUTF8/BOM e metas dos19C# alterados/novos verificada;
+gitdiff--check limpo. BuildPredictionLaunch57Development em execução no runner;
+ainda não restaurar paths do runner ou publicar até concluir os smokes.
+
+
+Revisão encontrou timeout de receita pausada: heartbeat de pausa é intencionalmente
+suprimido, mas timeout antigo invalidava a geração após pausa longa. Corrigido
+localmente para aplicar timeout somente emestado não pausado; dois testes owner/
+observer novos. Ainda não copiado ao runner enquanto a primeira buildDevelopment
+estiver executando. Repetir foco40 e full968 com esta correção antes da buildfinal.
+
+
+Focused5 passou40/40 (inclui pausa prolongada); C#0/0 novamente. Arena1 executou
+2clientes reais e ambos begin/end/amostras/unlock,0erros/avisosservidor, câmeraURP.
+Inspeção adicional detectou recuo11.5ms na fase do observer após stall: resultado
+antigo não deve contar como aceite final. Presenter local agora retém o maior
+elapsed jáexibido apenas dentro da mesma geração (root e lift); nova geração não
+herda fase. Dois testes novos (42focados/970full esperados) ainda nãoexecutados.
+Validator agora rejeita recuo de fase superior1ms. Cannon1 nãoexecutou: reserva
+mínima3GiB insuficiente com suíteUnity em paralelo. Não diminuir a reserva; aguardar
+Editor/testes terminarem e rodar os smokes sequencialmente. Full2+Development2
+emexecução usam apenas a correção de pausa, não a monotonicidade local posterior.
+Depois copiar estes2sources novamente, rodar full970 e buildDevelopment3 final.
+
+
+Final de compilação/testes57: PredictionLaunch57Full3 passou970/970,0skips,
+incluindo os42casosLaunch. C#final0erros/0avisos; Python60CI+8Directory passaram.
+Correção de monotonicidade e logs launch_recipe_publish no servidor estão nesta
+suíte. BuildPredictionLaunch57Development3 emexecução; será a base dos smokes
+finais comvalidatorque rejeita recuo. Ainda não há commit/push57. PreflightSSH passou.
+
+
+Cannon2/Development3 passou:2clientes reais Stage_2-3,90s,owner/observer contínuos
+sem recuo e desbloqueados, voo completo + cancelamento montado,0erros/avisos.
+Geyser1/Stage_3-3: critérios de curva/phase/unlock passaram nos2clientes, mas smoke
+completo REPROVOU por47warnings de sprites de bolha ausentes no CoopSceneCatalog.
+Não ocultar os warnings nem descrever Geyser1 como aceite limpo. Causa: catálogo
+Stage33BubbleAnimations carregado viaResources, fora das dependências serializadas.
+
+CoopSceneCatalogBuilder agora inclui explicitamente esse recurso só naStage_3-3;
+novo testegera catálogos e exige todos osframes(>40), sem mudar gameplay/RNG dasbolhas.
+Full4/971esperados +Development4 emexecução. Ao finalizar Full4, scriptcopia somente
+Assets/Resources/CoopScenes/Stage_3-3.asset gerado do runner ao checkout original.
+Owned-paths JSON inclui builder e esseasset para restauração antes deCI.
+Próximo: conferir971, build4 e repetir Geyser2, Arena2 eCannon3 semUnity emparalelo.
+C02 ainda parcial até concluir estes aceites e atualizar checklist/publicação57.
+
+
+Full4 passou971/971,0skips;43casosLaunch incluindo assetcatalog. EditorC#também
+0/0 após restoreNuGet do csprojgerado (tentativa --no-restore falhou só porassets
+NuGet ausente). Stage_3-3.asset gerado copiado ao root:48refsSprite acrescentadas
+mais contentHash, nenhuma mudança na lógica de bolhas. Development4 concluído.
+Cannon2 continua válido: Assembly-CSharp.dll deDevelopment4 é exatamente o mesmo
+SHA256(2a2ef52acb90c633004cf0ab2398e69625d5498d110b6393b9fa5a8ab740562e).
+Não repetir Cannon3 sem mudança relevante: só catálogoStage_3-3/Editor mudaram.
+Geyser2 eArena2 estão emexecução sequencial(90s cada) no exec65508; nenhumaUnity
+batch/teste emparalelo. Conferir resultado/failure antes de marcarC02 e publicar.
+
+
+## C02 concluído e validado localmente — pronto para publicação57
+
+Cannon2/Geyser2/Arena2 passaram90s cada,2clientesMirror reais porcenário, ambos
+owner eobserver com begin/amostras/end/unlock e fase monotônica.0erros e0avisos
+emcada resultado. Assemblyruntime igual nos3cenários; catálogoStage_3-3 corrigido
+naDevelopment4. Arena2 passou também a remoção dos atoresduráveis e encerramento.
+CapturasURP inspecionadas(incluindo bolhas após correção); não são medição de
+inputlag humano ou validação exaustiva de HUD, áudio ou conexãoWAN.
+
+Principais correções: receitaSyncVar noNPI existente; sampler nativo/online;
+curvasParábola/Platô com wrap/clamp existentes; clock único root/player/mount porrole;
+liftcondicional preserva pose e sombraPink; sombraBattle4 decorativa; pausa longa
+não expira a receita; fase não recua com updates da mesma geração. Morte/disable/
+scene/cancel limpam a apresentação; cancelnativo não teleporta ao fim. Fila de
+bounce/stop aguarda arco principal. Handoff reproduz caminhada sem executar açõesA.
+Destino, disputa, colisões, invulnerabilidade e consequências continuam autoritativos.
+
+Sources ecatálogo do root conferidos byte-a-byte com runner testado;20C# strictUTF8/
+BOM/meta passaram, diff--check limpo. Fonts do usuário preservados. Checklist19/33
+implementados/testados,14parciais. Próximo: restaurar SOMENTE paths tracked em
+Logs/C02-57-owned-paths.json no runner,commit/push conjunto cliente+servidor57 e
+conferir Actions; não executar build/teste local no runner durante CI.

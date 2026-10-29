@@ -14,6 +14,7 @@ public class PinkLouieShadowController : MonoBehaviour
     bool jumping;
     Vector2 jumpGroundPos;
     bool hasJumpGroundPos;
+    public bool HasGroundedJump => jumping && hasJumpGroundPos;
 
     MovementController cachedOwner;
 

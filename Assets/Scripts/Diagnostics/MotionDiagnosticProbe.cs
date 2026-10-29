@@ -114,6 +114,7 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
     public static string ClassifyPredictionBlock(MovementController motor, NetworkPlayerInput input, NetworkBombFx fx)
     {
         if (GamePauseController.IsPaused) return "paused";
+        if (input != null && input.ApprovedLaunchActive && fx?.ClientPlayerMotionActive != true) return "approved_launch";
         if (NetSync.Mode == NetSync.NetMode.Client && input != null && input.isLocalPlayer && !input.ServerAllowsMovementPrediction) return "server_authoritative";
         if (motor == null) return "missing_motor";
         if (motor.NetworkPredictionBlockReason != null) return motor.NetworkPredictionBlockReason;

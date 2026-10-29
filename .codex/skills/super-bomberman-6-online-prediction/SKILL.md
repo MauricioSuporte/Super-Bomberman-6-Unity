@@ -569,3 +569,21 @@ uses -150. Confirm gesture_only plus phase_preserved in each client's own captur
 not merely a native server dismount. A GPU-enabled batch player can still save a
 black backbuffer. Request the gameplay camera through the active URP into a render
 target and verify distinct, visible frames before reporting rendered acceptance.
+
+
+For native launcher presentation, share the exact native curve and preserve root
+height versus sprite-only lift. A launch-scoped pose carries its sampled lift so
+the client can replace only that portion with the current approved phase, retaining
+other frame offsets and a grounded Pink shadow. Use the role's clock for root,
+player and mount together; keep transform decoding active and restore the presenter
+after reconciliation. Queue the approved landing bounce and its stop until the main
+arc finishes. Handoff may replay walking history only, never action edges. Validate
+native disposal and actual two-client owner/observer progression independently of
+server checkpoints. A recipe does not authorize guessing an unknown contact phase.
+
+A retained paused recipe must not expire merely because its phase heartbeat stops.
+Keep already presented phase monotonic within a generation after delivery stalls,
+for both root and visual lift; reset it on a new launch. A successful server fixture
+alone can hide an observer rewind: validate per-client phase progression and
+unlocked handoff from the completed JSONL. Run three-process smokes after the
+Editor/test process exits when RAM is limited; preserve the memory reserve.

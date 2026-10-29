@@ -12,7 +12,8 @@ namespace Assets.Scripts.Netcode
     // Development-only command-line harness. No remote message can enable it.
     public partial class BombermanNetworkManager
     {
-        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked;
+        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked, loadTestLaunchersChecked;
+        string loadTestLauncherKind;
         readonly HashSet<int> loadTestPresenterReady = new();
         int loadTestPlayers;
         float loadTestStart, loadTestDuration, loadTestNextHealth;
@@ -34,6 +35,13 @@ namespace Assets.Scripts.Netcode
                 var args = Environment.GetCommandLineArgs();
                 loadTestPlayers = ReadDedicatedNumber(args, "-load-test-players", RoomCapacity, 2, RoomCapacity);
                 loadTestDuration = ReadDedicatedNumber(args, "-load-test-duration", 180, 30, 1800);
+                int launcherArg = Array.IndexOf(args, "-load-test-launchers");
+                if (launcherArg >= 0)
+                {
+                    loadTestLauncherKind = launcherArg + 1 < args.Length ? args[launcherArg + 1] : "";
+                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon")
+                        throw new ArgumentException("Unknown Development launcher fixture");
+                }
                 loadTestStart = Time.realtimeSinceStartup;
                 Debug.Log("[LoadTest] Synthetic durable actors; network controls at 30 Hz. Not normal game rules.");
             }
@@ -62,13 +70,13 @@ namespace Assets.Scripts.Netcode
                     PlayerPersistentStats.ResetToDefaultsAll();
                     if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
-                    bool fillCom = HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles");
+                    bool fillCom = HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
                     if (fillCom) global::SaveSystem.SetBattleModeComputerLevel(BattleModeComputerLevel.Hard);
                     for (int i = 0; i < modes.Length; i++) modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle("BattleMode_15");
+                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "arena" ? "BattleMode_4" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -81,6 +89,12 @@ namespace Assets.Scripts.Netcode
                 {
                     loadTestSpawnsChecked = true;
                     StartCoroutine(CheckLoadTestSpawns());
+                }
+                if (!loadTestLaunchersChecked && loadTestLauncherKind != null && Time.timeSinceLevelLoad > 12 &&
+                    (!IsCoopRoom || OnlineCoopPlayersReady) && !BattleStartPending)
+                {
+                    loadTestLaunchersChecked = true;
+                    StartCoroutine(CheckLoadTestLaunchers());
                 }
                 if (!loadTestRevengeChecked && HasArg("-load-test-revenge-input") && !IsCoopRoom && Time.timeSinceLevelLoad > 12)
                 {
@@ -95,6 +109,75 @@ namespace Assets.Scripts.Netcode
                     StartCoroutine(CheckLoadTestPresenterRemoval());
                 }
             }
+        }
+
+        System.Collections.IEnumerator CheckLoadTestLaunchers()
+        {
+            int index = 0;
+            var positions = new List<Vector2>();
+            foreach (var peer in NetworkServer.connections.Values)
+            {
+                if (peer.identity == null) throw new InvalidOperationException("Launcher fixture requires two live actors");
+                var mover = peer.identity.GetComponent<MovementController>();
+                var input = peer.identity.GetComponent<NetworkPlayerInput>();
+                var companion = peer.identity.GetComponent<PlayerMountCompanion>();
+                var health = peer.identity.GetComponent<CharacterHealth>();
+                if (mover == null || input == null || companion == null || health == null) throw new InvalidOperationException("Missing launcher actor components");
+                bool priorProtection = health.HasExternalInvulnerability;
+                health.SetExternalInvulnerability(true);
+                Vector2 original = mover.Rigidbody.position;
+                companion.RestoreMounted(index == 0 ? MountedType.None : MountedType.Pink);
+                yield return new WaitForSecondsRealtime(.5f);
+                uint previous = input.ApprovedLaunchSnapshot.sequence;
+                MonoBehaviour mechanism = null;
+                Vector2 entry;
+                if (loadTestLauncherKind == "arena")
+                {
+                    var arena = FindAnyObjectByType<BattleMode4SpringTileController>();
+                    if (arena == null) throw new InvalidOperationException("Arena fixture missing its native spring controller");
+                    arena.CopySpringWorldPositions(positions);
+                    if (positions.Count == 0) throw new InvalidOperationException("Arena fixture has no native spring tile");
+                    entry = positions[index % positions.Count];
+                }
+                else
+                {
+                    mechanism = loadTestLauncherKind == "cannon" ? (MonoBehaviour)FindAnyObjectByType<CannonLauncher>() : FindAnyObjectByType<SpringLauncher>();
+                    if (mechanism == null || !mechanism.TryGetComponent<Collider2D>(out var trigger))
+                        throw new InvalidOperationException("Scene does not contain the requested native launcher " + loadTestLauncherKind);
+                    mechanism.enabled = true;
+                    entry = trigger.bounds.center;
+                }
+                mover.SnapToWorldPoint(entry, roundToGrid: false);
+                ServerReconcileFixturePlayer(input);
+                float deadline = Time.unscaledTime + 10;
+                while (Time.unscaledTime < deadline && (!input.ApprovedLaunchSnapshot.active || input.ApprovedLaunchSnapshot.sequence == previous)) yield return null;
+                var launch = input.ApprovedLaunchSnapshot;
+                if (!launch.active || launch.sequence == previous) throw new InvalidOperationException("Native launcher did not produce an approved curve " + loadTestLauncherKind);
+                Debug.Log("[LoadTest] launcher started kind=" + launch.arc.kind + " player=" + mover.PlayerId + " sequence=" + launch.sequence + " mounted=" + mover.IsMounted);
+                bool cancel = index == 1 && mechanism != null;
+                if (cancel)
+                {
+                    yield return new WaitForSecondsRealtime(.2f);
+                    mechanism.enabled = false;
+                }
+                deadline = Time.unscaledTime + 10;
+                while (Time.unscaledTime < deadline && input.ApprovedLaunchSnapshot.active) yield return null;
+                if (input.ApprovedLaunchSnapshot.active) throw new InvalidOperationException("Native launcher failed to end its approved curve");
+                if (mechanism != null) mechanism.enabled = false; // Stop an idle spring's deliberate repeat.
+                yield return new WaitForSecondsRealtime(.5f);
+                if (mover.InputLocked || mover.ExternalMovementOverride || mover.VisualOverrideActive)
+                    throw new InvalidOperationException("Native launcher left player control locked");
+                Debug.Log("[LoadTest] launcher finished kind=" + launch.arc.kind + " player=" + mover.PlayerId + " cancelled=" + cancel);
+                mover.SnapToWorldPoint(original, roundToGrid: false); ServerReconcileFixturePlayer(input);
+                health.SetExternalInvulnerability(priorProtection);
+                index++;
+            }
+            if (index != 2) throw new InvalidOperationException("Launcher fixture requires exactly two actors");
+            Debug.Log("[LoadTest] launchers completed kind=" + loadTestLauncherKind + " players=2");
+        }
+        static void ServerReconcileFixturePlayer(NetworkPlayerInput input)
+        {
+            if (NetworkServer.active && input != null && input.isServer) input.ServerReconcileMovementNow();
         }
 
         System.Collections.IEnumerator CheckLoadTestRevengeInput()
@@ -383,7 +466,7 @@ namespace Assets.Scripts.Netcode
         bool capturedRiding, captureWarmed;
         int captureArc, captureFrame;
         float captureNext;
-        bool checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
+        bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
@@ -398,6 +481,7 @@ namespace Assets.Scripts.Netcode
             var root = new GameObject("LocalNetworkInputSmoke");
             DontDestroyOnLoad(root);
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
+            smoke.checkLauncherInput = Array.IndexOf(args, "-load-test-launchers") >= 0;
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
             smoke.repeatMountCycles = Array.IndexOf(args, "-load-test-mount-cycles") >= 0;
@@ -411,6 +495,7 @@ namespace Assets.Scripts.Netcode
                     throw new InvalidOperationException("Mount capture requires an active graphics device");
                 smoke.captureDirectory = System.IO.Path.GetFullPath(args[captureArg + 1]);
                 System.IO.Directory.CreateDirectory(smoke.captureDirectory);
+                root.AddComponent<LocalNetworkSmokeCapture>().source = smoke;
                 Debug.Log("[LoadTest] mount-capture graphics=" + SystemInfo.graphicsDeviceType);
             }
         }
@@ -429,6 +514,11 @@ namespace Assets.Scripts.Netcode
                     Application.Quit();
                     return;
                 }
+            }
+            if (checkLauncherInput && NetworkClient.isConnected && NetworkClient.localPlayer != null && PlayerInputManager.Instance != null)
+            {
+                var launcher = NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>();
+                PlayerInputManager.Instance.SetSyntheticHeld(1, PlayerAction.MoveRight, launcher != null && launcher.OwnerUsesAuthorityPresentation && !launcher.ApprovedLaunchActive);
             }
             if (revengeInput && NetworkManager.singleton is BombermanNetworkManager manager && manager != null)
                 manager.TickLocalRevengeInputSmoke();
@@ -485,18 +575,18 @@ namespace Assets.Scripts.Netcode
             }
         }
 
-        void LateUpdate()
+        internal void CapturePresentationFrame()
         {
             if (string.IsNullOrEmpty(captureDirectory) || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
             var camera = Camera.main;
             if (camera == null) return;
-            if (!captureWarmed && SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) && Time.timeSinceLevelLoad > 1)
+            if (!captureWarmed && (SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) || SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal)) && Time.timeSinceLevelLoad > 1)
             {
                 CaptureMountFrame(camera, "warmup.png"); captureWarmed = true;
                 return;
             }
             var fx = NetworkClient.localPlayer.GetComponent<NetworkBombFx>();
-            bool riding = fx != null && fx.RidingArcActive;
+            bool riding = fx != null && fx.RidingArcActive || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true;
             if (riding && !capturedRiding) { captureArc++; captureFrame = 0; captureNext = Time.unscaledTime; }
             capturedRiding = riding;
             if (!riding || captureArc > 3 || Time.unscaledTime < captureNext) return;
@@ -530,13 +620,20 @@ namespace Assets.Scripts.Netcode
         void OnDisable()
         {
             if (PlayerInputManager.Instance == null) return;
-            if (runRealInput)
+            if (runRealInput || checkLauncherInput)
                 foreach (var action in new[] { PlayerAction.Select, PlayerAction.MoveLeft, PlayerAction.MoveRight })
                     PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
             if (!revengeInput) return;
             foreach (var action in new[] { PlayerAction.MoveUp, PlayerAction.ActionA, PlayerAction.ActionC })
                 PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
         }
+    }
+
+    [DefaultExecutionOrder(1500)]
+    public sealed class LocalNetworkSmokeCapture : MonoBehaviour
+    {
+        public LocalNetworkInputSmoke source;
+        void LateUpdate() { if (source != null) source.CapturePresentationFrame(); }
     }
 
     public sealed class LocalOnlineFlowSmoke : MonoBehaviour

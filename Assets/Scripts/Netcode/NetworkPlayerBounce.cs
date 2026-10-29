@@ -49,7 +49,7 @@ namespace Assets.Scripts.Netcode
         {
             if (NetSync.Mode != NetSync.NetMode.Client || isServer || !NetworkClient.active) return;
             if (!NetworkInputHistory.IsNewer(motion.revision, receivedBounceRevision)) return;
-            if (DeferBounceForRiding(motion)) return;
+            if (DeferBounceForRiding(motion) || GetComponent<NetworkPlayerInput>()?.DeferBounceForApprovedLaunch(motion) == true) return;
             receivedBounceRevision = motion.revision; bounceSilence = 0;
             if (!motion.first && playerBounceActive && (bounceElapsed < playerBounce.duration || playerBounceQueue.Count > 0))
             {

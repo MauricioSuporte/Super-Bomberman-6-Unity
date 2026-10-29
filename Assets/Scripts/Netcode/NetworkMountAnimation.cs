@@ -128,7 +128,7 @@ namespace Assets.Scripts.Netcode
                 var sprite = sprites[i];
                 var frame = frames[i];
                 bool buffered = !isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true;
-                if (buffered && visualHistory.Count > 0 && !TrySampleMountFrame(NetworkTime.time, companion.GetMountedLouieType(), i, out frame)) continue;
+                if (buffered && visualHistory.Count > 0 && !TrySampleMountFrame(GetComponent<NetworkPlayerInput>()?.AuthorityPresentationTime ?? NetworkTime.time, companion.GetMountedLouieType(), i, out frame)) continue;
                 if (frame.visible)
                     for (var branch = animation.transform; branch != null && branch != trackedMount.transform; branch = branch.parent)
                         if (!branch.gameObject.activeSelf) branch.gameObject.SetActive(true);

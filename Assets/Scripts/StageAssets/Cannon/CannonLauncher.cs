@@ -373,12 +373,15 @@ public sealed class CannonLauncher : MonoBehaviour
         {
             float duration = Mathf.Max(0.05f, flightSeconds);
             float elapsed = 0f;
+            var arc = new PlayerLaunchArc { kind = PlayerLaunchArc.LaunchKind.Cannon, start = start, end = end, duration = duration, height = arcWorld, rootCarriesHeight = true, tileSize = tileSize };
+            using var launch = Assets.Scripts.Netcode.NetworkPlayerInput.PresentApprovedLaunch(mover, arc);
 
             while (elapsed < duration)
             {
                 if (mover == null || mover.isDead || mover.IsEndingStage || rb == null) yield break;
                 if (GamePauseController.IsPaused)
                 {
+                    launch.Progress(arc, elapsed, true);
                     yield return null;
                     continue;
                 }
@@ -391,11 +394,8 @@ public sealed class CannonLauncher : MonoBehaviour
                 else if (useBallVisual)
                     mover.SetExternalArcVisual(dir, descendingNow);
 
-                Vector2 flat = Vector2.Lerp(start, end, t);
-                float parabola = 4f * t * (1f - t);
-                Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
-
-                rb.position = pos;
+                launch.Progress(arc, elapsed, false);
+                rb.position = arc.Position(elapsed);
                 Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
                 elapsed += Time.deltaTime;

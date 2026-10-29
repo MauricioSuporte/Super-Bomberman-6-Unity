@@ -27,7 +27,11 @@ public sealed class CoopSceneCatalogBuilder : IPreprocessBuildWithReport
             .ToArray();
         foreach (var scene in EditorBuildSettings.scenes.Where(s => s.enabled && s.path.Contains("/Stage_")))
         {
-            var dependencies = AssetDatabase.GetDependencies(new[] { scene.path }.Concat(shared).ToArray(), true);
+            // The geyser scene loads these animation frames through Resources,
+            // outside the serialized scene/prefab dependency graph.
+            var runtimeResources = scene.path.EndsWith("/Stage_3-3.unity", StringComparison.Ordinal)
+                ? new[] { "Assets/Resources/StageAssets/Stage33BubbleAnimations.asset" } : Array.Empty<string>();
+            var dependencies = AssetDatabase.GetDependencies(new[] { scene.path }.Concat(shared).Concat(runtimeResources).ToArray(), true);
             var objects = dependencies.Where(p => p.StartsWith("Assets/", StringComparison.Ordinal) &&
                 !p.StartsWith(root + "/", StringComparison.Ordinal) && !p.EndsWith(".unity", StringComparison.OrdinalIgnoreCase))
                 .SelectMany(AssetDatabase.LoadAllAssetsAtPath).Where(o => o is Sprite or TileBase or Material or AudioClip)

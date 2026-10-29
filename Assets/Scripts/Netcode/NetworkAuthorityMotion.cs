@@ -53,6 +53,7 @@ namespace Assets.Scripts.Netcode
         {
             if (ownerAuthorityPresentation == value) return;
             ownerAuthorityPresentation = value;
+            if (!value) launchOwnerTimeline = false;
             GetComponent<NetworkPlayerAnimation>()?.ClearOwnerVisualHistory();
             GetComponent<NetworkMountAnimation>()?.OwnerAuthorityPresentationChanged(value);
             if (GameplayLatencyDiagnostics.Enabled)
@@ -89,6 +90,7 @@ namespace Assets.Scripts.Netcode
         void OnDisable()
         {
             SetOwnerAuthorityPresentation(false);
+            ClearApprovedLaunchHistory();
             authorityMotionToken = 0;
         }
     }

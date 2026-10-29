@@ -1512,3 +1512,37 @@ câmera gameplay URP inspecionadas em Mole/Tank; não equivalem a medição perc
 humana ou revisão final de HUD/barras. A11 concluído em implementação/testes;
 comparação humana segue no QA global. O smoke com --mount-input --mount-cycles
 --diagnostics --rendered exige os pares de previsão/confirmação e PNGs distintos.
+
+
+## C02 — curvas aprovadas de lançadores (protocolo57)
+
+SpringLauncher (incluindo GeyserLauncherBootstrap), CannonLauncher e Battle4
+compartilham PlayerLaunchArc entre a rotina nativa e NetworkPlayerInput.
+A receita retida contém geração/revisão, horário/fase/pausa, geometria, limites
+da sala e perfil parábola ou subida/platô/descida. Não antecipa contato com um
+mecanismo de fase desconhecida: apresenta continuamente a trajetória aprovada.
+Destino, colisão, dano, ocupação, wrap e consequências do pouso seguem no servidor.
+
+Owner usa o relógio previsto; observer usa interpolação. O mesmo relógio rege
+pose/player/mount. NetworkTransform continua recebendo dados; o presenter repõe
+o root após reconciliação e no LateUpdate estabelecido. Altura visual e altura
+no root são separadas: NetworkVisualPose transporta lift condicional por geração,
+preservando os offsets nativos e a sombra Pink ancorada ao chão. Battle4 cria
+somente uma sombra decorativa aprovada. O serializador adiciona1byte fora do salto
+e9bytes adicionais enquanto há metadata de lift; protocolo novo exige ambos builds.
+
+Pausa retém a fase; stop/revisão/generation/death/disable/scene descartam receitas
+obsoletas. Ao liberar controle, restaura o estado aprovado e reproduz apenas o
+motor dos inputs pendentes; nenhuma açãoA/ability é executada novamente.
+Bounce de recuperação recebido durante o arco principal aguarda seu fim, incluindo
+seu stop, emfila limitada. O launcher nativo conserva/restaura os flags anteriores
+e dispose do iterator filho durante cancelamento; cancelar não completa o trajeto.
+
+Evidência local57:43casosLaunch dentro de971/971 suíteUnity,0skips; C#0/0;
+Python68/68. Pausa longa não expira a receita pausada; updates da mesma geração
+não recuam o elapsed já apresentado. Servidor registra launch_recipe_publish. Integração de dois clientes e publicação devem ser consultadas no
+progresso-predicao-online.md; estes números isolados não comprovam latência humana.
+
+A validação da cena de gêiser encontrou frames de bolhas carregados por Resources
+fora da dependência serializada. O gerador inclui Stage33BubbleAnimations no
+catálogo da Stage_3-3; teste exige todos os frames. A gameplay das bolhas não muda.

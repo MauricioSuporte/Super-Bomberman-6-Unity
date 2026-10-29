@@ -108,6 +108,7 @@ namespace Assets.Scripts.Netcode
         {
             base.OnStartLocalPlayer();
             if (isServer) return;
+            ReceiveLaunchState(serverLaunch);
             movement.SetNetworkTickDriven(true);
             // Only observers interpolate. The owner is placed by reconciliation, including
             // during authoritative-only movement such as launchers and mounting.
@@ -172,7 +173,7 @@ namespace Assets.Scripts.Netcode
                 // History retains the command actually sent. Rejection/completion
                 // must be able to replay its original directional intent.
                 frame = RecordLocalFrame(frame);
-                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
+                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && !ApprovedLaunchActive && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
                 movement.SetPredictLocally(predict);
                 if (predict)
                 {
@@ -360,24 +361,17 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestoreBlackDashPosition();
             kickFx?.ReconcileRiding(acknowledgedTick, state, mountActions);
             kickFx?.RestoreRidingPosition();
-            SetOwnerAuthorityPresentation(state.continuousPresentation && !state.canPredict &&
+            lastLaunchAck = acknowledgedTick;
+            ReconcileApprovedLaunch(state);
+            SetOwnerAuthorityPresentation((state.continuousPresentation && !state.canPredict || ApprovedLaunchActive) &&
                 !movement.isDead && !movement.IsEndingStage && kickFx?.ClientPlayerMotionActive != true);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
-            bool predict = state.canPredict && completeHistory && !Blocked && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
+            bool predict = state.canPredict && completeHistory && !Blocked && !ApprovedLaunchActive && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
-            if (predict)
-                for (int i = 0; i < pending.Count; i++)
-                {
-                    movementTick = pending[i].tick;
-                    int replayHeld = pending[i].held;
-                    if (kickFx?.AbilityPredictionLocksMovement == true) replayHeld &= ~15;
-                    kickFx?.PrepareClientMovementTick(movementTick, true, replayHeld);
-                    movement.RestorePredictedKickReference(kickFx != null ? kickFx.LastKickForTick(movementTick) : null);
-                    movement.SimulateNetworkMovementTick(replayHeld, replay: true);
-                }
+            if (predict) ReplayMovementHistory();
             kickFx?.RestoreClientKickPositions();
             kickFx?.RestoreRidingPosition();
             if (ownerAuthorityPresentation)
@@ -389,9 +383,24 @@ namespace Assets.Scripts.Netcode
                     transform.position = new Vector3(before.x, before.y, transform.position.z);
                 }
             }
+            RestoreApprovedLaunchPosition();
             kickFx?.RestorePausedBoatPosition(before);
             MotionDiagnosticProbe.Reconciliation(gameObject, before, acknowledgedTick, predict);
             MotionDiagnosticProbe.MovementReconciliation(gameObject, before, state.position, acknowledgedTick, predict);
+        }
+
+        void ReplayMovementHistory()
+        {
+            var kickFx = GetComponent<NetworkBombFx>();
+            for (int i = 0; i < pending.Count; i++)
+            {
+                movementTick = pending[i].tick;
+                int replayHeld = pending[i].held;
+                if (kickFx?.AbilityPredictionLocksMovement == true) replayHeld &= ~15;
+                kickFx?.PrepareClientMovementTick(movementTick, true, replayHeld);
+                movement.RestorePredictedKickReference(kickFx != null ? kickFx.LastKickForTick(movementTick) : null);
+                movement.SimulateNetworkMovementTick(replayHeld, replay: true);
+            }
         }
 
         public override void OnStopServer()
@@ -407,6 +416,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient()
         {
+            ClearApprovedLaunchHistory();
             SetOwnerAuthorityPresentation(false);
             pending.Clear();
             if (!isServer && movement != null)

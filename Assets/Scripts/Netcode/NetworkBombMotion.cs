@@ -34,7 +34,7 @@ namespace Assets.Scripts.Netcode
         public bool HasUnconfirmedClientMotion(Bomb target) => target != null &&
             kickPlayback.TryGetValue(target, out var state) && state.unconfirmed;
 
-        public bool AbilityPredictionLocksMovement => abilityLockRemaining > 0 || RidingArcActive || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
+        public bool AbilityPredictionLocksMovement => GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true || abilityLockRemaining > 0 || RidingArcActive || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseLocksMovement;
         public bool HasLocalMountAbilityPose => isLocalPlayer && (GreenDashActive || PinkJumpActive || BlackDashOwnsPose || RidingArcActive || PurpleLinePoseActive || MoleStartupActive || RedPunchPoseActive || TankShotPoseActive || (abilityPoseActive && abilityPoseRemaining > 0 &&
             (abilityPoseKind == BombMotionKind.Yellow || abilityPoseKind == BombMotionKind.Punch)));
         public static bool NonBlockingMotion(BombMotionKind kind) => kind == BombMotionKind.Punch ||

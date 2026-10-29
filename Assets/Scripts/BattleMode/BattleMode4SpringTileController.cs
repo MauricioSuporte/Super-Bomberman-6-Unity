@@ -40,6 +40,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
     readonly HashSet<TileBase> registeredTiles = new();
     readonly HashSet<MovementController> activeJumpers = new();
+    readonly Dictionary<MovementController, IEnumerator> jumpRoutines = new();
     readonly HashSet<MovementController> waitingForSpringExit = new();
     readonly Dictionary<MovementController, Vector3Int> occupiedSpringCells = new();
     readonly Dictionary<Vector3Int, Coroutine> swapRoutines = new();
@@ -70,6 +71,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
     void OnDisable()
     {
         UnregisterResolverTiles();
+        StopAllCoroutines();
+        foreach (var jump in new List<IEnumerator>(jumpRoutines.Values)) (jump as System.IDisposable)?.Dispose();
+        jumpRoutines.Clear();
 
         foreach (var routine in swapRoutines.Values)
         {
@@ -160,12 +164,14 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         }
 
         occupiedSpringCells[mover] = springCell;
-        StartCoroutine(SpringJumpRoutine(mover, springCell, landingCell));
+        var routine = SpringJumpRoutine(mover, springCell, landingCell);
+        jumpRoutines[mover] = routine;
+        StartCoroutine(routine);
     }
 
     IEnumerator SpringJumpRoutine(MovementController mover, Vector3Int springCell, Vector3Int landingCell)
     {
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
+        if (!isActiveAndEnabled || !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
@@ -184,6 +190,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         CancelActiveMountMovementAbilities(mover);
 
         bool prevInputLocked = mover.InputLocked;
+        bool prevMovementOverride = mover.ExternalMovementOverride;
+        bool completed = false;
+        IEnumerator flight = null;
         bool prevPlayerExplosionInvulnerable = mover.explosionInvulnerable;
         bool prevBombEnabled = false;
         bool hadBombController = mover.TryGetComponent(out BombController bombController) && bombController != null;
@@ -200,6 +209,8 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         bool prevMountExplosionInvulnerable = mountMovement != null && mountMovement.explosionInvulnerable;
 
         CharacterHealth[] affectedHealth = mover.GetComponentsInChildren<CharacterHealth>(true);
+        var priorExternalProtection = new bool[affectedHealth.Length];
+        for (int i = 0; i < affectedHealth.Length; i++) priorExternalProtection[i] = affectedHealth[i] != null && affectedHealth[i].HasExternalInvulnerability;
         StunReceiver stunReceiver = mover.GetComponent<StunReceiver>();
         bool bombControllerDisabledByActiveStun =
             hadBombController &&
@@ -231,7 +242,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
         try
         {
-            yield return PlayJumpVisualRoutine(
+            flight = PlayJumpVisualRoutine(
                 mover,
                 riding,
                 mountVisual,
@@ -242,14 +253,22 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                 end,
                 heightTiles * tileSize,
                 faceDir);
+            yield return flight;
+            flight = null;
+            completed = mover != null && !mover.isDead && !mover.IsEndingStage;
         }
         finally
         {
+            (flight as System.IDisposable)?.Dispose();
+            jumpRoutines.Remove(mover);
             if (shadow != null)
                 Destroy(shadow);
 
             if (mountVisual != null)
+            {
                 mountVisual.localOffset = prevMountLocalOffset;
+                if (mover != null && !mover.isDead && !mover.IsEndingStage && mountVisual.HasJumpVisuals()) mountVisual.SetJumpVisual(false, faceDir);
+            }
 
             if (eggQueue != null)
                 eggQueue.ClearOwnerVisualFollowYOffset();
@@ -259,15 +278,16 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
             ClearUnmountedSpringSprites(riding);
 
-            if (mover != null)
+            if (mover != null && !mover.isDead && !mover.IsEndingStage)
             {
-                rb.linearVelocity = Vector2.zero;
-                mover.SetExternalMovementOverride(false);
+                if (rb != null) rb.linearVelocity = Vector2.zero;
+                mover.SetExternalMovementOverride(prevMovementOverride);
                 mover.SetVisualOverrideActive(false);
 
                 if (!mover.IsEndingStage)
                 {
-                    rb.position = end;
+                    if (completed && rb != null) rb.position = end;
+                    Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
                     mover.SetInputLocked(prevInputLocked, forceIdle: false);
                     mover.EnableExclusiveFromState();
                     mover.SetExplosionInvulnerable(prevPlayerExplosionInvulnerable);
@@ -280,13 +300,14 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
                 springAbility.LogSpringLanding(start, end);
             }
 
-            bool restoreGameplayState = mover == null || !mover.IsEndingStage;
+            bool restoreGameplayState = mover != null && !mover.isDead && !mover.IsEndingStage;
 
             if (restoreGameplayState && mountMovement != null)
                 mountMovement.SetExplosionInvulnerable(prevMountExplosionInvulnerable);
 
             if (restoreGameplayState)
-                ApplyHealthInvulnerability(affectedHealth, false);
+                for (int i = 0; i < affectedHealth.Length; i++)
+                    if (affectedHealth[i] != null && !affectedHealth[i].IsDead) affectedHealth[i].SetExternalInvulnerability(priorExternalProtection[i]);
 
             if (restoreGameplayState && hadBombController && bombController != null)
             {
@@ -298,14 +319,15 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             if (restoreGameplayState && playerCollider != null)
                 playerCollider.enabled = prevColliderEnabled;
 
-            if (restoreGameplayState)
+            if (restoreGameplayState && completed)
                 TryResolvePlayerBounceAfterLanding(mover, faceDir);
 
             if (inputManager != null)
                 inputManager.SetSpringLauncherInputGate(playerId, false);
 
             bool landedOnSpring = groundTilemap != null && IsSpringTile(groundTilemap.GetTile(landingCell));
-            ReleaseJumperAfterGrace(mover, landedOnSpring);
+            if (isActiveAndEnabled) ReleaseJumperAfterGrace(mover, completed && landedOnSpring);
+            else activeJumpers.Remove(mover);
         }
     }
 
@@ -386,7 +408,6 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         float total = Mathf.Max(0.05f, jumpSeconds);
         float up = Mathf.Clamp(ascendSeconds, 0f, total);
         float down = Mathf.Clamp(descendSeconds, 0f, total - up);
-        float holdStart = up;
         float holdEnd = total - down;
 
         Vector2 baseMountOffset = mountVisual != null ? mountVisual.localOffset : Vector2.zero;
@@ -399,20 +420,25 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             mountVisual.SetJumpVisual(true, faceDir, descending: false);
 
         float elapsed = 0f;
+        var arc = new PlayerLaunchArc { kind = PlayerLaunchArc.LaunchKind.BattleSpring, groundShadow = true,
+            shadowColor = shadowColor, shadowScale = shadowScale, shadowOrder = shadowSortingOrder, start = start, end = end, duration = total, height = heightWorld,
+            plateau = true, ascend = up, descend = down, tileSize = mover.tileSize };
+        using var launch = Assets.Scripts.Netcode.NetworkPlayerInput.PresentApprovedLaunch(mover, arc);
         while (elapsed < total)
         {
-            if (mover.IsEndingStage)
+            if (mover == null || mover.isDead || mover.IsEndingStage)
                 yield break;
 
-            float t = Mathf.Clamp01(elapsed / total);
-            Vector2 ground = Vector2.Lerp(start, end, t);
+            if (GamePauseController.IsPaused) { launch.Progress(arc, elapsed, true); yield return null; continue; }
+            launch.Progress(arc, elapsed, false);
+            Vector2 ground = arc.Ground(elapsed);
             rb.position = ground;
             Assets.Scripts.Netcode.NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
             if (shadow != null)
                 shadow.transform.position = new Vector3(ground.x, ground.y, shadow.transform.position.z);
 
-            float visualHeight = CalculateOffsetHeight(elapsed, up, holdStart, holdEnd, down, total, heightWorld);
+            float visualHeight = arc.Height(elapsed);
             bool descending = elapsed >= holdEnd;
             ApplyEggQueueJumpArc(eggQueue, ground, visualHeight);
 
@@ -453,16 +479,7 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
     float CalculateOffsetHeight(float elapsed, float up, float holdStart, float holdEnd, float down, float total, float heightWorld)
     {
-        if (up > 0f && elapsed < holdStart)
-            return Mathf.Lerp(0f, heightWorld, Mathf.Clamp01(elapsed / up));
-
-        if (down > 0f && elapsed >= holdEnd)
-            return Mathf.Lerp(heightWorld, 0f, Mathf.Clamp01((elapsed - holdEnd) / down));
-
-        if (elapsed >= total)
-            return 0f;
-
-        return heightWorld;
+        return new PlayerLaunchArc { duration = total, height = heightWorld, plateau = true, ascend = up, descend = down }.Height(elapsed);
     }
 
     static void ApplyEggQueueJumpArc(MountEggQueue eggQueue, Vector2 groundPosition, float arcY)
@@ -859,6 +876,12 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         if (generatedShadowSprite != null)
             return generatedShadowSprite;
 
+        generatedShadowSprite = CreateLaunchShadowSprite();
+        return generatedShadowSprite;
+    }
+
+    public static Sprite CreateLaunchShadowSprite()
+    {
         Texture2D tex = new(16, 16, TextureFormat.RGBA32, false);
         tex.name = "BattleMode4GeneratedShadow";
 
@@ -874,9 +897,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         }
 
         tex.Apply();
-        generatedShadowSprite = Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
-        generatedShadowSprite.name = "BattleMode4GeneratedShadowSprite";
-        return generatedShadowSprite;
+        var sprite = Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
+        sprite.name = "BattleMode4GeneratedShadowSprite";
+        return sprite;
     }
 
     void ApplyInvulnerability(MovementController mover, MountMovementController mountMovement, CharacterHealth[] healths, bool enabled)

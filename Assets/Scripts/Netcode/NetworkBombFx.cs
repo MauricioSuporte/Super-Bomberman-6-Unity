@@ -481,6 +481,7 @@ namespace Assets.Scripts.Netcode
             PresentBombMotions(deltaTime, unscaledDeltaTime);
             UpdateLocalAbilityPresentation();
             UpdateOwnerBoat(deltaTime, unscaledDeltaTime);
+            GetComponent<NetworkPlayerInput>()?.RestoreApprovedLaunchPosition();
         }
 
         void PresentBombMotions(float deltaTime, float unscaledDeltaTime)

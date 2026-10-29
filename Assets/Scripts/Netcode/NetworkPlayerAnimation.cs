@@ -186,6 +186,7 @@ namespace Assets.Scripts.Netcode
 
         void ClientApply()
         {
+            double timeline = GetComponent<NetworkPlayerInput>()?.AuthorityPresentationTime ?? NetworkTime.time;
             byte activeIndex = this.activeIndex, activeFrame = this.activeFrame;
             bool activeIdle = this.activeIdle, activeFlip = this.activeFlip;
             Vector3 activeOffset = this.activeOffset;
@@ -193,7 +194,7 @@ namespace Assets.Scripts.Netcode
             int sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder;
             if ((!isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true) && visualFrames.Count > 0)
             {
-                while (visualFrames.Count > 1 && visualFrames[1].time <= NetworkTime.time) visualFrames.RemoveAt(0);
+                while (visualFrames.Count > 1 && visualFrames[1].time <= timeline) visualFrames.RemoveAt(0);
                 var sample = visualFrames[0];
                 activeIndex = sample.index; activeFrame = sample.frame;
                 activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset; pose = sample.pose;
@@ -204,7 +205,7 @@ namespace Assets.Scripts.Netcode
                     float offsetLimit = NetworkVisualPose.ApprovedOffsetLimit(sample.pose, next.pose);
                     if (sample.index == next.index && interval > 0 && interval <= 0.25 && Vector3.Distance(sample.offset, next.offset) <= offsetLimit)
                     {
-                        float t = Mathf.Clamp01((float)((NetworkTime.time - sample.time) / interval));
+                        float t = Mathf.Clamp01((float)((timeline - sample.time) / interval));
                         activeOffset = Vector3.Lerp(sample.offset, next.offset, t);
                         if (Vector3.Distance(sample.pose.position, next.pose.position) <= offsetLimit) pose = NetworkVisualPose.Interpolate(sample.pose, next.pose, t);
                     }
