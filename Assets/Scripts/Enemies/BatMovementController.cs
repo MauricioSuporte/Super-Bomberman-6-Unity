@@ -38,6 +38,7 @@ public sealed class BatMovementController : FlyMovimentController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.FixedUpdate();
 
         if (barrelHiddenMovementVisuals.Count > 0 &&
@@ -64,6 +65,7 @@ public sealed class BatMovementController : FlyMovimentController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -75,6 +77,7 @@ public sealed class BatMovementController : FlyMovimentController
 
     protected override void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (coreDestruction == null || coreDestruction.animationSprite == null ||
             coreDestruction.animationSprite.Length == 0 || !coreDestruction.TryGetComponent(out SpriteRenderer renderer))
         {

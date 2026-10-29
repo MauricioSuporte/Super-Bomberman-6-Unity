@@ -167,6 +167,7 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || GamePauseController.IsPaused) return;
         if (!isInDamagedLoop && !(TryGetComponent<StunReceiver>(out var receiver) && receiver.IsStunned))
         {
@@ -266,6 +267,7 @@ public sealed class CrasherMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         attacking = false;
         SetVisible(attackDown, false);
         SetVisible(attackLeft, false);

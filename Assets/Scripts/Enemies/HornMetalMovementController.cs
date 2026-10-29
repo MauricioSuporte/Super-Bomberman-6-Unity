@@ -17,6 +17,7 @@ public class ChargerPersecutingMovementController : PersecutingEnemyMovementCont
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         baseSpeed = speed;
         stunReceiver = GetComponent<StunReceiver>();
@@ -25,6 +26,7 @@ public class ChargerPersecutingMovementController : PersecutingEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -203,6 +205,7 @@ public class ChargerPersecutingMovementController : PersecutingEnemyMovementCont
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         isPreparingCharge = false;
         isCharging = false;
         speed = baseSpeed;

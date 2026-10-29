@@ -27,6 +27,7 @@ public sealed class DashMovementController : PersecutingEnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || GamePauseController.IsPaused)
             return;
 
@@ -210,6 +211,7 @@ public sealed class DashMovementController : PersecutingEnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         HideBoostSprites();
         base.Die();
     }

@@ -35,12 +35,14 @@ public sealed class BonMovementController : JunctionTurningEnemyMovementControll
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         timer = Random.Range(10f, 20f);
     }
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isInDamagedLoop ||
             (TryGetComponent<StunReceiver>(out var stun) && stun.IsStunned))
             return;
@@ -108,6 +110,7 @@ public sealed class BonMovementController : JunctionTurningEnemyMovementControll
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         // Expanded attack contacts must not redirect navigation or receive explosions.
         if (state == AttackState.Walking || state == AttackState.FinishingMovement ||
             other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
@@ -116,6 +119,7 @@ public sealed class BonMovementController : JunctionTurningEnemyMovementControll
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (attackArea != null)
             attackArea.enabled = false;
         ShowVisual(null, false);

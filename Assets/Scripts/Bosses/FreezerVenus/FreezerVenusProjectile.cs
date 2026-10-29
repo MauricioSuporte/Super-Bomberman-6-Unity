@@ -120,6 +120,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (kind != AttackKind.Doll || spent || GamePauseController.IsPaused ||
             owner == null || !owner.CombatActive) return;
         int frame;

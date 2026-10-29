@@ -67,6 +67,7 @@ public sealed class GurunMovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
         direction = Vector2.down;
         Enter(Phase.Ground, movementGround);
@@ -75,6 +76,7 @@ public sealed class GurunMovementController : EnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || GamePauseController.IsPaused) return;
         if (isInDamagedLoop || (TryGetComponent<StunReceiver>(out var stun) && stun.IsStunned))
         {
@@ -233,6 +235,7 @@ public sealed class GurunMovementController : EnemyMovementController
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         // Flight and its transitions are protected; grounded attacks accept damage.
         if (!IsFlightPhase(phase) && other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
             base.OnTriggerEnter2D(other);
@@ -321,6 +324,7 @@ public sealed class GurunMovementController : EnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         HideVisuals();
         base.Die();
     }
@@ -332,6 +336,7 @@ public sealed class GurunMovementController : EnemyMovementController
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (IsFlightPhase(phase) && TryGetComponent<CharacterHealth>(out var characterHealth)) characterHealth.SetExternalInvulnerability(true);
     }
 }

@@ -39,6 +39,7 @@ public sealed class FireballMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -111,6 +112,7 @@ public sealed class FireballMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         CancelBombPursuit();
         DisableAbilitySprites();
         base.Die();
@@ -118,6 +120,7 @@ public sealed class FireballMovementController : JunctionTurningEnemyMovementCon
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other != null && other.gameObject.layer == LayerMask.NameToLayer("Bomb") &&
             (preparingPursuit || pursuingBomb))
             return;

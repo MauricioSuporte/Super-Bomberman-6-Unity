@@ -22,6 +22,7 @@ public sealed class FishManSpear : MonoBehaviour
 
     public void Init(Vector2 travelDirection, GameObject spearOwner)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         direction = travelDirection == Vector2.zero ? Vector2.down : travelDirection.normalized;
         owner = spearOwner;
         ApplyDirectionSprite();
@@ -82,6 +83,7 @@ public sealed class FishManSpear : MonoBehaviour
 
     private void Expire()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!impacted)
             Destroy(gameObject);
     }

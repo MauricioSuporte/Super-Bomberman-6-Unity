@@ -4,6 +4,7 @@ public class KnightMovementController : ChargerPersecutingMovementController
 {
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

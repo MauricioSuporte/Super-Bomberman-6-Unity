@@ -376,6 +376,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (audioSource != null && audioSource.isPlaying)
         {
             Destroy(gameObject, 0.05f);

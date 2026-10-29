@@ -25,6 +25,7 @@ public class MiniHogeraMovementController : JunctionTurningEnemyMovementControll
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
 
         if (hasSpawnDirection)
@@ -38,6 +39,7 @@ public class MiniHogeraMovementController : JunctionTurningEnemyMovementControll
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (Time.time < ignoreEnemyCollisionsUntil &&
             other.gameObject.layer == LayerMask.NameToLayer("Enemy"))
         {

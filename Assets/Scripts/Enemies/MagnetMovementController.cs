@@ -35,6 +35,7 @@ public sealed partial class MagnetMovementController : EnemyMovementController, 
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (_isMagnetActive)
         {
             _isMagnetActive = false;
@@ -52,6 +53,7 @@ public sealed partial class MagnetMovementController : EnemyMovementController, 
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         if (isDead)
             return;

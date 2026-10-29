@@ -62,6 +62,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         baseSpd = speed;
         stun = GetComponent<StunReceiver>();
         wasStun = false;
@@ -77,6 +78,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -360,6 +362,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         preparing = false;
         charging = false;
         chargeStopping = false;

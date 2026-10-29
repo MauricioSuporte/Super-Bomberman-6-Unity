@@ -26,6 +26,7 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -67,6 +68,7 @@ public sealed class DogmanMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAbility();
         base.Die();
     }

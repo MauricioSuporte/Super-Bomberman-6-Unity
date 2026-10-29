@@ -40,8 +40,9 @@ public sealed partial class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(actor); NetSync.Mode = oldMode; Random.state = random; }
     }
 
-    [Test]
-    public void ApprovedEnemyBodyAndShadowShareTimelineFreezePresentedPoseAndCutWraps()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void ApprovedEnemyBodyAndShadowShareTimelineFreezePresentedPoseAndCutWraps(bool projectile)
     {
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
         var oldMode = NetSync.Mode; bool oldNetworkScene = NetSync.IsNetworkedScene;
@@ -63,10 +64,10 @@ public sealed partial class OnlineRoomEditModeTests
             var views = (Dictionary<int, SpriteRenderer>)typeof(BombermanNetworkManager).GetField("coopViews", flags).GetValue(manager);
             double clock = (double)typeof(BombermanNetworkManager).GetProperty("CoopVisualClock", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
             var body = new CoopSpriteFrame { id = 31, time = clock - .1, sprite = 0, material = -1, visible = true,
-                position = new Vector3(710, 710.5f), scale = Vector3.one, rotation = Quaternion.identity, color = Color.white, enemyStepLimit = 1.5f };
+                position = new Vector3(710, 710.5f), scale = Vector3.one, rotation = Quaternion.identity, color = Color.white, enemyStepLimit = projectile ? 0 : 1.5f, pauseWithGameplay = projectile };
             using (var writer = NetworkWriterPool.Get())
             { writer.Write(body); body = new NetworkReader(writer.ToArray()).Read<CoopSpriteFrame>(); }
-            Assert.AreEqual(1.5f, body.enemyStepLimit);
+            Assert.AreEqual(projectile ? 0 : 1.5f, body.enemyStepLimit); Assert.AreEqual(projectile, body.pauseWithGameplay);
             var nextBody = body; nextBody.time = clock + .1; nextBody.position = new Vector3(711, 711);
             var shadow = body; shadow.id = 32; shadow.position = new Vector3(710, 710);
             var nextShadow = shadow; nextShadow.time = nextBody.time; nextShadow.position = new Vector3(711, 710);
@@ -80,6 +81,7 @@ public sealed partial class OnlineRoomEditModeTests
             paused.SetValue(null, true); timeline.SetValue(null, (double)oldTimeline + .15); present.Invoke(manager, null);
             Assert.AreEqual(frozen, views[31].transform.position, "Buffered samples must not change an already presented paused enemy.");
             paused.SetValue(null, false); timeline.SetValue(null, oldTimeline);
+            if (projectile) return; // This case proves pause without enabling the enemy wrap profile.
             var wrap = nextBody; wrap.position = body.position + Vector3.left * 12;
             samples[31] = new List<CoopSpriteFrame> { body, wrap }; present.Invoke(manager, null);
             Assert.AreEqual(body.position, views[31].transform.position, "A wrap is a cut at its approved timestamp, not movement across the room.");

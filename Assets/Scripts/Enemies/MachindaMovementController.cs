@@ -45,6 +45,7 @@ public sealed class MachindaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         var manager = FindAnyObjectByType<GameManager>();
         if (manager != null) ground = manager.groundTilemap;
         if (ground == null)
@@ -55,6 +56,7 @@ public sealed class MachindaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
         if (TryGetComponent<StunReceiver>(out var stun) && stun.IsStunned) return;
         if (scattering)
@@ -161,6 +163,7 @@ public sealed class MachindaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
         {
@@ -432,6 +435,7 @@ public sealed class MachindaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (chain != null) ScatterChain();
         scattering = false;
         SetHopVisual(0f);

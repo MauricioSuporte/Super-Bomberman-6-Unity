@@ -46,6 +46,7 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isPursuing && TryGetPlayerDirection(out Vector2 playerDirection))
             StartCharge(playerDirection);
 
@@ -119,6 +120,7 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         isPursuing = false;
         speed = patrolSpeed;
         DisableTodoraSprites();
@@ -237,6 +239,7 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isPursuing && other != null)
         {
             int otherLayer = other.gameObject.layer;

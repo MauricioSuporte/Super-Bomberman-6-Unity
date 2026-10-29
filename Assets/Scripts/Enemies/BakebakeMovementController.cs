@@ -32,6 +32,7 @@ public sealed class BakebakeMovementController : FlyMovimentController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -106,6 +107,7 @@ public sealed class BakebakeMovementController : FlyMovimentController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
         SetIntangible(false);
@@ -117,6 +119,7 @@ public sealed class BakebakeMovementController : FlyMovimentController
 
     protected override void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (coreDestruction == null || coreDestruction.animationSprite == null ||
             coreDestruction.animationSprite.Length == 0 || !coreDestruction.TryGetComponent(out SpriteRenderer renderer))
         {

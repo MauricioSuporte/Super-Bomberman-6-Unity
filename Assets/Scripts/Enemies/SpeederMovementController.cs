@@ -19,7 +19,7 @@ public sealed class SpeederMovementController : EnemyMovementController
         base.Awake();
 
         selfCollider = GetComponent<Collider2D>();
-        preferLeftTurn = Random.value < 0.5f;
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) preferLeftTurn = Random.value < 0.5f;
         IgnoreDestructibleCollisions();
     }
 

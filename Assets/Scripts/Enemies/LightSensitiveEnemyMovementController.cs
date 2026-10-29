@@ -60,6 +60,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         DisableAllVisualsHard();
 
         if (_startedOnce)
@@ -123,6 +124,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!_baseSpeedCaptured)
         {
             _baseSpeed = speed;
@@ -167,6 +169,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -206,6 +209,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -537,6 +541,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

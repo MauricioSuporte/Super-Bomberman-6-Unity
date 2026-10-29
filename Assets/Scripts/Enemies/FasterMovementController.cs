@@ -60,6 +60,7 @@ public sealed class FasterMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

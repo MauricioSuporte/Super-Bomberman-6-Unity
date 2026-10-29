@@ -56,6 +56,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         // CharacterHealth initializes its renderer cache in Awake. Start runs
@@ -65,6 +66,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (state == PenguinState.Walking)
         {
             base.FixedUpdate();
@@ -93,6 +95,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || other == null)
             return;
 
@@ -124,6 +127,7 @@ public class PenguinMovementController : JunctionTurningEnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         penguinHealth?.SetExternalInvulnerability(false);
         SetContactColliderEnabled(true);
         TryTakeExplosionDamageAtLanding();

@@ -40,6 +40,7 @@ public sealed class EskimoMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isSliding)
         {
             base.FixedUpdate();
@@ -87,6 +88,7 @@ public sealed class EskimoMovementController : JunctionTurningEnemyMovementContr
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isSliding && other != null && other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
         {
             EndSlideAndResumeWalking();
@@ -98,6 +100,7 @@ public sealed class EskimoMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

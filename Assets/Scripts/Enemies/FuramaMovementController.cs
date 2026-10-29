@@ -45,6 +45,7 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
@@ -55,6 +56,7 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (flameAudioSource == null)
             return;
 
@@ -67,6 +69,7 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || attacking)
         {
             if (attacking && rb != null)
@@ -79,6 +82,7 @@ public sealed class FuramaMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAttackLoop();
         attacking = false;
         if (attackSprite != null)

@@ -46,6 +46,7 @@ public sealed class MagekoMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         FindAuthoredFlightVisuals();
         CreateShadow();
@@ -54,6 +55,7 @@ public sealed class MagekoMovementController : JunctionTurningEnemyMovementContr
     }
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
         {
             ClearFlight();
@@ -421,6 +423,7 @@ public sealed class MagekoMovementController : JunctionTurningEnemyMovementContr
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         bool airborne = state == State.Ascending || state == State.Flying || state == State.Descending;
         if (airborne && other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
             return;

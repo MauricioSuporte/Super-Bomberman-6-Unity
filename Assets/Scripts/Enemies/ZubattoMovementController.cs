@@ -28,6 +28,7 @@ public sealed class ZubattoMovementController : PenguinMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SetZubattoVisual(null);
         base.Die();
     }

@@ -47,6 +47,7 @@ public sealed class PygminMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player", "Louie");
@@ -56,6 +57,7 @@ public sealed class PygminMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (attacking)
         {
             if (rb != null)
@@ -75,6 +77,7 @@ public sealed class PygminMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAttack();
         base.Die();
     }

@@ -37,6 +37,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         ResolveTilemaps();
         ResolveDestructibleTileTemplate();
         base.Start();
@@ -44,6 +45,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (preparingSnow)
         {
             UpdateSnowPreparation();
@@ -80,6 +82,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!preparingSnow)
         {
             base.OnTriggerEnter2D(other);
@@ -101,6 +104,7 @@ public sealed class PengoMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         EndSnowPreparation();
         base.Die();
     }

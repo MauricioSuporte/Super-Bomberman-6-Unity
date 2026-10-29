@@ -47,6 +47,7 @@ public sealed class GurorinMovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
 
         if (rb != null)
@@ -59,6 +60,7 @@ public sealed class GurorinMovementController : EnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isInDamagedLoop)
             return;
 
@@ -113,6 +115,7 @@ public sealed class GurorinMovementController : EnemyMovementController
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
 
         if (rb == null) rb = GetComponent<Rigidbody2D>();
@@ -376,6 +379,7 @@ public sealed class GurorinMovementController : EnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (mainRoutine != null)
         {
             StopCoroutine(mainRoutine);

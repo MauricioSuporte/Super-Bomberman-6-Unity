@@ -24,6 +24,7 @@ public sealed class PrettyBomberDefeatSequence : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         health.Damaged += OnDamaged;
         health.CancelDeathRequest += CancelImmediateDeath;
     }

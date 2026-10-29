@@ -24,6 +24,7 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         TryStartAbilityLoop();
     }
 
@@ -36,6 +37,7 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ResolveTilemaps();
         started = true;
@@ -44,6 +46,7 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || usingAbility)
         {
             if (usingAbility && rb != null)
@@ -57,6 +60,7 @@ public sealed class GreinMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAbilityLoop();
         ClearActiveFireTiles();
         usingAbility = false;

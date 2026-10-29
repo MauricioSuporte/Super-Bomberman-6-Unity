@@ -85,6 +85,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         DisableAllAnimatedChildren();
@@ -95,6 +96,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         isDisguised = false;
         isTransforming = false;
         isBlinking = false;
@@ -120,6 +122,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isTransforming || isBlinking)
             return;
 
@@ -129,6 +132,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isTransforming)
             return;
 
@@ -941,6 +945,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

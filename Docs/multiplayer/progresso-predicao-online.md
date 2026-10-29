@@ -2030,3 +2030,23 @@ R07 e executar regressão parametrizada antes de commit/publicação. JellyFishS
 não agenda Expire no client; Speeder não sorteia preferLeftTurn em Awake client.
 Próximo: regressões parametrizadas, suíte completa e seguir demais IDs. O runner
 está livre após a suíte530, mas fontes R07 nele ainda diferem de HEAD.
+
+
+Auditoria de famílias55:857/857 Unity aprovados em
+Logs/PredictionNativeAudit55.xml/.log (326 entry points parametrizados +531
+regressões existentes). Não houve skips. Guarda externa adicionada a258 métodos
+nativos, mais ScheduleAttack/ScheduleAbility para não sortear IA em OnDisable;
+JellyFishShot não agenda expiração no client e Speeder não sorteia em Awake.
+Perfil de corte/pausa se aplica a todos EnemyMovementController, não somente
+Frog/Hop/SnowMan/Korobokkuru. pauseWithGameplay em CoopSpriteFrame congela
+apresentação de projéteis/visuais físicos e animações que respeitam pausa; blackout
+unscaled continua fora. Cache de classificação evita consulta RB a cada frame.
+Wire55 já inclui esse campo. Cliente continua sem executar IA/colisão/ataques.
+UTF8/BOM passou para os C# deste lote. Sem medição de render/curvas de todas as
+famílias em partida real; estes testes não concluem manual R03/R05/R06/R08.
+
+A11/R07 adicional em desenvolvimento após a suíte857: adiar remoção visual de
+montaria enquanto o rider vivo ainda apresenta arco de Riding. Não adiar estado
+real nem morte/troca para outra montaria. Cinco testes puros novos preparados;
+repetir suíte com essa mudança antes de commit/publicação. NPS/método de teste
+adicional ainda não fazem parte do lote validado857. Nenhum push55 realizado.

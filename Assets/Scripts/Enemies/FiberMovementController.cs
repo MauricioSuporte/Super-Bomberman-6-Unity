@@ -39,6 +39,7 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         TryStartAbilityLoop();
     }
 
@@ -49,6 +50,7 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         if (playerLayerMask.value == 0)
@@ -64,6 +66,7 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -80,6 +83,7 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAbilityLoop();
         isAbilityActive = false;
 

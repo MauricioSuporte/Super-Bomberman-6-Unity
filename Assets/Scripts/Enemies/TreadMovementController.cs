@@ -21,6 +21,7 @@ public sealed class TreadMovementController : JunctionTurningEnemyMovementContro
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (burstRemaining > 0f)
         {
             burstRemaining = Mathf.Max(0f, burstRemaining - Time.fixedDeltaTime);

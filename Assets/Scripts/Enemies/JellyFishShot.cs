@@ -19,6 +19,7 @@ public sealed class JellyFishShot : MonoBehaviour
 
     public void Init(Vector2 travelDirection, GameObject shotOwner)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         direction = travelDirection == Vector2.zero ? Vector2.down : travelDirection.normalized;
         owner = shotOwner;
     }
@@ -34,17 +35,19 @@ public sealed class JellyFishShot : MonoBehaviour
         hitCollider.isTrigger = true;
         if (spriteAnimation == null)
             spriteAnimation = GetComponent<AnimatedSpriteRenderer>();
-        Invoke(nameof(Expire), lifetime);
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) Invoke(nameof(Expire), lifetime);
     }
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!impacted)
             body.MovePosition(body.position + direction * speed * Time.fixedDeltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted || other == null || other.transform.IsChildOf(owner != null ? owner.transform : transform))
             return;
 
@@ -76,6 +79,7 @@ public sealed class JellyFishShot : MonoBehaviour
 
     private void Expire()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted)
             return;
 
@@ -84,6 +88,7 @@ public sealed class JellyFishShot : MonoBehaviour
 
     private void BeginImpact()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         impacted = true;
         CancelInvoke(nameof(Expire));
 

@@ -16,6 +16,7 @@ public sealed class GuardiMovementController : JunctionTurningEnemyMovementContr
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         FireworkTileHandler.AllFireworksDestroyedAtPhase2Start += HandleAllFireworksDestroyedAtPhase2Start;
     }
 
@@ -45,6 +46,7 @@ public sealed class GuardiMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (fireworkDeathSequenceStarted)
         {
             if (rb != null)
@@ -58,6 +60,7 @@ public sealed class GuardiMovementController : JunctionTurningEnemyMovementContr
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || fireworkDeathSequenceStarted)
             return;
 

@@ -27,6 +27,7 @@ public sealed class WheelRobotMovementController : JunctionTurningEnemyMovementC
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!signallingTurn)
         {
             base.FixedUpdate();
@@ -213,6 +214,7 @@ public sealed class WheelRobotMovementController : JunctionTurningEnemyMovementC
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -227,6 +229,7 @@ public sealed class WheelRobotMovementController : JunctionTurningEnemyMovementC
 
     protected override void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (coreDestruction == null || coreDestruction.animationSprite == null ||
             coreDestruction.animationSprite.Length == 0 || !coreDestruction.TryGetComponent(out SpriteRenderer renderer))
         {

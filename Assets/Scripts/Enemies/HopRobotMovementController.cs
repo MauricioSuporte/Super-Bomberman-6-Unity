@@ -244,6 +244,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
         RestoreMovementVisuals();
         StopMotion();
@@ -255,6 +256,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
 
     protected override void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (coreDestruction == null || coreDestruction.animationSprite == null ||
             coreDestruction.animationSprite.Length == 0 || !coreDestruction.TryGetComponent(out SpriteRenderer renderer))
         {

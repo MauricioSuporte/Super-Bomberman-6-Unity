@@ -12,6 +12,7 @@ public sealed class CrasherWreckage : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused) return;
         float delta = Time.deltaTime;
         transform.position += (Vector3)(velocity * delta);

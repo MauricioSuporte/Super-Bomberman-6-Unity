@@ -26,6 +26,7 @@ public sealed class RobofaceMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
 
@@ -34,6 +35,7 @@ public sealed class RobofaceMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (speedBoostRemaining > 0f)
         {
             speedBoostRemaining = Mathf.Max(0f, speedBoostRemaining - Time.fixedDeltaTime);

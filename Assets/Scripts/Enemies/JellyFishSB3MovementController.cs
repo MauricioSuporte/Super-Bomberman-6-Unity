@@ -29,6 +29,7 @@ public sealed class JellyFishSB3MovementController : JunctionTurningEnemyMovemen
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         jellyFishHealth = GetComponent<CharacterHealth>();
         movementSprite = activeSprite;
@@ -37,6 +38,7 @@ public sealed class JellyFishSB3MovementController : JunctionTurningEnemyMovemen
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (usingShock)
         {
             if (rb != null)
@@ -69,6 +71,7 @@ public sealed class JellyFishSB3MovementController : JunctionTurningEnemyMovemen
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopShock();
         ClearMovementHover();
         SetShadowVisible(false);

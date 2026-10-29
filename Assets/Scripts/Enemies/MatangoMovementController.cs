@@ -42,6 +42,7 @@ public sealed class MatangoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         stunReceiver = GetComponent<StunReceiver>();
 
@@ -51,6 +52,7 @@ public sealed class MatangoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
         {
             StopAttackVisuals();
@@ -86,6 +88,7 @@ public sealed class MatangoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAttackVisuals();
         base.Die();
     }

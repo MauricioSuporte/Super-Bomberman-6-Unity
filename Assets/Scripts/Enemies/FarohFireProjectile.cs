@@ -42,6 +42,7 @@ public sealed class FarohFireProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (remainingDistance <= 0f)
         {
             Destroy(gameObject);

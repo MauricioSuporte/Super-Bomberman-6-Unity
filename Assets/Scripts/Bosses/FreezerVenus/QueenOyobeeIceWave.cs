@@ -80,6 +80,7 @@ public sealed class QueenOyobeeIceWave : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused) return;
         if (owner == null || !owner.Boss.CombatActive) { Destroy(gameObject); return; }
         radius += Speed * Time.fixedDeltaTime;

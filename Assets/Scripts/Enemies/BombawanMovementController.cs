@@ -28,6 +28,7 @@ public sealed class BombawanMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

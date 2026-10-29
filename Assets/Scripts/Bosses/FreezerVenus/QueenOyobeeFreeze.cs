@@ -45,6 +45,7 @@ public sealed class QueenOyobeeFreeze : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused) return;
         protection = Mathf.Max(0f, protection - Time.deltaTime);
         remaining = Mathf.Max(0f, remaining - Time.deltaTime);

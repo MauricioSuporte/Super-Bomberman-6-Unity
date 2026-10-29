@@ -55,6 +55,7 @@ public sealed class JunctionPursuitCrazyMovementController : JunctionTurningEnem
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         if (!isDead && !isInDamagedLoop)
@@ -63,6 +64,7 @@ public sealed class JunctionPursuitCrazyMovementController : JunctionTurningEnem
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isInDamagedLoop)
         {
             if (rb != null)
@@ -169,6 +171,7 @@ public sealed class JunctionPursuitCrazyMovementController : JunctionTurningEnem
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

@@ -162,6 +162,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || _isDefeated)
             return;
 
@@ -199,6 +200,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || _isDefeated)
             return;
 

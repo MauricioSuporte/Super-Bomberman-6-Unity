@@ -125,6 +125,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         _nextRetargetTime = 0f;
         _currentTarget = null;
 

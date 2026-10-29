@@ -27,6 +27,7 @@ public class FlyingCardinalPursuitMovementController : FlyMovimentController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         speed = TryGetPlayerDirection(out _) ? patrolSpeed * pursuitSpeedMultiplier : patrolSpeed;
         base.FixedUpdate();
     }

@@ -21,6 +21,7 @@ public sealed class CrabMovementAnimationController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         patternIndex = 0;
         frameTimer = 0f;
         ConfigureMovementSprite();

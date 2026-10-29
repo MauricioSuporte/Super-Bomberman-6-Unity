@@ -40,6 +40,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SnapToGrid();
         direction = Vector2.down;
         targetTile = rb.position;
@@ -72,6 +73,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
         {
@@ -85,6 +87,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || GamePauseController.IsPaused) return;
         if (isInDamagedLoop || (TryGetComponent<StunReceiver>(out var stun) && stun.IsStunned))
         {
@@ -338,6 +341,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         HideSpecialSprites();
         HideWalkingSprites();
         base.Die();
@@ -351,6 +355,7 @@ public sealed class RoboidoMovementController : JunctionTurningEnemyMovementCont
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (state == State.Sleeping || state == State.Waking) SetWakeProtection(true);
     }
 

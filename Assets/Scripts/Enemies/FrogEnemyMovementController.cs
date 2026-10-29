@@ -124,6 +124,7 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SetWaterSubmerged(false);
         DestroyJumpShadow();
         DisableAllColliders();

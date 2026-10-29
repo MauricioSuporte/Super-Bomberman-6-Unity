@@ -14,6 +14,7 @@ public sealed class HeliMovementController : FlyMovimentController
     private float nextShotTime;
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || Time.time < nextShotTime || !TryGetPlayerDirection(out Vector2 shotDirection))
             return;
 

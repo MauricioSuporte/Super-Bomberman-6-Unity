@@ -29,6 +29,7 @@ public sealed class DespiderMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ScheduleAttack();
     }
@@ -59,6 +60,7 @@ public sealed class DespiderMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
         if (isInDamagedLoop || (TryGetComponent(out StunReceiver stun) && stun.IsStunned))
         {

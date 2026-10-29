@@ -16,6 +16,7 @@ public sealed class BirdRobotRocket : MonoBehaviour
 
     public void Init(Vector2 travelDirection, GameObject shotOwner, AnimatedSpriteRenderer explosion, float gridSize, bool useSingleImpact = false)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         singleImpact = useSingleImpact;
         direction = travelDirection;
         owner = shotOwner;
@@ -38,6 +39,7 @@ public sealed class BirdRobotRocket : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused)
             return;
         if (impacted)
@@ -57,6 +59,7 @@ public sealed class BirdRobotRocket : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (impacted || other == null || (owner != null && other.transform.IsChildOf(owner.transform)))
             return;
         Bomb bomb = other.GetComponentInParent<Bomb>();

@@ -37,6 +37,7 @@ public sealed class SnowManMovementController : JunctionTurningEnemyMovementCont
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         BombController.BombDetonating += OnBombDetonating;
     }
 
@@ -242,12 +243,14 @@ public sealed class SnowManMovementController : JunctionTurningEnemyMovementCont
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!jumping)
             base.OnTriggerEnter2D(other);
     }
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (jumping)
             EndJump();
         base.Die();

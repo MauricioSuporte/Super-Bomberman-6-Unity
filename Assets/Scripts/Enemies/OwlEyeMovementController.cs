@@ -93,6 +93,7 @@ public sealed class OwlEyeMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
         RestoreBarrelMovementVisuals();
         deathOrigin = SnapToPixel(spriteDeath != null ? spriteDeath.transform.position : transform.position);
@@ -116,6 +117,7 @@ public sealed class OwlEyeMovementController : JunctionTurningEnemyMovementContr
 
     protected override void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StartCoroutine(AnimateEyes());
     }
 

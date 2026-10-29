@@ -37,6 +37,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         if (!hasWokenUp && rb != null)
@@ -45,6 +46,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isWakingUp || isDead)
             return;
 
@@ -68,6 +70,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -105,6 +108,7 @@ public sealed class TrentMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

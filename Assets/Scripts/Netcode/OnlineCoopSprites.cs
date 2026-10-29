@@ -98,7 +98,7 @@ namespace Assets.Scripts.Netcode
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
             coopVisualRemovals.Clear(); coopViewClips.Clear(); bombVisualSamples.Clear();
             coopExpiredViews.Clear(); expiredBombViews.Clear(); coopPendingRenderers.Clear(); nextBombAnimation = 0;
-            coopEnemyVisualLimits.Clear();
+            coopEnemyVisualLimits.Clear(); coopPhysicsPause.Clear();
             coopDynamicIds.Clear(); coopDynamicVersions.Clear(); coopDefinitions.Clear();
             coopDynamicSprites.Clear(); coopDynamicTextures.Clear(); coopViewSpriteIds.Clear();
         }
@@ -232,7 +232,7 @@ namespace Assets.Scripts.Netcode
                     var samples = pair.Value;
                     // Keep the already displayed enemy pose/frame in world space.
                     // Buffered pre-pause samples must not advance or rewind it.
-                    if (GamePauseController.IsPaused && samples.Count > 0 && samples[^1].enemyStepLimit > 0 && coopViews.ContainsKey(id)) continue;
+                    if (GamePauseController.IsPaused && samples.Count > 0 && (samples[^1].enemyStepLimit > 0 || samples[^1].pauseWithGameplay) && coopViews.ContainsKey(id)) continue;
                     while (samples.Count > 1 && samples[1].time <= clock) samples.RemoveAt(0);
                     if (samples.Count == 0 || samples[0].time > clock) continue;
                     var frame = samples[0];
@@ -283,10 +283,17 @@ namespace Assets.Scripts.Netcode
 
         readonly HashSet<SpriteRenderer> coopPendingRenderers = new();
         readonly Dictionary<int, float> coopEnemyVisualLimits = new();
+        readonly Dictionary<int, bool> coopPhysicsPause = new();
+        bool CoopPauseWithGameplay(SpriteRenderer renderer)
+        {
+            int id = renderer.GetEntityId().GetHashCode();
+            if (!coopPhysicsPause.TryGetValue(id, out bool paused))
+                coopPhysicsPause[id] = paused = renderer.GetComponentInParent<Rigidbody2D>(true) != null;
+            return paused;
+        }
 
         static float EnemyVisualLimit(EnemyMovementController actor) =>
-            actor is FrogEnemyMovementController or HopRobotMovementController or SnowManMovementController or KorobokkuruMovementController
-                ? Mathf.Max(.01f, actor.tileSize) * 1.5f : 0;
+            actor != null ? Mathf.Max(.01f, actor.tileSize) * 1.5f : 0;
 
         float CoopEnemyVisualLimit(SpriteRenderer renderer) => coopEnemyVisualLimits.TryGetValue(renderer.GetEntityId().GetHashCode(), out float limit)
             ? limit : EnemyVisualLimit(renderer.GetComponentInParent<EnemyMovementController>(true));

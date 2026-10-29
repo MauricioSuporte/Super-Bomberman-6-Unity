@@ -63,6 +63,7 @@ public sealed partial class SubmarineBubbleMovementController : JunctionTurningE
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         CreateShadow();
         walkTimer = WalkDuration;
@@ -70,6 +71,7 @@ public sealed partial class SubmarineBubbleMovementController : JunctionTurningE
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         if (isDead)
             return;
@@ -92,6 +94,7 @@ public sealed partial class SubmarineBubbleMovementController : JunctionTurningE
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         DestroyShadow();
         ClearHoverOffset();
         HideAttackVisuals();

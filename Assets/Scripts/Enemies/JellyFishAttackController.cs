@@ -24,6 +24,7 @@ public sealed class JellyFishAttackController : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (projectilePrefab == null || (health != null && health.life <= 0))
             return;
 

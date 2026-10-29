@@ -63,6 +63,7 @@ public sealed class RoboDashMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

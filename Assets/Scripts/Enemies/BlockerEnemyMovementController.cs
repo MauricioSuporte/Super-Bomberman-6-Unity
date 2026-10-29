@@ -40,6 +40,7 @@ public sealed class BlockerEnemyMovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         TryAutoResolveDestructiblesTilemap();
         TryAutoResolveIndestructiblesTilemap();
@@ -47,6 +48,7 @@ public sealed class BlockerEnemyMovementController : EnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

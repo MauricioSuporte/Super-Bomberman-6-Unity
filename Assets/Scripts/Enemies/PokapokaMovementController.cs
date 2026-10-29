@@ -52,6 +52,7 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         stunReceiver = GetComponent<StunReceiver>();
 
@@ -61,6 +62,7 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
         {
             StopAbility();
@@ -92,6 +94,7 @@ public sealed class PokapokaMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAbility();
         base.Die();
     }

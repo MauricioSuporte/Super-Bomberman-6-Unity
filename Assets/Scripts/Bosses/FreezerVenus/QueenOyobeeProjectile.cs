@@ -379,6 +379,7 @@ public sealed class QueenOyobeePixelTrail : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused || visual == null) return;
         elapsed += Time.deltaTime;
         visual.color = new Color(1f, 1f, 1f, 0.8f + Mathf.Sin(elapsed * 6f) * 0.15f);

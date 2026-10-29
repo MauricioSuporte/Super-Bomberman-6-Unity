@@ -43,6 +43,7 @@ public sealed class FrogWaterJumpEffect : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         elapsed += Time.deltaTime;
         float progress = Mathf.Clamp01(elapsed / Lifetime);
 

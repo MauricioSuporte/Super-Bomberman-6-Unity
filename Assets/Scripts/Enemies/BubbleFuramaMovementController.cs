@@ -64,6 +64,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!ready)
             return;
 
@@ -73,6 +74,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (flameAudioSource != null)
         {
             flameAudioSource.volume = Mathf.Min(1f, GameAudioSettings.ApplySfxVolume(1f) * 2f);
@@ -138,6 +140,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (phase != AttackPhase.Walking || GamePauseController.IsPaused)
         {
             rb.linearVelocity = Vector2.zero;
@@ -154,6 +157,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         // Bomb/enemy contact must not move or turn the enemy during its attack.
         if (phase == AttackPhase.Walking || other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
             base.OnTriggerEnter2D(other);
@@ -170,6 +174,7 @@ public sealed class BubbleFuramaMovementController : JunctionTurningEnemyMovemen
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
         if (flameAudioSource != null)

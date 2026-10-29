@@ -24,6 +24,7 @@ public sealed class IsoginchakkuMovementController : JunctionTurningEnemyMovemen
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         movementSprite = activeSprite;
         DisableAttackVisuals();
@@ -31,6 +32,7 @@ public sealed class IsoginchakkuMovementController : JunctionTurningEnemyMovemen
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (attacking)
         {
             if (rb != null)
@@ -57,6 +59,7 @@ public sealed class IsoginchakkuMovementController : JunctionTurningEnemyMovemen
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopAttack();
         base.Die();
     }

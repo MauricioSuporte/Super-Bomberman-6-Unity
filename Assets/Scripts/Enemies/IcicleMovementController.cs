@@ -20,6 +20,7 @@ public sealed class IcicleMovementController : JunctionTurningEnemyMovementContr
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || Time.time < nextScanTime || Time.time < nextShotTime)
             return;
 

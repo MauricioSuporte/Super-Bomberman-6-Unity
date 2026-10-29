@@ -31,6 +31,7 @@ public sealed class BirdRobotRedMovementController : JunctionTurningPersecutingE
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || GamePauseController.IsPaused)
             return;
         if (isInDamagedLoop || (TryGetComponent<StunReceiver>(out var stun) && stun.IsStunned))
@@ -69,6 +70,7 @@ public sealed class BirdRobotRedMovementController : JunctionTurningPersecutingE
 
     private void ScheduleAttack()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         float minimum = Mathf.Max(0.1f, attackIntervalSeconds.x);
         nextAttackTime = Time.time + Random.Range(minimum, Mathf.Max(minimum, attackIntervalSeconds.y));
     }
@@ -146,6 +148,7 @@ public sealed class BirdRobotRedMovementController : JunctionTurningPersecutingE
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         attacking = false;
         HideAttackSprites();
         base.Die();

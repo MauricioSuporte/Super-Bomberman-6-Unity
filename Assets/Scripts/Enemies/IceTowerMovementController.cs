@@ -86,6 +86,7 @@ public sealed class IceTowerMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         state = IceTowerState.Surface;
         stateTimer = surfaceDurationSeconds;
@@ -94,6 +95,7 @@ public sealed class IceTowerMovementController : JunctionTurningEnemyMovementCon
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || state == IceTowerState.EnteringSubmerge || state == IceTowerState.Submerged || state == IceTowerState.ExitingSubmerge)
             return;
 
@@ -120,6 +122,7 @@ public sealed class IceTowerMovementController : JunctionTurningEnemyMovementCon
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -171,6 +174,7 @@ public sealed class IceTowerMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

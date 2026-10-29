@@ -42,12 +42,14 @@ public sealed class FarohMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ScheduleNextFire();
     }
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -105,6 +107,7 @@ public sealed class FarohMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         HideFire();
         base.Die();
     }

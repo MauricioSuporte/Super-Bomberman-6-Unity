@@ -70,6 +70,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         seaBalloonHealth = GetComponent<CharacterHealth>();
         SetSubmergedInvulnerability(true);
@@ -86,6 +87,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isDead)
             SetSubmergedInvulnerability(looking || (!emerging && !throwingInk && !surfaceWalking));
 
@@ -142,6 +144,7 @@ public sealed class SeaBalloonMovementController : JunctionTurningEnemyMovementC
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopLook();
         StopSurfaceWalk();
         StopSurfaceInk();

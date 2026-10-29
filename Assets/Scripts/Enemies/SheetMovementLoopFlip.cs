@@ -18,6 +18,7 @@ public sealed class SheetMovementLoopFlip : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         previousFrame = animatedSprite != null ? animatedSprite.CurrentFrame : 0;
         alternateFlip = false;
         baseFlipX = spriteRenderer != null && spriteRenderer.flipX;

@@ -74,6 +74,7 @@ public sealed class DespiderWebProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         elapsed += Time.fixedDeltaTime;
         if (trail)
         {

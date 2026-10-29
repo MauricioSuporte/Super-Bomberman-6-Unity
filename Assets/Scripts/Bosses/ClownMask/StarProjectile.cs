@@ -109,6 +109,7 @@ public class StarProjectile : MonoBehaviour
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         RestartLifetime();
     }
 

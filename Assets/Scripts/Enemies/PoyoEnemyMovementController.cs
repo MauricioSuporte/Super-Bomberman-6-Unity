@@ -44,6 +44,7 @@ public sealed class PoyoEnemyMovementController : JunctionTurningEnemyMovementCo
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (_launchScheduled)
             return;
 
@@ -52,6 +53,7 @@ public sealed class PoyoEnemyMovementController : JunctionTurningEnemyMovementCo
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (_isLaunching)
         {
             if (_rb != null)

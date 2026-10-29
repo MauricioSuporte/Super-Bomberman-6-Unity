@@ -30,6 +30,7 @@ public sealed class KamestoneMovementController : JunctionTurningEnemyMovementCo
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (abilityRoutine == null)
             abilityRoutine = StartCoroutine(AbilityLoop());
     }
@@ -53,6 +54,7 @@ public sealed class KamestoneMovementController : JunctionTurningEnemyMovementCo
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         EndInvulnerabilityAbility();
         base.Die();
     }

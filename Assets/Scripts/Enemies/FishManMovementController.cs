@@ -27,6 +27,7 @@ public sealed class FishManMovementController : JunctionTurningEnemyMovementCont
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || isInDamagedLoop || throwRoutine != null || spearPrefab == null ||
             Time.time < nextScanTime || Time.time < nextShotTime)
             return;
@@ -38,6 +39,7 @@ public sealed class FishManMovementController : JunctionTurningEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (throwRoutine != null)
         {
             if (rb != null)
@@ -50,6 +52,7 @@ public sealed class FishManMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         DisableAllVisuals();
         StopThrow();
         base.Die();

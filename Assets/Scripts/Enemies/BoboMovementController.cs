@@ -32,6 +32,7 @@ public sealed class BoboMovementController : JunctionTurningEnemyMovementControl
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (turnSpeedTimer <= 0f && !Mathf.Approximately(speed, normalSpeed))
             speed = normalSpeed;
 

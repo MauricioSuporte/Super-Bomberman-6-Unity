@@ -90,6 +90,7 @@ public sealed class ElectroMovementController : PersecutingEnemyMovementControll
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         stun = GetComponent<StunReceiver>();
         wasStun = false;
 
@@ -107,6 +108,7 @@ public sealed class ElectroMovementController : PersecutingEnemyMovementControll
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -309,6 +311,7 @@ public sealed class ElectroMovementController : PersecutingEnemyMovementControll
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         preparing = false;
         charging = false;
         unpreparing = false;

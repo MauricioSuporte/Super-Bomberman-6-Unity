@@ -30,6 +30,7 @@ public sealed class MunchieJumpEnemyMovementController : JunctionTurningEnemyMov
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -83,6 +84,7 @@ public sealed class MunchieJumpEnemyMovementController : JunctionTurningEnemyMov
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

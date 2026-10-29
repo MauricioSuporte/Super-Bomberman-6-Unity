@@ -14,6 +14,7 @@ public class JunctionTurningPersecutingEnemyMovementController : JunctionTurning
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         if (playerLayerMask.value == 0)

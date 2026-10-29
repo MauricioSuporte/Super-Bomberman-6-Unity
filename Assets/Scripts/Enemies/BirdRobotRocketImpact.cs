@@ -14,6 +14,7 @@ public sealed class BirdRobotRocketImpact : MonoBehaviour
 
     public void Init(GameObject explosionTemplate, float gridSize)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         template = explosionTemplate;
         template.transform.SetParent(transform);
         tileSize = gridSize;
@@ -23,6 +24,7 @@ public sealed class BirdRobotRocketImpact : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused)
             return;
         elapsed += Time.deltaTime;

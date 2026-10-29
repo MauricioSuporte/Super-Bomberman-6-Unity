@@ -60,6 +60,7 @@ public sealed class SubmarineMovementController : JunctionTurningEnemyMovementCo
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         CreateShadow();
         EnterSurfacedState();
@@ -67,6 +68,7 @@ public sealed class SubmarineMovementController : JunctionTurningEnemyMovementCo
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -121,6 +123,7 @@ public sealed class SubmarineMovementController : JunctionTurningEnemyMovementCo
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SetSubmergedInvulnerability(false);
         DestroyShadow();
         ClearHoverOffset();

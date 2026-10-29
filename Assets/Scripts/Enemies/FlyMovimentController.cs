@@ -18,6 +18,7 @@ public class FlyMovimentController : JunctionTurningGhostEnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         CreateShadow();
     }
@@ -36,6 +37,7 @@ public class FlyMovimentController : JunctionTurningGhostEnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         DestroyShadow();
         ClearHoverOffset();
         base.Die();

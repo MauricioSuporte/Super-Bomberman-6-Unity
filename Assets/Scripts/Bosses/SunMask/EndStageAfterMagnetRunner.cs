@@ -30,6 +30,7 @@ public class EndStageAfterMagnetRunner : MonoBehaviour
 
     void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StartCoroutine(Run());
     }
 

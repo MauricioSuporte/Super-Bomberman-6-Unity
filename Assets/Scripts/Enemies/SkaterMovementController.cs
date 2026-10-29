@@ -18,6 +18,7 @@ public sealed class SkaterMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         currentSpeed = 0f;
         speed = 0f;
         isSliding = false;
@@ -29,6 +30,7 @@ public sealed class SkaterMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -70,6 +72,7 @@ public sealed class SkaterMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         isSliding = false;
         currentSpeed = 0f;
         speed = 0f;

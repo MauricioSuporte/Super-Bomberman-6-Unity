@@ -71,6 +71,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ResetWalkTimer();
     }
@@ -88,6 +89,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -234,6 +236,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         CancelAbilityStop();
         base.Die();
     }

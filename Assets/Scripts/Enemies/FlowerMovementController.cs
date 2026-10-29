@@ -29,6 +29,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         EnsureStateCycleRunning();
@@ -36,6 +37,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         EnsureStateCycleRunning();
     }
 
@@ -53,6 +55,7 @@ public sealed class FlowerMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 

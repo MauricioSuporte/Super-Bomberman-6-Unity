@@ -127,6 +127,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (other != null && other.gameObject.layer == LayerMask.NameToLayer("Explosion") &&
             IsExplosionImmuneDuringJump())
         {
@@ -138,6 +139,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SetJumpInvulnerability(false);
         ClearJumpOffsets();
         SetShadows(jumping: false);

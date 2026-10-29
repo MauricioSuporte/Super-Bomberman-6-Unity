@@ -57,6 +57,7 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
 
         CacheBombController();
@@ -69,6 +70,7 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -85,6 +87,7 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (abilityLoopRoutine != null)
         {
             StopCoroutine(abilityLoopRoutine);

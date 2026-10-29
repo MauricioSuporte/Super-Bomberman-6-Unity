@@ -21,6 +21,7 @@ public class ClownExplosionVfx : MonoBehaviour
 
     void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (frames == null || frames.Length == 0)
         {
             if (!TryGetComponent<AnimatedSpriteRenderer>(out var anim))
@@ -49,6 +50,7 @@ public class ClownExplosionVfx : MonoBehaviour
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!started) return;
 
         timer += Time.deltaTime;

@@ -52,12 +52,14 @@ public class JunctionTurningGhostEnemyMovementController : JunctionTurningEnemyM
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ApplyGhostAlpha();
     }
 
     private void OnEnable()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         ApplyGhostAlpha();
     }
 
@@ -71,6 +73,7 @@ public class JunctionTurningGhostEnemyMovementController : JunctionTurningEnemyM
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SetAlphaAll(deathAlpha);
         base.Die();
     }

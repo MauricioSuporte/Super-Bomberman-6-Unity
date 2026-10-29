@@ -74,6 +74,7 @@ public sealed class PrettyBomberMagicEffect : MonoBehaviour
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (GamePauseController.IsPaused)
             return;
         elapsed += Time.deltaTime;

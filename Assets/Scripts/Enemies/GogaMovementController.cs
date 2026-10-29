@@ -47,6 +47,7 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
     protected override void Start() { base.Start(); state = State.Surface; UpdateSpriteDirection(direction); }
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead) return;
 
         if (state == State.Surface)

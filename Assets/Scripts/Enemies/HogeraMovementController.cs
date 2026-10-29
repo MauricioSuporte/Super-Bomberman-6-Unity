@@ -36,6 +36,7 @@ public class HogeraMovementController : JunctionTurningEnemyMovementController
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -52,6 +53,7 @@ public class HogeraMovementController : JunctionTurningEnemyMovementController
 
     protected override void OnDeathAnimationEnded()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         SpawnMiniHogeras();
         base.OnDeathAnimationEnded();
     }

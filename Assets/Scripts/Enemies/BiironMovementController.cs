@@ -36,6 +36,7 @@ public sealed class BiironMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ResolveLandingTilemaps();
         ScheduleNextJump();
@@ -43,6 +44,7 @@ public sealed class BiironMovementController : JunctionTurningEnemyMovementContr
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (jumpRoutine != null)
         {
             if (rb != null)
@@ -78,6 +80,7 @@ public sealed class BiironMovementController : JunctionTurningEnemyMovementContr
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         StopJump();
         base.Die();
     }

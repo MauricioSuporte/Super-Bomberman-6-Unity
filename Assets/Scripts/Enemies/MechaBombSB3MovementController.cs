@@ -32,12 +32,14 @@ public sealed class MechaBombSB3MovementController : JunctionTurningEnemyMovemen
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ScheduleAbility();
     }
 
     private void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead || GamePauseController.IsPaused)
             return;
 
@@ -95,6 +97,7 @@ public sealed class MechaBombSB3MovementController : JunctionTurningEnemyMovemen
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isAbilityActive)
         {
             rb.linearVelocity = Vector2.zero;
@@ -111,12 +114,14 @@ public sealed class MechaBombSB3MovementController : JunctionTurningEnemyMovemen
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!isAbilityActive)
             base.OnTriggerEnter2D(other);
     }
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         EndAbility();
         base.Die();
     }

@@ -16,6 +16,7 @@ public sealed class SandpileMovementController : JunctionTurningEnemyMovementCon
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         ResolveTilemaps();
         base.Start();
         navigationStarted = true;

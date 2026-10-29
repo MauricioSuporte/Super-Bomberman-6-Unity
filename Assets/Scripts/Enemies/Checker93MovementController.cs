@@ -12,6 +12,7 @@ public sealed class Checker93MovementController : EnemyMovementController
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
 

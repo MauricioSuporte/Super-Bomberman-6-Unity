@@ -140,6 +140,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
 
     private void BeginImpact()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         impacted = true;
         CancelInvoke(nameof(Expire));
 
@@ -154,6 +155,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
 
     private void Expire()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!impacted)
             Destroy(gameObject);
     }

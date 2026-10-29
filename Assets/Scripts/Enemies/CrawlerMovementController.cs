@@ -43,6 +43,7 @@ public sealed class CrawlerMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         state = MovementState.Walking;
         ScheduleWalking();
@@ -51,6 +52,7 @@ public sealed class CrawlerMovementController : JunctionTurningEnemyMovementCont
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (isDead)
             return;
 
@@ -106,6 +108,7 @@ public sealed class CrawlerMovementController : JunctionTurningEnemyMovementCont
 
     protected override void Die()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         CancelScrollingInvulnerability();
         DisableCrawlerSprites();
         base.Die();

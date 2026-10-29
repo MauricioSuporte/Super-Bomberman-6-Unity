@@ -43,6 +43,7 @@ public sealed partial class HurricaneMovementController : JunctionTurningEnemyMo
 
     protected override void FixedUpdate()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!NetSync.ShouldSimulateLocally || GamePauseController.IsPaused) return;
         base.FixedUpdate();
 
@@ -54,6 +55,7 @@ public sealed partial class HurricaneMovementController : JunctionTurningEnemyMo
 
     protected override void Start()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         base.Start();
         ApplyRapidMovementFrameDuration();
     }
