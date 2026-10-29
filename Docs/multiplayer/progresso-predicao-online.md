@@ -50,6 +50,8 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   [40875720038](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40875720038)
   completed/success: servidor, cliente e atualizador; inclui o lifetime do canhão
   e os commits anteriores de R07/co-op. A12 teve captura real validada no lote.
+  Lote da mola `8b3841929` enviado; [pipeline40878816406](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40878816406)
+  em andamento, publicação ainda não confirmada.
 - **Validação local mais recente:**902/902 Unity, sem skips, C02/lifetime de mola/canhão;
   C#0/0 e Python53/53. Report PredictionSpringLifetime55Full. A12 validado com2clientes
   e6disparos em PredictionRevengeInputs55Run2. R07 em PredictionPresenterClients55Run2
@@ -2557,3 +2559,20 @@ Próximo: auditar C03 PlayerPreparingImpulseRoutine/PlayerImpulseRoutine e integ
 OnDisable da corda (hoje só restaura tiles); ainda NÃO há alterações nessas rotinas.
 C02/C03 trajetórias completas/handoff, P0 comparativos e demais IDs continuam abertos.
 Runner restaurado só nos fontes próprios antes de push; relatórios na raiz Logs.
+
+
+## Checkpoint após envio da mola
+
+8b3841929 enviado ao origin/v0.5.0. Actions40878816406 iniciado/em andamento;
+NÃO anunciar deploy concluído antes do sucesso. Último deploy confirmado5619659d9.
+Todos os fontes/testes desta etapa foram salvos;902/902 Unity, C#0/0, Python53/53.
+Relatórios preservados na raiz Logs; fontes rastreados próprios do runner restaurados.
+Nenhum processo próprio de teste/build continua ativo. Runner pertence ao pipeline.
+
+Próxima retomada: conferir essa publicação; seguir C03/cancelamento da preparação e
+voo da corda. Auditoria feita, ainda sem mudanças em BattleMode11ImpulseRopeController:
+Awake requer cena BattleMode_11; fixture pode usar SceneManager.CreateScene com esse
+nome para isolar sem carregar uma arena completa. OnDisable na partial Network só
+restaura tiles; faltam tracking/dispose de outer+nested e restauração de flags/poses.
+C02 curvas completas/handoff e os demais parciais continuam abertos. Checklist17/33
+concluídos em implementação/testes,16parciais; matriz visual/manual permanece pendente.
