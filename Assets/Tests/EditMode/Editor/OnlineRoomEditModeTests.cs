@@ -1460,6 +1460,56 @@ public sealed partial class OnlineRoomEditModeTests
     }
 
     [Test]
+    public void RidingOwnerMountContactRollsBackRejectionAndPreservesPhaseOnBatchedReceipt()
+    {
+        var oldMode = NetSync.Mode; var actor = new GameObject("RidingMountOwner"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null); NetworkBombFx fx = null;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client; clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            actor.AddComponent<BoxCollider2D>(); var identity = actor.AddComponent<NetworkIdentity>(); fx = actor.AddComponent<NetworkBombFx>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            var movement = actor.GetComponent<MovementController>(); var body = actor.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, body);
+            var companion = actor.AddComponent<PlayerMountCompanion>(); var rider = actor.AddComponent<PlayerRidingController>();
+            actor.SetActive(true); movement.SetNetworkTickDriven(true);
+            var state = new MovementController.NetworkMovementState { position = new Vector2(12, 12), facing = Vector2.down,
+                worldSpeed = 4, animationSpeed = PlayerPersistentStats.BaseSpeedNormal, canPredict = true, serverTime = NetworkTime.localTime };
+            movement.RestoreNetworkMovementState(state); fx.ReconcileRiding(29, state, default);
+            var arc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Mount, Vector2.down, actor.transform.position, actor.transform.position + Vector3.right * .5f);
+            var begin = typeof(NetworkBombFx).GetMethod("BeginRidingPresentation", flags);
+            var update = typeof(NetworkBombFx).GetMethod("UpdateRidingPresentation", flags);
+            var elapsed = typeof(NetworkBombFx).GetField("ridingElapsed", flags);
+            var prediction = new NetworkBombFx.RidingMotion { inputTick = 30, arc = arc, active = true };
+            Assert.IsTrue((bool)begin.Invoke(fx, new object[] { prediction, false }));
+            update.Invoke(fx, new object[] { .1f, .1f });
+            Assert.IsFalse(rider.IsPlaying); Assert.IsFalse(movement.InputLocked); Assert.IsFalse(movement.explosionInvulnerable);
+            Assert.AreEqual(MountedType.None, companion.GetMountedLouieType());
+            fx.ReconcileRiding(37, state, default); Assert.IsTrue(fx.RidingArcActive);
+            fx.ReconcileRiding(38, state, default); Assert.IsFalse(fx.RidingArcActive);
+            Assert.AreEqual(state.position, body.position, "Rejected/contested contact returns to the approved actor position.");
+            prediction.inputTick = 40; Assert.IsTrue((bool)begin.Invoke(fx, new object[] { prediction, false }));
+            update.Invoke(fx, new object[] { .1f, .1f }); float phase = (float)elapsed.GetValue(fx);
+            var receipt = prediction; receipt.revision = 1; receipt.inputTick = 43;
+            receipt.serverTime = receipt.sampleTime = NetworkTime.localTime;
+            fx.ReceiveRidingArc(receipt);
+            Assert.AreEqual(phase, elapsed.GetValue(fx)); Assert.IsTrue(fx.RidingArcActive);
+            Assert.IsFalse((bool)typeof(NetworkBombFx).GetField("ridingPending", flags).GetValue(fx));
+            receipt.revision = 2; receipt.active = false; receipt.completed = false;
+            fx.ReceiveRidingArc(receipt); Assert.IsFalse(fx.RidingArcActive);
+            Assert.AreEqual(state.position, body.position); Assert.AreEqual(MountedType.None, companion.GetMountedLouieType());
+        }
+        finally
+        {
+            if (fx != null) typeof(NetworkBombFx).GetMethod("ClearRidingPresentation", flags).Invoke(fx, new object[] { "test_cleanup" });
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
     public void RidingObserverStartsFromRetainedPausedPhaseAndRejectsStaleEvents()
     {
         var oldMode = NetSync.Mode; var actor = new GameObject("RidingObserver"); actor.SetActive(false);
@@ -1528,6 +1578,70 @@ public sealed partial class OnlineRoomEditModeTests
             Assert.AreEqual(Vector2.zero, body.linearVelocity); Assert.AreEqual(0, body.angularVelocity);
         }
         finally { NetSync.Mode = oldMode; Object.DestroyImmediate(actor); }
+    }
+
+    [TestCase("BlueLouie", MountedType.Blue)]
+    [TestCase("BlackLouie", MountedType.Black)]
+    [TestCase("PurpleLouie", MountedType.Purple)]
+    [TestCase("GreenLouie", MountedType.Green)]
+    [TestCase("YellowLouie", MountedType.Yellow)]
+    [TestCase("PinkLouie", MountedType.Pink)]
+    [TestCase("RedLouie", MountedType.Red)]
+    [TestCase("Mole", MountedType.Mole)]
+    [TestCase("Tank", MountedType.Tank)]
+    public void RidingArcEndpointsMatchEachMountSeatAndFootPose(string prefabName, MountedType type)
+    {
+        var root = new GameObject("InactiveRidingAnchorFixture"); root.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var oldMode = NetSync.Mode;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Offline;
+            var playerPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player.prefab");
+            var mountPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Mounts/{prefabName}.prefab");
+            Assert.IsNotNull(playerPrefab); Assert.IsNotNull(mountPrefab);
+            var actor = Object.Instantiate(playerPrefab, root.transform);
+            var mount = Object.Instantiate(mountPrefab, root.transform);
+            foreach (var animation in actor.GetComponentsInChildren<AnimatedSpriteRenderer>(true))
+                typeof(AnimatedSpriteRenderer).GetMethod("Awake", flags).Invoke(animation, null);
+            var movement = actor.GetComponent<MovementController>();
+            var rider = actor.GetComponent<PlayerRidingController>();
+            var companion = actor.GetComponent<PlayerMountCompanion>();
+            var definition = mount.GetComponentInChildren<MountVisualController>(true);
+            typeof(PlayerMountCompanion).GetField("currentLouie", flags).SetValue(companion, mount);
+            typeof(PlayerMountCompanion).GetField("mountedType", flags).SetValue(companion, type);
+            Vector3 collectedAt = new(2.35f, -1.2f, 0), landedAt = new(2.5f, -1.5f, 0);
+            actor.transform.position = collectedAt;
+            foreach (var facing in new[] { Vector2.up, Vector2.down, Vector2.left, Vector2.right })
+            {
+                Assert.IsTrue(movement.TryGetRidingVisualAnchor(false, facing, definition, type, out var foot));
+                Assert.IsTrue(movement.TryGetRidingVisualAnchor(true, facing, definition, type, out var seat));
+                if (definition.useHeadOnlyPlayerVisual)
+                    Assert.That(Vector2.Distance(seat, definition.GetPlayerSeatOffset(facing)), Is.LessThan(0.00001f));
+                if (type == MountedType.Pink) Assert.AreEqual(1.3f, seat.y, 0.00001f);
+                for (int cycle = 0; cycle < 3; cycle++)
+                {
+                    var enter = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Mount, facing, collectedAt, landedAt);
+                    var exit = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Dismount, facing, landedAt, collectedAt);
+                    Assert.AreEqual(collectedAt, enter.start); Assert.AreEqual(landedAt, enter.target);
+                    Assert.AreEqual(landedAt, exit.start); Assert.AreEqual(collectedAt, exit.target);
+                    Assert.That(Vector2.Distance(foot, PlayerRidingController.SampleNetworkArcOffset(enter, 0)), Is.LessThan(0.00001f));
+                    Assert.That(Vector2.Distance(seat, PlayerRidingController.SampleNetworkArcOffset(enter, 1)), Is.LessThan(0.00001f));
+                    Assert.That(Vector2.Distance(seat, PlayerRidingController.SampleNetworkArcOffset(exit, 0)), Is.LessThan(0.00001f));
+                    Assert.That(Vector2.Distance(foot, PlayerRidingController.SampleNetworkArcOffset(exit, 1)), Is.LessThan(0.00001f));
+                    using var writer = NetworkWriterPool.Get(); writer.Write(enter);
+                    using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+                    var received = reader.Read<PlayerRidingController.NetworkArcState>();
+                    Assert.AreEqual(enter.startVisualX, received.startVisualX); Assert.AreEqual(enter.endVisualX, received.endVisualX);
+                    Assert.AreEqual(enter.endHeight, received.endHeight);
+                    for (int sample = 0; sample <= 16; sample++)
+                        Assert.AreEqual(PlayerRidingController.SampleNetworkArcOffset(enter, sample / 16f),
+                            PlayerRidingController.SampleNetworkArcOffset(received, sample / 16f));
+                }
+            }
+            Assert.IsFalse(rider.IsPlaying); Assert.IsFalse(movement.InputLocked);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(root); }
     }
 
     [Test]
@@ -2944,6 +3058,97 @@ public sealed partial class OnlineRoomEditModeTests
             if (fx != null) typeof(NetworkBombFx).GetMethod("ClearPlacementPredictions", flags).Invoke(fx, null);
             NetSync.Mode = mode; clientState.SetValue(null, previousClientState); Object.DestroyImmediate(actor);
         }
+    }
+
+    [TestCase(MountedType.Mole)]
+    [TestCase(MountedType.Tank)]
+    [TestCase(MountedType.Blue)]
+    [TestCase(MountedType.Black)]
+    [TestCase(MountedType.Purple)]
+    [TestCase(MountedType.Green)]
+    [TestCase(MountedType.Yellow)]
+    [TestCase(MountedType.Pink)]
+    [TestCase(MountedType.Red)]
+    public void RidingMountContactRequiresFreshStationaryApprovedPickupWithoutEnablingGameplay(MountedType type)
+    {
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var oldMode = NetSync.Mode;
+        var clientState = typeof(NetworkClient).GetField("connectState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var oldClientState = clientState.GetValue(null);
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/NetworkWorldMount.prefab");
+        var instance = Object.Instantiate(prefab);
+        var actor = new GameObject("RidingContactActor"); var actorCollider = actor.AddComponent<BoxCollider2D>();
+        const uint id = 19900145;
+        bool hadIdentity = NetworkClient.spawned.TryGetValue(id, out var previousIdentity);
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            clientState.SetValue(null, System.Enum.Parse(clientState.FieldType, "Connected"));
+            var identity = instance.GetComponent<NetworkIdentity>(); var proxy = instance.GetComponent<NetworkWorldMount>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, id);
+            NetworkClient.spawned[id] = identity;
+            void Set(string name, object value) => typeof(NetworkWorldMount).GetField(name, flags).SetValue(proxy, value);
+            var sample = typeof(NetworkWorldMount).GetMethod("OnWorldMountTime", flags);
+            Vector3 position = new(100, 100, 0); actor.transform.position = position;
+            Set("mountType", type); Set("contactAvailable", true); Set("worldPosition", position); Set("worldRotation", Quaternion.identity); Set("worldScale", Vector3.one);
+            double now = NetworkTime.time;
+            void ReceiveFrames(bool visible)
+            {
+                using var writer = NetworkWriterPool.Get(); writer.WriteUInt(visible ? 1u : 0u);
+                if (visible) writer.Write(new NetworkWorldMount.MountFrame { visible = true, color = Color.white });
+                writer.WriteUInt(0);
+                using var reader = NetworkReaderPool.Get(writer.ToArraySegment()); proxy.frames.OnDeserializeAll(reader);
+            }
+            ReceiveFrames(true);
+            sample.Invoke(proxy, new object[] { 0d, now - .05 }); Set("sampleTime", now);
+            proxy.OnStartClient(); Physics2D.SyncTransforms();
+            Assert.IsTrue(proxy.TryGetPredictedMountContact(actorCollider, out var target, out var definition, out var selectedType));
+            Assert.AreEqual(type, selectedType); Assert.IsNotNull(definition);
+            Assert.That(Vector3.Distance(position, target), Is.LessThan(.001f));
+            foreach (var collider in instance.GetComponentsInChildren<Collider2D>(true)) Assert.IsFalse(collider.enabled);
+            foreach (var body in instance.GetComponentsInChildren<Rigidbody2D>(true)) Assert.IsFalse(body.simulated);
+            foreach (var behaviour in instance.transform.GetChild(0).GetComponentsInChildren<MonoBehaviour>(true)) Assert.IsFalse(behaviour.enabled);
+            actor.transform.position += Vector3.right * 3; Physics2D.SyncTransforms();
+            Assert.IsFalse(proxy.TryGetPredictedMountContact(actorCollider, out _, out _, out _), "No contact cannot predict collection.");
+            actor.transform.position = position; Physics2D.SyncTransforms();
+            Set("sampleTime", now - 1);
+            Assert.IsFalse(proxy.TryGetPredictedMountContact(actorCollider, out _, out _, out _), "Stale state cannot predict collection.");
+            Set("sampleTime", now); Set("contactAvailable", false);
+            Assert.IsFalse(proxy.TryGetPredictedMountContact(actorCollider, out _, out _, out _), "Server-disabled contact cannot predict collection.");
+            Set("contactAvailable", true); NetworkClient.spawned.Remove(id);
+            Assert.IsFalse(proxy.TryGetPredictedMountContact(actorCollider, out _, out _, out _), "A removed pickup cannot predict collection.");
+            NetworkClient.spawned[id] = identity;
+            Set("worldPosition", position + Vector3.right);
+            Assert.IsFalse(proxy.TryGetPredictedMountContact(actorCollider, out _, out _, out _), "Moving pickups wait for authority.");
+            Set("worldPosition", position); ReceiveFrames(false);
+            Assert.IsFalse(proxy.TryGetPredictedMountContact(actorCollider, out _, out _, out _), "An invisible/unknown pickup cannot predict collection.");
+        }
+        finally
+        {
+            if (hadIdentity) NetworkClient.spawned[id] = previousIdentity; else NetworkClient.spawned.Remove(id);
+            NetSync.Mode = oldMode; clientState.SetValue(null, oldClientState);
+            Object.DestroyImmediate(instance); Object.DestroyImmediate(actor);
+        }
+    }
+
+    [TestCase(0u, 0u, true)]
+    [TestCase(10u, 14u, true)]
+    [TestCase(10u, 18u, true)]
+    [TestCase(10u, 19u, false)]
+    [TestCase(10u, 9u, false)]
+    [TestCase(uint.MaxValue, 2u, true)]
+    public void RidingMountConfirmationHasBoundedTickAndTargetMatching(uint requested, uint approved, bool expected)
+    {
+        var prediction = new NetworkBombFx.RidingMotion { inputTick = requested,
+            arc = new PlayerRidingController.NetworkArcState { kind = PlayerRidingController.RidingArcType.Mount, target = Vector3.one } };
+        var receipt = prediction; receipt.inputTick = approved;
+        var match = typeof(NetworkBombFx).GetMethod("MatchesPredictedRiding", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.AreEqual(expected, match.Invoke(null, new object[] { prediction, receipt }));
+        receipt.arc.target += Vector3.right;
+        Assert.IsFalse((bool)match.Invoke(null, new object[] { prediction, receipt }), "A different contested pickup must use the approved sequence.");
+        receipt = prediction; receipt.arc.kind = PlayerRidingController.RidingArcType.Dismount;
+        Assert.IsFalse((bool)match.Invoke(null, new object[] { prediction, receipt }));
     }
 
     [TestCase(MountedType.Mole)]

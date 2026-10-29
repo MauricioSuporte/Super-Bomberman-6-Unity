@@ -1466,3 +1466,49 @@ evita-se buscar duas vezes os mesmos filhos. Geometria/ease/pixel grid/colisão,
 sons e timers de CharacterHealth continuam nativos; não se cancela a proteção de
 outras fontes. O client puro continua sem executar essa simulação. C03 ainda é
 parcial por descritores de curva/handoff completo e comparação visual entre peers.
+
+
+### A11 — pontos do arco por montaria (protocolo56, em validação)
+
+O sampler nativo e o presenter de rede compartilham agora o mesmo offset visual
+X/Y. O início da montagem usa a posição do jogador na coleta; o fim usa a pose
+montada específica (HeadOnly por direção ou pose de corpo inteiro, incluindo Pink).
+A desmontagem captura a pose e a origem antes de destacar a montaria e centralizar
+o corpo, e termina no pé/destino desmontado. Os extremos preservam valores exatos
+como1.3; apenas as amostras internas continuam quantizadas à grade de pixels.
+Os dois offsets X adicionais mudam NetworkArcState e exigem cliente/servidor56.
+
+NetworkMountAnimation amostra também a montaria pendente ou recém-destacada durante
+o arco vivo. Essa referência é apenas visual: não devolve posse/colisor/ovos ao
+player. A previsão Select deriva a pose da direção atual e o destino desmontado
+conhecido. Coleta, dano, proteção, transferência de ovos e finalização continuam
+no caminho nativo autoritativo; nenhuma coleta especulativa foi acrescentada.
+
+Validação inicial: RidingAnchors56Focused14/14 e Full912/912, sem skips. A última
+correção de direção também passou FinalFocused14/14. Repetição com dois peers e
+capturas renderizadas ainda aguardam a compilação Development no momento deste
+registro; consultar o checkpoint vivo antes de citar esses passos como aprovados.
+
+
+A11 complemento: pickups NetworkWorldMount conhecidos podem antecipar somente o
+gesto/arco do owner em Battle. São exigidos dois samples parados, idade<=250ms,
+identidade ainda spawnada, frame visível e contato habilitado pelo servidor.
+O cliente consulta a geometria circular desativada sem habilitar colisores ou
+comportamentos. Exige input/motor efetivo em direção ao alvo; parado ou saindo do
+pickup não inicia remontagem. Coop/geometria desconhecida e pickups móveis aguardam
+aprovação. Não há comando novo, consumo especulativo, troca de posse ou ovos.
+
+A confirmação Mount aceita o mesmo alvo (tolerância125mm) em até8ticks, por causa
+do batch de inputs antes do trigger físico. Dismount permanece no tick exato.
+Ack sem aprovação após essa janela ou timeout restaura o estado aprovado; a
+confirmação mantém fase normalizada. contactAvailable é mais um campo wire56.
+Foco30/30 passou; integração completa deste complemento ainda em andamento.
+
+
+A11/56 validado: Full928/928, foco30/30; dois clientes reais/90s repetiram3remontagens
+nativas e4desmontagens porowner com1ovo transferido em cada fase. Cada um confirmou
+3Mount e4Dismount previstos preservando fase, sem rollback indevido. Capturas da
+câmera gameplay URP inspecionadas em Mole/Tank; não equivalem a medição perceptual
+humana ou revisão final de HUD/barras. A11 concluído em implementação/testes;
+comparação humana segue no QA global. O smoke com --mount-input --mount-cycles
+--diagnostics --rendered exige os pares de previsão/confirmação e PNGs distintos.

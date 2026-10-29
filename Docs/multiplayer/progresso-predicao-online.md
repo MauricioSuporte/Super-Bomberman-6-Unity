@@ -46,17 +46,17 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo55, commit `8b3841929`, pipeline
-  [40878816406](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40878816406)
-  completed/success: servidor, cliente e atualizador; inclui cleanup de mola/canhão,
-  R07/co-op e a implementação A12 anteriormente validada em integração.
-  Lote seguinte `0ddcf872d` enviado; [pipeline40910624716](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40910624716)
-  em andamento; publicação do updater/C03 ainda não confirmada.
-- **Validação local mais recente:**903/903 Unity, sem skips, C03/lifetime da corda;
-  C#0/0 e Python58/58. Report PredictionRopeLifetime55Final. Updater13/13 nativos
-  aprovados, compilado com warnings-as-errors. A12 validado com2clientes
-  e6disparos em PredictionRevengeInputs55Run2. R07 em PredictionPresenterClients55Run2
-  manteve8amostras de movimento porpeer após transferência, sem novo evento.
+- **Publicado:** protocolo55, commit `0ddcf872d`,
+  [Actions40910624716](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40910624716)
+  completed/success confirmado, incluindo updater/C03. Lote A11/protocolo56
+  validado localmente e pronto para publicação conjunta de cliente/servidor.
+- **Validação local mais recente:**928/928 Unity sem skips (PredictionMountContact56Full),
+  foco30/30, C#0/0; Python64/64 (56CI+8Directory). Três ciclos de remontagem nativa,
+  quatro Select por owner e1ovo porplayer em2clientes Mirror reais, com câmera URP.
+  Cada cliente confirmou3Mount e4Dismount previstos sem reiniciar fase nem rollback
+  indevido (PredictionMountContact56CyclesRendered3/riding-review.json).
+  Capturas da câmera gameplay inspecionadas; não medem latência humana nem validam
+  a saída completa de HUD/barras. A12 mantém o aceite expresso com2clientes reais.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
   itens em movimento e desmontagem Mole/Tank; co-op Stage_1-1 por90s com captura.
   Ambos sem erros/avisos. Headless; não comprova renderização nem input lag zero.
@@ -67,10 +67,10 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:**17 IDs implementados/testados e16 parciais; todos os33 iniciados.
+- **Checklist:**18 IDs implementados/testados e15 parciais; todos os33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** auditar cancelamento/curvas da corda C03; continuar curvas e entrega
-  ao motor de C02 e demais parciais.
+- **Próximo:** publicar A11/56 e conferir o CI; continuar curvas e entrega ao motor
+  de C02/C03 e os demais IDs parciais.
   A12 já teve integração de morte nativa, C e3cargas/releases porcliente. ClownMask/SunMask/
   Stage_3-6 já tiveram integração real documentada abaixo; manual visual pendente.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
@@ -222,7 +222,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A08: pose/proxy/handoff/cooldown e testes; manual pendente.
 - [x] A09: grupo/tile/estoque/variantes e Purple pose, 176+5 testes; manual pendente.
 - [x] A10: auditado feedback existente, logs Btick/selecao e guards client; 182 testes; capturas/manual pendentes.
-- [ ] A11: parcial55 local: riding/dismount, fila visual e defer de remoção da montaria no arco vivo testados; smoke2peers Mole/Tank detectou teardown, corrigido em suíte878. Repetição e manual visual pendentes.
+- [x] A11: implementado/testado56: arcos X/Y por assento/HeadOnly e origem pré-snap; contato conhecido e Select previstos, confirmação/rollback e fila visual. Unity928/928; dois peers com3Mount+4Dismount previstos/confirmados porowner, ovos intactos. Capturas URP inspecionadas; comparação perceptual humana permanece no QA global.
 - [x] A12: concluído. Motor/replay, carga/mira, recoil/muzzle, release tick, retorno confirmado e handoff testados; integração55 com2clientes, C e3cargas/releases porowner,6confirmações. Usuário confirmou validação com2clientes reais e conclusão em29/10/2026.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
@@ -2659,3 +2659,135 @@ Próximo: conferir CI e continuar descritores de curva/phase e handoff C02/C03;
 C03 já tem cleanup/reuso/first-frame cobertos, mas descritores/visual2peers ainda
 não foram implementados/validados por este lote. Não repetir suíte903 sem nova
 mudança/falha. Continuar demais IDs a partir do checklist vivo, preservando offline.
+
+
+## A11 retomado em29/10 — arcos por assento, em validação
+
+Pedido atual: concluir A11 e ligar o arco à posição visual real de coleta/assento,
+incluindo HeadOnly e direção, e fazer o caminho inverso na desmontagem.
+Alterações locais ainda NÃO publicadas: pontos X/Y do assento e pé no mesmo sampler
+nativo/rede; captura da origem antes do detach/snap; apresentação da montaria
+pendente/destacada durante o arco; guardas autoritativas nos pickups/detach/remount.
+Protocolo56 nos dois lados, pois NetworkArcState ganhou dois floats X.
+Previsão Select usa destino de desembarque e assento da direção atual. Montagem
+continua dependendo do evento aprovado; NÃO foi implementada previsão de coleta.
+
+PredictionRidingAnchors56Focused passou14/14 (nove prefabs x quatro direções,
+três repetições de amostragem/wire mais regressões prévias). Suíte completa
+PredictionRidingAnchors56Full ainda em execução. C#0/0; Python58/58.
+Harness Development ganhou mount-cycles: três remontagens pelo trigger nativo,
+quatro Select por cliente, conferência da transferência de um ovo por player.
+Capturas renderizadas opcionais preparadas; ainda NÃO executadas/inspecionadas.
+Não declarar repetição2peers ou validação visual com base somente nos testes.
+
+Próximo: conferir full; copiar últimos ajustes de direção/harness ao runner livre;
+compilar Development e rodar smoke2peers mount_input=True,mount_cycles=True,
+rendered=True,diagnostics=True. Revisar capturas/falhas; validar compilação final,
+UTF8/BOM e atualizar A11 com a evidência realmente obtida. Lista de paths próprios
+copiados ao runner em Logs/A11-56-owned-paths.json. Não restaurar fonts/settings
+alheios do runner e não incluir os três fonts sujos do usuário no commit.
+Actions40910624716 confirmado completed/success; nenhum novo publish56 iniciado.
+
+
+A11 complemento em andamento após Full912/912 e FinalFocused14/14: root agora tem
+previsão limitada de contato com NetworkWorldMount já aprovado, parado, visível,
+spawnado e recente (250ms); clone permanece sem gameplay/colisores. Só Battle,
+alvo conhecido e owner elegível. Origem/destino/assento compartilhados; confirmação
+aceita até8ticks posteriores (batch de inputs + trigger), mesmo alvo125mm; sem
+aprovação retorna ao estado confirmado por ack/timeout. Ainda NÃO testado Unity.
+Novos testes de contato9montarias e matching6casos incluídos, mas não executados.
+O build Development atualmente no runner (exec42946) ainda é anterior a esse
+complemento: valida apenas arcos/frames/harness/repetição. Não publicar/commitar
+sem validar complemento. Próximo após smoke é copiar novos paths, rodar foco/full
+927esperados e reconstruir player para integração com contato previsto. Capturas
+renderizadas A11 ainda não foram produzidas neste ponto.
+
+
+## A11 — retomada após foco de contato, estado em29/10 13h05 local
+
+PredictionMountContact56Focused2:30/30 passou sem skips. Inclui9montarias com
+contato aprovado parado/recente, bloqueio de collider indisponível/estado antigo/
+remoção/movimento, seis matching de tick/alvo incluindo wrap, rollback por ack,
+confirmação preservando fase e cancelamento, além dos14testes de arco anteriores.
+O primeiro foco falhou9fixtures por escrita direta em SyncList do client; corrigida
+a fixture para desserializar o pacote de frames, mantendo as guardas de autoridade.
+
+Primeiro smoke real PredictionRiding56CyclesRendered1 completou3remounts e4Select
+por cliente, transferência de1ovo em cada ciclo, sem erros/warnings de rede. Esse
+binário ainda NÃO tinha o novo contato previsto. Os PNG eram pretos; visual-review.json
+registra que NÃO houve aceite visual, apesar de result.rendered=true indicar GPU
+ativa. Capturador corrigido para request da câmera URP/RT; ainda não validado.
+
+Sourcefinal adiciona contactAvailable aprovado ao world proxy (wire56), exige input
+e movimento efetivo em direção ao pickup, não ao sair dele; não há remontagem
+especulativa estando parado. O harness agora caminha para sair/retornar ao trigger.
+PredictionMountContact56Full está emexec57152 (928esperados), seguido por build
+PredictionMountContact56DevBuild no mesmoexec apenas se full passar. NÃO copiar
+nem restaurar runner enquanto esseexec não terminar. Depois rodar novo smoke120s
+com mount_cycles/rendered/diagnostics, confirmar previsões Mount/phase e imagens
+variadas. Protocolo56 ainda não publicado/commitado; C#último0/0 e Python58/58.
+Lista paths próprios no Logs/A11-56-owned-paths.json. Preservar fonts alheios.
+
+
+A11 atualização: PredictionMountContact56Full passou928/928,0skips. Build emexec57152
+PredictionMountContact56DevBuild ainda em andamento. Não interromper nem copiar
+runner até ele terminar. ÚNICA diferença atual de C# raiz/runner é atributo
+DefaultExecutionOrder(-150) em LocalNetworkInputSmoke: precisa anteceder
+NetworkPlayerInput(-100), depois de PlayerInputManager(-200), para GetDown sintético
+não desaparecer no LateUpdate do input. Primeiro smoke tinha apenas riding authority,
+não prediction_begin gesture_only; esse limite está identificado, não declarar
+predição comprovada naquele lote. Após build atual, copiar SOMENTE harness final
+e reconstruir Development (sem repetir928, é só mudança de ordem da fixture).
+Então executar smoke90s com2clients/rendered/mount-cycles/diagnostics e exigir
+Select previsto/confirmado nos dois, contato Mount quando caminhada reentrar,
+ovos intactos e PNG distintos reais. Demais fontes root/runner byte a byte iguais.
+
+
+A11 integração2 (PredictionMountContact56CyclesRendered2):3ciclos e1ovo porowner
+novamente passaram;0erros/warnings no servidor. Capturas de ambos confirmam4gestos
+Select previstos,3confirmados preservando fase; o primeiro sofreu warmupGPU do
+capturador (new_sequence/timeout), não serve como medida de atraso de gameplay.
+Nenhum Mount gesture_only nesse lote: fixture escolhia direção porPlayerId, mas
+spawn estava embaralhado e ambos andavam para fora da arena/parede. Não declarar
+previsão de contato comprovada com essa captura. Render URP funciona, mas RT1024x896
+cortava os players nas bordas pois viewport usa Screen.width/height reais.
+
+Correções SÓ na fixture Development: sentido pela posiçãoX do spawn, aquecer a
+pipeline antes do primeiro arco e RT nas dimensões reais da tela. C#final0/0.
+Novoexec90018: PredictionMountContact56CaptureDevBuild e, se compilar, smoke90s
+PredictionMountContact56CyclesRendered3, já com script atualizado. Não usar runner
+até término. Fontes de runtime/testes continuam exatamente as que passaram928/928;
+a ordem-150 e essas correções da fixture compilaram em dotnet e serão compiladas
+no Unity pelo build. Próximo: confirmar contato previsto comfase, ovos e imagens
+complayersvisíveis; se falhar, corrigir causa e repetir só teste afetado. Ainda56
+local não publicado. A11 continua parcial até fechar essas evidências.
+
+
+## A11 concluído em implementação e validação — protocolo56 pronto
+
+PredictionMountContact56Full:928/928,0falhas/0skips; foco30/30. C#final0erros/0avisos.
+PredictionMountContact56CyclesRendered3: duas instâncias completas Mirror/Direct3D11,
+90s,3remounts nativos via trigger e4Select porowner. Cada cliente registrou3previsões
+Mount e4Dismount, todas confirmadas preservando fase, sem rejeição/timeout/new_sequence.
+Arquivo riding-review.json valida esses pares. Transferência de1ovo porplayer
+conferida no servidor em cada saída/entrada, sem perda/duplicação.0erros/warnings
+nos eventos de servidor e0erros de replicação nos três processos.
+
+Frames reais da câmera gameplay URP foram inspecionados para início/subida/descida/
+fim em Mole/Tank. A11 marcado[x] no critério implementação/testes,18/33 e15parciais.
+Não confundir request offscreen da câmera com a saída final de HUD/barras, nem com
+aceite humano de sensação/input lag. Os9prefabs/quatro direções e HeadOnly/fullbody
+estão cobertos pelos testes de pontos de assento/pé e amostragem/wire compartilhada.
+As capturas renderizadas registram avisos de shaders LensFlare opcionais removidos
+no build URP da baseline; sem alteração de pipeline/settings/cena/prefab neste lote.
+
+O smoke agora exige previsões locais confirmadas (além dos checkpoints do servidor),
+e3PNGs distintos porclient quando rendered. validate_mount_smoke.py também passou
+nos dois captures reais, e seis regressões rejeitam aprovação sem previsão, falta
+de arcos, rollback/timeout e contam só oowner. Python64/64. Novas opções:
+--mount-input --mount-cycles --diagnostics --rendered; usar player Development.
+
+Próximo: UTF8/diff finais; preservar reports; restaurar só os17tracked próprios do
+runner listados em Logs/A11-56-owned-paths.json; salvar/publicar todos os22paths
+próprios, sem os3fonts do usuário. Protocolo56 alinhado no jogo/directory; builds
+cliente e servidor devem ser publicados juntos. Ainda NÃO houve push56 neste ponto.

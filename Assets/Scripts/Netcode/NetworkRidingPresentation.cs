@@ -39,10 +39,59 @@ namespace Assets.Scripts.Netcode
                 (TryGetComponent<NetworkPlayerInput>(out var input) && !input.ServerAllowsMovementPrediction)) return false;
             var arc = dismountTemplate;
             arc.kind = PlayerRidingController.RidingArcType.Dismount;
-            arc.start = arc.target = transform.position;
+            arc.start = transform.position;
+            arc.target = TryGetComponent<PlayerMountCompanion>(out var companion) ? companion.GetDismountLandingPosition() : transform.position;
             arc.facing = MotionDiagnosticProbe.DirectionFromMask(held);
             if (arc.facing == Vector2.zero) arc.facing = movement.FacingDirection;
+            var mount = companion != null ? companion.GetMountedLouieObject() : null;
+            var definition = mount != null ? mount.GetComponentInChildren<MountVisualController>(true) : null;
+            var type = companion != null ? companion.GetMountedLouieType() : MountedType.None;
+            if (definition != null && movement.TryGetRidingVisualAnchor(true, arc.facing, definition, type, out var seat))
+            { arc.startVisualX = seat.x; arc.startHeight = seat.y; }
+            if (movement.TryGetRidingVisualAnchor(false, arc.facing, definition, type, out var foot))
+            { arc.endVisualX = foot.x; arc.endHeight = foot.y; }
             return BeginRidingPresentation(new RidingMotion { inputTick = tick, arc = arc, active = true }, false);
+        }
+
+        public bool TryPredictMountContact(uint tick, int held)
+        {
+            Vector2 direction = MotionDiagnosticProbe.DirectionFromMask(held);
+            if (direction == Vector2.zero || NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || isServer || !isLocalPlayer ||
+                BombermanNetworkManager.IsCoopStage || ridingActive || ClientPlayerMotionActive || AbilityPredictionLocksMovement ||
+                GamePauseController.IsPaused || BombermanNetworkManager.BattleStartPending ||
+                !TryGetComponent<MovementController>(out var movement) || !movement.CanPredictNetworkMovement || movement.IsMounted ||
+                !TryGetComponent<PlayerRidingController>(out var rider) || rider.IsPlaying ||
+                !TryGetComponent<Collider2D>(out var collider) ||
+                (TryGetComponent<NetworkPlayerInput>(out var input) && !input.ServerAllowsMovementPrediction) ||
+                (TryGetComponent<PowerGloveAbility>(out var glove) && glove.IsHoldingBomb)) return false;
+            direction = movement.Direction;
+            if (direction == Vector2.zero) return false;
+            NetworkWorldMount selected = null; Vector3 target = default;
+            MountVisualController definition = null; MountedType type = MountedType.None;
+            float distance = float.PositiveInfinity;
+            foreach (var identity in NetworkClient.spawned.Values)
+            {
+                if (identity == null || !identity.TryGetComponent<NetworkWorldMount>(out var mount) ||
+                    !mount.TryGetPredictedMountContact(collider, out var candidate, out var candidateDefinition, out var candidateType)) continue;
+                if (Vector2.Dot((Vector2)(candidate - transform.position), direction) <= .01f) continue;
+                float candidateDistance = (candidate - transform.position).sqrMagnitude;
+                if (candidateDistance > distance || (candidateDistance == distance && selected != null && mount.netId >= selected.netId)) continue;
+                selected = mount; distance = candidateDistance; target = candidate; definition = candidateDefinition; type = candidateType;
+            }
+            if (selected == null) return false;
+            var arc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Mount, movement.FacingDirection,
+                transform.position, target, targetMount: definition, targetType: type);
+            return BeginRidingPresentation(new RidingMotion { inputTick = tick, arc = arc, active = true }, false);
+        }
+
+        static bool MatchesPredictedRiding(RidingMotion predicted, RidingMotion approved)
+        {
+            if (predicted.arc.kind != approved.arc.kind) return false;
+            if (approved.arc.kind == PlayerRidingController.RidingArcType.Dismount) return predicted.inputTick == approved.inputTick;
+            // Physics triggers run after a batch of at most four input steps.
+            // Permit a bounded receipt window, including uint tick wrap.
+            return unchecked(approved.inputTick - predicted.inputTick) <= 8 &&
+                Vector3.Distance(predicted.arc.target, approved.arc.target) <= .125f;
         }
 
         bool BeginRidingPresentation(RidingMotion motion, bool confirmed)
@@ -123,8 +172,7 @@ namespace Assets.Scripts.Netcode
                 ridingEnding = true; ridingPending = false; ridingSilence = 0;
                 return;
             }
-            bool predicted = ridingActive && ridingPending && ridingMotion.inputTick == motion.inputTick &&
-                ridingMotion.arc.kind == PlayerRidingController.RidingArcType.Dismount;
+            bool predicted = ridingActive && ridingPending && MatchesPredictedRiding(ridingMotion, motion);
             if (!predicted)
             {
                 ClearRidingPresentation("new_sequence");
@@ -147,7 +195,8 @@ namespace Assets.Scripts.Netcode
             ridingReplica = state.position; ridingSnapshotTime = state.serverTime;
             hasDismountState = true; dismountReady = actions.dismountEligible; dismountTemplate = actions.dismountArc;
             if (!ridingActive || !isLocalPlayer) return;
-            if (ridingPending && !NetworkInputHistory.IsNewer(ridingMotion.inputTick, tick)) { RollbackRiding("input_processed_without_riding"); return; }
+            uint pendingDeadline = ridingMotion.arc.kind == PlayerRidingController.RidingArcType.Mount ? unchecked(ridingMotion.inputTick + 8) : ridingMotion.inputTick;
+            if (ridingPending && !NetworkInputHistory.IsNewer(pendingDeadline, tick)) { RollbackRiding("input_processed_without_riding"); return; }
             if (!ridingPending)
             {
                 ridingSilence = 0;
@@ -232,7 +281,7 @@ namespace Assets.Scripts.Netcode
         void TraceRiding(string kind, string reason)
         {
             if (!GameplayLatencyDiagnostics.Enabled) return;
-            var entry = GameplayLatencyDiagnostics.For(kind, GetComponent<MovementController>(), detail: reason +
+            var entry = GameplayLatencyDiagnostics.For(kind, GetComponent<MovementController>(), detail: reason + ";arc=" + ridingMotion.arc.kind + ";pending=" + ridingPending +
                 ";hold_ms=" + (Mathf.Max(0, ridingElapsed - ridingMotion.arc.duration) * 1000).ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
             entry.inputTick = ridingMotion.inputTick; entry.durationMs = ridingElapsed * 1000;
             entry.delta = ridingCorrection; GameplayLatencyDiagnostics.Write(entry);

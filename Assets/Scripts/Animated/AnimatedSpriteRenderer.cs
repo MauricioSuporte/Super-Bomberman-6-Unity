@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -56,6 +56,18 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     Vector3 runtimeBaseOffset;
     public Vector3 RuntimeBaseLocalOffset => runtimeBaseOffset;
+    // Excludes animation-frame bobbing while retaining the configured seat/base.
+    public Vector3 RestingLocalPosition
+    {
+        get
+        {
+            EnsureTargets();
+            Vector3 value = (hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition) + runtimeBaseOffset;
+            if (runtimeLockX) value.x = runtimeLockedLocalX;
+            return value;
+        }
+    }
+
     bool runtimeLockX;
     float runtimeLockedLocalX;
 

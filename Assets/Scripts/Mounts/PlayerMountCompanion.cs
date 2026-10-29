@@ -86,6 +86,8 @@ public class PlayerMountCompanion : MonoBehaviour
     GameObject pendingWorldMountLouie;
     MountedType pendingWorldMountType = MountedType.None;
     MountEggQueue pendingWorldMountQueue;
+    GameObject detachedPresentation;
+    MountedType detachedPresentationType;
 
     void Awake()
     {
@@ -127,6 +129,8 @@ public class PlayerMountCompanion : MonoBehaviour
             SetLouieAbilitiesLocked(shouldLock, affectVisuals: false);
 
         TickDashInvulnerability();
+        var presentationRider = GetComponent<PlayerRidingController>();
+        if (presentationRider == null || !presentationRider.IsPlaying) { detachedPresentation = null; detachedPresentationType = MountedType.None; }
 
         if (currentLouie != null && mountedType != MountedType.Blue)
             EnforceNoPunchWhileMountedNonBlue();
@@ -206,6 +210,16 @@ public class PlayerMountCompanion : MonoBehaviour
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
     public bool HasMountedLouie() => currentLouie != null;
     public GameObject GetMountedLouieObject() => currentLouie;
+    public GameObject GetMountPresentationObject()
+    {
+        if (pendingWorldMountLouie != null) return pendingWorldMountLouie;
+        if (currentLouie != null) return currentLouie;
+        var rider = GetComponent<PlayerRidingController>();
+        return rider != null && rider.IsPlaying ? detachedPresentation : null;
+    }
+    public MountedType GetMountPresentationType() => currentLouie != null || pendingWorldMountLouie != null ? mountedType : detachedPresentationType;
+    public Vector3 GetDismountLandingPosition() => GetPlayerTileCenter();
+
 
     public void ClearMountedStateForForcedArenaRemoval()
     {
@@ -655,7 +669,7 @@ public class PlayerMountCompanion : MonoBehaviour
         detachedLouie = null;
         detachedType = MountedType.None;
 
-        if (currentLouie == null || movement == null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || currentLouie == null || movement == null)
             return false;
 
         var louie = currentLouie;
@@ -696,8 +710,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
         transform.position = snappedWorldPos;
 
-        detachedLouie = louie;
-        detachedType = typeBeforeReset;
+        detachedPresentation = detachedLouie = louie;
+        detachedPresentationType = detachedType = typeBeforeReset;
         return true;
     }
 
@@ -708,7 +722,7 @@ public class PlayerMountCompanion : MonoBehaviour
         Vector3 startWorldPos,
         Vector3 targetWorldPos)
     {
-        if (louieWorldInstance == null || movement == null || currentLouie != null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || louieWorldInstance == null || movement == null || currentLouie != null)
             return false;
 
         PrepareWorldRemountSfxIfNone(louieType);

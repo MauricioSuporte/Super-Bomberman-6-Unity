@@ -146,6 +146,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (facingAtPress == Vector2.zero)
             facingAtPress = Vector2.down;
 
+        var presentationArc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Dismount,
+            facingAtPress, transform.position, companion.GetDismountLandingPosition(), manualDismountDuration);
+
         if (!companion.TryDetachMountedLouieToWorldStationary(out var detachedLouie, out var detachedType))
             return;
 
@@ -215,7 +218,8 @@ public sealed class PlayerManualDismount : MonoBehaviour
                 if (eggQueue != null)
                     eggQueue.SetIgnoreOwnerInvulnerability(false);
             },
-            networkInputTick: TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var networkInput) ? networkInput.CurrentSelectTick : 0
+            networkInputTick: TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var networkInput) ? networkInput.CurrentSelectTick : 0,
+            presentationArc: presentationArc
         );
 
         if (!started)

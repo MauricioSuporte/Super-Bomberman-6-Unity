@@ -13,7 +13,11 @@ from benchmark_local import host_memory
 
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False):
+    if rendered and not mount_cycles:
+        raise ValueError('rendered mount captures require mount cycles')
+    if mount_cycles and (not mount_input or not diagnostics):
+        raise ValueError('mount cycles require mount input and diagnostics')
     if revenge_input and (mode != 'BattleMode' or not diagnostics or mount_input):
         raise ValueError('revenge input requires BattleMode diagnostics without the mount input fixture')
     output = output.resolve()
@@ -29,13 +33,13 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 raise RuntimeError('the durable actor smoke requires Development players')
             assembly_hashes[role] = hashlib.sha256(assembly).hexdigest()
         (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
-            revengeInput=revenge_input, assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
+            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
         env = dict(os.environ, SB6_ROOM_ID='spawn-regression', SB6_ROOM_TOKEN=secrets.token_hex(32),
                    SB6_ROOM_STATUS=str(output/'status.json'))
         def launch(binary, name, arguments, environment=None):
             handle = (output/(name+'-launcher.log')).open('wb')
             handles.append(handle)
-            process = subprocess.Popen([str(binary), '-batchmode', '-nographics', '-logFile',
+            process = subprocess.Popen([str(binary), '-batchmode'] + ([] if rendered and name.startswith('client-') else ['-nographics']) + ['-logFile',
                                         str(output/(name+'.log'))] + arguments,
                                        cwd=binary.parent, env=environment, stdout=handle,
                                        stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -50,6 +54,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                         (['-load-test-presenter-removal'] if presenter_removal else []) +
                         (['-load-test-revenge-input'] if revenge_input else []) +
                         (['-load-test-full-input'] if mount_input else []) +
+                        (['-load-test-mount-cycles'] if mount_cycles else []) +
                         (['-load-test-item-motion'] if prediction_items else []), env)
         for _ in range(60):
             if room.poll() is not None: raise RuntimeError('server exited before accepting clients')
@@ -69,6 +74,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                    (['-load-test-presenter-removal'] if presenter_removal else []) +
                    (['-load-test-revenge-input'] if revenge_input else []) +
                    (['-load-test-real-input'] if mount_input else []) +
+                   (['-load-test-mount-cycles'] if mount_cycles else []) +
+                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '1024', '-screen-height', '896'] if rendered else []) +
                    (['-load-test-item-motion'] if prediction_items else []) +
                    ['-local-diagnostic-name', 'SB6Smoke'+str(index+1)])
             time.sleep(1)
@@ -97,6 +104,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 raise RuntimeError('cooperative smoke did not join exactly two client connections')
         for marker in markers:
             if marker not in server_text: raise RuntimeError('missing server checkpoint: '+marker)
+        if mount_cycles:
+            if '[LoadTest] mount-cycles completed cycles=3 players=2' not in server_text:
+                raise RuntimeError('server did not complete three remount/dismount cycles for both owners')
         removed_bomb = None
         if revenge_input:
             if '[LoadTest] revenge-input completed players=2' not in server_text:
@@ -122,6 +132,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             lines = path.read_text(encoding='utf-8-sig', errors='replace').splitlines()
             if mount_input and path.name.startswith('client-') and not any('full-input dismount acknowledged' in line for line in lines):
                 raise RuntimeError('client did not acknowledge the authoritative dismount: '+path.name)
+            if mount_cycles and path.name.startswith('client-') and sum('full-input dismount acknowledged' in line for line in lines) < 4:
+                raise RuntimeError('client did not acknowledge four dismounts: '+path.name)
             if prediction_items and path.name.startswith('client-'):
                 for item_type in ('Skull', 'LineBomb'):
                     if not any('item-motion presented type='+item_type in line for line in lines):
@@ -170,6 +182,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 captures[path.stem] = dict(file=destination.name, unlockedPlayers=unlocked,
                     presenterTransferMovingSamples=transfer_samples,
                     familyCostReports=sum(row.get('kind') == 'coop_family_cost' for row in rows))
+                if mount_cycles and path.stem != 'server':
+                    from validate_mount_smoke import validate_mount_capture
+                    captures[path.stem]['riding'] = validate_mount_capture(rows)
                 if revenge_input:
                     from validate_revenge_smoke import validate_revenge_capture
                     captures[path.stem]['revenge'] = validate_revenge_capture(rows, path.stem == 'server')
@@ -182,7 +197,11 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             errors = [event['message'] for event in entries if event.get('level') in ('Error', 'Exception', 'Assert')]
             warning_events = [event['message'] for event in entries if event.get('level') == 'Warning']
             if errors: failures['server-events'] = list(dict.fromkeys(errors))
-        result = dict(actualMirrorClients=2, simulatedClients=False, rendered=False,
+        if rendered:
+            for index in (1, 2):
+                if len({hashlib.sha256(frame.read_bytes()).digest() for frame in (output/('client-'+str(index)+'-frames')).glob('*.png')}) < 3:
+                    raise RuntimeError('missing distinct rendered mount arc captures for client '+str(index))
+        result = dict(actualMirrorClients=2, simulatedClients=False, rendered=rendered, mountCycles=mount_cycles,
                       mode=mode, scene=scene, captures=captures, assemblySha256=assembly_hashes, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
                       spawnCheckpoints=mode == 'BattleMode', arenaLoadRequests=round_reloads,
                       syntheticHardwareInput=mount_input or revenge_input, revengeInput=revenge_input, approvedItemMotion=prediction_items,
@@ -216,6 +235,8 @@ if __name__ == '__main__':
     parser.add_argument('--diagnostics', action='store_true', help='Enable and copy the three process motion logs')
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
+    parser.add_argument('--mount-cycles', action='store_true', help='Require three native remount cycles and egg transfers per owner')
+    parser.add_argument('--rendered', action='store_true', help='Enable client graphics and capture mount arcs for visual review')
     parser.add_argument('--mount-input', action='store_true', help='Development client supplies Select through the normal input path')
     parser.add_argument('--revenge-input', action='store_true', help='Development Battle fixture exercises C boost and three charged A releases per owner')
     parser.add_argument('--seconds', type=int, default=210, help='At least 180 also requires a round reload checkpoint')
@@ -235,4 +256,4 @@ if __name__ == '__main__':
                        any(character in args.scene for character in '/\\')):
         parser.error('scene must be a cooperative Stage_* name')
     run(args.server.resolve(), args.client.resolve(), args.output, args.port, args.mount_input, args.seconds,
-        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input)
+        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input, args.mount_cycles, args.rendered)

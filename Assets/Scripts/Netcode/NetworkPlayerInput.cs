@@ -181,6 +181,7 @@ namespace Assets.Scripts.Netcode
                     kickFx?.PrepareClientMovementTick(frame.tick, false, frame.held);
                     movement.RestorePredictedKickReference(kickFx != null ? kickFx.LastKickForTick(frame.tick) : null);
                     movement.SimulateNetworkMovementTick(frame.held);
+                    kickFx?.TryPredictMountContact(frame.tick, frame.held);
                 }
             }
             if (!isServer || connectionToClient == null || connectionToClient == NetworkServer.localConnection) return;

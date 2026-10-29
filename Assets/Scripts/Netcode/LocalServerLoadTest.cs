@@ -62,7 +62,7 @@ namespace Assets.Scripts.Netcode
                     PlayerPersistentStats.ResetToDefaultsAll();
                     if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
-                    bool fillCom = HasArg("-load-test-com");
+                    bool fillCom = HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles");
                     if (fillCom) global::SaveSystem.SetBattleModeComputerLevel(BattleModeComputerLevel.Hard);
                     for (int i = 0; i < modes.Length; i++) modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
@@ -271,6 +271,12 @@ namespace Assets.Scripts.Netcode
                     var type = mountedPlayers.Count == 0 ? MountedType.Mole : MountedType.Tank;
                     companion.RestoreMounted(type);
                     companion.ApplyRidingTransitionInvulnerability(15f, false, companion.GetMountedLouieObject());
+                    if (HasArg("-load-test-mount-cycles"))
+                    {
+                        var queue = companion.GetComponent<MountEggQueue>();
+                        if (queue == null || !queue.TryEnqueue(ItemType.BlueLouieEgg, null, null, 1))
+                            throw new InvalidOperationException("Mount cycle fixture could not enqueue its egg");
+                    }
                     mountedPlayers.Add(companion);
                     equippedMounts.Add(companion.GetMountedLouieObject());
                     Debug.Log("[LoadTest] full-input equipped=" + type);
@@ -308,6 +314,53 @@ namespace Assets.Scripts.Netcode
                     Debug.Log("[LoadTest] full-input world pickup replicated type=" + pickup.Type);
                 }
                 Debug.Log("[LoadTest] full-input dismount confirmed players=" + mountedPlayers.Count);
+                if (HasArg("-load-test-mount-cycles"))
+                {
+                    for (int cycle = 1; cycle <= 3; cycle++)
+                    {
+                        yield return new WaitForSecondsRealtime(1);
+                        for (int i = 0; i < mountedPlayers.Count; i++)
+                        {
+                            var worldMount = equippedMounts[i];
+                            var queue = worldMount.GetComponent<MountEggQueue>();
+                            if (queue == null || queue.Count != 1 || mountedPlayers[i].GetComponent<MountEggQueue>().Count != 0)
+                                throw new InvalidOperationException("Mount cycle lost detached egg ownership");
+                            // Re-enable real trigger contact only after the dismount completes.
+                            worldMount.GetComponent<Collider2D>().enabled = true;
+                        }
+                        deadline = Time.unscaledTime + 8;
+                        bool allMounted = false;
+                        while (Time.unscaledTime < deadline)
+                        {
+                            allMounted = true;
+                            foreach (var companion in mountedPlayers)
+                                allMounted &= companion.HasMountedLouie() && !companion.GetComponent<PlayerRidingController>().IsPlaying;
+                            if (allMounted) break;
+                            yield return null;
+                        }
+                        if (!allMounted) throw new InvalidOperationException("Mount cycle failed native pickup remount");
+                        foreach (var companion in mountedPlayers)
+                            if (companion.GetComponent<MountEggQueue>().Count != 1)
+                                throw new InvalidOperationException("Mount cycle lost remounted egg ownership");
+                        Debug.Log("[LoadTest] mount-cycle remount confirmed cycle=" + cycle + " players=" + mountedPlayers.Count + " eggs=1");
+                        deadline = Time.unscaledTime + 8;
+                        bool allDetached = false;
+                        while (Time.unscaledTime < deadline)
+                        {
+                            allDetached = true;
+                            foreach (var companion in mountedPlayers)
+                                allDetached &= companion.GetMountedLouieType() == MountedType.None;
+                            foreach (var worldMount in equippedMounts)
+                                if (worldMount != null && worldMount.TryGetComponent<MountWorldPickup>(out _))
+                                    worldMount.GetComponent<Collider2D>().enabled = false;
+                            if (allDetached) break;
+                            yield return null;
+                        }
+                        if (!allDetached) throw new InvalidOperationException("Mount cycle failed repeated Select dismount");
+                        Debug.Log("[LoadTest] mount-cycle dismount confirmed cycle=" + cycle + " players=" + mountedPlayers.Count);
+                    }
+                    Debug.Log("[LoadTest] mount-cycles completed cycles=3 players=" + mountedPlayers.Count);
+                }
             }
             yield return new WaitForSecondsRealtime(10);
             foreach (var instance in spawned) NetSpawn.Despawn(instance);
@@ -318,13 +371,18 @@ namespace Assets.Scripts.Netcode
 
     // Test-only synthetic hardware input on an otherwise complete Mirror client.
     // No custom server command: Select travels through NetworkPlayerInput.
+    [DefaultExecutionOrder(-150)]
     public sealed class LocalNetworkInputSmoke : MonoBehaviour
     {
         MountedType observedMount;
-        float mountedAt, releaseTime;
-        bool sent, completed;
+        float mountedAt, releaseTime, mountTravelAt;
+        bool sent, completed, repeatMountCycles;
         readonly HashSet<ItemType> observedMovingItems = new();
         float nextItemCheck;
+        string captureDirectory;
+        bool capturedRiding, captureWarmed;
+        int captureArc, captureFrame;
+        float captureNext;
         bool checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -342,9 +400,19 @@ namespace Assets.Scripts.Netcode
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
+            smoke.repeatMountCycles = Array.IndexOf(args, "-load-test-mount-cycles") >= 0;
             smoke.suspendPresenterInputs = Array.IndexOf(args, "-load-test-presenter-removal") >= 0;
             smoke.revengeInput = Array.IndexOf(args, "-load-test-revenge-input") >= 0;
             smoke.quitAfterDisconnect = Array.IndexOf(args, "-load-test-client") >= 0;
+            int captureArg = Array.IndexOf(args, "-load-test-mount-captures");
+            if (captureArg >= 0 && captureArg + 1 < args.Length)
+            {
+                if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
+                    throw new InvalidOperationException("Mount capture requires an active graphics device");
+                smoke.captureDirectory = System.IO.Path.GetFullPath(args[captureArg + 1]);
+                System.IO.Directory.CreateDirectory(smoke.captureDirectory);
+                Debug.Log("[LoadTest] mount-capture graphics=" + SystemInfo.graphicsDeviceType);
+            }
         }
 
         void Update()
@@ -379,11 +447,22 @@ namespace Assets.Scripts.Netcode
                 NetworkClient.Send(new PresenterSmokeReady { scene = SceneManager.GetActiveScene().name });
                 Debug.Log("[LoadTest] presenter-removal input suspended netId=" + NetworkClient.localPlayer.netId);
             }
-            if (!runRealInput || completed || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
+            if (!runRealInput || (completed && !repeatMountCycles) || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
             var companion = NetworkClient.localPlayer.GetComponent<PlayerMountCompanion>();
             var input = PlayerInputManager.Instance;
             if (companion == null || input == null) return;
             var current = companion.GetMountedLouieType();
+            if (completed && repeatMountCycles)
+            {
+                var movement = NetworkClient.localPlayer.GetComponent<MovementController>();
+                bool right = movement != null && movement.transform.position.x < 0;
+                float travel = Time.unscaledTime - mountTravelAt;
+                bool outbound = travel < .35f, inbound = travel >= .95f && travel < 1.5f;
+                input.SetSyntheticHeld(1, PlayerAction.MoveRight, current == MountedType.None && (right ? outbound : inbound));
+                input.SetSyntheticHeld(1, PlayerAction.MoveLeft, current == MountedType.None && (right ? inbound : outbound));
+                if (current == MountedType.None) return;
+                completed = sent = false; observedMount = MountedType.None;
+            }
             if (observedMount == MountedType.None)
             {
                 if (current != MountedType.Mole && current != MountedType.Tank) return;
@@ -400,15 +479,61 @@ namespace Assets.Scripts.Netcode
                 input.SetSyntheticHeld(1, PlayerAction.Select, false);
                 if (current == MountedType.None)
                 {
-                    completed = true;
+                    completed = true; mountTravelAt = Time.unscaledTime;
                     Debug.Log("[LoadTest] full-input dismount acknowledged type=" + observedMount);
                 }
             }
         }
 
+        void LateUpdate()
+        {
+            if (string.IsNullOrEmpty(captureDirectory) || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
+            var camera = Camera.main;
+            if (camera == null) return;
+            if (!captureWarmed && SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) && Time.timeSinceLevelLoad > 1)
+            {
+                CaptureMountFrame(camera, "warmup.png"); captureWarmed = true;
+                return;
+            }
+            var fx = NetworkClient.localPlayer.GetComponent<NetworkBombFx>();
+            bool riding = fx != null && fx.RidingArcActive;
+            if (riding && !capturedRiding) { captureArc++; captureFrame = 0; captureNext = Time.unscaledTime; }
+            capturedRiding = riding;
+            if (!riding || captureArc > 3 || Time.unscaledTime < captureNext) return;
+            captureNext = Time.unscaledTime + 0.12f;
+            CaptureMountFrame(camera, $"arc-{captureArc:D2}-{captureFrame++:D2}.png");
+        }
+
+        void CaptureMountFrame(Camera camera, string filename)
+        {
+            // Batch clients do not present their backbuffer. Render the actual
+            // gameplay camera through URP instead of saving a black screenshot.
+            var target = RenderTexture.GetTemporary(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height), 24, RenderTextureFormat.ARGB32);
+            var previous = RenderTexture.active;
+            Texture2D pixels = null;
+            try
+            {
+                var request = new UnityEngine.Rendering.RenderPipeline.StandardRequest { destination = target };
+                UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera, request);
+                RenderTexture.active = target;
+                pixels = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
+                pixels.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0); pixels.Apply();
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(captureDirectory, filename), pixels.EncodeToPNG());
+            }
+            finally
+            {
+                RenderTexture.active = previous; RenderTexture.ReleaseTemporary(target);
+                if (pixels != null) Destroy(pixels);
+            }
+        }
+
         void OnDisable()
         {
-            if (!revengeInput || PlayerInputManager.Instance == null) return;
+            if (PlayerInputManager.Instance == null) return;
+            if (runRealInput)
+                foreach (var action in new[] { PlayerAction.Select, PlayerAction.MoveLeft, PlayerAction.MoveRight })
+                    PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
+            if (!revengeInput) return;
             foreach (var action in new[] { PlayerAction.MoveUp, PlayerAction.ActionA, PlayerAction.ActionC })
                 PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
         }

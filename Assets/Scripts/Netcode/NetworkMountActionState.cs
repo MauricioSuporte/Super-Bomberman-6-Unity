@@ -20,7 +20,8 @@ namespace Assets.Scripts.Netcode
             {
                 state.dismountEligible = dismount.NetworkDismountEligible;
                 state.dismountArc = rider.CaptureNetworkArcState(PlayerRidingController.RidingArcType.Dismount,
-                    UnityEngine.Vector2.down, transform.position, transform.position, dismount.NetworkDismountDuration);
+                    TryGetComponent<MovementController>(out var movement) ? movement.FacingDirection : UnityEngine.Vector2.down,
+                    transform.position, transform.position, dismount.NetworkDismountDuration);
             }
             return state;
         }

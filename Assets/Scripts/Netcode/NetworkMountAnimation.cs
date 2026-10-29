@@ -83,7 +83,7 @@ namespace Assets.Scripts.Netcode
         void LateUpdate()
         {
             if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient)) return;
-            var mount = companion != null ? companion.GetMountedLouieObject() : null;
+            var mount = companion != null ? (isServer ? companion.GetMountPresentationObject() : companion.GetMountedLouieObject()) : null;
             if (mount != trackedMount) Rebind(mount);
             if (renderers == null) return;
             if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.OwnerBoatPredictionReady == true)
@@ -111,7 +111,7 @@ namespace Assets.Scripts.Netcode
                     if (i >= frames.Count) { frames.Add(frame); changed = true; }
                     else if (!frames[i].Equals(frame)) { frames[i] = frame; changed = true; }
                 }
-                if (changed) { frameType = companion.GetMountedLouieType(); frameTime = NetworkTime.localTime; }
+                if (changed) { frameType = companion.GetMountPresentationType(); frameTime = NetworkTime.localTime; }
                 return;
             }
             if (GamePauseController.IsPaused) return;

@@ -539,3 +539,33 @@ own clock. Stop test input senders and acknowledge/drain before synthetic actor
 removal so deliberately late Commands do not pollute the result. Keep report
 elapsed-time variables separate from per-event timestamps. Headless evidence
 proves state progression, not final rendering or human-perceived zero input lag.
+
+
+For riding arcs, capture the pre-detach actor root and visual seat before native
+snapping clears the mounted state. Derive both X/Y endpoints from the specific
+mount and facing (including HeadOnly), with a foot endpoint on dismount. Share the
+native/network sampler and preserve exact endpoints even if intermediate samples
+are pixel-quantized. A pending world mount and a just-detached mount still need
+approved ground frames while the player is airborne; presentation references
+must never restore gameplay ownership or transfer eggs. Exercise repeated native
+pickup/Select cycles and verify egg ownership after every handoff. Rendered smoke
+captures can support visual review, but are not a human latency measurement.
+
+
+A known Battle world mount can predict only the owner gesture on live inward
+movement/contact with its approved stationary, visible, recently sampled proxy.
+Require the server's contactAvailable flag and a still-spawned scene identity;
+never enable the clone's circle collider or gameplay scripts for a query. Do not
+trigger remount while stationary or moving away after dismount. Unknown/co-op
+pickups still need the approved target event. Accept a bounded input-batch window
+and same target for mount confirmation, preserving phase; keep dismount's exact
+tick correlation. An acknowledgement without approval or timeout must roll back
+without consuming the pickup, assigning ownership or transferring eggs.
+
+A synthetic held change emitted after NetworkPlayerInput.Update can lose GetDown
+when PlayerInputManager.LateUpdate stores the previous state. Run the Development
+smoke sender between InputManager(-200) and NetworkPlayerInput(-100); the fixture
+uses -150. Confirm gesture_only plus phase_preserved in each client's own capture,
+not merely a native server dismount. A GPU-enabled batch player can still save a
+black backbuffer. Request the gameplay camera through the active URP into a render
+target and verify distinct, visible frames before reporting rendered acceptance.

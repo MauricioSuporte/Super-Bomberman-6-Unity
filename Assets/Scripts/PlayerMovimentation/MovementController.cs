@@ -1470,12 +1470,12 @@ public partial class MovementController : MonoBehaviour, IKillable
         return spriteRendererDown != null ? spriteRendererDown : activeSpriteRenderer;
     }
 
-    private AnimatedSpriteRenderer PickMountedRenderer(Vector2 dir)
+    private AnimatedSpriteRenderer PickMountedRenderer(Vector2 dir, bool? preferHead = null)
     {
         Vector2 face = GetFacing(dir);
 
         bool useHead =
-            useHeadOnlyWhenMountedRuntime &&
+            (preferHead ?? useHeadOnlyWhenMountedRuntime) &&
             (headOnlyUp != null || headOnlyDown != null || headOnlyLeft != null || headOnlyRight != null);
 
         if (useHead)
@@ -1494,6 +1494,25 @@ public partial class MovementController : MonoBehaviour, IKillable
         if (face == Vector2.right) return mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight;
 
         return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
+    }
+
+    public bool TryGetRidingVisualAnchor(bool mounted, Vector2 facing, MountVisualController definition, MountedType type, out Vector2 offset)
+    {
+        bool head = definition != null && definition.useHeadOnlyPlayerVisual;
+        var renderer = mounted ? PickMountedRenderer(facing, head) : PickFootRenderer(facing);
+        offset = Vector2.zero;
+        if (renderer == null) return false;
+        Vector3 local = renderer.RestingLocalPosition;
+        bool headRenderer = renderer == headOnlyUp || renderer == headOnlyDown || renderer == headOnlyLeft || renderer == headOnlyRight;
+        if (mounted && head && headRenderer)
+        {
+            Vector2 seat = definition.GetPlayerSeatOffset(facing);
+            local.x = seat.x; local.y = seat.y;
+        }
+        else if (mounted && type == MountedType.Pink) local.y = pinkMountedSpritesLocalY;
+        Vector3 world = renderer.transform.parent != null ? renderer.transform.parent.TransformPoint(local) : local;
+        offset = world - transform.position;
+        return true;
     }
 
     public void ApplyMountedBounceVisual(Vector2 faceDir, bool preferHeadOnly)

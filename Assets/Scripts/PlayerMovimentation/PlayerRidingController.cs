@@ -16,27 +16,48 @@ public sealed class PlayerRidingController : MonoBehaviour
         public RidingArcType kind;
         public Vector3 start, target;
         public Vector2 facing;
-        public float duration, peak, startHeight, endHeight, pixelsPerUnit;
+        public float duration, peak, startHeight, endHeight, pixelsPerUnit, startVisualX, endVisualX;
         public bool quantize;
     }
 
     // Presentation only. It never runs the riding coroutine or completion hooks.
     bool networkArcVisual;
+    NetworkArcState nativeArc;
 
-    public NetworkArcState CaptureNetworkArcState(RidingArcType kind, Vector2 facing, Vector3 start, Vector3 target, float duration = -1)
+    public NetworkArcState CaptureNetworkArcState(RidingArcType kind, Vector2 facing, Vector3 start, Vector3 target, float duration = -1, MountVisualController targetMount = null, MountedType targetType = MountedType.None)
     {
         start.z = target.z = transform.position.z;
-        return new NetworkArcState { kind = kind, facing = facing, start = start, target = target,
+        var arc = new NetworkArcState { kind = kind, facing = facing, start = start, target = target,
             duration = Mathf.Max(0.01f, duration < 0 ? ridingSeconds : duration), peak = JumpPeakWorld,
             startHeight = GetStartHeightWorld(kind), endHeight = GetEndHeightWorld(kind),
             pixelsPerUnit = Mathf.Max(1, pixelsPerUnit), quantize = quantizeToPixel };
+        movement = movement != null ? movement : GetComponent<MovementController>();
+        var companion = GetComponent<PlayerMountCompanion>();
+        var mount = companion != null ? companion.GetMountPresentationObject() : null;
+        var definition = targetMount != null ? targetMount : mount != null ? mount.GetComponentInChildren<MountVisualController>(true) : null;
+        MountedType type = targetMount != null ? targetType : companion != null ? companion.GetMountPresentationType() : MountedType.None;
+        if (movement != null && (kind == RidingArcType.Mount || definition != null) && movement.TryGetRidingVisualAnchor(kind == RidingArcType.Dismount, facing, definition, type, out var initial))
+        { arc.startVisualX = initial.x; arc.startHeight = initial.y; }
+        if (movement != null && (kind == RidingArcType.Dismount || definition != null) && movement.TryGetRidingVisualAnchor(kind == RidingArcType.Mount, facing, definition, type, out var final))
+        { arc.endVisualX = final.x; arc.endHeight = final.y; }
+        return arc;
     }
 
     public static float SampleNetworkArcHeight(NetworkArcState arc, float progress)
     {
         float t = Mathf.Clamp01(progress);
+        if (t <= 0) return arc.startHeight;
+        if (t >= 1) return arc.endHeight;
         float height = Mathf.Lerp(arc.startHeight, arc.endHeight, t) + 4f * arc.peak * t * (1f - t);
         return arc.quantize ? Mathf.Round(height * Mathf.Max(1, arc.pixelsPerUnit)) / Mathf.Max(1, arc.pixelsPerUnit) : height;
+    }
+
+    public static Vector2 SampleNetworkArcOffset(NetworkArcState arc, float progress)
+    {
+        float t = Mathf.Clamp01(progress);
+        float x = Mathf.Lerp(arc.startVisualX, arc.endVisualX, t);
+        if (arc.quantize && t > 0 && t < 1) x = Mathf.Round(x * Mathf.Max(1, arc.pixelsPerUnit)) / Mathf.Max(1, arc.pixelsPerUnit);
+        return new Vector2(x, SampleNetworkArcHeight(arc, t));
     }
 
     public void PresentNetworkArc(NetworkArcState arc, float elapsed)
@@ -60,7 +81,7 @@ public sealed class PlayerRidingController : MonoBehaviour
             float phaseTime = t < 0.5f ? elapsed : elapsed - arc.duration * 0.5f;
             active.CurrentFrame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Max(0, phaseTime) / Mathf.Max(0.0001f, active.animationTime)), 0, Mathf.Max(0, count - 1));
         }
-        ApplyRendererArcOffset(active, SampleNetworkArcHeight(arc, t));
+        ApplyRendererArcOffset(active, SampleNetworkArcOffset(arc, t));
     }
 
     public void StopNetworkArcVisual()
@@ -164,7 +185,7 @@ public sealed class PlayerRidingController : MonoBehaviour
             onStart);
     }
 
-    public bool TryPlayDismount(Vector2 facing, System.Action onComplete = null, System.Action onStart = null, uint networkInputTick = 0)
+    public bool TryPlayDismount(Vector2 facing, System.Action onComplete = null, System.Action onStart = null, uint networkInputTick = 0, NetworkArcState? presentationArc = null)
     {
         Vector3 startWorldPos = transform.position;
         Vector3 targetWorldPos = transform.position;
@@ -175,7 +196,7 @@ public sealed class PlayerRidingController : MonoBehaviour
             startWorldPos,
             targetWorldPos,
             onComplete,
-            onStart, networkInputTick);
+            onStart, networkInputTick, presentationArc);
     }
 
     public bool TryPlayMountArc(
@@ -217,7 +238,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         Vector3 targetWorldPos,
         System.Action onComplete = null,
         System.Action onStart = null,
-        uint networkInputTick = 0)
+        uint networkInputTick = 0, NetworkArcState? presentationArc = null)
     {
         if (isPlaying || movement == null)
             return false;
@@ -225,6 +246,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         if (routine != null)
             StopCoroutine(routine);
 
+        var initial = presentationArc ?? CaptureNetworkArcState(arcType, facing, startWorldPos, targetWorldPos);
         isPlaying = true;
 
         CacheRenderers();
@@ -237,8 +259,16 @@ public sealed class PlayerRidingController : MonoBehaviour
         ClearAllRuntimeOffsets();
 
         onStart?.Invoke();
+        nativeArc = presentationArc ?? CaptureNetworkArcState(arcType, facing, startWorldPos, targetWorldPos);
+        nativeArc.startHeight = initial.startHeight; nativeArc.startVisualX = initial.startVisualX;
+        startWorldPos = nativeArc.start; targetWorldPos = nativeArc.target;
+        transform.position = startWorldPos; SyncNetworkRidingBody();
+        var firstRenderer = PickRendererForPhase(facing, true);
+        ApplyExclusiveRenderer(firstRenderer); ApplyRendererArcOffset(firstRenderer, SampleNetworkArcOffset(nativeArc, 0));
+        if (networkInputTick == 0 && arcType == RidingArcType.Mount && TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var input))
+            networkInputTick = input.CurrentInputTick;
         if (Assets.Scripts.Netcode.NetSync.IsServer && TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx) && fx.isServer && fx.netId != 0)
-            fx.ServerRidingArcStart(CaptureNetworkArcState(arcType, facing, startWorldPos, targetWorldPos), networkInputTick);
+            fx.ServerRidingArcStart(nativeArc, networkInputTick);
 
         routine = StartCoroutine(PlayMountArcRoutine(
             arcType,
@@ -296,11 +326,9 @@ public sealed class PlayerRidingController : MonoBehaviour
     {
         yield return null;
 
-        float duration = Mathf.Max(0.01f, ridingSeconds);
+        var arc = nativeArc.duration > 0 ? nativeArc : CaptureNetworkArcState(arcType, facing, startWorldPos, targetWorldPos);
+        float duration = arc.duration;
         float elapsed = 0f;
-
-        float startHeightWorld = GetStartHeightWorld(arcType);
-        float endHeightWorld = GetEndHeightWorld(arcType);
 
         transform.position = startWorldPos;
 
@@ -319,17 +347,10 @@ public sealed class PlayerRidingController : MonoBehaviour
 
             Vector3 flat = Vector3.Lerp(startWorldPos, targetWorldPos, t);
 
-            float baseHeight = Mathf.Lerp(startHeightWorld, endHeightWorld, t);
-            float parabolaHeight = 4f * JumpPeakWorld * t * (1f - t);
-            float totalHeight = baseHeight + parabolaHeight;
-
-            if (quantizeToPixel)
-                totalHeight = QuantizeWorldToPixel(totalHeight);
-
             AnimatedSpriteRenderer renderer = PickRendererForPhase(facing, t < 0.5f);
 
             ApplyExclusiveRenderer(renderer);
-            ApplyRendererArcOffset(renderer, totalHeight);
+            ApplyRendererArcOffset(renderer, SampleNetworkArcOffset(arc, t));
 
             flat.z = transform.position.z;
             transform.position = flat;
@@ -346,7 +367,7 @@ public sealed class PlayerRidingController : MonoBehaviour
 
         AnimatedSpriteRenderer finalRenderer = PickRendererForPhase(facing, false);
         ApplyExclusiveRenderer(finalRenderer);
-        ApplyRendererArcOffset(finalRenderer, endHeightWorld);
+        ApplyRendererArcOffset(finalRenderer, SampleNetworkArcOffset(arc, 1));
 
         DisableAllRiding();
         ClearAllRuntimeOffsets();
@@ -529,14 +550,17 @@ public sealed class PlayerRidingController : MonoBehaviour
             target.RefreshFrame();
     }
 
-    void ApplyRendererArcOffset(AnimatedSpriteRenderer active, float arcY)
+    void ApplyRendererArcOffset(AnimatedSpriteRenderer active, Vector2 offset)
     {
         ClearAllRuntimeOffsetsExcept(active);
 
         if (active == null)
             return;
 
-        active.SetRuntimeBaseLocalY(arcY);
+        Vector3 world = transform.position + (Vector3)offset;
+        Vector3 local = active.transform.parent != null ? active.transform.parent.InverseTransformPoint(world) : world;
+        active.SetRuntimeBaseLocalX(local.x);
+        active.SetRuntimeBaseLocalY(local.y);
         active.RefreshFrame();
     }
 
@@ -593,12 +617,6 @@ public sealed class PlayerRidingController : MonoBehaviour
             return;
 
         current.ClearRuntimeBaseOffset();
-    }
-
-    float QuantizeWorldToPixel(float worldValue)
-    {
-        float ppu = Mathf.Max(1f, pixelsPerUnit);
-        return Mathf.Round(worldValue * ppu) / ppu;
     }
 
     static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)

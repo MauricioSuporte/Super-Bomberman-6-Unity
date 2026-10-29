@@ -722,6 +722,14 @@ public class MountVisualController : MonoBehaviour
         }
     }
 
+    public Vector2 GetPlayerSeatOffset(Vector2 facing)
+    {
+        if (facing == Vector2.up) return headOnlyUpLocalOffset;
+        if (facing == Vector2.left) return headOnlyLeftLocalOffset;
+        if (facing == Vector2.right) return headOnlyRightLocalOffset;
+        return headOnlyDownLocalOffset + (temporaryHeadOnlyDownDeltaActive ? temporaryHeadOnlyDownDelta : Vector2.zero);
+    }
+
     private void ApplyHeadOnlyOffsetsIfNeeded(bool force)
     {
         if (owner == null)

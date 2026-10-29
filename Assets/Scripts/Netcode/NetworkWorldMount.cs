@@ -12,6 +12,7 @@ namespace Assets.Scripts.Netcode
     {
         [SerializeField] PlayerMountCompanion mountCatalog;
         [SyncVar] MountedType mountType;
+        [SyncVar] bool contactAvailable;
         [SyncVar] Vector3 worldPosition;
         [SyncVar] Quaternion worldRotation;
         [SyncVar] Vector3 worldScale;
@@ -125,6 +126,30 @@ namespace Assets.Scripts.Netcode
             Apply();
         }
 
+        // Read only: native clone components remain disabled. Unknown/moving
+        // pickups wait for the approved arc rather than guessing their destination.
+        public bool TryGetPredictedMountContact(Collider2D actor, out Vector3 target, out MountVisualController definition, out MountedType type)
+        {
+            target = default; definition = null; type = MountedType.None;
+            if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || isServer ||
+                netId == 0 || !contactAvailable || visual == null || actor == null || !actor.enabled || !actor.gameObject.activeInHierarchy ||
+                actor.gameObject.scene != gameObject.scene || worldHistory.Count < 2 ||
+                !NetworkClient.spawned.TryGetValue(netId, out var spawned) || spawned != netIdentity ||
+                NetworkTime.time - sampleTime > .25 || sampleTime > NetworkTime.predictedTime + .1 ||
+                Vector3.Distance(worldHistory[worldHistory.Count - 2].position, worldPosition) > .001f ||
+                !visual.TryGetComponent<CircleCollider2D>(out var shape)) return false;
+            bool visible = false;
+            foreach (var frame in frames) visible |= frame.visible;
+            if (!visible) return false;
+            Vector2 center = shape.transform.TransformPoint(shape.offset);
+            float radius = shape.radius * Mathf.Max(Mathf.Abs(shape.transform.lossyScale.x), Mathf.Abs(shape.transform.lossyScale.y));
+            if (Vector2.Distance(actor.ClosestPoint(center), center) > radius) return false;
+            definition = visual.GetComponentInChildren<MountVisualController>(true);
+            if (definition == null || mountType == MountedType.None) return false;
+            target = MountWorldPickup.ResolveLandingWorldPosition(center); type = mountType;
+            return true;
+        }
+
         public override void OnStopClient()
         {
             worldHistory.Clear(); worldPresented = false; sampledWorldFrames = null;
@@ -162,6 +187,7 @@ namespace Assets.Scripts.Netcode
 
         void Capture()
         {
+            contactAvailable = source.IsAvailable && source.TryGetComponent<Collider2D>(out var sourceCollider) && sourceCollider.enabled;
             worldPosition = source.transform.position;
             worldRotation = source.transform.rotation;
             worldScale = source.transform.lossyScale;

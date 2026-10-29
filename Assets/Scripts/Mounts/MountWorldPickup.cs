@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
@@ -72,7 +72,7 @@ public sealed class MountWorldPickup : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (consumed || other == null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || !isActiveAndEnabled || consumed || other == null)
             return;
 
         if (!other.CompareTag(playerTag))
@@ -83,7 +83,7 @@ public sealed class MountWorldPickup : MonoBehaviour
         if (!player.TryGetComponent<MovementController>(out var mv) || mv == null)
             return;
 
-        if (mv.isDead || GamePauseController.IsPaused)
+        if (mv.isDead || mv.IsEndingStage || GamePauseController.IsPaused)
             return;
 
         if (player.TryGetComponent<PlayerRidingController>(out var rider) && rider != null && rider.IsPlaying)
@@ -126,8 +126,11 @@ public sealed class MountWorldPickup : MonoBehaviour
 
     Vector3 ResolveLandingWorldPosition()
     {
-        Vector3 worldPos = _col != null ? _col.bounds.center : transform.position;
+        return ResolveLandingWorldPosition(_col != null ? _col.bounds.center : transform.position);
+    }
 
+    public static Vector3 ResolveLandingWorldPosition(Vector3 worldPos)
+    {
         var tm = ResolveGroundTilemapNear(worldPos);
         if (tm != null)
         {
