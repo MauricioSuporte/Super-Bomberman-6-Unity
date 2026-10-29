@@ -462,3 +462,26 @@ must stay on its approved cell rather than slide with the cart. Separate paused
 root/frame state from already-approved unscaled child recoil. Exclude localConnection
 from remote-only view messages: the host retains native actors and may intentionally
 have no handler. Test the real host round/reload path, not only pure helpers.
+
+
+## Validate the scene phase, not just transport
+
+An error-free scene smoke can still leave players locked in an intro. Require
+an authoritative transition back to free movement and an unlocked owner in each
+client's capture. For boss scenes, inspect actual phase/activity too; a headless
+smoke never proves rendered masks, telegraphs, sound or perceived responsiveness.
+The development smoke supports --diagnostics and --require-unlocked.
+
+A new readiness yield changes coroutine-handle lifetime. An intro that calls a
+reset routine after waiting can cancel itself if that reset stops its stored
+coroutine. Preserve the current intro only for that internal reset; Awake,
+OnDisable and interruption must still cancel the previous lifetime and clear
+static intro gates. Test coroutine liveness and cancellation across a frame.
+
+For audited conveyor AnimatedTile variants, resolve the registered runtime tile
+to its catalog original rather than transmitting an unknown asset id as empty.
+After applying the world cells, reapply the already-approved conveyor phase and
+then restore the snapshot's color/matrix. Keep collider geometry authoritative.
+Do not generalize this aliasing to unknown TileBase startup/gameplay behaviors.
+Cost classification should skip common wrappers such as CharacterHealth so a
+boss family is not hidden under a shared health label.

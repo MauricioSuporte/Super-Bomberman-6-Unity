@@ -8,6 +8,44 @@ using Object = UnityEngine.Object;
 
 public sealed partial class OnlineRoomEditModeTests
 {
+    [UnityEngine.TestTools.UnityTest]
+    public System.Collections.IEnumerator ClownIntroResetKeepsItsAlreadyRunningCoroutineAlive()
+    {
+        var previousMode = NetSync.Mode;
+        bool previousIntro = ClownMaskBoss.BossIntroRunning;
+        NetSync.Mode = NetSync.NetMode.Client;
+        var actor = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bosses/ClownMask/ClownMask.prefab"));
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var boss = actor.GetComponent<ClownMaskBoss>();
+        int ticks = 0;
+        System.Collections.IEnumerator Marker()
+        { while (true) { ticks++; yield return null; } }
+        System.Collections.IEnumerator intro = null;
+        try
+        {
+            foreach (var behaviour in actor.GetComponentsInChildren<MonoBehaviour>(true)) behaviour.enabled = false;
+            NetSync.Mode = NetSync.NetMode.Offline;
+            var running = boss.StartCoroutine(Marker());
+            typeof(ClownMaskBoss).GetField("introRoutine", flags).SetValue(boss, running);
+            intro = (System.Collections.IEnumerator)typeof(ClownMaskBoss).GetMethod("IntroSequence", flags).Invoke(boss, null);
+            Assert.IsTrue(intro.MoveNext());
+            int before = ticks;
+            yield return null;
+            Assert.Greater(ticks, before, "Reset after the readiness yield must not stop the coroutine hosting the intro.");
+            Assert.AreSame(running, typeof(ClownMaskBoss).GetField("introRoutine", flags).GetValue(boss));
+            before = ticks;
+            typeof(ClownMaskBoss).GetMethod("OnDisable", flags).Invoke(boss, null);
+            yield return null;
+            Assert.AreEqual(before, ticks); Assert.IsFalse(ClownMaskBoss.BossIntroRunning);
+        }
+        finally
+        {
+            (intro as IDisposable)?.Dispose(); boss.StopAllCoroutines(); Object.DestroyImmediate(actor);
+            typeof(ClownMaskBoss).GetProperty("BossIntroRunning").SetValue(null, previousIntro);
+            NetSync.Mode = previousMode;
+        }
+    }
+
     [TestCase(false)] [TestCase(true)]
     public void ApprovedMotionRecoversAReconnectedPeerEvenWhenItsConnectionIdIsReused(bool world)
     {
@@ -136,6 +174,15 @@ public sealed partial class OnlineRoomEditModeTests
             classify.Invoke(coordinator, new object[] { child.GetComponent<SpriteRenderer>() }); Assert.AreEqual(1, cache.Count);
             typeof(BombermanNetworkManager).GetMethod("ClearCoopPresentationMetrics", flags).Invoke(coordinator, null);
             Assert.AreEqual(0, cache.Count);
+            var bossRoot = new GameObject("MetricsBoss"); bossRoot.SetActive(false);
+            try
+            {
+                bossRoot.AddComponent<CharacterHealth>(); bossRoot.AddComponent<ClownMaskMovement>();
+                var sprite = bossRoot.AddComponent<SpriteRenderer>();
+                Assert.AreEqual(nameof(ClownMaskMovement), classify.Invoke(coordinator, new object[] { sprite }),
+                    "A shared health component must not hide the native boss family in cost reports.");
+            }
+            finally { Object.DestroyImmediate(bossRoot); }
         }
         finally { Object.DestroyImmediate(enemy); }
     }

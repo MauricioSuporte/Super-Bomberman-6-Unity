@@ -308,9 +308,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         playerBombs = new BombController[0];
     }
 
-    void ResetBossState()
+    void ResetBossState(bool cancelIntro = true)
     {
-        if (introRoutine != null) { StopCoroutine(introRoutine); introRoutine = null; }
+        if (cancelIntro) BossIntroRunning = false;
+        if (cancelIntro && introRoutine != null) { StopCoroutine(introRoutine); introRoutine = null; }
         if (specialRoutine != null) { StopCoroutine(specialRoutine); specialRoutine = null; }
         if (damageSequenceRoutine != null) { StopCoroutine(damageSequenceRoutine); damageSequenceRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
@@ -353,7 +354,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         while (!Assets.Scripts.Netcode.BombermanNetworkManager.OnlineCoopPlayersReady) yield return null;
         BossIntroRunning = true;
 
-        ResetBossState();
+        // The readiness wait above may already have yielded. Keep this running
+        // intro alive; OnDisable/Awake still cancel the previous lifetime.
+        ResetBossState(cancelIntro: false);
         MoveBossToIntroPosition();
 
         EnsurePlayersRefs();

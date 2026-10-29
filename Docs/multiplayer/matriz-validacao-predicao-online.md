@@ -228,3 +228,25 @@ python Tools/RoomDirectory/smoke_full_clients.py --server <SB6.exe> --client <SB
 
 A ferramenta só encerra seus
 próprios processos. Libere o runner antes de compilar/substituir o executável.
+
+
+## Co-op55 ampliado: intro e tiles (Run2)
+
+O Run1 de Clown conectou sem Exception, mas seus logs mantinham input_locked até
+encerrar: não comprovou combate. Corrigido cancelamento da própria coroutine após
+a espera online. World3 Run1 tinha3avisos de tiles de esteira Runtime ausentes;
+corrigido alias de catálogo e reaplicação da fase visual, com cor/matriz aprovadas.
+
+| Execução | Checkpoint adicional | Resultado |
+| --- | --- | --- |
+| PredictionClownClients55Run2 | NormalGame/Stage_1-7,90s,2clients; intro libera movimento no servidor e cada owner |0erros/avisos,82reports de ClownMaskMovement,6717frames alterados em7750amostras |
+| PredictionWorld3Clients55Run2 | NormalGame/Stage_3-6,90s; owners liberados; catálogo sem tiles faltantes |0erros/avisos,896reports em11famílias observadas, sem registros de custo inválidos |
+| PredictionSunClients55Run2 | BossRush/Stage_2-7,90s; owners liberados |0erros/avisos,139reports, logs e análise por captura preservados |
+
+Os3usam Development headless com atores duráveis/sem hardware físico. Config guarda
+SHA256 das DLLs. Não comprova pixels, telegraphs, áudio, colisão sentida, curvas ou
+comparação offline. A suíte887e os2focados seguintes cobrem correções de estado e
+metadados; não somar casos repetidos como novos testes únicos.
+
+A ferramenta aceita --require-unlocked junto de co-op/--diagnostics para exigir
+esse checkpoint. Avisos de catálogo de assets faltantes também falham o smoke.

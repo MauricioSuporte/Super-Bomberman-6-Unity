@@ -12,7 +12,7 @@ from benchmark_local import host_memory
 
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False):
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     owned, handles = [], []
@@ -25,7 +25,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             if b'LocalNetworkInputSmoke' not in assembly:
                 raise RuntimeError('the durable actor smoke requires Development players')
             assembly_hashes[role] = hashlib.sha256(assembly).hexdigest()
-        (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds,
+        (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds, requireUnlocked=require_unlocked,
             assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
         env = dict(os.environ, SB6_ROOM_ID='spawn-regression', SB6_ROOM_TOKEN=secrets.token_hex(32),
                    SB6_ROOM_STATUS=str(output/'status.json'))
@@ -100,7 +100,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 'Exception', '[NetSpawn]', 'Could not spawn', 'Failed to spawn', 'Spawn prefab not found',
                 'has another NetworkIdentity', 'Spawn scene object not found', 'no receiver', 'invalid Command',
                 'Scene change is already in progress', 'called when server was not active',
-                'called when client was not active'))]
+                'called when client was not active', 'Catalog asset unavailable'))]
             if errors: failures[path.name] = list(dict.fromkeys(errors))
             if diagnostics:
                 capture_lines = [line.split('[GameplayLatency] Capture: ', 1)[1].strip()
@@ -114,7 +114,12 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 rows = [json.loads(line) for line in destination.read_text(encoding='utf-8-sig').splitlines()]
                 if scene and not any(row.get('scene') == scene for row in rows):
                     raise RuntimeError('diagnostics did not reach cooperative scene: '+path.name)
-                captures[path.stem] = dict(file=destination.name,
+                unlocked = sorted({row.get('player') for row in rows if row.get('kind') == 'motion_sample' and
+                    row.get('scene') == scene and 'prediction_block=none ' in row.get('detail', '') and
+                    (path.stem == 'server' or row.get('localPlayer'))})
+                if require_unlocked and (len(unlocked) < (2 if path.stem == 'server' else 1)):
+                    raise RuntimeError('cooperative intro never released player movement: '+path.name)
+                captures[path.stem] = dict(file=destination.name, unlockedPlayers=unlocked,
                     familyCostReports=sum(row.get('kind') == 'coop_family_cost' for row in rows))
         if diagnostics and mode != 'BattleMode' and not captures['server']['familyCostReports']:
             raise RuntimeError('cooperative server produced no family cost reports')
@@ -126,7 +131,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             warning_events = [event['message'] for event in entries if event.get('level') == 'Warning']
             if errors: failures['server-events'] = list(dict.fromkeys(errors))
         result = dict(actualMirrorClients=2, simulatedClients=False, rendered=False,
-                      mode=mode, scene=scene, captures=captures, assemblySha256=assembly_hashes,
+                      mode=mode, scene=scene, captures=captures, assemblySha256=assembly_hashes, requireUnlocked=require_unlocked,
                       spawnCheckpoints=mode == 'BattleMode', arenaLoadRequests=round_reloads,
                       syntheticHardwareInput=mount_input, approvedItemMotion=prediction_items,
                       serverDevelopmentDurableActors=True, requestedSeconds=seconds,
@@ -157,6 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', choices=('BattleMode', 'NormalGame', 'BossRush'), default='BattleMode')
     parser.add_argument('--scene', help='Enabled Stage_* scene for a cooperative Development smoke')
     parser.add_argument('--diagnostics', action='store_true', help='Enable and copy the three process motion logs')
+    parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--mount-input', action='store_true', help='Development client supplies Select through the normal input path')
     parser.add_argument('--seconds', type=int, default=210, help='At least 180 also requires a round reload checkpoint')
     args = parser.parse_args()
@@ -165,8 +171,10 @@ if __name__ == '__main__':
     if not 60 <= args.seconds <= 300: parser.error('duration must be 60-300 seconds')
     if args.mode != 'BattleMode' and (args.mount_input or args.prediction_items or not args.scene):
         parser.error('cooperative smoke requires --scene and cannot use Battle spawn fixtures')
+    if args.require_unlocked and (not args.diagnostics or args.mode == 'BattleMode'):
+        parser.error('--require-unlocked requires cooperative --diagnostics')
     if args.scene and (args.mode == 'BattleMode' or not args.scene.startswith('Stage_') or
                        any(character in args.scene for character in '/\\')):
         parser.error('scene must be a cooperative Stage_* name')
     run(args.server.resolve(), args.client.resolve(), args.output, args.port, args.mount_input, args.seconds,
-        args.prediction_items, args.mode, args.scene, args.diagnostics)
+        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked)

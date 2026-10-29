@@ -35,6 +35,9 @@ namespace Assets.Scripts.Netcode
 
         Vector3 lastPos;
         bool hasLastPos;
+        Vector3 presentedEggPosition;
+        Quaternion presentedEggRotation;
+        bool hasPresentedEggPose;
 
         void Awake()
         {
@@ -51,7 +54,20 @@ namespace Assets.Scripts.Netcode
             if (sprites == null) Awake();
             ReceiveQueuePresentation(queuePresentation);
             ApplyQueuePresentation(NetworkTime.time);
+            RememberEggPose();
             foreach (var hitbox in GetComponentsInChildren<Collider2D>(true)) hitbox.enabled = false;
+        }
+
+        void RememberEggPose()
+        {
+            presentedEggPosition = transform.position; presentedEggRotation = transform.rotation;
+            hasPresentedEggPose = true;
+        }
+
+        public override void OnStopClient()
+        {
+            pendingPresentation.Clear(); hasPresentedEggPose = false; hasLastPos = false;
+            base.OnStopClient();
         }
 
         void LateUpdate()
@@ -60,6 +76,13 @@ namespace Assets.Scripts.Netcode
             // Destruction owns the renderers once its authoritative event arrives.
             if (!ReplicationEnabled || !NetSync.IsOnline || !isClient || isServer || directional == null || destroyKind != 0)
                 return;
+
+            if (GamePauseController.IsPaused && hasPresentedEggPose)
+            {
+                transform.SetPositionAndRotation(presentedEggPosition, presentedEggRotation);
+                return;
+            }
+            RememberEggPose();
 
             if (pendingPresentation.Count > 0)
             {

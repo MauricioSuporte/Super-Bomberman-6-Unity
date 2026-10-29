@@ -1,9 +1,26 @@
 using Assets.Scripts.Netcode;
 using Mirror;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public sealed partial class BattleMode5ConveyorController
 {
+    public bool TryResolveNetworkTileOrigin(Tilemap map, TileBase tile, out TileBase original)
+    {
+        original = null;
+        if (map != groundTilemap || tile is not AnimatedTile animated ||
+            !conveyorRuntimeTileOrigins.TryGetValue(animated, out var source) || source == null) return false;
+        original = source; return true;
+    }
+
+    public void RefreshNetworkTileVisuals(Tilemap map)
+    {
+        if (NetSync.Mode != NetSync.NetMode.Client || map != groundTilemap) return;
+        // General world snapshots carry catalog originals. Reapply only the
+        // already-approved conveyor phase after replacing those visual cells.
+        RefreshControlTileVisuals(); RefreshConveyorAnimatedTileVisuals();
+    }
+
     public struct NetworkMotorState
     {
         public string path;

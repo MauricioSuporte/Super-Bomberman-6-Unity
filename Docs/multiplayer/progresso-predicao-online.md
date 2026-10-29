@@ -46,11 +46,13 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo54, commit `0b2f10852`, pipeline
-  [40808356205](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40808356205)
-  completed/success. Protocolo55 publicado em11c1bdf55/Actions40843901315 (completed/success).
-- **Validação55:**881/881 Unity, sem skips; C#0 erros/0 avisos; Python47/47;
-  UTF8/BOM/diff conferidos. Reports em Logs/PredictionRecovery55.*.
+- **Publicado:** protocolo55, commit `11c1bdf55`, pipeline
+  [40843901315](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40843901315)
+  completed/success: servidor, cliente e atualizador. Fix de referência do chute
+  compartilhado validado em4focados, commit26fdda131 local ainda sem publicação.
+- **Validação local mais recente:**887/887 Unity, sem skips;2focados posteriores
+  de metadados de esteira; C#0/0 e Python47/47. Reports PredictionCoopCorrections55
+  e PredictionConveyorMetadata55. Lote seguinte ao deploy11c1bdf55, ainda sem envio.
 - **Integração55:**2clientes Mirror reais em Battle por210s com2cargas de arena,
   itens em movimento e desmontagem Mole/Tank; co-op Stage_1-1 por90s com captura.
   Ambos sem erros/avisos. Headless; não comprova renderização nem input lag zero.
@@ -63,8 +65,8 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** publicar55 após liberar o runner; continuar C02/C03 (curvas e entrega
-  ao motor), A12/capturas e demais parciais. Não marcar melhorias percebidas sem teste.
+- **Próximo:** integração de ClownMask/SunMask/Stage_3-6 e envio do fix de referência;
+  continuar C02/C03 (curvas e entrega ao motor), A12/capturas e demais parciais. Não marcar melhorias percebidas sem teste.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -234,7 +236,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
 - [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
 - [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
-- [ ] R07: parcial55 local: ovos/poses e VFX independente do owner, WorldBombMotion sem endpoint original, itens expulsos e histórico root/frames de montaria testados (suíte878). Smoke Battle/co-op2peers passou; manual gráfico/transferências e curvas pendentes.
+- [ ] R07: parcial55: itens/poses de montaria e transporte de bombas independentes do ator testados; pausa dos ovos no lote local887. Próximo: provar continuidade de arco já recebido quando o FX original é destruído, além de roteamento de novo evento; manual gráfico/transferências pendentes.
 - [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
 - [ ] Consolidar skill e notas (atualizadas até55: motion independente do ator, itens/montaria, custos, reconexão e teardown); matriz atualizada com integração automática2peers. Manual gráfico e consolidação dos IDs parciais pendentes.
 
@@ -2201,3 +2203,87 @@ passaram (2novos +2regressões existentes). C# sem erros/avisos novos;6avisos j�
 existentes no Mirror após rebuild de dependências. A suíte completa881 precede
 esse fix; não afirmar883/883. Build Development seguinte em andamento. Ainda não
 publicado. Não copiar/restaurar runner até terminar build e smokes próprios.
+
+
+## Continuação R07 — pausa dos ovos, após commit local26fdda131
+
+Development do fix de referência compilou com resultado Succeeded/errors0. Houve
+uma mensagem interna do allocator Unity durante build (Failed to free block),
+sem falha no relatório/exit; conservar log PredictionSharedKick55DevelopmentBuild
+para verificar recorrência. Não é aviso C# e não foi suprimido. Smokes sequenciais
+ClownMask/NormalGame Stage_1-7, SunMask/BossRush Stage_2-7 e World3/NormalGame
+Stage_3-6 iniciados em Logs/Prediction{Clown,Sun,World3}Clients55Run1.
+
+Nova lacuna encontrada em NetworkEggFollower: enquanto pausado, NT e histórico
+visual ainda podiam avançar. Client agora retém root/rotação e fase já apresentados,
+sem drenar a fila até retomar; limpa estado no OnStopClient. Host/offline continuam
+nativos, destruição aprovada mantém posse dos renderers. Um teste novo preparado;
+ainda NÃO está no Development dos smokes, NÃO validado Unity e NÃO commitado.
+Após smokes, sincronizar EggFollower/OnlineRoomItemMotionTests e executar suíte
+completa (884 esperados). LastKickForTick já foi validado em4focados e salvo local.
+Não publicar enquanto runner estiver em uso.
+
+
+## Integração ampliada55 revelou falhas sem Exception
+
+Smokes Clown/Sun/World3 Run1 completaram conexão/cena/encerramento. Sun0avisos;
+World3 teve3avisos de catálogo de tiles Runtime. NÃO classificar Clown como
+combate aprovado: análise das capturas mostrou players input_locked até o fim,
+7930 amostras de visual e só5frames alterados. IntroSequence aguarda playersReady,
+mas depois ResetBossState parava introRoutine já atribuída pelo primeiro yield:
+a própria coroutine era cancelada. Corrigido com cancelIntro:false só dentro da
+intro, preservando cancelamento no Awake/OnDisable e limpando BossIntroRunning.
+UnityTest verifica que a coroutine segue viva e que OnDisable ainda a cancela.
+
+R02 classificação também escondia ClownMaskMovement sob CharacterHealth; o wrapper
+de saúde agora é ignorado ao encontrar família de gameplay. Teste ampliado.
+C01/R02: tiles AnimatedTile de esteira gerados em runtime agora resolvem para seu
+original no catálogo via controller/mapa de origem; índice cacheado no catálogo
+existente. Client reaplica apenas a fase já aprovada após snapshot geral do mundo,
+com cor/matriz autoritativas restauradas depois da troca visual. Sem novo wire55,
+sem novo gerenciador, Startup/força/dano continuam nas regras já existentes.
+Duas regressões de Tilemap verificam identidade/colisão, fase e preservação offline.
+
+Suíte PredictionCoopCorrections55:887/887 passou,0falhas/0skips. Inclui pausa de ovos,
+fix de intro Clown e wrapper de custo. Relatórios copiados a Logs/. Depois dessa
+suíte foi reforçada a preservação de cor/matriz no helper ApplyCoopTileCells; dois
+focados PredictionConveyorMetadata55 estão rodando e, se aprovarem, BuildPerformance
+já encadeado. Teste novo compara cor/matriz do Tilemap além da fase. Não sobrescrever
+runner enquanto esse script estiver em execução.
+
+smoke_full_clients ganhou --require-unlocked: exige movimento livre no servidor
+e no owner de cada cliente após a intro, via diagnóstico. Falta de asset de catálogo
+agora também falha o smoke. Repetir Clown e World3 em Run2 com --diagnostics e
+--require-unlocked após novo Development. Sun pode repetir para comparação de
+classificação. Os Run1 não comprovam gameplay nem imagens. Código desse lote ainda
+não commitado/publicado; origin continua11c1bdf55, fix26fdda131 está só local.
+
+
+PredictionConveyorMetadata55:2/2 focados aprovados, cor e matriz comparadas no
+Tilemap real após reaplicar variante. C# final0/0. Build Performance com o lote
+completo em andamento (session58924), log PredictionCoopCorrections55DevelopmentBuild.
+Após exit0, repetir ClownRun2/World3Run2/SunRun2 comdiagnostics+require_unlocked=True,
+90s cada. Script já exige que owner de cada cliente e2players no servidor tenham
+prediction_block=none depois da intro. Run1 Sun e World3 possuem esse desbloqueio;
+ClownRun1 não. Não escrever sucesso de combate para ClownRun1.
+Próximo lote tem887full +2focados posteriores; não anunciar889testes únicos.
+
+
+## Lote co-op55 validado para publicação após Run2
+
+ClownRun2, World3Run2 e SunRun2 aprovaram os checkpoints estritos:2clientes reais,
+90s/cena,2players livres no servidor e owner livre em cada client,0erros/avisos.
+Reports completos e SHA256 em cada pasta Logs/Prediction{Clown,World3,Sun}Clients55Run2.
+Clown agora tem6717frames alterados em7750 amostras (antes5/7930 com intro presa).
+Classificação correta ClownMaskMovement, não CharacterHealth. World3 teve11famílias
+observadas (6de inimigos +props), não afirmar que todos16prefabs inventariados
+simularam. Sun/World3 analysis.json criados; dados não são comparação de performance.
+Último Development não repetiu a mensagem interna de allocator do build anterior.
+
+887full +2focados de metadados, C#0/0, Python47/47, smokes estritos aprovados.
+Sem novo wire: protocolo55 mantido. Código de Clown/esteira/ovos/custo ainda precisa
+commit e envio junto com26fdda131 local. Restaurar só fontes próprias no runner
+antes de push. Próximo após publicar: R07 transferência de apresentação já em curso
+com destruição do FX (teste atual cobre novo evento após remoção, não esse intervalo),
+C02/C03 curvas/handoff e demais IDs parciais. Checklist15/18 continua honesto;
+smoke headless não encerra validação visual/manual de nenhum ID.

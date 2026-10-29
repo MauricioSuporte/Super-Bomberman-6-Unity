@@ -1371,3 +1371,28 @@ adjacente do owner para replay. Preservar a referência de chutes próprios apro
 Correção local validada em4/4focados Unity após publicação55; inclui2novos casos
 owner/observer e preservação do comando próprio. Build/smokes seguintes em andamento;
 o fix ainda não está publicado.
+
+
+### Co-op55: regressões encontradas com dois clientes reais
+
+ClownMask aguardava os jogadores online e chamava ResetBossState, que parava o
+handle da própria intro já atribuído após o yield. A cena não lançava Exception,
+mas mantinha todos input_locked. O reset interno agora preserva essa coroutine;
+Awake/OnDisable ainda cancelam a anterior e limpam BossIntroRunning. UnityTest
+verifica liveness e cancelamento; Run2 Stage_1-7 liberou o servidor e os dois owners.
+
+World3 Stage_3-6 gerava variantes AnimatedTile de esteira ausentes do catálogo.
+ReadCoopTileFrame resolve a origem registrada pelo controller e usa o índice do
+asset original. Após aplicar células do mundo, o client reaplica a fase aprovada
+e restaura cor/matriz do snapshot; não inicia força ou lógica de terreno nova.
+Testes usam Tilemap real, preservam colisão e mantêm o caminho offline. Run2 removeu
+os3avisos de catálogo. Aliasing não se aplica a qualquer TileBase desconhecido.
+
+NetworkEggFollower conserva root/rotação e fase apresentados na pausa e limpa
+histórico ao parar o client. Captura de custo ignora CharacterHealth ao classificar
+bosses, mantendo caches e escopo CPU/bytes já documentados.
+
+Validação:887/887 Unity,2focados adicionais de cor/matriz e C#0/0. Smokes estritos
+ClownMask/NormalGame, World3/NormalGame e SunMask/BossRush,90s cada com2clientes reais,
+0erros/avisos e movimento desbloqueado em todos os owners. São Development,
+headless e com atores duráveis; não substituem manual gráfico nem baseline offline.

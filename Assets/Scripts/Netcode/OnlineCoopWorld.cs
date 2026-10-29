@@ -102,6 +102,7 @@ namespace Assets.Scripts.Netcode
         readonly HashSet<string> coopMissingAssets = new();
         SpriteRenderer[] coopRenderers = Array.Empty<SpriteRenderer>();
         StageBlackout[] coopBlackoutSources = Array.Empty<StageBlackout>();
+        BattleMode5ConveyorController[] coopConveyorSources = Array.Empty<BattleMode5ConveyorController>();
         float coopNextDiscover, coopNextFrame, coopNextTiles;
         string coopScene;
         GameObject coopViewRoot;
@@ -184,6 +185,10 @@ namespace Assets.Scripts.Netcode
             foreach (var blackout in FindObjectsByType<StageBlackout>(FindObjectsInactive.Include))
                 if (blackout.gameObject.scene == scene) blackouts.Add(blackout);
             coopBlackoutSources = blackouts.ToArray();
+            var conveyors = new List<BattleMode5ConveyorController>();
+            foreach (var conveyor in FindObjectsByType<BattleMode5ConveyorController>(FindObjectsInactive.Include))
+                if (conveyor.gameObject.scene == scene) conveyors.Add(conveyor);
+            coopConveyorSources = conveyors.ToArray();
             foreach (var map in FindObjectsByType<Tilemap>(FindObjectsInactive.Include))
                 if (map.gameObject.scene == scene) coopMaps[CoopPath(map.transform)] = map;
             foreach (var health in FindObjectsByType<CharacterHealth>(FindObjectsInactive.Include))
@@ -283,6 +288,7 @@ namespace Assets.Scripts.Netcode
             coopSceneHealth.Clear(); coopServerHealth = Array.Empty<CharacterHealth>(); coopNextStatus = 0;
             coopRenderers = Array.Empty<SpriteRenderer>();
             coopBlackoutSources = Array.Empty<StageBlackout>();
+            coopConveyorSources = Array.Empty<BattleMode5ConveyorController>();
             coopCatalog = null; coopScene = null; coopHasMusic = false;
             if (coopViewRoot != null) Destroy(coopViewRoot);
             coopViewRoot = null;
@@ -487,7 +493,13 @@ namespace Assets.Scripts.Netcode
         CoopTileFrame ReadCoopTileFrame(Tilemap map, Vector3Int cell)
         {
             var type = map.GetColliderType(cell);
-            return new CoopTileFrame { cell = cell, tile = CatalogId(map.GetTile(cell), coopTileIds), color = map.GetColor(cell),
+            var tile = map.GetTile(cell);
+            if (tile != null && !coopTileIds.ContainsKey(tile))
+                foreach (var conveyor in coopConveyorSources)
+                    if (conveyor != null && conveyor.TryResolveNetworkTileOrigin(map, tile, out var original) &&
+                        coopTileIds.TryGetValue(original, out int catalogId))
+                    { coopTileIds[tile] = catalogId; break; }
+            return new CoopTileFrame { cell = cell, tile = CatalogId(tile, coopTileIds), color = map.GetColor(cell),
                 matrix = map.GetTransformMatrix(cell), collisionType = (byte)type,
                 collisionSprite = type == Tile.ColliderType.Sprite ? CoopSpriteId(map.GetSprite(cell)) : -1 };
         }
@@ -566,15 +578,25 @@ namespace Assets.Scripts.Netcode
             Vector3 scale = parent == null ? Vector3.one : parent.lossyScale;
             map.transform.localScale = new Vector3(message.scale.x / scale.x, message.scale.y / scale.y, message.scale.z / scale.z);
             map.color = message.color;
-            foreach (var cell in message.cells ?? Array.Empty<CoopTileFrame>())
-            {
+            ApplyCoopTileCells(map, message.cells ?? Array.Empty<CoopTileFrame>());
+            ApplyCoopCollisionTiles(message);
+        }
+
+        void ApplyCoopTileCells(Tilemap map, CoopTileFrame[] cells)
+        {
+            foreach (var cell in cells)
                 map.SetTile(cell.cell, At(coopCatalog.tiles, cell.tile));
+            foreach (var conveyor in coopConveyorSources)
+                if (conveyor != null) conveyor.RefreshNetworkTileVisuals(map);
+            // Replacing a catalog tile with its animated variant must not erase
+            // the color/transform approved in the same world snapshot.
+            foreach (var cell in cells)
+            {
                 if (cell.tile < 0) continue;
                 map.SetTileFlags(cell.cell, TileFlags.None);
                 map.SetColor(cell.cell, cell.color);
                 map.SetTransformMatrix(cell.cell, cell.matrix);
             }
-            ApplyCoopCollisionTiles(message);
         }
 
         static T At<T>(T[] values, int index) where T : UnityEngine.Object => index >= 0 && index < values.Length ? values[index] : null;

@@ -8,6 +8,44 @@ using Object = UnityEngine.Object;
 
 public sealed partial class OnlineRoomEditModeTests
 {
+    [Test]
+    public void EggQueuePauseKeepsItsPresentedRootAndPhaseUntilResume()
+    {
+        using var fixture = new ItemMotionFixture();
+        var actor = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/EggFollower.prefab"));
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            var identity = actor.GetComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isClient").SetValue(identity, true);
+            var network = actor.GetComponent<NetworkEggFollower>();
+            typeof(NetworkEggFollower).GetMethod("Awake", flags).Invoke(network, null);
+            network.OnStartClient();
+            var sprite = actor.GetComponentInChildren<SpriteRenderer>(true);
+            var state = new NetworkEggFollower.QueuePresentation { valid = true, time = NetworkTime.time - 1,
+                visible = true, idle = true, facing = Vector2.down, sortingOrder = 7 };
+            network.ReceiveQueuePresentation(state);
+            var late = typeof(NetworkEggFollower).GetMethod("LateUpdate", flags);
+            actor.transform.position = new Vector3(714, 710); late.Invoke(network, null);
+            Assert.AreEqual(7, sprite.sortingOrder);
+            ItemMotionFixture.Pause.SetValue(null, true);
+            state.time += .1; state.sortingOrder = 9; network.ReceiveQueuePresentation(state);
+            actor.transform.SetPositionAndRotation(new Vector3(715, 710), Quaternion.Euler(0, 0, 90));
+            late.Invoke(network, null);
+            Assert.AreEqual(new Vector3(714, 710), actor.transform.position);
+            Assert.AreEqual(Quaternion.identity, actor.transform.rotation); Assert.AreEqual(7, sprite.sortingOrder);
+            ItemMotionFixture.Pause.SetValue(null, false);
+            actor.transform.position = new Vector3(715, 710); late.Invoke(network, null);
+            Assert.AreEqual(new Vector3(715, 710), actor.transform.position); Assert.AreEqual(9, sprite.sortingOrder);
+            network.OnStopClient();
+            var pending = (System.Collections.IList)typeof(NetworkEggFollower).GetField("pendingPresentation", flags).GetValue(network);
+            Assert.AreEqual(0, pending.Count);
+            Assert.IsFalse((bool)typeof(NetworkEggFollower).GetField("hasPresentedEggPose", flags).GetValue(network));
+        }
+        finally { Object.DestroyImmediate(actor); }
+    }
+
     [TestCase(0, 1, true, true, true)]
     [TestCase(0, 1, false, true, false)]
     [TestCase(0, 1, true, false, false)]

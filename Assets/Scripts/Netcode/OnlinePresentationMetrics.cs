@@ -25,7 +25,7 @@ namespace Assets.Scripts.Netcode
             if (enemy != null) return coopMetricFamilies[id] = enemy.GetType().Name;
             for (var current = renderer.transform; current != null; current = current.parent)
                 foreach (var behaviour in current.GetComponents<MonoBehaviour>())
-                    if (behaviour != null && behaviour is not AnimatedSpriteRenderer &&
+                    if (behaviour != null && behaviour is not AnimatedSpriteRenderer && behaviour is not CharacterHealth &&
                         behaviour.GetType().Assembly == typeof(GameManager).Assembly)
                         return coopMetricFamilies[id] = behaviour.GetType().Name;
             return coopMetricFamilies[id] = "UnclassifiedWorldVisual";
