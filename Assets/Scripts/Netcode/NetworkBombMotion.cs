@@ -261,7 +261,11 @@ namespace Assets.Scripts.Netcode
         public void ForgetClientBomb(Bomb target)
         {
             if (target != null && kickPlayback.TryGetValue(target, out var state))
-            { RestoreMotionCollider(target, state); RestoreAbilityVisuals(state.motion.kind); kickPlayback.Remove(target); }
+            {
+                RestoreMotionCollider(target, state);
+                if (!state.motion.worldMotion) RestoreAbilityVisuals(state.motion.kind);
+                kickPlayback.Remove(target);
+            }
             rejectedStarts.Remove(target);
         }
 

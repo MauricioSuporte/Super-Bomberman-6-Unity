@@ -8,6 +8,127 @@ using Object = UnityEngine.Object;
 
 public sealed partial class OnlineRoomEditModeTests
 {
+    [Test]
+    public void ForgettingASharedBombDoesNotCancelAnUnrelatedOwnedPunchPose()
+    {
+        using var fixture = new WorldBombFixture(true);
+        fixture.actor.SetActive(true);
+        var ownedObject = new GameObject("OwnedPunchBesideSharedMotion"); ownedObject.SetActive(false);
+        const uint ownedId = uint.MaxValue - 280;
+        try
+        {
+            fixture.fx.ReceiveKickMotion(fixture.Motion(1, NetworkBombFx.BombMotionKind.Punch));
+            ownedObject.AddComponent<CircleCollider2D>(); var owned = ownedObject.AddComponent<Bomb>();
+            var identity = ownedObject.AddComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetProperty("netId").SetValue(identity, ownedId); NetworkClient.spawned.Add(ownedId, identity);
+            ownedObject.transform.position = new Vector3(720, 710); ownedObject.SetActive(true);
+            var punch = fixture.Motion(1, NetworkBombFx.BombMotionKind.Punch);
+            punch.bombId = ownedId; punch.worldMotion = false; punch.inputTick = 30;
+            punch.start = new Vector2(720, 710); punch.end = new Vector2(723, 710);
+            fixture.fx.ReceiveKickMotion(punch);
+            Assert.IsTrue(fixture.fx.HasLocalMountAbilityPose);
+            fixture.fx.ForgetClientBomb(fixture.bomb);
+            Assert.IsTrue(fixture.fx.HasLocalMountAbilityPose, "Shared presentation never owns this actor's separate punch gesture.");
+            Assert.IsTrue(owned.ClientMotionNonBlocking);
+            Assert.IsTrue(fixture.bomb.GetComponent<Collider2D>().enabled);
+            fixture.fx.ForgetClientBomb(owned);
+        }
+        finally { NetworkClient.spawned.Remove(ownedId); Object.DestroyImmediate(ownedObject); }
+    }
+
+    [TestCase("OnStopClient")] [TestCase("OnDisable")] [TestCase("OnDestroy")]
+    public void ApprovedArcSurvivesPresenterRemovalWithoutAnotherServerEvent(string callback)
+    {
+        using var fixture = new WorldBombFixture(false);
+        var replacement = fixture.MakeActor(WorldBombFixture.ActorId + 1, false);
+        var next = replacement.GetComponent<NetworkBombFx>();
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            var motion = fixture.Motion(1, NetworkBombFx.BombMotionKind.Punch);
+            motion.worldMotion = false; motion.inputTick = 20;
+            fixture.fx.ReceiveKickMotion(motion);
+            Assert.AreSame(fixture.fx, fixture.bomb.ClientBombMotionPresenter);
+            fixture.Present(.1f);
+            float before = fixture.replica.transform.position.x;
+            var stop = motion; stop.revision = 2; stop.moving = false; stop.first = false;
+            stop.start = stop.end; stop.duration = 0; stop.arcHeight = 0;
+            fixture.fx.ReceiveKickMotion(stop); // Already received, still queued behind the arc.
+            NetworkClient.spawned.Remove(WorldBombFixture.ActorId);
+            if (callback == "OnStopClient") fixture.fx.OnStopClient();
+            else typeof(NetworkBombFx).GetMethod(callback, flags).Invoke(fixture.fx, null);
+            Object.DestroyImmediate(fixture.actor);
+            Assert.AreSame(next, fixture.bomb.ClientBombMotionPresenter);
+            Assert.IsFalse(fixture.bomb.GetComponent<Collider2D>().enabled);
+            Assert.IsFalse(next.AbilityPredictionLocksMovement);
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", flags).Invoke(next, new object[] { .1f, .1f });
+            Assert.Greater(fixture.replica.transform.position.x, before);
+            Assert.Greater(fixture.replica.transform.position.y, 710);
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", flags).Invoke(next, new object[] { .3f, .3f });
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", flags).Invoke(next, new object[] { .02f, .02f });
+            Assert.AreEqual(new Vector3(713, 710), fixture.replica.transform.position);
+            Assert.IsTrue(fixture.bomb.GetComponent<Collider2D>().enabled);
+            Assert.IsFalse(fixture.bomb.ClientMotionNonBlocking);
+        }
+        finally
+        {
+            next.OnStopClient(); NetworkClient.spawned.Remove(WorldBombFixture.ActorId + 1); Object.DestroyImmediate(replacement);
+        }
+    }
+
+    [TestCase(false)] [TestCase(true)]
+    public void PresenterRemovalCancelsUnconfirmedActionsAndCarrierDependentMotion(bool carry)
+    {
+        using var fixture = new WorldBombFixture(true);
+        var replacement = fixture.MakeActor(WorldBombFixture.ActorId + 1, false);
+        try
+        {
+            fixture.actor.transform.position = fixture.replica.transform.position;
+            var motion = fixture.Motion(1, carry ? NetworkBombFx.BombMotionKind.Carry : NetworkBombFx.BombMotionKind.Punch);
+            motion.worldMotion = false; motion.inputTick = 10; motion.carryHeight = 1;
+            if (carry) fixture.fx.ReceiveKickMotion(motion);
+            else Assert.IsTrue(fixture.fx.BeginAbilityPrediction(fixture.bomb, motion, Vector2.right, .1f));
+            fixture.Present(.05f);
+            fixture.fx.OnStopClient();
+            var other = replacement.GetComponent<NetworkBombFx>();
+            var states = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("kickPlayback", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(other);
+            Assert.AreEqual(0, states.Count, "An unknown carrier position or unconfirmed command must not migrate to another actor.");
+            Assert.IsTrue(fixture.bomb.GetComponent<Collider2D>().enabled);
+            Assert.IsFalse(fixture.bomb.ClientMotionNonBlocking);
+        }
+        finally { NetworkClient.spawned.Remove(WorldBombFixture.ActorId + 1); Object.DestroyImmediate(replacement); }
+    }
+
+    [Test]
+    public void TransferredConfirmedKickKeepsProgressWithoutGivingTheNewActorAnInputReference()
+    {
+        using var fixture = new WorldBombFixture(true);
+        var replacement = fixture.MakeActor(WorldBombFixture.ActorId + 1, true);
+        var next = replacement.GetComponent<NetworkBombFx>();
+        try
+        {
+            var motion = fixture.Motion(1, NetworkBombFx.BombMotionKind.Kick);
+            motion.worldMotion = false; motion.inputTick = 10;
+            Assert.IsTrue(fixture.fx.BeginAbilityPrediction(fixture.bomb, motion, Vector2.right, .1f));
+            fixture.Present(.05f); fixture.fx.ReceiveKickMotion(motion);
+            Assert.IsFalse(fixture.fx.HasUnconfirmedClientMotion(fixture.bomb));
+            var before = fixture.replica.transform.position;
+            NetworkClient.spawned.Remove(WorldBombFixture.ActorId);
+            fixture.fx.OnStopClient();
+            Assert.AreSame(next, fixture.bomb.ClientBombMotionPresenter);
+            Assert.AreEqual(before, fixture.replica.transform.position);
+            Assert.IsNull(next.LastKickForTick(11)); Assert.IsTrue(next.IsKickMovingForTick(fixture.bomb, 11));
+            Assert.IsFalse(next.AbilityPredictionLocksMovement); Assert.IsFalse(fixture.bomb.IsBeingKicked);
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(next, new object[] { .05f, .05f });
+            Assert.Greater(fixture.replica.transform.position.x, before.x);
+        }
+        finally
+        {
+            next.OnStopClient(); NetworkClient.spawned.Remove(WorldBombFixture.ActorId + 1); Object.DestroyImmediate(replacement);
+        }
+    }
+
     [UnityEngine.TestTools.UnityTest]
     public System.Collections.IEnumerator ClownIntroResetKeepsItsAlreadyRunningCoroutineAlive()
     {

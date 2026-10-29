@@ -172,7 +172,7 @@ def build():
     unity(build_args, logs / "release.log")
     stage = ROOT / "Build/LinuxServer"
     assembly = stage / "SB6_Data/Managed/Assembly-CSharp.dll"
-    if any(marker in assembly.read_bytes() for marker in (b"LocalServerLoadTest", b"TickLocalLoadTest", b"LocalNetworkInputSmoke", b"LocalOnlineFlowSmoke")):
+    if any(marker in assembly.read_bytes() for marker in (b"LocalServerLoadTest", b"TickLocalLoadTest", b"LocalNetworkInputSmoke", b"LocalOnlineFlowSmoke", b"PresenterSmokeReady")):
         raise RuntimeError("development harness present in release")
     shutil.copy2(ROOT / "Tools/RoomDirectory/supervisor.py", stage / "supervisor.py")
     # The isolated checkout revision was validated before launching Unity.

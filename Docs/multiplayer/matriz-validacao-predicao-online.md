@@ -250,3 +250,19 @@ metadados; não somar casos repetidos como novos testes únicos.
 
 A ferramenta aceita --require-unlocked junto de co-op/--diagnostics para exigir
 esse checkpoint. Avisos de catálogo de assets faltantes também falham o smoke.
+
+
+## R07: remoção do presenter durante arco nativo
+
+PredictionPresenterClients55Run2: servidor+2clients reais, Stage_1-1, Punch nativo de
+1,2s; remoção da origem após250ms. Cada client registrou8samples móveis depois da
+transferência e antes do próximo apply,0erros/avisos. Entrada da fixture suspensa com
+ack/drenagem antes da remoção. SHA256, logs e análise salvos na pasta do teste.
+Suíte894/894 inclui stop/disable/destroy, fila já recebida, cancelamento de comando
+não confirmado/Carry e preservação de gesto próprio ao esquecer worldMotion.
+
+R07 está concluído em código/testes; os critérios visuais/manuais continuam pendentes.
+Usar --presenter-removal com NormalGame/Stage_1-1 e --diagnostics para repetir o probe
+Development. Não executar essa fixture como partida normal ou comparar seus inputs
+suspensos com latência humana. Orçamento --seconds inclui lobby/carregamento; o campo
+seconds deRun1 deste probe está inválido, corrigido emRun2. Nenhum vídeo/GPU foi medido.

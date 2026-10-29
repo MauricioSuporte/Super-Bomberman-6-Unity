@@ -46,10 +46,10 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo55, commit `11c1bdf55`, pipeline
-  [40843901315](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40843901315)
-  completed/success: servidor, cliente e atualizador. Fix de referência do chute
-  compartilhado validado em4focados, commit26fdda131 local ainda sem publicação.
+- **Publicado:** protocolo55, commit `a1e0e9e48`, pipeline
+  [40850586608](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40850586608)
+  completed/success: servidor, cliente e atualizador; inclui26fdda131, Clown/esteira/ovos.
+  Continuidade após destruição do presenter é o próximo lote local, ainda não publicado.
 - **Validação local mais recente:**887/887 Unity, sem skips;2focados posteriores
   de metadados de esteira; C#0/0 e Python47/47. Reports PredictionCoopCorrections55
   e PredictionConveyorMetadata55. Lote seguinte ao deploy11c1bdf55, ainda sem envio.
@@ -63,7 +63,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:**15 IDs implementados/testados e18 parciais; todos os33 iniciados.
+- **Checklist:**16 IDs implementados/testados e17 parciais; todos os33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
 - **Próximo:** integração de ClownMask/SunMask/Stage_3-6 e envio do fix de referência;
   continuar C02/C03 (curvas e entrega ao motor), A12/capturas e demais parciais. Não marcar melhorias percebidas sem teste.
@@ -201,7 +201,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo: **15 de33 IDs concluídos em implementação/testes e18 parciais**.
+Resumo: **16 de33 IDs concluídos em implementação/testes e17 parciais**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -236,7 +236,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
 - [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
 - [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
-- [ ] R07: parcial55: itens/poses de montaria e transporte de bombas independentes do ator testados; pausa dos ovos no lote local887. Próximo: provar continuidade de arco já recebido quando o FX original é destruído, além de roteamento de novo evento; manual gráfico/transferências pendentes.
+- [x] R07: itens/rolagem/push, ovos e poses de montaria alinhados; transporte independente de ator, migração de arco/fila aprovada após stop/disable/destroy e cleanup sem tomar pose/input de outro player. Suíte894 e probe2clients com8samples móveis por client após remoção,0erros/avisos. Manual gráfico/offline e casos ambientais continuam na matriz; publicação deste último lote ainda pendente.
 - [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
 - [ ] Consolidar skill e notas (atualizadas até55: motion independente do ator, itens/montaria, custos, reconexão e teardown); matriz atualizada com integração automática2peers. Manual gráfico e consolidação dos IDs parciais pendentes.
 
@@ -2287,3 +2287,111 @@ antes de push. Próximo após publicar: R07 transferência de apresentação já
 com destruição do FX (teste atual cobre novo evento após remoção, não esse intervalo),
 C02/C03 curvas/handoff e demais IDs parciais. Checklist15/18 continua honesto;
 smoke headless não encerra validação visual/manual de nenhum ID.
+
+
+## Lote co-op enviado / próxima prova R07
+
+Commits26fdda131 +a1e0e9e48 enviados, protocolo55 mantido; CI da nova publicação em
+execução. Não confundir envio com deploy. Runner pertence ao CI até terminar.
+
+R07 continuação:5testes novos preparados em OnlineRoomWorldBombMotionTests.
+3exigem que arco e stop já recebidos continuem sem NOVO evento de rede quando o
+FX original passa por OnStopClient/OnDisable/OnDestroy;2garantem que comando ainda
+não confirmado e Carry dependente de ator não migrem. Ainda NÃO rodaram; runtime
+continua sem migração explícita de KickPlayback entre FX. Primeiro reproduzir
+comportamento atual quando runner liberar, depois corrigir mantendo curva/progresso,
+fila aprovada e collider/sorting; não herdar input/pose/lead do outro ator.
+OnDisable perde o estado antes do OnDestroy quando CanRetain falha: tratar também
+essa entrada, além do stop client. Evitar migrar durante disconnect/scene loading.
+Nenhum código de produção novo desse próximo passo foi escrito ou publicado ainda.
+
+
+## R07: baseline reproduzido / migração em validação
+
+Publicaçãoa1e0e9e48 confirmada: Actions40850586608 completed/success, todos os passos.
+Novo lote local tem6testes. Baseline inicial deixou o manager escolher o presenter
+por ordem de Dictionary e2casos não testavam a origem desejada; preservado relatório
+PredictionPresenterTransfer55Baseline. Fixture corrigida para entregar RPC à origem
+e afirmar seu ownership antes da remoção. BaselineFixedFixture:6casos,2passaram,
+4falharam como esperado (stop/disable/destroy +kick confirmado). Cancelamento de
+comando não confirmado e Carry já funcionava. Reports em Logs/PredictionPresenterTransfer55BaselineFixedFixture.*.
+
+Runtime local agora migra só trajetórias confirmadas em andamento para FX realmente
+client/spawnado da mesma cena, preferindo o local. Preserva elapsed/posição/fila e
+captura de collider/sorting; remove histórico/tick/pose do ator anterior, marca
+worldMotion e approvedOnly para não inventar próximo segmento depois da perda da
+origem. Queues já aprovadas seguem essa restrição. Disable sem retain, stop client
+e destroy tratados; disconnect/scene loading, Carry/Lift e comandos pendentes não
+migram. Sem candidato, segue cleanup/fallback existente; não criar ator fictício.
+Mudanças ainda NÃO validadas Unity ou publicadas.
+
+Dev harness ganhou -load-test-presenter-removal, só Development/local server.
+Na Stage_1-1 lança Punch nativo de1,2s e remove o jogador que o apresentava após
+250ms, com os2clientes conectados. Smoke flag --presenter-removal exige evento de
+transferência e samples movendo antes do próximo apply no MESMO relógio de cada
+client. Sem teclado sintético nem mensagem remota habilitando fixture; actors são
+duráveis de teste. Novo harness ainda NÃO foi executado.
+
+Suíte PredictionPresenterTransfer55Full em execução,893esperados, session60572
+(identificador efêmero do tool). Runner está com
+fontes desse lote. Após aprovação: compilar Development e rodar smoke NormalGame,
+Stage_1-1,diagnostics+require_unlocked+presenter_removal,90s em pasta nova. C# e
+py_compile já executados; conferir conclusão do C# na ferramenta. Não publicar antes
+pelos resultados. Nenhum wire mudou; protocolo55 permanece.
+
+
+C# do lote R07 compilou0erros/0avisos novos;6avisos preexistentes do Mirror no rebuild
+de dependências. BaselineFixedFixture confirmou4falhas/2passes em6casos antes da
+correção. Nova migração usa approvedOnly nos estados transferidos, sem extrapolar
+novo kick/bounce além dos segmentos já aprovados; novo evento direto pode renovar
+o caminho normal. Callback da fila conserva essa restrição. State preserva sample
+cadence, progresso e metadados, sem transferir inputTick/history/gesto de player.
+Novo probe usa Punch NATIVO, direção para dentro do mapa, fuse10s e um único arco
+longo; exige arc ainda ativo antes de remover a origem, aguarda pouso e limpa a
+bomba. A flag só fica no arquivo Development já protegido por UNITY_EDITOR||DEBUG.
+Suíte893 ainda deve ser conferida; não considerar o código aprovado antes do XML.
+
+
+## R07 transferência:893 passaram / primeiro probe e reforço894
+
+PredictionPresenterTransfer55Full:893/893 aprovados,0skips; build Development passou.
+PredictionPresenterClients55Run1 confirmou9samples com deslocamento entre transferência
+e próximo apply em CADA client, sem erros. Teve1aviso Mirror de comando atrasado
+para o ator deliberadamente removido. O campo seconds do resultado ficou INVÁLIDO
+porque o parser reutilizou started para o relógio do evento; não foi teste de9h.
+Corrigido para transfer_started; não usar seconds de Run1 como métrica. Raw preservado.
+
+Para eliminar o aviso causado pela fixture, o probe agora suspende apenas o sender
+local nos clients de teste, envia PresenterSmokeReady e o servidor aguarda ambos
+mais1s de drenagem antes de remover o ator. Mensagem/hook só existem sob
+UNITY_EDITOR||DEBUG e flag local explícita. CI proíbe PresenterSmokeReady na DLL
+release junto dos harnesses já excluídos. runRealInput agora exige sua própriaflag,
+para um probe de observação não disparar Select por possuir Mole/Tank.
+
+Revisão adicional: ForgetClientBomb de estado worldMotion não pode cancelar gesto
+local de outro Punch. Guard adicionado e teste cria duas bombas/gesto aprovado
+real via ReceiveKickMotion. Suíte PredictionPresenterPose55Full:894/894 passou,
+0falhas/0skips. Relatórios copiados para Logs/. Novo Development +probeRun2 estão
+encadeados em session92037; aguardar exit/result, não copiar fontes para runner.
+C# incremental session69884 deve ser conferido. Não afirmar que o Run2 passou antes
+de existir report. Código R07 continua local sem commit/publicação.
+
+
+## R07 concluído em implementação/testes — publicação pendente
+
+PredictionPresenterPose55Full:894/894,0falhas/0skips; C#0erros/0avisos. Python47/47.
+PredictionPresenterClients55Run2 aprovado:2clients Mirror reais,8samples móveis em
+cada um depois da transferência e antes do próximo apply,0erros/0avisos. Input da
+fixture suspenso/confirmado antes da remoção e período de drenagem eliminaram o
+comando tardio observado emRun1, sem suprimir avisos. seconds agora96,656 (contador
+corrigido);90é orçamento solicitado do servidor, inclui lobby/cena, não90s exatos
+de gameplay. Build Development aprovado; não comprova pixels/áudio/latência humana.
+SHA256 e reports em Logs/PredictionPresenterClients55Run2; análise agregada separada.
+
+R07 marcado[x] só em implementação/testes, levando o checklist a16/33 completos e
+17parciais. Itens/ovos/montarias são autoritativos; FX migrado não recebe habilidade,
+pose ou histórico do ator anterior. Sem presenter válido, cleanup/NT existentes;
+sem inventar endpoint/continuar Carry desconhecido. Validação manual permanece.
+Próximo imediato: salvar/push do lote validado (ainda local), liberar runner paraCI,
+acompanhar publicação; continuar A12 (prova de input/carga/boost em2clients) e
+C02/C03. Não repetir a suíte894 sem nova alteração ou falha que justifique.

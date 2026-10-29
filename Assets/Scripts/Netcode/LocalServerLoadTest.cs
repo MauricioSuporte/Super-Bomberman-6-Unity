@@ -8,10 +8,12 @@ using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts.Netcode
 {
+    struct PresenterSmokeReady : NetworkMessage { public string scene; }
     // Development-only command-line harness. No remote message can enable it.
     public partial class BombermanNetworkManager
     {
-        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked;
+        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked;
+        readonly HashSet<int> loadTestPresenterReady = new();
         int loadTestPlayers;
         float loadTestStart, loadTestDuration, loadTestNextHealth;
 
@@ -23,6 +25,12 @@ namespace Assets.Scripts.Netcode
                 loadTestConfigured = true;
                 loadTestEnabled = Debug.isDebugBuild && HasArg("-load-test-server");
                 if (!loadTestEnabled) return;
+                if (HasArg("-load-test-presenter-removal"))
+                    NetworkServer.RegisterHandler<PresenterSmokeReady>((peer, message) =>
+                    {
+                        if (peer.isReady && peer.identity != null && message.scene == SceneManager.GetActiveScene().name)
+                            loadTestPresenterReady.Add(peer.connectionId);
+                    });
                 var args = Environment.GetCommandLineArgs();
                 loadTestPlayers = ReadDedicatedNumber(args, "-load-test-players", RoomCapacity, 2, RoomCapacity);
                 loadTestDuration = ReadDedicatedNumber(args, "-load-test-duration", 180, 30, 1800);
@@ -73,7 +81,43 @@ namespace Assets.Scripts.Netcode
                     loadTestSpawnsChecked = true;
                     StartCoroutine(CheckLoadTestSpawns());
                 }
+                if (!loadTestPresenterChecked && HasArg("-load-test-presenter-removal") && IsCoopRoom &&
+                    Time.timeSinceLevelLoad > 12 && OnlineCoopPlayersReady && loadTestPresenterReady.Count >= loadTestPlayers &&
+                    NetworkServer.connections.Count >= loadTestPlayers)
+                {
+                    loadTestPresenterChecked = true;
+                    StartCoroutine(CheckLoadTestPresenterRemoval());
+                }
             }
+        }
+
+        System.Collections.IEnumerator CheckLoadTestPresenterRemoval()
+        {
+            // Both local test clients stopped their senders; let already-sent
+            // input drain before deliberately removing the network actor.
+            yield return new WaitForSecondsRealtime(1);
+            GameObject source = null; BombController controller = null; NetworkBombFx presenter = null;
+            foreach (var peer in NetworkServer.connections.Values)
+                if (peer.identity != null && peer.identity.TryGetComponent(out controller) && peer.identity.TryGetComponent(out presenter))
+                { source = peer.identity.gameObject; break; }
+            if (source == null || controller.bombPrefab == null) throw new InvalidOperationException("Presenter fixture requires an active player and bomb prefab");
+            var instance = Instantiate(controller.bombPrefab, source.transform.position, Quaternion.identity);
+            var bomb = instance.GetComponent<Bomb>(); bomb.Initialize(null); bomb.SetFuseSeconds(10); bomb.punchDuration = 1.2f;
+            NetSpawn.Server(instance);
+            uint bombId = instance.GetComponent<NetworkIdentity>().netId;
+            Vector2 direction = source.transform.position.x <= 0 ? Vector2.right : Vector2.left;
+            if (bombId == 0 || !bomb.StartPunch(direction, 1, 1, 0, null, presenter: presenter))
+                throw new InvalidOperationException("Presenter fixture failed to launch its native arc");
+            Debug.Log("[LoadTest] presenter-removal started bomb=" + bombId);
+            yield return new WaitForSecondsRealtime(.25f);
+            if (bomb == null || !bomb.IsBeingPunched) throw new InvalidOperationException("Presenter fixture lost its arc before removal");
+            NetworkServer.Destroy(source);
+            Debug.Log("[LoadTest] presenter-removal removed source bomb=" + bombId);
+            float deadline = Time.unscaledTime + 6;
+            while (bomb != null && bomb.IsBeingPunched && Time.unscaledTime < deadline) yield return null;
+            if (bomb == null || bomb.IsBeingPunched) throw new InvalidOperationException("Presenter fixture did not finish its native arc");
+            Debug.Log("[LoadTest] presenter-removal completed bomb=" + bombId);
+            NetworkServer.Destroy(instance);
         }
 
         System.Collections.IEnumerator CheckLoadTestSpawns()
@@ -177,19 +221,23 @@ namespace Assets.Scripts.Netcode
         bool sent, completed;
         readonly HashSet<ItemType> observedMovingItems = new();
         float nextItemCheck;
-        bool checkItemMotion;
+        bool checkItemMotion, runRealInput, suspendPresenterInputs;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
         {
-            if (!Debug.isDebugBuild || (Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-real-input") < 0 &&
-                Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-item-motion") < 0)) return;
+            var args = Environment.GetCommandLineArgs();
+            if (!Debug.isDebugBuild || (Array.IndexOf(args, "-load-test-real-input") < 0 &&
+                Array.IndexOf(args, "-load-test-item-motion") < 0 && Array.IndexOf(args, "-load-test-presenter-removal") < 0)) return;
             Application.runInBackground = true;
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 0;
             var root = new GameObject("LocalNetworkInputSmoke");
             DontDestroyOnLoad(root);
-            root.AddComponent<LocalNetworkInputSmoke>().checkItemMotion = Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-item-motion") >= 0;
+            var smoke = root.AddComponent<LocalNetworkInputSmoke>();
+            smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
+            smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
+            smoke.suspendPresenterInputs = Array.IndexOf(args, "-load-test-presenter-removal") >= 0;
         }
 
         void Update()
@@ -201,7 +249,15 @@ namespace Assets.Scripts.Netcode
                     if (identity != null && identity.TryGetComponent<ItemPickup>(out var item) && item.HasPresentedApprovedItemMotion && observedMovingItems.Add(item.type))
                         Debug.Log("[LoadTest] item-motion presented type=" + item.type);
             }
-            if (completed || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
+            if (suspendPresenterInputs && NetworkClient.isConnected && NetworkClient.localPlayer != null &&
+                SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal) && Time.timeSinceLevelLoad > 8 &&
+                NetworkClient.localPlayer.TryGetComponent<NetworkPlayerInput>(out var sender) && sender.enabled)
+            {
+                sender.enabled = false; // Drain in-flight commands before the server destroys this test actor.
+                NetworkClient.Send(new PresenterSmokeReady { scene = SceneManager.GetActiveScene().name });
+                Debug.Log("[LoadTest] presenter-removal input suspended netId=" + NetworkClient.localPlayer.netId);
+            }
+            if (!runRealInput || completed || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
             var companion = NetworkClient.localPlayer.GetComponent<PlayerMountCompanion>();
             var input = PlayerInputManager.Instance;
             if (companion == null || input == null) return;

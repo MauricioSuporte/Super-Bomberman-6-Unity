@@ -96,7 +96,7 @@ namespace Assets.Scripts.Netcode
         void OnDisable()
         {
             presentationOwnerSuspended = true;
-            if (!NetworkBombMotionLifetime.Retain(this)) { ClearKickPlayback(); return; }
+            if (!NetworkBombMotionLifetime.Retain(this)) { TransferApprovedBombMotions(); ClearKickPlayback(); return; }
             // Cancel speculative input/poses while keeping only already-approved
             // bomb motion. No player input, abilities or gameplay get ticked.
             expiredKicks.Clear();
@@ -126,12 +126,65 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient()
         {
+            TransferApprovedBombMotions();
             NetworkBombMotionLifetime.Forget(this); ClearKickPlayback(); base.OnStopClient();
         }
 
         void OnDestroy()
         {
+            TransferApprovedBombMotions();
             NetworkBombMotionLifetime.Forget(this); ClearKickPlayback();
+        }
+
+        bool CanReceiveTransferredMotion(NetworkBombFx candidate, Bomb target) => candidate != null && candidate != this &&
+            candidate.gameObject.scene == target.gameObject.scene && candidate.TryGetComponent<NetworkIdentity>(out var identity) &&
+            identity.isClient && !identity.isServer && identity.netId != 0 && NetworkClient.spawned.TryGetValue(identity.netId, out var current) && current == identity;
+
+        NetworkBombFx FindBombMotionReplacement(Bomb target)
+        {
+            if (NetworkClient.localPlayer != null && NetworkClient.localPlayer.TryGetComponent<NetworkBombFx>(out var local) &&
+                CanReceiveTransferredMotion(local, target)) return local;
+            foreach (var identity in NetworkClient.spawned.Values)
+                if (identity != null && identity.TryGetComponent<NetworkBombFx>(out var candidate) && CanReceiveTransferredMotion(candidate, target))
+                    return candidate;
+            return null;
+        }
+
+        void TransferApprovedBombMotions()
+        {
+            if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.isConnected || NetworkServer.active || NetworkClient.isLoadingScene) return;
+            expiredKicks.Clear();
+            foreach (var pair in kickPlayback)
+                if (pair.Key != null && !pair.Key.HasExploded && pair.Key.isActiveAndEnabled && pair.Key.ClientBombMotionPresenter == this &&
+                    !pair.Value.unconfirmed && pair.Value.motion.moving && pair.Value.motion.kind != BombMotionKind.Lift && pair.Value.motion.kind != BombMotionKind.Carry)
+                    expiredKicks.Add(pair.Key);
+            foreach (var target in expiredKicks)
+            {
+                var replacement = FindBombMotionReplacement(target);
+                if (replacement == null) continue;
+                var state = kickPlayback[target];
+                // Detach before Claim: the old presenter's Forget must not restore
+                // colliders/sorting that still belong to this approved trajectory.
+                kickPlayback.Remove(target);
+                if (!target.ClaimClientPresentation(replacement, target.ClientMotionRevision))
+                { kickPlayback[target] = state; continue; }
+                state.motion.worldMotion = true; state.motion.inputTick = 0;
+                state.startInputTick = 0; state.history = null; state.approvedOnly = true;
+                int queued = state.pendingArcs.Count;
+                for (int i = 0; i < queued; i++)
+                {
+                    var motion = state.pendingArcs.Dequeue(); motion.worldMotion = true; motion.inputTick = 0;
+                    state.pendingArcs.Enqueue(motion);
+                }
+                replacement.kickPlayback[target] = state; replacement.rejectedStarts.Remove(target);
+                replacement.StartBombMotionLifetime();
+                state.correction = state.presented - replacement.SamplePlayback(target, state);
+                replacement.ApplyMotionCollider(target, state);
+                if (GameplayLatencyDiagnostics.Enabled)
+                    GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("bomb_motion_presenter_transfer",
+                        replacement.GetComponent<MovementController>(), target, "approved_only;kind=" + state.motion.kind + ";queued=" + queued));
+            }
+            expiredKicks.Clear();
         }
 
         internal void PresentRetainedBombMotions(float deltaTime, float unscaledDeltaTime)

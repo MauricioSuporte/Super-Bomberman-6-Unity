@@ -485,3 +485,29 @@ then restore the snapshot's color/matrix. Keep collider geometry authoritative.
 Do not generalize this aliasing to unknown TileBase startup/gameplay behaviors.
 Cost classification should skip common wrappers such as CharacterHealth so a
 boss family is not hidden under a shared health label.
+
+
+## Losing the presenter during an approved arc
+
+An independent event transport does not by itself preserve playback when its FX
+component is removed. Transfer confirmed segments and already-received stops to
+another valid spawned client FX in the same actual scene before clearing the old
+component. Cover OnStopClient, OnDestroy and OnDisable when retention fails.
+Detach the old dictionary entry before ClaimClientPresentation so Forget cannot
+restore a collider/sorting capture still owned by the ongoing trajectory.
+
+Keep elapsed, last presented position, sample cadence and approved queue; remove
+input history/ticks and player pose ownership. Transferred playback is approvedOnly
+and cannot invent a further segment/bounce. Cancel unconfirmed actions and
+carrier-dependent Lift/Carry instead of attaching them to an arbitrary actor.
+Skip migration during disconnect/scene loading. Never create a fake identity to
+keep an endpoint alive. Cleanup of worldMotion must not cancel a separate owned
+ability pose on the actor hosting that visual.
+
+Verify the original FX actually owns the trajectory in fixtures; dictionary
+iteration is not a deterministic choice of presenter. A real two-client probe
+should require motion after transfer and before the next apply on each client's
+own clock. Stop test input senders and acknowledge/drain before synthetic actor
+removal so deliberately late Commands do not pollute the result. Keep report
+elapsed-time variables separate from per-event timestamps. Headless evidence
+proves state progression, not final rendering or human-perceived zero input lag.

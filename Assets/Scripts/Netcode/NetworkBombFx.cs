@@ -75,7 +75,7 @@ namespace Assets.Scripts.Netcode
             public float elapsed, staleSeconds;
             public double endpointWaitAt = -1;
             public Vector2 presented, correction;
-            public bool predictedContinuation, unconfirmed, predictedBounce, predictedLandingBounce;
+            public bool predictedContinuation, unconfirmed, predictedBounce, predictedLandingBounce, approvedOnly;
             public uint startInputTick;
             public bool colliderWasEnabled, colliderCaptured, sortingCaptured;
             public int originalSorting;
@@ -282,7 +282,7 @@ namespace Assets.Scripts.Netcode
             var motion = playback.motion;
             if (!motion.moving) return motion.end;
             bool continueLocally = false;
-            if (!presentationOwnerSuspended && motion.moving && !IsFlightArc(motion.kind) &&
+            if (!playback.approvedOnly && !presentationOwnerSuspended && motion.moving && !IsFlightArc(motion.kind) &&
                 motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && motion.kind != BombMotionKind.Environment &&
                 playback.elapsed > motion.duration && motion.duration > 0)
             {
@@ -303,7 +303,7 @@ namespace Assets.Scripts.Netcode
             }
             if (motion.kind == BombMotionKind.Lift || motion.kind == BombMotionKind.Carry)
                 return SampleCarry(motion, transform.position, playback.elapsed);
-            if (IsFlightArc(motion.kind) && motion.kind != BombMotionKind.Revenge && motion.rubber && motion.bounceDuration > 0 && playback.elapsed > motion.duration &&
+            if (!playback.approvedOnly && IsFlightArc(motion.kind) && motion.kind != BombMotionKind.Revenge && motion.rubber && motion.bounceDuration > 0 && playback.elapsed > motion.duration &&
                 motion.bounceIndex + 1 < RubberBombBounceSequence.MinimumBounces(motion.bounceSeed))
             {
                 Vector2 direction = RubberBombBounceSequence.Direction(motion.bounceSeed, motion.bounceIndex + 1);
@@ -389,6 +389,7 @@ namespace Assets.Scripts.Netcode
                     Mathf.Clamp(previous.elapsed - previous.motion.duration, 0, Mathf.Min(0.15f, motion.duration)) : ArcRemainder(previous.elapsed, previous.motion.duration)) :
                 motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Magnet || motion.kind == BombMotionKind.Environment ? 0 : age,
                 pendingArcs = arcContinuation ? previous.pendingArcs : new Queue<KickMotion>(),
+                approvedOnly = applyingQueuedBombArc && previous?.approvedOnly == true,
                 nextPresentationSample = previous != null ? previous.nextPresentationSample : 0,
                 sampledPresentation = previous != null ? previous.sampledPresentation : Vector2.zero,
                 hasPresentationSample = previous != null && previous.hasPresentationSample,

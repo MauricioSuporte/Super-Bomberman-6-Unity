@@ -1396,3 +1396,25 @@ Validação:887/887 Unity,2focados adicionais de cor/matriz e C#0/0. Smokes estr
 ClownMask/NormalGame, World3/NormalGame e SunMask/BossRush,90s cada com2clientes reais,
 0erros/avisos e movimento desbloqueado em todos os owners. São Development,
 headless e com atores duráveis; não substituem manual gráfico nem baseline offline.
+
+
+### R07: estado já recebido sobrevive ao FX original
+
+NetworkBombMotionLifetime migra KickPlayback confirmado para um FX client/spawnado
+na mesma cena quando stop/disable/destroy perderiam a origem. O dicionário antigo
+é desassociado antes de Claim, mantendo captura de collider/sorting, elapsed,
+correção, amostragem e fila de arcos/paradas. O receptor guarda worldMotion e
+approvedOnly, sem histórico/inputTick/gesto do outro ator. A fila já recebida mantém
+a restrição; um novo evento direto pode estabelecer o caminho normal novamente.
+Lift/Carry e ações não confirmadas cancelam; disconnect/cena não migram. Na ausência
+de outro FX válido usa cleanup/NT existente. Não há entidade artificial nem novo
+input, fuse, posse ou dano local. Forget de worldMotion também preserva gesto próprio
+não relacionado do actor hospedeiro.
+
+Baseline de6casos reproduziu4falhas antes do fix. Suíte final894/894 passou. Probe
+Development com Punch nativo1,2s remove o presenter após250ms e observa os2clients:
+8samples móveis em cada um antes do próximo apply,0erros/avisos. A fixture suspende
+input com ack/drenagem antes da remoção; mensagem de teste só existe em DEBUG/Editor
+e é proibida na DLL release pelo CI. Dados em PredictionPresenterClients55Run2.
+O seconds deRun1 é inválido por variável de contador sobrescrita; não usar como
+métrica. Run2 registra96,656s do processo; orçamento90inclui lobby/carregamento.
