@@ -132,6 +132,7 @@ public sealed class PlayerRidingController : MonoBehaviour
     readonly HashSet<SpriteRenderer> allowedSrs = new HashSet<SpriteRenderer>();
 
     public bool IsPlaying => isPlaying;
+    public bool IsPresentingArc => isPlaying || networkArcVisual;
 
     float JumpPeakWorld => jumpPeakPixels / Mathf.Max(1f, pixelsPerUnit);
 

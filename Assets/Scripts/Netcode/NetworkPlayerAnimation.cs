@@ -51,7 +51,7 @@ namespace Assets.Scripts.Netcode
 
         readonly List<VisualFrame> visualFrames = new(64);
         NetworkTransformReliable positionSync;
-        float nextDiagnostic;
+        float nextDiagnostic, nextVisualTrace;
         bool diagnostics;
 
         void OnVisualTime(double previous, double current)
@@ -109,6 +109,7 @@ namespace Assets.Scripts.Netcode
             // Walking owners animate immediately. Special poses and observers retain
             // authoritative frame playback; replay never emits animation RPCs.
             bool predicting = !isServer && isLocalPlayer && move != null && move.PredictLocally;
+            bool resumingPrediction = predicting && !wasPredicting;
             if (predicting != wasPredicting)
             {
                 wasPredicting = predicting;
@@ -116,6 +117,13 @@ namespace Assets.Scripts.Netcode
                 appliedIndex = -2;
                 foreach (var renderer in renderers)
                     if (renderer != null) renderer.SetManualAnimationUpdate(!predicting);
+            }
+            if (resumingPrediction && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true)
+            {
+                foreach (var renderer in renderers) SetEnabled(renderer, false);
+                move.EnableExclusiveFromState();
+                GetComponent<NetworkMountAnimation>()?.RestoreOwnerLocomotion();
+                appliedIndex = -1;
             }
             if (!isServer && GetComponent<NetworkBombFx>()?.RidingArcActive == true) return;
             if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.MoleStartupActive == true) return;
@@ -125,15 +133,29 @@ namespace Assets.Scripts.Netcode
                 // Replicated ordering can change during an external ride. Keep
                 // confirmed sorting while the owner chooses its own pose/frame.
                 ApplyOwnerConfirmedSorting();
-                return;
+                TracePlayerVisual(); return;
             }
             if (isServer)
             {
                 SampleOwned();
-                return;
+                TracePlayerVisual(); return;
             }
 
             if (!GamePauseController.IsPaused) ClientApply();
+            TracePlayerVisual();
+        }
+
+        void TracePlayerVisual()
+        {
+            if (!GameplayLatencyDiagnostics.Enabled || Time.unscaledTime < nextVisualTrace || renderers == null) return;
+            nextVisualTrace = Time.unscaledTime + .1f;
+            var visible = new List<string>();
+            foreach (var renderer in renderers)
+                if (renderer != null && renderer.GetComponentInParent<MountVisualController>(true) == null && renderer.TryGetComponent<SpriteRenderer>(out var sprite) && sprite.enabled && sprite.gameObject.activeInHierarchy)
+                    visible.Add(renderer.name);
+            var entry = GameplayLatencyDiagnostics.For("player_visual_sample", move, detail: "renderers=" + string.Join(",", visible));
+            entry.accepted = isServer ? move.CanPredictNetworkMovement : isLocalPlayer && move.PredictLocally;
+            GameplayLatencyDiagnostics.Write(entry);
         }
 
         void ApplyOwnerConfirmedSorting()
@@ -152,7 +174,7 @@ namespace Assets.Scripts.Netcode
             {
                 for (int i = 0; i < renderers.Length && i < NoRenderer; i++)
                 {
-                    if (renderers[i] != null && renderers[i].enabled &&
+                    if (renderers[i] != null && renderers[i].isActiveAndEnabled &&
                         (!renderers[i].TryGetComponent<SpriteRenderer>(out var visibleSprite) || visibleSprite.enabled))
                     {
                         active = renderers[i];
@@ -238,6 +260,14 @@ namespace Assets.Scripts.Netcode
                 appliedFlip = !activeFlip;
             }
 
+            // Other presenters may have touched visibility without changing the
+            // approved renderer index. End poses must remain exclusive too.
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (i == activeIndex && renderers[i] != null && !renderers[i].enabled) appliedFrame = -1;
+                SetEnabled(renderers[i], i == activeIndex);
+            }
+
             if (activeIndex == NoRenderer || activeIndex >= renderers.Length)
                 return;
 
@@ -281,8 +311,9 @@ namespace Assets.Scripts.Netcode
 
         static void SetEnabled(AnimatedSpriteRenderer r, bool on)
         {
-            if (r != null && r.enabled != on)
-                r.enabled = on;
+            if (r == null) return;
+            if (r.enabled != on) r.enabled = on;
+            if (r.TryGetComponent<SpriteRenderer>(out var sprite)) sprite.enabled = on;
         }
     }
 }

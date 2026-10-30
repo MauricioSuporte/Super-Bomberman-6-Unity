@@ -46,12 +46,10 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo56, commit `bf111acca`,
-  [Actions40922400063](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40922400063)
-  completed/success confirmado. **C02/protocolo57 implementado/testado no commit
-  `97d88c4f7`**; publicação conjunta em andamento no
-  [Actions40964582861](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40964582861).
-  Ainda não declarar57 disponível no servidor até confirmar sucesso do deployment.
+- **Publicado:** protocolo57, commit `97d88c4f7`,
+  [Actions40964582861](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40964582861)
+  completed/success confirmado. Novo lote58 de visuais reportados pelo usuário
+  está LOCAL e em validação; nenhuma publicação58 ainda.
 - **Validação local mais recente (C02/protocolo57):**971/971Unity,0skips,
   incluindo43casosLaunch; C#runtime/Editor0erros/0avisos; Python68/68(60CI+8Directory).
   Cannon2(Stage_2-3),Geyser2(Stage_3-3) eArena2(Battle4):2clientesMirror reais,
@@ -2993,3 +2991,100 @@ C02 marcado[x], checklist19/33 e14parciais. Últimas evidências finais:
 Próxima retomada: consultar Actions40964582861; emfalha inspecionar logs e corrigir,
 emsuccess registrar publicação57/commit97d88c4f7 e seguir IDs ainda parciais do plano.
 Não refazer estes testes sem nova mudança/falha relevante. Não reverter fontes.
+
+
+## Visuais de montaria e player — protocolo 58 em validação local
+
+Baseline publicado: protocolo 57, commit `97d88c4f7`; Actions `40964582861`
+concluído com sucesso. O checklist geral permanece 19/33; esta revisão corrige
+regressões visuais reportadas pelo usuário, sem encerrar outros IDs.
+
+Implementação local:
+- Montaria pendente: apresentar os frames aprovados durante a montagem antes de
+  conceder o estado lógico de montado; colliders e scripts nativos continuam desligados.
+- Riding: distinguir arco visual recebido da coroutine nativa para que setters de
+  cabeça/estado não escondam o player durante a montagem/desmontagem.
+- Tank/Mole: restaurar os offsets HeadOnly autorais após pose aprovada e reconciliação.
+- Pink Louie: desligar o lifecycle nativo no client após o salto e limpar os outros
+  ramos visuais ao voltar à locomoção, mesmo sem mudança da direção em cache.
+- Emote/AFK: reforçar exclusividade do sprite aprovado e devolver a locomoção ao
+  owner quando a pose termina. Enviar explicitamente o toque direcional junto com L,
+  mantendo a proteção contra gerar um segundo A a partir de botão segurado.
+- Morte: encaminhar a causa para CharacterHealth, não guardar causa de um golpe
+  ignorado por invulnerabilidade, remover a antiga montaria do player e transmitir
+  a animação destacada pelo transporte WorldMount existente no Battle. Co-op usa
+  seu registro de renderers. O client não executa morte/dano localmente.
+- Diagnósticos de renderer/frame/head e fixture Development com dois clientes,
+  ovo Blue real, emotes/AFK, morte normal/explosão, salto Pink e Tank/Mole.
+- Authenticator e supervisor alinhados no protocolo 58 (mudança de campos na rede).
+
+Validação e evidências locais:
+- `VisualRepair58Full`: 983/983, sem skips. Depois foi ampliado o caso de morte
+  com explosão ignorada seguida de morte normal: `VisualRepair58IgnoredBlast`, 1/1.
+- `VisualRepair58Full2`: 983/984; o novo teste de input falhou por identidade Mirror
+  não inicializada na fixture. Inicialização corrigida; `VisualRepair58Full3` passou 984/984, sem skips.
+- C# final: 0 erros, 0 avisos. Python: 64 testes CI + 8 Directory aprovados.
+- `VisualRepair58Peers1`: falhou ao iniciar emote nativo. Logs fechados comprovam
+  L+Up segurado, mas somente L pressionado; o transporte descartava a borda direcional.
+  A correção de bordas explícitas está no Full3. Não considerar este smoke aprovado.
+- Próximo: terminar Full3, gerar Development com `OnlineClientBuild.BuildPerformancePlayer`,
+  repetir smoke renderizado em `Logs/VisualRepair58Peers2`, revisar capturas e corrigir
+  falhas reais. Só depois restaurar os arquivos próprios do runner e publicar cliente
+  e servidor juntos, conforme autorização persistente da sessão.
+
+Retomada operacional: checkout principal `v0.5.0`, HEAD `db07900ac` antes desta revisão.
+Fontes do usuário permanecem sujas e não devem entrar no commit. Runner isolado em
+`C:/Users/mauri/.sb6-actions-runner/_work/Super-Bomberman-6-Unity/Super-Bomberman-6-Unity`.
+Arquivos copiados estão em `Logs/VisualRepair58-owned-paths.json`: restaurar somente
+`tracked`, nunca as fontes/settings do usuário. Não executar smoke de três processos
+junto com Unity e preservar reserva de 3 GiB de RAM. Finalizar writers antes de ler
+ou copiar JSONL. Nenhuma correção 58 publicada até esta etapa.
+
+
+Atualização da validação: `VisualRepair58Full3` passou 984/984, C# 0/0 e Python
+72/72. `VisualRepair58Development4` compilou com sucesso. A tentativa Development3
+usou nome incorreto do método de build e foi substituída pelo entrypoint existente
+BuildPerformancePlayer; não houve erro no código do jogo.
+
+`VisualRepair58Peers2` confirmou emote/AFK a pé e montado, ovo Blue coletado e morte
+normal animada nos dois clientes (frames 0–5, sem renderer extra na caminhada).
+A captura URP arc-01-00 mostra a montaria visível sob o player no arco. O teste
+parou ao checar Pink Jump em 200 ms: os logs fechados comprovam que o comando C
+chegou depois dessa checagem e iniciou JumpUp normalmente. A fixture agora espera
+o início nativo real, com prazo de 2 s, antes de mandar o movimento lateral.
+Development5 em execução com essa única alteração de harness; a fonte funcional
+continua sendo a validada no Full3. Próximo smoke: VisualRepair58Peers3.
+
+
+Development5 compilou; Peers3 revelou que a captura URP durante o botão segurado
+pode atrasar o cliente por mais de 100 ms. O servidor libera held input após esse
+limite deliberadamente: os logs mostram emote correto seguido da liberação. A
+fixture esperava que ele continuasse ativo aos 700 ms e falhava nesse caso válido.
+Agora a fixture cancela AFK anterior com movimento confirmado, observa a entrada
+real na pose (prazo 2 s) e só depois envia movimento para sair. O prazo de held
+input do jogo permanece inalterado. Development6 em execução; próximo Peers4.
+Nenhuma alteração funcional após Full3, somente sincronização do dev harness.
+
+
+### Resultado final local — 30/10/2026
+
+Development6 compilou com sucesso. `Logs/VisualRepair58Peers4/result.json` aprovado:
+120 s solicitados, 141,25 s totais, servidor e dois clientes Mirror reais renderizados,
+mesmo Assembly-CSharp SHA256 `16c97d4c5e3653ad06e4f4ac1d94b921a6beab37d52e1a4fd7f56406c78771ab`.
+Todos os checkpoints nativos dos dois jogadores concluíram; sem erros de replicação
+e sem eventos de warning do servidor. O fixture usa atores duráveis; não é uma
+medição humana de latência nem uma nova validação manual em produção.
+
+Cada client registrou 300 amostras de caminhada prevista sem renderer extra; morte
+Blue normal e Pink explosão com frames 0–5; montagem visível no owner/observador
+(15/22 amostras no client1, 17/19 no client2). Conferência adicional dos JSONLs
+fechados: 15 amostras laterais Pink por owner, somente Left + corpo MoutedRigth ou
+MoutedLeft, sem JumpUp residual. HeadOnly Mole = 1,3 em todas as direções; Tank =
+1,4 vertical / 1,5 horizontal, iguais aos offsets autorais. Capturas URP de montagem,
+lateral Pink e cabeça Tank/Mole inspecionadas. A arena 15 possui blackout próprio.
+
+Validação funcional Full3: 984/984 sem skips; após isso só mudou a sincronização
+do harness Development, recompilado na Development6 e exercitado no Peers4. C#
+final 0 erros/0 avisos; Python 64 CI + 8 Directory aprovados. 14 C# com UTF-8
+estrito, meta e fonte idêntica ao runner. Nenhuma cena/prefab/texture alterada.
+Próximo passo: restaurar somente arquivos próprios do runner e commit/push both58.

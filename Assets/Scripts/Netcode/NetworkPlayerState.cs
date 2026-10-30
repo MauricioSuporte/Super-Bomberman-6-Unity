@@ -29,6 +29,8 @@ namespace Assets.Scripts.Netcode
         [SyncVar] int abilityFlags;   // bitmask de powerups (ver Pack/Unpack)
         [SyncVar] byte tempFx;        // F4: bit0 = skull ativo, bit1 = invencível
         [SyncVar] byte mountType;     // F6: MountedType do Louie montado (0=None)
+        [SyncVar] uint mountDeathRevision;
+        uint appliedMountDeathRevision;
         [SyncVar] bool diedByExplosion; // morte por explosão? (renderer de morte)
         [SyncVar] bool gloveHolding;  // luva: segurando bomba? (pose no dono)
         [SyncVar(hook = nameof(OnEliminatedChanged))] bool eliminated; // F5a
@@ -253,6 +255,7 @@ namespace Assets.Scripts.Netcode
             // F6 — tipo de montaria (Louie) para o cliente mostrar o visual.
             byte mt = (byte)(mountCompanion != null ? (int)mountCompanion.GetMountedLouieType() : 0);
             if (mt != mountType) mountType = mt;
+            mountDeathRevision = mountCompanion != null ? mountCompanion.MountDeathRevision : 0;
 
             // Animações host-decididas que o dono replica localmente (client-auth):
             // morte (por explosão?) e a pose de carregar/arremessar da luva.
@@ -358,10 +361,12 @@ namespace Assets.Scripts.Netcode
             }
             appliedTempFx = tempFx;
 
+            bool mountDied = mountDeathRevision != appliedMountDeathRevision;
+            appliedMountDeathRevision = mountDeathRevision;
             // F6 — mostra/esconde o visual do Louie conforme o tipo replicado.
             // (Passo A: o Louie aparece; a animação/facing dele é o Passo B.)
             if (mountType != appliedMountType && mountCompanion != null && (move == null || !move.IsEndingStage) &&
-                !DeferMountVisualRemoval(mountType, appliedMountType, GetComponent<NetworkBombFx>()?.RidingArcActive == true, life > 0 && (move == null || !move.isDead)))
+                (mountDied || !DeferMountVisualRemoval(mountType, appliedMountType, GetComponent<NetworkBombFx>()?.RidingArcActive == true, life > 0 && (move == null || !move.isDead))))
             {
                 // "Montando agora" = de nenhuma montaria (0/desconhecido) para X. Nesse
                 // caso o DONO reproduz o hop de montar localmente (o NetworkPlayerAnimation

@@ -9,10 +9,11 @@ using UnityEngine.SceneManagement;
 namespace Assets.Scripts.Netcode
 {
     struct PresenterSmokeReady : NetworkMessage { public string scene; }
+    struct MountVisualSmokeStep : NetworkMessage { public int phase; }
     // Development-only command-line harness. No remote message can enable it.
     public partial class BombermanNetworkManager
     {
-        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked, loadTestLaunchersChecked;
+        bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked, loadTestLaunchersChecked, loadTestVisualsChecked;
         string loadTestLauncherKind;
         readonly HashSet<int> loadTestPresenterReady = new();
         int loadTestPlayers;
@@ -26,7 +27,7 @@ namespace Assets.Scripts.Netcode
                 loadTestConfigured = true;
                 loadTestEnabled = Debug.isDebugBuild && HasArg("-load-test-server");
                 if (!loadTestEnabled) return;
-                if (HasArg("-load-test-presenter-removal"))
+                if (HasArg("-load-test-presenter-removal") || HasArg("-load-test-mount-visuals"))
                     NetworkServer.RegisterHandler<PresenterSmokeReady>((peer, message) =>
                     {
                         if (peer.isReady && peer.identity != null && message.scene == SceneManager.GetActiveScene().name)
@@ -70,7 +71,7 @@ namespace Assets.Scripts.Netcode
                     PlayerPersistentStats.ResetToDefaultsAll();
                     if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
-                    bool fillCom = HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
+                    bool fillCom = !HasArg("-load-test-mount-visuals") && HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
                     if (fillCom) global::SaveSystem.SetBattleModeComputerLevel(BattleModeComputerLevel.Hard);
                     for (int i = 0; i < modes.Length; i++) modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
@@ -89,6 +90,10 @@ namespace Assets.Scripts.Netcode
                 {
                     loadTestSpawnsChecked = true;
                     StartCoroutine(CheckLoadTestSpawns());
+                }
+                if (!loadTestVisualsChecked && HasArg("-load-test-mount-visuals") && Time.timeSinceLevelLoad > 12 && !BattleStartPending && loadTestPresenterReady.Count >= loadTestPlayers)
+                {
+                    loadTestVisualsChecked = true; StartCoroutine(CheckLoadTestMountVisuals());
                 }
                 if (!loadTestLaunchersChecked && loadTestLauncherKind != null && Time.timeSinceLevelLoad > 12 &&
                     (!IsCoopRoom || OnlineCoopPlayersReady) && !BattleStartPending)
@@ -109,6 +114,77 @@ namespace Assets.Scripts.Netcode
                     StartCoroutine(CheckLoadTestPresenterRemoval());
                 }
             }
+        }
+
+        System.Collections.IEnumerator CheckLoadTestMountVisuals()
+        {
+            int index = 0;
+            foreach (var peer in NetworkServer.connections.Values)
+            {
+                var actor = peer.identity;
+                if (actor == null) throw new InvalidOperationException("Visual fixture lost its actor");
+                var mover = actor.GetComponent<MovementController>(); var companion = actor.GetComponent<PlayerMountCompanion>();
+                var health = actor.GetComponent<CharacterHealth>(); bool protectedBefore = health.HasExternalInvulnerability;
+                health.SetExternalInvulnerability(true);
+                foreach (bool mounted in new[] { false, true })
+                {
+                    if (mounted)
+                    {
+                        AutoItemDatabase.BuildIfNeeded(); var prefab = AutoItemDatabase.Get(ItemType.BlueLouieEgg);
+                        if (prefab == null) throw new InvalidOperationException("Missing native Blue egg");
+                        var egg = Instantiate(prefab, actor.transform.position, Quaternion.identity); NetSpawn.Server(egg.gameObject);
+                        yield return new WaitForSecondsRealtime(1.8f);
+                        if (!mover.IsMounted || companion.GetMountedLouieType() != MountedType.Blue) throw new InvalidOperationException("Native egg pickup did not mount Blue");
+                        Debug.Log("[LoadTest] visual egg mounted player=" + mover.PlayerId);
+                    }
+                    // Start from confirmed locomotion, rather than an automatic AFK
+                    // pose left running while clients warmed their render pipeline.
+                    peer.Send(new MountVisualSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.5f);
+                    peer.Send(new MountVisualSmokeStep()); yield return new WaitForSecondsRealtime(.2f);
+                    if (!mover.CanPredictNetworkMovement) throw new InvalidOperationException("Visual fixture did not reach locomotion before emote");
+                    peer.Send(new MountVisualSmokeStep { phase = 1 });
+                    float emoteDeadline = Time.realtimeSinceStartup + 2f;
+                    while (mover.CanPredictNetworkMovement && Time.realtimeSinceStartup < emoteDeadline) yield return null;
+                    if (mover.CanPredictNetworkMovement) throw new InvalidOperationException("Native emote never took presentation ownership");
+                    // Capture can briefly stall a GPU batch client beyond the normal
+                    // held-input grace. Assert the actual start, then release explicitly.
+                    yield return new WaitForSecondsRealtime(.15f);
+                    peer.Send(new MountVisualSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.5f);
+                    peer.Send(new MountVisualSmokeStep()); yield return new WaitForSecondsRealtime(.2f);
+                    if (!mover.CanPredictNetworkMovement) throw new InvalidOperationException("Emote did not release on native movement input");
+                    Debug.Log("[LoadTest] visual emote released player=" + mover.PlayerId + " mounted=" + mounted);
+                    yield return new WaitForSecondsRealtime(5.6f);
+                    if (mover.CanPredictNetworkMovement) throw new InvalidOperationException("Native AFK pose never started");
+                    peer.Send(new MountVisualSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.5f);
+                    peer.Send(new MountVisualSmokeStep()); yield return new WaitForSecondsRealtime(.2f);
+                    if (!mover.CanPredictNetworkMovement) throw new InvalidOperationException("AFK pose did not release on native movement input");
+                    Debug.Log("[LoadTest] visual afk released player=" + mover.PlayerId + " mounted=" + mounted);
+                }
+                companion.GetMountedLouieHealth().StopInvulnerability(); companion.GetMountedLouieHealth().SetExternalInvulnerability(false);
+                companion.OnMountedLouieHit(999, false); yield return new WaitForSecondsRealtime(2.2f);
+                if (companion.HasMountedLouie()) throw new InvalidOperationException("Native regular mount death did not detach");
+                Debug.Log("[LoadTest] visual death player=" + mover.PlayerId + " explosion=False");
+                companion.MountPinkLouie(); yield return new WaitForSecondsRealtime(1.4f);
+                peer.Send(new MountVisualSmokeStep { phase = 4 });
+                float jumpDeadline = Time.realtimeSinceStartup + 2f;
+                while (!actor.GetComponent<PinkLouieJumpAbility>().JumpActive && Time.realtimeSinceStartup < jumpDeadline) yield return null;
+                if (!actor.GetComponent<PinkLouieJumpAbility>().JumpActive) throw new InvalidOperationException("Native Pink jump did not start from client input");
+                peer.Send(new MountVisualSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(1.2f);
+                peer.Send(new MountVisualSmokeStep { phase = 5 }); yield return new WaitForSecondsRealtime(.5f);
+                peer.Send(new MountVisualSmokeStep()); yield return new WaitForSecondsRealtime(.2f);
+                Debug.Log("[LoadTest] visual pink sides player=" + mover.PlayerId);
+                companion.GetMountedLouieHealth().StopInvulnerability(); companion.GetMountedLouieHealth().SetExternalInvulnerability(false);
+                companion.OnMountedLouieHit(999, true); yield return new WaitForSecondsRealtime(2.2f);
+                if (companion.HasMountedLouie()) throw new InvalidOperationException("Native explosion mount death did not detach");
+                Debug.Log("[LoadTest] visual death player=" + mover.PlayerId + " explosion=True");
+                companion.RestoreMounted(index == 0 ? MountedType.Mole : MountedType.Tank); yield return new WaitForSecondsRealtime(.4f);
+                foreach (int phase in new[] { 2, 5, 6, 7 }) { peer.Send(new MountVisualSmokeStep { phase = phase }); yield return new WaitForSecondsRealtime(.4f); }
+                peer.Send(new MountVisualSmokeStep());
+                Debug.Log("[LoadTest] visual head player=" + mover.PlayerId + " type=" + companion.GetMountedLouieType());
+                health.SetExternalInvulnerability(protectedBefore); index++;
+            }
+            if (index != 2) throw new InvalidOperationException("Visual fixture requires two owners");
+            Debug.Log("[LoadTest] mount visuals completed players=2");
         }
 
         System.Collections.IEnumerator CheckLoadTestLaunchers()
@@ -465,7 +541,10 @@ namespace Assets.Scripts.Netcode
         string captureDirectory;
         bool capturedRiding, captureWarmed;
         int captureArc, captureFrame;
-        float captureNext;
+        float captureNext, visualCaptureAt = float.PositiveInfinity, visualAfkCaptureAt = float.PositiveInfinity;
+        int visualCaptureSerial;
+        bool checkMountVisuals, mountVisualHandler, mountVisualReady;
+        int mountVisualPhase;
         bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -481,6 +560,7 @@ namespace Assets.Scripts.Netcode
             var root = new GameObject("LocalNetworkInputSmoke");
             DontDestroyOnLoad(root);
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
+            smoke.checkMountVisuals = Array.IndexOf(args, "-load-test-mount-visuals") >= 0;
             smoke.checkLauncherInput = Array.IndexOf(args, "-load-test-launchers") >= 0;
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
@@ -513,6 +593,33 @@ namespace Assets.Scripts.Netcode
                     enabled = false;
                     Application.Quit();
                     return;
+                }
+            }
+            if (checkMountVisuals && NetworkClient.isConnected)
+            {
+                if (!mountVisualHandler)
+                {
+                    mountVisualHandler = true;
+                    NetworkClient.RegisterHandler<MountVisualSmokeStep>(step =>
+                    {
+                        mountVisualPhase = step.phase; visualCaptureAt = Time.unscaledTime + .3f;
+                        visualAfkCaptureAt = step.phase == 0 ? Time.unscaledTime + 5.3f : float.PositiveInfinity;
+                        Debug.Log("[LoadTest] visual step=" + step.phase);
+                    });
+                }
+                if (!mountVisualReady && (string.IsNullOrEmpty(captureDirectory) || captureWarmed) && SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal))
+                {
+                    mountVisualReady = true; NetworkClient.Send(new PresenterSmokeReady { scene = SceneManager.GetActiveScene().name });
+                }
+                var visualInput = PlayerInputManager.Instance;
+                if (visualInput != null)
+                {
+                    visualInput.SetSyntheticHeld(1, PlayerAction.ActionL, mountVisualPhase == 1);
+                    visualInput.SetSyntheticHeld(1, PlayerAction.ActionC, mountVisualPhase == 4);
+                    visualInput.SetSyntheticHeld(1, PlayerAction.MoveUp, mountVisualPhase == 1 || mountVisualPhase == 4 || mountVisualPhase == 6);
+                    visualInput.SetSyntheticHeld(1, PlayerAction.MoveDown, mountVisualPhase == 7);
+                    visualInput.SetSyntheticHeld(1, PlayerAction.MoveRight, mountVisualPhase == 2);
+                    visualInput.SetSyntheticHeld(1, PlayerAction.MoveLeft, mountVisualPhase == 5);
                 }
             }
             if (checkLauncherInput && NetworkClient.isConnected && NetworkClient.localPlayer != null && PlayerInputManager.Instance != null)
@@ -585,11 +692,17 @@ namespace Assets.Scripts.Netcode
                 CaptureMountFrame(camera, "warmup.png"); captureWarmed = true;
                 return;
             }
+            if (checkMountVisuals && visualCaptureSerial < 80 && (Time.unscaledTime >= visualCaptureAt || Time.unscaledTime >= visualAfkCaptureAt))
+            {
+                if (Time.unscaledTime >= visualCaptureAt) visualCaptureAt = float.PositiveInfinity;
+                else visualAfkCaptureAt = float.PositiveInfinity;
+                CaptureMountFrame(camera, $"visual-{++visualCaptureSerial:D2}-phase-{mountVisualPhase:D2}.png");
+            }
             var fx = NetworkClient.localPlayer.GetComponent<NetworkBombFx>();
-            bool riding = fx != null && fx.RidingArcActive || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true;
+            bool riding = fx != null && (fx.RidingArcActive || checkMountVisuals && fx.PinkJumpVisualActive) || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true;
             if (riding && !capturedRiding) { captureArc++; captureFrame = 0; captureNext = Time.unscaledTime; }
             capturedRiding = riding;
-            if (!riding || captureArc > 3 || Time.unscaledTime < captureNext) return;
+            if (!riding || captureArc > (checkMountVisuals ? 12 : 3) || Time.unscaledTime < captureNext) return;
             captureNext = Time.unscaledTime + 0.12f;
             CaptureMountFrame(camera, $"arc-{captureArc:D2}-{captureFrame++:D2}.png");
         }
@@ -620,6 +733,9 @@ namespace Assets.Scripts.Netcode
         void OnDisable()
         {
             if (PlayerInputManager.Instance == null) return;
+            if (checkMountVisuals)
+                foreach (var action in new[] { PlayerAction.ActionL, PlayerAction.ActionC, PlayerAction.MoveUp, PlayerAction.MoveDown, PlayerAction.MoveRight, PlayerAction.MoveLeft })
+                    PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
             if (runRealInput || checkLauncherInput)
                 foreach (var action in new[] { PlayerAction.Select, PlayerAction.MoveLeft, PlayerAction.MoveRight })
                     PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);

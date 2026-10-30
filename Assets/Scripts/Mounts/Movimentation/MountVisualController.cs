@@ -470,6 +470,14 @@ public class MountVisualController : MonoBehaviour
         Vector2 face = idle ? owner.FacingDirection : owner.Direction;
         ApplyDirection(face, idle);
         if (scaleWalkAnimationWithOwnerSpeed) AdvanceManualWalkAnimation();
+        // Approved poses and Pink's external jump animator can enable branches
+        // without updating this controller's cached active renderer.
+        if (allAnimatedRenderers == null) CacheAllRenderers();
+        foreach (var renderer in allAnimatedRenderers)
+            if (renderer != null && renderer != active &&
+                (active == null || !active.transform.IsChildOf(renderer.transform)))
+                SetRendererBranchEnabled(renderer, false);
+        SetRendererBranchEnabled(active, true);
         ApplyPinkRidingHorizontalFlipOverride(face);
         if (isPinkLouieVisual && !IsPinkRidingAnimationActive()) ForceDisableRightRenderer();
         ApplyBlinkSyncFromOwnerIfNeeded(); ApplyExternalTintIfNeeded(); ApplyPlayerEffectTintIfNeeded();

@@ -86,6 +86,7 @@ public class PlayerMountCompanion : MonoBehaviour
     GameObject pendingWorldMountLouie;
     MountedType pendingWorldMountType = MountedType.None;
     MountEggQueue pendingWorldMountQueue;
+    public uint MountDeathRevision { get; private set; }
     GameObject detachedPresentation;
     MountedType detachedPresentationType;
 
@@ -483,7 +484,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
     public void OnMountedLouieHit(int damage, bool fromExplosion)
     {
-        if (currentLouie == null)
+        if (currentLouie == null || mountedLouieHealth != null &&
+            (mountedLouieHealth.IsInvulnerable || mountedLouieHealth.HasExternalInvulnerability))
             return;
 
         int dmg = Mathf.Max(1, damage);
@@ -501,29 +503,23 @@ public class PlayerMountCompanion : MonoBehaviour
             }
         }
 
-        if (fromExplosion && mountedLouieHealth != null)
-        {
-            int lifeAfter = mountedLouieHealth.life - dmg;
-            if (lifeAfter <= 0)
-            {
-                skipQueueRemountOnce = true;
-                killDetachedLouieByExplosion = true;
-            }
-        }
-
         if (mountedLouieHealth != null)
         {
             if (mountedLouieHealth.IsInvulnerable)
                 return;
 
-            mountedLouieHealth.TakeDamage(dmg);
+            mountedLouieHealth.TakeDamage(dmg, fromExplosion);
             mountedLouieHp = Mathf.Max(0, mountedLouieHealth.life);
 
             if (mountedLouieHealth.life > 0)
                 SyncPlayerBlinkWithLouie();
 
             if (mountedLouieHealth.life <= 0)
+            {
+                skipQueueRemountOnce = fromExplosion;
+                killDetachedLouieByExplosion = fromExplosion;
                 LoseMount();
+            }
 
             return;
         }
@@ -642,6 +638,8 @@ public class PlayerMountCompanion : MonoBehaviour
             return;
 
         var louie = currentLouie;
+        var dyingType = mountedType;
+        ++MountDeathRevision;
         currentLouie = null;
 
         Vector3 snappedWorldPos = GetPlayerTileCenter();
@@ -658,6 +656,12 @@ public class PlayerMountCompanion : MonoBehaviour
         DetachLouieToWorld(louie, snappedWorldPos, worldRot, disableRidingVisual: false);
 
         KillDetachedLouieGuaranteed(louie, byExplosion);
+        Assets.Scripts.Netcode.NetworkWorldMount.SpawnDeathPresentation(louie, dyingType);
+        // Co-op uses its existing scene renderer transport instead of a proxy.
+        if (louie.TryGetComponent<MovementController>(out var dyingMovement))
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackAnimation(
+                byExplosion && dyingMovement.spriteRendererDeathByExplosion != null
+                    ? dyingMovement.spriteRendererDeathByExplosion : dyingMovement.spriteRendererDeath);
     }
 
     #endregion

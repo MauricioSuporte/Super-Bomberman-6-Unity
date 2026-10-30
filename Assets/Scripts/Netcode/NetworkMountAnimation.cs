@@ -68,7 +68,7 @@ namespace Assets.Scripts.Netcode
         GameObject trackedMount;
         AnimatedSpriteRenderer[] renderers;
         SpriteRenderer[] sprites;
-        float nextSample;
+        float nextSample, nextVisualTrace;
         GreenLouieDashAnimator greenDash;
         BlackLouieDashAnimator blackDash;
         MountVisualController ownerVisual;
@@ -83,6 +83,11 @@ namespace Assets.Scripts.Netcode
         void LateUpdate()
         {
             if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient)) return;
+            // A consumed world mount is pending outside the actor until landing.
+            // Its approved frames must already have a client view during that arc.
+            if (!isServer && companion != null && companion.GetMountedLouieObject() == null &&
+                frameType != MountedType.None && frames.Count > 0 && GetComponent<NetworkBombFx>()?.MountingArcActive == true)
+                companion.ShowMountVisualClient(frameType);
             var mount = companion != null ? (isServer ? companion.GetMountPresentationObject() : companion.GetMountedLouieObject()) : null;
             if (mount != trackedMount) Rebind(mount);
             if (renderers == null) return;
@@ -112,15 +117,16 @@ namespace Assets.Scripts.Netcode
                     else if (!frames[i].Equals(frame)) { frames[i] = frame; changed = true; }
                 }
                 if (changed) { frameType = companion.GetMountPresentationType(); frameTime = NetworkTime.localTime; }
+                TraceVisual();
                 return;
             }
             if (GamePauseController.IsPaused) return;
             // Riding presents only the player arc; keep the ground mount on its approved timeline.
-            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || bombFx.PinkJumpVisualActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose && !bombFx.RidingArcActive))) return;
+            if (TryGetComponent<NetworkBombFx>(out var bombFx) && (bombFx.PlayerBounceActive || bombFx.PinkJumpVisualActive || (isLocalPlayer && bombFx.HasLocalMountAbilityPose && !bombFx.RidingArcActive))) { TraceVisual(); return; }
             if (bombFx?.RidingArcActive != true && isLocalPlayer && TryGetComponent<MovementController>(out var movement) && movement.PredictLocally && movement.IsMounted && ownerVisual != null)
             {
                 ownerVisual.PresentNetworkLocomotion();
-                return;
+                TraceVisual(); return;
             }
             for (int i = 0; i < renderers.Length && i < frames.Count; i++)
             {
@@ -144,13 +150,38 @@ namespace Assets.Scripts.Netcode
                 if (frame.visible && greenDash != null) greenDash.PresentNetworkAfterimage(animation);
                 if (frame.visible && blackDash != null) blackDash.PresentNetworkAfterimage(animation);
             }
+            TraceVisual();
+        }
+
+        void TraceVisual()
+        {
+            if (!GameplayLatencyDiagnostics.Enabled || Time.unscaledTime < nextVisualTrace || renderers == null) return;
+            nextVisualTrace = Time.unscaledTime + .1f;
+            var visible = new List<string>();
+            for (int i = 0; i < renderers.Length; i++)
+                if (sprites[i] != null && sprites[i].enabled && sprites[i].gameObject.activeInHierarchy) visible.Add(renderers[i].name);
+            var bodies = new List<string>(); Vector2 offset = default;
+            foreach (var body in GetComponentsInChildren<AnimatedSpriteRenderer>(true))
+                if ((trackedMount == null || !body.transform.IsChildOf(trackedMount.transform)) && body.TryGetComponent<SpriteRenderer>(out var sprite) && sprite.enabled && sprite.gameObject.activeInHierarchy)
+                { bodies.Add(body.name); offset = body.transform.position - transform.position; }
+            var fx = GetComponent<NetworkBombFx>();
+            var entry = GameplayLatencyDiagnostics.For("mount_visual_sample", GetComponent<MovementController>(), detail:
+                "type=" + companion.GetMountPresentationType() + ";riding=" + (GetComponent<PlayerRidingController>()?.IsPresentingArc == true) + ";pink=" + (fx?.PinkJumpVisualActive == true) + ";mount=" + string.Join(",", visible) + ";body=" + string.Join(",", bodies));
+            entry.delta = offset; GameplayLatencyDiagnostics.Write(entry);
+        }
+
+        public void RestoreOwnerLocomotion()
+        {
+            if (!isLocalPlayer || ownerVisual == null) return;
+            ownerVisual.RefreshHeadOnlyPlayerOffsets();
+            ownerVisual.PresentNetworkLocomotion();
         }
 
         NetworkVisualPose.Baseline[] ownerVisualBaseline;
         public void OwnerAuthorityPresentationChanged(bool active)
         {
             if (active) ownerVisualBaseline ??= NetworkVisualPose.CaptureBaseline(renderers, transform);
-            else { NetworkVisualPose.RestoreBaseline(ownerVisualBaseline); ownerVisualBaseline = null; }
+            else { NetworkVisualPose.RestoreBaseline(ownerVisualBaseline); ownerVisualBaseline = null; RestoreOwnerLocomotion(); }
         }
 
         void Rebind(GameObject mount)
@@ -162,6 +193,7 @@ namespace Assets.Scripts.Netcode
             {
                 movement.SetUseHeadOnlyWhenMounted(ownerVisual.useHeadOnlyPlayerVisual);
                 movement.SetMountedSpritesLocalYOverride(companion.GetMountedLouieType() == MountedType.Pink, movement.pinkMountedSpritesLocalY);
+                ownerVisual.RefreshHeadOnlyPlayerOffsets();
             }
             greenDash = mount != null ? mount.GetComponentInChildren<GreenLouieDashAnimator>(true) : null;
             blackDash = mount != null ? mount.GetComponentInChildren<BlackLouieDashAnimator>(true) : null;

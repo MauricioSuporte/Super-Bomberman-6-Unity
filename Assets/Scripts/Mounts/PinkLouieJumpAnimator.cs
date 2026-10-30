@@ -124,7 +124,7 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
 
         if (riderVisual != null)
         {
-            riderVisual.enabled = true;
+            riderVisual.enabled = Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally;
             ForceDisableRiderVisualRenderers();
         }
 

@@ -587,3 +587,27 @@ for both root and visual lift; reset it on a new launch. A successful server fix
 alone can hide an observer rewind: validate per-client phase progression and
 unlocked handoff from the completed JSONL. Run three-process smokes after the
 Editor/test process exits when RAM is limited; preserve the memory reserve.
+
+
+## Mount and player pose handoff
+
+Compare actual SpriteRenderer visibility with the presenter's cached active
+branch. An external Pink jump or AFK/emote can enable another branch while the
+cached walking direction stays unchanged. On owner locomotion handoff, enforce
+exclusivity across all mount renderers and keep native animation drivers disabled
+on pure clients. Reapply the mount's authored HeadOnly offsets after restoring a
+captured pose baseline. A received riding arc counts as a visual guard even when
+the native riding coroutine is not running.
+
+A consumed world mount can be pending outside the player until landing. Present
+its approved ground frames during the arc without granting mounted gameplay,
+colliders, health or egg ownership. A detached death needs an independent approved
+presentation endpoint; the player's mounted state must not freeze the old mount.
+Preserve the native death cause through CharacterHealth and do not remember an
+explosion rejected by invulnerability. Co-op already has scene renderer transport;
+register the chosen death renderer there instead of publishing a duplicate proxy.
+
+For L+direction emotes, carry the explicit directional press with L through the
+input queue. Held-state reconstruction cannot replace that edge and must never
+manufacture another ActionA press after a delivery gap. Validate both the network
+input bridge and the native pose's start/release using actual client input.

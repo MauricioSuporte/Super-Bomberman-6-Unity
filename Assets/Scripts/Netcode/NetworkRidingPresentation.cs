@@ -94,6 +94,8 @@ namespace Assets.Scripts.Netcode
                 Vector3.Distance(predicted.arc.target, approved.arc.target) <= .125f;
         }
 
+        public bool MountingArcActive => ridingActive && ridingMotion.arc.kind == PlayerRidingController.RidingArcType.Mount;
+
         bool BeginRidingPresentation(RidingMotion motion, bool confirmed)
         {
             bool revengeReturn = confirmed && GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true;

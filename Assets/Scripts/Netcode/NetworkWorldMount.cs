@@ -18,6 +18,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] Vector3 worldScale;
         public readonly SyncList<MountFrame> frames = new();
         [SyncVar(hook = nameof(OnWorldMountTime))] double sampleTime;
+        [SyncVar] double presentationEndTime;
         struct WorldMountSample
         {
             public double time;
@@ -72,6 +73,10 @@ namespace Assets.Scripts.Netcode
         }
 
         MountWorldPickup source;
+        GameObject presentationTarget;
+        [SyncVar] bool deathPresentation;
+        public bool PresentsDeath => deathPresentation;
+        float nextDeathTrace;
         AnimatedSpriteRenderer[] animations;
         SpriteRenderer[] sprites;
         GameObject visual;
@@ -89,12 +94,37 @@ namespace Assets.Scripts.Netcode
                 if (definition.mountCatalog == null || definition.mountCatalog.GetMountPrefabForType(pickup.Type) == null) return false;
                 var proxy = Instantiate(prefab).GetComponent<NetworkWorldMount>();
                 proxy.source = pickup;
+                proxy.presentationTarget = pickup.gameObject;
                 pickup.NetworkPresentation = proxy;
                 proxy.mountType = pickup.Type;
                 proxy.BindAnimations(pickup.gameObject);
                 proxy.Capture();
                 NetworkServer.Spawn(proxy.gameObject);
                 Debug.Log($"[WorldMount] spawned type={pickup.Type} netId={proxy.netId}");
+                return true;
+            }
+            return false;
+        }
+
+        // Detached death is approved render output, never a collectible or a
+        // client-side kill routine. Reuse the existing world-mount transport.
+        public static bool SpawnDeathPresentation(GameObject target, MountedType type)
+        {
+            if (!NetworkServer.active || !NetSync.IsServer || BombermanNetworkManager.IsCoopStage || target == null || type == MountedType.None || NetworkManager.singleton == null) return false;
+            foreach (var prefab in NetworkManager.singleton.spawnPrefabs)
+            {
+                if (prefab == null || !prefab.TryGetComponent<NetworkWorldMount>(out var definition)) continue;
+                if (definition.mountCatalog == null || definition.mountCatalog.GetMountPrefabForType(type) == null) return false;
+                var proxy = Instantiate(prefab).GetComponent<NetworkWorldMount>();
+                proxy.presentationTarget = target; proxy.deathPresentation = true; proxy.mountType = type;
+                proxy.BindAnimations(target); proxy.Capture(); NetworkServer.Spawn(proxy.gameObject);
+                if (GameplayLatencyDiagnostics.Enabled)
+                {
+                    var mover = target.GetComponent<MovementController>();
+                    var entry = GameplayLatencyDiagnostics.For("mount_death_publish", mover,
+                        detail: "type=" + type + ";explosion=" + (mover != null && mover.DeathWasByExplosion));
+                    entry.netId = proxy.netId; GameplayLatencyDiagnostics.Write(entry);
+                }
                 return true;
             }
             return false;
@@ -170,7 +200,14 @@ namespace Assets.Scripts.Netcode
             {
                 // Consumption transfers the original mount to PlayerMountCompanion;
                 // NetworkPlayerState then supplies its attached client visual.
-                if (source == null || !source.IsAvailable || source.transform.parent != null)
+                if (!NetworkServer.active) return;
+                if (deathPresentation && (presentationTarget == null || !presentationTarget.activeInHierarchy))
+                {
+                    if (presentationEndTime == 0) presentationEndTime = NetworkTime.localTime;
+                    if (NetworkTime.localTime >= presentationEndTime + 1) NetworkServer.Destroy(gameObject);
+                    return;
+                }
+                if (!deathPresentation && (source == null || !source.IsAvailable || source.transform.parent != null))
                 {
                     Debug.Log($"[WorldMount] removed type={mountType} netId={netId}");
                     NetworkServer.Destroy(gameObject);
@@ -187,10 +224,12 @@ namespace Assets.Scripts.Netcode
 
         void Capture()
         {
-            contactAvailable = source.IsAvailable && source.TryGetComponent<Collider2D>(out var sourceCollider) && sourceCollider.enabled;
-            worldPosition = source.transform.position;
-            worldRotation = source.transform.rotation;
-            worldScale = source.transform.lossyScale;
+            var target = presentationTarget != null ? presentationTarget : source != null ? source.gameObject : null;
+            if (target == null) return;
+            contactAvailable = !deathPresentation && source != null && source.IsAvailable && source.TryGetComponent<Collider2D>(out var sourceCollider) && sourceCollider.enabled;
+            worldPosition = target.transform.position;
+            worldRotation = target.transform.rotation;
+            worldScale = target.transform.lossyScale;
             for (int i = 0; i < animations.Length; i++)
             {
                 var animation = animations[i];
@@ -201,7 +240,7 @@ namespace Assets.Scripts.Netcode
                     idle = animation.idle, frame = animation.CurrentFrame,
                     flipX = sprite != null && sprite.flipX, flipY = sprite != null && sprite.flipY,
                     color = sprite != null ? sprite.color : Color.white,
-                    localPosition = animation.transform.localPosition, pose = NetworkVisualPose.Capture(source.transform, sprite)
+                    localPosition = animation.transform.localPosition, pose = NetworkVisualPose.Capture(target.transform, sprite)
                 };
                 if (frames.Count <= i) frames.Add(frame);
                 else if (!frames[i].Equals(frame)) frames[i] = frame;
@@ -212,6 +251,8 @@ namespace Assets.Scripts.Netcode
         void Apply()
         {
             if (GamePauseController.IsPaused && worldPresented) return;
+            if (presentationEndTime > 0 && NetworkTime.time >= presentationEndTime)
+            { if (visual != null) visual.SetActive(false); return; }
             SampleWorldMount(NetworkTime.time, out var position, out var rotation, out var scale, out var buffered);
             transform.SetPositionAndRotation(position, rotation);
             transform.localScale = scale; worldPresented = true;
@@ -230,6 +271,17 @@ namespace Assets.Scripts.Netcode
                 sprite.flipX = frame.flipX; sprite.flipY = frame.flipY;
                 sprite.color = frame.color;
                 frame.pose.Apply(transform, sprite);
+            }
+            if (deathPresentation && GameplayLatencyDiagnostics.Enabled && Time.unscaledTime >= nextDeathTrace)
+            {
+                nextDeathTrace = Time.unscaledTime + .05f;
+                for (int i = 0; i < animations.Length; i++)
+                    if (sprites[i] != null && sprites[i].enabled && sprites[i].gameObject.activeInHierarchy)
+                    {
+                        var entry = GameplayLatencyDiagnostics.For("mount_death_visual", detail: "type=" + mountType + ";renderer=" + animations[i].name + ";frame=" + animations[i].CurrentFrame);
+                        entry.netId = netId; entry.position = sprites[i].transform.position;
+                        GameplayLatencyDiagnostics.Write(entry);
+                    }
             }
         }
     }

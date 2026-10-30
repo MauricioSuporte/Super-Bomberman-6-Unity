@@ -128,7 +128,7 @@ namespace Assets.Scripts.Netcode
                 else for (int i = 0; i < Actions.Length; i++)
                 {
                     if (input.Get(1, Actions[i])) sampledHeld |= 1 << i;
-                    if (i >= 4 && input.GetDown(1, Actions[i])) { pendingPressed |= 1 << i; pressedNow |= 1 << i; }
+                    if ((i >= 4 || input.Get(1, PlayerAction.ActionL)) && input.GetDown(1, Actions[i])) { pendingPressed |= 1 << i; pressedNow |= 1 << i; }
                 }
                 if (Blocked) movement.SetPredictLocally(false);
                 else
@@ -253,7 +253,7 @@ namespace Assets.Scripts.Netcode
             for (int i = 0; i < Actions.Length; i++)
             {
                 input.SetSyntheticHeld(setup.PlayerId, Actions[i], (held & (1 << i)) != 0, explicitEdges: true);
-                if (i >= 4 && (pressed & (1 << i)) != 0) input.TapSynthetic(setup.PlayerId, Actions[i]);
+                if ((pressed & (1 << i)) != 0) input.TapSynthetic(setup.PlayerId, Actions[i]);
             }
         }
 
@@ -267,7 +267,9 @@ namespace Assets.Scripts.Netcode
             if (((frame.held | frame.pressed) & ValidMask) != 0) BombermanNetworkManager.RegisterRoomActivity();
             if (Blocked) { processedTick = frame.tick; return; }
             frame.held &= ValidMask;
-            frame.pressed &= ValidMask & ~15;
+            // Direction edges are presentation commands only while L is part
+            // of the same input. Held input after an outage never creates edges.
+            frame.pressed &= ((frame.held | frame.pressed) & 256) != 0 ? ValidMask : ValidMask & ~15;
             // Bound queued time as well as memory after a network stall. Dropped ticks
             // are acknowledged only with the state of a later actually simulated tick.
             if (serverInputs.Count == MaxQueuedTicks)

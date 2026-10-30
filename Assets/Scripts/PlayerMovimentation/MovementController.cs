@@ -270,7 +270,7 @@ public partial class MovementController : MonoBehaviour, IKillable
     private bool NetworkPlatformControlsPose => Assets.Scripts.Netcode.NetSync.IsOnline &&
         FloatingPlatform.TryGetPlatformForRider(this, out var platform) && platform.RequiresAuthorityRiderPose;
     public string NetworkPredictionBlockReason => isDead ? "dead" : inputLocked ? "input_locked" : isEndingStage ? "stage_ending" :
-        NetworkPlatformControlsPose ? "platform_transport" : externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
+        NetworkPlatformControlsPose ? "platform_transport" : inactivityMountedDownOverride ? "inactivity_pose" : externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
         !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && !string.IsNullOrEmpty(networkBoat.path) && !CanPredictBoatRide ? "boat_context_pending" :
         externalVisualSuppressed && !CanPredictGloveCarry && !CanPredictBoatRide ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
         IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :
@@ -700,7 +700,7 @@ public partial class MovementController : MonoBehaviour, IKillable
         if (cachedRiding == null)
             TryGetComponent(out cachedRiding);
 
-        return cachedRiding != null && cachedRiding.IsPlaying;
+        return cachedRiding != null && cachedRiding.IsPresentingArc;
     }
 
     private void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
