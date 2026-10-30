@@ -48,9 +48,13 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 - **Publicado:** protocolo57, commit `97d88c4f7`,
   [Actions40964582861](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40964582861)
-  completed/success confirmado. Novo lote58 de visuais reportados pelo usuário
-  está LOCAL e em validação; nenhuma publicação58 ainda.
-- **Validação local mais recente (C02/protocolo57):**971/971Unity,0skips,
+  completed/success confirmado. Correções de visuais 58 implementadas e validadas
+  no commit `605f9d662`; publicação de cliente + servidor em andamento no
+  [Actions 41054228040](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41054228040).
+  Ainda não declarar o servidor atualizado enquanto o deploy não concluir.
+- **Validação local mais recente (visuais/protocolo58):**984/984 Unity, sem skips;
+  C# 0 erros/0 avisos, Python 72/72, Peers4 renderizado aprovado com 2 clientes.
+- **Validação anterior (C02/protocolo57):**971/971Unity,0skips,
   incluindo43casosLaunch; C#runtime/Editor0erros/0avisos; Python68/68(60CI+8Directory).
   Cannon2(Stage_2-3),Geyser2(Stage_3-3) eArena2(Battle4):2clientesMirror reais,
   90s porcenário, owner/observer com fase contínua sem recuo, begin/end e controle
@@ -228,7 +232,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
-- [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 em andamento no Actions40964582861.
+- [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [ ] C03: parcial55: preparação/voo/deformação aprovados; cancelamento, pose/proteção, reutilização e início no frame de input testados (903/903). Descritores de curva/handoff completo e comparação manual pendentes.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
@@ -3088,3 +3092,15 @@ do harness Development, recompilado na Development6 e exercitado no Peers4. C#
 final 0 erros/0 avisos; Python 64 CI + 8 Directory aprovados. 14 C# com UTF-8
 estrito, meta e fonte idêntica ao runner. Nenhuma cena/prefab/texture alterada.
 Próximo passo: restaurar somente arquivos próprios do runner e commit/push both58.
+
+
+### Publicação iniciada
+
+Commit `605f9d662a9557b7c74b757ec050c01036c7008b`, push v0.5.0 confirmado.
+Actions `41054228040`, job `124057578682`, target both / quick iniciado.
+Última consulta: checkout em andamento; pré-flight/build/deploy ainda pendentes.
+Consultar esse run antes de declarar publicação concluída. O runner teve somente
+os arquivos próprios restaurados antes do push e o Actions assumiu seu checkout.
+Os três assets de fonte sujos do usuário continuam preservados no root.
+Progresso do plano permanece 19/33: este lote corrige os visuais reportados, sem
+marcar outros IDs parciais como concluídos. Não há smoke/Unity local ainda rodando.
