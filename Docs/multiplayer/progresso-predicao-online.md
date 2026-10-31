@@ -50,7 +50,13 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   [Actions 41054228040](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41054228040)
   concluído com sucesso (cliente e servidor). Usuário testou e aprovou os ajustes
   de montaria, morte, cabeça, Pink e emote/AFK em 30/10/2026.
-- **Validação local mais recente (visuais/protocolo58):**984/984 Unity, sem skips;
+- **C03/protocolo 59:** commit `cef9598d7` enviado; cliente + servidor na fila do
+  [Actions 41150289348](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41150289348).
+  Ainda não declarar publicado enquanto o deploy não concluir.
+- **Validação local mais recente (C03/protocolo59):** Full3 995/995, sem skips;
+  C# 0 erros/0 avisos; ferramentas 73/73 e 5 focados; Peers3 renderizado aprovado
+  com 2 clientes, endpoints de 750/20/240 ms apresentados em ambos.
+- **Validação anterior (visuais/protocolo58):**984/984 Unity, sem skips;
   C# 0 erros/0 avisos, Python 72/72, Peers4 renderizado aprovado com 2 clientes.
 - **Validação anterior (C02/protocolo57):**971/971Unity,0skips,
   incluindo43casosLaunch; C#runtime/Editor0erros/0avisos; Python68/68(60CI+8Directory).
@@ -74,7 +80,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
 - **Próximo:** C04, auditoria das fases/rotas e integração dos carrinhos Battle9/12
   e Stage3-2, preservando entrada/saída/ocupação autoritativas. C03 implementado e
-  testado no protocolo 59 local; publicação ainda será iniciada.
+  testado no protocolo 59; publicação na fila do Actions 41150289348.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -3220,3 +3226,15 @@ Peers3. C# final0erros/0avisos; Python65CI+8Directory73/73, mais5 testes focados
 do validador ampliado. UTF8/meta e fontes do runner idênticas ao root conferidos.
 Nenhuma cena/prefab/texture modificada. Checklist atualizado:20/33 feitos,13parciais.
 Próximo: restaurar só owned paths do runner, commitar/publicar cliente+servidor59.
+
+
+### Publicação C03 iniciada
+
+Commit runtime/testes/docs/skill `cef9598d77e9fbd86c14dfe7aa936d978b05a0ce`,
+push v0.5.0 confirmado. Actions41150289348, target both / quick, última consulta
+queued. Conferir esse run na retomada antes de declarar servidor59 publicado.
+Runner restaurado somente nos owned paths; nenhum Unity ou smoke ficou ativo.
+Três assets de fonte do usuário preservados no root. Checkpoint, notas e matriz
+foram atualizados; C03 marcado feito por implementação/testes, manual global
+permanece separado. Próximo ID de implementação: C04 (ver auditoria preliminar
+acima); os outros 13 IDs parciais não foram marcados concluídos.
