@@ -43,15 +43,13 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 
 ## Estado atual
 
-Atualizado em29/10/2026. O checklist distingue implementação/testes de validação
+Atualizado em 30/10/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo57, commit `97d88c4f7`,
-  [Actions40964582861](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/40964582861)
-  completed/success confirmado. Correções de visuais 58 implementadas e validadas
-  no commit `605f9d662`; publicação de cliente + servidor em andamento no
-  [Actions 41054228040](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41054228040).
-  Ainda não declarar o servidor atualizado enquanto o deploy não concluir.
+- **Publicado:** protocolo 58, commit `605f9d662`,
+  [Actions 41054228040](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41054228040)
+  concluído com sucesso (cliente e servidor). Usuário testou e aprovou os ajustes
+  de montaria, morte, cabeça, Pink e emote/AFK em 30/10/2026.
 - **Validação local mais recente (visuais/protocolo58):**984/984 Unity, sem skips;
   C# 0 erros/0 avisos, Python 72/72, Peers4 renderizado aprovado com 2 clientes.
 - **Validação anterior (C02/protocolo57):**971/971Unity,0skips,
@@ -72,12 +70,11 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:**19 IDs implementados/testados e14 parciais; todos os33 iniciados.
+- **Checklist:** 20 IDs implementados/testados e 13 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** publicar A11/56 e conferir o CI; continuar curvas e entrega ao motor
-  de C02/C03 e os demais IDs parciais.
-  A12 já teve integração de morte nativa, C e3cargas/releases porcliente. ClownMask/SunMask/
-  Stage_3-6 já tiveram integração real documentada abaixo; manual visual pendente.
+- **Próximo:** C04, auditoria das fases/rotas e integração dos carrinhos Battle9/12
+  e Stage3-2, preservando entrada/saída/ocupação autoritativas. C03 implementado e
+  testado no protocolo 59 local; publicação ainda será iniciada.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -233,7 +230,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
-- [ ] C03: parcial55: preparação/voo/deformação aprovados; cancelamento, pose/proteção, reutilização e início no frame de input testados (903/903). Descritores de curva/handoff completo e comparação manual pendentes.
+- [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
 - [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
@@ -3104,3 +3101,122 @@ os arquivos próprios restaurados antes do push e o Actions assumiu seu checkout
 Os três assets de fonte sujos do usuário continuam preservados no root.
 Progresso do plano permanece 19/33: este lote corrige os visuais reportados, sem
 marcar outros IDs parciais como concluídos. Não há smoke/Unity local ainda rodando.
+
+
+## Retomada C03 — protocolo 59 local
+
+Aceite humano dos visuais 58 recebido e publicação 58 confirmada success.
+PlayerLaunchArc inclui Rope com ease-out quadrático e pixel grid nativos. A
+corda publica esse descritor e fase após cada passo aceito, sem mudar checagem
+de obstáculos. O presenter usa timeline buffered nos dois papéis e limita a
+continuação à maior fase já aprovada, pois blockers móveis só o servidor decide.
+Scope da corda retém heartbeat/pausa e encerra receita depois de restaurar flags,
+antes do snapshot de handoff. Preparação/tiles mantêm transporte aprovado existente.
+
+Testes novos no OnlineRoomLaunchCurveTests: geometria nativa/pixel grid, prefixo
+confirmado, bloqueio antecipado, owner/observer e pausa longa. Fixture Development
+launcher `rope`: BattleMode_11, dois owners a pé/Pink, input real Up para segurar
+corda, Right durante voo/handoff e cancelamento da segunda instância.
+
+Exec 5179 roda PredictionRope59Full (992 esperados) e, se passar, Development
+sequencialmente no runner isolado. Owned paths em Logs/PredictionRope59-owned-paths.json.
+Não sobrescrever runner enquanto Unity estiver ativo. Próximo: verificar suíte,
+smoke renderizado --launchers rope com diagnostics, closed JSONL e capturas.
+Não executar Unity junto com smoke de três processos (reserva 3 GiB). Fontes do
+usuário preservadas. Ainda sem commit/publicação 59.
+
+
+C03 checkpoint seguinte: Full1 passou 992/992, sem skips; Development1 compilou.
+Revisão encontrou voo truncado em menos de um intervalo SyncVar: protocolo 59
+agora envia também begin/stop confiáveis somente para Rope, com revisão única.
+A recepção conserva a duração relativa de begin/stop tardios e aplica o mesmo
+deslocamento de relógio à geração, sem extrapolar prefixo desconhecido. Dois
+testes adicionais de entrega tardia/stop curto (owner/observer) levam a 994.
+Fixture final usa corredores livres x=-7 e x=5 para voo completo/cancelamento,
+e repete x=-6 sob pilar para testar prefixo curto. Não usar Development1 como
+artefato final: ele contém harness anterior à escolha dos corredores e não tem
+RPC de bordas. Exec28588: Full2+Development2 finais em andamento; fontes copiadas.
+Python65CI+8Directory73/73; C# final em exec67118 aguardando resultado.
+Ainda sem commit59 nem smoke59. Preservar as fontes do usuário e não tocar runner.
+
+
+C03 Peers1 falhou com evidência útil: servidor concluiu os três casos, ambos
+clientes receberam begin/stop da geração curta, mas só apresentaram dois voos.
+Os JSONLs fechados mostram também batch inicial de fases 0–540 ms no mesmo
+frame após shader/render stall. Retime no recebimento não bastava: o relógio
+da rede podia avançar antes do frame de apresentação e pular a janela curta.
+
+Correção atual: relógio local de reprodução por ator/generation, iniciado no
+frame efetivo, passo limitado a 50 ms e ao prefixo aprovado; stop recebido fica
+retido até apresentar o endpoint. Corpo e montaria usam a mesma fase mapeada ao
+clock nativo, sem repetir uma pausa já observada. Pausa conserva fase; timeout
+sem aprovação cancela a receita sem conceder predição e não revive a geração
+expirada. Ack de movimento livre não encerra cedo uma corda ainda apresentada.
+Novo launcher de outra família preempta o clock antigo. Nenhum input, física,
+dano ou invulnerabilidade nativa roda no client.
+
+Full2 passou 994/994 e Development2 compilou; ambos anteriores ao novo clock.
+Exec16595 roda Full3 (995 esperados) e Development3 finais. Não copiar runner
+ativo. C# mais recente passou antes da guarda extra de timeout, repetir final.
+Próximo smoke: PredictionRope59Peers2 (rope/rendered/diagnostics, 90 s). Exigir
+três gerações em cada client, begin/end, fases sem recuo e motor desbloqueado.
+Manter Peers1 como falha; não flexibilizar o validador para escondê-la.
+
+Auditoria preliminar C04: MinecartView já interpola cantos de trilho e offset/
+escala; não criar outro presenter. Battle9/12 têm transporte próprio, Stage3-2
+usa stream co-op. Escopo do plano mantém entrada/saída/ocupação autoritativas;
+a pendência histórica de "boarding previsto" precisa ser confrontada com esse
+limite antes de implementar. Nenhuma alteração C04 feita neste lote.
+
+
+Full3 passou 995/995 (0 skips), C# 0 erros/0 avisos. Development3 compilou com
+o clock final. Foi acrescentado somente um evento diagnóstico após aplicar o
+endpoint: launch_recipe_endpoint. O validador agora exige os endpoints das três
+gerações e um prefixo apresentado de 0–50 ms em cada cliente. Cinco testes do
+validador passaram. Exec36903 compila Development4 com esse log; exec10048 C#
+final. Fontes finais funcionais são as do Full3, fora esse registro diagnóstico.
+Próximo: PredictionRope59Peers2 via smoke_full_clients.run(... launcher_kind='rope',
+diagnostics=True, rendered=True, seconds=90). Aguardar saída de todos os players
+antes de ler JSONL. Não há smoke ativo agora. Ainda sem commit/publicação59.
+
+
+Peers2 falhou na precondição nativa do prefixo curto: o input Right anterior
+ainda chegava quando a fixture reposicionava para x=-6; o ator mudava para um
+corredor livre antes do Up, produzindo voo completo. Os JSONLs foram copiados
+após fechar todos os processos. Confirmam o clock corrigido: endpoints de
+750 ms apresentados nas gerações 1–5 pelos dois clientes, sem encurtar o voo.
+Não tratar esse smoke como aprovado, pois o cenário de bloqueio não ocorreu.
+
+Harness final agora envia passo neutro e espera RopeSmokeAck com tick depois de
+dois FixedUpdates do client, seguido de processamento desse tick e controles
+zerados no servidor, antes de cada reposicionamento. Evita fabricar cenário com
+input antigo em trânsito. Registro e mensagens são somente Development.
+Exec30716 compila Development5; exec97764 C# final. Próximo Peers3, mesmas
+exigências do validador, sem afrouxar endpoints/curva/bloqueio/cancelamento.
+Código funcional continua o do Full3/995; após ele só diagnóstico e harness.
+
+
+### C03 aprovado localmente — 30/10/2026
+
+Development5 compilou. `Logs/PredictionRope59Peers3/result.json` aprovado: 90 s
+solicitados, 108,625 s totais, dois clientes Mirror reais com câmera URP e input
+sintético no caminho de hardware/NPI. Mesmo Assembly-CSharp nos três players:
+`1ef76e58be6f36bbbdfb711746cfaf9f4cc87a74570849ec9d03fa7329062f7c`.
+
+Ambos apresentaram e registraram os endpoints completos antes do handoff:
+- Player1/seq1: 750 ms, posição (-7,-4), voo completo a pé.
+- Player1/seq2: 20 ms, posição (-6,3.5625), prefixo bloqueado pelo pilar.
+- Player2/seq1: 240 ms, posição (5,-0.3125), cancelamento com Pink montada.
+Client1: 2begins/2ends/17samples owner e1/1/6 observer. Client2:1/1/7 owner e
+2/2/19 observer. Fases sem recuo e movimento desbloqueado após end; zero erros
+de replicação/avisos do servidor. Capturas URP distintas de voo a pé e montado
+foram inspecionadas. A fixture usa atores duráveis; não é teste humano de latência
+nem comparação manual completa com offline. Poses especiais nativas montadas e
+qualidade perceptual permanecem no roteiro global, sem alterar arte offline.
+
+Full3 995/995 passou (sem skips). Depois dele somente log de endpoint e handshake
+de input da fixture; ambos compilaram no Development5 e foram exercitados no
+Peers3. C# final0erros/0avisos; Python65CI+8Directory73/73, mais5 testes focados
+do validador ampliado. UTF8/meta e fontes do runner idênticas ao root conferidos.
+Nenhuma cena/prefab/texture modificada. Checklist atualizado:20/33 feitos,13parciais.
+Próximo: restaurar só owned paths do runner, commitar/publicar cliente+servidor59.

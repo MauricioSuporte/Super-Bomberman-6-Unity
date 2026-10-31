@@ -310,3 +310,13 @@ teleporte ao destino e reutilização. A baseline com a mesma fixture corrigida
 falhou no input preso após desativar. PredictionRopeLifetime55Immediate também
 exige preparação no frame da chamada. Isso verifica código nativo e lifetime;
 não substitui curva/renderização/2peers em uma arena completa.
+
+
+### Evidência automatizada C03 — protocolo59
+
+PredictionRope59Full3:995/995; PredictionRope59Peers3:90s, dois clientes Mirror
+renderizados. Ambos apresentaram início/fim, fases sem recuo e endpoints750ms
+(voo a pé),20ms (pilar) e240ms (cancelamento com Pink), voltando ao motor livre.
+Capturas URP inspecionadas, zero erros/avisos de servidor. Native lifetime/pausa/
+timeout continuam cobertos na suíte. Não substitui o roteiro humano em offline
+vs owner/observer, posse concorrente, dano, inputs variados e rede degradada.

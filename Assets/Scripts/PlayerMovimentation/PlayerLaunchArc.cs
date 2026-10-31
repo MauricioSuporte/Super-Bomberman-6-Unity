@@ -4,7 +4,7 @@ using UnityEngine;
 // No collision, input, RNG, protection or landing callbacks live in this value.
 public struct PlayerLaunchArc
 {
-    public enum LaunchKind { Spring, Cannon, BattleSpring }
+    public enum LaunchKind { Spring, Cannon, BattleSpring, Rope }
     public LaunchKind kind;
     public bool groundShadow;
     public Color shadowColor;
@@ -15,7 +15,13 @@ public struct PlayerLaunchArc
     public Vector4 room; // minX, minY, maxX, maxY
     public bool bounded, rootCarriesHeight, plateau, quantizeVisual;
 
-    public Vector2 Ground(float elapsed) => Wrap(Vector2.Lerp(start, end, Progress(elapsed)), bounded, room, tileSize);
+    public Vector2 Ground(float elapsed)
+    {
+        float t = Progress(elapsed);
+        if (kind == LaunchKind.Rope) t = 1f - Mathf.Pow(1f - t, 2f);
+        Vector2 point = Wrap(Vector2.Lerp(start, end, t), bounded, room, tileSize);
+        return kind == LaunchKind.Rope ? new Vector2(Mathf.Round(point.x * 16f) / 16f, Mathf.Round(point.y * 16f) / 16f) : point;
+    }
     public float Progress(float elapsed) => Mathf.Clamp01(elapsed / Mathf.Max(.0001f, duration));
     public float Height(float elapsed)
     {

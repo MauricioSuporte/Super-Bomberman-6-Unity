@@ -16,7 +16,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False):
     if mount_visuals and (mode != 'BattleMode' or not diagnostics or mount_input or launcher_kind or revenge_input):
         raise ValueError('mount visual fixture requires BattleMode diagnostics without other input fixtures')
-    if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon') or not diagnostics or mount_input or revenge_input or presenter_removal):
+    if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope') or not diagnostics or mount_input or revenge_input or presenter_removal):
         raise ValueError('launcher fixture requires diagnostics and no other input fixture')
     if rendered and not (mount_cycles or launcher_kind or mount_visuals):
         raise ValueError('rendered captures require mount cycles or launchers')
@@ -119,6 +119,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             raise RuntimeError('native launcher fixture did not finish with two actors')
         if mount_visuals and '[LoadTest] mount visuals completed players=2' not in server_text:
             raise RuntimeError('native mount visual fixture did not finish with two owners')
+        if launcher_kind == 'rope' and '[LoadTest] rope blocked prefix player=' not in server_text:
+            raise RuntimeError('native rope fixture did not exercise an early blocker')
         removed_bomb = None
         if revenge_input:
             if '[LoadTest] revenge-input completed players=2' not in server_text:
@@ -132,7 +134,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             for marker in ('removed source', 'completed'):
                 if 'presenter-removal '+marker+' bomb='+str(removed_bomb) not in server_text:
                     raise RuntimeError('missing presenter removal '+marker)
-        round_reloads = server_text.count('[Room] scene='+('BattleMode_4' if launcher_kind == 'arena' else 'BattleMode_15'))
+        round_reloads = server_text.count('[Room] scene='+('BattleMode_4' if launcher_kind == 'arena' else 'BattleMode_11' if launcher_kind == 'rope' else 'BattleMode_15'))
         if mode == 'BattleMode' and seconds >= 180 and round_reloads < 2: raise RuntimeError('round reload was not exercised')
         if mount_input:
             for marker in ('full-input dismount confirmed players=2', 'full-input world pickup replicated type=Mole',
@@ -253,7 +255,7 @@ if __name__ == '__main__':
     parser.add_argument('--diagnostics', action='store_true', help='Enable and copy the three process motion logs')
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
-    parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon'), help='Exercise native launcher trajectories with two actors')
+    parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope'), help='Exercise native launcher trajectories with two actors')
     parser.add_argument('--mount-visuals', action='store_true', help='Exercise native egg mount, death variants, Pink jump, emote and AFK handoff')
     parser.add_argument('--mount-cycles', action='store_true', help='Require three native remount cycles and egg transfers per owner')
     parser.add_argument('--rendered', action='store_true', help='Enable client graphics and capture mount arcs for visual review')

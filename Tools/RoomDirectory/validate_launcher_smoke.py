@@ -2,7 +2,17 @@
 
 
 def validate_launcher_capture(rows, launcher_kind):
-    expected = {'arena': 'BattleSpring', 'spring': 'Spring', 'cannon': 'Cannon'}[launcher_kind]
+    expected = {'arena': 'BattleSpring', 'spring': 'Spring', 'cannon': 'Cannon', 'rope': 'Rope'}[launcher_kind]
+    if launcher_kind == 'rope':
+        begins = [row for row in rows if row.get('kind') == 'launch_recipe_begin' and
+                  'kind=Rope' in row.get('detail', '').split(';')]
+        keys = {(row['player'], next((part for part in row['detail'].split(';') if part.startswith('sequence=')), '')) for row in begins}
+        if len(keys) < 3:
+            raise ValueError('Rope: missing full flight, short blocked prefix or cancelled flight in this client view')
+        endpoints = [row for row in rows if row.get('kind') == 'launch_recipe_endpoint' and 'kind=Rope' in row.get('detail', '').split(';')]
+        endpoint_keys = {(row['player'], next((part for part in row['detail'].split(';') if part.startswith('sequence=')), '')) for row in endpoints}
+        if not keys.issubset(endpoint_keys) or not any(0 < row.get('durationMs', 0) <= 50 for row in endpoints):
+            raise ValueError('Rope: confirmed endpoints, including the short prefix, were not actually presented')
     result = {}
     for owner in (True, False):
         events = [row for row in rows if row.get('localPlayer') == owner and

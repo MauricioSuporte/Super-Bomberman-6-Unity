@@ -22,6 +22,19 @@ class LauncherSmokeTests(unittest.TestCase):
         self.assertEqual([1], result['owner']['players'])
         self.assertEqual([2], result['observer']['players'])
 
+    def test_rope_requires_both_roles_and_unlocked_handoff(self):
+        rows = self.rows()
+        for row in rows: row['detail'] = row['detail'].replace('kind=Cannon', 'kind=Rope')
+        with self.assertRaises(ValueError): smoke.validate_launcher_capture(rows, 'rope')
+        rows += [dict(row, realtime=row['realtime'] + 4, detail=row['detail'].replace('sequence=1', 'sequence=2'))
+                 for row in rows if row['player'] == 1]
+        with self.assertRaises(ValueError): smoke.validate_launcher_capture(rows, 'rope')
+        endpoints = [dict(row, kind='launch_recipe_endpoint', durationMs=20 if 'sequence=2' in row['detail'] else 800)
+                     for row in rows if row['kind'] == 'launch_recipe_end']
+        rows += endpoints
+        result = smoke.validate_launcher_capture(rows, 'rope')
+        self.assertEqual(2, result['observer']['continuousSamples'])
+
     def test_owner_only_does_not_validate_the_other_client_view(self):
         with self.assertRaises(ValueError): smoke.validate_launcher_capture([r for r in self.rows() if r['localPlayer']], 'cannon')
 

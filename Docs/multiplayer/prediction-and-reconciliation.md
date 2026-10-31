@@ -1546,3 +1546,31 @@ progresso-predicao-online.md; estes números isolados não comprovam latência h
 A validação da cena de gêiser encontrou frames de bolhas carregados por Resources
 fora da dependência serializada. O gerador inclui Stage33BubbleAnimations no
 catálogo da Stage_3-3; teste exige todos os frames. A gameplay das bolhas não muda.
+
+
+## C03 — trajetória aprovada da corda (protocolo 59)
+
+PlayerLaunchArc.Rope compartilha com o loop nativo o ease-out quadrático e a
+quantização de 1/16. O servidor verifica bombas/indestrutíveis a cada passo,
+publica o descritor e apenas a fase aceita. O scope conserva heartbeat/pausa,
+restaura os estados capturados e só depois encerra a receita e a autoridade.
+Begin/stop também usam RPC confiável no ator: um voo bloqueado pode durar20ms
+e desaparecer entre dois deltas SyncVar. Revisões deduplicam as duas entregas.
+
+O client não executa ativação, colisão, dano ou proteção. A reprodução inicia no
+frame efetivo, avança até50ms por frame e no máximo ao prefixo aprovado. Stop
+recebido não apaga esse prefixo: apresentar o endpoint antes de devolver controle.
+Corpo/montaria usam o clock nativo correspondente à fase apresentada, incluindo
+salto do intervalo de pausa já observado. Ack de motor livre não encerra cedo
+a corda; handoff restaura estado confirmado e replay somente de locomoção.
+
+Pausa retém fase. Timeout sem nova confirmação encerra a receita sem inventar
+continuação/conceder predição; a geração expirada não revive. Morte, fim de fase,
+saída de cena e outra família de lançamento continuam interrompendo apresentação.
+Sob stalls de render/rede pode haver reprodução atrasada; não é promessa de
+latência humana zero. A matriz geral conserva o aceite perceptual manual.
+
+Full3:995Unity. Peers3: dois clients renderizados, endpoints750/20/240ms em cada,
+voo completo, blocker curto e cancelamento montado, sem erros/avisos. O harness
+espera ack de hardware neutro e processamento do tick antes de reposicionar: um
+botão antigo em trânsito pode mudar a coluna e invalidar o cenário do pilar.

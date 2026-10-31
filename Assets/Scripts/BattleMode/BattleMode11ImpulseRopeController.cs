@@ -70,6 +70,10 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
         public readonly PlayerPreparingVisualState preparing;
         public readonly PlayerDashVisualState dash;
         public readonly Assets.Scripts.Netcode.NetworkPlayerInput.AuthorityMotionScope authority;
+        public Assets.Scripts.Netcode.NetworkPlayerInput.LaunchScope flightPresentation;
+        public PlayerLaunchArc flightArc;
+        public float flightElapsed;
+        public bool flightActive;
         public IEnumerator routine;
         public bool released;
 
@@ -164,6 +168,8 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
             PresentNetworkRope();
             return;
         }
+        foreach (var scope in playerImpulseScopes.Values)
+            if (scope.flightActive) scope.flightPresentation.Progress(scope.flightArc, scope.flightElapsed, GamePauseController.IsPaused);
         TickPlayerImpulseTriggers();
     }
 
@@ -441,6 +447,7 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
             playersBeingImpulsed.Remove(scope.player);
             playerImpulseScopes.Remove(scope.player);
             // Reconcile the released state, never the old input-locked pose.
+            scope.flightPresentation.Dispose();
             scope.authority.Dispose();
         }
     }
@@ -525,7 +532,7 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
 
         StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection, RopeTileAnimationType.Impulse, ropeDeformationSeconds);
         PlayPlayerImpulseSfx(player);
-        var flight = PlayerImpulseRoutine(player, impactDirection, launchDirection, mountMovement, scope.dash);
+        var flight = PlayerImpulseRoutine(player, impactDirection, launchDirection, mountMovement, scope.dash, scope);
         using var flightCleanup = flight as System.IDisposable;
         yield return flight;
     }
@@ -548,7 +555,7 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
         Vector2 impactDirection,
         Vector2 launchDirection,
         MountMovementController mountMovement,
-        PlayerDashVisualState dashVisual)
+        PlayerDashVisualState dashVisual, PlayerImpulseScope scope)
     {
         playersBeingImpulsed.Add(player);
 
@@ -561,6 +568,10 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
 
         Vector2 target = start + launchDirection * (playerImpulseTiles * tileSize);
         Vector2 lastSafe = start;
+        scope.flightArc = new PlayerLaunchArc { kind = PlayerLaunchArc.LaunchKind.Rope,
+            start = start, end = target, duration = duration, tileSize = tileSize };
+        scope.flightPresentation = Assets.Scripts.Netcode.NetworkPlayerInput.PresentApprovedLaunch(player, scope.flightArc);
+        scope.flightActive = true;
 
         player.SetExplosionInvulnerable(true);
 
@@ -598,10 +609,7 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
 
             elapsed += Time.fixedDeltaTime;
 
-            float t = Mathf.Clamp01(elapsed / duration);
-            float eased = 1f - Mathf.Pow(1f - t, 2f);
-            Vector2 next = Vector2.Lerp(start, target, eased);
-            next = QuantizeToPixelGrid(next);
+            Vector2 next = scope.flightArc.Position(elapsed);
 
             if (IsPlayerImpulseBlocked(next, tileSize))
             {
@@ -611,6 +619,8 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
 
             MovePlayerTo(player, rb, next);
             lastSafe = next;
+            scope.flightElapsed = Mathf.Min(elapsed, duration);
+            scope.flightPresentation.Progress(scope.flightArc, scope.flightElapsed, false);
 
             yield return new WaitForFixedUpdate();
         }
@@ -1025,14 +1035,6 @@ public sealed partial class BattleMode11ImpulseRopeController : MonoBehaviour, I
     {
         worldPos.x = Mathf.Round(worldPos.x / tileSize) * tileSize;
         worldPos.y = Mathf.Round(worldPos.y / tileSize) * tileSize;
-        return worldPos;
-    }
-
-    static Vector2 QuantizeToPixelGrid(Vector2 worldPos)
-    {
-        const float pixelsPerUnit = 16f;
-        worldPos.x = Mathf.Round(worldPos.x * pixelsPerUnit) / pixelsPerUnit;
-        worldPos.y = Mathf.Round(worldPos.y * pixelsPerUnit) / pixelsPerUnit;
         return worldPos;
     }
 

@@ -10,12 +10,15 @@ namespace Assets.Scripts.Netcode
 {
     struct PresenterSmokeReady : NetworkMessage { public string scene; }
     struct MountVisualSmokeStep : NetworkMessage { public int phase; }
+    struct RopeSmokeStep : NetworkMessage { public int phase; }
+    struct RopeSmokeAck : NetworkMessage { public int phase; public uint tick; }
     // Development-only command-line harness. No remote message can enable it.
     public partial class BombermanNetworkManager
     {
         bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked, loadTestLaunchersChecked, loadTestVisualsChecked;
         string loadTestLauncherKind;
         readonly HashSet<int> loadTestPresenterReady = new();
+        readonly Dictionary<int, RopeSmokeAck> loadTestRopeAcks = new();
         int loadTestPlayers;
         float loadTestStart, loadTestDuration, loadTestNextHealth;
 
@@ -27,11 +30,17 @@ namespace Assets.Scripts.Netcode
                 loadTestConfigured = true;
                 loadTestEnabled = Debug.isDebugBuild && HasArg("-load-test-server");
                 if (!loadTestEnabled) return;
-                if (HasArg("-load-test-presenter-removal") || HasArg("-load-test-mount-visuals"))
+                if (HasArg("-load-test-presenter-removal") || HasArg("-load-test-mount-visuals") || HasArg("-load-test-launchers"))
                     NetworkServer.RegisterHandler<PresenterSmokeReady>((peer, message) =>
                     {
                         if (peer.isReady && peer.identity != null && message.scene == SceneManager.GetActiveScene().name)
                             loadTestPresenterReady.Add(peer.connectionId);
+                    });
+                if (HasArg("-load-test-launchers"))
+                    NetworkServer.RegisterHandler<RopeSmokeAck>((peer, message) =>
+                    {
+                        if (peer.isReady && peer.identity != null && message.phase >= 0 && message.phase <= 2)
+                            loadTestRopeAcks[peer.connectionId] = message;
                     });
                 var args = Environment.GetCommandLineArgs();
                 loadTestPlayers = ReadDedicatedNumber(args, "-load-test-players", RoomCapacity, 2, RoomCapacity);
@@ -40,7 +49,7 @@ namespace Assets.Scripts.Netcode
                 if (launcherArg >= 0)
                 {
                     loadTestLauncherKind = launcherArg + 1 < args.Length ? args[launcherArg + 1] : "";
-                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon")
+                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon" && loadTestLauncherKind != "rope")
                         throw new ArgumentException("Unknown Development launcher fixture");
                 }
                 loadTestStart = Time.realtimeSinceStartup;
@@ -77,7 +86,7 @@ namespace Assets.Scripts.Netcode
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "arena" ? "BattleMode_4" : "BattleMode_15");
+                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -96,7 +105,8 @@ namespace Assets.Scripts.Netcode
                     loadTestVisualsChecked = true; StartCoroutine(CheckLoadTestMountVisuals());
                 }
                 if (!loadTestLaunchersChecked && loadTestLauncherKind != null && Time.timeSinceLevelLoad > 12 &&
-                    (!IsCoopRoom || OnlineCoopPlayersReady) && !BattleStartPending)
+                    (!IsCoopRoom || OnlineCoopPlayersReady) && !BattleStartPending &&
+                    (loadTestLauncherKind != "rope" || loadTestPresenterReady.Count >= loadTestPlayers))
                 {
                     loadTestLaunchersChecked = true;
                     StartCoroutine(CheckLoadTestLaunchers());
@@ -187,6 +197,24 @@ namespace Assets.Scripts.Netcode
             Debug.Log("[LoadTest] mount visuals completed players=2");
         }
 
+        System.Collections.IEnumerator WaitForNeutralRopeInput(NetworkConnectionToClient peer, NetworkPlayerInput input, MovementController mover)
+        {
+            uint before = input.CurrentInputTick;
+            peer.Send(new RopeSmokeStep());
+            float deadline = Time.unscaledTime + 5;
+            bool NeutralConfirmed() => loadTestRopeAcks.TryGetValue(peer.connectionId, out var ack) && ack.phase == 0 &&
+                NetworkInputHistory.IsNewer(ack.tick, before) && (input.CurrentInputTick == ack.tick || NetworkInputHistory.IsNewer(input.CurrentInputTick, ack.tick)) &&
+                PlayerInputManager.Instance != null && GetRopeFixtureDirection(mover.PlayerId) == Vector2.zero;
+            while (!NeutralConfirmed() && Time.unscaledTime < deadline) yield return null;
+            if (!NeutralConfirmed()) throw new InvalidOperationException("Rope fixture did not drain the preceding directional input");
+        }
+        static Vector2 GetRopeFixtureDirection(int player)
+        {
+            var input = PlayerInputManager.Instance;
+            return new Vector2((input.Get(player, PlayerAction.MoveRight) ? 1 : 0) - (input.Get(player, PlayerAction.MoveLeft) ? 1 : 0),
+                (input.Get(player, PlayerAction.MoveUp) ? 1 : 0) - (input.Get(player, PlayerAction.MoveDown) ? 1 : 0));
+        }
+
         System.Collections.IEnumerator CheckLoadTestLaunchers()
         {
             int index = 0;
@@ -207,7 +235,14 @@ namespace Assets.Scripts.Netcode
                 uint previous = input.ApprovedLaunchSnapshot.sequence;
                 MonoBehaviour mechanism = null;
                 Vector2 entry;
-                if (loadTestLauncherKind == "arena")
+                if (loadTestLauncherKind == "rope")
+                {
+                    mechanism = FindAnyObjectByType<BattleMode11ImpulseRopeController>();
+                    if (mechanism == null) throw new InvalidOperationException("Rope fixture missing its native controller");
+                    mechanism.enabled = true;
+                    entry = new Vector2(index == 0 ? -7 : 5, 4);
+                }
+                else if (loadTestLauncherKind == "arena")
                 {
                     var arena = FindAnyObjectByType<BattleMode4SpringTileController>();
                     if (arena == null) throw new InvalidOperationException("Arena fixture missing its native spring controller");
@@ -223,27 +258,57 @@ namespace Assets.Scripts.Netcode
                     mechanism.enabled = true;
                     entry = trigger.bounds.center;
                 }
+                if (loadTestLauncherKind == "rope") yield return WaitForNeutralRopeInput(peer, input, mover);
                 mover.SnapToWorldPoint(entry, roundToGrid: false);
                 ServerReconcileFixturePlayer(input);
+                if (loadTestLauncherKind == "rope") peer.Send(new RopeSmokeStep { phase = 1 });
                 float deadline = Time.unscaledTime + 10;
                 while (Time.unscaledTime < deadline && (!input.ApprovedLaunchSnapshot.active || input.ApprovedLaunchSnapshot.sequence == previous)) yield return null;
                 var launch = input.ApprovedLaunchSnapshot;
                 if (!launch.active || launch.sequence == previous) throw new InvalidOperationException("Native launcher did not produce an approved curve " + loadTestLauncherKind);
                 Debug.Log("[LoadTest] launcher started kind=" + launch.arc.kind + " player=" + mover.PlayerId + " sequence=" + launch.sequence + " mounted=" + mover.IsMounted);
+                if (loadTestLauncherKind == "rope") peer.Send(new RopeSmokeStep { phase = 2 });
                 bool cancel = index == 1 && mechanism != null;
                 if (cancel)
                 {
                     yield return new WaitForSecondsRealtime(.2f);
+                    if (loadTestLauncherKind == "rope" && !input.ApprovedLaunchSnapshot.active)
+                        throw new InvalidOperationException("Rope cancellation fixture ended before disable");
                     mechanism.enabled = false;
                 }
                 deadline = Time.unscaledTime + 10;
                 while (Time.unscaledTime < deadline && input.ApprovedLaunchSnapshot.active) yield return null;
                 if (input.ApprovedLaunchSnapshot.active) throw new InvalidOperationException("Native launcher failed to end its approved curve");
+                if (loadTestLauncherKind == "rope" && !cancel && input.ApprovedLaunchSnapshot.elapsed < launch.arc.duration - .02f)
+                    throw new InvalidOperationException("Rope fixture did not exercise the complete flight");
                 if (mechanism != null) mechanism.enabled = false; // Stop an idle spring's deliberate repeat.
                 yield return new WaitForSecondsRealtime(.5f);
                 if (mover.InputLocked || mover.ExternalMovementOverride || mover.VisualOverrideActive)
                     throw new InvalidOperationException("Native launcher left player control locked");
                 Debug.Log("[LoadTest] launcher finished kind=" + launch.arc.kind + " player=" + mover.PlayerId + " cancelled=" + cancel);
+                if (loadTestLauncherKind == "rope" && index == 0)
+                {
+                    // The adjacent pillar truncates this second flight before a
+                    // normal SyncVar interval. Begin/stop must still reach both views.
+                    yield return WaitForNeutralRopeInput(peer, input, mover);
+                    mechanism.enabled = true;
+                    mover.SnapToWorldPoint(new Vector2(-6, 4), roundToGrid: false);
+                    ServerReconcileFixturePlayer(input);
+                    previous = input.ApprovedLaunchSnapshot.sequence;
+                    peer.Send(new RopeSmokeStep { phase = 1 });
+                    deadline = Time.unscaledTime + 6;
+                    while (Time.unscaledTime < deadline && input.ApprovedLaunchSnapshot.sequence == previous) yield return null;
+                    while (Time.unscaledTime < deadline && input.ApprovedLaunchSnapshot.active) yield return null;
+                    var blocked = input.ApprovedLaunchSnapshot;
+                    if (blocked.sequence == previous || blocked.active || blocked.elapsed <= 0 || blocked.elapsed >= blocked.arc.duration)
+                        throw new InvalidOperationException("Rope fixture did not exercise an early blocker");
+                    mechanism.enabled = false;
+                    peer.Send(new RopeSmokeStep());
+                    yield return new WaitForSecondsRealtime(.5f);
+                    if (mover.InputLocked || mover.ExternalMovementOverride) throw new InvalidOperationException("Blocked rope did not restore control");
+                    Debug.Log("[LoadTest] rope blocked prefix player=" + mover.PlayerId + " phase=" + blocked.elapsed);
+                }
+                if (loadTestLauncherKind == "rope") yield return WaitForNeutralRopeInput(peer, input, mover);
                 mover.SnapToWorldPoint(original, roundToGrid: false); ServerReconcileFixturePlayer(input);
                 health.SetExternalInvulnerability(priorProtection);
                 index++;
@@ -544,7 +609,9 @@ namespace Assets.Scripts.Netcode
         float captureNext, visualCaptureAt = float.PositiveInfinity, visualAfkCaptureAt = float.PositiveInfinity;
         int visualCaptureSerial;
         bool checkMountVisuals, mountVisualHandler, mountVisualReady;
-        int mountVisualPhase;
+        int mountVisualPhase, ropeSmokePhase, ropeAckPending = -1;
+        uint ropeAckAfterTick;
+        bool checkRopeInput, ropeSmokeHandler;
         bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -562,6 +629,7 @@ namespace Assets.Scripts.Netcode
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
             smoke.checkMountVisuals = Array.IndexOf(args, "-load-test-mount-visuals") >= 0;
             smoke.checkLauncherInput = Array.IndexOf(args, "-load-test-launchers") >= 0;
+            smoke.checkRopeInput = smoke.checkLauncherInput && Array.IndexOf(args, "rope") >= 0;
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
             smoke.repeatMountCycles = Array.IndexOf(args, "-load-test-mount-cycles") >= 0;
@@ -625,7 +693,32 @@ namespace Assets.Scripts.Netcode
             if (checkLauncherInput && NetworkClient.isConnected && NetworkClient.localPlayer != null && PlayerInputManager.Instance != null)
             {
                 var launcher = NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>();
-                PlayerInputManager.Instance.SetSyntheticHeld(1, PlayerAction.MoveRight, launcher != null && launcher.OwnerUsesAuthorityPresentation && !launcher.ApprovedLaunchActive);
+                if (checkRopeInput)
+                {
+                    if (!ropeSmokeHandler)
+                    {
+                        ropeSmokeHandler = true;
+                        NetworkClient.RegisterHandler<RopeSmokeStep>(step =>
+                        {
+                            ropeSmokePhase = ropeAckPending = step.phase;
+                            ropeAckAfterTick = unchecked(launcher.CurrentInputTick + 1);
+                        });
+                    }
+                    if (!mountVisualReady && (string.IsNullOrEmpty(captureDirectory) || captureWarmed) && SceneManager.GetActiveScene().name == "BattleMode_11")
+                    {
+                        mountVisualReady = true; NetworkClient.Send(new PresenterSmokeReady { scene = SceneManager.GetActiveScene().name });
+                    }
+                    PlayerInputManager.Instance.SetSyntheticHeld(1, PlayerAction.MoveUp, ropeSmokePhase == 1);
+                    // At least two FixedUpdate ticks after receipt: the first can
+                    // precede Update's new hardware sample. Ack follows the actual Command.
+                    if (ropeAckPending >= 0 && NetworkInputHistory.IsNewer(launcher.CurrentInputTick, ropeAckAfterTick))
+                    {
+                        NetworkClient.Send(new RopeSmokeAck { phase = ropeAckPending, tick = launcher.CurrentInputTick });
+                        ropeAckPending = -1;
+                    }
+                }
+                PlayerInputManager.Instance.SetSyntheticHeld(1, PlayerAction.MoveRight, checkRopeInput ? ropeSmokePhase == 2 :
+                    launcher != null && launcher.OwnerUsesAuthorityPresentation && !launcher.ApprovedLaunchActive);
             }
             if (revengeInput && NetworkManager.singleton is BombermanNetworkManager manager && manager != null)
                 manager.TickLocalRevengeInputSmoke();
@@ -737,7 +830,7 @@ namespace Assets.Scripts.Netcode
                 foreach (var action in new[] { PlayerAction.ActionL, PlayerAction.ActionC, PlayerAction.MoveUp, PlayerAction.MoveDown, PlayerAction.MoveRight, PlayerAction.MoveLeft })
                     PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
             if (runRealInput || checkLauncherInput)
-                foreach (var action in new[] { PlayerAction.Select, PlayerAction.MoveLeft, PlayerAction.MoveRight })
+                foreach (var action in new[] { PlayerAction.Select, PlayerAction.MoveLeft, PlayerAction.MoveRight, PlayerAction.MoveUp })
                     PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);
             if (!revengeInput) return;
             foreach (var action in new[] { PlayerAction.MoveUp, PlayerAction.ActionA, PlayerAction.ActionC })

@@ -76,6 +76,100 @@ public sealed partial class OnlineRoomEditModeTests
         Assert.IsTrue(pose.Equals(reader.Read<NetworkVisualPose>()));
     }
 
+    [TestCase(0f)] [TestCase(.02f)] [TestCase(.13f)] [TestCase(.325f)] [TestCase(.65f)]
+    public void LaunchRopeCurvePreservesNativeEaseAndPixelGrid(float elapsed)
+    {
+        var arc = new PlayerLaunchArc { kind = PlayerLaunchArc.LaunchKind.Rope,
+            start = new(-6, 4), end = new(2, 4), duration = .65f };
+        float t = Mathf.Clamp01(elapsed / .65f);
+        Vector2 expected = Vector2.Lerp(arc.start, arc.end, 1f - Mathf.Pow(1f - t, 2f));
+        expected = new Vector2(Mathf.Round(expected.x * 16) / 16, Mathf.Round(expected.y * 16) / 16);
+        Assert.AreEqual(expected, arc.Position(elapsed));
+        Assert.AreEqual(0, arc.VisualHeight(elapsed));
+    }
+
+    [TestCase(true)] [TestCase(false)]
+    public void LaunchRopeWaitsForApprovedPrefixAndDoesNotInventMotionAfterMovingBlocker(bool owner)
+    {
+        using var f = new LaunchClientFixture(owner);
+        double origin = NetworkTime.time + 10;
+        var state = LaunchReceipt(origin, false); state.arc.kind = PlayerLaunchArc.LaunchKind.Rope;
+        state.arc.height = 0; state.elapsed = .1f;
+        f.input.ReceiveLaunchState(state);
+        Assert.IsTrue(f.input.TrySampleApprovedLaunch(origin + .4, out _, out float phase));
+        Assert.That(phase, Is.EqualTo(.1f).Within(.0001f), "No confirmation, no extra travel.");
+        state.revision = 2; state.time = origin + .2; state.elapsed = .3f;
+        f.input.ReceiveLaunchState(state);
+        Assert.IsTrue(f.input.TrySampleApprovedLaunch(origin + .1, out _, out phase));
+        Assert.That(phase, Is.EqualTo(.2f).Within(.0001f), "Use the shared curve between approved steps.");
+        Assert.IsTrue(f.input.TrySampleApprovedLaunch(origin + .6, out _, out phase));
+        Assert.That(phase, Is.EqualTo(.3f).Within(.0001f));
+        state.revision = 3; state.time = origin + .3; state.active = false;
+        f.input.ReceiveLaunchState(state);
+        Assert.IsFalse(f.input.TrySampleApprovedLaunch(origin + .4, out _, out _));
+        Assert.IsTrue(f.input.TrySampleApprovedLaunch(origin + .25, out _, out phase));
+        Assert.That(phase, Is.EqualTo(.3f).Within(.0001f), "A confirmed stop cannot extend the prefix.");
+        Assert.IsTrue(f.collider.enabled); Assert.IsFalse(f.movement.explosionInvulnerable);
+    }
+
+    [Test]
+    public void LaunchRopePauseRetainsItsApprovedPhasePastTheUsualDeliveryTimeout()
+    {
+        using var f = new LaunchClientFixture(true);
+        double origin = NetworkTime.time + 10;
+        var state = LaunchReceipt(origin, false); state.arc.kind = PlayerLaunchArc.LaunchKind.Rope;
+        state.arc.height = 0; state.paused = true;
+        f.input.ReceiveLaunchState(state);
+        Assert.IsTrue(f.input.TrySampleApprovedLaunch(origin + 100, out _, out float phase));
+        Assert.AreEqual(.25f, phase);
+        f.input.RestoreApprovedLaunchPosition();
+        typeof(NetworkPlayerInput).GetField("ropePlaybackFreshAt", LaunchClientFixture.Private).SetValue(f.input, Time.realtimeSinceStartupAsDouble - 100);
+        typeof(NetworkPlayerInput).GetField("ropePlaybackFrame", LaunchClientFixture.Private).SetValue(f.input, -1);
+        f.input.RestoreApprovedLaunchPosition(); Assert.IsTrue(f.input.ApprovedLaunchActive);
+        Assert.IsTrue(f.input.TrySampleApprovedLaunch(origin + 200, out _, out phase)); Assert.AreEqual(.25f, phase);
+    }
+
+    [Test]
+    public void LaunchRopePresentationTimesOutWithoutInventingMovementOrRevivingAnOldGeneration()
+    {
+        using var f = new LaunchClientFixture(true);
+        var state = LaunchReceipt(NetworkTime.time, false); state.arc.kind = PlayerLaunchArc.LaunchKind.Rope; state.arc.height = 0;
+        f.input.ReceiveLaunchState(state); f.input.RestoreApprovedLaunchPosition();
+        Vector2 shown = f.body.position;
+        typeof(NetworkPlayerInput).GetField("ropePlaybackFreshAt", LaunchClientFixture.Private).SetValue(f.input, Time.realtimeSinceStartupAsDouble - 10);
+        typeof(NetworkPlayerInput).GetField("ropePlaybackFrame", LaunchClientFixture.Private).SetValue(f.input, -1);
+        f.input.RestoreApprovedLaunchPosition(); Assert.IsFalse(f.input.ApprovedLaunchActive);
+        Assert.AreEqual(shown, f.body.position); Assert.IsFalse(f.movement.PredictLocally);
+        state.revision++; state.elapsed += .1f; f.input.ReceiveLaunchState(state);
+        Assert.IsFalse(f.input.ApprovedLaunchActive, "An expired generation waits for authoritative fallback, not a revived flight.");
+    }
+
+    [TestCase(true)] [TestCase(false)]
+    public void LaunchRopeLateBeginAndEarlyStopRetainOneApprovedInterval(bool owner)
+    {
+        using var f = new LaunchClientFixture(owner);
+        double now = NetworkTime.time;
+        var state = LaunchReceipt(now - 5, false);
+        state.arc.kind = PlayerLaunchArc.LaunchKind.Rope; state.arc.height = 0; state.elapsed = 0;
+        f.input.ReceiveLaunchState(state);
+        state.active = false; state.revision = 2; state.time += .02; state.elapsed = .02f;
+        f.input.ReceiveLaunchState(state);
+        f.input.RestoreApprovedLaunchPosition();
+        Assert.IsTrue(f.input.ApprovedLaunchActive);
+        Assert.That(Vector2.Distance(state.arc.start, f.body.position), Is.LessThan(.001f));
+        void Frame(float delta)
+        {
+            typeof(NetworkPlayerInput).GetField("ropePlaybackFrame", LaunchClientFixture.Private).SetValue(f.input, -1);
+            typeof(NetworkPlayerInput).GetField("ropePlaybackLastAt", LaunchClientFixture.Private).SetValue(f.input, Time.realtimeSinceStartupAsDouble - delta);
+            f.input.RestoreApprovedLaunchPosition();
+        }
+        Frame(.03f);
+        Assert.IsTrue(f.input.ApprovedLaunchActive, "Present the confirmed endpoint before releasing the actor.");
+        Assert.That(Vector2.Distance(state.arc.Position(.02f), f.body.position), Is.LessThan(.001f));
+        Frame(.02f); Assert.IsFalse(f.input.ApprovedLaunchActive);
+        Assert.IsTrue(f.collider.enabled); Assert.IsFalse(f.movement.explosionInvulnerable);
+    }
+
     sealed class LaunchClientFixture : IDisposable
     {
         readonly NetSync.NetMode oldMode = NetSync.Mode;

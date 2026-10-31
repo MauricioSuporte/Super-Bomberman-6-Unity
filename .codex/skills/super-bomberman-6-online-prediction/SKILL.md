@@ -611,3 +611,22 @@ For L+direction emotes, carry the explicit directional press with L through the
 input queue. Held-state reconstruction cannot replace that edge and must never
 manufacture another ActionA press after a delivery gap. Validate both the network
 input bridge and the native pose's start/release using actual client input.
+
+
+For native rope flight, share the exact ease/pixel grid but authorize only the
+confirmed prefix: moving blockers are checked each physics step. SyncVars can
+coalesce a 20 ms begin/stop, so retain reliable edges with revision deduplication.
+A receive-time shift alone can still skip the flight when the network timeline
+advances before rendering. Start bounded playback in the actual presentation
+frame, map body/mount poses to that phase and retain an approved stop through its
+endpoint. Do not let a newer free-motor acknowledgement prematurely end it.
+Keep pause, timeout/no-revival, family interruption and scene cleanup explicit.
+Validate actual endpoint application in each client's own diagnostics; receipt
+and successful server checkpoints do not prove that short motion was presented.
+
+Before a Development fixture repositions an actor, drain the preceding hardware
+input. A neutral message acknowledgement must follow the Command carrying it;
+then wait for that tick to be processed with neutral server controls. Otherwise
+an old Right can move the actor into another column before the next Up and make
+a supposed blocked flight traverse a free corridor. Never fix that false setup
+by weakening the motion/endpoint validator or changing production input grace.
