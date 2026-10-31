@@ -32,6 +32,15 @@ TextureImporter:
   - first:
       213: 6262525050021080823
     second: Pomori_9
+  - first:
+      213: -4833326584602288714
+    second: Pomori_10
+  - first:
+      213: -3820683597597771917
+    second: Pomori_11
+  - first:
+      213: 6321954628683686377
+    second: Pomori_12
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -146,9 +155,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 16
-        height: 16
+        y: 44
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,10 +176,10 @@ TextureImporter:
       name: Pomori_1
       rect:
         serializedVersion: 2
-        x: 18
-        y: 0
-        width: 16
-        height: 16
+        x: 38
+        y: 44
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -189,10 +198,10 @@ TextureImporter:
       name: Pomori_2
       rect:
         serializedVersion: 2
-        x: 36
-        y: 0
-        width: 16
-        height: 16
+        x: 76
+        y: 44
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -211,10 +220,10 @@ TextureImporter:
       name: Pomori_3
       rect:
         serializedVersion: 2
-        x: 54
-        y: 0
-        width: 16
-        height: 16
+        x: 114
+        y: 44
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -233,10 +242,10 @@ TextureImporter:
       name: Pomori_4
       rect:
         serializedVersion: 2
-        x: 72
-        y: 0
-        width: 16
-        height: 16
+        x: 152
+        y: 44
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -255,10 +264,10 @@ TextureImporter:
       name: Pomori_5
       rect:
         serializedVersion: 2
-        x: 90
-        y: 0
-        width: 16
-        height: 16
+        x: 0
+        y: 22
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -277,10 +286,10 @@ TextureImporter:
       name: Pomori_6
       rect:
         serializedVersion: 2
-        x: 108
-        y: 0
-        width: 16
-        height: 16
+        x: 38
+        y: 22
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -299,10 +308,10 @@ TextureImporter:
       name: Pomori_7
       rect:
         serializedVersion: 2
-        x: 126
-        y: 0
-        width: 16
-        height: 16
+        x: 76
+        y: 22
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -321,10 +330,10 @@ TextureImporter:
       name: Pomori_8
       rect:
         serializedVersion: 2
-        x: 144
-        y: 0
-        width: 16
-        height: 16
+        x: 114
+        y: 22
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -343,10 +352,10 @@ TextureImporter:
       name: Pomori_9
       rect:
         serializedVersion: 2
-        x: 162
+        x: 0
         y: 0
-        width: 16
-        height: 16
+        width: 38
+        height: 22
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -361,11 +370,77 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Pomori_10
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 0
+        width: 38
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bd145154139cecb0800000000000000
+      internalID: -4833326584602288714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pomori_11
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 0
+        width: 38
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 377f506c2843afac0800000000000000
+      internalID: -3820683597597771917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pomori_12
+      rect:
+        serializedVersion: 2
+        x: 114
+        y: 0
+        width: 38
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e1e3d85d381cb750800000000000000
+      internalID: 6321954628683686377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 6ee5256375dfb5e4ca2ed7a3d7c2b36b
     internalID: 0
     vertices: []
     indices: 
@@ -373,10 +448,15 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":38.0,"y":22.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Pomori_0: -9032290949840846662
       Pomori_1: 2438278967983562657
+      Pomori_10: -4833326584602288714
+      Pomori_11: -3820683597597771917
+      Pomori_12: 6321954628683686377
       Pomori_2: -9083057396239450920
       Pomori_3: -6005065495960195678
       Pomori_4: -2844159655789955063
