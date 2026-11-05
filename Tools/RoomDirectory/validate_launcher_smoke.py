@@ -94,3 +94,26 @@ def validate_portal_capture(rows, expected):
         if not actors: raise ValueError(f'Portal owner={owner}: missing actor view')
         result['owner' if owner else 'observer'] = dict(players=actors, approvedEndpoints=True, unlocked=True)
     return result
+
+
+def validate_field_capture(rows, expected):
+    if len(expected) != 3 or {r.get('detail') for r in expected} != {'kind=Magnet', 'kind=Search', 'kind=Kick'}:
+        raise ValueError('Missing native field motion checkpoints')
+    result = []
+    for checkpoint in expected:
+        points = [r['bombPosition'] for r in rows if r.get('bombNetId') == checkpoint['bombNetId'] and
+                  r.get('kind') in ('bomb_motion_sample', 'kick_presentation_sample', 'bomb_motion_apply', 'kick_segment_apply')]
+        origin, end = checkpoint['bombPosition'], checkpoint['position']
+        corner = {a: origin[a] + checkpoint['delta'][a] for a in ('x', 'y')}
+        def near(p, q): return sum((p[a]-q[a])**2 for a in ('x','y')) < .0625
+        cursor = 0
+        for target in (origin, corner, end):
+            matches = [i for i in range(cursor, len(points)) if near(points[i], target)]
+            if not matches: raise ValueError('Field path missing presented endpoint: '+checkpoint['detail'])
+            cursor = matches[0]
+        for p in points:
+            if (not origin['x']-.06 <= p['x'] <= end['x']+.06 or not origin['y']-.06 <= p['y'] <= end['y']+.06 or
+                abs(p['y']-origin['y']) > .06 and abs(p['x']-corner['x']) > .06):
+                raise ValueError('Field path cut its approved corner: '+checkpoint['detail'])
+        result.append(checkpoint['detail'])
+    return result

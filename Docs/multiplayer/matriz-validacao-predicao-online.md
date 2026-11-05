@@ -370,3 +370,28 @@ C05 final: FinalFocused2 3/3; Peers8 Battle7 eStage3-4 com2clientes renderizados
 passaram sem erros/avisos do servidor. Publicação completa do commitba9be59ee
 confirmada no Actions42010967595 (Linux/Windows/updater). O QA humano acima
 continua separado desse aceite automatizado.
+
+### C08 — ímãs e redirecionamento
+
+Full2:1028/1028,0skips, incluindo15 casos novos. Cobertura: Magnet/Search
+lineares ordenados, canto deKick, stop normal, cancelamento que descarta rota,
+pausa, revisão antiga/duplicada e espera quando aprovação futura não chegou.
+
+Fixture de integração Development emStage_2-1 usa movimentos nativos no
+corredor isolado(30,30), obstáculo real Stage no fim e2clientesMirror headless.
+Cada captura exige origem/canto/destino deMagnet/Search/Kick e mantém a
+regressão de remoção do presenter. Peers1 encontrou extrapolação autônoma
+além do canto; falha preservada e causa corrigida sem aumentar tolerâncias.
+Resultado final é registrado no checklist.
+
+QA humano: Battle6(setas), Battle14 eStage2-1(ímãs), com mudança de direção
+por explosão, bomba de outro jogador, bloqueio móvel, pausa e owner saindo.
+Comparar sensação/frames comoffline; o smoke headless não mede renderGPU
+nem latência dehardware. Não prever alvo/campo/colisão/dano.
+
+C08 final: Peers2 aprovado em117,875s. Ambos os clientes apresentaram os3
+trajetos e9amostras após transferência, sem erros/avisos do servidor.
+Full2final1028/1028; C#0erros/0avisos; Python86/86.
+
+C08 Peers3 final aprovado em118,812s com gate de serial: três trajetos e oito
+amostras de transferência porcliente;0erros/avisos. Final18 18/18.

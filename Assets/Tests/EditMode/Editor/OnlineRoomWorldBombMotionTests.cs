@@ -363,6 +363,96 @@ public sealed partial class OnlineRoomEditModeTests
         finally { NetworkClient.spawned.Remove(WorldBombFixture.ActorId + 1); Object.DestroyImmediate(replacement); }
     }
 
+    [TestCase(false, NetworkBombFx.BombMotionKind.Magnet)]
+    [TestCase(true, NetworkBombFx.BombMotionKind.Magnet)]
+    [TestCase(false, NetworkBombFx.BombMotionKind.Search)]
+    [TestCase(true, NetworkBombFx.BombMotionKind.Search)]
+    [TestCase(false, NetworkBombFx.BombMotionKind.Kick)]
+    [TestCase(true, NetworkBombFx.BombMotionKind.Kick)]
+    public void EnvironmentalBombTurnKeepsApprovedCornerAndStop(bool local, NetworkBombFx.BombMotionKind kind)
+    {
+        using var fixture = new WorldBombFixture(local);
+        var first = fixture.Motion(1, kind); first.arcHeight = 0;
+        fixture.Receive(first); fixture.Present(.1f);
+        var before = fixture.replica.transform.position;
+        var turn = first; turn.first = false; turn.revision = 2;
+        turn.start = first.end; turn.end = first.end + Vector2.up * 3;
+        fixture.Receive(turn);
+        Assert.AreEqual(before, fixture.replica.transform.position, "Receipt must not skip the unfinished leg.");
+        fixture.Receive(turn); // Repeated delivery must not add another leg.
+        var stop = turn; stop.revision = 3; stop.moving = false;
+        stop.start = stop.end; stop.duration = 0;
+        fixture.Receive(stop);
+        var paused = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        paused.SetValue(null, true); fixture.Present(.2f);
+        Assert.AreEqual(before, fixture.replica.transform.position, "Pause must freeze the queued turn too.");
+        paused.SetValue(null, false);
+        fixture.Present(.2f);
+        Assert.That(fixture.replica.transform.position.x, Is.EqualTo(first.end.x).Within(.001f));
+        Assert.That(fixture.replica.transform.position.y, Is.EqualTo(first.end.y).Within(.001f));
+        fixture.Present(.15f);
+        Assert.That(fixture.replica.transform.position.x, Is.EqualTo(turn.end.x).Within(.001f));
+        Assert.That(fixture.replica.transform.position.y, Is.InRange(turn.start.y + 1.4f, turn.start.y + 1.6f));
+        fixture.Present(.15f); fixture.Present(0);
+        Assert.That(Vector2.Distance(fixture.replica.transform.position, stop.end), Is.LessThan(.001f));
+        Assert.IsFalse(fixture.fx.AbilityPredictionLocksMovement);
+        Assert.IsFalse(fixture.bomb.IsBeingMagnetPulled, "Presentation cannot run native gameplay.");
+        fixture.Receive(first); fixture.Present(0);
+        Assert.That(Vector2.Distance(fixture.replica.transform.position, stop.end), Is.LessThan(.001f), "A stale segment cannot revive the finished motion.");
+    }
+
+    [TestCase(NetworkBombFx.BombMotionKind.Magnet)]
+    [TestCase(NetworkBombFx.BombMotionKind.Search)]
+    [TestCase(NetworkBombFx.BombMotionKind.Kick)]
+    public void EnvironmentalBombCancellationDiscardsUnfinishedApprovedRoute(NetworkBombFx.BombMotionKind kind)
+    {
+        using var fixture = new WorldBombFixture(true);
+        var first = fixture.Motion(1, kind); first.arcHeight = 0;
+        fixture.Receive(first); fixture.Present(.1f);
+        var turn = first; turn.first = false; turn.revision = 2;
+        turn.start = first.end; turn.end += Vector2.up * 3;
+        fixture.Receive(turn);
+        var stop = turn; stop.revision = 3; stop.moving = false; stop.duration = 0;
+        stop.start = stop.end = first.start;
+        fixture.Receive(stop);
+        Assert.That(Vector2.Distance(fixture.replica.transform.position, first.start), Is.LessThan(.001f));
+        fixture.Present(.3f); fixture.Receive(turn); fixture.Present(0);
+        Assert.That(Vector2.Distance(fixture.replica.transform.position, first.start), Is.LessThan(.001f), "A queued or late turn cannot survive authoritative cancellation.");
+    }
+
+    [TestCase(false, NetworkBombFx.BombMotionKind.Kick)] [TestCase(true, NetworkBombFx.BombMotionKind.Kick)]
+    [TestCase(false, NetworkBombFx.BombMotionKind.Magnet)] [TestCase(true, NetworkBombFx.BombMotionKind.Magnet)]
+    [TestCase(false, NetworkBombFx.BombMotionKind.Search)] [TestCase(true, NetworkBombFx.BombMotionKind.Search)]
+    public void AutonomousBombWaitsAtApprovedEndpointWithoutInventingStraightContinuation(bool local, NetworkBombFx.BombMotionKind kind)
+    {
+        using var fixture = new WorldBombFixture(local);
+        var motion = fixture.Motion(1, kind); motion.arcHeight = 0;
+        fixture.Receive(motion); fixture.Present(.45f);
+        Assert.That(Vector2.Distance(fixture.replica.transform.position, motion.end), Is.LessThan(.001f),
+            "Empty local geometry cannot authorize another player's or an autonomous bomb's next direction.");
+    }
+
+    [TestCase(NetworkBombFx.BombMotionKind.Magnet)]
+    [TestCase(NetworkBombFx.BombMotionKind.Search)]
+    [TestCase(NetworkBombFx.BombMotionKind.Kick)]
+    public void QueuedEnvironmentalRouteRejectsAnOlderCancellation(NetworkBombFx.BombMotionKind kind)
+    {
+        using var fixture = new WorldBombFixture(true);
+        var first = fixture.Motion(1, kind); first.arcHeight = 0;
+        fixture.Receive(first); fixture.Present(.1f);
+        var turn = first; turn.first = false; turn.revision = 3;
+        turn.start = first.end; turn.end += Vector2.up * 3;
+        fixture.Receive(turn);
+        var before = fixture.replica.transform.position;
+        var obsoleteStop = turn; obsoleteStop.revision = 2; obsoleteStop.moving = false;
+        obsoleteStop.start = obsoleteStop.end = first.start; obsoleteStop.duration = 0;
+        fixture.Receive(obsoleteStop);
+        Assert.AreEqual(before, fixture.replica.transform.position);
+        fixture.Present(.2f); fixture.Present(.15f);
+        Assert.That(fixture.replica.transform.position.y, Is.GreaterThan(first.end.y + 1.4f));
+        Assert.That(fixture.replica.transform.position.x, Is.EqualTo(turn.end.x).Within(.001f));
+    }
+
     [Test]
     public void WorldBombMotionValidatesFiniteStateAndRequiresTheWorldFlag()
     {

@@ -13,7 +13,9 @@ from benchmark_local import host_memory
 
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False):
+    if field_motion and (not presenter_removal or not diagnostics):
+        raise ValueError('field motion requires presenter-removal diagnostics')
     if mount_visuals and (mode != 'BattleMode' or not diagnostics or mount_input or launcher_kind or revenge_input):
         raise ValueError('mount visual fixture requires BattleMode diagnostics without other input fixtures')
     if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34') or not diagnostics or mount_input or revenge_input or presenter_removal):
@@ -56,6 +58,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                         (['-load-test-scene', scene] if scene else []) +
                         (['-online-motion-logs'] if diagnostics else []) +
                         (['-load-test-presenter-removal'] if presenter_removal else []) +
+                        (['-load-test-field-motion'] if field_motion else []) +
                         (['-load-test-revenge-input'] if revenge_input else []) +
                         (['-load-test-full-input'] if mount_input else []) +
                         (['-load-test-mount-cycles'] if mount_cycles else []) +
@@ -143,6 +146,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         failures = {}
         captures = {}
         portal_expected = []
+        field_expected = []
         for path in [output/'server.log', output/'client-1.log', output/'client-2.log']:
             lines = path.read_text(encoding='utf-8-sig', errors='replace').splitlines()
             if mount_input and path.name.startswith('client-') and not any('full-input dismount acknowledged' in line for line in lines):
@@ -194,6 +198,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                             row.get('bombNetId') == removed_bomb and transfer_started < row['realtime'] < next_apply and
                             any(abs(row.get('delta', {}).get(axis, 0)) > .0001 for axis in ('x', 'y')))
                     if not transfer_samples: raise RuntimeError('approved arc did not keep moving between presenter transfer and the next apply: '+path.name)
+                if field_motion and path.stem == 'server':
+                    field_expected = [row for row in rows if row.get('kind') == 'field_motion_expected']
                 if launcher_kind and launcher_kind.startswith('portal') and path.stem == 'server':
                     portal_expected = [row for row in rows if row.get('kind') == 'portal_smoke_expected']
                 captures[path.stem] = dict(file=destination.name, unlockedPlayers=unlocked,
@@ -202,6 +208,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 if mount_visuals and path.stem != 'server':
                     from validate_mount_visual_smoke import validate_mount_visual_capture
                     captures[path.stem]['mountVisuals'] = validate_mount_visual_capture(rows)
+                if field_motion and path.stem != 'server':
+                    from validate_launcher_smoke import validate_field_capture
+                    captures[path.stem]['fieldMotion'] = validate_field_capture(rows, field_expected)
                 if launcher_kind and path.stem != 'server':
                     from validate_launcher_smoke import validate_launcher_capture
                     captures[path.stem]['launchers'] = validate_launcher_capture(rows, launcher_kind, portal_expected)

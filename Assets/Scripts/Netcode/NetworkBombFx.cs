@@ -282,8 +282,9 @@ namespace Assets.Scripts.Netcode
             var motion = playback.motion;
             if (!motion.moving) return motion.end;
             bool continueLocally = false;
-            if (!playback.approvedOnly && !presentationOwnerSuspended && motion.moving && !IsFlightArc(motion.kind) &&
+            if (!playback.approvedOnly && !motion.worldMotion && !presentationOwnerSuspended && motion.moving && !IsFlightArc(motion.kind) &&
                 motion.kind != BombMotionKind.Lift && motion.kind != BombMotionKind.Carry && motion.kind != BombMotionKind.Environment &&
+                motion.kind != BombMotionKind.Magnet && motion.kind != BombMotionKind.Search &&
                 playback.elapsed > motion.duration && motion.duration > 0)
             {
                 var step = motion.end - motion.start;
@@ -365,11 +366,36 @@ namespace Assets.Scripts.Netcode
             kickPlayback.TryGetValue(movingBomb, out var previous);
             if (!motion.worldMotion && previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
                 !NetworkInputHistory.IsNewer(motion.inputTick, previous.history.startTick)) return;
+            if (!applyingQueuedBombArc && previous != null && previous.pendingArcs.Count > 0)
+            {
+                uint queuedRevision = previous.motion.revision;
+                foreach (var queued in previous.pendingArcs) queuedRevision = queued.revision;
+                // A delayed cancellation must not discard a newer approved route.
+                if (!NetworkInputHistory.IsNewer(motion.revision, queuedRevision)) return;
+            }
             bool arcContinuation = previous != null && !previous.unconfirmed && !motion.first &&
-                PreservesSegmentOrder(previous.motion.kind) && previous.motion.kind == motion.kind && previous.motion.moving;
+                previous.motion.kind == motion.kind && previous.motion.moving &&
+                (PreservesSegmentOrder(previous.motion.kind) || previous.motion.kind == BombMotionKind.Kick &&
+                    (previous.approvedOnly || previous.pendingArcs.Count > 0 || motion.moving &&
+                     Vector2.Dot(previous.motion.end - previous.motion.start, motion.end - motion.start) <= 0));
+            if (arcContinuation && !motion.moving &&
+                (motion.kind == BombMotionKind.Magnet || motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Kick))
+            {
+                Vector2 approvedEnd = previous.motion.end;
+                foreach (var queued in previous.pendingArcs) approvedEnd = queued.end;
+                // Native collision/cancellation may return to an earlier tile.
+                // That is an authoritative correction, not completion of the queued route.
+                if ((motion.end - approvedEnd).sqrMagnitude > .000001f) arcContinuation = false;
+            }
             if (arcContinuation && !applyingQueuedBombArc &&
                 (previous.elapsed < previous.motion.duration || previous.pendingArcs.Count > 0))
             {
+                uint newestRevision = previous.motion.revision;
+                foreach (var queued in previous.pendingArcs) newestRevision = queued.revision;
+                if (!NetworkInputHistory.IsNewer(motion.revision, newestRevision)) return;
+                // An approved turn must finish at its corner before changing direction.
+                // Do not extrapolate the outgoing leg while that turn is queued.
+                if (previous.motion.kind == BombMotionKind.Kick) previous.approvedOnly = true;
                 if (previous.pendingArcs.Count < 32) { previous.pendingArcs.Enqueue(motion); return; }
                 previous.pendingArcs.Clear(); // Bounded recovery after a long delivery stall.
             }
@@ -566,7 +592,8 @@ namespace Assets.Scripts.Netcode
         }
 
         public static bool IsFlightArc(BombMotionKind kind) => kind == BombMotionKind.Punch || kind == BombMotionKind.Throw || kind == BombMotionKind.Revenge;
-        public static bool PreservesSegmentOrder(BombMotionKind kind) => IsFlightArc(kind) || kind == BombMotionKind.Environment;
+        public static bool PreservesSegmentOrder(BombMotionKind kind) => IsFlightArc(kind) || kind == BombMotionKind.Environment ||
+            kind == BombMotionKind.Magnet || kind == BombMotionKind.Search;
         public static float ArcRemainder(float elapsed, float duration) => Mathf.Clamp(elapsed - duration, 0, Time.unscaledDeltaTime);
 
         // Called before local movement/replay queries. Normal NetworkTransform may

@@ -1647,3 +1647,40 @@ Stage3-4 additionally includes the runtime-loaded BigWorm sheet in its generated
 co-op catalog. Its generated one-pixel sand grain remains CPU-readable for the
 existing dynamic sprite transport; disabling the effect before Start tolerates
 uninitialized grains. No generic sprite fallback or new wire format was added.
+
+## C08 — ordered magnetic motion and approved kick turns (protocol63)
+
+Magnet and Search now retain ordered approved linear segments and their normal
+completion stop, just as existing Environment/arcs do. They cannot use kick's
+free-cell extrapolation to invent another autonomous step. Straight owner kicks
+retain their existing responsive path; a confirmed turn completes its corner
+before applying the incoming direction. A queued turn disables straight kick
+continuation for that approved route, and duplicate queued revisions are ignored.
+
+A stop at a different endpoint represents native interruption or collision:
+discard the queued route immediately and apply that authoritative correction.
+Do not finish a cancelled path before rolling back. Pause freezes the route;
+old revisions cannot revive it. No target selection, field rotation, collision,
+fuse or ability ownership is simulated by the client. Existing manager-owned
+WorldBombMotion carries autonomous bombs after an actor/presenter is removed.
+
+Validation: final Full2 passed1028/1028, including15 new owner/observer tests
+for ordered turns, cancellation, pause, stale delivery and withheld approvals. C# final0errors/0warnings;
+Python71CI+15Directory passed. Development-only field fixture adds native
+Magnet/Search/Kick+TryRedirectKick to the existing presenter-removal smoke, in
+an isolated open corridor with a real Stage collider at its stop. Each client's
+JSONL must show ordered origin/corner/destination without cutting the corner.
+This headless integration does not establish GPU presentation or hardware lag;
+results and publication are recorded in the progress checklist.
+
+The first C08 two-client run exposed a further distinction: WorldBombMotion
+must not inherit the local presenter's straight kick continuation. Its Kick
+can redirect without a local command; keep the approved endpoint while awaiting
+the next event. Only the actual owner's non-world prediction retains bounded
+straight continuation. Six additional regressions cover withheld approvals.
+The failed capture was retained and validation tolerances were unchanged.
+
+Final serial review adds a gate against the newest queued revision before
+processing another cancellation or family change. ClientMotionRevision alone
+represents only the applied leg; an older stop must not discard newer queued
+approvals. Final focused suite passed18/18 after the full1028/1028 run.

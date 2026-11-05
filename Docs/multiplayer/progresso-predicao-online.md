@@ -46,6 +46,14 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em 05/11/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
+- **C08 implementado e validado:** Magnet/Search preservam os segmentos aprovados;
+  curvas de chute passam pelo canto, e cancelamento descarta a rota pendente.
+  Bombas autônomas não herdam extrapolação do chute local. Full2: 1028/1028,
+  sem skips; 18 casos focados finais; C# 0 erros/0 avisos; Python 86/86.
+  Peers3 em Stage_2-1, com dois
+  clientes Mirror reais headless, confirmou os três trajetos e transferência do
+  presenter, sem erros/avisos do servidor. QA visual/hardware segue separado.
+  Protocolo 63 mantido; publicação deste lote pendente.
 - **C05 implementado e validado:** cleanup dos portais de jogador/bomba preserva
   estados anteriores e encerra a apresentação autoritativa após liberar o controle.
   Full4: 1013/1013, sem skips; três testes focados finais e Python78/78 aprovados.
@@ -53,16 +61,15 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   aprovados e caminhada após saída nos dois papéis; zero erros/avisos do servidor.
   Corrigidos também catálogoBigWorm e ciclo de vida/transmissão do grão de areia.
   Protocolo60 mantido; lote publicado com sucesso no Actions42010967595.
-- **Publicado:** protocolo60, commit `ba9be59ee`,
-  [Actions42010967595](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42010967595)
-  concluído com sucesso: servidorLinux, clienteWindows e canalGameUpdater0.5.0.
-  Manifestos de servidor e updater confirmam o mesmo commit. O baseline anterior
-  C04 é `6c2b92cae`/Actions41948608681.
+- **Publicado antes deste lote:** protocolo 63, commit `16f96722f`,
+  [Actions42077315561](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42077315561)
+  concluído com sucesso. Inclui os ajustes de chat posteriores ao C05.
+  C05 foi publicado em `ba9be59ee`/Actions42010967595, ainda no protocolo 60.
 - **C04/protocolo60 concluído e publicado:** cart/passageiro/poses na mesma
   trajetória aprovada; curvas, salto/wrap, portais, pausa/retomada, cancelamento
   nativo e handoff ao motor/bounce. Entrada/saída e rota permanecem autoritativas.
   Commit `6c2b92cae` publicado com sucesso para cliente e servidor.
-- **Validação local mais recente (C04/protocolo60):** Full7 1010/1010, sem skips;
+- **Validação anterior (C04/protocolo60):** Full7 1010/1010, sem skips;
   C#0erros,6avisos legados do pacoteMirror; nenhum aviso introduzido. Python76/76.
   Development8 compilou; Peers7 com2clientes reais renderizados por110s em Battle9,
   Battle12 e Stage3-2Room1: fases/curva/salto/portal e caminhada após desembarque
@@ -91,9 +98,9 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:** 22 IDs implementados/testados e 11 parciais; todos os 33 iniciados.
+- **Checklist:** 23 IDs implementados/testados e 10 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** continuar C08, mantendo a comparação
+- **Próximo:** publicar C08 e continuar C09, mantendo a comparação
   perceptual/manual no roteiro geral. C06 e C07 já estão implementados/testados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
@@ -229,7 +236,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo: **22 de33 IDs concluídos em implementação/testes e11 parciais**.
+Resumo: **23 de33 IDs concluídos em implementação/testes e10 parciais**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -255,7 +262,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C05: protocolo60: portais hidden/sink com apresentação aprovada, corte de destino e cleanup nativo de player/bomba; proteção anterior e controle preservados. Full4 1013/1013 e três testes focados finais; Peers8 Battle7/Stage3-4 com2clientes renderizados,0erros/avisos. Hall/retorno e gates de swap/blackout auditados; QA perceptual/held-bomb/saída ocupada segue na matriz geral. Publicação concluída no Actions42010967595.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
-- [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
+- [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicação deste lote pendente.
 - [ ] C09: parcial48: caldeira/pull ordenado sem previsão/lead, gates de swap/dinamite/foguete, blackout/room lights e materiais de máscara aprovados,445 testes combinados; fases/tile Startup/capturas/render gráfico ainda pendentes.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
@@ -3648,3 +3655,100 @@ ba9be59ee1de049fdedf215bdafec53550e1e66b. deploy-status.success=true;
 canalGameUpdater0.5.0 aponta SB6-Windows-2026-11-05_06-28-22.zip.
 Checklist permanece22/33 implementados/testados,11parciais. PróximoC08.
 Nenhum arquivo do usuário entrou nos commits C05 ou de checkpoint.
+
+### C08 retomado em05/11/2026 — continuidade de ímã/redirecionamento
+
+Baseline16f96722f. Preservar Packages/manifest.json e packages-lock.json do usuário
+(hashes emLogs/PredictionC08-user-packages.json). Runner semEditor/CI ativo, mas
+com12arquivos gerados de build anteriores; não limpar esses arquivos. Editor
+do usuárioPID24924 intocado. Fontes próprias: NetworkBombFx.cs e
+OnlineRoomWorldBombMotionTests.cs. Nenhum protocolo novo neste lote.
+
+Encontrado: Magnet/Search não preservavam sequência de segmentos; recebimento
+podia pular ao próximo tile e até usar extrapolação deKick além do aprovado.
+Agora mantêm fila comoEnvironment, sem extrapolar novo passo magnético/Search.
+Kick mantém caminho reto responsivo, mas curva aprovada termina primeiro no
+canto antes de aplicar nova direção; fila de revisões descarta duplicatas antigas.
+Seis casos owner/observer Magnet/Search/Kick exercitam canto,stop,sem gameplay;
+fixture final também inclui pausa e mensagem velha após término.
+
+C#exec76626:0erros,6avisos legadosMirror. Focused inicialexec40055 está no runner
+(apenas seis casos). Após terminar, copiar teste final com pausa/stale e rodar
+suíte combinada. Integração real dos trajetos C08 ainda pendente; não marcarC08
+concluído nem publicar até validar os resultados. Checklist segue22/33.
+
+C08 Focused aprovado6/6. Full combinado emexec33910 com pausa/stale adicionado.
+Revisão adicional encontrou cancelamento nativo que retorna ao tile anterior:
+stop divergente do último endpoint deve cortar a fila imediatamente, não exibir
+rota descartada. Correção e3regressões adicionais estão na raiz, ainda não
+copiadas ao runner ocupado. Rodar nove casos finais após oFull.
+
+FixtureDev preparada emLocalServerLoadTest.cs: -load-test-field-motion junto
+a presenter-removal executa nativeMagnet/Search eKick+TryRedirectKick num
+corredor isolado(30,30), com paredeColliderStage para stop. Sem cena/prefab novo.
+Python smoke_full_clients.run(field_motion=True,presenter_removal=True,
+diagnostics=True) valida origem/canto/destino dos3netIds em cada client e
+mantém regressão de remoção do presenter. Não exige GPU (rendered=False).
+11testes do validador passaram. BuildDev/integracao ainda pendentes.
+
+C08 Full aprovado1019/1019,0skips. FinalFocused aprovado9/9 com cancelamento
+e pausa/stale. C#finalexec61707 aprovado0erros/0avisos. Python71CI+15Directory
+=86/86. UTF8 estrito e hashesPackages do usuário preservados. Development em
+exec64073, seguido de smoke110s Stage_2-1 com2clientes headless reais.
+Nenhuma capturaGPU neste lote; manter QA perceptual separado.
+
+C08 baseline ativo é protocolo63 (commits dechat posteriores aC05), mantido
+sem nova alteração dewire. Development compilou; smoke atual completou no
+servidor Magnet/Search/Kick nativos e presenter-removal. Aguardar fechamento
+dos3processos/validaçãoJSONL para concluir integração; exec64073 continua.
+
+C08 Peers1 REPROVADO pelo validador: Kick autônomo avançou atéx32.061985
+antes de curva confirmada. Servidor completou os3trajetos e remoção; logs dos
+2clientes preservados. Não aumentar tolerância nem descartar a evidência.
+Causa: SamplePlayback ainda aplicava continuação localKick em worldMotion=true.
+Corrigido para continuar localmente apenas comando não-world; chute local
+predito mantém caminho existente. Seis regressões adicionais comprovam espera
+noendpoint deKick/Magnet/Search autônomos para owner/observer, sem inventar
+uma direção pela geometria livre. Full2final emexec28650, depoisDevelopment2
+ePeers2; nenhuma publicaçãoC08 até passar. Código final congelado.
+
+C08 Full2FINAL aprovado1028/1028,0skips; inclui15regressões novas e todo
+OnlineRoom/COM. C#finalexec39612 aprovado0erros/0avisos. Development2 em
+exec28650, seguido dePeers2. Não modificarfontesrunner até terminar.
+
+### C08 — integração final aprovada em 05/11/2026
+
+Peers2 passou por 117,875s em Stage_2-1 com dois clientes Mirror reais headless.
+Ambos apresentaram origem, canto e destino de Magnet, Search e Kick redirecionado;
+cada um registrou nove amostras de movimento após transferência do presenter.
+Zero erros e zero avisos do servidor. SHA de Assembly-CSharp idêntico nos três
+processos: c73da0f8f49ec3a9cdc7b6cfa28a95bcec85860d7bbde6650efdb9bcdda4b1e8.
+
+Full2 final: 1028/1028, sem skips. C# final: 0 erros/0 avisos. Python: 86/86.
+Fontes do runner idênticas às testadas; restaurados apenas os três arquivos
+próprios de código/teste. Preservados os arquivos gerados anteriormente no runner.
+Packages/manifest.json e packages-lock.json do usuário intactos, fora do lote.
+Nenhuma cena/prefab editada; o fixture é exclusivo de Development.
+Checklist atualizado para 23/33 e 10 parciais. Próximo item: C09.
+
+Revisão finalC08 antes do commit: stop antigo com revisão menor que uma
+continuação enfileirada ainda podia descartar a rota, pois ClientMotionRevision
+representa só o trecho aplicado. Adicionado gate pelo maior serial já enfileirado,
+antes de processar cancelamento/troca de kind. Três regressões específicas.
+Root tem versões STAGED anteriores e mudanças finais UNSTAGED emFX/teste;
+restage somente após validar. Final18/Development3/Peers3 emexec61196, fontes
+próprias novamente no runner. Nenhum commit/pushC08 ainda. PreservarPackages.
+
+C08 Final18 aprovado18/18; gate de serial enfileirado validado. C#final
+exec14743:0erros/0avisos. Development3/Peers3 ainda emexec61196. Depois de
+passar: conferirparidadeUTF8 e hashesPackages, restaurar só3fontes próprias
+no runner, restageFX/teste/docs, commit/push e acompanhar publicaçãoboth.
+Basepublicada63/16f96722f confirmada noActions42077315561 success.
+
+C08 Peers3 FINAL aprovado em 118,812s, já com gate de revisão enfileirada.
+Ambos os clientes apresentaram os três trajetos e oito amostras após transferência
+do presenter, sem erros nem avisos do servidor. Assembly igual nos três processos:
+a2ab64f9a80ce0b9c760d1796c40c208492fe91617d3501dc783ddc454a90c26.
+Final18 18/18; Full2 anterior 1028/1028; C# final0erros/0avisos; Python86/86.
+Paridade de fontes/UTF8 confirmada e só as três fontes próprias foram restauradas
+no runner. Packages do usuário preservados byte a byte. Pronto para commit/push.

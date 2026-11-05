@@ -98,3 +98,19 @@ class PortalSmokeTests(unittest.TestCase):
         self.assertTrue(smoke.validate_launcher_capture(rows, 'portal7', expected)['owner']['approvedEndpoints'])
         with self.assertRaises(ValueError):
             smoke.validate_launcher_capture([r for r in rows if r['kind'] != 'portal_pose_sample' or r['position']['x'] == 0], 'portal7', expected)
+
+
+class FieldBombSmokeTests(unittest.TestCase):
+    def test_native_field_paths_require_corner_and_endpoint_in_each_capture(self):
+        expected, rows = [], []
+        for identity, kind in enumerate(('Magnet', 'Search', 'Kick'), 1):
+            end_y = 2 if kind == 'Kick' else 0
+            expected.append(dict(bombNetId=identity, detail='kind='+kind, bombPosition=dict(x=0,y=0),
+                                 delta=dict(x=2,y=0), position=dict(x=2,y=end_y)))
+            for x,y in ((0,0),(1,0),(2,0),(2,end_y)):
+                rows.append(dict(kind='bomb_motion_sample', bombNetId=identity, bombPosition=dict(x=x,y=y)))
+        self.assertEqual(3, len(smoke.validate_field_capture(rows, expected)))
+        for bad in ([r for r in rows if r['bombPosition']['x'] != 2],
+                    rows + [dict(kind='kick_presentation_sample', bombNetId=3, bombPosition=dict(x=1,y=1))]):
+            with self.assertRaises(ValueError): smoke.validate_field_capture(bad, expected)
+        with self.assertRaises(ValueError): smoke.validate_field_capture(rows, expected[:2])

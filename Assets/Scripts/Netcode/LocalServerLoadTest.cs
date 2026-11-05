@@ -530,6 +530,51 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        System.Collections.IEnumerator CheckLoadTestFieldBombMotion(BombController controller)
+        {
+            // Native motion in an isolated open corridor, not normal arena rules.
+            foreach (var kind in new[] { NetworkBombFx.BombMotionKind.Magnet, NetworkBombFx.BombMotionKind.Search, NetworkBombFx.BombMotionKind.Kick })
+            {
+                Vector2 origin = new(30, 30);
+                Vector2 corner = origin + Vector2.right * 2;
+                Vector2 target = kind == NetworkBombFx.BombMotionKind.Kick ? corner + Vector2.up * 2 : corner;
+                var wall = new GameObject("FieldSmokeStop", typeof(BoxCollider2D));
+                wall.layer = LayerMask.NameToLayer("Stage");
+                wall.transform.position = target + (kind == NetworkBombFx.BombMotionKind.Kick ? Vector2.up : Vector2.right);
+                var instance = Instantiate(controller.bombPrefab, origin, Quaternion.identity);
+                var bomb = instance.GetComponent<Bomb>(); bomb.Initialize(null); bomb.SetFuseSeconds(20); bomb.kickSpeed = 2;
+                NetSpawn.Server(instance); Physics2D.SyncTransforms();
+                try
+                {
+                    bool started = kind == NetworkBombFx.BombMotionKind.Kick
+                        ? bomb.StartKick(Vector2.right, 1, LayerMask.GetMask("Stage"), null)
+                        : bomb.StartMagnetPull(Vector2.right, 1, 2, LayerMask.GetMask("Stage"), null, .2f,
+                            LayerMask.GetMask("Stage"), .6f, .9f, false, kind == NetworkBombFx.BombMotionKind.Search);
+                    if (!started) throw new InvalidOperationException("Field smoke could not start native " + kind);
+                    bool turned = false;
+                    float deadline = Time.unscaledTime + 6;
+                    while ((bomb.IsBeingKicked || bomb.IsBeingMagnetPulled) && Time.unscaledTime < deadline)
+                    {
+                        if (kind == NetworkBombFx.BombMotionKind.Kick && !turned && bomb.GetComponent<Rigidbody2D>().position.x > corner.x - .4f)
+                        {
+                            turned = bomb.TryRedirectKick(Vector2.up);
+                            if (!turned) throw new InvalidOperationException("Native redirection rejected");
+                        }
+                        yield return null;
+                    }
+                    if (bomb.HasExploded || bomb.IsBeingKicked || bomb.IsBeingMagnetPulled || Vector2.Distance(bomb.transform.position, target) > .05f)
+                        throw new InvalidOperationException("Field smoke native endpoint failed " + kind + " at " + bomb.transform.position);
+                    var expected = GameplayLatencyDiagnostics.For("field_motion_expected", bomb: bomb, detail: "kind=" + kind);
+                    expected.bombPosition = origin; expected.delta = corner - origin; expected.position = target;
+                    GameplayLatencyDiagnostics.Write(expected);
+                    Debug.Log("[LoadTest] field-motion completed kind=" + kind);
+                    yield return new WaitForSecondsRealtime(1);
+                }
+                finally { NetworkServer.Destroy(instance); Destroy(wall); }
+                yield return null;
+            }
+        }
+
         System.Collections.IEnumerator CheckLoadTestPresenterRemoval()
         {
             // Both local test clients stopped their senders; let already-sent
@@ -540,6 +585,7 @@ namespace Assets.Scripts.Netcode
                 if (peer.identity != null && peer.identity.TryGetComponent(out controller) && peer.identity.TryGetComponent(out presenter))
                 { source = peer.identity.gameObject; break; }
             if (source == null || controller.bombPrefab == null) throw new InvalidOperationException("Presenter fixture requires an active player and bomb prefab");
+            if (HasArg("-load-test-field-motion")) yield return CheckLoadTestFieldBombMotion(controller);
             var instance = Instantiate(controller.bombPrefab, source.transform.position, Quaternion.identity);
             var bomb = instance.GetComponent<Bomb>(); bomb.Initialize(null); bomb.SetFuseSeconds(10); bomb.punchDuration = 1.2f;
             NetSpawn.Server(instance);

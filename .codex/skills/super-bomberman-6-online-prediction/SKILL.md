@@ -670,3 +670,19 @@ control recovery. Preserve native hidden travel and sink masks instead of drawin
 a continuous visible path between disconnected portal destinations. Portal cleanup
 must dispose nested iterators, preserve preexisting external protection and movement
 flags, and avoid reactivating dead actors or launching a cancelled bomb.
+
+For magnet/search motion, preserve approved linear segments in order as well as
+arcs; target selection and field changes are unknown until server approval.
+Do not apply kick's free-cell extrapolation to those autonomous mechanisms.
+A confirmed kick turn must complete its outgoing corner before the next leg;
+retain straight owner kick responsiveness. Reject duplicate queued revisions.
+If the authoritative stop differs from the queued route's endpoint, discard
+that route immediately: native collision can return a bomb to an earlier tile.
+Test this correction separately from a normal completion stop, with pause,
+late segments, owner/observer roles and no native gameplay on the client.
+
+Do not reuse local kick extrapolation for WorldBombMotion merely because a
+local player hosts its presenter. An autonomous or remote bomb's next direction
+is still unknown. Empty collision geometry does not approve a straight next leg;
+retain the last endpoint until the next segment arrives. Keep the owner's
+actual predicted kick command on its separate responsive path.
