@@ -661,3 +661,12 @@ walking through production input. A normal AFK pose after5s of neutral input
 must not be mistaken for a stuck motor. Repositioned Development actors need
 SyncAuthorityMotionTransform before reconciliation so Rigidbody interpolation
 does not publish the prior spawn as a temporary rider offset.
+
+For portal validation, sample roots after the final production LateUpdate presenter.
+An Update diagnostic can observe reconciliation or Rigidbody interpolation before
+the approved pose is reapplied; it cannot prove the frame that reached rendering.
+Keep source/destination checks strict and use a separate later input sample for
+control recovery. Preserve native hidden travel and sink masks instead of drawing
+a continuous visible path between disconnected portal destinations. Portal cleanup
+must dispose nested iterators, preserve preexisting external protection and movement
+flags, and avoid reactivating dead actors or launching a cancelled bomb.

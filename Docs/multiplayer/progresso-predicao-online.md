@@ -43,9 +43,16 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 
 ## Estado atual
 
-Atualizado em 04/11/2026. O checklist distingue implementação/testes de validação
+Atualizado em 05/11/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
+- **C05 implementado e validado:** cleanup dos portais de jogador/bomba preserva
+  estados anteriores e encerra a apresentação autoritativa após liberar o controle.
+  Full4: 1013/1013, sem skips; três testes focados finais e Python78/78 aprovados.
+  Peers8: Battle7 e Stage3-4 com dois clientes reais renderizados, origem/destino
+  aprovados e caminhada após saída nos dois papéis; zero erros/avisos do servidor.
+  Corrigidos também catálogoBigWorm e ciclo de vida/transmissão do grão de areia.
+  Protocolo60 mantido; publicação deste lote pendente.
 - **Publicado:** protocolo60, commit `6c2b92cae`,
   [Actions41948608681](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41948608681)
   concluído com sucesso: Linux dedicado, clienteWindows e canalGameUpdater.
@@ -84,11 +91,10 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:** 21 IDs implementados/testados e 12 parciais; todos os 33 iniciados.
+- **Checklist:** 22 IDs implementados/testados e 11 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** C05 (portais), mantendo os12IDs parciais e a validação perceptual
-  manual separados. C04 está implementado/testado/publicado; seu aceite humano
-  completo com offline continua no roteiro geral.
+- **Próximo:** publicar o lote C05 e continuar C08, mantendo a comparação
+  perceptual/manual no roteiro geral. C06 e C07 já estão implementados/testados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -223,7 +229,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo: **21 de33 IDs concluídos em implementação/testes e12 parciais**.
+Resumo: **22 de33 IDs concluídos em implementação/testes e11 parciais**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -246,7 +252,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
 - [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 concluída no Actions41948608681.
-- [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
+- [x] C05: protocolo60: portais hidden/sink com apresentação aprovada, corte de destino e cleanup nativo de player/bomba; proteção anterior e controle preservados. Full4 1013/1013 e três testes focados finais; Peers8 Battle7/Stage3-4 com2clientes renderizados,0erros/avisos. Hall/retorno e gates de swap/blackout auditados; QA perceptual/held-bomb/saída ocupada segue na matriz geral. Publicação deste lote pendente.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
@@ -3506,3 +3512,122 @@ protocol60,targetboth,workingTreeDirtyBeforeBuild=false,benchmarkHarness=false.
 C04 concluído em implementação/testes/publicação. PróximoC05. Checklist21/33feitos,
 12parciais, mais QAmanual/consolidação fora da contagem. Não ficou nenhum smoke
 ouUnityde teste ativo; Editor e todos os arquivos alheios do usuário preservados.
+
+
+## C05 iniciado — auditoria de portais
+
+Escopo confirmado: Battle7, swap e World3; destino/ocupação/reserva autoritativos,
+transição aprovada e corte do teleporte. Primeira correção LOCAL em
+BattleMode7PortalController.cs: guardar/restaurar proteção externa anterior por
+CharacterHealth; não reativar controle/bombas/collider após morte ou fim de fase.
+UTF8 conferido. Compilação C#exec95258 a consultar. Ainda sem testes Unity desta
+alteração, sem commit/publicação; C05 NÃO concluído. Próximo adicionar regressão
+nativa de cancelamento/proteção/morte, auditar iteradores aninhados e validar
+portal/saída/blackout com dois clients. Preservar os diffs alheios Rocket/fontes/
+material já listados no checkpoint anterior. Protocolo publicado continua60.
+
+
+### Continuação C05 —04/11
+
+C#exec95258 passou0erros/6avisosMirrorlegados. NativePortal: pilha de iteradores
+rastreada e explicitamente descartada no disable; scope de autoridade liberado
+após restauração. Preserva flags externos/visuais e proteção prévia; morte/fim
+não reativam controle/collider/bombcontroller. Focused1/2 falharam em drift1415u
+porMovePosition/interpolação pendente; limpeza agora fixa Rigidbody na última
+posição apresentada e sobrescreve movimento pendente (mesmo contratoC04).
+Focused3 passou1UnityTest com2variantes (hidden/sink), preservação de flags,
+proteção true/false, cancelamento e reuso. Relatórios fechados emLogs/.
+
+Auditoria incluiu bombas: rotina escondia render/collider/notifier sem finally.
+Agora tem lifetime rastreado e restaura só bomba viva em cancelamento, sem punch
+ou detonação; transferência normal aoStartPunch mantém sua própria colisão.
+Esse caso foi adicionado ao mesmoUnityTest, ainda aguardandoFull2.
+
+HarnessDevelopment: portal7(Battle7) eportal34(NormalGame Stage3-4),2owners a pé/
+Pink. Confere origem/destino nativos, proteção e unlock; aguarda owner largar
+AuthorityPresentation antes de caminhar cominputreal. ValidadorPython exige os
+endpoints em cada cliente (owner/observer) e movimento livre após chegada.
+9testes focados do validador passaram. C#exec73284 passou0erros/0avisos (antes do
+último finally da bomba). Sem wirechange: protocolo continua60; "61" nos nomes
+Logs é loteC05, não alteração do protocolo. Não publicar antes das evidências.
+
+Exec70381 orquestradorPython28864 interrompido após vincular aoUnity27468 Full1,
+que continua até encerramento natural. Exec38704 ATIVA espera esseEditor sair,
+copia apenas ownedpaths e rodaFull2 esperado1011 → Development2 →
+PredictionPortal61Peers2-portal7/portal34,110s renderizados,ports28170/28171.
+Para no primeiro erro. Nenhuma alteração runtime posterior à cópia planejada.
+Runner já tinha13dirt gerados porCI antes desta cópia; não descartar como se
+fossem fontesC05. Preservar rootRocket/fontes/material/newPNG. C05 ainda parcial;
+nenhum commit/push/publicação deste lote. Editor do usuário permanece aberto.
+
+
+Full2 passou1011/1011,0skips (inclui bomba em cancelamento). Development2 foi
+interrompido explicitamente no processo19488 após conferir log/projectPath do
+runnerisolado e parent26336; nenhum Editor do usuário foi tocado. Evitado build
+ultrapassado após último ajuste de cleanup daGlove.
+
+Última correção: limpar supressão transitória daPowerGlove mesmo após morte,
+sem reativar sprites de carry no jogador morto/finalizando. Setter agora verifica
+mover vivo antes de refresh visual. MesmoUnityTest adiciona estado morto e exige
+input/collider/bombcontroller bloqueados e flagdeGlove limpa. Código atual está
+em Full3(esperado1011), seguido de Development3 e Peers3-portal7/portal34,
+110s/2clientes/renderizados/ports28170–28171. Exec15845 ATIVA. Sourcefrozen após
+cópia; próxima mudança só se houver falha demonstrada. Não publicar parcialmente.
+
+Auditoria World3Hall: entrada e retornoWorldMap passam porRouteCoopScene, mantendo
+roteamento do servidor. SwapGroundTileHandler eSwapGroundTileBlackoutHandler
+possuem gates nos pontos de simulação/ignição; sem escolher alteração de terreno
+no client. Não houve nova predição de destino/rota/reserva. QAmanual de todas as
+variações de sala/heldbomb ainda deve ser mantido separado do aceite automático.
+
+
+Full3 APROVADO1011/1011,0skips. C#finalexec73888 passou0erros/0avisos. Exec15845
+agora em Development3; depois2smokesPeers3. Sem alteração runtime após Full3.
+GloveDeath, Collider/InputDead e bomba em cancelamento foram realmente executados
+no mesmoUnityTest dePlayMode, além de hidden/sink e reuso. Só comparar render e
+handoff entre dois peers quando os writersJSONL encerrarem. Protocolo ainda60;
+nenhum commit/publicaçãoC05. Não marcarC05feito antes desses resultados.
+
+C05 continuação: Full3 aprovado1011/1011. Peers4 Battle7 passou; Stage3-4
+completou os dois portais nativos, mas o validador não encontrou a origem de um
+owner em motion_sample (Update). Novo portal_pose_sample coleta após presenters
+no LateUpdate1500; validação estrita de origem/destino e controle preservada.
+Development5 e Peers5 dos dois cenários em execução; não publicado.
+
+Peers6: Battle7 aprovado; Stage3-4 endpoints/controle aprovados em ambos,
+mas reprovado por catálogo (BigWorm e sprite sólido gerado) e NullReference
+em Stage34SandstormEffect.OnDisable antes de Start. Corrigidos recursos explícitos
+no catalog builder, pixels conhecidos de Texture2D.whiteTexture sem readback
+e cleanup nulo/idempotente dos grãos. Dois testes novos. Full4 + Development6
++ Peers7 nos dois cenários em execução (exec39061); não publicar antes do aceite.
+
+Diagnóstico refinado: sprite sem nome é o grão da tempestade (textura1x1
+descartada no CPU), não Texture2D.whiteTexture. Removido fallback branco
+genérico; manter apenas esse pixel legível resolve a origem sem alterar protocolo.
+Teste de cleanup também exige pixels legíveis. Orquestrador27004 encerrado
+antes do build para evitar smokes sabidamente obsoletos; Unity Full4 PID25564
+continua até gravar XML. Não copiar fontes no runner até ele terminar.
+Próximo: copiar grain/test final, Full5 e Development7, Peers8 de ambos.
+
+Full4 aprovado1013/1013; C#finalexec81778 aprovado0erros/0avisos.
+FinalFocused primeiro:2/3 (teste criou textura e chamou Destroy adiado emEditMode).
+Corrigido fixture para cleanup antes deStart duas vezes e inspeção do pixel
+com descarte explícito dos próprios assets. Runtime não alterado por essa falha.
+FinalFocused2/Development7/Peers8 emexec29276; fontes finais copiadas ao runner.
+Nenhuma publicaçãoC05 até validar ambos os cenários finais sem erros.
+
+### Retomada final em 05/11/2026 — C05 aprovado
+
+FinalFocused2: 3/3; Development7 compilado. Peers8 Battle7 (130,672s) e
+Stage3-4 (115,640s): dois clientes reais, câmeraURP, origem confirmada e destino
+após presenters, retorno ao motor nos dois papéis. Zero erros/avisos servidor.
+Assembly igual no servidor e clientes: bdc29a145ab52758a9dc6777e0ab2b944383142ccd48ee06849f548eb8c900ab.
+Imagens finais de chegada inspecionadas. A captura não mede latência de hardware
+nem substitui comparação humana completa com offline. Checklist22/33 e11parciais.
+
+Durante a pausa, HEAD avançou para c7c9e7a8c (sprites do foguete, trabalho do
+usuário). Runner foi limpo pelo CI; nenhum cleanup adicional é necessário.
+Actions41962406679 desse commit recebeu shutdown do runner durante a build;
+servidor e updater não foram publicados. Listener está ativo na retomada.
+Preservar também PlayerPersistentStats, DestructibleRocketController, fonte e
+StageHeatHaze atualmente alterados pelo usuário. Publicar somente arquivos C05.

@@ -39,7 +39,7 @@ namespace Assets.Scripts.Netcode
                 if (HasArg("-load-test-launchers"))
                     NetworkServer.RegisterHandler<RopeSmokeAck>((peer, message) =>
                     {
-                        if (peer.isReady && peer.identity != null && message.phase >= 0 && message.phase <= 3)
+                        if (peer.isReady && peer.identity != null && message.phase >= 0 && message.phase <= 4)
                             loadTestRopeAcks[peer.connectionId] = message;
                     });
                 var args = Environment.GetCommandLineArgs();
@@ -49,7 +49,7 @@ namespace Assets.Scripts.Netcode
                 if (launcherArg >= 0)
                 {
                     loadTestLauncherKind = launcherArg + 1 < args.Length ? args[launcherArg + 1] : "";
-                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon" && loadTestLauncherKind != "rope" && !loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal))
+                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon" && loadTestLauncherKind != "rope" && !loadTestLauncherKind.StartsWith("portal", StringComparison.Ordinal) && !loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal))
                         throw new ArgumentException("Unknown Development launcher fixture");
                 }
                 loadTestStart = Time.realtimeSinceStartup;
@@ -86,7 +86,7 @@ namespace Assets.Scripts.Netcode
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
+                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -106,7 +106,7 @@ namespace Assets.Scripts.Netcode
                 }
                 if (!loadTestLaunchersChecked && loadTestLauncherKind != null && Time.timeSinceLevelLoad > 12 &&
                     (!IsCoopRoom || OnlineCoopPlayersReady) && !BattleStartPending &&
-                    ((loadTestLauncherKind != "rope" && !loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal)) || loadTestPresenterReady.Count >= loadTestPlayers))
+                    ((loadTestLauncherKind != "rope" && !loadTestLauncherKind.StartsWith("portal", StringComparison.Ordinal) && !loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal)) || loadTestPresenterReady.Count >= loadTestPlayers))
                 {
                     loadTestLaunchersChecked = true;
                     StartCoroutine(CheckLoadTestLaunchers());
@@ -215,6 +215,53 @@ namespace Assets.Scripts.Netcode
                 (input.Get(player, PlayerAction.MoveUp) ? 1 : 0) - (input.Get(player, PlayerAction.MoveDown) ? 1 : 0));
         }
 
+        System.Collections.IEnumerator CheckLoadTestPortals()
+        {
+            var portal = FindAnyObjectByType<BattleMode7PortalController>();
+            if (portal == null) throw new InvalidOperationException("Missing native player portal");
+            var cells = new List<Vector2Int>(); portal.CopyPortalCells(cells);
+            if (cells.Count < 2 || !portal.TryGetPortalWorldCenter(cells[0], out var entry) ||
+                !portal.TryGetClockwiseDestination(cells[0], out var destinationCell) || !portal.TryGetPortalWorldCenter(destinationCell, out var exit))
+                throw new InvalidOperationException("Missing authored portal endpoints");
+            int owners = 0;
+            foreach (var peer in NetworkServer.connections.Values)
+            {
+                var actor = peer.identity;
+                if (actor == null) throw new InvalidOperationException("Missing portal actor");
+                var mover = actor.GetComponent<MovementController>(); var input = actor.GetComponent<NetworkPlayerInput>();
+                var health = actor.GetComponent<CharacterHealth>(); bool protection = health.HasExternalInvulnerability;
+                health.SetExternalInvulnerability(true);
+                actor.GetComponent<PlayerMountCompanion>().RestoreMounted(owners == 0 ? MountedType.None : MountedType.Pink);
+                yield return new WaitForSecondsRealtime(.6f);
+                peer.Send(new RopeSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.4f);
+                yield return WaitForNeutralRopeInput(peer, input, mover);
+                Vector2 origin = mover.Rigidbody.position;
+                mover.SnapToWorldPoint(entry, roundToGrid: false); ServerReconcileFixturePlayer(input);
+                float deadline = Time.unscaledTime + 5;
+                while (!mover.InputLocked && Time.unscaledTime < deadline) yield return null;
+                if (!mover.InputLocked) throw new InvalidOperationException("Native portal did not claim the actor");
+                deadline = Time.unscaledTime + 10;
+                while (mover.InputLocked && Time.unscaledTime < deadline) yield return null;
+                if (mover.InputLocked || Vector2.Distance(mover.Rigidbody.position, exit) > .25f || !health.HasExternalInvulnerability)
+                    throw new InvalidOperationException("Native portal failed destination/control/protection validation");
+                var expected = GameplayLatencyDiagnostics.For("portal_smoke_expected", mover, detail: "fixture=" + loadTestLauncherKind);
+                expected.bombPosition = entry; expected.delta = exit - entry; expected.position = exit; GameplayLatencyDiagnostics.Write(expected);
+                uint before = input.CurrentInputTick; peer.Send(new RopeSmokeStep { phase = 4 }); deadline = Time.unscaledTime + 10;
+                bool Released() => loadTestRopeAcks.TryGetValue(peer.connectionId, out var ack) && ack.phase == 4 && NetworkInputHistory.IsNewer(ack.tick, before);
+                while (!Released() && Time.unscaledTime < deadline) yield return null;
+                if (!Released()) throw new InvalidOperationException("Portal owner did not release authority presentation");
+                yield return new WaitForSecondsRealtime(.6f);
+                mover.SnapToWorldPoint(origin, roundToGrid: false); ServerReconcileFixturePlayer(input);
+                peer.Send(new RopeSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.4f);
+                yield return WaitForNeutralRopeInput(peer, input, mover);
+                if (!mover.CanPredictNetworkMovement) throw new InvalidOperationException("Portal did not return to native walking");
+                health.SetExternalInvulnerability(protection); owners++;
+                Debug.Log("[LoadTest] portal input restored player=" + mover.PlayerId);
+            }
+            if (owners != 2) throw new InvalidOperationException("Portal fixture requires two owners");
+            Debug.Log("[LoadTest] launchers completed kind=" + loadTestLauncherKind + " players=2");
+        }
+
         System.Collections.IEnumerator CheckLoadTestMinecarts()
         {
             var carts = FindObjectsByType<BattleMode9MinecartController>();
@@ -273,6 +320,8 @@ namespace Assets.Scripts.Netcode
 
         System.Collections.IEnumerator CheckLoadTestLaunchers()
         {
+            if (loadTestLauncherKind.StartsWith("portal", StringComparison.Ordinal))
+            { yield return CheckLoadTestPortals(); yield break; }
             if (loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal))
             { yield return CheckLoadTestMinecarts(); yield break; }
             int index = 0;
@@ -667,13 +716,15 @@ namespace Assets.Scripts.Netcode
         float nextItemCheck;
         string captureDirectory;
         bool capturedRiding, captureWarmed;
+        float portalCaptureUntil, portalCaptureNext, portalPoseNext;
+        int portalCaptureFrame;
         int captureArc, captureFrame;
         float captureNext, visualCaptureAt = float.PositiveInfinity, visualAfkCaptureAt = float.PositiveInfinity;
         int visualCaptureSerial;
         bool checkMountVisuals, mountVisualHandler, mountVisualReady;
         int mountVisualPhase, ropeSmokePhase, ropeAckPending = -1;
         uint ropeAckAfterTick;
-        bool checkRopeInput, ropeSmokeHandler;
+        bool checkRopeInput, ropeSmokeHandler, checkPortalInput;
         bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -691,7 +742,8 @@ namespace Assets.Scripts.Netcode
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
             smoke.checkMountVisuals = Array.IndexOf(args, "-load-test-mount-visuals") >= 0;
             smoke.checkLauncherInput = Array.IndexOf(args, "-load-test-launchers") >= 0;
-            smoke.checkRopeInput = smoke.checkLauncherInput && (Array.IndexOf(args, "rope") >= 0 || Array.Exists(args, arg => arg.StartsWith("cart", StringComparison.Ordinal)));
+            smoke.checkRopeInput = smoke.checkLauncherInput && (Array.IndexOf(args, "rope") >= 0 || Array.Exists(args, arg => (arg.StartsWith("cart", StringComparison.Ordinal) || arg.StartsWith("portal", StringComparison.Ordinal))));
+            smoke.checkPortalInput = Array.Exists(args, arg => arg.StartsWith("portal", StringComparison.Ordinal));
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
             smoke.repeatMountCycles = Array.IndexOf(args, "-load-test-mount-cycles") >= 0;
@@ -766,14 +818,14 @@ namespace Assets.Scripts.Netcode
                             ropeAckAfterTick = unchecked(launcher.CurrentInputTick + 1);
                         });
                     }
-                    if (!mountVisualReady && (string.IsNullOrEmpty(captureDirectory) || captureWarmed) && (SceneManager.GetActiveScene().name == "BattleMode_11" || SceneManager.GetActiveScene().name == "BattleMode_9" || SceneManager.GetActiveScene().name == "BattleMode_12" || SceneManager.GetActiveScene().name == "Stage_3-2"))
+                    if (!mountVisualReady && (string.IsNullOrEmpty(captureDirectory) || captureWarmed) && (SceneManager.GetActiveScene().name == "BattleMode_11" || SceneManager.GetActiveScene().name == "BattleMode_9" || SceneManager.GetActiveScene().name == "BattleMode_12" || (SceneManager.GetActiveScene().name == "Stage_3-2" || SceneManager.GetActiveScene().name == "Stage_3-4" || SceneManager.GetActiveScene().name == "BattleMode_7")))
                     {
                         mountVisualReady = true; NetworkClient.Send(new PresenterSmokeReady { scene = SceneManager.GetActiveScene().name });
                     }
                     PlayerInputManager.Instance.SetSyntheticHeld(1, PlayerAction.MoveUp, ropeSmokePhase == 1);
                     // At least two FixedUpdate ticks after receipt: the first can
                     // precede Update's new hardware sample. Ack follows the actual Command.
-                    if (ropeAckPending >= 0 && (ropeAckPending != 3 || !launcher.ApprovedCartActive) && NetworkInputHistory.IsNewer(launcher.CurrentInputTick, ropeAckAfterTick))
+                    if (ropeAckPending >= 0 && (ropeAckPending != 3 || !launcher.ApprovedCartActive) && (ropeAckPending != 4 || !launcher.OwnerUsesAuthorityPresentation) && NetworkInputHistory.IsNewer(launcher.CurrentInputTick, ropeAckAfterTick))
                     {
                         NetworkClient.Send(new RopeSmokeAck { phase = ropeAckPending, tick = launcher.CurrentInputTick });
                         ropeAckPending = -1;
@@ -840,6 +892,16 @@ namespace Assets.Scripts.Netcode
         internal void CapturePresentationFrame()
         {
             if (string.IsNullOrEmpty(captureDirectory) || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
+            if (checkPortalInput && Time.unscaledTime >= portalPoseNext)
+            {
+                portalPoseNext = Time.unscaledTime + .05f;
+                foreach (var identity in NetworkClient.spawned.Values)
+                {
+                    if (identity == null || !identity.TryGetComponent<MovementController>(out var mover)) continue;
+                    // Sample after the production presenters, at the pose rendered this frame.
+                    GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("portal_pose_sample", mover));
+                }
+            }
             var camera = Camera.main;
             if (camera == null) return;
             if (!captureWarmed && (SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) || SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal)) && Time.timeSinceLevelLoad > 1)
@@ -854,9 +916,16 @@ namespace Assets.Scripts.Netcode
                 CaptureMountFrame(camera, $"visual-{++visualCaptureSerial:D2}-phase-{mountVisualPhase:D2}.png");
             }
             var fx = NetworkClient.localPlayer.GetComponent<NetworkBombFx>();
-            bool riding = fx != null && (fx.RidingArcActive || checkMountVisuals && fx.PinkJumpVisualActive) || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedCartActive == true;
+            bool riding = fx != null && (fx.RidingArcActive || checkMountVisuals && fx.PinkJumpVisualActive) || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedCartActive == true || checkPortalInput && NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true;
             if (riding && !capturedRiding) { captureArc++; captureFrame = 0; captureNext = Time.unscaledTime; }
+            if (checkPortalInput && capturedRiding && !riding)
+            { portalCaptureUntil = Time.unscaledTime + .4f; portalCaptureNext = 0; }
             capturedRiding = riding;
+            if (checkPortalInput && !riding && Time.unscaledTime < portalCaptureUntil && Time.unscaledTime >= portalCaptureNext)
+            {
+                portalCaptureNext = Time.unscaledTime + .12f;
+                CaptureMountFrame(camera, $"portal-arrival-{portalCaptureFrame++:D2}.png");
+            }
             if (!riding || captureArc > (checkMountVisuals ? 12 : 3) || Time.unscaledTime < captureNext) return;
             captureNext = Time.unscaledTime + 0.12f;
             CaptureMountFrame(camera, $"arc-{captureArc:D2}-{captureFrame++:D2}.png");

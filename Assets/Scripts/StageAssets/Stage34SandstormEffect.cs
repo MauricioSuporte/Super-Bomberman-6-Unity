@@ -100,7 +100,7 @@ namespace StageAssets
         {
             for (int i = 0; i < grains.Length; i++)
             {
-                if (grains[i].transform != null)
+                if (grains[i]?.transform != null)
                     Destroy(grains[i].transform.gameObject);
 
                 grains[i] = null;
@@ -239,7 +239,8 @@ namespace StageAssets
                 name = "Stage34SandGrain"
             };
             grainTexture.SetPixel(0, 0, Color.white);
-            grainTexture.Apply(false, true);
+            // Keep the one pixel readable for the existing co-op sprite definition.
+            grainTexture.Apply(false, false);
 
             return Sprite.Create(grainTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), pixelsPerUnit);
         }

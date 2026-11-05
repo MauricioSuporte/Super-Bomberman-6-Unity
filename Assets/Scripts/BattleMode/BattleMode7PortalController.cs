@@ -76,10 +76,41 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
     static Sprite fixedPortalMaskSprite;
     readonly Dictionary<MovementController, List<PortalVisualSnapshot>> activePortalVisuals = new();
 
+    readonly Dictionary<MovementController, PortalRoutine> portalRoutines = new();
+    readonly Dictionary<Bomb, PortalRoutine> bombPortalRoutines = new();
+
+    sealed class PortalRoutine : System.IDisposable
+    {
+        readonly Stack<IEnumerator> frames = new();
+        readonly Assets.Scripts.Netcode.NetworkPlayerInput.AuthorityMotionScope authority;
+        bool disposed;
+        public PortalRoutine(IEnumerator routine, Assets.Scripts.Netcode.NetworkPlayerInput.AuthorityMotionScope authority)
+        { frames.Push(routine); this.authority = authority; }
+        public bool Step(out object wait)
+        {
+            wait = null;
+            while (!disposed && frames.Count > 0)
+            {
+                var top = frames.Peek();
+                if (!top.MoveNext()) { frames.Pop(); (top as System.IDisposable)?.Dispose(); continue; }
+                if (top.Current is IEnumerator nested) { frames.Push(nested); continue; }
+                wait = top.Current; return true;
+            }
+            return false;
+        }
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            try { while (frames.Count > 0) (frames.Pop() as System.IDisposable)?.Dispose(); }
+            finally { authority.Dispose(); }
+        }
+    }
+
     sealed class TeleportState
     {
         public Vector2 roomPresencePosition;
-        public bool prevInputLocked;
+        public bool prevInputLocked, prevExternalMovement, prevVisualOverride;
         public bool prevPlayerExplosionInvulnerable;
         public bool prevMountExplosionInvulnerable;
         public bool prevBombEnabled;
@@ -89,6 +120,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
         public Collider2D playerCollider;
         public MountMovementController mountMovement;
         public CharacterHealth[] healths;
+        public bool[] previousHealthProtection;
         public PlayerMountCompanion mountCompanion;
         public MountEggQueue eggQueue;
         public Bomb heldBomb;
@@ -164,7 +196,11 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
 
     void OnDisable()
     {
+        var running = new List<PortalRoutine>(portalRoutines.Values);
+        running.AddRange(bombPortalRoutines.Values);
         StopAllCoroutines();
+        foreach (var routine in running) routine.Dispose();
+        portalRoutines.Clear(); bombPortalRoutines.Clear();
         ClearNetworkPortalStars();
         foreach (var snapshots in activePortalVisuals.Values)
         {
@@ -233,6 +269,15 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
 
     IEnumerator TeleportAndPunchBombRoutine(Bomb bomb, int sourceIndex)
     {
+        if (!NetSync.ShouldSimulateLocally || !isActiveAndEnabled || bomb == null || bombPortalRoutines.ContainsKey(bomb)) yield break;
+        var routine = new PortalRoutine(TeleportAndPunchBombCore(bomb, sourceIndex), default);
+        bombPortalRoutines.Add(bomb, routine);
+        try { while (routine.Step(out var wait)) yield return wait; }
+        finally { routine.Dispose(); bombPortalRoutines.Remove(bomb); activeBombTeleporters.Remove(bomb); }
+    }
+
+    IEnumerator TeleportAndPunchBombCore(Bomb bomb, int sourceIndex)
+    {
         if (NetSync.Mode == NetSync.NetMode.Client) yield break;
         if (bomb == null || portalCells == null || portalCells.Length < 2)
             yield break;
@@ -264,83 +309,98 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
         BombAtGroundTileNotifier notifier = bomb.GetComponent<BombAtGroundTileNotifier>();
         bool notifierWasEnabled = notifier != null && notifier.enabled;
 
-        SetRenderersEnabled(renderers, false);
-        if (bombCollider != null)
-            bombCollider.enabled = false;
-        if (notifier != null)
-            notifier.enabled = false;
-
-        PlayEnterSfx();
-        int spawnedStars = 0;
-        if (spawnTeleportStars)
+        bool restored = false;
+        try
         {
-            SpawnTeleportStar(source);
-            spawnedStars = 1;
-        }
+            SetRenderersEnabled(renderers, false);
+            if (bombCollider != null)
+                bombCollider.enabled = false;
+            if (notifier != null)
+                notifier.enabled = false;
 
-        float elapsed = 0f;
-        float duration = Mathf.Max(0.01f, teleportSeconds);
-        while (elapsed < duration)
-        {
+            PlayEnterSfx();
+            int spawnedStars = 0;
+            if (spawnTeleportStars)
+            {
+                SpawnTeleportStar(source);
+                spawnedStars = 1;
+            }
+
+            float elapsed = 0f;
+            float duration = Mathf.Max(0.01f, teleportSeconds);
+            while (elapsed < duration)
+            {
+                if (bomb == null || bomb.HasExploded)
+                {
+                    activeBombTeleporters.Remove(bomb);
+                    yield break;
+                }
+
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                float t = Mathf.Clamp01(elapsed / duration);
+                spawnedStars = SpawnTeleportStarsAlongPath(source, destination, t, spawnedStars);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
             if (bomb == null || bomb.HasExploded)
             {
                 activeBombTeleporters.Remove(bomb);
                 yield break;
             }
 
-            if (GamePauseController.IsPaused)
+            bomb.ForceStopExternalMovementAndSnap(destination);
+            RestoreRendererStates(renderers, rendererStates);
+            if (bombCollider != null)
+                bombCollider.enabled = colliderWasEnabled;
+            if (notifier != null)
+                notifier.enabled = notifierWasEnabled;
+            restored = true;
+
+            SpawnTeleportStarsAlongPath(source, destination, 1f, spawnedStars);
+
+            BombController owner = bomb.Owner;
+            MovementController ownerMovement = owner != null
+                ? owner.GetComponent<MovementController>()
+                : null;
+            LayerMask obstacles = ownerMovement != null
+                ? ownerMovement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player")
+                : LayerMask.GetMask("Stage", "Enemy", "Bomb", "Player");
+            Tilemap destructibleTilemap = owner != null ? owner.destructibleTiles : null;
+            float tileSize = ownerMovement != null ? Mathf.Max(0.0001f, ownerMovement.tileSize) : 1f;
+
+            bool launched = bomb.StartPunch(
+                launchDirection,
+                tileSize,
+                BombPortalPunchDistanceTiles,
+                obstacles,
+                destructibleTilemap,
+                logicalOriginOverride: destination);
+
+            if (!launched)
             {
-                yield return null;
-                continue;
+                activeBombTeleporters.Remove(bomb);
+                yield break;
             }
 
-            float t = Mathf.Clamp01(elapsed / duration);
-            spawnedStars = SpawnTeleportStarsAlongPath(source, destination, t, spawnedStars);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        if (bomb == null || bomb.HasExploded)
-        {
+            bombsWaitingForPortalExit[bomb] = destinationCell;
             activeBombTeleporters.Remove(bomb);
-            yield break;
         }
-
-        bomb.ForceStopExternalMovementAndSnap(destination);
-        RestoreRendererStates(renderers, rendererStates);
-        if (bombCollider != null)
-            bombCollider.enabled = colliderWasEnabled;
-        if (notifier != null)
-            notifier.enabled = notifierWasEnabled;
-
-        SpawnTeleportStarsAlongPath(source, destination, 1f, spawnedStars);
-
-        BombController owner = bomb.Owner;
-        MovementController ownerMovement = owner != null
-            ? owner.GetComponent<MovementController>()
-            : null;
-        LayerMask obstacles = ownerMovement != null
-            ? ownerMovement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player")
-            : LayerMask.GetMask("Stage", "Enemy", "Bomb", "Player");
-        Tilemap destructibleTilemap = owner != null ? owner.destructibleTiles : null;
-        float tileSize = ownerMovement != null ? Mathf.Max(0.0001f, ownerMovement.tileSize) : 1f;
-
-        bool launched = bomb.StartPunch(
-            launchDirection,
-            tileSize,
-            BombPortalPunchDistanceTiles,
-            obstacles,
-            destructibleTilemap,
-            logicalOriginOverride: destination);
-
-        if (!launched)
+        finally
         {
+            if (!restored && bomb != null && !bomb.HasExploded)
+            {
+                RestoreRendererStates(renderers, rendererStates);
+                if (bombCollider != null) bombCollider.enabled = colliderWasEnabled;
+                if (notifier != null) notifier.enabled = notifierWasEnabled;
+            }
             activeBombTeleporters.Remove(bomb);
-            yield break;
         }
-
-        bombsWaitingForPortalExit[bomb] = destinationCell;
-        activeBombTeleporters.Remove(bomb);
     }
 
     static Vector2 GetCardinalDirection(Vector2 direction)
@@ -495,11 +555,23 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
 
     IEnumerator TeleportRoutine(MovementController mover, int sourceIndex, int destinationIndex)
     {
+        if (!NetSync.ShouldSimulateLocally || !isActiveAndEnabled || mover == null || portalRoutines.ContainsKey(mover)) yield break;
+        var routine = new PortalRoutine(TeleportCore(mover, sourceIndex, destinationIndex), NetworkPlayerInput.PresentAuthorityMotion(mover));
+        portalRoutines.Add(mover, routine);
+        try { while (routine.Step(out var wait)) yield return wait; }
+        finally
+        {
+            routine.Dispose(); portalRoutines.Remove(mover);
+            if (activeStates.Remove(mover, out var abandoned)) RestoreTeleportState(mover, abandoned);
+        }
+    }
+
+    IEnumerator TeleportCore(MovementController mover, int sourceIndex, int destinationIndex)
+    {
         if (NetSync.Mode == NetSync.NetMode.Client) yield break;
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
-        using var authorityMotion = NetworkPlayerInput.PresentAuthorityMotion(mover);
         activeTeleporters.Add(mover);
 
         Vector3Int sourceCell = ToCell(portalCells[sourceIndex]);
@@ -549,7 +621,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
                         sinkSpawnedStars = SpawnTeleportStarsAlongPath(
                             source, destination, travelElapsed / travelSeconds, sinkSpawnedStars);
                     });
-                if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
+                if (mover == null || mover.Rigidbody == null || mover.isDead || mover.IsEndingStage)
                     yield break;
 
                 // Keep the mounted Louie active through the sink animation so
@@ -568,7 +640,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
 
                 while (travelElapsed < travelSeconds)
                 {
-                    if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
+                    if (mover == null || mover.Rigidbody == null || mover.isDead || mover.IsEndingStage)
                         yield break;
 
                     if (GamePauseController.IsPaused)
@@ -602,7 +674,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
                     portalExitSeconds,
                     startProgress: portalExitStartProgress);
                 teleportedToDestination =
-                    mover != null && mover.Rigidbody != null && !mover.IsEndingStage;
+                    mover != null && mover.Rigidbody != null && !mover.isDead && !mover.IsEndingStage;
                 yield break;
             }
 
@@ -620,7 +692,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
                 if (mover == null || mover.Rigidbody == null)
                     yield break;
 
-                if (mover.IsEndingStage)
+                if (mover.isDead || mover.IsEndingStage)
                     yield break;
 
                 if (GamePauseController.IsPaused)
@@ -642,7 +714,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
                 yield return null;
             }
 
-            if (mover != null && !mover.IsEndingStage)
+            if (mover != null && !mover.isDead && !mover.IsEndingStage)
             {
                 Vector2 finalPosition = snapToDestinationCenter ? destination : mover.Rigidbody.position;
                 mover.SnapToWorldPoint(finalPosition, roundToGrid: false);
@@ -659,7 +731,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
         {
             RestoreTeleportState(mover, state);
             activeStates.Remove(mover);
-            if (teleportedToDestination && mover != null && !mover.IsEndingStage)
+            if (teleportedToDestination && mover != null && !mover.isDead && !mover.IsEndingStage)
                 StartPortalExitInvulnerability(state.healths);
 
             if (comPortalAbility != null)
@@ -669,7 +741,8 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
                     portalCells[destinationIndex]);
             }
 
-            StartCoroutine(ReleaseTeleporterAfterGrace(mover, destinationCell));
+            if (isActiveAndEnabled) StartCoroutine(ReleaseTeleporterAfterGrace(mover, destinationCell));
+            else activeTeleporters.Remove(mover);
         }
     }
 
@@ -678,6 +751,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
         var state = new TeleportState
         {
             prevInputLocked = mover.InputLocked,
+            prevExternalMovement = mover.ExternalMovementOverride, prevVisualOverride = mover.VisualOverrideActive,
             prevPlayerExplosionInvulnerable = mover.explosionInvulnerable,
             playerCollider = mover.GetComponent<Collider2D>(),
             mountMovement = mover.GetComponentInChildren<MountMovementController>(true),
@@ -686,6 +760,9 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
             eggQueue = mover.GetComponentInChildren<MountEggQueue>(true),
         };
 
+        state.previousHealthProtection = new bool[state.healths.Length];
+        for (int i = 0; i < state.healths.Length; i++)
+            state.previousHealthProtection[i] = state.healths[i] != null && state.healths[i].HasExternalInvulnerability;
         state.powerGlove = mover.GetComponent<PowerGloveAbility>();
         // PowerGloveAbility retains its last thrown bomb reference while it
         // watches the landing. Only a bomb actively carried by the player may
@@ -798,14 +875,19 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
 
         if (mover != null)
         {
-            mover.SetExternalMovementOverride(false);
-            mover.SetVisualOverrideActive(false);
+            mover.SetExternalMovementOverride(!mover.isDead && !mover.IsEndingStage && state.prevExternalMovement);
+            mover.SetVisualOverrideActive(!mover.isDead && !mover.IsEndingStage && state.prevVisualOverride);
 
             if (mover.Rigidbody != null)
+            {
+                Vector2 held = mover.transform.position;
+                mover.Rigidbody.position = held;
+                mover.Rigidbody.MovePosition(held);
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+            }
             NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
 
-            if (!mover.IsEndingStage)
+            if (!mover.IsEndingStage && !mover.isDead)
             {
                 mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
                 mover.EnableExclusiveFromState();
@@ -814,11 +896,11 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
                 RestoreRendererStates(
                     state.portalVisualRenderers,
                     state.portalVisualRendererStates);
-                state.powerGlove?.SetTeleportVisualSuppressed(false);
             }
         }
 
-        bool restoreGameplayState = mover == null || !mover.IsEndingStage;
+        bool restoreGameplayState = mover != null && !mover.IsEndingStage && !mover.isDead;
+        state.powerGlove?.SetTeleportVisualSuppressed(false);
 
         if (restoreGameplayState && state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(state.prevMountExplosionInvulnerable);
@@ -838,8 +920,9 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
             state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
         }
 
-        if (restoreGameplayState)
-            SetHealthInvulnerability(state.healths, false);
+        for (int i = 0; state.healths != null && i < state.healths.Length; i++)
+            if (state.healths[i] != null)
+                state.healths[i].SetExternalInvulnerability(state.previousHealthProtection != null && i < state.previousHealthProtection.Length && state.previousHealthProtection[i]);
     }
 
     IEnumerator AnimatePortalSinkRise(
@@ -881,7 +964,7 @@ public sealed partial class BattleMode7PortalController : MonoBehaviour
 
             while (elapsed < duration)
             {
-                if (mover == null || mover.Rigidbody == null || mover.IsEndingStage)
+                if (mover == null || mover.Rigidbody == null || mover.isDead || mover.IsEndingStage)
                     yield break;
 
                 if (GamePauseController.IsPaused)

@@ -1,7 +1,9 @@
 """Require each actual client to present both approved native launcher actors."""
 
 
-def validate_launcher_capture(rows, launcher_kind):
+def validate_launcher_capture(rows, launcher_kind, portal_expected=None):
+    if launcher_kind.startswith('portal'):
+        return validate_portal_capture(rows, portal_expected)
     if launcher_kind.startswith('cart'):
         return validate_minecart_capture(rows, launcher_kind)
     expected = {'arena': 'BattleSpring', 'spring': 'Spring', 'cannon': 'Cannon', 'rope': 'Rope'}[launcher_kind]
@@ -64,4 +66,31 @@ def validate_minecart_capture(rows, kind):
                    r['realtime'] > ends[-1]['realtime'] and 'prediction_block=none ' in r.get('detail', '') for r in rows):
             raise ValueError(f'{kind} owner={owner}: no free movement after release')
         result['owner' if owner else 'observer'] = dict(samples=len(samples), phases=sorted(phases), releases=len(ends))
+    return result
+
+
+def validate_portal_capture(rows, expected):
+    if not expected or len({r['player'] for r in expected}) != 2:
+        raise ValueError('Portal fixture did not confirm two native destinations')
+    result = {}
+    def near(row, point):
+        p = row.get('position', {})
+        return sum((p.get(axis, float('inf'))-point.get(axis, 0))**2 for axis in ('x', 'y')) < .36
+    for owner in (True, False):
+        actors = []
+        for checkpoint in expected:
+            samples = [r for r in rows if r.get('kind') == 'portal_pose_sample' and r.get('player') == checkpoint['player'] and r.get('localPlayer') == owner]
+            if not samples: continue
+            # Hidden travel can start between rendered frames. The owner's approved
+            # entry event establishes its source; destination must be a final pose.
+            entries = [r for r in rows if owner and r.get('kind') == 'authority_motion_begin' and r.get('player') == checkpoint['player'] and r.get('localPlayer') == owner]
+            starts = [r for r in samples + entries if near(r, checkpoint['bombPosition'])]
+            if not starts: raise ValueError(f'Portal owner={owner}: no approved source presented')
+            ends = [r for r in samples if r['realtime'] > starts[0]['realtime'] and near(r, checkpoint['position'])]
+            if not ends: raise ValueError(f'Portal owner={owner}: no approved destination presented')
+            if not any(r['realtime'] > ends[0]['realtime'] and 'prediction_block=none ' in r.get('detail', '') for r in rows if r.get('kind') == 'motion_sample' and r.get('player') == checkpoint['player'] and r.get('localPlayer') == owner):
+                raise ValueError(f'Portal owner={owner}: no free movement after arrival')
+            actors.append(checkpoint['player'])
+        if not actors: raise ValueError(f'Portal owner={owner}: missing actor view')
+        result['owner' if owner else 'observer'] = dict(players=actors, approvedEndpoints=True, unlocked=True)
     return result

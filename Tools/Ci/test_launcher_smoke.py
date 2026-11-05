@@ -77,3 +77,24 @@ class MinecartSmokeTests(unittest.TestCase):
         rows = self.rows()
         for row in rows: row['position'] = dict(x=0, y=0)
         with self.assertRaises(ValueError): smoke.validate_launcher_capture(rows, 'cart9')
+
+
+class PortalSmokeTests(unittest.TestCase):
+    def test_portals_require_both_roles_destination_and_control(self):
+        expected = [dict(player=p, bombPosition=dict(x=0,y=0), position=dict(x=8,y=0)) for p in (1,2)]
+        rows = [dict(kind='motion_sample', player=p, localPlayer=owner, realtime=t, position=dict(x=x,y=0), detail='prediction_block=none mounted=False')
+                for p,owner in ((1,True),(2,False)) for t,x in ((1,0),(2,8),(3,8))]
+        rows += [dict(r, kind='portal_pose_sample') for r in rows]
+        self.assertEqual([2], smoke.validate_launcher_capture(rows, 'portal7', expected)['observer']['players'])
+        for bad in ([r for r in rows if r.get('kind') != 'portal_pose_sample'], [r for r in rows if r['localPlayer']], [r for r in rows if r['position']['x']==0],
+                    [dict(r,detail='prediction_block=server_authoritative ') for r in rows]):
+            with self.assertRaises(ValueError): smoke.validate_launcher_capture(bad, 'portal7', expected)
+
+    def test_hidden_portal_approved_entry_still_requires_rendered_arrival(self):
+        expected = [dict(player=p, bombPosition=dict(x=0,y=0), position=dict(x=8,y=0)) for p in (1,2)]
+        rows = [dict(kind=kind, player=p, localPlayer=owner, realtime=t, position=dict(x=x,y=0), detail='prediction_block=none ')
+                for p,owner in ((1,True),(2,False)) for kind,t,x in (('authority_motion_begin',1,0),('portal_pose_sample',2,8),('motion_sample',3,8))]
+        rows.append(dict(rows[3], kind='portal_pose_sample'))
+        self.assertTrue(smoke.validate_launcher_capture(rows, 'portal7', expected)['owner']['approvedEndpoints'])
+        with self.assertRaises(ValueError):
+            smoke.validate_launcher_capture([r for r in rows if r['kind'] != 'portal_pose_sample' or r['position']['x'] == 0], 'portal7', expected)

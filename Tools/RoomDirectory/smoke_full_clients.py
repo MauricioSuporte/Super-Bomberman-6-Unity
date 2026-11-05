@@ -16,7 +16,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False):
     if mount_visuals and (mode != 'BattleMode' or not diagnostics or mount_input or launcher_kind or revenge_input):
         raise ValueError('mount visual fixture requires BattleMode diagnostics without other input fixtures')
-    if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32') or not diagnostics or mount_input or revenge_input or presenter_removal):
+    if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34') or not diagnostics or mount_input or revenge_input or presenter_removal):
         raise ValueError('launcher fixture requires diagnostics and no other input fixture')
     if rendered and not (mount_cycles or launcher_kind or mount_visuals):
         raise ValueError('rendered captures require mount cycles or launchers')
@@ -142,6 +142,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 if marker not in server_text: raise RuntimeError('missing input checkpoint: '+marker)
         failures = {}
         captures = {}
+        portal_expected = []
         for path in [output/'server.log', output/'client-1.log', output/'client-2.log']:
             lines = path.read_text(encoding='utf-8-sig', errors='replace').splitlines()
             if mount_input and path.name.startswith('client-') and not any('full-input dismount acknowledged' in line for line in lines):
@@ -193,6 +194,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                             row.get('bombNetId') == removed_bomb and transfer_started < row['realtime'] < next_apply and
                             any(abs(row.get('delta', {}).get(axis, 0)) > .0001 for axis in ('x', 'y')))
                     if not transfer_samples: raise RuntimeError('approved arc did not keep moving between presenter transfer and the next apply: '+path.name)
+                if launcher_kind and launcher_kind.startswith('portal') and path.stem == 'server':
+                    portal_expected = [row for row in rows if row.get('kind') == 'portal_smoke_expected']
                 captures[path.stem] = dict(file=destination.name, unlockedPlayers=unlocked,
                     presenterTransferMovingSamples=transfer_samples,
                     familyCostReports=sum(row.get('kind') == 'coop_family_cost' for row in rows))
@@ -201,7 +204,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                     captures[path.stem]['mountVisuals'] = validate_mount_visual_capture(rows)
                 if launcher_kind and path.stem != 'server':
                     from validate_launcher_smoke import validate_launcher_capture
-                    captures[path.stem]['launchers'] = validate_launcher_capture(rows, launcher_kind)
+                    captures[path.stem]['launchers'] = validate_launcher_capture(rows, launcher_kind, portal_expected)
                 if mount_cycles and path.stem != 'server':
                     from validate_mount_smoke import validate_mount_capture
                     captures[path.stem]['riding'] = validate_mount_capture(rows)
@@ -255,7 +258,7 @@ if __name__ == '__main__':
     parser.add_argument('--diagnostics', action='store_true', help='Enable and copy the three process motion logs')
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
-    parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32'), help='Exercise native launcher trajectories with two actors')
+    parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34'), help='Exercise native launcher trajectories with two actors')
     parser.add_argument('--mount-visuals', action='store_true', help='Exercise native egg mount, death variants, Pink jump, emote and AFK handoff')
     parser.add_argument('--mount-cycles', action='store_true', help='Require three native remount cycles and egg transfers per owner')
     parser.add_argument('--rendered', action='store_true', help='Enable client graphics and capture mount arcs for visual review')

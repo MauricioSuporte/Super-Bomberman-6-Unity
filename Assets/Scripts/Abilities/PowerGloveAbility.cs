@@ -173,7 +173,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             return;
         }
 
-        if (holding && IsHeldBombValid())
+        if (holding && IsHeldBombValid() && movement != null && !movement.isDead && !movement.IsEndingStage)
             UpdateCarryVisual();
     }
 

@@ -30,7 +30,9 @@ public sealed class CoopSceneCatalogBuilder : IPreprocessBuildWithReport
             // The geyser scene loads these animation frames through Resources,
             // outside the serialized scene/prefab dependency graph.
             var runtimeResources = scene.path.EndsWith("/Stage_3-3.unity", StringComparison.Ordinal)
-                ? new[] { "Assets/Resources/StageAssets/Stage33BubbleAnimations.asset" } : Array.Empty<string>();
+                ? new[] { "Assets/Resources/StageAssets/Stage33BubbleAnimations.asset" }
+                : scene.path.EndsWith("/Stage_3-4.unity", StringComparison.Ordinal)
+                    ? new[] { "Assets/Resources/StageAssets/BigWorm.png" } : Array.Empty<string>();
             var dependencies = AssetDatabase.GetDependencies(new[] { scene.path }.Concat(shared).Concat(runtimeResources).ToArray(), true);
             var objects = dependencies.Where(p => p.StartsWith("Assets/", StringComparison.Ordinal) &&
                 !p.StartsWith(root + "/", StringComparison.Ordinal) && !p.EndsWith(".unity", StringComparison.OrdinalIgnoreCase))

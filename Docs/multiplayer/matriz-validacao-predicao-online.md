@@ -354,3 +354,14 @@ Stage3-2: shuttleRoom1 comwrap/jump e retorno. ImagensURP de embarque/trilho/jum
 rise inspecionadas. Não há medição humana de latência nem comparação manual
 completa com offline; demais trajetos dasalas2/3 e aceites perceptuais seguem
 no roteiro. Código de rota/ocupação/colisão/dano continua nativo/servidor.
+
+### C05 — continuação de ciclo de vida dos portais
+
+Full4:1013/1013, sem skips. Teste nativo dePlayMode desativa/reutiliza portal
+hidden/sink e verifica locks/proteções anteriores, morte e cancelamento de bomba.
+CatálogoBigWorm e limpeza precoce deStage34Sandstorm recebem regressões.
+Smokes com2clientes reais e câmeraURP exigem entrada confirmada/origem aprovada,
+destino apósLateUpdate e posterior movimento livre para owner e observer.
+Evento de entrada permite janela oculta que começa entre frames; jamais substitui
+a evidência da chegada renderizada. Resultados finais no checklist de progresso.
+Comparação humana, bomba carregada e saída ocupada continuam neste roteiro.

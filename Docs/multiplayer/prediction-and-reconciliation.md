@@ -1622,3 +1622,28 @@ Validação final: Full7 1010/1010, Peers7 com dois clientes reais renderizados 
 Battle9/12 e Stage3-2Room1, caminhada real após saída,0erros/avisos. Publicação
 cliente/servidor60 concluída no Actions41948608681, commit6c2b92cae. Comparação
 perceptual completa com offline permanece no roteiro manual.
+
+## C05 portal lifecycle continuation (protocol 60)
+
+Battle7 and Stage3-4 keep server-approved entry, destination, masks and stars.
+The portal controller tracks native player and bomb iterators and disposes their
+nested frames on disable. Cancellation restores the prior external motion/visual
+flags and each health protection flag; death and stage completion keep control of
+their locks. Clearing carry suppression does not refresh dead actor sprites.
+Cancelled bombs recover their original collider/render/notifier state without
+launching or detonating; a normal punch retains ownership of its collider.
+The authority-motion scope now ends after native control restoration.
+
+Full3 passed 1011 Unity tests, including actual PlayMode disable, hidden/sink
+variants, reuse, prior protection, dead-state cleanup and bomb interruption.
+Final focused tests passed 3/3. Peers8 passed with two actual rendered clients
+in Battle7 and Stage3-4, approved endpoints and unlocked input for both roles,
+without server warnings or replication errors. Portal pose evidence is sampled after all production
+presenters, separately from input recovery diagnostics. No wire changes.
+Hall entry and return retain RouteCoopScene; swap/blackout simulation entrypoints
+retain ShouldSimulateLocally. Broad manual room/held-bomb comparisons remain QA.
+
+Stage3-4 additionally includes the runtime-loaded BigWorm sheet in its generated
+co-op catalog. Its generated one-pixel sand grain remains CPU-readable for the
+existing dynamic sprite transport; disabling the effect before Start tolerates
+uninitialized grains. No generic sprite fallback or new wire format was added.
