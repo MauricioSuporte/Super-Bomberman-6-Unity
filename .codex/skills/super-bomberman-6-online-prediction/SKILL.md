@@ -630,3 +630,34 @@ then wait for that tick to be processed with neutral server controls. Otherwise
 an old Right can move the actor into another column before the next Up and make
 a supposed blocked flight traverse a free corridor. Never fix that false setup
 by weakening the motion/endpoint validator or changing production input grace.
+
+
+For approved minecarts, sample passenger and vehicle from the same rail history,
+including corners and explicit phase/generation cuts. Keep boarding, exits,
+route RNG and collisions native to the authority. A co-op cart already has a
+renderer stream: correct that existing body, preserve its masks/materials and
+use the stream's clock instead of creating a second vehicle clone. Freeze cart
+renderers with gameplay even when the prefab has no Rigidbody2D. Retain the
+last approved owner motor while transported; free-motor acknowledgements must
+not truncate a still-presented exit. Queue the approved recovery bounce and stop
+until the cart releases the passenger. Native cancellation must dispose nested
+iterators and restore every directional branch's scale/offset, including branches
+inactive at boarding, as well as prior protection. Test native reuse and actual
+owner/observer travel, portal cuts and co-op jump independently of server logs.
+
+Claim a cart's presentation clock before animation history can be pruned using
+server-now, but apply the root only in presentation. Start retained short phases
+in the actual frame, cap progress per frame and at the latest approved time, and
+use that same time for player/mount poses and the existing co-op body stream.
+A long pause must not become seconds of buffered stationary playback on resume:
+skip only a received, confirmed pause interval of the same generation. Preserve
+freeze/rewind and withheld-approval tests along with actual-client phase coverage.
+
+For long carriers, reassess a short-flight's per-frame bound: a blanket50ms cap
+runs rail travel at half speed on a10FPS client. Cart uses100ms for rail/jump/hidden
+motion and50ms for short transitions, stopping at each approved phase boundary.
+In actual-client fixtures, wait for the owner's presented exit, then exercise
+walking through production input. A normal AFK pose after5s of neutral input
+must not be mistaken for a stuck motor. Repositioned Development actors need
+SyncAuthorityMotionTransform before reconciliation so Rigidbody interpolation
+does not publish the prior spawn as a temporary rider offset.

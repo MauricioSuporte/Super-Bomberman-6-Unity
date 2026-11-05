@@ -12,6 +12,60 @@ namespace Assets.Scripts.Netcode
         public bool OwnerUsesAuthorityPresentation => ownerAuthorityPresentation;
         public float AuthorityVisualOffsetLimit => authorityMotionToken != 0 ? authorityVisualOffsetLimit : 4f;
 
+        BattleMode9MinecartController approvedCart;
+        MovementController.NetworkMovementState cartMotorState;
+        bool hasCartMotorState;
+        readonly System.Collections.Generic.Queue<NetworkBombFx.PlayerBounceMotion> cartLandingBounces = new();
+        public bool ApprovedCartActive => approvedCart != null;
+
+        public bool ClaimApprovedCart(BattleMode9MinecartController cart)
+        {
+            if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || isServer || cart == null ||
+                movement == null || movement.isDead || movement.IsEndingStage || !gameObject.activeInHierarchy ||
+                (approvedCart != null && approvedCart != cart)) return false;
+            approvedCart = cart;
+            movement.SetNetworkCartPresentation(true); movement.SetPredictLocally(false);
+            if (isLocalPlayer) SetOwnerAuthorityPresentation(true);
+            return true;
+        }
+        public bool PresentApprovedCart(BattleMode9MinecartController cart, Vector3 position)
+        {
+            if (!ClaimApprovedCart(cart)) return false;
+            if (movement.Rigidbody != null) movement.Rigidbody.position = position;
+            transform.position = position;
+            return true;
+        }
+        public void ReleaseApprovedCart(BattleMode9MinecartController cart)
+        {
+            if (approvedCart != cart) return;
+            approvedCart = null; movement?.SetNetworkCartPresentation(false);
+            var bounces = cartLandingBounces.ToArray(); cartLandingBounces.Clear();
+            var cartFx = GetComponent<NetworkBombFx>();
+            if (cartFx != null && movement != null && !movement.isDead && !movement.IsEndingStage && gameObject.activeInHierarchy)
+                foreach (var bounce in bounces) cartFx.ReceivePlayerBounce(bounce);
+            if (cartFx?.PlayerBounceActive == true) SetOwnerAuthorityPresentation(false);
+            if (isLocalPlayer && hasCartMotorState && cartMotorState.canPredict && movement != null && !movement.isDead &&
+                !movement.IsEndingStage && !Blocked && !ApprovedLaunchActive && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true)
+            {
+                movement.RestoreNetworkMovementState(cartMotorState); SetOwnerAuthorityPresentation(false);
+                bool complete = pending.Count == 0 || pending[0].tick == unchecked(lastLaunchAck + 1);
+                movement.SetPredictLocally(complete && movement.CanPredictNetworkMovement);
+                if (complete) ReplayMovementHistory();
+            }
+            hasCartMotorState = false;
+        }
+        public bool DeferBounceForApprovedCart(NetworkBombFx.PlayerBounceMotion motion)
+        {
+            if (!ApprovedCartActive || (!motion.moving && cartLandingBounces.Count == 0)) return false;
+            if (cartLandingBounces.Count >= 32) cartLandingBounces.Dequeue();
+            cartLandingBounces.Enqueue(motion); return true;
+        }
+        void ClearApprovedCart()
+        {
+            cartLandingBounces.Clear();
+            approvedCart = null; hasCartMotorState = false; movement?.SetNetworkCartPresentation(false);
+        }
+
         // A native authoritative routine marks its lifetime; this never starts it
         // on a client, chooses a destination or changes movement eligibility.
         public readonly struct AuthorityMotionScope : System.IDisposable
@@ -72,7 +126,7 @@ namespace Assets.Scripts.Netcode
 
         void UpdateOwnerAuthorityPresentation()
         {
-            if (!ownerAuthorityPresentation) return;
+            if (!ownerAuthorityPresentation || ApprovedCartActive) return;
             if (NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || isServer || !isLocalPlayer ||
                 movement == null || movement.Rigidbody == null || movement.isDead || movement.IsEndingStage ||
                 GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive == true)
@@ -91,6 +145,7 @@ namespace Assets.Scripts.Netcode
         {
             SetOwnerAuthorityPresentation(false);
             ClearApprovedLaunchHistory();
+            ClearApprovedCart();
             authorityMotionToken = 0;
         }
     }

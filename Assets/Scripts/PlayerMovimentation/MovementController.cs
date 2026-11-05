@@ -264,13 +264,15 @@ public partial class MovementController : MonoBehaviour, IKillable
         public bool hasInput, alignTarget, reentryActive, canPredict, continuousPresentation;
     }
 
+    bool networkCartPresentation;
+    public void SetNetworkCartPresentation(bool active) => networkCartPresentation = active;
     public bool CanPredictNetworkMovement => NetworkPredictionBlockReason == null;
     public bool AcknowledgedDestructiblePass => hasNetworkMovementContext ? (networkMovementCapabilities & 2) != 0 :
         (CurrentMovementCapabilities & 2) != 0;
     private bool NetworkPlatformControlsPose => Assets.Scripts.Netcode.NetSync.IsOnline &&
         FloatingPlatform.TryGetPlatformForRider(this, out var platform) && platform.RequiresAuthorityRiderPose;
     public string NetworkPredictionBlockReason => isDead ? "dead" : inputLocked ? "input_locked" : isEndingStage ? "stage_ending" :
-        NetworkPlatformControlsPose ? "platform_transport" : inactivityMountedDownOverride ? "inactivity_pose" : externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
+        NetworkPlatformControlsPose ? "platform_transport" : networkCartPresentation ? "cart_transport" : inactivityMountedDownOverride ? "inactivity_pose" : externalMovementOverride ? "external_motion" : visualOverrideActive ? "visual_override" :
         !Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally && !string.IsNullOrEmpty(networkBoat.path) && !CanPredictBoatRide ? "boat_context_pending" :
         externalVisualSuppressed && !CanPredictGloveCarry && !CanPredictBoatRide ? "visual_suppressed" : IsSpriteLocked ? "sprite_lock" :
         IsRidingPlaying() ? "mount_transition" : stunReceiver != null && stunReceiver.IsStunned ? "stunned" :

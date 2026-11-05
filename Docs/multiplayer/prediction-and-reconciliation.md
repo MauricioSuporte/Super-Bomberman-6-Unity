@@ -1574,3 +1574,46 @@ Full3:995Unity. Peers3: dois clients renderizados, endpoints750/20/240ms em cada
 voo completo, blocker curto e cancelamento montado, sem erros/avisos. O harness
 espera ack de hardware neutro e processamento do tick antes de reposicionar: um
 botão antigo em trânsito pode mudar a coluna e invalidar o cenário do pilar.
+
+
+## C04 — carrinho e passageiro no mesmo referencial (protocolo60 local)
+
+MinecartView estende o transporte existente com geração, fase, segmento,
+progresso, velocidade e offsets do passageiro/corpo. Battle9/12 amostram corpo e
+passageiro no mesmo clock de transform; a curva aprovada em L substitui a
+interpolação independente do rider. Stage3-2 usa o clock do stream co-op e corrige
+somente seu renderer existente, mantendo máscaras/material e sem duplicar o corpo.
+
+Enquanto a viagem confirmada é apresentada, o motor do owner continua enviando
+inputs/recebendo ack, mas não disputa o root. Ao receber Idle libera o referencial
+e restaura o último motor aprovado, com replay apenas de locomoção quando o
+histórico está completo. Uma fase livre no ack não encerra uma viagem ainda
+apresentada. Observador também acompanha o mesmo suporte. Pausa conserva a última
+posição. Geração/fase e wraps são cortes, e PortalHidden não desenha travessia do
+mapa. Entrada/saída, ocupação, rota aleatória, colisão, dano e proteção não são
+executados pelo client. Não existe direção acionável do ocupante neste mecanismo.
+
+Na rotina nativa, disable dispõe explicitamente a pilha de iteradores aninhados,
+restaura proteção/flags anteriores e não deixa MovePosition pendente continuar a
+viagem. Morte/fim de fase não restauram controle/collider vivo. O scope de
+autoridade termina após a limpeza; reativar o carrinho permite novo embarque.
+Evidências finais e publicação devem ser consultadas no checkpoint C04; seis
+casos focados passaram, integração real ainda está em execução/preparação.
+
+
+O clock60 retém o prefixo entregue após um stall: inicia no primeiro sample ativo
+em frame de apresentação; avança no máximo50ms/frame nas transições curtas e
+100ms/frame em trilho/salto/trecho oculto, nunca além do tempo
+aprovado mais recente. NPI reivindica a apresentação no recebimento antes de o
+histórico visual ser podado; root só muda ao apresentar. Corpo, montaria e
+renderers do cart co-op usam esse mesmo clock (com o offset de pose correspondente).
+Begin/Exit também publicam edge forçado. Ao acabar o prefixo, mantém o último
+estado; não extrapola rota/segmento desconhecido. Fila de bounce confirmado e stop
+aguarda o Idle apresentado, preservando o desembarque. Recuperação permanece
+limitada pelos64samples; não é promessa de zero latência sob stalls prolongados.
+
+Avanço de trecho longo para na primeira mudança aprovada de fase/geração/rider.
+Isso evita rodar uma viagem longa em metade da velocidade num client de10FPS,
+sem consumir a entrada do portal ou outra transição dentro do mesmo passo.
+O harness espera a saída apresentada no owner e caminha pelo input real antes
+de exigir handoff livre; AFK normal após5s sem comandos não representa lock.

@@ -16,7 +16,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False):
     if mount_visuals and (mode != 'BattleMode' or not diagnostics or mount_input or launcher_kind or revenge_input):
         raise ValueError('mount visual fixture requires BattleMode diagnostics without other input fixtures')
-    if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope') or not diagnostics or mount_input or revenge_input or presenter_removal):
+    if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32') or not diagnostics or mount_input or revenge_input or presenter_removal):
         raise ValueError('launcher fixture requires diagnostics and no other input fixture')
     if rendered and not (mount_cycles or launcher_kind or mount_visuals):
         raise ValueError('rendered captures require mount cycles or launchers')
@@ -255,7 +255,7 @@ if __name__ == '__main__':
     parser.add_argument('--diagnostics', action='store_true', help='Enable and copy the three process motion logs')
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
-    parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope'), help='Exercise native launcher trajectories with two actors')
+    parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32'), help='Exercise native launcher trajectories with two actors')
     parser.add_argument('--mount-visuals', action='store_true', help='Exercise native egg mount, death variants, Pink jump, emote and AFK handoff')
     parser.add_argument('--mount-cycles', action='store_true', help='Require three native remount cycles and egg transfers per owner')
     parser.add_argument('--rendered', action='store_true', help='Enable client graphics and capture mount arcs for visual review')

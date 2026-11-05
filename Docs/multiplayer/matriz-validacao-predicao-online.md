@@ -320,3 +320,37 @@ renderizados. Ambos apresentaram início/fim, fases sem recuo e endpoints750ms
 Capturas URP inspecionadas, zero erros/avisos de servidor. Native lifetime/pausa/
 timeout continuam cobertos na suíte. Não substitui o roteiro humano em offline
 vs owner/observer, posse concorrente, dano, inputs variados e rede degradada.
+
+
+### C04 — roteiro de carrinhos, protocolo60
+
+Validar BattleMode_9, BattleMode_12 e Stage_3-2 (salto/wrap), com passageiro
+owner e observador, a pé e montado. Observar curva sem diagonal, cabeça/corpo
+presos ao mesmo referencial, hop de entrada/saída e liberação para caminhar.
+Na arena12, conferir sink/estrelas, intervalo oculto e rise no destino aprovado;
+nenhum movimento visível atravessando o mapa. Pausa no transporte deve conservar
+posição e retomar no mesmo trecho. Interromper/desabilitar e repetir embarque;
+proteção de outra fonte deve sobreviver e morte não deve reativar o jogador.
+Disputa entre dois jogadores na estação continua decidida no servidor.
+
+Não há comando de direção/rota do ocupante no controller nativo atual. Entrada,
+saída e destino aleatório ficam autoritativos conforme o plano. Não marcar a
+antiga pendência histórica de "boarding previsto" como requisito do C04.
+Os testes automatizados e capturas locais são registrados no checkpoint; este
+roteiro não representa aceite manual humano já executado.
+
+
+### Evidência automatizada C04 — protocolo60,04/11/2026
+
+Full7:1010/1010 Unity,0skips; 15novoscasosC04 desde995. Casos incluem root de
+owner/observer na curva, pause/hidden/cut, fila de bounce+stop, disposals nativos
+emEnter/Rail, proteção anterior/reuso, branch inativa, pausa longa e FPS10 sem
+pular transição. Development8 compilou helper final da fixture.
+
+Logs/PredictionCart60Peers7-cart32/cart9/cart12/result.json aprovados.2clientes
+reais renderizados,110s porcenário,0erros/avisos. Battle9 e12: ambosowners a pé/Pink,
+entrada/trilho/saída, sink/rise12 e caminhada após client soltar apresentação;
+Stage3-2: shuttleRoom1 comwrap/jump e retorno. ImagensURP de embarque/trilho/jump/
+rise inspecionadas. Não há medição humana de latência nem comparação manual
+completa com offline; demais trajetos dasalas2/3 e aceites perceptuais seguem
+no roteiro. Código de rota/ocupação/colisão/dano continua nativo/servidor.

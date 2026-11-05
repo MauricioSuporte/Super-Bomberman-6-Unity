@@ -39,7 +39,7 @@ namespace Assets.Scripts.Netcode
                 if (HasArg("-load-test-launchers"))
                     NetworkServer.RegisterHandler<RopeSmokeAck>((peer, message) =>
                     {
-                        if (peer.isReady && peer.identity != null && message.phase >= 0 && message.phase <= 2)
+                        if (peer.isReady && peer.identity != null && message.phase >= 0 && message.phase <= 3)
                             loadTestRopeAcks[peer.connectionId] = message;
                     });
                 var args = Environment.GetCommandLineArgs();
@@ -49,7 +49,7 @@ namespace Assets.Scripts.Netcode
                 if (launcherArg >= 0)
                 {
                     loadTestLauncherKind = launcherArg + 1 < args.Length ? args[launcherArg + 1] : "";
-                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon" && loadTestLauncherKind != "rope")
+                    if (loadTestLauncherKind != "arena" && loadTestLauncherKind != "spring" && loadTestLauncherKind != "cannon" && loadTestLauncherKind != "rope" && !loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal))
                         throw new ArgumentException("Unknown Development launcher fixture");
                 }
                 loadTestStart = Time.realtimeSinceStartup;
@@ -86,7 +86,7 @@ namespace Assets.Scripts.Netcode
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
+                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -106,7 +106,7 @@ namespace Assets.Scripts.Netcode
                 }
                 if (!loadTestLaunchersChecked && loadTestLauncherKind != null && Time.timeSinceLevelLoad > 12 &&
                     (!IsCoopRoom || OnlineCoopPlayersReady) && !BattleStartPending &&
-                    (loadTestLauncherKind != "rope" || loadTestPresenterReady.Count >= loadTestPlayers))
+                    ((loadTestLauncherKind != "rope" && !loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal)) || loadTestPresenterReady.Count >= loadTestPlayers))
                 {
                     loadTestLaunchersChecked = true;
                     StartCoroutine(CheckLoadTestLaunchers());
@@ -215,8 +215,66 @@ namespace Assets.Scripts.Netcode
                 (input.Get(player, PlayerAction.MoveUp) ? 1 : 0) - (input.Get(player, PlayerAction.MoveDown) ? 1 : 0));
         }
 
+        System.Collections.IEnumerator CheckLoadTestMinecarts()
+        {
+            var carts = FindObjectsByType<BattleMode9MinecartController>();
+            if (carts.Length == 0) throw new InvalidOperationException("Missing native minecart");
+            // Stage 3-2 Room 1 has the audited wrap and jump; choose its authored station.
+            BattleMode9MinecartController cart = null;
+            foreach (var candidate in carts)
+                if (loadTestLauncherKind != "cart32" || candidate.StationTile == new Vector2Int(4, -2)) { cart = candidate; break; }
+            if (cart == null) throw new InvalidOperationException("Missing Room 1 shuttle");
+            int owners = 0;
+            foreach (var peer in NetworkServer.connections.Values)
+            {
+                var actor = peer.identity;
+                if (actor == null) throw new InvalidOperationException("Missing minecart actor");
+                var mover = actor.GetComponent<MovementController>(); var input = actor.GetComponent<NetworkPlayerInput>();
+                var health = actor.GetComponent<CharacterHealth>(); bool protection = health.HasExternalInvulnerability;
+                health.SetExternalInvulnerability(true);
+                actor.GetComponent<PlayerMountCompanion>().RestoreMounted(owners == 0 ? MountedType.None : MountedType.Pink);
+                yield return new WaitForSecondsRealtime(.6f);
+                // Native AFK owns the visual after renderer warmup. Cancel it
+                // through real input before placing a standing actor at the station.
+                peer.Send(new RopeSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.4f);
+                yield return WaitForNeutralRopeInput(peer, input, mover);
+                if (mover.VisualOverrideActive) throw new InvalidOperationException("Minecart fixture did not leave the native AFK pose");
+                Vector2 origin = mover.Rigidbody.position;
+                cart.enabled = true;
+                // The cart rests exactly at its current station before boarding.
+                mover.SnapToWorldPoint(cart.transform.position, roundToGrid: false); ServerReconcileFixturePlayer(input);
+                float deadline = Time.unscaledTime + 5;
+                while (!cart.RideActive && Time.unscaledTime < deadline) yield return null;
+                if (cart.CurrentRider != mover) throw new InvalidOperationException("Native station did not board the intended rider; block=" + mover.NetworkPredictionBlockReason + ";position=" + mover.Rigidbody.position + ";cart=" + cart.transform.position + ";station=" + cart.StationTile);
+                Debug.Log("[LoadTest] minecart boarded player=" + mover.PlayerId);
+                deadline = Time.unscaledTime + 30;
+                while (cart.RideActive && Time.unscaledTime < deadline) yield return null;
+                if (cart.RideActive || mover.InputLocked || mover.ExternalMovementOverride)
+                    throw new InvalidOperationException("Native minecart did not release the rider");
+                if (!health.HasExternalInvulnerability) throw new InvalidOperationException("Minecart erased preexisting protection");
+                Debug.Log("[LoadTest] minecart released player=" + mover.PlayerId);
+                uint beforeRelease = input.CurrentInputTick;
+                peer.Send(new RopeSmokeStep { phase = 3 });
+                deadline = Time.unscaledTime + 12;
+                bool PresentedExit() => loadTestRopeAcks.TryGetValue(peer.connectionId, out var ack) && ack.phase == 3 && NetworkInputHistory.IsNewer(ack.tick, beforeRelease);
+                while (!PresentedExit() && Time.unscaledTime < deadline) yield return null;
+                if (!PresentedExit()) throw new InvalidOperationException("Client did not release its approved minecart presentation");
+                mover.SnapToWorldPoint(origin, roundToGrid: false); ServerReconcileFixturePlayer(input);
+                peer.Send(new RopeSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.4f);
+                yield return WaitForNeutralRopeInput(peer, input, mover);
+                if (!mover.CanPredictNetworkMovement) throw new InvalidOperationException("Native locomotion did not resume after the presented exit");
+                Debug.Log("[LoadTest] minecart input restored player=" + mover.PlayerId);
+                yield return new WaitForSecondsRealtime(1);
+                health.SetExternalInvulnerability(protection); owners++;
+            }
+            if (owners != 2) throw new InvalidOperationException("Minecart fixture requires two owners");
+            Debug.Log("[LoadTest] launchers completed kind=" + loadTestLauncherKind + " players=2");
+        }
+
         System.Collections.IEnumerator CheckLoadTestLaunchers()
         {
+            if (loadTestLauncherKind.StartsWith("cart", StringComparison.Ordinal))
+            { yield return CheckLoadTestMinecarts(); yield break; }
             int index = 0;
             var positions = new List<Vector2>();
             foreach (var peer in NetworkServer.connections.Values)
@@ -318,7 +376,11 @@ namespace Assets.Scripts.Netcode
         }
         static void ServerReconcileFixturePlayer(NetworkPlayerInput input)
         {
-            if (NetworkServer.active && input != null && input.isServer) input.ServerReconcileMovementNow();
+            if (NetworkServer.active && input != null && input.isServer)
+            {
+                NetworkPlayerInput.SyncAuthorityMotionTransform(input.GetComponent<MovementController>());
+                input.ServerReconcileMovementNow();
+            }
         }
 
         System.Collections.IEnumerator CheckLoadTestRevengeInput()
@@ -629,7 +691,7 @@ namespace Assets.Scripts.Netcode
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
             smoke.checkMountVisuals = Array.IndexOf(args, "-load-test-mount-visuals") >= 0;
             smoke.checkLauncherInput = Array.IndexOf(args, "-load-test-launchers") >= 0;
-            smoke.checkRopeInput = smoke.checkLauncherInput && Array.IndexOf(args, "rope") >= 0;
+            smoke.checkRopeInput = smoke.checkLauncherInput && (Array.IndexOf(args, "rope") >= 0 || Array.Exists(args, arg => arg.StartsWith("cart", StringComparison.Ordinal)));
             smoke.checkItemMotion = Array.IndexOf(args, "-load-test-item-motion") >= 0;
             smoke.runRealInput = Array.IndexOf(args, "-load-test-real-input") >= 0;
             smoke.repeatMountCycles = Array.IndexOf(args, "-load-test-mount-cycles") >= 0;
@@ -704,14 +766,14 @@ namespace Assets.Scripts.Netcode
                             ropeAckAfterTick = unchecked(launcher.CurrentInputTick + 1);
                         });
                     }
-                    if (!mountVisualReady && (string.IsNullOrEmpty(captureDirectory) || captureWarmed) && SceneManager.GetActiveScene().name == "BattleMode_11")
+                    if (!mountVisualReady && (string.IsNullOrEmpty(captureDirectory) || captureWarmed) && (SceneManager.GetActiveScene().name == "BattleMode_11" || SceneManager.GetActiveScene().name == "BattleMode_9" || SceneManager.GetActiveScene().name == "BattleMode_12" || SceneManager.GetActiveScene().name == "Stage_3-2"))
                     {
                         mountVisualReady = true; NetworkClient.Send(new PresenterSmokeReady { scene = SceneManager.GetActiveScene().name });
                     }
                     PlayerInputManager.Instance.SetSyntheticHeld(1, PlayerAction.MoveUp, ropeSmokePhase == 1);
                     // At least two FixedUpdate ticks after receipt: the first can
                     // precede Update's new hardware sample. Ack follows the actual Command.
-                    if (ropeAckPending >= 0 && NetworkInputHistory.IsNewer(launcher.CurrentInputTick, ropeAckAfterTick))
+                    if (ropeAckPending >= 0 && (ropeAckPending != 3 || !launcher.ApprovedCartActive) && NetworkInputHistory.IsNewer(launcher.CurrentInputTick, ropeAckAfterTick))
                     {
                         NetworkClient.Send(new RopeSmokeAck { phase = ropeAckPending, tick = launcher.CurrentInputTick });
                         ropeAckPending = -1;
@@ -792,7 +854,7 @@ namespace Assets.Scripts.Netcode
                 CaptureMountFrame(camera, $"visual-{++visualCaptureSerial:D2}-phase-{mountVisualPhase:D2}.png");
             }
             var fx = NetworkClient.localPlayer.GetComponent<NetworkBombFx>();
-            bool riding = fx != null && (fx.RidingArcActive || checkMountVisuals && fx.PinkJumpVisualActive) || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true;
+            bool riding = fx != null && (fx.RidingArcActive || checkMountVisuals && fx.PinkJumpVisualActive) || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedLaunchActive == true || NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>()?.ApprovedCartActive == true;
             if (riding && !capturedRiding) { captureArc++; captureFrame = 0; captureNext = Time.unscaledTime; }
             capturedRiding = riding;
             if (!riding || captureArc > (checkMountVisuals ? 12 : 3) || Time.unscaledTime < captureNext) return;

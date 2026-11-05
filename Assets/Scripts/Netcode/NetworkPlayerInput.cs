@@ -173,7 +173,7 @@ namespace Assets.Scripts.Netcode
                 // History retains the command actually sent. Rejection/completion
                 // must be able to replay its original directional intent.
                 frame = RecordLocalFrame(frame);
-                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && !ApprovedLaunchActive && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
+                bool predict = receivedSnapshot && serverAllowsPrediction && !Blocked && !ApprovedLaunchActive && !ApprovedCartActive && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
                 movement.SetPredictLocally(predict);
                 if (predict)
                 {
@@ -340,6 +340,7 @@ namespace Assets.Scripts.Netcode
         public void ReceiveMovementState(uint acknowledgedTick, MovementController.NetworkMovementState state, NetworkBombFx.PlacementState placement, NetworkBombFx.MountActionState mountActions)
         {
             if (isServer || !isLocalPlayer || movement == null || movement.Rigidbody == null) return;
+            if (ApprovedCartActive) { cartMotorState = state; hasCartMotorState = true; }
             Vector2 before = movement.transform.position;
             receivedSnapshot = true;
             serverAllowsPrediction = state.canPredict;
@@ -365,12 +366,12 @@ namespace Assets.Scripts.Netcode
             kickFx?.RestoreRidingPosition();
             lastLaunchAck = acknowledgedTick;
             ReconcileApprovedLaunch(state);
-            SetOwnerAuthorityPresentation((state.continuousPresentation && !state.canPredict || ApprovedLaunchActive) &&
+            SetOwnerAuthorityPresentation((state.continuousPresentation && !state.canPredict || ApprovedLaunchActive || ApprovedCartActive) &&
                 !movement.isDead && !movement.IsEndingStage && kickFx?.ClientPlayerMotionActive != true);
             // If an outage exceeded history, wait until the server catches up rather
             // than replaying a partial history as if no inputs had been lost.
             bool completeHistory = pending.Count == 0 || pending[0].tick == unchecked(acknowledgedTick + 1);
-            bool predict = state.canPredict && completeHistory && !Blocked && !ApprovedLaunchActive && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
+            bool predict = state.canPredict && completeHistory && !Blocked && !ApprovedLaunchActive && !ApprovedCartActive && movement.CanPredictNetworkMovement && GetComponent<NetworkBombFx>()?.ClientPlayerMotionActive != true;
             serverAllowsPrediction &= completeHistory;
             movement.SetPredictLocally(predict);
             if (predict) ReplayMovementHistory();
@@ -419,6 +420,7 @@ namespace Assets.Scripts.Netcode
         public override void OnStopClient()
         {
             ClearApprovedLaunchHistory();
+            ClearApprovedCart();
             SetOwnerAuthorityPresentation(false);
             pending.Clear();
             if (!isServer && movement != null)

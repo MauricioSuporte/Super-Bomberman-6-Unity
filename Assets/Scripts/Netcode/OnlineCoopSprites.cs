@@ -16,6 +16,12 @@ namespace Assets.Scripts.Netcode
 
     public partial class BombermanNetworkManager
     {
+        readonly Dictionary<int, BattleMode9MinecartController> coopCartCarriers = new();
+        public static void RegisterCoopCartCarrier(int id, BattleMode9MinecartController cart)
+        {
+            if (singleton is BombermanNetworkManager manager && manager != null && cart != null) manager.coopCartCarriers[id] = cart;
+        }
+        double CoopCarrierClock(int id, double fallback) => coopCartCarriers.TryGetValue(id, out var cart) && cart != null ? cart.GetCartPresentationTime(fallback) : fallback;
         readonly Dictionary<Sprite, int> coopDynamicIds = new();
         readonly Dictionary<Sprite, uint> coopDynamicVersions = new();
         readonly Dictionary<int, CoopSpriteDefinition> coopDefinitions = new();
@@ -98,7 +104,7 @@ namespace Assets.Scripts.Netcode
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
             coopVisualRemovals.Clear(); coopViewClips.Clear(); bombVisualSamples.Clear();
             coopExpiredViews.Clear(); expiredBombViews.Clear(); coopPendingRenderers.Clear(); nextBombAnimation = 0;
-            coopEnemyVisualLimits.Clear(); coopPhysicsPause.Clear();
+            coopEnemyVisualLimits.Clear(); coopPhysicsPause.Clear(); coopCartCarriers.Clear();
             coopDynamicIds.Clear(); coopDynamicVersions.Clear(); coopDefinitions.Clear();
             coopDynamicSprites.Clear(); coopDynamicTextures.Clear(); coopViewSpriteIds.Clear();
         }
@@ -197,7 +203,7 @@ namespace Assets.Scripts.Netcode
                 animation.loopRestartDelay = clip.restartDelay; animation.pingPong = clip.pingPong;
                 coopViewClips[frame.id] = frame.animation;
             }
-            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, CoopVisualClock - frame.time), false);
+            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, CoopCarrierClock(frame.id, CoopVisualClock) - frame.time), false);
             if (clip.offsets != null && clip.offsets.Length > 0)
             {
                 Vector2 offset = clip.offsets[Mathf.Clamp(animation.CurrentFrame, 0, clip.offsets.Length - 1)];
@@ -210,6 +216,16 @@ namespace Assets.Scripts.Netcode
         // Align world props/supports with the approved player transform timeline.
         // Sampling on packet time while the rider uses NT's offset makes the
         // platform appear ahead of its passenger even when both are smooth.
+        public static double CoopPresentationTime => CoopVisualClock;
+        public static bool TryPresentCoopCarrier(int id, Vector3 approvedPosition, out Vector3 position)
+        {
+            position = default;
+            if (NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager ||
+                !manager.coopViews.TryGetValue(id, out var renderer) || renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) return false;
+            renderer.transform.position = approvedPosition;
+            position = renderer.transform.position; return true;
+        }
+
         static double CoopVisualClock => NetworkTime.time - TransformVisualOffset(NetworkClient.localPlayer);
 
         void PresentOnlineSprites()
@@ -222,6 +238,7 @@ namespace Assets.Scripts.Netcode
                 foreach (var pair in coopVisualSamples)
                 {
                     int id = pair.Key;
+                    clock = CoopCarrierClock(id, CoopVisualClock);
                     if (coopVisualRemovals.TryGetValue(id, out double removed) && clock >= removed)
                     {
                         ReleaseCoopMaskMaterial(id, null);
@@ -288,7 +305,7 @@ namespace Assets.Scripts.Netcode
         {
             int id = renderer.GetEntityId().GetHashCode();
             if (!coopPhysicsPause.TryGetValue(id, out bool paused))
-                coopPhysicsPause[id] = paused = renderer.GetComponentInParent<Rigidbody2D>(true) != null;
+                coopPhysicsPause[id] = paused = renderer.GetComponentInParent<Rigidbody2D>(true) != null || renderer.GetComponentInParent<BattleMode9MinecartController>(true) != null;
             return paused;
         }
 

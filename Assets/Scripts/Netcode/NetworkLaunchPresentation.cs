@@ -34,7 +34,7 @@ namespace Assets.Scripts.Netcode
         Sprite launchShadowSprite;
         float nextLaunchDiagnostic, presentedLaunchElapsed;
         double LaunchTimeline => launchUsesBufferedTimeline && launchPresentationActive ? ropePlaybackSourceTime : isLocalPlayer ? NetworkTime.predictedTime : NetworkTime.time;
-        public double AuthorityPresentationTime => launchUsesBufferedTimeline && launchPresentationActive ? ropePlaybackSourceTime : isLocalPlayer && launchOwnerTimeline ? NetworkTime.predictedTime : NetworkTime.time;
+        public double AuthorityPresentationTime => ApprovedCartActive ? approvedCart.RiderPresentationTime : launchUsesBufferedTimeline && launchPresentationActive ? ropePlaybackSourceTime : isLocalPlayer && launchOwnerTimeline ? NetworkTime.predictedTime : NetworkTime.time;
 
         public readonly struct LaunchScope : System.IDisposable
         {

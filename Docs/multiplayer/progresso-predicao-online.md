@@ -43,19 +43,26 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 
 ## Estado atual
 
-Atualizado em 30/10/2026. O checklist distingue implementação/testes de validação
+Atualizado em 04/11/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo 58, commit `605f9d662`,
-  [Actions 41054228040](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41054228040)
-  concluído com sucesso (cliente e servidor). Usuário testou e aprovou os ajustes
-  de montaria, morte, cabeça, Pink e emote/AFK em 30/10/2026.
-- **C03/protocolo 59:** commit `cef9598d7` enviado; cliente + servidor na fila do
-  [Actions 41150289348](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41150289348).
-  Ainda não declarar publicado enquanto o deploy não concluir.
-- **Validação local mais recente (C03/protocolo59):** Full3 995/995, sem skips;
-  C# 0 erros/0 avisos; ferramentas 73/73 e 5 focados; Peers3 renderizado aprovado
-  com 2 clientes, endpoints de 750/20/240 ms apresentados em ambos.
+- **Publicado:** protocolo 59, commit `cef9598d7`,
+  [Actions 41150289348](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41150289348)
+  concluído com sucesso para cliente e servidor. Primeira tentativa falhou antes
+  da compilação por IPC do Unity Package Manager; repetição do job concluiu.
+- **C04/protocolo60 validado localmente:** cart/passageiro/poses na mesma
+  trajetória aprovada; curvas, salto/wrap, portais, pausa/retomada, cancelamento
+  nativo e handoff ao motor/bounce. Entrada/saída e rota permanecem autoritativas.
+  Publicação cliente+servidor é o próximo passo.
+- **Validação local mais recente (C04/protocolo60):** Full7 1010/1010, sem skips;
+  C#0erros,6avisos legados do pacoteMirror; nenhum aviso introduzido. Python76/76.
+  Development8 compilou; Peers7 com2clientes reais renderizados por110s em Battle9,
+  Battle12 e Stage3-2Room1: fases/curva/salto/portal e caminhada após desembarque
+  apresentados em cada cliente,0erros/avisos do servidor. ImagensURP inspecionadas.
+  Full7 valida produção; depois dele só helper Development de teleporte, compilado
+  e exercitado no Development8/Peers7. Aceite humano/offline segue na matriz geral.
+- **Validação anterior (C03/protocolo59):** Full3 995/995, sem skips;
+  C#0erros/0avisos; Peers3 com2clientes e endpoints750/20/240ms.
 - **Validação anterior (visuais/protocolo58):**984/984 Unity, sem skips;
   C# 0 erros/0 avisos, Python 72/72, Peers4 renderizado aprovado com 2 clientes.
 - **Validação anterior (C02/protocolo57):**971/971Unity,0skips,
@@ -76,11 +83,10 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:** 20 IDs implementados/testados e 13 parciais; todos os 33 iniciados.
+- **Checklist:** 21 IDs implementados/testados e 12 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** C04, auditoria das fases/rotas e integração dos carrinhos Battle9/12
-  e Stage3-2, preservando entrada/saída/ocupação autoritativas. C03 implementado e
-  testado no protocolo 59; publicação na fila do Actions 41150289348.
+- **Próximo:** publicar cliente+servidor60/C04; depois C05 (portais), mantendo
+  os demais12IDs parciais e a validação perceptual manual separados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -215,7 +221,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo: **17 de33 IDs concluídos em implementação/testes e16 parciais**.
+Resumo: **21 de33 IDs concluídos em implementação/testes e12 parciais**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -237,7 +243,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
-- [ ] C04: parcial37 publicado: transporte de cart/rider/loop/estrelas e gates testados; boarding previsto e manual de entrada/saída/portais pendentes.
+- [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 em preparação.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
@@ -3238,3 +3244,240 @@ Três assets de fonte do usuário preservados no root. Checkpoint, notas e matri
 foram atualizados; C03 marcado feito por implementação/testes, manual global
 permanece separado. Próximo ID de implementação: C04 (ver auditoria preliminar
 acima); os outros 13 IDs parciais não foram marcados concluídos.
+
+
+### C04 em implementação — protocolo60 local
+
+Runtime compila C# com0erros/0avisos. Focused6/6 passou em Unity, incluindo
+owner/observer na curva e pausa, corte de geração/portal e cancelamento nativo
+em Enter/Rail com reuso e preservação de proteção preexistente. Relatórios em
+Logs/PredictionCart60Focused.xml/.log. Runner livre após publicação59; copiados
+somente caminhos próprios de Logs/PredictionCart60-owned-paths.json. Fontes do
+usuário preservadas.
+
+Exec56886: suíte completa seguida de Development, no runner isolado. Próximo:
+conferir XML/compilação e rodar smoke_full_clients com launcher_kind cart9/cart12
+(Battle) e cart32 (NormalGame/Stage_3-2), diagnostics/rendered=True. A fixture
+exige embarque/saída nativos de dois jogadores, um Pink, proteção conservada;
+validador exige Enter/Rail/Exit + portal ou Jump e retorno ao motor livre nos
+capturados de cada cliente. Ainda NÃO executado. Não marcar C04 concluído nem
+publicado até fechar evidências. Boarding especulativo não se aplica: o plano
+C04 mantém disputa/entrada/saída e rota aleatória autoritativas. Carrinho não tem
+comando de direção do ocupante para prever.
+
+
+Full passou1001/1001,0skips; XML/log copiados para Logs/PredictionCart60Full.*.
+Python67CI+8Directory=75/75. Development está compilando na mesma exec56886.
+Fonte funcional final é a da suíte completa; depois dela somente documentação.
+Próximo executar cart9/cart12/cart32 quando Unity encerrar, preservando reserva
+RAM3GiB; ler/copiar motionJSONL somente depois de todos os writers encerrarem.
+
+
+Development1 compilou (205s). Auditoria posterior achou que o snapshot inicial
+capturava só a direção visível do cart: cancelamento no portal poderia deixar
+outra direção achatada. CaptureAndApply agora captura todos os renderers do corpo,
+e o teste nativo altera uma branch inativa e exige sua escala original no cancel.
+Também impede snap de saída/continuação do portal após morte.
+
+Exec32298: Full2 das fontes finais, seguido de Development2 e três smokes
+renderizados95s: cart9(28160),cart12(28161),cart32(28162/NormalGame Stage_3-2).
+O script para ao primeiro erro; verificar relatórios antes de retomar. C#final
+exec46633. Nenhuma publicação60 ou commit ainda. C04 permanece parcial até essa
+validação. Primeiro Full1001 e Development1 são anteriores ao último ajuste de
+limpeza, não devem ser descritos como binário final.
+
+
+Auditoria final co-op: prefab Minecart não tem Rigidbody2D. Classificador
+CoopPauseWithGameplay agora inclui o controller de carrinho, para congelar
+corpo/animação junto ao passageiro; teste focado novo. Alteração ainda só no root,
+posterior à cópia da exec32298. Essa exec valida Full2/Development2/smokes ANTES
+dessa correção de pausa. Depois copiar fontes finais, rodar Full3(esperado1002),
+Development3 e ao menos repetir cart32; não publicar fontes finais sem compilação.
+
+
+Continuação local: bounce de recuperação pode chegar antes do fim apresentado
+Exit. NetworkPlayerBounce agora delega ao NPI a fila aprovada de cart (máx32),
+incluindo stop, e libera apenas ao Idle/cleanup. Dois testes owner/observer exigem
+não truncar Exit, completar endpoint do bounce e restaurar collider. Alterações
+apenas no root depois da cópiaFull2; executar Full3(esperado1004)/Development3 e
+smokes das fontes finais. Owned paths atualizado com NetworkPlayerBounce.cs.
+Full2/Development2/primeiros smokes são anteriores a pausa e fila de bounce.
+
+
+Exec32298 encerrou: Full2 passou1001, Development2 compilou. Peers-cart9 falhou
+antes do embarque por AFK do ator durante warmup (motion server confirma
+visual_override no ponto da estação); nenhum trajeto aprovado, sem marcar aceito.
+Capturas JSONL copiadas somente após fechar os3processos, tentativa preservada.
+Harness agora manda Right0.4s pelo input real, espera ack neutro e exige saída da
+pose AFK antes de reposicionar. Sem mudar a regra de entrada em produção.
+
+Exec29139 é a retomada ATIVA: fontes finais copiadas (inclui pausa co-op e fila
+de bounce), Full3 esperado1004 → Development3 → smokes95s renderizados
+Logs/PredictionCart60Peers2-cart9/cart12/cart32 (ports28160–28162). Para no primeiro
+erro. C#exec99767. Ainda sem commit/push/publicação60. Ao concluir conferirXML,
+result.json de cada smoke, inspecionar PNGs, byteUTF8/meta, atualizar checklist,
+restaurar somente ownedpaths do runner e publicar ambos clientes/servidor.
+Skill recebeu notas do C04 (ainda sem commit). Um campo legado nunca lido
+PortalVisualSnapshot.rendererEnabled foi removido (sem YAML por não serializado).
+
+
+### Retomada31/10 — Full3 e reprodução das fases curtas
+
+Exec29139 encerrou: Full3 passou1004/1004,0skips; Development3 compilou.
+Peers2-cart9 aprovado (2clientes,95s, renderizado,0erros/avisos, Enter/Rail/Exit e
+handoff em ambos). Peers2-cart12 completou nativo2owners mas falhou no validador:
+primeiro Enter ausente em ambos os clientes; Rail/PortalSink/Rise/Exit presentes.
+Capturas fechadas preservadas, inclusive client2 copiado após saída. Não marcar
+aceito nem enfraquecer validador. cart32 não executou porque script parou.
+
+Correção LOCAL posterior ao Full3: relógio limitado a50ms/frame inicia no primeiro
+prefixo entregue de uma viagem, sem pular o embarque para pegar o estado mais
+recente. Retém pausa e monotonicidade; bounded history continua64. NPI's
+AuthorityPresentationTime usa o clock do cart para corpo/montaria. Co-op registra
+ids dos renderers no manager existente e usa esse clock no stream já existente,
+incluindo animação, mantendo máscaras e materiais. Enter/Exit publicam também
+edge forçado. Teste novo de stall/pausa/rewind (total esperado1005).
+C#exec59156 começou antes dos2Publishforce, conferir/rodar final após isso.
+Próximo Full4/Development4 e Peers3-cart9/cart12/cart32 das fontes finais.
+Ainda sem commit/push/publicação60; três fontes do usuário intocadas.
+
+
+Exec65828 ATIVA: Full4(esperado1005) → Development4 → Peers3-cart9/cart12/cart32,
+95s cada,2clientes renderizados. Fontes copiadas iguais ao root neste instante;
+nenhuma mudança runtime posterior. C#do clock passou0/0; os2Publishforce vieram
+logo depois. Conferir final C# depois dos testes. Publicação60 ainda NÃO feita.
+
+
+### Fontes finais C04 — retomada31/10
+
+Full4 concluiu1005/1005,0skips. OrquestradorPython4388 interrompido após identificar
+sua associação ao Unity24664 de Full4; o Editor de teste continuou e encerrou
+normalmente. Não houve Development4/Peers3 (evitado build de fontes ultrapassadas).
+XML/log Full4 copiados ao root.
+
+Ajuste final no mesmo clock: ClaimApprovedCart no recebimento protege o histórico
+de animação antes de ClientApply poder podar o Enter pelo relógio global, sem
+aplicar root nesse recebimento. Clock não avança além do último tempo aprovado;
+testes exigem claim imediato sem mudar root e hold após acabar o prefixo recebido.
+Nenhuma outra mudança runtime após a cópia abaixo; manter congeladas até resultados.
+
+Exec48960 ATIVA: Full5(1005 esperado) → Development5 → Peers4-cart9/cart12/cart32,
+95s renderizados cada, dois clientes Mirror reais, portas28160–28162. Para ao
+primeiro erro. C#final exec55191. No root/runner mesmas fontes próprias, conforme
+Logs/PredictionCart60-owned-paths.json; três assets de fonte do usuário preservados.
+Próximo: conferir resultados, corrigir somente falha demonstrada, inspecionar PNGs,
+UTF8/meta e checklist, restaurar owned paths do runner e publicar cliente+servidor60.
+Ainda sem commit/push60. C03/protocolo59 segue última publicação confirmada.
+
+
+### Retomada final do clock — exec45657
+
+Full4 passou1005/1005 e foi preservado. Full5 roda/encerra separadamente (Unity5488)
+sem seu orquestradorPython26812, que foi interrompido para evitar build ultrapassado.
+Exec45657 aguarda esse Unity encerrar naturalmente antes de copiar qualquer fonte
+para o runner; depois copia/loga Full5, executa Full6 esperado1006, Development6 e
+Peers5-cart9/cart12/cart32,95s renderizados por cenário,2clientes,ports28160–28162.
+
+Última correção local: MinecartView.paused confirma o intervalo parado. Relógio
+conserva o último tempo recebido e, na retomada, pula somente o intervalo de pausa
+já confirmado da mesma geração. Evita atraso de vários segundos após pausa longa.
+Teste novo exige sem continuação inventada antes do resume e salto dos40s parados
+após aprovação. Claim no recebimento, limite temporal e replay do bounce seguem.
+Fontes congeladas para Full6/Development6; não marcar C04 concluído nem publicar
+antes dos3resultados e revisão das imagens. Nenhum commit/push60 ainda.
+
+
+Full5 passou1005/1005,0skips, preservado em Logs/. Exec45657 já iniciou Full6 das
+fontes finais (1006 esperado); depois Development6/Peers5. C#final exec53293 passou
+0erros/0avisos. UTF8/meta12arquivosC# e git diff --check aprovados. Depois da cópia
+para Full6 somente documentação/skill alteradas; não há runtime posterior.
+
+
+Full6 APROVADO1006/1006,0skips (Logs/PredictionCart60Full6.xml/.log). Exec45657
+segue em Development6; depois Peers5 das3cenas. Nenhuma mudança runtime posterior
+ao Full6. C#final0/0, UTF8/meta12C# e diffcheck aprovados. Ainda sem publicar60.
+
+
+### Retomada04/11 — C04 pendência Stage3-2
+
+HEAD agora cef2e5d86 (Pomori sprites, commit do usuário). Preservar também novos
+diffs do usuário: DestructibleRocketController.cs/prefab, Rocket.asset,
+StageHeatHaze.mat, Rocket 2.png/.meta, além das3fontes. Manifesto de hashes dos
+tracked alheios em Logs/PredictionCart60-user-files-20261104.json. Não adicionar
+esses diffs ao commit C04. Runner limpo em cef2e5d8 antes da cópia própria.
+MCP Unity não consta nos tools expostos; Editor do usuário permanece aberto.
+
+Resultados recuperados: Development6 compilou; Peers5-cart9 e-cart12 aprovados,
+2clientes renderizados,95s,0erros/avisos. cart32 nativo completo nos2players, mas
+validador falhou no handoff. JSONLs completos conferidos após todos os processos
+encerrados: servidor liberou P2 por5s, então AFK normal; client só terminou sua
+reprodução após esse intervalo. Limite50ms/frame durante rail longo acumulava
+atraso no FPS reduzido pela captura PNG.
+
+Correção local: Rail/Jump/PortalHidden permitem100ms/frame, transições curtas50ms;
+nenhuma fase/geração/rider é pulada no avanço. Quatro testes de FPS10/transição
+adicionados (suíte esperada1010). Harness agora aguarda ack3 após o client soltar
+ApprovedCartActive e envia caminhada real+ack neutro, exigindo motor nativo livre
+antes de registrar input restored. Evita confundir AFK legítimo após viagem com
+lock de gameplay, mantendo validador estrito e input pela produção.
+
+Exec58571 ATIVA: Full7 → Development7 → Peers6-cart32/cart9/cart12,110s/cenário,
+2clientes renderizados, portas28160–28162. Inicia pelo cenário que falhou. Copiados
+somente ownedpaths ao runner; nenhuma alteração runtime após essa cópia. Guardas
+RAM continuam ativas (3GiB para smoke); não fechar Editor nem apps do usuário.
+Ainda sem commit/push/publicação60. Última publicação confirmada é protocolo59.
+
+
+04/11: Full7 APROVADO1010/1010,0skips. OrquestradorPython21776 foi interrompido
+antes do build para evitar fixture ultrapassada; Unity26500 finalizou normalmente,
+XML/log preservados. Após Full7 só mudou helper Development de teleporte: sincroniza
+transform a partir do Rigidbody antes do reconcile, evitando screenshot inicial
+com parent interpolado no spawn antigo. Produção C04 é a fonte validada em Full7.
+Exec46497 ATIVA: Development8 compila helper final → Peers7-cart32/cart9/cart12,
+110s/2clientes/renderizados,ports28160–28162. Nenhum runtime posterior à cópia.
+
+C#root restaurado (Temp project.assets inexistente após regeneração do Editor),
+compilou0erros/6avisos conhecidos de Mirror/package, nenhum do código alterado.
+Preflight SSH de homologação passou,protocol60alinhado,disk11GiBlivre. GH CLI sem
+auth; API pública lista Actions. Último commit cef2e5d86 temrun41228579688failed,
+anterior41150289348success59; investigar motivo antes de publicação60. Não reenviar
+run antigo enquanto o runner está ocupado pelo teste local.
+
+
+04/11 continuação: Full7 passou1010/1010,0skips. Exec46497 compila Development8
+e rodará Peers7-cart32/cart9/cart12,110s cada. Apenas helper Development de
+teleporte mudou após Full7 (SyncAuthorityMotionTransform antes do reconcile);
+produção é a validada em1010. Evita root visual antigo nos primeiros frames da
+fixture, sem mudar contatos/embarque em produção. Ainda sem alteração runtime
+posterior à cópia para Development8. C#root passou0erros/6avisos legadosMirror.
+Run cef2e5d86 falhou por shutdown signal do runner durante testes Python (logs
+confirmados), não por erro do jogo. Listener atual ativo; não reenviar esse run
+antigo. Novo commit C04 deverá publicar ambos. SSHpreflight60 passou.
+
+
+### C04 aprovado localmente —04/11/2026
+
+Development8 compilou. Peers7-cart32/cart9/cart12 aprovados:110s solicitados por
+cenário,129.391s/115.234s/115.047s totais. Dois clientesMirror reais, renderização
+URP, input sintético no caminho P1/NPI e caminhada confirmada após saída apresentada.
+Mesmo Assembly-CSharp nos3players:5e57a431256696dd55ec478b51decf3c6fd1a3045d4da9724c4dcea72dc3823f.
+Cada cliente registrou owner e observador, Enter/Rail/Exit, mais Jump no shuttle
+Room1 e PortalSink/Rise emBattle12.0erros/avisos do servidor. Imagens de entrada,
+trilho/jump e rise inspecionadas; não substituem teste humano de sensação/offline.
+
+Full7 passou1010/1010,0skips. Após essa suíte só o helper Development de snap foi
+sincronizado antes do reconcile; compilou noDevelopment8 e foi exercitado nos3smokes.
+Python68CI+8Directory76/76; C#0erros/6avisos já conhecidos emMirror. ByteUTF8/meta,
+diffcheck e paridade owned sources root/runner aprovados. Nenhum prefab/cena/texture
+alterado pelo C04. Os7arquivos alheios tracked mantêm hashes do início da retomada;
+Rocket2.png/.meta também preservados sem stage. Checklist21/33feitos,12parciais.
+Próximo restaurar APENAS ownedpaths do runner, commitar/pushC04 e conferirCIboth60.
+
+
+Runner restaurado em2listas exatas:14ownedpaths de fontes, depois14arquivos
+reescritos por import/build/teste (manifesto emLogs/PredictionCart60-generated-runner-paths.json).
+A segunda lista foi verificada contra allowlist explícita e checkout limpo inicial;
+só no runnerisolado, nenhum revert/clean no root. Runner gitstatus limpo agora,
+nenhum player/Unity de teste ativo. Editor do usuário continua aberto.
+Build reemitirá seus catálogos gerados normalmente. Fontes, Rocket e demais diffs
+alheios no root mantidos; índiceGit estava vazio antes do stage C04.

@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
+[DefaultExecutionOrder(1100)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AudioSource))]
 public sealed partial class BattleMode9MinecartController : MonoBehaviour
@@ -159,6 +160,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
     readonly HashSet<MovementController> activeRiders = new();
     readonly HashSet<MovementController> waitingForStationExit = new();
     readonly Dictionary<MovementController, RideState> activeStates = new();
+    readonly Dictionary<MovementController, CartRideRoutine> rideRoutines = new();
     readonly Collider2D[] hitBuffer = new Collider2D[32];
     readonly HashSet<GameObject> processedThisFrame = new();
     readonly List<AnimatedSpriteRenderer> riderRenderers = new();
@@ -221,9 +223,40 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         }
     }
 
+    sealed class CartRideRoutine : System.IDisposable
+    {
+        readonly Stack<IEnumerator> frames = new();
+        readonly Assets.Scripts.Netcode.NetworkPlayerInput.AuthorityMotionScope authority;
+        bool disposed;
+        public CartRideRoutine(IEnumerator routine, Assets.Scripts.Netcode.NetworkPlayerInput.AuthorityMotionScope authority)
+        { frames.Push(routine); this.authority = authority; }
+        public bool Step(out object wait)
+        {
+            wait = null;
+            while (!disposed && frames.Count > 0)
+            {
+                var top = frames.Peek();
+                if (!top.MoveNext()) { frames.Pop(); (top as System.IDisposable)?.Dispose(); continue; }
+                if (top.Current is IEnumerator nested) { frames.Push(nested); continue; }
+                wait = top.Current; return true;
+            }
+            return false;
+        }
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            try { while (frames.Count > 0) (frames.Pop() as System.IDisposable)?.Dispose(); }
+            finally { authority.Dispose(); }
+        }
+    }
+
     sealed class RideState
     {
-        public bool prevInputLocked;
+        public bool prevInputLocked, prevExternalMovement, prevVisualOverride;
+        public bool[] previousHealthProtection;
+        public List<PortalVisualSnapshot> cartVisualBaseline;
+        public Vector3 cartBasePosition, cartBaseScale;
         public bool prevPlayerExplosionInvulnerable;
         public bool prevMountExplosionInvulnerable;
         public bool prevBombEnabled;
@@ -256,14 +289,12 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         public readonly Transform transform;
         public readonly Vector3 localScale;
         public readonly Vector3 localPosition;
-        public readonly bool rendererEnabled;
 
         public PortalVisualSnapshot(SpriteRenderer renderer)
         {
             transform = renderer != null ? renderer.transform : null;
             localScale = transform != null ? transform.localScale : Vector3.one;
             localPosition = transform != null ? transform.localPosition : Vector3.zero;
-            rendererEnabled = renderer != null && renderer.enabled;
         }
     }
 
@@ -319,10 +350,13 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
     void OnDisable()
     {
-        if (Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client) StopAllCoroutines();
+        var running = new List<CartRideRoutine>(rideRoutines.Values);
+        StopAllCoroutines();
+        foreach (var ride in running) ride.Dispose();
+        rideRoutines.Clear();
         PublishNetworkCart(hidden: true);
         ClearNetworkCart();
-        foreach (var pair in activeStates)
+        foreach (var pair in new Dictionary<MovementController, RideState>(activeStates))
             RestoreRideState(pair.Key, pair.Value);
 
         ClearActiveTeleportStars();
@@ -383,7 +417,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
     bool TryHandlePlayerAtStation(MovementController mover, Vector3Int station)
     {
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
-        if (mover == null || mover.Rigidbody == null || !mover.CompareTag("Player"))
+        if (!isActiveAndEnabled || mover == null || mover.Rigidbody == null || !mover.CompareTag("Player"))
             return false;
 
         if (mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy)
@@ -412,13 +446,27 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
     IEnumerator RideRoutine(MovementController mover)
     {
-        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
-        using var authorityMotion = Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover);
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || !isActiveAndEnabled || mover == null ||
+            currentRider != null || rideRoutines.ContainsKey(mover)) yield break;
+        var ride = new CartRideRoutine(RideCore(mover), Assets.Scripts.Netcode.NetworkPlayerInput.PresentAuthorityMotion(mover));
+        rideRoutines.Add(mover, ride);
+        try { while (ride.Step(out var wait)) yield return wait; }
+        finally
+        {
+            ride.Dispose(); rideRoutines.Remove(mover);
+            if (activeStates.Remove(mover, out var abandoned)) RestoreRideState(mover, abandoned);
+            if (currentRider == mover) currentRider = null;
+        }
+    }
+
+    IEnumerator RideCore(MovementController mover)
+    {
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
         activeRiders.Add(mover);
         currentRider = mover;
+        ++networkRideGeneration; networkRidePhase = Assets.Scripts.Netcode.MinecartPhase.Enter;
         currentRailTargetIndex = 1;
         rideEnterAnimationActive = true;
         rideEnterAnimationStartedTime = Time.time;
@@ -475,18 +523,19 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         RideState state = CaptureAndApplyRideState(mover);
         activeStates[mover] = state;
 
-        SetCartVisible(true);
-        SetCartWorldPosition(stationWorld);
-        currentCartDirection = startFacing != Vector2.zero ? startFacing : Vector2.right;
-        UpdateCartVisual(currentCartDirection, moving: false);
-
-        PlayOneShot(enterSfx);
-
         try
         {
+            SetCartVisible(true);
+            SetCartWorldPosition(stationWorld);
+            currentCartDirection = startFacing != Vector2.zero ? startFacing : Vector2.right;
+            UpdateCartVisual(currentCartDirection, moving: false);
+
+            PlayOneShot(enterSfx);
+            PublishNetworkCart(force: true);
+
             yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds, enterHopHeightTiles, "Enter");
             rideEnterAnimationActive = false;
-            if (mover == null || mover.IsEndingStage)
+            if (mover == null || mover.isDead || mover.IsEndingStage)
                 yield break;
 
             SetRideCompanionsVisible(state, false);
@@ -529,7 +578,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
                 yield return MoveCartAroundRail(mover, state);
             }
 
-            if (mover == null || mover.IsEndingStage)
+            if (mover == null || mover.isDead || mover.IsEndingStage)
                 yield break;
 
             Vector2 actualExitWorld = state.forcedExit ? state.forcedExitWorld : exitWorld;
@@ -547,6 +596,8 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
                 PlayOneShot(exitSfx);
                 rideExitAnimationActive = true;
                 rideExitAnimationStartedTime = Time.time;
+                networkRidePhase = Assets.Scripts.Netcode.MinecartPhase.Exit;
+                PublishNetworkCart(force: true);
                 yield return PlayEnterExitVisualRoutine(mover, state, exitStartWorld, actualExitWorld, actualExitFacing, exitAnimationSeconds, exitHopHeightTiles, "Exit");
                 rideExitAnimationActive = false;
             }
@@ -555,7 +606,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
                 SetCartVisible(false);
             }
 
-            if (mover != null && !mover.IsEndingStage)
+            if (mover != null && !mover.isDead && !mover.IsEndingStage)
             {
                 mover.SnapToWorldPoint(actualExitWorld, roundToGrid: false);
                 if (!IsStage32Room3ShuttleActive())
@@ -569,7 +620,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         {
             StopRideLoopSfx();
             RestoreRideState(mover, state);
-            if (mover != null && !mover.IsEndingStage)
+            if (mover != null && !mover.IsEndingStage && !mover.isDead)
             {
                 Vector2 finalFacing = state.forcedExit ? state.forcedExitFacing : exitFacing;
                 mover.ForceFacingDirection(finalFacing);
@@ -611,7 +662,10 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             {
                 SetCartVisible(false);
             }
-            StartCoroutine(ReleaseRiderAfterGrace(mover));
+            networkRidePhase = Assets.Scripts.Netcode.MinecartPhase.Idle;
+            PublishNetworkCart(force: true);
+            if (isActiveAndEnabled) StartCoroutine(ReleaseRiderAfterGrace(mover));
+            else activeRiders.Remove(mover);
         }
     }
 
@@ -662,7 +716,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
     {
         if (Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client)
         {
-            PresentNetworkCart(Mirror.NetworkTime.time);
+            PresentNetworkCart(GetCartPresentationTime(Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage ? Assets.Scripts.Netcode.BombermanNetworkManager.CoopPresentationTime : Mirror.NetworkTime.time));
             SyncRideLoopSfxWithPause();
             return;
         }
@@ -891,7 +945,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             beforeJump.Add(waypoints[i]);
         yield return MoveCartAlongStage32Waypoints(mover, state, beforeJump.ToArray());
 
-        if (mover == null || mover.IsEndingStage)
+        if (mover == null || mover.isDead || mover.IsEndingStage)
             yield break;
 
         Vector2Int jumpStart = waypoints[jumpSegmentIndex];
@@ -899,7 +953,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         Vector2 jumpFacing = Cardinalize(new Vector2(jumpEnd.x - jumpStart.x, jumpEnd.y - jumpStart.y));
         yield return MoveCartStage32Jump(mover, state, jumpStart, jumpEnd, jumpFacing);
 
-        if (mover == null || mover.IsEndingStage || jumpSegmentIndex + 2 >= waypoints.Length)
+        if (mover == null || mover.isDead || mover.IsEndingStage || jumpSegmentIndex + 2 >= waypoints.Length)
             yield break;
 
         var afterJump = new List<Vector2Int>(waypoints.Length - jumpSegmentIndex - 1);
@@ -907,7 +961,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             afterJump.Add(waypoints[i]);
         yield return MoveCartAlongStage32Waypoints(mover, state, afterJump.ToArray());
 
-        if (mover == null || mover.IsEndingStage ||
+        if (mover == null || mover.isDead || mover.IsEndingStage ||
             (state != null && state.cartDestroyedBySuddenDeath))
             yield break;
 
@@ -982,6 +1036,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
                        Mathf.Max(0.0001f, mover != null ? mover.tileSize : 1f);
         Vector3 baseVisualLocal = cartVisualRoot != null ? cartVisualRoot.localPosition : Vector3.zero;
         float elapsed = 0f;
+        networkRidePhase = Assets.Scripts.Netcode.MinecartPhase.Jump; networkRideProgress = 0;
         var fixedWait = new WaitForFixedUpdate();
 
         currentCartDirection = facing;
@@ -992,7 +1047,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
         while (elapsed < duration)
         {
-            if (mover == null || mover.IsEndingStage)
+            if (mover == null || mover.isDead || mover.IsEndingStage)
                 yield break;
 
             if (GamePauseController.IsPaused)
@@ -1005,6 +1060,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             float t = Mathf.Clamp01(elapsed / duration);
             Vector2 ground = QuantizeToPixelGrid(Vector2.Lerp(start, end, t));
             float arcHeight = QuantizeWorldToPixelStep(4f * height * t * (1f - t));
+            networkRideProgress = t;
 
             ApplyCartRidePosition(mover, state, ground, facing);
             if (cartVisualRoot != null)
@@ -1126,7 +1182,9 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
         {
             currentRailTargetIndex = i;
-            if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && mover.IsEndingStage))
+            networkRidePhase = Assets.Scripts.Netcode.MinecartPhase.Rail;
+            networkRideSegment = i; networkRideProgress = 0; networkRideSpeed = speed;
+            if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && (mover.isDead || mover.IsEndingStage)))
                 yield break;
 
             Vector2 start = QuantizeToPixelGrid(GetCellCenter(path[i - 1]));
@@ -1153,7 +1211,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
             while (Vector2.Distance(position, end) > PixelWorldStep * 0.5f)
             {
-                if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && mover.IsEndingStage))
+                if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && (mover.isDead || mover.IsEndingStage)))
                     yield break;
 
                 if (GamePauseController.IsPaused)
@@ -1171,6 +1229,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
                     position = Vector2.MoveTowards(position, end, moveWorld);
                     position = QuantizeToPixelGrid(position);
 
+                    networkRideProgress = Vector2.Distance(start, position) / Mathf.Max(.0001f, Vector2.Distance(start, end));
                     ApplyCartRidePosition(mover, state, position, dir);
                     HandleCartCollisions(position, dir, mover);
                 }
@@ -1366,9 +1425,10 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         PlayOneShot(portalEnterSfx, portalEnterSfxVolume);
         yield return AnimatePortalSinkRise(mover, state, source, appearing: false);
 
-        if (mover == null || mover.IsEndingStage)
+        if (mover == null || mover.isDead || mover.IsEndingStage)
             yield break;
 
+        networkRidePhase = Assets.Scripts.Netcode.MinecartPhase.PortalHidden;
         SetCartVisible(false);
         SetTeleportRiderVisualsVisible(state, false);
         MoveRiderWithCart(mover, source);
@@ -1393,7 +1453,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
                 yield break;
             }
 
-            if (mover.IsEndingStage)
+            if (mover.isDead || mover.IsEndingStage)
             {
                 ClearActiveTeleportStars();
                 yield break;
@@ -1455,6 +1515,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
     IEnumerator AnimatePortalSinkRise(MovementController mover, RideState state, Vector2 portalWorld, bool appearing)
     {
+        networkRidePhase = appearing ? Assets.Scripts.Netcode.MinecartPhase.PortalRise : Assets.Scripts.Netcode.MinecartPhase.PortalSink;
         ApplyCartRidePosition(mover, state, portalWorld, currentCartDirection);
         SetCartVisible(!cartDestroyedBySuddenDeath);
         ShowRiderHeadOnly(state, currentCartDirection);
@@ -1472,7 +1533,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
         while (elapsed < duration)
         {
-            if (mover == null || mover.IsEndingStage)
+            if (mover == null || mover.isDead || mover.IsEndingStage)
                 yield break;
 
             if (GamePauseController.IsPaused)
@@ -1497,7 +1558,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         ApplyCartRidePosition(mover, state, portalWorld, currentCartDirection);
     }
 
-    List<PortalVisualSnapshot> CapturePortalVisualSnapshots(MovementController mover)
+    List<PortalVisualSnapshot> CapturePortalVisualSnapshots(MovementController mover, bool includeInactive = false)
     {
         portalVisualRenderers.Clear();
 
@@ -1509,7 +1570,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         for (int i = 0; i < portalVisualRenderers.Count; i++)
         {
             SpriteRenderer renderer = portalVisualRenderers[i];
-            if (renderer == null || !seen.Add(renderer) || !renderer.enabled || renderer.sprite == null)
+            if (renderer == null || !seen.Add(renderer) || (!includeInactive && (!renderer.enabled || renderer.sprite == null)))
                 continue;
 
             snapshots.Add(new PortalVisualSnapshot(renderer));
@@ -1771,6 +1832,10 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         var state = new RideState
         {
             prevInputLocked = mover.InputLocked,
+            prevExternalMovement = mover.ExternalMovementOverride, prevVisualOverride = mover.VisualOverrideActive,
+            cartVisualBaseline = CapturePortalVisualSnapshots(mover, includeInactive: true),
+            cartBasePosition = cartVisualRoot != null ? cartVisualRoot.localPosition : Vector3.zero,
+            cartBaseScale = cartVisualRoot != null ? cartVisualRoot.localScale : Vector3.one,
             prevPlayerExplosionInvulnerable = mover.explosionInvulnerable,
             playerCollider = mover.GetComponent<Collider2D>(),
             mountMovement = mover.GetComponentInChildren<MountMovementController>(true),
@@ -1804,6 +1869,8 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         if (state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(true);
 
+        state.previousHealthProtection = new bool[state.healths.Length];
+        for (int i = 0; i < state.healths.Length; i++) state.previousHealthProtection[i] = state.healths[i] != null && state.healths[i].HasExternalInvulnerability;
         SetHealthInvulnerability(state.healths, true);
         ApplyHeadOffsets(state, "CaptureAndApplyRideState");
 
@@ -1839,6 +1906,8 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         if (state == null)
             return;
 
+        RestorePortalVisualSnapshots(state.cartVisualBaseline);
+        if (cartVisualRoot != null) { cartVisualRoot.localPosition = state.cartBasePosition; cartVisualRoot.localScale = state.cartBaseScale; }
         HideRiderHeadOnly(state);
         ClearHeadOffsets(state);
         RestoreCartRiderSorting(state);
@@ -1846,13 +1915,17 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
 
         if (mover != null)
         {
-            mover.SetExternalMovementOverride(false);
-            mover.SetVisualOverrideActive(false);
+            mover.SetExternalMovementOverride(!mover.isDead && !mover.IsEndingStage && state.prevExternalMovement);
+            mover.SetVisualOverrideActive(!mover.isDead && !mover.IsEndingStage && state.prevVisualOverride);
 
             if (mover.Rigidbody != null)
+            {
+                Vector2 held = mover.transform.position;
+                mover.Rigidbody.position = held; mover.Rigidbody.MovePosition(held);
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+            }
 
-            if (!mover.IsEndingStage)
+            if (!mover.IsEndingStage && !mover.isDead)
             {
                 mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
                 mover.EnableExclusiveFromState();
@@ -1860,7 +1933,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             }
         }
 
-        bool restoreGameplayState = mover == null || !mover.IsEndingStage;
+        bool restoreGameplayState = mover != null && !mover.IsEndingStage && !mover.isDead;
 
         if (restoreGameplayState && state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(state.prevMountExplosionInvulnerable);
@@ -1886,8 +1959,8 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
         }
 
-        if (restoreGameplayState)
-            SetHealthInvulnerability(state.healths, false);
+        for (int i = 0; state.healths != null && i < state.healths.Length; i++)
+            if (state.healths[i] != null) state.healths[i].SetExternalInvulnerability(state.previousHealthProtection != null && i < state.previousHealthProtection.Length && state.previousHealthProtection[i]);
     }
 
     void SetRideCompanionsVisible(RideState state, bool visible)
@@ -3077,7 +3150,7 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
             return;
 
         audioSource.loop = true;
-        if (Assets.Scripts.Netcode.NetSync.IsOnline && !Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+        if (Assets.Scripts.Netcode.NetSync.IsOnline)
         {
             // Approved cart state owns the loop in Battle; the generic one-shot
             // broadcast would otherwise double its first playback on clients.

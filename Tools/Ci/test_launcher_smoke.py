@@ -48,3 +48,32 @@ class LauncherSmokeTests(unittest.TestCase):
             if frozen: rows[2]['durationMs'] = 100
             else: rows = [r for r in rows if r['kind'] != 'motion_sample']
             with self.assertRaises(ValueError): smoke.validate_launcher_capture(rows, 'cannon')
+
+
+class MinecartSmokeTests(unittest.TestCase):
+    def rows(self):
+        rows = []
+        for player, owner in ((1, True), (2, False)):
+            for index, phase in enumerate(('Enter', 'Rail', 'Rail', 'Jump', 'PortalSink', 'PortalRise', 'Exit')):
+                rows.append(dict(kind='minecart_present', realtime=1+index*.1, player=player,
+                    localPlayer=owner, position=dict(x=index,y=0), detail='cart=Cart;generation=1;phase='+phase+';segment=1'))
+            rows.append(dict(kind='minecart_end', realtime=2, player=player, localPlayer=owner))
+            rows.append(dict(kind='motion_sample', realtime=3, player=player, localPlayer=owner, detail='prediction_block=none mounted=False'))
+        return rows
+
+    def test_cart_requires_both_passengers_and_unlocked_handoff(self):
+        for kind in ('cart9', 'cart12', 'cart32'):
+            self.assertEqual(7, smoke.validate_launcher_capture(self.rows(), kind)['observer']['samples'])
+        for missing in ('minecart_end', 'motion_sample'):
+            with self.assertRaises(ValueError): smoke.validate_launcher_capture([r for r in self.rows() if r['kind'] != missing], 'cart9')
+        with self.assertRaises(ValueError): smoke.validate_launcher_capture([r for r in self.rows() if r['localPlayer']], 'cart9')
+
+    def test_specialized_cart_cannot_pass_without_portal_or_jump(self):
+        for kind, phase in (('cart12', 'PortalRise'), ('cart32', 'Jump')):
+            with self.assertRaises(ValueError):
+                smoke.validate_launcher_capture([r for r in self.rows() if 'phase='+phase not in r.get('detail', '')], kind)
+
+    def test_cart_phase_labels_alone_cannot_validate_frozen_passenger(self):
+        rows = self.rows()
+        for row in rows: row['position'] = dict(x=0, y=0)
+        with self.assertRaises(ValueError): smoke.validate_launcher_capture(rows, 'cart9')
