@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04696a3eb3a17448b9c53d2f0dafad7, type: 3}
   m_Name: Stage_World3Hall
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.CoopSceneCatalog
-  contentHash: B140D8D3684AAA66C10FFFA4095255A1C8FCE18C2686661C6C4F40353E5BD4C0
+  contentHash: 899D05B387CF01654466BF46AD3DE52FEB999C8002C89A5DF9A5D265018D52E6
   sprites:
   - {fileID: 21300000, guid: 0071492598ef6b242b83c5d0e2f81927, type: 3}
   - {fileID: 21300000, guid: 05267943b815b8e4b8756add93c97057, type: 3}
@@ -2066,6 +2066,8 @@ MonoBehaviour:
   - Sounds/MountRedLouie
   - Sounds/MountTank
   - Sounds/MountYellowLouie
+  - Sounds/OnlineChat/player_join
+  - Sounds/OnlineChat/player_leave
   - Sounds/Portal Unlock
   - Sounds/RubberBombBounce
   - Sounds/SB5 Sound Effects (48)

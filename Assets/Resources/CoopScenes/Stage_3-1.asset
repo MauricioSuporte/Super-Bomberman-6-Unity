@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04696a3eb3a17448b9c53d2f0dafad7, type: 3}
   m_Name: Stage_3-1
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.CoopSceneCatalog
-  contentHash: 665E9CAEADEA25A2693F3315CB91CF6DA7E87D3B1CFEE45C732303ED95DCD286
+  contentHash: 5DB593F2AE9643D05022A8F60FD87CF24D9BA297782AAF8B8E76CFA04E48ED24
   sprites:
   - {fileID: 21300000, guid: 0071492598ef6b242b83c5d0e2f81927, type: 3}
   - {fileID: 21300000, guid: 0144111ae1f3e154d8fb33e80f7e080f, type: 3}
@@ -2251,6 +2251,8 @@ MonoBehaviour:
   - Sounds/MountRedLouie
   - Sounds/MountTank
   - Sounds/MountYellowLouie
+  - Sounds/OnlineChat/player_join
+  - Sounds/OnlineChat/player_leave
   - Sounds/Portal Unlock
   - Sounds/RubberBombBounce
   - Sounds/SB5 Sound Effects (48)

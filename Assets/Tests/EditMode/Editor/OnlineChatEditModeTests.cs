@@ -30,6 +30,19 @@ public sealed class OnlineChatEditModeTests
         typeof(OnlineChatOverlay).GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(chat, null);
     }
 
+    [OneTimeSetUp]
+    public void SynchronizePresenceAudioCatalogs() => CoopSceneCatalogBuilder.Generate();
+
+    static int OwnJoinCount(OnlineChatOverlay chat)
+    {
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var lines = (System.Collections.IEnumerable)typeof(OnlineChatOverlay).GetField("roomLines", flags).GetValue(chat);
+        int count = 0;
+        foreach (var line in lines)
+            if ((byte)line.GetType().GetField("presence").GetValue(line) == 1 && (bool)line.GetType().GetField("you").GetValue(line)) count++;
+        return count;
+    }
+
     [UnityTearDown]
     public System.Collections.IEnumerator RestoreChatSession()
     {
@@ -70,7 +83,11 @@ public sealed class OnlineChatEditModeTests
         NetworkClient.Send(new OnlineChatSendMessage { text = "olá <b>teste</b>", nonce = System.Guid.NewGuid().ToString("N") });
         deadline = Time.realtimeSinceStartup + 3;
         while (!(history.text ?? "").Contains("olá") && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.AreEqual(OnlineChatRules.FormatLine("CHAT_TEST", "olá <b>teste</b>", 1), history.text);
+        Assert.IsTrue(history.text.Contains(OnlineChatRules.FormatLine("CHAT_TEST", "olá <b>teste</b>", 1)));
+        Assert.IsTrue(history.text.Contains(GameTextDatabase.Online.ChatPresence("", true, true)));
+        Assert.AreEqual(1, OwnJoinCount(chat));
+        Assert.IsNotNull(Resources.Load<AudioClip>("Sounds/OnlineChat/player_join"));
+        Assert.IsNotNull(Resources.Load<AudioClip>("Sounds/OnlineChat/player_leave"));
         Assert.IsTrue(history.richText);
         Assert.AreEqual(FontStyles.Bold, history.fontStyle);
         Assert.IsNull(history.transform.parent.GetComponent<UnityEngine.UI.Image>());
@@ -105,7 +122,15 @@ public sealed class OnlineChatEditModeTests
         var entry = System.Array.Find(labels, label => label.name == "Entry");
         Assert.IsTrue(entry.text.Contains("oi"));
         Assert.AreEqual(FontStyles.Bold, entry.fontStyle);
-        Assert.IsFalse(System.Array.Find(labels, label => label.name == "Hint").gameObject.activeSelf);
+        Assert.IsNull(System.Array.Find(labels, label => label.name == "Hint"));
+        var bands = history.transform.parent.Find("TextBackgrounds").GetComponentsInChildren<UnityEngine.UI.Image>();
+        Assert.Greater(bands.Length, 0);
+        foreach (var band in bands)
+        {
+            Assert.AreEqual(0, band.color.r); Assert.AreEqual(0, band.color.g); Assert.AreEqual(0, band.color.b);
+            Assert.Greater(band.color.a, 0); Assert.Less(band.color.a, 1);
+            Assert.LessOrEqual(band.rectTransform.rect.width, 202);
+        }
         Assert.IsFalse(input.Get(1, PlayerAction.Start));
         Assert.IsFalse(input.GetDown(1, PlayerAction.ActionA));
         var safeFrame = PixelPerfectViewport.ResolveFinalPixelRect(Camera.main);
@@ -148,11 +173,14 @@ public sealed class OnlineChatEditModeTests
         Assert.AreEqual("BattleModeMenu", SceneManager.GetActiveScene().name);
         Assert.AreSame(chat, manager.GetComponent<OnlineChatOverlay>());
         Assert.AreEqual(1, Object.FindObjectsByType<OnlineChatOverlay>().Length);
+        Assert.AreEqual(1, OwnJoinCount(chat), "Changing scenes must not announce the same player again.");
         SetChatKeys(chat, keyboard, Key.T);
         yield return null; yield return null;
         Assert.IsTrue(history.text.Contains("olá"), "Room history must survive scene transitions.");
         if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
         {
+            chat.ReceivePresence("VISITANTE", 2, true, false);
+            chat.ReceivePresence("VISITANTE", 2, false, false);
             var names = new[] { "BRANCO", "PRETO", "VERMELHO", "AZUL", "VERDE", "AMARELO" };
             for (int id = 1; id <= 6; id++) chat.ReceiveRoomLine("P" + id, names[id - 1], System.Guid.NewGuid().ToString("N"), id);
             yield return null;
@@ -160,6 +188,13 @@ public sealed class OnlineChatEditModeTests
         }
         InputSystem.RemoveDevice(keyboard);
         manager.StopHost();
+        yield return null; yield return null;
+        var departure = Object.FindObjectsByType<OnlineChatOverlay>();
+        Assert.IsTrue(System.Array.Exists(departure, overlay =>
+        {
+            var label = System.Array.Find(overlay.GetComponentsInChildren<TextMeshProUGUI>(true), text => text.name == "History");
+            return label != null && label.text.Contains(GameTextDatabase.Online.ChatPresence("", false, true));
+        }), "Own departure must remain visible after disconnecting.");
         OnlineVersionAuthenticator.PlayerName = savedChatName;
         restoreChatName = false;
         yield return null; yield return null;

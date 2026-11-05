@@ -28,7 +28,7 @@ namespace Assets.Scripts.Netcode
         IEnumerator StopDedicatedRoomAfterDisconnect()
         {
             // KCP is iterating its connection collection during the disconnect callback.
-            yield return null;
+            yield return new WaitForSecondsRealtime(0.25f);
             StopServer();
             Application.Quit();
         }

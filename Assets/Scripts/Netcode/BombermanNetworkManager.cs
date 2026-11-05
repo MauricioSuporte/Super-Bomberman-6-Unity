@@ -385,6 +385,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
+            if (!leavingRoom) BroadcastChatPresence(conn, false);
             nextChatByConnection.Remove(conn.connectionId);
             roomPresentationByConnection.Remove(conn.connectionId);
             if (authenticator is OnlineVersionAuthenticator names) names.ReleaseName(conn.connectionId);
@@ -419,6 +420,8 @@ namespace Assets.Scripts.Netcode
             int assigned = FindAvailableRoomSlot(new HashSet<int>(playerIdByConnection.Values), RoomCapacity);
             if (assigned == 0) return 0;
             playerIdByConnection[conn.connectionId] = assigned;
+            chatDepartedConnections.Remove(conn.connectionId);
+            BroadcastChatPresence(conn, true);
             Debug.Log($"[Room] join connection={conn.connectionId} player={assigned}");
             return assigned;
         }

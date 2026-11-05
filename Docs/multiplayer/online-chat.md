@@ -52,7 +52,7 @@ Mensagens e tokens não são gravados em logs nem em disco.
 
 ## Publicação e validação
 
-O protocolo atual é **62**. Recompile cliente e servidor dedicado e publique o
+O protocolo atual é **63**. Recompile cliente e servidor dedicado e publique o
 supervisor atualizado junto deles. O servidor público anterior não oferece
 esses endpoints/handlers. Proxies que filtram rotas precisam permitir `/chat`
 e `/chat/session`, além de encaminhar `X-Chat-Token`.
@@ -98,8 +98,9 @@ Os relatórios locais estão em `build/Validation/ChatDeploy/`.
 ## Revisão visual e de entrada
 
 Texto em negrito com contorno escuro, nomes nas cores P1 branco, P2 preto, P3 vermelho, P4 azul, P5 verde e P6 amarelo, e mensagens em rosa
-claro, sem painel de fundo. O campo usa verde claro. A única dica T fica oculta
-ao digitar; Z não mostra o histórico. O histórico aparece junto com o campo.
+claro. Faixas pretas com transparência acompanham cada linha visível, inclusive
+o campo de entrada verde claro. Não há dica de T na interface. Z não mostra
+o histórico; o histórico aparece junto com o campo ao pressionar T.
 
 Digitação é aplicada imediatamente ao TMP no evento de texto, inclusive várias
 letras no frame de abertura. Inputs locais permanecem bloqueados até liberar as
@@ -121,3 +122,21 @@ fundo no painel. A prévia Unity dos seis slots fica em `build/Validation/ChatPo
 Validação da revisão: 8/8 testes Unity, 15/15 testes Python do diretório e 12/12
 testes do pipeline de release aprovados. Compilação C# sem erros/avisos nesta
 execução. A prévia renderizada confirmou as seis cores e o campo sem fundo.
+
+## Presença e efeitos sonoros
+
+O servidor anuncia entradas e saídas com o nome e a cor do slot. A própria
+entrada e saída também aparecem, com texto localizado nos quatro idiomas.
+Entradas usam verde e saídas laranja; trocar de cena na mesma sala não produz
+novos avisos. O aviso da própria saída permanece brevemente durante a transição.
+
+Os arquivos `Sounds/OnlineChat/player_join` e `player_leave` reproduzem os SFX
+fornecidos pelo usuário. A reprodução é local em cada cliente, respeita o volume
+de efeitos e funciona durante a pausa, sem retransmitir o áudio pela rede.
+
+Validação de presença/SFX: 8/8 testes Unity, 15/15 testes do diretório e 12/12
+testes do pipeline aprovados. A compilação C# final passou sem avisos nem erros.
+A prévia renderizada está em `build/Validation/ChatPresence/preview.png`.
+A suíte verificou avisos próprios, importação dos clips, faixas transparentes,
+ausência da dica e preservação do aviso de saída. A audição dos SFX e a sessão
+com dois executáveis remotos permanecem como validação manual.

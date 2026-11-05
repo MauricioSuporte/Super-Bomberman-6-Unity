@@ -4,4 +4,4 @@ The current implementation uses dedicated servers: see [dedicated-server.md](ded
 
 Movement prediction and its current limits: see [prediction-and-reconciliation.md](prediction-and-reconciliation.md).
 
-Public and room chat, keyboard controls and protocol 62 deployment: see [online-chat.md](online-chat.md).
+Public and room chat, keyboard controls and protocol 63 deployment: see [online-chat.md](online-chat.md).

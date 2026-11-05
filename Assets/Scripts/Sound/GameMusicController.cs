@@ -339,6 +339,13 @@ public class GameMusicController : MonoBehaviour
         GameAudioSettings.PlaySfx(unpausedSfxSource, clip, volume);
     }
 
+    // Local UI notifications are already delivered to every peer by their owner.
+    public void PlayLocalSfxIgnoringListenerPause(AudioClip clip, float volume = 1f)
+    {
+        if (clip != null && unpausedSfxSource != null)
+            unpausedSfxSource.PlayOneShot(clip, GameAudioSettings.ApplySfxVolume(volume));
+    }
+
     public void StopMusic()
     {
         Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlayMusic(null, 0, false, 1f, stopped: true);

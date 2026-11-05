@@ -30,13 +30,22 @@ namespace Assets.Scripts.Netcode
             public float received;
             public bool pending, failed, room;
             public int colorIndex;
+            public byte presence;
+            public bool you;
         }
         readonly List<Line> roomLines = new(), publicLines = new();
         readonly Queue<Line> outgoing = new();
-        RectTransform safe, panel;
+        RectTransform safe, panel, backgroundRoot;
+        GameObject canvasRoot;
+        readonly List<Image> textBackgrounds = new();
+        AudioSource localSfx;
+        AudioClip joinSfx, leaveSfx;
+        bool departing, viewHandedOff, leftNotified;
+        int ownPlayerId;
+        float expiresAt, lastJoinSound = -100, lastLeaveSound = -100;
         CanvasGroup group;
         UICameraViewportFitter viewport;
-        TextMeshProUGUI history, contrastNames, entry, hint, status;
+        TextMeshProUGUI history, contrastNames, entry, status;
         TMP_FontAsset font;
         OnlineRoomBrowser browser;
         OnlineLobbyMenu lobby;
@@ -52,7 +61,7 @@ namespace Assets.Scripts.Netcode
         bool ModalOpen => SceneManager.GetActiveScene().name == NetworkLobby.SceneName && lobby != null && lobby.ChatModalOpen;
         bool InRoom => NetworkClient.isConnected && NetworkClient.connection != null && NetworkClient.connection.isAuthenticated;
         bool Browsing => !NetworkClient.active && !NetworkServer.active && SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
-        bool Available => InRoom || (Browsing && browser != null && browser.CanUseOnline && browser.DirectoryConfigured &&
+        bool Available => departing || InRoom || (Browsing && browser != null && browser.CanUseOnline && browser.DirectoryConfigured &&
             OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName));
         List<Line> Lines => roomContext ? roomLines : publicLines;
 
@@ -60,22 +69,35 @@ namespace Assets.Scripts.Netcode
 
         void Start()
         {
+            if (departing) return;
             active = this;
             browser = GetComponent<OnlineRoomBrowser>();
             lobby = GetComponent<OnlineLobbyMenu>();
             CreateView();
+            foreach (var previous in FindObjectsByType<OnlineChatOverlay>())
+                if (previous != this && previous.departing)
+                {
+                    foreach (var line in previous.roomLines) if (line.presence != 0) Append(publicLines, line);
+                    previous.gameObject.SetActive(false);
+                    Destroy(previous.gameObject);
+                }
             StartCoroutine(PollDirectory());
         }
 
         void Update()
         {
+            if (departing)
+            {
+                if (Time.unscaledTime >= expiresAt) Destroy(gameObject);
+                return;
+            }
             RefreshInput();
             PumpOutgoing();
         }
 
         void AfterInputUpdate()
         {
-            if (Application.isPlaying && isActiveAndEnabled && InputState.currentUpdateType != InputUpdateType.Editor) RefreshInput();
+            if (!departing && Application.isPlaying && isActiveAndEnabled && InputState.currentUpdateType != InputUpdateType.Editor) RefreshInput();
         }
 
         void RefreshInput()
@@ -159,7 +181,7 @@ namespace Assets.Scripts.Netcode
 
         bool AnyKeyboardKeyHeld()
         {
-            if (keyboard == null) return false;
+            if (keyboard == null || !keyboard.added) return false;
             foreach (var key in keyboard.allKeys) if (key.isPressed) return true;
             return false;
         }
@@ -208,6 +230,73 @@ namespace Assets.Scripts.Netcode
             failureUntil = Time.unscaledTime + 4;
         }
 
+        public void ReceivePresence(string sender, int playerId, bool joined, bool you)
+        {
+            if (!OnlineVersionAuthenticator.ValidPlayerName(sender) || playerId < 1 || playerId > 6) return;
+            if (you && joined)
+            {
+                ownPlayerId = playerId;
+                leftNotified = false;
+                if (viewHandedOff) { viewHandedOff = false; CreateView(); active = this; }
+            }
+            if (you && !joined && leftNotified) return;
+            if (!roomContext) { roomLines.Clear(); roomContext = contextInitialized = true; Close(); }
+            if (you && !joined) leftNotified = true;
+            Append(roomLines, new Line { sender = sender, colorIndex = playerId, presence = joined ? (byte)1 : (byte)2,
+                you = you, received = Time.unscaledTime });
+            PlayPresenceSound(joined);
+        }
+
+        void PlayPresenceSound(bool joined)
+        {
+            if (Time.unscaledTime - (joined ? lastJoinSound : lastLeaveSound) < 0.08f) return;
+            if (joined) lastJoinSound = Time.unscaledTime; else lastLeaveSound = Time.unscaledTime;
+            if (joinSfx == null) joinSfx = Resources.Load<AudioClip>("Sounds/OnlineChat/player_join");
+            if (leaveSfx == null) leaveSfx = Resources.Load<AudioClip>("Sounds/OnlineChat/player_leave");
+            var clip = joined ? joinSfx : leaveSfx;
+            if (GameMusicController.Instance != null) GameMusicController.Instance.PlayLocalSfxIgnoringListenerPause(clip);
+            else if (localSfx != null && clip != null) localSfx.PlayOneShot(clip, GameAudioSettings.ApplySfxVolume(1));
+        }
+
+        // Retain the existing chat view briefly while its network manager changes scene.
+        // This is an expiring presentation object, not another network/session owner.
+        public void PrepareLocalDeparture()
+        {
+            if (departing || viewHandedOff || panel == null || (!roomContext && ownPlayerId <= 0)) return;
+            int id = ownPlayerId > 0 ? ownPlayerId : BombermanNetworkManager.LocalRoomPlayerId;
+            if (id <= 0) return;
+            if (!leftNotified)
+            {
+                string name = BombermanNetworkManager.RoomPlayerName(id);
+                if (!OnlineVersionAuthenticator.ValidPlayerName(name)) name = OnlineVersionAuthenticator.PlayerName;
+                ReceivePresence(name, id, false, true);
+            }
+            Close();
+            var root = new GameObject("OnlineChatDeparture");
+            DontDestroyOnLoad(root);
+            var view = root.AddComponent<OnlineChatOverlay>();
+            view.departing = true; view.expiresAt = Time.unscaledTime + 5.4f;
+            view.roomContext = view.contextInitialized = true;
+            view.canvasRoot = canvasRoot; view.safe = safe; view.panel = panel; view.backgroundRoot = backgroundRoot;
+            view.viewport = viewport; view.group = group; view.history = history; view.contrastNames = contrastNames;
+            view.entry = entry; view.status = status; view.localSfx = localSfx;
+            view.textBackgrounds.AddRange(textBackgrounds);
+            view.roomLines.AddRange(roomLines);
+            canvasRoot.transform.SetParent(root.transform, false);
+            viewHandedOff = true; panel = null; canvasRoot = null;
+            if (active == view || active == this) active = null;
+        }
+
+        string Format(Line line, bool contrastOnly = false)
+        {
+            if (line.presence == 0) return OnlineChatRules.FormatLine(line.sender, line.text, line.colorIndex, contrastOnly);
+            string color = contrastOnly ? "FFFFFF00" : line.presence == 1 ? "69FF73" : "FFBB78";
+            string nameColor = OnlineChatRules.NameColor(line.colorIndex, line.sender);
+            if (contrastOnly) nameColor += line.colorIndex is 2 or 4 ? "FF" : "00";
+            string name = "<color=#" + nameColor + ">" + OnlineChatRules.EscapeMarkup(line.sender) + "</color>";
+            return "<color=#" + color + ">" + GameTextDatabase.Online.ChatPresence(name, line.presence == 1, line.you) + "</color>";
+        }
+
         public void ReceiveRoomLine(string sender, string text, string nonce, int playerId)
         {
             if (!InRoom) return;
@@ -244,7 +333,7 @@ namespace Assets.Scripts.Netcode
                     if (name != publicName || url != publicUrl)
                     {
                         publicName = name; publicUrl = url; token = ""; lastId = 0;
-                        directoryReady = false; publicLines.Clear();
+                        directoryReady = false; publicLines.RemoveAll(line => line.presence == 0);
                     }
                     if (token.Length == 0)
                     {
@@ -328,7 +417,10 @@ namespace Assets.Scripts.Netcode
         void CreateView()
         {
             var canvasObject = new GameObject("OnlineChatCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            canvasRoot = canvasObject;
             canvasObject.transform.SetParent(transform, false);
+            localSfx = canvasObject.AddComponent<AudioSource>();
+            localSfx.playOnAwake = false; localSfx.spatialBlend = 0; localSfx.ignoreListenerPause = true;
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 300; canvas.pixelPerfect = true;
             canvasObject.GetComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
@@ -337,6 +429,9 @@ namespace Assets.Scripts.Netcode
             panel = Rect("Chat", safe);
             panel.anchorMin = panel.anchorMax = panel.pivot = Vector2.zero;
             panel.sizeDelta = new Vector2(200, 88);
+            backgroundRoot = Rect("TextBackgrounds", panel);
+            backgroundRoot.anchorMin = backgroundRoot.anchorMax = backgroundRoot.pivot = Vector2.zero;
+            backgroundRoot.anchoredPosition = Vector2.zero; backgroundRoot.sizeDelta = panel.sizeDelta;
             group = panel.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = group.interactable = false;
             history = Label("History", panel, 0, 23, 200, 65, 6);
@@ -350,7 +445,6 @@ namespace Assets.Scripts.Netcode
             entry.color = new Color32(175, 255, 175, 255);
             status = Label("Status", panel, 0, 14, 200, 8, 4);
             status.color = new Color32(255, 150, 150, 255);
-            hint = Label("Hint", safe, 4, 2, 248, 8, 5);
         }
 
         static RectTransform Rect(string name, Transform parent)
@@ -380,15 +474,12 @@ namespace Assets.Scripts.Netcode
             if (panel == null) return;
             viewport.ForceApplyNow();
             float scale = Mathf.Max(1, Mathf.Floor(Mathf.Min(safe.rect.width / 256f, safe.rect.height / 224f)));
-            panel.localScale = hint.rectTransform.localScale = new Vector3(scale, scale, 1);
+            panel.localScale = new Vector3(scale, scale, 1);
             panel.anchoredPosition = new Vector2(4 * scale, 4 * scale);
-            hint.rectTransform.anchoredPosition = new Vector2(4 * scale, 2 * scale);
             bool expanded = typing;
             float newest = Lines.Count > 0 ? Lines[^1].received : -100;
             bool visible = Available && !ModalOpen && (expanded || Time.unscaledTime - newest < 5.4f);
             panel.gameObject.SetActive(visible);
-            hint.gameObject.SetActive(Available && !typing && !visible && !ModalOpen);
-            hint.text = GameTextDatabase.Online.ChatHint;
             if (!visible) return;
             group.alpha = expanded ? 1 : Mathf.Clamp01((5.4f - (Time.unscaledTime - newest)) / 0.4f);
             RefreshEntry();
@@ -400,16 +491,52 @@ namespace Assets.Scripts.Netcode
             {
                 var line = Lines[i];
                 if (!expanded && Time.unscaledTime - line.received >= 5.4f) break;
-                string candidate = OnlineChatRules.FormatLine(line.sender, line.text, line.colorIndex) + (line.failed ? " <color=#FF7777>!</color>" : "") + (content.Length > 0 ? "\n" + content : "");
+                string candidate = Format(line) + (line.failed ? " <color=#FF7777>!</color>" : "") + (content.Length > 0 ? "\n" + content : "");
                 if (history.GetPreferredValues(candidate, 200, float.PositiveInfinity).y > 65 && content.Length > 0) break;
                 content = candidate;
-                contrast = OnlineChatRules.FormatLine(line.sender, line.text, line.colorIndex, true) +
+                contrast = Format(line, true) +
                     (line.failed ? " <color=#FFFFFF00>!</color>" : "") + (contrast.Length > 0 ? "\n" + contrast : "");
             }
             history.text = content;
             contrastNames.text = contrast;
             LocalizedTmpFontFallback.Apply(history);
-            LocalizedTmpFontFallback.Apply(entry); LocalizedTmpFontFallback.Apply(hint);
+            LocalizedTmpFontFallback.Apply(entry);
+            UpdateTextBackgrounds();
+        }
+
+        void UpdateTextBackgrounds()
+        {
+            int used = 0;
+            AddTextBackgrounds(history, ref used);
+            if (entry.gameObject.activeSelf) AddTextBackgrounds(entry, ref used);
+            if (status.gameObject.activeSelf) AddTextBackgrounds(status, ref used);
+            for (int i = used; i < textBackgrounds.Count; i++) textBackgrounds[i].gameObject.SetActive(false);
+        }
+
+        void AddTextBackgrounds(TMP_Text label, ref int used)
+        {
+            label.ForceMeshUpdate();
+            for (int i = 0; i < label.textInfo.lineCount; i++)
+            {
+                var line = label.textInfo.lineInfo[i];
+                if (line.visibleCharacterCount == 0) continue;
+                if (used == textBackgrounds.Count)
+                {
+                    var rect = Rect("TextBand", backgroundRoot);
+                    rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.zero;
+                    var image = rect.gameObject.AddComponent<Image>();
+                    image.color = new Color(0, 0, 0, 0.55f); image.raycastTarget = false;
+                    textBackgrounds.Add(image);
+                }
+                var background = textBackgrounds[used++];
+                background.gameObject.SetActive(true);
+                var position = label.rectTransform.anchoredPosition;
+                background.rectTransform.anchoredPosition = new Vector2(
+                    Mathf.Floor(position.x + line.lineExtents.min.x - 1), Mathf.Floor(position.y + line.descender - 1));
+                background.rectTransform.sizeDelta = new Vector2(
+                    Mathf.Ceil(Mathf.Min(200, line.lineExtents.max.x - line.lineExtents.min.x) + 2),
+                    Mathf.Ceil(line.ascender - line.descender + 2));
+            }
         }
 
         void RefreshEntry()

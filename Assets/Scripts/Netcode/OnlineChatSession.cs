@@ -10,6 +10,13 @@ namespace Assets.Scripts.Netcode
     public struct OnlineChatSendMessage : NetworkMessage { public string text, nonce; }
     public struct OnlineChatLineMessage : NetworkMessage { public string sender, text, nonce; public int playerId; }
 
+    public struct OnlineChatPresenceMessage : NetworkMessage
+    {
+        public string sender;
+        public int playerId;
+        public bool joined, you;
+    }
+
     public static class OnlineChatRules
     {
         public const int MaxLength = 128;
@@ -86,10 +93,24 @@ namespace Assets.Scripts.Netcode
     public partial class BombermanNetworkManager
     {
         readonly Dictionary<int, OnlineChatSendBudget> nextChatByConnection = new();
+        readonly HashSet<int> chatDepartedConnections = new();
+
+        void BroadcastChatPresence(NetworkConnectionToClient connection, bool joined)
+        {
+            if (connection == null || !playerIdByConnection.TryGetValue(connection.connectionId, out int id)) return;
+            if (!joined && !chatDepartedConnections.Add(connection.connectionId)) return;
+            string name = authenticator is OnlineVersionAuthenticator names ? names.NameForConnection(connection.connectionId) : "";
+            if (!OnlineVersionAuthenticator.ValidPlayerName(name)) return;
+            foreach (var peer in NetworkServer.connections.Values)
+                if (peer != null && peer.isAuthenticated && (joined || peer != connection))
+                    peer.Send(new OnlineChatPresenceMessage { sender = name, playerId = id,
+                        joined = joined, you = peer.connectionId == connection.connectionId });
+        }
 
         void InitializeChatServer()
         {
             nextChatByConnection.Clear();
+            chatDepartedConnections.Clear();
             NetworkServer.RegisterHandler<OnlineChatSendMessage>((connection, message) =>
             {
                 if (!connection.isAuthenticated || !playerIdByConnection.TryGetValue(connection.connectionId, out int playerId)) return;
@@ -108,7 +129,12 @@ namespace Assets.Scripts.Netcode
             });
         }
 
-        void InitializeChatClient() => NetworkClient.RegisterHandler<OnlineChatLineMessage>(message =>
-            GetComponent<OnlineChatOverlay>()?.ReceiveRoomLine(message.sender, message.text, message.nonce, message.playerId));
+        void InitializeChatClient()
+        {
+            NetworkClient.RegisterHandler<OnlineChatLineMessage>(message =>
+                GetComponent<OnlineChatOverlay>()?.ReceiveRoomLine(message.sender, message.text, message.nonce, message.playerId));
+            NetworkClient.RegisterHandler<OnlineChatPresenceMessage>(message =>
+                GetComponent<OnlineChatOverlay>()?.ReceivePresence(message.sender, message.playerId, message.joined, message.you));
+        }
     }
 }

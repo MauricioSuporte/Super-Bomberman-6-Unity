@@ -19,7 +19,7 @@ from urllib.parse import urlsplit, parse_qs
 from collections import deque
 import unicodedata
 
-PROTOCOL = 62
+PROTOCOL = 63
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 

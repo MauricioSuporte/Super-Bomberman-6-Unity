@@ -190,7 +190,8 @@ namespace Assets.Scripts.Netcode
             DedicatedRoom = dedicatedServer;
             NetworkServer.RegisterHandler<OnlineLeaveRoomMessage>((connection, _) =>
             {
-                if (connection.isAuthenticated && playerIdByConnection.ContainsKey(connection.connectionId)) CloseRoomForEveryone();
+                if (connection.isAuthenticated && playerIdByConnection.ContainsKey(connection.connectionId))
+                { BroadcastChatPresence(connection, false); CloseRoomForEveryone(); }
             });
             NetworkServer.RegisterHandler<OnlineConfigureRoomMessage>((connection, message) =>
             {
@@ -551,6 +552,7 @@ namespace Assets.Scripts.Netcode
         static void LeaveRoomToScene(string destination)
         {
             if (singleton is not BombermanNetworkManager manager || manager.leavingRoom) return;
+            manager.GetComponent<OnlineChatOverlay>()?.PrepareLocalDeparture();
             if (NetworkClient.isConnected && NetworkClient.connection.isAuthenticated) NetworkClient.Send(new OnlineLeaveRoomMessage());
             manager.leavingRoom = true;
             if (NetworkServer.active && NetworkClient.active) manager.StopHost();
@@ -599,6 +601,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnClientDisconnect()
         {
+            GetComponent<OnlineChatOverlay>()?.PrepareLocalDeparture();
             base.OnClientDisconnect();
             if (!leavingRoom && !NetworkServer.active) LeaveRoomToBrowser();
         }
@@ -738,6 +741,8 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active || singleton is not BombermanNetworkManager manager || manager.leavingRoom) return;
             if (!manager.dedicatedServer) { LeaveRoom(); return; }
             manager.BroadcastRoom();
+            foreach (var peer in NetworkServer.connections.Values)
+                if (peer != null && peer.isAuthenticated) manager.BroadcastChatPresence(peer, false);
             manager.leavingRoom = true;
             manager.StartCoroutine(manager.StopDedicatedRoomAfterDisconnect());
         }
