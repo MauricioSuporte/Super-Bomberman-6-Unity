@@ -538,6 +538,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     void Update()
     {
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput) return;
         if (root != null && root.activeInHierarchy)
             ApplyDynamicScaleIfNeeded(false);
     }

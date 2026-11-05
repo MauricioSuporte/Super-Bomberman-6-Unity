@@ -208,7 +208,7 @@ class ReleaseProfileTests(unittest.TestCase):
         self.assertEqual(2, len(calls))
         self.assertIn("-runTests", calls[0])
         selected = calls[0][calls[0].index("-testFilter") + 1].split(";")
-        self.assertEqual({"OnlineRoomEditModeTests", "BattleModeComEditorTests"}, set(selected))
+        self.assertEqual({"OnlineRoomEditModeTests", "BattleModeComEditorTests", "OnlineChatEditModeTests"}, set(selected))
         self.assertIn("DedicatedServerBuild.BuildReleaseArtifacts", calls[1])
 
 

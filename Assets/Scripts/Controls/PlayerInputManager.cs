@@ -751,7 +751,7 @@ public class PlayerInputManager : MonoBehaviour
 
     static bool ReadKeyHeld(KeyCode k)
     {
-        if (k == KeyCode.Z && Assets.Scripts.Netcode.OnlineChatOverlay.ReservesHistoryKey) return false;
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput) return false;
         var kb = Keyboard.current;
         if (kb == null)
             return false;
@@ -761,7 +761,7 @@ public class PlayerInputManager : MonoBehaviour
 
     static bool ReadKeyDown(KeyCode k)
     {
-        if (k == KeyCode.Z && Assets.Scripts.Netcode.OnlineChatOverlay.ReservesHistoryKey) return false;
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput) return false;
         var kb = Keyboard.current;
         if (kb == null)
             return false;

@@ -156,13 +156,13 @@ def build():
     tests = REPORTS / "online-tests.xml"
     tests.unlink(missing_ok=True)
     if profile == "full":
-        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests;BattleModeComEditorTests", "-testResults", tests], logs / "tests.log")
+        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests;BattleModeComEditorTests;OnlineChatEditModeTests", "-testResults", tests], logs / "tests.log")
         result = ET.parse(tests).getroot()
         if result.get("result") != "Passed" or int(result.get("failed", "1")):
             raise RuntimeError("online tests failed; release left unchanged")
     else:
         print("Quick profile: Unity tests skipped; requested players still compile.", flush=True)
-    command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/RoomDirectory", "-p", "test_supervisor.py"])
+    command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/RoomDirectory", "-p", "test_*.py"])
     command([os.sys.executable, "-m", "unittest", "discover", "-s", "Tools/Ci", "-p", "test_*.py"])
     method = "DedicatedServerBuild.BuildLinuxServer" if target == "server" else "DedicatedServerBuild.BuildReleaseArtifacts"
     build_args = ["-quit", "-executeMethod", method]

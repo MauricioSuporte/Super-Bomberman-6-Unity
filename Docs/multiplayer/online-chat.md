@@ -12,8 +12,8 @@ Controles de teclado:
 - **T:** abre a digitação.
 - **Enter:** envia e fecha. Com texto vazio, apenas fecha.
 - **Esc:** cancela a digitação.
-- **Segurar Z:** mostra o histórico enquanto a tecla estiver pressionada.
-- **Page Up / Page Down:** percorre o histórico enquanto digita ou segura Z.
+- O histórico aparece automaticamente ao abrir a digitação com **T**. Z mantém sua função de gameplay.
+- **Page Up / Page Down:** percorre o histórico enquanto digita.
 
 Mensagens novas aparecem por cinco segundos, seguidos por um fade de 0,4 s.
 O histórico local guarda até 64 mensagens por canal. O chat da sala é apagado
@@ -23,37 +23,36 @@ O painel usa o safe frame do `UICameraViewportFitter`/`PixelPerfectViewport`,
 no canto inferior esquerdo, com escala inteira para a referência 256×224.
 
 Enquanto digita, o chat captura os controles locais de menus e gameplay,
-incluindo Enter/Esc no frame de fechamento. A partida continua para os outros
-jogadores. Z fica reservada ao histórico no online; offline mantém seus controles.
+incluindo Enter/Esc até soltar as teclas após o fechamento. A partida continua para os outros
+jogadores. Z não é reservada pelo chat.
 Os formulários de nome/senha/criação mantêm a própria entrada de teclado.
 Esses atalhos requerem teclado; esta alteração não adiciona teclado virtual ou
 atalhos de chat ao controle e aos botões de toque.
 
 ## Transporte e limites
 
-`OnlineChatSession` estende o `BombermanNetworkManager`. O cliente envia somente
-o texto; o servidor obtém o nome pelo autenticador, valida o slot e distribui
+`OnlineChatSession` estende o `BombermanNetworkManager`. O cliente envia o texto e uma nonce de confirmação; o servidor obtém o nome pelo autenticador, valida o slot e distribui
 a mensagem a todas as conexões autenticadas, independentemente de `isReady`.
 Nenhum prefab de jogador precisa conter o componente do chat.
 
 `OnlineChatOverlay` é adicionado pelo menu ao NetworkManager persistente e cria
 a interface em runtime. Não há novo singleton persistente nem alteração de cena.
 O histórico pertence à sessão, não ao save. Texto é limitado a 128 unidades
-UTF-16, com controles invisíveis removidos e rich text desativado no TMP.
-O servidor limita os envios a uma mensagem a cada 0,75 s por conexão.
+UTF-16, com controles invisíveis removidos. Marcadores enviados pelos usuários são escapados antes das cores controladas pelo apresentador TMP.
+O servidor limita os envios a uma mensagem a cada 0,25 s por crédito, com tolerância a quatro mensagens em sequência.
 
 O supervisor oferece `POST /chat/session`, `GET /chat?after=<id>` e `POST /chat`.
 A sessão vincula um token aleatório ao IP e ao nome informado na entrada.
 O nome geral é um apelido, sem autenticação de conta. Tokens expiram após
 90 segundos sem consultas; o cliente renova a sessão automaticamente.
 Há até 64 mensagens em memória, com retenção de cinco minutos, limite de oito
-sessões por IP e 4096 no total. Criações e mensagens têm intervalo mínimo de
-0,75 s por IP, compartilhado entre sessões. O polling ocorre a cada segundo.
+sessões por IP e 4096 no total. Criações de sessão têm intervalo mínimo de
+0,75 s por IP. Mensagens compartilham um orçamento por IP de quatro créditos, recuperando um a cada 0,25 s. O polling ocorre a cada 0,2 s.
 Mensagens e tokens não são gravados em logs nem em disco.
 
 ## Publicação e validação
 
-O protocolo passa a **61**. Recompile cliente e servidor dedicado e publique o
+O protocolo atual é **62**. Recompile cliente e servidor dedicado e publique o
 supervisor atualizado junto deles. O servidor público anterior não oferece
 esses endpoints/handlers. Proxies que filtram rotas precisam permitir `/chat`
 e `/chat/session`, além de encaminhar `X-Chat-Token`.
@@ -95,3 +94,30 @@ A publicação preservou rollback e atualizou somente o servidor. Teste pelo
 Unity Editor deste checkout, entrando em Play Mode a partir de TitleScreen.
 O executável Windows e o canal do atualizador não foram publicados nesta etapa.
 Os relatórios locais estão em `build/Validation/ChatDeploy/`.
+
+## Revisão visual e de entrada
+
+Texto em negrito com contorno escuro, nomes nas cores P1 branco, P2 preto, P3 vermelho, P4 azul, P5 verde e P6 amarelo, e mensagens em rosa
+claro, sem painel de fundo. O campo usa verde claro. A única dica T fica oculta
+ao digitar; Z não mostra o histórico. O histórico aparece junto com o campo.
+
+Digitação é aplicada imediatamente ao TMP no evento de texto, inclusive várias
+letras no frame de abertura. Inputs locais permanecem bloqueados até liberar as
+teclas após Enter/Esc; COM e outros participantes continuam jogando. O HUD de
+FPS e seus atalhos de captura também respeitam o bloqueio.
+
+Enter mostra o envio imediatamente no histórico local e o coloca em uma fila
+limitada. Uma nonce por mensagem permite confirmar o eco do servidor sem duplicar
+o histórico. O texto novo não espera pela resposta HTTP, e a resposta de um envio
+anterior não fecha um novo campo aberto. Falhas de conexão aparecem separadas do
+texto digitado; limite temporário HTTP 429 é reprocessado sem o aviso de ocupado.
+Mensagens de usuários são escapadas antes dos marcadores de cor do TMP.
+
+A cor da sala é determinada pelo slot validado no servidor, não pelo cliente.
+No chat geral, o diretório atribui um índice de cor único por sessão e o preserva
+no histórico. Nomes pretos e azuis recebem um contorno claro adicional, sem criar
+fundo no painel. A prévia Unity dos seis slots fica em `build/Validation/ChatPolish/preview.png`.
+
+Validação da revisão: 8/8 testes Unity, 15/15 testes Python do diretório e 12/12
+testes do pipeline de release aprovados. Compilação C# sem erros/avisos nesta
+execução. A prévia renderizada confirmou as seis cores e o campo sem fundo.

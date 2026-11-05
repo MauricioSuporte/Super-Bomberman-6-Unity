@@ -44,9 +44,33 @@ class ChatTests(unittest.TestCase):
         with patch("supervisor.time.monotonic", return_value=101):
             second = chat.join("ip", "TWO")["token"]
             chat.send("ip", first, "one")
+            for _ in range(3): chat.send("ip", first, "burst")
             with self.assertRaises(OverflowError): chat.send("ip", second, "two")
         with patch("supervisor.time.monotonic", return_value=102):
             chat.send("ip", second, "two")
+
+    def test_nonce_echo_is_idempotent_and_bursts_refill(self):
+        chat = ChatStore()
+        with patch("supervisor.time.monotonic", return_value=100):
+            token = chat.join("ip", "ALICE")["token"]
+            reply = chat.send("ip", token, "one", "a" * 32)
+            self.assertEqual("a" * 32, reply["message"]["nonce"])
+            self.assertEqual(reply, chat.send("ip", token, "one", "a" * 32))
+            self.assertEqual(1, len(chat.messages))
+            for _ in range(3): chat.send("ip", token, "burst")
+            with self.assertRaises(OverflowError): chat.send("ip", token, "flood")
+        with patch("supervisor.time.monotonic", return_value=100.25):
+            chat.send("ip", token, "refilled")
+
+    def test_each_public_session_has_a_distinct_color_preserved_in_history(self):
+        chat = ChatStore()
+        first = chat.join("first-ip", "ALICE")
+        second = chat.join("second-ip", "BOB")
+        self.assertNotEqual(first["colorIndex"], second["colorIndex"])
+        chat.send("first-ip", first["token"], "one")
+        chat.send("second-ip", second["token"], "two")
+        lines = chat.poll("first-ip", first["token"], 0)["messages"]
+        self.assertEqual([first["colorIndex"], second["colorIndex"]], [line["colorIndex"] for line in lines])
 
     def test_invalid_names_empty_messages_and_unicode_limits(self):
         chat = ChatStore()
@@ -83,6 +107,7 @@ class ChatTests(unittest.TestCase):
                 with urlopen(request, timeout=3) as response:
                     line = json.load(response)["messages"][0]
                 self.assertEqual(("ALICE", "bora jogar"), (line["sender"], line["text"]))
+                for _ in range(3): post("/chat", token=alice, text="burst")
                 for path, body, status in (
                     ("/chat", dict(token=bob, text="flood"), 429),
                     ("/chat/session", dict(name="OLD", protocol=PROTOCOL - 1), 409),

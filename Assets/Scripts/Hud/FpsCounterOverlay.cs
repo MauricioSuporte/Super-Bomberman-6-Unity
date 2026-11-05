@@ -80,6 +80,7 @@ public sealed class FpsCounterOverlay : MonoBehaviour
 
     void HandleToggleShortcut()
     {
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput) return;
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null || !keyboard.fKey.wasPressedThisFrame)
             return;
@@ -358,6 +359,7 @@ public sealed class BattleModePerformanceDiagnostics : MonoBehaviour
 
     void HandleShortcut()
     {
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput) return;
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null || !keyboard.fKey.wasPressedThisFrame)
             return;

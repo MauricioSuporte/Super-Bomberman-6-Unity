@@ -6,6 +6,7 @@ using Mirror;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -16,30 +17,38 @@ namespace Assets.Scripts.Netcode
     [DefaultExecutionOrder(-20000)]
     public sealed class OnlineChatOverlay : MonoBehaviour
     {
-        [Serializable] public sealed class DirectoryLine { public int id; public string sender, text; }
-        [Serializable] sealed class DirectoryReply { public string token = ""; public DirectoryLine[] messages = Array.Empty<DirectoryLine>(); }
+        [Serializable] public sealed class DirectoryLine { public int id, colorIndex; public string sender, text, nonce; }
+        [Serializable] sealed class DirectoryReply { public string token = ""; public DirectoryLine[] messages = Array.Empty<DirectoryLine>(); public DirectoryLine message = null; public int colorIndex = 0; }
         [Serializable] sealed class DirectorySend
         {
             public int protocol = OnlineVersionAuthenticator.ProtocolVersion;
-            public string buildIdentity, name, token, text;
+            public string buildIdentity, name, token, text, nonce;
         }
-        sealed class Line { public string sender, text; public float received; }
+        sealed class Line
+        {
+            public string sender, text, nonce;
+            public float received;
+            public bool pending, failed, room;
+            public int colorIndex;
+        }
         readonly List<Line> roomLines = new(), publicLines = new();
+        readonly Queue<Line> outgoing = new();
         RectTransform safe, panel;
         CanvasGroup group;
         UICameraViewportFitter viewport;
-        TextMeshProUGUI heading, history, entry, hint;
+        TextMeshProUGUI history, contrastNames, entry, hint, status;
         TMP_FontAsset font;
         OnlineRoomBrowser browser;
         OnlineLobbyMenu lobby;
         Keyboard keyboard;
         string draft = "", token = "", publicName = "", publicUrl = "";
-        bool typing, roomContext, contextInitialized, sending, directoryReady;
-        int consumedFrame = -1, openedFrame = -1, lastId, scroll, previousKeys;
-        float nextSend, noticeUntil;
+        bool typing, roomContext, contextInitialized, sending, directoryReady, releaseKeys;
+        int consumedFrame = -1, lastId, scroll, previousKeys, publicColorIndex;
+        float nextSend, failureUntil;
         static OnlineChatOverlay active;
-        public static bool BlocksLocalInput => active != null && (active.typing || active.consumedFrame == Time.frameCount);
-        public static bool ReservesHistoryKey => active != null && active.Available && !active.ModalOpen;
+        public static bool BlocksLocalInput => active != null && (active.typing || active.releaseKeys ||
+            active.consumedFrame == Time.frameCount || (Keyboard.current != null && Keyboard.current.tKey.isPressed &&
+            (active.previousKeys & 1) == 0 && active.Available && !active.ModalOpen));
         bool ModalOpen => SceneManager.GetActiveScene().name == NetworkLobby.SceneName && lobby != null && lobby.ChatModalOpen;
         bool InRoom => NetworkClient.isConnected && NetworkClient.connection != null && NetworkClient.connection.isAuthenticated;
         bool Browsing => !NetworkClient.active && !NetworkServer.active && SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
@@ -60,6 +69,17 @@ namespace Assets.Scripts.Netcode
 
         void Update()
         {
+            RefreshInput();
+            PumpOutgoing();
+        }
+
+        void AfterInputUpdate()
+        {
+            if (Application.isPlaying && isActiveAndEnabled && InputState.currentUpdateType != InputUpdateType.Editor) RefreshInput();
+        }
+
+        void RefreshInput()
+        {
             if (keyboard != Keyboard.current)
             {
                 if (keyboard != null) keyboard.onTextInput -= Type;
@@ -67,6 +87,7 @@ namespace Assets.Scripts.Netcode
                 previousKeys = 0;
                 if (keyboard != null) keyboard.onTextInput += Type;
             }
+            if (!AnyKeyboardKeyHeld()) releaseKeys = false;
             // Track transitions locally: manual updates and newly connected keyboards
             // do not always expose the same wasPressedThisFrame update counter.
             int keys = keyboard == null ? 0 :
@@ -83,6 +104,8 @@ namespace Assets.Scripts.Netcode
                 Close();
                 // Forget the previous room on disconnect. Public history is a separate channel.
                 roomLines.Clear();
+                outgoing.Clear();
+                foreach (var line in publicLines) if (line.pending) { line.pending = false; line.failed = true; }
                 roomContext = currentRoom;
                 contextInitialized = true;
                 scroll = 0;
@@ -91,13 +114,13 @@ namespace Assets.Scripts.Netcode
             else if (keyboard != null)
             {
                 if (!typing && (pressed & 1) != 0)
-                { typing = true; openedFrame = Time.frameCount; draft = ""; scroll = 0; }
+                    Open();
                 else if (typing)
                 {
                     if ((pressed & 4) != 0) Close();
                     else if ((pressed & 2) != 0) Submit();
                 }
-                if (typing || keyboard.zKey.isPressed)
+                if (typing)
                 {
                     if ((pressed & 8) != 0) scroll = Mathf.Min(Lines.Count - 1, scroll + 3);
                     if ((pressed & 16) != 0) scroll = Mathf.Max(0, scroll - 3);
@@ -105,9 +128,23 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        void Open()
+        {
+            typing = true;
+            draft = "";
+            scroll = 0;
+            RefreshEntry();
+        }
+
         void Type(char c)
         {
-            if (!typing || openedFrame == Time.frameCount) return;
+            // The opening T arrives before MonoBehaviour.Update. Consume only that
+            // character, preserving all subsequent text events in the same frame.
+            if (!typing)
+            {
+                if ((c == 't' || c == 'T') && Available && !ModalOpen && !releaseKeys) Open();
+                return;
+            }
             if (c == '\b')
             {
                 if (draft.Length > 0)
@@ -117,11 +154,19 @@ namespace Assets.Scripts.Netcode
                 }
             }
             else if (!char.IsControl(c) && draft.Length < OnlineChatRules.MaxLength) draft += c;
+            RefreshEntry();
+        }
+
+        bool AnyKeyboardKeyHeld()
+        {
+            if (keyboard == null) return false;
+            foreach (var key in keyboard.allKeys) if (key.isPressed) return true;
+            return false;
         }
 
         void Close()
         {
-            if (typing) consumedFrame = Time.frameCount;
+            if (typing) { consumedFrame = Time.frameCount; releaseKeys = AnyKeyboardKeyHeld(); }
             typing = false;
             draft = "";
         }
@@ -130,31 +175,62 @@ namespace Assets.Scripts.Netcode
         {
             string text = OnlineChatRules.Normalize(draft);
             if (text.Length == 0) { Close(); return; }
-            if (sending || Time.unscaledTime < nextSend || (!roomContext && !directoryReady))
-            { noticeUntil = Time.unscaledTime + 3; return; }
-            nextSend = Time.unscaledTime + OnlineChatRules.SendInterval;
-            if (roomContext)
-            {
-                NetworkClient.Send(new OnlineChatSendMessage { text = text });
-                Close();
-            }
-            else StartCoroutine(SendDirectory(text));
+            if (outgoing.Count >= OnlineChatRules.HistoryLimit) return;
+            var line = new Line { sender = OnlineVersionAuthenticator.PlayerName, text = text,
+                colorIndex = roomContext ? BombermanNetworkManager.LocalRoomPlayerId : publicColorIndex,
+                nonce = Guid.NewGuid().ToString("N"), received = Time.unscaledTime, pending = true, room = roomContext };
+            Append(Lines, line);
+            outgoing.Enqueue(line);
+            Close();
+            PumpOutgoing();
         }
 
-        public void ReceiveRoomLine(string sender, string text)
+        void PumpOutgoing()
+        {
+            foreach (var line in Lines)
+                if (line.pending && Time.unscaledTime - line.received > 10)
+                    Fail(line);
+            if (sending || outgoing.Count == 0 || !Available || Time.unscaledTime < nextSend) return;
+            if (!roomContext && (!directoryReady || token.Length == 0)) return;
+            if (roomContext && BombermanNetworkManager.LocalRoomPlayerId <= 0) return;
+            var pending = outgoing.Dequeue();
+            if (!pending.pending || pending.room != roomContext) { Fail(pending); return; }
+            pending.colorIndex = roomContext ? BombermanNetworkManager.LocalRoomPlayerId : publicColorIndex;
+            nextSend = Time.unscaledTime + OnlineChatRules.SendInterval + 0.05f;
+            if (roomContext) NetworkClient.Send(new OnlineChatSendMessage { text = pending.text, nonce = pending.nonce });
+            else StartCoroutine(SendDirectory(pending));
+        }
+
+        void Fail(Line line)
+        {
+            line.pending = false;
+            line.failed = true;
+            failureUntil = Time.unscaledTime + 4;
+        }
+
+        public void ReceiveRoomLine(string sender, string text, string nonce, int playerId)
         {
             if (!InRoom) return;
-            // Network callbacks can precede our first Update after authentication.
             if (!roomContext) { roomLines.Clear(); roomContext = contextInitialized = true; Close(); }
-            Add(roomLines, sender, text, false);
+            Add(roomLines, sender, text, nonce, playerId, false);
         }
 
-        static void Add(List<Line> lines, string sender, string text, bool historical)
+        static void Append(List<Line> lines, Line line)
+        {
+            if (lines.Count == OnlineChatRules.HistoryLimit) lines.RemoveAt(0);
+            lines.Add(line);
+        }
+
+        static void Add(List<Line> lines, string sender, string text, string nonce, int colorIndex, bool historical)
         {
             text = OnlineChatRules.Normalize(text);
             if (text.Length == 0 || !OnlineVersionAuthenticator.ValidPlayerName(sender)) return;
-            if (lines.Count == OnlineChatRules.HistoryLimit) lines.RemoveAt(0);
-            lines.Add(new Line { sender = sender, text = text, received = historical ? -100 : Time.unscaledTime });
+            if (!string.IsNullOrEmpty(nonce))
+                foreach (var line in lines)
+                    if (line.nonce == nonce && line.sender == sender)
+                    { line.pending = line.failed = false; line.colorIndex = colorIndex; return; }
+            Append(lines, new Line { sender = sender, text = text, nonce = nonce, colorIndex = colorIndex,
+                received = historical ? -100 : Time.unscaledTime });
         }
 
         IEnumerator PollDirectory()
@@ -179,6 +255,8 @@ namespace Assets.Scripts.Netcode
                         {
                             var reply = Parse(join);
                             token = reply?.token ?? "";
+                            publicColorIndex = reply?.colorIndex ?? 0;
+                            foreach (var line in publicLines) if (line.pending) line.colorIndex = publicColorIndex;
                             Apply(reply, true);
                             directoryReady = token.Length > 0;
                         }
@@ -194,21 +272,32 @@ namespace Assets.Scripts.Netcode
                     }
                 }
                 else directoryReady = false;
-                yield return new WaitForSecondsRealtime(1);
+                yield return new WaitForSecondsRealtime(0.2f);
             }
         }
 
-        IEnumerator SendDirectory(string text)
+        IEnumerator SendDirectory(Line line)
         {
             sending = true;
             string sendingToken = token;
-            using var request = JsonPost(publicUrl + "/chat", new DirectorySend { token = token, text = text,
+            using var request = JsonPost(publicUrl + "/chat", new DirectorySend { token = token, text = line.text, nonce = line.nonce,
                 buildIdentity = OnlineVersionAuthenticator.ConnectionBuildIdentity });
             yield return request.SendWebRequest();
             sending = false;
-            if (sendingToken != token || !Browsing) yield break;
-            if (request.result == UnityWebRequest.Result.Success) Close();
-            else noticeUntil = Time.unscaledTime + 3;
+            if (sendingToken != token || !Browsing) { Fail(line); yield break; }
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                var reply = Parse(request);
+                if (reply?.message != null) Add(publicLines, reply.message.sender, reply.message.text, reply.message.nonce, reply.message.colorIndex, false);
+                else Fail(line);
+            }
+            else if (request.responseCode == 429 || request.responseCode == 401)
+            {
+                outgoing.Enqueue(line);
+                nextSend = Time.unscaledTime + 0.4f;
+                if (request.responseCode == 401) { token = ""; directoryReady = false; }
+            }
+            else Fail(line);
         }
 
         static UnityWebRequest JsonPost(string url, DirectorySend value)
@@ -233,7 +322,7 @@ namespace Assets.Scripts.Netcode
             if (reply?.messages == null) return;
             foreach (var line in reply.messages)
                 if (line != null && line.id > lastId)
-                { lastId = line.id; Add(publicLines, line.sender, line.text, historical); }
+                { lastId = line.id; Add(publicLines, line.sender, line.text, line.nonce, line.colorIndex, historical); }
         }
 
         void CreateView()
@@ -250,12 +339,17 @@ namespace Assets.Scripts.Netcode
             panel.sizeDelta = new Vector2(200, 88);
             group = panel.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = group.interactable = false;
-            panel.gameObject.AddComponent<Image>().color = new Color(0.02f, 0.03f, 0.09f, 0.82f);
-            heading = Label("Channel", panel, 4, 76, 192, 8, 5);
-            heading.color = new Color(1, 0.88f, 0.38f);
-            history = Label("History", panel, 4, 19, 192, 55, 5);
+            history = Label("History", panel, 0, 23, 200, 65, 6);
+            history.richText = true;
             history.verticalAlignment = VerticalAlignmentOptions.Bottom;
-            entry = Label("Entry", panel, 4, 4, 192, 12, 5);
+            contrastNames = Label("NameContrast", panel, 0, 23, 200, 65, 6);
+            contrastNames.richText = true;
+            contrastNames.verticalAlignment = VerticalAlignmentOptions.Bottom;
+            contrastNames.outlineColor = Color.white;
+            entry = Label("Entry", panel, 0, 0, 200, 14, 6);
+            entry.color = new Color32(175, 255, 175, 255);
+            status = Label("Status", panel, 0, 14, 200, 8, 4);
+            status.color = new Color32(255, 150, 150, 255);
             hint = Label("Hint", safe, 4, 2, 248, 8, 5);
         }
 
@@ -273,6 +367,8 @@ namespace Assets.Scripts.Netcode
             var text = rect.gameObject.AddComponent<TextMeshProUGUI>();
             text.font = font != null ? font : TMP_Settings.defaultFontAsset;
             text.text = "";
+            text.fontStyle = FontStyles.Bold;
+            text.outlineWidth = 0.2f; text.outlineColor = Color.black;
             text.fontSize = size; text.color = Color.white; text.richText = false; text.raycastTarget = false;
             text.textWrappingMode = TextWrappingModes.Normal; text.overflowMode = TextOverflowModes.Truncate;
             LocalizedTmpFontFallback.Apply(text, true);
@@ -285,44 +381,60 @@ namespace Assets.Scripts.Netcode
             viewport.ForceApplyNow();
             float scale = Mathf.Max(1, Mathf.Floor(Mathf.Min(safe.rect.width / 256f, safe.rect.height / 224f)));
             panel.localScale = hint.rectTransform.localScale = new Vector3(scale, scale, 1);
-            panel.anchoredPosition = new Vector2(4 * scale, 13 * scale);
+            panel.anchoredPosition = new Vector2(4 * scale, 4 * scale);
             hint.rectTransform.anchoredPosition = new Vector2(4 * scale, 2 * scale);
-            bool held = keyboard != null && keyboard.zKey.isPressed && !ModalOpen;
-            bool expanded = typing || held;
+            bool expanded = typing;
             float newest = Lines.Count > 0 ? Lines[^1].received : -100;
             bool visible = Available && !ModalOpen && (expanded || Time.unscaledTime - newest < 5.4f);
             panel.gameObject.SetActive(visible);
-            hint.gameObject.SetActive(Available && Browsing && !ModalOpen);
+            hint.gameObject.SetActive(Available && !typing && !visible && !ModalOpen);
             hint.text = GameTextDatabase.Online.ChatHint;
             if (!visible) return;
             group.alpha = expanded ? 1 : Mathf.Clamp01((5.4f - (Time.unscaledTime - newest)) / 0.4f);
-            heading.text = roomContext ? GameTextDatabase.Online.ChatRoom : GameTextDatabase.Online.ChatPublic;
-            entry.text = Time.unscaledTime < noticeUntil ? GameTextDatabase.Online.ChatUnavailable :
-                typing ? "> " + (draft.Length > 60 ? draft[^60..] : draft) + (Mathf.Repeat(Time.unscaledTime, 1) < 0.5f ? "_" : "") : GameTextDatabase.Online.ChatHint;
-            entry.verticalAlignment = VerticalAlignmentOptions.Bottom;
+            RefreshEntry();
+            status.gameObject.SetActive(Time.unscaledTime < failureUntil);
+            status.text = GameTextDatabase.Online.ChatUnavailable;
             scroll = Mathf.Clamp(scroll, 0, Mathf.Max(0, Lines.Count - 1));
-            string content = "";
+            string content = "", contrast = "";
             for (int i = Lines.Count - 1 - (expanded ? scroll : 0); i >= 0; i--)
             {
                 var line = Lines[i];
                 if (!expanded && Time.unscaledTime - line.received >= 5.4f) break;
-                string candidate = line.sender + ": " + line.text + (content.Length > 0 ? "\n" + content : "");
-                if (history.GetPreferredValues(candidate, 192, float.PositiveInfinity).y > 55 && content.Length > 0) break;
+                string candidate = OnlineChatRules.FormatLine(line.sender, line.text, line.colorIndex) + (line.failed ? " <color=#FF7777>!</color>" : "") + (content.Length > 0 ? "\n" + content : "");
+                if (history.GetPreferredValues(candidate, 200, float.PositiveInfinity).y > 65 && content.Length > 0) break;
                 content = candidate;
+                contrast = OnlineChatRules.FormatLine(line.sender, line.text, line.colorIndex, true) +
+                    (line.failed ? " <color=#FFFFFF00>!</color>" : "") + (contrast.Length > 0 ? "\n" + contrast : "");
             }
             history.text = content;
-            LocalizedTmpFontFallback.Apply(heading); LocalizedTmpFontFallback.Apply(history);
+            contrastNames.text = contrast;
+            LocalizedTmpFontFallback.Apply(history);
             LocalizedTmpFontFallback.Apply(entry); LocalizedTmpFontFallback.Apply(hint);
+        }
+
+        void RefreshEntry()
+        {
+            if (entry == null) return;
+            entry.gameObject.SetActive(typing);
+            int start = Mathf.Max(0, draft.Length - 52);
+            if (start > 0 && char.IsLowSurrogate(draft[start])) start++;
+            entry.text = typing ? "> " + draft[start..] + (Mathf.Repeat(Time.unscaledTime, 1) < 0.5f ? "_" : "") : "";
         }
 
         void OnDisable()
         {
+            InputSystem.onAfterUpdate -= AfterInputUpdate;
             Close();
+            releaseKeys = false;
             if (keyboard != null) keyboard.onTextInput -= Type;
             keyboard = null;
             if (active == this) active = null;
         }
 
-        void OnEnable() => active = this;
+        void OnEnable()
+        {
+            active = this;
+            InputSystem.onAfterUpdate += AfterInputUpdate;
+        }
     }
 }

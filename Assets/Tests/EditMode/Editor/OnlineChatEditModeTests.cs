@@ -67,20 +67,30 @@ public sealed class OnlineChatEditModeTests
         var labels = chat.GetComponentsInChildren<TextMeshProUGUI>(true);
         var history = System.Array.Find(labels, label => label.name == "History");
         Assert.IsNotNull(history);
-        NetworkClient.Send(new OnlineChatSendMessage { text = "olá <b>teste</b>" });
+        NetworkClient.Send(new OnlineChatSendMessage { text = "olá <b>teste</b>", nonce = System.Guid.NewGuid().ToString("N") });
         deadline = Time.realtimeSinceStartup + 3;
         while (!(history.text ?? "").Contains("olá") && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.AreEqual("CHAT_TEST: olá <b>teste</b>", history.text);
-        Assert.IsFalse(history.richText);
-        NetworkClient.Send(new OnlineChatSendMessage { text = "flood" });
+        Assert.AreEqual(OnlineChatRules.FormatLine("CHAT_TEST", "olá <b>teste</b>", 1), history.text);
+        Assert.IsTrue(history.richText);
+        Assert.AreEqual(FontStyles.Bold, history.fontStyle);
+        Assert.IsNull(history.transform.parent.GetComponent<UnityEngine.UI.Image>());
+        for (int i = 0; i < 8; i++)
+            NetworkClient.Send(new OnlineChatSendMessage { text = "flood" + i, nonce = System.Guid.NewGuid().ToString("N") });
         yield return null; yield return null;
-        Assert.IsFalse(history.text.Contains("flood"));
+        Assert.IsFalse(history.text.Contains("flood7"));
 
         savedInputUpdateMode = InputSystem.settings.updateMode;
         restoreInputUpdateMode = true;
         InputSystem.settings.updateMode = InputSettings.UpdateMode.ProcessEventsManually;
         var keyboard = testKeyboard = InputSystem.AddDevice<Keyboard>();
-        SetChatKeys(chat, keyboard, Key.T);
+        SetChatKeys(chat, keyboard);
+        yield return null;
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.T));
+        InputSystem.QueueTextEvent(keyboard, 't');
+        InputSystem.QueueTextEvent(keyboard, 'o');
+        InputSystem.QueueTextEvent(keyboard, 'i');
+        InputSystem.Update();
+        Assert.IsTrue(System.Array.Find(labels, label => label.name == "Entry").text.Contains("oi"), "Text must appear in the opening input update.");
         yield return null; yield return null;
         Assert.IsTrue(OnlineChatOverlay.BlocksLocalInput, $"T must capture local gameplay/menu input. focused={Application.isFocused}, batch={Application.isBatchMode}, key={keyboard.tKey.isPressed}, enabled={keyboard.enabled}, modal={manager.GetComponent<OnlineLobbyMenu>().ChatModalOpen}");
         var input = PlayerInputManager.Instance;
@@ -91,16 +101,13 @@ public sealed class OnlineChatEditModeTests
 
         SetChatKeys(chat, keyboard);
         yield return null;
-        InputSystem.QueueTextEvent(keyboard, 'o'); InputSystem.QueueTextEvent(keyboard, 'i'); InputSystem.Update();
         yield return null; yield return null;
         var entry = System.Array.Find(labels, label => label.name == "Entry");
         Assert.IsTrue(entry.text.Contains("oi"));
-        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
-        {
-            System.IO.Directory.CreateDirectory("build/Validation");
-            ScreenCapture.CaptureScreenshot("build/Validation/online-chat-lobby.png");
-            yield return null; yield return null;
-        }
+        Assert.AreEqual(FontStyles.Bold, entry.fontStyle);
+        Assert.IsFalse(System.Array.Find(labels, label => label.name == "Hint").gameObject.activeSelf);
+        Assert.IsFalse(input.Get(1, PlayerAction.Start));
+        Assert.IsFalse(input.GetDown(1, PlayerAction.ActionA));
         var safeFrame = PixelPerfectViewport.ResolveFinalPixelRect(Camera.main);
         var corners = new Vector3[4];
         history.transform.parent.GetComponent<RectTransform>().GetWorldCorners(corners);
@@ -110,11 +117,14 @@ public sealed class OnlineChatEditModeTests
         Assert.LessOrEqual(corners[2].y, safeFrame.yMax);
         yield return new WaitForSecondsRealtime(OnlineChatRules.SendInterval);
         SetChatKeys(chat, keyboard, Key.Enter);
+        Assert.IsTrue(OnlineChatOverlay.BlocksLocalInput, "Keep Enter blocked in the closing input update.");
         yield return null; yield return null;
-        Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput, "Enter must send and close chat.");
+        SetChatKeys(chat, keyboard);
+        yield return null; yield return null;
+        Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput, $"Enter must send and close chat: typing={typeof(OnlineChatOverlay).GetField("typing", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(chat)}, release={typeof(OnlineChatOverlay).GetField("releaseKeys", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(chat)}, frame={Time.frameCount}");
         deadline = Time.realtimeSinceStartup + 3;
-        while (!history.text.Contains("CHAT_TEST: oi") && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.IsTrue(history.text.Contains("CHAT_TEST: oi"));
+        while (!history.text.Contains(OnlineChatRules.FormatLine("CHAT_TEST", "oi", 1)) && Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.IsTrue(history.text.Contains(OnlineChatRules.FormatLine("CHAT_TEST", "oi", 1)));
         SetChatKeys(chat, keyboard);
         yield return null;
         SetChatKeys(chat, keyboard, Key.T);
@@ -122,12 +132,13 @@ public sealed class OnlineChatEditModeTests
         Assert.IsTrue(OnlineChatOverlay.BlocksLocalInput);
         SetChatKeys(chat, keyboard, Key.Escape);
         yield return null; yield return null;
+        SetChatKeys(chat, keyboard);
+        yield return null; yield return null;
         Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput);
         Assert.IsFalse(GamePauseController.IsPaused, "Esc used to close chat must not pause.");
         SetChatKeys(chat, keyboard, Key.Z);
         yield return null; yield return null;
-        Assert.IsTrue(OnlineChatOverlay.ReservesHistoryKey);
-        Assert.IsTrue(history.gameObject.activeInHierarchy);
+        Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput, "Z must remain a gameplay key.");
         SetChatKeys(chat, keyboard);
         yield return null;
         manager.ServerChangeScene("BattleModeMenu");
@@ -137,16 +148,97 @@ public sealed class OnlineChatEditModeTests
         Assert.AreEqual("BattleModeMenu", SceneManager.GetActiveScene().name);
         Assert.AreSame(chat, manager.GetComponent<OnlineChatOverlay>());
         Assert.AreEqual(1, Object.FindObjectsByType<OnlineChatOverlay>().Length);
-        SetChatKeys(chat, keyboard, Key.Z);
+        SetChatKeys(chat, keyboard, Key.T);
         yield return null; yield return null;
         Assert.IsTrue(history.text.Contains("olá"), "Room history must survive scene transitions.");
+        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
+        {
+            var names = new[] { "BRANCO", "PRETO", "VERMELHO", "AZUL", "VERDE", "AMARELO" };
+            for (int id = 1; id <= 6; id++) chat.ReceiveRoomLine("P" + id, names[id - 1], System.Guid.NewGuid().ToString("N"), id);
+            yield return null;
+            CaptureChatPreview(chat);
+        }
         InputSystem.RemoveDevice(keyboard);
         manager.StopHost();
         OnlineVersionAuthenticator.PlayerName = savedChatName;
         restoreChatName = false;
-        yield return null;
+        yield return null; yield return null;
         Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput);
         yield return new ExitPlayMode();
+    }
+
+    static void CaptureChatPreview(OnlineChatOverlay chat)
+    {
+        var source = System.Array.Find(chat.GetComponentsInChildren<Canvas>(true), canvas => canvas.name == "OnlineChatCanvas");
+        var clone = Object.Instantiate(source.gameObject);
+        var cameraObject = new GameObject("ChatPreviewCamera", typeof(Camera));
+        var target = new RenderTexture(1024, 896, 24);
+        var previous = RenderTexture.active;
+        Texture2D pixels = null;
+        try
+        {
+            foreach (var fitter in clone.GetComponentsInChildren<UICameraViewportFitter>(true)) fitter.enabled = false;
+            foreach (var transform in clone.GetComponentsInChildren<Transform>(true)) transform.gameObject.layer = 5;
+            var canvas = clone.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var root = clone.GetComponent<RectTransform>();
+            root.SetParent(null); root.position = Vector3.zero; root.rotation = Quaternion.identity; root.localScale = Vector3.one;
+            root.sizeDelta = new Vector2(256, 224);
+            var safe = (RectTransform)root.Find("SafeFrame");
+            safe.anchorMin = Vector2.zero; safe.anchorMax = Vector2.one;
+            safe.offsetMin = safe.offsetMax = Vector2.zero;
+            var panel = (RectTransform)safe.Find("Chat");
+            panel.localScale = Vector3.one; panel.anchoredPosition = new Vector2(4, 4); panel.gameObject.SetActive(true);
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.enabled = false; camera.orthographic = true; camera.orthographicSize = 112;
+            camera.transform.position = new Vector3(0, 0, -10);
+            camera.cullingMask = 1 << 5; camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color32(64, 68, 76, 255);
+            canvas.worldCamera = camera;
+            target.Create(); camera.targetTexture = target;
+            Canvas.ForceUpdateCanvases();
+            var request = new UnityEngine.Rendering.Universal.UniversalRenderPipeline.SingleCameraRequest { destination = target };
+            UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera, request);
+            RenderTexture.active = target;
+            pixels = new Texture2D(1024, 896, TextureFormat.RGBA32, false);
+            pixels.ReadPixels(new Rect(0, 0, 1024, 896), 0, 0); pixels.Apply();
+            string output = System.Environment.GetEnvironmentVariable("SB6_CHAT_PREVIEW") ?? System.IO.Path.GetFullPath("build/Validation/chat-polish-preview.png");
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(output));
+            System.IO.File.WriteAllBytes(output, pixels.EncodeToPNG());
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            target.Release(); Object.DestroyImmediate(target);
+            if (pixels != null) Object.DestroyImmediate(pixels);
+            Object.DestroyImmediate(cameraObject); Object.DestroyImmediate(clone);
+        }
+    }
+
+    [Test]
+    public void BurstBudgetRefillsAndFormattingCannotExecuteUserTags()
+    {
+        var colors = new System.Collections.Generic.HashSet<string>();
+        for (int id = 1; id <= 6; id++) Assert.IsTrue(colors.Add(OnlineChatRules.NameColor(id)), "Each room slot needs a distinct name color.");
+        Assert.AreEqual(OnlineChatRules.NameColor(3), OnlineChatRules.NameColor(3, "DIFFERENT NAME"));
+        CollectionAssert.AreEqual(new[] { "FFFFFF", "000000", "FF0000", "0000FF", "00FF00", "FFFF00" },
+            new[] { OnlineChatRules.NameColor(1), OnlineChatRules.NameColor(2), OnlineChatRules.NameColor(3),
+                OnlineChatRules.NameColor(4), OnlineChatRules.NameColor(5), OnlineChatRules.NameColor(6) });
+        var budget = new OnlineChatSendBudget();
+        for (int i = 0; i < 4; i++) Assert.IsTrue(budget.TryConsume(10));
+        Assert.IsFalse(budget.TryConsume(10));
+        Assert.IsTrue(budget.TryConsume(10.25f));
+        var actor = new GameObject("ChatFormatting", typeof(RectTransform), typeof(Canvas));
+        try
+        {
+            var text = actor.AddComponent<TextMeshProUGUI>();
+            text.font = TMP_Settings.defaultFontAsset;
+            text.richText = true;
+            text.text = OnlineChatRules.FormatLine("ALICE", "<size=200>oi</size></noparse><b>x</b>");
+            text.ForceMeshUpdate(true);
+            Assert.AreEqual("ALICE: <size=200>oi</size></noparse><b>x</b>", text.GetParsedText());
+        }
+        finally { Object.DestroyImmediate(actor); }
     }
 
     [TestCase(null, "")]
@@ -181,7 +273,7 @@ public sealed class OnlineChatEditModeTests
             chat.enabled = false;
             typeof(OnlineChatOverlay).GetMethod("OnDisable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(chat, null);
             Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput);
-            Assert.IsFalse(OnlineChatOverlay.ReservesHistoryKey);
+
         }
         finally { Object.DestroyImmediate(actor); }
     }

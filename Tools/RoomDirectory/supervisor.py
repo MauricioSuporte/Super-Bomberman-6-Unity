@@ -19,7 +19,7 @@ from urllib.parse import urlsplit, parse_qs
 from collections import deque
 import unicodedata
 
-PROTOCOL = 61
+PROTOCOL = 62
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
@@ -172,11 +172,12 @@ class ChatStore:
         self.last_send = {}
         self.last_join = {}
         self.sequence = 0
+        self.next_color = 0
         self.lock = threading.RLock()
 
     def prune(self, now):
         self.sessions = {k: s for k, s in self.sessions.items() if now - s["seen"] < 90}
-        self.last_send = {k: t for k, t in self.last_send.items() if now - t < 90}
+        self.last_send = {k: state for k, state in self.last_send.items() if now - state[1] < 90}
         self.last_join = {k: t for k, t in self.last_join.items() if now - t < 90}
         while self.messages and now - self.messages[0][0] >= 300:
             self.messages.popleft()
@@ -194,8 +195,9 @@ class ChatStore:
                 raise OverflowError("chat busy")
             self.last_join[ip] = now
             token = secrets.token_hex(32)
-            self.sessions[token] = dict(ip=ip, name=name, seen=now)
-            return dict(token=token, messages=[m for _, m in self.messages])
+            self.next_color += 1
+            self.sessions[token] = dict(ip=ip, name=name, seen=now, colorIndex=self.next_color)
+            return dict(token=token, colorIndex=self.next_color, messages=[m for _, m in self.messages])
 
     def session(self, ip, token, now):
         self.prune(now)
@@ -211,7 +213,9 @@ class ChatStore:
             self.session(ip, token, now)
             return dict(messages=[m for _, m in self.messages if m["id"] > after])
 
-    def send(self, ip, token, text):
+    def send(self, ip, token, text, nonce=""):
+        if not isinstance(nonce, str) or (nonce and not re.fullmatch(r"[0-9a-f]{32}", nonce)):
+            raise ValueError("invalid message nonce")
         if not isinstance(text, str) or len(text) > 512:
             raise ValueError("invalid message")
         text = "".join(" " if c.isspace() else "" if unicodedata.category(c) in ("Cc", "Cf", "Cs") else c for c in text)
@@ -222,13 +226,20 @@ class ChatStore:
         with self.lock:
             now = time.monotonic()
             session = self.session(ip, token, now)
-            if now - self.last_send.get(ip, -100) < 0.75:
+            if nonce:
+                for _, previous in self.messages:
+                    if previous.get("nonce") == nonce and previous["sender"] == session["name"]:
+                        return dict(ok=True, message=previous)
+            credits, last = self.last_send.get(ip, (4.0, now))
+            credits = min(4.0, credits + max(0, now - last) / 0.25)
+            self.last_send[ip] = (credits, now)
+            if credits < 1:
                 raise OverflowError("wait before sending again")
-            self.last_send[ip] = now
+            self.last_send[ip] = (credits - 1, now)
             self.sequence += 1
-            message = dict(id=self.sequence, sender=session["name"], text=text)
+            message = dict(id=self.sequence, sender=session["name"], text=text, nonce=nonce, colorIndex=session["colorIndex"])
             self.messages.append((now, message))
-            return dict(ok=True)
+            return dict(ok=True, message=message)
 
 
 class Server(ThreadingHTTPServer):
@@ -295,7 +306,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/chat/session":
                 return self.reply(200, self.server.chat.join(self.client_address[0], data.get("name")))
             if self.path == "/chat":
-                return self.reply(200, self.server.chat.send(self.client_address[0], data.get("token"), data.get("text")))
+                return self.reply(200, self.server.chat.send(self.client_address[0], data.get("token"), data.get("text"), data.get("nonce", "")))
             private = data.get("isPrivate", False)
             password = data.get("password", "") if private else ""
             if not isinstance(private, bool) or (private and not re.fullmatch(r"[0-9]{6}", password if isinstance(password, str) else "")):

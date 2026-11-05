@@ -21,8 +21,8 @@ public sealed class OnlineRoomText
         Rules, Items, Louies, Handicap;
     public string ChatPublic => LanguageText("PUBLIC CHAT", "全体チャット", "CHAT GENERAL", "CHAT GERAL");
     public string ChatRoom => LanguageText("ROOM CHAT", "ルームチャット", "CHAT DE SALA", "CHAT DA SALA");
-    public string ChatHint => LanguageText("T: CHAT  HOLD Z: HISTORY", "T: 入力  Z長押し: 履歴", "T: CHAT  MANTÉN Z: HISTORIAL", "T: CHAT  SEGURE Z: HISTÓRICO");
-    public string ChatUnavailable => LanguageText("CHAT BUSY / UNAVAILABLE. TRY AGAIN.", "送信できません。再試行してください", "CHAT OCUPADO / SIN CONEXIÓN. REINTENTA.", "CHAT OCUPADO / INDISPONÍVEL. TENTE DE NOVO.");
+    public string ChatHint => LanguageText("T: CHAT", "T: チャット", "T: CHAT", "T: CHAT");
+    public string ChatUnavailable => LanguageText("MESSAGE NOT SENT. CHECK CONNECTION.", "送信できません。接続を確認してください", "MENSAJE NO ENVIADO. REVISA LA CONEXIÓN.", "MENSAGEM NÃO ENVIADA. VERIFIQUE A CONEXÃO.");
     public string NewRoom => LanguageText("NEW ROOM", "新しいルーム", "NUEVA SALA", "NOVA SALA");
     public string RoomName => LanguageText("ROOM NAME", "ルーム名", "NOMBRE DE SALA", "NOME DA SALA");
     public string RoomType => LanguageText("TYPE", "種類", "TIPO", "TIPO");
