@@ -365,3 +365,8 @@ destino apósLateUpdate e posterior movimento livre para owner e observer.
 Evento de entrada permite janela oculta que começa entre frames; jamais substitui
 a evidência da chegada renderizada. Resultados finais no checklist de progresso.
 Comparação humana, bomba carregada e saída ocupada continuam neste roteiro.
+
+C05 final: FinalFocused2 3/3; Peers8 Battle7 eStage3-4 com2clientes renderizados
+passaram sem erros/avisos do servidor. Publicação completa do commitba9be59ee
+confirmada no Actions42010967595 (Linux/Windows/updater). O QA humano acima
+continua separado desse aceite automatizado.

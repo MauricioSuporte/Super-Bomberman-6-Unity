@@ -52,12 +52,12 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   Peers8: Battle7 e Stage3-4 com dois clientes reais renderizados, origem/destino
   aprovados e caminhada após saída nos dois papéis; zero erros/avisos do servidor.
   Corrigidos também catálogoBigWorm e ciclo de vida/transmissão do grão de areia.
-  Protocolo60 mantido; publicação deste lote pendente.
-- **Publicado:** protocolo60, commit `6c2b92cae`,
-  [Actions41948608681](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41948608681)
-  concluído com sucesso: Linux dedicado, clienteWindows e canalGameUpdater.
-  Protocolo59/`cef9598d7` é o baseline anterior; run dePomori `cef2e5d86` foi
-  interrompido pelo shutdown do runner, e suas alterações já integram o commit60.
+  Protocolo60 mantido; lote publicado com sucesso no Actions42010967595.
+- **Publicado:** protocolo60, commit `ba9be59ee`,
+  [Actions42010967595](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42010967595)
+  concluído com sucesso: servidorLinux, clienteWindows e canalGameUpdater0.5.0.
+  Manifestos de servidor e updater confirmam o mesmo commit. O baseline anterior
+  C04 é `6c2b92cae`/Actions41948608681.
 - **C04/protocolo60 concluído e publicado:** cart/passageiro/poses na mesma
   trajetória aprovada; curvas, salto/wrap, portais, pausa/retomada, cancelamento
   nativo e handoff ao motor/bounce. Entrada/saída e rota permanecem autoritativas.
@@ -93,7 +93,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:** 22 IDs implementados/testados e 11 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** publicar o lote C05 e continuar C08, mantendo a comparação
+- **Próximo:** continuar C08, mantendo a comparação
   perceptual/manual no roteiro geral. C06 e C07 já estão implementados/testados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
@@ -252,7 +252,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
 - [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 concluída no Actions41948608681.
-- [x] C05: protocolo60: portais hidden/sink com apresentação aprovada, corte de destino e cleanup nativo de player/bomba; proteção anterior e controle preservados. Full4 1013/1013 e três testes focados finais; Peers8 Battle7/Stage3-4 com2clientes renderizados,0erros/avisos. Hall/retorno e gates de swap/blackout auditados; QA perceptual/held-bomb/saída ocupada segue na matriz geral. Publicação deste lote pendente.
+- [x] C05: protocolo60: portais hidden/sink com apresentação aprovada, corte de destino e cleanup nativo de player/bomba; proteção anterior e controle preservados. Full4 1013/1013 e três testes focados finais; Peers8 Battle7/Stage3-4 com2clientes renderizados,0erros/avisos. Hall/retorno e gates de swap/blackout auditados; QA perceptual/held-bomb/saída ocupada segue na matriz geral. Publicação concluída no Actions42010967595.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [ ] C08: parcial40 validado: campo magnético aprovado e gates client; continuidade/R07 e manual pendentes.
@@ -3638,3 +3638,13 @@ https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42010967
 Aguardar servidorLinux e canalGameUpdater antes de marcar publicado.
 Fontes, PlayerPersistentStats, DestructibleRocketController e StageHeatHaze
 do usuário ficaram fora do commit. Não modificar o runner enquanto CI trabalha.
+
+### Publicação C05 concluída em 05/11/2026
+
+Actions42010967595 finalizou success. Linux dedicado e Windows compilaram sem
+erros; servidor, updater, artefato Windows e resumo de deploy passaram.
+Build limpa, profilequick/targetboth, protocolo60, commit de ambos:
+ba9be59ee1de049fdedf215bdafec53550e1e66b. deploy-status.success=true;
+canalGameUpdater0.5.0 aponta SB6-Windows-2026-11-05_06-28-22.zip.
+Checklist permanece22/33 implementados/testados,11parciais. PróximoC08.
+Nenhum arquivo do usuário entrou nos commits C05 ou de checkpoint.
