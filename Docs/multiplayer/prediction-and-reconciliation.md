@@ -1576,7 +1576,7 @@ espera ack de hardware neutro e processamento do tick antes de reposicionar: um
 botão antigo em trânsito pode mudar a coluna e invalidar o cenário do pilar.
 
 
-## C04 — carrinho e passageiro no mesmo referencial (protocolo60 local)
+## C04 — carrinho e passageiro no mesmo referencial (protocolo60)
 
 MinecartView estende o transporte existente com geração, fase, segmento,
 progresso, velocidade e offsets do passageiro/corpo. Battle9/12 amostram corpo e
@@ -1617,3 +1617,8 @@ Isso evita rodar uma viagem longa em metade da velocidade num client de10FPS,
 sem consumir a entrada do portal ou outra transição dentro do mesmo passo.
 O harness espera a saída apresentada no owner e caminha pelo input real antes
 de exigir handoff livre; AFK normal após5s sem comandos não representa lock.
+
+Validação final: Full7 1010/1010, Peers7 com dois clientes reais renderizados em
+Battle9/12 e Stage3-2Room1, caminhada real após saída,0erros/avisos. Publicação
+cliente/servidor60 concluída no Actions41948608681, commit6c2b92cae. Comparação
+perceptual completa com offline permanece no roteiro manual.

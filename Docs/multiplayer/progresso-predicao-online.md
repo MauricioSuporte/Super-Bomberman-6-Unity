@@ -46,15 +46,15 @@ Protocolo52 mantido: nenhuma alteração de wire/RPC/SyncVar neste lote.
 Atualizado em 04/11/2026. O checklist distingue implementação/testes de validação
 manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
-- **Publicado:** protocolo 59, commit `cef9598d7`,
-  [Actions 41150289348](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41150289348)
-  concluído com sucesso para cliente e servidor. Primeira tentativa falhou antes
-  da compilação por IPC do Unity Package Manager; repetição do job concluiu.
-- **C04/protocolo60 validado localmente:** cart/passageiro/poses na mesma
+- **Publicado:** protocolo60, commit `6c2b92cae`,
+  [Actions41948608681](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41948608681)
+  concluído com sucesso: Linux dedicado, clienteWindows e canalGameUpdater.
+  Protocolo59/`cef9598d7` é o baseline anterior; run dePomori `cef2e5d86` foi
+  interrompido pelo shutdown do runner, e suas alterações já integram o commit60.
+- **C04/protocolo60 concluído e publicado:** cart/passageiro/poses na mesma
   trajetória aprovada; curvas, salto/wrap, portais, pausa/retomada, cancelamento
   nativo e handoff ao motor/bounce. Entrada/saída e rota permanecem autoritativas.
-  Commit `6c2b92cae` enviado; publicação cliente+servidor em andamento no
-  [Actions41948608681](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41948608681).
+  Commit `6c2b92cae` publicado com sucesso para cliente e servidor.
 - **Validação local mais recente (C04/protocolo60):** Full7 1010/1010, sem skips;
   C#0erros,6avisos legados do pacoteMirror; nenhum aviso introduzido. Python76/76.
   Development8 compilou; Peers7 com2clientes reais renderizados por110s em Battle9,
@@ -86,8 +86,9 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:** 21 IDs implementados/testados e 12 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** confirmar publicação cliente+servidor60/C04; depois C05 (portais), mantendo
-  os demais12IDs parciais e a validação perceptual manual separados.
+- **Próximo:** C05 (portais), mantendo os12IDs parciais e a validação perceptual
+  manual separados. C04 está implementado/testado/publicado; seu aceite humano
+  completo com offline continua no roteiro geral.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
 
@@ -244,7 +245,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
-- [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 no Actions41948608681 em andamento.
+- [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 concluída no Actions41948608681.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
@@ -3494,3 +3495,14 @@ Workspace só com7diffstracked alheios +Rocket2.png/.meta; nada deC04solto. Runn
 foi limpo apenas nos caminhos próprios/generatedverificados; nenhum smoke ficou
 ativo. Editor do usuário preservado. Checklist21/33 feitos,12parciais; próximoC05
 após confirmar esta publicação. Não reenviar run antigo cef2e5d86/protocolo59.
+
+
+### Publicação C04 concluída —04/11/2026
+
+Actions41948608681 COMPLETO/sucesso confirmado pela API do GitHub: buildLinux e
+Windows sem erros, deployLinux/KCP aprovado, canalGameUpdaterWindows publicado,
+artefatos/relatórios enviados. Manifesto confirma sourceCommit6c2b92cae6b740d1b96b793523bbb69bc68c647e,
+protocol60,targetboth,workingTreeDirtyBeforeBuild=false,benchmarkHarness=false.
+C04 concluído em implementação/testes/publicação. PróximoC05. Checklist21/33feitos,
+12parciais, mais QAmanual/consolidação fora da contagem. Não ficou nenhum smoke
+ouUnityde teste ativo; Editor e todos os arquivos alheios do usuário preservados.
