@@ -81,7 +81,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -2721918549723830297, guid: 1d89f074059aca94e930c7586f2ea0bb, type: 3}
+  m_Sprite: {fileID: -7189430602764213981, guid: 25c15f05061e7d0419e99dfaed34241c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -173,12 +173,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1497121213533345291, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  m_Sprite: {fileID: 6711257252158638106, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 1.625, y: 1.875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -329,15 +329,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageAssets.DestructibleRocketController
   rocket: {fileID: 2923441344452685425}
-  ascentSprite: {fileID: -1497121213533345291, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
-  descentSprite: {fileID: -5894468589109551015, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
-  explosionFrames:
+  target: {fileID: 1657706262530968863}
+  ascentFrames:
+  - {fileID: -5894468589109551015, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
   - {fileID: 3030430670136859216, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
   - {fileID: -8496209971355159727, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
   - {fileID: 1915823445782849378, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
-  - {fileID: -8496209971355159727, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
-  - {fileID: 3030430670136859216, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
-  target: {fileID: 1657706262530968863}
+  descentFrames:
+  - {fileID: 1750392083150762168, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: -5902959098424519459, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: -5705383838495865921, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: 5566900023345785563, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  explosionFrames:
+  - {fileID: 8710853978823120584, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: -562222668597649534, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: -5132561551459516596, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: 6648235313674055145, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: 1267101313916264235, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  - {fileID: 4260238315155428070, guid: 829629edb012d4e4991a6243e1f511bc, type: 3}
+  targetFrames:
+  - {fileID: -7189430602764213981, guid: 25c15f05061e7d0419e99dfaed34241c, type: 3}
+  - {fileID: -838827888710293457, guid: 25c15f05061e7d0419e99dfaed34241c, type: 3}
+  flightAnimationFps: 10
   launchSfx: {fileID: 8300000, guid: b3620cfe6b7947938a7a61faec89e7b0, type: 3}
   descendSfx: {fileID: 8300000, guid: e85ad7dbe8e349f783e66b0786edfe09, type: 3}
   explosionSfx: {fileID: 8300000, guid: 7ae55e3562fb4fcba8be93e8507b2d38, type: 3}
