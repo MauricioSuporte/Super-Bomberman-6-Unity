@@ -3631,3 +3631,10 @@ Actions41962406679 desse commit recebeu shutdown do runner durante a build;
 servidor e updater não foram publicados. Listener está ativo na retomada.
 Preservar também PlayerPersistentStats, DestructibleRocketController, fonte e
 StageHeatHaze atualmente alterados pelo usuário. Publicar somente arquivos C05.
+
+C05 commit ba9be59ee1de049fdedf215bdafec53550e1e66b enviado a origin/v0.5.0.
+Publicação both/quick iniciada no Actions42010967595 em05/11/2026:
+https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42010967595
+Aguardar servidorLinux e canalGameUpdater antes de marcar publicado.
+Fontes, PlayerPersistentStats, DestructibleRocketController e StageHeatHaze
+do usuário ficaram fora do commit. Não modificar o runner enquanto CI trabalha.
