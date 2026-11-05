@@ -3752,3 +3752,8 @@ a2ab64f9a80ce0b9c760d1796c40c208492fe91617d3501dc783ddc454a90c26.
 Final18 18/18; Full2 anterior 1028/1028; C# final0erros/0avisos; Python86/86.
 Paridade de fontes/UTF8 confirmada e só as três fontes próprias foram restauradas
 no runner. Packages do usuário preservados byte a byte. Pronto para commit/push.
+
+C08 commit3ca94c369c235e32799826e386700bfb680ad123 enviado aorigin/v0.5.0.
+Actions42110831096 iniciado para cliente+servidor no protocolo63:
+https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42110831096
+Aguardar deployLinux e canalGameUpdater antes de marcar publicação concluída.
