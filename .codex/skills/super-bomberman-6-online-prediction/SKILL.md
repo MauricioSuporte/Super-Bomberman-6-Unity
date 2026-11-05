@@ -686,3 +686,7 @@ local player hosts its presenter. An autonomous or remote bomb's next direction
 is still unknown. Empty collision geometry does not approve a straight next leg;
 retain the last endpoint until the next segment arrives. Keep the owner's
 actual predicted kick command on its separate responsive path.
+
+Before accepting a cancellation or family change, compare its serial against
+the newest queued approval, not only the applied segment's revision. An old
+stop cannot discard a newer route that has not reached presentation yet.

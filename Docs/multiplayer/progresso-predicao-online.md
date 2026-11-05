@@ -53,7 +53,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   Peers3 em Stage_2-1, com dois
   clientes Mirror reais headless, confirmou os três trajetos e transferência do
   presenter, sem erros/avisos do servidor. QA visual/hardware segue separado.
-  Protocolo 63 mantido; publicação deste lote pendente.
+  Protocolo 63 mantido; publicação concluída no Actions42110831096.
 - **C05 implementado e validado:** cleanup dos portais de jogador/bomba preserva
   estados anteriores e encerra a apresentação autoritativa após liberar o controle.
   Full4: 1013/1013, sem skips; três testes focados finais e Python78/78 aprovados.
@@ -61,10 +61,11 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   aprovados e caminhada após saída nos dois papéis; zero erros/avisos do servidor.
   Corrigidos também catálogoBigWorm e ciclo de vida/transmissão do grão de areia.
   Protocolo60 mantido; lote publicado com sucesso no Actions42010967595.
-- **Publicado antes deste lote:** protocolo 63, commit `16f96722f`,
-  [Actions42077315561](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42077315561)
-  concluído com sucesso. Inclui os ajustes de chat posteriores ao C05.
-  C05 foi publicado em `ba9be59ee`/Actions42010967595, ainda no protocolo 60.
+- **Publicado:** protocolo 63, commit `3ca94c369`,
+  [Actions42110831096](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42110831096).
+  Servidor Linux, cliente Windows e canal GameUpdater 0.5.0 publicados com sucesso;
+  os três manifestos confirmam o mesmo commit e build limpa. Baseline anterior:
+  `16f96722f`/Actions42077315561 (chat e ajustes posteriores ao C05).
 - **C04/protocolo60 concluído e publicado:** cart/passageiro/poses na mesma
   trajetória aprovada; curvas, salto/wrap, portais, pausa/retomada, cancelamento
   nativo e handoff ao motor/bounce. Entrada/saída e rota permanecem autoritativas.
@@ -100,7 +101,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:** 23 IDs implementados/testados e 10 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** publicar C08 e continuar C09, mantendo a comparação
+- **Próximo:** continuar C09, mantendo a comparação
   perceptual/manual no roteiro geral. C06 e C07 já estão implementados/testados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
@@ -262,7 +263,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C05: protocolo60: portais hidden/sink com apresentação aprovada, corte de destino e cleanup nativo de player/bomba; proteção anterior e controle preservados. Full4 1013/1013 e três testes focados finais; Peers8 Battle7/Stage3-4 com2clientes renderizados,0erros/avisos. Hall/retorno e gates de swap/blackout auditados; QA perceptual/held-bomb/saída ocupada segue na matriz geral. Publicação concluída no Actions42010967595.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
-- [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicação deste lote pendente.
+- [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
 - [ ] C09: parcial48: caldeira/pull ordenado sem previsão/lead, gates de swap/dinamite/foguete, blackout/room lights e materiais de máscara aprovados,445 testes combinados; fases/tile Startup/capturas/render gráfico ainda pendentes.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
@@ -3757,3 +3758,17 @@ C08 commit3ca94c369c235e32799826e386700bfb680ad123 enviado aorigin/v0.5.0.
 Actions42110831096 iniciado para cliente+servidor no protocolo63:
 https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42110831096
 Aguardar deployLinux e canalGameUpdater antes de marcar publicação concluída.
+
+### Publicação C08 concluída em 05/11/2026
+
+Actions42110831096 publicou Linux, Windows e canal GameUpdater com sucesso.
+Builds sem erros, targetboth/profilequick; deploy-status.success=true;
+deployment.protocol=63 e workingTreeDirtyBeforeBuild=false. Todos os manifestos
+apontam para 3ca94c369c235e32799826e386700bfb680ad123.
+
+Validação antes da publicação: Full2 1028/1028; Final18 18/18 após gate adicional
+de serial; C# final0erros/0avisos; Python86/86; Peers3 com2clientesMirror reais
+headless e três trajetos nativos, sem erros/avisos e com transferência preservada.
+Checklist23/33 implementados/testados,10parciais. PróximoC09.
+QA perceptual/GPU/offline segue na matriz geral. Nenhuma alteração do usuário
+emPackages entrou no lote; hashes originais preservados até a confirmação final.

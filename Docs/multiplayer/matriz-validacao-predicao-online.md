@@ -395,3 +395,6 @@ Full2final1028/1028; C#0erros/0avisos; Python86/86.
 
 C08 Peers3 final aprovado em118,812s com gate de serial: três trajetos e oito
 amostras de transferência porcliente;0erros/avisos. Final18 18/18.
+
+C08 publicado noActions42110831096, commit3ca94c369/protocolo63,
+cliente+servidor+updater confirmados. QA humano acima continua separado.
