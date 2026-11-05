@@ -34,6 +34,7 @@ namespace Assets.Scripts.Netcode
     public sealed class OnlineRoomBrowser : MonoBehaviour
     {
         public readonly List<OnlineListedRoom> Rooms = new();
+        public string DirectoryUrl => directoryUrl;
         string directoryUrl;
         public bool DirectoryConfigured => !string.IsNullOrEmpty(directoryUrl);
         public bool DirectoryFailed { get; private set; }

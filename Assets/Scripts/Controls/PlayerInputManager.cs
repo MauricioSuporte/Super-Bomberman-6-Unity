@@ -393,6 +393,9 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput)
+            return Mirror.NetworkServer.active && IsSyntheticHeld(playerId, action);
+
         if (TryGetMobileDirectionalHeld(action, playerId, out bool mobileDirectionalHeld) &&
             mobileDirectionalHeld)
         {
@@ -414,6 +417,9 @@ public class PlayerInputManager : MonoBehaviour
 
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
+
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput)
+            return Mirror.NetworkServer.active && IsSyntheticDown(playerId, action);
 
         return IsSyntheticDown(playerId, action) || ReadDownRawCached(playerId, action);
     }
@@ -526,6 +532,9 @@ public class PlayerInputManager : MonoBehaviour
 
         if (ShouldBlockActionBecauseStunned(playerId))
             return false;
+
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput)
+            return Mirror.NetworkServer.active && HasAnySyntheticHeld(playerId);
 
         int frameStamp = GetFrameStamp();
         if (anyHeldInputCacheStamp[playerId] == frameStamp)
@@ -742,6 +751,7 @@ public class PlayerInputManager : MonoBehaviour
 
     static bool ReadKeyHeld(KeyCode k)
     {
+        if (k == KeyCode.Z && Assets.Scripts.Netcode.OnlineChatOverlay.ReservesHistoryKey) return false;
         var kb = Keyboard.current;
         if (kb == null)
             return false;
@@ -751,6 +761,7 @@ public class PlayerInputManager : MonoBehaviour
 
     static bool ReadKeyDown(KeyCode k)
     {
+        if (k == KeyCode.Z && Assets.Scripts.Netcode.OnlineChatOverlay.ReservesHistoryKey) return false;
         var kb = Keyboard.current;
         if (kb == null)
             return false;

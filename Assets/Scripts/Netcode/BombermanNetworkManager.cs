@@ -197,6 +197,7 @@ namespace Assets.Scripts.Netcode
         public override void OnStartClient()
         {
             base.OnStartClient();
+            InitializeChatClient();
             InitializeBattleStartClient();
             if (!NetworkServer.active)
             {
@@ -384,6 +385,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
+            nextChatByConnection.Remove(conn.connectionId);
             roomPresentationByConnection.Remove(conn.connectionId);
             if (authenticator is OnlineVersionAuthenticator names) names.ReleaseName(conn.connectionId);
             bool ownerLeft = playerIdByConnection.TryGetValue(conn.connectionId, out int departedId) &&

@@ -23,12 +23,12 @@ public static class LocalizedTmpFontFallback
     private static Font runtimeLegacyJapaneseFont;
     private static bool warnedMissingFallback;
 
-    public static void Apply(TMP_Text text)
+    public static void Apply(TMP_Text text, bool includeJapanese = false)
     {
         if (text == null || text.font == null)
             return;
 
-        if (SaveSystem.GetLanguage() != GameLanguage.Japanese)
+        if (!includeJapanese && SaveSystem.GetLanguage() != GameLanguage.Japanese)
             return;
 
         TMP_FontAsset fallback = ResolveJapaneseFallback();

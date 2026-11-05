@@ -15,9 +15,11 @@ import shutil
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
+from collections import deque
+import unicodedata
 
-PROTOCOL = 60
+PROTOCOL = 61
 MODES = {"BattleMode": ("Battle Mode", 6), "NormalGame": ("Normal Game", 4), "BossRush": ("Boss Rush", 4)}
 log = logging.getLogger("rooms")
 
@@ -162,11 +164,79 @@ class RoomPool:
                 log.info(json.dumps(dict(event="history_pruned", room=folder.name, bytes=sizes[folder])))
 
 
+class ChatStore:
+    """Ephemeral public channel. Names are display aliases, not verified accounts."""
+    def __init__(self):
+        self.sessions = {}
+        self.messages = deque(maxlen=64)
+        self.last_send = {}
+        self.last_join = {}
+        self.sequence = 0
+        self.lock = threading.RLock()
+
+    def prune(self, now):
+        self.sessions = {k: s for k, s in self.sessions.items() if now - s["seen"] < 90}
+        self.last_send = {k: t for k, t in self.last_send.items() if now - t < 90}
+        self.last_join = {k: t for k, t in self.last_join.items() if now - t < 90}
+        while self.messages and now - self.messages[0][0] >= 300:
+            self.messages.popleft()
+
+    def join(self, ip, name):
+        if not isinstance(name, str) or len(name) > 64:
+            raise ValueError("invalid name")
+        name = unicodedata.normalize("NFKC", name.strip())
+        if not 1 <= len(name) <= 16 or any(not (c.isalnum() or c in " _-") for c in name):
+            raise ValueError("invalid name")
+        with self.lock:
+            now = time.monotonic()
+            self.prune(now)
+            if len(self.sessions) >= 4096 or sum(s["ip"] == ip for s in self.sessions.values()) >= 8 or now - self.last_join.get(ip, -100) < 0.75:
+                raise OverflowError("chat busy")
+            self.last_join[ip] = now
+            token = secrets.token_hex(32)
+            self.sessions[token] = dict(ip=ip, name=name, seen=now)
+            return dict(token=token, messages=[m for _, m in self.messages])
+
+    def session(self, ip, token, now):
+        self.prune(now)
+        session = self.sessions.get(token) if isinstance(token, str) else None
+        if session is None or session["ip"] != ip:
+            raise PermissionError("chat session expired")
+        session["seen"] = now
+        return session
+
+    def poll(self, ip, token, after):
+        with self.lock:
+            now = time.monotonic()
+            self.session(ip, token, now)
+            return dict(messages=[m for _, m in self.messages if m["id"] > after])
+
+    def send(self, ip, token, text):
+        if not isinstance(text, str) or len(text) > 512:
+            raise ValueError("invalid message")
+        text = "".join(" " if c.isspace() else "" if unicodedata.category(c) in ("Cc", "Cf", "Cs") else c for c in text)
+        # Match the client's UTF-16 limit without cutting a surrogate pair.
+        text = text.encode("utf-16-le")[:256].decode("utf-16-le", errors="ignore").strip()
+        if not text:
+            raise ValueError("empty message")
+        with self.lock:
+            now = time.monotonic()
+            session = self.session(ip, token, now)
+            if now - self.last_send.get(ip, -100) < 0.75:
+                raise OverflowError("wait before sending again")
+            self.last_send[ip] = now
+            self.sequence += 1
+            message = dict(id=self.sequence, sender=session["name"], text=text)
+            self.messages.append((now, message))
+            return dict(ok=True)
+
+
 class Server(ThreadingHTTPServer):
     daemon_threads = True
 
     def __init__(self, address, pool):
         self.pool = pool
+        self.chat = ChatStore()
         super().__init__(address, Handler)
 
 
@@ -189,6 +259,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path == "/chat":
+            try:
+                after = int(parse_qs(urlsplit(self.path).query).get("after", ["0"])[0])
+                if after < 0: raise ValueError()
+                return self.reply(200, self.server.chat.poll(self.client_address[0], self.headers.get("X-Chat-Token", ""), after))
+            except PermissionError:
+                return self.reply(401, {"error": "chat session expired"})
+            except ValueError:
+                return self.reply(400, {"error": "invalid cursor"})
         self.server.pool.refresh()
         with self.server.pool.lock:
             if path == "/health":
@@ -204,21 +283,27 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(404, {"error": "room not found"})
 
     def do_POST(self):
-        if self.path != "/rooms":
+        if self.path not in ("/rooms", "/chat", "/chat/session"):
             return self.reply(404, {"error": "not found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < length <= 1024:
+            if not 0 < length <= 4096:
                 raise ValueError()
             data = json.loads(self.rfile.read(length).decode("utf-8"))
             if data.get("protocol") != PROTOCOL or data.get("buildIdentity") != self.server.pool.build_identity:
                 return self.reply(409, {"error": "incompatible build or protocol"})
+            if self.path == "/chat/session":
+                return self.reply(200, self.server.chat.join(self.client_address[0], data.get("name")))
+            if self.path == "/chat":
+                return self.reply(200, self.server.chat.send(self.client_address[0], data.get("token"), data.get("text")))
             private = data.get("isPrivate", False)
             password = data.get("password", "") if private else ""
             if not isinstance(private, bool) or (private and not re.fullmatch(r"[0-9]{6}", password if isinstance(password, str) else "")):
                 raise ValueError("private room passwords require six digits")
             room = self.server.pool.create(self.client_address[0], data.get("mode", "BattleMode"), password, data.get("name", ""), data.get("creator", ""), data.get("maxPlayers"))
             self.reply(202, room)
+        except PermissionError:
+            self.reply(401, {"error": "chat session expired"})
         except OverflowError as error:
             self.reply(429, {"error": str(error)})
         except (ValueError, AttributeError, UnicodeError):

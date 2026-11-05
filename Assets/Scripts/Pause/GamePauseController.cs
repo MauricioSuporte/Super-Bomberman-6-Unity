@@ -685,6 +685,7 @@ public partial class GamePauseController : MonoBehaviour
 
     bool IsStartPressed()
     {
+        if (Assets.Scripts.Netcode.OnlineChatOverlay.BlocksLocalInput) return false;
         var input = PlayerInputManager.Instance;
         bool startPressed = input != null && (Assets.Scripts.Netcode.NetSync.IsOnline
             ? Assets.Scripts.Netcode.NetSync.IsServer && input.GetDown(1, PlayerAction.Start)

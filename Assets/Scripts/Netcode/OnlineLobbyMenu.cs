@@ -11,6 +11,7 @@ namespace Assets.Scripts.Netcode
 {
     public partial class OnlineLobbyMenu : MonoBehaviour
     {
+        public bool ChatModalOpen => (nameRoot != null && nameRoot.activeSelf) || passwordOpen || creationOpen;
         GameObject canvasRoot;
         [SerializeField] Sprite[] backgrounds;
         [SerializeField] TMP_FontAsset lobbyFont;
@@ -89,6 +90,8 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             CreateRoomCanvas();
+            if (GetComponent<OnlineChatOverlay>() == null)
+                gameObject.AddComponent<OnlineChatOverlay>().SetFont(lobbyFont);
             if (GameMusicController.Instance != null)
                 GameMusicController.Instance.PlayDefaultMusic(false);
         }
@@ -165,7 +168,10 @@ namespace Assets.Scripts.Netcode
                 nameRejectionShown = true;
                 OpenName();
             }
-            if (nameRoot.activeSelf) UpdateName(); else if (passwordOpen) UpdatePassword(); else UpdateNavigation();
+            if (!OnlineChatOverlay.BlocksLocalInput)
+            {
+                if (nameRoot.activeSelf) UpdateName(); else if (passwordOpen) UpdatePassword(); else UpdateNavigation();
+            }
         }
 
         void CreateRoomCanvas()

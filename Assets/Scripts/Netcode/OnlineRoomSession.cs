@@ -166,6 +166,7 @@ namespace Assets.Scripts.Netcode
 
         void InitializeRoomServer()
         {
+            InitializeChatServer();
             InitializeBattleStartServer();
             InitializeRevengeServer();
             roomPresentationByConnection.Clear();
@@ -351,7 +352,7 @@ namespace Assets.Scripts.Netcode
                     if (input != null && input.GetDown(1, (PlayerAction)i)) pressed |= 1 << i;
                 }
 #if ENABLE_INPUT_SYSTEM
-                if (DedicatedRoom && IsRoomAdmin && !InConfiguration &&
+                if (!OnlineChatOverlay.BlocksLocalInput && DedicatedRoom && IsRoomAdmin && !InConfiguration &&
                     UnityEngine.InputSystem.Keyboard.current != null &&
                     UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
                     pressed |= 1 << (int)PlayerAction.Start;

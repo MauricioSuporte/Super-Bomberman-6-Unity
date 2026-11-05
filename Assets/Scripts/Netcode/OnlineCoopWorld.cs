@@ -242,7 +242,7 @@ namespace Assets.Scripts.Netcode
             Type type = behaviour.GetType();
             if (type.Assembly != typeof(GameManager).Assembly || behaviour.GetComponentInParent<Canvas>(true) != null) return true;
             string name = type.Name;
-            return behaviour is BombermanNetworkManager or OnlineLobbyMenu or OnlineRoomBrowser or GamePauseController or StageBlackout or WorldBlackoutRenderer or BattleMode9MinecartController ||
+            return behaviour is BombermanNetworkManager or OnlineLobbyMenu or OnlineRoomBrowser or OnlineChatOverlay or GamePauseController or StageBlackout or WorldBlackoutRenderer or BattleMode9MinecartController ||
                 name.Contains("Camera", StringComparison.Ordinal) || name.Contains("Hud", StringComparison.Ordinal) ||
                 name.Contains("HUD", StringComparison.Ordinal) || name.Contains("Viewport", StringComparison.Ordinal) ||
                 name.StartsWith("Localized", StringComparison.Ordinal) || name == "PlayerInputManager" ||

@@ -19,6 +19,10 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
+    public string ChatPublic => LanguageText("PUBLIC CHAT", "全体チャット", "CHAT GENERAL", "CHAT GERAL");
+    public string ChatRoom => LanguageText("ROOM CHAT", "ルームチャット", "CHAT DE SALA", "CHAT DA SALA");
+    public string ChatHint => LanguageText("T: CHAT  HOLD Z: HISTORY", "T: 入力  Z長押し: 履歴", "T: CHAT  MANTÉN Z: HISTORIAL", "T: CHAT  SEGURE Z: HISTÓRICO");
+    public string ChatUnavailable => LanguageText("CHAT BUSY / UNAVAILABLE. TRY AGAIN.", "送信できません。再試行してください", "CHAT OCUPADO / SIN CONEXIÓN. REINTENTA.", "CHAT OCUPADO / INDISPONÍVEL. TENTE DE NOVO.");
     public string NewRoom => LanguageText("NEW ROOM", "新しいルーム", "NUEVA SALA", "NOVA SALA");
     public string RoomName => LanguageText("ROOM NAME", "ルーム名", "NOMBRE DE SALA", "NOME DA SALA");
     public string RoomType => LanguageText("TYPE", "種類", "TIPO", "TIPO");

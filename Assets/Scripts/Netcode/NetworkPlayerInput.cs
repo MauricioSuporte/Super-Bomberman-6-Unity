@@ -124,7 +124,7 @@ namespace Assets.Scripts.Netcode
             {
                 sampledHeld = 0;
                 int pressedNow = 0;
-                if (Blocked) pendingPressed = 0;
+                if (Blocked || OnlineChatOverlay.BlocksLocalInput) pendingPressed = 0;
                 else for (int i = 0; i < Actions.Length; i++)
                 {
                     if (input.Get(1, Actions[i])) sampledHeld |= 1 << i;
@@ -166,7 +166,7 @@ namespace Assets.Scripts.Netcode
             if (isLocalPlayer && !isServer && NetworkClient.ready)
             {
                 var frame = new NetworkInputFrame { tick = ++localTick,
-                    held = Blocked ? 0 : sampledHeld, pressed = Blocked ? 0 : pendingPressed };
+                    held = Blocked || OnlineChatOverlay.BlocksLocalInput ? 0 : sampledHeld, pressed = Blocked || OnlineChatOverlay.BlocksLocalInput ? 0 : pendingPressed };
                 pendingPressed = 0;
                 MotionDiagnosticProbe.NetworkInput(gameObject, "input_send", frame.held, frame.pressed);
                 CmdControls(frame);
