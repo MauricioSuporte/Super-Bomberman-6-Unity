@@ -53,7 +53,8 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **C04/protocolo60 validado localmente:** cart/passageiro/poses na mesma
   trajetória aprovada; curvas, salto/wrap, portais, pausa/retomada, cancelamento
   nativo e handoff ao motor/bounce. Entrada/saída e rota permanecem autoritativas.
-  Publicação cliente+servidor é o próximo passo.
+  Commit `6c2b92cae` enviado; publicação cliente+servidor em andamento no
+  [Actions41948608681](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41948608681).
 - **Validação local mais recente (C04/protocolo60):** Full7 1010/1010, sem skips;
   C#0erros,6avisos legados do pacoteMirror; nenhum aviso introduzido. Python76/76.
   Development8 compilou; Peers7 com2clientes reais renderizados por110s em Battle9,
@@ -85,7 +86,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
 - **Checklist:** 21 IDs implementados/testados e 12 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** publicar cliente+servidor60/C04; depois C05 (portais), mantendo
+- **Próximo:** confirmar publicação cliente+servidor60/C04; depois C05 (portais), mantendo
   os demais12IDs parciais e a validação perceptual manual separados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
@@ -243,7 +244,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
-- [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 em preparação.
+- [x] C04: protocolo60: cart/rider/poses com clock aprovado, fases/segmentos/progresso/velocidade, curvas e cortes de portal, pausa/retomada, cancelamento nativo e motor/bounce após saída. Full7 1010/1010; Peers7 com2clientes renderizados em Battle9/12 e Stage3-2Room1,0erros/avisos e caminhada real após desembarque. Comparação perceptual/offline permanece no QA global; publicação60 no Actions41948608681 em andamento.
 - [ ] C05: parcial38 publicado: Portal7 owner/pose/máscara/estrelas e gates; manual e auditoria do swap/blackout C09 pendentes.
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
@@ -3481,3 +3482,15 @@ só no runnerisolado, nenhum revert/clean no root. Runner gitstatus limpo agora,
 nenhum player/Unity de teste ativo. Editor do usuário continua aberto.
 Build reemitirá seus catálogos gerados normalmente. Fontes, Rocket e demais diffs
 alheios no root mantidos; índiceGit estava vazio antes do stage C04.
+
+
+### Publicação C04 iniciada —04/11/2026
+
+Commit6c2b92cae6b740d1b96b793523bbb69bc68c647e,pushv0.5.0confirmado.
+Actions41948608681 in_progress, targetboth/quick (testesUnity já locais1010).
+Link:https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/41948608681.
+Conferir build/deployLinux e updaterWindows antes de declarar servidor60 publicado.
+Workspace só com7diffstracked alheios +Rocket2.png/.meta; nada deC04solto. Runner
+foi limpo apenas nos caminhos próprios/generatedverificados; nenhum smoke ficou
+ativo. Editor do usuário preservado. Checklist21/33 feitos,12parciais; próximoC05
+após confirmar esta publicação. Não reenviar run antigo cef2e5d86/protocolo59.
