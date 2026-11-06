@@ -265,7 +265,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
-- [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 em andamento.
+- [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 concluída no Actions42204673208.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
 - [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
@@ -4033,3 +4033,20 @@ deploy65 eponteiro públicoUpdater nomesmo sourceCommit. Rootsomente2Packages
 usuário fora docommit. Runnerfontes próprias restauradas e4novos removidos
 somente daquele checkout apósúltimo smoke. Checkpoint/skill/notas atualizados;
 não encerrar publicação65 antes de confirmarstepcliente apósdeployservidor.
+
+
+### Publicação C10 concluída — Actions42204673208 success
+
+BuildsLinux(149.3s)/Windows(180.4s), deployservidor, canalupdater eartefatos
+concluíram comsucesso. Servidorativo verificado porSSH em
+b391172d18e0303ddbee30e93c1387f26202057b/protocolo65/benchmarkHarness=false.
+Build-info cliente confirmoumesmo commit65. Ponteiro públicoReleaseonline-v0.5.0
+também confirmado nesse commit; tamanho doasset eSHA256 conferidos com pacoteCI.
+Evidências emLogs/PredictionC10-live-server.json e-public-updater.json,
+manifestos/deploy-status copiados aLogs/PredictionC10-*.json.
+
+C10 concluído em implementação/testes/publicação. Checklist25/33 feitos e8parciais;
+próximoR01. Suite1041/1041+Final4/4,92Python, cinco execuções2clientes (4cenários
+iniciais+SDfinal),0erros/avisos servidor. QA perceptual/offline permaneceglobal.
+2Packages do usuário preservados comhashes originais; nenhuma cena/prefab editada
+na raiz e nenhum código de fixture deDevelopment nos binários publicados.
