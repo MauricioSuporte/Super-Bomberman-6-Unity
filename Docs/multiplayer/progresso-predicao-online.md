@@ -3907,3 +3907,14 @@ verificados. Checklist24/33 feitos e9parciais; próximoC10. QA humano de sensaç
 comoffline e custo comparativoR02 permanecem no roteiroglobal.
 Próximo passo autorizado: commit/pushv0.5.0 e Actions ambos, confirmarservidor,
 cliente e updater no mesmo commit64; salvar confirmação neste checkpoint.
+
+
+C09 commit46b1ba1c8b7e110c6bc5a5c6afad91f324b2d505 enviadoav0.5.0.
+Actions42152138685/job127677638641 emandamento, alvoambos/quick. Ainda confirmar
+buildscliente/Linux, deployservidor64 echannelupdater no mesmo sourceCommit.
+Fontes próprias restauradas no runner depois dos testes;4arquivosnovos removidos
+somente daquele checkout. Gerados preexistentes preservados. Raiz temsomente
+Packages/manifest.json ePackages/packages-lock.json do usuário fora docommit;
+hashes originais preservados. Não publicar sóservidor nem alterar essesPackages.
+Se interrompido: consultar oActions acima, corrigir falha casoexista eguardar
+resultado final aqui. C09 implementado/testado; publicação pendente.
