@@ -4025,3 +4025,11 @@ pendente. Nenhuma cena/prefab/texture alterada na raiz.2Packages do usuário com
 hashes preservados. Checklist25/33 feitos e8parciais; próximoR01, QA humano
 perceptual/offline segue global. Próximo passo autorizado épublicar ambos65 e
 confirmar Actions, servidorativo eponteiroUpdater no mesmo commit.
+
+
+C10 commitb391172d18e0303ddbee30e93c1387f26202057b enviadoav0.5.0.
+Actions42204673208 emandamento, ambos/quick. Ainda confirmarLinux+Windows,
+deploy65 eponteiro públicoUpdater nomesmo sourceCommit. Rootsomente2Packages
+usuário fora docommit. Runnerfontes próprias restauradas e4novos removidos
+somente daquele checkout apósúltimo smoke. Checkpoint/skill/notas atualizados;
+não encerrar publicação65 antes de confirmarstepcliente apósdeployservidor.
