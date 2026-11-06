@@ -1118,14 +1118,17 @@ public sealed partial class OnlineRoomEditModeTests
             Assert.AreEqual(before, Random.state, "A client warning must not consume gameplay RNG.");
             Assert.IsNull(typeof(BattleMode2FallingBombController).GetMethod("LaunchBomb", flags).Invoke(controller, new object[] { Vector2.one }));
             var message = new FallingBombTarget { scene = "BattleMode_2", revision = 1, time = NetworkBombFx.KickServerNow,
-                position = new Vector2(3, 4), remaining = 2, fuse = 3, radius = 4, active = true, paused = true };
+                position = new Vector2(3, 4), remaining = 2, fuse = 3, gameplayTime = 4.5f, radius = 4, active = true, paused = true };
             using (var writer = NetworkWriterPool.Get())
             { writer.Write(message); message = new NetworkReader(writer.ToArray()).Read<FallingBombTarget>(); }
+            var invalid = message; invalid.position = new Vector2(float.NaN, 0);
+            controller.ReceiveNetworkTarget(invalid);
             controller.ReceiveNetworkTarget(message);
             Assert.IsTrue(controller.TryGetActiveTargetWarning(out var position, out var radius, out var seconds));
             Assert.AreEqual(message.position, position); Assert.AreEqual(4, radius); Assert.AreEqual(5, seconds, 0.001f);
             var renderer = (SpriteRenderer)typeof(BattleMode2FallingBombController).GetField("targetRenderer", flags).GetValue(controller);
             Assert.IsNotNull(renderer); Assert.IsTrue(renderer.enabled); Assert.AreEqual((Vector3)message.position, renderer.transform.position);
+            Assert.AreEqual(.75f, renderer.color.a, .0001f, "Blink phase follows approved gameplay time even when paused.");
             typeof(BattleMode2FallingBombController).GetMethod("Update", flags).Invoke(controller, null);
             controller.TryGetActiveTargetWarning(out _, out _, out seconds); Assert.AreEqual(5, seconds, 0.001f, "An approved pause freezes the display countdown.");
             var stop = message; stop.revision = 2; stop.time += 0.1; stop.active = false;

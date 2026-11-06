@@ -724,3 +724,20 @@ scope, emits its approved parts/destroyed cells, and restores parent collectors
 in finally. Pure clients cannot start that gameplay; publication also requires
 an active server. Check actual client explosion objects/rendered flames, not
 only the server's completion marker or a block disappearing.
+
+
+For Sudden Death or another announced terrain hazard, an approved fall start is
+not a terrain commit. Present the authority's start/end/duration on its scaled
+elapsed clock, freeze across pause, and hold the completed visual until an
+explicit landing commits the solid cell. Never call the native drop/cleanup or
+damage coroutine on a client to recreate the effect. A bounded full heartbeat
+(path, active falls, completed cells, revision and clock) recovers readers that
+missed earlier events without guessing terrain or drawing another RNG result.
+Map a committed world center into each affected tilemap's own coordinates; do
+not assume matching indices. Rebuild approved collision geometry on commit.
+Preserve a queued shadow's current scale/alpha when the fall takes over.
+On disable, cancel native waits and clear their pending world reservations,
+not only the visual objects, and test reuse in real Play Mode. Require each
+client's committed-cell set to equal actual server landings in integration
+captures, plus pause evidence. This does not add lobby permission to join an
+already-running Battle room or establish human-perceived zero latency.

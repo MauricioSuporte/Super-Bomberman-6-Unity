@@ -39,3 +39,16 @@ class MechanismSmokeTests(unittest.TestCase):
         self.assertTrue(smoke.validate_mechanism_capture(rows,'dynamite',[])['approvedPresentation'])
         with self.assertRaises(ValueError): smoke.validate_mechanism_capture(rows[:1],'dynamite',[])
         with self.assertRaises(ValueError): smoke.validate_mechanism_capture(captures('dynamite'),'dynamite',[])
+
+
+    def test_sudden_death_requires_actual_client_fall_pause_and_approved_commit(self):
+        rows=captures('sudden')+[dict(kind='sudden_death_present',detail='falls=2;committed=0'),dict(kind='mechanism_sudden_pause',detail='paused=True'),dict(kind='sudden_death_commit_apply',detail='cell=1,2')]
+        self.assertTrue(smoke.validate_mechanism_capture(rows,'sudden',[dict(detail='cell=1,2,0')])['approvedPresentation'])
+        for missing in ('sudden_death_present','mechanism_sudden_pause','sudden_death_commit_apply'):
+            with self.assertRaises(ValueError):smoke.validate_mechanism_capture([r for r in rows if r['kind']!=missing],'sudden',[dict(detail='cell=1,2,0')])
+
+    def test_roof_powder_and_falling_require_both_native_phases(self):
+        for kind,event,details in [('roof','mechanism_roof',['tile=0','tile=-1']),('powder','mechanism_powder',['frame=0','frame=-1']),('falling','mechanism_target',['active=True;bombs=0','active=False;bombs=1'])]:
+            rows=captures(kind)+[dict(kind=event,detail=d) for d in details]
+            self.assertTrue(smoke.validate_mechanism_capture(rows,kind,[])['approvedPresentation'])
+            with self.assertRaises(ValueError):smoke.validate_mechanism_capture(rows[:-1],kind,[])

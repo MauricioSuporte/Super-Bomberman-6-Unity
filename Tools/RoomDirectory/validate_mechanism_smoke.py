@@ -31,4 +31,24 @@ def validate_mechanism_capture(rows, kind, expected):
     elif kind == 'dynamite':
         if not any(int(re.search(r'explosions=(\d+)', r['detail'])[1]) > 0 for r in captures):
             raise ValueError('No client explosion visuals for native dynamite')
+    elif kind == 'sudden':
+        def cells(records):
+            return {tuple(map(int,m.groups())) for r in records if (m := re.search(r'cell=(-?\d+),(-?\d+)', r.get('detail','')))}
+        approved = cells(expected)
+        actual = cells([r for r in rows if r.get('kind') == 'sudden_death_commit_apply'])
+        if not approved or actual != approved: raise ValueError('Client terrain differs from actual server landings')
+        views = [r.get('detail','') for r in rows if r.get('kind') == 'sudden_death_present']
+        if not any(re.search(r'falls=[1-9]', s) for s in views): raise ValueError('No client falling visual')
+        if not any('paused=True' in s for s in views) and not any(r.get('kind')=='mechanism_sudden_pause' and 'paused=True' in r.get('detail','') for r in rows):
+            raise ValueError('No pause evidence')
+    elif kind == 'falling':
+        views = [r.get('detail','') for r in rows if r.get('kind') == 'mechanism_target']
+        if not any('active=True' in s for s in views) or not any('active=False' in s for s in views): raise ValueError('Missing target phases')
+        if not any(re.search(r'bombs=[1-9]',s) for s in views): raise ValueError('No replicated falling bomb')
+    elif kind == 'powder':
+        frames = [int(r['detail'].split('=')[1]) for r in rows if r.get('kind')=='mechanism_powder']
+        if not any(f>=0 for f in frames) or -1 not in frames: raise ValueError('Missing powder frame/restore')
+    elif kind == 'roof':
+        tiles = {int(r['detail'].split('=')[1]) for r in rows if r.get('kind')=='mechanism_roof'}
+        if not any(t>=0 and t%4==0 for t in tiles) or not any(t==-1 or t%4==3 for t in tiles): raise ValueError('Missing closed/open roof')
     return dict(kind=kind, phases=True, approvedPresentation=True)

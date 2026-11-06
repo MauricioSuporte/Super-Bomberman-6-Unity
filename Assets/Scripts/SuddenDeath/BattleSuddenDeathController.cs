@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
-public sealed class BattleSuddenDeathController : MonoBehaviour
+public sealed partial class BattleSuddenDeathController : MonoBehaviour
 {
     const float SuddenDeathTriggerTime = 50f;
     const float SuddenDeathEndTime = 5f;
@@ -99,14 +99,13 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     bool selectedClockwise = true;
     SuddenDeathDropPattern selectedDropPattern;
     float suddenDeathShadowStartRemainingTime;
-    float networkShadowStartedAt;
 
     public bool SuddenDeathStarted => suddenDeathStarted;
 
     public bool IsActiveSuddenDeathCell(Vector3Int cell)
     {
         return indestructibleTilemap != null &&
-               damageCoroutines.ContainsKey(cell) &&
+               (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally ? damageCoroutines.ContainsKey(cell) : networkAppliedCells.Contains(cell)) &&
                indestructibleTilemap.HasTile(cell);
     }
 
@@ -377,15 +376,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (!Application.isPlaying || (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning)) return;
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
         {
-            if (suddenDeathStarted && !suddenDeathFinished)
-            {
-                float elapsed = Time.time - networkShadowStartedAt;
-                EnsureQueuedShadows(elapsed, GetDropWindowDuration());
-                UpdateQueuedShadows(elapsed);
-            }
+            PresentNetworkSuddenDeath();
             return;
         }
 
+        PublishNetworkSuddenDeath();
         if (suddenDeathFinished)
             return;
 
@@ -444,22 +439,22 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 float.IsNaN(remaining) || float.IsInfinity(remaining) || remaining < 0 ||
                 float.IsNaN(musicDelay) || float.IsInfinity(musicDelay) || musicDelay < 0) return;
             BeginSuddenDeath(remaining, path, musicDelay);
-            networkShadowStartedAt = Time.time;
+
         }
-        else if (suddenDeathStarted && suddenDeathPath.Contains(cell)) StartCoroutine(DropTileRoutine(cell));
+        // Legacy fall events cannot commit terrain or start gameplay on a client.
     }
 
-    void BeginSuddenDeath(float remainingTimeAtStart, Vector3Int[] approvedPath = null, float approvedMusicDelay = 0)
+    void BeginSuddenDeath(float remainingTimeAtStart, Vector3Int[] approvedPath = null, float approvedMusicDelay = 0, bool presentAnnouncement = true)
     {
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
 
-        if (hurryUpUI != null)
+        if (presentAnnouncement && hurryUpUI != null)
         {
             hurryUpUI.Play();
             LogFlow("HurryUp UI exibido.");
         }
-        else
+        else if (presentAnnouncement)
         {
             LogWarning("HurryUp UI não configurado.");
         }
@@ -519,7 +514,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 ? $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, randomizeDropPattern={randomizeDropPattern}"
                 : "pathSource=approved, gameplayRng=disabled"));
 
-        StartCoroutine(PlayHurryUpAndResumeMusic(remainingTimeAtStart, approvedMusicDelay));
+        if (presentAnnouncement || Application.isPlaying && isActiveAndEnabled) StartCoroutine(PlayHurryUpAndResumeMusic(remainingTimeAtStart, approvedMusicDelay));
     }
 
     void InitializeClosingPath(Vector3Int[] approvedPath)
@@ -685,7 +680,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             $"DropNextTile: slot com queda visual. " +
             $"slotIndex={slotIndex + 1}/{suddenDeathPath.Count}, cell={cell}, slotDuration={slotDuration:0.000}");
 
-        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(1, cell: cell);
         StartCoroutine(DropTileRoutine(cell));
     }
 
@@ -816,6 +810,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     IEnumerator DropTileRoutine(Vector3Int cell)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) yield break;
         if (indestructibleTilemap == null)
         {
             LogError($"DropTileRoutine: indestructibleTilemap NULL para {cell}");
@@ -848,9 +843,10 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogShadow($"DropTileRoutine: reutilizando sombra antecipada para {cell}");
         }
 
+        Vector3 spawnPosition = GetFallingVisualSpawnPosition(worldCenter);
+        ReportNetworkFall(cell, spawnPosition, worldCenter, duration);
         if (TryGetCurrentTileSprite(out Sprite tileSprite))
         {
-            Vector3 spawnPosition = GetFallingVisualSpawnPosition(worldCenter);
 
             visual = CreateFallingVisual(tileSprite, spawnPosition);
             RegisterActiveFallingVisual(visual);
@@ -926,6 +922,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         NotifyGameManagerIndestructibleDropFinished(cell);
         activeFallingCellApplyTimes.Remove(cell);
+        ReportNetworkCommit(cell);
 
         if (GameplayLatencyDiagnostics.Enabled)
         {
@@ -1244,7 +1241,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         Vector3Int cell = new Vector3Int(-7, 4, 0);
-        Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(1, cell: cell);
         StartCoroutine(DropTileRoutine(cell));
     }
 
@@ -1473,8 +1469,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         // The authority has now selected/played the real voice. Publish its wait
         // instead of making clients draw another voice merely to time the music.
         if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
-            Assets.Scripts.Netcode.BombermanNetworkManager.SendBattleFeedback(0,
-                value: remainingTimeAtStart, path: suddenDeathPath.ToArray(), duration: wait);
+            BeginNetworkSuddenDeath(remainingTimeAtStart, wait);
 
         yield return new WaitForSeconds(wait);
 
@@ -2234,6 +2229,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void OnDisable()
     {
+        PublishNetworkSuddenDeath(true, false);
+        StopAllCoroutines();
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            foreach (var cell in activeFallingCellApplyTimes.Keys) NotifyGameManagerIndestructibleDropFinished(cell);
+        ClearNetworkSuddenDeath();
         ClearAllQueuedShadowVisuals();
         ClearAllActiveDropVisuals();
         ClearAllDamageCoroutines();
@@ -2243,6 +2243,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void OnDestroy()
     {
+        ClearNetworkSuddenDeath();
         ClearAllQueuedShadowVisuals();
         ClearAllActiveDropVisuals();
         ClearAllDamageCoroutines();

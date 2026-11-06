@@ -10,7 +10,7 @@ namespace Assets.Scripts.Netcode
         public uint revision;
         public double time;
         public Vector2 position;
-        public float remaining, fuse;
+        public float remaining, fuse, gameplayTime;
         public int radius;
         public bool active, paused;
     }
@@ -20,7 +20,7 @@ public sealed partial class BattleMode2FallingBombController
 {
     uint targetRevision, receivedTargetRevision;
     double receivedTargetTime = double.NegativeInfinity;
-    float nextTargetSample, clientTargetRemaining, clientTargetAge;
+    float nextTargetSample, clientTargetRemaining, clientTargetAge, clientTargetGameplayTime;
     bool clientTargetPaused;
 
     void PublishTarget(bool changed = false)
@@ -31,13 +31,17 @@ public sealed partial class BattleMode2FallingBombController
         nextTargetSample = Time.unscaledTime + 0.1f;
         NetworkServer.SendToReady(new FallingBombTarget { scene = gameObject.scene.name, revision = targetRevision,
             time = NetworkTime.localTime, position = targetWarningWorldPosition, remaining = targetWarningSecondsRemaining,
-            fuse = bombFuseSeconds, radius = bombFireLevel, active = targetWarningActive, paused = GamePauseController.IsPaused });
+            fuse = bombFuseSeconds, gameplayTime = Time.time, radius = bombFireLevel, active = targetWarningActive, paused = GamePauseController.IsPaused });
     }
 
     public void ReceiveNetworkTarget(FallingBombTarget message)
     {
         if (NetSync.Mode != NetSync.NetMode.Client || NetworkServer.active || !NetworkClient.active ||
             message.scene != gameObject.scene.name || message.scene != BattleMode2SceneName || !isActiveAndEnabled ||
+            double.IsNaN(message.time) || double.IsInfinity(message.time) ||
+            !FiniteTarget(message.position.x) || !FiniteTarget(message.position.y) ||
+            !FiniteTarget(message.remaining) || message.remaining < 0 || !FiniteTarget(message.fuse) || message.fuse <= 0 ||
+            !FiniteTarget(message.gameplayTime) || message.radius < 1 ||
             (message.revision != receivedTargetRevision && !NetworkInputHistory.IsNewer(message.revision, receivedTargetRevision)) ||
             (message.revision == receivedTargetRevision && message.time <= receivedTargetTime)) return;
         receivedTargetRevision = message.revision; receivedTargetTime = message.time;
@@ -45,6 +49,7 @@ public sealed partial class BattleMode2FallingBombController
         clientTargetPaused = message.paused;
         float age = message.paused || GamePauseController.IsPaused ? 0 : Mathf.Max(0, (float)(NetworkBombFx.KickServerNow - message.time));
         clientTargetRemaining = Mathf.Max(0, message.remaining - age); clientTargetAge = 0;
+        clientTargetGameplayTime = message.gameplayTime + age;
         targetWarningSecondsRemaining = clientTargetRemaining;
         bombFuseSeconds = Mathf.Max(0.01f, message.fuse); bombFireLevel = Mathf.Max(1, message.radius);
         EnsureTargetRenderer();
@@ -52,7 +57,19 @@ public sealed partial class BattleMode2FallingBombController
         {
             targetRenderer.transform.position = new Vector3(message.position.x, message.position.y, targetRenderer.transform.position.z);
             targetRenderer.enabled = message.active;
+            SetApprovedTargetAlpha();
         }
+    }
+
+    static bool FiniteTarget(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+    void SetApprovedTargetAlpha()
+    {
+        if (targetRenderer == null) return;
+        Color color = targetRenderer.color;
+        color.a = Mathf.Lerp(targetMinAlpha, targetMaxAlpha,
+            Mathf.PingPong((clientTargetGameplayTime + clientTargetAge) * targetBlinkSpeed, 1));
+        targetRenderer.color = color;
     }
 
     void Update()
@@ -61,12 +78,7 @@ public sealed partial class BattleMode2FallingBombController
         if (GamePauseController.IsPaused || clientTargetPaused) return;
         clientTargetAge += Time.unscaledDeltaTime;
         targetWarningSecondsRemaining = Mathf.Max(0, clientTargetRemaining - clientTargetAge);
-        if (targetRenderer != null)
-        {
-            Color color = targetRenderer.color;
-            color.a = Mathf.Lerp(targetMinAlpha, targetMaxAlpha, Mathf.PingPong(Time.time * targetBlinkSpeed, 1));
-            targetRenderer.color = color;
-        }
+        SetApprovedTargetAlpha();
         // Reaching the display deadline never launches a client bomb. Only the
         // server's inactive event removes the warning; spawn remains authoritative.
     }

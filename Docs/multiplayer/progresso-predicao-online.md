@@ -99,9 +99,9 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:** 24 IDs implementados/testados e 9 parciais; todos os 33 iniciados.
+- **Checklist:** 25 IDs implementados/testados e 8 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** continuar C10, mantendo a comparação
+- **Próximo:** continuar R01, mantendo a comparação
   perceptual/manual no roteiro geral. C06 e C07 já estão implementados/testados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
@@ -265,7 +265,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
-- [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
+- [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 em andamento.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
 - [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
@@ -3942,3 +3942,86 @@ C09 concluído em implementação/testes/publicação. Checklist24/33 feitos e9p
 próximoC10. QA perceptual/offline permanece no roteiroglobal, sempromessa de
 inputlagzero. Raiz preserva somente as2alteraçõesPackages do usuário; hashes
 originais conferidos apóspublicação. Nenhuma cena/prefab do usuário alterada.
+
+
+### C10 iniciado em06/11/2026 — protocolo65 local, ainda não publicar
+
+Base9ef356171 (C09 publicado64). Raiz tinha somente2Packages do usuário;
+hashes emLogs/PredictionC10-user-packages.json. SemEditor/players ativos no início.
+Fontes próprias emLogs/PredictionC10-owned-paths.json. Nenhuma cena/prefab editada.
+
+Auditoria: SuddenDeath usava início/drop sem timestamp e client iniciava
+DropTileRoutine nativa, incluindo commit local de terreno ao fim do seu timer.
+Novo partial Network transporta snapshots completos com caminho, elapsed de
+Time.time, pausado, trajetos/começo/duração de quedas e conjunto de commits reais.
+Heartbeat/revisões/buffer32 e scene gate; late observer recupera sem eventos
+anteriores. Client anima a curva linear nativa/sombra, espera commit explícito e
+não executa limpeza/dano/callbacksGameManager. OnDisable cancela coroutines,
+retira reservas pendentes e publica clear. Sombras guardam escala/alpha do lead.
+FallingBomb recebe faseblink de gameplayTime aprovado e valida finitos antes
+serial; zero sorteio/spawn no client. Teto/powder mantêm transporte43 auditado.
+ProtocolosUnity/supervisor65 alinhados. C#local0erros/0avisos apósimpl principal;
+repetircheck final apósfixtures. Python6/6 testes de mecanismo passaram.
+
+Três novos testes de SD: deadline semcommit, confirmação+destrutível, wire,
+revisões/inputs inválidos, recuperação tardia, copy/cancel, pausa e buffer32.
+FallingBomb existente ampliado parafase deblink eNaN. FixturesDevelopment
+estendem -load-test-mechanisms: sudden/falling/powder/roof nas arenas15/2/3/8.
+Sudden usa timer48 e pausa/resume nativos; nenhumplayer simulado.
+Próximos: suíteUnity ebuildDevelopment isolados;4smokes2clientes renderizados,
+inspecionarimagens/custos, corrigirfalhas, finalizarC10 sóapós evidências.
+Checklist continua24/33 implementados/testados e9parciais; publicação65 pendente.
+
+
+C10 validação emexec16333: fontes próprias copiadas para runner livre, estado
+prévio emLogs/PredictionC10-runner-dirty.txt. FullUnity OnlineRoom+COM em
+Logs/PredictionC10Full.xml/.log; se passar geraDevelopment e4Peers60s. Não copiar
+fontes nem fechar essaUnity enquantoexecativa. TesteSudden reposiciona2atores
+nocentro por APIsnativas antes detimer48 para não morrerem jáno1ºanel; pausa
+invocaTogglePause nativo e valida pausa/resume. Fases/commits sãoexigidos emcada
+cliente pelo validadorPython. Semcompromisso comsucesso atélerosresultados.
+
+
+C10 checksC#0erros/0avisos ePython77CI+15Directory=92 aprovados. Apóscópia ao
+runner, revisão corrigiu rootNetwork commit de destrutível paraWorldToCell do
+centroindestrutível (mapascomoffsets) e ampliouteste3novo paraisso ecurva50%.
+Esses2arquivos rootaindaNÃO foramcopiados; aguardarexec16333 encerrar. Smokes
+iniciais nasarenas (mapassobrepostos) continuam úteis para caminho normal.
+Repetir3ClosingTimelineTests depois desseajuste eC#final; não usarhash dobinário
+anteriorcomoprova dooffset. NativeServer/editor dousuário preservados.
+
+
+C10 Full passou1041/1041. Development compilou;4Peers(sudden/falling/powder/roof)
+60s passaram com2clientes reais renderizados,0erros/avisos servidor. Sudden
+atravessou1recarga de rodada:104células de drop_finished servidor iguais às104
+commit_apply emcada cliente. Pausa capturada5vezes emcada. Imagens conferidas:
+queda/sombraSD, FallingBomb alvo+voo, Powderframes1/3/5/8 e restauração, teto
+aberto/fechado. Comparação de células agoraobrigatória novalidador final.
+
+Apósajuste deWorldToCell/colisores,4testesFinal passaram4/4, incluindonativo em
+PlayMode: disable impedecommitpendente, liberareservas e permitepousooffline
+apósreuso. Curva50%, snapshot tardio/RNG/cópia/serial/pausa/buffer32 também
+aprovados. Development2+Peers2-sudden emexec37958/Python8904 para validarcódigo
+finalexato. Ainda aguardar esse resultado antes demarcarC10/publicar65.
+C#final/bytes precisam ser conferidos apósúltimacorreção;92Pythonjáaprovados,
+6focados doverificador passaram apóscomparação estrita de células.
+
+
+### C10 implementado/testado — protocolo65 pronto para publicação
+
+Full1041/1041, Final4/4 (incluiPlayMode disable/reusooffline eoffsets). C#final
+0erros/0avisos;77CI+15Directory=92Python e6focados apósvalidador estrito.
+Peers iniciais60s deSD/Falling/Powder/Roof aprovados nos2clientes reais comGPU.
+Peers2Sudden no código final também passou:104células pousadas de fato no servidor
+iguaisàs104aplicadas emcada cliente; pausa/resume e1recarga de rodada,0erros/avisos.
+Imagens dequeda/sombraSD, alvo+vooFalling, frames+restorePowder, tetoaberto/fechado
+inspecionadas. Fase desconhecida não prevê dano nem rotaRNG; commit nunca vemdo
+fimdo timer visual. Recuperação desnapshot não altera política de entrar numa
+Battlejáemcurso. Nativecancel também remove reservas antes de reuso.
+
+Custo medido noSD finalperto60fps/P9516.75ms; egress total2clientes75–103KiB/s
+emamostras finais. Semcomparativo específico offline/baseline; R02 permanece
+pendente. Nenhuma cena/prefab/texture alterada na raiz.2Packages do usuário com
+hashes preservados. Checklist25/33 feitos e8parciais; próximoR01, QA humano
+perceptual/offline segue global. Próximo passo autorizado épublicar ambos65 e
+confirmar Actions, servidorativo eponteiroUpdater no mesmo commit.

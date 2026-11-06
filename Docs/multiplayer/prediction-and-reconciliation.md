@@ -1720,3 +1720,17 @@ scope, emits its approved parts/destroyed cells, and restores parent collectors
 in finally. Pure clients cannot start that gameplay; publication also requires
 an active server. Check actual client explosion objects/rendered flames, not
 only the server's completion marker or a block disappearing.
+
+
+C10 (protocol65): SuddenDeathState replaces untimed native client drops with a
+bounded approved timeline. Snapshots include scaled elapsed time, pause, path,
+active linear falls and actual committed cells. The client holds a finished
+visual until commit; only that commit installs terrain/removes the corresponding
+destructible cell, converting through world coordinates and updating colliders.
+It does not run native cleanup/damage/GameManager placement callbacks. Full
+heartbeats recover state without preceding begin/fall messages. Native disable
+cancels coroutines and removes pending reservations; offline reuse is covered
+in Play Mode. FallingBomb warnings now share the server gameplay blink phase
+and reject nonfinite data before accepting a serial. Roof/Powder retain their
+approved frame histories. Joining an in-progress Battle room remains governed
+by existing room policy, independently of snapshot recovery.

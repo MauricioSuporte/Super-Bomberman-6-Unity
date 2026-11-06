@@ -80,6 +80,8 @@ namespace Assets.Scripts.Netcode
                 else
                 {
                     PlayerPersistentStats.ResetToDefaultsAll();
+                    if(HasArg("-load-test-mechanisms")&&LoadTestMechanismScene()=="BattleMode_15")
+                        global::SaveSystem.SetBattleModeSuddenDeathSetting(BattleModeSuddenDeathSetting.On);
                     if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
                     bool fillCom = !HasArg("-load-test-mechanisms") && !HasArg("-load-test-mount-visuals") && HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
@@ -88,7 +90,7 @@ namespace Assets.Scripts.Netcode
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle(HasArg("-load-test-mechanisms") ? "BattleMode_14" : loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
+                    ServerLaunchConfiguredBattle(HasArg("-load-test-mechanisms") ? LoadTestMechanismScene() : loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -537,6 +539,13 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        static string LoadTestMechanismScene()
+        {
+            var args=Environment.GetCommandLineArgs();int at=Array.IndexOf(args,"-load-test-mechanisms");
+            return (at>=0&&at+1<args.Length?args[at+1]:"") switch
+            { "falling"=>"BattleMode_2", "powder"=>"BattleMode_3", "roof"=>"BattleMode_8", "sudden"=>"BattleMode_15", _=>"BattleMode_14" };
+        }
+
         System.Collections.IEnumerator CheckLoadTestMechanism()
         {
             var args=Environment.GetCommandLineArgs();int arg=Array.IndexOf(args,"-load-test-mechanisms");
@@ -567,7 +576,43 @@ namespace Assets.Scripts.Netcode
             int[] renderers=Array.Empty<int>();
             NetworkServer.SendToReady(new MechanismSmokeStep {kind=kind,phase=1,renderers=renderers});
             yield return new WaitForSecondsRealtime(.2f);
-            if(kind=="boiler" || kind=="blackout")
+            if(kind=="sudden")
+            {
+                int player=0;
+                foreach(var peer in NetworkServer.connections.Values)
+                    if(peer.identity!=null&&peer.identity.TryGetComponent<NetworkPlayerInput>(out var input))
+                    {
+                        var mover=input.GetComponent<MovementController>();
+                        Vector2 position=new(player++==0?-1:1,-1);
+                        source.ClearDestructibleForEffect(position,false,false);
+                        mover.Rigidbody.position=position;mover.transform.position=position;
+                        ServerReconcileFixturePlayer(input);
+                    }
+                GameManager.Instance.ApplyNetworkTimer(48,true);
+                yield return new WaitForSecondsRealtime(2);
+                var pause=GamePauseController.Instance;
+                var toggle=typeof(GamePauseController).GetMethod("TogglePause",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+                if(pause==null)throw new InvalidOperationException("Missing native pause");
+                toggle.Invoke(pause,null);
+                if(!GamePauseController.IsPaused)throw new InvalidOperationException("Native pause rejected");
+                yield return new WaitForSecondsRealtime(1);
+                toggle.Invoke(pause,null);
+                if(GamePauseController.IsPaused)throw new InvalidOperationException("Native resume rejected");
+                yield return new WaitForSecondsRealtime(4);
+            }
+            else if(kind=="powder")
+            {
+                var powder=FindAnyObjectByType<BattleMode3PowderTrailController>();var positions=new List<Vector2>();
+                if(powder==null)throw new InvalidOperationException("Missing native powder");
+                powder.CopyTrailWorldPositions(positions);
+                if(positions.Count==0)throw new InvalidOperationException("No powder trail cells");
+                var map=source.groundTiles;var cell=map.WorldToCell(positions[0]);
+                powder.OnExplosionHit(source,positions[0],cell,map.GetTile(cell));
+                yield return new WaitForSecondsRealtime(2);
+                if(powder.IgnitionRunning)throw new InvalidOperationException("Powder did not end");
+            }
+            else if(kind=="falling"||kind=="roof") yield return new WaitForSecondsRealtime(8);
+            else if(kind=="boiler" || kind=="blackout")
             {
                 var ground=source.groundTiles;var resolver=FindAnyObjectByType<GroundTileResolver>();
                 if(ground==null||resolver==null)throw new InvalidOperationException("Mechanism ground missing");
@@ -666,6 +711,30 @@ namespace Assets.Scripts.Netcode
                     var sample=GameplayLatencyDiagnostics.For("mechanism_view",detail:"fixture="+kind+";phase="+phase+";visible="+view.enabled+";sprite="+(view.sprite!=null?view.sprite.name:"")+";shader="+(view.sharedMaterial!=null?view.sharedMaterial.shader.name:""));
                     sample.entity=id;sample.position=view.transform.position;GameplayLatencyDiagnostics.Write(sample);
                 }
+            const System.Reflection.BindingFlags flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            if(kind=="sudden")
+                GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_sudden_pause",detail:"paused="+GamePauseController.IsPaused));
+            if(kind=="falling")
+            {
+                var target=FindAnyObjectByType<BattleMode2FallingBombController>();
+                if(target!=null){bool active=target.TryGetActiveTargetWarning(out _,out _,out _);
+                    GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_target",detail:"active="+active+";bombs="+FindObjectsByType<Bomb>().Length));}
+            }
+            if(kind=="powder")
+            {
+                var powder=FindAnyObjectByType<BattleMode3PowderTrailController>();
+                if(powder!=null)GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_powder",detail:"frame="+typeof(BattleMode3PowderTrailController).GetField("presentedNetworkPowderFrame",flags).GetValue(powder)));
+            }
+            if(kind=="roof")
+            {
+                var roof=FindAnyObjectByType<BattleMode8RoofController>();
+                if(roof!=null)
+                {
+                    var history=(List<RoofTileState>)typeof(BattleMode8RoofController).GetField("networkRoofHistory",flags).GetValue(roof);
+                    if(history.Count>0){var state=history[0];int tile=state.tiles.Length>0?state.tiles[0]:-9;
+                        GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_roof",detail:"tile="+tile));}
+                }
+            }
             StageBlackout blackout=StageBlackout.Instance;
             if(!string.IsNullOrEmpty(blackoutPath))
                 foreach(var candidate in coopBlackoutSources)if(candidate!=null&&candidate.NetworkBlackoutPath==blackoutPath){blackout=candidate;break;}
@@ -1127,7 +1196,7 @@ namespace Assets.Scripts.Netcode
             if(mechanismKind!=null&&mechanismPhase>0&&mechanismFrame<100&&Time.unscaledTime<mechanismCaptureUntil&&Time.unscaledTime>=mechanismCaptureNext)
             {
                 float elapsed=Time.unscaledTime-mechanismPhaseAt;
-                float interval=elapsed<1.5f&&(mechanismKind=="boiler"||mechanismKind=="dynamite")?.025f:
+                float interval=elapsed<1.5f&&(mechanismKind=="boiler"||mechanismKind=="dynamite"||mechanismKind=="powder")?.025f:
                     elapsed<1.5f||mechanismKind=="rocket"&&elapsed>4.8f&&elapsed<6.6f?.1f:.2f;
                 mechanismCaptureNext=Time.unscaledTime+interval;
                 if(NetworkManager.singleton is BombermanNetworkManager manager)manager.TraceMechanismViews(mechanismKind,mechanismPhase,mechanismRenderers,mechanismBlackoutPath);

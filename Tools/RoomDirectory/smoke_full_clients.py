@@ -14,7 +14,7 @@ from benchmark_local import host_memory
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
         mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False, mechanism_kind=None):
-    if mechanism_kind and (mechanism_kind not in ('boiler', 'blackout', 'world-blackout', 'rocket', 'dynamite') or not diagnostics or not rendered):
+    if mechanism_kind and (mechanism_kind not in ('boiler', 'blackout', 'world-blackout', 'rocket', 'dynamite', 'sudden', 'falling', 'powder', 'roof') or not diagnostics or not rendered):
         raise ValueError('mechanism fixture requires diagnostics and rendered clients')
     if field_motion and (not presenter_removal or not diagnostics):
         raise ValueError('field motion requires presenter-removal diagnostics')
@@ -206,7 +206,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                             any(abs(row.get('delta', {}).get(axis, 0)) > .0001 for axis in ('x', 'y')))
                     if not transfer_samples: raise RuntimeError('approved arc did not keep moving between presenter transfer and the next apply: '+path.name)
                 if mechanism_kind and path.stem == 'server':
-                    mechanism_expected = [row for row in rows if row.get('kind') == 'mechanism_bomb_expected']
+                    mechanism_expected = [row for row in rows if row.get('kind') == ('sudden_death_drop_finished' if mechanism_kind == 'sudden' else 'mechanism_bomb_expected')]
                 if field_motion and path.stem == 'server':
                     field_expected = [row for row in rows if row.get('kind') == 'field_motion_expected']
                 if launcher_kind and launcher_kind.startswith('portal') and path.stem == 'server':
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
     parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34'), help='Exercise native launcher trajectories with two actors')
-    parser.add_argument('--mechanisms', choices=('boiler','blackout','world-blackout','rocket','dynamite'), help='Exercise native phase mechanisms with two rendered clients')
+    parser.add_argument('--mechanisms', choices=('boiler','blackout','world-blackout','rocket','dynamite','sudden','falling','powder','roof'), help='Exercise native phase mechanisms with two rendered clients')
     parser.add_argument('--mount-visuals', action='store_true', help='Exercise native egg mount, death variants, Pink jump, emote and AFK handoff')
     parser.add_argument('--mount-cycles', action='store_true', help='Require three native remount cycles and egg transfers per owner')
     parser.add_argument('--rendered', action='store_true', help='Enable client graphics and capture mount arcs for visual review')

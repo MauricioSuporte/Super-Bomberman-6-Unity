@@ -119,6 +119,12 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopTileAnimation>(ApplyCoopTileAnimation);
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
+            NetworkClient.RegisterHandler<SuddenDeathState>(message =>
+            {
+                if (message.scene != SceneManager.GetActiveScene().name) return;
+                var suddenDeath = FindAnyObjectByType<BattleSuddenDeathController>();
+                if (suddenDeath != null) suddenDeath.ReceiveNetworkSuddenDeath(message);
+            });
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
             NetworkClient.RegisterHandler<PortalMaskSnapshot>(ApplyPortalMasks);
             NetworkClient.RegisterHandler<RoofTileState>(message =>
