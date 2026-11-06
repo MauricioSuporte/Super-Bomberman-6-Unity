@@ -13,14 +13,16 @@ from benchmark_local import host_memory
 
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False, mechanism_kind=None):
+    if mechanism_kind and (mechanism_kind not in ('boiler', 'blackout', 'world-blackout', 'rocket', 'dynamite') or not diagnostics or not rendered):
+        raise ValueError('mechanism fixture requires diagnostics and rendered clients')
     if field_motion and (not presenter_removal or not diagnostics):
         raise ValueError('field motion requires presenter-removal diagnostics')
     if mount_visuals and (mode != 'BattleMode' or not diagnostics or mount_input or launcher_kind or revenge_input):
         raise ValueError('mount visual fixture requires BattleMode diagnostics without other input fixtures')
     if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34') or not diagnostics or mount_input or revenge_input or presenter_removal):
         raise ValueError('launcher fixture requires diagnostics and no other input fixture')
-    if rendered and not (mount_cycles or launcher_kind or mount_visuals):
+    if rendered and not (mount_cycles or launcher_kind or mount_visuals or mechanism_kind):
         raise ValueError('rendered captures require mount cycles or launchers')
     if mount_cycles and (not mount_input or not diagnostics):
         raise ValueError('mount cycles require mount input and diagnostics')
@@ -39,7 +41,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 raise RuntimeError('the durable actor smoke requires Development players')
             assembly_hashes[role] = hashlib.sha256(assembly).hexdigest()
         (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
-            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, launcherKind=launcher_kind, mountVisuals=mount_visuals, assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
+            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, launcherKind=launcher_kind, mountVisuals=mount_visuals, mechanismKind=mechanism_kind, assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
         env = dict(os.environ, SB6_ROOM_ID='spawn-regression', SB6_ROOM_TOKEN=secrets.token_hex(32),
                    SB6_ROOM_STATUS=str(output/'status.json'))
         def launch(binary, name, arguments, environment=None):
@@ -59,6 +61,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                         (['-online-motion-logs'] if diagnostics else []) +
                         (['-load-test-presenter-removal'] if presenter_removal else []) +
                         (['-load-test-field-motion'] if field_motion else []) +
+                        (['-load-test-mechanisms', mechanism_kind] if mechanism_kind else []) +
                         (['-load-test-revenge-input'] if revenge_input else []) +
                         (['-load-test-full-input'] if mount_input else []) +
                         (['-load-test-mount-cycles'] if mount_cycles else []) +
@@ -86,7 +89,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                    (['-load-test-mount-cycles'] if mount_cycles else []) +
                    (['-load-test-launchers', launcher_kind] if launcher_kind else []) +
                    (['-load-test-mount-visuals'] if mount_visuals else []) +
-                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '1024', '-screen-height', '896'] if rendered else []) +
+                   (['-load-test-mechanisms', mechanism_kind] if mechanism_kind else []) +
+                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '512' if mechanism_kind else '1024', '-screen-height', '448' if mechanism_kind else '896'] if rendered else []) +
                    (['-load-test-item-motion'] if prediction_items else []) +
                    ['-local-diagnostic-name', 'SB6Smoke'+str(index+1)])
             time.sleep(1)
@@ -124,6 +128,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             raise RuntimeError('native mount visual fixture did not finish with two owners')
         if launcher_kind == 'rope' and '[LoadTest] rope blocked prefix player=' not in server_text:
             raise RuntimeError('native rope fixture did not exercise an early blocker')
+        if mechanism_kind and '[LoadTest] mechanism completed kind='+mechanism_kind not in server_text:
+            raise RuntimeError('native mechanism fixture did not complete')
         removed_bomb = None
         if revenge_input:
             if '[LoadTest] revenge-input completed players=2' not in server_text:
@@ -147,6 +153,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         captures = {}
         portal_expected = []
         field_expected = []
+        mechanism_expected = []
         for path in [output/'server.log', output/'client-1.log', output/'client-2.log']:
             lines = path.read_text(encoding='utf-8-sig', errors='replace').splitlines()
             if mount_input and path.name.startswith('client-') and not any('full-input dismount acknowledged' in line for line in lines):
@@ -198,6 +205,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                             row.get('bombNetId') == removed_bomb and transfer_started < row['realtime'] < next_apply and
                             any(abs(row.get('delta', {}).get(axis, 0)) > .0001 for axis in ('x', 'y')))
                     if not transfer_samples: raise RuntimeError('approved arc did not keep moving between presenter transfer and the next apply: '+path.name)
+                if mechanism_kind and path.stem == 'server':
+                    mechanism_expected = [row for row in rows if row.get('kind') == 'mechanism_bomb_expected']
                 if field_motion and path.stem == 'server':
                     field_expected = [row for row in rows if row.get('kind') == 'field_motion_expected']
                 if launcher_kind and launcher_kind.startswith('portal') and path.stem == 'server':
@@ -208,6 +217,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 if mount_visuals and path.stem != 'server':
                     from validate_mount_visual_smoke import validate_mount_visual_capture
                     captures[path.stem]['mountVisuals'] = validate_mount_visual_capture(rows)
+                if mechanism_kind and path.stem != 'server':
+                    from validate_mechanism_smoke import validate_mechanism_capture
+                    captures[path.stem]['mechanism'] = validate_mechanism_capture(rows, mechanism_kind, mechanism_expected)
                 if field_motion and path.stem != 'server':
                     from validate_launcher_smoke import validate_field_capture
                     captures[path.stem]['fieldMotion'] = validate_field_capture(rows, field_expected)
@@ -268,6 +280,7 @@ if __name__ == '__main__':
     parser.add_argument('--require-unlocked', action='store_true', help='Require the server and each owner to regain free movement after the cooperative intro')
     parser.add_argument('--presenter-removal', action='store_true', help='Development Stage_1-1 fixture removes the player presenting an approved native bomb arc')
     parser.add_argument('--launchers', choices=('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34'), help='Exercise native launcher trajectories with two actors')
+    parser.add_argument('--mechanisms', choices=('boiler','blackout','world-blackout','rocket','dynamite'), help='Exercise native phase mechanisms with two rendered clients')
     parser.add_argument('--mount-visuals', action='store_true', help='Exercise native egg mount, death variants, Pink jump, emote and AFK handoff')
     parser.add_argument('--mount-cycles', action='store_true', help='Require three native remount cycles and egg transfers per owner')
     parser.add_argument('--rendered', action='store_true', help='Enable client graphics and capture mount arcs for visual review')
@@ -290,4 +303,4 @@ if __name__ == '__main__':
                        any(character in args.scene for character in '/\\')):
         parser.error('scene must be a cooperative Stage_* name')
     run(args.server.resolve(), args.client.resolve(), args.output, args.port, args.mount_input, args.seconds,
-        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input, args.mount_cycles, args.rendered, args.launchers, args.mount_visuals)
+        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input, args.mount_cycles, args.rendered, args.launchers, args.mount_visuals, mechanism_kind=args.mechanisms)

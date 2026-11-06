@@ -99,9 +99,9 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 - **R02/R03/R05–R08:** custos CPU/bytes por família instrumentados; primeira captura
   EnemyMovementController registrada sem baseline comparativo; guardas nativas e
   pausa de apresentação ampliadas. Curvas/ambientes/telegraphs ainda em auditoria.
-- **Checklist:** 23 IDs implementados/testados e 10 parciais; todos os 33 iniciados.
+- **Checklist:** 24 IDs implementados/testados e 9 parciais; todos os 33 iniciados.
   Validação visual/manual continua pendente, inclusive em IDs marcados como feitos.
-- **Próximo:** continuar C09, mantendo a comparação
+- **Próximo:** continuar C10, mantendo a comparação
   perceptual/manual no roteiro geral. C06 e C07 já estão implementados/testados.
 - **Workspace:** branch `v0.5.0`, checkout original. Nenhuma cena/prefab editada neste
   lote. Não fechar nem sobrescrever o Editor ou cenas/fontes do usuário.
@@ -264,7 +264,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
-- [ ] C09: parcial48: caldeira/pull ordenado sem previsão/lead, gates de swap/dinamite/foguete, blackout/room lights e materiais de máscara aprovados,445 testes combinados; fases/tile Startup/capturas/render gráfico ainda pendentes.
+- [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 em andamento.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
@@ -3772,3 +3772,138 @@ headless e três trajetos nativos, sem erros/avisos e com transferência preserv
 Checklist23/33 implementados/testados,10parciais. PróximoC09.
 QA perceptual/GPU/offline segue na matriz geral. Nenhuma alteração do usuário
 emPackages entrou no lote; hashes originais preservados até a confirmação final.
+
+### C09 retomado em05/11/2026 — protocolo64 local, não publicar ainda
+
+Base99a72b14f (C08 publicado63). Packages/manifest.json e packages-lock.json
+são do usuário; hashes emLogs/PredictionC09-user-packages.json. Runner isolado
+livre ao início,12arquivos gerados deCI preservados. Fontes próprias listadas
+emLogs/PredictionC09-owned-paths.json; inclui2novosC# e metas. Editor24924 não
+foi fechado. Nenhuma cena/prefab editada. Nenhum commitC09 ainda.
+
+Implementação local: CoopTileFrame inclui animated/frame no snapshot inicial;
+CoopTileAnimation envia deltas compactos de até48células, revision por mapa,
+a20Hz somente nas células animadas cacheadas. Snapshot estrutural a4Hz não
+repete matrizes por avanço de frame. Delta altera só frame no cache para não
+perder mudança ainda não enviada de cor/matriz/colisão. Frames recebidos pausam
+relógio nativo do tile; leitura no client não consome Random. Tiles comPrefab
+viram clones visuais semPrefab/collider. Conveyor mantém seu transporte próprio.
+
+Caldeira usa Bomb.Bind/Report/EndNetworkBombMotion para fallback WorldBombMotion
+quando o jogador é removido. OnDisable cancela MovePosition pendente e restaura
+a animação congelada; End não publica sem NetworkServer.active. Environment
+cancelado corta a fila se stop divergente; regressões C08 ampliadas. Foguete
+semRigidbody agora participa do freeze de gameplay no stream de sprites.
+
+Novos testes OnlineRoomMechanismPhaseTests: RNG/frame/color/matrix, prefab
+sanitizado, protocolo/revisão/scene/path/frame inválido/late snapshot/terreno
+removido, NativeBoiler PlayMode e pause doRocket. Focused1 e2 não executaram
+por erro de API(nome GetInstantiatedObject) e namespace(global::StageAssets),
+já corrigidos. Focused3 emexec62222; aguardar XML antes de copiar fonte.
+
+C#csproj raiz não incluiu arquivo novo automaticamente. Check explícito com
+Logs/PredictionC09-compile.targets, condicionado apenas aAssembly-CSharp, passou
+0erros/6avisos legados antes das últimas revisões. Refazer checkfinal com esse
+target se .csproj continuar antigo; não editar csproj gerado. Primeiro target
+sem condição afetou referências e falhou; foi corrigido, não é falha runtime.
+Próximos: focados, suíte completa, fixtures2clientesrenderizados (caldeira,
+blackout/swap, foguete/tiles), shader/material e auditoriaStartup; só depois
+marcarC09, commit/publicar64 ambos e confirmarCI. Checklist segue23/33.
+
+
+C09 checkpoint adicional: Focused3 passou13/13 e Full1 passou1036/1036.
+Câmera aprovada agora acompanha transições nativas de sala; bounds de BoxCollider
+desativado no cliente são calculados sem reativar colisão. Cobertura de câmera
+e wire adicionada. C# final local0erros/0avisos; Python fixtures4/4.
+Full2 e buildDevelopment/testes renderizados de2clientes em execução no runner
+isolado (sessão30928): boiler, blackout, world-blackout, rocket e dynamite.
+Aguardar resultados emLogs/PredictionC09Full2 e PredictionC09Peers-* antes de
+marcarC09 ou publicar64. Sem alterações emfontes após cópia ao runner.
+
+
+Retomada: Full2 passou1037/1037 e Development compilou. Peers1 falhou por
+parâmetro de fixture ausente no client; Python agora passa -load-test-mechanisms
+nos dois lados e CLI expõe --mechanisms. Peers2/3 interrompidos durante retomada
+(nenhum resultado válido). Peers4 apresentou pull/endpoints em2clientes sem
+avisos, mas detectou ausência de frames da porta: Unity headless não avança
+GetAnimationFrame. Correção local adiciona relógio visual servidor por tile,
+Time.time escalado, velocidade declarada (sem sorteioextra), invalidação em
+mudanças deasset/célula e limpeza de cena. Offline/renderizador nativo intactos.
+Novo teste de avanço/loop/RNG. Full3+Development2+Peers5 emsessão43223; aguardar
+resultados antes de concluirC09/publicar64. Editor do usuário não está aberto
+na retomada. Packages continuam com hashes preservados. Protocolo64 não publicado.
+
+
+Full3:1037/1038; único erro foi teste de late snapshot esperando frame do renderer
+no servidor headless. Teste ajustado ao relógioaprovado, Final5 passou5/5, incluindo
+late snapshot, revisão inválida, porta/RNG e câmera. CompilaçãoC# incremental
+Logs/PredictionC09CSharpFinal.log passou0erros/0avisos (restore anterior só6Mirror
+legados). FixtureRocket percorre2transições nativas até sala3, com2atores.
+BuildDevelopment3 + Peers5 emsessão55871. Development2 teve execução sobreposta
+na orquestração e foi descartada; somente Unity do runner foi encerrado, sem
+Editor do usuário. Não concluir nem publicar antes de verificar Peers5.
+
+
+Peers5 caldeira e blackout/swap passaram nos2clientes reais renderizados,
+0erros/avisos servidor, owners destravados. Porta comframes intermediários
+inspecionados e2683deltas de tile aplicados porclient durante110s naStage2-2;
+origem/fim da bomba apresentados. Blackout claro/escuro0.85 confirmado emlogs
+e imagem01-16, incluindo retorno. Stage2-2 estabilizou perto60fps/P9516.75ms,
+egress servidor total142–148KiB/s para2peers (sem baseline direto; custoR02
+continua emaberto). WorldBlackout/rocket/dynamite ainda executando em55871.
+
+
+Peers5Rocket passou fases em2clients, semerros/avisos; a câmeraaprovada chegou
+à sala3 através das2transições. Captura inicial ficou comorigemfora doquadro;
+fixture passa aselecionar célula visível, sem alterar alvoRNG nativo. WorldBlackout
+Peers5 validou estados/material, mas salaescura fora doquadro; nova fixture entra
+pela transição nativa na sala2. BuildDevelopment4+Peers6(world/rocket60s) em20806,
+processoPython21308. Somente fixtures mudaram apósDevelopment3 atéentão.
+Peers5Dynamite falhou comexplosõesclient=0: SpawnExplosionCrossForEffect não
+coletava/publicava Fx deBattle. Correção local usa coletor existente+try/finally
+para preservar escopo ancestral e transporta partes/terreno aprovados, comgate
+client e servidorativo. Teste nativo deescopo/guard acrescentado à PlayMode.
+AguardarPeers6 encerrar antes decopiar fontes; próximo script pronto em
+Logs/PredictionC09-dynamite-final.py: Final2 cincoafetados, Development5 e
+Peers7-dynamite60s. C#final precisa ser repetido apósBombController. C09aberto.
+
+
+Peers6WorldBlackout passou2clients após transição nativa: imagens01-05(escuro
+comcírculos/partesvisíveis) e01-20(claro) inspecionadas. Peers6Rocket passou
+fases/marker/endpoints, GPU mostra subida, porém teve1aviso deEmitAbilityExplosionFx
+emMechaBomb.Update apósNetworkServer.Stop. Guarda NetworkServer.active já entrou
+na correçãoBombController paraDynamite; repetirRocket nomesmo binário5 para
+exigir0avisos. Final2+Development5+Peers7Dynamite em28689/Python22592. Aoencerrar,
+Logs/PredictionC09-rocket-final.py repeteRocket60s semrebuild, porta28721.
+
+
+Final2 passou5/5 comescopo nativo deexplosão/cross eguardclient. C#final passou
+0erros/0avisos apósBombController. Development5 emexec28689, seguidode
+Peers7Dynamite60s. Exec81488 esperaPython22592 terminar e rodaPeers7Rocket60s
+comguardas paraXMLFinal2 aprovado ebuild5 concluída. Não copiarfontes enquanto
+estiveremativos. Código/fixture finais jácopiados ao runner naexec28689.
+Protocolo64 ainda não publicado; não stagePackages. Aguardarambosresultados,
+inspecionarchamas naDinamite e repetircheckbytes/dirty. FecharC09 epublicarambos
+apenas depois disso. Os demais cenários aprovados estão emPeers5boiler/blackout
+ePeers6world-blackout, comimagens jáinspecionadas.
+
+
+### C09 implementado e validado — protocolo64 pronto para publicação
+
+Resultados finais: Peers5boiler/blackout, Peers6world-blackout e
+Peers7rocket/dynamite passaram com2clientes Mirror reais renderizados.
+Todos0erros e0avisos servidor. ImagensURP inspecionadas: abertura intermediária
+da porta, blackoutUI escuro/claro, sala2 comcírculos de luz/partesvisíveis,
+foguete visível emsubida e dinamite comchamas. Rocket7 teve Rocket2–5/7–10/12/15
+e Target0/1 nos2clientes; Dynamo7 teve explosõesclientes>0(5,15...).
+O aviso teardown doRocket6 não reapareceu noRocket7 comguarda servidorativo.
+As tentativas falhas foram preservadas, sem diminuir critérios do verificador.
+
+C#final0erros/0avisos; Python75CI+15Directory=90 aprovados. Full2 1037/1037;
+Full3 1037/1038 (único teste de late snapshot ajustado ao clockheadless), Final5
+5/5 e Final2 5/5 após escopo daexplosão. Não declarar Full3 totalmente aprovado.
+Nenhuma cena/prefab/texture editada na raiz. Packages preservados e hashes
+verificados. Checklist24/33 feitos e9parciais; próximoC10. QA humano de sensação
+comoffline e custo comparativoR02 permanecem no roteiroglobal.
+Próximo passo autorizado: commit/pushv0.5.0 e Actions ambos, confirmarservidor,
+cliente e updater no mesmo commit64; salvar confirmação neste checkpoint.

@@ -305,7 +305,8 @@ namespace Assets.Scripts.Netcode
         {
             int id = renderer.GetEntityId().GetHashCode();
             if (!coopPhysicsPause.TryGetValue(id, out bool paused))
-                coopPhysicsPause[id] = paused = renderer.GetComponentInParent<Rigidbody2D>(true) != null || renderer.GetComponentInParent<BattleMode9MinecartController>(true) != null;
+                coopPhysicsPause[id] = paused = renderer.GetComponentInParent<Rigidbody2D>(true) != null || renderer.GetComponentInParent<BattleMode9MinecartController>(true) != null ||
+                    renderer.GetComponentInParent<global::StageAssets.DestructibleRocketController>(true) != null;
             return paused;
         }
 

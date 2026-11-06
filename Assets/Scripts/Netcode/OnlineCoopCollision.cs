@@ -91,7 +91,10 @@ namespace Assets.Scripts.Netcode
         void OnCoopTileChanged(Tilemap map, Tilemap.SyncTile[] changes)
         {
             if (NetworkServer.active && IsCoopStage && map != null && map.gameObject.scene.name == coopScene && changes != null && changes.Length > 0)
+            {
                 coopDirtyMaps.Add(map);
+                InvalidateCoopTileClocks(map, changes);
+            }
         }
 
         void CaptureCoopCollisionState()

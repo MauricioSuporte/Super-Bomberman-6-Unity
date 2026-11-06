@@ -40,7 +40,9 @@ public class AnimatedTile : TileBase
         }
         else
         {
-            tileAnimationData.animationSpeed = Random.Range(m_MinSpeed, m_MaxSpeed);
+            // Pure clients present approved frames; querying a tile must not draw gameplay RNG.
+            tileAnimationData.animationSpeed = Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client
+                ? m_MinSpeed : Random.Range(m_MinSpeed, m_MaxSpeed);
         }
 
         tileAnimationData.animationStartTime = m_AnimationStartTime;

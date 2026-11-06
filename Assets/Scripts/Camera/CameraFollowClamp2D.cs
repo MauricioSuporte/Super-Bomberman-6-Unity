@@ -45,6 +45,18 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     private float PixelWorldStep => (pixelsPerUnit > 0) ? (1f / pixelsPerUnit) : 0.0625f;
 
+    static Bounds ReadFollowBounds(Collider2D area)
+    {
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || area is not BoxCollider2D box || box.enabled && box.gameObject.activeInHierarchy)
+            return area.bounds;
+        Vector2 half=box.size*.5f;
+        Bounds bounds=new(box.transform.TransformPoint(box.offset-half),Vector3.zero);
+        bounds.Encapsulate(box.transform.TransformPoint(box.offset+half));
+        bounds.Encapsulate(box.transform.TransformPoint(box.offset+new Vector2(half.x,-half.y)));
+        bounds.Encapsulate(box.transform.TransformPoint(box.offset+new Vector2(-half.x,half.y)));
+        return bounds;
+    }
+
     void Awake()
     {
         cam = GetComponent<Camera>();
@@ -87,7 +99,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             transform.position.z
         );
 
-        desired = ClampToBounds(desired, boundsCollider.bounds);
+        desired = ClampToBounds(desired, ReadFollowBounds(boundsCollider));
 
         Vector2 current = new Vector2(rawPos.x, rawPos.y);
         current = QuantizeToPixelGrid(current);
@@ -100,7 +112,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
         if (moveWorld <= 0f || dir == Vector2.zero)
         {
-            rawPos = ClampToBounds(new Vector3(current.x, current.y, rawPos.z), boundsCollider.bounds);
+            rawPos = ClampToBounds(new Vector3(current.x, current.y, rawPos.z), ReadFollowBounds(boundsCollider));
             transform.position = rawPos;
             return;
         }
@@ -127,7 +139,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         next = QuantizeToPixelGrid(next);
 
         rawPos = new Vector3(next.x, next.y, transform.position.z);
-        rawPos = ClampToBounds(rawPos, boundsCollider.bounds);
+        rawPos = ClampToBounds(rawPos, ReadFollowBounds(boundsCollider));
 
         transform.position = rawPos;
     }
@@ -429,7 +441,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             transform.position.z
         );
 
-        desired = ClampToBounds(desired, boundsCollider.bounds);
+        desired = ClampToBounds(desired, ReadFollowBounds(boundsCollider));
 
         rawPos = desired;
         lastMoveDirCardinal = Vector2.zero;
@@ -437,7 +449,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
         Vector2 quantized = QuantizeToPixelGrid(new Vector2(rawPos.x, rawPos.y));
         rawPos = new Vector3(quantized.x, quantized.y, rawPos.z);
-        rawPos = ClampToBounds(rawPos, boundsCollider.bounds);
+        rawPos = ClampToBounds(rawPos, ReadFollowBounds(boundsCollider));
 
         transform.position = rawPos;
         if (refreshPlayersNow)

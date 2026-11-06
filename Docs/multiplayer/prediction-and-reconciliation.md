@@ -1684,3 +1684,39 @@ Final serial review adds a gate against the newest queued revision before
 processing another cancellation or family change. ClientMotionRevision alone
 represents only the applied leg; an older stop must not discard newer queued
 approvals. Final focused suite passed18/18 after the full1028/1028 run.
+
+
+C09 implementation (protocol64): generic AnimatedTile phases use initial/full
+CoopTileFrame state plus bounded CoopTileAnimation deltas at20Hz. Structural
+map snapshots remain separate; advancing a frame cannot swallow pending color,
+transform or collider changes. Conveyor variants retain C01 phase ownership.
+Client tile queries no longer draw gameplay RNG. Prefab-bearing Tile sources
+are cloned into cached visual-only Tiles without prefab/collider mutation.
+
+Boiler capture reports Environment motion through Bomb's canonical world-capable
+transport, so removing the source does not remove the motion route. Disabling
+the boiler cancels pending physics movement and restores frozen bomb animation.
+Rocket renderers without bodies participate in approved gameplay pause.
+CoopStageStatus carries approved camera selection for native room transitions;
+client follow bounds use authored disabled BoxCollider2D geometry without enabling
+collision. Mechanism fixtures and rendered acceptance results are recorded in
+the maintained progress checklist; these changes do not predict hidden targets,
+explosion damage or terrain edits.
+
+
+Headless Tilemap renderers do not advance GetAnimationFrame. For approved tile
+phases on dedicated players, keep a per-map/cell clock in scaled gameplay time,
+reset it on asset replacement/removal, and clear it on scene teardown. Use the
+authored specified duration or minimum speed without an extra gameplay RNG draw.
+Rendered native servers/offline keep their actual renderer phase. Exercise a
+real dedicated/no-graphics server and both clients; editor frame setters alone
+cannot prove that a live door animation sends intermediate frames.
+
+
+Mechanism explosions must publish their actual visual parts through the existing
+explosion transport in Battle too; cooperative sprite streaming can hide a
+missing Battle RPC. SpawnExplosionCrossForEffect now owns a nested collector
+scope, emits its approved parts/destroyed cells, and restores parent collectors
+in finally. Pure clients cannot start that gameplay; publication also requires
+an active server. Check actual client explosion objects/rendered flames, not
+only the server's completion marker or a block disappearing.

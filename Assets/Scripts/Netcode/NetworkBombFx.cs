@@ -379,7 +379,7 @@ namespace Assets.Scripts.Netcode
                     (previous.approvedOnly || previous.pendingArcs.Count > 0 || motion.moving &&
                      Vector2.Dot(previous.motion.end - previous.motion.start, motion.end - motion.start) <= 0));
             if (arcContinuation && !motion.moving &&
-                (motion.kind == BombMotionKind.Magnet || motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Kick))
+                (motion.kind == BombMotionKind.Magnet || motion.kind == BombMotionKind.Search || motion.kind == BombMotionKind.Kick || motion.kind == BombMotionKind.Environment))
             {
                 Vector2 approvedEnd = previous.motion.end;
                 foreach (var queued in previous.pendingArcs) approvedEnd = queued.end;

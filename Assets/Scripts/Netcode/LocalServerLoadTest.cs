@@ -10,6 +10,7 @@ namespace Assets.Scripts.Netcode
 {
     struct PresenterSmokeReady : NetworkMessage { public string scene; }
     struct MountVisualSmokeStep : NetworkMessage { public int phase; }
+    struct MechanismSmokeStep : NetworkMessage { public string kind; public int phase; public int[] renderers; public string blackout; }
     struct RopeSmokeStep : NetworkMessage { public int phase; }
     struct RopeSmokeAck : NetworkMessage { public int phase; public uint tick; }
     // Development-only command-line harness. No remote message can enable it.
@@ -17,6 +18,7 @@ namespace Assets.Scripts.Netcode
     {
         bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked, loadTestLaunchersChecked, loadTestVisualsChecked;
         string loadTestLauncherKind;
+        bool loadTestMechanismChecked;
         readonly HashSet<int> loadTestPresenterReady = new();
         readonly Dictionary<int, RopeSmokeAck> loadTestRopeAcks = new();
         int loadTestPlayers;
@@ -80,13 +82,13 @@ namespace Assets.Scripts.Netcode
                     PlayerPersistentStats.ResetToDefaultsAll();
                     if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
-                    bool fillCom = !HasArg("-load-test-mount-visuals") && HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
+                    bool fillCom = !HasArg("-load-test-mechanisms") && !HasArg("-load-test-mount-visuals") && HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
                     if (fillCom) global::SaveSystem.SetBattleModeComputerLevel(BattleModeComputerLevel.Hard);
                     for (int i = 0; i < modes.Length; i++) modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle(loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
+                    ServerLaunchConfiguredBattle(HasArg("-load-test-mechanisms") ? "BattleMode_14" : loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -115,6 +117,11 @@ namespace Assets.Scripts.Netcode
                 {
                     loadTestRevengeChecked = true;
                     StartCoroutine(CheckLoadTestRevengeInput());
+                }
+                if (!loadTestMechanismChecked && HasArg("-load-test-mechanisms") && Time.timeSinceLevelLoad > 15 &&
+                    NetworkServer.connections.Count >= loadTestPlayers && (!IsCoopRoom || OnlineCoopPlayersReady))
+                {
+                    loadTestMechanismChecked = true; StartCoroutine(CheckLoadTestMechanism());
                 }
                 if (!loadTestPresenterChecked && HasArg("-load-test-presenter-removal") && IsCoopRoom &&
                     Time.timeSinceLevelLoad > 12 && OnlineCoopPlayersReady && loadTestPresenterReady.Count >= loadTestPlayers &&
@@ -530,6 +537,151 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        System.Collections.IEnumerator CheckLoadTestMechanism()
+        {
+            var args=Environment.GetCommandLineArgs();int arg=Array.IndexOf(args,"-load-test-mechanisms");
+            string kind=arg+1<args.Length?args[arg+1]:"";
+            BombController source=null;
+            foreach(var peer in NetworkServer.connections.Values)
+                if(peer.identity!=null&&peer.identity.TryGetComponent(out source))break;
+            if(source==null)throw new InvalidOperationException("Mechanism smoke needs a source");
+            if(kind=="rocket" || kind=="world-blackout")
+            {
+                var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                // Traverse the authored transitions into the room that owns the mechanism.
+                int roomSteps=kind=="rocket"?2:1;
+                for(int roomStep=0;roomStep<roomSteps;roomStep++)
+                {
+                global::StageAssets.World3RoomTwoTransition transition=null;
+                foreach(var candidate in FindObjectsByType<global::StageAssets.World3RoomTwoTransition>())
+                    if((Camera)typeof(global::StageAssets.World3RoomTwoTransition).GetField("sourceRoomCamera",flags).GetValue(candidate)==Camera.main){transition=candidate;break;}
+                if(transition==null)throw new InvalidOperationException("Rocket fixture needs native room transition");
+                typeof(global::StageAssets.World3RoomTwoTransition).GetField("transitionStarted",flags).SetValue(transition,true);
+                typeof(global::StageAssets.World3RoomTwoTransition).GetField("transitionSourcePosition",flags).SetValue(transition,(Vector2)Camera.main.transform.position);
+                yield return (System.Collections.IEnumerator)typeof(global::StageAssets.World3RoomTwoTransition).GetMethod("TransitionRoutine",flags).Invoke(transition,null);
+                foreach(var peer in NetworkServer.connections.Values)
+                    if(peer.identity!=null&&peer.identity.TryGetComponent<NetworkPlayerInput>(out var input))ServerReconcileFixturePlayer(input);
+                yield return new WaitForSecondsRealtime(1);
+                }
+            }
+            int[] renderers=Array.Empty<int>();
+            NetworkServer.SendToReady(new MechanismSmokeStep {kind=kind,phase=1,renderers=renderers});
+            yield return new WaitForSecondsRealtime(.2f);
+            if(kind=="boiler" || kind=="blackout")
+            {
+                var ground=source.groundTiles;var resolver=FindAnyObjectByType<GroundTileResolver>();
+                if(ground==null||resolver==null)throw new InvalidOperationException("Mechanism ground missing");
+                var cells=new List<Vector3Int>();
+                foreach(var cell in ground.cellBounds.allPositionsWithin)
+                    if(resolver.TryGetHandler(ground.GetTile(cell),out var handler) &&
+                        (kind=="boiler"?handler is BoilerTriggerGroundTileHandler:handler is SwapGroundTileBlackoutHandler))cells.Add(cell);
+                if(cells.Count==0)throw new InvalidOperationException("No native mechanism cells: "+kind);
+                if(kind=="boiler")
+                {
+                    var cell=cells[0];Vector2 position=ground.GetCellCenterWorld(cell);
+                    var instance=Instantiate(source.bombPrefab,position,Quaternion.identity);var bomb=instance.GetComponent<Bomb>();bomb.Initialize(source);bomb.SetFuseSeconds(20);NetSpawn.Server(instance);
+                    resolver.TryGetHandler(ground.GetTile(cell),out var handler);
+                    var expected=GameplayLatencyDiagnostics.For("mechanism_bomb_expected",bomb:bomb,detail:"fixture=boiler");
+                    expected.position=position+Vector2.up*(int)typeof(BoilerTriggerGroundTileHandler).GetField("pullTilesUp",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(handler);
+                    expected.bombPosition=position;GameplayLatencyDiagnostics.Write(expected);
+                    ((BoilerTriggerGroundTileHandler)handler).OnBombAt(source,position,cell,ground.GetTile(cell),instance);
+                    yield return new WaitForSecondsRealtime(3);
+                    if(bomb!=null&&!bomb.HasExploded)throw new InvalidOperationException("Boiler did not finish its native capture/explosion");
+                }
+                else
+                {
+                    if(StageBlackout.Instance==null)throw new InvalidOperationException("No native blackout");
+                    var cell=cells[0];
+                    for(int i=0;i<2;i++)
+                    {
+                        resolver.TryGetHandler(ground.GetTile(cell),out var handler);
+                        ((SwapGroundTileBlackoutHandler)handler).OnExplosionHit(source,ground.GetCellCenterWorld(cell),cell,ground.GetTile(cell));
+                        yield return new WaitForSecondsRealtime(1.2f);
+                    }
+                    if(StageBlackout.Instance.CaptureNetworkBlackout().active)
+                    {
+                        resolver.TryGetHandler(ground.GetTile(cell),out var handler);
+                        ((SwapGroundTileBlackoutHandler)handler).OnExplosionHit(source,ground.GetCellCenterWorld(cell),cell,ground.GetTile(cell));
+                    }
+                    yield return new WaitForSecondsRealtime(.7f);
+                    if(StageBlackout.Instance.CaptureNetworkBlackout().active)throw new InvalidOperationException("Native swap did not release blackout");
+                }
+            }
+            else if(kind=="world-blackout")
+            {
+                StageBlackout blackout=null;
+                foreach(var candidate in FindObjectsByType<StageBlackout>(FindObjectsInactive.Include))
+                {
+                    var view=candidate.CaptureNetworkBlackout();var overlay=candidate.GetComponent<WorldBlackoutRenderer>();
+                    if(view.world&&view.roomActive&&overlay!=null&&overlay.RoomWorldBounds.Contains(source.transform.position)){blackout=candidate;break;}
+                }
+                if(blackout==null)throw new InvalidOperationException("No active native world blackout");
+                NetworkServer.SendToReady(new MechanismSmokeStep {kind=kind,phase=1,renderers=renderers,blackout=blackout.NetworkBlackoutPath});
+                blackout.SetBlackoutActive(true);yield return new WaitForSecondsRealtime(1.5f);
+                blackout.SetBlackoutActive(false);yield return new WaitForSecondsRealtime(1.5f);
+                blackout.SetBlackoutActive(true);yield return new WaitForSecondsRealtime(1.5f);
+            }
+            else if(kind=="rocket" || kind=="dynamite")
+            {
+                var map=source.destructibleTiles;var resolver=FindAnyObjectByType<DestructibleTileResolver>();
+                if(map==null||resolver==null)throw new InvalidOperationException("Mechanism destructibles missing");
+                bool triggered=false;
+                foreach(var cell in map.cellBounds.allPositionsWithin)
+                {
+                    if(!resolver.TryGetHandler(map.GetTile(cell),out var handler)||
+                        !(kind=="rocket"?handler is RocketTileHandler:handler is DynamiteTileHandler))continue;
+                    Vector3 position=map.GetCellCenterWorld(cell);
+                    if(kind=="rocket")
+                    {
+                        var room=global::StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(position);
+                        if(room==null||!global::StageAssets.World3RoomProgressionController.IsRoomOccupied(room))continue;
+                        Vector3 viewport=Camera.main.WorldToViewportPoint(position);
+                        if(viewport.z<=0||viewport.x<.1f||viewport.x>.9f||viewport.y<.1f||viewport.y>.9f)continue;
+                    }
+                    triggered=handler.HandleHit(source,position,cell);if(triggered)break;
+                }
+                if(!triggered)throw new InvalidOperationException("No native occupied mechanism: "+kind);
+                if(kind=="rocket")
+                {
+                    var flight=FindAnyObjectByType<global::StageAssets.DestructibleRocketController>();
+                    if(flight==null)throw new InvalidOperationException("Native rocket did not launch");
+                    var visuals=flight.GetComponentsInChildren<SpriteRenderer>(true);renderers=new int[visuals.Length];
+                    for(int i=0;i<visuals.Length;i++)renderers[i]=visuals[i].GetEntityId().GetHashCode();
+                    NetworkServer.SendToReady(new MechanismSmokeStep {kind=kind,phase=1,renderers=renderers});
+                    yield return new WaitForSecondsRealtime(7);
+                    if(flight!=null)throw new InvalidOperationException("Native rocket did not complete");
+                }
+                else yield return new WaitForSecondsRealtime(2);
+            }
+            else throw new InvalidOperationException("Unknown mechanism fixture: "+kind);
+            NetworkServer.SendToReady(new MechanismSmokeStep {kind=kind,phase=2,renderers=renderers});
+            Debug.Log("[LoadTest] mechanism completed kind="+kind);
+        }
+
+        internal void TraceMechanismViews(string kind,int phase,int[] renderers,string blackoutPath)
+        {
+            if(renderers!=null)foreach(int id in renderers)
+                if(coopViews.TryGetValue(id,out var view)&&view!=null)
+                {
+                    var sample=GameplayLatencyDiagnostics.For("mechanism_view",detail:"fixture="+kind+";phase="+phase+";visible="+view.enabled+";sprite="+(view.sprite!=null?view.sprite.name:"")+";shader="+(view.sharedMaterial!=null?view.sharedMaterial.shader.name:""));
+                    sample.entity=id;sample.position=view.transform.position;GameplayLatencyDiagnostics.Write(sample);
+                }
+            StageBlackout blackout=StageBlackout.Instance;
+            if(!string.IsNullOrEmpty(blackoutPath))
+                foreach(var candidate in coopBlackoutSources)if(candidate!=null&&candidate.NetworkBlackoutPath==blackoutPath){blackout=candidate;break;}
+            if((kind=="blackout"||kind=="world-blackout")&&blackout!=null)
+            {
+                var state=blackout.CaptureNetworkBlackout();
+                GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_blackout",detail:"active="+state.active+";alpha="+state.alpha.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            }
+            if(kind=="world-blackout"||kind=="rocket")
+            {
+                int unsupported=0;
+                foreach(var material in coopViewMaskMaterials.Values)if(material.instance!=null&&!material.instance.shader.isSupported)unsupported++;
+                GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_materials",detail:"masked="+coopViewMaskMaterials.Count+";unsupported="+unsupported));
+            }
+        }
+
         System.Collections.IEnumerator CheckLoadTestFieldBombMotion(BombController controller)
         {
             // Native motion in an isolated open corridor, not normal arena rules.
@@ -768,6 +920,11 @@ namespace Assets.Scripts.Netcode
         float captureNext, visualCaptureAt = float.PositiveInfinity, visualAfkCaptureAt = float.PositiveInfinity;
         int visualCaptureSerial;
         bool checkMountVisuals, mountVisualHandler, mountVisualReady;
+        string mechanismKind,mechanismBlackoutPath;
+        bool mechanismHandler;
+        int mechanismPhase,mechanismFrame;
+        int[] mechanismRenderers;
+        float mechanismCaptureUntil,mechanismCaptureNext,mechanismPhaseAt;
         int mountVisualPhase, ropeSmokePhase, ropeAckPending = -1;
         uint ropeAckAfterTick;
         bool checkRopeInput, ropeSmokeHandler, checkPortalInput;
@@ -786,6 +943,8 @@ namespace Assets.Scripts.Netcode
             var root = new GameObject("LocalNetworkInputSmoke");
             DontDestroyOnLoad(root);
             var smoke = root.AddComponent<LocalNetworkInputSmoke>();
+            int mechanismArg=Array.IndexOf(args,"-load-test-mechanisms");
+            smoke.mechanismKind=mechanismArg>=0&&mechanismArg+1<args.Length?args[mechanismArg+1]:null;
             smoke.checkMountVisuals = Array.IndexOf(args, "-load-test-mount-visuals") >= 0;
             smoke.checkLauncherInput = Array.IndexOf(args, "-load-test-launchers") >= 0;
             smoke.checkRopeInput = smoke.checkLauncherInput && (Array.IndexOf(args, "rope") >= 0 || Array.Exists(args, arg => (arg.StartsWith("cart", StringComparison.Ordinal) || arg.StartsWith("portal", StringComparison.Ordinal))));
@@ -810,6 +969,16 @@ namespace Assets.Scripts.Netcode
 
         void Update()
         {
+            if(mechanismKind!=null&&!mechanismHandler&&NetworkClient.active)
+            {
+                mechanismHandler=true;NetworkClient.RegisterHandler<MechanismSmokeStep>(message=>
+                {
+                    if(message.kind!=mechanismKind)return;
+                    mechanismPhase=message.phase;mechanismRenderers=message.renderers;if(!string.IsNullOrEmpty(message.blackout))mechanismBlackoutPath=message.blackout;mechanismPhaseAt=Time.unscaledTime;
+                    mechanismCaptureUntil=Time.unscaledTime+(message.phase==1?9f:1f);mechanismCaptureNext=0;
+                    Debug.Log("[LoadTest] mechanism phase="+message.phase+" kind="+message.kind);
+                });
+            }
             if (quitAfterDisconnect)
             {
                 if (NetworkClient.isConnected) sawConnection = true;
@@ -955,6 +1124,16 @@ namespace Assets.Scripts.Netcode
                 CaptureMountFrame(camera, "warmup.png"); captureWarmed = true;
                 return;
             }
+            if(mechanismKind!=null&&mechanismPhase>0&&mechanismFrame<100&&Time.unscaledTime<mechanismCaptureUntil&&Time.unscaledTime>=mechanismCaptureNext)
+            {
+                float elapsed=Time.unscaledTime-mechanismPhaseAt;
+                float interval=elapsed<1.5f&&(mechanismKind=="boiler"||mechanismKind=="dynamite")?.025f:
+                    elapsed<1.5f||mechanismKind=="rocket"&&elapsed>4.8f&&elapsed<6.6f?.1f:.2f;
+                mechanismCaptureNext=Time.unscaledTime+interval;
+                if(NetworkManager.singleton is BombermanNetworkManager manager)manager.TraceMechanismViews(mechanismKind,mechanismPhase,mechanismRenderers,mechanismBlackoutPath);
+                GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_capture",detail:"fixture="+mechanismKind+";phase="+mechanismPhase+";explosions="+FindObjectsByType<BombExplosion>().Length));
+                CaptureMountFrame(camera,$"mechanism-{mechanismPhase:D2}-{mechanismFrame++:D2}.png");
+            }
             if (checkMountVisuals && visualCaptureSerial < 80 && (Time.unscaledTime >= visualCaptureAt || Time.unscaledTime >= visualAfkCaptureAt))
             {
                 if (Time.unscaledTime >= visualCaptureAt) visualCaptureAt = float.PositiveInfinity;
@@ -984,8 +1163,24 @@ namespace Assets.Scripts.Netcode
             var target = RenderTexture.GetTemporary(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height), 24, RenderTextureFormat.ARGB32);
             var previous = RenderTexture.active;
             Texture2D pixels = null;
+            int previousMask=camera.cullingMask;
+            var canvases=new List<(Canvas canvas,RenderMode mode,Camera camera,float distance,bool sorting,int order)>();
             try
             {
+                if(mechanismKind!=null)
+                {
+                    // A camera request omits ScreenSpaceOverlay canvases. Temporarily
+                    // render them through this camera so legacy blackout/UI is visible.
+                    foreach(var canvas in FindObjectsByType<Canvas>())
+                        if(canvas.isRootCanvas&&canvas.isActiveAndEnabled&&canvas.renderMode!=RenderMode.WorldSpace&&
+                           (canvas.renderMode==RenderMode.ScreenSpaceOverlay||canvas.worldCamera!=camera))
+                        {
+                            canvases.Add((canvas,canvas.renderMode,canvas.worldCamera,canvas.planeDistance,canvas.overrideSorting,canvas.sortingOrder));
+                            int order=canvas.sortingOrder;canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;
+                            canvas.planeDistance=camera.nearClipPlane+.5f;canvas.overrideSorting=true;canvas.sortingOrder=Mathf.Clamp(32000+order,30000,32760);
+                        }
+                    camera.cullingMask|=LayerMask.GetMask("UI");Canvas.ForceUpdateCanvases();
+                }
                 var request = new UnityEngine.Rendering.RenderPipeline.StandardRequest { destination = target };
                 UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera, request);
                 RenderTexture.active = target;
@@ -995,6 +1190,13 @@ namespace Assets.Scripts.Netcode
             }
             finally
             {
+                camera.cullingMask=previousMask;
+                foreach(var state in canvases)if(state.canvas!=null)
+                {
+                    state.canvas.renderMode=state.mode;state.canvas.worldCamera=state.camera;state.canvas.planeDistance=state.distance;
+                    state.canvas.overrideSorting=state.sorting;state.canvas.sortingOrder=state.order;
+                }
+                if(canvases.Count>0)Canvas.ForceUpdateCanvases();
                 RenderTexture.active = previous; RenderTexture.ReleaseTemporary(target);
                 if (pixels != null) Destroy(pixels);
             }

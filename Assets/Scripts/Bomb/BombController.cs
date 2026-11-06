@@ -2805,6 +2805,7 @@ public partial class BombController : MonoBehaviour
 
     public void SpawnExplosionCrossForEffect(Vector2 origin, int radius, bool pierce)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         ResolveExplosionPrefab();
         if (explosionPrefab == null)
             return;
@@ -2812,13 +2813,27 @@ public partial class BombController : MonoBehaviour
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
 
-        BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
-        centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p, pierce);
-
-        Explode(p, Vector2.up, radius, pierce);
-        Explode(p, Vector2.down, radius, pierce);
-        Explode(p, Vector2.left, radius, pierce);
-        Explode(p, Vector2.right, radius, pierce);
+        var previousFx = _netFxCollector;
+        var previousCells = _netDestroyedCells;
+        _netFxCollector = Assets.Scripts.Netcode.NetSync.IsServer ? new(16) : null;
+        _netDestroyedCells = Assets.Scripts.Netcode.NetSync.IsServer ? new(8) : null;
+        try
+        {
+            BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
+            centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p, pierce);
+            _netFxCollector?.Add(new Assets.Scripts.Netcode.ExplosionFx { pos = p, part = (byte)BombExplosion.ExplosionPart.Start });
+            Explode(p, Vector2.up, radius, pierce);
+            Explode(p, Vector2.down, radius, pierce);
+            Explode(p, Vector2.left, radius, pierce);
+            Explode(p, Vector2.right, radius, pierce);
+            EmitAbilityExplosionFx(p, pierce);
+        }
+        finally
+        {
+            // Nested chain reactions must retain their parent's collection scope.
+            _netFxCollector = previousFx;
+            _netDestroyedCells = previousCells;
+        }
     }
 
     public void SpawnExplosionAreaForEffect(Vector2 origin, int radius, bool pierce)
@@ -3205,7 +3220,7 @@ public partial class BombController : MonoBehaviour
 
     void EmitAbilityExplosionFx(Vector2 origin, bool pierce)
     {
-        if (!Assets.Scripts.Netcode.NetSync.IsServer || !TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx)) return;
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || !TryGetComponent<Assets.Scripts.Netcode.NetworkBombFx>(out var fx)) return;
         if (_netFxCollector != null && _netFxCollector.Count > 0) fx.ServerEmit(origin, _netFxCollector.ToArray(), pierce, explosionDuration);
         if (_netDestroyedCells != null && _netDestroyedCells.Count > 0) fx.ServerEmitDestroyed(_netDestroyedCells.ToArray());
     }

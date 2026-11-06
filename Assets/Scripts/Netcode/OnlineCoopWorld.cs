@@ -31,8 +31,11 @@ namespace Assets.Scripts.Netcode
         public Vector3Int cell; public int tile; public Color color; public Matrix4x4 matrix;
         public byte collisionType;
         public int collisionSprite;
+        public bool animated;
+        public int animationFrame;
         public bool Matches(CoopTileFrame other) => cell == other.cell && tile == other.tile && color == other.color && matrix == other.matrix &&
-            collisionType == other.collisionType && collisionSprite == other.collisionSprite;
+            collisionType == other.collisionType && collisionSprite == other.collisionSprite &&
+            animated == other.animated && animationFrame == other.animationFrame;
     }
     public struct CoopTiles : NetworkMessage
     {
@@ -113,6 +116,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<BombAnimations>(ApplyBombAnimations);
             NetworkClient.RegisterHandler<CoopSprites>(ApplyCoopSprites);
             NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
+            NetworkClient.RegisterHandler<CoopTileAnimation>(ApplyCoopTileAnimation);
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
@@ -278,12 +282,14 @@ namespace Assets.Scripts.Netcode
             ClearPortalMaskViews();
             ClearCoopCollisionWorld();
             ClearCoopSprites();
+            ClearCoopTileAnimation();
             coopLastSprites.Clear(); coopViews.Clear(); coopMaps.Clear(); coopLastTiles.Clear();
             coopTileScratch.Clear(); coopPeerBuffer.Clear(); coopChangedSprites.Clear();
             coopRemovedSprites.Clear(); coopCurrentSprites.Clear(); coopChangedTiles.Clear();
             coopInitializedPeers.Clear(); coopMissingAssets.Clear();
             coopSpriteIds.Clear(); coopTileIds.Clear(); coopMaterialIds.Clear(); coopSoundIds.Clear();
             coopCinematicImages.Clear(); coopClientImages.Clear();
+            coopClientCameras.Clear(); coopApprovedCamera = null;
             coopSpotlightImage = null;
             coopSceneHealth.Clear(); coopServerHealth = Array.Empty<CharacterHealth>(); coopNextStatus = 0;
             coopRenderers = Array.Empty<SpriteRenderer>();
@@ -404,6 +410,7 @@ namespace Assets.Scripts.Netcode
                 if (map.Value != null && (periodicTiles || coopDirtyMaps.Contains(map.Value) || CoopMapCollisionPoseChanged(map.Key, map.Value)))
                     CaptureCoopTiles(map.Key, map.Value, peers);
             }
+            CaptureCoopTileAnimations(peers);
             coopDirtyMaps.Clear();
         }
 
@@ -451,13 +458,22 @@ namespace Assets.Scripts.Netcode
             current.Clear();
             var changed = coopChangedTiles;
             changed.Clear();
+            if (!coopAnimatedCells.TryGetValue(path, out var animatedCells)) coopAnimatedCells[path] = animatedCells = new List<Vector3Int>();
+            animatedCells.Clear();
             foreach (var cell in map.cellBounds.allPositionsWithin)
             {
                 var tile = map.GetTile(cell);
                 if (tile == null) continue;
                 var frame = ReadCoopTileFrame(map, cell);
                 current[cell] = frame;
-                if (!previous.TryGetValue(cell, out var old) || !frame.Matches(old)) changed.Add(frame);
+                if (frame.animated) animatedCells.Add(cell);
+                if (!previous.TryGetValue(cell, out var old)) changed.Add(frame);
+                else
+                {
+                    var structural = frame; structural.animationFrame = old.animationFrame;
+                    if (!structural.Matches(old)) changed.Add(frame);
+                    else current[cell] = old; // Compact animation deltas update this below.
+                }
             }
             foreach (var cell in previous.Keys)
                 if (!current.ContainsKey(cell)) changed.Add(new CoopTileFrame { cell = cell, tile = -1 });
@@ -494,14 +510,17 @@ namespace Assets.Scripts.Netcode
         {
             var type = map.GetColliderType(cell);
             var tile = map.GetTile(cell);
-            if (tile != null && !coopTileIds.ContainsKey(tile))
+            bool conveyorOwned = false;
+            if (tile is AnimatedTile)
                 foreach (var conveyor in coopConveyorSources)
                     if (conveyor != null && conveyor.TryResolveNetworkTileOrigin(map, tile, out var original) &&
                         coopTileIds.TryGetValue(original, out int catalogId))
-                    { coopTileIds[tile] = catalogId; break; }
+                    { coopTileIds[tile] = catalogId; conveyorOwned = true; break; }
+            bool animated = !conveyorOwned && tile is AnimatedTile animation && animation.m_AnimatedSprites != null && animation.m_AnimatedSprites.Length > 0;
             return new CoopTileFrame { cell = cell, tile = CatalogId(tile, coopTileIds), color = map.GetColor(cell),
                 matrix = map.GetTransformMatrix(cell), collisionType = (byte)type,
-                collisionSprite = type == Tile.ColliderType.Sprite ? CoopSpriteId(map.GetSprite(cell)) : -1 };
+                collisionSprite = type == Tile.ColliderType.Sprite ? CoopSpriteId(map.GetSprite(cell)) : -1,
+                animated = animated, animationFrame = animated ? ReadApprovedTileFrame(map, cell, (AnimatedTile)tile) : 0 };
         }
 
         List<CoopTileFrame> ReadCoopTileFrames(Tilemap map)
@@ -585,7 +604,7 @@ namespace Assets.Scripts.Netcode
         void ApplyCoopTileCells(Tilemap map, CoopTileFrame[] cells)
         {
             foreach (var cell in cells)
-                map.SetTile(cell.cell, At(coopCatalog.tiles, cell.tile));
+                map.SetTile(cell.cell, CoopSafeVisualTile(At(coopCatalog.tiles, cell.tile)));
             foreach (var conveyor in coopConveyorSources)
                 if (conveyor != null) conveyor.RefreshNetworkTileVisuals(map);
             // Replacing a catalog tile with its animated variant must not erase
@@ -596,6 +615,7 @@ namespace Assets.Scripts.Netcode
                 map.SetTileFlags(cell.cell, TileFlags.None);
                 map.SetColor(cell.cell, cell.color);
                 map.SetTransformMatrix(cell.cell, cell.matrix);
+                if (cell.animated) SetCoopTileAnimationFrame(map, cell.cell, cell.animationFrame);
             }
         }
 

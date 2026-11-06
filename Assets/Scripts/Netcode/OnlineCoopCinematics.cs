@@ -18,9 +18,14 @@ namespace Assets.Scripts.Netcode
         readonly List<Image> coopCinematicImages = new();
         readonly Dictionary<string, Image> coopClientImages = new();
         Image coopSpotlightImage;
+        readonly Dictionary<string, Camera> coopClientCameras = new();
+        string coopApprovedCamera;
 
         void InitializeCoopCinematics()
         {
+            foreach (var camera in FindObjectsByType<Camera>(FindObjectsInactive.Include))
+                if (camera.gameObject.scene.name == coopScene && camera.CompareTag("MainCamera"))
+                    coopClientCameras[CoopPath(camera.transform)] = camera;
             foreach (var image in FindObjectsByType<Image>(FindObjectsInactive.Include))
                 if (image.gameObject.scene.name == coopScene) coopClientImages[CoopPath(image.transform)] = image;
             AddCoopCinematic(StageIntroTransition.Instance != null ? StageIntroTransition.Instance.fadeImage : null);
@@ -28,6 +33,25 @@ namespace Assets.Scripts.Netcode
             var clown = FindAnyObjectByType<StageIntroClownMaskBoss>(FindObjectsInactive.Include);
             coopSpotlightImage = clown != null ? clown.spotlightImage : null;
             AddCoopCinematic(coopSpotlightImage);
+        }
+
+        string CaptureCoopCameraSelection()
+        {
+            var camera=Camera.main;
+            return camera!=null&&camera.gameObject.scene.name==coopScene?CoopPath(camera.transform):null;
+        }
+
+        void ApplyCoopCameraSelection(string path)
+        {
+            if(string.IsNullOrEmpty(path)||path==coopApprovedCamera||!coopClientCameras.TryGetValue(path,out var selected)||selected==null)return;
+            foreach(var camera in coopClientCameras.Values)
+                if(camera!=null)
+                {
+                    camera.enabled=camera==selected;
+                    if(camera.TryGetComponent<AudioListener>(out var listener))listener.enabled=camera==selected;
+                }
+            coopApprovedCamera=path;
+            if(selected.TryGetComponent<CameraFollowClamp2D>(out var follow))follow.ForceSnapNow(refreshPlayersNow:true);
         }
 
         void AddCoopCinematic(Image image)

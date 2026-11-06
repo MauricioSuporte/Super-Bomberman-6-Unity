@@ -404,6 +404,7 @@ public sealed partial class OnlineRoomEditModeTests
     [TestCase(NetworkBombFx.BombMotionKind.Magnet)]
     [TestCase(NetworkBombFx.BombMotionKind.Search)]
     [TestCase(NetworkBombFx.BombMotionKind.Kick)]
+    [TestCase(NetworkBombFx.BombMotionKind.Environment)]
     public void EnvironmentalBombCancellationDiscardsUnfinishedApprovedRoute(NetworkBombFx.BombMotionKind kind)
     {
         using var fixture = new WorldBombFixture(true);
@@ -435,6 +436,7 @@ public sealed partial class OnlineRoomEditModeTests
     [TestCase(NetworkBombFx.BombMotionKind.Magnet)]
     [TestCase(NetworkBombFx.BombMotionKind.Search)]
     [TestCase(NetworkBombFx.BombMotionKind.Kick)]
+    [TestCase(NetworkBombFx.BombMotionKind.Environment)]
     public void QueuedEnvironmentalRouteRejectsAnOlderCancellation(NetworkBombFx.BombMotionKind kind)
     {
         using var fixture = new WorldBombFixture(true);

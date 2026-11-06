@@ -34,7 +34,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
     private Coroutine routine;
     private Coroutine doorAllRoutine;
-    private Assets.Scripts.Netcode.NetworkBombFx networkPullFx;
+    private AnimatedSpriteRenderer frozenBombAnimation;
     private Bomb networkPullBomb;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
@@ -64,7 +64,14 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
     private void OnDisable()
     {
+        if (networkPullBomb != null && !networkPullBomb.HasExploded && networkPullBomb.TryGetComponent<Rigidbody2D>(out var body))
+        {
+            Vector2 held = body.position;
+            body.position = held; body.MovePosition(held);
+            networkPullBomb.transform.position = held;
+        }
         EndNetworkPull();
+        RestoreCapturedBombAnimation();
         if (routine != null)
         {
             StopCoroutine(routine);
@@ -227,23 +234,28 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
     private void BeginNetworkPull(BombController source, Bomb bomb, Vector2 from, Vector2 to, float duration)
     {
-        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || source == null || bomb == null) return;
-        var fx = source.GetComponent<Assets.Scripts.Netcode.NetworkBombFx>();
-        if (fx == null || !fx.isServer || fx.netId == 0) return;
+        if (bomb == null) return;
         EndNetworkPull();
-        networkPullFx = fx; networkPullBomb = bomb;
-        fx.ServerEmitBombMotion(bomb, Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Environment,
-            from, to, duration, 0, 0, true, true);
+        networkPullBomb = bomb;
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || source == null) return;
+        bomb.BindNetworkBombMotion(source.GetComponent<Assets.Scripts.Netcode.NetworkBombFx>(),
+            Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Environment);
+        bomb.ReportNetworkBombMotion(from, to, duration);
     }
 
     private void EndNetworkPull()
     {
-        var fx = networkPullFx; var bomb = networkPullBomb;
-        networkPullFx = null; networkPullBomb = null;
-        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || fx == null || bomb == null || bomb.HasExploded) return;
+        var bomb = networkPullBomb; networkPullBomb = null;
+        if (!Assets.Scripts.Netcode.NetSync.IsServer || !Mirror.NetworkServer.active || bomb == null || bomb.HasExploded) return;
         Vector2 position = bomb.TryGetComponent<Rigidbody2D>(out var body) ? body.position : (Vector2)bomb.transform.position;
-        fx.ServerEmitBombMotion(bomb, Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Environment,
-            position, position, 0, 0, 0, false, false);
+        bomb.EndNetworkBombMotion(position);
+    }
+
+    private void RestoreCapturedBombAnimation()
+    {
+        if (frozenBombAnimation == null) return;
+        frozenBombAnimation.SetFrozen(false); frozenBombAnimation.RefreshFrame();
+        frozenBombAnimation = null;
     }
 
     private void FinalizeBoilerOnce()
@@ -267,17 +279,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         Vector2 to,
         float explodeDelay)
     {
-        AnimatedSpriteRenderer frozenAnim = null;
-
-        void RestoreAnimIfNeeded()
-        {
-            if (frozenAnim != null)
-            {
-                frozenAnim.SetFrozen(false);
-                frozenAnim.RefreshFrame();
-                frozenAnim = null;
-            }
-        }
+        void RestoreAnimIfNeeded() => RestoreCapturedBombAnimation();
 
         if (bomb != null)
             bomb.ForceStopExternalMovementAndSnap(from);
@@ -303,8 +305,8 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
         if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim) && anim != null)
         {
-            frozenAnim = anim;
-            frozenAnim.SetFrozen(true);
+            frozenBombAnimation = anim;
+            frozenBombAnimation.SetFrozen(true);
         }
 
         if (bombGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)

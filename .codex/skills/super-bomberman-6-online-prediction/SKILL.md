@@ -690,3 +690,37 @@ actual predicted kick command on its separate responsive path.
 Before accepting a cancellation or family change, compare its serial against
 the newest queued approval, not only the applied segment's revision. An old
 stop cannot discard a newer route that has not reached presentation yet.
+
+
+For animated terrain, separate structural changes (asset/color/matrix/collision)
+from compact approved frame deltas. Updating a cached frame must not acknowledge
+an unsent structural change. Seed late observers with the current frame, reject
+invalid/stale scene/map revisions before consuming them, and never recreate a
+removed tile from an animation delta. Preserve conveyor-specific phase ownership.
+Client animation queries must not consume gameplay RNG. Sanitize prefab-bearing
+Tile assets into cached visual clones without mutating their source assets.
+
+A server-only room transition also owns the camera selection. Replicate the
+approved scene-relative camera path and switch only known gameplay cameras;
+snap once per change. Disabled client bounds colliders report empty bounds:
+compute authored BoxCollider2D corners without reactivating gameplay collisions.
+Validate actual room transition and rendered views rather than moving a test
+camera to hide missing production transport.
+
+
+Headless Tilemap renderers do not advance GetAnimationFrame. For approved tile
+phases on dedicated players, keep a per-map/cell clock in scaled gameplay time,
+reset it on asset replacement/removal, and clear it on scene teardown. Use the
+authored specified duration or minimum speed without an extra gameplay RNG draw.
+Rendered native servers/offline keep their actual renderer phase. Exercise a
+real dedicated/no-graphics server and both clients; editor frame setters alone
+cannot prove that a live door animation sends intermediate frames.
+
+
+Mechanism explosions must publish their actual visual parts through the existing
+explosion transport in Battle too; cooperative sprite streaming can hide a
+missing Battle RPC. SpawnExplosionCrossForEffect now owns a nested collector
+scope, emits its approved parts/destroyed cells, and restores parent collectors
+in finally. Pure clients cannot start that gameplay; publication also requires
+an active server. Check actual client explosion objects/rendered flames, not
+only the server's completion marker or a block disappearing.
