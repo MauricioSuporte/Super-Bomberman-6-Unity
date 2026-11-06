@@ -264,7 +264,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C06: correnteza/plataforma39 e barco45 (água no replay, owner view/cabeça, gates, pausa/cleanup e handoff) implementados/testados; manual pendente.
 - [x] C07: continuação owner46 limitada a contato/célula/fase aprovados, caminhada/replay e interrupções testados (378 combinados); manual pendente.
 - [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
-- [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 em andamento.
+- [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
 - [ ] C10: parcial44: FallingBomb36, teto/powder43 e path/espera de áudio SuddenDeath44 testados (335 casos); timeline/commit de terreno/late join/manual pendentes.
 - [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
 - [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
@@ -3918,3 +3918,27 @@ Packages/manifest.json ePackages/packages-lock.json do usuário fora docommit;
 hashes originais preservados. Não publicar sóservidor nem alterar essesPackages.
 Se interrompido: consultar oActions acima, corrigir falha casoexista eguardar
 resultado final aqui. C09 implementado/testado; publicação pendente.
+
+
+PublicaçãoC09: Actions42152138685 concluiu buildsLinux(179.5s)/Windows(213.7s)
+e deployservidor. VerificaçãoSSH direta de~/sb6/server/deployment.json confirmou
+sourceCommit46b1ba1c8b7e110c6bc5a5c6afad91f324b2d505, protocol64,
+benchmarkHarness=false; evidência emLogs/PredictionC09-live-server.json.
+Canalupdater ainda emupload noúltimo check; ponteiro público aindaeraC08.
+Não finalizar a publicação antes deconcluirStep8 econfirmarReleaseonline-v0.5.0
+comsourceCommit46b1ba1c8. ArquivosBuild/CI de deployment/status copiados aLogs.
+
+
+### Publicação C09 concluída — Actions42152138685 success
+
+Builds Linux e Windows, deploy do servidor, canal do atualizador e artefatos
+concluíram com sucesso. Servidor ativo e build-info do cliente confirmados em
+46b1ba1c8b7e110c6bc5a5c6afad91f324b2d505/protocolo64. O ponteiro público da
+Release online-v0.5.0 também aponta para esse commit, com asset/tamanho conferidos
+pela API. Evidência pública salva emLogs/PredictionC09-public-updater.json;
+manifestos/deploy-status copiados aLogs/PredictionC09-*.json.
+
+C09 concluído em implementação/testes/publicação. Checklist24/33 feitos e9parciais;
+próximoC10. QA perceptual/offline permanece no roteiroglobal, sempromessa de
+inputlagzero. Raiz preserva somente as2alteraçõesPackages do usuário; hashes
+originais conferidos apóspublicação. Nenhuma cena/prefab do usuário alterada.
