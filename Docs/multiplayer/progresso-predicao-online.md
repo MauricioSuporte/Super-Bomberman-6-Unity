@@ -266,7 +266,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
 - [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 concluída no Actions42204673208.
-- [ ] R01: parcial (07/11/2026; protocolo 65 inalterado; não publicado). Implementação, validação automatizada (EditMode 1046/1046; smokes com 2 clientes renderizados, 0 passos para trás reais, 0 lacunas, 0 poses duplas) e aceite manual (aprovado pelo usuário nos cenários testados) concluídos. **Pendências obrigatórias do R01:** (1) custo CPU/bytes do player remoto (baseline comparável); (2) comparação online × offline com `analyze_prediction.py` (Logs/R01-comparacao.json). **Atualização 07/11:** (2) demonstrada; (1) medida, revelou custo de diagnósticos (+56 KiB/s de alocação no servidor) e +5–6% de ciclos no observador; a correção Development-only ainda precisa de compilação/EditMode e da medição sem captura. **Atualização 07/11 (tarde):** EditMode 1046/1046; sem captura não há diferença resolvida (Δ frame ≤ 0,05 ms); R01 concluído nos critérios obrigatórios, não publicado. Limitações: borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições só na CPU nova, teardown antigo não reproduzido (não corrigido).
+- [x] R01: concluído e publicado em homologação (07/11/2026; protocolo 65 inalterado; runtime `b01817c73`, Actions 42403939455). Implementação, validação automatizada (EditMode 1046/1046; smokes com 2 clientes renderizados, 0 passos para trás reais, 0 lacunas, 0 poses duplas) e aceite manual (aprovado pelo usuário nos cenários testados) concluídos. **Pendências obrigatórias do R01:** (1) custo CPU/bytes do player remoto (baseline comparável); (2) comparação online × offline com `analyze_prediction.py` (Logs/R01-comparacao.json). **Atualização 07/11:** (2) demonstrada; (1) medida, revelou custo de diagnósticos (+56 KiB/s de alocação no servidor) e +5–6% de ciclos no observador; a correção Development-only ainda precisa de compilação/EditMode e da medição sem captura. **Atualização 07/11 (tarde):** EditMode 1046/1046; sem captura não há diferença resolvida (Δ frame ≤ 0,05 ms); R01 concluído nos critérios obrigatórios. **Publicação 07/11:** servidor, cliente e atualizador conferidos em `b01817c73`/65. Limitações: borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições só na CPU nova, teardown antigo não reproduzido (não corrigido).
 - [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
 - [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
@@ -4831,3 +4831,39 @@ Nas duas, o `resources.assets` embutido contém `"enabled": false` e nenhum `"en
 - comparação online × offline demonstrada (sessão 2);
 - custo medido, com a parte atribuível isolada até onde as chaves permitem e as limitações declaradas;
 - correção dos diagnósticos compilada e testada.
+
+### Publicação R01 concluída — Actions 42403939455 success (07/11/2026)
+Publicação autorizada pelo usuário para homologação. O R02 não foi iniciado.
+
+**Commit de runtime:** `b01817c73c62a28e7b936bcd6af559e045240969` (`fix: complete R01 remote player presentation and measurement`), 28 arquivos.
+- **Runtime e testes:** NetworkPlayerAnimation, NetworkMountAnimation, NetworkPlayerInput, NetworkLaunchPresentation, LocalServerLoadTest, MovementController, StunReceiver, GameplayLatencyDiagnostics, OnlineRoomVisualRepairTests e `OnlineBattleAudio.asset`.
+  - O `.asset` registra os clipes `player_join`/`player_leave`, que já existiam. Ele estava na build validada.
+- **Diagnósticos Development:** `FrameHitchProbe` e `R01ComparisonHarness` (+ .meta).
+- **Ferramentas e testes Python:** `analyze_remote_player`, `hitch_report`, `r01_ab_report`, `r01_compare`, `r01_compare_run`, `r01_cost_report`, `r01_measure_all`, os 3 testes em `Tools/Ci` e `smoke_full_clients.py`.
+- **Docs:** checkpoint, matriz e `prediction-and-reconciliation.md`.
+
+**Ficaram fora do commit:**
+- os 2 arquivos de `Packages/`, alterações do usuário. Hashes iguais antes e depois: manifest `b8b74927…`, lock `803f0e80…`;
+- `Tools/R01Mcp/`, `.codex-remote-attachments/`, `handoff-claude-predicao-online.md` e `revisao-runner-r01.md`, que não são necessários para o runtime.
+
+**Correspondência com o validado:** os 19 arquivos sincronizados no runner para os testes EditMode 1046/1046 e para a build `r01-nodiag` têm SHA-256 idêntico ao conteúdo commitado.
+- A única diferença é intencional: `GameplayLatencyDiagnostics.json`. Na medição, o overlay o desligou; no commit, ele segue igual ao HEAD (`enabled: true`, como em todas as publicações anteriores).
+- **Diferença de Packages:** a validação local usou os Packages do usuário (SDK/toolchain Linux 1.1.1). O CI compilou com os Packages commitados (1.1.0, os mesmos do C10). O código C# é o mesmo.
+- **Quebra de linha:** o Git normaliza para CRLF no checkout do CI; o conteúdo não muda.
+- **Trava órfã:** havia um `.git/index.lock` de 06/11 22:13, com 0 bytes e nenhum processo git ativo. Removi só essa trava antes do stage.
+
+**Pipeline:** push em `v0.5.0` disparou o Homologation both/quick, sucesso em 10m16s.
+- Artefatos: `SB6-Windows-2026-11-07_14-58-57` e `SB6-Validation-2026-11-07_14-58-57`.
+- Antes do push, conferi que nenhum outro job estava rodando.
+
+**Verificação** (`python Logs/R01-verify-publication.py` → `Logs/R01-publication.json`; manifestos copiados para `Logs/R01-publication-*.json`):
+- **Servidor ativo, via SSH:** `sourceCommit=b01817c7…`, `protocol=65`, `benchmarkHarness=false`.
+- **deploy-status:** mesmo commit, `success=true`, ativado em 2026-11-07T19:07:31Z. A ativação reiniciou as salas, como autorizado.
+- **Cliente:** o `build-info.json` dentro do pacote publicado tem o mesmo commit e o protocolo 65.
+- **Atualizador:** o ponteiro público da Release `online-v0.5.0` aponta para o mesmo commit.
+  - Asset: `SB6-Windows-2026-11-07_14-58-57.zip`, 183.620.834 bytes, SHA-256 `35249bc3…`. Tamanho e hash conferem com o pacote do CI.
+
+**Observação sobre o binário publicado:** diferente do C10, o cliente release contém os tipos `R01ComparisonHarness` e `FrameHitchProbe`.
+- O `LocalServerLoadTest` continua ausente, porque usa `#if UNITY_EDITOR || DEBUG`.
+- Os dois tipos retornam na primeira linha quando `Debug.isDebugBuild` é falso, então ficam inertes em release; foi isso o que se validou.
+- Se a convenção "sem código de fixture no binário publicado" tiver de valer também para eles, o próximo passo é envolvê-los no mesmo `#if` em uma publicação separada. Não fiz isso agora para não publicar código diferente do validado.
