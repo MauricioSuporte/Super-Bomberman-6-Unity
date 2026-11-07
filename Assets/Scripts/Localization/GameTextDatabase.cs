@@ -265,6 +265,14 @@ public static partial class GameTextDatabase
         Player4 = "4 PLAYERS",
         Fullscreen = "FULLSCREEN",
         WindowSize = "WINDOW SIZE",
+        DisplayMode = "SCALING",
+        VideoBackground = "BACKGROUND",
+        ScreenFilter = "FILTER",
+        FilterIntensity = "INTENSITY",
+        ScreenFilters = new[] { "OFF", "SCANLINES", "CRT LIGHT", "CRT RGB", "LCD" },
+        BackgroundImage = "IMAGE",
+        DisplayModes = new[] { "PIXEL PERFECT", "PROPORTIONAL", "STRETCHED" },
+        VideoBackgrounds = new[] { "BLACK", "BLURRED GAME" },
         MusicVolume = "MUSIC",
         SfxVolume = "SFX",
         Voices = "VOICES",
@@ -301,6 +309,14 @@ public static partial class GameTextDatabase
         Player4 = "4人プレイ",
         Fullscreen = "フルスクリーン",
         WindowSize = "ウィンドウサイズ",
+        DisplayMode = "表示モード",
+        VideoBackground = "背景",
+        ScreenFilter = "フィルター",
+        FilterIntensity = "強さ",
+        ScreenFilters = new[] { "オフ", "走査線", "CRT ライト", "CRT RGB", "LCD" },
+        BackgroundImage = "画像",
+        DisplayModes = new[] { "ピクセルパーフェクト", "縦横比を維持", "引き伸ばし" },
+        VideoBackgrounds = new[] { "黒", "ゲームぼかし" },
         On = "オン",
         Off = "オフ",
         ResetWarning = "消去されます:",
@@ -335,6 +351,14 @@ public static partial class GameTextDatabase
         Player4 = "4 JUGADORES",
         Fullscreen = "PANTALLA COMPLETA",
         WindowSize = "TAMAÑO VENTANA",
+        DisplayMode = "ESCALA",
+        VideoBackground = "FONDO",
+        ScreenFilter = "FILTRO",
+        FilterIntensity = "INTENSIDAD",
+        ScreenFilters = new[] { "NO", "SCANLINES", "CRT SUAVE", "CRT RGB", "LCD" },
+        BackgroundImage = "IMAGEN",
+        DisplayModes = new[] { "PIXEL PERFECT", "PROPORCIONAL", "ESTIRADO" },
+        VideoBackgrounds = new[] { "NEGRO", "JUEGO BORROSO" },
         On = "SÍ",
         Off = "NO",
         ResetWarning = "ESTO BORRARÁ:",
@@ -369,6 +393,14 @@ public static partial class GameTextDatabase
         Player4 = "4 JOGADORES",
         Fullscreen = "TELA CHEIA",
         WindowSize = "TAMANHO DA JANELA",
+        DisplayMode = "ESCALA",
+        VideoBackground = "FUNDO",
+        ScreenFilter = "FILTRO",
+        FilterIntensity = "INTENSIDADE",
+        ScreenFilters = new[] { "DESATIVADO", "SCANLINES", "CRT LEVE", "CRT RGB", "LCD" },
+        BackgroundImage = "IMAGEM",
+        DisplayModes = new[] { "PIXEL PERFECT", "PROPORCIONAL", "ESTICADO" },
+        VideoBackgrounds = new[] { "PRETO", "JOGO BORRADO" },
         On = "SIM",
         Off = "NÃO",
         ResetWarning = "ISTO VAI APAGAR:",
@@ -1221,6 +1253,14 @@ public sealed class TitleScreenText
     public string Player4;
     public string Fullscreen;
     public string WindowSize;
+    public string DisplayMode;
+    public string VideoBackground;
+    public string ScreenFilter;
+    public string FilterIntensity;
+    public string[] ScreenFilters;
+    public string BackgroundImage;
+    public string[] DisplayModes;
+    public string[] VideoBackgrounds;
     public string MusicVolume;
     public string SfxVolume;
     public string Voices;

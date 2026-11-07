@@ -262,16 +262,17 @@ namespace Assets.Scripts.Netcode
         void LateUpdate()
         {
             if (panelRect == null || safeRect == null) return;
-            float scale = Mathf.Max(1f, Mathf.Floor(Mathf.Min(safeRect.rect.width / 256f, safeRect.rect.height / 224f)));
-            panelRect.localScale = new Vector3(scale, scale, 1);
-            float warningScale = Mathf.Max(1f, Mathf.Floor(Mathf.Min(timeoutLabel.transform.parent.GetComponent<RectTransform>().rect.width / 256f, timeoutLabel.transform.parent.GetComponent<RectTransform>().rect.height / 224f)));
-            timeoutLabel.rectTransform.localScale = new Vector3(warningScale, warningScale, 1);
+            int displayMode = global::SaveSystem.GetVideoSettings().displayMode;
+            panelRect.localScale = PixelPerfectViewport.ResolveUiScale(safeRect.rect.size, displayMode);
+            var warningSafe = timeoutLabel.transform.parent.GetComponent<RectTransform>();
+            Vector3 warningScale = PixelPerfectViewport.ResolveUiScale(warningSafe.rect.size, displayMode);
+            timeoutLabel.rectTransform.localScale = warningScale;
             timeoutLabel.rectTransform.anchorMin = timeoutLabel.rectTransform.anchorMax = new Vector2(0.5f, 0);
             bool lobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
             timeoutLabel.rectTransform.sizeDelta = lobby ? new Vector2(100, 24) : new Vector2(246, 20);
             timeoutLabel.rectTransform.anchoredPosition = lobby
-                ? new Vector2(54 * warningScale, 176 * warningScale)
-                : new Vector2(0, 22 * warningScale);
+                ? new Vector2(54 * warningScale.x, 176 * warningScale.y)
+                : new Vector2(0, 22 * warningScale.y);
             // Keep keyboard/controller selection inside the scrolling room list.
             var selected = cursorButton != null ? cursorButton.gameObject : null;
             if (selected == null || roomContent == null || selected.transform.parent != roomContent) return;

@@ -311,7 +311,7 @@ public class TitleScreenController : MonoBehaviour
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
     Vector2 ScaledVec(Vector2 v) => v * _currentUiScale;
 
-    int MenuFontSizeScaled => ScaledFont(menuFontSize);
+    int MenuFontSizeScaled => ScaledFont(menuMode == MenuMode.Video ? Mathf.Max(10, menuFontSize - 4) : menuFontSize);
     int PushStartFontSizeScaled => ScaledFont(pushStartFontSize);
     float PushStartYOffsetScaled => ScaledFloat(pushStartYOffset);
     Vector2 MenuAnchoredPosScaled => ScaledVec(menuAnchoredPos);
@@ -1191,6 +1191,35 @@ public class TitleScreenController : MonoBehaviour
 
         videoValuesRect.anchoredPosition = new Vector2(x, y);
 
+        if (showVideoValues)
+        {
+            // Reserve the longest choice, so changing a value never pushes it into
+            // the label or makes the label column jump between choices.
+            TitleScreenText labels = GameTextDatabase.Title;
+            float reservedWidth = videoValuesText.GetPreferredValues(videoValuesText.text).x;
+            foreach (string choice in labels.DisplayModes)
+                reservedWidth = Mathf.Max(reservedWidth, videoValuesText.GetPreferredValues(choice).x);
+            foreach (string choice in labels.VideoBackgrounds)
+                reservedWidth = Mathf.Max(reservedWidth, videoValuesText.GetPreferredValues(choice).x);
+            foreach (string choice in labels.ScreenFilters)
+                reservedWidth = Mathf.Max(reservedWidth, videoValuesText.GetPreferredValues(choice).x);
+            reservedWidth = Mathf.Max(reservedWidth,
+                videoValuesText.GetPreferredValues($"{labels.BackgroundImage} 09").x);
+            float reservedRootWidth = root.InverseTransformVector(
+                videoValuesRect.TransformVector(Vector3.right * reservedWidth)).x;
+            float labelRight = float.MinValue;
+            for (int i = 0; i < ti.lineCount; i++)
+                labelRight = Mathf.Max(labelRight, root.InverseTransformPoint(
+                    menuText.transform.TransformPoint(new Vector3(ti.lineInfo[i].lineExtents.max.x, 0f, 0f))).x);
+            float shift = Mathf.Min(0f,
+                root.rect.xMax + x - reservedRootWidth - ScaledFloat(32f) - labelRight);
+            if (shift < 0f)
+            {
+                menuText.rectTransform.position += root.TransformVector(new Vector3(Mathf.Floor(shift), 0f, 0f));
+                UpdateCursorPosition();
+            }
+        }
+
         if (!videoValuesText.gameObject.activeSelf)
             videoValuesText.gameObject.SetActive(true);
     }
@@ -1823,11 +1852,36 @@ public class TitleScreenController : MonoBehaviour
                         }
                     }
 
+                    if (menuIndex == 2 || menuIndex == 3)
+                    {
+                        SavedVideoSettings settings = SaveSystem.GetVideoSettings();
+                        int step = left ? -1 : 1;
+                        SaveSystem.SetVideoPresentation(
+                            menuIndex == 2 ? Wrap(settings.displayMode + step, 3) : settings.displayMode,
+                            menuIndex == 3 ? Wrap(settings.background + step, 11) : settings.background);
+                        changed = true;
+                    }
+
+                    if (menuIndex == 4 || menuIndex == 5)
+                    {
+                        SavedVideoSettings settings = SaveSystem.GetVideoSettings();
+                        int step = left ? -1 : 1;
+                        SaveSystem.SetVideoFilter(
+                            menuIndex == 4 ? Wrap(settings.screenFilter + step, SavedVideoSettings.ScreenFilterCount) : settings.screenFilter,
+                            menuIndex == 5 ? Wrap(settings.filterIntensity / 25 + step, 5) * 25 : settings.filterIntensity);
+                        changed = true;
+                    }
+
                     if (changed)
                     {
                         PlaySelectSfx();
-                        SaveVideoPrefs();
-                        ApplyVideoSettingsImmediate();
+                        if (menuIndex < 2)
+                        {
+                            SaveVideoPrefs();
+                            ApplyVideoSettingsImmediate();
+                        }
+                        else
+                            ForceRecomputeLayoutAfterResolutionChange();
                         RefreshMenuText();
 
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA) ||
@@ -2171,7 +2225,7 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 5 : 4;
         if (menuMode == MenuMode.Language) return GameTextDatabase.SupportedLanguages.Length;
         if (menuMode == MenuMode.Sound) return 3;
-        if (menuMode == MenuMode.Video) return 2;
+        if (menuMode == MenuMode.Video) return 6;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
         return 4;
     }
@@ -2294,10 +2348,13 @@ public class TitleScreenController : MonoBehaviour
 
     public void RefreshMenuText()
     {
+        // Video may shift the label column. Always start from the authored layout,
+        // including when returning to Options, Sound or the main title menu.
+        ApplyMenuAnchoredPosition();
         RefreshMenuTextInternal();
         UpdateCursorPosition();
 
-        if (menuMode == MenuMode.ResetSaveConfirm)
+        if (menuMode == MenuMode.ResetSaveConfirm || menuMode == MenuMode.Video)
             StopPushStartBlink();
         else if (Running && pushStartRoutine == null)
             StartPushStartBlink();
@@ -2496,7 +2553,11 @@ public class TitleScreenController : MonoBehaviour
         menuText.text =
             "<align=left>" +
             $"<size={size}>{text.Fullscreen}</size>\n" +
-            $"<size={size}>{text.WindowSize}</size>" +
+            $"<size={size}>{text.WindowSize}</size>\n" +
+            $"<size={size}>{text.DisplayMode}</size>\n" +
+            $"<size={size}>{text.VideoBackground}</size>\n" +
+            $"<size={size}>{text.ScreenFilter}</size>\n" +
+            $"<size={size}>{text.FilterIntensity}</size>" +
             "</align>";
 
         EnsureVideoValuesText();
@@ -2505,7 +2566,12 @@ public class TitleScreenController : MonoBehaviour
         {
             string fs = _videoFullscreen ? text.On : text.Off;
             string ws = $"{Mathf.Max(1, _videoWindowMult)}x";
-            videoValuesText.text = $"{fs}\n{ws}";
+            SavedVideoSettings settings = SaveSystem.GetVideoSettings();
+            string mode = text.DisplayModes[Mathf.Clamp(settings.displayMode, 0, 2)];
+            int background = Mathf.Clamp(settings.background, 0, 10);
+            string backdrop = background < 2 ? text.VideoBackgrounds[background] : $"{text.BackgroundImage} {background - 1:00}";
+            string filter = text.ScreenFilters[settings.screenFilter];
+            videoValuesText.text = $"{fs}\n{ws}\n{mode}\n{backdrop}\n{filter}\n{settings.filterIntensity}%";
         }
     }
 
@@ -2638,7 +2704,7 @@ public class TitleScreenController : MonoBehaviour
         if (pushStartText == null)
             return;
 
-        if (menuMode == MenuMode.ResetSaveConfirm)
+        if (menuMode == MenuMode.ResetSaveConfirm || menuMode == MenuMode.Video)
         {
             pushStartText.gameObject.SetActive(false);
             return;
@@ -2671,7 +2737,7 @@ public class TitleScreenController : MonoBehaviour
 
         while (Running)
         {
-            if (menuMode == MenuMode.ResetSaveConfirm)
+            if (menuMode == MenuMode.ResetSaveConfirm || menuMode == MenuMode.Video)
             {
                 if (pushStartText != null)
                     pushStartText.gameObject.SetActive(false);

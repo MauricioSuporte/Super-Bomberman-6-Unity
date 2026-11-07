@@ -29,6 +29,10 @@ public sealed class UrpPixelPerfectCameraFallback : MonoBehaviour
             legacyPixelPerfectCamera.enabled = false;
 
         EnsureBlackBarsCamera();
+        if (GetComponent<VideoBackgroundPresenter>() == null)
+            gameObject.AddComponent<VideoBackgroundPresenter>();
+        if (GetComponent<VideoFilterPresenter>() == null)
+            gameObject.AddComponent<VideoFilterPresenter>();
         ApplyViewport();
     }
 
@@ -66,6 +70,10 @@ public sealed class UrpPixelPerfectCameraFallback : MonoBehaviour
             outputRect.yMin / screenHeight,
             outputRect.width / screenWidth,
             outputRect.height / screenHeight);
+        targetCamera.ResetAspect();
+        if (SaveSystem.GetVideoSettings().displayMode == 2)
+            targetCamera.aspect = (float)Mathf.Max(1, legacyPixelPerfectCamera.refResolutionX) /
+                Mathf.Max(1, legacyPixelPerfectCamera.refResolutionY);
         targetCamera.orthographicSize = ResolveOrthographicSize(outputRect);
 
         if (backgroundCamera != null)
@@ -81,7 +89,7 @@ public sealed class UrpPixelPerfectCameraFallback : MonoBehaviour
         float referenceWidth = Mathf.Max(1, legacyPixelPerfectCamera.refResolutionX);
         float referenceHeight = Mathf.Max(1, legacyPixelPerfectCamera.refResolutionY);
 
-        if (legacyPixelPerfectCamera.cropFrameY)
+        if (SaveSystem.GetVideoSettings().displayMode != 0 || legacyPixelPerfectCamera.cropFrameY)
             return referenceHeight * 0.5f / ppu;
 
         if (legacyPixelPerfectCamera.cropFrameX)

@@ -473,9 +473,9 @@ namespace Assets.Scripts.Netcode
         {
             if (panel == null) return;
             viewport.ForceApplyNow();
-            float scale = Mathf.Max(1, Mathf.Floor(Mathf.Min(safe.rect.width / 256f, safe.rect.height / 224f)));
-            panel.localScale = new Vector3(scale, scale, 1);
-            panel.anchoredPosition = new Vector2(4 * scale, 4 * scale);
+            Vector3 scale = PixelPerfectViewport.ResolveUiScale(safe.rect.size, global::SaveSystem.GetVideoSettings().displayMode);
+            panel.localScale = scale;
+            panel.anchoredPosition = new Vector2(4 * scale.x, 4 * scale.y);
             bool expanded = typing;
             float newest = Lines.Count > 0 ? Lines[^1].received : -100;
             bool visible = Available && !ModalOpen && (expanded || Time.unscaledTime - newest < 5.4f);

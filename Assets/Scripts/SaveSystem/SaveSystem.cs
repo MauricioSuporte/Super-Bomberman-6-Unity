@@ -778,8 +778,26 @@ public static partial class SaveSystem
         EnsureLoaded();
 
         data.videoSettings ??= new SavedVideoSettings();
+        data.videoSettings.NormalizeScreenFilter();
 
         return data.videoSettings;
+    }
+
+    public static void SetVideoFilter(int screenFilter, int intensity)
+    {
+        SavedVideoSettings settings = GetVideoSettings();
+        settings.screenFilter = screenFilter;
+        settings.filterIntensity = intensity;
+        settings.NormalizeScreenFilter();
+        Save();
+    }
+
+    public static void SetVideoPresentation(int displayMode, int background)
+    {
+        SavedVideoSettings settings = GetVideoSettings();
+        settings.displayMode = Mathf.Clamp(displayMode, 0, 2);
+        settings.background = Mathf.Clamp(background, 0, 10);
+        Save();
     }
 
     public static GameLanguage GetLanguage()
@@ -1017,6 +1035,7 @@ public static partial class SaveSystem
         d.language = (int)NormalizeLanguage(d.language);
 
         d.videoSettings ??= new SavedVideoSettings();
+        d.videoSettings.NormalizeScreenFilter();
         EnsureBattleModeItemAmounts(d, GameManager.GetDefaultBattleModeHiddenItemAmounts());
         EnsureBattleModeLouieAmounts(d, GameManager.GetDefaultBattleModeLouieAmounts());
         EnsureBattleModeHandicapProfiles(d);

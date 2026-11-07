@@ -22,6 +22,10 @@ public static class PixelPerfectViewport
         int screenHeight = Mathf.Max(1, Screen.height);
         int referenceWidth = Mathf.Max(1, pixelPerfectCamera.refResolutionX);
         int referenceHeight = Mathf.Max(1, pixelPerfectCamera.refResolutionY);
+        int displayMode = Application.isPlaying ? Mathf.Clamp(SaveSystem.GetVideoSettings().displayMode, 0, 2) : 0;
+        if (displayMode != 0)
+            return ResolveExpandedPixelRect(screenWidth, screenHeight, referenceWidth, referenceHeight, displayMode == 2);
+
         int zoom = Mathf.Max(1, Mathf.Min(screenWidth / referenceWidth, screenHeight / referenceHeight));
 
         bool cropX = pixelPerfectCamera.cropFrameX;
@@ -76,6 +80,28 @@ public static class PixelPerfectViewport
         }
 
         return Centered(zoom * renderWidth, zoom * renderHeight, screenWidth, screenHeight);
+    }
+
+    public static Rect ResolveExpandedPixelRect(int screenWidth, int screenHeight,
+        int referenceWidth, int referenceHeight, bool stretch)
+    {
+        screenWidth = Mathf.Max(1, screenWidth);
+        screenHeight = Mathf.Max(1, screenHeight);
+        return stretch ? new Rect(0f, 0f, screenWidth, screenHeight) :
+            FitCentered(screenWidth, screenHeight, (float)Mathf.Max(1, referenceWidth) / Mathf.Max(1, referenceHeight));
+    }
+
+    /// <summary>Scales a UI authored in reference pixels inside the resolved safe frame.</summary>
+    public static Vector3 ResolveUiScale(Vector2 viewportSize, int displayMode)
+    {
+        float widthScale = Mathf.Max(0.0001f, viewportSize.x / 256f);
+        float heightScale = Mathf.Max(0.0001f, viewportSize.y / 224f);
+        if (displayMode == 2)
+            return new Vector3(widthScale, heightScale, 1f);
+        float scale = Mathf.Min(widthScale, heightScale);
+        if (displayMode != 1)
+            scale = Mathf.Max(1f, Mathf.Floor(scale));
+        return new Vector3(scale, scale, 1f);
     }
 
     static int MakeEven(int value) => Mathf.Max(2, value / 2 * 2);
