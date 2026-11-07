@@ -721,6 +721,16 @@ public partial class MovementController : MonoBehaviour, IKillable
             SetAnimEnabled(arr[i], enabled);
     }
 
+    // R01: lets an observer know that the plain on-foot body (not a mounted / head-only / special pose) is what is on screen.
+    public bool IsPlainFootBodyVisible()
+    {
+        return IsVisibleFoot(spriteRendererUp) || IsVisibleFoot(spriteRendererDown) || IsVisibleFoot(spriteRendererLeft) ||
+            IsVisibleFoot(spriteRendererRight) || IsVisibleFoot(spriteRendererBall);
+    }
+
+    static bool IsVisibleFoot(AnimatedSpriteRenderer r) =>
+        r != null && r.enabled && r.TryGetComponent<SpriteRenderer>(out var s) && s.enabled && s.gameObject.activeInHierarchy;
+
     private void DisableAllFootSprites()
     {
         SetMany(false, spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight, spriteRendererBall);
@@ -1585,6 +1595,21 @@ public partial class MovementController : MonoBehaviour, IKillable
             return headOnlyDown;
 
         return spriteRendererDown;
+    }
+
+    // The rider's seated body renderers (mounted body and head-only poses); one of them is the visible seated pose.
+    public void CollectMountedBodyRenderers(List<AnimatedSpriteRenderer> into)
+    {
+        into.Clear();
+        AddDistinct(into, mountedSpriteUp); AddDistinct(into, mountedSpriteDown);
+        AddDistinct(into, mountedSpriteLeft); AddDistinct(into, mountedSpriteRight);
+        AddDistinct(into, headOnlyUp); AddDistinct(into, headOnlyDown);
+        AddDistinct(into, headOnlyLeft); AddDistinct(into, headOnlyRight);
+    }
+
+    static void AddDistinct(List<AnimatedSpriteRenderer> into, AnimatedSpriteRenderer renderer)
+    {
+        if (renderer != null && !into.Contains(renderer)) into.Add(renderer);
     }
 
     public void CopyHeadOnlyVisualsTo(

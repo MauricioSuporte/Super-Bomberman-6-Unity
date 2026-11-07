@@ -224,5 +224,191 @@ public sealed partial class OnlineRoomEditModeTests
         animator.jumpUp = f.MakeAnimation(go.transform, "JumpUp"); animator.Play(Vector2.up); animator.Stop();
         Assert.IsFalse(visual.enabled); Assert.IsFalse(animator.jumpUp.GetComponent<SpriteRenderer>().enabled);
     }
+
+    // R01 / mount-cycles "Dismount predicted=4 confirmed=3": a burst after a stall overflowed the server queue and dropped the
+    // Select frame. PlayerManualDismount reacts to the held transition, so the dismount ran on a held-only frame and was
+    // published with the previous dismount's tick. The dropped edges must reach the next queued frame with their own tick.
+    [Test]
+    public void R01ServerInputQueueOverflowKeepsDroppedEdgesAheadOfHeldOnlyFramesWithTheirTick()
+    {
+        var queue = new System.Collections.Generic.Queue<NetworkPlayerInput.QueuedInput>();
+        for (uint tick = 839; tick < 847; tick++)
+            Assert.IsFalse(NetworkPlayerInput.EnqueueBounded(queue, new NetworkInputFrame { tick = tick, held = 128, pressed = tick == 839 ? 128 : 0 }, tick, 8, out _));
+        Assert.IsTrue(NetworkPlayerInput.EnqueueBounded(queue, new NetworkInputFrame { tick = 847, held = 128 }, 847, 8, out uint dropped));
+        Assert.AreEqual(839u, dropped);
+        Assert.AreEqual(8, queue.Count);
+        var head = queue.Peek();
+        Assert.AreEqual(840u, head.frame.tick); Assert.AreEqual(128, head.frame.pressed); Assert.AreEqual(839u, head.EdgeTick(128));
+        var items = queue.ToArray();
+        Assert.AreEqual(847u, items[7].frame.tick); Assert.AreEqual(0, items[7].frame.pressed); Assert.AreEqual(847u, items[7].EdgeTick(128));
+        for (int i = 1; i < 7; i++) Assert.AreEqual(0, items[i].frame.pressed, "only the next frame carries the dropped edge");
+
+        // Another overflow drops the carrier: the edge moves on again with its original tick; the newest frame keeps its own.
+        Assert.IsTrue(NetworkPlayerInput.EnqueueBounded(queue, new NetworkInputFrame { tick = 848, held = 128 }, 848, 8, out dropped));
+        Assert.AreEqual(840u, dropped);
+        Assert.AreEqual(841u, queue.Peek().frame.tick); Assert.AreEqual(128, queue.Peek().frame.pressed, "the carried edge moves on with its tick");
+        Assert.AreEqual(839u, queue.Peek().EdgeTick(128));
+
+        // Capacity 1 has no next queued frame: the incoming frame takes the edge and its tick.
+        var single = new System.Collections.Generic.Queue<NetworkPlayerInput.QueuedInput>();
+        NetworkPlayerInput.EnqueueBounded(single, new NetworkInputFrame { tick = 5, pressed = 16 }, 0, 1, out _);
+        Assert.IsTrue(NetworkPlayerInput.EnqueueBounded(single, new NetworkInputFrame { tick = 6 }, 0, 1, out dropped));
+        Assert.AreEqual(5u, dropped); Assert.AreEqual(16, single.Peek().frame.pressed); Assert.AreEqual(5u, single.Peek().EdgeTick(16));
+    }
+
+    // R01: preserving the dropped tick must not duplicate an action or re-label another one. Every press is applied by exactly
+    // one dequeued frame, the carrier's own press keeps its own tick, a repeated press of the same button stays one edge, and
+    // a burst of overflows never multiplies edges.
+    [Test]
+    public void R01ServerInputQueueOverflowNeverDuplicatesOrRelabelsActions()
+    {
+        var queue = new System.Collections.Generic.Queue<NetworkPlayerInput.QueuedInput>();
+        NetworkPlayerInput.EnqueueBounded(queue, new NetworkInputFrame { tick = 10, pressed = 128 }, 0, 2, out _);
+        NetworkPlayerInput.EnqueueBounded(queue, new NetworkInputFrame { tick = 11, pressed = 16 | 128 }, 0, 2, out _);
+        Assert.IsTrue(NetworkPlayerInput.EnqueueBounded(queue, new NetworkInputFrame { tick = 12 }, 0, 2, out uint dropped));
+        Assert.AreEqual(10u, dropped);
+        var carrier = queue.Peek();
+        Assert.AreEqual(16 | 128, carrier.frame.pressed, "the repeated Select is one edge, not two");
+        Assert.AreEqual(11u, carrier.EdgeTick(16), "the carrier's own A keeps its own tick");
+        Assert.AreEqual(10u, carrier.EdgeTick(128), "the merged Select keeps the dropped (earlier) tick");
+
+        // A long burst through a full queue: count applied edges per button after draining.
+        var burst = new System.Collections.Generic.Queue<NetworkPlayerInput.QueuedInput>();
+        int sentA = 0, sentSelect = 0;
+        for (uint tick = 1; tick <= 40; tick++)
+        {
+            int pressed = (tick % 7 == 0 ? 16 : 0) | (tick % 11 == 0 ? 128 : 0);
+            if ((pressed & 16) != 0) sentA++;
+            if ((pressed & 128) != 0) sentSelect++;
+            NetworkPlayerInput.EnqueueBounded(burst, new NetworkInputFrame { tick = tick, pressed = pressed }, 0, 8, out _);
+        }
+        int appliedA = 0, appliedSelect = 0;
+        var seenA = new System.Collections.Generic.HashSet<uint>();
+        var seenSelect = new System.Collections.Generic.HashSet<uint>();
+        while (burst.Count > 0)
+        {
+            var item = burst.Dequeue();
+            if ((item.frame.pressed & 16) != 0) { appliedA++; Assert.IsTrue(seenA.Add(item.EdgeTick(16)), "an A edge tick was applied twice"); Assert.AreEqual(0u, item.EdgeTick(16) % 7); }
+            if ((item.frame.pressed & 128) != 0) { appliedSelect++; Assert.IsTrue(seenSelect.Add(item.EdgeTick(128)), "a Select edge tick was applied twice"); Assert.AreEqual(0u, item.EdgeTick(128) % 11); }
+        }
+        // Without draining, presses cascade into one carrier: some are lost (as before R01), none is invented or doubled.
+        Assert.That(appliedA, Is.InRange(1, sentA), "no A press was invented");
+        Assert.That(appliedSelect, Is.InRange(1, sentSelect), "no Select press was invented");
+    }
+
+    // R01: the predicting owner applied a replicated mount (Pink -> Mole) on the frame it arrived while its own body was still
+    // the plain on-foot sprite for one frame. The gate hides only the mount for that frame; HeadOnly/mounted bodies keep it.
+    [Test]
+    public void R01MountGateHidesArrivingMountForPredictingOwnerWhileFootBodyIsVisible()
+    {
+        using var fixture = new OwnerBoatFixture();
+        var actor = fixture.fx.gameObject;
+        var mountAnimation = actor.AddComponent<NetworkMountAnimation>();
+        var companion = actor.GetComponent<PlayerMountCompanion>();
+        var mount = new GameObject("ArrivingMole"); mount.transform.SetParent(actor.transform, false);
+        try
+        {
+            var visual = fixture.MakeAnimation(mount.transform, "Movimentation");
+            var mountSprite = visual.GetComponent<SpriteRenderer>();
+            typeof(NetworkMountAnimation).GetField("companion", BoatFlags).SetValue(mountAnimation, companion);
+            typeof(NetworkMountAnimation).GetField("trackedMount", BoatFlags).SetValue(mountAnimation, mount);
+            typeof(NetworkMountAnimation).GetField("renderers", BoatFlags).SetValue(mountAnimation, new[] { visual });
+            typeof(NetworkMountAnimation).GetField("sprites", BoatFlags).SetValue(mountAnimation, new[] { mountSprite });
+            var identity = actor.GetComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", BoatFlags).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isClient").SetValue(identity, true);
+            var gate = typeof(NetworkMountAnimation).GetMethod("HideMountBeforeAuthorityBody", BoatFlags);
+            fixture.movement.SetPredictLocally(true);
+            fixture.bodyVisual.enabled = true; fixture.bodyVisual.GetComponent<SpriteRenderer>().enabled = true;
+            foreach (var head in fixture.heads) { head.enabled = false; head.GetComponent<SpriteRenderer>().enabled = false; }
+            mountSprite.enabled = true;
+            Assert.IsTrue(fixture.movement.IsPlainFootBodyVisible());
+            gate.Invoke(mountAnimation, null);
+            Assert.IsFalse(mountSprite.enabled, "foot body + arriving mount must not reach the screen on the predicting owner");
+
+            fixture.bodyVisual.enabled = false; fixture.bodyVisual.GetComponent<SpriteRenderer>().enabled = false;
+            fixture.heads[2].enabled = true; fixture.heads[2].GetComponent<SpriteRenderer>().enabled = true;
+            mountSprite.enabled = true;
+            gate.Invoke(mountAnimation, null);
+            Assert.IsTrue(mountSprite.enabled, "a HeadOnly body keeps its mount");
+
+            fixture.bodyVisual.enabled = true; fixture.bodyVisual.GetComponent<SpriteRenderer>().enabled = true;
+            NetSync.Mode = NetSync.NetMode.Offline;
+            gate.Invoke(mountAnimation, null);
+            Assert.IsTrue(mountSprite.enabled, "offline presentation is never touched");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(mount); }
+    }
+
+    // R01 round-reload_r1 (server frames 7167-7227): a stunned Mole rider showed HeadOnlyUp and HeadOnlyDown together for
+    // the whole 1 s stun. The Mole has no animated stun renderer (shake only), so StunReceiver kept the rider's sprites and
+    // enabled the head-down stun pose next to the current head. Same code offline, host, owner and server (observers copy
+    // the server's single pose).
+    [Test]
+    public void R01MountedShakeOnlyStunShowsOneRiderHeadAndRestoresTheSeatedPose()
+    {
+        var root = new GameObject("MoleStunFixture"); root.SetActive(false);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            var actor = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player.prefab"), root.transform);
+            var mount = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Mounts/Mole.prefab"), actor.transform);
+            foreach (var animation in actor.GetComponentsInChildren<AnimatedSpriteRenderer>(true))
+                typeof(AnimatedSpriteRenderer).GetMethod("Awake", flags).Invoke(animation, null);
+            var movement = actor.GetComponent<MovementController>();
+            var stun = actor.GetComponent<StunReceiver>();
+            var visual = mount.GetComponentInChildren<MountVisualController>(true);
+            Assert.IsTrue(visual.useHeadOnlyPlayerVisual);
+            typeof(MovementController).GetField("isMounted", flags).SetValue(movement, true);
+            typeof(MovementController).GetField("useHeadOnlyWhenMountedRuntime", flags).SetValue(movement, true);
+            typeof(StunReceiver).GetField("cachedMovement", flags).SetValue(stun, movement);
+            typeof(StunReceiver).GetField("activeMountedStunVisual", flags).SetValue(stun, visual);
+            AnimatedSpriteRenderer Head(string name) => (AnimatedSpriteRenderer)typeof(MovementController).GetField(name, flags).GetValue(movement);
+            var body = new System.Collections.Generic.List<AnimatedSpriteRenderer>();
+            movement.CollectMountedBodyRenderers(body);
+            void Show(AnimatedSpriteRenderer keep)
+            {
+                foreach (var r in body) { r.enabled = r == keep; r.GetComponent<SpriteRenderer>().enabled = r == keep; }
+            }
+            string Shown()
+            {
+                var names = new System.Collections.Generic.List<string>();
+                foreach (var r in body) if (r.enabled && r.GetComponent<SpriteRenderer>().enabled) names.Add(r.name);
+                return string.Join(",", names);
+            }
+            var showStun = typeof(StunReceiver).GetMethod("ShowMountedPlayerDownForMountedStun", flags);
+            var hideMethod = typeof(StunReceiver).GetMethod("HideMountedPlayerDownForMountedStun", flags);
+            var stunRendererField = typeof(StunReceiver).GetField("activeMountedPlayerStunRenderer", flags);
+            void HideStun() { hideMethod.Invoke(stun, null); stunRendererField.SetValue(stun, null); } // as every stun exit does
+
+            Show(Head("headOnlyUp"));
+            showStun.Invoke(stun, null);
+            Assert.AreEqual("HeadOnlyDown", Shown(), "stun must replace the current head, not add a second one");
+            showStun.Invoke(stun, null); // re-entry after a damaged/external suppression keeps one head
+            Assert.AreEqual("HeadOnlyDown", Shown());
+            HideStun();
+            Assert.AreEqual("HeadOnlyUp", Shown(), "the seated pose comes back after the stun");
+
+            // Already facing down: nothing else to hide, and the down head stays after the stun.
+            Show(Head("headOnlyDown"));
+            showStun.Invoke(stun, null);
+            Assert.AreEqual("HeadOnlyDown", Shown());
+            HideStun();
+            Assert.AreEqual("HeadOnlyDown", Shown());
+
+            // Something else chose a pose meanwhile (or the rider dismounted): the old head is not brought back on top.
+            Show(Head("headOnlyRight"));
+            showStun.Invoke(stun, null);
+            Head("headOnlyLeft").enabled = true; Head("headOnlyLeft").GetComponent<SpriteRenderer>().enabled = true;
+            HideStun();
+            Assert.AreEqual("HeadOnlyLeft", Shown());
+            Show(Head("headOnlyRight"));
+            showStun.Invoke(stun, null);
+            typeof(MovementController).GetField("isMounted", flags).SetValue(movement, false);
+            HideStun();
+            Assert.AreEqual("", Shown());
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
 }
 #endif

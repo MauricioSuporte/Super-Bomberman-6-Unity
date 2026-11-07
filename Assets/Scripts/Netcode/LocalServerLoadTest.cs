@@ -23,6 +23,11 @@ namespace Assets.Scripts.Netcode
         readonly Dictionary<int, RopeSmokeAck> loadTestRopeAcks = new();
         int loadTestPlayers;
         float loadTestStart, loadTestDuration, loadTestNextHealth;
+        // R01 (Development only): deterministic server frame stalls. A stall longer than the client's buffer makes Mirror
+        // clamp the client timeline back when snapshots resume, the condition behind the remote back-steps measured on the
+        // older CPU. Same schedule with and without the remote presentation clock gives a controlled A/B.
+        int loadTestStallMs, loadTestStallEvery;
+        float loadTestNextStall;
 
         void TickLocalLoadTest()
         {
@@ -47,6 +52,9 @@ namespace Assets.Scripts.Netcode
                 var args = Environment.GetCommandLineArgs();
                 loadTestPlayers = ReadDedicatedNumber(args, "-load-test-players", RoomCapacity, 2, RoomCapacity);
                 loadTestDuration = ReadDedicatedNumber(args, "-load-test-duration", 180, 30, 1800);
+                loadTestStallMs = ReadDedicatedNumber(args, "-load-test-server-stall-ms", 0, 0, 1000);
+                loadTestStallEvery = ReadDedicatedNumber(args, "-load-test-server-stall-every", 3, 1, 60);
+                if (loadTestStallMs > 0) Debug.Log("[LoadTest] server-stall schedule ms=" + loadTestStallMs + " every=" + loadTestStallEvery + "s");
                 int launcherArg = Array.IndexOf(args, "-load-test-launchers");
                 if (launcherArg >= 0)
                 {
@@ -63,6 +71,16 @@ namespace Assets.Scripts.Netcode
                 Debug.Log("[LoadTest] completed");
                 leavingRoom = true; // Mark shutdown before StopServer disconnect callbacks.
                 StopServer(); Application.Quit(); return;
+            }
+            if (loadTestStallMs > 0 && loadTestStarted && !InLobbyScene() && Time.realtimeSinceStartup >= loadTestNextStall)
+            {
+                bool stall = loadTestNextStall > 0;
+                loadTestNextStall = Time.realtimeSinceStartup + loadTestStallEvery;
+                if (stall)
+                {
+                    System.Threading.Thread.Sleep(loadTestStallMs);
+                    Debug.Log("[LoadTest] server-stall ms=" + loadTestStallMs + " t=" + (Time.realtimeSinceStartup - loadTestStart).ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
+                }
             }
             if (!loadTestStarted && InLobbyScene() && RoomPlayers.Length == loadTestPlayers)
             {
@@ -135,9 +153,19 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        static void ToggleNativePause(bool paused)
+        {
+            var pause = GamePauseController.Instance;
+            var toggle = typeof(GamePauseController).GetMethod("TogglePause", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (pause == null || toggle == null) throw new InvalidOperationException("Missing native pause");
+            toggle.Invoke(pause, null);
+            if (GamePauseController.IsPaused != paused) throw new InvalidOperationException(paused ? "Native pause rejected" : "Native resume rejected");
+        }
+
         System.Collections.IEnumerator CheckLoadTestMountVisuals()
         {
             int index = 0;
+            CharacterHealth lastHealth = null; PlayerMountCompanion lastCompanion = null; MovementController lastMover = null;
             foreach (var peer in NetworkServer.connections.Values)
             {
                 var actor = peer.identity;
@@ -200,10 +228,47 @@ namespace Assets.Scripts.Netcode
                 foreach (int phase in new[] { 2, 5, 6, 7 }) { peer.Send(new MountVisualSmokeStep { phase = phase }); yield return new WaitForSecondsRealtime(.4f); }
                 peer.Send(new MountVisualSmokeStep());
                 Debug.Log("[LoadTest] visual head player=" + mover.PlayerId + " type=" + companion.GetMountedLouieType());
-                health.SetExternalInvulnerability(protectedBefore); index++;
+                // R01: native pause while the player is mounted and walking, then resume; observers must keep pose and mount.
+                peer.Send(new MountVisualSmokeStep { phase = 2 }); yield return new WaitForSecondsRealtime(.3f);
+                ToggleNativePause(true); yield return new WaitForSecondsRealtime(1f);
+                ToggleNativePause(false); yield return new WaitForSecondsRealtime(.4f);
+                peer.Send(new MountVisualSmokeStep()); yield return new WaitForSecondsRealtime(.3f);
+                Debug.Log("[LoadTest] visual pause mounted player=" + mover.PlayerId + " type=" + companion.GetMountedLouieType());
+                // R01: native 1 s stun of a rider facing up (round-reload_r1 showed two Mole heads for a whole stun).
+                if (mover.TryGetComponent<StunReceiver>(out var stunReceiver))
+                {
+                    var seated = new List<AnimatedSpriteRenderer>();
+                    string Seated()
+                    {
+                        mover.CollectMountedBodyRenderers(seated);
+                        var shown = new List<string>();
+                        foreach (var r in seated) if (r.TryGetComponent<SpriteRenderer>(out var s) && s.enabled && s.gameObject.activeInHierarchy) shown.Add(r.name);
+                        return string.Join(",", shown);
+                    }
+                    mover.ForceFacingDirection(Vector2.up); yield return new WaitForSecondsRealtime(.3f);
+                    string before = Seated();
+                    stunReceiver.ForceStun(1f, false); yield return new WaitForSecondsRealtime(.5f);
+                    string during = Seated();
+                    yield return new WaitForSecondsRealtime(.9f);
+                    string after = Seated();
+                    Debug.Log("[LoadTest] visual stun mounted player=" + mover.PlayerId + " type=" + companion.GetMountedLouieType() + " before=" + before + " during=" + during + " after=" + after);
+                    if (during.Contains(",")) throw new InvalidOperationException("Stunned rider shows more than one seated pose: " + during);
+                }
+                health.SetExternalInvulnerability(protectedBefore); index++; lastHealth = health; lastCompanion = companion; lastMover = mover;
             }
             if (index != 2) throw new InvalidOperationException("Visual fixture requires two owners");
             Debug.Log("[LoadTest] mount visuals completed players=2");
+            // R01: native death of the last owner while it is still mounted (Mole/Tank). In a two-player battle this also ends
+            // the round, so the reload exercises pose/mount cleanup for a player that died mounted. The outcome is logged as is.
+            yield return new WaitForSecondsRealtime(1f);
+            if (lastHealth != null && lastCompanion != null)
+            {
+                bool mountedBefore = lastMover.IsMounted; string typeBefore = lastCompanion.GetMountedLouieType().ToString();
+                lastHealth.StopInvulnerability(); lastHealth.SetExternalInvulnerability(false);
+                lastHealth.TakeDamage(lastHealth.life, true);
+                Debug.Log("[LoadTest] visual mounted death player=" + lastMover.PlayerId + " dead=" + lastHealth.IsDead + " mountedBefore=" + mountedBefore +
+                    " typeBefore=" + typeBefore + " mountedAfter=" + lastMover.IsMounted);
+            }
         }
 
         System.Collections.IEnumerator WaitForNeutralRopeInput(NetworkConnectionToClient peer, NetworkPlayerInput input, MovementController mover)
@@ -998,6 +1063,9 @@ namespace Assets.Scripts.Netcode
         uint ropeAckAfterTick;
         bool checkRopeInput, ropeSmokeHandler, checkPortalInput;
         bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
+        bool remoteWalk;
+        float walkStartedAt = -1, walkCaptureNext;
+        int walkCaptureSerial;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
@@ -1023,6 +1091,7 @@ namespace Assets.Scripts.Netcode
             smoke.repeatMountCycles = Array.IndexOf(args, "-load-test-mount-cycles") >= 0;
             smoke.suspendPresenterInputs = Array.IndexOf(args, "-load-test-presenter-removal") >= 0;
             smoke.revengeInput = Array.IndexOf(args, "-load-test-revenge-input") >= 0;
+            smoke.remoteWalk = Array.IndexOf(args, "-load-test-remote-walk") >= 0;
             smoke.quitAfterDisconnect = Array.IndexOf(args, "-load-test-client") >= 0;
             int captureArg = Array.IndexOf(args, "-load-test-mount-captures");
             if (captureArg >= 0 && captureArg + 1 < args.Length)
@@ -1038,6 +1107,7 @@ namespace Assets.Scripts.Netcode
 
         void Update()
         {
+            DriveRemoteWalk();
             if(mechanismKind!=null&&!mechanismHandler&&NetworkClient.active)
             {
                 mechanismHandler=true;NetworkClient.RegisterHandler<MechanismSmokeStep>(message=>
@@ -1203,6 +1273,13 @@ namespace Assets.Scripts.Netcode
                 GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mechanism_capture",detail:"fixture="+mechanismKind+";phase="+mechanismPhase+";explosions="+FindObjectsByType<BombExplosion>().Length));
                 CaptureMountFrame(camera,$"mechanism-{mechanismPhase:D2}-{mechanismFrame++:D2}.png");
             }
+            if (remoteWalk && walkStartedAt >= 0 && walkCaptureSerial < 60 && Time.unscaledTime >= walkCaptureNext)
+            {
+                // R01: this client's view of the OTHER (walking) player; UTC in the name matches frames to the motion logs.
+                walkCaptureNext = Time.unscaledTime + .5f;
+                CaptureMountFrame(camera, $"walk-{++walkCaptureSerial:D2}-{DateTime.UtcNow:HHmmss.fff}.png");
+            }
+            if (checkMountVisuals) CaptureMountChangeFrames(camera);
             if (checkMountVisuals && visualCaptureSerial < 80 && (Time.unscaledTime >= visualCaptureAt || Time.unscaledTime >= visualAfkCaptureAt))
             {
                 if (Time.unscaledTime >= visualCaptureAt) visualCaptureAt = float.PositiveInfinity;
@@ -1223,6 +1300,31 @@ namespace Assets.Scripts.Netcode
             if (!riding || captureArc > (checkMountVisuals ? 12 : 3) || Time.unscaledTime < captureNext) return;
             captureNext = Time.unscaledTime + 0.12f;
             CaptureMountFrame(camera, $"arc-{captureArc:D2}-{captureFrame++:D2}.png");
+        }
+
+        // R01: frame-by-frame evidence of mount / mount-type changes (Mole, Tank, Louies), for the owner and the observed
+        // player. Every rendered frame after the change is saved for a short window, after all presenters (order 1500), so a
+        // one-frame foot body next to a mount is visible in the PNGs. PNG encoding slows those frames; frames stay consecutive.
+        readonly Dictionary<uint, (MountedType type, bool mounted)> mountChangeState = new();
+        int mountChangeSerial, mountChangeFramesLeft, mountChangeFrame;
+        string mountChangeLabel;
+        void CaptureMountChangeFrames(Camera camera)
+        {
+            foreach (var identity in NetworkClient.spawned.Values)
+            {
+                if (identity == null || !identity.TryGetComponent<MovementController>(out var mover) || !identity.TryGetComponent<PlayerMountCompanion>(out var companion)) continue;
+                var state = (companion.GetMountPresentationType(), mover.IsMounted);
+                if (mountChangeState.TryGetValue(identity.netId, out var previous) && previous != state && mountChangeSerial < 24)
+                {
+                    mountChangeSerial++; mountChangeFramesLeft = 8; mountChangeFrame = 0;
+                    mountChangeLabel = $"{(identity.isLocalPlayer ? "owner" : "observed")}-p{mover.PlayerId}-{previous.type}-{state.Item1}";
+                    GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mount_change_capture", mover, detail: "serial=" + mountChangeSerial + ";label=" + mountChangeLabel));
+                }
+                mountChangeState[identity.netId] = state;
+            }
+            if (mountChangeFramesLeft <= 0) return;
+            mountChangeFramesLeft--;
+            CaptureMountFrame(camera, $"mountchange-{mountChangeSerial:D2}-{mountChangeFrame++:D2}-f{Time.frameCount}-{mountChangeLabel}.png");
         }
 
         void CaptureMountFrame(Camera camera, string filename)
@@ -1271,9 +1373,38 @@ namespace Assets.Scripts.Netcode
             }
         }
 
+        // R01 (Development only): deterministic walking through the normal synthetic hardware slot so that the
+        // OTHER client can be measured against the server. It only drives this process's own player; it never
+        // supplies another player's input and it does not run unless -load-test-remote-walk is passed.
+        void DriveRemoteWalk()
+        {
+            var input = PlayerInputManager.Instance;
+            if (!remoteWalk || input == null || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return;
+            var mover = NetworkClient.localPlayer.GetComponent<MovementController>();
+            if (mover == null || !mover.CanPredictNetworkMovement || GamePauseController.IsPaused) { ReleaseRemoteWalk(input); return; }
+            if (walkStartedAt < 0)
+            {
+                walkStartedAt = Time.unscaledTime;
+                Debug.Log("[LoadTest] remote-walk started player=" + mover.PlayerId);
+            }
+            // 14 s cycle with stops between segments; odd/even players are offset so the two clients rarely overlap.
+            float t = (Time.unscaledTime - walkStartedAt + (mover.PlayerId & 1) * 3.5f) % 14f;
+            input.SetSyntheticHeld(1, PlayerAction.MoveRight, t < 2.4f);
+            input.SetSyntheticHeld(1, PlayerAction.MoveLeft, t >= 3f && t < 5.4f);
+            input.SetSyntheticHeld(1, PlayerAction.MoveUp, t >= 6f && t < 8.4f);
+            input.SetSyntheticHeld(1, PlayerAction.MoveDown, t >= 9f && t < 11.4f);
+        }
+
+        static void ReleaseRemoteWalk(PlayerInputManager input)
+        {
+            foreach (var action in new[] { PlayerAction.MoveLeft, PlayerAction.MoveRight, PlayerAction.MoveUp, PlayerAction.MoveDown })
+                input.SetSyntheticHeld(1, action, false);
+        }
+
         void OnDisable()
         {
             if (PlayerInputManager.Instance == null) return;
+            if (remoteWalk) ReleaseRemoteWalk(PlayerInputManager.Instance);
             if (checkMountVisuals)
                 foreach (var action in new[] { PlayerAction.ActionL, PlayerAction.ActionC, PlayerAction.MoveUp, PlayerAction.MoveDown, PlayerAction.MoveRight, PlayerAction.MoveLeft })
                     PlayerInputManager.Instance.SetSyntheticHeld(1, action, false);

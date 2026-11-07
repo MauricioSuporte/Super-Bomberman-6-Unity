@@ -266,7 +266,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C08: protocolo 63: campo e alvo autoritativos; Magnet/Search e curvas de Kick em ordem, stop/cancelamento, pausa/revisões e bombas sem dono/presenter. Full2 1028/1028 + Final18 18/18; Peers3 com 2 clientes reais headless e 3 trajetos nativos, transferência sem interrupção, 0 erros/avisos do servidor. QA visual/offline permanece na matriz geral; publicado no Actions42110831096.
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
 - [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 concluída no Actions42204673208.
-- [ ] R01: parcial36: tempo pose/posição e geração de montaria alinhados/testados; capturas/custo e validação entre peers pendentes.
+- [ ] R01: parcial (07/11/2026; protocolo 65 inalterado; não publicado). Implementação, validação automatizada (EditMode 1046/1046; smokes com 2 clientes renderizados, 0 passos para trás reais, 0 lacunas, 0 poses duplas) e aceite manual (aprovado pelo usuário nos cenários testados) concluídos. **Pendências obrigatórias do R01:** (1) custo CPU/bytes do player remoto (baseline comparável); (2) comparação online × offline com `analyze_prediction.py` (Logs/R01-comparacao.json). **Atualização 07/11:** (2) demonstrada; (1) medida, revelou custo de diagnósticos (+56 KiB/s de alocação no servidor) e +5–6% de ciclos no observador; a correção Development-only ainda precisa de compilação/EditMode e da medição sem captura. **Atualização 07/11 (tarde):** EditMode 1046/1046; sem captura não há diferença resolvida (Δ frame ≤ 0,05 ms); R01 concluído nos critérios obrigatórios, não publicado. Limitações: borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições só na CPU nova, teardown antigo não reproduzido (não corrigido).
 - [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
 - [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
@@ -4050,3 +4050,784 @@ próximoR01. Suite1041/1041+Final4/4,92Python, cinco execuções2clientes (4cen�
 iniciais+SDfinal),0erros/avisos servidor. QA perceptual/offline permaneceglobal.
 2Packages do usuário preservados comhashes originais; nenhuma cena/prefab editada
 na raiz e nenhum código de fixture deDevelopment nos binários publicados.
+
+### R01 retomado em 06/11/2026 — auditoria apenas, sem código novo
+
+Ambiente desta sessão: shell Linux (VM) sem Unity, dotnet nem o runner
+`.sb6-actions-runner`; só leitura/edição de fontes e testes Python são possíveis.
+Nada foi compilado, testado em Unity, capturado entre peers nem publicado.
+Branch `v0.5.0`, HEAD `b7c77eff3`. `git status` completo NÃO terminou nesta montagem Linux
+(timeout); a afirmação anterior de árvore limpa estava errada. Alterações do usuário em
+Packages/manifest.json e packages-lock.json devem ser presumidas e preservadas.
+
+Auditado (leitura): NetworkMountAnimation (history64 por tipo/geração, interpolação
+de localPosition/pose com limite de offset aprovado, pausa congela), NetworkPlayerAnimation
+(history64 de renderer/frame/offset/pose, interpolação só no mesmo renderer, limite 0,25 s),
+NetworkVisualPose (pose relativa ao ator, nunca move o root de gameplay) e NetworkPlayerSetup.
+Nenhuma divergência comprovada foi encontrada que justifique editar C# sem poder compilar
+e capturar owner/observador. Nota: NetworkPlayerAnimation.OnVisualTime não tem a guarda
+`NetSync.Mode/NetworkClient.active` que NetworkMountAnimation tem; hipótese a verificar
+com prefab offline, não é bug confirmado.
+
+R01 segue parcial (36). Pendências: capturas owner/observador entre peers, custo CPU/bytes,
+validação de transições/papéis (troca de montaria/geração, morte, emote/AFK, pausa, rodada).
+Próxima ação: em máquina com Unity 6000.6.0f1, estender `LocalServerLoadTest.cs` para player
+remoto, gerar build Development e rodar `smoke_full_clients.py --rendered --mount-visuals`
+(receita na seção 9 do handoff), comparando com `analyze_prediction.py`.
+Publicação: não iniciada.
+
+Análise OnVisualTime (estática, não executada): é hook de SyncVar de NetworkPlayerAnimation,
+chamado só ao desserializar estado de rede em cliente, e retorna cedo no servidor e no owner sem
+apresentação de autoridade. LateUpdate também sai sem NetSync.IsOnline. Offline não há
+desserialização, logo o hook não roda; guarda por simetria com NetworkMountAnimation seria
+desnecessária e pode desativar animações válidas. Hipótese refutada por leitura; confirmar
+só se um log online/offline mostrar alteração indevida de pose.
+
+Preparação R01 (06/11) — NADA compilado nem executado em Unity/Windows; publicação não iniciada.
+Estado do checkout: branch v0.5.0, HEAD b7c77eff3. `git diff --name-only` confirma alterações do
+USUÁRIO em Packages/manifest.json e Packages/packages-lock.json (preservadas, não tocadas).
+Arquivos próprios (tracked): LocalServerLoadTest.cs, NetworkMountAnimation.cs,
+NetworkPlayerAnimation.cs, Tools/RoomDirectory/smoke_full_clients.py e estes dois docs.
+Novos (untracked, sem .meta pois não são assets Unity): Tools/Diagnostics/analyze_remote_player.py,
+Tools/Ci/test_remote_player_analysis.py, Logs/R01-validate-assisted.py (Logs não é versionado).
+
+C# (compilação PENDENTE; revisão estática apenas):
+- NetworkMountAnimation.TraceVisual e NetworkPlayerAnimation.TracePlayerVisual passam a registrar
+  `rev=` (frameRevision) e `ptime=` (AuthorityPresentationTime ou NetworkTime.time, InvariantCulture)
+  no detail. Só log; sem mudança de wire/protocolo (65 mantido). Validadores existentes leem o
+  detail por chave, então campos extras não os afetam.
+- LocalNetworkInputSmoke ganhou `-load-test-remote-walk` (DriveRemoteWalk/ReleaseRemoteWalk): ciclo
+  de 14 s (direita, esquerda, cima, baixo, com paradas) no slot de hardware 1, só do próprio
+  processo, só após CanPredictNetworkMovement e fora da pausa; loga `[LoadTest] remote-walk started`.
+  smoke_full_clients.py ganhou `--remote-walk` (exige BattleMode + diagnostics, sem outras
+  fixtures, sem --rendered) e falha se um cliente nunca iniciar a caminhada.
+Motivo: nas capturas antigas 26 de 42 cenários são inconclusivos (jogadores parados); mount-cycles
+anda ~0,35 s por ciclo e Sudden Death não anda.
+
+Analisador (Python, 15 testes sintéticos passando; 92 testes Tools/Ci executados, 15 pulados, só na
+VM Linux): atraso esperado = timeline-ptime (ou bufferMs); atraso constante perto disso NÃO é falha;
+falhas = atraso acima do esperado+150 ms, deriva entre janelas de 3 s >150 ms, travamento (>=0,5 s
+parado enquanto o servidor se move, ignorando as bordas), descontinuidade, RMS>0,35, pose ausente ou
+inexistente no servidor, geração de montaria inexistente no servidor, offset p95>0,5. Arcos de
+montar/Pink são excluídos. Sem movimento suficiente => inconclusivo, nunca "0 ms". Limites provisórios.
+Em ~50 capturas antigas: atrasos medidos 20–100 ms ~ bufferMs 33–52 ms. Pistas, não conclusões:
+VisualRepair58Peers2/4 (build antiga) em que o observador nunca mostrou MountAscendLeft/Right; casos
+de cart/portal com descontinuidade (arcos de outros presenters).
+
+Script (Logs/R01-validate-assisted.py): bloqueia (exit 3) se fontes (Assets+ProjectSettings) do runner
+divergirem do checkout, Packages divergirem (sem --accept-packages-diff), runner ocupado ou RAM/disco/
+portas insuficientes. Resultados separados: falha de execução (1), falha de medição (2), inconclusivo
+(4, não é aprovação); 0 = dentro dos limites provisórios, ainda sem aceitar o R01. Casos: locomotion
+(novo, sem render), mount-visuals, regression-sudden, mount-cycles (regressões complementares).
+Comando: `python Logs/R01-validate-assisted.py --step preflight`, depois `--step all`; devolver a pasta
+`Logs/R01-assisted-<data>` inteira. Resultado esperado: o primeiro erro provável é de compilação do
+driver C# (falha de execução, não de medição). Próxima ação após os resultados: diagnosticar e
+corrigir; R01 segue parcial.
+
+## Preparação R01 (06/11, parte 2) — NADA compilado nem executado no Windows
+
+- `Logs/R01-validate-assisted.py` agora aceita `--resume <pasta|latest>`: preflight, tests, build e smoke ficam na mesma pasta `Logs/R01-assisted-<data>`; o ponteiro fica em `Logs/R01-latest.txt` e `result.json` guarda `invocations` (um registro por comando). Sem `--resume`, cada comando cria pasta nova; o vínculo é `Build/ServerBenchmark/r01-build-identity.json` no runner (sha256 do SB6.exe e digest das fontes) mais os digests de cada `result.json`. Antes de cada smoke o binário é reverificado.
+- Divergência de fontes: o preflight bloqueia e gera `sync-plan.txt`, `sync-to-runner.ps1` (dry-run; `-Apply` copia só arquivos próprios e seus `.meta`, com backup em `runner-backup/`; `-IncludeOther` explícito) e `restore-runner.ps1`. Nunca apaga, não toca em `Packages`. O script Python não copia nada. Testado só em Linux com pastas temporárias.
+- Novo caso `locomotion-rendered` (porta 29023): `--remote-walk` com clientes renderizados, salvando `walk-NN-<UTC>.png` do observador a cada 0,5 s para conferir root, pose e montaria. `locomotion` (sem renderização) segue como medição automatizada; logs `player_visual_sample` headless existem em capturas antigas, mas movimento do root sob `-nographics` só será confirmado na primeira execução Windows.
+- R01 continua **parcial**. C# novo (`DriveRemoteWalk`, captura) não foi compilado.
+
+## Preparação R01 (06/11, parte 3) — MCP restrito e sincronização (nada executado no Windows)
+
+- `Tools/R01Mcp/` (não rastreado): servidor MCP stdio com operações fixas (start/job/cancel/results/read), um job por vez, sem shell, sem Packages, sem `--accept-packages-diff`. Instalação por `install.ps1` (simulação por padrão; `-Apply` faz backup do config e mexe só em `mcpServers.sb6-r01` via `merge_config.py`). Testado só em Linux (protocolo, trava, cancelamento sem órfãos por grupo de processos). Job Object do Windows e exposição do servidor a esta sessão: NÃO verificados. A documentação oficial diz que servidores MCP locais não rodam em sessões na nuvem; confirmar após instalar.
+- Preflight de 12:40 (usuário) não comparava fontes; corrigido. Runner em HEAD `b391172` contra `b7c77eff3`: HEAD sozinho não prova divergência; vale o manifesto de `Assets/`+`ProjectSettings/`.
+- Diferenças agora classificadas: próprias (copiadas por `-Apply`), atrasadas com cópia intacta (só com `-IncludeBehind`), alteradas pelo próprio runner (nunca copiadas; seguir só com `--accept-runner-local-diffs`, registrado como ressalva).
+
+## MCP sb6-r01 — verificação em 06/11 12:58 (local): NÃO visível nesta sessão
+- `.sb6-r01-mcp` existe no usuário e `Logs/r01-mcp/server.log` mostra 3 inicializações do servidor às 12:54 (provavelmente autotestes do instalador e/ou do app; não distingue). Nenhuma chamada de ferramenta registrada.
+- `get_device_info.localMcpServers` segue `[]`; `RefreshMcpTools` não listou `sb6-r01` (servidor `remote-devices` com 54 ferramentas, sem acréscimo); ToolSearch não achou `r01_start`.
+- Conclusão: INCONCLUSIVO, não é prova de incompatibilidade. A sessão pode ter sido criada antes do reinício do app; a documentação oficial também diz que MCP local não roda em sessões na nuvem. Próximo passo: abrir sessão NOVA e repetir a checagem. Preflight não executado por esse caminho.
+
+## Preflight via computer use (06/11 13:12 local) — BLOQUEADO por fontes (esperado), nada copiado
+- Caminho usado: computer use (Explorador de Arquivos, nível click) com duplo clique em `Logs/R01-run-preflight.cmd` (fixo: só `--step preflight`). Terminais não aceitam digitação por computer use; só arquivos preparados. O app Claude não foi concedível, então Configurações → Desenvolvedor não foi inspecionado. MCP `sb6-r01` ainda não verificado em sessão nova.
+- 1ª execução (13:04) acusou 8604 diferenças; amostra de 400: 399 eram só quebra de linha (runner CRLF, repo LF). Manifesto passou a normalizar CRLF→LF em texto (`norm_sha`; arquivos com NUL ficam crus), inclusive para `Packages`.
+- 2ª execução (pasta `R01-assisted-20261106-131233`): diferenças reais = próprias 3 (`LocalServerLoadTest.cs`, `NetworkMountAnimation.cs`, `NetworkPlayerAnimation.cs`); atrasadas 2 (`Assets/Resources/OnlineBuildIdentity.txt` e `.meta`); alteradas pelo runner 1 (`Assets/Resources/OnlineBattleAudio.asset`). `Packages/manifest.json` e `packages-lock.json` também diferem (hash normalizado). RAM livre 4,9 GiB. `acceptRunnerLocalDiffs=false`.
+- Pendente de decisão do usuário: copiar as 3 próprias (reversível); revisar OnlineBuildIdentity e OnlineBattleAudio.asset; decidir sobre Packages. Tests/build/smoke NÃO iniciados.
+
+## Sincronização temporária do runner e preflight (06/11 13:23 local)
+- Seguido `Docs/multiplayer/revisao-runner-r01.md`. Script `Logs/R01-runner-sync.ps1` (modos Plan/Apply/Restore; wrappers `R01-sync-*.cmd`), executado por computer use. Apply copiou repo -> runner, só no runner, com backup em `Logs/R01-runner-sync/backup-20261106-132330` e `state.json` (hashes original/instalado): 3 fontes C#, `OnlineBattleAudio.asset`, `OnlineBuildIdentity.txt` + `.meta` (par tratado junto; GUID do runner d8252331… sem outras referências), `Packages/manifest.json` e `packages-lock.json`. Nada no checkout original foi alterado; sem reset/clean.
+- Restore só roda com Unity/SB6/validação/Actions parados e só repõe arquivo que ainda tem o conteúdo instalado; senão reporta "changed since sync" (ou `-Force`, salvando antes a cópia atual). Packages podem ser regravados pelo Unity durante o teste; esperar conflito e tratar no restore.
+- Efeitos a registrar: Unity pode importar/baixar pacotes no runner (Library do runner não é revertida). OnlineBuildIdentity do runner passa a ser o do checkout original (não prova as fontes dirty; a identidade do teste é o manifesto + assemblies). Áudio igualado ao original: cobertura de áudio do runner anterior não vale.
+- Preflight (`R01-assisted-20261106-132339`): exit 0, fontes idênticas, Packages iguais. NADA medido; R01 segue parcial. Próximo: tests, depois build, depois smoke (um por vez, sem publicar).
+
+## R01 — execução assistida: testes, build e smokes (06/11 15:00 local)
+Pasta de resultados: `Logs/R01-assisted-20261106-132339` (smokes/analyses anteriores arquivados em `previous-smokes-1`, `previous-analyses-1`; imagens em `evidence/`).
+- Testes EditMode (filtro `OnlineRoomEditModeTests;BattleModeComEditorTests`): 1041/1042. A falha é o catálogo de áudio (asset original sem entradas que o Unity adiciona), preexistente e alheia ao R01.
+- Build Development (runner sincronizado, Packages iguais): sucesso; identidade em `binary-identity.json` (hash da Assembly-CSharp.dll). Duas intercorrências minhas: (1) um duplo clique acidental reexecutou o build-accept (falhou sem alterar a identidade); (2) o checador de "binário novo" olhava só SB6.exe, que o Unity não religa quando só scripts mudam; corrigido para exigir log "Succeeded" + DLL mais nova que os scripts do runner.
+- Correções feitas após os primeiros smokes (todas de diagnóstico, nenhuma muda o jogo): `NetworkPlayerAnimation.LateUpdate` passa a chamar `TracePlayerVisual()` também durante arco de montaria/toupeira/barco (antes o observador não logava pose nesses trechos; agora há MountAscend/Descend nos logs do observador); analisador ignora linhas do observador após o fim dos dados do servidor, aceita revisões `frameRevision` intermediárias (contador único por player, bumps sem linha no servidor), ignora estados de uma única amostra (aliasing a 10 Hz) e compara o offset da montaria com qualquer offset publicado pelo servidor na tolerância (o offset espelha com a direção); `mount-visuals` passou a 150 s. Testes sintéticos: 19 passam.
+- Resultado dos 5 smokes (binário identificado, análise pelo analisador corrigido): locomotion headless e renderizado e mount-visuals: dentro dos limites provisórios (lag de raiz constante 40–60 ms ≈ atraso de interpolação, 0 stalls, 0 descontinuidades, RMS 0,01–0,11, p95 ≤0,27; atraso de pose mediano 34–83 ms). mount-cycles e regression-sudden: sem falhas, mas players parados, logo raiz não mensurável (registrado como "não aplicável", não como evidência de locomotion).
+- Imagens do locomotion renderizado (`evidence/*-sheet.png`, frames walk-NN): partida renderiza normalmente com mounts, bombas e explosões; não vi corrupção óbvia. Há silhuetas pretas perto de um COM em dois frames (provável sprite de efeito/morte); não consegui julgar. Julgamento perceptual (suavidade, alinhamento de pose/mount, GPU real) fica como QA manual PENDENTE, separado.
+- Runner restaurado com `R01-sync-Restore.cmd` (todos os arquivos voltaram aos hashes originais; state arquivado no backup). Checkout do usuário intocado; nada publicado. Library do runner não foi revertida.
+- Estado: R01 segue PARCIAL. Limites são provisórios (sem baseline), há apenas uma execução por smoke e falta o QA manual perceptual. Não marcado como concluído.
+
+
+## R01 - investigacao adicional antes de fechar (06/11, 15:30 local) - R01 CONTINUA PARCIAL, SEM PUBLICACAO
+
+### Medido
+- Catalogo de audio (teste unico no runner): baseline equivalente SEM as alteracoes R01 e sem trocar o asset PASSOU; com o asset do repositorio trocado temporariamente FALHOU de forma identica. Atribuicao: a falha nao vem do codigo R01; e latente do asset commitado quando o runner nao o reserializou (Logs/R01-baseline-*/). Causa exata no asset segue nao analisada.
+- Analisador reescrito: comparacao por entidade, geracao de montaria e tempo de apresentacao (ptime), nao mais por offset publicado em qualquer instante. Amostras de um quadro, poses ambiguas e revisoes intermediarias sao contadas como "inconclusivas" (coverageNotes/candidates), nunca descartadas em silencio. 24 testes do analisador passam.
+- Repeticao 3 (build com trace do servidor a 20 Hz, dt= por quadro, limite de log 64 MiB; nenhum capture_limit): 
+  - locomotion rendered: dentro dos limites provisorios (atraso de apresentacao ~38 ms, erro de posicao no mesmo ptime p95 0,39, 0 divergencias estritas).
+  - locomotion headless: FALHA de medicao (posicao no mesmo ptime p95 0,52 > 0,5; deriva de lag de 260-280 ms em uma janela, na mesma janela nos 3 observadores). Nao tratar como aprovado.
+  - mount-visuals, mount-cycles, regression-sudden: INCONCLUSIVOS (jogador quase parado, raiz sem lag identificavel); 0 divergencias estritas de pose/montaria; revisoes intermediarias de montaria (mount-cycles: 2, 4, 8) listadas.
+- Causa provavel dos "buracos" no log do servidor, das derivas e dos degraus grandes: travadas reais de quadro do SERVIDOR (dt medido). Ex.: locomotion dt=610 ms (ptime 11,6), 281 ms (18,1) e 4050 ms (35,0 - explica o degrau de 2,76 u); rendered 655 ms e 275 ms; demais smokes 190-925 ms perto de 9-10 s (inicio de rodada). O servidor headless divide a maquina com 2 clientes. Isso e correlacao forte, nao prova de que o p95 de 0,52 seja so isso.
+- Silhuetas pretas: identificadas como TemporarySpeedBlink (MovementController, tint preto/branco a cada 0,1 s) disparado por caveira/velocidade temporaria; comportamento esperado. Evidencia em evidence/black-silhouette-crops.png. Fase do blink entre clientes nao verificada.
+
+### Descartado
+- Falha de audio como regressao do R01 (baseline passa sem R01, falha com o asset do repositorio igual em ambos).
+- Truncamento de logs por limite de 8 MiB (corrigido: 64 MiB).
+- Tolerancia por offset em qualquer momento (substituida por ptime/geracao).
+
+### Candidatos abertos (nao resolvidos)
+- Recuo do relogio de apresentacao (ptime) de 0,1-0,23 s em todos os smokes; efeito visual nao provado (pode coincidir com as travadas do servidor).
+- Estado de um quadro so no observador (Down,MountAscendLeft; antes: Mole body=Down) que o servidor nunca registrou.
+- Degraus grandes sem referencia densa do servidor (parcialmente explicados pelas travadas).
+- Reexecutar locomotion headless para ver se o p95 > 0,5 reproduz fora das travadas.
+
+### Sem cobertura
+Qualidade perceptiva/GPU; comparacao offline x online; morte montado, pausa, troca de rodada; custo de CPU/bytes; correlacao por tick; sincronia da fase do blink da caveira; visibilidade do recuo de ptime.
+
+### QA manual pendente (2 clientes, ~10 min, build Development com -online-motion-logs, gravar a tela)
+1. Locomocao: A anda em quadrado e diagonais por 20 s; em B, procurar engasgos ao virar/parar.
+2. Pose: A vira nas 4 direcoes, coloca bomba e para; em B, procurar piscadas de pose.
+3. Montarias: A monta Tank/Mole/Louie e anda em todas as direcoes; em B, offset do corpo acompanha a direcao, arcos de subir/descer, e atencao ao flash de corpo inteiro em Mole so-cabeca (inversoes Cima/Baixo).
+4. Ciclos: A monta/desmonta 5x rapido; B nao pode mostrar o quadro da montaria anterior apos desmontar.
+5. Caveira: A pega caveira; B ve piscar preto ~0,1 s, sem ficar preso no preto, terminando junto.
+6. Nao coberto: pausa, troca de rodada, morte montado.
+
+## Rodada 06/11/2026 noite - hitches, ptime, quadro do Mole, locomotion (R01 segue PARCIAL, sem publicacao)
+
+Condicoes: CPU antiga nas medicoes principais; a maquina trocou para Ryzen 5 5600GT (16 GB) no fim da rodada. Tempos valem para a CPU antiga; repetir locomotion na nova.
+
+Medido
+- Lacunas no log do servidor vinham do orcamento de 180 linhas/s da captura (289 de 291 amostras esparsas eram logDropped), nao de travadas. Com `-online-motion-log-budget 600` (so densidade de captura; limiares do analisador intactos): locomotion_n2 e locomotion-rendered_n3 dentro dos limites provisorios; locomotion-rendered_n2 e locomotion_n3 inconclusivos (degraus em lacunas reais do servidor, janela de lag 160 ms nao corroborada por ptime). A "falha" headless anterior (p95 0,52) era artefato de referencia esparsa. Nenhuma janela descartada: todas listadas acima.
+- Travadas reais do servidor existem sem captura (plain-nocapture_n1: 7 apos 15 s, max 338 ms, fase update; carga de cena ate 1,9 s). Custo de captura pequeno: formatacao 2-7 ms/s, IO 0,4-1,1 ms/s. mount-visuals_n3: 7 travadas no servidor (5 coincidem com GC na fase early, max 775 ms na carga de cena, 1 fixed 161 ms, 1 preLate), 160 coletas. GC coincide mas causalidade nao provada. Clientes renderizados: 47-61 travadas (max ~385 ms), pois 2 clientes + servidor dividem a maquina.
+- ptime recua por TimelineClamp/reset do Mirror (passos de -20 a -200 ms; -1,2 s no reset). 9 de 21 recuos seguiram travada >=100 ms do servidor; 12 sem causa isolada (rtt mediano 37 ms). O recuo chega a posicao apresentada: 4 recuos em movimento deram degraus de 0,3-0,4 u nos renderizados (0 de 3 no headless n3). Visibilidade perceptiva nao julgada. Relogio monotonico NAO imposto. Pausa (~1 s) nao gerou salto de ptime.
+- Quadro de corpo inteiro na montaria: reproduzido de novo em mount-visuals_n3 (56/51 mount_body_edge nos clientes) e ausente do log denso do servidor, portanto nao e amostragem. Observador mostra corpo base Down por 1 frame (~16 ms), as vezes Left/MountDescendRight ate ~67 ms antes de MoutedRigth/HeadOnly*; root e rev inalterados; player_renderer_edge nao mostra. Sem correcao tentada.
+- Novo: classe "borderline" no analisador (degrau 90.68 e subleitura do pico pelo servidor) = inconclusivo, nunca falha. 27 testes passam.
+
+Nao concluido / pendente
+- round-reload (200 s) FALHOU na orquestracao: "missing server checkpoint: [LoadTest] completed" (smoke-round-reload_n2/failure.json); troca de rodada continua sem cobertura automatizada. Nao e resultado.
+- mount-visuals_n3: inconclusivo (servidor moveu 0,00 u nas janelas dos clientes; lag nao identificavel). Morte montado: observador mostra body vazio ~43 ms e depois Down; nao analisado em profundidade.
+- Fora do escopo: GPU/percepcao, offline x online, custo CPU/bytes, correlacao por tick, pausa com montados.
+
+Manual (usuario): o flash de 16-67 ms e visivel? Os degraus de 0,3-0,4 u sao visiveis? Fase do blink (TemporarySpeedBlink e comportamento esperado).
+
+Ferramentas: FrameHitchProbe (`-online-hitch-probe`, `-online-hitch-ms`), Tools/Diagnostics/hitch_report.py, `-online-motion-log-budget N`, `-online-motion-logs-off`, casos plain-nocapture/plain-capture/round-reload no orquestrador. Runner restaurado (11 arquivos; FrameHitchProbe removido); checkout do usuario intocado.
+
+## Falha separada: catalogo de audio (OnlineBattleAudio)
+Linha de base sem alteracoes do R01 passa; com o asset do repo copiado para o runner falha de forma identica. Causa no asset nao analisada. Nao relacionada ao R01.
+
+## Rodada 06/11/2026 22:00-23:30 - correcoes do flash de corpo e dos passos para tras, round-reload e baseline na CPU nova (R01 segue PARCIAL, sem publicacao)
+
+Hardware: runs com tag `_n*` e `_h*` antigos = CPU antiga; `_g*`, `_k*`, `_m*`, `_p*` = CPU nova (Ryzen 5 5600GT, 16 GB, GTX 1660). Tempos nao sao comparados diretamente entre as duas.
+
+Causas encontradas e correcoes (codigo de jogo, so apresentacao em observadores; sem mudar geracao, HeadOnly ou modo offline)
+- Flash do corpo base (Down/Left por 1-4 frames) na montagem: dois mecanismos. (1) No fim do arco de montar/desmontar, `NetworkBombFx.ClearRidingPresentation` -> `PlayerRidingController.StopNetworkArcVisual` chama `EnableExclusiveFromState()` DEPOIS do `LateUpdate` do `NetworkPlayerAnimation`, entao o corpo a pe chegava a tela por 1 frame ate o proximo `ClientApply`. (2) Mole/Tank: o mount e o corpo vem de dois streams bufferizados e o mount podia aparecer ~1 frame (16 ms) antes do corpo autoritativo (antes: ate ~67 ms).
+- Correcao: `NetworkPlayerAnimation.EnforceAuthorityPose()` (reaplica a pose autoritativa no fim do frame, chamado por `NetworkMountAnimation.LateUpdate`, order 1000; mesmas guardas do LateUpdate: arco de montar, MoleStartup/barco do dono, predicao local, pausa, fim de fase) e `NetworkMountAnimation.HideMountBeforeAuthorityBody()` (esconde o mount no frame em que o corpo autoritativo ainda e o a pe; nao age no dono que prediz, em movimento de habilidade, MoleStartup, morto, pausa). `MovementController.IsPlainFootBodyVisible()` e o predicado. Interruptores de A/B: `-online-no-pose-enforce`, `-online-no-mount-gate`. Linhas novas: `player_pose_enforced`, `mount_gated_by_body`.
+- Medicao (mount-visuals, CPU nova; quadros finais com corpo a pe + mount visivel, 2 clientes): tudo desligado 8 (m2; antigo n3: 9) -> so reaplicacao 3 (k2) -> + gate observador 2 (k1/m1) -> + gate no dono nao-predito 1 (p1, Mole no proprio dono) e 0 (p2). Residual: 1 frame (~16 ms) no dono durante MoleStartup, caminho local que nao foi alterado; aparece em 1 de 2 execucoes.
+- Tentativa descartada: adiar a aplicacao do `mountType` ate o ptime alcancar o carimbo do servidor (A/B h1 vs h2: 14 vs 13 eventos, sem efeito) - revertida; `NetworkPlayerState.cs` identico ao HEAD.
+- Passos para tras do timeline: o relogio do Mirror (`NetworkTime.time`) NAO foi tocado. `NetworkPlayerAnimation.PresentSlewedPosition()` mantem, so para a posicao de jogadores remotos, um tempo de apresentacao que nunca volta: apos um recuo avanca a meia taxa ate o relogio do Mirror alcancar (gap maximo 0,25 s). Cortes legitimos nao sao suavizados: recuo > 0,25 s, lacuna de entrega > 0,25 s entre os snapshots amostrados, salto do tamanho de teleporte (1,5 tile), pausa, habilidade/arco/lancamento/carrinho dono da raiz, morto/fim de fase. `-online-no-timeline-slew` desliga. Linhas: `timeline_slew_begin/end` (gap, duracao, motivo).
+- Medicao (CPU nova): locomotion-rendered k1 (com) teve 40 recuos de ptime (28 em movimento, ate 216 ms) e 0 passos para tras > 0,1 u (30 janelas de suavizacao no headless, 70 no renderizado, 15 no round-reload); k2 (sem) teve 5 recuos (4 em movimento) e 0 > 0,1 u; h2 sem suavizador: 1 passo de 0,13 u e 1 descontinuidade de raiz. Na CPU antiga (sem suavizador): 0,32-0,38 u (n2/n3). A CPU nova quase nao reproduz o problema, entao a evidencia de beneficio e indireta (muitos recuos grandes sem passo visivel), nao um A/B limpo. Visibilidade perceptiva continua sendo QA manual.
+- round-reload: causa = harness. O cliente tem duracao padrao de 180 s (`-load-test-duration`) e saiu antes do servidor de 200 s, que nunca imprimiu `[LoadTest] completed`; nao era timeout nem queda do jogo. `smoke_full_clients.py` agora passa `-load-test-duration seconds+40` ao cliente. round-reload_k1: exit 0 (troca de rodada exercitada, 15 janelas de suavizacao, 0 recuos).
+- mount-cycles: uma execucao falhou a validacao do dono ("Dismount: predicted=4, confirmed=3", k1); repetida 3x (m1, m2 com tudo desligado, m3, p1) sem falha - flutuacao, nao regressao. Fica registrado.
+- Baseline na CPU nova: locomotion headless k1 dentro dos limites provisorios (exit 0); renderizados k1/k2 e demais cenarios inconclusivos (degraus em lacunas reais do servidor/"borderline"; cenarios parados nao medem locomotion). Hitches (hitch_report): servidor 6-9 (max 1,0 s no carregamento de cena; GC 4-5, update 2-4), clientes renderizados ~75 (fase preLate = renderizacao). Captura: formatacao 4,6-5,3 ms/s na CPU nova vs 7,6-8,0 na antiga. Nenhuma janela descartada; os valores inconclusivos estao nos JSON `analysis-*`.
+
+Nao coberto / pendente
+- Pausa com jogadores montados e morte montado em profundidade: fixtures rodaram (regression-sudden k1/p1, mount-visuals) mas ficaram inconclusivos para locomotion; nenhuma discontinuidade nova foi vista, nao ha criterio automatico dedicado.
+- Percepcao (GPU/olho), offline vs online, custo de CPU/bytes e correlacao por tick continuam fora.
+- QA visual (usuario): os frames existentes `smoke-mount-visuals_p1/client-N-frames/arc-*.png` (arcos Blue/Pink) e `visual-*-phase.png`; para o Mole/Tank, as linhas `mount_body_edge`/`player_pose_enforced`/`mount_gated_by_body` com frame e ptime em `client-N-motion.jsonl` (ex.: client-1 frame 2414, client-2 frame ~4034) marcam o quadro exato; nao ha captura quadro a quadro dessas transicoes.
+
+
+## Rodada 07/11/2026 00:00-01:30 — relógio único de apresentação, gate do Mole no dono, bordas da fila de input (R01 segue PARCIAL, sem publicação)
+
+Hardware: só CPU nova (Ryzen 5 5600GT, 16 GB). Tags desta rodada: `_s*`/`_r*` (rodada 3), `_m*`/`_n*` (rodada 4); nenhuma comparação com a CPU antiga. Pasta: `Logs/R01-assisted-20261107-002305`. Protocolo 65 inalterado; sem mudança de wire.
+
+**Correção do registro anterior:** o `PresentSlewedPosition()` da rodada de 06/11 nunca agiu — `if (slewPresented >= mirror) EndSlew("caught_up")` encerrava toda retenção no mesmo frame (todas as linhas `timeline_slew_end` tinham `duration_ms=0`). O A/B "com/sem suavizador" daquela seção não é válido e "0 passos > 0,1 u com suavizador" não demonstra benefício.
+
+Correções (código de jogo, só apresentação online; offline intocado)
+- `NetworkPlayerAnimation.RemotePresentationClock`: um único tempo de apresentação para observadores; raiz, pose e mount amostram o mesmo instante (`NetworkPlayerInput.AuthorityPresentationTime` → `ObserverPresentationTime`). Recuo do relógio do Mirror ≤ 0,25 s é retido e reencontra o Mirror a meia taxa (retenção máx. 1 s); cortes legítimos seguem o Mirror (lacuna de entrega > 0,25 s, segmento > 1,5 tile, pausa, habilidade/lançamento/carrinho, morto/fim de fase). `NetworkTime.time` não é alterado.
+- `NetworkMountAnimation.HideMountBeforeAuthorityBody` agora vale também para o dono que prediz (o flash "corpo Left + Mole" de 1 frame no dono, p1 frame 2414, era esse caso).
+- `NetworkPlayerInput`: a fila de input do servidor (8 ticks) guardava só o frame; um estouro após travada descartava o frame com Select e o desmonte rodava num frame só "held" com `CurrentSelectTick` antigo (647 em vez de 839). O cliente não casava o tick e registrava `new_sequence` ("Dismount predicted=4 confirmed=3"). `EnqueueBounded` move os bits pressionados do frame descartado para o próximo, preservando o tick original da borda.
+- Interruptores A/B (`-online-no-timeline-slew`, `-online-no-pose-enforce`, `-online-no-mount-gate`) só em build de desenvolvimento (`Debug.isDebugBuild`, avaliação preguiçosa; a leitura em inicializador estático causava 33 falhas de teste).
+- `OnlineBattleAudio.asset`: adicionadas as 2 entradas que o gerador inclui (`player_leave`/`player_join`); o teste do catálogo de áudio passa.
+- `FrameHitchProbe`: removidos 2 campos privados não lidos (CS0414).
+- Harness: `-load-test-server-stall-ms/-every` (travadas determinísticas do servidor, só `-load-test-server` em Development) e captura PNG de 8 quadros a cada troca de montaria (`mountchange-*.png`).
+
+Métrica de passo para trás (nova, independente do relógio)
+- Linhas `root_backstep`/`root_motion_summary` por observador. A 1ª versão (contra o segmento amostrado) e a 2ª (janela de 1 frame) marcavam saltos PARA FRENTE através de reversões reais do servidor (ex.: locomotion_s2 p3 -6,29 → -6,009 em 1 frame, depois virando à esquerda; round-reload p6 com Louie em dash -3,85 → -3,13 enquanto o servidor revertia em -3,25).
+- Versão final (3ª): a referência é o caminho autoritativo entre os dois tempos apresentados; se o tempo recuou, é o movimento à frente terminando no tempo apresentado. Isto corrige falsos positivos com evidência; o limite de 0,1 u não mudou.
+- **A 3ª versão compilou (dotnet, 0 erros/0 avisos), mas não foi executada em smoke** (a rodada 5 foi interrompida; ver abaixo).
+
+Resultados reais
+- Testes EditMode no runner: 1047/1047 (0 ignorados), incluindo 5 novos do R01 (relógio: retém / corte legítimo / limite; fila: borda+tick preservados; gate do dono). A primeira execução teve 33 falhas (inicializador estático), corrigidas.
+- Python: Tools/Ci 107/107, Tools/RoomDirectory 15/15.
+- dotnet build do Assembly-CSharp: 0 erros, 0 avisos.
+- mount-cycles: Dismount predicted=4 / confirmed=4 com travada (s1) e sem (r1); Mount 3/3. Exit 4 só porque o cenário parado não mede atraso de locomotion.
+- mount-visuals_r1: 0 quadros com corpo a pé + mount visível no dono e no observador (antes: 1 no dono em MoleStartup). 27 trocas capturadas quadro a quadro (`client-N-frames/mountchange-*.png`), revisadas por amostragem (Mole no dono, Tank no observador), sem combinação inválida.
+- regression-sudden_r1: fases e apresentação aprovada presentes; inconclusivo para locomotion (parado).
+- Travadas de 180 ms a cada 3 s (métrica 2ª versão), somando 8 observadores em movimento: relógio ligado (m1) 17 passos > 0,1 u; desligado (m2) 29; renderizado ligado (m1) 38. Uma execução por lado, sem significância estatística.
+  - Nenhum passo marcado ocorreu durante retenção (`stepsWhileHolding=0` em todas); as retenções terminam quase sempre em `legitimate_cut`.
+  - Caso examinado (locomotion_m1, client-1, t=81,254): o observador mostrou y=1,829, além do mínimo do log do servidor (2,25), logo após a travada, onde o log do servidor tem lacuna de 285 ms. É compatível com o próprio servidor dando um passo grande (dt da travada) e revertendo; não é verificável pelo log.
+- Sem travadas: locomotion_r1 teve 1 passo (0,109 u); locomotion_n1 teve 0 (exit 4: inconclusivo por movimento); round-reload_n1 teve 7 passos, só no p6 montado (dash do Louie, falsos positivos da 2ª versão, ver acima).
+- Recuos do relógio do Mirror: sem travada, 0-1 por execução (≤ 41 ms); com travada, 2-5 (até 295 ms).
+
+Interrupção e estado do runner
+- A rodada 5 (build + 4 smokes para validar a 3ª versão da métrica) foi encerrada pelo Claude Code por memória baixa do sistema durante o build do Unity. Não foi reiniciada.
+- O runner tem um `Temp/UnityLockfile` órfão do build morto (nenhum processo Unity rodando); a Library do runner pode ter compilação parcial.
+- Runner restaurado (`R01-runner-sync.ps1 -Mode Restore`): 15 arquivos voltaram aos hashes originais e 2 novos foram removidos, sem conflitos; restam só as modificações locais preexistentes do runner.
+- Checkout do usuário: Packages intocados; nada publicado nem enviado.
+
+Status do R01 por critério
+- Pose/posição/mount no mesmo tempo: implementado e testado (unidade); sem regressão nos smokes.
+- Sem corpo a pé + mount: atendido nos smokes (0 no dono e no observador, 1 execução); QA perceptual pendente.
+- Desmonte confirmado sob travada: atendido (4/4 em 2 execuções); mais repetições recomendadas.
+- Passos para trás visíveis: NÃO validado. A métrica final não foi executada; sob travadas sintéticas ainda há passos marcados fora de retenção (provavelmente movimento autoritativo); o benefício do relógio não foi demonstrado estatisticamente.
+- Pausa/morte montado, custo CPU/bytes, offline × online: não cobertos.
+- QA humano perceptual: separado e pendente.
+
+Próximo (sem avançar para o R02): com RAM livre ≥ 3 GiB, reaplicar a sincronização (`R01-runner-sync.ps1 -Mode Apply`) e reexecutar `Logs/R01-round5-chain.ps1` para medir a 3ª versão da métrica (q1/q2 com travada, renderizado, round-reload). Repetir cada lado ≥ 3 vezes antes de concluir sobre o relógio; restaurar o runner depois.
+
+## Rodada 07/11/2026 06:00-08:30 — A/B controlado, remoção do relógio, pausa e morte montado (R01 segue PARCIAL: 1 achado de pose do servidor aberto, QA humano pendente, sem publicação)
+
+Hardware: só a CPU nova (Ryzen 5 5600GT, 16 GB). Protocolo 65 inalterado, sem mudança de wire. Nada publicado, nenhum push, servidor remoto intocado. Os Packages do usuário (`manifest.json` e `packages-lock.json`) não foram alterados.
+
+### 1. Recuperação do runner após o build interrompido
+- Nenhum processo nosso restante (Unity, players SB6 ou Python do harness). O serviço do GitHub runner (que não é nosso) foi deixado como estava.
+- `Temp/UnityLockfile` órfão: nenhum processo o mantinha aberto e foi deixado no lugar (o Unity o reutiliza). Nenhum cache, Library ou lock foi apagado.
+- Sincronização reaplicada com manifesto e backup em `Logs/R01-runner-sync/backup-20261107-061218`; restauração condicionada a hash no fim (seção 7).
+
+### 2. Captura densa do servidor (correção da lacuna que impedia a comparação)
+- Antes, o servidor gravava `player_visual_sample` a cada 50 ms. Um passo marcado no observador caía entre duas amostras e não podia ser classificado; essas comparações eram inconclusivas.
+- Correção: `-online-dense-server-reference` (só Development) faz o servidor gravar `player_visual_sample` e `mount_visual_sample` em todo frame.
+  - Números de frame faltando = lacuna de captura (inconclusivo).
+  - Salto de tempo entre frames consecutivos = travada real do servidor (referência exata).
+- Resultado: **0 lacunas de captura** em todas as execuções desta rodada (`serverCaptureDropped=0`, `captureGaps=0`).
+
+### 3. Métrica final de passos para trás (classificação por tempo no caminho)
+Cada passo visível (> 0,1 u, limite inalterado) recebe o tempo τ do servidor em que aquela posição existiu no caminho denso, lido como o estado menos defasado que ele pode mostrar e nunca no futuro.
+
+| Classe | Significado | Efeito no veredito |
+|---|---|---|
+| `path_forward` | τ avançou: raiz atrasada alcançando o servidor, ou reversão do próprio servidor mostrada em ordem | não é passo para trás |
+| `presentation` | τ recuou: o observador voltou a um estado anterior | **passo para trás real (falha)** |
+| `off_path` | posição que o servidor nunca teve | falha |
+| `ambiguous_reversal` | o servidor reverteu em ≤ 2 frames e as duas leituras cabem em 35 ms | inconclusivo (nunca aprovação) |
+| `unverifiable` | o passo cai numa lacuna de captura | inconclusivo |
+
+Implementação: `Tools/Diagnostics/analyze_remote_player.py` (classify/path_times/path_classes) e `Tools/Diagnostics/r01_ab_report.py` (agregação A/B). Testes: `Tools/Ci/test_r01_ab_report.py` cobre catch-up, recuo real, fora do caminho, lacuna, reversão de 2 frames e a distinção entre lacuna de captura e travada.
+
+### 4. A/B controlado do relógio de apresentação (3 execuções por configuração)
+Cenário `locomotion`, 2 clientes renderizados e 6 jogadores, cerca de 21 a 26 mil frames em movimento por execução. "Travada" = `-load-test-server-stall-ms 180 -load-test-server-stall-every 3`. Pasta: `Logs/R01-assisted-20261107-061225` (`ab-stall.json`, `ab-calm.json`).
+
+| Configuração | passos reais (`presentation`) | por 1000 frames | `path_forward` | retenções | maior retenção | recuperação máx. | atraso mirror−apresentado p95 | raiz≠pose / pose≠mount |
+|---|---|---|---|---|---|---|---|---|
+| travada, relógio ligado | 0 / 2* / 0 | 0 / 0,085 / 0 | 14 / 27 / 23 | 342 / 330 / 297 | 218 / 120 / 141 ms | 100 / 100 / 117 ms | 0,5 / 0,5 / 0,4 ms | 0 / 0 |
+| travada, relógio desligado | 0 / 0 / 2 | 0 / 0 / 0,094 | 23 / 24 / 17 | 0 | — | — | 0,4 / 0,5 / 0,4 ms | 0 / 0 |
+| calmo, relógio ligado | 0 / 0 / 0 | 0 | 2 / 2 / 2 | 43 / 50 / 55 | 102 / 107 / 127 ms | 0 / 17 / 183 ms | 0,5 / 0,3 / 0,4 ms | 0 / 0 |
+| calmo, relógio desligado | 0 / 1 / 0 | 0 / 0,039 / 0 | 0 / 3 / 0 | 0 | — | — | 0,3 / 0,5 / 0,5 ms | 0 / 0 |
+
+\* Os 2 passos de on2 caíram numa reversão do servidor em 2 frames (1,125 → 0,812 → 1,062). Reclassificados como `ambiguous_reversal`: inconclusivos, não contados como melhora nem como falha.
+
+- Atraso acumulado: a diferença entre o tempo do Mirror e o apresentado não cresce (p95 ≤ 0,5 ms em todas as execuções; máx. 0,5 ms).
+- Alinhamento raiz/pose/montaria: 0 frames em que a raiz e a pose/montaria amostram tempos diferentes; 0 pares pose≠mount no mesmo frame.
+- **Conclusão: o relógio não demonstrou benefício.** Os passos reais são raros e equivalentes nos dois lados (≤ 2 por execução, cerca de 0,09 por 1000 frames). O relógio só acrescentava retenções de até 218 ms.
+- Os passos marcados que restam são, em quase todos os casos, `path_forward`: atraso legítimo da interpolação alcançando o servidor depois de uma travada. Não são passos para trás.
+
+### 5. Remoção do relógio (item 5) e correções mantidas
+- Removidos: `RemotePresentationClock`, `ObserverPresentationTime`, as linhas `timeline_slew`, o interruptor `-online-no-timeline-slew`, `RemoteObserverTime` e os 3 testes do relógio. `AuthorityPresentationTime` voltou a usar `NetworkTime.time` para observadores.
+- Mantidos, porque foram comprovados:
+  - gate do mount também no dono que prediz;
+  - reaplicação da pose (`-online-no-pose-enforce`);
+  - fila de input com tick por borda;
+  - catálogo de áudio.
+  - Mantidos também: a exclusão de diagnóstico `UsesSpecialPresentationTimeline` e a medição `root_backstep`/`root_motion_summary` (agora com `units;ptime;pprev;mirror`, sem campos do relógio).
+- Confirmação sem relógio, com o build final (pasta `Logs/R01-assisted-20261107-071951`, `ab-final.json`):
+  - locomotion_s1 (travada): 0 `presentation`, 12 `path_forward`, 0 lacunas.
+  - locomotion_n1 (calmo): 0 `presentation`, 1 `path_forward`.
+  - Nos dois: 0 desalinhamento e atraso p95 de 0,4 ms.
+  - Execuções sem relógio somadas: travada 0/0/2/0 e calmo 0/1/0/0.
+- Inconclusivo que permanece (sem mudar limites): o verificador de locomotion do `analyze_remote_player` marca como "borderline" de 1 a 5 passos grandes (≥ 1 u) por observador, em excursões rápidas do servidor (velocidade de 7 a 18 u/s), abaixo do próprio limite de amostragem. Com a referência densa, os mesmos passos são `path_forward`. Ficam registrados como inconclusivos, não como aprovação.
+
+### 6. Fila de input: o tick preservado não duplica nem reaplica ações
+- Cada elemento da fila carrega um tick por borda (`QueuedInput.EdgeTick`). No estouro, as bordas do frame descartado passam para o próximo com o tick original. As bordas do próprio frame mantêm os seus ticks.
+- Uma borda repetida continua sendo uma borda. Frames antigos não voltam, porque `CmdControls` só aceita ticks mais novos.
+- Teste EditMode novo, `R01ServerInputQueueOverflowNeverDuplicatesOrRelabelsActions`:
+  - o A do próprio frame mantém o tick 11 e o Select mesclado mantém o tick 10;
+  - numa rajada de 40 ticks, nenhuma borda é aplicada duas vezes e o total aplicado fica entre 1 e o número enviado.
+- Smokes `mount-cycles` sob travada (c1, c2, c3): Select enviado 4, aplicado 4, duplicado 0 em cada cliente, nas 3 execuções. Desmonte previsto 4 / confirmado 4 e montagem 3/3 em c1 e c2; c3 teve Select 4/4 e 0 duplicações.
+
+### 7. Pausa, morte montado e regressões
+- Pausa montado (`mount-visuals_v2`, novo trecho do fixture): cada dono anda montado por 0,3 s, pausa por 1 s (`GamePauseController.TogglePause`), retoma e anda por 0,4 s. Janelas de pausa medidas: 0,97 e 0,98 s (cliente 1) e 1,07 e 1,01 s (cliente 2). Durante e depois delas: 0 passos visíveis e 0 trocas de renderer observadas.
+- Morte montado:
+  - Bug pré-existente encontrado e corrigido: depois da morte montado em Tank, o servidor lançava `NullReferenceException` em todo frame (`NetworkMountAnimation.cs:139`), porque o mount destruído ainda era tratado como mount vivo.
+  - Correção: um mount destruído é tratado como "sem mount", e renderers destruídos forçam o rebind.
+  - `mount-visuals_v1`, antes da correção: falha com NRE. `mount-visuals_v2`, depois: 0 exceções.
+  - Servidor: `dead=True`. No observador, o p2 passa de Tank para None no frame 4108 e entra no renderer Death no frame 4109; nenhum quadro com mount aparece depois da morte. Capturas `client-1-frames/mountchange-13-00-f4108-*.png` e `mountchange-13-01-f4109-*.png` foram revisadas visualmente.
+  - Limitação: o cliente não registra `dead=` replicado, então "morto visto no cliente" é inferido pelo renderer Death.
+- Corpo a pé + mount: 0 quadros no dono e no observador (`mount-visuals_v2`, mount-cycles c1–c3).
+- `regression-sudden_s1`: o mecanismo terminou (`mechanism completed kind=sudden`), as fases e a apresentação aprovada estão presentes, 0 avisos e 0 exceções. É inconclusivo só para atraso de locomotion, porque o cenário é parado.
+- `round-reload_r1` (calmo, cerca de 200 s, com troca de rodada): terminou (`[LoadTest] completed`), com 0 exceções e 0 avisos, mas teve **exit 2 por 1 falha de pose**: duas cabeças no servidor, ver "Achados separados".
+
+### Testes e verificações
+- EditMode no runner, com o código final (relógio removido e correção da NRE): **1045/1045** aprovados, 0 falhas, 0 ignorados e 0 avisos `warning CS` no log de compilação (`Logs/R01-assisted-20261107-071951/R01-tests.xml`). O total caiu de 1047 porque os 3 testes do relógio saíram e 1 teste de fila foi acrescentado.
+- Python: Tools/Ci 113/113 e Tools/RoomDirectory 15/15.
+- UTF-8: os 9 `.cs` alterados ou novos decodificam em UTF-8 estrito, sem BOM corrompido e sem U+FFFD.
+
+### Achados separados (não são do R01, ficam registrados)
+- Corrida no teardown: `NetworkBombFx::ServerEmit called when server was not active` depois de `[LoadTest] completed` (smoke-locomotion_a1, exit 1). Não se reproduziu nas demais execuções desta rodada.
+- **Duas cabeças ativas no servidor (aberto, pré-existente).**
+  - O que aconteceu: em `round-reload_r1` (exit 2), o p5, montado no Mole, ficou com `HeadOnlyUp,HeadOnlyDown` ativos por 61 frames (7167–7227, cerca de 1 s).
+  - No mesmo frame, os três atores sintéticos receberam uma pose de 1 s: p4 foi para `MoutedDown` e p6 ficou sem renderers rastreados (emote). Só no rider de Mole a cabeça anterior continuou ligada, junto com a cabeça para baixo do override de inatividade montado (`SetInactivityMountedDownOverride`).
+  - Os dois observadores mostraram só `HeadOnlyUp` nessa janela. O analisador acusa "observer never showed HeadOnlyUp,HeadOnlyDown"; a falha foi mantida, não suprimida, e o limite não mudou.
+  - Antes, um caso da mesma classe (`HeadOnlyDown,HeadOnlyRight`, cerca de 500 ms) apareceu num run com o relógio ligado. Portanto não vem da remoção do relógio, e o R01 não altera visuais do servidor (só acrescentou o getter `IsPlainFootBodyVisible`).
+  - Próximo passo: investigar `MovementController.SetInactivityMountedDownOverride` × `MountVisualController` no Mole, offline e online. Isso é gameplay, fora da apresentação do observador.
+
+### Status do R01 por critério (técnico)
+| Critério | Status | Evidência |
+|---|---|---|
+| Raiz, pose e mount no mesmo tempo | **atendido**: 0 frames desalinhados e 0 pose≠mount em 16 execuções | ab-stall/ab-calm/ab-final.json |
+| Passos para trás visíveis | **atendido**: ≤ 2 passos reais por execução (≤ 0,094 por 1000 frames), iguais com e sem relógio, 0 no build final | idem |
+| Atraso acumulado e recuperação | **atendido**: p95 ≤ 0,5 ms, sem crescimento | idem |
+| Corpo a pé + mount | **atendido**: 0 no dono e no observador | mount-visuals_v2, mountchange-*.png |
+| Desmonte/montagem sob travada, sem duplicar ações | **atendido**: Select 4/4/0 duplicações em 3 execuções; teste de rajada | mount-cycles_c1–c3, EditMode |
+| Pausa montado | **atendido**: 0 passos e 0 trocas durante e depois | mount-visuals_v2 |
+| Morte montado | **atendido** depois da correção da NRE (o observador não registra `dead`; inferido pelo renderer) | mount-visuals_v1/v2 |
+| Locomotion (verificador de amostragem) | inconclusivo "borderline" em excursões rápidas; o caminho denso classifica esses passos como `path_forward` | analysis-locomotion_*.json |
+| Pose no observador × pose do servidor | **aberto**: 1 falha em round-reload_r1, causada por uma pose inválida do próprio servidor (duas cabeças no Mole durante o override de inatividade); o observador mostrou uma cabeça | round-reload_r1 |
+| Relógio de apresentação | removido (sem benefício) | seção 4 |
+| QA humano perceptual | **pendente e separado** | — |
+
+### QA humano (separado, não executado)
+Usar 2 clientes, build Development com `-online-motion-logs`, gravando a tela, por cerca de 10 min:
+- andar com o outro jogador visível;
+- montar e desmontar Louie, Mole e Tank;
+- pausar montado;
+- morrer montado;
+- trocar de rodada.
+
+Anotar qualquer tranco, passo para trás ou quadro de corpo a pé com montaria, junto com o horário.
+
+### Reprodução
+1. `powershell -File Logs\R01-runner-sync.ps1 -Mode Apply` (com RAM livre ≥ 3 GiB e sem `Runner.Worker`).
+2. `python Logs\R01-validate-assisted.py --step build` e depois `--step tests --resume latest`.
+3. `powershell -File Logs\R01-round7.ps1 -Runs "locomotion:_k1:stall,locomotion:_k2:calm,mount-cycles:_c1:stall,mount-visuals:_v1:calm"`
+4. `python Tools\Diagnostics\r01_ab_report.py --group stall <pastas> --group calm <pastas> --output ab.json`
+5. `powershell -File Logs\R01-runner-sync.ps1 -Mode Restore`
+
+Próximo: QA humano e investigação do achado das duas cabeças no servidor. Não avançar para o R02 sem autorização.
+
+## Rodada 07/11/2026 08:30-09:20 — duas cabeças no Mole: causa, correção e round-reload no código final (sem publicação)
+
+Pasta: `Logs/R01-assisted-20261107-084653`. Hardware: só a CPU nova. Protocolo 65 inalterado. O suavizador/relógio continua removido.
+
+### Causa (reproduzida)
+- O caso de `round-reload_r1` (frames 7167–7227 do servidor) não era inatividade: era um **stun de 1 s**.
+- No mesmo frame, p4 (Louie) passou a mostrar só `MoutedDown`, p6 (a pé) ficou sem renderers rastreados e p5 (Mole) mostrou `HeadOnlyUp,HeadOnlyDown`.
+- `StunReceiver.ShowMountedPlayerDownForMountedStun` liga a pose do rider olhando para baixo (`GetMountedDownRendererForExternalStun`), mas não desliga a pose sentada atual.
+  - Montarias com renderer de stun animado (Louies) passam antes por `SetVisualOverrideActive(true)`, que esconde tudo. Por isso só aparece uma pose.
+  - O Mole tem `useAnimatedStunRenderer: 0` (stun só com tremor, `Mole.prefab`). Ele mantém os sprites do rider, então a cabeça anterior continuava ligada ao lado da cabeça do stun durante todo o stun.
+- O componente é comum a offline, host, dono e servidor. Os observadores copiam a pose única que o servidor amostra; por isso mostravam só `HeadOnlyUp`.
+
+### Correção
+- `MovementController.CollectMountedBodyRenderers`: lista as poses sentadas do rider (mounted e head-only).
+- `StunReceiver`:
+  - ao mostrar o rider olhando para baixo, esconde as outras poses sentadas visíveis e as guarda;
+  - ao sair, devolve essas poses só se o rider ainda estiver montado, vivo e sem outra pose sentada visível. Se algo assumiu a pose no meio, a cabeça antiga não volta por cima.
+  - A visibilidade é medida pelo `SpriteRenderer`, porque `RestoreAnimations` pode deixar o sprite ligado com o animador desligado.
+  - Uma conclusão de stun com apresentador externo descarta a lista.
+- O Louie (stun com override visual) não muda: nada fica visível para esconder.
+
+### Regressão e reprodução determinística
+- EditMode `R01MountedShakeOnlyStunShowsOneRiderHeadAndRestoresTheSeatedPose`, com `Player.prefab` e `Mole.prefab` reais:
+  - Up → stun → só `HeadOnlyDown`; reentrada mantém uma cabeça; saída → `HeadOnlyUp`;
+  - já virado para baixo: permanece `HeadOnlyDown`;
+  - outra pose escolhida durante o stun: a antiga não volta;
+  - desmontado durante o stun: nada é restaurado.
+- Fixture `mount-visuals` (só Development): depois da pausa, cada rider é virado para cima e recebe `ForceStun(1 s)`. O fixture falha se houver mais de uma pose sentada durante o stun.
+
+### Resultados no código final
+| Verificação | Resultado |
+|---|---|
+| EditMode no runner | **1046/1046**, 0 falhas, 0 avisos `warning CS` (`R01-tests.xml`) |
+| mount-visuals_t1 | servidor: Mole `before=HeadOnlyUp during=HeadOnlyDown after=HeadOnlyUp`; Tank igual. Servidor, dono e observador: 0 bordas com duas poses sentadas e as mesmas bordas `HeadOnlyDown`. Pausa: janelas de 0,97–1,03 s, 0 passos e 0 trocas. Morte montado: sem NRE. 0 exceções |
+| round-reload_t1 | **0 falhas** (antes exit 2), `[LoadTest] completed`, 0 avisos, 0 exceções, 0 poses duplas em servidor e clientes. Passos: 0 `presentation`, 5 `path_forward`, 0 lacunas de captura |
+| regression-sudden_t1 | 0 falhas, 0 poses duplas |
+| mount-cycles_t1 (travada) | Select 4/4, 0 duplicados; 0 `presentation` |
+| locomotion_t1 (travada) | 0 falhas, 0 `presentation`, 17 `path_forward`, 0 lacunas, atraso p95 de 0,4 ms, 0 desalinhados |
+
+O round-reload não garante um stun montado em toda execução. A cobertura determinística do stun é o fixture e o teste EditMode; o round-reload confirma que não há regressão.
+
+### Separação final do R01
+**Falhas técnicas abertas:** nenhuma reproduzida no código final.
+- As duas cabeças foram corrigidas.
+- A NRE da morte montado foi corrigida.
+- A corrida no teardown (`NetworkBombFx::ServerEmit` depois de `[LoadTest] completed`, 1 ocorrência em `locomotion_a1`) não se reproduziu desde então. Fica registrada como não reproduzida, não como corrigida.
+
+**Medições inconclusivas e limitações:**
+- O verificador de locomotion por amostragem marca como "borderline" passos de cerca de 1 u em excursões rápidas do servidor (7–18 u/s), abaixo do próprio limite de amostragem. Na referência densa, todos são `path_forward`. O limite não foi mudado e eles continuam inconclusivos, não aprovados.
+- Os cenários parados (mount-cycles, sudden, mount-visuals) não medem atraso de locomotion.
+- "Morto no cliente" é inferido pelo renderer Death, porque o cliente não registra `dead=` replicado.
+- 1 a 4 execuções por cenário e só a CPU nova; não há comparação com a CPU antiga.
+- O stun montado no round-reload é casual.
+
+**QA perceptual humano (pendente, separado):** 2 clientes, build Development com `-online-motion-logs`, gravando a tela, por cerca de 10 min:
+- andar com o outro jogador visível;
+- montar e desmontar Louie, Mole e Tank;
+- pausar montado;
+- ser atordoado montado no Mole e no Louie;
+- morrer montado;
+- trocar de rodada.
+
+Runner restaurado no fim (ver relatório). Não avançar para o R02 sem autorização.
+
+## R01 — status registrado em 07/11/2026 09:30: implementação e validação automatizada concluídas; aceite manual pendente (não publicado)
+
+**Status:** a implementação e a validação automatizada estão concluídas. O **aceite manual (QA perceptual humano) está pendente.** Nada foi publicado e o R02 não foi iniciado.
+
+### Concluído
+- **Código:**
+  - gate do mount também no dono;
+  - reaplicação da pose;
+  - fila de input com tick por borda;
+  - NRE da morte montado;
+  - duas cabeças no stun do Mole (`StunReceiver`);
+  - catálogo de áudio;
+  - remoção do relógio/suavizador, que não demonstrou benefício.
+- **Validação automatizada no código final** (`Logs/R01-assisted-20261107-084653`):
+  - EditMode 1046/1046, 0 avisos;
+  - Python Ci 113/113 e RoomDirectory 15/15 (sem mudanças em Python desde a última execução);
+  - smokes mount-visuals, mount-cycles (travada), round-reload, sudden e locomotion (travada), sem falhas técnicas;
+  - 0 passos para trás reais (`presentation`) e 0 lacunas de captura;
+  - Select 4/4 sem duplicar;
+  - 0 poses sentadas duplas.
+
+### Limitações preservadas (não são aprovação)
+- **Medições inconclusivas:** o verificador de locomotion por amostragem marca como "borderline" passos de cerca de 1 u em excursões rápidas do servidor (7–18 u/s). Na referência densa eles são `path_forward`, mas continuam inconclusivos; o limite não mudou.
+- Os cenários parados não medem atraso de locomotion.
+- "Morto no cliente" é inferido pelo renderer Death.
+- 1 a 4 execuções por cenário, só na CPU nova.
+- O stun montado no round-reload é casual; a cobertura determinística é o fixture e o EditMode.
+- **Teardown antigo:** `NetworkBombFx::ServerEmit called when server was not active` depois de `[LoadTest] completed` (`smoke-locomotion_a1`, 07/11, exit 1). Não se reproduziu nas execuções seguintes. Está registrado como não reproduzido, **não como corrigido**.
+
+### Aceite manual (pendente)
+- Pacote: `C:\Users\mauri\SB6-QA-R01`, fora do repositório e do runner.
+  - Cópia da build testada, com o mesmo SHA-256 do Assembly-CSharp: `1b3cba05…`.
+  - Scripts `1-Servidor.cmd` (servidor dedicado local na porta 7790, Development, `-online-motion-logs`), `2-Cliente1.cmd` e `3-Cliente2.cmd` (`-online-join kcp://127.0.0.1:7790`).
+  - `LEIA-ME.txt` com o roteiro.
+- Verificado em 07/11 às 09:25: o servidor escuta na 7790 e os dois clientes entram no lobby (`[Room] join player=1/2`). Os processos de teste foram encerrados em seguida.
+- Roteiro:
+  - andar com o outro jogador visível;
+  - montar e desmontar Louie, Mole e Tank;
+  - pausar montado;
+  - ser atordoado montado no Mole e no Louie;
+  - morrer montado;
+  - trocar de rodada.
+- Observar o dono e o observador. Gravar a tela e anexar os logs.
+- Depois do aceite: decidir a publicação. Não avançar para o R02 sem autorização.
+
+## R01 — aceite manual aprovado em 07/11/2026 (status corrigido na seção seguinte: R01 NÃO concluído)
+
+**Status (substituído pela seção seguinte):** implementação, validação automatizada e aceite manual completos; o R01 continua parcial por duas medições obrigatórias pendentes. Publicação não feita; R02 não iniciado.
+
+### Aceite manual
+- O usuário relatou em 07/11/2026: "QA manual aprovado nos cenários testados".
+- O QA usou o pacote `C:\Users\mauri\SB6-QA-R01`: build Development validada (Assembly-CSharp SHA-256 `1b3cba05…`), servidor dedicado local na porta 7790 e 2 clientes.
+- O roteiro oferecido cobria:
+  - andar com o outro jogador visível;
+  - montar e desmontar Louie, Mole e Tank;
+  - pausar montado;
+  - ser atordoado montado no Mole e no Louie;
+  - morrer montado;
+  - trocar de rodada.
+- O aceite vale para os cenários efetivamente testados pelo usuário. Cenários do roteiro que não tenham sido exercitados não ganham cobertura por este registro.
+
+### Base do fechamento
+- **Código:**
+  - `NetworkMountAnimation`: gate do mount também no dono; rebind de mount destruído na morte montado.
+  - `NetworkPlayerAnimation`: reaplicação da pose, diagnósticos e remoção do relógio.
+  - `NetworkPlayerInput`: fila com tick por borda.
+  - `StunReceiver` + `MovementController.CollectMountedBodyRenderers`: uma cabeça no stun do Mole.
+  - `OnlineBattleAudio.asset`.
+- **Validação automatizada no código final** (`Logs/R01-assisted-20261107-084653`):
+  - EditMode 1046/1046, 0 avisos;
+  - Python Ci 113/113 e RoomDirectory 15/15;
+  - smokes mount-visuals, mount-cycles (travada), round-reload, sudden e locomotion (travada), sem falhas técnicas;
+  - A/B do relógio com 3 execuções por configuração (`Logs/R01-assisted-20261107-061225`).
+
+### Limitações preservadas (continuam válidas depois do aceite)
+- O verificador de locomotion por amostragem marca como "borderline" passos de cerca de 1 u em excursões rápidas do servidor (7–18 u/s). Na referência densa eles são `path_forward`. Continuam inconclusivos, e o limite não foi mudado.
+- Os cenários parados (mount-cycles, sudden, mount-visuals) não medem atraso de locomotion.
+- "Morto no cliente" é inferido pelo renderer Death, porque o cliente não registra `dead=` replicado.
+- 1 a 4 execuções automatizadas por cenário, só na CPU nova (Ryzen 5 5600GT); não há comparação com a CPU antiga.
+- O stun montado no round-reload é casual. A cobertura determinística é o fixture `mount-visuals` e o teste EditMode.
+- Teardown antigo: `NetworkBombFx::ServerEmit called when server was not active` depois de `[LoadTest] completed` (`smoke-locomotion_a1`, 07/11, exit 1). Não se reproduziu depois. Está registrado como **não reproduzido, não corrigido**.
+- Custo de CPU/bytes e comparação offline × online não foram medidos especificamente para o R01.
+
+### Próximos passos (não executados)
+- Publicação do lote R01: aguarda autorização explícita.
+- R02: não iniciar sem autorização.
+
+## R01 — status corrigido em 07/11/2026: PARCIAL, com 2 medições obrigatórias pendentes (não publicado)
+
+Motivo: os critérios registrados para o R01 incluem medições que não foram feitas. Elas pertencem ao R01, não ao R02:
+- este arquivo, na auditoria de 06/11: "R01 segue parcial (36). Pendências: capturas owner/observador entre peers, **custo CPU/bytes**, validação de transições/papéis";
+- `handoff-claude-predicao-online.md`, na tabela de IDs: "R01 — Faltam capturas entre peers, **custo** e validação das transições/papéis";
+- a receita do R01 no handoff (§9): `analyze_prediction.py --online <online.jsonl> --offline <offline.jsonl> --output Logs/R01-comparacao.json`.
+
+O R02 mede custo/atraso **por família de sprites no co-op** (geometria, props e paredes). É outro escopo e não cobre o player remoto do R01. As medições a seguir não são tratadas como validadas por nenhum item.
+
+| Critério do R01 | Status |
+|---|---|
+| Capturas owner/observador entre peers | atendido (smokes com 2 clientes renderizados e captura densa do servidor) |
+| Validação de transições/papéis: troca de montaria, morte, emote/AFK, pausa, rodada, stun | atendido (automatizado + aceite manual nos cenários testados) |
+| Raiz/pose/mount no mesmo tempo; passos para trás; fila de input sem duplicar | atendido |
+| **Custo CPU/bytes do player remoto** | **PENDENTE (obrigatório)**: não medido. Precisa de uma baseline comparável (mesmo cenário, CPU nova, antes × depois ou referência documentada); uma medição isolada não prova nada |
+| **Comparação online × offline** (`analyze_prediction.py`, `Logs/R01-comparacao.json`) | **PENDENTE (obrigatório)**: não executada. Comparar mesma fase, loadout, ação e papel |
+| QA perceptual | aprovado pelo usuário nos cenários testados |
+
+Limitações preservadas (não são aprovação):
+- borderline de amostragem em locomotion (inconclusivo);
+- cenários parados sem medir atraso;
+- morte no cliente inferida pelo renderer Death;
+- 1 a 4 execuções só na CPU nova;
+- stun montado casual no round-reload;
+- teardown antigo (`NetworkBombFx::ServerEmit` após `[LoadTest] completed`, `smoke-locomotion_a1`): não reproduzido e não corrigido.
+
+**Status:** R01 **PARCIAL**. Implementação, validação automatizada e aceite manual concluídos; faltam as duas medições obrigatórias acima. Não publicado; R02 não iniciado. O R01 só deve ser marcado como concluído depois das duas medições, com evidência em `Logs/`.
+
+## R01 — critérios das duas medições obrigatórias, registrados ANTES das execuções (07/11/2026)
+
+Ferramentas (não publicadas):
+- `Assets/Scripts/Diagnostics/R01ComparisonHarness.cs`: só em Development, inerte sem argumentos `-r01-*`. Usa apenas APIs anteriores ao R01, para entrar também na build baseline.
+- `Tools/Diagnostics/r01_compare_run.py`: lança e amostra as execuções.
+- `Tools/Diagnostics/r01_compare.py`: gera `Logs/R01-comparacao.json`. Testes em `Tools/Ci/test_r01_compare.py`.
+- `Tools/Diagnostics/r01_cost_report.py`: relatório de custo.
+
+Cenário comum:
+- BattleMode_15, 2 jogadores (P1/P2 Man, demais Off), sem COM, sem fixture de spawn, Sudden Death forçado Off e restaurado no fim.
+- P1 executa um script fixo pelo slot sintético de hardware: Direita, Esquerda, Cima, Baixo, cada um segurado 2,4 s com 0,6 s de pausa, ×3 (36 s), mais 3 s de repouso. P2 fica parado.
+- Processos renderizados a 60 fps, vSync 0, 1024×896. Online: servidor dedicado local (batchmode, nographics) + 2 clientes renderizados (cliente 1 = dono de P1; cliente 2 = observador de P1).
+
+### Medição 1 — custo do jogador remoto
+- Builds:
+  - **baseline** = HEAD `b7c77eff3` (sem o diff do R01) + somente o harness;
+  - **R01** = árvore atual;
+  - **R01 com chaves A/B desligadas** (`-online-no-pose-enforce -online-no-mount-gate`).
+- 3 repetições por configuração, sem captura por quadro nem logs de movimento.
+- Métricas:
+  - CPU de processo (% de um núcleo) do servidor, do cliente 1 e do cliente 2 na janela do script;
+  - `[ServerMetrics]` do servidor: CPU, KiB/s de entrada e saída, marcadores BattlePerf.
+- Execução válida: todos os processos saem com 0, a janela do script foi vista e há janela de servidor sem transição. Execuções inválidas são listadas.
+- Diferença em relação à baseline: "não resolvida" se as faixas mín–máx se sobrepõem; caso contrário, "diferença medida", com o tamanho. Não há limite de aprovação para CPU.
+- Atribuição:
+  - baseline → R01 é a mudança total;
+  - R01 → chaves desligadas isola só a imposição de pose e o gate do mount;
+  - a fila de input e a correção do stun não têm chave e **não são isoláveis**.
+- Bytes: o diff do R01 não adiciona SyncVar, Command, Rpc nem mensagem. O resultado esperado é igual e é verificado pela medição.
+
+### Medição 2 — online × offline (`Logs/R01-comparacao.json`)
+3 execuções offline + 3 online com captura, pareadas pelo índice.
+
+| Critério | Exigência |
+|---|---|
+| A. Fase e loadout | Mesma cena; 2 jogadores; spawn de P1 com \|Δ\| ≤ 0,01 u por eixo; mesma velocidade, bombas e raio; Sudden Death Off; mesma impressão dos blocos destrutíveis; P1 desmontado e vivo no início do script; processos renderizados a 60 fps / vSync 0 |
+| B. Sequência de ações | Offline e dono executaram os 12 segmentos na ordem; cada um segurado 2,4 s ± 0,034 s (2 quadros) |
+| C. Apresentação | A sequência colapsada de renderers do corpo de P1 é igual à offline no servidor, no dono e no observador; nenhuma combinação de renderers de P1 ou P2 que nunca aparece offline (pega pose dupla); P2 parado não se move |
+| D. Movimento | Trechos de movimento de P1 (\|deslocamento\| ≥ 0,05 u; pausas ≤ 0,1 s unidas): mesma quantidade e direção que offline; por trecho, \|Δ deslocamento\| ≤ 0,25 u e \|Δ duração\| ≤ 0,1 s |
+| E. Posição final | \|Δ\| ≤ 0,25 u |
+| F. Só relatado, sem limite | Início input→movimento (offline × dono); atraso do servidor e do observador em relação ao dono (relógio UTC comum); resumo do `analyze_prediction.py` |
+
+- As execuções offline também são comparadas entre si por C, D e E. Se offline não reproduz offline, o resultado é **inconclusivo**, nunca aprovação.
+- O `analyze_prediction.py` mede apenas a latência `input_to_motion` e a contagem de eventos. Ele **não** verifica fase, loadout, sequência, pose nem posição. Por isso os critérios A–E ficam no `r01_compare.py`, e a saída do `analyze_prediction.py` vai embutida no JSON.
+
+### Piloto de ferramenta e emenda de protocolo (07/11/2026, antes das execuções medidas; nenhum limite alterado)
+Piloto em `Logs/R01-measure-pilot` (1 offline + 2 online), **fora dos resultados**. Encontrou dois problemas.
+
+1. **Bug do harness.** A impressão dos blocos destrutíveis dependia da ordem em que o `FindObjectsByType<Tilemap>` devolve os tilemaps: o cliente 1 deu outro hash com as mesmas 182 células. Passou a ser uma soma independente de ordem. As duas builds foram refeitas com o harness idêntico. Na nova build piloto, os 6 papéis dão o mesmo valor (`182:5fd04101`).
+2. **Quadros longos e o critério B.** O input sintético é aplicado no `Update` e a borda cai no primeiro quadro renderizado depois do prazo. Quadros longos (92–282 ms) prolongam o hold de verdade, também no tempo de jogo; o piloto offline teve um hold de 2,5165 s. Isso faz o input deixar de ser equivalente, e é exatamente o que B detecta. Emenda: uma execução cujos únicos problemas são de B fica listada como "input não equivalente", sai do pareamento e é substituída. São no máximo 6 tentativas por modo e o veredito exige 3 válidas por modo. As excluídas ficam no JSON. Limites inalterados.
+
+Limitação de cobertura vista no piloto: a partir do spawn em BattleMode_15, P1 tem só 1 ou 2 tiles livres. São 7 trechos de movimento de no máximo 0,52 s por execução, então a comparação não cobre corridas longas. Elas continuam cobertas pelos smokes de locomotion.
+
+Builds medidas (`C:\Users\mauri\SB6-R01-cost`; as v1 foram preservadas):
+
+| Build | Conteúdo | Assembly-CSharp SHA-256 |
+|---|---|---|
+| baseline | runner `b391172d` (código igual a HEAD `b7c77eff3`; os commits seguintes só mudam docs) + harness + os mesmos Packages do repositório (só versões do SDK/toolchain Linux) | `ae600537…` |
+| R01 | conjunto completo do R01 + harness | `4642fb27…` |
+
+- Unity 6000.6.0f1, Development, sem avisos CS.
+- Marcadores verificados no binário: a baseline **não** contém `-online-no-pose-enforce` nem `CollectMountedBodyRenderers`; a build R01 contém os dois.
+- O runner foi restaurado depois de cada build e voltou às 14 diferenças locais pré-existentes.
+
+## R01 — resultado das duas medições obrigatórias (07/11/2026; não publicado; R02 não iniciado)
+
+**Status:** R01 continua **PARCIAL**.
+- A comparação online × offline foi demonstrada (com as emendas registradas).
+- A medição de custo foi feita e revelou dois custos. Um deles levou a uma correção (gate Development-only) que **ainda não foi compilada no Unity nem medida**: a execução de testes e build foi interrompida pelo Claude Code por falta de memória.
+- QA manual preservado: "QA manual aprovado nos cenários testados".
+
+### Comandos
+```
+python Tools/Diagnostics/r01_measure_all.py --baseline C:\Users\mauri\SB6-R01-cost\baseline --r01 C:\Users\mauri\SB6-R01-cost\r01 --output Logs/R01-measure-20261107            # custo (GetProcessTimes) + comparação 1
+python Tools/Diagnostics/r01_measure_all.py --only compare ... --output Logs/R01-measure-20261107b                                                                          # comparação 2 (veredito)
+python Tools/Diagnostics/r01_measure_all.py --only cost ... --output Logs/R01-measure-20261107c                                                                             # custo 2 (QueryProcessCycleTime)
+python Tools/Diagnostics/r01_compare.py --offline <3 pastas> --online <3 pastas> --output <json>
+python Tools/Diagnostics/r01_cost_report.py --baseline <3> --r01 <3> --r01-switches-off <3> --output <json>
+```
+
+Cenário: o pré-registrado. Builds: baseline `ae600537…` × R01 `4642fb27…`. Máquina: Ryzen 5 5600GT + GTX 1660, Windows 11.
+- Servidor dedicado local em batchmode/nographics.
+- Os 2 clientes rodam em `-batchmode` com dispositivo D3D11, **sem janela visível**. Isso corrige a descrição "renderizados".
+- Cada execução dura ~85 s; a janela medida é a do script, de 36 s.
+
+### Medição 2 — online × offline: **demonstrada** (`Logs/R01-comparacao.json`)
+- **Sessão 1** (`Logs/R01-measure-20261107/compare`, relatório `R01-comparacao-regras-originais-FALHOU.json`): **falhou** pelas regras originais. Duas causas, nenhuma é divergência do R01:
+  1. O instrumento gravou a linha de setup no primeiro quadro em que P1 existia, antes de P2 nascer naquele processo (`players=1`). Os mesmos arquivos têm amostras de P2 desde 3,3 s antes do script.
+  2. P2 parado mostrou `Afk2` no servidor, no dono e no observador de online-3. `InactivityAnimation` escolhe `Afk2` no lugar de `Afk` com 30% de chance, e as 3 execuções offline tiraram `Afk`.
+  - P1 bateu exatamente em todos os papéis: Δ deslocamento 0, Δ final 0.
+- **Segunda emenda**, registrada no `r01_compare.py` antes da sessão 2. Nenhum limite numérico mudou:
+  - os 2 jogadores são verificados pelas amostras;
+  - pose dupla passa a ser explícita: 2 ou mais renderers do corpo visíveis ao mesmo tempo;
+  - a sequência de P2 no dono e no observador tem de ser igual à do servidor, e `Afk2` é aceito como estado de P2;
+  - P1 continua exigindo igualdade total com offline.
+- **Sessão 2** (`Logs/R01-measure-20261107b`, cópia em `Logs/R01-comparacao.json`): **demonstrated**, 3 offline + 3 online, 0 execuções excluídas.
+
+| Critério | Resultado (3 pares) |
+|---|---|
+| A. Fase e loadout | Iguais: BattleMode_15, spawn (-7,4)/(5,4), velocidade 4, 1 bomba, raio 2, SD Off, blocos `182:5fd04101`, 60 fps / vSync 0; 2 jogadores presentes |
+| B. Ações | 12/12 segmentos; holds de 2,4000 a 2,4058 s |
+| C. Apresentação | Sequência de P1 igual à offline nos 3 papéis; 0 poses duplas; P2 `Down → Afk` igual nos 3 papéis; P2 sem movimento |
+| D. Movimento | 7 trechos (RLDUDUD) em todos os papéis; Δ deslocamento 0,000 u; Δ duração máx.: servidor 0,017 s, dono 0,001–0,059 s, observador 0,034–0,050 s |
+| E. Posição final | Δ 0,000 u |
+| Offline × offline | 7 trechos iguais; Δ duração ≤ 0,016 s |
+| F (relatado) | Início input→movimento: offline mediana 33 ms (17–34; varia com a fase do quadro); dono mediana 17 ms (11–59). Atraso em relação ao dono: servidor, medianas por execução 1,5–11 ms; observador 28–46 ms |
+
+`analyze_prediction.py` (embutido no JSON): `input_to_motion` com 6–7 amostras livres por captura, cliente ~17 ms. O p95 fica nulo, porque o mínimo é de 20 amostras. Ele **não** mede fase, sequência, pose nem posição; isso é feito pelo `r01_compare.py`.
+
+Limitação: a partir do spawn, P1 tem só 1–2 tiles livres. São trechos curtos (≤ 0,52 s), sem corridas longas.
+
+### Medição 1 — custo do jogador remoto: **feita; revelou dois custos; correção pendente de validação**
+- **Sessão 1** (`Logs/R01-measure-20261107/R01-custo.json`): 9/9 execuções válidas. Os clientes usam ~1 s de CPU por 70 s, e o `GetProcessTimes` (cobrança por tick de 15,6 ms) **não resolve** isso: o mínimo do cliente 2 chegou a 0,000%. Os números de CPU dessa sessão ficam como não resolvidos.
+- **Emenda de instrumento:** `QueryProcessCycleTime`, que conta ciclos exatos.
+- **Sessão 2** (`Logs/R01-measure-20261107c/R01-custo.json`): 9/9 válidas. Valores: média [mín–máx], n = 3.
+
+| Métrica | baseline | R01 | R01 sem chaves | R01 − baseline |
+|---|---|---|---|---|
+| Cliente 2, observador do jogador remoto (Mciclos/s) | 350,9 [346,2–359,7] | 373,3 [368,9–376,9] | 355,5 [349,9–365,3] | **+22,4 (+6,4%), diferença medida.** Contra R01 sem chaves: +17,8 (+5,0%), medida |
+| Cliente 1, dono (Mciclos/s) | 344,8 [342,6–347,2] | 353,1 [346,4–359,7] | 348,7 [341,9–358,5] | +8,3 (+2,4%), não resolvida |
+| Servidor (Mciclos/s) | 337,1 [331,2–340,2] | 333,0 [322,9–348,3] | 341,6 [329,4–349,5] | −4,0, não resolvida |
+| Bytes servidor entrada (KiB/s) | 2,571 | 2,576 | 2,570 | +0,2%, não resolvida |
+| Bytes servidor saída (KiB/s) | 21,13 | 21,07 | 21,40 | −0,3%, não resolvida (coerente com nenhuma mudança de wire) |
+| Alocação GC no servidor (KiB/s) | 646,9 [645,7–648,8] | 702,9 [701,5–704,2] | 702,3 | **+56 (+8,6%), medida.** Não vem das chaves; a sessão 1 também deu +61 |
+| Marcadores BattlePerf do servidor | — | — | — | todos não resolvidos (≤ 0,01 ms) |
+
+**Achado.** A captura de movimento estava **ativa em todas as execuções de custo**, nas duas builds. O `Assets/Resources/GameplayLatencyDiagnostics.json` versionado tem `"enabled": true`, o que liga a captura em qualquer build. Isso contraria o "sem logs de movimento" pré-registrado. O custo medido inclui, portanto:
+- a imposição de pose e o gate do mount: a parte isolável pelas chaves, cerca de +17,8 Mciclos/s no observador;
+- os diagnósticos adicionados pelo R01: amostra do servidor a cada 0,05 s em vez de 0,1 s, linhas de borda por quadro, rastreio de raiz e limite de 64 MiB em vez de 8 MiB. A alocação do servidor (+56 KiB/s) vem daqui.
+
+Não isolável: a fila de input e o stun não têm chave. O total do processo inclui Unity, Mirror e o escalonador.
+
+**Correção aplicada (não validada):** a densificação de diagnósticos do R01 passa a ser só de Development (`NetworkPlayerAnimation.R01DenseDiagnostics => Debug.isDebugBuild`). Ela gata `PresentObserverPosition`, `TracePlayerEdge`, `TraceBodyEdge`, a amostra de 0,05 s do servidor e o limite de 64 MiB (`GameplayLatencyDiagnostics.MaxBytes`).
+- Em release com captura ligada, volta a densidade anterior ao R01. Em Development nada muda, então os smokes e a comparação continuam válidos para esse comportamento.
+- Validação feita: Python CI 124/124 e UTF-8 sem BOM corrompido.
+- **Pendentes:**
+  1. compilação Unity e EditMode no código final. A execução de 07/11 11:05 (`Logs/R01-final-tests-20261107-110541`) foi encerrada pelo Claude Code por falta de memória, aos 40 s, durante a importação; nenhum processo ficou ativo;
+  2. builds sem captura (`baseline-nodiag` pronta, `ae600537…` + JSON `enabled:false` via overlay `Logs/R01-nodiag-overlay`; a `r01-nodiag` não foi feita), para isolar o custo da funcionalidade sem diagnósticos;
+  3. decidir se o +5% de ciclos do observador (a imposição de pose chama um segundo `ClientApply()` por quadro) é aceitável ou se precisa de otimização. Isso não deve ser decidido sem a medição sem captura.
+
+Runner restaurado depois de cada etapa (14 diferenças locais pré-existentes). Nenhuma publicação.
+
+### Sessão sem captura — critérios registrados antes das execuções (07/11/2026, 14:05; sessão `Logs/R01-measure-20261107d`)
+Retomada autorizada pelo usuário depois do bloqueio de memória. Gate de 3 GiB de RAM livre mantido; etapas sequenciais.
+- **Builds:** `baseline-nodiag2` (código de HEAD + harness + Packages iguais) × `r01-nodiag` (R01 final com o gate Development-only).
+  - Nas duas, o `GameplayLatencyDiagnostics.json` vem com `"enabled": false`, aplicado pelo overlay `Logs/R01-nodiag-overlay`.
+  - O harness é o mesmo nas duas. A `baseline-nodiag` anterior (`ae600537…`) foi preservada, mas não é usada: não tem a coleta de frame.
+- **Cenário:** igual ao das sessões anteriores. BattleMode_15, 2 jogadores, SD Off, script de 36 s, 75 s de partida, servidor e 2 clientes locais em batchmode.
+- **Repetições:** 5 por configuração, intercaladas baseline / R01 / R01 sem chaves. A regra de sobreposição mín–máx é a mesma.
+- **Como confirmo que não houve captura:** uma execução só é válida se as 3 condições valerem nos 3 processos:
+  1. o log tem `[R01Frame] installed … motionCapture=False` (lido de `GameplayLatencyDiagnostics.Enabled`);
+  2. o log não tem nenhum `[GameplayLatency] Capture:`;
+  3. a pasta não tem nenhum `*-motion.jsonl`.
+- **Métricas novas por processo**, vindas do mesmo harness nas duas builds (`-r01-frame-stats`), dentro da janela do script (UTC exato de `script_start`/`script_done` no log do cliente 1):
+  - **tempo de trabalho do frame na main thread:** do início do EarlyUpdate ao fim do PostLateUpdate, ou seja, sem a espera de frame rate. Reporto média ponderada, p95 médio e máximo;
+  - frames por segundo;
+  - alocação gerenciada em KiB/s (`GC Allocated In Frame`);
+  - coletas gen-0 por minuto.
+  - Continuam também ciclos de CPU, bytes e métricas do servidor.
+- **Critério de experiência:** custo absoluto do frame. Uma diferença medida no tempo de trabalho é reportada em ms por frame e em % do orçamento de 16,7 ms a 60 fps. Nenhum limite de aprovação/reprovação.
+- **Gatilho da otimização:** se a diferença no observador continuar medida sem captura, investigo uma otimização da reaplicação de pose que preserve a correção do flash, com regressão direcionada.
+
+### Sessão sem captura — resultado (07/11/2026, 14:12–14:35; `Logs/R01-measure-20261107d/R01-custo.json`)
+**Comandos:**
+```
+.\Logs\R01-runner-sync.ps1 -Mode Apply -Overlay Logs\R01-nodiag-overlay              # R01 final + JSON enabled:false
+python scratchpad/run_tests.py                                                         # Logs/R01-final-tests-20261107-140033
+python scratchpad/cost_build.py r01-nodiag C:\Users\mauri\SB6-R01-cost\r01-nodiag      # Logs/R01-cost-build-r01-nodiag-20261107-140414
+.\Logs\R01-runner-sync.ps1 -Mode Restore
+.\Logs\R01-runner-sync.ps1 -Mode Apply -Overlay Logs\R01-nodiag-overlay -Only <harness .cs/.meta, GameplayLatencyDiagnostics.json, Packages/manifest.json, packages-lock.json>
+python scratchpad/cost_build.py baseline-nodiag2 C:\Users\mauri\SB6-R01-cost\baseline-nodiag2
+.\Logs\R01-runner-sync.ps1 -Mode Restore                                               # runner de volta às 14 diferenças pré-existentes
+python Tools/Diagnostics/r01_measure_all.py --only cost --repetitions 5 --frame-stats --require-capture-off --baseline C:\Users\mauri\SB6-R01-cost\baseline-nodiag2 --r01 C:\Users\mauri\SB6-R01-cost\r01-nodiag --output Logs/R01-measure-20261107d
+```
+
+**Código final:**
+- Compilação Unity + EditMode no runner: **1046/1046 aprovados**, 0 avisos CS (`Logs/R01-final-tests-20261107-140033`).
+- Python CI: 124/124. UTF-8 dos .cs alterados sem BOM corrompido, sem U+FFFD.
+- O harness ganhou só `-r01-frame-stats` e o UTC nas linhas `[R01Compare]`. O relatório refeito da sessão c deu resultado idêntico.
+
+**Builds (Unity 6000.6.0f1, Development, 0 avisos CS):**
+
+| Build | Assembly-CSharp | Conteúdo |
+|---|---|---|
+| `baseline-nodiag2` | `3226f140…` | HEAD + harness + Packages; sem código R01 (o assembly não contém `EnforceAuthorityPose`) |
+| `r01-nodiag` | `45770046…` | R01 final com o gate Development-only |
+
+Nas duas, o `resources.assets` embutido contém `"enabled": false` e nenhum `"enabled": true`.
+
+**Como foi confirmado que não houve captura:** as 15 execuções passaram pela regra `--require-capture-off`, e nenhuma ficou inválida. Em cada uma, os 3 processos:
+- registraram `[R01Frame] installed gcRecorderValid=True motionCapture=False`;
+- não tiveram nenhum `[GameplayLatency] Capture:`;
+- não deixaram nenhum `*-motion.jsonl`.
+
+**Resultados:** 5 válidas por configuração. Média [mín–máx], janela do script de 36 s (UTC exato).
+
+| Métrica | baseline | R01 | R01 sem chaves | R01 − baseline |
+|---|---|---|---|---|
+| Observador (cliente 2), Mciclos/s | 325,9 [312,7–337,3] | 324,7 [311,0–337,0] | 332,8 [322,8–339,2] | −0,4%, não resolvida |
+| Observador, trabalho do frame, média (ms) | 0,980 [0,907–1,034] | 1,004 [0,887–1,258] | 0,976 | +0,024 ms (0,15% de 16,7 ms), não resolvida |
+| Observador, p95 do trabalho (ms) | 1,157 | 1,149 | 1,171 | não resolvida |
+| Observador, alocação (KiB/s) / GC por min | 113,4 / 6,5 | 112,8 / 6,8 | 113,2 / 6,8 | não resolvidas |
+| Dono (cliente 1), Mciclos/s | 323,9 [305,5–338,3] | 336,3 [322,1–345,3] | 329,6 | +3,8%, não resolvida |
+| Dono, trabalho do frame, média (ms) | 0,995 [0,878–1,117] | 1,037 [0,988–1,131] | 1,040 | +0,042 ms (0,25%), não resolvida |
+| Dono, alocação (KiB/s) | 140,2 | 139,4 | 139,6 | não resolvida |
+| Servidor, Mciclos/s | 313,5 | 312,7 | 311,5 | não resolvida |
+| Servidor, trabalho do frame, média (ms) | 0,973 | 1,024 [0,929–1,238] | 0,967 | +0,052 ms (0,31%), não resolvida |
+| Servidor, alocação (KiB/s) | 433,4 [432,7–434,0] | 432,7 [427,3–434,7] | 432,8 | −0,1%, não resolvida |
+| Bytes do servidor, entrada / saída (KiB/s) | 2,572 / 21,32 | 2,572 / 20,92 | 2,585 / 21,25 | não resolvidas |
+| fps (3 processos) | 59,8–60,0 | 59,8–59,9 | 59,8–60,0 | não resolvida |
+
+- O máximo de trabalho por frame (picos de 35 a 377 ms) aparece nas 3 configurações. É instável entre execuções e não foi resolvido.
+
+**Leitura:**
+- Sem captura, nenhuma métrica mostra diferença resolvida entre baseline e R01, nem entre R01 com e sem as chaves.
+- O custo absoluto médio do frame fica abaixo de 0,06 ms (< 0,35% do orçamento de 60 fps) nos 3 processos, e nem isso é separável do ruído.
+- Os +6,4% de ciclos do observador e os +56 KiB/s de alocação no servidor da sessão c dependiam da captura ligada. Isso é coerente com o código: com a captura ligada, a imposição de pose calcula a máscara de corpo visível antes e depois e grava linhas `player_pose_enforced`.
+- **Otimização:** não acionada, pelo gatilho pré-registrado: o custo da reaplicação de pose não ficou demonstrado sem captura. Não aceitei nem rejeitei um percentual isolado: o custo absoluto não é distinguível do ruído.
+
+**Limitações:**
+- Todas as builds medidas são Development. O efeito do gate em release com captura ligada foi validado por compilação, EditMode e revisão, não por medição em build release.
+- A fila de input e o stun continuam sem chave; o que se mede é o total da build.
+- O orçamento de 16,7 ms usa a cadência de 60 fps do cenário. Os clientes são batchmode, sem janela visível, e a GPU não é medida.
+- Na comparação online × offline, os trechos de movimento são curtos.
+- A otimização "componentes em cache em `EnforceAuthorityPose`/`ClientApply`" (`GetComponent` por frame) continua possível, mas não foi feita: não há custo demonstrado que a justifique.
+
+**Status:** R01 **CONCLUÍDO** nos critérios obrigatórios, mas não publicado e com o R02 não iniciado:
+- QA manual aprovado nos cenários testados;
+- comparação online × offline demonstrada (sessão 2);
+- custo medido, com a parte atribuível isolada até onde as chaves permitem e as limitações declaradas;
+- correção dos diagnósticos compilada e testada.

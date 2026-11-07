@@ -1734,3 +1734,42 @@ in Play Mode. FallingBomb warnings now share the server gameplay blink phase
 and reject nonfinite data before accepting a serial. Roof/Powder retain their
 approved frame histories. Joining an in-progress Battle room remains governed
 by existing room policy, independently of snapshot recovery.
+
+## R01 — remote player: mount gate, input-queue edges, mounted death (07/11, protocol 65 unchanged)
+
+- **No presentation clock.** Observers present the remote root at Mirror's `NetworkTime.time` (NetworkTransformReliable
+  snapshot interpolation) and the pose/mount presenters sample `NetworkPlayerInput.AuthorityPresentationTime`, which is
+  the same time for a remote player (`rootMisaligned` counts frames where they differ: 0 in every 07/11 run). A
+  presentation clock that held Mirror's back-steps (`RemotePresentationClock`) was measured on 07/11 in a controlled A/B
+  (3 runs per configuration, with and without 180 ms server stalls, dense server reference) and removed: it did not
+  reduce back-steps along the server path (stall: 0/2/0 on vs 0/0/2 off; calm: 0/0/0 vs 0/1/0) and only added holds of
+  up to 218 ms. The earlier position-only slew never acted (all holds had `duration_ms=0`).
+- **Mount gate.** `NetworkMountAnimation.HideMountBeforeAuthorityBody` hides only the mount sprites for the frame in
+  which the plain on-foot body is visible next to a mount. It also covers the predicting owner: the replicated mount
+  (e.g. Pink -> Mole) is applied the frame it arrives while the owner's own body becomes HeadOnly one frame later.
+  Online clients only; not during ability motion, Mole startup, death, end of stage or pause; never touches the body.
+- **Mounted death.** When the mount object is destroyed under a dead rider, `NetworkMountAnimation` rebinds to "no mount"
+  (a destroyed `UnityEngine.Object` compares equal to null, and destroyed cached renderers force a rebind); previously
+  the server threw a NullReferenceException every frame after a Tank rider died.
+- **Stunned rider on a shake-only mount.** `StunReceiver.ShowMountedPlayerDownForMountedStun` shows the rider facing
+  down for the stun; on a mount without an animated stun renderer (Mole) it now hides the other seated poses
+  (`MovementController.CollectMountedBodyRenderers`) and gives them back afterwards only if the rider is still mounted,
+  alive and no seated pose was chosen meanwhile. Previously the current head stayed on next to the stun head for the
+  whole stun (offline, host, owner and server; observers copied the server's single sampled pose).
+- **Server input queue overflow.** `NetworkPlayerInput.EnqueueBounded`: each queued element carries the frame plus one
+  tick per action edge (`QueuedInput.EdgeTick`). When a burst after a stall fills the 8-tick queue, the dropped frame's
+  pressed edges move to the next queued frame with their original ticks; that frame's own presses keep their own ticks.
+  Each edge is applied once (a repeated press is still one edge) and old frames cannot return because `CmdControls`
+  only accepts newer ticks. `PlayerManualDismount` reacts to the held transition, so a dropped Select frame previously
+  let the dismount run on a held-only frame and be published with the previous dismount's `CurrentSelectTick`; the
+  owner's prediction (exact tick match) then ended as `new_sequence` ("Dismount predicted=4 confirmed=3").
+- **Diagnostics (Development/diagnostic logs only).** `root_backstep` rows (`units;ptime;pprev;mirror`) and
+  `root_motion_summary` measure presented root steps against the authoritative path between the two presented times.
+  `-online-dense-server-reference` makes the server write `player_visual_sample`/`mount_visual_sample` every frame, so
+  `Tools/Diagnostics/r01_ab_report.py` can place each flagged step on the server polyline: `path_forward` (stale catch-up
+  or a server reversal shown in order), `presentation` (went back to an earlier state: a real back-step), `off_path`,
+  `ambiguous_reversal` (server reversal within ~2 frames; inconclusive) or `unverifiable` (capture gap; inconclusive).
+  A time gap between consecutive server frame numbers is a server simulation gap, not a capture gap. Switches
+  `-online-no-pose-enforce` and `-online-no-mount-gate` only work in Development builds.
+  `-load-test-server-stall-ms N -load-test-server-stall-every S` (dedicated Development load-test server) stalls the
+  server frame on a fixed schedule to reproduce timeline clamps and queue overflow.

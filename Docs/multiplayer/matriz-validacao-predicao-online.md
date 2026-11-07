@@ -398,3 +398,144 @@ amostras de transferência porcliente;0erros/avisos. Final18 18/18.
 
 C08 publicado noActions42110831096, commit3ca94c369/protocolo63,
 cliente+servidor+updater confirmados. QA humano acima continua separado.
+
+## R01 — player remoto (observador): cobertura e medição
+
+Medido por Tools/Diagnostics/analyze_remote_player.py (limites provisórios; sem baseline):
+atraso do root contra o atraso de interpolação esperado (timeline-ptime ou bufferMs), deriva entre
+janelas, travamentos, descontinuidades, erro RMS, sequência de poses, geração/tipo de montaria
+(rev=, build nova) e offset do corpo. Resultados possíveis: dentro dos limites, falha de medição ou
+inconclusivo (movimento insuficiente); inconclusivo nunca é aprovação.
+
+| Transição | Fixture | Medida no observador | Lacuna |
+| --- | --- | --- | --- |
+| Caminhada / root | `--remote-walk` (novo; compilação pendente) | atraso, deriva, travamento, RMS | sem comparação offline |
+| Montar (ovo) / troca de geração | `--mount-visuals`, `--mount-input --mount-cycles` | poses, offset, rev= | mount-cycles anda pouco |
+| Morte (Blue/Pink) | `--mount-visuals` | estados de renderer | morte montado em outro cenário não coberta |
+| Pink jump, emote, AFK | `--mount-visuals` | estados de renderer | aceite perceptual |
+| Pausa | `--mechanisms sudden` (pausa) | indireta | pausa durante pose/montaria não medida |
+| Mudança de rodada | `--mechanisms sudden` (recarga) | indireta | cleanup de pose/montaria não medido |
+
+Arcos de montar e de salto Pink ficam fora das estatísticas de root (outros presenters).
+Não medido: aceite perceptual/GPU, latência humana, custo CPU/bytes, comparação offline, tick por
+observador (o campo só existe para o dono). Pistas de capturas antigas (build anterior ao reparo 58):
+observador sem MountAscendLeft/Right; reconferir com a build atual.
+
+### R01 — atualização da execução assistida (06/11 15:00)
+| Item | Estado | Evidência |
+| --- | --- | --- |
+| Locomotion headless (2 observadores) | dentro dos limites provisórios | `analysis-locomotion.json`: lag 60 ms constante, 0 stalls/descontinuidades |
+| Locomotion renderizado | dentro dos limites provisórios | `analysis-locomotion-rendered.json`: lag 40 ms; frames em `smoke-locomotion-rendered/client-N-frames` |
+| Troca/offset de montaria e arcos | dentro dos limites provisórios | `analysis-mount-visuals.json`, `analysis-mount-cycles.json`; observador loga MountAscend/Descend |
+| Raiz em mount-cycles / regression-sudden | não mensurável (players parados) | não conta como evidência de locomotion |
+| Julgamento perceptual / GPU real | PENDENTE (QA manual) | imagens em `evidence/` |
+| Baseline e limites definitivos | PENDENTE | limites provisórios; 1 execução por smoke |
+R01 permanece parcial.
+
+
+## R01 - atualizacao da investigacao (06/11, 15:30) - parcial
+
+| Item | Estado | Evidencia |
+|---|---|---|
+| Falha de audio atribuida ao R01? | Nao: baseline sem R01 passa; asset do repo falha igual | Logs/R01-baseline-* |
+| Analise por entidade/geracao/ptime | Implementada; inconclusivos contados | analyze_remote_player.py, 24 testes |
+| locomotion rendered | Dentro dos limites provisorios | analysis-locomotion-rendered.json |
+| locomotion headless | FALHA de medicao (p95 0,52; deriva em janela com travadas do servidor) | analysis-locomotion.json |
+| mount-visuals / mount-cycles / regression-sudden | Inconclusivos (raiz parada), 0 divergencias estritas | analysis-*.json |
+| Silhuetas pretas | TemporarySpeedBlink, esperado | evidence/black-silhouette-crops.png |
+| Travadas do servidor | 190-4050 ms medidas por dt | server-motion.jsonl |
+| Candidatos | recuo de ptime, estado de 1 quadro, degraus sem referencia | analysis-*.json candidates |
+| QA manual | pendente (sequencia no checkpoint) | - |
+| R01 | PARCIAL, nao publicado | - |
+
+## Rodada 06/11/2026 noite (resumo)
+- Locomotion headless/renderizado repetido (budget 600): 2 dentro dos limites provisorios, 2 inconclusivos; nenhuma janela descartada. R01 parcial.
+- ptime: recuo por TimelineClamp, chega a posicao (0,3-0,4 u em movimento); perceptivo pendente.
+- Quadro corpo inteiro Mole/montaria: reproduzido so no observador (nao e amostragem); sem correcao.
+- Travadas do servidor: GC/cena/update, captura barata; GC nao provado causal.
+- round-reload: falha de orquestracao (sem checkpoint [LoadTest] completed); mount-visuals_n3 inconclusivo; troca de rodada, pausa com montados: nao cobertos.
+- Audio catalog: falha separada (ver progresso).
+
+## Rodada 06/11/2026 noite (2) - resumo
+- Flash de corpo na montagem: causa localizada (EnableExclusiveFromState apos o LateUpdate do NetworkPlayerAnimation; mount adiantado em 1 frame sobre o corpo bufferizado). Corrigido na apresentacao do observador (reaplicacao no fim do frame + gate do mount); residual 1 frame (~16 ms) no dono em MoleStartup. Dados: tudo desligado 8 -> 0-1.
+- Passos para tras: suavizador de posicao so no observador (relogio do Mirror intacto, cortes legitimos preservados). CPU nova quase nao reproduz o recuo; beneficio indireto. Percepcao pendente (usuario).
+- round-reload: falha era do harness (cliente 180 s < servidor 200 s); corrigido, k1 exit 0.
+- mount-cycles k1: 1 falha de validacao do dono, nao reproduzida em 4 repeticoes.
+- Locomotion CPU nova: headless k1 dentro dos limites; renderizado inconclusivo. Resultados separados por hardware; sem comparacao direta de tempos.
+- Cenarios parados validam pose, mas seguem inconclusivos para locomotion.
+
+
+## Rodada 07/11/2026 (CPU nova) - resumo
+| Item | Resultado | Evidência |
+|---|---|---|
+| EditMode | 1047/1047, 5 testes R01 novos | Logs/R01-assisted-20261107-002305/R01-tests.xml |
+| Python | Ci 107/107, RoomDirectory 15/15 | - |
+| Desmonte sob travada | predicted 4 / confirmed 4 (s1, r1) | smoke-mount-cycles_*/result.json |
+| Corpo a pé + mount | 0 no dono e no observador (1 execução) | smoke-mount-visuals_r1, mountchange-*.png |
+| Relógio de apresentação | retenções ocorrem; 0 passos durante retenção | analysis-locomotion_*.json |
+| Passos para trás > 0,1 u (travada 180 ms) | 2ª métrica: ligado 17, desligado 29, renderizado 38 (1 execução cada) | analysis-*_m1/_m2.json |
+| Métrica final (3ª) | compilada, NÃO executada (rodada 5 encerrada por memória baixa) | Logs/R01-round5-chain-output.txt |
+| Catálogo de áudio | corrigido (2 entradas), teste passa | OnlineBattleAudio.asset |
+| Runner | restaurado, sem conflitos | Logs/R01-runner-sync/ |
+| QA manual perceptual | pendente | - |
+| R01 | PARCIAL, não publicado | - |
+
+## Rodada 07/11/2026 06:00-08:30 (CPU nova) - A/B final, relógio removido, R01 parcial
+| Item | Resultado | Evidência |
+|---|---|---|
+| Captura do servidor | densa (todo frame), 0 lacunas de captura | `-online-dense-server-reference` |
+| Passos reais (`presentation`), travada 180 ms | relógio ligado 0/2*/0, desligado 0/0/2 (*ambíguos) | Logs/R01-assisted-20261107-061225/ab-stall.json |
+| Passos reais, calmo | ligado 0/0/0, desligado 0/1/0 | ab-calm.json |
+| Build final sem relógio | travada 0, calmo 0; atraso p95 0,4 ms | Logs/R01-assisted-20261107-071951/ab-final.json |
+| Retenções do relógio | 297-342 (travada), 43-55 (calmo); máx. 218 ms; sem benefício | ab-*.json |
+| Atraso acumulado | mirror−apresentado p95 ≤ 0,5 ms, não cresce | ab-*.json |
+| Raiz/pose/mount | 0 desalinhados, 0 pose≠mount | ab-*.json |
+| Relógio de apresentação | **removido** | NetworkPlayerAnimation.cs |
+| Fila de input | Select 4/4, 0 duplicados (3 execuções); teste de rajada | mount-cycles_c1-c3, EditMode |
+| Pausa montado | 0 passos e 0 trocas durante e depois | mount-visuals_v2 |
+| Morte montado | NRE do servidor corrigida; Tank→None→Death sem quadro inválido | mount-visuals_v1 (falha) / v2 |
+| Sudden death | completo, 0 avisos | regression-sudden_s1 |
+| Round-reload | `round-reload_r1` (calmo, cerca de 200 s, com troca de rodada): terminou (`[LoadTest] completed`), com 0 exceções e 0 avisos, mas teve **exit 2 por 1 falha de pose**: duas cabeças no servidor, ver "Achados separados". | round-reload_r1 |
+| Testes | EditMode no runner, com o código final (relógio removido e correção da NRE): **1045/1045** aprovados, 0 falhas, 0 ignorados e 0 avisos `warning CS` no log de compilação (`Logs/R01-assisted-20261107-071951/R01-tests.xml`). O total caiu de 1047 porque os 3 testes do relógio saíram e 1 teste de fila foi acrescentado.; Python Ci 113/113, RoomDirectory 15/15 | R01-tests.xml |
+| Locomotion (verificador de amostragem) | inconclusivo "borderline" em excursões rápidas (limite não mudou) | analysis-locomotion_*.json |
+| QA humano perceptual | pendente, separado | - |
+| Duas cabeças no servidor (Mole + override de inatividade) | aberto, pré-existente, fora da apresentação do observador | round-reload_r1, frames 7167-7227 |
+| R01 | PARCIAL: critérios de apresentação atendidos; 1 achado de pose do servidor aberto; QA humano pendente; não publicado | - |
+
+## Rodada 07/11/2026 08:30-09:20 - duas cabeças no Mole corrigidas
+| Item | Resultado | Evidência |
+|---|---|---|
+| Causa | stun só com tremor (Mole) ligava a cabeça para baixo sem desligar a atual | StunReceiver.ShowMountedPlayerDownForMountedStun, Mole.prefab `useAnimatedStunRenderer: 0` |
+| Correção | StunReceiver esconde/restaura as poses sentadas (MovementController.CollectMountedBodyRenderers) | StunReceiver.cs, MovementController.cs |
+| Regressão | EditMode R01MountedShakeOnlyStun... passa; fixture de stun no mount-visuals | Logs/R01-assisted-20261107-084653/R01-tests.xml |
+| EditMode | 1046/1046, 0 avisos | idem |
+| mount-visuals_t1 | uma cabeça durante o stun (Mole e Tank) em servidor, dono e observador | smoke-mount-visuals_t1 |
+| round-reload_t1 | 0 falhas (antes exit 2), 0 poses duplas, 0 `presentation` | analysis-round-reload_t1.json, ab-final.json |
+| sudden / mount-cycles / locomotion (travada) | 0 falhas; Select 4/4 sem duplicar; 0 `presentation` | ab-final.json |
+| Falhas técnicas abertas | nenhuma reproduzida | - |
+| Inconclusivos | borderline de amostragem em locomotion; cenários parados sem atraso | analysis-*.json |
+| QA humano perceptual | pendente, separado | - |
+| R01 | técnico sem falhas abertas; aguarda QA humano; não publicado | - |
+
+## R01 - status em 07/11/2026 09:30
+| Item | Status |
+|---|---|
+| Implementação | concluída |
+| Validação automatizada (EditMode 1046/1046, smokes no código final) | concluída, sem falhas técnicas abertas |
+| Medições inconclusivas (borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições, só CPU nova) | registradas como limitações |
+| Teardown antigo (`NetworkBombFx::ServerEmit` após `[LoadTest] completed`, smoke-locomotion_a1) | não reproduzido; não corrigido; limitação |
+| Aceite manual (QA perceptual) | **pendente**; pacote em `C:\Users\mauri\SB6-QA-R01` |
+| Publicação / R02 | não realizada / não iniciado |
+
+## R01 - status em 07/11/2026 (aceite manual aprovado; R01 parcial)
+| Item | Status |
+|---|---|
+| Implementação | concluída |
+| Validação automatizada (EditMode 1046/1046; smokes no código final) | concluída, sem falhas técnicas abertas |
+| Aceite manual (QA perceptual, 2 clientes) | **aprovado pelo usuário nos cenários testados** |
+| Medições inconclusivas (borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições, só CPU nova, stun casual no round-reload) | preservadas como limitações |
+| Teardown antigo (`NetworkBombFx::ServerEmit` após `[LoadTest] completed`, smoke-locomotion_a1) | não reproduzido; não corrigido; limitação |
+| Custo CPU/bytes do player remoto (R01) | **MEDIDO**. Com captura (`Logs/R01-measure-20261107c`): observador +6,4% de ciclos e servidor +8,6% de alocação, vindos dos diagnósticos. Sem captura (`Logs/R01-measure-20261107d/R01-custo.json`; 5+5+5 válidas; captura confirmada desligada nos 3 processos): nenhuma diferença resolvida em ciclos, tempo de frame (Δ ≤ 0,05 ms, < 0,35% de 16,7 ms), alocações, GC, fps ou bytes. Otimização não acionada. Limitações: só builds Development; fila de input e stun sem chave |
+| Comparação online × offline (`analyze_prediction.py`, Logs/R01-comparacao.json) | **DEMONSTRADA** na sessão 2 (`Logs/R01-measure-20261107b`; 3+3, A–E aprovados, 0 excluídas). A sessão 1 falhou pelas regras originais (instrumento de jogadores e `Afk2` aleatório); está registrada |
+| R01 | **CONCLUÍDO** nos critérios obrigatórios (07/11): QA manual aprovado; comparação demonstrada; custo medido com e sem captura; gate Development-only compilado e testado (EditMode 1046/1046). Não publicado; R02 não iniciado |
+| Publicação / R02 | pendente de autorização / não iniciado |

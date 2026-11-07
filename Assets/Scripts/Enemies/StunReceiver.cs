@@ -93,6 +93,10 @@ public partial class StunReceiver : MonoBehaviour
     private bool savedMountedPlayerRendererIdle;
     private bool savedMountedPlayerRendererLoop;
     private bool savedMountedPlayerSpriteEnabled;
+    // Seated poses hidden while the stun shows the rider facing down (a shake-only mount such as the Mole keeps the
+    // rider's sprites, so the current head would otherwise stay visible next to the stun head).
+    private readonly List<AnimatedSpriteRenderer> mountedBodyRenderers = new();
+    private readonly List<AnimatedSpriteRenderer> hiddenMountedBodyRenderers = new();
     private bool mountedStunUsesShakeOnly;
     private bool loggedStunVisualStart;
 
@@ -586,6 +590,7 @@ public partial class StunReceiver : MonoBehaviour
         activeStunAnimatedRenderer = null;
         activeMountedStunVisual = null;
         activeMountedPlayerStunRenderer = null;
+        hiddenMountedBodyRenderers.Clear(); // an external presenter owns the rider's visuals now
     }
 
     private void SuppressStunVisualForExternalTransition()
@@ -1186,7 +1191,54 @@ public partial class StunReceiver : MonoBehaviour
         if (renderer.TryGetComponent(out SpriteRenderer spriteRenderer) && spriteRenderer != null)
             spriteRenderer.enabled = true;
 
+        cachedMovement.CollectMountedBodyRenderers(mountedBodyRenderers);
+        for (int i = 0; i < mountedBodyRenderers.Count; i++)
+        {
+            var other = mountedBodyRenderers[i];
+            if (other == renderer || !IsRendererShown(other))
+                continue;
+
+            if (!hiddenMountedBodyRenderers.Contains(other))
+                hiddenMountedBodyRenderers.Add(other);
+            SetAnimEnabled(other, false);
+        }
+
         renderer.RefreshFrame();
+    }
+
+    // What is on screen is the SpriteRenderer (RestoreAnimations may leave it on with the animator component off).
+    private static bool IsRendererShown(AnimatedSpriteRenderer renderer) =>
+        renderer != null && renderer.TryGetComponent(out SpriteRenderer sr) && sr != null && sr.enabled;
+
+    // Gives the seated pose back only if nothing else took over meanwhile (still mounted, no seated pose shown).
+    private void RestoreHiddenMountedBodyRenderers()
+    {
+        if (hiddenMountedBodyRenderers.Count == 0)
+            return;
+
+        bool restore = cachedMovement != null && cachedMovement.IsMounted && !cachedMovement.isDead;
+        if (restore)
+        {
+            cachedMovement.CollectMountedBodyRenderers(mountedBodyRenderers);
+            for (int i = 0; i < mountedBodyRenderers.Count && restore; i++)
+                if (IsRendererShown(mountedBodyRenderers[i]))
+                    restore = false;
+        }
+
+        if (restore)
+        {
+            for (int i = 0; i < hiddenMountedBodyRenderers.Count; i++)
+            {
+                var hidden = hiddenMountedBodyRenderers[i];
+                if (hidden == null)
+                    continue;
+
+                SetAnimEnabled(hidden, true);
+                hidden.RefreshFrame();
+            }
+        }
+
+        hiddenMountedBodyRenderers.Clear();
     }
 
     private void HideMountedPlayerDownForMountedStun()
@@ -1203,6 +1255,7 @@ public partial class StunReceiver : MonoBehaviour
             spriteRenderer.enabled = savedMountedPlayerSpriteEnabled;
 
         renderer.RefreshFrame();
+        RestoreHiddenMountedBodyRenderers();
     }
 
     private void ClearMountedStunShake()

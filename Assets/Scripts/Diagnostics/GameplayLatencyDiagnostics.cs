@@ -10,9 +10,16 @@ public static class GameplayLatencyDiagnostics
 {
     public const string PreferenceKey = "Diagnostics.GameplayLatency";
     public const string BuildSettingsPath = "GameplayLatencyDiagnostics";
-    const long MaxBytes = 8 * 1024 * 1024;
+    // R01: 8 MiB ended 90 s Development smokes at ~57 s (capture_limit). The larger cap is Development-only so a release
+    // build with the capture enabled keeps its previous disk footprint (R01 cost measurement, 07/11/2026).
+    static long MaxBytes => Debug.isDebugBuild ? 64L * 1024 * 1024 : 8L * 1024 * 1024;
     const double MaxSeconds = 600;
-    const int MaxEventsPerSecond = 180;
+    const int DefaultEventsPerSecond = 180;
+    static int maxEventsPerSecond = DefaultEventsPerSecond; // R01: -online-motion-log-budget N changes capture density only; default unchanged
+    // R01: cost of the capture itself, read by FrameHitchProbe (ticks of Stopwatch.GetTimestamp).
+    public static long FormatTicks, IoTicks, RowsWritten;
+    public static int DroppedRows => dropped;
+    public static int EventBudget => maxEventsPerSecond;
 
     [Serializable] public sealed class Settings { public bool enabled = false; }
     [Serializable] public sealed class Entry
@@ -45,6 +52,8 @@ public static class GameplayLatencyDiagnostics
         initialized = false;
         CurrentFile = null;
         bytes = budgetCount = dropped = 0;
+        FormatTicks = IoTicks = RowsWritten = 0;
+        maxEventsPerSecond = DefaultEventsPerSecond;
         started = flushAt = budgetWindow = 0;
         Application.quitting -= Close;
         Application.quitting += Close;
@@ -59,6 +68,10 @@ public static class GameplayLatencyDiagnostics
         var args = Environment.GetCommandLineArgs();
         enabled = inBuild || PlayerPrefs.GetInt(PreferenceKey, 0) != 0 ||
             Array.IndexOf(args, "-gameplay-latency-logs") >= 0 || Array.IndexOf(args, "-online-motion-logs") >= 0;
+        if (Array.IndexOf(args, "-online-motion-logs-off") >= 0) enabled = false; // R01: lets a hitch run have no capture although the build setting enables it
+        int budgetArg = Array.IndexOf(args, "-online-motion-log-budget");
+        if (budgetArg >= 0 && budgetArg + 1 < args.Length && int.TryParse(args[budgetArg + 1], out int budget) && budget >= DefaultEventsPerSecond && budget <= 5000)
+            maxEventsPerSecond = budget;
     }
 
     public static void SetEnabled(bool value)
@@ -97,7 +110,7 @@ public static class GameplayLatencyDiagnostics
         if (!Enabled) return;
         double now = Time.realtimeSinceStartupAsDouble;
         if (now - budgetWindow >= 1) { budgetWindow = now; budgetCount = 0; }
-        if (++budgetCount > MaxEventsPerSecond) { dropped++; return; }
+        if (++budgetCount > maxEventsPerSecond) { dropped++; return; }
         try
         {
             if (writer == null)
@@ -130,10 +143,13 @@ public static class GameplayLatencyDiagnostics
             entry.bufferMs = NetworkClient.active && !NetworkServer.active ? NetworkClient.bufferTime * 1000 : 0;
             entry.sendIntervalMs = NetSync.IsOnline ? NetworkServer.sendInterval * 1000 : 0;
             entry.dropped = dropped;
+            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             string line = JsonUtility.ToJson(entry);
             bytes += Encoding.UTF8.GetByteCount(line) + 1;
+            long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
             writer.WriteLine(line);
             if (now >= flushAt) { writer.Flush(); flushAt = now + 1; }
+            FormatTicks += t1 - t0; IoTicks += System.Diagnostics.Stopwatch.GetTimestamp() - t1; RowsWritten++;
         }
         catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
         {

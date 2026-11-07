@@ -82,6 +82,37 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
+            LateUpdateCore();
+            // Runs at order 1000, after every default-order presenter: the last word on which player body is visible.
+            if (!isServer) GetComponent<NetworkPlayerAnimation>()?.EnforceAuthorityPose();
+            if (!isServer) HideMountBeforeAuthorityBody();
+            if (GameplayLatencyDiagnostics.Enabled && NetworkPlayerAnimation.R01DenseDiagnostics && renderers != null) TraceBodyEdge();
+        }
+
+        // R01: the mount frames and the player body come from two streams. For a frame or two the mount can already be shown
+        // (mount / dismount / mount change) while the body is still the plain on-foot sprite: a full body next to the mount.
+        // Observers: the mount stream led the buffered body. Predicting owner: the replicated mount is applied directly the
+        // frame it arrives, while the owner's own body becomes mounted (HeadOnly/Mouted) one frame later (measured: Pink -> Mole,
+        // body Left + Mole for 1 frame). That frame keeps the mount hidden; the next frame both agree. Never applied to ability
+        // motion, the Mole startup, dead players, end of stage or while paused; never touches the body or gameplay state.
+        // -online-no-mount-gate (Development builds only) disables it for A/B measurements.
+        static int mountGateDisabledCache;
+        static bool mountGateDisabled => NetworkPlayerAnimation.DevelopmentSwitch("-online-no-mount-gate", ref mountGateDisabledCache);
+        void HideMountBeforeAuthorityBody()
+        {
+            if (mountGateDisabled || !NetSync.IsOnline || isServer || !isClient || renderers == null || sprites == null || trackedMount == null || GamePauseController.IsPaused) return;
+            var fx = GetComponent<NetworkBombFx>();
+            if (fx != null && (fx.ClientPlayerMotionActive || fx.MoleStartupActive)) return;
+            if (!TryGetComponent<MovementController>(out var movement) || movement.isDead || movement.IsEndingStage || !movement.IsPlainFootBodyVisible()) return;
+            bool hidden = false;
+            foreach (var sprite in sprites) if (sprite != null && sprite.enabled) { sprite.enabled = false; hidden = true; }
+            if (hidden && GameplayLatencyDiagnostics.Enabled)
+                GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("mount_gated_by_body", movement, detail: "type=" + companion.GetMountPresentationType() + ";ptime=" +
+                    (GetComponent<NetworkPlayerInput>()?.AuthorityPresentationTime ?? NetworkTime.time).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)));
+        }
+
+        void LateUpdateCore()
+        {
             if (!NetSync.IsOnline || netIdentity == null || (!isServer && !isClient)) return;
             // A consumed world mount is pending outside the actor until landing.
             // Its approved frames must already have a client view during that arc.
@@ -89,7 +120,10 @@ namespace Assets.Scripts.Netcode
                 frameType != MountedType.None && frames.Count > 0 && GetComponent<NetworkBombFx>()?.MountingArcActive == true)
                 companion.ShowMountVisualClient(frameType);
             var mount = companion != null ? (isServer ? companion.GetMountPresentationObject() : companion.GetMountedLouieObject()) : null;
-            if (mount != trackedMount) Rebind(mount);
+            if (mount == null) mount = null; // a destroyed mount is no mount
+            // A destroyed tracked mount compares equal to a destroyed/null mount; its renderers must not be touched again
+            // (R01 mounted-death fixture: dying on a Tank destroyed it while the reference stayed tracked; NRE every frame).
+            if (mount != trackedMount || !ReferenceEquals(trackedMount, null) && trackedMount == null || RenderersDestroyed()) Rebind(mount);
             if (renderers == null) return;
             if (!isServer && isLocalPlayer && GetComponent<NetworkBombFx>()?.OwnerBoatPredictionReady == true)
             {
@@ -153,10 +187,41 @@ namespace Assets.Scripts.Netcode
             TraceVisual();
         }
 
+        // R01: edge-triggered rows. The 0.05/0.1 s samples can miss (or alias) a one-frame state, so every change of
+        // the visible body / mount renderers is logged on the frame it happens, with root, revision and presentation time.
+        AnimatedSpriteRenderer[] edgeBodies; float edgeBodiesAt; long lastEdgeMask = -1;
+        void TraceBodyEdge()
+        {
+            if (edgeBodies == null || Time.unscaledTime >= edgeBodiesAt) { edgeBodies = GetComponentsInChildren<AnimatedSpriteRenderer>(true); edgeBodiesAt = Time.unscaledTime + 1f; }
+            int mask = 0;
+            for (int i = 0; i < edgeBodies.Length && i < 30; i++)
+                if (edgeBodies[i] != null && (trackedMount == null || !edgeBodies[i].transform.IsChildOf(trackedMount.transform)) &&
+                    edgeBodies[i].TryGetComponent<SpriteRenderer>(out var s) && s.enabled && s.gameObject.activeInHierarchy) mask |= 1 << i;
+            int mountMask = 0;
+            for (int i = 0; i < renderers.Length && i < 8; i++)
+                if (sprites[i] != null && sprites[i].enabled && sprites[i].gameObject.activeInHierarchy) mountMask |= 1 << i;
+            long combined = ((long)mask << 8) | (uint)(mountMask & 0xFF);
+            if (combined == lastEdgeMask) return;
+            bool first = lastEdgeMask == -1;
+            lastEdgeMask = combined;
+            if (first) return;
+            var bodies = new List<string>(); Vector2 offset = default;
+            for (int i = 0; i < edgeBodies.Length && i < 30; i++)
+                if ((mask & (1 << i)) != 0) { bodies.Add(edgeBodies[i].name); offset = edgeBodies[i].transform.position - transform.position; }
+            var visible = new List<string>();
+            for (int i = 0; i < renderers.Length && i < 8; i++) if ((mountMask & (1 << i)) != 0) visible.Add(renderers[i].name);
+            var fx = GetComponent<NetworkBombFx>();
+            var edge = GameplayLatencyDiagnostics.For("mount_body_edge", GetComponent<MovementController>(), detail:
+                "type=" + companion.GetMountPresentationType() + ";riding=" + (GetComponent<PlayerRidingController>()?.IsPresentingArc == true) + ";pink=" + (fx?.PinkJumpVisualActive == true) +
+                ";mount=" + string.Join(",", visible) + ";body=" + string.Join(",", bodies) + ";rev=" + frameRevision + ";ptime=" +
+                (GetComponent<NetworkPlayerInput>()?.AuthorityPresentationTime ?? NetworkTime.time).ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
+            edge.delta = offset; GameplayLatencyDiagnostics.Write(edge);
+        }
+
         void TraceVisual()
         {
             if (!GameplayLatencyDiagnostics.Enabled || Time.unscaledTime < nextVisualTrace || renderers == null) return;
-            nextVisualTrace = Time.unscaledTime + .1f;
+            nextVisualTrace = Time.unscaledTime + (isServer && NetworkPlayerAnimation.R01DenseDiagnostics ? (NetworkPlayerAnimation.DenseServerReference ? 0f : .05f) : .1f); // R01: denser server reference (Development only)
             var visible = new List<string>();
             for (int i = 0; i < renderers.Length; i++)
                 if (sprites[i] != null && sprites[i].enabled && sprites[i].gameObject.activeInHierarchy) visible.Add(renderers[i].name);
@@ -166,7 +231,7 @@ namespace Assets.Scripts.Netcode
                 { bodies.Add(body.name); offset = body.transform.position - transform.position; }
             var fx = GetComponent<NetworkBombFx>();
             var entry = GameplayLatencyDiagnostics.For("mount_visual_sample", GetComponent<MovementController>(), detail:
-                "type=" + companion.GetMountPresentationType() + ";riding=" + (GetComponent<PlayerRidingController>()?.IsPresentingArc == true) + ";pink=" + (fx?.PinkJumpVisualActive == true) + ";mount=" + string.Join(",", visible) + ";body=" + string.Join(",", bodies));
+                "type=" + companion.GetMountPresentationType() + ";riding=" + (GetComponent<PlayerRidingController>()?.IsPresentingArc == true) + ";pink=" + (fx?.PinkJumpVisualActive == true) + ";mount=" + string.Join(",", visible) + ";body=" + string.Join(",", bodies) + ";rev=" + frameRevision + ";ptime=" + (GetComponent<NetworkPlayerInput>()?.AuthorityPresentationTime ?? NetworkTime.time).ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
             entry.delta = offset; GameplayLatencyDiagnostics.Write(entry);
         }
 
@@ -182,6 +247,13 @@ namespace Assets.Scripts.Netcode
         {
             if (active) ownerVisualBaseline ??= NetworkVisualPose.CaptureBaseline(renderers, transform);
             else { NetworkVisualPose.RestoreBaseline(ownerVisualBaseline); ownerVisualBaseline = null; RestoreOwnerLocomotion(); }
+        }
+
+        bool RenderersDestroyed()
+        {
+            if (renderers == null) return false;
+            foreach (var renderer in renderers) if (renderer == null) return true;
+            return false;
         }
 
         void Rebind(GameObject mount)

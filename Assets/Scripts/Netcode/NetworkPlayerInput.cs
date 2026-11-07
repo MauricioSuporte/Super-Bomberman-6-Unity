@@ -61,7 +61,26 @@ namespace Assets.Scripts.Netcode
         };
         const int ValidMask = (1 << 10) - 1;
         const int MaxQueuedTicks = 8;
-        readonly Queue<(NetworkInputFrame frame, double receivedAt)> serverInputs = new(MaxQueuedTicks);
+        // A received frame plus, per action button, the tick its press came from: the frame's own tick unless the press was
+        // merged in from an overflow-dropped frame. Ticks are kept per button so a merge never re-labels the frame's own presses.
+        public struct QueuedInput
+        {
+            public NetworkInputFrame frame;
+            public double receivedAt;
+            public uint tickA, tickB, tickC, tickSelect; // 0 = frame.tick
+
+            public uint EdgeTick(int bit)
+            {
+                uint tick = bit switch { 16 => tickA, 32 => tickB, 64 => tickC, 128 => tickSelect, _ => 0u };
+                return tick != 0 ? tick : frame.tick;
+            }
+
+            public void SetEdgeTick(int bit, uint tick)
+            {
+                if (bit == 16) tickA = tick; else if (bit == 32) tickB = tick; else if (bit == 64) tickC = tick; else if (bit == 128) tickSelect = tick;
+            }
+        }
+        readonly Queue<QueuedInput> serverInputs = new(MaxQueuedTicks);
         readonly NetworkInputHistory pending = new();
         readonly NetworkInputStepBudget serverStepBudget = new();
         NetworkPlayerSetup setup;
@@ -203,10 +222,11 @@ namespace Assets.Scripts.Netcode
                 processedTick = frame.tick;
                 serverHeldMask = frame.held;
                 actionEdges |= frame.pressed;
-                if ((frame.pressed & 16) != 0) CurrentActionATick = frame.tick;
-                if ((frame.pressed & 32) != 0) CurrentActionBTick = frame.tick;
-                if ((frame.pressed & 128) != 0) CurrentSelectTick = frame.tick;
-                if ((frame.pressed & 64) != 0) CurrentActionCTick = frame.tick;
+                // Edges merged from an overflow-dropped tick keep that tick, the one the owner predicted with.
+                if ((frame.pressed & 16) != 0) CurrentActionATick = queued.EdgeTick(16);
+                if ((frame.pressed & 32) != 0) CurrentActionBTick = queued.EdgeTick(32);
+                if ((frame.pressed & 128) != 0) CurrentSelectTick = queued.EdgeTick(128);
+                if ((frame.pressed & 64) != 0) CurrentActionCTick = queued.EdgeTick(64);
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
@@ -272,13 +292,47 @@ namespace Assets.Scripts.Netcode
             frame.pressed &= ((frame.held | frame.pressed) & 256) != 0 ? ValidMask : ValidMask & ~15;
             // Bound queued time as well as memory after a network stall. Dropped ticks
             // are acknowledged only with the state of a later actually simulated tick.
-            if (serverInputs.Count == MaxQueuedTicks)
+            if (EnqueueBounded(serverInputs, frame, Time.realtimeSinceStartupAsDouble, MaxQueuedTicks, out uint droppedTick))
+                MotionDiagnosticProbe.QueueEvent(gameObject, "queue_full_dropped_oldest_tick", droppedTick);
+        }
+
+        /// <summary>
+        /// Enqueues a received frame, dropping the oldest one when the queue is full. The dropped frame's action edges move to
+        /// the NEXT queued frame (not the newest) together with their original tick: held-transition gameplay such as
+        /// PlayerManualDismount must still see the edge before the held-only frames that followed it, and the server must
+        /// report the tick the owner predicted with (a burst after a stall once published a dismount with the previous
+        /// dismount's tick, so the owner's prediction could not be matched). Each edge is still applied exactly once: the
+        /// dropped frame never runs, an edge already present on the carrier (a second press of the same button) is not doubled,
+        /// and the carrier's own presses keep their own tick. Old frames cannot come back: CmdControls only accepts newer ticks.
+        /// Returns true when a frame was dropped.
+        /// </summary>
+        public static bool EnqueueBounded(Queue<QueuedInput> queue, NetworkInputFrame frame, double receivedAt, int capacity, out uint droppedTick)
+        {
+            droppedTick = 0;
+            var incoming = new QueuedInput { frame = frame, receivedAt = receivedAt };
+            bool dropped = queue.Count >= capacity && queue.Count > 0;
+            if (dropped)
             {
-                var dropped = serverInputs.Dequeue();
-                frame.pressed |= dropped.frame.pressed;
-                MotionDiagnosticProbe.QueueEvent(gameObject, "queue_full_dropped_oldest_tick", dropped.frame.tick);
+                var oldest = queue.Dequeue();
+                droppedTick = oldest.frame.tick;
+                if (oldest.frame.pressed != 0 && queue.Count == 0) MergeEdges(oldest, ref incoming);
+                else if (oldest.frame.pressed != 0)
+                {
+                    var kept = queue.ToArray();
+                    queue.Clear();
+                    MergeEdges(oldest, ref kept[0]);
+                    foreach (var item in kept) queue.Enqueue(item);
+                }
             }
-            serverInputs.Enqueue((frame, Time.realtimeSinceStartupAsDouble));
+            queue.Enqueue(incoming);
+            return dropped;
+        }
+
+        static void MergeEdges(QueuedInput from, ref QueuedInput into)
+        {
+            for (int bit = 16; bit <= 128; bit <<= 1)
+                if ((from.frame.pressed & bit) != 0) into.SetEdgeTick(bit, from.EdgeTick(bit)); // the earlier press is the one applied
+            into.frame.pressed |= from.frame.pressed;
         }
 
         void LateUpdate()

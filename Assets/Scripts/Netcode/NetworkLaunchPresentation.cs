@@ -35,6 +35,8 @@ namespace Assets.Scripts.Netcode
         float nextLaunchDiagnostic, presentedLaunchElapsed;
         double LaunchTimeline => launchUsesBufferedTimeline && launchPresentationActive ? ropePlaybackSourceTime : isLocalPlayer ? NetworkTime.predictedTime : NetworkTime.time;
         public double AuthorityPresentationTime => ApprovedCartActive ? approvedCart.RiderPresentationTime : launchUsesBufferedTimeline && launchPresentationActive ? ropePlaybackSourceTime : isLocalPlayer && launchOwnerTimeline ? NetworkTime.predictedTime : NetworkTime.time;
+        // R01 diagnostics: a cart or launch presenter owns the root and its own timeline (excluded from root measurements).
+        public bool UsesSpecialPresentationTimeline => ApprovedCartActive || launchPresentationActive;
 
         public readonly struct LaunchScope : System.IDisposable
         {
