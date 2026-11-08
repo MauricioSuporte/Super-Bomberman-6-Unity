@@ -1773,3 +1773,77 @@ by existing room policy, independently of snapshot recovery.
   `-online-no-pose-enforce` and `-online-no-mount-gate` only work in Development builds.
   `-load-test-server-stall-ms N -load-test-server-stall-every S` (dedicated Development load-test server) stalls the
   server frame on a fixed schedule to reproduce timeline clamps and queue overflow.
+
+## R02 — co-op world presentation: per-frame approved poses, rest anchors, screen-space overlays (07/11, protocol 66)
+
+- **Stream.** The server still samples every scene `SpriteRenderer` at 20 Hz and sends changed `CoopSpriteFrame`s. In
+  addition, `PublishCoopMotion` sends a `CoopMotion` message every server frame with only the base position (animation
+  offset removed) of renderers that translated since the previous frame. It only continues a stream whose last approved
+  full frame is visible and has the same rotation/scale; rotation, scale, visibility and sprite changes still wait for
+  the next full frame. Batches of 128 entries; ready peers only.
+- **Rest anchors.** When motion starts after one or more unsent (unchanged) frames, the server also sends the approved
+  pose of the previous server frame (`anchorTime`), in `CoopMotion.anchors` or, for a full frame, through
+  `TryCoopRestAnchor`. Without it the client interpolated from the start of the rest and the motion began early.
+- **Client.** `ApplyCoopMotion` (scene-guarded) only appends to known, visible streams, ignores removed ids, stale or
+  repeated times, and keeps the 64-sample bound. Appended samples copy the latest full frame, so sprite/animation state
+  is unchanged; `CoopSpriteFrame.playbackTime` (internal, not serialized) keeps the animation phase on the full frame's
+  origin. The pause hold, carrier clock (C06), discontinuity cut and cleanup paths are the existing ones.
+- **Screen-space overlays.** Renderers under a `Camera` (Stage 3-4 sandstorm grains and bats, snowfall, fish schools)
+  follow the server camera and are excluded from the per-frame stream and anchors (`CoopScreenSpace`, cached per id):
+  streaming them cost about +145 KiB/s per peer in Stage 3-4 without gameplay meaning. They keep the pre-R02 20 Hz
+  stream, including its known limitation: a grain wrapping to the other edge is interpolated across the screen (shape
+  error 226-255 px, identical before and after R02). A wrap cut was tried and removed (worse max error, no demonstrated
+  benefit); a proper fix needs a decision (per-frame overlay stream, or an approved drift+wrap descriptor in the client
+  camera frame).
+- **What it is not.** No client scripts, AI, RNG or physics are re-enabled; no new presenter; no prediction, collision
+  or damage on the client; offline and host paths are untouched (server-only publication, client-only application).
+- **Development only.** `-coop-r02-legacy` restores the pre-R02 20 Hz-only stream (no position samples, no anchors)
+  in the same binary for A/B. With motion logs on: `coop_family_shape` (sent reconstruction against the
+  native per-frame pose on the server), `coop_family_cost` (+ position entries/bytes/CPU), `coop_family_ids`, and
+  client `coop_present_window` v=3 (starvation, positional starvation, delay, stalls, steps, CPU, pause holds).
+  Fixture `-load-test-coop-world` / `smoke_full_clients.py --coop-world`; report `Tools/Diagnostics/r02_coop_report.py`.
+
+## R02 part 2 — explicit overlay reposition, client-only sample state, frequency cap, split starvation (08/11, protocol 67)
+
+- **Client-only state left the wire.** `CoopSpriteFrame.playbackTime` was removed. The client keeps `CoopVisualSample`
+  (frame, `playbackOrigin`, `cut`) only in its local history, so server and client message arrays are back to their pre-R02 size.
+- **Screen-space overlay reposition.** Every server frame, camera-attached renderers that jump more than 2 units between two frames
+  get a `repositionAnchor` (the pose of the previous server frame, i.e. the approved end of the old segment) and a `reposition`
+  (the new pose) in `CoopMotion`. The client marks that sample as a cut, whichever of the full frame and the motion message arrives
+  first, so a wrap is never interpolated across the screen. The client runs no RNG or gameplay for it, and particles still get no
+  per-frame samples (about 3.3 KiB/s per peer in Stage 3-4). Residual shape loss (max 9-20 px) is tied to server hitches longer than
+  40 ms; the wrap itself is fixed.
+- **Frequency cap.** At most one position sample per renderer per Mirror send tick (sendRate 60). The Development comparison modes
+  `-coop-r02-motion half|segments` were measured and rejected: half loses shape; segments adds stalls and real starvation. Release
+  always uses `frame`.
+- **Metrics v4 (Development capture).**
+  - `approved hold`: the next sample repeats the pose, so holding was correct.
+  - `real starvation`: the pose changed while the client held.
+  - Delay is split into network/timeline lag and presentation hold, with 10 ms bins for the p95.
+  - `r02_coop_report.py spikes` classifies windows above 500 ms.
+- **Reconnect evidence.** The Development flags `-load-test-rejoin <uri>` and `-load-test-leave-after S` drive
+  `Tools/RoomDirectory/smoke_coop_reconnect.py` through the supported flow: LeaveRoomToBrowser, then the dedicated room closes, then
+  the client returns to the browser and calls StartClient. Each stream begin logs its prior history counts, which must be 0.
+
+## R02 part 3 — server capture phase, controlled hitch reproduction, per-path allocation (08/11, protocol 67)
+
+- **Capture phase.** The co-op world was sampled in `BombermanNetworkManager.LateUpdate` (execution order −150). The sandstorm
+  overlays and the camera follow move in their own `LateUpdate` (order 0), so each sample carried the previous frame's pose with
+  the current frame's timestamp.
+  - After a long server frame, the large step therefore landed one sample late and bent the approved trajectory, by about the
+    overlay speed × the frame time.
+  - The wrap was also detected one frame late.
+  - `CoopLateCaptureDriver` (order 32000) now captures after every `LateUpdate`. Wire format and client are unchanged.
+  - The Development A/B switch `-coop-r02-capture-early` restores the old phase.
+  - An EditMode test asserts that no `MonoBehaviour` in the assembly runs after the capture.
+- **Controlled reproduction.** The Development server fixture `-load-test-hitch-ms N` blocks the main thread for N ms every 2.5 s,
+  12 times, at logged instants.
+  - With N = 120: the old phase gives an overlay max of 10.5 px.
+  - The late capture gives 1.06–1.16 px (p95 0.8 px) with and without hitches.
+  - `coop_phase_probe` logs the old-phase vs rendered pose difference: 2.2 px in normal frames, 17–31 px in frames over 100 ms,
+    with a camera move of 0 px.
+- **Allocation, per path.** Removing the 8-byte field does not reduce allocation under Boehm: an array of 48 frames costs 8192 bytes
+  with or without it, because large objects use 4 KiB blocks. The field removal is a code fact, not a demonstrated saving.
+- **Localhost spikes.** Spikes are classified by each process's logged `frameMs` within ±2 s. Most are server stalls: Mirror answers
+  pings on the main thread, so the RTT rises with the stall and is not evidence of the network. The rest are reported as
+  Mirror-observed delay with the origin not isolated.

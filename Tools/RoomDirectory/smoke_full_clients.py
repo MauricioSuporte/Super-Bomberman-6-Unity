@@ -11,9 +11,25 @@ import subprocess
 import time
 from benchmark_local import host_memory
 
+# R02 cost runs: exact per-process cycle counts (QueryProcessCycleTime) and CPU seconds, sampled from the handles
+# this script owns. "u" uses the harness/fixture clock: UTC milliseconds minus 63900000000000 (.NET ticks / 10000).
+UTC_U_OFFSET_MS = 63900000000000 - 62135596800000
+
+
+def process_counters(process):
+    import ctypes
+    import ctypes.wintypes as wt
+    kernel32 = ctypes.windll.kernel32
+    handle = wt.HANDLE(int(process._handle))
+    cycles = ctypes.c_ulonglong()
+    creation, exit_, kernel, user = wt.FILETIME(), wt.FILETIME(), wt.FILETIME(), wt.FILETIME()
+    ticks = lambda ft: (ft.dwHighDateTime << 32) | ft.dwLowDateTime
+    cpu = (ticks(kernel) + ticks(user)) / 1e7 if kernel32.GetProcessTimes(handle, ctypes.byref(creation), ctypes.byref(exit_), ctypes.byref(kernel), ctypes.byref(user)) else None
+    return (cycles.value if kernel32.QueryProcessCycleTime(handle, ctypes.byref(cycles)) else None), cpu
+
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False, mechanism_kind=None, remote_walk=False, extra_args=()):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False, mechanism_kind=None, remote_walk=False, extra_args=(), coop_world=False, cycle_samples=False):
     if mechanism_kind and (mechanism_kind not in ('boiler', 'blackout', 'world-blackout', 'rocket', 'dynamite', 'sudden', 'falling', 'powder', 'roof') or not diagnostics or not rendered):
         raise ValueError('mechanism fixture requires diagnostics and rendered clients')
     if field_motion and (not presenter_removal or not diagnostics):
@@ -24,7 +40,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         raise ValueError('remote walk fixture requires BattleMode diagnostics without other fixtures')
     if launcher_kind and (launcher_kind not in ('arena', 'spring', 'cannon', 'rope', 'cart9', 'cart12', 'cart32', 'portal7', 'portal34') or not diagnostics or mount_input or revenge_input or presenter_removal):
         raise ValueError('launcher fixture requires diagnostics and no other input fixture')
-    if rendered and not (mount_cycles or launcher_kind or mount_visuals or mechanism_kind or remote_walk):
+    if coop_world and (mode == 'BattleMode' or not scene or mount_input or launcher_kind or mechanism_kind or presenter_removal or revenge_input or mount_visuals):
+        raise ValueError('coop world fixture requires a cooperative Stage_* scene without other fixtures')
+    if rendered and not (mount_cycles or launcher_kind or mount_visuals or mechanism_kind or remote_walk or coop_world):
         raise ValueError('rendered captures require mount cycles or launchers')
     if mount_cycles and (not mount_input or not diagnostics):
         raise ValueError('mount cycles require mount input and diagnostics')
@@ -43,7 +61,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 raise RuntimeError('the durable actor smoke requires Development players')
             assembly_hashes[role] = hashlib.sha256(assembly).hexdigest()
         (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
-            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, launcherKind=launcher_kind, mountVisuals=mount_visuals, mechanismKind=mechanism_kind, remoteWalk=remote_walk, assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
+            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, launcherKind=launcher_kind, mountVisuals=mount_visuals, mechanismKind=mechanism_kind, remoteWalk=remote_walk, coopWorld=coop_world, cycleSamples=cycle_samples, extraArgs=list(extra_args), assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
         env = dict(os.environ, SB6_ROOM_ID='spawn-regression', SB6_ROOM_TOKEN=secrets.token_hex(32),
                    SB6_ROOM_STATUS=str(output/'status.json'))
         def launch(binary, name, arguments, environment=None):
@@ -69,6 +87,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                         (['-load-test-mount-cycles'] if mount_cycles else []) +
                         (['-load-test-launchers', launcher_kind] if launcher_kind else []) +
                         (['-load-test-mount-visuals'] if mount_visuals else []) +
+                        (['-load-test-coop-world'] if coop_world else []) +
                         (['-load-test-item-motion'] if prediction_items else []) + list(extra_args), env)
         for _ in range(60):
             if room.poll() is not None: raise RuntimeError('server exited before accepting clients')
@@ -93,14 +112,26 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                    (['-load-test-mount-cycles'] if mount_cycles else []) +
                    (['-load-test-launchers', launcher_kind] if launcher_kind else []) +
                    (['-load-test-remote-walk'] if remote_walk else []) +
+                   (['-load-test-coop-world'] if coop_world else []) +
                    (['-load-test-mount-visuals'] if mount_visuals else []) +
                    (['-load-test-mechanisms', mechanism_kind] if mechanism_kind else []) +
-                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '512' if mechanism_kind else '1024', '-screen-height', '448' if mechanism_kind else '896'] if rendered else []) +
+                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '512' if mechanism_kind else '1024', '-screen-height', '448' if mechanism_kind else '896'] if rendered else
+                    ['-screen-width', '1024', '-screen-height', '896'] if cycle_samples else []) +
                    (['-load-test-item-motion'] if prediction_items else []) +
                    list(extra_args) +
                    ['-local-diagnostic-name', 'SB6Smoke'+str(index+1)])
             time.sleep(1)
+        samples = []
+        names = ['server', 'client-1', 'client-2']
+        def sample():
+            if not cycle_samples: return
+            row = dict(u=time.time()*1000 - UTC_U_OFFSET_MS)
+            for name, process in zip(names, owned):
+                if process.poll() is None:
+                    row[name+'#cycles'], row[name] = process_counters(process)
+            samples.append(row)
         while time.monotonic() < deadline and room.poll() is None:
+            sample()
             if any(process.poll() is not None for process in owned[1:]):
                 # The server disconnects peers before its own Unity process exits.
                 # A Development client can therefore flush and quit just before it.
@@ -108,6 +139,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 except subprocess.TimeoutExpired: raise RuntimeError('client exited unexpectedly while server remained active')
                 break
             time.sleep(1)
+        if cycle_samples: (output/'cpu-samples.json').write_text(json.dumps(samples), encoding='utf-8')
         if room.poll() is None: raise RuntimeError('development server did not finish within the bound')
         if room.returncode != 0: raise RuntimeError('development server failed')
         for process in owned[1:]:
@@ -139,6 +171,11 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             raise RuntimeError('native mount visual fixture did not finish with two owners')
         if launcher_kind == 'rope' and '[LoadTest] rope blocked prefix player=' not in server_text:
             raise RuntimeError('native rope fixture did not exercise an early blocker')
+        if coop_world:
+            for marker in ('coop-world started scene='+scene, 'coop-world paused index=1', 'coop-world resumed index=1',
+                           'coop-world reloaded scene='+scene, 'coop-world paused index=2', 'coop-world resumed index=2', 'coop-world completed scene='+scene):
+                if '[LoadTest] '+marker not in server_text: raise RuntimeError('missing coop world checkpoint: '+marker)
+            if server_text.count('[Room] scene='+scene) < 2: raise RuntimeError('coop world reload did not load the stage again')
         if mechanism_kind and '[LoadTest] mechanism completed kind='+mechanism_kind not in server_text:
             raise RuntimeError('native mechanism fixture did not complete')
         removed_bomb = None
@@ -260,6 +297,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                       mode=mode, scene=scene, captures=captures, assemblySha256=assembly_hashes, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
                       spawnCheckpoints=mode == 'BattleMode', arenaLoadRequests=round_reloads,
                       syntheticHardwareInput=mount_input or revenge_input or bool(launcher_kind) or mount_visuals or remote_walk, remoteWalk=remote_walk, revengeInput=revenge_input, approvedItemMotion=prediction_items,
+                      coopWorld=coop_world, cycleSamples=len(samples),
                       serverDevelopmentDurableActors=True, requestedSeconds=seconds,
                       serverWarningEvents=len(warning_events), serverWarnings=list(dict.fromkeys(warning_events)),
                       errors=failures, seconds=time.monotonic()-started)
@@ -300,6 +338,8 @@ if __name__ == '__main__':
     parser.add_argument('--mount-input', action='store_true', help='Development client supplies Select through the normal input path')
     parser.add_argument('--revenge-input', action='store_true', help='Development Battle fixture exercises C boost and three charged A releases per owner')
     parser.add_argument('--seconds', type=int, default=210, help='At least 180 also requires a round reload checkpoint')
+    parser.add_argument('--coop-world', action='store_true', help='R02: native co-op world with a native pause, a stage reload and a second pause')
+    parser.add_argument('--cycle-samples', action='store_true', help='R02: sample CPU cycles/seconds of the three owned processes into cpu-samples.json')
     args = parser.parse_args()
     if os.name != 'nt': parser.error('Windows binaries required')
     if not 1024 <= args.port <= 65000: parser.error('invalid port')
@@ -312,8 +352,10 @@ if __name__ == '__main__':
         parser.error('--presenter-removal requires NormalGame/Stage_1-1 and --diagnostics')
     if args.revenge_input and (args.mode != 'BattleMode' or not args.diagnostics or args.mount_input):
         parser.error('--revenge-input requires BattleMode/--diagnostics without --mount-input')
+    if args.coop_world and (args.mode == 'BattleMode' or not args.scene):
+        parser.error('--coop-world requires a cooperative --scene')
     if args.scene and (args.mode == 'BattleMode' or not args.scene.startswith('Stage_') or
                        any(character in args.scene for character in '/\\')):
         parser.error('scene must be a cooperative Stage_* name')
     run(args.server.resolve(), args.client.resolve(), args.output, args.port, args.mount_input, args.seconds,
-        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input, args.mount_cycles, args.rendered, args.launchers, args.mount_visuals, mechanism_kind=args.mechanisms, remote_walk=args.remote_walk, extra_args=__import__('shlex').split(args.extra_args))
+        args.prediction_items, args.mode, args.scene, args.diagnostics, args.require_unlocked, args.presenter_removal, args.revenge_input, args.mount_cycles, args.rendered, args.launchers, args.mount_visuals, mechanism_kind=args.mechanisms, remote_walk=args.remote_walk, extra_args=__import__('shlex').split(args.extra_args), coop_world=args.coop_world, cycle_samples=args.cycle_samples)

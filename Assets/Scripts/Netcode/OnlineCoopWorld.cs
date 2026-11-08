@@ -26,6 +26,46 @@ namespace Assets.Scripts.Netcode
             enemyStepLimit == other.enemyStepLimit && pauseWithGameplay == other.pauseWithGameplay && (blackout == null ? other.blackout == null : blackout.Equals(other.blackout));
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
+
+    // R02: the server capture of the co-op world runs after every LateUpdate. The manager itself runs at -150, before the
+    // camera follow and the screen-space overlays (sandstorm, order 0) move in their LateUpdate; sampling there stamped the
+    // previous frame's pose with this frame's time, which bends the approved trajectory after every long server frame.
+    [DefaultExecutionOrder(32000)]
+    public sealed class CoopLateCaptureDriver : MonoBehaviour
+    {
+        internal BombermanNetworkManager manager;
+        void LateUpdate() { if (manager != null) manager.CaptureCoopWorldLate(); }
+    }
+
+    /// <summary>
+    /// R02: one buffered presentation sample. Never serialized: the client-only bookkeeping stays out of
+    /// <see cref="CoopSpriteFrame"/>, whose size is paid by every server and client message array.
+    /// The server's Development shape reconstruction uses the same type so both follow one segment rule.
+    /// </summary>
+    public struct CoopVisualSample
+    {
+        public CoopSpriteFrame frame;
+        // Time of the full frame whose animation playback this sample shows (position-only samples keep it).
+        public double playbackOrigin;
+        // Explicit reposition: the segment from the previous sample is never interpolated (wrap/camera cut).
+        public bool cut;
+
+        public static CoopVisualSample Full(in CoopSpriteFrame frame) => new() { frame = frame, playbackOrigin = frame.time };
+
+        public CoopVisualSample At(double time, Vector3 position, bool reposition = false)
+        {
+            var sample = this; sample.frame.time = time; sample.frame.position = position; sample.cut = reposition;
+            return sample;
+        }
+
+        // Linear between two visible samples unless the server marked a reposition or an enemy discontinuity.
+        public static bool Interpolates(in CoopVisualSample from, in CoopVisualSample to)
+        {
+            if (to.cut || !from.frame.visible || !to.frame.visible || to.frame.time <= from.frame.time) return false;
+            return !(from.frame.enemyStepLimit > 0 && (to.frame.time - from.frame.time > .25 ||
+                Vector3.Distance(from.frame.position, to.frame.position) > from.frame.enemyStepLimit));
+        }
+    }
     public struct CoopTileFrame
     {
         public Vector3Int cell; public int tile; public Color color; public Matrix4x4 matrix;
@@ -115,6 +155,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopWorldBegin>(ApplyCoopBegin);
             NetworkClient.RegisterHandler<BombAnimations>(ApplyBombAnimations);
             NetworkClient.RegisterHandler<CoopSprites>(ApplyCoopSprites);
+            NetworkClient.RegisterHandler<CoopMotion>(ApplyCoopMotion);
             NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
             NetworkClient.RegisterHandler<CoopTileAnimation>(ApplyCoopTileAnimation);
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
@@ -289,6 +330,7 @@ namespace Assets.Scripts.Netcode
             ClearCoopCollisionWorld();
             ClearCoopSprites();
             ClearCoopTileAnimation();
+            ClearCoopMotion();
             coopLastSprites.Clear(); coopViews.Clear(); coopMaps.Clear(); coopLastTiles.Clear();
             coopTileScratch.Clear(); coopPeerBuffer.Clear(); coopChangedSprites.Clear();
             coopRemovedSprites.Clear(); coopCurrentSprites.Clear(); coopChangedTiles.Clear();
@@ -318,8 +360,40 @@ namespace Assets.Scripts.Netcode
                     if (NetworkServer.active) blackout.PublishNetworkBlackout();
                     else blackout.PresentNetworkBlackout(CoopVisualClock);
                 }
+            if (!NetworkServer.active) return;
+            if (!CoopLateCapture) { CaptureCoopWorld(); return; }
+            if (coopLateDriver == null) { coopLateDriver = gameObject.AddComponent<CoopLateCaptureDriver>(); coopLateDriver.manager = this; }
+            if (CoopShapeDiagnostics && IsCoopStage) ProbeCoopPhaseEarly();
+        }
+
+        CoopLateCaptureDriver coopLateDriver;
+        static int coopCaptureState;
+
+        // Development A/B only: "-coop-r02-capture-early" restores the old capture phase (manager LateUpdate, order -150).
+        internal static bool CoopLateCapture
+        {
+            get
+            {
+                if (coopCaptureState == 0)
+                    coopCaptureState = Debug.isDebugBuild && Array.IndexOf(Environment.GetCommandLineArgs(), "-coop-r02-capture-early") >= 0 ? 1 : 2;
+                return coopCaptureState == 2;
+            }
+        }
+
+        internal void CaptureCoopWorldLate()
+        {
+            if (!NetworkServer.active || !CoopLateCapture) return;
+            if (CoopShapeDiagnostics) ProbeCoopPhaseLate();
+            CaptureCoopWorld();
+        }
+
+        void CaptureCoopWorld()
+        {
             if (!NetworkServer.active || !IsCoopStage || coopCatalog == null || NetworkServer.isLoadingScene) return;
-            if (Time.unscaledTime < coopNextFrame) return;
+            bool shapeDiagnostics = CoopShapeDiagnostics;
+            if (shapeDiagnostics) SampleCoopTruth();
+            TrackCoopOverlays(shapeDiagnostics);
+            if (Time.unscaledTime < coopNextFrame) { PublishCoopMotion(shapeDiagnostics); return; }
             using var scope = CoopPresentationMarker.Auto();
             coopNextFrame = Time.unscaledTime + 0.05f;
             CaptureCoopCollisionState();
@@ -372,7 +446,11 @@ namespace Assets.Scripts.Netcode
                 bool active = renderer.gameObject.activeInHierarchy;
                 // Send the visible -> hidden transition once. Sleeping pool objects
                 // need no repeated transform/material/sprite reads or initial clone.
-                if (!active && (!coopLastSprites.TryGetValue(id, out var sleeping) || !sleeping.visible)) continue;
+                if (!active && (!coopLastSprites.TryGetValue(id, out var sleeping) || !sleeping.visible))
+                {
+                    if (shapeDiagnostics) ForgetCoopShape(id);
+                    continue;
+                }
                 long metricStarted = GameplayLatencyDiagnostics.Enabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
                 var frame = new CoopSpriteFrame
                 {
@@ -396,16 +474,32 @@ namespace Assets.Scripts.Netcode
                     Vector2 offset = animation.CurrentSpriteOffset;
                     frame.position -= frame.offsetRight * offset.x + frame.offsetUp * offset.y;
                 }
-                bool frameChanged = !coopLastSprites.TryGetValue(id, out var previous) || !frame.Matches(previous);
-                if (frameChanged) changed.Add(frame);
+                bool hadPrevious = coopLastSprites.TryGetValue(id, out var previous);
+                bool frameChanged = !hadPrevious || !frame.Matches(previous);
+                if (shapeDiagnostics) TakeCoopShapePending(id, coopShapeSent);
+                int extraFrames = 0;
+                if (frameChanged && hadPrevious && !CoopScreenSpace(renderer, id) && TryCoopRestAnchor(id, previous, frame, out var anchor))
+                {
+                    // R02: after unsent (unchanged) ticks the client would interpolate from the old sample across the
+                    // whole rest. The approved rest pose at the previous server frame starts the segment where it began.
+                    changed.Add(anchor); extraFrames++;
+                    if (shapeDiagnostics) coopShapeSent.Add(CoopVisualSample.Full(anchor));
+                }
+                if (frameChanged) { changed.Add(frame); coopLastSentTime[id] = frame.time; }
                 RecordCoopPresentationMetric(renderer, frame, frameChanged, metricStarted);
+                if (shapeDiagnostics)
+                {
+                    // A reposition of this server frame was already queued by TrackCoopOverlays (anchor + cut sample).
+                    if (frameChanged) coopShapeSent.Add(new CoopVisualSample { frame = frame, playbackOrigin = frame.time, cut = coopRepositionIds.Contains(id) });
+                    EvaluateCoopShape(renderer, id, coopShapeSent, frame.time, extraFrames);
+                }
                 coopLastSprites[id] = frame;
             }
             FlushCoopPresentationMetrics();
             var removed = coopRemovedSprites;
             removed.Clear();
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
-            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); coopPhysicsPause.Remove(id); coopMetricFamilies.Remove(id); }
+            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); coopPhysicsPause.Remove(id); coopMetricFamilies.Remove(id); ForgetCoopShape(id); ForgetCoopMotion(id); }
             SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
             if (coopChangedCollisions.Count > 0 || coopRemovedCollisions.Count > 0)
                 foreach (var peer in peers) SendCoopCollisionFrames(peer, coopChangedCollisions, coopRemovedCollisions.ToArray(), false);
@@ -418,6 +512,7 @@ namespace Assets.Scripts.Netcode
             }
             CaptureCoopTileAnimations(peers);
             coopDirtyMaps.Clear();
+            PublishCoopMotion(shapeDiagnostics);
         }
 
         int CatalogId<T>(T value, Dictionary<T, int> index) where T : UnityEngine.Object
@@ -546,6 +641,10 @@ namespace Assets.Scripts.Netcode
                 StopClient();
                 return;
             }
+            // Development evidence for scene/session cleanup: a new stream must start with no history of another one.
+            if (Debug.isDebugBuild)
+                Debug.Log("[Coop] stream begin scene=" + message.scene + " priorSamples=" + coopVisualSamples.Count + " priorRemovals=" + coopVisualRemovals.Count +
+                    " priorViews=" + coopViews.Count + " priorStats=" + coopPresentStats.Count + " priorBombSamples=" + bombVisualSamples.Count);
             foreach (var view in coopViews.Values) if (view != null) Destroy(view.gameObject);
             coopViews.Clear();
             coopCollisionObjectsReceived = false;
@@ -557,15 +656,17 @@ namespace Assets.Scripts.Netcode
             foreach (var frame in message.frames ?? Array.Empty<CoopSpriteFrame>())
             {
                 if (!coopVisualSamples.TryGetValue(frame.id, out var samples))
-                    coopVisualSamples[frame.id] = samples = new List<CoopSpriteFrame>();
-                samples.Add(frame);
+                    coopVisualSamples[frame.id] = samples = new List<CoopVisualSample>();
+                var received = CoopVisualSample.Full(frame);
+                if (CoopShapeDiagnostics) RecordCoopArrival(frame.id, samples, received);
+                samples.Add(received);
                 if (samples.Count > 64) samples.RemoveAt(0);
             }
             foreach (int id in message.removed ?? Array.Empty<int>())
                 coopVisualRemovals[id] = message.time;
         }
 
-        void PresentCoopSprite(CoopSpriteFrame frame)
+        void PresentCoopSprite(CoopSpriteFrame frame, double playbackOrigin)
         {
             if (!coopViews.TryGetValue(frame.id, out var view) || view == null)
             {
@@ -578,7 +679,7 @@ namespace Assets.Scripts.Netcode
             view.transform.localScale = frame.scale;
             coopViewSpriteIds[frame.id] = frame.sprite;
             view.sprite = CoopSpriteAt(frame.sprite);
-            PresentCoopAnimation(view, frame);
+            PresentCoopAnimation(view, frame, playbackOrigin);
             bool materialReady = true;
             if (frame.blackout != null) materialReady = ApplyCoopBlackoutMask(frame.id, view, frame.blackout);
             else

@@ -121,6 +121,28 @@ namespace Assets.Scripts.Netcode
         public bool sequence, loop, pingPong;
     }
 
+    public struct CoopMotionEntry
+    {
+        public int id;
+        public Vector3 position;
+    }
+
+    /// <summary>
+    /// R02: position-only samples for world renderers that translated during a server frame. Full CoopSprites
+    /// frames stay at 20 Hz; without these, a client whose presentation clock trails the server by less than one
+    /// 50-67 ms frame interval runs past the newest sample, holds, and then jumps. Anchors carry the approved pose
+    /// of the previous server frame when motion starts after a rest, so the segment does not begin early.
+    /// </summary>
+    public struct CoopMotion : NetworkMessage
+    {
+        public string scene;
+        public double time, anchorTime;
+        public CoopMotionEntry[] anchors, entries;
+        // Explicit repositions of screen-space overlays (a wrap to the other edge or a camera cut) at `time`.
+        // repositionAnchors[i] is the approved pose of the same renderer at anchorTime, the last frame before the jump.
+        public CoopMotionEntry[] repositionAnchors, repositions;
+    }
+
     public struct BombAnimationFrame
     {
         public uint id;
@@ -139,7 +161,7 @@ namespace Assets.Scripts.Netcode
     {
         readonly Dictionary<int, CoopAnimationDefinition> coopAnimationDefinitions = new();
         readonly Dictionary<int, (int hash, int clip)> coopAnimationClips = new();
-        readonly Dictionary<int, List<CoopSpriteFrame>> coopVisualSamples = new();
+        readonly Dictionary<int, List<CoopVisualSample>> coopVisualSamples = new();
         readonly Dictionary<int, double> coopVisualRemovals = new();
         readonly Dictionary<uint, List<BombAnimationFrame>> bombVisualSamples = new();
         readonly List<int> coopExpiredViews = new();
@@ -182,7 +204,7 @@ namespace Assets.Scripts.Netcode
             if (CanApplyCoop(message.scene)) coopAnimationDefinitions[message.id] = message;
         }
 
-        void PresentCoopAnimation(SpriteRenderer view, CoopSpriteFrame frame)
+        void PresentCoopAnimation(SpriteRenderer view, CoopSpriteFrame frame, double playbackOrigin)
         {
             if (frame.animation == 0 || !coopAnimationDefinitions.TryGetValue(frame.animation, out var clip)) return;
             if (!view.TryGetComponent<AnimatedSpriteRenderer>(out var animation))
@@ -203,7 +225,7 @@ namespace Assets.Scripts.Netcode
                 animation.loopRestartDelay = clip.restartDelay; animation.pingPong = clip.pingPong;
                 coopViewClips[frame.id] = frame.animation;
             }
-            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, CoopCarrierClock(frame.id, CoopVisualClock) - frame.time), false);
+            animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, CoopCarrierClock(frame.id, CoopVisualClock) - playbackOrigin), false);
             if (clip.offsets != null && clip.offsets.Length > 0)
             {
                 Vector2 offset = clip.offsets[Mathf.Clamp(animation.CurrentFrame, 0, clip.offsets.Length - 1)];
@@ -212,6 +234,286 @@ namespace Assets.Scripts.Netcode
         }
 
         readonly Dictionary<int, int> coopViewClips = new();
+
+        static readonly Unity.Profiling.ProfilerMarker CoopMotionMarker = new("SB6.Coop.Motion");
+        readonly Dictionary<int, double> coopLastSentTime = new();
+        readonly Dictionary<int, Vector3> coopPreviousPose = new();
+        readonly Dictionary<int, bool> coopMotionScreenSpace = new();
+        readonly HashSet<int> coopMovedLastFrame = new();
+        readonly Dictionary<int, CoopSegmentState> coopSegments = new();
+        readonly List<CoopMotionEntry> coopMotionEntries = new();
+        readonly List<CoopMotionEntry> coopMotionAnchors = new();
+        readonly List<CoopMotionEntry> coopRepositionAnchors = new();
+        readonly List<CoopMotionEntry> coopRepositions = new();
+        readonly HashSet<int> coopRepositionIds = new();
+        readonly List<SpriteRenderer> coopOverlayRenderers = new();
+        SpriteRenderer[] coopOverlaySource;
+        double coopPreviousFrameTime = double.NegativeInfinity;
+        static int coopLegacyState, coopMotionModeState;
+
+        // Frequency limit: at most one position sample per renderer per Mirror send tick (sendRate 60). The client
+        // receives batches at that rate, so a faster server frame rate would only add bytes, never earlier poses.
+        const double CoopMotionMinInterval = .9 / 60;
+        // Reposition: a screen-space overlay moving farther than this between two server frames jumped (32 px).
+        const float CoopRepositionJump = 2f;
+        // Development comparison modes ("segments" keeps every turn vertex within this tolerance).
+        const int CoopSegmentHeartbeatFrames = 3;
+        const float CoopSegmentTolerance = .5f / 16f;
+
+        internal enum CoopMotionMode { Frame = 1, Half = 2, Segments = 3 }
+
+        sealed class CoopSegmentState
+        {
+            public double startTime;
+            public Vector3 start;
+            public int count;
+            public readonly double[] times = new double[CoopSegmentHeartbeatFrames + 1];
+            public readonly Vector3[] poses = new Vector3[CoopSegmentHeartbeatFrames + 1];
+            public void Reset(double time, Vector3 position) { startTime = time; start = position; count = 0; }
+            public void Add(double time, Vector3 position)
+            {
+                if (count == times.Length) { System.Array.Copy(times, 1, times, 0, count - 1); System.Array.Copy(poses, 1, poses, 0, count - 1); count--; }
+                times[count] = time; poses[count] = position; count++;
+            }
+            // Would the straight segment from the start to (time, position) miss a buffered native pose?
+            public bool Deviates(double time, Vector3 position)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    float t = (float)((times[i] - startTime) / (time - startTime));
+                    if (Vector3.Distance(Vector3.Lerp(start, position, t), poses[i]) > CoopSegmentTolerance) return true;
+                }
+                return false;
+            }
+        }
+
+        // Development A/B only: "-coop-r02-legacy" restores the pre-R02 20 Hz-only stream for measurements.
+        internal static bool CoopR02Legacy
+        {
+            get
+            {
+                if (coopLegacyState == 0)
+                    coopLegacyState = Debug.isDebugBuild && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-coop-r02-legacy") >= 0 ? 1 : 2;
+                return coopLegacyState == 1;
+            }
+        }
+
+        // Development comparison only: "-coop-r02-motion frame|half|segments". Release builds always use Frame.
+        internal static CoopMotionMode CoopMotionModeSetting
+        {
+            get
+            {
+                if (coopMotionModeState != 0) return (CoopMotionMode)coopMotionModeState;
+                coopMotionModeState = (int)CoopMotionMode.Frame;
+                var args = System.Environment.GetCommandLineArgs();
+                int index = System.Array.IndexOf(args, "-coop-r02-motion");
+                if (Debug.isDebugBuild && index >= 0 && index + 1 < args.Length)
+                    coopMotionModeState = args[index + 1] switch { "half" => (int)CoopMotionMode.Half, "segments" => (int)CoopMotionMode.Segments, _ => (int)CoopMotionMode.Frame };
+                return (CoopMotionMode)coopMotionModeState;
+            }
+        }
+
+        bool TryCoopRestAnchor(int id, in CoopSpriteFrame previous, in CoopSpriteFrame frame, out CoopSpriteFrame anchor)
+        {
+            anchor = previous;
+            if (CoopR02Legacy || !previous.visible || !frame.visible) return false;
+            if (previous.position == frame.position && previous.rotation == frame.rotation && previous.scale == frame.scale) return false;
+            double at = coopPreviousFrameTime;
+            if (at <= previous.time || at >= frame.time) return false;
+            if (coopLastSentTime.TryGetValue(id, out double sent) && sent >= at) return false;
+            anchor.time = at;
+            if (coopPreviousPose.TryGetValue(id, out var pose)) anchor.position = pose;
+            coopLastSentTime[id] = at;
+            return true;
+        }
+
+        // Called at the start of every server tick, before full frames are captured, so the full frame of a jump
+        // frame (and the Development shape reconstruction) already knows about the reposition.
+        void TrackCoopOverlays(bool shapeDiagnostics)
+        {
+            coopRepositionAnchors.Clear(); coopRepositions.Clear(); coopRepositionIds.Clear();
+            if (CoopR02Legacy) return;
+            if (!ReferenceEquals(coopOverlaySource, coopRenderers))
+            {
+                coopOverlaySource = coopRenderers; coopOverlayRenderers.Clear();
+                if (coopRenderers != null)
+                    foreach (var renderer in coopRenderers)
+                        if (renderer != null && CoopScreenSpace(renderer, renderer.GetEntityId().GetHashCode())) coopOverlayRenderers.Add(renderer);
+            }
+            double now = NetworkTime.localTime, previous = coopPreviousFrameTime;
+            foreach (var renderer in coopOverlayRenderers)
+            {
+                if (renderer == null) continue;
+                int id = renderer.GetEntityId().GetHashCode();
+                if (!renderer.gameObject.activeInHierarchy) { coopPreviousPose.Remove(id); continue; }
+                Vector3 position = CoopBasePosition(renderer, out _, out _, out _);
+                bool hadPose = coopPreviousPose.TryGetValue(id, out var before);
+                coopPreviousPose[id] = position;
+                if (!hadPose || (position - before).sqrMagnitude <= CoopRepositionJump * CoopRepositionJump) continue;
+                if (!renderer.enabled || renderer.forceRenderingOff || !coopLastSprites.TryGetValue(id, out var approved) || !approved.visible) continue;
+                // The approved trajectory reaches `before` at the previous frame and continues from `position`;
+                // the client holds the end of the old segment and starts the new one without crossing the screen.
+                coopRepositionAnchors.Add(new CoopMotionEntry { id = id, position = before });
+                coopRepositions.Add(new CoopMotionEntry { id = id, position = position });
+                coopRepositionIds.Add(id);
+                if (shapeDiagnostics) RecordCoopRepositionMetric(renderer, id, approved, before, previous, position, now);
+            }
+        }
+
+        void PublishCoopMotion(bool shapeDiagnostics)
+        {
+            double now = NetworkTime.localTime, previous = coopPreviousFrameTime;
+            coopPreviousFrameTime = now;
+            if (CoopR02Legacy) return;
+            using var scope = CoopMotionMarker.Auto();
+            coopMotionEntries.Clear(); coopMotionAnchors.Clear();
+            var mode = CoopMotionModeSetting;
+            double heartbeat = mode switch { CoopMotionMode.Half => 1.8 / 60, CoopMotionMode.Segments => (CoopSegmentHeartbeatFrames - .1) / 60, _ => CoopMotionMinInterval };
+            foreach (var renderer in coopRenderers)
+            {
+                if (renderer == null) continue;
+                int id = renderer.GetEntityId().GetHashCode();
+                if (!renderer.gameObject.activeInHierarchy) { coopPreviousPose.Remove(id); coopMovedLastFrame.Remove(id); continue; }
+                if (CoopScreenSpace(renderer, id)) continue;
+                long metricStarted = shapeDiagnostics ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+                Vector3 position = CoopBasePosition(renderer, out _, out _, out _);
+                bool hadPose = coopPreviousPose.TryGetValue(id, out var before);
+                coopPreviousPose[id] = position;
+                bool moved = hadPose && before != position;
+                // Rest-based anchor: the previous frame did not move (or the stream never sent), so the approved
+                // segment starts at the rest pose of the previous frame instead of at an older sample.
+                bool restStart = !coopMovedLastFrame.Contains(id);
+                if (moved) coopMovedLastFrame.Add(id); else coopMovedLastFrame.Remove(id);
+                if (!moved || !coopLastSprites.TryGetValue(id, out var approved) || !approved.visible) continue;
+                bool hasSent = coopLastSentTime.TryGetValue(id, out double sent);
+                if (!coopSegments.TryGetValue(id, out var segment)) coopSegments[id] = segment = new CoopSegmentState();
+                // A full frame published this server frame already carries the pose. Rotation, scale or
+                // visibility changes wait for the next full frame so a position-only sample never mixes them.
+                if (hasSent && sent >= now) { segment.Reset(now, position); continue; }
+                if (!renderer.enabled || renderer.forceRenderingOff ||
+                    renderer.transform.rotation != approved.rotation || renderer.transform.lossyScale != approved.scale) continue;
+                bool anchor = !hasSent || (restStart && sent < previous);
+                bool entry = anchor || now - sent >= heartbeat;
+                if (!anchor && mode == CoopMotionMode.Segments && segment.Deviates(now, position) && previous > segment.startTime)
+                {
+                    // Turn vertex: the straight segment ended at the previous frame's approved pose.
+                    anchor = true; segment.Reset(previous, before);
+                }
+                if (!anchor && !entry)
+                {
+                    segment.Add(now, position);
+                    continue;
+                }
+                if (anchor) coopMotionAnchors.Add(new CoopMotionEntry { id = id, position = before });
+                if (entry)
+                {
+                    coopMotionEntries.Add(new CoopMotionEntry { id = id, position = position });
+                    coopLastSentTime[id] = now; segment.Reset(now, position);
+                }
+                else
+                {
+                    coopLastSentTime[id] = previous; segment.Add(now, position);
+                }
+                if (shapeDiagnostics) RecordCoopMotionMetric(renderer, id, approved, anchor, before, previous, entry, position, now, metricStarted);
+            }
+            if (coopMotionEntries.Count == 0 && coopMotionAnchors.Count == 0 && coopRepositions.Count == 0) return;
+            const int batch = 128;
+            for (int start = 0; start == 0 || start < coopMotionEntries.Count; start += batch)
+            {
+                int count = Mathf.Min(batch, coopMotionEntries.Count - start);
+                var entries = count <= 0 ? System.Array.Empty<CoopMotionEntry>() : new CoopMotionEntry[count];
+                if (count > 0) coopMotionEntries.CopyTo(start, entries, 0, count);
+                // Anchors and repositions precede every entry of the frame; send them once, with the first chunk.
+                bool first = start == 0;
+                var message = new CoopMotion
+                {
+                    scene = coopScene, time = now, anchorTime = previous, entries = entries,
+                    anchors = first && coopMotionAnchors.Count > 0 ? coopMotionAnchors.ToArray() : System.Array.Empty<CoopMotionEntry>(),
+                    repositionAnchors = first && coopRepositions.Count > 0 ? coopRepositionAnchors.ToArray() : System.Array.Empty<CoopMotionEntry>(),
+                    repositions = first && coopRepositions.Count > 0 ? coopRepositions.ToArray() : System.Array.Empty<CoopMotionEntry>()
+                };
+                foreach (var peer in coopPeerBuffer) if (peer != null && peer.isReady) peer.Send(message);
+            }
+        }
+
+        // Camera-attached overlays (sandstorm grains, snowfall, bat swarms, fish schools) are screen-space ambience that
+        // follows the server camera. They keep the 20 Hz full-frame stream (no per-frame samples, which would cost about
+        // 145 KiB/s per peer in Stage 3-4) plus an explicit reposition when they jump, so a wrap never sweeps the screen.
+        bool CoopScreenSpace(SpriteRenderer renderer, int id)
+        {
+            if (!coopMotionScreenSpace.TryGetValue(id, out bool screenSpace))
+                coopMotionScreenSpace[id] = screenSpace = renderer.GetComponentInParent<Camera>(true) != null;
+            return screenSpace;
+        }
+
+        void ForgetCoopMotion(int id)
+        {
+            coopLastSentTime.Remove(id); coopPreviousPose.Remove(id); coopMotionScreenSpace.Remove(id);
+            coopMovedLastFrame.Remove(id); coopSegments.Remove(id);
+        }
+
+        void ClearCoopMotion()
+        {
+            coopLastSentTime.Clear(); coopPreviousPose.Clear(); coopMotionScreenSpace.Clear(); coopMotionEntries.Clear(); coopMotionAnchors.Clear();
+            coopMovedLastFrame.Clear(); coopSegments.Clear(); coopRepositionAnchors.Clear(); coopRepositions.Clear(); coopRepositionIds.Clear();
+            coopOverlayRenderers.Clear(); coopOverlaySource = null;
+            coopPreviousFrameTime = double.NegativeInfinity;
+        }
+
+        void ApplyCoopMotion(CoopMotion message)
+        {
+            if (!CanApplyCoop(message.scene)) return;
+            AppendCoopMotion(message.anchors, message.anchorTime);
+            AppendCoopMotion(message.entries, message.time);
+            ApplyCoopRepositions(message.repositionAnchors, message.repositions, message.anchorTime, message.time);
+        }
+
+        void AppendCoopMotion(CoopMotionEntry[] entries, double time)
+        {
+            if (entries == null) return;
+            bool diagnostics = CoopShapeDiagnostics;
+            foreach (var entry in entries)
+            {
+                // Only continue an approved visible stream: never create a view, revive a removed one or reorder samples.
+                if (coopVisualRemovals.ContainsKey(entry.id) || !coopVisualSamples.TryGetValue(entry.id, out var samples) || samples.Count == 0) continue;
+                var latest = samples[^1];
+                if (!latest.frame.visible || time <= latest.frame.time) continue;
+                var sample = latest.At(time, entry.position);
+                if (diagnostics) RecordCoopArrival(entry.id, samples, sample);
+                samples.Add(sample);
+                if (samples.Count > 64) samples.RemoveAt(0);
+            }
+        }
+
+        void ApplyCoopRepositions(CoopMotionEntry[] anchors, CoopMotionEntry[] repositions, double anchorTime, double time)
+        {
+            if (repositions == null) return;
+            for (int i = 0; i < repositions.Length; i++)
+            {
+                var entry = repositions[i];
+                if (coopVisualRemovals.ContainsKey(entry.id) || !coopVisualSamples.TryGetValue(entry.id, out var samples) || samples.Count == 0) continue;
+                var latest = samples[^1];
+                if (!latest.frame.visible) continue;
+                bool hasAnchor = anchors != null && i < anchors.Length && anchors[i].id == entry.id;
+                if (latest.frame.time == time)
+                {
+                    // The full frame of this server frame arrived first (same reliable channel, earlier message):
+                    // mark it as the explicit reposition and give the old segment its approved end.
+                    latest.cut = true; samples[^1] = latest;
+                    // The anchor keeps the appearance of the old segment (the sample before the full frame).
+                    var end = samples.Count > 1 ? samples[^2] : latest;
+                    double endTime = samples.Count > 1 ? end.frame.time : double.NegativeInfinity;
+                    if (hasAnchor && anchorTime > endTime && anchorTime < time && end.frame.visible)
+                        samples.Insert(samples.Count - 1, end.At(anchorTime, anchors[i].position));
+                }
+                else if (time > latest.frame.time)
+                {
+                    if (hasAnchor && anchorTime > latest.frame.time) samples.Add(latest.At(anchorTime, anchors[i].position));
+                    samples.Add(latest.At(time, entry.position, true));
+                }
+                while (samples.Count > 64) samples.RemoveAt(0);
+            }
+        }
 
         // Align world props/supports with the approved player transform timeline.
         // Sampling on packet time while the rider uses NT's offset makes the
@@ -232,6 +534,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!NetworkClient.active || NetworkServer.active) return;
             double clock = CoopVisualClock;
+            bool presentDiagnostics = CoopShapeDiagnostics;
             if (coopCatalog != null && coopViewRoot != null)
             {
                 coopExpiredViews.Clear();
@@ -247,28 +550,34 @@ namespace Assets.Scripts.Netcode
                         coopExpiredViews.Add(id); continue;
                     }
                     var samples = pair.Value;
+                    long presentStarted = presentDiagnostics ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
                     // Keep the already displayed enemy pose/frame in world space.
                     // Buffered pre-pause samples must not advance or rewind it.
-                    if (GamePauseController.IsPaused && samples.Count > 0 && (samples[^1].enemyStepLimit > 0 || samples[^1].pauseWithGameplay) && coopViews.ContainsKey(id)) continue;
-                    while (samples.Count > 1 && samples[1].time <= clock) samples.RemoveAt(0);
-                    if (samples.Count == 0 || samples[0].time > clock) continue;
-                    var frame = samples[0];
-                    if (samples.Count > 1 && frame.visible && samples[1].visible && samples[1].time > frame.time)
+                    if (GamePauseController.IsPaused && samples.Count > 0 && (samples[^1].frame.enemyStepLimit > 0 || samples[^1].frame.pauseWithGameplay) && coopViews.ContainsKey(id))
                     {
-                        var next = samples[1];
-                        float t = Mathf.Clamp01((float)((clock - frame.time) / (next.time - frame.time)));
-                        bool discontinuity = frame.enemyStepLimit > 0 &&
-                            (next.time - frame.time > .25 || Vector3.Distance(frame.position, next.position) > frame.enemyStepLimit);
-                        if (!discontinuity)
-                        {
-                            frame.position = Vector3.Lerp(frame.position, next.position, t);
-                            frame.rotation = Quaternion.Slerp(frame.rotation, next.rotation, t);
-                            frame.scale = Vector3.Lerp(frame.scale, next.scale, t);
-                        }
+                        if (presentDiagnostics) CoopPresentStat(id).pausedHeld++;
+                        continue;
                     }
-                    PresentCoopSprite(frame);
+                    while (samples.Count > 1 && samples[1].frame.time <= clock) samples.RemoveAt(0);
+                    if (samples.Count == 0 || samples[0].frame.time > clock) continue;
+                    var current = samples[0];
+                    var frame = current.frame;
+                    bool interpolated = false;
+                    double stateTime = frame.time;
+                    if (samples.Count > 1 && CoopVisualSample.Interpolates(current, samples[1]))
+                    {
+                        var next = samples[1].frame;
+                        float t = Mathf.Clamp01((float)((clock - frame.time) / (next.time - frame.time)));
+                        frame.position = Vector3.Lerp(frame.position, next.position, t);
+                        frame.rotation = Quaternion.Slerp(frame.rotation, next.rotation, t);
+                        frame.scale = Vector3.Lerp(frame.scale, next.scale, t);
+                        interpolated = true; stateTime = clock;
+                    }
+                    PresentCoopSprite(frame, current.playbackOrigin);
+                    if (presentStarted != 0) RecordCoopPresented(id, frame, interpolated, stateTime, clock, presentStarted);
                 }
                 foreach (int id in coopExpiredViews) { coopVisualSamples.Remove(id); coopVisualRemovals.Remove(id); }
+                if (presentDiagnostics) FlushCoopPresentStats();
             }
             clock = NetworkTime.time;
             expiredBombViews.Clear();

@@ -18,7 +18,7 @@ namespace Assets.Scripts.Netcode
     {
         bool loadTestConfigured, loadTestEnabled, loadTestStarted, loadTestSpawnsChecked, loadTestPresenterChecked, loadTestRevengeChecked, loadTestLaunchersChecked, loadTestVisualsChecked;
         string loadTestLauncherKind;
-        bool loadTestMechanismChecked;
+        bool loadTestMechanismChecked, loadTestCoopWorldChecked;
         readonly HashSet<int> loadTestPresenterReady = new();
         readonly Dictionary<int, RopeSmokeAck> loadTestRopeAcks = new();
         int loadTestPlayers;
@@ -143,6 +143,12 @@ namespace Assets.Scripts.Netcode
                 {
                     loadTestMechanismChecked = true; StartCoroutine(CheckLoadTestMechanism());
                 }
+                if (!loadTestCoopWorldChecked && HasArg("-load-test-coop-world") && IsCoopRoom && Time.timeSinceLevelLoad > 12 &&
+                    OnlineCoopPlayersReady && NetworkServer.connections.Count >= loadTestPlayers)
+                {
+                    loadTestCoopWorldChecked = true;
+                    StartCoroutine(CheckLoadTestCoopWorld());
+                }
                 if (!loadTestPresenterChecked && HasArg("-load-test-presenter-removal") && IsCoopRoom &&
                     Time.timeSinceLevelLoad > 12 && OnlineCoopPlayersReady && loadTestPresenterReady.Count >= loadTestPlayers &&
                     NetworkServer.connections.Count >= loadTestPlayers)
@@ -151,6 +157,48 @@ namespace Assets.Scripts.Netcode
                     StartCoroutine(CheckLoadTestPresenterRemoval());
                 }
             }
+        }
+
+        // R02: native co-op world for 2 real clients: steady autonomous actors, a native pause, a stage reload
+        // (scene cleanup + fresh late-observer snapshot) and a second pause. No gameplay rule is changed.
+        System.Collections.IEnumerator CheckLoadTestCoopWorld()
+        {
+            string scene = SceneManager.GetActiveScene().name;
+            static string U() => " u=" + (DateTime.UtcNow.Ticks / 10000 - 63900000000000L).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            Debug.Log("[LoadTest] coop-world started scene=" + scene + U());
+            // 30 s of steady native world first: the pre-registered cost window ends at the first pause.
+            // R02 controlled reproduction: "-load-test-hitch-ms N" blocks the server main thread N ms every 2.5 s (12 times)
+            // inside that window, so long server frames happen at known instants. Without the flag nothing changes.
+            int hitchArg = Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-hitch-ms");
+            int hitchMs = 0;
+            if (hitchArg >= 0 && hitchArg + 1 < Environment.GetCommandLineArgs().Length)
+                int.TryParse(Environment.GetCommandLineArgs()[hitchArg + 1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out hitchMs);
+            if (hitchMs <= 0) yield return new WaitForSecondsRealtime(30f);
+            else
+                for (int hitch = 1; hitch <= 12; hitch++)
+                {
+                    yield return new WaitForSecondsRealtime(2.5f);
+                    Debug.Log("[LoadTest] coop-world hitch index=" + hitch + " ms=" + hitchMs + U());
+                    System.Threading.Thread.Sleep(Mathf.Clamp(hitchMs, 1, 1000));
+                }
+            ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=1" + U());
+            yield return new WaitForSecondsRealtime(2f);
+            ToggleNativePause(false); Debug.Log("[LoadTest] coop-world resumed index=1" + U());
+            yield return new WaitForSecondsRealtime(10f);
+            Debug.Log("[LoadTest] coop-world reload scene=" + scene + U());
+            ServerChangeScene(scene);
+            yield return null;
+            float deadline = Time.realtimeSinceStartup + 60f;
+            while (Time.realtimeSinceStartup < deadline && (NetworkServer.isLoadingScene || SceneManager.GetActiveScene().name != scene ||
+                Time.timeSinceLevelLoad < 12f || !OnlineCoopPlayersReady)) yield return null;
+            if (!OnlineCoopPlayersReady || SceneManager.GetActiveScene().name != scene) throw new InvalidOperationException("Co-op world reload did not become ready");
+            Debug.Log("[LoadTest] coop-world reloaded scene=" + scene + U());
+            yield return new WaitForSecondsRealtime(3f);
+            ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=2" + U());
+            yield return new WaitForSecondsRealtime(2f);
+            ToggleNativePause(false); Debug.Log("[LoadTest] coop-world resumed index=2" + U());
+            yield return new WaitForSecondsRealtime(5f);
+            Debug.Log("[LoadTest] coop-world completed scene=" + scene + U());
         }
 
         static void ToggleNativePause(bool paused)
@@ -1063,7 +1111,13 @@ namespace Assets.Scripts.Netcode
         uint ropeAckAfterTick;
         bool checkRopeInput, ropeSmokeHandler, checkPortalInput;
         bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
-        bool remoteWalk;
+        bool remoteWalk, coopWorld;
+        // R02 reconnect: survive the first disconnect (the supported flow returns to the browser and joins the next room).
+        bool awaitRejoin, leftRoom;
+        int disconnects;
+        float leaveAfter = -1, stageReadyAt = -1;
+        float coopWorldCaptureNext;
+        int coopWorldCaptureSerial;
         float walkStartedAt = -1, walkCaptureNext;
         int walkCaptureSerial;
 
@@ -1092,7 +1146,13 @@ namespace Assets.Scripts.Netcode
             smoke.suspendPresenterInputs = Array.IndexOf(args, "-load-test-presenter-removal") >= 0;
             smoke.revengeInput = Array.IndexOf(args, "-load-test-revenge-input") >= 0;
             smoke.remoteWalk = Array.IndexOf(args, "-load-test-remote-walk") >= 0;
+            smoke.coopWorld = Array.IndexOf(args, "-load-test-coop-world") >= 0;
             smoke.quitAfterDisconnect = Array.IndexOf(args, "-load-test-client") >= 0;
+            smoke.awaitRejoin = Array.IndexOf(args, "-load-test-rejoin") >= 0;
+            int leaveArg = Array.IndexOf(args, "-load-test-leave-after");
+            if (leaveArg >= 0 && leaveArg + 1 < args.Length &&
+                float.TryParse(args[leaveArg + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float leave))
+                smoke.leaveAfter = leave;
             int captureArg = Array.IndexOf(args, "-load-test-mount-captures");
             if (captureArg >= 0 && captureArg + 1 < args.Length)
             {
@@ -1103,6 +1163,18 @@ namespace Assets.Scripts.Netcode
                 root.AddComponent<LocalNetworkSmokeCapture>().source = smoke;
                 Debug.Log("[LoadTest] mount-capture graphics=" + SystemInfo.graphicsDeviceType);
             }
+        }
+
+        // R02 reconnect: this client leaves through the supported room flow a fixed time after its co-op stage is live.
+        void DriveRoomLeave()
+        {
+            if (leaveAfter < 0 || leftRoom || !NetworkClient.isConnected || !SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal))
+            { if (!NetworkClient.isConnected) stageReadyAt = -1; return; }
+            if (stageReadyAt < 0) { stageReadyAt = Time.unscaledTime; return; }
+            if (Time.unscaledTime - stageReadyAt < leaveAfter) return;
+            leftRoom = true;
+            Debug.Log("[LoadTest] reconnect leaving room scene=" + SceneManager.GetActiveScene().name);
+            BombermanNetworkManager.LeaveRoomToBrowser();
         }
 
         void Update()
@@ -1118,9 +1190,15 @@ namespace Assets.Scripts.Netcode
                     Debug.Log("[LoadTest] mechanism phase="+message.phase+" kind="+message.kind);
                 });
             }
+            DriveRoomLeave();
             if (quitAfterDisconnect)
             {
                 if (NetworkClient.isConnected) sawConnection = true;
+                else if (sawConnection && awaitRejoin && disconnects == 0)
+                {
+                    disconnects++; sawConnection = false;
+                    Debug.Log("[LoadTest] client disconnected; awaiting rejoin left=" + leftRoom);
+                }
                 else if (sawConnection)
                 {
                     // Let Application.quitting flush diagnostics before the smoke
@@ -1278,6 +1356,13 @@ namespace Assets.Scripts.Netcode
                 // R01: this client's view of the OTHER (walking) player; UTC in the name matches frames to the motion logs.
                 walkCaptureNext = Time.unscaledTime + .5f;
                 CaptureMountFrame(camera, $"walk-{++walkCaptureSerial:D2}-{DateTime.UtcNow:HHmmss.fff}.png");
+            }
+            if (coopWorld && captureWarmed && coopWorldCaptureSerial < 100 && Time.unscaledTime >= coopWorldCaptureNext &&
+                SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal))
+            {
+                // R02: rendered co-op world view; the UTC in the name matches each PNG to the motion logs.
+                coopWorldCaptureNext = Time.unscaledTime + (GamePauseController.IsPaused ? .25f : 1f);
+                CaptureMountFrame(camera, $"world-{++coopWorldCaptureSerial:D3}-{(GamePauseController.IsPaused ? "paused" : "live")}-{DateTime.UtcNow:HHmmss.fff}.png");
             }
             if (checkMountVisuals) CaptureMountChangeFrames(camera);
             if (checkMountVisuals && visualCaptureSerial < 80 && (Time.unscaledTime >= visualCaptureAt || Time.unscaledTime >= visualAfkCaptureAt))

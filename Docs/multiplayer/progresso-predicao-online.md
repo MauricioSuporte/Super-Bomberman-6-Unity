@@ -267,7 +267,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
 - [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 concluída no Actions42204673208.
 - [x] R01: concluído e publicado em homologação (07/11/2026; protocolo 65 inalterado; runtime `b01817c73`, Actions 42403939455). Implementação, validação automatizada (EditMode 1046/1046; smokes com 2 clientes renderizados, 0 passos para trás reais, 0 lacunas, 0 poses duplas) e aceite manual (aprovado pelo usuário nos cenários testados) concluídos. **Pendências obrigatórias do R01:** (1) custo CPU/bytes do player remoto (baseline comparável); (2) comparação online × offline com `analyze_prediction.py` (Logs/R01-comparacao.json). **Atualização 07/11:** (2) demonstrada; (1) medida, revelou custo de diagnósticos (+56 KiB/s de alocação no servidor) e +5–6% de ciclos no observador; a correção Development-only ainda precisa de compilação/EditMode e da medição sem captura. **Atualização 07/11 (tarde):** EditMode 1046/1046; sem captura não há diferença resolvida (Δ frame ≤ 0,05 ms); R01 concluído nos critérios obrigatórios. **Publicação 07/11:** servidor, cliente e atualizador conferidos em `b01817c73`/65. Limitações: borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições só na CPU nova, teardown antigo não reproduzido (não corrigido).
-- [ ] R02: parcial55 local: geometria/clock aprovados, instrumentação CPU e bytes de frame por família e analyzer testados. Primeira captura co-op2peers Stage_1-1 analisada; curvas e comparação de custo pendentes.
+- [ ] R02: PARCIAL (08/11; protocolo 67, binário r02c `020208c8…`, não publicado). Parte 1: amostras de posição por frame + âncoras de repouso; forma das famílias de gameplay corrigida (p95 0,1 px). Parte 2: reposicionamento explícito no wrap; reconexão 3/3; teto de 60 Hz (`frame`); fome real separada. Parte 3: resíduo das sobreposições isolado (captura do servidor antes do LateUpdate da areia/câmera) e corrigido com captura após todos os LateUpdate; reprodução controlada com travadas de 120 ms: fase antiga 10,5 px, r02c 1,06–1,16 px (p95 0,8) em 6/6 execuções. Campo removido sem redução de alocação demonstrada (alocador em blocos de 4 KiB: ≈ 0 no servidor); custo total r02c − baseline +25/+23/+22 KiB/s, sem regressão contra r02b. Picos de localhost: 41/48 janelas são travadas do servidor; o restante é atraso observado pelo Mirror ou travada de cliente. EditMode 1055/1055. Aceite perceptual pendente (`C:\Users\mauri\SB6-QA-R02`).
 - [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
 - [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
@@ -4867,3 +4867,660 @@ Publicação autorizada pelo usuário para homologação. O R02 não foi iniciad
 - O `LocalServerLoadTest` continua ausente, porque usa `#if UNITY_EDITOR || DEBUG`.
 - Os dois tipos retornam na primeira linha quando `Debug.isDebugBuild` é falso, então ficam inertes em release; foi isso o que se validou.
 - Se a convenção "sem código de fixture no binário publicado" tiver de valer também para eles, o próximo passo é envolvê-los no mesmo `#if` em uma publicação separada. Não fiz isso agora para não publicar código diferente do validado.
+
+## R02 — critérios obrigatórios e validação prevista (início 07/11/2026)
+
+**Escopo:** apresentação do mundo co-op (`OnlineCoopWorld`, `OnlineCoopSprites`, `OnlinePresentationMetrics`). Autorizado pelo usuário em 07/11; sem push/deploy/publicação; R03+ não iniciar.
+
+**Estado inicial:**
+- branch `v0.5.0`, HEAD `43bf8d0e0` (commit do usuário "Add more options in video menu", que inclui os Packages);
+- única alteração local: `Assets/Resources/Fonts/PressStart2P-Regular SDF.asset`, do usuário, a preservar e não commitar;
+- Unity 6000.6.0f1; protocolo 65;
+- runner ocupado no início pelo Actions 42415518535 (push do usuário); não usar enquanto isso.
+
+**Fontes dos critérios:**
+- matriz R02: "Co-op com paredes, props móveis e várias famílias de sprites — geometria de consulta aprovada pronta antes da previsão; medir custo/atraso por família e preservar forma das curvas";
+- plano §4.3: "auditar atraso e custo por família; usar descritores de arco/segmento onde interpolação linear perde a forma; não reativar em massa os scripts/física de cena desativados no client";
+- checkpoint: geometria concluída em d25c34734; curvas e comparação de custo pendentes; dois peers/manual pendentes;
+- skill online-prediction: geometria de consulta, timeline/offset dos carriers (C06), pausa, snapshots tardios e cleanup.
+
+| # | Critério obrigatório | Validação prevista |
+|---|---|---|
+| CR1 | Geometria de consulta aprovada pronta antes da previsão (paredes, props móveis) | Testes EditMode Coop existentes; captura com 2 clientes reais em cena com props (Stage_3-4 ou 3-6) confirmando a prontidão |
+| CR2 | Atraso medido por família nos clientes (do estado do servidor até a apresentação), incluindo fome de buffer | Instrumentação Development com a captura ligada; clientes reais; repetições, com variação registrada |
+| CR3 | Custo por família: CPU de captura no servidor, CPU de apresentação no cliente, bytes de frame; custo total contra baseline comparável | Por família: captura ligada. Total (ciclos, trabalho por frame, alocações, GC, bytes): captura desligada, baseline = HEAD + harness, mesmas dependências, 5 repetições, regra de não sobreposição de faixas |
+| CR4 | Preservar a forma das curvas: medir onde a interpolação linear perde a forma e usar segmentos/pontos aprovados onde perder | Erro da reconstrução enviada contra a trajetória nativa quadro a quadro no servidor, por família; limiar pré-registrado abaixo; antes/depois |
+| CR5 | Continuidade entre segmentos: início após repouso, término, visibilidade, cancelamento/remoção | Mesma métrica de reconstrução (início após repouso separado) + passos/paradas por quadro no cliente; regressões EditMode |
+| CR6 | Snapshots tardios, geração/revisão de cena, substituição de entidade, morte/disable, desconexão e troca de cena, com históricos limitados e cleanup | Regressões EditMode nos caminhos tocados; captura com troca de cena/recarga quando o caminho for tocado |
+| CR7 | Pausa/retomada sem avanço/retrocesso do buffer nas famílias que pausam com o gameplay | Regressão EditMode + pausa em captura real |
+| CR8 | Sem reativar scripts/IA/RNG/física de cena no cliente; sem apresentador concorrente; autoridade e caminhos offline/host intactos | Revisão de código + testes existentes de gates + logs (0 erros/avisos) |
+| CR9 | Comparação com o comportamento offline quando aplicável | A referência nativa é a trajetória quadro a quadro executada pelo servidor (mesmo código do offline); comparar passos/paradas apresentados pelo cliente com essa referência |
+| CR10 | Validação: compilação C#/Unity sem warnings novos, EditMode, Python, 2 clientes reais headless e renderizados, capturas | Runner sincronizado por manifesto, com backup e restauração por hash |
+
+**Regras pré-registradas, antes de qualquer medição R02:**
+- **Forma:** a família perde a forma quando, em frames visíveis em movimento, o erro da reconstrução linear contra a trajetória nativa tiver p95 > 1 px ou máximo > 2 px (PPU 16) em pelo menos 2 execuções. Corrigida = p95 ≤ 1 px e máximo ≤ 2 px nas mesmas condições. Não aumentar esses limites depois de ver os dados.
+- **Continuidade:** "fome" = o relógio de apresentação passou da amostra mais nova de um stream contínuo (amostras separadas por ≤ 100 ms) antes da chegada da seguinte. Reportar a fração por família. Uma correção só conta se reduzir a fração com faixas que não se sobreponham.
+- **Atraso:** reportar média e p95 por família. Qualquer aumento precisa ser explicado pelo mecanismo; não é aceito só porque a fluidez melhora.
+- **Custo:** mesma regra do R01. Uma diferença só conta se as faixas mín–máx das repetições não se sobrepuserem. Considerar o custo absoluto (ms/frame, % de 16,7 ms, KiB/s), não só o percentual.
+- Execução inválida ou inconclusiva não conta como aprovação. Falhas e dados inconclusivos ficam preservados.
+
+### R02 — auditoria, implementação e método de medição (pré-registro, antes das capturas)
+
+**Auditoria do código (HEAD `43bf8d0e0`):**
+- O servidor amostra cada `SpriteRenderer` de cena a 20 Hz (`TickCoopWorld`, `coopNextFrame` + 0,05 s em `Time.unscaledTime`) e envia só frames alterados.
+- Renderers com `AnimatedSpriteRenderer` são sempre "alterados" (`Matches` exige `animation == 0`).
+- Frames parados não são reenviados. Um renderer que volta a se mover depois de um repouso tem como amostra anterior a do início do repouso. O cliente interpola essa amostra antiga até a nova e começa o movimento antes, com um salto, exceto para inimigos acima de 0,25 s, onde há corte.
+- **Relógio do cliente:** `CoopVisualClock` = `NetworkTime.time` (já atrasado em `bufferTime` = 1/60 × multiplicador dinâmico ≥ 1,5) − offset do NT do player (sendInterval × (mult − 1 + mult), com mult = 1, logo ≈ 16,7 ms). Resultado: ≈ 33–50 ms atrás do servidor.
+- O intervalo do stream é de 50–67 ms, por causa da quantização em frames. **Hipótese a medir:** o relógio passa da amostra mais nova antes da próxima chegar ("fome"), com retenção e depois salto, nas famílias em movimento.
+- A interpolação linear a 20 Hz entre poses nativas de 60 Hz pode perder a forma em curvas, como saltos e arcos. É medido por família.
+- A geometria de consulta (CR1) já existe (`CoopCollisionViews`/`OnlineCoopCollision`, d25c34734): não foi alterada.
+- Os carriers (C06, carrinho) usam o mesmo relógio: atrasar o stream inteiro desalinharia suporte e rider. Por isso não foi escolhido.
+
+**Implementação (protocolo 65 → 66; novo `CoopMotion`):**
+- Entre os frames completos de 20 Hz, o servidor envia a cada frame só a posição base (sem o offset da animação) dos renderers que transladaram.
+- Só com o último frame completo visível e com a mesma rotação/escala. Mudanças de rotação, escala, visibilidade e sprite continuam no frame completo.
+- **Âncora:** quando o movimento começa depois de um repouso, entra a pose aprovada do frame anterior do servidor (`anchorTime`), também nos frames completos (`TryCoopRestAnchor`).
+- **Cliente:** só continua streams existentes e visíveis; ignora view removida, amostra repetida ou antiga e cena diferente; histórico limitado a 64.
+- A fase da animação usa a origem do frame completo (`playbackTime`, campo interno, não serializado).
+- Não reativa scripts nem física, não cria um apresentador novo e não prevê nada: são poses do servidor.
+- **Chave Development `-coop-r02-legacy`:** desliga as amostras de posição e as âncoras (stream pré-R02), para A/B no mesmo binário.
+- **Instrumentação Development com a captura ligada:**
+  - `coop_family_shape`: reconstrução do que foi enviado contra a pose nativa quadro a quadro no servidor; início após repouso; passos e paradas nativos;
+  - `coop_family_cost`: acrescenta entradas, bytes e CPU de posição;
+  - `coop_family_ids`;
+  - `coop_present_window` nos clientes: fome, atraso, paradas, passos, CPU, frames retidos na pausa.
+
+**Fixture `-load-test-coop-world`** (servidor e clientes Development; `smoke_full_clients.py --coop-world`):
+- 30 s de mundo nativo estável;
+- pausa nativa de 2 s;
+- recarga da fase (limpeza de cena + snapshot inicial novo);
+- segunda pausa;
+- marcadores com o relógio UTC do harness;
+- PNG renderizado a cada 1 s (0,25 s durante a pausa).
+
+**Builds** (Unity 6000.6.0f1, Development, mesmo runner, mesmos Packages):
+- `baseline` = HEAD + só a fixture;
+- `r02` = código R02.
+- `legacy` = binário `r02` com `-coop-r02-legacy`.
+
+**Sessões planejadas:**
+1. **Piloto:** 1 execução com a captura ligada em Stage_1-1 e Stage_3-4, só para validar a fixture/captura e escolher a cena com mais famílias. Não conta como medição.
+2. **Famílias** (captura ligada, `-online-motion-log-budget 2000`): r02 × 3 e legacy × 3 headless, intercaladas, + 1 renderizada de cada. A execução é inválida se houver linha descartada, limite de captura ou falha da fixture.
+3. **Custo** (captura desligada: `-online-motion-logs-off -r01-frame-stats --cycle-samples`): baseline/r02/legacy × 5 headless intercaladas + baseline/r02 × 3 renderizadas.
+   - Janela fixa: de "coop-world started" até "paused index=1" (30 s).
+   - Validade: os 3 processos com `motionCapture=False`, sem linha Capture, sem arquivo motion.
+
+**Critérios:** os pré-registrados acima (forma p95 ≤ 1 px / máx ≤ 2 px; fome; atraso explicado; custo pela regra de não sobreposição, com o custo absoluto).
+- Custo **atribuível:** r02 − legacy (mesmo binário).
+- Custo **total:** r02 − baseline.
+- **Por família:** só com a captura ligada.
+
+### R02 — piloto e decisões antes das sessões de medição
+
+**Piloto** (`Logs/R02-pilot-20261107`, binário r02 inicial, assembly `6353db49…`, preservado em `C:/Users/mauri/SB6-R02/r02-pilot`):
+- Stage_1-1 e Stage_3-4 passaram em todos os checkpoints da fixture, sem erros/avisos e sem linhas descartadas. **Não conta como medição.**
+- **Forma (r02):** p95 0,1 px e máximo ≤ 0,43 px em todas as famílias.
+- **"Fome" residual de 7–45%,** média de ≈ 12,7 ms por evento. Origem: streams que só animam, como tochas, BlackoutVisibleParts e inimigos parados mas animados.
+  - Eles recebem só frames completos a 20 Hz (intervalo de 50 ms) com uma margem de ≈ 30–37 ms, então o relógio passa da amostra mais nova em ≈ 13 ms.
+  - Para esses streams a pose não muda e a animação continua localmente a partir da origem do frame, então não há retenção de posição visível.
+- **Fluxo da câmera em Stage_3-4:** a família `UrpPixelPerfectCameraFallback` é composta pelos 200 grãos de `Stage34SandstormEffect` (mais morcegos), filhos da câmera, a 112 px/s.
+  - Eles geraram ≈ 950 mil entradas de posição.
+  - **Sonda dirigida** com a captura desligada (`Logs/R02-probe-camera-20261107`, 1 execução de cada; reprodução, não medição de custo), em KiB/s de saída do servidor nas janelas sem transição:
+
+| Configuração | Saída do servidor (KiB/s) |
+|---|---|
+| r02 | 1283–1485 |
+| legacy | 975–1199 |
+
+  - Diferença: ≈ +290 KiB/s (≈ 145 KiB/s por peer), atribuível aos grãos.
+
+**Decisões, antes de qualquer sessão de medição:**
+1. **Sobreposições de espaço de tela** (renderer com `Camera` ancestral: areia, neve, morcegos, cardume) ficam fora do stream de posição e das âncoras.
+   - Elas seguem a câmera do servidor e não têm significado de gameplay.
+   - Mantêm exatamente o stream de 20 Hz pré-R02.
+   - Implementação: `CoopScreenSpace`, com cache por id, limpo na remoção e na troca de cena; regressão EditMode.
+2. **Métrica suplementar `moveStarved`** (janela v=3): a fome contada só quando a amostra nova muda a pose.
+   - A métrica pré-registrada continua sendo a principal e é reportada sem mudança.
+   - A suplementar só separa o caso animação-sem-translação. Nenhum limite foi alterado.
+3. O binário r02 é refeito com essas mudanças. A baseline não muda: a fixture é a mesma.
+
+### R02 — sessão de famílias 1 (Stage_3-4) e correção do wrap das sobreposições
+
+**Sessão** `Logs/R02-families-20261107`:
+- binário r02 com a exclusão de tela, assembly `87e7c330…`, preservado em `C:/Users/mauri/SB6-R02/r02-families1`;
+- r02 × 3 e legacy × 3 headless intercalados, + 1 renderizada de cada;
+- 8/8 com saída 0 e todos os checkpoints da fixture; 8/8 válidas (sem descarte nem limite);
+- relatório: `families.json`.
+
+| Família | Métrica | legacy (faixa) | r02 (faixa) | Classificação |
+|---|---|---|---|---|
+| JunctionTurning | erro máx. (px) | 1,92–2,99 | 0,43 | **diferença medida** |
+| JunctionTurning | p95 (px) | 0,5 | 0,1 | diferença medida |
+| JunctionTurning | retenção no início após repouso, máx. (px) | 0,64–1,28 | 0 | diferença medida |
+| JunctionTurning | fome (pré-registrada) | 0,224–0,326 | 0,100–0,129 | **diferença medida** |
+| JunctionTurning | paradas no cliente | 0,033–0,050 | 0,021–0,031 | diferença medida (faixas por cliente) |
+| Speeder | erro máx. (px) | 1,92–2,99 (3,2 renderizada) | 0–0,43 | diferença medida |
+| Speeder | fome | 0,223–0,326 | 0,113–0,150 | diferença medida |
+| BubbleChipFloat | p95 (px) | 0,8 | 0,1 | diferença medida |
+| BubbleChipFloat | fome posicional | 0,27–0,38 | 0–0,006 | diferença medida |
+| BubbleChipFloat | paradas no cliente | 0,13–0,19 | 0–0,006 | diferença medida (contra 0,6–1,7% de paradas nativas) |
+| Sandpile | fome | 0,226–0,317 | 0,197–0,268 | não resolvida (faixas se sobrepõem) |
+
+- **Forma pela regra pré-registrada:** o legacy passou de 2 px em 1 de 3 execuções headless em Junction e Speeder, mais 1 renderizada em Speeder (3,2 px). Speeder perde a forma em 2 execuções; Junction só em 1, o que não basta para a regra. O r02 fica em p95 ≤ 0,1 px e máximo ≤ 0,43 px em todas as famílias móveis e execuções.
+- **Atraso médio:** faixas sobrepostas (legacy 62–87 ms, r02 63–84 ms). Sem aumento atribuível.
+- **Atraso máximo:**
+  - **r02-1:** chegou a 1,2–1,6 s em uma janela em que os 2 clientes viram ao mesmo tempo o RTT subir de 19 para 306 ms e o buffer de 36 para 200 ms. É um pico ambiental, não do mecanismo; as médias nessa execução ficaram normais.
+  - **Demais execuções headless:** r02 de 99 a 221 ms, legacy de 282 a 408 ms.
+  - **Renderizadas** (1 de cada): r02 307–330 ms, legacy 105–131 ms. **Inconclusivo** com 1 execução.
+  - **Desvio do pré-registro:** a instrumentação de cliente registra média e máximo, não p95.
+- **Pausa:** `pausedMoving` = 0 em todas as famílias que pausam. A única exceção são as sobreposições de tela, que se movem na pausa também no nativo (`Stage34SandstormEffect` usa `unscaledDeltaTime` de propósito); isso confere com o offline.
+- **Achado — sobreposições de tela** (grãos de areia, família classificada como `UrpPixelPerfectCameraFallback`): erro máximo de 237–255 px **em ambas as configurações**, um defeito anterior ao R02.
+  - Ao dar a volta na tela, o grão vai de uma borda à outra (descontinuidade nativa) e o cliente interpola atravessando a tela.
+  - **Correção:** o servidor envia `enemyStepLimit` negativo (−4 unidades) para renderers com câmera ancestral. Não custa bytes extras.
+  - O limite positivo continua significando "congela na pausa", o que essas sobreposições não fazem.
+  - `CoopDiscontinuity` corta o segmento só em saltos maiores que 64 px (o wrap ou um corte de câmera), nunca no avanço de ≈ 6 px por amostra.
+  - A reconstrução de forma no servidor usa a mesma função.
+  - Desligado em `-coop-r02-legacy`. Regressão EditMode `CoopDiscontinuityCutsScreenSpaceWrapsButKeepsDriftAndEnemyRules`.
+- O binário r02 foi refeito. A sessão de famílias é repetida com o binário final, e a sessão 1 fica preservada como evidência intermediária.
+
+### R02 — sessão de famílias 2 e remoção do corte de wrap (sem benefício demonstrado)
+
+**Sessão** `Logs/R02-families2-20261107`:
+- binário com o corte de wrap, assembly `194bb543…`, preservado em `C:/Users/mauri/SB6-R02/r02-wrapcut`;
+- EditMode 1050/1050 (`Logs/R02-tests-20261107-185049`);
+- 8/8 com saída 0 e válidas; relatório `families.json`.
+
+**Famílias móveis** (confirmam a sessão 1):
+
+| Família | Métrica | legacy | r02 | Classificação |
+|---|---|---|---|---|
+| Junction | erro máx. (px) | 1,92–2,99 | 0,43 | diferença medida |
+| Speeder | erro máx. (px) | 1,92–4,64 | 0–0,32 | diferença medida (**legacy perde a forma em 2/3 execuções headless**) |
+| Junction | fome | 0,229–0,333 | 0,082–0,184 | diferença medida |
+| Speeder | fome | 0,230–0,337 | 0,094–0,216 | diferença medida |
+| Junction | fome, renderizada (1 + 1) | 0,75–0,85 | 0,31–0,35 | 1 execução de cada; mesma direção |
+| BubbleChip | fome posicional | 0,27–0,39 | 0–0,006 | diferença medida |
+| BubbleChip | paradas no cliente | 0,12–0,18 | 0–0,006 | diferença medida |
+| BubbleChip | fome pré-registrada | 0,223–0,322 | 0,10–0,235 | não resolvida nesta sessão (faixas se sobrepõem; na sessão 1, resolvida) |
+| Sandpile | fome | — | — | não resolvida |
+| Estáticas/animadas (Dogman, Torch) | fome | 0,22–0,32 | 0,19–0,45 | não resolvida; esperado, pois o R02 não altera esses streams |
+
+**Demais métricas:**
+- **Atraso médio:** faixas sobrepostas (legacy 62–83 ms, r02 63–92 ms).
+- **Atraso máximo headless:** legacy 127–399 ms, r02 86–396 ms.
+- **Pausa:** `pausedMoving` = 0 e `pausedHeld` igual entre as configurações em todas as famílias que pausam.
+
+**Corte de wrap das sobreposições:**
+- erro máximo de 338 px no r02, contra 226–255 px no legacy;
+- o corte segura a posição anterior ao wrap nos dois eixos até a próxima amostra de 20 Hz, o que gera um erro diagonal;
+- o ganho seria só perceptual (some o rastro atravessando a tela) e não foi demonstrado.
+- **Removido** (lição do R01: não manter mecanismo sem benefício demonstrado).
+
+**Código final:**
+- os 6 arquivos são idênticos byte a byte aos do build da sessão 1 (hashes conferidos contra o estado do sync);
+- **binário final r02** = assembly `87e7c330…`, agora em `C:/Users/mauri/SB6-R02/r02`;
+- EditMode com esse código: 1049/1049 (`Logs/R02-tests-20261107-181940`);
+- as famílias medidas na sessão 1 são as do binário final.
+
+**Limitação registrada (anterior ao R02, não resolvida):** as sobreposições de tela continuam perdendo a forma no wrap (erro máximo de 226–255 px, idêntico ao pré-R02, porque estão fora do stream R02). Opções para decisão humana:
+- (a) stream por frame das sobreposições: +≈ 145 KiB/s por peer, medido na sonda;
+- (b) um descritor aprovado de deriva + wrap no referencial da câmera do cliente, o que também resolveria a câmera do servidor diferente da do cliente;
+- (c) aceitar, por ser decorativo.
+
+## R02 — status em 07/11/2026 (mundo co-op: técnico validado; QA perceptual pendente; não publicado)
+
+**Identidade:**
+- branch `v0.5.0`, HEAD `43bf8d0e0`; mudanças locais não commitadas;
+- protocolo 66; Unity 6000.6.0f1;
+- binário final `C:/Users/mauri/SB6-R02/r02`: assembly `87e7c330…`, SB6.exe `b5d982ad…` (igual ao da baseline: o executável não muda, só o assembly);
+- baseline `C:/Users/mauri/SB6-R02/baseline`: assembly `e182fcda…`, HEAD + fixture.
+
+| # | Critério | Status | Evidência |
+|---|---|---|---|
+| CR1 | Geometria de consulta aprovada antes da previsão | **atendido**: inalterada desde d25c34734; EditMode Coop passa; capturas com props em Stage_3-4 | `Logs/R02-tests-20261107-181940` |
+| CR2 | Atraso e fome por família | **medido**: atraso médio igual (faixas sobrepostas, ≈ 62–92 ms); fome reduzida nas famílias móveis (ex.: Junction 0,23–0,33 → 0,08–0,18) | `Logs/R02-families-20261107`, `Logs/R02-families2-20261107` (`families.json`) |
+| CR3 | Custo por família e total contra a baseline | **medido**; detalhes abaixo da tabela | `Logs/R02-cost-20261107/cost*.json` |
+| CR4 | Forma das curvas | **atendido nas famílias de gameplay**: legacy até 1,92–4,64 px (Speeder perde a forma em 2/3) → r02 p95 ≤ 0,1 px, máximo ≤ 0,43 px. **Não atendido** nas sobreposições de tela (decorativas), ver limitação | sessões de famílias |
+| CR5 | Continuidade (início após repouso, término, visibilidade) | **atendido**: retenção no início após repouso de 0,64–1,28 px → 0; regressões EditMode de âncora, visibilidade, rotação/escala e origem da animação | testes `CoopMotion*` |
+| CR6 | Snapshots tardios, geração, substituição, morte/disable, desconexão, troca de cena, limites e cleanup | **atendido nos caminhos tocados**: EditMode (amostra antiga/repetida, view removida, cena diferente, limite 64); recarga real 2× por execução, todas válidas. Desconexão: `ClearCoopWorld` → `ClearCoopMotion`, sem captura dedicada | testes + fixture |
+| CR7 | Pausa e retomada | **atendido**: `pausedMoving` = 0 e `pausedHeld` igual ao legacy em todas as famílias que pausam; as sobreposições se movem na pausa como no nativo (`unscaledDeltaTime`) | sessões de famílias |
+| CR8 | Sem reativar scripts/IA/RNG/física; sem apresentador concorrente; autoridade e offline intactos | **atendido**: publicação só no servidor, aplicação só no cliente, mesmo apresentador; revisão de código; 0 erros/avisos nos logs | diff + logs |
+| CR9 | Comparação com o offline | **atendido**: referência nativa quadro a quadro no servidor; paradas no cliente ≤ paradas nativas; o legacy inventava paradas em BubbleChip (12–19% contra 0,6–1,7% nativas), o r02 fica em 0–0,6% | `families.json` |
+| CR10 | Validação | **atendido**: dotnet 0 avisos e 0 erros; EditMode 1049/1049 (final) e 1050/1050 (variante com corte); Python 132/132 + 15/15; 2 clientes reais headless e renderizados; bytes dos `.cs` conferidos | ver logs |
+
+**Detalhes do CR3:**
+- **Por família, com a captura ligada:**
+  - entradas e bytes de posição: Junction ≈ 200 KB, Speeder ≈ 66 KB, BubbleChip ≈ 19 KB por execução;
+  - CPU de posição de 15 / 5 / 1,3 ms por execução.
+- **Atribuível (r02 − legacy, mesmo binário, 5 + 5, captura desligada):**
+  - servidor: +0,13 ms/frame (0,78% de 16,7 ms), +28 Mciclos/s (+4,5%), +13 KiB/s de saída (+1,1%);
+  - alocações: +11–17 KiB/s;
+  - clientes: sem diferença resolvida em trabalho ou ciclos.
+- **Total (r02 − baseline):** servidor +8,5 KiB/s headless e +13,8 KiB/s renderizado; trabalho do servidor renderizado +0,12 ms/frame; alocações +46 KiB/s nos 3 processos.
+  - Desses, +34 KiB/s vêm do campo de cliente `playbackTime` (+8 bytes por `CoopSpriteFrame`, ≈ 4000 frames/s em Stage_3-4, quase todos dos grãos de areia), presente também no modo legacy.
+
+**Limitações:**
+1. **Sobreposições de tela** (areia, morcegos): a perda de forma no wrap (erro máximo de 226–255 px) é anterior ao R02 e não foi corrigida.
+   - Elas foram excluídas do stream de posição, que custaria +≈ 145 KiB/s por peer.
+   - Um corte de wrap foi testado e removido: não teve benefício demonstrado e o erro máximo subiu para 338 px.
+   - Opções para decisão: stream por frame, descritor de deriva + wrap na câmera do cliente, ou aceitar.
+2. **Atraso:** foi registrado média e máximo, não p95 (desvio do pré-registro).
+   - Máximos isolados: 1,2–1,6 s em uma execução, num pico ambiental de RTT (19 → 306 ms) visto pelos 2 clientes.
+   - Renderizadas com 1 execução de cada: inconclusivo.
+3. **Fome residual do r02** (≈ 8–22% nas famílias móveis, ≈ 0,4–14 ms): inclui as paradas nativas de 1 frame (≈ 21–23% dos frames), em que segurar a pose é correto. A métrica não separa esses casos.
+4. Só Stage_3-4 foi medido nas sessões de famílias e custo; Stage_1-1 só no piloto. Só builds Development, só a CPU atual.
+5. O desconecta/reconecta não foi capturado em execução real; coberto por revisão e pelo cleanup comum.
+
+**Demais itens:**
+- **Runner:** sincronizado e restaurado 4 vezes por manifesto, com backups em `Logs/R02-runner-sync/backup-*`. No estado final, os 6 arquivos R02 estão fora do runner (o modo Plan confirma). As outras diferenças locais do runner são reserializações automáticas da Unity anteriores ao R02 e não foram tocadas.
+- **QA perceptual:** **pendente**. Pacote e roteiro em `C:\Users\mauri\SB6-QA-R02\ROTEIRO.md`, binário `C:\Users\mauri\SB6-R02\r02`.
+- **Publicação:** não realizada (sem push, deploy ou publicação). R03 não iniciado.
+
+## R02 parte 2 — implementação e pré-registro (07/11/2026, antes de qualquer medição da parte 2; R02 continua parcial; sem publicação)
+
+**Pedido:** p95 de atraso e investigação do pico de 1,2–1,6 s; desconexão/reconexão reais; wrap das sobreposições com trajetória aprovada; alocações do campo de cliente; frequência do envio posicional; fome residual separada das paradas nativas e cobertura de cenas.
+
+**Mudanças de código (protocolo 66 → 67):**
+- **Campo de cliente fora da mensagem:** `CoopSpriteFrame.playbackTime` foi removido. O cliente guarda `CoopVisualSample` (frame + `playbackOrigin` + `cut`) só no histórico local. Os arrays de rede do servidor e dos clientes voltam ao tamanho pré-R02.
+- **Reposicionamento explícito das sobreposições de tela** (`TrackCoopOverlays`, todo frame do servidor, só renderers presos à câmera):
+  - um salto maior que 2 unidades (32 px) entre dois frames do servidor envia `repositionAnchors` (pose do frame anterior, fim aprovado do segmento antigo) e `repositions` (pose nova) na `CoopMotion`;
+  - o cliente marca a amostra nova como corte (`cut`): segura o fim do segmento antigo e começa o novo sem interpolar pela tela, nas duas ordens de chegada (frame completo antes ou depois da mensagem);
+  - nenhum RNG/gameplay roda no cliente; as sobreposições continuam sem amostras por frame (custo: 2 entradas por salto).
+- **Frequência:** no máximo 1 amostra de posição por renderer por tick de envio do Mirror (sendRate 60; intervalo mínimo 0,9/60 s). Taxa maior que 60 Hz só acrescentaria bytes, sem poses mais cedo no cliente.
+- **Modos Development de comparação** (`-coop-r02-motion frame|half|segments`; Release sempre `frame`):
+  - `half`: 1 amostra a cada 2 frames;
+  - `segments`: batimento a cada 3 frames + vértice aprovado (pose do frame anterior) quando a reta desde o início do segmento erra uma pose nativa em mais de 0,5 px;
+  - a âncora após repouso passa a ser decidida pelo repouso real do frame anterior em todos os modos.
+- **Métrica do cliente `coop_present_window` v=4:**
+  - **retenção aprovada:** a amostra seguinte repete a pose, ou seja, o objeto nativo parou e segurar era o correto;
+  - **fome real:** a pose mudou enquanto o cliente segurava;
+  - atraso = defasagem de rede/linha do tempo (buffer + RTT/2 + offset visual) + retenção de apresentação (relógio − tempo do estado não interpolado);
+  - idade de chegada;
+  - histograma de atraso em bins de 10 ms (0–600 ms + transbordo).
+- **Reconexão:**
+  - `OnlineRoomBrowser`, só em Development com `-load-test-rejoin`: depois da primeira sala, entra na sala seguinte pelo mesmo `StartClient`;
+  - `LocalNetworkInputSmoke`: `-load-test-leave-after S` sai pela `LeaveRoomToBrowser`;
+  - log Development `[Coop] stream begin … prior*=` a cada início de stream;
+  - `Tools/RoomDirectory/smoke_coop_reconnect.py`.
+
+**Critérios pré-registrados (não serão alterados depois de ver dados):**
+1. **Atraso:**
+   - p95 por família e agregado (`*all*`) por cliente e execução, sobre os frames apresentados em movimento, com o limite superior do bin;
+   - o r02 não pode ficar medido pior que o legacy (faixas sem sobreposição);
+   - **pico:** toda janela com atraso máximo > 500 ms é classificada como dominada por retenção (retenção máxima ≥ 50% do atraso máximo) ou por defasagem de rede, e cruzada com a idade de chegada e com o RTT/buffer do mesmo segundo nos dois clientes.
+2. **Reconexão:** `smoke_coop_reconnect.py` aprovado em 2 execuções headless + 1 renderizada, com:
+   - sala A com 2 clientes e saída de 1 deles;
+   - sala A encerrada pelo contrato dedicado;
+   - os 2 clientes de volta ao navegador e na sala B;
+   - fixture completa na sala B;
+   - todos os inícios de stream com `prior*` = 0;
+   - 0 erros/exceções.
+   Qualquer falha fica preservada.
+3. **Sobreposições** (família `UrpPixelPerfectCameraFallback`, Stage_3-4):
+   - **corrigida:** p95 ≤ 1 px e máximo ≤ 2 px em pelo menos 2 execuções (mesma regra da forma);
+   - **tráfego:** os bytes de reposicionamento da família devem ficar ≤ 5% dos bytes de frame da mesma família;
+   - **sem varredura:** nenhuma amostra de corte interpolada (garantido pela regra comum de segmento) + verificação visual no pacote de QA.
+4. **Alocações:** sessão de custo com a captura desligada (baseline × r02 parte 1 × r02 parte 2, 5 headless intercaladas):
+   - a alocação do servidor da parte 2 deve ficar medida abaixo da parte 1 (sem sobreposição);
+   - a diferença contra a baseline é relatada pela regra de não sobreposição.
+5. **Modo de envio:** entre `frame`, `half` e `segments`, escolher o de menos bytes de posição que cumpra:
+   - forma p95 ≤ 1 px e máximo ≤ 2 px em toda execução válida de toda família móvel;
+   - fome real, p95 de atraso e paradas não medidos piores que `frame` (sem sobreposição).
+   Se nenhum modo mais barato cumprir, fica `frame`. O teto de 60 Hz vale em todos os modos.
+6. **Fome residual:** relatar a retenção aprovada e a fome real separadamente; só a fome real conta.
+7. **Cobertura:** além de Stage_3-4, são medidas Stage_1-1 e Stage_3-6, com o modo escolhido e o legacy × 2 cada, captura ligada.
+
+**Sessões (sequenciais; runner sincronizado por manifesto, com backup e restauração):**
+- **Modos em Stage_3-4:** frame/half/segments/legacy × 3 headless intercaladas.
+- **Cobertura:** Stage_1-1 e Stage_3-6.
+- **Reconexão.**
+- **Custo:**
+  - 5 headless intercaladas: baseline, r02 parte 1 e parte 2;
+  - 3 renderizadas: baseline e parte 2.
+- **Validade:** sem linha descartada, sem limite de captura, fixture completa. Execução inválida não conta e fica preservada.
+
+## R02 parte 2 — resultados (08/11/2026; R02 continua PARCIAL; sem publicação; R03 não iniciado)
+
+**Identidade:**
+- binário `C:/Users/mauri/SB6-R02/r02b`: assembly `f40db7d1…`, protocolo 67, mesmo runner/Packages (HEAD `43bf8d0e0` + 7 arquivos R02 sincronizados e restaurados);
+- dotnet: 0 avisos, 0 erros;
+- EditMode 1053/1053, incluindo 4 testes novos (`Logs/R02-tests-20261107-232936`);
+- Python 136/136 (`Tools/Ci`) + 15/15 (`Tools/RoomDirectory`);
+- `.cs` conferidos: UTF-8 estrito, sem BOM corrompido, CRLF.
+
+**Incidente preservado:** a primeira cadeia foi interrompida por falta de memória. A restauração dela rodou antes do build, que compilou o runner já restaurado (HEAD + edições locais não rastreadas, sem nenhum código da parte 2). Esse binário inválido está em `C:/Users/mauri/SB6-R02/r02b-INVALID-runner-restored-before-build` e não foi usado. O EditMode dessa cadeia é válido: rodou antes da restauração, e os testes novos aparecem no XML.
+
+### 1. Atraso: p95 e o pico (`Logs/R02b-modes-20261108`, 3 execuções por modo, 2 clientes)
+
+**p95 do atraso dos frames em movimento**, agregado por cliente:
+
+| Execuções | frame | legacy |
+|---|---|---|
+| 1–2 | 70–100 ms | 90–110 ms |
+| 3 | 120 ms | 200–210 ms |
+
+- As faixas se sobrepõem, então o r02 não é medido pior que o legacy (critério 1 atendido).
+- Média de 60–72 ms nos dois.
+- **Decomposição em regime normal (frame):**
+  - defasagem de rede/linha do tempo: máximo de 80–215 ms;
+  - retenção: máximo de 16–368 ms, em instantes isolados.
+
+**Picos** (> 500 ms, `spikes.json`):
+- **frame-3:** 1 segundo em 1 cliente (máximo de 502 ms, dominado por retenção).
+- **Entre 04:24 e 04:32 UTC:** um evento do host afetou half-3, segments-3, legacy-3 e a execução renderizada.
+  - O RTT de localhost subiu a 733/735 ms nos dois clientes (até 1558 ms em um deles).
+  - O atraso apresentado chegou a 2,9 s no legacy e a 5,9 s no half.
+  - Os casos dominados por retenção são lacunas de entrega: idade de chegada até 3,4 s; o cliente segurou a última pose aprovada.
+  - Os dominados por defasagem são o buffer dinâmico do Mirror crescendo depois do jitter.
+- **Conclusão sobre o pico de 1,2–1,6 s da parte 1:** é o mesmo padrão (RTT 19 → 306 ms visto pelos 2 clientes). É lacuna de entrega no host, com retenção aprovada mais crescimento do buffer.
+  - Aparece igual no legacy, então não é causado pelo R02.
+  - Nada foi alterado: extrapolar contrariaria a autoridade do servidor.
+
+### 2. Desconexão e reconexão reais (`Logs/R02b-reconnect-20261108`): **atendido**
+
+3/3 execuções aprovadas (2 headless + 1 renderizada; `smoke_coop_reconnect.py`):
+- o cliente 2 sai pela `LeaveRoomToBrowser`; a sala A fecha pelo contrato dedicado;
+- o cliente 1 é desconectado; os 2 voltam ao navegador e entram na sala B pelo `StartClient`;
+- a sala B completa a fixture (pausa, recarga, segunda pausa);
+- todos os 6 inícios de stream por execução têm `prior*` = 0: amostras, remoções, views, estatísticas e bombas;
+- 0 erros, 0 linhas descartadas;
+- a apresentação volta em movimento nas duas salas;
+- capturas renderizadas: a sala B começa limpa, sem inimigos nem areia da sala A.
+
+### 3. Wrap das sobreposições de tela (família `UrpPixelPerfectCameraFallback`, Stage_3-4): **melhorado; critério de forma NÃO atendido**
+
+| | legacy | frame |
+|---|---|---|
+| Erro máximo | 200–255 px | 9,1–19,5 px |
+| Frames > 2 px por execução | 28–31 mil | 0,5–3,9 mil |
+| p95 | 0,8 px | 0,8 px |
+
+- O traço pela tela no wrap acabou: corte explícito na trajetória aprovada, nas duas ordens de chegada (EditMode).
+- **Tráfego:**
+  - 11,5–12 mil reposicionamentos por execução;
+  - 391–407 KB por execução, ou 0,75–0,78% dos bytes de frame da família (limite de 5% atendido);
+  - nenhuma amostra por frame para partículas.
+- **Resíduo:** 96–99% dos frames > 2 px caem nas janelas logo depois de travamentos do servidor (frame > 40 ms):
+  - frame-1: 3896/3901;
+  - frame-2: 459/465;
+  - frame-3: 1617/1735.
+- O mecanismo exato dentro do travamento não foi isolado. Fica como limitação, sem aumentar limites.
+
+### 4. Alocações do campo do cliente: **causa removida; critério do servidor não resolvido**
+
+**Repetição limpa `Logs/R02b-costparts-20261108`** (5 + 5, captura desligada):
+
+| Processo | r02b − r02 (parte 1) | Classificação |
+|---|---|---|
+| Clientes | −26,2 / −26,3 KiB/s | diferença medida |
+| Servidor | média de −27,7 KiB/s | **não resolvida**: as faixas 1837–1862 e 1813–1841 se sobrepõem em 4 KiB/s |
+
+- Trabalho e ciclos: sem diferença resolvida.
+
+**Renderizadas** (`Logs/R02b-cost-20261108`, 3 + 3, diferença medida):
+
+| | r02b − baseline | parte 1 − baseline |
+|---|---|---|
+| Alocação do servidor | +13,6 KiB/s | +47,0 KiB/s |
+| Alocação dos clientes | +21,3 / +21,6 KiB/s | +45,3 / +45,7 KiB/s |
+| Saída do servidor | +22,6 KiB/s | +13,8 KiB/s |
+| Trabalho do servidor | +0,17 ms/frame (1,0% de 16,7 ms) | — |
+| Ciclos do servidor | +35 Mciclos/s | — |
+
+- O aumento da saída corresponde aos reposicionamentos: ≈ 3,3 KiB/s por peer.
+
+**Sessão headless de custo** (`Logs/R02b-cost-20261108`, 4/4/5 válidas; baseline-1 e r02-1 falharam por timeout de prontidão, preservadas): **inconclusiva**. O host alternou entre 2 estados de desempenho no mesmo binário (servidor com trabalho de 5,4–6,8 ms contra 2,4–2,8 ms). Por isso foi feita a repetição justificada acima, registrada antes de rodar.
+
+### 5. Frequência do envio posicional: **`frame` mantido, com teto de 60 Hz**
+
+**Por que 60 Hz:** é a taxa de envio do Mirror. Uma amostra por renderer por tick de envio é o máximo útil: amostras mais frequentes chegariam no mesmo lote.
+
+**Regra pré-registrada aplicada** (Stage_3-4, 3 execuções por modo):
+- **half:** −47% de bytes, mas perde a forma (Junction com máximo de 2,24 e 3,2 px em 2 de 3 execuções); fome real do BubbleChip 0,003 → 0,071 (medida). **Reprovado.**
+- **segments:** −71% de bytes e forma mantida (máximo de 1,28 px), mas:
+  - paradas do Speeder 0,032 → 0,048 (medidas);
+  - fome real do BubbleChip 0,003 → 0,064.
+  **Reprovado.**
+- **frame:** forma com p95 de 0,1 px e máximo ≤ 0,43 px em todas as famílias de gameplay. Bytes de posição por execução de 120 s: Junction ≈ 190 KB, Speeder ≈ 64 KB, BubbleChip ≈ 20 KB, Sandpile ≈ 2,7 KB.
+
+### 6. Fome residual separada: **feito**
+
+Stage_3-4, frame:
+
+| Família | "Fome" antiga (total) | Retenção aprovada | Fome real |
+|---|---|---|---|
+| BubbleChip | 8–15% | quase toda | 0–1% |
+| Junction / Speeder | — | — | 7–15%, média de 0,7–16 ms (menos de 1 frame de folga do relógio) |
+| Sobreposições | — | — | 14–28% |
+
+- No legacy, a fome real é de 10–57%.
+
+**Cobertura** (`Logs/R02b-coverage-20261108`, frame × legacy, 2 + 2 por cena):
+- **Stage_1-1** (`EnemyMovementController`): frame com p95 de 0,1 px e máximo de 0 px; legacy com máximo de 4,32 e 1,44 px.
+- **Stage_3-6** (9 famílias): frame com máximo ≤ 0,64 px; o legacy perde a forma em BigTelpio, Checker93, Heli, Roboface, Tread e UnclassifiedWorldVisual (2,4–8,2 px).
+- **Fome real menor no frame:** BubbleChip 0,0025 contra 0,14–0,25.
+- **Atraso dessa sessão: inconclusivo.** O RTT de localhost teve p95 de 142–518 ms nas duas configurações.
+
+### Status da parte 2
+
+**Atendidos:**
+- reconexão;
+- p95 e explicação do pico;
+- fome separada;
+- frequência justificada e limitada;
+- causa das alocações removida (clientes resolvidos);
+- cobertura com 3 cenas.
+
+**Não atendidos:**
+- **forma das sobreposições:** o wrap foi corrigido, mas o resíduo ligado a travamentos do servidor deixa o máximo em 9–20 px;
+- **queda da alocação do servidor contra a parte 1:** sobreposição de 4 KiB/s.
+
+**Pendente:** QA perceptual (`C:\Users\mauri\SB6-QA-R02\ROTEIRO.md`, atualizado).
+
+Sem push, deploy ou publicação. R03 não iniciado.
+
+## R02 parte 3 — pré-registro (08/11/2026; registrado antes de qualquer medição da parte 3; R02 continua PARCIAL)
+
+**Diagnóstico do resíduo das sobreposições (pelo código, antes de medir):**
+- O `BombermanNetworkManager` tem `DefaultExecutionOrder(-150)`. O `LateUpdate` dele chama `TickCoopWorld`, que amostrava o mundo co-op do servidor.
+- O `Stage34SandstormEffect` (sobreposições presas à câmera) e o `CameraFollowClamp2D` movem os renderers no `LateUpdate` deles, com ordem 0, ou seja, **depois** da amostra.
+- **Instante da amostra:** cada amostra trazia a pose do frame anterior com o carimbo de tempo do frame atual.
+- **Fase do movimento:** a sobreposição anda por `deltaTime`. Num frame longo (Δ) o passo dela é grande, mas esse passo só entra na amostra seguinte, carimbada um frame depois. A trajetória aprovada dobra em torno do frame longo, com erro ≈ velocidade × Δ (112 px/s × 0,1 s ≈ 11 px, a mesma ordem do máximo de 9–20 px).
+- **Referencial da câmera:** a posição base da sobreposição segue a câmera, que também se move depois da amostra.
+- **Aplicação do wrap:** o salto do wrap também era detectado um frame atrasado.
+- **Inimigos:** não são afetados, porque se movem no `Update`/`FixedUpdate`, antes de qualquer `LateUpdate`.
+
+**Correção implementada (binário r02c, protocolo 67 inalterado, sem mudança de mensagem):**
+- `CoopLateCaptureDriver` com `DefaultExecutionOrder(32000)` faz a captura do servidor depois de todos os `LateUpdate`.
+- O cliente não muda.
+- `-coop-r02-capture-early` só funciona em Development e restaura a fase antiga, para o A/B.
+- A sonda `coop_phase_probe` (captura Development) registra, em cada frame > 40 ms e uma vez por segundo:
+  - a diferença entre a pose vista na fase antiga e a pose renderizada;
+  - o movimento da câmera entre as duas;
+  - os wraps dentro do frame.
+
+**Reprodução controlada:**
+- Fixture de servidor `-load-test-hitch-ms 120`: dentro da janela de 30 s de regime, bloqueia a thread principal do servidor por 120 ms a cada 2,5 s, 12 vezes, em instantes registrados (`[LoadTest] coop-world hitch`).
+- Execuções, sequenciais, no Stage_3-4 (2 clientes headless, captura ligada), mesmo binário r02c:
+  - `early-hitch` ×2;
+  - `late-hitch` ×2;
+  - `late` sem hitch ×3 (regressão das famílias de gameplay);
+  - mais 1 `late-hitch` renderizada para o QA visual.
+
+**Critérios (fixados agora, sem afrouxar depois):**
+- **Forma das sobreposições (`UrpPixelPerfectCameraFallback`):** p95 ≤ 1 px e **máximo ≤ 2 px** nas execuções `late-hitch` e `late`. O limite de 2 px não muda.
+- **Reprodução válida:** `early-hitch` precisa reproduzir o defeito (máximo > 2 px nas janelas dos hitches registrados). Se não reproduzir, a reprodução é declarada inválida, sem conclusão.
+- **Sonda:** em `early-hitch`, frames > 100 ms devem mostrar `early_late_max_px` ≥ 5 px. Em `late`, o critério de forma decide.
+- **Famílias de gameplay em `late`:** máximo ≤ 2 px e p95 ≤ 1 px, como na parte 2.
+- Se o critério de forma falhar em qualquer execução `late*`, a falha fica registrada e preservada, sem tolerância nova e sem repetir até passar. Repetição só com causa registrada antes (falha de ambiente comprovada, por exemplo timeout de prontidão).
+
+**Alocações: duas afirmações separadas:**
+1. **"Campo removido":** fato de código. A medição direcionada por caminho é o teste EditMode `CoopSpriteMessageAllocationsArePerPathMeasured`. Ele mede `GC.GetAllocatedBytesForCurrentThread` por mensagem de 48 frames em três caminhos:
+   - array de lote do servidor (atual × elemento com o `double` removido);
+   - serialização num writer reutilizado;
+   - desserialização no cliente.
+   A economia esperada em KiB/s vem de bytes por mensagem × frames por segundo medidos (`changed` do `coop_family_cost` da parte 2).
+2. **"Redução estatisticamente demonstrada":** só com faixas de processo sem sobreposição. A bateria da parte 2 **não** demonstrou isso para o servidor e não será repetida para buscar aprovação.
+
+**Regressão de custo total no código final:** uma única sessão headless de custo, 5 baseline + 5 r02b (parte 2) + 5 r02c, captura desligada, alternadas. Regressão = faixas sem sobreposição com r02c pior que r02b em alocação, trabalho ou saída do servidor ou dos clientes. O custo total contra a baseline é registrado na mesma sessão. Faixas sobrepostas = sem regressão demonstrada (não é aprovação de melhoria).
+
+**Picos de localhost:** a origem é classificada pela regra a seguir, fixada antes de aplicá-la aos dados, a partir do maior `frameMs` registrado por processo em ±2 s. Transparência: a regra foi escrita no código (`delay_spikes`) antes de ser aplicada, mas este registro no documento é posterior à primeira aplicação dela às evidências da parte 2. As execuções novas da parte 3 usam a mesma regra, sem alteração:
+- **"travada do servidor"** se o do servidor for ≥ 50% do atraso máximo;
+- senão, **"travada do cliente"** se o do próprio cliente for;
+- senão, **"atraso observado pelo Mirror (origem não isolada)"**.
+
+Transporte e escalonamento dos processos pelo sistema operacional não são separáveis com estes logs, então nenhum pico é atribuído à rede.
+
+## R02 parte 3 — resultados (08/11/2026; R02 continua PARCIAL: falta o aceite perceptual; sem publicação; R03 não iniciado)
+
+**Identidade:**
+- binário `C:/Users/mauri/SB6-R02/r02c`: assembly `020208c8…`, protocolo 67 (mensagens iguais às do r02b), mesmo runner/Packages (HEAD `43bf8d0e0` + 7 arquivos R02 sincronizados e restaurados);
+- as strings novas foram conferidas na DLL (UTF-8 e UTF-16);
+- dotnet: 0 avisos, 0 erros;
+- EditMode **1055/1055** (`Logs/R02-tests-20261108-032440`), com 2 testes novos;
+- Python 137/137 em `Tools/Ci`, com 1 teste novo;
+- `.cs` conferidos: UTF-8 estrito, sem BOM, CRLF.
+
+**Falhas preservadas:**
+- `Logs/R02-tests-20261108-030526` e `-031435`: o teste de alocação falhou porque o Mono do Unity devolve 0 em `GC.GetAllocatedBytesForCurrentThread`.
+- `Logs/R02-tests-20261108-031944`: o contador do heap não resolve arrays pequenos.
+- O teste foi corrigido para medir pelo heap e só fazer asserções sobre o que é resolvível. Isso não mudou nenhum código de jogo, e o binário r02c não inclui o assembly de testes.
+
+### 1. Resíduo das sobreposições depois de frames do servidor > 40 ms: **causa isolada e corrigida**
+
+**Causa** (pré-registro da parte 3): a captura do servidor rodava no `LateUpdate` do manager (ordem −150), antes do `LateUpdate` da areia e da câmera (ordem 0).
+- **Instante da amostra:** a pose era do frame anterior, com o carimbo do frame atual.
+- **Fase do movimento:** depois de um frame longo, o passo grande entrava um frame atrasado. A trajetória dobrava.
+- **Wrap:** era detectado um frame atrasado.
+- **Correção:** a captura passou para depois de todos os `LateUpdate` (`CoopLateCaptureDriver`, ordem 32000). Um teste EditMode garante que nenhum `MonoBehaviour` do assembly roda depois dela.
+
+**Reprodução controlada** (`Logs/R02c-repro-20261108`, Stage_3-4, 2 clientes): servidor bloqueado 120 ms a cada 2,5 s, 12 vezes, em instantes registrados.
+
+| Execução | Máximo (px) | p95 (px) | Frames > 2 px | Janelas após hitch: máximo |
+|---|---|---|---|---|
+| early-hitch-1 / 2 (fase antiga) | 10,52 / 10,52 | 0,8 | 5142 / 5477 (87–93% nas janelas após hitch) | 10,52 |
+| **late-hitch-1 / 2** | **1,13 / 1,13** | **0,8** | **0** | 1,13 |
+| **late-1 / 2 / 3** (sem hitch) | **1,16 / 1,06 / 1,15** | **0,8** | **0** | — |
+| **late-hitch renderizada** | **1,13** | **0,8** | **0** | 1,13 |
+
+- **Critério de forma** (p95 ≤ 1 px, máximo ≤ 2 px; o limite de 2 px foi mantido): **atendido** nas 6 execuções `late*`.
+- A reprodução é válida: `early-hitch` reproduz o defeito nas 2 execuções.
+- Comparado com o r02b frame da parte 2, o erro máximo cai de 13,5 para 1,12 px (diferença medida).
+
+**Sonda `coop_phase_probe`:** diferença entre a pose vista na fase antiga e a pose renderizada, nas execuções `late*`.
+- Frames ≤ 40 ms: até 2,24 px (um passo de frame).
+- Frames > 100 ms: 17–31 px (média dos máximos 13–20 px).
+- **Câmera:** 0 px em todos os casos. O referencial da câmera não contribui no Stage_3-4.
+- **Wraps dentro do frame longo:** 41–387 por execução, todos registrados no frame certo depois da correção.
+
+**Desvio do pré-registro, registrado:** a sonda só roda no caminho da captura tardia. Por isso o critério "em `early-hitch`, ≥ 5 px" não pôde ser avaliado nessas execuções (0 linhas). A mesma grandeza foi medida nas execuções `late*`, onde passa com folga. A decisão continua com o critério de forma.
+
+**Regressão das famílias de gameplay** (late × r02b frame): máximo ≤ 0,43 px e p95 de 0,1 px. Nenhuma diferença medida pior em forma, fome real, paradas ou atraso. O p95 do atraso foi de 80–90 ms (late) e 90–100 ms (late-hitch), contra 70–120 ms no r02b. Diferenças medidas em métricas de apresentação:
+- CPU de apresentação do BubbleChip: 3,63 contra 2,68 µs/frame. O código do cliente é idêntico entre r02b e r02c, então é variação do host.
+- Bytes de movimento do Speeder: +3,7%.
+
+### 2. Alocações: "campo removido" × "redução demonstrada"
+
+**Campo removido (fato de código, desde a parte 2):** o `double playbackTime` saiu do `CoopSpriteFrame`, de 168 para 160 bytes por elemento.
+
+**Medição direcionada por caminho** (EditMode `CoopSpriteMessageAllocationsArePerPathMeasured`, mensagem de 48 frames, alocador Boehm do Mono, o mesmo do player Mono):
+
+| Caminho | Atual | Com o campo |
+|---|---|---|
+| Array de lote do servidor (48 frames) | 8192 B | 8192 B |
+| Serialização em writer reutilizado | 0 B | — |
+| Leitura no cliente (inclui o array de frames) | 8192 B | 8192 B (estimativa) |
+
+- **Por que é igual:** acima de ~2 KiB o Boehm aloca blocos inteiros de 4 KiB. Entre os comprimentos de lote resolvíveis (13–48 frames), só n = 25 cai num bloco a menos (4096 contra 8192 B).
+- **Economia esperada no servidor:** ≈ 0 KiB/s. Um lote cheio não economiza nada, e só o último lote de uma captura (`count % 48`) pode, se tiver exatamente 25 frames. A projeção ingênua de 8 B × ~4150 frames alterados/s ≈ 32 KiB/s **não vale** com este alocador.
+- Isso explica a diferença "não resolvida" do servidor na parte 2.
+- **Os −26 KiB/s medidos nos clientes da parte 2 não podem ser atribuídos ao campo:** o caminho de leitura tem o mesmo arredondamento, e a parte 2 mudou outras coisas no cliente (histórico `CoopVisualSample` com 176 B por elemento, em listas reaproveitadas, e reposicionamentos).
+- A bateria não foi repetida para buscar aprovação.
+
+**Redução estatisticamente demonstrada:** nenhuma para o campo. O que está demonstrado é o custo total do R02 contra a baseline, a seguir.
+
+**Custo total no código final** (`Logs/R02c-cost-20261108`, headless, captura desligada; 5 baseline + 5 r02b + 5 r02c alternadas; 15/15 válidas; host estável, com trabalho do servidor de 2,4–2,6 ms nas 3 configurações):
+
+| | r02c − r02b | r02c − baseline |
+|---|---|---|
+| Alocação do servidor | +2,6 KiB/s, não resolvida | **+25,2 KiB/s (+1,4%), medida** |
+| Alocação dos clientes | +1,4 / +0,8, não resolvida | **+23,0 / +23,2 KiB/s (+2,5%), medida** |
+| Saída do servidor | +1,9 KiB/s, não resolvida | **+22,3 KiB/s (+1,8%), medida** (amostras de posição + reposicionamentos) |
+| Trabalho e ciclos (servidor e clientes) | não resolvidos | não resolvidos |
+
+- **Regressão do r02c contra a parte 2: nenhuma demonstrada.**
+- O custo total do R02 contra a baseline continua medido e pequeno. Não é reivindicado como melhoria.
+
+### 3. Picos de localhost: origem separada (`Logs/R02c-spike-origin-20261108/spike-origin.json`)
+
+Regra pré-registrada: o maior `frameMs` registrado por processo em ±2 s, comparado com 50% do atraso máximo.
+
+**Sessão modes da parte 2** (janelas distintas com atraso > 500 ms):
+
+| Execução | Travada do servidor | Travada do cliente | Atraso observado pelo Mirror, origem não isolada |
+|---|---|---|---|
+| frame-3 | 1 (frame máximo do servidor 426 ms) | — | — |
+| frame-rendered-1 | 8 (até 3,6 s) | — | — |
+| half-3 | 18 (até 9,3 s) | — | 2 |
+| legacy-3 | 7 (até 2,6 s) | — | — |
+| segments-3 | 7 | 5 | — |
+| **Total** | **41** | **5** | **2** |
+
+**Correção da parte 2:** o pico atribuído a "lacuna de entrega no host / RTT de localhost" é, na maior parte, **travada do processo servidor**.
+- O RTT do Mirror sobe junto porque o servidor responde ao ping na thread principal. O RTT não é evidência de rede.
+- Nenhum pico é atribuído à rede.
+- Os 2 casos não isolados ficam registrados como **atraso observado pelo Mirror**: transporte e escalonamento dos processos pelo sistema operacional não são separáveis com estes logs.
+
+**Cobertura da parte 2:** misto de travadas do servidor (inclusive na recarga da fixture, com até 5,5–7,9 s), travadas de cliente e 4–318 entradas não isoladas por execução.
+
+**Parte 3:** nenhum pico nas 7 execuções headless da reprodução, inclusive com hitches de 120 ms. Houve 3 entradas na renderizada, todas travadas do servidor.
+
+### Status da parte 3
+
+**Atendidos:**
+- forma das sobreposições, com causa isolada, reprodução controlada e máximo ≤ 2 px;
+- medição de alocação por caminho;
+- custo total sem regressão contra a parte 2;
+- origem dos picos separada.
+
+**Não demonstrado (registrado como tal):** redução de alocação causada pelo campo removido. Pelo alocador, ela é ≈ 0 no servidor.
+
+**Pendente:** aceite perceptual (`C:\Users\mauri\SB6-QA-R02\ROTEIRO.md`, atualizado para r02c, com o cenário de travadas). Por isso o **R02 continua PARCIAL**.
+
+Sem push, deploy ou publicação. R03 não iniciado.
+
+### Checkpoint de publicação R02 em homologação (08/11/2026; autorizada pelo usuário; R02 continua PARCIAL; R03 não iniciado)
+
+**Escopo da autorização:** publicar o R02 em homologação, servidor e cliente compatíveis, pelo pipeline existente (push em `v0.5.0` → Homologation both/quick), com o reinício das salas que o deploy exige.
+- A publicação **não** é aceite: o QA visual humano não foi feito e continua pendente (`C:\Users\mauri\SB6-QA-R02\ROTEIRO.md`).
+- Seguem registradas as limitações de R02:
+  - o campo removido não tem redução de alocação demonstrada (≈ 0 no servidor pelo alocador);
+  - existe um custo total medido contra a baseline (+25/+23/+22 KiB/s);
+  - há atraso observado pelo Mirror com origem não isolada em poucos picos.
+
+**Protocolo: 65 → 67 (o 66 nunca foi publicado).**
+
+| Versão | Situação | Conteúdo do formato de rede |
+|---|---|---|
+| 65 | publicado (C10, R01 e `43bf8d0e0`) | stream co-op pré-R02 |
+| 66 | só local (binário r02 da parte 1) | `CoopMotion` com amostras por frame e âncoras + campo `playbackTime` dentro de `CoopSpriteFrame` |
+| 67 | este commit | `playbackTime` removido do `CoopSpriteFrame`; `CoopMotion` com `repositionAnchors`/`repositions` para as sobreposições |
+
+- **Por que 67 e não 66:** a parte 2 mudou a serialização de duas mensagens já alteradas no 66. Sem o `double`, o layout de cada frame muda. Os reposicionamentos são campos novos em `CoopMotion`.
+- Um par 66 × 67 desserializaria errado em silêncio, então a versão foi incrementada de novo para que o autenticador recuse a combinação.
+- A parte 3 não mudou mensagens (só a fase da captura no servidor) e manteve o 67.
+- **Contrato do pipeline:** `OnlineVersionAuthenticator.ProtocolVersion = 67` e `Tools/RoomDirectory/supervisor.py PROTOCOL = 67`, conferidos pelo `release.py preflight`.
+- Clientes 65 já instalados são recusados pelo servidor 67 e atualizados pelo canal do atualizador publicado no mesmo job.
+
+**Identidade validada × commit:**
+- **Runtime:** os 6 `.cs` de runtime do commit têm SHA-256 idêntico aos instalados no runner para a build `r02c` (assembly `020208c8…`, binário `b5d982ad…`).
+- **Testes:** os 7 arquivos, incluindo o teste, são idênticos aos usados no EditMode 1055/1055 (`Logs/R02-tests-20261108-032440`). Os estados da sincronização estão em `Logs/R02-runner-sync/backup-20261108-030525` e `-032439`.
+- **Diferenças esperadas:**
+  - o CI compila um player **release**: os interruptores e sondas do R02 exigem `Debug.isDebugBuild`, e o `LocalServerLoadTest` continua fora do release;
+  - a quebra de linha é normalizada pelo Git.
+
+**Ficaram fora do commit:**
+- o asset de fonte `PressStart2P-Regular SDF.asset`, alteração do usuário;
+- `Packages/`, sem alterações no momento e nunca incluído;
+- `Logs/` (evidências, ignoradas pelo Git);
+- `Assets/_Recovery/`.

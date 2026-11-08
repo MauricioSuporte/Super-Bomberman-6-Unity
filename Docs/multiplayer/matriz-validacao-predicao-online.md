@@ -539,3 +539,44 @@ R01 permanece parcial.
 | Comparação online × offline (`analyze_prediction.py`, Logs/R01-comparacao.json) | **DEMONSTRADA** na sessão 2 (`Logs/R01-measure-20261107b`; 3+3, A–E aprovados, 0 excluídas). A sessão 1 falhou pelas regras originais (instrumento de jogadores e `Afk2` aleatório); está registrada |
 | R01 | **CONCLUÍDO** nos critérios obrigatórios (07/11): QA manual aprovado; comparação demonstrada; custo medido com e sem captura; gate Development-only compilado e testado (EditMode 1046/1046). **Publicado em homologação**: `b01817c73`/65, Actions 42403939455; servidor, cliente e atualizador conferidos. R02 não iniciado |
 | Publicação / R02 | pendente de autorização / não iniciado |
+
+## R02 — mundo co-op: cobertura e medição (07/11/2026)
+| Item | Resultado | Evidência |
+|---|---|---|
+| Forma, famílias de gameplay (Junction, Speeder, BubbleChip, Sandpile) | legacy p95 0,3–0,8 px / máx. até 4,64 px → r02 p95 0,1 px / máx. ≤ 0,43 px | Logs/R02-families-20261107/families.json, Logs/R02-families2-20261107/families.json |
+| Início após repouso (retenção) | legacy 0,64–1,28 px → r02 0 | idem |
+| Fome (pré-registrada) | Junction 0,22–0,33 → 0,08–0,18; Speeder 0,22–0,34 → 0,09–0,22; Sandpile e famílias estáticas não resolvidas | idem |
+| Paradas no cliente contra o nativo (offline) | BubbleChip 12–19% → 0–0,6% (nativo 0,6–1,7%) | idem |
+| Pausa / recarga | pausedMoving 0; pausedHeld igual; 2 recargas por execução, 8 + 8 + 21 válidas | sessões |
+| Custo atribuível (r02 − legacy) | servidor +0,13 ms/frame, +4,5% ciclos, +13 KiB/s; clientes sem diferença resolvida | Logs/R02-cost-20261107/cost-attributable.json |
+| Custo total (r02 − baseline) | servidor +8,5 KiB/s (headless) / +13,8 (renderizado); alocações +46 KiB/s, das quais +34 vêm de `playbackTime` | cost.json, cost-rendered.json |
+| Sobreposições de tela | perda de forma anterior ao R02 mantida; fora do stream de posição | checkpoint R02 |
+| QA perceptual | pendente | C:\Users\mauri\SB6-QA-R02\ROTEIRO.md |
+| R02 | técnico validado; aceite perceptual pendente; não publicado | - |
+
+## R02 parte 2 — wrap, reconexão, atraso p95, frequência e fome real (08/11/2026; protocolo 67; R02 parcial)
+| Item | Resultado | Evidência |
+|---|---|---|
+| Atraso p95 (frames em movimento, agregado por cliente) | frame 70–120 ms contra legacy 90–210 ms; sobreposição, então não piora. Média 60–72 ms | Logs/R02b-modes-20261108/families.json |
+| Pico de 1,2–1,6 s (parte 1) e picos de até 5,9 s | lacunas de entrega do host: RTT de localhost 0,7–1,5 s nos 2 clientes; retenção aprovada + buffer dinâmico do Mirror; iguais no legacy | Logs/R02b-modes-20261108/spikes.json |
+| Reconexão real (saída pela LeaveRoomToBrowser, sala nova) | 3/3 aprovadas; `prior*` = 0 em todos os inícios de stream; fixture completa na sala B; 0 erros | Logs/R02b-reconnect-20261108 |
+| Wrap das sobreposições | máximo 200–255 → 9–20 px; frames > 2 px 28–31 mil → 0,5–3,9 mil; reposicionamentos = 0,75–0,78% dos bytes da família. Critério de forma **não atendido**: resíduo em 96–99% nas janelas após travamentos do servidor | families.json (modes) |
+| Frequência | `frame` mantido (teto de 60 Hz = taxa de envio do Mirror). Half perde a forma; segments piora paradas e fome real | families.json (modes) |
+| Fome residual | separada: retenção aprovada (pose repetida) × fome real (pose mudou). BubbleChip: real 0–1%; Junction/Speeder: real 7–15%, média < 1 frame | families.json (modes) |
+| Cobertura | Stage_1-1 e Stage_3-6: frame máximo ≤ 0,64 px; legacy perde a forma em 7 famílias (até 8,2 px). Atraso inconclusivo (host degradado nas 2 configurações) | Logs/R02b-coverage-20261108 |
+| Alocações (campo de cliente removido) | clientes −26 KiB/s (medido); servidor −28 KiB/s não resolvido (sobreposição de 4 KiB/s). Renderizado contra a baseline: servidor +13,6 KiB/s (parte 1: +47) | Logs/R02b-costparts-20261108, Logs/R02b-cost-20261108 |
+| Validação | dotnet 0/0; EditMode 1053/1053; Python 136/136 + 15/15 | Logs/R02-tests-20261107-232936 |
+| R02 | parcial; aceite perceptual pendente (roteiro atualizado); não publicado | C:\Users\mauri\SB6-QA-R02\ROTEIRO.md |
+
+## R02 parte 3 — resíduo das sobreposições, alocação por caminho e origem dos picos (08/11/2026; protocolo 67; R02 parcial)
+| Item | Resultado | Evidência |
+|---|---|---|
+| Causa do resíduo após frames do servidor > 40 ms | captura do servidor no LateUpdate do manager (−150), antes da areia e da câmera (0): pose do frame anterior com o carimbo atual; o wrap também era detectado um frame atrasado. Câmera parada no Stage_3-4 (0 px) | coop_phase_probe em Logs/R02c-repro-20261108 |
+| Correção | `CoopLateCaptureDriver` (ordem 32000) captura depois de todos os LateUpdate; teste EditMode de ordem | OnlineCoopWorld.cs; EditMode |
+| Reprodução controlada (travadas de 120 ms × 12) | fase antiga: máximo de 10,52 px (2/2); r02c: 1,13 px (2/2) + renderizada 1,13 px; sem hitch: 1,06–1,16 px (3/3). p95 de 0,8 px. **Critério de forma atendido; limite de 2 px mantido** | Logs/R02c-repro-20261108/repro.json, families.json |
+| Regressão das famílias de gameplay | máximo ≤ 0,43 px; p95 do atraso de 80–100 ms (r02b 70–120); nenhuma piora medida em forma ou fome | families.json |
+| Alocação por caminho (mensagem de 48 frames) | campo removido (168 → 160 B por frame), mas o Boehm aloca 8192 B nos dois casos; servidor ≈ 0 KiB/s esperado. **Redução não demonstrada** | EditMode CoopSpriteMessageAllocationsArePerPathMeasured (Logs/R02-tests-20261108-032440) |
+| Custo total no código final | r02c − r02b: nada resolvido (sem regressão). r02c − baseline: servidor +25,2, clientes +23 KiB/s, saída +22,3 KiB/s (medidos); trabalho não resolvido | Logs/R02c-cost-20261108/cost.json |
+| Picos de localhost | 41 travadas do servidor, 5 de cliente, 2 com origem não isolada (atraso observado pelo Mirror); corrige a atribuição à rede feita na parte 2 | Logs/R02c-spike-origin-20261108/spike-origin.json |
+| Validação | dotnet 0/0; EditMode 1055/1055; Python 137/137 + 15/15 | Logs/R02-tests-20261108-032440 |
+| R02 | parcial: aceite perceptual pendente; não publicado | C:\Users\mauri\SB6-QA-R02\ROTEIRO.md |

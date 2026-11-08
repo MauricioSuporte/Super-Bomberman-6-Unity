@@ -45,6 +45,11 @@ namespace Assets.Scripts.Netcode
         public bool RefreshRequested { get; set; }
         public bool Creating { get; private set; }
 
+        static bool initialJoinUsed;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetJoin() => initialJoinUsed = false;
+
         void Start()
         {
             if (NetworkManager.singleton is BombermanNetworkManager manager && manager.IsDedicatedServer)
@@ -57,8 +62,14 @@ namespace Assets.Scripts.Netcode
                     (endpoint.IsLoopback || endpoint.Host == "100.64.0.46" || endpoint.Host == "192.48.205.46")))) directoryUrl = "";
             var args = Environment.GetCommandLineArgs();
             int join = Array.IndexOf(args, "-online-join");
-            if (!VersionBlocked && join >= 0 && join + 1 < args.Length && Uri.TryCreate(args[join + 1], UriKind.Absolute, out var server) && server.Scheme == "kcp")
+            string target = join >= 0 && join + 1 < args.Length ? args[join + 1] : null;
+            // Development reconnect smoke only: after the first room ends, the browser joins the next room through
+            // the same supported StartClient path. Without the flag every visit keeps the original behaviour.
+            int rejoin = Array.IndexOf(args, "-load-test-rejoin");
+            if (target != null && initialJoinUsed && Debug.isDebugBuild && rejoin >= 0 && rejoin + 1 < args.Length) target = args[rejoin + 1];
+            if (!VersionBlocked && target != null && Uri.TryCreate(target, UriKind.Absolute, out var server) && server.Scheme == "kcp")
             {
+                initialJoinUsed = true;
                 NetworkManager.singleton.StartClient(server);
                 return;
             }
