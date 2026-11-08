@@ -199,8 +199,8 @@ namespace Assets.Scripts.Netcode
                     playerIdByConnection.TryGetValue(connection.connectionId, out int id) && id == RoomAdminPlayerId)
                 {
                     if (!global::SaveSystem.ApplyRoomProgress(message.ownerSave, false)) return;
-                    OwnerModeLocked = RoomMode == OnlineRoomMode.BossRush && !global::SaveSystem.Data.bossRushUnlocked;
-                    if (OwnerModeLocked) { BroadcastRoom(); return; }
+                    // Unlocks restrict the local creation picker, never participants or a replacement admin.
+                    OwnerModeLocked = false;
                     BossRushProgress.SetSelectedDifficulty((BossRushDifficulty)Mathf.Clamp(message.bossDifficulty, 0, 3));
                     ownerFlowConfigured = true;
                     ServerBeginConfiguration();

@@ -15,11 +15,12 @@ namespace Assets.Scripts.Netcode
         public string id, name, creator, uri, mode;
         public int maxPlayers;
         public int players;
-        public bool available, requiresPassword;
+        public bool available, requiresPassword, inMatch;
+        public bool Joinable => available && !inMatch && players < maxPlayers;
         public OnlineRoomMode Mode => Enum.TryParse(mode, out OnlineRoomMode parsed) && OnlineRoomRules.IsValid(parsed)
             ? parsed : OnlineRoomMode.BattleMode;
     }
-    [Serializable] public sealed class OnlineDirectoryHealth { public bool ok; public int protocol; public string buildIdentity; }
+    [Serializable] public sealed class OnlineDirectoryHealth { public bool ok; public int protocol; public string buildIdentity; public int capacity = 3; }
     [Serializable] public sealed class OnlineRoomListing { public OnlineListedRoom[] rooms; }
 
     [Serializable] public sealed class OnlineRoomAllocation
@@ -44,6 +45,8 @@ namespace Assets.Scripts.Netcode
         public bool CanUseOnline => CompatibilityChecked && !VersionBlocked;
         public bool RefreshRequested { get; set; }
         public bool Creating { get; private set; }
+        public int RoomCapacity { get; private set; } = 3;
+        public bool AtCapacity => Rooms.Count >= RoomCapacity;
 
         static bool initialJoinUsed;
 
@@ -126,7 +129,7 @@ namespace Assets.Scripts.Netcode
                         catch (ArgumentException) { DirectoryFailed = true; }
                         if (listing?.rooms != null)
                             foreach (var room in listing.rooms)
-                                if (Valid(room) && room.available && room.players < room.maxPlayers) Rooms.Add(room);
+                                if (Valid(room)) Rooms.Add(room);
                     }
                 }
                 yield return new WaitForSecondsRealtime(0.5f);
@@ -139,6 +142,7 @@ namespace Assets.Scripts.Netcode
         {
             CompatibilityChecked = version != null && version.ok;
             if (!CompatibilityChecked) return;
+            RoomCapacity = version.capacity > 0 ? Mathf.Clamp(version.capacity, 1, 32) : 3;
             #if UNITY_EDITOR
             // Debug uses the deployed identity only after checking the wire protocol.
             // Release players keep exact identity matching and the updater workflow.
@@ -169,7 +173,7 @@ namespace Assets.Scripts.Netcode
 
         public void CreateRoom(OnlineRoomMode mode = OnlineRoomMode.BattleMode, string password = "", string roomName = "", int maxPlayers = 0)
         {
-            if (!CanUseOnline || !DirectoryConfigured || !Browsing || Creating || !OnlineRoomRules.IsValid(mode) ||
+            if (!CanUseOnline || !DirectoryConfigured || !Browsing || Creating || AtCapacity || !OnlineRoomRules.IsValid(mode) ||
                 !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
             StartCoroutine(Allocate(mode, password, roomName, maxPlayers));
         }
@@ -222,7 +226,7 @@ namespace Assets.Scripts.Netcode
 
         public void JoinRoom(OnlineListedRoom room, string password = "")
         {
-            if (!CanUseOnline || !Browsing || Creating || !Valid(room) || !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
+            if (!CanUseOnline || !Browsing || Creating || !Valid(room) || !room.Joinable || !OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName)) return;
             OnlineVersionAuthenticator.RoomPassword = password;
             NetworkManager.singleton.StartClient(new Uri(room.uri));
         }

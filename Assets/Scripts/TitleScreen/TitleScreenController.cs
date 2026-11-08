@@ -255,7 +255,8 @@ public class TitleScreenController : MonoBehaviour
     const int OPTIONS_IDX_LANGUAGE = 1;
     const int OPTIONS_IDX_SOUND = 2;
     int OptionsVideoIndex => IsVideoMenuAvailable ? 3 : -1;
-    int OptionsResetSaveIndex => IsVideoMenuAvailable ? 4 : 3;
+    int OptionsDiscordIndex => IsVideoMenuAvailable ? 4 : 3;
+    int OptionsResetSaveIndex => OptionsDiscordIndex + 1;
 
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
@@ -1647,6 +1648,7 @@ public class TitleScreenController : MonoBehaviour
 
         while (Running && !locked)
         {
+            if (Assets.Scripts.Netcode.GameUpdateController.IsOpen) { yield return null; continue; }
             int itemCount = GetMenuItemCount();
 
             TryHandlePointerHover();
@@ -1979,6 +1981,14 @@ public class TitleScreenController : MonoBehaviour
                     if (cursorRenderer != null)
                         yield return PlayCursorConfirm();
 
+                    if (menuIndex == 3)
+                    {
+                        Assets.Scripts.Netcode.GameUpdateController.Run();
+                        locked = false;
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA)) yield return null;
+                        continue;
+                    }
+
                     ExitRequested = true;
                     yield return ExitGame();
                     yield break;
@@ -2116,6 +2126,13 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
+                    if (menuIndex == OptionsDiscordIndex)
+                    {
+                        Assets.Scripts.Netcode.GameUpdateController.OpenDiscord();
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA)) yield return null;
+                        continue;
+                    }
+
                     if (menuIndex == OptionsResetSaveIndex)
                     {
                         menuMode = MenuMode.ResetSaveConfirm;
@@ -2222,12 +2239,12 @@ public class TitleScreenController : MonoBehaviour
     {
         if (menuMode == MenuMode.PlayerCount) return 4;
         if (menuMode == MenuMode.GameModes) return 4;
-        if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 5 : 4;
+        if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 6 : 5;
         if (menuMode == MenuMode.Language) return GameTextDatabase.SupportedLanguages.Length;
         if (menuMode == MenuMode.Sound) return 3;
         if (menuMode == MenuMode.Video) return 6;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
-        return 4;
+        return 5;
     }
 
     int GetCurrentLanguageIndex()
@@ -2392,6 +2409,7 @@ public class TitleScreenController : MonoBehaviour
                 $"<size={size}>{gameModes}</size>\n" +
                 $"<size={size}>{achievements}</size>\n" +
                 $"<size={size}>{options}</size>\n" +
+                $"<size={size}><color=#FFD86AFF>{GameTextDatabase.Online.UpdateGame}</color></size>\n" +
                 $"<size={size}>{exit}</size>" +
                 "</align>";
 
@@ -2437,6 +2455,7 @@ public class TitleScreenController : MonoBehaviour
                     $"<size={size}>{language}</size>\n" +
                     $"<size={size}>{sound}</size>\n" +
                     $"<size={size}>{video}</size>\n" +
+                    $"<size={size}>DISCORD</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
             }
@@ -2447,6 +2466,7 @@ public class TitleScreenController : MonoBehaviour
                     $"<size={size}>{controls}</size>\n" +
                     $"<size={size}>{language}</size>\n" +
                     $"<size={size}>{sound}</size>\n" +
+                    $"<size={size}>DISCORD</size>\n" +
                     $"<size={size}>{resetSave}</size>" +
                     "</align>";
             }

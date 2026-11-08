@@ -48,7 +48,7 @@ namespace Assets.Scripts.Netcode
         {
             public string token;
             public int players;
-            public bool available;
+            public bool available, inMatch;
         }
 
         [Serializable]
@@ -151,7 +151,8 @@ namespace Assets.Scripts.Netcode
                         File.WriteAllText(temporary, JsonUtility.ToJson(new DedicatedStatus
                         {
                             token = dedicatedToken, players = playerIdByConnection.Count,
-                            available = !leavingRoom && AcceptingRoomPlayers
+                            available = !leavingRoom && AcceptingRoomPlayers,
+                            inMatch = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != NetworkLobby.SceneName
                         }), new System.Text.UTF8Encoding(false));
                         if (File.Exists(dedicatedStatusPath)) File.Delete(dedicatedStatusPath);
                         File.Move(temporary, dedicatedStatusPath);

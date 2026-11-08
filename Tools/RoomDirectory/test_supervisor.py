@@ -31,8 +31,8 @@ class RoomsTests(unittest.TestCase):
         self.pool.close()
         self.temp.cleanup()
 
-    def ready(self, room, players=1, available=True, token=None):
-        data = dict(token=token or room["token"], players=players, available=available)
+    def ready(self, room, players=1, available=True, token=None, in_match=False):
+        data = dict(token=token or room["token"], players=players, available=available, inMatch=in_match)
         room["status"].write_text(json.dumps(data), encoding="utf-8")
         self.pool.refresh()
 
@@ -61,7 +61,7 @@ class RoomsTests(unittest.TestCase):
                 self.pool.create("bad-limit", "BattleMode", max_players=limit)
         with self.assertRaises(ValueError):
             self.pool.create("bad-coop", "NormalGame", max_players=5)
-        for name in ("<b>ROOM</b>", "A" * 17, 12):
+        for name in ("<b>ROOM</b>", "A" * 33, 12):
             with self.assertRaises(ValueError):
                 self.pool.create("bad-name", name=name)
 
@@ -101,6 +101,19 @@ class RoomsTests(unittest.TestCase):
         self.pool.refresh()
         third = self.pool.create("c")
         self.assertEqual(first["uri"], third["uri"])
+
+    def test_default_limit_counts_all_three_rooms_including_matches_and_startup(self):
+        pool = RoomPool("server", "127.0.0.1", logs=Path(self.temp.name) / "three-rooms", spawn=lambda *args, **kwargs: Process())
+        try:
+            for index in range(3):
+                room = pool.create(str(index), creator="Mauricio")
+                self.assertEqual("Mauricio's Room", room["name"])
+                self.assertFalse(room["available"])
+            with self.assertRaisesRegex(OverflowError, "capacity"):
+                pool.create("fourth")
+            self.assertEqual(3, len(pool.rooms))
+        finally:
+            pool.close()
 
     def test_authenticated_status_and_timeout(self):
         public = self.pool.create("a")
@@ -144,9 +157,12 @@ class RoomsTests(unittest.TestCase):
             self.ready(room)
             with urlopen(url + "/rooms") as response:
                 self.assertEqual(1, len(json.load(response)["rooms"]))
-            self.ready(room, available=False)
+            self.ready(room, available=False, in_match=True)
             with urlopen(url + "/rooms") as response:
-                self.assertEqual([], json.load(response)["rooms"])
+                listed = json.load(response)["rooms"]
+                self.assertEqual(1, len(listed))
+                self.assertFalse(listed[0]["available"])
+                self.assertTrue(listed[0]["inMatch"])
             before = len(self.pool.rooms)
             request = Request(url + "/rooms", data=json.dumps({"protocol": PROTOCOL, "buildIdentity": "stale-commit"}).encode())
             with self.assertRaises(HTTPError) as error: urlopen(request)

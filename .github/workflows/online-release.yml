@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: "both = matching client + server; server = fastest, test with Editor at the same commit"
+        description: "both = Windows + Linux + Android + server; server = test with Editor at the same commit"
         type: choice
         default: both
         options: [both, server]
@@ -31,10 +31,14 @@ jobs:
       contents: write
     if: github.repository == 'MauricioSuporte/Super-Bomberman-6-Unity' && github.actor == 'MauricioSuporte' && github.ref == 'refs/heads/v0.5.0'
     runs-on: [self-hosted, Windows, X64, sb6-unity]
-    timeout-minutes: 75
+    timeout-minutes: 180
     env:
       SB6_RELEASE_PROFILE: ${{ inputs.profile || 'quick' }}
       SB6_RELEASE_TARGET: ${{ inputs.target || (contains(github.event.head_commit.message, '[server-only]') && 'server') || 'both' }}
+      SB6_ANDROID_KEYSTORE: ${{ secrets.SB6_ANDROID_KEYSTORE }}
+      SB6_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.SB6_ANDROID_KEYSTORE_PASSWORD }}
+      SB6_ANDROID_KEY_ALIAS: ${{ secrets.SB6_ANDROID_KEY_ALIAS }}
+      SB6_ANDROID_KEY_PASSWORD: ${{ secrets.SB6_ANDROID_KEY_PASSWORD }}
       PYTHONUNBUFFERED: '1'
     defaults:
       run:
@@ -66,14 +70,14 @@ jobs:
         timeout-minutes: 2
         run: python Tools/Ci/release.py preflight
       - name: Compile, test and build requested players
-        timeout-minutes: ${{ inputs.profile == 'full' && 60 || 35 }}
+        timeout-minutes: ${{ inputs.profile == 'full' && 120 || 100 }}
         run: python Tools/Ci/release.py build
       - name: Publish Linux release and disconnect current rooms
         timeout-minutes: 18
         run: python Tools/Ci/release.py deploy
       - name: Publish client updater channel after successful server deployment
         if: env.SB6_RELEASE_TARGET == 'both'
-        timeout-minutes: 12
+        timeout-minutes: 45
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python Tools/Ci/release.py publish-client
@@ -83,6 +87,17 @@ jobs:
         with:
           name: SB6-Windows-${{ env.SB6_ARTIFACT_TIMESTAMP }}
           path: Build/CI/SB6-Windows-*.zip
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+      - name: Linux and Android clients for players
+        if: env.SB6_RELEASE_TARGET == 'both'
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Linux-Android-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          path: |
+            Build/CI/SB6-Linux-*.zip
+            Build/CI/SB6-Android-*.apk
           compression-level: 0
           if-no-files-found: error
           retention-days: 14

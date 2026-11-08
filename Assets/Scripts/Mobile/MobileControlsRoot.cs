@@ -22,6 +22,8 @@ public class MobileControlsRoot : MonoBehaviour
     public static bool Editing { get; private set; }
     public int SelectedControl { get; set; }
     private CanvasGroup visibility;
+    private RectTransform chatButton;
+    private TMPro.TextMeshProUGUI chatLabel;
     private MobileDynamicJoystick joystick;
     private readonly RectTransform[] targets = new RectTransform[8];
     private readonly Vector2[] originalSizes = new Vector2[8];
@@ -77,6 +79,7 @@ public class MobileControlsRoot : MonoBehaviour
         }
         // The directional hit area follows the visual; dynamic mode expands it below.
         ApplyLayout();
+        CreateChatButton();
     }
 
     public void StorePosition(int index)
@@ -203,6 +206,41 @@ public class MobileControlsRoot : MonoBehaviour
         if (touch != null && touch.primaryTouch.press.isPressed) NotifyTouch();
         ApplyPlatformVisibility();
         RefreshContextIcons();
+        RefreshChatButton();
+    }
+
+    void CreateChatButton()
+    {
+        var go = new GameObject("OnlineChat", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+        go.transform.SetParent(visibility.transform, false);
+        chatButton = go.GetComponent<RectTransform>();
+        go.GetComponent<UnityEngine.UI.Image>().color = new Color32(30, 22, 61, 230);
+        go.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(Assets.Scripts.Netcode.OnlineChatOverlay.OpenTouchChat);
+        var label = new GameObject("Label", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+        label.transform.SetParent(go.transform, false);
+        var rect = label.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+        var text = label.GetComponent<TMPro.TextMeshProUGUI>();
+        text.font = Resources.Load<TMPro.TMP_FontAsset>("Fonts/PressStart2P-Regular SDF");
+        chatLabel = text;
+        text.text = GameTextDatabase.Online.ChatButton; text.fontSize = 26; text.alignment = TMPro.TextAlignmentOptions.Center;
+        text.color = new Color32(255, 216, 106, 255); text.raycastTarget = false;
+        RefreshChatButton();
+    }
+
+    void RefreshChatButton()
+    {
+        if (chatButton == null) return;
+        chatButton.gameObject.SetActive(!Editing && Assets.Scripts.Netcode.OnlineChatOverlay.CanOpenTouch);
+        if (!chatButton.gameObject.activeSelf || targets[0] == null || targets[6] == null) return;
+        chatLabel.text = GameTextDatabase.Online.ChatButton;
+        LocalizedTmpFontFallback.Apply(chatLabel);
+        chatButton.sizeDelta = new Vector2(180, 120);
+        var dpadTop = targets[0].TransformPoint(new Vector3(targets[0].rect.center.x, targets[0].rect.yMax, 0));
+        var shoulderBottom = targets[6].TransformPoint(new Vector3(targets[6].rect.center.x, targets[6].rect.yMin, 0));
+        chatButton.position = (dpadTop + shoulderBottom) * .5f;
+        ClampToSafeArea(chatButton);
     }
 
     void CacheContextButtonsAndSprites()

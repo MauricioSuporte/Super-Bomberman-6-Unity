@@ -11,6 +11,41 @@ import release
 
 
 class ReleaseProfileTests(unittest.TestCase):
+    def test_all_platform_assets_upload_before_the_update_pointer_changes(self):
+        for fail_platform in (None, "Linux", "Android"):
+            with self.subTest(fail_platform=fail_platform), tempfile.TemporaryDirectory() as temporary:
+                reports = Path(temporary)
+                revision = "a" * 40
+                windows = reports / "SB6-Windows-2026-11-08.zip"
+                linux = reports / ("SB6-Linux-" + revision + ".zip")
+                android = reports / ("SB6-Android-" + revision + ".apk")
+                for package in (windows, linux, android): package.write_bytes(package.name.encode())
+                manifest = dict(sourceCommit=revision, version="0.5.0", package=windows.name, sha256=release.sha(windows),
+                    linuxPackage=linux.name, linuxSha256=release.sha(linux), androidPackage=android.name, androidSha256=release.sha(android))
+                (reports / "client-update.json").write_text(json.dumps(manifest), encoding="utf-8")
+                calls = []
+                def api(request, **kwargs):
+                    calls.append(request)
+                    if request.get_method() == "GET":
+                        value = dict(id=1, assets=[], upload_url="https://uploads.github.com/repos/test/assets{?name}")
+                    elif request.get_method() == "POST":
+                        name = release.urllib.parse.parse_qs(release.urllib.parse.urlsplit(request.full_url).query)["name"][0]
+                        if fail_platform and name.startswith("SB6-" + fail_platform):
+                            raise release.urllib.error.HTTPError(request.full_url, 503, "unavailable", {}, None)
+                        value = dict(browser_download_url="https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases/download/online-v0.5.0/" + name)
+                    else:
+                        body = json.loads(request.data)["body"]
+                        self.assertIn(linux.name, body); self.assertIn(android.name, body)
+                        self.assertIn(manifest["linuxSha256"], body); self.assertIn(manifest["androidSha256"], body)
+                        self.assertEqual(6, sum(c.get_method() == "POST" for c in calls))
+                        value = {}
+                    return io.BytesIO(json.dumps(value).encode())
+                with patch.object(release, "REPORTS", reports), patch.dict(release.os.environ, {"GITHUB_TOKEN": "test-token"}), patch.object(release.urllib.request, "urlopen", side_effect=api):
+                    if fail_platform:
+                        with self.assertRaises(release.urllib.error.HTTPError): release.publish_client()
+                    else: release.publish_client()
+                self.assertEqual(fail_platform is None, any(c.get_method() == "PATCH" for c in calls))
+
     def test_updater_pointer_changes_only_after_a_successful_asset_upload(self):
         for fail_upload in (False, True):
             with self.subTest(fail_upload=fail_upload), tempfile.TemporaryDirectory() as temporary:
@@ -59,6 +94,13 @@ class ReleaseProfileTests(unittest.TestCase):
             (root / "Build/OnlineClient/Windows").mkdir(parents=True)
             (root / "Build/OnlineClient/Windows/SB6.exe").write_bytes(b"stale executable")
             (root / "Build/OnlineClient/Windows/Super Bomberman 6.exe").write_bytes(b"current executable")
+            (root / "Build/OnlineClient/Linux").mkdir(parents=True)
+            (root / "Build/OnlineClient/Linux/SB6.x86_64").write_bytes(b"linux client")
+            (root / "Build/OnlineClient/Linux/SB6_Data").mkdir()
+            (root / "Build/OnlineClient/Android").mkdir(parents=True)
+            (root / "Build/OnlineClient/Android/SB6-Android.apk").write_bytes(b"android client")
+            (root / "Tools/Ci").mkdir(parents=True)
+            (root / "Tools/Ci/GameUpdater.py").write_text("# Linux updater", encoding="utf-8")
             updater = root / "Updater.exe"
             updater.write_bytes(b"standalone updater")
             (root / "ProjectSettings").mkdir()
@@ -102,6 +144,8 @@ class ReleaseProfileTests(unittest.TestCase):
                     update = json.loads((reports / "client-update.json").read_text(encoding="utf-8"))
                     self.assertEqual(release.sha(reports / update["package"]), update["sha256"])
                     self.assertEqual(folder.name, update["folder"])
+                    self.assertEqual(release.sha(reports / update["linuxPackage"]), update["linuxSha256"])
+                    self.assertEqual(release.sha(reports / update["androidPackage"]), update["androidSha256"])
                     self.assertIn("GameUpdater.exe", json.loads((folder / "client-files.json").read_text(encoding="utf-8")))
                     self.assertFalse((folder / "SB6.exe").exists())
                 return [call.args[0] for call in build.call_args_list]
@@ -208,7 +252,7 @@ class ReleaseProfileTests(unittest.TestCase):
         self.assertEqual(2, len(calls))
         self.assertIn("-runTests", calls[0])
         selected = calls[0][calls[0].index("-testFilter") + 1].split(";")
-        self.assertEqual({"OnlineRoomEditModeTests", "BattleModeComEditorTests", "OnlineChatEditModeTests"}, set(selected))
+        self.assertEqual({"OnlineRoomEditModeTests", "BattleModeComEditorTests", "OnlineChatEditModeTests", "OnlineLobbyInputEditModeTests"}, set(selected))
         self.assertIn("DedicatedServerBuild.BuildReleaseArtifacts", calls[1])
 
 

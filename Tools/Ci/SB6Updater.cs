@@ -185,9 +185,12 @@ internal static class SB6Updater
                 }
                 catch (ArgumentException) { } // The game may already have exited.
             }
-            Update(Path.GetFullPath(args[1]));
-            Console.WriteLine(Text("Press ENTER to close.", "ENTERで閉じます。", "Pulsa ENTER para cerrar.", "Pressione ENTER para fechar.")); Console.ReadLine();
+            string installDirectory = Path.GetFullPath(args[1]);
+            Update(installDirectory);
+            Process.Start(new ProcessStartInfo(Path.Combine(installDirectory, Game))
+                { UseShellExecute = true, WorkingDirectory = installDirectory });
             return 0;
+
         }
         catch (Exception error)
         {

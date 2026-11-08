@@ -50,6 +50,9 @@ namespace Assets.Scripts.Netcode
         OnlineRoomBrowser browser;
         OnlineLobbyMenu lobby;
         Keyboard keyboard;
+        TouchScreenKeyboard touchKeyboard;
+        public static bool CanOpenTouch => active != null && active.Available && !active.ModalOpen && !active.departing;
+        public static void OpenTouchChat() { if (CanOpenTouch && !active.typing) active.Open(); }
         string draft = "", token = "", publicName = "", publicUrl = "";
         bool typing, roomContext, contextInitialized, sending, directoryReady, releaseKeys;
         int consumedFrame = -1, lastId, scroll, previousKeys, publicColorIndex;
@@ -92,6 +95,13 @@ namespace Assets.Scripts.Netcode
                 return;
             }
             RefreshInput();
+            if (typing && touchKeyboard != null)
+            {
+                draft = touchKeyboard.text;
+                RefreshEntry();
+                if (touchKeyboard.status == TouchScreenKeyboard.Status.Done) Submit();
+                else if (touchKeyboard.status is TouchScreenKeyboard.Status.Canceled or TouchScreenKeyboard.Status.LostFocus) Close();
+            }
             PumpOutgoing();
         }
 
@@ -154,6 +164,8 @@ namespace Assets.Scripts.Netcode
         {
             typing = true;
             draft = "";
+            if (Application.isMobilePlatform && TouchScreenKeyboard.isSupported)
+                touchKeyboard = TouchScreenKeyboard.Open("", TouchScreenKeyboardType.Default, false, false, false, false, "", OnlineChatRules.MaxLength);
             scroll = 0;
             RefreshEntry();
         }
@@ -162,6 +174,7 @@ namespace Assets.Scripts.Netcode
         {
             // The opening T arrives before MonoBehaviour.Update. Consume only that
             // character, preserving all subsequent text events in the same frame.
+            if (touchKeyboard != null) return;
             if (!typing)
             {
                 if ((c == 't' || c == 'T') && Available && !ModalOpen && !releaseKeys) Open();
@@ -190,6 +203,8 @@ namespace Assets.Scripts.Netcode
         {
             if (typing) { consumedFrame = Time.frameCount; releaseKeys = AnyKeyboardKeyHeld(); }
             typing = false;
+            if (touchKeyboard != null) touchKeyboard.active = false;
+            touchKeyboard = null;
             draft = "";
         }
 

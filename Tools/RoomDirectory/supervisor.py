@@ -60,8 +60,8 @@ class RoomPool:
             raise ValueError("invalid room mode")
         if not isinstance(password, str) or (password and not re.fullmatch(r"[0-9]{6}", password)):
             raise ValueError("private room passwords require six digits")
-        for value in (name, creator):
-            if not isinstance(value, str) or len(value) > 16 or any(not (c.isalnum() or c in " _-") for c in value):
+        for value, limit, punctuation in ((name, 32, " _-'"), (creator, 16, " _-")):
+            if not isinstance(value, str) or len(value) > limit or any(not (c.isalnum() or c in punctuation) for c in value):
                 raise ValueError("invalid room name or creator")
         if max_players is None:
             max_players = MODES[mode][1]
@@ -93,8 +93,8 @@ class RoomPool:
                                       "-logFile", str(directory / "unity.log")],
                                      cwd=str(Path(self.binary).parent), env=env,
                                      stdout=launch_log, stderr=subprocess.STDOUT)
-            room = dict(id=key, mode=mode, maxPlayers=max_players, creator=creator.strip(), name=name.strip() or MODES[mode][0] + " " + key[:6], uri=f"kcp://{self.host}:{port}",
-                        players=0, available=False, requiresPassword=bool(password), process=process, port=port, token=token,
+            room = dict(id=key, mode=mode, maxPlayers=max_players, creator=creator.strip(), name=name.strip() or (creator.strip() + "'s Room" if creator.strip() else MODES[mode][0] + " " + key[:6]), uri=f"kcp://{self.host}:{port}",
+                        players=0, available=False, inMatch=False, requiresPassword=bool(password), process=process, port=port, token=token,
                         heartbeat=now, status=directory / "status.json", last_status=0)
             self.rooms[key] = room
             self.last_create[ip] = now
@@ -103,7 +103,7 @@ class RoomPool:
 
     @staticmethod
     def public(room):
-        return {k: room[k] for k in ("id", "creator", "name", "uri", "players", "available", "mode", "maxPlayers", "requiresPassword")}
+        return {k: room[k] for k in ("id", "creator", "name", "uri", "players", "available", "inMatch", "mode", "maxPlayers", "requiresPassword")}
 
     def refresh(self):
         with self.lock:
@@ -115,7 +115,7 @@ class RoomPool:
                     data = json.loads(room["status"].read_text(encoding="utf-8-sig"))
                     if not hmac.compare_digest(data.get("token", ""), room["token"]):
                         continue
-                    room.update(players=int(data["players"]), available=bool(data["available"]),
+                    room.update(players=int(data["players"]), available=bool(data["available"]), inMatch=bool(data.get("inMatch", False)),
                                 heartbeat=time.monotonic(), last_status=modified)
                 except (OSError, ValueError, KeyError, TypeError):
                     pass  # Atomic status replacement can race the first read.
@@ -282,10 +282,9 @@ class Handler(BaseHTTPRequestHandler):
         self.server.pool.refresh()
         with self.server.pool.lock:
             if path == "/health":
-                return self.reply(200, {"ok": True, "protocol": PROTOCOL, "buildIdentity": self.server.pool.build_identity})
+                return self.reply(200, {"ok": True, "protocol": PROTOCOL, "buildIdentity": self.server.pool.build_identity, "capacity": self.server.pool.capacity})
             if path == "/rooms":
-                rooms = [self.server.pool.public(r) for r in self.server.pool.rooms.values()
-                         if r["available"] and r["players"] < r["maxPlayers"]]
+                rooms = [self.server.pool.public(r) for r in self.server.pool.rooms.values()]
                 return self.reply(200, {"rooms": rooms})
             if path.startswith("/rooms/"):
                 room = self.server.pool.rooms.get(path.split("/")[-1])

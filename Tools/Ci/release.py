@@ -129,7 +129,7 @@ def unity(args, log):
         startup.wShowWindow = subprocess.SW_HIDE
         launch = dict(creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup)
     command([executable, "-batchmode", "-nographics", "-projectPath", ROOT, "-logFile", log, *args],
-            timeout=1800, env=environment, heartbeat_log=log, **launch)
+            timeout=7200, env=environment, heartbeat_log=log, **launch)
 
 
 def build():
@@ -156,7 +156,7 @@ def build():
     tests = REPORTS / "online-tests.xml"
     tests.unlink(missing_ok=True)
     if profile == "full":
-        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests;BattleModeComEditorTests;OnlineChatEditModeTests", "-testResults", tests], logs / "tests.log")
+        unity(["-runTests", "-testPlatform", "EditMode", "-testFilter", "OnlineRoomEditModeTests;BattleModeComEditorTests;OnlineChatEditModeTests;OnlineLobbyInputEditModeTests", "-testResults", tests], logs / "tests.log")
         result = ET.parse(tests).getroot()
         if result.get("result") != "Passed" or int(result.get("failed", "1")):
             raise RuntimeError("online tests failed; release left unchanged")
@@ -186,6 +186,7 @@ def build():
         destination.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     if target == "both":
         package_client(commit, manifest["builtUtc"], updater, wire_protocol)
+        package_platforms(commit, wire_protocol)
     else:
         # Never expose a previous run's updater manifest in server-only mode.
         (REPORTS / "client-update.json").unlink(missing_ok=True)
@@ -223,6 +224,24 @@ def package_client(commit, built_utc, updater, wire_protocol):
                 archive.write(path, path.relative_to(distribution.parent).as_posix())
     (REPORTS / "client-update.json").write_text(json.dumps(dict(sourceCommit=commit, version=version[1],
         folder=distribution.name, package=package.name, sha256=sha(package)), indent=2), encoding="utf-8")
+
+def package_platforms(commit, wire_protocol):
+    linux = ROOT / "Build/OnlineClient/Linux"
+    shutil.copy2(ROOT / "Tools/Ci/GameUpdater.py", linux / "GameUpdater.py")
+    (linux / "build-info.json").write_text(json.dumps(dict(sourceCommit=commit, protocol=wire_protocol)), encoding="utf-8")
+    files = sorted(p.relative_to(linux).as_posix() for p in linux.rglob("*") if p.is_file())
+    (linux / "client-files.json").write_text(json.dumps(files + ["client-files.json"]), encoding="utf-8")
+    package = REPORTS / ("SB6-Linux-" + commit + ".zip")
+    with zipfile.ZipFile(package, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=1) as archive:
+        for path in sorted(linux.rglob("*")):
+            if path.is_file(): archive.write(path, path.relative_to(linux).as_posix())
+    apk = REPORTS / ("SB6-Android-" + commit + ".apk")
+    shutil.copy2(ROOT / "Build/OnlineClient/Android/SB6-Android.apk", apk)
+    update_path = REPORTS / "client-update.json"
+    update = json.loads(update_path.read_text(encoding="utf-8"))
+    update.update(linuxPackage=package.name, linuxSha256=sha(package), androidPackage=apk.name, androidSha256=sha(apk))
+    update_path.write_text(json.dumps(update, indent=2), encoding="utf-8")
+
 
 def deploy():
     manifest = json.loads((REPORTS / "deployment.json").read_text(encoding="utf-8"))
@@ -276,7 +295,7 @@ def publish_client():
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
                    "User-Agent": "SB6-Release", "Content-Type": content_type}
         with urllib.request.urlopen(urllib.request.Request(url, data=body, headers=headers, method=method), timeout=120) as response:
-            return json.load(response)
+            return json.load(response) if method != "DELETE" else None
 
     try:
         release = request(f"{endpoint}/tags/{tag}")
@@ -296,8 +315,34 @@ def publish_client():
             with urllib.request.urlopen(urllib.request.Request(upload, data=stream, headers=headers, method="POST"), timeout=1800) as response:
                 existing = json.load(response)
     update["url"] = existing["browser_download_url"]
+    platform_packages = [("windows", package, update["sha256"])]
+    for platform in ("linux", "android"):
+        name = update.pop(platform + "Package", None)
+        if name is None: continue
+        if not re.fullmatch(r"SB6-" + platform.capitalize() + r"-[0-9a-f]{40}\.(zip|apk)", name):
+            raise RuntimeError("invalid platform package")
+        artifact = REPORTS / name
+        if sha(artifact) != update[platform + "Sha256"]: raise RuntimeError("platform package changed")
+        asset = next((a for a in release["assets"] if a["name"] == name), None)
+        if asset is None:
+            with artifact.open("rb") as stream:
+                headers = {"Authorization": f"Bearer {token}", "User-Agent": "SB6-Release",
+                           "Content-Type": "application/octet-stream", "Content-Length": str(artifact.stat().st_size)}
+                with urllib.request.urlopen(urllib.request.Request(release["upload_url"].split("{")[0] + "?name=" + urllib.parse.quote(name), data=stream, headers=headers, method="POST"), timeout=1800) as response:
+                    asset = json.load(response)
+        update[platform + "Url"] = asset["browser_download_url"]
+        platform_packages.append((platform, artifact, update[platform + "Sha256"]))
+    # Stable filenames are README download targets. Update only after every immutable asset uploaded.
+    for platform, artifact, digest in platform_packages:
+        stable = {"windows": "SB6-Windows.zip", "linux": "SB6-Linux.zip", "android": "SB6-Android.apk"}[platform]
+        old = next((a for a in release["assets"] if a["name"] == stable), None)
+        if old is not None: request(f"https://api.github.com/repos/{repository}/releases/assets/{old['id']}", "DELETE")
+        with artifact.open("rb") as stream:
+            headers = {"Authorization": f"Bearer {token}", "User-Agent": "SB6-Release", "Content-Type": "application/octet-stream", "Content-Length": str(artifact.stat().st_size)}
+            with urllib.request.urlopen(urllib.request.Request(release["upload_url"].split("{")[0] + "?name=" + stable, data=stream, headers=headers, method="POST"), timeout=1800) as response:
+                json.load(response)
     update.pop("package")
-    body = "Cliente correspondente ao servidor online publicado. Execute GameUpdater.exe com o jogo fechado.\n\n"
+    body = "Windows, Linux e Android correspondentes ao servidor online publicado. Use Atualizar jogo no menu. Linux: extraia o ZIP, execute chmod +x SB6.x86_64 e inicie o jogo; atualizador requer Python 3.9+.\n\n"
     body += f"Build: {update['sourceCommit']}\n\n<!-- sb6-update:{json.dumps(update, separators=(',', ':'))} -->"
     request(f"{endpoint}/{release['id']}", "PATCH", dict(body=body, prerelease=True, make_latest="false"))
     print("Client updater channel published:", update["sourceCommit"], flush=True)

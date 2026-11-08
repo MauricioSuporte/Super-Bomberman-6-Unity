@@ -7,7 +7,11 @@ namespace Assets.Scripts.Netcode
     public partial class OnlineLobbyMenu
     {
         bool creationOpen, editingRoomName;
-        string createdRoomName = "ROOM 1";
+        string createdRoomName = "";
+        bool customRoomName;
+        const int MaxRoomNameLength = 32;
+        string DefaultRoomName => OnlineVersionAuthenticator.PlayerName + "'s Room";
+        string CurrentRoomName => customRoomName ? createdRoomName : DefaultRoomName;
         int selectedMaxPlayers = 6;
         GameObject creationForm;
         Button roomNameButton, browseCreateButton;
@@ -16,8 +20,8 @@ namespace Assets.Scripts.Netcode
         static string ConnectingText(OnlineRoomText text) => text.Connecting.TrimEnd('.') + new string('.', (int)(Time.unscaledTime * 3f) % 4);
         readonly TextMeshProUGUI[] creationCaptions = new TextMeshProUGUI[4];
         readonly TextMeshProUGUI[] tableHeaders = new TextMeshProUGUI[5];
-        static readonly float[] ColumnX = { -85, -41, 7, 51, 88 };
-        static readonly float[] ColumnWidth = { 38, 46, 46, 38, 30 };
+        static readonly float[] ColumnX = { -84, -28, 30, 67, 94 };
+        static readonly float[] ColumnWidth = { 38, 70, 42, 28, 22 };
 
         void CreateCreationForm(Transform parent)
         {
@@ -39,6 +43,7 @@ namespace Assets.Scripts.Netcode
             }
             browseCreateButton = MakeButton(browserRoot.transform, "NewRoom", 0, -61, () =>
             {
+                if (!HasPlayerName()) { OpenName(); return; }
                 creationOpen = true;
                 cursorButton = roomNameButton;
                 PlayLobbySound(confirmSfx);
@@ -47,14 +52,16 @@ namespace Assets.Scripts.Netcode
 
         void UpdateCreationForm(bool idle)
         {
+            if (creationOpen && selectedMode == OnlineRoomMode.BossRush && !StageUnlockProgress.IsBossRushUnlocked())
+                selectedMode = OnlineRoomMode.BattleMode;
             creationForm.SetActive(idle && creationOpen);
             var text = GameTextDatabase.Online;
             creationTitle.text = browser != null && browser.Creating ? ConnectingText(text) : text.NewRoom;
             browseCreateButton.gameObject.SetActive(idle);
             foreach (var heading in tableHeaders) heading.gameObject.SetActive(idle);
             browseCreateButton.GetComponentInChildren<TextMeshProUGUI>(true).text = text.Host;
-            browseCreateButton.interactable = browser != null && browser.CanUseOnline && !browser.Creating;
-            roomNameButton.GetComponentInChildren<TextMeshProUGUI>(true).text = createdRoomName;
+            browseCreateButton.interactable = browser != null && browser.CanUseOnline && !browser.Creating && !browser.AtCapacity;
+            roomNameButton.GetComponentInChildren<TextMeshProUGUI>(true).text = CurrentRoomName;
             creationCaptions[0].text = text.RoomName;
             creationCaptions[1].text = text.RoomType;
             creationCaptions[2].text = text.RoomPassword;
@@ -65,7 +72,7 @@ namespace Assets.Scripts.Netcode
         void OpenRoomName()
         {
             editingRoomName = true;
-            BeginNameEdit(createdRoomName);
+            BeginNameEdit(CurrentRoomName);
         }
 
         void ChangeCapacity(int delta)
@@ -95,20 +102,24 @@ namespace Assets.Scripts.Netcode
             var cells = button.GetComponentsInChildren<TextMeshProUGUI>(true);
             if (cells.Length == 1)
             {
-                for (int i = 1; i < 5; i++) Label(button.transform, "Cell" + i, ColumnX[i], 0, ColumnWidth[i], 18, 4);
+                for (int i = 1; i < 5; i++) Label(button.transform, "Cell" + i, ColumnX[i], 4, ColumnWidth[i], 18, 4);
                 cells = button.GetComponentsInChildren<TextMeshProUGUI>(true);
             }
             string[] values = { string.IsNullOrEmpty(room.creator) ? "-" : room.creator, room.name,
                 text.TableModeName(room.Mode), room.players + "/" + room.maxPlayers, room.requiresPassword ? text.Yes : text.No };
-            for (int i = 0; i < cells.Length; i++)
+            for (int i = 0; i < 5; i++)
             {
-                Position(cells[i].rectTransform, ColumnX[i], 0, ColumnWidth[i], 18);
+                Position(cells[i].rectTransform, ColumnX[i], 4, ColumnWidth[i], 18);
                 cells[i].fontSize = 4;
                 cells[i].richText = false;
                 cells[i].textWrappingMode = TextWrappingModes.NoWrap;
                 cells[i].overflowMode = TextOverflowModes.Ellipsis;
                 cells[i].text = values[i];
             }
+            var state = button.transform.Find("RoomState");
+            var stateLabel = state != null ? state.GetComponent<TextMeshProUGUI>() : Label(button.transform, "RoomState", 0, -8, 198, 8, 4);
+            stateLabel.text = room.inMatch ? text.MatchInProgress : room.players >= room.maxPlayers ? text.RoomFull : !room.available ? text.Connecting : text.Join;
+            stateLabel.color = room.Joinable ? Gold : Muted;
         }
     }
 }

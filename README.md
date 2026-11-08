@@ -1,5 +1,14 @@
 # 🎮 Super Bomberman 6 — Unity Fan Project
 
+<p align="center">
+  <a href="https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases/download/online-v0.5.0/SB6-Windows.zip"><img alt="Download Windows x64" src="https://img.shields.io/badge/DOWNLOAD-WINDOWS_x64-0078D6?style=for-the-badge&amp;logo=windows" /></a>
+  <a href="https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases/download/online-v0.5.0/SB6-Linux.zip"><img alt="Download Linux x86_64" src="https://img.shields.io/badge/DOWNLOAD-LINUX_x86__64-FCC624?style=for-the-badge&amp;logo=linux&amp;logoColor=black" /></a>
+  <a href="https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases/download/online-v0.5.0/SB6-Android.apk"><img alt="Download Android APK" src="https://img.shields.io/badge/DOWNLOAD-ANDROID_APK-3DDC84?style=for-the-badge&amp;logo=android&amp;logoColor=white" /></a>
+</p>
+
+Latest matching online builds · [All releases](https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases) · [Discord](https://discord.gg/F2dTdmwChF)
+The three download buttons are populated by the next complete online release. Linux: extract, run `chmod +x SB6.x86_64`, then launch it; in-game updates require Python 3.9+. Android updates require the system installation confirmation.
+
 Welcome to **Super Bomberman 6 Unity**, an open-source fan-made project that recreates and expands the classic Bomberman gameplay using **Unity** and **C#**.
 
 This project is currently in **active development** and already includes a playable demo with core systems, enemies, items, and gameplay loops — along with many new features inspired by classic Super Bomberman titles.

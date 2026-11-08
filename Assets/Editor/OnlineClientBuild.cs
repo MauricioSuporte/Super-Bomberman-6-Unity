@@ -33,6 +33,38 @@ public static class OnlineClientBuild
     public static void BuildPerformancePlayer() => Build(BuildTarget.StandaloneWindows64,
         "Build/ServerBenchmark/Windows/SB6.exe", BuildOptions.Development);
 
+    [MenuItem("Build/Online Client (Android)")]
+    public static void BuildAndroid()
+    {
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
+            throw new BuildFailedException("Install Android Build Support first.");
+        string keyStore = System.Environment.GetEnvironmentVariable("SB6_ANDROID_KEYSTORE");
+        if (!string.IsNullOrEmpty(keyStore))
+        {
+            PlayerSettings.Android.useCustomKeystore = true;
+            PlayerSettings.Android.keystoreName = keyStore;
+            PlayerSettings.Android.keystorePass = System.Environment.GetEnvironmentVariable("SB6_ANDROID_KEYSTORE_PASSWORD");
+            PlayerSettings.Android.keyaliasName = System.Environment.GetEnvironmentVariable("SB6_ANDROID_KEY_ALIAS");
+            PlayerSettings.Android.keyaliasPass = System.Environment.GetEnvironmentVariable("SB6_ANDROID_KEY_PASSWORD");
+        }
+        if (System.Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" && !PlayerSettings.Android.useCustomKeystore)
+            throw new BuildFailedException("Configure a permanent Android signing key before publishing updates.");
+        // All platforms use the exact same source stamp, never a platform-specific hash.
+        PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+        PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.ARMv7;
+        PlayerSettings.Android.bundleVersionCode = (int)(System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 60);
+        EditorUserBuildSettings.buildAppBundle = false;
+        var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToList();
+        scenes.Remove(EntryScene); scenes.Insert(0, EntryScene);
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+        {
+            scenes = scenes.ToArray(), locationPathName = "Build/OnlineClient/Android/SB6-Android.apk",
+            target = BuildTarget.Android, targetGroup = BuildTargetGroup.Android
+        });
+        if (report.summary.result != BuildResult.Succeeded || report.summary.totalErrors > 0)
+            throw new BuildFailedException("Android client build failed.");
+    }
+
     static void Build(BuildTarget target, string outputPath, BuildOptions options = BuildOptions.None)
     {
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);

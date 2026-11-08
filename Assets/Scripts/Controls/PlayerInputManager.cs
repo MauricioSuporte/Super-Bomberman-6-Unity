@@ -868,6 +868,20 @@ public class PlayerInputManager : MonoBehaviour
         return false;
     }
 
+    // Text dialogs must ignore keyboard gameplay bindings while preserving configured controllers.
+    public bool GetTextDialogDown(PlayerAction action)
+    {
+        if (MobileInputBridge.Instance != null && MobileInputBridge.Instance.GetDown(action)) return true;
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
+        {
+            var profile = GetPlayer(id);
+            var binding = profile.GetBinding(action);
+            if (binding.kind == BindKind.JoyButton && ReadGamepadButtonDown(profile, binding.joyButton)) return true;
+            if (binding.kind == BindKind.DPad && ReadDownRawUncached(id, action)) return true;
+        }
+        return false;
+    }
+
     static bool ReadGamepadButtonHeld(PlayerInputProfile p, int btn)
     {
         var device = ResolvePlayerInputDevice(p);

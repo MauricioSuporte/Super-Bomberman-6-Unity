@@ -35,6 +35,12 @@ public static class DedicatedServerBuild
         timer.Restart();
         OnlineClientBuild.BuildWindows();
         Debug.Log($"[ReleaseTiming] Windows client: {timer.Elapsed.TotalSeconds:F1}s");
+        timer.Restart();
+        OnlineClientBuild.BuildLinux();
+        Debug.Log($"[ReleaseTiming] Linux client: {timer.Elapsed.TotalSeconds:F1}s");
+        timer.Restart();
+        OnlineClientBuild.BuildAndroid();
+        Debug.Log($"[ReleaseTiming] Android client: {timer.Elapsed.TotalSeconds:F1}s");
     }
 
     static void Build(BuildTarget target, string outputPath, StandaloneBuildSubtarget subtarget,

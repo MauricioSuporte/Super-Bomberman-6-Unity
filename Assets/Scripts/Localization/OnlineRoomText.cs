@@ -19,6 +19,7 @@ public sealed class OnlineRoomText
     public readonly string Online, Offline, Room, BattleMode, Host, Join, Address, Leave, Configure,
         Connecting, Waiting, You, Empty, HostConfiguring, Choosing, Confirmed, NeedPlayers, Unavailable,
         Rules, Items, Louies, Handicap;
+    public string ChatButton => LanguageText("CHAT", "チャット", "CHAT", "CHAT");
     public string ChatPublic => LanguageText("PUBLIC CHAT", "全体チャット", "CHAT GENERAL", "CHAT GERAL");
     public string ChatRoom => LanguageText("ROOM CHAT", "ルームチャット", "CHAT DE SALA", "CHAT DA SALA");
     public string ChatPresence(string name, bool joined, bool you) => you
@@ -42,14 +43,26 @@ public sealed class OnlineRoomText
     public string EditName => LanguageText("EDIT NAME", "名前を変更", "CAMBIAR NOMBRE", "ALTERAR NOME");
     public string CurrentName => LanguageText("NAME", "名前", "NOMBRE", "NOME");
     public string ChangeNameRequired => LanguageText("SELECT EDIT NAME: NAME MISSING, INVALID OR IN USE", "名前が空欄・無効・使用中です。名前を変更してください", "ELIGE CAMBIAR NOMBRE: VACÍO, INVÁLIDO O EN USO", "SELECIONE ALTERAR NOME: VAZIO, INVÁLIDO OU EM USO");
+    public string UpdateGame => LanguageText("UPDATE GAME", "ゲームを更新", "ACTUALIZAR JUEGO", "ATUALIZAR JOGO");
+    public string MatchInProgress => LanguageText("IN MATCH", "対戦中", "EN PARTIDA", "EM PARTIDA");
+    public string RoomFull => LanguageText("FULL", "満員", "LLENA", "CHEIA");
+    public string RoomLimitReached => LanguageText("ROOM LIMIT REACHED", "ルーム数が上限です", "LÍMITE DE SALAS ALCANZADO", "LIMITE DE SALAS ATINGIDO");
+    public string UpdateChecking => LanguageText("CHECKING UPDATE...", "更新を確認中...", "BUSCANDO ACTUALIZACIÓN...", "VERIFICANDO ATUALIZAÇÃO...");
+    public string UpdateDownloading => LanguageText("DOWNLOADING", "ダウンロード中", "DESCARGANDO", "BAIXANDO");
+    public string UpdateInstall => LanguageText("CONFIRM INSTALLATION ON ANDROID", "Androidでインストールを確認してください", "CONFIRMA LA INSTALACIÓN EN ANDROID", "CONFIRME A INSTALAÇÃO NO ANDROID");
+    public string UpdatePermission => LanguageText("ALLOW INSTALL UNKNOWN APPS, RETURN AND UPDATE AGAIN", "不明なアプリのインストールを許可し、戻って再度更新してください", "PERMITE INSTALAR APPS DESCONOCIDAS, VUELVE E INTÉNTALO DE NUEVO", "PERMITA INSTALAR APPS DESCONHECIDOS, VOLTE E ATUALIZE NOVAMENTE");
+    public string UpdateBuiltPlayer => LanguageText("RUN THE UPDATER IN THE BUILT GAME", "ビルドしたゲームから更新してください", "ACTUALIZA DESDE EL JUEGO COMPILADO", "EXECUTE O ATUALIZADOR NO JOGO COMPILADO");
+    public string UpdateMissing => LanguageText("UPDATE PACKAGE OR HELPER UNAVAILABLE", "更新パッケージがありません", "PAQUETE O ACTUALIZADOR NO DISPONIBLE", "PACOTE OU ATUALIZADOR INDISPONÍVEL");
+    public string UpdateFailed => LanguageText("UPDATE FAILED. TRY AGAIN.", "更新に失敗しました。再試行してください。", "ERROR AL ACTUALIZAR. INTÉNTALO DE NUEVO.", "FALHA AO ATUALIZAR. TENTE NOVAMENTE.");
+    public string UpdateDismiss => LanguageText("TAP TO CLOSE / START / B", "タップで閉じる / START / B", "TOCA PARA CERRAR / START / B", "TOQUE PARA FECHAR / START / B");
     public string RunUpdater => LanguageText("RUN GAME UPDATER", "ゲーム更新を起動", "EJECUTAR ACTUALIZADOR", "EXECUTAR ATUALIZADOR");
     public string EnterName => LanguageText("YOUR NAME (1-16)", "名前（1～16文字）", "TU NOMBRE (1-16)", "SEU NOME (1-16)");
     public string NameInUse => LanguageText("NAME ALREADY IN USE IN THIS ROOM\nCHOOSE ANOTHER NAME", "この部屋では名前が使用中です\n別の名前を選んでください", "NOMBRE YA EN USO EN ESTA SALA\nELIGE OTRO NOMBRE", "NOME JÁ EM USO NESTA SALA\nESCOLHA OUTRO NOME");
     public string NameUnavailable => LanguageText("NAME EMPTY, INVALID OR ALREADY IN USE", "名前が空欄・無効・使用中です", "NOMBRE VACÍO, INVÁLIDO O EN USO", "NOME VAZIO, INVÁLIDO OU JÁ EM USO");
-    public string NameHint => LanguageText("TYPE OR USE ARROWS\nLEFT/RIGHT: POSITION\nUP/DOWN: LETTER\nA / ENTER: CONFIRM\nB: BACK", "入力または矢印キー\n左右：位置\n上下：文字\nA / ENTER：決定\nB：戻る", "ESCRIBE O USA LAS FLECHAS\nIZQ/DER: POSICIÓN\nARR/ABA: LETRA\nA / ENTER: CONFIRMAR\nB: VOLVER", "DIGITE OU USE AS SETAS\nESQ/DIR: POSIÇÃO\nCIMA/BAIXO: LETRA\nA / ENTER: CONFIRMAR\nB: VOLTAR");
+    public string NameHint => LanguageText("TYPE TEXT\nENTER: CONFIRM / ESC: BACK\nPAD: START / B", "文字を入力\nENTER: 決定 / ESC: 戻る\nパッド: START / B", "ESCRIBE\nENTER: CONFIRMAR / ESC: VOLVER\nMANDO: START / B", "DIGITE O TEXTO\nENTER: CONFIRMAR / ESC: VOLTAR\nCONTROLE: START / B");
     public string PrivateRoom => LanguageText("PRIVATE", "非公開", "PRIVADA", "PRIVADA");
     public string Password => LanguageText("PASSWORD (6 DIGITS)", "パスワード（数字6桁）", "CLAVE (6 DÍGITOS)", "SENHA (6 DÍGITOS)");
-    public string PasswordHint => LanguageText("LEFT/RIGHT: DIGIT\nUP/DOWN: CHANGE\nA: CONFIRM\nB: BACK", "左右: 桁\n上下: 数字\nA: 決定\nB: 戻る", "IZQ/DER: DÍGITO\nARR/ABA: CAMBIAR\nA: CONFIRMAR\nB: VOLVER", "ESQ/DIR: DÍGITO\nCIMA/BAIXO: ALTERAR\nA: CONFIRMAR\nB: VOLTAR");
+    public string PasswordHint => LanguageText("TYPE TEXT\nENTER: CONFIRM / ESC: BACK\nPAD: START / B", "文字を入力\nENTER: 決定 / ESC: 戻る\nパッド: START / B", "ESCRIBE\nENTER: CONFIRMAR / ESC: VOLVER\nMANDO: START / B", "DIGITE O TEXTO\nENTER: CONFIRMAR / ESC: VOLTAR\nCONTROLE: START / B");
     public string WrongPassword => LanguageText("INCORRECT PASSWORD", "パスワードが違います", "CLAVE INCORRECTA", "SENHA INCORRETA");
     public string Back => LanguageText("BACK", "戻る", "VOLVER", "VOLTAR");
     public string AvailableRooms => LanguageText("AVAILABLE ROOMS", "参加できるルーム", "SALAS DISPONIBLES", "SALAS DISPONÍVEIS");
@@ -65,7 +78,7 @@ public sealed class OnlineRoomText
     public string LanUnavailable => LanguageText("LAN DISCOVERY UNAVAILABLE", "LAN検索を利用できません", "BÚSQUEDA LAN NO DISPONIBLE", "BUSCA LAN INDISPONÍVEL");
     public string DirectJoin => LanguageText("OR JOIN BY HOST IP", "またはホストIPで参加", "O ENTRA POR IP DEL HOST", "OU ENTRE PELO IP DO HOST");
     public string VersionMismatch => UnityEngine.Application.isEditor ? LanguageText(
-        "EDITOR/SERVER PROTOCOL MISMATCH: WAIT FOR DEPLOY", "Editorとサーバーのプロトコルが異なります。デプロイを待ってください", "PROTOCOLO EDITOR/SERVIDOR DISTINTO: ESPERA EL DESPLIEGUE", "PROTOCOLO EDITOR/SERVIDOR DIFERENTE: AGUARDE O DEPLOY") : LanguageText("INCOMPATIBLE VERSION: RUN GameUpdater.exe", "バージョンが異なります。GameUpdater.exe を実行してください", "VERSIÓN INCOMPATIBLE: EJECUTA GameUpdater.exe", "VERSÃO INCOMPATÍVEL: EXECUTE GameUpdater.exe");
+        "EDITOR/SERVER PROTOCOL MISMATCH: WAIT FOR DEPLOY", "Editorとサーバーのプロトコルが異なります。デプロイを待ってください", "PROTOCOLO EDITOR/SERVIDOR DISTINTO: ESPERA EL DESPLIEGUE", "PROTOCOLO EDITOR/SERVIDOR DIFERENTE: AGUARDE O DEPLOY") : LanguageText("INCOMPATIBLE VERSION: UPDATE GAME", "バージョンが異なります。ゲームを更新してください", "VERSIÓN INCOMPATIBLE: ACTUALIZA EL JUEGO", "VERSÃO INCOMPATÍVEL: ATUALIZE O JOGO");
     public string YouJoined => LanguageText("YOU JOINED THE ROOM!", "ルームに参加しました！", "¡HAS ENTRADO EN LA SALA!", "VOCÊ ENTROU NA SALA!");
     public string StartingMatch => LanguageText("Starting the match!", "対戦を開始します！", "¡Comenzando la partida!", "Iniciando a partida!");
     public string PleaseWait => LanguageText("Please wait...", "お待ちください…", "Espera, por favor...", "Por favor, aguarde...");
