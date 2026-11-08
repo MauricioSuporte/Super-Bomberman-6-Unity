@@ -579,4 +579,4 @@ R01 permanece parcial.
 | Custo total no código final | r02c − r02b: nada resolvido (sem regressão). r02c − baseline: servidor +25,2, clientes +23 KiB/s, saída +22,3 KiB/s (medidos); trabalho não resolvido | Logs/R02c-cost-20261108/cost.json |
 | Picos de localhost | 41 travadas do servidor, 5 de cliente, 2 com origem não isolada (atraso observado pelo Mirror); corrige a atribuição à rede feita na parte 2 | Logs/R02c-spike-origin-20261108/spike-origin.json |
 | Validação | dotnet 0/0; EditMode 1055/1055; Python 137/137 + 15/15 | Logs/R02-tests-20261108-032440 |
-| R02 | parcial: aceite perceptual pendente; não publicado | C:\Users\mauri\SB6-QA-R02\ROTEIRO.md |
+| R02 | parcial: aceite perceptual humano pendente; publicado em homologação em `b2d90fb7b`/protocolo 67 (Actions 42473009178; servidor, cliente e atualizador conferidos) | C:\Users\mauri\SB6-QA-R02\ROTEIRO.md; Logs/R02-publication.json |

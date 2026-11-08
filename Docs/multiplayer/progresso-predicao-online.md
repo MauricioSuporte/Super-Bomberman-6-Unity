@@ -267,7 +267,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
 - [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 concluída no Actions42204673208.
 - [x] R01: concluído e publicado em homologação (07/11/2026; protocolo 65 inalterado; runtime `b01817c73`, Actions 42403939455). Implementação, validação automatizada (EditMode 1046/1046; smokes com 2 clientes renderizados, 0 passos para trás reais, 0 lacunas, 0 poses duplas) e aceite manual (aprovado pelo usuário nos cenários testados) concluídos. **Pendências obrigatórias do R01:** (1) custo CPU/bytes do player remoto (baseline comparável); (2) comparação online × offline com `analyze_prediction.py` (Logs/R01-comparacao.json). **Atualização 07/11:** (2) demonstrada; (1) medida, revelou custo de diagnósticos (+56 KiB/s de alocação no servidor) e +5–6% de ciclos no observador; a correção Development-only ainda precisa de compilação/EditMode e da medição sem captura. **Atualização 07/11 (tarde):** EditMode 1046/1046; sem captura não há diferença resolvida (Δ frame ≤ 0,05 ms); R01 concluído nos critérios obrigatórios. **Publicação 07/11:** servidor, cliente e atualizador conferidos em `b01817c73`/65. Limitações: borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições só na CPU nova, teardown antigo não reproduzido (não corrigido).
-- [ ] R02: PARCIAL (08/11; protocolo 67, binário r02c `020208c8…`, não publicado). Parte 1: amostras de posição por frame + âncoras de repouso; forma das famílias de gameplay corrigida (p95 0,1 px). Parte 2: reposicionamento explícito no wrap; reconexão 3/3; teto de 60 Hz (`frame`); fome real separada. Parte 3: resíduo das sobreposições isolado (captura do servidor antes do LateUpdate da areia/câmera) e corrigido com captura após todos os LateUpdate; reprodução controlada com travadas de 120 ms: fase antiga 10,5 px, r02c 1,06–1,16 px (p95 0,8) em 6/6 execuções. Campo removido sem redução de alocação demonstrada (alocador em blocos de 4 KiB: ≈ 0 no servidor); custo total r02c − baseline +25/+23/+22 KiB/s, sem regressão contra r02b. Picos de localhost: 41/48 janelas são travadas do servidor; o restante é atraso observado pelo Mirror ou travada de cliente. EditMode 1055/1055. Aceite perceptual pendente (`C:\Users\mauri\SB6-QA-R02`).
+- [ ] R02: PARCIAL, publicado em homologação (08/11; protocolo 67; runtime `b2d90fb7b`, Actions 42473009178; validado no binário r02c `020208c8…`). Parte 1: amostras de posição por frame + âncoras de repouso; forma das famílias de gameplay corrigida (p95 0,1 px). Parte 2: reposicionamento explícito no wrap; reconexão 3/3; teto de 60 Hz (`frame`); fome real separada. Parte 3: resíduo das sobreposições isolado (captura do servidor antes do LateUpdate da areia/câmera) e corrigido com captura após todos os LateUpdate; reprodução controlada com travadas de 120 ms: fase antiga 10,5 px, r02c 1,06–1,16 px (p95 0,8) em 6/6 execuções. Campo removido sem redução de alocação demonstrada (alocador em blocos de 4 KiB: ≈ 0 no servidor); custo total r02c − baseline +25/+23/+22 KiB/s, sem regressão contra r02b. Picos de localhost: 41/48 janelas são travadas do servidor; o restante é atraso observado pelo Mirror ou travada de cliente. EditMode 1055/1055. Aceite perceptual humano pendente mesmo após a publicação (`C:\Users\mauri\SB6-QA-R02`).
 - [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
 - [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
@@ -5524,3 +5524,36 @@ Sem push, deploy ou publicação. R03 não iniciado.
 - `Packages/`, sem alterações no momento e nunca incluído;
 - `Logs/` (evidências, ignoradas pelo Git);
 - `Assets/_Recovery/`.
+
+### Publicação R02 concluída — Actions 42473009178 success (08/11/2026)
+Publicado em homologação com a autorização do usuário. **O R02 continua PARCIAL**: o QA visual humano não foi feito, e as limitações acima continuam valendo. R03 não iniciado.
+
+**Commit:** `b2d90fb7bbaf11b4e8cdb6fca99761fcfe031c9e` (`fix: complete R02 co-op world motion samples and capture phase (protocol 67)`), 15 arquivos.
+- 6 `.cs` de runtime, o teste EditMode, 3 docs, `smoke_full_clients.py`, `supervisor.py` (PROTOCOL 67), `smoke_coop_reconnect.py`, `r02_coop_report.py` e `test_r02_coop_report.py`.
+- **Fora do commit:**
+  - o asset de fonte do usuário, que continua modificado no working tree;
+  - `Packages/`, com hashes inalterados: manifest `b8b74927…`, lock `803f0e80…`;
+  - `Logs/`.
+
+**Pipeline:** o push em `v0.5.0` disparou o Homologation both/quick, sucesso em 8m45s.
+- Run: https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42473009178
+- Job: https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/42473009178/job/128707982474
+- Artefatos: `SB6-Windows-2026-11-08_06-49-05` e `SB6-Validation-2026-11-08_06-49-05`.
+- Nenhum outro job rodava antes do push. Nenhuma falha de pipeline e nenhuma validação contornada.
+
+**Verificação** (`python Logs/R02-verify-publication.py` → `Logs/R02-publication.json`; manifestos copiados para `Logs/R02-publication-*.json`):
+- **Servidor ativo, via SSH:** `sourceCommit=b2d90fb7…`, `protocol=67`, `benchmarkHarness=false`.
+- **deploy-status:** mesmo commit, `success=true`, ativado em 2026-11-08T10:55:24Z. A ativação reiniciou as salas, como autorizado.
+- **Cliente:** o `build-info.json` dentro do pacote publicado tem `sourceCommit=b2d90fb7…`, `protocol=67`, build de 2026-11-08T10:54:02Z.
+- **Atualizador:** o ponteiro público da Release `online-v0.5.0` aponta para o mesmo commit.
+  - Asset: https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases/download/online-v0.5.0/SB6-Windows-2026-11-08_06-49-05.zip
+  - Tamanho: 192.265.046 bytes; SHA-256 `7640c96a…`. Tamanho e hash conferem com o pacote do CI.
+- **Tipos no cliente release (Mono):** `CoopLateCaptureDriver`, `CoopVisualSample` e a sonda estão presentes; `LocalServerLoadTest` está ausente, como no R01.
+  - A sonda e os interruptores do R02 exigem `Debug.isDebugBuild` e ficam inertes em release.
+  - A captura tardia é o comportamento padrão de release.
+
+**Pendências mantidas após a publicação:**
+- aceite perceptual humano (`C:\Users\mauri\SB6-QA-R02\ROTEIRO.md`, cenários 1–8, inclusive as travadas do servidor);
+- redução de alocação do campo removido não demonstrada (≈ 0 pelo alocador);
+- custo total contra a baseline medido (+25/+23/+22 KiB/s);
+- poucos picos registrados como atraso observado pelo Mirror, com origem não isolada.
